@@ -1,8 +1,0 @@
-{
-  "values": [
-    "hbm:machine_assembler",
-    "hbm:red_cable",
-    "hbm:chemplant",
-    "hbm:machine_shredder"
-  ]
-}

@@ -1,9 +1,0 @@
-{
-	"parent": "block/orientable",
-	"textures": {
-		"top": "hbm:block/waste_charge_top",
-		"front": "hbm:block/waste_charge",
-		"side": "hbm:block/waste_charge",
-		"bottom": "hbm:block/waste_charge_bottom"
-	}
-}

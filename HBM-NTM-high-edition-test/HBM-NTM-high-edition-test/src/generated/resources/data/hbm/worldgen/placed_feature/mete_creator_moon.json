@@ -1,9 +1,0 @@
-{
-  "feature": "hbm:mete_creator_moon",
-  "placement": [
-    {
-      "type": "minecraft:rarity_filter",
-      "chance": 50
-    }
-  ]
-}

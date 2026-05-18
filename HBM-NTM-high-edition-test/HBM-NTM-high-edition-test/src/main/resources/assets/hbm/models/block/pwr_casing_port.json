@@ -1,6 +1,0 @@
-{
-  "parent": "block/cube_all",
-  "textures": {
-    "all": "hbm:block/pwr_casing_port"
-  }
-}

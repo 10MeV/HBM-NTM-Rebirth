@@ -1,6 +1,0 @@
-{
-  "parent": "block/cube_all",
-  "textures": {
-    "all": "hbm:block/glyphid_block_2"
-  }
-}

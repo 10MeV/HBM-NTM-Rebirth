@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "hbm:block/chicago_graphite_block"
-  }
-}
