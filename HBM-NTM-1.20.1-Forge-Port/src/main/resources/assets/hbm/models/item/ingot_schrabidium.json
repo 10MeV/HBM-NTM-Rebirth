@@ -1,0 +1,6 @@
+﻿{
+    "textures":  {
+                     "layer0":  "hbm:item/ingot_schrabidium"
+                 },
+    "parent":  "minecraft:item/generated"
+}

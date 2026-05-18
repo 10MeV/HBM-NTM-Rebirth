@@ -1,0 +1,7 @@
+{
+    "parent": "minecraft:block/cube_all",
+    "textures": {
+        "all": "hbm:block/wire_coated",
+        "particle": "hbm:block/wire_coated"
+    }
+}

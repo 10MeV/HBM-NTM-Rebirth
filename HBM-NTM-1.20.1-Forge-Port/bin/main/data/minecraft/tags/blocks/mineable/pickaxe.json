@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "hbm:machine_press",
+    "hbm:machine_difurnace_off",
+    "hbm:machine_electric_furnace_off",
+    "hbm:machine_boiler_off",
+    "hbm:machine_shredder",
+    "hbm:nuke_gadget",
+    "hbm:nuke_boy",
+    "hbm:nuke_man",
+    "hbm:nuke_tsar",
+    "hbm:nuke_mike",
+    "hbm:nuke_prototype",
+    "hbm:nuke_fleija",
+    "hbm:nuke_solinium",
+    "hbm:nuke_n2",
+    "hbm:nuke_fstbmb",
+    "hbm:bomb_multi"
+  ]
+}

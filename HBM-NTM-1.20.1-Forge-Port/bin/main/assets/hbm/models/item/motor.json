@@ -1,0 +1,6 @@
+﻿{
+    "textures":  {
+                     "layer0":  "hbm:item/motor"
+                 },
+    "parent":  "minecraft:item/generated"
+}

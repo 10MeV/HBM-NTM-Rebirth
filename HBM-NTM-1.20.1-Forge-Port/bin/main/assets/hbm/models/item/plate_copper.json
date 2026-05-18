@@ -1,0 +1,6 @@
+﻿{
+    "textures":  {
+                     "layer0":  "hbm:item/plate_copper"
+                 },
+    "parent":  "minecraft:item/generated"
+}

@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "hbm:block/difurnace_side_alt",
+    "down": "hbm:block/brick_fire",
+    "up": "hbm:block/difurnace_top_off_alt",
+    "north": "hbm:block/difurnace_side_alt",
+    "east": "hbm:block/difurnace_side_alt",
+    "south": "hbm:block/difurnace_front_off_alt",
+    "west": "hbm:block/difurnace_side_alt"
+  }
+}

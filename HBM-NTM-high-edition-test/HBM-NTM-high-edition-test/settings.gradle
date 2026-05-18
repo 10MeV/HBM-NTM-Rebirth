@@ -1,0 +1,23 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        maven {
+            name = 'MinecraftForge'
+            url = 'https://maven.minecraftforge.net/'
+        }
+        maven { url = 'https://maven.parchmentmc.org' }
+        maven {
+            name = 'GradleEnterprise'
+            url = 'https://repo.gradle.com/gradle/enterprise-gradle-plugin'
+        }
+        maven { url = 'https://bmclapi2.bangbang93.com/maven'}
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
+}
+
+rootProject.name = 'com.dalis'
+include 'processor'

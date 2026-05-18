@@ -1,0 +1,22 @@
+pluginManagement {
+    repositories {
+        maven { url = 'https://maven.aliyun.com/repository/gradle-plugin' }
+        gradlePluginPortal()
+        maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = 'https://maven.parchmentmc.org' }
+        maven { url = 'https://maven.aliyun.com/repository/public' }
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = 'https://maven.parchmentmc.org' }
+        maven { url = 'https://maven.aliyun.com/repository/public' }
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'HBM-NTM-1.20.1-Forge-Port'

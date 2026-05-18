@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "hbm:block/nuke_tsar",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "hbm:block/nuke_tsar",
+      "y": 270
+    },
+    "facing=south": {
+      "model": "hbm:block/nuke_tsar"
+    },
+    "facing=west": {
+      "model": "hbm:block/nuke_tsar",
+      "y": 90
+    }
+  }
+}

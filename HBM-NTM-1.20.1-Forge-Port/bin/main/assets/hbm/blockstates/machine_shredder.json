@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "hbm:block/machine_shredder",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "hbm:block/machine_shredder",
+      "y": 270
+    },
+    "facing=south": {
+      "model": "hbm:block/machine_shredder"
+    },
+    "facing=west": {
+      "model": "hbm:block/machine_shredder",
+      "y": 90
+    }
+  }
+}

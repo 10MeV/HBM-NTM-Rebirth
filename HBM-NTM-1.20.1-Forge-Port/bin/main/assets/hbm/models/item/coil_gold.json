@@ -1,0 +1,6 @@
+﻿{
+    "textures":  {
+                     "layer0":  "hbm:item/coil_gold"
+                 },
+    "parent":  "minecraft:item/generated"
+}

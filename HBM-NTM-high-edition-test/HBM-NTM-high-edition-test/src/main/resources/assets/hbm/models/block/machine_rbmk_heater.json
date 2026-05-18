@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "hbm:block/rbmk/rbmk_heater_side",
+    "end": "hbm:block/rbmk/rbmk_heater_top"
+  },
+  "render_type": "minecraft:cutout"
+}

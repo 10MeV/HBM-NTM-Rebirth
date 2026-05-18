@@ -1,0 +1,8 @@
+{
+  "values": [
+    "hbm:battery",
+    "hbm:battery_block_lithium",
+    "hbm:battery_dineutronium",
+    "hbm:battery_dineutronium"
+  ]
+}
