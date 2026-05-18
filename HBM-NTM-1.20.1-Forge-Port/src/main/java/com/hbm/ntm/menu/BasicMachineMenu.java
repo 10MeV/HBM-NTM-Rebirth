@@ -1,6 +1,7 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
+import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -10,12 +11,13 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class BasicMachineMenu extends AbstractContainerMenu {
-    private static final int MACHINE_SLOT_COUNT = 3;
-    private static final int PLAYER_INVENTORY_START = 4;
+    private static final int PLAYER_INVENTORY_START = 13;
     private static final int PLAYER_INVENTORY_END = PLAYER_INVENTORY_START + 27;
     private static final int HOTBAR_END = PLAYER_INVENTORY_END + 9;
 
@@ -29,10 +31,13 @@ public class BasicMachineMenu extends AbstractContainerMenu {
         super(ModMenuTypes.BASIC_MACHINE.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_FUEL, 26, 35));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_STAMP, 62, 35));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_INPUT, 98, 35));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_OUTPUT, 134, 35));
+        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_FUEL, 26, 53));
+        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_STAMP, 80, 17));
+        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_INPUT, 80, 53));
+        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_OUTPUT, 140, 35));
+        for (int column = 0; column < 9; column++) {
+            addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_STORAGE_START + column, 8 + column * 18, 84));
+        }
         addPlayerInventory(playerInventory);
         addMachineDataSlots(blockEntity);
     }
@@ -43,6 +48,18 @@ public class BasicMachineMenu extends AbstractContainerMenu {
             return 0;
         }
         return blockEntity.getProgress() * maxWidth / maxProgress;
+    }
+
+    public int getPressHeight(int maxHeight) {
+        return blockEntity.getPress() * maxHeight / BasicMachineBlockEntity.MAX_PRESS;
+    }
+
+    public int getSpeedPercent() {
+        return blockEntity.getSpeed() * 100 / BasicMachineBlockEntity.MAX_SPEED;
+    }
+
+    public int getStoredOperations() {
+        return blockEntity.getBurnTime() / BasicMachineBlockEntity.FUEL_PER_OPERATION;
     }
 
     @Override
@@ -64,7 +81,18 @@ public class BasicMachineMenu extends AbstractContainerMenu {
                 if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (!moveItemStackTo(stack, 0, PLAYER_INVENTORY_START - 1, false)) {
+            } else if (ForgeHooks.getBurnTime(stack, RecipeType.SMELTING) > 0) {
+                if (!moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_FUEL, BasicMachineBlockEntity.SLOT_FUEL + 1, false)
+                        && !moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_STORAGE_START, BasicMachineBlockEntity.SLOT_STORAGE_END, false)) {
+                    return ItemStack.EMPTY;
+                }
+            } else if (stack.getItem() instanceof ItemPressStamp) {
+                if (!moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_STAMP, BasicMachineBlockEntity.SLOT_STAMP + 1, false)
+                        && !moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_STORAGE_START, BasicMachineBlockEntity.SLOT_STORAGE_END, false)) {
+                    return ItemStack.EMPTY;
+                }
+            } else if (!moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_INPUT, BasicMachineBlockEntity.SLOT_INPUT + 1, false)
+                    && !moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_STORAGE_START, BasicMachineBlockEntity.SLOT_STORAGE_END, false)) {
                 return ItemStack.EMPTY;
             }
 
@@ -80,12 +108,12 @@ public class BasicMachineMenu extends AbstractContainerMenu {
     private void addPlayerInventory(Inventory inventory) {
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {
-                addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 84 + row * 18));
+                addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 120 + row * 18));
             }
         }
 
         for (int column = 0; column < 9; column++) {
-            addSlot(new Slot(inventory, column, 8 + column * 18, 142));
+            addSlot(new Slot(inventory, column, 8 + column * 18, 178));
         }
     }
 
@@ -104,12 +132,34 @@ public class BasicMachineMenu extends AbstractContainerMenu {
         addDataSlot(new DataSlot() {
             @Override
             public int get() {
-                return blockEntity.getMaxProgress();
+                return blockEntity.getBurnTime();
             }
 
             @Override
             public void set(int value) {
-                blockEntity.setMaxProgress(value);
+                blockEntity.setBurnTime(value);
+            }
+        });
+        addDataSlot(new DataSlot() {
+            @Override
+            public int get() {
+                return blockEntity.getSpeed();
+            }
+
+            @Override
+            public void set(int value) {
+                blockEntity.setSpeed(value);
+            }
+        });
+        addDataSlot(new DataSlot() {
+            @Override
+            public int get() {
+                return blockEntity.getPress();
+            }
+
+            @Override
+            public void set(int value) {
+                blockEntity.setPress(value);
             }
         });
     }

@@ -9,10 +9,12 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
@@ -45,5 +47,18 @@ public class MachineBlockEntityBlock extends HorizontalMachineBlock implements E
         }
         return (tickLevel, tickPos, tickState, blockEntity) ->
                 BasicMachineBlockEntity.serverTick(tickLevel, tickPos, tickState, (BasicMachineBlockEntity) blockEntity);
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) {
+            if (!level.isClientSide && level.getBlockEntity(pos) instanceof BasicMachineBlockEntity machine) {
+                for (ItemStack stack : machine.getDrops()) {
+                    Block.popResource(level, pos, stack);
+                }
+            }
+            level.updateNeighbourForOutputSignal(pos, this);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 }

@@ -35,6 +35,7 @@
 - 基础机器方块实体: `src/main/java/com/hbm/ntm/blockentity/BasicMachineBlockEntity.java`
 - 基础机器菜单: `src/main/java/com/hbm/ntm/menu/BasicMachineMenu.java`
 - 基础机器界面: `src/main/java/com/hbm/ntm/client/screen/BasicMachineScreen.java`
+- 基础机器渲染: `src/main/java/com/hbm/ntm/client/renderer/BasicMachineRenderer.java`
 - 压机配方: `src/main/java/com/hbm/ntm/recipe/PressRecipe.java`
 - 物品注册: `src/main/java/com/hbm/ntm/registry/ModItems.java`
 - 方块注册: `src/main/java/com/hbm/ntm/registry/ModBlocks.java`
@@ -55,7 +56,7 @@
 - 基础物品、基础机器和两批核弹/基础爆炸物模型已注册。
 - `HorizontalMachineBlock` 已支持水平朝向，摆放时正面朝向玩家。
 - 非完整 OBJ 模型使用 `noOcclusion`，避免像锻压机那样隐藏地面或邻接方块表面。
-- `machine_press` 已作为第一个基础机器接入 `BasicMachineBlockEntity`/`BasicMachineMenu`/`BasicMachineScreen`，具备 NBT、4 槽物品 handler、更新包入口、server tick、右键打开 GUI、进度同步入口和第一版 `hbm:press` 配方处理循环。
+- `machine_press` 已作为第一个基础机器接入 `BasicMachineBlockEntity`/`BasicMachineMenu`/`BasicMachineScreen`/`BasicMachineRenderer`，具备 NBT、13 槽物品 handler、旧版 GUI 贴图、左上角顺时针表盘指针、更新包入口、server tick、右键打开 GUI、速度/燃料/压头同步、第一版 `hbm:press` 配方处理循环、输入物品动画和破坏掉落内部物品。真实 `press_head.obj` 压头动画仍待后续迁移。
 - `stamp_iron_plate` 已迁移为第一枚压机模具，用于测试板材压制。
 
 ## 已迁移基础物品
@@ -67,7 +68,7 @@
 
 ## 已迁移基础机器
 
-- `machine_press`: 火力锻压机，OBJ 组合模型，已修正旧 TESR 中心原点偏移；已绑定基础 BlockEntity/Menu/Screen/Recipe 链路。
+- `machine_press`: 火力锻压机，OBJ 组合模型，已修正旧 TESR 中心原点偏移；已绑定基础 BlockEntity/Menu/Screen/Recipe/Renderer 链路。
 - `machine_difurnace_off`: 高炉，占位多面材质模型。
 - `machine_electric_furnace_off`: 电炉，多面材质模型。
 - `machine_boiler_off`: 锅炉，多面材质模型。
@@ -119,5 +120,5 @@ $env:JAVA_OPTS='-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7890 -Dhttps.proxyHo
 
 - 矿石生成与世界生成。
 - 核弹真实爆炸、辐射、污染、蘑菇云。
-- 完整机器处理逻辑、完整压机配方、预热器、音效和压头动画。
+- 完整机器处理逻辑、完整压机配方、预热器、音效和真实 OBJ 压头动画。
 - JEI/Jade 兼容。
