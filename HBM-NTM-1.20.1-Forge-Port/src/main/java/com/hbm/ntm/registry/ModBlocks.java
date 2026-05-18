@@ -2,6 +2,7 @@ package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.MachineBlockEntityBlock;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -19,8 +20,8 @@ import java.util.function.Supplier;
 public final class ModBlocks {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, HbmNtm.MOD_ID);
 
-    // Legacy 1.7.10 machine IDs. These are static placeholder blocks until their BlockEntity/Menu logic is ported.
-    public static final RegistryObject<Block> MACHINE_PRESS = nonOccludingMachine("machine_press");
+    // Legacy 1.7.10 machine IDs. Only machine_press has the first BlockEntity scaffold so far.
+    public static final RegistryObject<Block> MACHINE_PRESS = basicMachine("machine_press");
     public static final RegistryObject<Block> MACHINE_DIFURNACE_OFF = machine("machine_difurnace_off");
     public static final RegistryObject<Block> MACHINE_ELECTRIC_FURNACE_OFF = machine("machine_electric_furnace_off");
     public static final RegistryObject<Block> MACHINE_BOILER_OFF = machine("machine_boiler_off");
@@ -75,6 +76,15 @@ public final class ModBlocks {
 
     private static RegistryObject<Block> nonOccludingMachine(String name) {
         return registerBlockWithItem(name, () -> new HorizontalMachineBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion(), false));
+    }
+
+    private static RegistryObject<Block> basicMachine(String name) {
+        return registerBlockWithItem(name, () -> new MachineBlockEntityBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.METAL)

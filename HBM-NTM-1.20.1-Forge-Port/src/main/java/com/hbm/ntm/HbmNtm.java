@@ -2,9 +2,12 @@ package com.hbm.ntm;
 
 import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.datagen.HbmDataGenerators;
+import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModCreativeTabs;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.recipe.ModRecipes;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -24,6 +27,9 @@ public class HbmNtm {
 
         ModItems.register(modBus);
         ModBlocks.register(modBus);
+        ModBlockEntities.register(modBus);
+        ModMenuTypes.register(modBus);
+        ModRecipes.register(modBus);
         ModCreativeTabs.register(modBus);
 
         modBus.addListener(this::commonSetup);

@@ -1,0 +1,10 @@
+{
+  "type": "hbm:press",
+  "stamp": "plate",
+  "ingredient": {
+    "item": "hbm:ingot_titanium"
+  },
+  "result": {
+    "item": "hbm:plate_titanium"
+  }
+}

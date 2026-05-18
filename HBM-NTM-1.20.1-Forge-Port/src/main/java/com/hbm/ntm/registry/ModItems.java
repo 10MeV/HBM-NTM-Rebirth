@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.item.ItemPressStamp;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -58,6 +59,9 @@ public final class ModItems {
     public static final RegistryObject<Item> GOLD_COIL = part("coil_gold");
     public static final RegistryObject<Item> MOTOR = part("motor");
 
+    public static final RegistryObject<Item> IRON_PLATE_STAMP = ITEMS.register("stamp_iron_plate",
+            () -> new ItemPressStamp(new Item.Properties().durability(64), ItemPressStamp.StampType.PLATE));
+
     public static final List<RegistryObject<Item>> PARTS_TAB_ITEMS = List.of(
             URANIUM_INGOT,
             URANIUM_233_INGOT,
@@ -99,7 +103,8 @@ public final class ModItems {
             COPPER_COIL,
             TUNGSTEN_COIL,
             GOLD_COIL,
-            MOTOR
+            MOTOR,
+            IRON_PLATE_STAMP
     );
 
     public static void register(IEventBus modBus) {

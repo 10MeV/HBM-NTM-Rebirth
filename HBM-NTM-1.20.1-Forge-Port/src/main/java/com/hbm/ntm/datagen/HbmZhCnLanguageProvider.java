@@ -54,6 +54,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.coil_tungsten", "\u52a0\u70ed\u7ebf\u5708");
         add("item.hbm.coil_gold", "\u91d1\u7ebf\u5708");
         add("item.hbm.motor", "\u9a6c\u8fbe");
+        add("item.hbm.stamp_iron_plate", "\u677f\u6750\u6a21\u5177\uff08\u94c1\uff09");
         add("block.hbm.machine_press", "\u706b\u529b\u953b\u538b\u673a");
         add("block.hbm.machine_difurnace_off", "\u9ad8\u7089");
         add("block.hbm.machine_electric_furnace_off", "\u7535\u7089");

@@ -54,6 +54,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.coil_tungsten", "Heating Coil");
         add("item.hbm.coil_gold", "Gold Coil");
         add("item.hbm.motor", "Motor");
+        add("item.hbm.stamp_iron_plate", "Plate Stamp (Iron)");
         add("block.hbm.machine_press", "Burner Press");
         add("block.hbm.machine_difurnace_off", "Blast Furnace");
         add("block.hbm.machine_electric_furnace_off", "Electric Furnace");

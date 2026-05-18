@@ -19,10 +19,11 @@
 
 ## 源码定位
 
-- 1.7.10 原版源码: `E:\游戏\我的世界\开发\Hbm-s-Nuclear-Tech-GIT-master`
-- 1.7.10 索引: `E:\游戏\我的世界\开发\Hbm-s-Nuclear-Tech-GIT-master\1.7.10-源码资源迁移索引.md`
-- 1.20.1 参考移植版: `E:\游戏\我的世界\开发\HBM-NTM-high-edition-test\HBM-NTM-high-edition-test`
-- 1.20.1 参考索引: `E:\游戏\我的世界\开发\HBM-NTM-high-edition-test\HBM-NTM-high-edition-test\1.20.1-参考移植版源码资源索引.md`
+- 源码包根目录: `E:\游戏\我的世界\源码包`
+- 1.7.10 原版源码: `E:\游戏\我的世界\源码包\Hbm-s-Nuclear-Tech-GIT-master`
+- 1.7.10 索引: `E:\游戏\我的世界\开发\HBM-NTM-1.20.1-Forge-Port\1.7.10-源码资源迁移索引.md`
+- 1.20.1 参考移植版: `E:\游戏\我的世界\源码包\HBM-NTM-high-edition-test`
+- 1.20.1 参考索引: `E:\游戏\我的世界\开发\HBM-NTM-1.20.1-Forge-Port\1.20.1-参考移植版源码资源索引.md`
 - 当前移植工程: `E:\游戏\我的世界\开发\HBM-NTM-1.20.1-Forge-Port`
 
 ## 当前工程结构
@@ -30,8 +31,16 @@
 - 主类: `src/main/java/com/hbm/ntm/HbmNtm.java`
 - 配置: `src/main/java/com/hbm/ntm/config/HbmCommonConfig.java`
 - 方块基类: `src/main/java/com/hbm/ntm/block/HorizontalMachineBlock.java`
+- 方块实体机器块: `src/main/java/com/hbm/ntm/block/MachineBlockEntityBlock.java`
+- 基础机器方块实体: `src/main/java/com/hbm/ntm/blockentity/BasicMachineBlockEntity.java`
+- 基础机器菜单: `src/main/java/com/hbm/ntm/menu/BasicMachineMenu.java`
+- 基础机器界面: `src/main/java/com/hbm/ntm/client/screen/BasicMachineScreen.java`
+- 压机配方: `src/main/java/com/hbm/ntm/recipe/PressRecipe.java`
 - 物品注册: `src/main/java/com/hbm/ntm/registry/ModItems.java`
 - 方块注册: `src/main/java/com/hbm/ntm/registry/ModBlocks.java`
+- 方块实体注册: `src/main/java/com/hbm/ntm/registry/ModBlockEntities.java`
+- 菜单注册: `src/main/java/com/hbm/ntm/registry/ModMenuTypes.java`
+- 配方注册: `src/main/java/com/hbm/ntm/recipe/ModRecipes.java`
 - 创造栏: `src/main/java/com/hbm/ntm/registry/ModCreativeTabs.java`
 - DataGen: `src/main/java/com/hbm/ntm/datagen`
 - 客户端资源: `src/main/resources/assets/hbm`
@@ -46,6 +55,8 @@
 - 基础物品、基础机器和两批核弹/基础爆炸物模型已注册。
 - `HorizontalMachineBlock` 已支持水平朝向，摆放时正面朝向玩家。
 - 非完整 OBJ 模型使用 `noOcclusion`，避免像锻压机那样隐藏地面或邻接方块表面。
+- `machine_press` 已作为第一个基础机器接入 `BasicMachineBlockEntity`/`BasicMachineMenu`/`BasicMachineScreen`，具备 NBT、4 槽物品 handler、更新包入口、server tick、右键打开 GUI、进度同步入口和第一版 `hbm:press` 配方处理循环。
+- `stamp_iron_plate` 已迁移为第一枚压机模具，用于测试板材压制。
 
 ## 已迁移基础物品
 
@@ -56,7 +67,7 @@
 
 ## 已迁移基础机器
 
-- `machine_press`: 火力锻压机，OBJ 组合模型，已修正旧 TESR 中心原点偏移。
+- `machine_press`: 火力锻压机，OBJ 组合模型，已修正旧 TESR 中心原点偏移；已绑定基础 BlockEntity/Menu/Screen/Recipe 链路。
 - `machine_difurnace_off`: 高炉，占位多面材质模型。
 - `machine_electric_furnace_off`: 电炉，多面材质模型。
 - `machine_boiler_off`: 锅炉，多面材质模型。
@@ -108,5 +119,5 @@ $env:JAVA_OPTS='-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7890 -Dhttps.proxyHo
 
 - 矿石生成与世界生成。
 - 核弹真实爆炸、辐射、污染、蘑菇云。
-- 机器 BlockEntity/Menu/Screen 和真实处理逻辑。
+- 完整机器处理逻辑、完整压机配方、预热器、音效和压头动画。
 - JEI/Jade 兼容。

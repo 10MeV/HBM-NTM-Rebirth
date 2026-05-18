@@ -2,10 +2,11 @@
 
 ## 项目路径
 
-- 1.7.10 原版源码: `E:\游戏\我的世界\开发\Hbm-s-Nuclear-Tech-GIT-master`
-- 1.7.10 索引: `E:\游戏\我的世界\开发\Hbm-s-Nuclear-Tech-GIT-master\1.7.10-源码资源迁移索引.md`
-- 1.20.1 参考移植版: `E:\游戏\我的世界\开发\HBM-NTM-high-edition-test\HBM-NTM-high-edition-test`
-- 1.20.1 参考索引: `E:\游戏\我的世界\开发\HBM-NTM-high-edition-test\HBM-NTM-high-edition-test\1.20.1-参考移植版源码资源索引.md`
+- 源码包根目录: `E:\游戏\我的世界\源码包`
+- 1.7.10 原版源码: `E:\游戏\我的世界\源码包\Hbm-s-Nuclear-Tech-GIT-master`
+- 1.7.10 索引: `E:\游戏\我的世界\开发\HBM-NTM-1.20.1-Forge-Port\1.7.10-源码资源迁移索引.md`
+- 1.20.1 参考移植版: `E:\游戏\我的世界\源码包\HBM-NTM-high-edition-test`
+- 1.20.1 参考索引: `E:\游戏\我的世界\开发\HBM-NTM-1.20.1-Forge-Port\1.20.1-参考移植版源码资源索引.md`
 - 当前移植工程: `E:\游戏\我的世界\开发\HBM-NTM-1.20.1-Forge-Port`
 
 ## 迁移原则
