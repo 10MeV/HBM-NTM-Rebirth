@@ -3,6 +3,7 @@ package com.hbm.ntm.registry;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
+import com.hbm.ntm.blockentity.TrinketBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -20,6 +21,14 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<DeconBlockEntity>> DECON =
             BLOCK_ENTITIES.register("decon", () ->
                     BlockEntityType.Builder.of(DeconBlockEntity::new, ModBlocks.DECON.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<TrinketBlockEntity>> TRINKET =
+            BLOCK_ENTITIES.register("trinket", () ->
+                    BlockEntityType.Builder.of(
+                            TrinketBlockEntity::new,
+                            ModBlocks.legacyBlock("bobblehead").get(),
+                            ModBlocks.legacyBlock("snowglobe").get(),
+                            ModBlocks.legacyBlock("plushie").get()).build(null));
 
     public static void register(IEventBus modBus) {
         BLOCK_ENTITIES.register(modBus);

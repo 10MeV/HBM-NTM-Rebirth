@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.item.TrinketBlockItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -37,7 +38,13 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm.blocks"))
                     .icon(() -> ModBlocks.WASTE_EARTH.get().asItem().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModBlocks.BLOCK_TAB_BLOCKS.forEach(block -> output.accept(block.get())))
+                    .displayItems((parameters, output) -> ModBlocks.BLOCK_TAB_BLOCKS.forEach(block -> {
+                        if (block.get().asItem() instanceof TrinketBlockItem item) {
+                            TrinketBlockItem.addCreativeStacks(output, item);
+                        } else {
+                            output.accept(block.get());
+                        }
+                    }))
                     .build());
 
     public static final RegistryObject<CreativeModeTab> NUKES = CREATIVE_TABS.register("nukes",

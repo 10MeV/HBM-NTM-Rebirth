@@ -1,0 +1,11 @@
+﻿{
+    "render_type":  "minecraft:cutout",
+    "loader":  "forge:obj",
+    "flip_v":  true,
+    "model":  "hbm:models/block/trinkets/bobble_classic.obj",
+    "textures":  {
+                     "default":  "hbm:block/trinkets/frizzle",
+                     "texture0":  "hbm:block/trinkets/frizzle",
+                     "particle":  "hbm:block/trinkets/frizzle"
+                 }
+}

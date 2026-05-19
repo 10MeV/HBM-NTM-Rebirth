@@ -1,0 +1,12 @@
+﻿{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "hbm:block/rebar",
+    "bar": "hbm:block/rebar"
+  },
+  "elements": [
+    { "from": [7, 0, 7], "to": [9, 16, 9], "faces": { "north": { "texture": "#bar" }, "south": { "texture": "#bar" }, "east": { "texture": "#bar" }, "west": { "texture": "#bar" }, "up": { "texture": "#bar" }, "down": { "texture": "#bar" } } },
+    { "from": [0, 7, 7], "to": [16, 9, 9], "faces": { "north": { "texture": "#bar" }, "south": { "texture": "#bar" }, "east": { "texture": "#bar" }, "west": { "texture": "#bar" }, "up": { "texture": "#bar" }, "down": { "texture": "#bar" } } },
+    { "from": [7, 7, 0], "to": [9, 9, 16], "faces": { "north": { "texture": "#bar" }, "south": { "texture": "#bar" }, "east": { "texture": "#bar" }, "west": { "texture": "#bar" }, "up": { "texture": "#bar" }, "down": { "texture": "#bar" } } }
+  ]
+}

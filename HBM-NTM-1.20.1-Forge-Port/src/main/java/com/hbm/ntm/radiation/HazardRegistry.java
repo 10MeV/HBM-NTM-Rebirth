@@ -4,6 +4,8 @@ import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraftforge.registries.RegistryObject;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -28,6 +30,9 @@ public final class HazardRegistry {
         register(ModItems.POLONIUM_INGOT.get(), HazardType.RADIATION, RadiationConstants.PO210 * RadiationConstants.INGOT);
         register(ModItems.SCHRABIDIUM_INGOT.get(), HazardType.RADIATION, RadiationConstants.SA326 * RadiationConstants.INGOT);
 
+        registerRadioactiveParts();
+        registerRadioactiveBlocks();
+
         register(ModItems.URANIUM_POWDER.get(), HazardType.RADIATION, RadiationConstants.U * RadiationConstants.POWDER_MULTIPLIER);
         register(ModItems.PLUTONIUM_POWDER.get(), HazardType.RADIATION, RadiationConstants.PU * RadiationConstants.POWDER_MULTIPLIER);
         register(ModItems.THORIUM_POWDER.get(), HazardType.RADIATION, RadiationConstants.TH232 * RadiationConstants.POWDER_MULTIPLIER);
@@ -40,6 +45,179 @@ public final class HazardRegistry {
         register(ModBlocks.NUKE_FLEIJA.get().asItem(), HazardType.RADIATION, RadiationConstants.SA326);
         register(ModBlocks.NUKE_SOLINIUM.get().asItem(), HazardType.RADIATION, RadiationConstants.SA326 * 8.0F);
         register(ModBlocks.NUKE_FSTBMB.get().asItem(), HazardType.DIGAMMA, 0.01F);
+    }
+
+    private static void registerRadioactiveParts() {
+        registerRad("ingot_pu_mix", RadiationConstants.PU);
+        registerRad("ingot_am241", RadiationConstants.AM241);
+        registerRad("ingot_am242", RadiationConstants.AM242);
+        registerRad("ingot_am_mix", RadiationConstants.AM_MIX);
+        registerRad("ingot_technetium", RadiationConstants.TC99);
+        registerRad("ingot_co60", RadiationConstants.CO60);
+        registerRad("ingot_sr90", RadiationConstants.SR90);
+        registerRad("ingot_au198", RadiationConstants.AU198);
+        registerRad("ingot_pb209", RadiationConstants.PB209);
+        registerRad("ingot_ra226", RadiationConstants.RA226);
+
+        registerRad("ingot_uranium_fuel", RadiationConstants.U_FUEL);
+        registerRad("ingot_plutonium_fuel", RadiationConstants.PU_FUEL);
+        registerRad("ingot_neptunium_fuel", RadiationConstants.NP_FUEL);
+        registerRad("ingot_mox_fuel", RadiationConstants.MOX_FUEL);
+        registerRad("ingot_americium_fuel", RadiationConstants.AM_FUEL);
+        registerRad("ingot_thorium_fuel", RadiationConstants.TH_FUEL);
+        registerRad("ingot_schrabidium_fuel", RadiationConstants.SA_FUEL);
+        registerByName("ingot_schrabidium_fuel", HazardType.BLINDING, 5.0F);
+
+        registerRad("solid_fuel_bf", 1_000.0F);
+        registerRad("solid_fuel_presto_bf", 2_000.0F);
+        registerRad("solid_fuel_presto_triplet_bf", 6_000.0F);
+
+        registerNugget("nugget_th232", RadiationConstants.TH232);
+        registerNugget("nugget_uranium", RadiationConstants.U);
+        registerNugget("nugget_u233", RadiationConstants.U233);
+        registerNugget("nugget_u235", RadiationConstants.U235);
+        registerNugget("nugget_u238", RadiationConstants.U238);
+        registerNugget("nugget_plutonium", RadiationConstants.PU);
+        registerNugget("nugget_pu238", RadiationConstants.PU238);
+        registerNugget("nugget_pu239", RadiationConstants.PU239);
+        registerNugget("nugget_pu240", RadiationConstants.PU240);
+        registerNugget("nugget_pu241", RadiationConstants.PU241);
+        registerNugget("nugget_pu_mix", RadiationConstants.PU);
+        registerNugget("nugget_am241", RadiationConstants.AM241);
+        registerNugget("nugget_am242", RadiationConstants.AM242);
+        registerNugget("nugget_am_mix", RadiationConstants.AM_MIX);
+        registerNugget("nugget_neptunium", RadiationConstants.NP237);
+        registerNugget("nugget_polonium", RadiationConstants.PO210);
+        registerNugget("nugget_technetium", RadiationConstants.TC99);
+        registerNugget("nugget_co60", RadiationConstants.CO60);
+        registerNugget("nugget_sr90", RadiationConstants.SR90);
+        registerNugget("nugget_au198", RadiationConstants.AU198);
+        registerNugget("nugget_pb209", RadiationConstants.PB209);
+        registerNugget("nugget_ra226", RadiationConstants.RA226);
+
+        registerNugget("nugget_uranium_fuel", RadiationConstants.U_FUEL);
+        registerNugget("nugget_thorium_fuel", RadiationConstants.TH_FUEL);
+        registerNugget("nugget_plutonium_fuel", RadiationConstants.PU_FUEL);
+        registerNugget("nugget_neptunium_fuel", RadiationConstants.NP_FUEL);
+        registerNugget("nugget_mox_fuel", RadiationConstants.MOX_FUEL);
+        registerNugget("nugget_americium_fuel", RadiationConstants.AM_FUEL);
+        registerNugget("nugget_schrabidium_fuel", RadiationConstants.SA_FUEL);
+        registerByName("nugget_schrabidium_fuel", HazardType.BLINDING, 5.0F * RadiationConstants.NUGGET);
+
+        registerBillet("billet_uranium", RadiationConstants.U);
+        registerBillet("billet_u233", RadiationConstants.U233);
+        registerBillet("billet_u235", RadiationConstants.U235);
+        registerBillet("billet_u238", RadiationConstants.U238);
+        registerBillet("billet_uzh", RadiationConstants.UZH);
+        registerBillet("billet_th232", RadiationConstants.TH232);
+        registerBillet("billet_plutonium", RadiationConstants.PU);
+        registerBillet("billet_pu238", RadiationConstants.PU238);
+        registerBillet("billet_pu239", RadiationConstants.PU239);
+        registerBillet("billet_pu240", RadiationConstants.PU240);
+        registerBillet("billet_pu241", RadiationConstants.PU241);
+        registerBillet("billet_pu_mix", RadiationConstants.PU);
+        registerBillet("billet_am241", RadiationConstants.AM241);
+        registerBillet("billet_am242", RadiationConstants.AM242);
+        registerBillet("billet_am_mix", RadiationConstants.AM_MIX);
+        registerBillet("billet_neptunium", RadiationConstants.NP237);
+        registerBillet("billet_polonium", RadiationConstants.PO210);
+        registerBillet("billet_technetium", RadiationConstants.TC99);
+        registerBillet("billet_co60", RadiationConstants.CO60);
+        registerBillet("billet_sr90", RadiationConstants.SR90);
+        registerBillet("billet_au198", RadiationConstants.AU198);
+        registerBillet("billet_pb209", RadiationConstants.PB209);
+        registerBillet("billet_ra226", RadiationConstants.RA226);
+        registerBillet("billet_actinium", RadiationConstants.AC227);
+        registerBillet("billet_solinium", RadiationConstants.SA326);
+        registerBillet("billet_uranium_fuel", RadiationConstants.U_FUEL);
+        registerBillet("billet_thorium_fuel", RadiationConstants.TH_FUEL);
+        registerBillet("billet_plutonium_fuel", RadiationConstants.PU_FUEL);
+        registerBillet("billet_neptunium_fuel", RadiationConstants.NP_FUEL);
+        registerBillet("billet_mox_fuel", RadiationConstants.MOX_FUEL);
+        registerBillet("billet_americium_fuel", RadiationConstants.AM_FUEL);
+        registerBillet("billet_schrabidium_fuel", RadiationConstants.SA_FUEL);
+        registerBillet("billet_hes", RadiationConstants.SA_FUEL);
+        registerBillet("billet_po210be", RadiationConstants.PO210 * 3.0F);
+        registerBillet("billet_ra226be", RadiationConstants.RA226 * 3.0F);
+        registerBillet("billet_pu238be", RadiationConstants.PU238 * 3.0F);
+        registerRad("billet_nuclear_waste", RadiationConstants.WASTE * RadiationConstants.BILLET);
+        registerByName("billet_schrabidium_fuel", HazardType.BLINDING, 5.0F * RadiationConstants.BILLET);
+        registerByName("billet_les", HazardType.BLINDING, 20.0F);
+    }
+
+    private static void registerRadioactiveBlocks() {
+        registerBlockRad("ore_uranium", RadiationConstants.U);
+        registerBlockRad("ore_uranium_scorched", RadiationConstants.U);
+        registerBlockRad("ore_thorium", RadiationConstants.TH232);
+        registerBlockRad("ore_schrabidium", RadiationConstants.SA326);
+        registerBlockRad("ore_nether_uranium", RadiationConstants.U);
+        registerBlockRad("ore_nether_uranium_scorched", RadiationConstants.U);
+        registerBlockRad("ore_nether_plutonium", RadiationConstants.PU);
+        registerBlockRad("ore_nether_schrabidium", RadiationConstants.SA326);
+        registerBlockRad("ore_gneiss_uranium", RadiationConstants.U);
+        registerBlockRad("ore_gneiss_uranium_scorched", RadiationConstants.U);
+        registerBlockRad("ore_gneiss_schrabidium", RadiationConstants.SA326);
+
+        registerBlockRad("block_uranium", RadiationConstants.U * RadiationConstants.BLOCK);
+        registerBlockRad("block_u233", RadiationConstants.U233 * RadiationConstants.BLOCK);
+        registerBlockRad("block_u235", RadiationConstants.U235 * RadiationConstants.BLOCK);
+        registerBlockRad("block_u238", RadiationConstants.U238 * RadiationConstants.BLOCK);
+        registerBlockRad("block_uranium_fuel", RadiationConstants.U_FUEL * RadiationConstants.BLOCK);
+        registerBlockRad("block_thorium", RadiationConstants.TH232 * RadiationConstants.BLOCK);
+        registerBlockRad("block_thorium_fuel", RadiationConstants.TH_FUEL * RadiationConstants.BLOCK);
+        registerBlockRad("block_neptunium", RadiationConstants.NP237 * RadiationConstants.BLOCK);
+        registerBlockRad("block_polonium", RadiationConstants.PO210 * RadiationConstants.BLOCK);
+        registerBlockRad("block_mox_fuel", RadiationConstants.MOX_FUEL * RadiationConstants.BLOCK);
+        registerBlockRad("block_plutonium", RadiationConstants.PU * RadiationConstants.BLOCK);
+        registerBlockRad("block_pu238", RadiationConstants.PU238 * RadiationConstants.BLOCK);
+        registerBlockRad("block_pu239", RadiationConstants.PU239 * RadiationConstants.BLOCK);
+        registerBlockRad("block_pu240", RadiationConstants.PU240 * RadiationConstants.BLOCK);
+        registerBlockRad("block_pu_mix", RadiationConstants.PU * RadiationConstants.BLOCK);
+        registerBlockRad("block_plutonium_fuel", RadiationConstants.PU_FUEL * RadiationConstants.BLOCK);
+        registerBlockRad("block_trinitite", RadiationConstants.TRINITITE * RadiationConstants.BLOCK);
+        registerBlockRad("block_waste", RadiationConstants.WASTE * RadiationConstants.BLOCK);
+        registerBlockRad("block_waste_painted", RadiationConstants.WASTE * RadiationConstants.BLOCK);
+        registerBlockRad("block_waste_vitrified", RadiationConstants.WASTE_VITRIFIED * RadiationConstants.BLOCK);
+        registerBlockRad("ancient_scrap", 150.0F);
+        registerBlockRad("block_corium", 150.0F);
+        registerBlockRad("block_corium_cobble", 150.0F);
+        registerBlockRad("block_schraranium", RadiationConstants.SA326 * RadiationConstants.BLOCK);
+        registerBlockRad("block_schrabidium", RadiationConstants.SA326 * RadiationConstants.BLOCK);
+        registerBlockRad("block_solinium", RadiationConstants.SA326 * RadiationConstants.BLOCK);
+        registerBlockRad("block_schrabidium_fuel", RadiationConstants.SA_FUEL * RadiationConstants.BLOCK);
+        registerBlockByName("block_schrabidium_fuel", HazardType.BLINDING, 5.0F * RadiationConstants.BLOCK);
+        registerBlockRad("block_ra226", RadiationConstants.RA226 * RadiationConstants.BLOCK);
+        registerBlockRad("block_actinium", RadiationConstants.AC227 * RadiationConstants.BLOCK);
+    }
+
+    private static void registerRad(String itemName, float level) {
+        registerByName(itemName, HazardType.RADIATION, level);
+    }
+
+    private static void registerNugget(String itemName, float baseLevel) {
+        registerRad(itemName, baseLevel * RadiationConstants.NUGGET);
+    }
+
+    private static void registerBillet(String itemName, float baseLevel) {
+        registerRad(itemName, baseLevel * RadiationConstants.BILLET);
+    }
+
+    private static void registerByName(String itemName, HazardType type, float level) {
+        RegistryObject<Item> item = ModItems.legacyItem(itemName);
+        if (item != null) {
+            register(item.get(), type, level);
+        }
+    }
+
+    private static void registerBlockRad(String blockName, float level) {
+        registerBlockByName(blockName, HazardType.RADIATION, level);
+    }
+
+    private static void registerBlockByName(String blockName, HazardType type, float level) {
+        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(blockName);
+        if (block != null) {
+            register(block.get().asItem(), type, level);
+        }
     }
 
     public static void register(Item item, HazardType type, float level) {

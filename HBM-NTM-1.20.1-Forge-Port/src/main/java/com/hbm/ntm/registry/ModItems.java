@@ -11,10 +11,14 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 public final class ModItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, HbmNtm.MOD_ID);
+    private static final Map<String, RegistryObject<Item>> ITEMS_BY_LEGACY_NAME = new LinkedHashMap<>();
 
     // Legacy 1.7.10 ID: ModItems.ingot_uranium / texture items/ingot_uranium.png
     public static final RegistryObject<Item> URANIUM_INGOT = ingot("ingot_uranium");
@@ -76,7 +80,167 @@ public final class ModItems {
     public static final RegistryObject<Item> RADAWAY_FLUSH = ITEMS.register("radaway_flush",
             () -> new RadawayItem(new Item.Properties().stacksTo(16), 50, 19));
 
-    public static final List<RegistryObject<Item>> PARTS_TAB_ITEMS = List.of(
+    public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = simpleParts(
+            "ingot_pu_mix",
+            "ingot_am241",
+            "ingot_am242",
+            "ingot_am_mix",
+            "ingot_technetium",
+            "ingot_co60",
+            "ingot_sr90",
+            "ingot_au198",
+            "ingot_pb209",
+            "ingot_ra226",
+            "ingot_boron",
+            "ingot_graphite",
+            "ingot_firebrick",
+            "sulfur",
+            "nitra",
+            "nitra_small",
+            "ingot_uranium_fuel",
+            "ingot_plutonium_fuel",
+            "ingot_neptunium_fuel",
+            "ingot_mox_fuel",
+            "ingot_americium_fuel",
+            "ingot_schrabidium_fuel",
+            "ingot_thorium_fuel",
+            "nugget_uranium_fuel",
+            "nugget_thorium_fuel",
+            "nugget_plutonium_fuel",
+            "nugget_neptunium_fuel",
+            "nugget_mox_fuel",
+            "nugget_americium_fuel",
+            "nugget_schrabidium_fuel",
+            "ingot_tcalloy",
+            "ingot_cdalloy",
+            "ingot_bismuth_bronze",
+            "ingot_arsenic_bronze",
+            "ingot_bscco",
+            "ingot_red_copper",
+            "ingot_tungsten_carbide",
+            "fluorite",
+            "plate_dura_steel",
+            "plate_gold",
+            "plate_advanced_alloy",
+            "lithium",
+            "ingot_zirconium",
+            "ingot_phosphorus",
+            "coil_advanced_alloy",
+            "coil_advanced_torus",
+            "ingot_magnetized_tungsten",
+            "plate_mixed",
+            "pipes_steel",
+            "drill_titanium",
+            "plate_dalekanium",
+            "plate_polymer",
+            "plate_kevlar",
+            "plate_dineutronium",
+            "plate_desh",
+            "ingot_solinium",
+            "nugget_solinium",
+            "photo_panel",
+            "sat_base",
+            "thruster_nuclear",
+            "safety_fuse",
+            "billet_uranium",
+            "billet_u233",
+            "billet_u235",
+            "billet_u238",
+            "billet_uzh",
+            "billet_th232",
+            "billet_plutonium",
+            "billet_pu238",
+            "billet_pu239",
+            "billet_pu240",
+            "billet_pu241",
+            "billet_pu_mix",
+            "billet_am241",
+            "billet_am242",
+            "billet_am_mix",
+            "billet_neptunium",
+            "billet_polonium",
+            "billet_technetium",
+            "billet_cobalt",
+            "billet_co60",
+            "billet_sr90",
+            "billet_au198",
+            "billet_pb209",
+            "billet_ra226",
+            "billet_actinium",
+            "billet_solinium",
+            "billet_uranium_fuel",
+            "billet_thorium_fuel",
+            "billet_plutonium_fuel",
+            "billet_neptunium_fuel",
+            "billet_mox_fuel",
+            "billet_americium_fuel",
+            "billet_les",
+            "billet_schrabidium_fuel",
+            "billet_hes",
+            "billet_po210be",
+            "billet_ra226be",
+            "billet_pu238be",
+            "billet_beryllium",
+            "billet_bismuth",
+            "billet_zirconium",
+            "billet_yharonite",
+            "billet_zfb_bismuth",
+            "billet_zfb_pu241",
+            "billet_zfb_am_mix",
+            "billet_nuclear_waste",
+            "ingot_gunmetal",
+            "plate_gunmetal",
+            "ingot_calcium",
+            "powder_calcium",
+            "ingot_cadmium",
+            "powder_cadmium",
+            "powder_bismuth",
+            "ingot_mud",
+            "ingot_cft",
+            "plate_armor_titanium",
+            "plate_armor_ajr",
+            "plate_armor_hev",
+            "plate_armor_lunar",
+            "plate_armor_fau",
+            "plate_armor_dnt",
+            "solid_fuel",
+            "solid_fuel_presto",
+            "solid_fuel_presto_triplet",
+            "solid_fuel_bf",
+            "solid_fuel_presto_bf",
+            "solid_fuel_presto_triplet_bf",
+            "rocket_fuel",
+            "lignite",
+            "powder_lignite",
+            "coal_infernal",
+            "cinnebar",
+            "powder_limestone",
+            "nugget_th232",
+            "nugget_uranium",
+            "nugget_u233",
+            "nugget_u235",
+            "nugget_u238",
+            "nugget_plutonium",
+            "nugget_pu238",
+            "nugget_pu239",
+            "nugget_pu240",
+            "nugget_pu241",
+            "nugget_pu_mix",
+            "nugget_am241",
+            "nugget_am242",
+            "nugget_am_mix",
+            "nugget_neptunium",
+            "nugget_polonium",
+            "nugget_technetium",
+            "nugget_cobalt",
+            "nugget_co60",
+            "nugget_sr90",
+            "nugget_au198",
+            "nugget_pb209",
+            "nugget_ra226"
+    );
+
+    public static final List<RegistryObject<Item>> PARTS_TAB_ITEMS = Stream.concat(Stream.of(
             URANIUM_INGOT,
             URANIUM_233_INGOT,
             URANIUM_235_INGOT,
@@ -119,7 +283,7 @@ public final class ModItems {
             GOLD_COIL,
             MOTOR,
             IRON_PLATE_STAMP
-    );
+    ), EXTRA_PARTS_TAB_ITEMS.stream()).toList();
 
     public static final List<RegistryObject<Item>> CONSUMABLE_TAB_ITEMS = List.of(
             GEIGER_COUNTER,
@@ -133,12 +297,26 @@ public final class ModItems {
         ITEMS.register(modBus);
     }
 
+    public static RegistryObject<Item> legacyItem(String name) {
+        return ITEMS_BY_LEGACY_NAME.get(name);
+    }
+
     private static RegistryObject<Item> ingot(String name) {
-        return ITEMS.register(name, () -> new Item(new Item.Properties()));
+        return simpleItem(name);
     }
 
     private static RegistryObject<Item> part(String name) {
-        return ITEMS.register(name, () -> new Item(new Item.Properties()));
+        return simpleItem(name);
+    }
+
+    private static List<RegistryObject<Item>> simpleParts(String... names) {
+        return Stream.of(names).map(ModItems::simpleItem).toList();
+    }
+
+    private static RegistryObject<Item> simpleItem(String name) {
+        RegistryObject<Item> item = ITEMS.register(name, () -> new Item(new Item.Properties()));
+        ITEMS_BY_LEGACY_NAME.put(name, item);
+        return item;
     }
 
     private ModItems() {

@@ -1,0 +1,11 @@
+﻿{
+    "render_type":  "minecraft:cutout",
+    "loader":  "forge:obj",
+    "flip_v":  true,
+    "model":  "hbm:models/block/trinkets/hundun.obj",
+    "textures":  {
+                     "default":  "hbm:block/trinkets/hundun",
+                     "texture0":  "hbm:block/trinkets/hundun",
+                     "particle":  "hbm:block/trinkets/hundun"
+                 }
+}

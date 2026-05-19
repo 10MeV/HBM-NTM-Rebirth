@@ -1,0 +1,11 @@
+﻿{
+    "render_type":  "minecraft:translucent",
+    "loader":  "forge:obj",
+    "flip_v":  true,
+    "model":  "hbm:models/block/trinkets/snowglobe_glass.obj",
+    "textures":  {
+                     "default":  "hbm:block/trinkets/snowglobe_glass",
+                     "texture0":  "hbm:block/trinkets/snowglobe_glass",
+                     "particle":  "hbm:block/trinkets/snowglobe_glass"
+                 }
+}

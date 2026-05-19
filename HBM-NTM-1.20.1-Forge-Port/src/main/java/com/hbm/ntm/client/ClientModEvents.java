@@ -3,6 +3,7 @@ package com.hbm.ntm.client;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.renderer.BasicMachineRenderer;
+import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
 import com.hbm.ntm.client.screen.BasicMachineScreen;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModMenuTypes;
@@ -24,10 +25,12 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlockEntities.BASIC_MACHINE.get(), BasicMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.TRINKET.get(), TrinketBlockEntityRenderer::new);
     }
 
     @SubscribeEvent
     public static void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
+        TrinketBlockEntityRenderer.registerAdditionalModels();
         ObjModelLibrary.registerAdditionalModels(event);
     }
 

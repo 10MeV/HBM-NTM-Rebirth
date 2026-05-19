@@ -1,0 +1,5 @@
+﻿{
+  "variants": {
+    "": { "model": "hbm:block/stone_depth_nether" }
+  }
+}

@@ -1,0 +1,11 @@
+﻿{
+    "render_type":  "minecraft:cutout",
+    "loader":  "forge:obj",
+    "flip_v":  true,
+    "model":  "hbm:models/block/trinkets/derg.obj",
+    "textures":  {
+                     "default":  "hbm:block/trinkets/derg",
+                     "texture0":  "hbm:block/trinkets/derg",
+                     "particle":  "hbm:block/trinkets/derg"
+                 }
+}

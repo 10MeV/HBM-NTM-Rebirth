@@ -1,5 +1,6 @@
 package com.hbm.ntm.datagen;
 
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.data.PackOutput;
 import net.minecraftforge.common.data.LanguageProvider;
 
@@ -103,5 +104,35 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.nuke_n2", "N2 Mine");
         add("block.hbm.nuke_fstbmb", "Balefire Bomb");
         add("block.hbm.bomb_multi", "Multi Purpose Bomb");
+        ModItems.EXTRA_PARTS_TAB_ITEMS.forEach(item -> addItem(item, title(item.getId().getPath())));
+    }
+
+    private static String title(String id) {
+        StringBuilder builder = new StringBuilder();
+        for (String part : id.split("_")) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            if (!builder.isEmpty()) {
+                builder.append(' ');
+            }
+            builder.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+        }
+        return builder.toString()
+                .replace("U233", "U-233")
+                .replace("U235", "U-235")
+                .replace("U238", "U-238")
+                .replace("Pu238", "Pu-238")
+                .replace("Pu239", "Pu-239")
+                .replace("Pu240", "Pu-240")
+                .replace("Pu241", "Pu-241")
+                .replace("Am241", "Am-241")
+                .replace("Am242", "Am-242")
+                .replace("Co60", "Co-60")
+                .replace("Sr90", "Sr-90")
+                .replace("Au198", "Au-198")
+                .replace("Pb209", "Pb-209")
+                .replace("Ra226", "Ra-226")
+                .replace("Th232", "Th-232");
     }
 }

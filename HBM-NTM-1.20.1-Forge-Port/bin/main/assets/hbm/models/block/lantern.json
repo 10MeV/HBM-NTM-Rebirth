@@ -1,0 +1,17 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/trinkets/lantern_block.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/trinkets/lantern",
+    "default": "hbm:block/trinkets/lantern",
+    "texture0": "hbm:block/trinkets/lantern"
+  },
+  "display": {
+    "gui": { "rotation": [30, 45, 0], "translation": [0, -10, 0], "scale": [0.22, 0.22, 0.22] },
+    "ground": { "translation": [0, 3, 0], "scale": [0.12, 0.12, 0.12] },
+    "thirdperson_righthand": { "rotation": [75, 45, 0], "translation": [0, -1, 0], "scale": [0.22, 0.22, 0.22] },
+    "firstperson_righthand": { "rotation": [0, 315, 0], "translation": [0, -1, 0], "scale": [0.22, 0.22, 0.22] }
+  }
+}

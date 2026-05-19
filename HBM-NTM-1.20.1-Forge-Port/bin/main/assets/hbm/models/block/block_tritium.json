@@ -1,0 +1,8 @@
+﻿{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "hbm:block/block_tritium_side",
+    "top": "hbm:block/block_tritium_top",
+    "bottom": "hbm:block/block_tritium_top"
+  }
+}

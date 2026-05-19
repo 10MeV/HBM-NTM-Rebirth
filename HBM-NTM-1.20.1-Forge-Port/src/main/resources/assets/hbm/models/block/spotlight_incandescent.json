@@ -1,0 +1,17 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/lights/cage_lamp_block.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/cage_lamp",
+    "default": "hbm:block/cage_lamp",
+    "texture0": "hbm:block/cage_lamp"
+  },
+  "display": {
+    "gui": { "rotation": [30, 45, 0], "translation": [0, 0, 0], "scale": [1.65, 1.65, 1.65] },
+    "ground": { "translation": [0, 3, 0], "scale": [0.65, 0.65, 0.65] },
+    "thirdperson_righthand": { "rotation": [75, 45, 0], "translation": [0, 1, 0], "scale": [1.65, 1.65, 1.65] },
+    "firstperson_righthand": { "rotation": [0, 315, 0], "translation": [0, 2, 0], "scale": [1.65, 1.65, 1.65] }
+  }
+}

@@ -1,0 +1,8 @@
+﻿{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "hbm:block/block_fiberglass_side",
+    "top": "hbm:block/block_fiberglass_top",
+    "bottom": "hbm:block/block_fiberglass_top"
+  }
+}

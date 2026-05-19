@@ -1,0 +1,11 @@
+﻿{
+    "render_type":  "minecraft:cutout",
+    "loader":  "forge:obj",
+    "flip_v":  true,
+    "model":  "hbm:models/block/trinkets/bobble.obj",
+    "textures":  {
+                     "default":  "hbm:block/trinkets/hbm",
+                     "texture0":  "hbm:block/trinkets/hbm",
+                     "particle":  "hbm:block/trinkets/hbm"
+                 }
+}

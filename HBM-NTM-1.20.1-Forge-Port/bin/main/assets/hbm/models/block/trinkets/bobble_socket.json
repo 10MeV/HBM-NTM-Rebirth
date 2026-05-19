@@ -1,0 +1,11 @@
+﻿{
+    "render_type":  "minecraft:cutout",
+    "loader":  "forge:obj",
+    "flip_v":  true,
+    "model":  "hbm:models/block/trinkets/bobble_socket.obj",
+    "textures":  {
+                     "default":  "hbm:block/trinkets/socket",
+                     "texture0":  "hbm:block/trinkets/socket",
+                     "particle":  "hbm:block/trinkets/socket"
+                 }
+}
