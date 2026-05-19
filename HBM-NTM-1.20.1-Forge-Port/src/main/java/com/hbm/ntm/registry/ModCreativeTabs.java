@@ -26,6 +26,20 @@ public final class ModCreativeTabs {
                     .displayItems((parameters, output) -> ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> output.accept(block.get())))
                     .build());
 
+    public static final RegistryObject<CreativeModeTab> CONSUMABLES = CREATIVE_TABS.register("consumables",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.hbm.consumables"))
+                    .icon(() -> ModItems.GEIGER_COUNTER.get().getDefaultInstance())
+                    .displayItems((parameters, output) -> ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> output.accept(item.get())))
+                    .build());
+
+    public static final RegistryObject<CreativeModeTab> BLOCKS = CREATIVE_TABS.register("blocks",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.hbm.blocks"))
+                    .icon(() -> ModBlocks.WASTE_EARTH.get().asItem().getDefaultInstance())
+                    .displayItems((parameters, output) -> ModBlocks.BLOCK_TAB_BLOCKS.forEach(block -> output.accept(block.get())))
+                    .build());
+
     public static final RegistryObject<CreativeModeTab> NUKES = CREATIVE_TABS.register("nukes",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm.nukes"))

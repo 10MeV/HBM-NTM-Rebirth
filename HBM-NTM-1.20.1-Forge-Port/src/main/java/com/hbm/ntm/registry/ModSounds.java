@@ -21,6 +21,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_6 = register("tool.geiger6");
     public static final RegistryObject<SoundEvent> TOOL_TECH_BOOP = register("tool.tech_boop");
     public static final RegistryObject<SoundEvent> TOOL_RADAWAY = register("tool.radaway");
+    public static final RegistryObject<SoundEvent> PLAYER_VOMIT = register("player.vomit");
 
     public static void register(IEventBus modBus) {
         SOUNDS.register(modBus);

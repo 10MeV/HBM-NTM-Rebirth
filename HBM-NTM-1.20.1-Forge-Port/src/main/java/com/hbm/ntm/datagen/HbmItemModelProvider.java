@@ -13,5 +13,6 @@ public class HbmItemModelProvider extends ItemModelProvider {
     @Override
     protected void registerModels() {
         ModItems.PARTS_TAB_ITEMS.forEach(item -> basicItem(item.get()));
+        ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> basicItem(item.get()));
     }
 }

@@ -12,6 +12,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
     protected void addTranslations() {
         add("itemGroup.hbm.parts", "HBM \u96f6\u4ef6");
         add("itemGroup.hbm.machines", "HBM \u673a\u5668");
+        add("itemGroup.hbm.consumables", "HBM \u6d88\u8017\u54c1");
         add("itemGroup.hbm.nukes", "HBM \u6838\u5f39");
         add("item.hbm.ingot_uranium", "\u94c0\u952d");
         add("item.hbm.ingot_u233", "\u94c0-233\u952d");
@@ -56,6 +57,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.motor", "\u9a6c\u8fbe");
         add("item.hbm.stamp_iron_plate", "\u677f\u6750\u6a21\u5177\uff08\u94c1\uff09");
         add("item.hbm.geiger_counter", "\u76d6\u9769\u8ba1\u6570\u5668");
+        add("item.hbm.digamma_diagnostic", "\u73a9\u5bb6F-\u8fea\u4f3d\u9a6c\u8f90\u5c04\u81ea\u68c0\u5668");
         add("item.hbm.radaway", "\u6d88\u8f90\u5b81");
         add("item.hbm.radaway_strong", "\u5f3a\u6548\u6d88\u8f90\u5b81");
         add("item.hbm.radaway_flush", "\u51b2\u5237\u578b\u6d88\u8f90\u5b81");
@@ -66,6 +68,10 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("geiger.envRad", "\u73af\u5883\u5242\u91cf\uff1a%s RAD/s");
         add("geiger.playerRad", "\u73a9\u5bb6\u5242\u91cf\uff1a%s RAD");
         add("geiger.playerRes", "\u8f90\u5c04\u6297\u6027\uff1a%s%%");
+        add("digamma.title", "\u73a9\u5bb6F-\u8fea\u4f3d\u9a6c\u8f90\u5c04\u81ea\u68c0\u5668");
+        add("digamma.playerDigamma", "\u73a9\u5bb6F-\u8fea\u4f3d\u9a6c\u8f90\u7167\u6c34\u5e73\uff1a%s DRX");
+        add("digamma.playerHealth", "\u73a9\u5bb6\u6240\u53d7F-\u8fea\u4f3d\u9a6c\u8f90\u7167\u5f71\u54cd\uff1a%s%%");
+        add("digamma.playerRes", "\u73a9\u5bb6F-\u8fea\u4f3d\u9a6c\u9632\u62a4\u6c34\u5e73\uff1a%s");
         add("tooltip.hbm.radiation.single", "\u8f90\u5c04\uff1a%s RAD/s");
         add("tooltip.hbm.radiation.total", "\u6574\u7ec4\u603b\u8f90\u5c04\uff1a%s RAD/s");
         add("tooltip.hbm.radiation.resistance", "\u8f90\u5c04\u6297\u6027\uff1a%s\uff08\u963b\u6321 %s%%\uff09");

@@ -55,5 +55,11 @@
     "sounds": [
       "hbm:tool/radaway"
     ]
+  },
+  "player.vomit": {
+    "subtitle": "subtitles.hbm.player.vomit",
+    "sounds": [
+      "hbm:player/vomit"
+    ]
   }
 }

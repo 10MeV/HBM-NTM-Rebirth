@@ -12,6 +12,7 @@ public class HbmLanguageProvider extends LanguageProvider {
     protected void addTranslations() {
         add("itemGroup.hbm.parts", "HBM Parts");
         add("itemGroup.hbm.machines", "HBM Machines");
+        add("itemGroup.hbm.consumables", "HBM Consumables");
         add("itemGroup.hbm.nukes", "HBM Nukes");
         add("item.hbm.ingot_uranium", "Uranium Ingot");
         add("item.hbm.ingot_u233", "Uranium-233 Ingot");
@@ -56,6 +57,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.motor", "Motor");
         add("item.hbm.stamp_iron_plate", "Plate Stamp (Iron)");
         add("item.hbm.geiger_counter", "Geiger Counter");
+        add("item.hbm.digamma_diagnostic", "Digamma Diagnostic");
         add("item.hbm.radaway", "RadAway");
         add("item.hbm.radaway_strong", "RadAway Strong");
         add("item.hbm.radaway_flush", "RadAway Flush");
@@ -66,6 +68,10 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("geiger.envRad", "Environmental dose: %s RAD/s");
         add("geiger.playerRad", "Player dose: %s RAD");
         add("geiger.playerRes", "Radiation resistance: %s%%");
+        add("digamma.title", "DIGAMMA DIAGNOSTIC");
+        add("digamma.playerDigamma", "Digamma exposure: %s DRX");
+        add("digamma.playerHealth", "Digamma influence: %s%%");
+        add("digamma.playerRes", "Digamma resistance: %s");
         add("tooltip.hbm.radiation.single", "Radiation: %s RAD/s");
         add("tooltip.hbm.radiation.total", "Stack total: %s RAD/s");
         add("tooltip.hbm.radiation.resistance", "Radiation resistance: %s (%s%% blocked)");

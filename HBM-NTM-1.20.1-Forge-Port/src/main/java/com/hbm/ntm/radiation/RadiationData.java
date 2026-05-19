@@ -2,11 +2,18 @@ package com.hbm.ntm.radiation;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.UUID;
+
 public final class RadiationData {
+    public static final UUID DIGAMMA_UUID = UUID.fromString("2a3d8aec-5ab9-4218-9b8b-ca812bdf378b");
     private static final String TAG_ROOT = "hbm_radiation";
     private static final String TAG_RADIATION = "hfr_radiation";
+    private static final String TAG_DIGAMMA = "hfr_digamma";
     private static final String TAG_RAD_ENV = "hfr_rad_env";
     private static final String TAG_RAD_BUF = "hfr_rad_buf";
 
@@ -20,6 +27,38 @@ public final class RadiationData {
 
     public static void incrementRadiation(LivingEntity entity, float amount) {
         setRadiation(entity, getRadiation(entity) + amount);
+    }
+
+    public static float getDigamma(LivingEntity entity) {
+        return getTag(entity).getFloat(TAG_DIGAMMA);
+    }
+
+    public static void setDigamma(LivingEntity entity, float digamma) {
+        getTag(entity).putFloat(TAG_DIGAMMA, Mth.clamp(digamma, 0.0F, 10.0F));
+        applyDigammaModifier(entity);
+    }
+
+    public static void incrementDigamma(LivingEntity entity, float amount) {
+        setDigamma(entity, getDigamma(entity) + amount);
+    }
+
+    public static void applyDigammaModifier(LivingEntity entity) {
+        AttributeInstance maxHealth = entity.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealth == null) {
+            return;
+        }
+        maxHealth.removeModifier(DIGAMMA_UUID);
+
+        float digamma = getDigamma(entity);
+        if (digamma <= 0.0F) {
+            return;
+        }
+
+        double healthModifier = Math.pow(0.5D, digamma) - 1.0D;
+        maxHealth.addTransientModifier(new AttributeModifier(DIGAMMA_UUID, "digamma", healthModifier, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        if (entity.getHealth() > entity.getMaxHealth() && entity.getMaxHealth() > 0.0F) {
+            entity.setHealth(entity.getMaxHealth());
+        }
     }
 
     public static float getRadEnv(LivingEntity entity) {

@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.DeconBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.MachineBlockEntityBlock;
+import com.hbm.ntm.block.RadioactiveWasteEarthBlock;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -29,6 +30,10 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_SHREDDER = machine("machine_shredder");
     public static final RegistryObject<Block> DECON = decon("decon");
 
+    // Legacy 1.7.10 blockTab entries used as an early chunk-radiation test bed.
+    public static final RegistryObject<Block> WASTE_EARTH = wasteEarth("waste_earth", false, 5.0F);
+    public static final RegistryObject<Block> WASTE_MYCELIUM = wasteEarth("waste_mycelium", true, 15.0F);
+
     // Legacy 1.7.10 nuclear device IDs. These are model-only placeholders for now.
     public static final RegistryObject<Block> NUKE_GADGET = nonOccludingMachine("nuke_gadget");
     public static final RegistryObject<Block> NUKE_BOY = nonOccludingMachine("nuke_boy");
@@ -49,6 +54,11 @@ public final class ModBlocks {
             MACHINE_BOILER_OFF,
             MACHINE_SHREDDER,
             DECON
+    );
+
+    public static final List<RegistryObject<Block>> BLOCK_TAB_BLOCKS = List.of(
+            WASTE_EARTH,
+            WASTE_MYCELIUM
     );
 
     public static final List<RegistryObject<Block>> NUKE_TAB_BLOCKS = List.of(
@@ -101,6 +111,13 @@ public final class ModBlocks {
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.METAL)
                 .requiresCorrectToolForDrops()));
+    }
+
+    private static RegistryObject<Block> wasteEarth(String name, boolean mycelium, float chunkRadiation) {
+        return registerBlockWithItem(name, () -> new RadioactiveWasteEarthBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.GRASS)
+                .strength(0.6F)
+                .sound(SoundType.GRASS), mycelium, chunkRadiation));
     }
 
     private static <T extends Block> RegistryObject<T> registerBlockWithItem(String name, Supplier<T> blockSupplier) {

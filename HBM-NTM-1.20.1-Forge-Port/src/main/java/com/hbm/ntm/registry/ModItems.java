@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.item.DigammaDiagnosticItem;
 import com.hbm.ntm.item.GeigerCounterItem;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.item.RadawayItem;
@@ -66,6 +67,8 @@ public final class ModItems {
 
     public static final RegistryObject<Item> GEIGER_COUNTER = ITEMS.register("geiger_counter",
             () -> new GeigerCounterItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> DIGAMMA_DIAGNOSTIC = ITEMS.register("digamma_diagnostic",
+            () -> new DigammaDiagnosticItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> RADAWAY = ITEMS.register("radaway",
             () -> new RadawayItem(new Item.Properties().stacksTo(16), 14, 9));
     public static final RegistryObject<Item> RADAWAY_STRONG = ITEMS.register("radaway_strong",
@@ -115,8 +118,12 @@ public final class ModItems {
             TUNGSTEN_COIL,
             GOLD_COIL,
             MOTOR,
-            IRON_PLATE_STAMP,
+            IRON_PLATE_STAMP
+    );
+
+    public static final List<RegistryObject<Item>> CONSUMABLE_TAB_ITEMS = List.of(
             GEIGER_COUNTER,
+            DIGAMMA_DIAGNOSTIC,
             RADAWAY,
             RADAWAY_STRONG,
             RADAWAY_FLUSH

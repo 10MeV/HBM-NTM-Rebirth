@@ -4,6 +4,10 @@ import com.hbm.ntm.registry.ModEffects;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.MushroomCow;
+import net.minecraft.world.entity.animal.Ocelot;
+import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 
 public final class RadiationUtil {
@@ -11,10 +15,20 @@ public final class RadiationUtil {
         if (amount <= 0.0F) {
             return;
         }
+        if (isRadImmune(entity)) {
+            return;
+        }
 
         float modifier = bypassResistance ? 1.0F : RadiationResistance.calculateRadiationModifier(entity);
         RadiationData.setRadEnv(entity, RadiationData.getRadEnv(entity) + amount);
         RadiationData.incrementRadiation(entity, amount * modifier);
+    }
+
+    public static boolean isRadImmune(LivingEntity entity) {
+        return entity instanceof MushroomCow
+                || entity instanceof Zombie
+                || entity instanceof Skeleton
+                || entity instanceof Ocelot;
     }
 
     public static void applyRadiationEffect(LivingEntity entity, int amplifier) {
@@ -38,6 +52,16 @@ public final class RadiationUtil {
         player.displayClientMessage(Component.translatable("geiger.envRad", round(envRad)), false);
         player.displayClientMessage(Component.translatable("geiger.playerRad", round(playerRad)), false);
         player.displayClientMessage(Component.translatable("geiger.playerRes", round(resistance)), false);
+    }
+
+    public static void printDiagnosticData(Player player) {
+        float digamma = Math.round(RadiationData.getDigamma(player) * 100.0F) / 100.0F;
+        float healthInfluence = Math.round((1.0F - (float) Math.pow(0.5D, digamma)) * 10000.0F) / 100.0F;
+
+        player.displayClientMessage(Component.translatable("digamma.title"), false);
+        player.displayClientMessage(Component.translatable("digamma.playerDigamma", digamma), false);
+        player.displayClientMessage(Component.translatable("digamma.playerHealth", healthInfluence), false);
+        player.displayClientMessage(Component.translatable("digamma.playerRes", "N/A"), false);
     }
 
     public static void addRadiationPoisoning(LivingEntity entity, int durationTicks, int amplifier) {
