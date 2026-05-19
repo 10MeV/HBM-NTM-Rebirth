@@ -7,6 +7,7 @@ import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModCreativeTabs;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -30,6 +31,7 @@ public class HbmNtm {
         ModBlockEntities.register(modBus);
         ModMenuTypes.register(modBus);
         ModRecipes.register(modBus);
+        ModSounds.register(modBus);
         ModCreativeTabs.register(modBus);
 
         modBus.addListener(this::commonSetup);

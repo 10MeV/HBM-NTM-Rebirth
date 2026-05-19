@@ -45,6 +45,7 @@
   "item.hbm.motor": "Motor",
   "item.hbm.stamp_iron_plate": "Plate Stamp (Iron)",
   "block.hbm.machine_press": "Burner Press",
+  "subtitles.hbm.block.press_operate": "Burner Press operates",
   "block.hbm.machine_difurnace_off": "Blast Furnace",
   "block.hbm.machine_electric_furnace_off": "Electric Furnace",
   "block.hbm.machine_boiler_off": "Old Boiler",

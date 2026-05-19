@@ -56,6 +56,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.motor", "\u9a6c\u8fbe");
         add("item.hbm.stamp_iron_plate", "\u677f\u6750\u6a21\u5177\uff08\u94c1\uff09");
         add("block.hbm.machine_press", "\u706b\u529b\u953b\u538b\u673a");
+        add("subtitles.hbm.block.press_operate", "\u706b\u529b\u953b\u538b\u673a\u8fd0\u4f5c");
         add("block.hbm.machine_difurnace_off", "\u9ad8\u7089");
         add("block.hbm.machine_electric_furnace_off", "\u7535\u7089");
         add("block.hbm.machine_boiler_off", "\u9505\u7089");

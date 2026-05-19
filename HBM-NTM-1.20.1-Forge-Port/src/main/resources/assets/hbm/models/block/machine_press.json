@@ -9,15 +9,6 @@
       "textures": {
         "default": "hbm:block/press/press_body"
       }
-    },
-    "head": {
-      "loader": "forge:obj",
-      "model": "hbm:models/block/press_head.obj",
-      "flip_v": true,
-      "render_type": "minecraft:cutout",
-      "textures": {
-        "default": "hbm:block/press/press_head"
-      }
     }
   },
   "textures": {

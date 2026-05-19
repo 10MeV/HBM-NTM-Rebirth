@@ -45,6 +45,7 @@
   "item.hbm.motor": "\u9a6c\u8fbe",
   "item.hbm.stamp_iron_plate": "\u677f\u6750\u6a21\u5177\uff08\u94c1\uff09",
   "block.hbm.machine_press": "\u706b\u529b\u953b\u538b\u673a",
+  "subtitles.hbm.block.press_operate": "\u706b\u529b\u953b\u538b\u673a\u8fd0\u4f5c",
   "block.hbm.machine_difurnace_off": "\u9ad8\u7089",
   "block.hbm.machine_electric_furnace_off": "\u7535\u7089",
   "block.hbm.machine_boiler_off": "\u9505\u7089",

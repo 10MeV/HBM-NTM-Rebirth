@@ -56,6 +56,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.motor", "Motor");
         add("item.hbm.stamp_iron_plate", "Plate Stamp (Iron)");
         add("block.hbm.machine_press", "Burner Press");
+        add("subtitles.hbm.block.press_operate", "Burner Press operates");
         add("block.hbm.machine_difurnace_off", "Blast Furnace");
         add("block.hbm.machine_electric_furnace_off", "Electric Furnace");
         add("block.hbm.machine_boiler_off", "Old Boiler");

@@ -1,0 +1,11 @@
+{
+  "block.press_operate": {
+    "subtitle": "subtitles.hbm.block.press_operate",
+    "sounds": [
+      {
+        "name": "hbm:block/press_operate",
+        "stream": false
+      }
+    ]
+  }
+}

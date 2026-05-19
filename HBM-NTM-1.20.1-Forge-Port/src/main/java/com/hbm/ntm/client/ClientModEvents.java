@@ -1,12 +1,14 @@
 package com.hbm.ntm.client;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.renderer.BasicMachineRenderer;
 import com.hbm.ntm.client.screen.BasicMachineScreen;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModMenuTypes;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -22,6 +24,11 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlockEntities.BASIC_MACHINE.get(), BasicMachineRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
+        ObjModelLibrary.registerAdditionalModels(event);
     }
 
     private ClientModEvents() {

@@ -4,6 +4,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.menu.BasicMachineMenu;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.PressRecipe;
+import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -17,8 +18,11 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -85,6 +89,11 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     private boolean retracting;
     private int delay;
     private long ticksExisted;
+    private double renderPress;
+    private double lastPress;
+    private int syncPress;
+    private int turnProgress;
+    private boolean clientRenderInitialized;
 
     public BasicMachineBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.BASIC_MACHINE.get(), pos, state);
@@ -131,8 +140,20 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
         }
 
         blockEntity.setChanged();
-        if (blockEntity.ticksExisted % 5 == 0) {
-            level.sendBlockUpdated(pos, state, state, 3);
+        if (blockEntity.isPressActiveForSync(canProcess) || blockEntity.ticksExisted % 10 == 0) {
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+        }
+    }
+
+    public static void clientTick(Level level, BlockPos pos, BlockState state, BasicMachineBlockEntity blockEntity) {
+        blockEntity.ticksExisted++;
+        blockEntity.lastPress = blockEntity.renderPress;
+        if (blockEntity.turnProgress > 0) {
+            blockEntity.renderPress = blockEntity.renderPress
+                    + ((blockEntity.syncPress - blockEntity.renderPress) / (double) blockEntity.turnProgress);
+            blockEntity.turnProgress--;
+        } else {
+            blockEntity.renderPress = blockEntity.syncPress;
         }
     }
 
@@ -183,6 +204,10 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
         this.press = press;
     }
 
+    public double getInterpolatedPress(float partialTick) {
+        return Mth.lerp(partialTick, lastPress, renderPress);
+    }
+
     public int getStoredOperations() {
         return burnTime / FUEL_PER_OPERATION;
     }
@@ -222,7 +247,19 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
         ticksExisted = tag.getLong(TAG_TICKS_EXISTED);
         burnTime = tag.getInt(TAG_BURN_TIME);
         speed = tag.getInt(TAG_SPEED);
-        press = tag.getInt(TAG_PRESS);
+        int loadedPress = tag.getInt(TAG_PRESS);
+        press = loadedPress;
+        if (level != null && level.isClientSide) {
+            boolean targetChanged = loadedPress != syncPress;
+            syncPress = loadedPress;
+            if (!clientRenderInitialized) {
+                renderPress = loadedPress;
+                lastPress = loadedPress;
+                clientRenderInitialized = true;
+            } else if (targetChanged) {
+                turnProgress = 2;
+            }
+        }
         retracting = tag.getBoolean(TAG_RETRACTING);
         delay = tag.getInt(TAG_DELAY);
     }
@@ -272,6 +309,10 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
                 .orElse(null);
     }
 
+    private boolean isPressActiveForSync(boolean canProcess) {
+        return canProcess || retracting || press > 0 || speed > 0 || delay > 0;
+    }
+
     private void consumeFuel() {
         ItemStack fuel = items.getStackInSlot(SLOT_FUEL);
         int fuelTime = ForgeHooks.getBurnTime(fuel, RecipeType.SMELTING);
@@ -307,6 +348,8 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
         } else {
             output.grow(result.getCount());
         }
+
+        level.playSound(null, worldPosition, ModSounds.BLOCK_PRESS_OPERATE.get(), SoundSource.BLOCKS, 1.5F, 1.0F);
 
         items.extractItem(SLOT_INPUT, 1, false);
         ItemStack stamp = items.getStackInSlot(SLOT_STAMP);

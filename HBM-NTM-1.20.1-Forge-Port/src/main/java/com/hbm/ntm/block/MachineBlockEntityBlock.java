@@ -42,10 +42,13 @@ public class MachineBlockEntityBlock extends HorizontalMachineBlock implements E
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide || type != ModBlockEntities.BASIC_MACHINE.get()) {
+        if (type != ModBlockEntities.BASIC_MACHINE.get()) {
             return null;
         }
-        return (tickLevel, tickPos, tickState, blockEntity) ->
+        return level.isClientSide
+                ? (tickLevel, tickPos, tickState, blockEntity) ->
+                BasicMachineBlockEntity.clientTick(tickLevel, tickPos, tickState, (BasicMachineBlockEntity) blockEntity)
+                : (tickLevel, tickPos, tickState, blockEntity) ->
                 BasicMachineBlockEntity.serverTick(tickLevel, tickPos, tickState, (BasicMachineBlockEntity) blockEntity);
     }
 
