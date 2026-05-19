@@ -1,4 +1,3 @@
-﻿{
-  "parent": "hbm:block/snowglobe"
+{
+  "parent": "minecraft:builtin/entity"
 }
-

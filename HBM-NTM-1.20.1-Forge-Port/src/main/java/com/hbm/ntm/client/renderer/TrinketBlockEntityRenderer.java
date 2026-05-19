@@ -65,13 +65,17 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
         poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.yawDegrees() + 90.0F));
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, blockEntity.getBlockState(), packedLight, packedOverlay);
+        renderTrinket(kind, variant, blockEntity.squishTimer(), partialTick, context);
+
+        poseStack.popPose();
+    }
+
+    public static void renderTrinket(TrinketVariant.Kind kind, int variant, int squishTimer, float partialTick, ObjRenderContext context) {
         switch (kind) {
             case BOBBLEHEAD -> renderBobblehead(variant, context);
             case SNOWGLOBE -> renderSnowglobe(variant, context);
-            case PLUSHIE -> renderPlushie(blockEntity, partialTick, variant, context);
+            case PLUSHIE -> renderPlushie(squishTimer, partialTick, variant, context);
         }
-
-        poseStack.popPose();
     }
 
     private static void renderBobblehead(int variant, ObjRenderContext context) {
@@ -105,9 +109,8 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
         context.poseStack().popPose();
     }
 
-    private static void renderPlushie(TrinketBlockEntity blockEntity, float partialTick, int variant, ObjRenderContext context) {
+    private static void renderPlushie(int squishTimer, float partialTick, int variant, ObjRenderContext context) {
         context.poseStack().pushPose();
-        int squishTimer = blockEntity.squishTimer();
         if (squishTimer > 0) {
             double squish = Math.max(0.0D, squishTimer - partialTick);
             context.poseStack().scale(1.0F, (float) (1.0D + (-(Math.sin(squish)) * squish) * 0.025D), 1.0F);

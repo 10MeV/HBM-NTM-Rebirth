@@ -1,7 +1,9 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.block.TrinketVariant;
+import com.hbm.ntm.client.renderer.TrinketItemRenderer;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
@@ -12,7 +14,9 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 
+import java.util.function.Consumer;
 import java.util.List;
 
 public class TrinketBlockItem extends BlockItem {
@@ -25,6 +29,16 @@ public class TrinketBlockItem extends BlockItem {
 
     public TrinketVariant.Kind kind() {
         return kind;
+    }
+
+    @Override
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        consumer.accept(new IClientItemExtensions() {
+            @Override
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                return TrinketItemRenderer.INSTANCE;
+            }
+        });
     }
 
     public static int getVariant(ItemStack stack) {

@@ -32,12 +32,13 @@ public final class ObjRenderUtils {
             MultiBufferSource buffer,
             int packedLight,
             int packedOverlay,
-            RenderType overrideRenderType) {
+            RenderType overrideRenderType,
+            float lightMultiplier) {
         BlockColors blockColors = Minecraft.getInstance().getBlockColors();
         int color = blockColors.getColor(state, (BlockAndTintGetter) null, (BlockPos) null, 0);
-        float red = (float) (color >> 16 & 255) / 255.0F;
-        float green = (float) (color >> 8 & 255) / 255.0F;
-        float blue = (float) (color & 255) / 255.0F;
+        float red = Mth.clamp(((float) (color >> 16 & 255) / 255.0F) * lightMultiplier, 0.0F, 1.0F);
+        float green = Mth.clamp(((float) (color >> 8 & 255) / 255.0F) * lightMultiplier, 0.0F, 1.0F);
+        float blue = Mth.clamp(((float) (color & 255) / 255.0F) * lightMultiplier, 0.0F, 1.0F);
         RandomSource random = RandomSource.create(42L);
 
         for (RenderType renderType : model.getRenderTypes(state, random, ModelData.EMPTY)) {
@@ -66,14 +67,25 @@ public final class ObjRenderUtils {
             int packedLight,
             int packedOverlay,
             RenderType renderType) {
+        renderModel(model, poseStack, buffer, packedLight, packedOverlay, renderType, 1.0F);
+    }
+
+    public static void renderModel(
+            BakedModel model,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight,
+            int packedOverlay,
+            RenderType renderType,
+            float lightMultiplier) {
         VertexConsumer consumer = buffer.getBuffer(renderType);
         BlockState dummyState = Blocks.AIR.defaultBlockState();
         RandomSource random = RandomSource.create(42L);
 
         for (Direction direction : DIRECTIONS) {
-            renderQuadList(poseStack.last(), consumer, model.getQuads(dummyState, direction, random), packedLight, packedOverlay);
+            renderQuadList(poseStack.last(), consumer, model.getQuads(dummyState, direction, random), packedLight, packedOverlay, lightMultiplier);
         }
-        renderQuadList(poseStack.last(), consumer, model.getQuads(dummyState, null, random), packedLight, packedOverlay);
+        renderQuadList(poseStack.last(), consumer, model.getQuads(dummyState, null, random), packedLight, packedOverlay, lightMultiplier);
     }
 
     private static void renderQuadList(
@@ -81,11 +93,12 @@ public final class ObjRenderUtils {
             VertexConsumer consumer,
             List<BakedQuad> quads,
             int packedLight,
-            int packedOverlay) {
+            int packedOverlay,
+            float lightMultiplier) {
         for (BakedQuad quad : quads) {
-            float red = quad.isTinted() ? Mth.clamp(1.0F, 0.0F, 1.0F) : 1.0F;
-            float green = quad.isTinted() ? Mth.clamp(1.0F, 0.0F, 1.0F) : 1.0F;
-            float blue = quad.isTinted() ? Mth.clamp(1.0F, 0.0F, 1.0F) : 1.0F;
+            float red = Mth.clamp((quad.isTinted() ? 1.0F : 1.0F) * lightMultiplier, 0.0F, 1.0F);
+            float green = Mth.clamp((quad.isTinted() ? 1.0F : 1.0F) * lightMultiplier, 0.0F, 1.0F);
+            float blue = Mth.clamp((quad.isTinted() ? 1.0F : 1.0F) * lightMultiplier, 0.0F, 1.0F);
             consumer.putBulkData(pose, quad, red, green, blue, packedLight, packedOverlay);
         }
     }

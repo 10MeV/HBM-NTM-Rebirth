@@ -23,6 +23,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -210,6 +211,12 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
 
     public int getStoredOperations() {
         return burnTime / FUEL_PER_OPERATION;
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        BlockPos pos = getBlockPos();
+        return new AABB(pos).inflate(0.25D, 2.0D, 0.25D);
     }
 
     public ItemStack getRenderStack() {

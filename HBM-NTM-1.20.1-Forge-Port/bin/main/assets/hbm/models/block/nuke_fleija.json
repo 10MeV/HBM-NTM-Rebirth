@@ -11,20 +11,21 @@
   "display": {
     "gui": {
       "rotation": [30, 45, 0],
-      "translation": [0, -6, 0],
-      "scale": [0.32, 0.32, 0.32]
+      "translation": [0, 0, 0],
+      "scale": [0.28, 0.28, 0.28]
     },
     "ground": {
-      "translation": [0, 3, 0],
+      "translation": [0, 0, 0],
       "scale": [0.22, 0.22, 0.22]
     },
     "thirdperson_righthand": {
       "rotation": [75, 45, 0],
-      "scale": [0.32, 0.32, 0.32]
+      "translation": [0, 0, 0],
+      "scale": [0.28, 0.28, 0.28]
     },
     "firstperson_righthand": {
       "rotation": [0, 315, 0],
-      "translation": [0, 2, 0],
+      "translation": [0, 0, 0],
       "scale": [0.22, 0.22, 0.22]
     }
   }

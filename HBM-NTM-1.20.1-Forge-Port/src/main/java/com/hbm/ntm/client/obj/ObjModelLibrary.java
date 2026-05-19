@@ -12,6 +12,9 @@ public final class ObjModelLibrary {
     private static final Set<ResourceLocation> MODELS = new LinkedHashSet<>();
 
     public static final ObjModelPart PRESS_HEAD = blockCenteredPart("press_head")
+            .withRenderType(net.minecraft.client.renderer.RenderType.entityCutoutNoCull(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS))
+            .withLightMultiplier(0.82F)
+            .direct()
             .withOrigin(ObjPartTransform.BLOCK_CENTER.withScale(0.99F, 1.0F, 0.99F));
     public static final ObjAnimatedModel PRESS = new ObjAnimatedModel()
             .part("Head", PRESS_HEAD);
@@ -41,9 +44,25 @@ public final class ObjModelLibrary {
     private ObjModelLibrary() {
     }
 
-    public record ObjModelPartBuilder(ResourceLocation modelLocation, net.minecraft.client.renderer.RenderType renderType) {
+    public record ObjModelPartBuilder(ResourceLocation modelLocation, net.minecraft.client.renderer.RenderType renderType, float lightMultiplier, boolean directRender) {
+        public ObjModelPartBuilder(ResourceLocation modelLocation, net.minecraft.client.renderer.RenderType renderType) {
+            this(modelLocation, renderType, 1.0F, false);
+        }
+
+        public ObjModelPartBuilder withRenderType(net.minecraft.client.renderer.RenderType renderType) {
+            return new ObjModelPartBuilder(modelLocation, renderType, lightMultiplier, directRender);
+        }
+
+        public ObjModelPartBuilder withLightMultiplier(float lightMultiplier) {
+            return new ObjModelPartBuilder(modelLocation, renderType, lightMultiplier, directRender);
+        }
+
+        public ObjModelPartBuilder direct() {
+            return new ObjModelPartBuilder(modelLocation, renderType, lightMultiplier, true);
+        }
+
         public ObjModelPart withOrigin(ObjPartTransform transform) {
-            return new ObjModelPart(modelLocation, renderType, transform);
+            return new ObjModelPart(modelLocation, renderType, transform, lightMultiplier, directRender);
         }
     }
 }

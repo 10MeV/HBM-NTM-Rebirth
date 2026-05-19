@@ -1,4 +1,3 @@
-﻿{
-  "parent": "hbm:block/plushie"
+{
+  "parent": "minecraft:builtin/entity"
 }
-

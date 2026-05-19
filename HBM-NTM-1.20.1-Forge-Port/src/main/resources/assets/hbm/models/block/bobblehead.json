@@ -1,6 +1,6 @@
 ﻿{
   "loader": "forge:obj",
-  "model": "hbm:models/block/trinkets/bobble.obj",
+  "model": "hbm:models/block/trinkets/bobble_socket.obj",
   "flip_v": true,
   "render_type": "minecraft:cutout",
   "textures": {
