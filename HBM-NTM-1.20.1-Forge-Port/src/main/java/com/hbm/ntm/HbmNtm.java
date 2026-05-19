@@ -5,9 +5,13 @@ import com.hbm.ntm.datagen.HbmDataGenerators;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModCreativeTabs;
+import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.radiation.HazmatRegistry;
+import com.hbm.ntm.radiation.ItemRadiationRegistry;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -32,6 +36,7 @@ public class HbmNtm {
         ModMenuTypes.register(modBus);
         ModRecipes.register(modBus);
         ModSounds.register(modBus);
+        ModEffects.register(modBus);
         ModCreativeTabs.register(modBus);
 
         modBus.addListener(this::commonSetup);
@@ -41,6 +46,11 @@ public class HbmNtm {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            HazmatRegistry.registerDefaults();
+            ItemRadiationRegistry.registerDefaults();
+            ModMessages.register();
+        });
         if (HbmCommonConfig.LOG_STARTUP.get()) {
             LOGGER.info("HBM NTM migration scaffold loaded. Source semantics: 1.7.10 first, 1.20.1 reference second.");
         }

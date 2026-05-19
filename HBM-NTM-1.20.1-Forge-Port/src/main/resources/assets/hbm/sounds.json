@@ -7,5 +7,53 @@
         "stream": false
       }
     ]
+  },
+  "tool.geiger1": {
+    "subtitle": "subtitles.hbm.tool.geiger",
+    "sounds": [
+      "hbm:tool/geiger1"
+    ]
+  },
+  "tool.geiger2": {
+    "subtitle": "subtitles.hbm.tool.geiger",
+    "sounds": [
+      "hbm:tool/geiger2"
+    ]
+  },
+  "tool.geiger3": {
+    "subtitle": "subtitles.hbm.tool.geiger",
+    "sounds": [
+      "hbm:tool/geiger3"
+    ]
+  },
+  "tool.geiger4": {
+    "subtitle": "subtitles.hbm.tool.geiger",
+    "sounds": [
+      "hbm:tool/geiger4"
+    ]
+  },
+  "tool.geiger5": {
+    "subtitle": "subtitles.hbm.tool.geiger",
+    "sounds": [
+      "hbm:tool/geiger5"
+    ]
+  },
+  "tool.geiger6": {
+    "subtitle": "subtitles.hbm.tool.geiger",
+    "sounds": [
+      "hbm:tool/geiger6"
+    ]
+  },
+  "tool.tech_boop": {
+    "subtitle": "subtitles.hbm.tool.tech_boop",
+    "sounds": [
+      "hbm:tool/tech_boop"
+    ]
+  },
+  "tool.radaway": {
+    "subtitle": "subtitles.hbm.tool.radaway",
+    "sounds": [
+      "hbm:tool/radaway"
+    ]
   }
 }

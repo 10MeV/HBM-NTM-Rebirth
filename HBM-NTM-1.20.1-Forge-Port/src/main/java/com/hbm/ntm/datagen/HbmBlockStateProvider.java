@@ -39,6 +39,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "machine_shredder_front_alt",
                 "machine_shredder_side_alt",
                 "machine_shredder_side_alt");
+        sidedCubeWithItem(ModBlocks.DECON,
+                "decon_side",
+                "decon_top",
+                "decon_side",
+                "decon_side",
+                "decon_side",
+                "decon_side");
         existingModelWithItem(ModBlocks.NUKE_GADGET, "nuke_gadget");
         existingModelWithItem(ModBlocks.NUKE_BOY, "nuke_boy");
         existingModelWithItem(ModBlocks.NUKE_MAN, "nuke_man");

@@ -1,7 +1,9 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.item.GeigerCounterItem;
 import com.hbm.ntm.item.ItemPressStamp;
+import com.hbm.ntm.item.RadawayItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -62,6 +64,15 @@ public final class ModItems {
     public static final RegistryObject<Item> IRON_PLATE_STAMP = ITEMS.register("stamp_iron_plate",
             () -> new ItemPressStamp(new Item.Properties().durability(64), ItemPressStamp.StampType.PLATE));
 
+    public static final RegistryObject<Item> GEIGER_COUNTER = ITEMS.register("geiger_counter",
+            () -> new GeigerCounterItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> RADAWAY = ITEMS.register("radaway",
+            () -> new RadawayItem(new Item.Properties().stacksTo(16), 14, 9));
+    public static final RegistryObject<Item> RADAWAY_STRONG = ITEMS.register("radaway_strong",
+            () -> new RadawayItem(new Item.Properties().stacksTo(16), 20 * 20, 1));
+    public static final RegistryObject<Item> RADAWAY_FLUSH = ITEMS.register("radaway_flush",
+            () -> new RadawayItem(new Item.Properties().stacksTo(16), 50, 19));
+
     public static final List<RegistryObject<Item>> PARTS_TAB_ITEMS = List.of(
             URANIUM_INGOT,
             URANIUM_233_INGOT,
@@ -104,7 +115,11 @@ public final class ModItems {
             TUNGSTEN_COIL,
             GOLD_COIL,
             MOTOR,
-            IRON_PLATE_STAMP
+            IRON_PLATE_STAMP,
+            GEIGER_COUNTER,
+            RADAWAY,
+            RADAWAY_STRONG,
+            RADAWAY_FLUSH
     );
 
     public static void register(IEventBus modBus) {

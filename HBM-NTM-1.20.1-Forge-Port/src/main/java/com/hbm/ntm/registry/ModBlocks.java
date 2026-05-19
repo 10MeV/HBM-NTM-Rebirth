@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.block.DeconBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.MachineBlockEntityBlock;
 import net.minecraft.world.item.BlockItem;
@@ -26,6 +27,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_ELECTRIC_FURNACE_OFF = machine("machine_electric_furnace_off");
     public static final RegistryObject<Block> MACHINE_BOILER_OFF = machine("machine_boiler_off");
     public static final RegistryObject<Block> MACHINE_SHREDDER = machine("machine_shredder");
+    public static final RegistryObject<Block> DECON = decon("decon");
 
     // Legacy 1.7.10 nuclear device IDs. These are model-only placeholders for now.
     public static final RegistryObject<Block> NUKE_GADGET = nonOccludingMachine("nuke_gadget");
@@ -45,7 +47,8 @@ public final class ModBlocks {
             MACHINE_DIFURNACE_OFF,
             MACHINE_ELECTRIC_FURNACE_OFF,
             MACHINE_BOILER_OFF,
-            MACHINE_SHREDDER
+            MACHINE_SHREDDER,
+            DECON
     );
 
     public static final List<RegistryObject<Block>> NUKE_TAB_BLOCKS = List.of(
@@ -90,6 +93,14 @@ public final class ModBlocks {
                 .sound(SoundType.METAL)
                 .requiresCorrectToolForDrops()
                 .noOcclusion(), false));
+    }
+
+    private static RegistryObject<Block> decon(String name) {
+        return registerBlockWithItem(name, () -> new DeconBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
     }
 
     private static <T extends Block> RegistryObject<T> registerBlockWithItem(String name, Supplier<T> blockSupplier) {
