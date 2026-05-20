@@ -1,6 +1,6 @@
 {
   "loader": "forge:obj",
-  "model": "hbm:models/block/lights/fluorescent_lamp_block.obj",
+  "model": "hbm:models/block/lights/fluorescent_lamp_single_block.obj",
   "flip_v": true,
   "render_type": "minecraft:cutout",
   "textures": {

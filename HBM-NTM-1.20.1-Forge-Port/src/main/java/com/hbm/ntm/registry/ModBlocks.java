@@ -378,6 +378,7 @@ public final class ModBlocks {
 
     private static RegistryObject<Block> simpleBlockResourceBlock(String name, String textureName) {
         return registerBlockWithItem(name, () -> switch (name) {
+            case "lamp_demon" -> LegacyComplexShapeBlock.demonLamp(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15));
             case "lantern" -> LegacyComplexShapeBlock.lantern(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15));
             case "spotlight_incandescent" -> LegacyComplexShapeBlock.spotlightIncandescent(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15));
             case "spotlight_fluoro" -> LegacyComplexShapeBlock.spotlightFluoro(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15));

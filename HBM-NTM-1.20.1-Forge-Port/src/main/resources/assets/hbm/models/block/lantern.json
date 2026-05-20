@@ -1,6 +1,6 @@
 {
   "loader": "forge:obj",
-  "model": "hbm:models/block/trinkets/lantern_block.obj",
+  "model": "hbm:models/block/trinkets/lantern_block_bake.obj",
   "flip_v": true,
   "render_type": "minecraft:cutout",
   "textures": {

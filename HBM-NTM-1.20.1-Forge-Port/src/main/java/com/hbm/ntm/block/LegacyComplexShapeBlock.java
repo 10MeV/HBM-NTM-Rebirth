@@ -13,10 +13,11 @@ public class LegacyComplexShapeBlock extends Block {
     private static final VoxelShape BOBBLEHEAD = box(5.5D, 0.0D, 5.5D, 10.5D, 10.0D, 10.5D);
     private static final VoxelShape SNOWGLOBE = box(4.0D, 0.0D, 4.0D, 12.0D, 5.0D, 12.0D);
     private static final VoxelShape PLUSHIE = box(3.0D, 0.0D, 3.0D, 13.0D, 12.0D, 13.0D);
+    private static final VoxelShape DEMON_LAMP = box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
     private static final VoxelShape LANTERN = box(5.0D, 0.0D, 5.0D, 11.0D, 16.0D, 11.0D);
-    private static final VoxelShape SPOTLIGHT_INCANDESCENT = box(4.0D, 4.8D, 5.6D, 12.0D, 11.2D, 10.4D);
-    private static final VoxelShape SPOTLIGHT_FLUORO = box(0.0D, 0.0D, 6.4D, 16.0D, 16.0D, 9.6D);
-    private static final VoxelShape SPOTLIGHT_HALOGEN = box(2.4D, 4.0D, 4.8D, 13.6D, 12.0D, 11.2D);
+    private static final VoxelShape SPOTLIGHT_INCANDESCENT = box(5.6D, 4.8D, 4.0D, 10.4D, 11.2D, 12.0D);
+    private static final VoxelShape SPOTLIGHT_FLUORO = box(6.4D, 0.0D, 0.0D, 9.6D, 16.0D, 16.0D);
+    private static final VoxelShape SPOTLIGHT_HALOGEN = box(4.8D, 4.0D, 2.4D, 11.2D, 12.0D, 13.6D);
     private static final VoxelShape FLOODLIGHT = box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
     private static final VoxelShape REBAR = Shapes.or(
             box(7.0D, 0.0D, 7.0D, 9.0D, 16.0D, 9.0D),
@@ -48,6 +49,10 @@ public class LegacyComplexShapeBlock extends Block {
 
     public static LegacyComplexShapeBlock plushie(BlockBehaviour.Properties properties) {
         return new LegacyComplexShapeBlock(properties, PLUSHIE);
+    }
+
+    public static LegacyComplexShapeBlock demonLamp(BlockBehaviour.Properties properties) {
+        return new LegacyComplexShapeBlock(properties, DEMON_LAMP);
     }
 
     public static LegacyComplexShapeBlock lantern(BlockBehaviour.Properties properties) {
