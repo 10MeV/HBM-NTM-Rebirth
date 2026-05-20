@@ -19,6 +19,25 @@ public final class ObjModelLibrary {
     public static final ObjAnimatedModel PRESS = new ObjAnimatedModel()
             .part("Head", PRESS_HEAD);
 
+    public static final ObjModelPart CAGE_LAMP = blockCenteredPart("legacy/cage_lamp_render")
+            .direct()
+            .withOrigin(ObjPartTransform.IDENTITY);
+    public static final ObjModelPart FLUORESCENT_LAMP_SINGLE = blockCenteredPart("legacy/fluorescent_lamp_single_render")
+            .direct()
+            .withOrigin(ObjPartTransform.IDENTITY);
+    public static final ObjModelPart FLOOD_LAMP = blockCenteredPart("legacy/flood_lamp_render")
+            .direct()
+            .withOrigin(ObjPartTransform.IDENTITY);
+    public static final ObjModelPart FLOODLIGHT_BASE = blockCenteredPart("legacy/floodlight_base_render")
+            .direct()
+            .withOrigin(ObjPartTransform.IDENTITY);
+    public static final ObjModelPart FLOODLIGHT_LIGHTS = blockCenteredPart("legacy/floodlight_lights_render")
+            .direct()
+            .withOrigin(ObjPartTransform.IDENTITY);
+    public static final ObjModelPart FLOODLIGHT_LAMPS = blockCenteredPart("legacy/floodlight_lamps_render")
+            .direct()
+            .withOrigin(ObjPartTransform.IDENTITY);
+
     public static ObjModelPart blockPart(String name) {
         return new ObjModelPart(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name), net.minecraft.client.renderer.RenderType.cutout());
     }

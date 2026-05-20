@@ -15,10 +15,6 @@ public class LegacyComplexShapeBlock extends Block {
     private static final VoxelShape PLUSHIE = box(3.0D, 0.0D, 3.0D, 13.0D, 12.0D, 13.0D);
     private static final VoxelShape DEMON_LAMP = box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
     private static final VoxelShape LANTERN = box(5.0D, 0.0D, 5.0D, 11.0D, 16.0D, 11.0D);
-    private static final VoxelShape SPOTLIGHT_INCANDESCENT = box(5.6D, 4.8D, 4.0D, 10.4D, 11.2D, 12.0D);
-    private static final VoxelShape SPOTLIGHT_FLUORO = box(6.4D, 0.0D, 0.0D, 9.6D, 16.0D, 16.0D);
-    private static final VoxelShape SPOTLIGHT_HALOGEN = box(4.8D, 4.0D, 2.4D, 11.2D, 12.0D, 13.6D);
-    private static final VoxelShape FLOODLIGHT = box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
     private static final VoxelShape REBAR = Shapes.or(
             box(7.0D, 0.0D, 7.0D, 9.0D, 16.0D, 9.0D),
             box(0.0D, 7.0D, 7.0D, 16.0D, 9.0D, 9.0D),
@@ -59,20 +55,20 @@ public class LegacyComplexShapeBlock extends Block {
         return new LegacyComplexShapeBlock(properties, LANTERN);
     }
 
-    public static LegacyComplexShapeBlock spotlightIncandescent(BlockBehaviour.Properties properties) {
-        return new LegacyComplexShapeBlock(properties, SPOTLIGHT_INCANDESCENT, false);
+    public static Block spotlightIncandescent(BlockBehaviour.Properties properties) {
+        return new LegacyDirectionalShapeBlock(properties, LegacyDirectionalShapeBlock.Kind.SPOTLIGHT_INCANDESCENT, false);
     }
 
-    public static LegacyComplexShapeBlock spotlightFluoro(BlockBehaviour.Properties properties) {
-        return new LegacyComplexShapeBlock(properties, SPOTLIGHT_FLUORO, false);
+    public static Block spotlightFluoro(BlockBehaviour.Properties properties) {
+        return new LegacyDirectionalShapeBlock(properties, LegacyDirectionalShapeBlock.Kind.SPOTLIGHT_FLUORO, false);
     }
 
-    public static LegacyComplexShapeBlock spotlightHalogen(BlockBehaviour.Properties properties) {
-        return new LegacyComplexShapeBlock(properties, SPOTLIGHT_HALOGEN, false);
+    public static Block spotlightHalogen(BlockBehaviour.Properties properties) {
+        return new LegacyDirectionalShapeBlock(properties, LegacyDirectionalShapeBlock.Kind.SPOTLIGHT_HALOGEN, false);
     }
 
-    public static LegacyComplexShapeBlock floodlight(BlockBehaviour.Properties properties) {
-        return new LegacyComplexShapeBlock(properties, FLOODLIGHT);
+    public static Block floodlight(BlockBehaviour.Properties properties) {
+        return new LegacyDirectionalShapeBlock(properties, LegacyDirectionalShapeBlock.Kind.FLOODLIGHT);
     }
 
     public static LegacyComplexShapeBlock rebar(BlockBehaviour.Properties properties) {

@@ -3,6 +3,7 @@ package com.hbm.ntm.registry;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
+import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -29,6 +30,15 @@ public final class ModBlockEntities {
                             ModBlocks.legacyBlock("bobblehead").get(),
                             ModBlocks.legacyBlock("snowglobe").get(),
                             ModBlocks.legacyBlock("plushie").get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LegacyLightBlockEntity>> LEGACY_LIGHT =
+            BLOCK_ENTITIES.register("legacy_light", () ->
+                    BlockEntityType.Builder.of(
+                            LegacyLightBlockEntity::new,
+                            ModBlocks.legacyBlock("spotlight_incandescent").get(),
+                            ModBlocks.legacyBlock("spotlight_fluoro").get(),
+                            ModBlocks.legacyBlock("spotlight_halogen").get(),
+                            ModBlocks.legacyBlock("floodlight").get()).build(null));
 
     public static void register(IEventBus modBus) {
         BLOCK_ENTITIES.register(modBus);
