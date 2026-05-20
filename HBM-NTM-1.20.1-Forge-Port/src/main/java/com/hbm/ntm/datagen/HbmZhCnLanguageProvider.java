@@ -14,6 +14,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("itemGroup.hbm.parts", "HBM \u96f6\u4ef6");
         add("itemGroup.hbm.machines", "HBM \u673a\u5668");
         add("itemGroup.hbm.consumables", "HBM \u6d88\u8017\u54c1");
+        add("itemGroup.hbm.control", "HBM \u63a7\u5236");
         add("itemGroup.hbm.nukes", "HBM \u6838\u5f39");
         add("item.hbm.ingot_uranium", "\u94c0\u952d");
         add("item.hbm.ingot_u233", "\u94c0-233\u952d");
@@ -113,6 +114,8 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.nuke_fstbmb", "\u91ce\u706b\u70b8\u5f39");
         add("block.hbm.bomb_multi", "\u591a\u529f\u80fd\u70b8\u5f39");
         ModItems.EXTRA_PARTS_TAB_ITEMS.forEach(item -> addItem(item, fallbackTitle(item.getId().getPath())));
+        ModItems.CONTROL_TAB_ITEMS.forEach(item -> addItem(item, fallbackTitle(item.getId().getPath())));
+        ModItems.NUKE_TAB_ITEMS.forEach(item -> addItem(item, fallbackTitle(item.getId().getPath())));
     }
 
     private static String fallbackTitle(String id) {

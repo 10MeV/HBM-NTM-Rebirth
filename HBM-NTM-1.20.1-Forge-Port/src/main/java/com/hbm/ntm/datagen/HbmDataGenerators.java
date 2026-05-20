@@ -22,7 +22,9 @@ public final class HbmDataGenerators {
         generator.addProvider(event.includeClient(), new HbmZhCnLanguageProvider(output, HbmNtm.MOD_ID, "zh_cn"));
         generator.addProvider(event.includeClient(), new HbmItemModelProvider(output, HbmNtm.MOD_ID, existingFileHelper));
         generator.addProvider(event.includeClient(), new HbmBlockStateProvider(output, HbmNtm.MOD_ID, existingFileHelper));
-        generator.addProvider(event.includeServer(), new HbmBlockTagsProvider(output, event.getLookupProvider(), HbmNtm.MOD_ID, existingFileHelper));
+        HbmBlockTagsProvider blockTagsProvider = new HbmBlockTagsProvider(output, event.getLookupProvider(), HbmNtm.MOD_ID, existingFileHelper);
+        generator.addProvider(event.includeServer(), blockTagsProvider);
+        generator.addProvider(event.includeServer(), new HbmItemTagsProvider(output, event.getLookupProvider(), blockTagsProvider.contentsGetter(), existingFileHelper));
         generator.addProvider(event.includeServer(), (DataProvider.Factory<LootTableProvider>) lootOutput -> new LootTableProvider(
                 lootOutput,
                 Collections.emptySet(),

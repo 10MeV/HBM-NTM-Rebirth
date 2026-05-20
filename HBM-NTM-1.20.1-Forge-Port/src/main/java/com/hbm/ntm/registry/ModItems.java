@@ -198,8 +198,53 @@ public final class ModItems {
             "ingot_cadmium",
             "powder_cadmium",
             "powder_bismuth",
+            "powder_yellowcake",
+            "powder_caesium",
+            "powder_coltan_ore",
             "ingot_mud",
             "ingot_cft",
+            "fallout",
+            "cell_empty",
+            "cell_sas3",
+            "nuclear_waste_long",
+            "nuclear_waste_long_tiny",
+            "nuclear_waste_short",
+            "nuclear_waste_short_tiny",
+            "nuclear_waste_long_depleted",
+            "nuclear_waste_long_depleted_tiny",
+            "nuclear_waste_short_depleted",
+            "nuclear_waste_short_depleted_tiny",
+            "nuclear_waste",
+            "nuclear_waste_tiny",
+            "nuclear_waste_vitrified",
+            "nuclear_waste_vitrified_tiny",
+            "waste_natural_uranium",
+            "waste_uranium",
+            "waste_thorium",
+            "waste_mox",
+            "waste_plutonium",
+            "waste_u233",
+            "waste_u235",
+            "waste_schrabidium",
+            "waste_zfb_mox",
+            "waste_plate_u233",
+            "waste_plate_u235",
+            "waste_plate_mox",
+            "waste_plate_pu239",
+            "waste_plate_sa326",
+            "waste_plate_ra226be",
+            "waste_plate_pu238be",
+            "scrap_nuclear",
+            "trinitite",
+            "gem_rad",
+            "crystal_uranium",
+            "crystal_thorium",
+            "crystal_plutonium",
+            "crystal_schraranium",
+            "crystal_schrabidium",
+            "crystal_phosphorus",
+            "crystal_lithium",
+            "crystal_trixite",
             "plate_armor_titanium",
             "plate_armor_ajr",
             "plate_armor_hev",
@@ -242,6 +287,48 @@ public final class ModItems {
             "nugget_pb209",
             "nugget_ra226"
     );
+
+    public static final List<RegistryObject<Item>> NUKE_TAB_ITEMS = simpleParts(
+            "boy_propellant",
+            "gadget_core",
+            "boy_target",
+            "boy_bullet",
+            "man_core",
+            "mike_core",
+            "tsar_core",
+            "fleija_propellant",
+            "fleija_core",
+            "solinium_propellant",
+            "solinium_core"
+    );
+
+    public static final List<RegistryObject<Item>> CONTROL_TAB_ITEMS = Stream.concat(simpleParts(
+            "pile_rod_uranium",
+            "pile_rod_pu239",
+            "pile_rod_plutonium",
+            "pile_rod_source",
+            "pile_rod_boron",
+            "pile_rod_lithium",
+            "pile_rod_detector",
+            "pellet_rtg_strontium",
+            "pellet_rtg_cobalt",
+            "pellet_rtg_actinium",
+            "pellet_rtg_lead"
+    ).stream(), simpleStackOneItems(
+            "plate_fuel_u233",
+            "plate_fuel_u235",
+            "plate_fuel_mox",
+            "plate_fuel_pu239",
+            "plate_fuel_sa326",
+            "plate_fuel_ra226be",
+            "plate_fuel_pu238be",
+            "pellet_rtg_radium",
+            "pellet_rtg_weak",
+            "pellet_rtg",
+            "pellet_rtg_polonium",
+            "pellet_rtg_americium",
+            "pellet_rtg_gold"
+    ).stream()).toList();
 
     public static final List<RegistryObject<Item>> PARTS_TAB_ITEMS = Stream.concat(Stream.of(
             URANIUM_INGOT,
@@ -317,8 +404,18 @@ public final class ModItems {
         return Stream.of(names).map(ModItems::simpleItem).toList();
     }
 
+    private static List<RegistryObject<Item>> simpleStackOneItems(String... names) {
+        return Stream.of(names).map(ModItems::simpleStackOneItem).toList();
+    }
+
     private static RegistryObject<Item> simpleItem(String name) {
         RegistryObject<Item> item = ITEMS.register(name, () -> new Item(new Item.Properties()));
+        ITEMS_BY_LEGACY_NAME.put(name, item);
+        return item;
+    }
+
+    private static RegistryObject<Item> simpleStackOneItem(String name) {
+        RegistryObject<Item> item = ITEMS.register(name, () -> new Item(new Item.Properties().stacksTo(1)));
         ITEMS_BY_LEGACY_NAME.put(name, item);
         return item;
     }

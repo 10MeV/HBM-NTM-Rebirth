@@ -39,7 +39,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "machine_shredder_front_alt",
                 "machine_shredder_side_alt",
                 "machine_shredder_side_alt");
-        sidedCubeWithItem(ModBlocks.DECON,
+        simpleSidedCubeWithItem(ModBlocks.DECON,
                 "decon_side",
                 "decon_top",
                 "decon_side",
@@ -106,6 +106,28 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 new ResourceLocation(HbmNtm.MOD_ID, "block/" + west))
                 .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + north));
         horizontalBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
+    private void simpleSidedCubeWithItem(
+            RegistryObject<Block> block,
+            String down,
+            String up,
+            String north,
+            String south,
+            String east,
+            String west) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cube(
+                blockName,
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + down),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + up),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + north),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + south),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + east),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + west))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + north));
+        simpleBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
     }
 }

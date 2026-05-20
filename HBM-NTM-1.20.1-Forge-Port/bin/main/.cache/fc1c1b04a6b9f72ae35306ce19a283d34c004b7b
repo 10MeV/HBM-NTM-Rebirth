@@ -1,0 +1,10 @@
+// 1.20.1	2026-05-20T21:11:06.3750582	Tags for minecraft:block mod id hbm
+bf487fae09edc59b2c5a95df69b7078635f0565d data/forge/tags/blocks/ores.json
+1a2125a06b77a02dff21857be1ec4db0e364041f data/forge/tags/blocks/ores/asbestos.json
+83c1b936b21ab3022e9daa51bf6ea878e141d137 data/forge/tags/blocks/ores/coal.json
+69049f7a661aec688e25419e8f502b164c95ffe9 data/forge/tags/blocks/ores/lignite.json
+5f1371aca51d69e751a3c08e4758d3b291255268 data/forge/tags/blocks/ores/schrabidium.json
+6b858923ad38dc8e630900fccb01efb406a1eb1b data/forge/tags/blocks/ores/thorium.json
+df800f523fde783ca77fd119aebc2afdbc19a204 data/forge/tags/blocks/ores/uranium.json
+ab439929e7fbcebec9f2fd3ac0bc1279db52972f data/minecraft/tags/blocks/mineable/pickaxe.json
+ab439929e7fbcebec9f2fd3ac0bc1279db52972f data/minecraft/tags/blocks/needs_iron_tool.json

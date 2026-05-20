@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -36,9 +37,7 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
         double press = Math.max(0.0D, Math.min(1.0D, blockEntity.getInterpolatedPress(partialTick) / (double) BasicMachineBlockEntity.MAX_PRESS));
         BlockState state = blockEntity.getBlockState();
-        float facingRotation = state.hasProperty(HorizontalMachineBlock.FACING)
-                ? 180.0F - state.getValue(HorizontalMachineBlock.FACING).toYRot()
-                : 0.0F;
+        float facingRotation = blockstateModelYRotation(state);
 
         poseStack.pushPose();
         LegacyObjTransforms.rotateAroundBlockCenterY(poseStack, facingRotation);
@@ -67,5 +66,13 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
                 0
         );
         poseStack.popPose();
+    }
+
+    private static float blockstateModelYRotation(BlockState state) {
+        if (!state.hasProperty(HorizontalMachineBlock.FACING)) {
+            return 0.0F;
+        }
+        Direction facing = state.getValue(HorizontalMachineBlock.FACING);
+        return facing.toYRot();
     }
 }

@@ -1,14 +1,62 @@
 package com.hbm.ntm.client.obj;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 
 public final class LegacyUntexturedQuadRenderer {
+    private static final RenderStateShard.TransparencyStateShard LIGHTNING_TRANSPARENCY =
+            new RenderStateShard.TransparencyStateShard("hbm_legacy_lightning_transparency",
+                    () -> {
+                        RenderSystem.enableBlend();
+                        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
+                    },
+                    () -> {
+                        RenderSystem.disableBlend();
+                        RenderSystem.defaultBlendFunc();
+                    });
+
+    private static final RenderType LEGACY_ADDITIVE_NO_CULL = RenderType.create(
+            "hbm_legacy_additive_no_cull",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS,
+            256,
+            false,
+            true,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeLightningShader))
+                    .setTransparencyState(LIGHTNING_TRANSPARENCY)
+                    .setCullState(new RenderStateShard.CullStateShard(false))
+                    .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, false))
+                    .createCompositeState(false));
+
+    private static final RenderType LEGACY_SOLID_NO_CULL = RenderType.create(
+            "hbm_legacy_solid_no_cull",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS,
+            256,
+            false,
+            false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
+                    .setCullState(new RenderStateShard.CullStateShard(false))
+                    .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
+                    .createCompositeState(false));
+
     public static VertexConsumer lightning(MultiBufferSource buffer) {
-        return buffer.getBuffer(RenderType.lightning());
+        return buffer.getBuffer(LEGACY_ADDITIVE_NO_CULL);
+    }
+
+    public static VertexConsumer solid(MultiBufferSource buffer) {
+        return buffer.getBuffer(LEGACY_SOLID_NO_CULL);
     }
 
     public static void vertex(VertexConsumer consumer, PoseStack.Pose pose, double x, double y, double z,

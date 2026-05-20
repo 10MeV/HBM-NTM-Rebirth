@@ -70,3 +70,23 @@
 - 连接判断同时支持 block 与 block entity。
 - 雷达、气体面具、信息面板接口不依赖客户端类。
 - 编译命令：`./gradlew.bat compileJava processResources --no-daemon`
+
+## 2026-05-20 第一轮现代接口落地
+
+- 新增现代 common API 壳，保留 1.7.10 语义但改用 1.20.1 类型：
+  - `com.hbm.ntm.api.block.Toolable`：对应旧 `api.hbm.block.IToolable`，保留 `SCREWDRIVER`、`HAND_DRILL`、`DEFUSER`、`WRENCH`、`TORCH`、`BOLT` 工具类型。
+  - `com.hbm.ntm.api.entity.RadarDetectable` / `RadarEntry`：对应旧 `IRadarDetectableNT` / `RadarEntry`，保留雷达 blip 等级、扫描参数、红石输出语义；维度字段改为 `ResourceLocation`。
+  - `com.hbm.ntm.api.item.GasMask` / `HazardClass`：对应旧 `IGasMask` 与 `ArmorRegistry.HazardClass`，暂只迁移防护类别契约，不与当前 `radiation.HazardType` 混用。
+  - `com.hbm.ntm.api.item.DesignatorItem`：对应旧 `IDesignatorItem`，坐标接口改用 `BlockPos` 与 `Vec3`。
+  - `com.hbm.ntm.api.tile.LoadedTile` / `InfoProviderEC` / `HeatSource`：对应旧 `ILoadedTile`、`IInfoProviderEC`、`IHeatSource`。
+- 新增 `com.hbm.ntm.util.ConnectionUtil`：
+  - 先迁移旧 `Library.canConnect(...)` 的能量连接判断语义。
+  - 支持现代 block 接口、block entity 接口，以及 Forge Energy capability。
+  - 暂不迁移 fluid MK2 连接判断，因为已有独立 `fluid-mk2-network` 追踪文档，后续应在该库完成类型后接入。
+- 新增 `com.hbm.ntm.util.RayTraceUtil`：
+  - 对应旧 `Library.rayTrace(...)` / `getPosition(...)`。
+  - 使用现代 `ClipContext`、`Player.getViewVector(...)`、`Level.clip(...)`。
+- 明确未迁移项：
+  - 旧 `ILoadedTile.TileAccessCache` 依赖 1.7.10 `TileEntity` 和旧 `Compat.getTileStandard(...)`，暂不照搬；后续如网络需要缓存，可基于 `BlockEntity` 与 `Level` 重写。
+  - 旧 `IGunHUDProvider` 依赖 `IIcon` 与旧 HUD 渲染，等 HUD/overlay 文档推进后再迁。
+  - 旧 `Library.chargeItemsFromTE(...)` / `chargeTEFromItems(...)` 已由现代 `HbmEnergyUtil` 的 Forge Energy item 充放电路径承接，本轮不重复实现。

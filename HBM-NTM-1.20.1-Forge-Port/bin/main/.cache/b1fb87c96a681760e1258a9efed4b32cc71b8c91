@@ -1,0 +1,12 @@
+// 1.20.1	2026-05-20T21:11:06.3739157	Tags for minecraft:item mod id hbm
+dfb0d13b432c34d4369e2c66216b1d1740b00e2b data/forge/tags/items/dusts.json
+dfb0d13b432c34d4369e2c66216b1d1740b00e2b data/forge/tags/items/dusts/lignite.json
+50e13739c5004ff1f5177fb29ecff7b5d3d45cd3 data/forge/tags/items/gems/coal.json
+b96f0a955b5755b293af014e9f8fd6129db7b1b3 data/forge/tags/items/gems/lignite.json
+bf487fae09edc59b2c5a95df69b7078635f0565d data/forge/tags/items/ores.json
+1a2125a06b77a02dff21857be1ec4db0e364041f data/forge/tags/items/ores/asbestos.json
+83c1b936b21ab3022e9daa51bf6ea878e141d137 data/forge/tags/items/ores/coal.json
+69049f7a661aec688e25419e8f502b164c95ffe9 data/forge/tags/items/ores/lignite.json
+5f1371aca51d69e751a3c08e4758d3b291255268 data/forge/tags/items/ores/schrabidium.json
+6b858923ad38dc8e630900fccb01efb406a1eb1b data/forge/tags/items/ores/thorium.json
+df800f523fde783ca77fd119aebc2afdbc19a204 data/forge/tags/items/ores/uranium.json

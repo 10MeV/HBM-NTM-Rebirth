@@ -14,6 +14,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("itemGroup.hbm.parts", "HBM Parts");
         add("itemGroup.hbm.machines", "HBM Machines");
         add("itemGroup.hbm.consumables", "HBM Consumables");
+        add("itemGroup.hbm.control", "HBM Control");
         add("itemGroup.hbm.nukes", "HBM Nukes");
         add("item.hbm.ingot_uranium", "Uranium Ingot");
         add("item.hbm.ingot_u233", "Uranium-233 Ingot");
@@ -113,6 +114,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.nuke_fstbmb", "Balefire Bomb");
         add("block.hbm.bomb_multi", "Multi Purpose Bomb");
         ModItems.EXTRA_PARTS_TAB_ITEMS.forEach(item -> addItem(item, title(item.getId().getPath())));
+        ModItems.CONTROL_TAB_ITEMS.forEach(item -> addItem(item, title(item.getId().getPath())));
+        ModItems.NUKE_TAB_ITEMS.forEach(item -> addItem(item, title(item.getId().getPath())));
     }
 
     private static String title(String id) {

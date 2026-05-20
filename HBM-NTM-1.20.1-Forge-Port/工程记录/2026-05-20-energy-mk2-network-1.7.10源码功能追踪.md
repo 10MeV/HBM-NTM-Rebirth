@@ -94,6 +94,44 @@
     - 保留最多 100 次的舍入误差补扣逻辑。
     - 保留 `sendPowerDiode(long power)` 语义。
   - 当前 `HbmPowerNet` 只负责算法和订阅生命周期，不负责导线寻路、节点合并、chunk 卸载扫描；这些仍留给后续 UNINOS/节点网络层。
+- 2026-05-20 第六批已迁移：
+  - `src/main/java/com/hbm/ntm/energy/HbmNetworkNode.java`
+  - `src/main/java/com/hbm/ntm/energy/HbmNodeNet.java`
+  - `src/main/java/com/hbm/ntm/energy/HbmEnergyNode.java`
+  - `HbmPowerNet extends HbmNodeNet<HbmEnergyNode>`，开始对齐旧版 `NodeNet` / `Nodespace.PowerNode` 的结构层。
+  - 已具备：
+    - 节点位置 `BlockPos`。
+    - 节点连接面 `Set<Direction>`。
+    - 节点 net 归属。
+    - `expired` 与 `recentlyChanged` 标记。
+    - network valid 状态。
+    - `joinLink`、`forceJoinLink`、`leaveLink`、`joinNetwork`、`destroy`。
+  - 当前仍未迁移：
+    - 世界级 nodespace map。
+    - 按方块放置/破坏自动创建和销毁节点。
+    - 邻居扫描与连通分量重建。
+    - recentlyChanged 二次复查机制。
+    - chunk unload 时节点剔除。
+- 2026-05-20 第七批已迁移：
+  - `src/main/java/com/hbm/ntm/energy/HbmEnergyNodespace.java`
+  - `src/main/java/com/hbm/ntm/event/CommonForgeEvents.java` 接入服务端 tick 与 level unload。
+  - 已具备世界级能量 nodespace 管理：
+    - 按 `Level.dimension()` 分世界保存节点 map。
+    - `getNode(Level, BlockPos)`。
+    - `createNode(Level, HbmEnergyNode)`。
+    - `destroyNode(Level, BlockPos)`。
+    - `unloadLevel(Level)`。
+    - server tick 中调用 `HbmEnergyNodespace.tick(ServerLevel)`。
+    - tick 时检查没有有效网络或 recentlyChanged 的节点。
+    - 检查相邻节点双向连接面是否匹配。
+    - 按旧版逻辑连接节点、合并网络、创建新 `HbmPowerNet`。
+    - tick active power nets：先 reset tracker，再 update。
+    - 每 5 分钟清理无效或空网络。
+  - 当前仍未迁移：
+    - 具体导线方块/BlockEntity 调用 create/destroy node。
+    - 节点重建时的完整连通分量拆分。
+    - chunk unload 细粒度剔除。
+    - 旧版 recentlyChanged 二次复查的完整 CPU/稳定性补偿策略。
 - 当前现代策略：
   - 内部继续使用 1.7.10 风格 long 型 HE。
   - 对外用 `ForgeEnergyAdapter implements IEnergyStorage` 暴露 Forge Energy capability。
@@ -161,6 +199,17 @@
   - 机器每 tick 或按旧时机调用 `addProvider` / `addReceiver` 刷新订阅时间戳。
   - 网络 tick 调用 `HbmPowerNet.update()` 完成能量分配。
   - diode 类单向注入应调用 `sendPowerDiode(long power)`。
+- 节点层后续接入时：
+  - 每个能量导线/管道 BlockEntity 应创建一个或多个 `HbmEnergyNode`。
+  - `HbmEnergyNode.connections` 必须反映该导线真实可连接方向。
+  - 连通网络重建时使用 `HbmPowerNet.joinLink` 和 `joinNetwork` 合并节点。
+  - 导线破坏时调用 `leaveLink` 或 `destroy`，并触发邻居重建。
+- 世界 nodespace 接入要求：
+  - 导线/管道 BlockEntity 创建时调用 `HbmEnergyNodespace.createNode(level, node)`。
+  - 导线/管道 BlockEntity 删除时调用 `HbmEnergyNodespace.destroyNode(level, pos)`。
+  - 不要在客户端创建 nodespace 节点。
+  - 当前 nodespace 已由 `CommonForgeEvents.onServerTick` 每 tick 更新。
+  - Level unload 时已调用 `HbmEnergyNodespace.unloadLevel` 清理对应维度节点。
 - `HbmPowerNet` 算法验证应覆盖：
   - 高优先级 receiver 先于低优先级 receiver 获得能量。
   - 同优先级 receiver 按需求比例获得能量。

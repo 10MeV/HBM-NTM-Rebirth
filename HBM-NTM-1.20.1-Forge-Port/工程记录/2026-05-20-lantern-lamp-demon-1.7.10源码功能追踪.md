@@ -82,8 +82,9 @@
 
 - `LegacyObjTransforms.applySixFaceAttachmentRotation(...)` 已用于复用 `lamp_demon` / `floodlight` 六面贴附旋转。
 - `LegacyUntexturedQuadRenderer` 已用于复用旧版禁用贴图、全亮、彩色透明 quad 的几何渲染。
-- `LegacyLanternBlockEntityRenderer` 已用公共无贴图全亮几何渲染暖色 `Light` 部分。
+- `LegacyLanternBlockEntityRenderer` 已用公共无贴图全亮几何渲染暖色 `Light` 部分；该分件按 1.7.10 `RenderLantern` 不开启 blend、正常写深度，现代端走 `LegacyUntexturedQuadRenderer.solid(...)`，避免透出后方物体。
 - `LegacyDemonLampBlockEntityRenderer` 已用公共六面贴附旋转和公共无贴图全亮几何渲染蓝色 aura。
+- `lamp_demon` aura 的 1.7.10 语义是单份 quad + 关闭背面剔除 + `glDepthMask(false)`，现代端通过 `LegacyUntexturedQuadRenderer` 的专用 no-cull/no-depth-write 加色 RenderType 复刻；不要用正反两份重叠 quad 代替，否则会在部分视角放大透明裂缝。
 - `LegacyLightBlockEntity` 已补齐 floodlight 旧状态字段 `rotation`、`power`、`delay`、`isOn` 的 NBT 与客户端同步契约。
 - `LegacyLightBlockEntityRenderer` 已按旧 `RenderFloodlight` 复刻 `Lamps` part 的视觉分支：`isOn` 时 fullbright，未开启时 `0x404040` 灰色。
 - 暂缓：floodlight 的能量接收、每 tick 消耗 100 HE、15 条 `floodlight_beam` 投射与清理逻辑尚未迁移，应在能量网络/光束方块逻辑批次继续。

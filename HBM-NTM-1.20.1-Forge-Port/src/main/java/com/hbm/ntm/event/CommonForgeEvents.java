@@ -2,6 +2,7 @@ package com.hbm.ntm.event;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.radiation.ArmorUtil;
@@ -47,6 +48,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkDataEvent;
+import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -69,6 +71,7 @@ public final class CommonForgeEvents {
 
         for (ServerLevel level : event.getServer().getAllLevels()) {
             ChunkRadiationManager.tick(level);
+            HbmEnergyNodespace.tick(level);
         }
     }
 
@@ -260,6 +263,13 @@ public final class CommonForgeEvents {
         if (event.getLevel() instanceof ServerLevel level) {
             ChunkPos pos = event.getChunk().getPos();
             event.getData().putFloat(ChunkRadiationManager.LEGACY_CHUNK_NBT_KEY, ChunkRadiationManager.getChunkRadiation(level, pos));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLevelUnload(LevelEvent.Unload event) {
+        if (!event.getLevel().isClientSide() && event.getLevel() instanceof Level level) {
+            HbmEnergyNodespace.unloadLevel(level);
         }
     }
 

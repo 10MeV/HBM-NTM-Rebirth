@@ -16,7 +16,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
     @Override
     protected void generate() {
         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
-        ModBlocks.EXTRA_BLOCK_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
+        ModBlocks.BLOCK_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
     }
 

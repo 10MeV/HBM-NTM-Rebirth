@@ -1,0 +1,18 @@
+{
+  "values": [
+    "hbm:ore_uranium",
+    "hbm:ore_uranium_scorched",
+    "hbm:ore_nether_uranium",
+    "hbm:ore_nether_uranium_scorched",
+    "hbm:ore_gneiss_uranium",
+    "hbm:ore_gneiss_uranium_scorched",
+    "hbm:ore_thorium",
+    "hbm:ore_schrabidium",
+    "hbm:ore_nether_schrabidium",
+    "hbm:ore_gneiss_schrabidium",
+    "hbm:ore_lignite",
+    "hbm:ore_asbestos",
+    "hbm:ore_gneiss_asbestos",
+    "hbm:ore_nether_coal"
+  ]
+}

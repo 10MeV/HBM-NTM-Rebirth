@@ -32,7 +32,7 @@ public class LegacyLanternBlockEntityRenderer implements BlockEntityRenderer<Leg
     @Override
     public void render(LegacyLanternBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        VertexConsumer consumer = LegacyUntexturedQuadRenderer.lightning(buffer);
+        VertexConsumer consumer = LegacyUntexturedQuadRenderer.solid(buffer);
         float mult = (float) (Math.sin(System.currentTimeMillis() / 200.0D) / 2.0D + 0.5D) * 0.1F + 0.9F;
         int red = Math.round(255.0F * mult);
         int green = Math.round(255.0F * mult);
@@ -55,6 +55,6 @@ public class LegacyLanternBlockEntityRenderer implements BlockEntityRenderer<Leg
 
     private static void renderVertex(VertexConsumer consumer, PoseStack.Pose pose, int index, int red, int green, int blue) {
         float[] vertex = LIGHT_VERTICES[index - 1];
-        LegacyUntexturedQuadRenderer.vertex(consumer, pose, vertex[0], vertex[1], vertex[2], red, green, blue, 210);
+        LegacyUntexturedQuadRenderer.vertex(consumer, pose, vertex[0], vertex[1], vertex[2], red, green, blue, 255);
     }
 }

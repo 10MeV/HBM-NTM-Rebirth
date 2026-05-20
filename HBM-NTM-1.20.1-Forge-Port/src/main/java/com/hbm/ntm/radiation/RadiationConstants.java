@@ -27,6 +27,10 @@ public final class RadiationConstants {
     public static final float AM242 = 9.5F;
     public static final float AM_MIX = 9.0F;
     public static final float SA326 = 15.0F;
+    public static final float SA327 = 17.5F;
+    public static final float SAS3 = 5.0F;
+    public static final float SCHRARANIUM = SA326 * 0.1F;
+    public static final float TRIXITE = 25.0F;
     public static final float U_FUEL = 0.5F;
     public static final float UZH = 0.125F;
     public static final float TH_FUEL = 1.75F;
@@ -38,12 +42,16 @@ public final class RadiationConstants {
     public static final float WASTE = 15.0F;
     public static final float WASTE_VITRIFIED = 7.5F;
     public static final float TRINITITE = 0.1F;
+    public static final float FALLOUT = 10.0F;
+    public static final float YELLOWCAKE = U;
     public static final float BALEFIRE = 300_000.0F;
+    public static final float XE135 = 1_250.0F;
 
     public static final float INGOT = 1.0F;
     public static final float BLOCK = 10.0F;
     public static final float BILLET = 0.5F;
     public static final float NUGGET = 0.1F;
+    public static final float RTG = BILLET * 3.0F;
     public static final float POWDER_MULTIPLIER = 3.0F;
 
     private RadiationConstants() {

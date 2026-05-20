@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class HbmPowerNet {
+public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
     public static final long DEFAULT_TIMEOUT_MS = 3_000L;
 
     private static final Random RANDOM = new Random();
@@ -63,10 +63,16 @@ public class HbmPowerNet {
         providerEntries.remove(provider);
     }
 
-    public void clear() {
+    public void clearSubscriptions() {
         receiverEntries.clear();
         providerEntries.clear();
         energyTracker = 0L;
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        clearSubscriptions();
     }
 
     public long update() {

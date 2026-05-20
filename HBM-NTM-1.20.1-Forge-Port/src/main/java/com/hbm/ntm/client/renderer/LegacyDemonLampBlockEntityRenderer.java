@@ -80,7 +80,7 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
             double x2, double y2, double z2,
             double x3, double y3, double z3,
             int nearAlpha) {
-        LegacyUntexturedQuadRenderer.doubleSidedQuad(
+        LegacyUntexturedQuadRenderer.quad(
                 consumer,
                 pose,
                 x0, y0, z0,

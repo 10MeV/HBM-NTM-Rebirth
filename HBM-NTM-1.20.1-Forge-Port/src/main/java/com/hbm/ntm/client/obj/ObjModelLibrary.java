@@ -59,6 +59,22 @@ public final class ObjModelLibrary {
         return blockPart("trinkets/" + name, renderType);
     }
 
+    public static ObjModelPart machinePart(String name) {
+        return machinePart(name, RenderType.cutout());
+    }
+
+    public static ObjModelPart machinePart(String name, RenderType renderType) {
+        return blockPart("machines/" + name, renderType);
+    }
+
+    public static ObjModelPartBuilder machinePartBuilder(String name, RenderType renderType) {
+        return blockPartBuilder("machines/" + name, renderType);
+    }
+
+    public static ObjModelPartBuilder directMachinePart(String name) {
+        return machinePartBuilder(name, RenderType.cutout()).direct();
+    }
+
     public static ResourceLocation blockModel(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "block/" + name);
     }

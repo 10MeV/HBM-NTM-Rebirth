@@ -114,6 +114,186 @@
 
 - 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+## 2026-05-20 基础物品 + 多 Hazard 条目批次
+
+本批按“先物品库，后 Hazard 库接入”的顺序迁移废料、晶体、核弹组件等基础物品，并使用 Pass 5 增加的复合注册 API 迁移旧版多 hazard 条目。
+
+旧版来源：
+
+- `ModItems` 中对应物品注册：
+  - `nuclear_waste_long/short/...`
+  - `cell_empty`
+  - `cell_sas3`
+  - `scrap_nuclear`
+  - `trinitite`
+  - `gem_rad`
+  - `crystal_*`
+  - `powder_yellowcake`
+  - `fallout`
+  - `powder_caesium`
+  - `powder_coltan_ore`
+  - `boy_propellant`
+  - `gadget_core`
+  - `boy_target`
+  - `boy_bullet`
+  - `man_core`
+  - `mike_core`
+  - `tsar_core`
+  - `fleija_propellant`
+  - `fleija_core`
+  - `solinium_propellant`
+  - `solinium_core`
+- `HazardRegistry.registerItems()` 中对应 hazard 注册。
+- 贴图来源：1.7.10 `assets/hbm/textures/items/*.png`。
+
+已完成：
+
+- `ModItems` 新增基础物品注册：
+  - 废料：`nuclear_waste_long`、`nuclear_waste_long_tiny`、`nuclear_waste_short`、`nuclear_waste_short_tiny`、`nuclear_waste_long_depleted`、`nuclear_waste_long_depleted_tiny`、`nuclear_waste_short_depleted`、`nuclear_waste_short_depleted_tiny`、`nuclear_waste`、`nuclear_waste_tiny`、`nuclear_waste_vitrified`、`nuclear_waste_vitrified_tiny`、`scrap_nuclear`、`trinitite`、`gem_rad`。
+  - 晶体：`crystal_uranium`、`crystal_thorium`、`crystal_plutonium`、`crystal_schraranium`、`crystal_schrabidium`、`crystal_phosphorus`、`crystal_lithium`、`crystal_trixite`。
+  - 粉末/散落物：`powder_yellowcake`、`fallout`、`powder_caesium`、`powder_coltan_ore`。
+  - 单元：`cell_empty`、`cell_sas3`。
+  - 核弹组件：`boy_propellant`、`gadget_core`、`boy_target`、`boy_bullet`、`man_core`、`mike_core`、`tsar_core`、`fleija_propellant`、`fleija_core`、`solinium_propellant`、`solinium_core`。
+- 新增 `ModItems.NUKE_TAB_ITEMS`，并接入 nuke 创造栏、item model datagen、英/中语言 datagen。
+- 已从 1.7.10 复制上述存在的 legacy 贴图到现代 `assets/hbm/textures/item/`。
+- `HazardRegistry` 新增并调用：
+  - `registerLegacyWasteAndCrystalHazards()`
+  - `registerLegacyNukePartHazards()`
+- 已迁多 hazard 条目：
+  - `cell_sas3`：radiation `SAS3` + blinding `60`。
+  - `nuclear_waste_short`：radiation `30` + hot `5`。
+  - `nuclear_waste_short_tiny`：radiation `3` + hot `5`。
+  - `powder_caesium`：hydroactive `1` + hot `3`。
+  - `fleija_propellant`：radiation `15` + explosive `8` + blinding `50`。
+  - `solinium_core`：radiation `SA327 * nugget * 8` + blinding `45`。
+
+暂未迁移/保留：
+
+- `yellow_barrel` 旧版 hazard 已核对，但本批未迁移：未在 1.7.10 `textures/items/yellow_barrel.png` 找到同名贴图，避免生成假资产。
+- `ItemWasteShort` 的 subtype tooltip 与废料分类枚举尚未迁入；本批先以基础物品承接 hazard。
+- `ItemFleija` 的 tooltip/rarity 尚未迁入；本批先迁物品 ID、贴图、创造栏与 hazard。
+- `cell_sas3` 的 container item 行为暂未迁入，需等流体/容器物品库更完整后补。
+
+验证：
+
+- 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-20 现代库层 Pass 5
+
+本批继续推进库层而非强行添加缺失物品。核对旧版 `registerItems()` 后，现代项目当前只存在少量对应条目，因此先补常量和复合 hazard 注册 API，避免后续迁 `cell_sas3`、短寿命核废料、FLEIJA 推进剂等多 hazard 物品时重复手写。
+
+已完成：
+
+- `RadiationConstants` 补旧版 HazardRegistry 常量：
+  - `SA327 = 17.5F`
+  - `SAS3 = 5.0F`
+  - `SCHRARANIUM = SA326 * 0.1F`
+  - `TRIXITE = 25.0F`
+  - `FALLOUT = 10.0F`
+  - `YELLOWCAKE = U`
+- `HazardRegistry` 新增复合条目注册入口：
+  - `register(Item, HazardEntry...)`
+  - `registerByName(String, HazardEntry...)`
+  - `registerBlockByName(String, HazardEntry...)`
+- 现有注册清理：
+  - `block_schraranium` 改用 `RadiationConstants.SCHRARANIUM`。
+  - `block_yellowcake` / `block_fallout` 改用 `RadiationConstants.YELLOWCAKE`，对应旧版 `yc`。
+
+仍未完成：
+
+- 旧版 `nuclear_waste_long/short`、`crystal_*`、`powder_yellowcake`、`fallout` item、核弹组件、holotape 等大量条目在现代项目中尚无对应物品或 subtype，未强行迁入。
+- 下一批可在物品库补齐后，用本批新增的复合注册入口迁移多 hazard 条目。
+
+验证：
+
+- 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-20 现代库层 Pass 4
+
+本批补旧版动态辐射 modifier，先把燃料棒/RTG/RBMK 所需公式移入现代 Hazard 库，避免后续注册批次写散。
+
+旧版来源：
+
+- `com.hbm.hazard.modifier.HazardModifierFuelRadiation`
+- `com.hbm.hazard.modifier.HazardModifierRTGRadiation`
+- `com.hbm.hazard.modifier.HazardModifierRBMKRadiation`
+- `com.hbm.hazard.modifier.HazardModifierRBMKHot`
+- `HazardRegistry.registerOtherFuel(...)`
+- `HazardRegistry.registerRTGPellet(...)`
+- `HazardRegistry.registerRBMK(...)`
+
+已完成：
+
+- 新增 `RtgRadiationModifier`：
+  - 对齐旧版 RTG pellet 线性耐久衰减公式。
+  - 公式：`level + (target - level) * depletion`。
+- 新增 `RbmkRadiationModifier`：
+  - 支持旧版 `yield` / `xenon` NBT。
+  - 额外兼容现代预留 key：`enrichment` / `poison`。
+  - 非线性 depletion：`1 - enrichment^2`。
+  - 线性 depletion：`1 - enrichment`。
+  - xenon 叠加：`RadiationConstants.XE135 * poison`。
+- 新增 `RbmkHotModifier`：
+  - 支持旧版 `hull` NBT。
+  - 额外兼容现代预留 key：`hullHeat`。
+  - 热危害公式按旧版 `(hull - 100) / 10` 向上取整，上限 60；现代侧夹到 `0..60`，避免低温负 hazard。
+- `RadiationConstants` 新增 `XE135 = 1250.0F`，对齐旧版 `HazardRegistry.xe135`。
+- `HazardRegistry` 新增便捷注册入口：
+  - `registerFuelRadiation(Item, base, target, blinding)`
+  - `registerFuelRadiation(ItemStack, base, target, blinding)`
+  - `registerRtgPellet(Item, base, target, hot, blinding)`
+  - `registerRbmkFuel(Item, base, depleted, hot, linear, blinding, digamma[, initialYield])`
+
+仍未完成：
+
+- 现代项目尚未迁 `ItemRBMKRod` / `ItemRBMKPellet` / `ItemRTGPellet` 本体，因此本批只补库层和 NBT 兼容公式。
+- 旧版 `registerOtherFuel`、`registerRTGPellet`、`registerRBMK*` 的具体条目尚未批量迁入；下一批可开始按现代已注册物品存在情况分组迁移。
+- RBMK pellet 的 meta/xenon overlay 逻辑仍需等对应现代 item/subtype 方案确定后接入 stack 层。
+
+验证：
+
+- 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-20 现代库层 Pass 3
+
+本批继续推进旧版 ore dict/tag 语义，避免 `HazardRegistry.registerForgeTag(...)` 只有代码入口但缺少现代 tag 数据承接。
+
+已完成：
+
+- 新增 `HbmItemTagsProvider`，并接入 `HbmDataGenerators`。
+- `HbmBlockTagsProvider` 新增一批旧版矿辞到 Forge block tag 的桥接：
+  - `forge:ores/uranium`
+  - `forge:ores/thorium`
+  - `forge:ores/schrabidium`
+  - `forge:ores/lignite`
+  - `forge:ores/asbestos`
+  - `forge:ores/coal`
+- `HbmItemTagsProvider` 将对应 block tag copy 到 item tag，并补部分非方块物品 tag：
+  - `forge:dusts/lignite` -> `powder_lignite`
+  - `forge:dusts` -> `powder_lignite`
+  - `forge:gems/coal` -> vanilla coal/charcoal
+  - `forge:gems/lignite` -> `lignite` / `coal_infernal`
+- `HazardRegistry` 开始使用 tag API 注册旧版煤尘/褐煤 hazard：
+  - `forge:dusts/coal` -> `COAL, powder`
+  - `forge:dusts/lignite` -> `COAL, powder`
+  - `forge:gems/lignite` -> `COAL, ingot`
+- `HazardRegistry` 补旧版铀矿/钍矿 blacklist 入口：
+  - `forge:ores/thorium`
+  - `forge:ores/uranium`
+
+迁移比例粗估：
+
+- Hazard 库框架：约 55%。
+  - 已有 data/entry/modifier/transformer 基础、tag/item/stack/blacklist 注册层、override/mutex 展开、背包/掉落物应用入口。
+  - 仍缺 ME transformer、容器衰减细分、RTG/RBMK/PWR/Watz 具体 modifier 与一部分长期效果细节。
+- `HazardRegistry.registerItems()` 数据迁移：约 20%。
+  - 已迁现代项目已有的主要锭/粒/坯/块、若干特殊资源、爆炸/热/煤/水活性/石棉条目。
+  - 旧版燃料棒、RTG pellet、RBMK、矿辞全量材料循环、meta stack 特例仍需分批迁移。
+
+验证：
+
+- 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ## 2026-05-20 现代库层 Pass 2
 
 本批继续补旧版 `HazardRegistry` 的注册/评估契约，目标是在迁更多物品条目前先让库层能够承接 ore dict/tag、item、stack 三层数据。
@@ -153,4 +333,66 @@
 
 验证：
 
+- 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+## 2026-05-20 Reactor Component 基础物品 + Hazard 批次
+
+本批继续按旧版 `HazardRegistry.registerItems()` 向后推进，先补旧版 controlTab / partsTab 中和反应堆燃料链相关的基础物品，再接入已迁好的 fuel / RTG hazard modifier 库。
+
+旧版来源：
+
+- `com.hbm.items.ModItems`
+  - `waste_natural_uranium` / `waste_uranium` / `waste_thorium` / `waste_mox` / `waste_plutonium` / `waste_u233` / `waste_u235` / `waste_schrabidium` / `waste_zfb_mox`
+  - `waste_plate_u233` / `waste_plate_u235` / `waste_plate_mox` / `waste_plate_pu239` / `waste_plate_sa326` / `waste_plate_ra226be` / `waste_plate_pu238be`
+  - `plate_fuel_u233` / `plate_fuel_u235` / `plate_fuel_mox` / `plate_fuel_pu239` / `plate_fuel_sa326` / `plate_fuel_ra226be` / `plate_fuel_pu238be`
+  - `pile_rod_uranium` / `pile_rod_pu239` / `pile_rod_plutonium` / `pile_rod_source` / `pile_rod_boron` / `pile_rod_lithium` / `pile_rod_detector`
+  - `pellet_rtg` / `pellet_rtg_radium` / `pellet_rtg_weak` / `pellet_rtg_strontium` / `pellet_rtg_cobalt` / `pellet_rtg_actinium` / `pellet_rtg_polonium` / `pellet_rtg_americium` / `pellet_rtg_gold` / `pellet_rtg_lead`
+- `com.hbm.hazard.HazardRegistry`
+  - `registerOtherWaste(...)`
+  - `registerRadSourceWaste(...)`
+  - `registerOtherFuel(...)`
+  - `registerRTGPellet(...)`
+- `com.hbm.items.machine.ItemDepletedFuel`
+  - 旧版有 meta 0/1 两个子型：0 为冷态低辐射，1 为热态完整辐射 + HOT 5 tooltip。
+
+已完成：
+
+- `ModItems` 新增上述基础物品。
+- `ModCreativeTabs` 新增现代 `HBM Control` 创造栏，对齐旧版 `MainRegistry.controlTab` 的承载位置。
+- `HbmItemModelProvider` / `HbmLanguageProvider` / `HbmZhCnLanguageProvider` 接入 `CONTROL_TAB_ITEMS`。
+- 从 1.7.10 资源复制对应贴图；旧版复用贴图的 `waste_u233`、`waste_u235`、`waste_plate_u233`、`waste_plate_u235`、`waste_plate_pu239`、`waste_natural_uranium` 在现代资源中生成同名副本，适配 basic item model。
+- `RadiationConstants` 新增 `RTG = BILLET * 3`，对齐旧版 `rtg` 常量。
+- `HazardRegistry` 新增 `registerLegacyReactorComponentHazards()`：
+  - 燃料板使用已迁 `FuelRadiationModifier`，例如 `plate_fuel_u235` 从 `U235 * INGOT` 衰减/耗尽到 `WASTE * INGOT * 10`。
+  - RTG pellet 使用已迁 `RtgRadiationModifier`，并补 HOT / BLINDING 组合，例如 `pellet_rtg_lead` = `PB209 * RTG` + HOT 7 + BLINDING 50。
+  - pile rod 先迁旧版已有辐射条目；`pile_rod_boron`、`pile_rod_lithium`、`pile_rod_detector` 旧版本批段无 hazard，先仅补物品。
+  - 衰变燃料废料基础物品先注册冷态 `base * 0.075` 或 rad source base。
+
+仍未完成：
+
+- `ItemDepletedFuel` 的 meta 0/1 子型、热态染色、`desc.item.wasteCooling` tooltip 尚未迁入；现代项目需要先决定旧版 meta 到 1.20.1 ItemStack NBT/DataComponent 的映射方式。
+- `plate_fuel_*` 目前只接入 hazard 语义，旧版 `ItemPlateFuel` 的燃耗函数、寿命、pile 反应堆逻辑仍待独立物品类/反应堆库迁移。
+- RTG pellet 目前只接入 hazard 语义，旧版 `ItemRTGPellet` 的热量、半衰期、衰变产物/container 行为尚未迁入。
+
+验证：
+
+- 2026-05-20 运行 `.\gradlew.bat runData --no-daemon` 通过，生成 42 个新/变更数据文件。
+- 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-20 基础物品批次 Datagen 收口
+
+本批在新增废料、晶体、核弹组件和复合 hazard 条目后，补齐资源生成链路，确保后续继续迁 `HazardRegistry.registerItems()` 时新增物品能自动落到模型、语言和资源处理流程中。
+
+已完成：
+
+- `HbmBlockStateProvider` 新增 `simpleSidedCubeWithItem(...)`，用于 `decon` 这类无 `FACING` 属性但需要顶/底/侧纹理的方块，避免 `runData` 误用 `horizontalBlock(...)` 生成缺失属性的 blockstate。
+- `HbmBlockLootProvider` 改为遍历 `ModBlocks.BLOCK_TAB_BLOCKS` 生成基础 dropSelf loot table，使 `waste_earth`、`waste_leaves` 等已注册方块不再阻塞 Forge datagen 的完整性校验。
+- `runData` 已生成本批新增物品的 item model 与 lang 条目，例如：
+  - `cell_sas3`
+  - `nuclear_waste_short`
+  - `nuclear_waste_short_tiny`
+  - `fleija_propellant`
+
+验证：
+
+- 2026-05-20 运行 `.\gradlew.bat runData --no-daemon` 通过。
 - 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。

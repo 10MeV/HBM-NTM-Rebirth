@@ -34,6 +34,13 @@ public final class ModCreativeTabs {
                     .displayItems((parameters, output) -> ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> output.accept(item.get())))
                     .build());
 
+    public static final RegistryObject<CreativeModeTab> CONTROL = CREATIVE_TABS.register("control",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.hbm.control"))
+                    .icon(() -> ModItems.legacyItem("plate_fuel_u235").get().getDefaultInstance())
+                    .displayItems((parameters, output) -> ModItems.CONTROL_TAB_ITEMS.forEach(item -> output.accept(item.get())))
+                    .build());
+
     public static final RegistryObject<CreativeModeTab> BLOCKS = CREATIVE_TABS.register("blocks",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm.blocks"))
@@ -51,7 +58,10 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm.nukes"))
                     .icon(() -> ModBlocks.NUKE_GADGET.get().asItem().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> output.accept(block.get())))
+                    .displayItems((parameters, output) -> {
+                        ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> output.accept(block.get()));
+                        ModItems.NUKE_TAB_ITEMS.forEach(item -> output.accept(item.get()));
+                    })
                     .build());
 
     public static void register(IEventBus modBus) {
