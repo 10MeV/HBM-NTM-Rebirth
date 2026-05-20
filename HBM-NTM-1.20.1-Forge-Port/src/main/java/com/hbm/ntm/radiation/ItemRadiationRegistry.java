@@ -11,6 +11,10 @@ public final class ItemRadiationRegistry {
         return HazardRegistry.getHazardLevel(stack, HazardType.RADIATION);
     }
 
+    public static float getHazardLevel(ItemStack stack, HazardType type) {
+        return HazardRegistry.getHazardLevel(stack, type);
+    }
+
     private ItemRadiationRegistry() {
     }
 }

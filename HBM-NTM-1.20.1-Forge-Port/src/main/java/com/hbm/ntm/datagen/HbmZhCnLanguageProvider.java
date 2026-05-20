@@ -62,8 +62,13 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.radaway", "\u6d88\u8f90\u5b81");
         add("item.hbm.radaway_strong", "\u5f3a\u6548\u6d88\u8f90\u5b81");
         add("item.hbm.radaway_flush", "\u51b2\u5237\u578b\u6d88\u8f90\u5b81");
+        add("item.hbm.radx", "\u9632\u8f90\u5c04\u836f");
+        add("item.hbm.radx.desc", "\u57283\u5206\u949f\u5185\u589e\u52a00.2\uff0837%\uff09\u7684\u6297\u8f90\u5c04\u80fd\u529b");
         add("effect.hbm.radiation", "\u8f90\u5c04");
         add("effect.hbm.radaway", "\u6d88\u8f90\u5b81");
+        add("effect.hbm.radx", "\u8f90\u7279\u5b81");
+        add("effect.hbm.mutation", "\u7a81\u53d8");
+        add("effect.hbm.stability", "\u7a33\u5b9a");
         add("geiger.title", "\u76d6\u9769\u8ba1\u6570\u5668");
         add("geiger.chunkRad", "\u533a\u5757\u8f90\u5c04\uff1a%s RAD/s");
         add("geiger.envRad", "\u73af\u5883\u5242\u91cf\uff1a%s RAD/s");
@@ -93,6 +98,9 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_boiler_off", "\u9505\u7089");
         add("block.hbm.machine_shredder", "\u7c89\u788e\u673a");
         add("block.hbm.decon", "\u6d88\u6c61\u5668");
+        add("block.hbm.waste_earth", "\u5e9f\u571f");
+        add("block.hbm.waste_mycelium", "\u5e9f\u571f\u83cc\u4e1d");
+        add("block.hbm.waste_leaves", "\u5e9f\u571f\u6811\u53f6");
         add("block.hbm.nuke_gadget", "\u5c0f\u73a9\u610f");
         add("block.hbm.nuke_boy", "\u5c0f\u7537\u5b69");
         add("block.hbm.nuke_man", "\u80d6\u5b50");

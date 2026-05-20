@@ -49,7 +49,10 @@ public final class ObjModelPart {
                     context.packedLight(),
                     context.packedOverlay(),
                     renderType,
-                    lightMultiplier);
+                    lightMultiplier,
+                    context.color(),
+                    context.hasColor(),
+                    context.legacyShadow());
         } else {
             ObjRenderUtils.renderBlockModel(
                     model,
@@ -60,7 +63,10 @@ public final class ObjModelPart {
                     context.packedLight(),
                     context.packedOverlay(),
                     renderType,
-                    lightMultiplier);
+                    lightMultiplier,
+                    context.color(),
+                    context.hasColor(),
+                    context.legacyShadow());
         }
         context.poseStack().popPose();
     }

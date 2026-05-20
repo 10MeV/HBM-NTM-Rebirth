@@ -20,6 +20,8 @@ public final class HbmCommonConfig {
                 .define("enableLegacyIdNotes", true);
         builder.pop();
 
+        RadiationConfig.define(builder);
+
         SPEC = builder.build();
     }
 

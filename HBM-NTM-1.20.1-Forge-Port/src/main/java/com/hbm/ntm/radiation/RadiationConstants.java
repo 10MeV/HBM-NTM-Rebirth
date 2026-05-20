@@ -41,7 +41,7 @@ public final class RadiationConstants {
     public static final float BALEFIRE = 300_000.0F;
 
     public static final float INGOT = 1.0F;
-    public static final float BLOCK = INGOT * 9.0F;
+    public static final float BLOCK = 10.0F;
     public static final float BILLET = 0.5F;
     public static final float NUGGET = 0.1F;
     public static final float POWDER_MULTIPLIER = 3.0F;

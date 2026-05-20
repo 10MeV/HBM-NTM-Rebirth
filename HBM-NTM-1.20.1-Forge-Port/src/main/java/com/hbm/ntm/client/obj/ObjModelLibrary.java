@@ -1,7 +1,9 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraftforge.client.event.ModelEvent;
 
 import java.util.Collections;
@@ -11,42 +13,54 @@ import java.util.Set;
 public final class ObjModelLibrary {
     private static final Set<ResourceLocation> MODELS = new LinkedHashSet<>();
 
-    public static final ObjModelPart PRESS_HEAD = blockCenteredPart("press_head")
-            .withRenderType(net.minecraft.client.renderer.RenderType.entityCutoutNoCull(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS))
+    public static final ObjModelPart PRESS_HEAD = directBlockPart("press_head")
+            .withRenderType(RenderType.entityCutoutNoCull(InventoryMenu.BLOCK_ATLAS))
             .withLightMultiplier(0.82F)
-            .direct()
             .withOrigin(ObjPartTransform.BLOCK_CENTER.withScale(0.99F, 1.0F, 0.99F));
     public static final ObjAnimatedModel PRESS = new ObjAnimatedModel()
             .part("Head", PRESS_HEAD);
 
-    public static final ObjModelPart CAGE_LAMP = blockCenteredPart("legacy/cage_lamp_render")
-            .direct()
+    public static final ObjModelPart CAGE_LAMP = directBlockPart("legacy/cage_lamp_render")
             .withOrigin(ObjPartTransform.IDENTITY);
-    public static final ObjModelPart FLUORESCENT_LAMP_SINGLE = blockCenteredPart("legacy/fluorescent_lamp_single_render")
-            .direct()
+    public static final ObjModelPart FLUORESCENT_LAMP_SINGLE = directBlockPart("legacy/fluorescent_lamp_single_render")
             .withOrigin(ObjPartTransform.IDENTITY);
-    public static final ObjModelPart FLOOD_LAMP = blockCenteredPart("legacy/flood_lamp_render")
-            .direct()
+    public static final ObjModelPart FLOOD_LAMP = directBlockPart("legacy/flood_lamp_render")
             .withOrigin(ObjPartTransform.IDENTITY);
-    public static final ObjModelPart FLOODLIGHT_BASE = blockCenteredPart("legacy/floodlight_base_render")
-            .direct()
+    public static final ObjModelPart FLOODLIGHT_BASE = directBlockPart("legacy/floodlight_base_render")
             .withOrigin(ObjPartTransform.IDENTITY);
-    public static final ObjModelPart FLOODLIGHT_LIGHTS = blockCenteredPart("legacy/floodlight_lights_render")
-            .direct()
+    public static final ObjModelPart FLOODLIGHT_LIGHTS = directBlockPart("legacy/floodlight_lights_render")
             .withOrigin(ObjPartTransform.IDENTITY);
-    public static final ObjModelPart FLOODLIGHT_LAMPS = blockCenteredPart("legacy/floodlight_lamps_render")
-            .direct()
+    public static final ObjModelPart FLOODLIGHT_LAMPS = directBlockPart("legacy/floodlight_lamps_render")
             .withOrigin(ObjPartTransform.IDENTITY);
-    public static final ObjModelPart DEMON_LAMP = blockCenteredPart("lamp_demon")
-            .direct()
+    public static final ObjModelPart DEMON_LAMP = directBlockPart("lamp_demon")
             .withOrigin(ObjPartTransform.IDENTITY);
 
     public static ObjModelPart blockPart(String name) {
-        return new ObjModelPart(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name), net.minecraft.client.renderer.RenderType.cutout());
+        return blockPart(name, RenderType.cutout());
+    }
+
+    public static ObjModelPart blockPart(String name, RenderType renderType) {
+        return new ObjModelPart(blockModel(name), renderType);
     }
 
     public static ObjModelPartBuilder blockCenteredPart(String name) {
-        return new ObjModelPartBuilder(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name), net.minecraft.client.renderer.RenderType.cutout());
+        return blockPartBuilder(name, RenderType.cutout());
+    }
+
+    public static ObjModelPartBuilder blockPartBuilder(String name, RenderType renderType) {
+        return new ObjModelPartBuilder(blockModel(name), renderType);
+    }
+
+    public static ObjModelPartBuilder directBlockPart(String name) {
+        return blockCenteredPart(name).direct();
+    }
+
+    public static ObjModelPart trinketPart(String name, RenderType renderType) {
+        return blockPart("trinkets/" + name, renderType);
+    }
+
+    public static ResourceLocation blockModel(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "block/" + name);
     }
 
     static void register(ResourceLocation modelLocation) {
@@ -66,12 +80,12 @@ public final class ObjModelLibrary {
     private ObjModelLibrary() {
     }
 
-    public record ObjModelPartBuilder(ResourceLocation modelLocation, net.minecraft.client.renderer.RenderType renderType, float lightMultiplier, boolean directRender) {
-        public ObjModelPartBuilder(ResourceLocation modelLocation, net.minecraft.client.renderer.RenderType renderType) {
+    public record ObjModelPartBuilder(ResourceLocation modelLocation, RenderType renderType, float lightMultiplier, boolean directRender) {
+        public ObjModelPartBuilder(ResourceLocation modelLocation, RenderType renderType) {
             this(modelLocation, renderType, 1.0F, false);
         }
 
-        public ObjModelPartBuilder withRenderType(net.minecraft.client.renderer.RenderType renderType) {
+        public ObjModelPartBuilder withRenderType(RenderType renderType) {
             return new ObjModelPartBuilder(modelLocation, renderType, lightMultiplier, directRender);
         }
 

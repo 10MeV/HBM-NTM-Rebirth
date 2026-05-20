@@ -25,7 +25,7 @@ public final class HazardTooltipUtil {
 
         for (HazardEntry entry : HazardRegistry.getHazards(stack)) {
             if (entry.type() != HazardType.RADIATION) {
-                tooltip.add(Component.translatable("tooltip.hbm.hazard." + entry.type().name().toLowerCase(Locale.ROOT), format(entry.level()))
+                tooltip.add(Component.translatable("tooltip.hbm.hazard." + entry.type().name().toLowerCase(Locale.ROOT), format(entry.modifiedLevel(stack, null)))
                         .withStyle(ChatFormatting.GOLD));
             }
         }

@@ -12,7 +12,12 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class LegacyLightBlockEntity extends BlockEntity {
+    public static final long FLOODLIGHT_MAX_POWER = 5_000L;
+
     private float rotation;
+    private long power;
+    private int delay;
+    private boolean on;
 
     public LegacyLightBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LEGACY_LIGHT.get(), pos, state);
@@ -23,6 +28,33 @@ public class LegacyLightBlockEntity extends BlockEntity {
 
     public float rotation() {
         return rotation;
+    }
+
+    public long power() {
+        return power;
+    }
+
+    public int delay() {
+        return delay;
+    }
+
+    public boolean isOn() {
+        return on;
+    }
+
+    public void setPower(long power) {
+        this.power = Math.max(0L, Math.min(FLOODLIGHT_MAX_POWER, power));
+        setChangedAndSync();
+    }
+
+    public void setDelay(int delay) {
+        this.delay = Math.max(0, delay);
+        setChangedAndSync();
+    }
+
+    public void setOn(boolean on) {
+        this.on = on;
+        setChangedAndSync();
     }
 
     public void setRotationFromPlacement(float playerPitch, float playerYaw, Direction face) {
@@ -44,12 +76,18 @@ public class LegacyLightBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putFloat("rotation", rotation);
+        tag.putLong("power", power);
+        tag.putInt("delay", delay);
+        tag.putBoolean("isOn", on);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         rotation = tag.getFloat("rotation");
+        power = tag.getLong("power");
+        delay = tag.getInt("delay");
+        on = tag.getBoolean("isOn");
     }
 
     @Override

@@ -62,8 +62,13 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.radaway", "RadAway");
         add("item.hbm.radaway_strong", "RadAway Strong");
         add("item.hbm.radaway_flush", "RadAway Flush");
+        add("item.hbm.radx", "Rad-X");
+        add("item.hbm.radx.desc", "Increases radiation resistance by 0.2 (37%) for 3 minutes");
         add("effect.hbm.radiation", "Radiation");
         add("effect.hbm.radaway", "RadAway");
+        add("effect.hbm.radx", "Rad-X");
+        add("effect.hbm.mutation", "Tainted Heart");
+        add("effect.hbm.stability", "Stability");
         add("geiger.title", "Geiger Counter");
         add("geiger.chunkRad", "Chunk radiation: %s RAD/s");
         add("geiger.envRad", "Environmental dose: %s RAD/s");
@@ -93,6 +98,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_boiler_off", "Old Boiler");
         add("block.hbm.machine_shredder", "Shredder");
         add("block.hbm.decon", "Decontaminator");
+        add("block.hbm.waste_earth", "Waste Earth");
+        add("block.hbm.waste_mycelium", "Waste Mycelium");
+        add("block.hbm.waste_leaves", "Waste Leaves");
         add("block.hbm.nuke_gadget", "The Gadget");
         add("block.hbm.nuke_boy", "Little Boy");
         add("block.hbm.nuke_man", "Fat Man");

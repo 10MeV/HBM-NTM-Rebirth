@@ -1,8 +1,8 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.TrinketVariant;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
+import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.ObjModelPart;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -11,7 +11,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -132,6 +131,6 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
     }
 
     private static ObjModelPart trinketPart(String name, RenderType renderType) {
-        return new ObjModelPart(new ResourceLocation(HbmNtm.MOD_ID, "block/trinkets/" + name), renderType);
+        return ObjModelLibrary.trinketPart(name, renderType);
     }
 }

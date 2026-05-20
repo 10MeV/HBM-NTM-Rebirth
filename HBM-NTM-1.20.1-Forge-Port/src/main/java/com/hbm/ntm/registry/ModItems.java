@@ -2,6 +2,7 @@ package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.item.DigammaDiagnosticItem;
+import com.hbm.ntm.item.EffectPillItem;
 import com.hbm.ntm.item.GeigerCounterItem;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.item.RadawayItem;
@@ -79,6 +80,8 @@ public final class ModItems {
             () -> new RadawayItem(new Item.Properties().stacksTo(16), 20 * 20, 1));
     public static final RegistryObject<Item> RADAWAY_FLUSH = ITEMS.register("radaway_flush",
             () -> new RadawayItem(new Item.Properties().stacksTo(16), 50, 19));
+    public static final RegistryObject<Item> RADX = ITEMS.register("radx",
+            () -> new EffectPillItem(new Item.Properties().stacksTo(16), ModEffects.RADX, 3 * 60 * 20, 0, null, true));
 
     public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = simpleParts(
             "ingot_pu_mix",
@@ -290,7 +293,8 @@ public final class ModItems {
             DIGAMMA_DIAGNOSTIC,
             RADAWAY,
             RADAWAY_STRONG,
-            RADAWAY_FLUSH
+            RADAWAY_FLUSH,
+            RADX
     );
 
     public static void register(IEventBus modBus) {

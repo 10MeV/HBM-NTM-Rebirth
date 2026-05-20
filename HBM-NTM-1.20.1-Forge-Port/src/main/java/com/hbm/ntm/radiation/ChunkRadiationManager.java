@@ -1,5 +1,7 @@
 package com.hbm.ntm.radiation;
 
+import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.tags.BlockTags;
@@ -16,16 +18,17 @@ import java.util.Map;
 public final class ChunkRadiationManager {
     private static int diffusionTimer;
     private static int worldEffectTimer;
+    public static final String LEGACY_CHUNK_NBT_KEY = "hfr_simple_radiation";
 
     public static float getRadiation(Level level, BlockPos pos) {
-        if (!(level instanceof ServerLevel serverLevel)) {
+        if (!RadiationConfig.ENABLE_CHUNK_RADS.get() || !(level instanceof ServerLevel serverLevel)) {
             return 0.0F;
         }
         return getData(serverLevel).get(new ChunkPos(pos));
     }
 
     public static void setRadiation(Level level, BlockPos pos, float radiation) {
-        if (level instanceof ServerLevel serverLevel) {
+        if (RadiationConfig.ENABLE_CHUNK_RADS.get() && level instanceof ServerLevel serverLevel) {
             getData(serverLevel).set(new ChunkPos(pos), radiation);
         }
     }
@@ -44,16 +47,33 @@ public final class ChunkRadiationManager {
         }
     }
 
+    public static void loadLegacyChunkRadiation(ServerLevel level, ChunkPos chunkPos, float radiation) {
+        if (RadiationConfig.ENABLE_CHUNK_RADS.get() && radiation > 0.0F) {
+            getData(level).set(chunkPos, radiation);
+        }
+    }
+
+    public static float getChunkRadiation(ServerLevel level, ChunkPos chunkPos) {
+        return RadiationConfig.ENABLE_CHUNK_RADS.get() ? getData(level).get(chunkPos) : 0.0F;
+    }
+
     public static void tick(ServerLevel level) {
+        if (!RadiationConfig.ENABLE_CHUNK_RADS.get()) {
+            return;
+        }
+
         diffusionTimer++;
         if (diffusionTimer >= 20) {
             getData(level).updateDiffusion();
             diffusionTimer = 0;
         }
 
-        worldEffectTimer++;
-        if (worldEffectTimer >= 5) {
+        if (RadiationConfig.WORLD_RAD_EFFECTS.get()) {
             handleWorldEffects(level);
+        }
+
+        worldEffectTimer++;
+        if (worldEffectTimer >= 20) {
             spawnRadiationFog(level);
             worldEffectTimer = 0;
         }
@@ -66,23 +86,37 @@ public final class ChunkRadiationManager {
         }
 
         int chunks = Math.min(5, entries.size());
+        int operations = RadiationConfig.WORLD_RAD.get();
+        int threshold = RadiationConfig.WORLD_RAD_THRESHOLD.get();
         for (int c = 0; c < chunks; c++) {
             Map.Entry<Long, Float> entry = entries.get(level.random.nextInt(entries.size()));
-            if (entry.getValue() < 10.0F) {
+            if (entry.getValue() < threshold) {
                 continue;
             }
             ChunkPos chunkPos = new ChunkPos(entry.getKey());
-            for (int i = 0; i < 10; i++) {
-                int x = chunkPos.getMinBlockX() + level.random.nextInt(16);
-                int z = chunkPos.getMinBlockZ() + level.random.nextInt(16);
-                BlockPos surface = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, new BlockPos(x, 0, z)).below();
-                BlockState state = level.getBlockState(surface);
-                if (state.is(Blocks.GRASS_BLOCK)) {
-                    level.setBlock(surface, Blocks.DIRT.defaultBlockState(), 2);
-                } else if (state.is(Blocks.GRASS) || state.is(Blocks.TALL_GRASS) || state.is(Blocks.FERN) || state.is(Blocks.LARGE_FERN)) {
-                    level.setBlock(surface, Blocks.AIR.defaultBlockState(), 2);
-                } else if (state.is(BlockTags.LEAVES) && level.random.nextInt(7) <= 5) {
-                    level.setBlock(surface, Blocks.AIR.defaultBlockState(), 2);
+            for (int i = 0; i < operations; i++) {
+                for (int a = 0; a < 16; a++) {
+                    for (int b = 0; b < 16; b++) {
+                        if (level.random.nextInt(3) != 0) {
+                            continue;
+                        }
+
+                        int x = chunkPos.getMinBlockX() + a;
+                        int z = chunkPos.getMinBlockZ() + b;
+                        BlockPos surface = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, new BlockPos(x, 0, z)).below(level.random.nextInt(2));
+                        BlockState state = level.getBlockState(surface);
+                        if (state.is(Blocks.GRASS_BLOCK)) {
+                            level.setBlock(surface, ModBlocks.WASTE_EARTH.get().defaultBlockState(), 2);
+                        } else if (state.is(Blocks.GRASS) || state.is(Blocks.TALL_GRASS) || state.is(Blocks.FERN) || state.is(Blocks.LARGE_FERN)) {
+                            level.setBlock(surface, Blocks.AIR.defaultBlockState(), 2);
+                        } else if (state.is(BlockTags.LEAVES) && !state.is(ModBlocks.WASTE_LEAVES.get())) {
+                            if (level.random.nextInt(7) <= 5) {
+                                level.setBlock(surface, ModBlocks.WASTE_LEAVES.get().defaultBlockState(), 2);
+                            } else {
+                                level.setBlock(surface, Blocks.AIR.defaultBlockState(), 2);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -95,7 +129,7 @@ public final class ChunkRadiationManager {
         }
 
         Map.Entry<Long, Float> entry = entries.get(level.random.nextInt(entries.size()));
-        if (entry.getValue() < 10.0F || level.random.nextInt(12) != 0) {
+        if (entry.getValue() <= RadiationConfig.FOG_RAD.get() || level.random.nextInt(RadiationConfig.FOG_CHANCE.get()) != 0) {
             return;
         }
         ChunkPos chunkPos = new ChunkPos(entry.getKey());

@@ -1,6 +1,9 @@
 package com.hbm.ntm.radiation;
 
+import com.hbm.ntm.config.RadiationConfig;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -11,21 +14,45 @@ import java.util.UUID;
 
 public final class RadiationData {
     public static final UUID DIGAMMA_UUID = UUID.fromString("2a3d8aec-5ab9-4218-9b8b-ca812bdf378b");
-    private static final String TAG_ROOT = "hbm_radiation";
+    private static final String TAG_ROOT = "HbmLivingProps";
+    private static final String TAG_PREVIOUS_ROOT = "hbm_radiation";
     private static final String TAG_RADIATION = "hfr_radiation";
     private static final String TAG_DIGAMMA = "hfr_digamma";
     private static final String TAG_RAD_ENV = "hfr_rad_env";
     private static final String TAG_RAD_BUF = "hfr_rad_buf";
+    private static final String TAG_ASBESTOS = "hfr_asbestos";
+    private static final String TAG_BOMB_TIMER = "hfr_bomb";
+    private static final String TAG_CONTAGION = "hfr_contagion";
+    private static final String TAG_BLACK_LUNG = "hfr_blacklung";
+    private static final String TAG_OIL = "hfr_oil";
+    private static final String TAG_FIRE = "hfr_fire";
+    private static final String TAG_PHOSPHORUS = "hfr_phosphorus";
+    private static final String TAG_BALEFIRE = "hfr_balefire";
+    private static final String TAG_BLACK_FIRE = "hfr_blackfire";
+    private static final String TAG_CONTAMINATION = "hfr_contamination";
+    private static final String TAG_LEGACY_CONTAMINATION_COUNT = "hfr_cont_count";
+    private static final String TAG_CONTAMINATION_MAX_RAD = "maxRad";
+    private static final String TAG_CONTAMINATION_MAX_TIME = "maxTime";
+    private static final String TAG_CONTAMINATION_TIME = "time";
+    private static final String TAG_CONTAMINATION_IGNORE_ARMOR = "ignoreArmor";
 
     public static float getRadiation(LivingEntity entity) {
+        if (!RadiationConfig.ENABLE_CONTAMINATION.get()) {
+            return 0.0F;
+        }
         return getTag(entity).getFloat(TAG_RADIATION);
     }
 
     public static void setRadiation(LivingEntity entity, float radiation) {
-        getTag(entity).putFloat(TAG_RADIATION, clampPlayerRadiation(radiation));
+        if (RadiationConfig.ENABLE_CONTAMINATION.get()) {
+            getTag(entity).putFloat(TAG_RADIATION, clampPlayerRadiation(radiation));
+        }
     }
 
     public static void incrementRadiation(LivingEntity entity, float amount) {
+        if (!RadiationConfig.ENABLE_CONTAMINATION.get()) {
+            return;
+        }
         setRadiation(entity, getRadiation(entity) + amount);
     }
 
@@ -66,7 +93,7 @@ public final class RadiationData {
     }
 
     public static void setRadEnv(LivingEntity entity, float radiation) {
-        getTag(entity).putFloat(TAG_RAD_ENV, Math.max(0.0F, radiation));
+        getTag(entity).putFloat(TAG_RAD_ENV, radiation);
     }
 
     public static float getRadBuf(LivingEntity entity) {
@@ -74,21 +101,153 @@ public final class RadiationData {
     }
 
     public static void setRadBuf(LivingEntity entity, float radiation) {
-        getTag(entity).putFloat(TAG_RAD_BUF, Math.max(0.0F, radiation));
+        getTag(entity).putFloat(TAG_RAD_BUF, radiation);
+    }
+
+    public static void flushEnvironmentBuffer(LivingEntity entity) {
+        setRadBuf(entity, getRadEnv(entity));
+        setRadEnv(entity, 0.0F);
+    }
+
+    public static int getAsbestos(LivingEntity entity) {
+        return getTag(entity).getInt(TAG_ASBESTOS);
+    }
+
+    public static void setAsbestos(LivingEntity entity, int asbestos) {
+        getTag(entity).putInt(TAG_ASBESTOS, Math.max(0, asbestos));
+    }
+
+    public static void incrementAsbestos(LivingEntity entity, int amount) {
+        setAsbestos(entity, getAsbestos(entity) + amount);
+    }
+
+    public static int getBombTimer(LivingEntity entity) {
+        return getTag(entity).getInt(TAG_BOMB_TIMER);
+    }
+
+    public static void setBombTimer(LivingEntity entity, int bombTimer) {
+        getTag(entity).putInt(TAG_BOMB_TIMER, bombTimer);
+    }
+
+    public static int getContagion(LivingEntity entity) {
+        return getTag(entity).getInt(TAG_CONTAGION);
+    }
+
+    public static void setContagion(LivingEntity entity, int contagion) {
+        getTag(entity).putInt(TAG_CONTAGION, Math.max(0, contagion));
+    }
+
+    public static int getBlackLung(LivingEntity entity) {
+        return getTag(entity).getInt(TAG_BLACK_LUNG);
+    }
+
+    public static void setBlackLung(LivingEntity entity, int blackLung) {
+        getTag(entity).putInt(TAG_BLACK_LUNG, Math.max(0, blackLung));
+    }
+
+    public static void incrementBlackLung(LivingEntity entity, int amount) {
+        setBlackLung(entity, getBlackLung(entity) + amount);
+    }
+
+    public static int getOil(LivingEntity entity) {
+        return getTag(entity).getInt(TAG_OIL);
+    }
+
+    public static void setOil(LivingEntity entity, int oil) {
+        getTag(entity).putInt(TAG_OIL, Math.max(0, oil));
+    }
+
+    public static int getFire(LivingEntity entity) {
+        return getTag(entity).getInt(TAG_FIRE);
+    }
+
+    public static void setFire(LivingEntity entity, int fire) {
+        getTag(entity).putInt(TAG_FIRE, Math.max(0, fire));
+    }
+
+    public static int getPhosphorus(LivingEntity entity) {
+        return getTag(entity).getInt(TAG_PHOSPHORUS);
+    }
+
+    public static void setPhosphorus(LivingEntity entity, int phosphorus) {
+        getTag(entity).putInt(TAG_PHOSPHORUS, Math.max(0, phosphorus));
+    }
+
+    public static int getBalefire(LivingEntity entity) {
+        return getTag(entity).getInt(TAG_BALEFIRE);
+    }
+
+    public static void setBalefire(LivingEntity entity, int balefire) {
+        getTag(entity).putInt(TAG_BALEFIRE, Math.max(0, balefire));
+    }
+
+    public static int getBlackFire(LivingEntity entity) {
+        return getTag(entity).getInt(TAG_BLACK_FIRE);
+    }
+
+    public static void setBlackFire(LivingEntity entity, int blackFire) {
+        getTag(entity).putInt(TAG_BLACK_FIRE, Math.max(0, blackFire));
+    }
+
+    public static ListTag getContamination(LivingEntity entity) {
+        return getTag(entity).getList(TAG_CONTAMINATION, Tag.TAG_COMPOUND);
+    }
+
+    public static void setContamination(LivingEntity entity, ListTag contamination) {
+        getTag(entity).put(TAG_CONTAMINATION, contamination.copy());
+    }
+
+    public static void addContamination(LivingEntity entity, float maxRad, int maxTime, int time, boolean ignoreArmor) {
+        CompoundTag effect = new CompoundTag();
+        effect.putFloat(TAG_CONTAMINATION_MAX_RAD, maxRad);
+        effect.putInt(TAG_CONTAMINATION_MAX_TIME, Math.max(1, maxTime));
+        effect.putInt(TAG_CONTAMINATION_TIME, Mth.clamp(time, 0, Math.max(1, maxTime)));
+        effect.putBoolean(TAG_CONTAMINATION_IGNORE_ARMOR, ignoreArmor);
+        ListTag effects = getContamination(entity).copy();
+        effects.add(effect);
+        setContamination(entity, effects);
     }
 
     public static void copyForRespawn(LivingEntity original, LivingEntity replacement) {
-        if (original.getPersistentData().contains(TAG_ROOT)) {
-            replacement.getPersistentData().put(TAG_ROOT, original.getPersistentData().getCompound(TAG_ROOT).copy());
+        CompoundTag originalData = original.getPersistentData();
+        if (originalData.contains(TAG_ROOT, Tag.TAG_COMPOUND)) {
+            replacement.getPersistentData().put(TAG_ROOT, originalData.getCompound(TAG_ROOT).copy());
+        } else if (originalData.contains(TAG_PREVIOUS_ROOT, Tag.TAG_COMPOUND)) {
+            replacement.getPersistentData().put(TAG_ROOT, originalData.getCompound(TAG_PREVIOUS_ROOT).copy());
         }
     }
 
     private static CompoundTag getTag(LivingEntity entity) {
         CompoundTag persistentData = entity.getPersistentData();
-        if (!persistentData.contains(TAG_ROOT)) {
-            persistentData.put(TAG_ROOT, new CompoundTag());
+        if (!persistentData.contains(TAG_ROOT, Tag.TAG_COMPOUND)) {
+            CompoundTag tag = persistentData.contains(TAG_PREVIOUS_ROOT, Tag.TAG_COMPOUND)
+                    ? persistentData.getCompound(TAG_PREVIOUS_ROOT).copy()
+                    : new CompoundTag();
+            migrateLegacyContamination(tag);
+            persistentData.put(TAG_ROOT, tag);
+        } else {
+            migrateLegacyContamination(persistentData.getCompound(TAG_ROOT));
         }
         return persistentData.getCompound(TAG_ROOT);
+    }
+
+    private static void migrateLegacyContamination(CompoundTag tag) {
+        if (tag.contains(TAG_CONTAMINATION, Tag.TAG_LIST)) {
+            return;
+        }
+        int count = tag.getInt(TAG_LEGACY_CONTAMINATION_COUNT);
+        if (count <= 0) {
+            return;
+        }
+
+        ListTag contamination = new ListTag();
+        for (int i = 0; i < count; i++) {
+            String key = "cont_" + i;
+            if (tag.contains(key, Tag.TAG_COMPOUND)) {
+                contamination.add(tag.getCompound(key).copy());
+            }
+        }
+        tag.put(TAG_CONTAMINATION, contamination);
     }
 
     private static float clampPlayerRadiation(float value) {

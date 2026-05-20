@@ -27,6 +27,10 @@
   - 贴图 `assets/hbm/textures/models/machines/demon_lamp.png`。
   - 按 metadata 0..5 做 1.7.10 六面旋转。
   - 渲染实体灯体后，叠加无贴图、加色混合、青色透明光束环。
+- 交叉核对 `spotlight_halogen`
+  - `src/main/java/com/hbm/blocks/machine/Spotlight.java` 的 `LightType.HALOGEN` 只选择 `ResourceManager.flood_lamp` 模型和 `flood_lamp.png`/`flood_lamp_off.png` 普通贴图。
+  - 卤素灯没有独立 halo/glow/beam 贴图；可见光束由 `Spotlight.propagateBeam()` 生成 `ModBlocks.spotlight_beam` 方块链。
+  - `src/main/java/com/hbm/blocks/machine/SpotlightBeam.java` 通过 `TileEntityData.metadata` 保存入射方向 bit，用于维护光束传播。
 - `src/main/java/com/hbm/blocks/generic/BlockLantern.java`
   - 继承 `BlockDummyable`。
   - 仅 metadata `>= 12` 的主方块创建 `TileEntityLantern`。
@@ -73,3 +77,13 @@
   - `lantern` 放置时需要上方 4 格空间；任意段破坏后整体移除且只掉 1 个主物品。
   - `lamp_demon` 六个面放置时模型方向应对应 1.7.10 metadata 0..5。
   - 生存/创造下 `lamp_demon` 近身应造成高额火焰伤害，远距离按遮挡和距离施加辐射。
+
+## 2026-05-20 渲染库对齐补充
+
+- `LegacyObjTransforms.applySixFaceAttachmentRotation(...)` 已用于复用 `lamp_demon` / `floodlight` 六面贴附旋转。
+- `LegacyUntexturedQuadRenderer` 已用于复用旧版禁用贴图、全亮、彩色透明 quad 的几何渲染。
+- `LegacyLanternBlockEntityRenderer` 已用公共无贴图全亮几何渲染暖色 `Light` 部分。
+- `LegacyDemonLampBlockEntityRenderer` 已用公共六面贴附旋转和公共无贴图全亮几何渲染蓝色 aura。
+- `LegacyLightBlockEntity` 已补齐 floodlight 旧状态字段 `rotation`、`power`、`delay`、`isOn` 的 NBT 与客户端同步契约。
+- `LegacyLightBlockEntityRenderer` 已按旧 `RenderFloodlight` 复刻 `Lamps` part 的视觉分支：`isOn` 时 fullbright，未开启时 `0x404040` 灰色。
+- 暂缓：floodlight 的能量接收、每 tick 消耗 100 HE、15 条 `floodlight_beam` 投射与清理逻辑尚未迁移，应在能量网络/光束方块逻辑批次继续。

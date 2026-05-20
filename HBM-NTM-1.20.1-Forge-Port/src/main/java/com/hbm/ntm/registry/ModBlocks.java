@@ -14,6 +14,7 @@ import com.hbm.ntm.item.TrinketBlockItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -45,6 +46,14 @@ public final class ModBlocks {
     // Legacy 1.7.10 blockTab entries used as an early chunk-radiation test bed.
     public static final RegistryObject<Block> WASTE_EARTH = wasteEarth("waste_earth", false, 5.0F);
     public static final RegistryObject<Block> WASTE_MYCELIUM = wasteEarth("waste_mycelium", true, 15.0F);
+    public static final RegistryObject<Block> WASTE_LEAVES = registerBlockWithItem("waste_leaves", () -> new LeavesBlock(BlockBehaviour.Properties.of()
+            .mapColor(MapColor.PLANT)
+            .strength(0.1F)
+            .sound(SoundType.GRASS)
+            .noOcclusion()
+            .isValidSpawn((state, level, pos, type) -> false)
+            .isSuffocating((state, level, pos) -> false)
+            .isViewBlocking((state, level, pos) -> false)));
 
     // Legacy 1.7.10 nuclear device IDs. These are model-only placeholders for now.
     public static final RegistryObject<Block> NUKE_GADGET = nonOccludingMachine("nuke_gadget");
@@ -293,7 +302,7 @@ public final class ModBlocks {
     );
 
     public static final List<RegistryObject<Block>> BLOCK_TAB_BLOCKS = Stream.concat(
-            Stream.of(WASTE_EARTH, WASTE_MYCELIUM),
+            Stream.of(WASTE_EARTH, WASTE_MYCELIUM, WASTE_LEAVES),
             EXTRA_BLOCK_TAB_BLOCKS.stream()).toList();
 
     public static final List<RegistryObject<Block>> NUKE_TAB_BLOCKS = List.of(

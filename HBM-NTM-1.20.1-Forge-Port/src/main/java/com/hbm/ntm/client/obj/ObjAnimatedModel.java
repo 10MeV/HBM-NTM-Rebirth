@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public final class ObjAnimatedModel {
+public final class ObjAnimatedModel implements LegacyObjModel {
     private final Map<String, ObjModelPart> parts = new LinkedHashMap<>();
 
     public ObjAnimatedModel part(String name, ObjModelPart part) {
@@ -15,12 +15,14 @@ public final class ObjAnimatedModel {
         return this;
     }
 
+    @Override
     public void renderAll(ObjRenderContext context) {
         for (ObjModelPart part : parts.values()) {
             part.render(context);
         }
     }
 
+    @Override
     public void renderPart(String name, ObjRenderContext context) {
         ObjModelPart part = parts.get(normalize(name));
         if (part != null) {
@@ -28,12 +30,14 @@ public final class ObjAnimatedModel {
         }
     }
 
+    @Override
     public void renderOnly(ObjRenderContext context, String... names) {
         for (String name : names) {
             renderPart(name, context);
         }
     }
 
+    @Override
     public void renderAllExcept(ObjRenderContext context, String... excludedNames) {
         List<String> excluded = Arrays.stream(excludedNames).map(ObjAnimatedModel::normalize).toList();
         for (Map.Entry<String, ObjModelPart> entry : parts.entrySet()) {
@@ -43,6 +47,7 @@ public final class ObjAnimatedModel {
         }
     }
 
+    @Override
     public List<String> getPartNames() {
         return Collections.unmodifiableList(parts.keySet().stream().toList());
     }

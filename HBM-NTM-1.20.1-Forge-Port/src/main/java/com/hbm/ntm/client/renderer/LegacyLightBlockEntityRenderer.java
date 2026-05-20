@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyDirectionalShapeBlock;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
+import com.hbm.ntm.client.obj.LegacyObjTransforms;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.ObjModelPart;
 import com.hbm.ntm.client.obj.ObjRenderContext;
@@ -46,8 +47,8 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
                 0.5D - face.getStepX() * 0.5D,
                 0.5D - face.getStepY() * 0.5D,
                 0.5D - face.getStepZ() * 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(yaw(face)));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(pitch(face)));
+        poseStack.mulPose(Axis.YP.rotationDegrees(LegacyObjTransforms.yawDegrees(face)));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(-LegacyObjTransforms.pitchDegrees(face)));
         model.render(new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
         poseStack.popPose();
     }
@@ -80,27 +81,12 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         poseStack.translate(0.0D, -0.5D, 0.0D);
         ObjRenderContext angledContext = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
         ObjModelLibrary.FLOODLIGHT_LIGHTS.render(angledContext);
-        ObjModelLibrary.FLOODLIGHT_LAMPS.render(angledContext);
+        ObjModelLibrary.FLOODLIGHT_LAMPS.render(blockEntity.isOn()
+                ? angledContext.fullBright()
+                : angledContext.withColor(0x404040));
         poseStack.popPose();
 
         poseStack.popPose();
-    }
-
-    private static float yaw(Direction direction) {
-        return switch (direction) {
-            case NORTH -> 90.0F;
-            case SOUTH -> -90.0F;
-            case WEST -> 180.0F;
-            default -> 0.0F;
-        };
-    }
-
-    private static float pitch(Direction direction) {
-        return switch (direction) {
-            case UP -> 90.0F;
-            case DOWN -> -90.0F;
-            default -> 0.0F;
-        };
     }
 
     private static void applyFloodlightBaseRotation(PoseStack poseStack, Direction face) {

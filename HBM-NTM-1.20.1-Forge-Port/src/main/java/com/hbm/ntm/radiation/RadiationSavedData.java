@@ -91,9 +91,15 @@ public class RadiationSavedData extends SavedData {
                     float percent = type == 0 ? 0.6F : type == 1 ? 0.075F : 0.025F;
                     ChunkPos target = new ChunkPos(origin.x + dx, origin.z + dz);
                     float spread = value * percent;
-                    float decayed = Math.max(spread * 0.99F - 0.05F, 0.0F);
-                    if (decayed > 0.0F) {
-                        next.merge(target.toLong(), decayed, Float::sum);
+                    float nextValue;
+                    if (previous.containsKey(target.toLong())) {
+                        float current = next.getOrDefault(target.toLong(), 0.0F);
+                        nextValue = Math.max((current + spread) * 0.99F - 0.05F, 0.0F);
+                    } else {
+                        nextValue = spread;
+                    }
+                    if (nextValue > 0.0F) {
+                        next.put(target.toLong(), nextValue);
                     }
                 }
             }
