@@ -45,6 +45,7 @@ public final class HazardRegistry {
         register(ModBlocks.NUKE_FLEIJA.get().asItem(), HazardType.RADIATION, RadiationConstants.SA326);
         register(ModBlocks.NUKE_SOLINIUM.get().asItem(), HazardType.RADIATION, RadiationConstants.SA326 * 8.0F);
         register(ModBlocks.NUKE_FSTBMB.get().asItem(), HazardType.DIGAMMA, 0.01F);
+        registerBlockByName("lamp_demon", HazardType.RADIATION, 100_000.0F);
     }
 
     private static void registerRadioactiveParts() {

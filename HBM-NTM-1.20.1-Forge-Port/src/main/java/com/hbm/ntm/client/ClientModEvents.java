@@ -3,6 +3,7 @@ package com.hbm.ntm.client;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.renderer.BasicMachineRenderer;
+import com.hbm.ntm.client.renderer.LegacyDemonLampBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.LegacyLightBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
 import com.hbm.ntm.client.screen.BasicMachineScreen;
@@ -28,6 +29,7 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.BASIC_MACHINE.get(), BasicMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.TRINKET.get(), TrinketBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_LIGHT.get(), LegacyLightBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_DEMON_LAMP.get(), LegacyDemonLampBlockEntityRenderer::new);
     }
 
     @SubscribeEvent

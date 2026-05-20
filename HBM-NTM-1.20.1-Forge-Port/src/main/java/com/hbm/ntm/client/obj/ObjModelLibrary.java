@@ -37,6 +37,9 @@ public final class ObjModelLibrary {
     public static final ObjModelPart FLOODLIGHT_LAMPS = blockCenteredPart("legacy/floodlight_lamps_render")
             .direct()
             .withOrigin(ObjPartTransform.IDENTITY);
+    public static final ObjModelPart DEMON_LAMP = blockCenteredPart("lamp_demon")
+            .direct()
+            .withOrigin(ObjPartTransform.IDENTITY);
 
     public static ObjModelPart blockPart(String name) {
         return new ObjModelPart(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name), net.minecraft.client.renderer.RenderType.cutout());

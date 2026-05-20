@@ -4,7 +4,9 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.DeconBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyComplexShapeBlock;
+import com.hbm.ntm.block.LegacyDemonLampBlock;
 import com.hbm.ntm.block.MachineBlockEntityBlock;
+import com.hbm.ntm.block.LegacyLanternBlock;
 import com.hbm.ntm.block.RadioactiveWasteEarthBlock;
 import com.hbm.ntm.block.TrinketBlock;
 import com.hbm.ntm.block.TrinketVariant;
@@ -378,8 +380,8 @@ public final class ModBlocks {
 
     private static RegistryObject<Block> simpleBlockResourceBlock(String name, String textureName) {
         return registerBlockWithItem(name, () -> switch (name) {
-            case "lamp_demon" -> LegacyComplexShapeBlock.demonLamp(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15));
-            case "lantern" -> LegacyComplexShapeBlock.lantern(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15));
+            case "lamp_demon" -> new LegacyDemonLampBlock(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15));
+            case "lantern" -> new LegacyLanternBlock(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15));
             case "spotlight_incandescent" -> LegacyComplexShapeBlock.spotlightIncandescent(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15));
             case "spotlight_fluoro" -> LegacyComplexShapeBlock.spotlightFluoro(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15));
             case "spotlight_halogen" -> LegacyComplexShapeBlock.spotlightHalogen(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15));

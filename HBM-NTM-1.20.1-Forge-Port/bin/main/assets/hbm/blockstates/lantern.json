@@ -1,5 +1,9 @@
 ﻿{
   "variants": {
-    "": { "model": "hbm:block/lantern" }
+    "segment=0": { "model": "hbm:block/lantern" },
+    "segment=1": { "model": "hbm:block/empty" },
+    "segment=2": { "model": "hbm:block/empty" },
+    "segment=3": { "model": "hbm:block/empty" },
+    "segment=4": { "model": "hbm:block/empty" }
   }
 }

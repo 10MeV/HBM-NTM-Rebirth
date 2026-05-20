@@ -3,6 +3,7 @@ package com.hbm.ntm.registry;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
+import com.hbm.ntm.blockentity.LegacyDemonLampBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -39,6 +40,12 @@ public final class ModBlockEntities {
                             ModBlocks.legacyBlock("spotlight_fluoro").get(),
                             ModBlocks.legacyBlock("spotlight_halogen").get(),
                             ModBlocks.legacyBlock("floodlight").get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LegacyDemonLampBlockEntity>> LEGACY_DEMON_LAMP =
+            BLOCK_ENTITIES.register("legacy_demon_lamp", () ->
+                    BlockEntityType.Builder.of(
+                            LegacyDemonLampBlockEntity::new,
+                            ModBlocks.legacyBlock("lamp_demon").get()).build(null));
 
     public static void register(IEventBus modBus) {
         BLOCK_ENTITIES.register(modBus);

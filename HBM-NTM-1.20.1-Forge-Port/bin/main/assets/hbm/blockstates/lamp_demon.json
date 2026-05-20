@@ -1,5 +1,10 @@
 ﻿{
   "variants": {
-    "": { "model": "hbm:block/lamp_demon" }
+    "face=down": { "model": "hbm:block/empty" },
+    "face=up": { "model": "hbm:block/empty" },
+    "face=north": { "model": "hbm:block/empty" },
+    "face=south": { "model": "hbm:block/empty" },
+    "face=west": { "model": "hbm:block/empty" },
+    "face=east": { "model": "hbm:block/empty" }
   }
 }
