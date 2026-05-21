@@ -7,9 +7,11 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModCreativeTabs;
 import com.hbm.ntm.registry.ModEffects;
+import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModFluids;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.registry.ModParticleTypes;
 import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.radiation.HazmatRegistry;
@@ -40,6 +42,8 @@ public class HbmNtm {
         ModRecipes.register(modBus);
         ModSounds.register(modBus);
         ModEffects.register(modBus);
+        ModEntityTypes.register(modBus);
+        ModParticleTypes.PARTICLE_TYPES.register(modBus);
         ModCreativeTabs.register(modBus);
 
         modBus.addListener(this::commonSetup);

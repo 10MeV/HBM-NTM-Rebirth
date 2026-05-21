@@ -69,6 +69,10 @@ public class RadiationSavedData extends SavedData {
         setDirty();
     }
 
+    public void loadChunk(ChunkPos pos, float radiation) {
+        chunkRadiation.put(pos.toLong(), clamp(radiation));
+    }
+
     public void clear() {
         if (!chunkRadiation.isEmpty()) {
             chunkRadiation.clear();
@@ -102,13 +106,14 @@ public class RadiationSavedData extends SavedData {
         return entries;
     }
 
-    public void updateDiffusion(ServerLevel level) {
+    public List<ChunkPos> updateDiffusion(ServerLevel level, float fogThreshold) {
         if (chunkRadiation.isEmpty()) {
-            return;
+            return List.of();
         }
 
         Map<Long, Float> previous = new HashMap<>(chunkRadiation);
         Map<Long, Float> next = new HashMap<>();
+        List<ChunkPos> fogCandidates = new ArrayList<>();
 
         for (Map.Entry<Long, Float> entry : previous.entrySet()) {
             float value = entry.getValue();
@@ -130,16 +135,21 @@ public class RadiationSavedData extends SavedData {
                         continue;
                     }
 
+                    long targetKey = target.toLong();
+                    boolean existed = previous.containsKey(targetKey);
                     float spread = value * percent;
                     float nextValue;
-                    if (previous.containsKey(target.toLong())) {
-                        float current = next.getOrDefault(target.toLong(), 0.0F);
+                    if (existed) {
+                        float current = next.getOrDefault(targetKey, 0.0F);
                         nextValue = Math.max((current + spread) * 0.99F - 0.05F, 0.0F);
                     } else {
                         nextValue = spread;
                     }
-                    if (nextValue > 0.0F) {
-                        next.put(target.toLong(), nextValue);
+                    if (nextValue > 0.0F || existed) {
+                        next.put(targetKey, nextValue);
+                    }
+                    if (nextValue > fogThreshold) {
+                        fogCandidates.add(origin);
                     }
                 }
             }
@@ -148,11 +158,10 @@ public class RadiationSavedData extends SavedData {
         chunkRadiation.clear();
         for (Map.Entry<Long, Float> entry : next.entrySet()) {
             float radiation = clamp(entry.getValue());
-            if (radiation > 0.0F) {
-                chunkRadiation.put(entry.getKey(), radiation);
-            }
+            chunkRadiation.put(entry.getKey(), radiation);
         }
         setDirty();
+        return fogCandidates;
     }
 
     public Set<Map.Entry<Long, Float>> entries() {

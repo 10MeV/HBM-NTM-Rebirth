@@ -534,6 +534,82 @@ Verification:
 
 - 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
+## 2026-05-21 Gas Meltdown Entity Collision Pass
+
+Legacy source:
+
+- `com.hbm.blocks.generic.BlockGasMeltdown#onEntityCollidedWithBlock`
+  - For every colliding `EntityLivingBase`, calls `ContaminationUtil.contaminate(entity, HazardType.RADIATION, ContaminationType.CREATIVE, 0.5F)`.
+  - Adds legacy radiation potion for `60 * 20` ticks with amplifier `2`.
+  - If `ArmorRegistry.hasAllProtection(entity, 3, HazardClass.PARTICLE_FINE)` succeeds, damages the gas-mask filter by `1`.
+  - Otherwise increments `HbmLivingProps` asbestos by `5`.
+- `BlockGasMeltdown#updateTick`
+  - If sky is visible, increments chunk radiation by `5`.
+  - Has a `1/350` chance to remove itself.
+  - Can spread `gas_radon_dense` to a random adjacent air block before running the base gas spread tick.
+
+Completed in the 1.20.1 port:
+
+- Added `LegacyGasMeltdownBlock#entityInside` so modern `gas_meltdown` now applies the old contact behavior:
+  - `HazardType.RADIATION + ContaminationType.CREATIVE`, amount `0.5F`.
+  - radiation poisoning for `60 * 20` ticks, amplifier `2`.
+  - asbestos `+5` when the entity lacks fine-particle protection.
+- Added `ArmorUtil.hasFineParticleProtection` as the current bridge for old `HazardClass.PARTICLE_FINE` level-3 checks. It maps to the existing full Haz2-level suit check until the old armor/filter registry is fully migrated.
+- `LegacyGasMeltdownBlock` now extends the migrated `LegacyGasBlock` base, so it uses the old gas movement contract:
+  - first direction: 50% up, otherwise down
+  - second direction: random horizontal
+  - delay: 2 ticks after the initial 10-tick schedule
+- Restored the old `1/7` adjacent-air `gas_radon_dense` spread branch before chunk radiation and dissipation checks.
+
+Still incomplete:
+
+- Old `ArmorUtil.damageGasMaskFilter(entityLiving, 1)` is not migrated yet because the modern port does not have the old gas-mask filter durability path wired in.
+- `gas_meltdown` still uses the temporary modern particle in `animateTick`; the old visual particle was `townaura`, while high-radiation yellow fog remains part of the chunk-radiation client/render pass rather than this block collision pass.
+
+Verification:
+
+- 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- 2026-05-21 after adding `LegacyGasBlock`/radon support, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-21 Chunk Radiation Diffusion/Fog Recheck
+
+User-visible issue:
+
+- Chunk radiation still appeared to spread too far.
+- Far from source blocks, some chunks had unexpectedly high values while adjacent chunks were low.
+- Yellow radiation fog still did not appear.
+
+Legacy source recheck:
+
+- `ChunkRadiationHandlerSimple#receiveChunkLoad` always inserts the loaded chunk into the runtime map with `event.getData().getFloat("hfr_simple_radiation")`, including `0F`.
+- In `updateSystem`, a target chunk that exists in the previous runtime map follows the damped merge path:
+  - `(current + spread) * 0.99F - 0.05F`
+- A target chunk that did not exist in the previous runtime map follows the raw spread path:
+  - `source * percent`
+- Therefore loaded zero-radiation chunks matter: they act as old-style damping boundaries for spread and reduce edge spikes.
+- Old fog is not a single random entry per second. It is checked inside the 3x3 diffusion loop for each new radiation cell whose post-merge value exceeds `fogRad`, using `rand.nextInt(fogCh) == 0`.
+- The old fog spawn chunk is the source `coord`, not necessarily the target `newCoord`, and the y coordinate is `world.getHeightValue(x, z) + rand.nextInt(5)`.
+
+Completed in the 1.20.1 port:
+
+- `ChunkRadiationManager#loadLegacyChunkRadiation` now loads chunks with `0F` as well as positive radiation, matching old `receiveChunkLoad`.
+- `CommonForgeEvents#onChunkDataLoad` now calls the chunk radiation load hook for every server chunk load; missing `hfr_simple_radiation` naturally reads as `0F`, matching old `NBTTagCompound#getFloat`.
+- `RadiationSavedData#loadChunk` stores the loaded chunk value in the runtime map without forcing positive-only persistence.
+- `RadiationSavedData#updateDiffusion` now keeps zero-valued loaded entries in the runtime map for old `containsKey` damping semantics.
+- The save path still omits `<= 0F` entries, so zero runtime entries do not bloat persistent saved data.
+- Fog candidates are now collected during the diffusion 3x3 loop, matching the old `rad > fogRad` check location and chance frequency.
+- `ChunkRadiationManager` now emits the custom `hbm:radiation_fog` particle instead of vanilla dust/smoke.
+
+Still incomplete:
+
+- The simple handler's old unbounded raw spread still exists by design; the loaded-chunk runtime boundary and zero-entry damping now better match 1.7.10, but strict long-distance behavior should be verified in-game with fixed source chunks and chunk loading ranges.
+- The custom particle is a modern approximation using the old texture, color, alpha curve, scale, and lifetime; it does not recreate the exact old GL loop that rendered 25 quads per particle.
+
+Verification:
+
+- 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- 2026-05-21 after aligning chunk-load zero entries, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
 ## 2026-05-21 Chunk Radiation Lag and Fog Repair
 
 User-visible issue:
@@ -600,6 +676,26 @@ Legacy source:
 - `com.hbm.blocks.gas.BlockGasMeltdown`
   - scheduled gas tick; if the block can see sky, writes `5.0F`.
   - can spread dense radon gas and may dissipate.
+- `com.hbm.blocks.gas.BlockGasBase`
+  - invisible, non-colliding, replaceable gas block.
+  - initial schedule delay `10`, movement delay `2`.
+  - tries first movement direction, then second movement direction; if both fail, reschedules itself.
+- `com.hbm.blocks.gas.BlockGasRadon`
+  - contact: if no full particle-fine protection, `RAD_BYPASS` radiation `0.05F` and asbestos `+1`.
+  - first direction: 1/5 up, otherwise down; second direction random horizontal.
+  - 1/50 chance to dissipate.
+- `com.hbm.blocks.gas.BlockGasRadonDense`
+  - contact: if no full particle-fine protection, `CREATIVE` radiation `0.5F`, radiation potion `15 * 20` ticks amplifier `0`, and asbestos `+5`.
+  - first direction: 1/5 up, otherwise down; second direction random horizontal.
+  - 1/20 chance to convert grass below to `waste_earth`.
+  - 1/30 chance to dissipate and place `fallout` if it can survive.
+- `com.hbm.blocks.gas.BlockGasRadonTomb`
+  - contact: removes `radaway` and `radx`, then applies `RAD_BYPASS` radiation `0.5F` and asbestos `+10`.
+  - first direction: 1/3 up, otherwise down; second direction random horizontal.
+  - 1/10 terrain decay check below the gas:
+    - grass -> dirt metadata 1 with 1/5 chance, otherwise `waste_earth`
+    - non-normal grass/leaves/plants/vine materials -> air
+  - 1/600 chance to dissipate.
 - `com.hbm.blocks.generic.BlockAbsorber`
   - schedules every 10 ticks.
   - metadata tiers absorb chunk radiation by `2.5`, `10`, `100`, `10000`.
@@ -618,21 +714,29 @@ Completed in the 1.20.1 port:
   - `LegacyRadiationBarrelBlock`
   - `LegacyGasMeltdownBlock`
   - `LegacyRadAbsorberBlock`
+- Added the minimum gas/radon library bridge:
+  - `LegacyGasBlock` for old invisible, replaceable, non-colliding gas movement.
+  - `LegacyGasRadonBlock` for `gas_radon`, `gas_radon_dense`, and `gas_radon_tomb`.
+- Registered `gas_radon`, `gas_radon_dense`, and `gas_radon_tomb`; copied their legacy textures, added datagen model/blockstate/item coverage, and marked their block loot as no-drop.
+- `gas_meltdown` now uses the shared gas movement bridge and can spawn `gas_radon_dense` like 1.7.10.
 - Copied legacy textures for barrels, absorber tiers, meltdown gas, and sellafield/slaked variants.
 - Added datagen coverage for blockstates, models, item models, loot tables, language entries, and tags.
 - Continuous chunk radiation/absorption behavior is now covered for all special rows from the generated 1.7.10 source table.
 
 Still incomplete:
 
-- `gas_meltdown` collision contamination/asbestos behavior and dense radon spreading are still deferred until the gas/radon block family is migrated.
 - `yellow_barrel` explosion behavior is deferred until the legacy detonatable/explosion/waste/radon placement paths are migrated.
 - `rad_absorber` higher tiers exist as blockstate/model variants, but creative sub-items and placement metadata for red/green/pink tiers still need a custom BlockItem/data path.
 - `sellafield` uses modern blockstate `level=0..5`; worldgen/source placement for non-zero levels still needs the future sellafield worldgen/ore pass.
+- The ash-glasses-only gas visibility path is still deferred.
+- Old gas-mask filter durability damage is still deferred until the full armor/filter registry is migrated.
 
 Verification:
 
 - 2026-05-21 ran `.\gradlew.bat runData --no-daemon`: passed after switching special cube models to non-facing blockstates.
 - 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- 2026-05-21 after adding `gas_radon`/`gas_radon_dense`, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- 2026-05-21 after adding `gas_radon_tomb`, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
 ## 2026-05-21 1.7.10 Chunk Radiation Block Source Audit
 
@@ -754,7 +858,7 @@ Not aligned / needs correction:
 - Radiation fog is a modern `MYCELIUM` particle bridge. Legacy uses `ParticleRadiationFog` / `radFog` proxy effect with the legacy texture/render path.
 - `FalloutLayerBlock` lacks the old support rule for placement on another fallout block whose metadata low bits equal 7. This does not require eight rendered height models, but it does require a compatibility decision for the metadata/state contract.
 - `RadiatingHazardBlock` is only a partial bridge for old `BlockHazard`. Old `BlockOre` has an independent `rad` field, and falling/radioactive blocks have separate classes. A per-block audit is required before assuming every radioactive block emits the correct chunk amount.
-- `RadioactiveWasteEarthBlock` currently injects/removes a fixed chunk radiation value on placement/removal. Old waste terrain is primarily produced by world radiation/fallout/explosion effects and does not share the same generic scheduled `BlockHazard` ticking contract; this must be marked as a bridge until the exact waste block behavior is audited.
+- `RadioactiveWasteEarthBlock` has now been audited and must not be treated as a chunk-radiation source. Old `WasteEarth` does not call `ChunkRadiationManager`; it is terrain damage output plus local waste-mycelium/entity behavior only.
 - PRISM/3D/NT/Blank radiation handlers, pollution coupling, fallout rain entity, nuke fallout passes, gas/radon fallout placement, waste pearl placement, reactor/machine/fluid radiation emission sources, and Geiger machine integrations are not fully migrated.
 - `/hbm radiation ...` command expansion is modern debug tooling. The old direct command surface is only `ntmrad clear` and `ntmrad set <amount>`; extra subcommands should remain documented as verification helpers, not legacy parity.
 
@@ -845,6 +949,9 @@ Completed in the 1.20.1 port:
 - Added `FalloutLayerBlock#stepOn` to apply the modern radiation effect bridge for 10 minutes at amplifier 0, matching legacy `HbmPotion.radiation`.
 - Added `FalloutLayerBlock#attack` to append `RadiationData.addContamination(player, 1F, 200, 200, false)`, using the contamination-list library from Command Pass 3.
 - Added `fallout` block hazard registration with `RadiationConstants.FALLOUT * RadiationConstants.POWDER_MULTIPLIER * 2.0F`, matching the old block/item multiplier relationship.
+- Added a `layers=1..8` state bridge for the legacy metadata low 3 bits. All values still render with the same fixed 1/8-height model, because 1.7.10 does not use eight visible fallout height models.
+- Tightened fallout support parity: another `fallout` block can support fallout above it only when `layers=8`, matching legacy `(metadata & 7) == 7`.
+- Unsupported fallout now removes itself without drops on neighbor update, matching the old `setBlockToAir` path.
 
 Deferred:
 
@@ -876,6 +983,7 @@ Completed in the 1.20.1 port:
 
 - Removed the modern-only 8-height fallout model variants after source audit showed 1.7.10 does not use them.
 - Restored `FalloutLayerBlock` to a fixed 1/8-height model and collision shape, matching the legacy constructor bounds.
+- Preserved only a metadata/state bridge (`layers=1..8`) for support-rule compatibility; each state maps to the same old thin model.
 - Added `RadiatingHazardBlock`, a modern bridge for legacy `BlockHazard`/radiating `BlockOre` behavior:
   - on placement, schedules a server block tick when the block's own item has a registered `HazardType.RADIATION` level.
   - every 20 ticks, injects `HazardRegistry.getHazardLevel(new ItemStack(block.asItem()), RADIATION) * 0.1F` into `ChunkRadiationManager`.
@@ -892,6 +1000,86 @@ Still incomplete:
 Verification:
 
 - 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-21 Waste Terrain Feedback Audit
+
+User-reported symptom:
+
+- In-game tests still showed effectively unlimited chunk-radiation spread.
+- Far-away chunks could retain uneven high/low radiation, suggesting a self-amplifying source or stale runtime entries rather than just the old 3x3 Simple diffusion.
+
+Legacy source re-check:
+
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple`
+  - Default handler unless `RadiationConfig.enablePRISM=true`.
+  - The 3x3 spread has no strict radius cutoff. New runtime entries receive raw spread, while entries already present in the previous buffer receive `*0.99F - 0.05F`.
+  - `receiveChunkLoad` always inserts the loaded chunk with `hfr_simple_radiation`, including zero.
+  - `receiveChunkUnload` appears to remove with `event.getChunk()` even though the map key is `ChunkCoordIntPair`; this is a legacy bug shape, not a feature to rely on for modern performance.
+- `com.hbm.handler.radiation.ChunkRadiationHandlerPRISM`
+  - Disabled by default.
+  - Has thresholded loaded-chunk spreading (`amount <= 1F` stops) and correct `ChunkCoordIntPair` unload removal.
+- `com.hbm.handler.radiation.ChunkRadiationHandlerNT`
+  - Not selected by the observed default config path.
+  - Uses pocket decay and thresholded connection spreading, so it is not the behavior currently being mirrored.
+- `com.hbm.blocks.generic.WasteEarth`
+  - Does not import or call `ChunkRadiationManager`.
+  - `waste_earth` / `waste_mycelium` are terrain damage output, not continuous chunk-radiation sources.
+  - `waste_mycelium` spread is gated by `GeneralConfig.enableMycelium`, default `false`.
+  - `waste_earth` and `waste_mycelium` decay to dirt when `RadiationConfig.cleanupDeadDirt=true` or the block above is too dark/opaque.
+
+Root cause in the 1.20.1 port:
+
+- `RadioactiveWasteEarthBlock` added modern-only chunk radiation on placement/removal (`waste_earth=5F`, `waste_mycelium=15F`).
+- Because the Simple terrain mutation turns grass into `waste_earth`, the modern port created a feedback loop: high chunk radiation killed grass, the new waste block injected more chunk radiation, then that new radiation spread and killed more terrain.
+- This feedback loop is not present in 1.7.10 and can make the spread appear unlimited even beyond the old Simple handler's already unbounded low-value diffusion tail.
+
+Completed:
+
+- Removed chunk-radiation placement/removal injection from `RadioactiveWasteEarthBlock`.
+- Changed `ModBlocks.WASTE_EARTH` and `ModBlocks.WASTE_MYCELIUM` registration to no longer carry artificial chunk-radiation values.
+- Added config mirrors:
+  - `radiation.cleanupDeadDirt`, default `false`, for legacy `RADWORLD_03_regrow`.
+  - `radiation.enableMyceliumSpread`, default `false`, for legacy `GeneralConfig 1.01_enableMyceliumSpread`.
+- Gated `waste_mycelium` spreading behind `enableMyceliumSpread`.
+- Restored old decay-to-dirt behavior for waste terrain under the cleanup/dark-opaque condition.
+
+Verification:
+
+- 2026-05-21 attempted `.\gradlew.bat compileJava processResources --no-daemon`.
+- Compile reached `:compileJava` and failed on an unrelated existing missing class: `com.hbm.ntm.menu.MachineBatteryMenu` referenced by `MachineBatteryBlockEntity`.
+- No compile error was reported from the waste-terrain/radiation files changed in this pass.
+
+## 2026-05-21 Special Source Metadata Variant Pass
+
+Legacy source:
+
+- `com.hbm.blocks.generic.BlockAbsorber`
+  - Same block id `rad_absorber` uses metadata `0..3`.
+  - Tiers are `BASE`, `RED`, `GREEN`, `PINK`.
+  - Every 10 ticks it calls `ChunkRadiationManager.proxy.decrementRad` with `2.5F`, `10F`, `100F`, or `10000F`.
+- `com.hbm.blocks.generic.BlockSellafield`
+  - Same block id `sellafield` uses metadata `0..5`.
+  - Every random tick it calls `ChunkRadiationManager.proxy.incrementRad(world, x, y, z, 0.5F * (meta + 1))`.
+  - Randomly decays metadata downward and eventually becomes `sellafield_slaked`.
+
+Completed in the 1.20.1 port:
+
+- Added `LegacyStateBlockItem`, a small legacy metadata bridge for block items whose modern blockstate uses an `IntegerProperty`.
+- Routed `rad_absorber` through `LegacyStateBlockItem`:
+  - creative tab now exposes all 4 legacy tiers.
+  - placement writes the selected tier into `LegacyRadAbsorberBlock.TIER`.
+  - existing block tick behavior then absorbs the correct old amount.
+- Routed `sellafield` through `LegacyStateBlockItem`:
+  - creative tab now exposes all 6 legacy levels.
+  - placement writes the selected level into `LegacySellafieldBlock.LEVEL`.
+  - existing random tick behavior then emits `0.5F * (level + 1)` and decays like the old class.
+- Added English and Chinese language keys for the new item variants.
+
+Verification:
+
+- 2026-05-21 attempted `.\gradlew.bat compileJava processResources --no-daemon`.
+- Compile reached `:compileJava` and failed on an unrelated existing datagen/API mismatch in `HbmItemModelProvider` (`BuiltinEntityModelFile` / `BlocklessModelBuilder` generic signatures).
+- No compile error was reported from `LegacyStateBlockItem`, `ModBlocks`, or `ModCreativeTabs`.
 
 ## 2026-05-21 Radiation Command Pass 2
 
@@ -954,12 +1142,23 @@ Completed in the 1.20.1 port:
   - `/hbm radiation contamination clear <targets>`
 - Commands route through `RadiationData` instead of mutating the entity NBT directly.
 - Added boolean suggestions for `ignoreArmor` (`false`, `true`) while accepting `true/yes/1` as truthy input.
+- `PlayerRadiationSyncPacket` now serializes the active contamination list after the long-term integer fields, matching the old `HbmLivingProps#serialize` packet shape:
+  - entry count
+  - `maxRad`
+  - `maxTime`
+  - `time`
+  - `ignoreArmor`
+- `ClientRadiationData` now keeps an immutable client-side contamination snapshot and exposes:
+  - `getContaminationEffects`
+  - `getContaminationCount`
+  - `ContaminationEffectData#currentRadiation`
 
 Still incomplete:
 
 - Actual gameplay sources for individual contamination-list entries still need follow-up migration where the source blocks/items/entities are ported. Existing obvious legacy source: `BlockFallout` adds `new ContaminationEffect(1F, 200, false)`.
-- The sync packet still does not serialize the contamination list itself; current command output is server-side debug feedback, while gameplay ticking reads the server NBT.
+- No HUD/overlay currently renders the contamination list; this pass only restores the old data sync contract for later UI and gameplay consumers.
 
 Verification:
 
 - 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- 2026-05-21 after adding contamination-list sync, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.

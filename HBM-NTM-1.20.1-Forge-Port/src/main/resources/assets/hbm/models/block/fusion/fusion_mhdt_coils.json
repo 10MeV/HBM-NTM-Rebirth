@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/fusion/fusion_mhdt.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "parts": { "visibility": {
+      "Coils": true,
+      "Turbine": false
+  } },
+  "textures": { "particle": "hbm:block/fusion/mhdt", "default": "hbm:block/fusion/mhdt" }
+}

@@ -36,6 +36,10 @@ public final class ArmorUtil {
         return getWornPieces(entity) == 4 && HazmatRegistry.getResistance(entity) >= 1.7F;
     }
 
+    public static boolean hasFineParticleProtection(LivingEntity entity) {
+        return checkForHaz2(entity);
+    }
+
     public static boolean hasBacteriaProtection(LivingEntity entity) {
         ItemStack helmet = getHelmet(entity);
         return !helmet.isEmpty()

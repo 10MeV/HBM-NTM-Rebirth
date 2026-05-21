@@ -4,8 +4,10 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.command.ModCommands;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
+import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
@@ -20,7 +22,6 @@ import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -83,6 +84,7 @@ public final class CommonForgeEvents {
             HbmEnergyNodespace.tick(level);
             HbmFluidNodespace.tick(level);
         }
+        ThreadedPacketDispatcher.flush();
     }
 
     @SubscribeEvent
@@ -193,14 +195,14 @@ public final class CommonForgeEvents {
         float hydroactive = HazardRegistry.getHazardLevel(stack, HazardType.HYDROACTIVE);
         if (hydroactive > 0.0F && itemEntity.isInWaterOrRain() && itemEntity.level() instanceof ServerLevel level) {
             itemEntity.discard();
-            level.explode(null, itemEntity.getX(), itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(), hydroactive, Level.ExplosionInteraction.MOB);
+            WeaponExplosionUtil.explodeStandard(level, itemEntity.getX(), itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(), hydroactive, itemEntity, true, false);
             return;
         }
 
         float explosive = HazardRegistry.getHazardLevel(stack, HazardType.EXPLOSIVE);
         if (explosive > 0.0F && itemEntity.isOnFire() && itemEntity.level() instanceof ServerLevel level) {
             itemEntity.discard();
-            level.explode(null, itemEntity.getX(), itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(), explosive, Level.ExplosionInteraction.MOB);
+            WeaponExplosionUtil.explodeStandard(level, itemEntity.getX(), itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(), explosive, itemEntity, true, true);
         }
     }
 
@@ -223,10 +225,10 @@ public final class CommonForgeEvents {
             player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, (int) Math.ceil(level), 0));
         } else if (type == HazardType.HYDROACTIVE && player.isInWaterOrRain() && player.level() instanceof ServerLevel levelAccessor) {
             stack.shrink(stack.getCount());
-            levelAccessor.explode(null, player.getX(), player.getEyeY(), player.getZ(), level, Level.ExplosionInteraction.MOB);
+            WeaponExplosionUtil.explodeStandard(levelAccessor, player.getX(), player.getEyeY(), player.getZ(), level, player, true, false);
         } else if (type == HazardType.EXPLOSIVE && player.isOnFire() && player.level() instanceof ServerLevel levelAccessor) {
             stack.shrink(stack.getCount());
-            levelAccessor.explode(null, player.getX(), player.getEyeY(), player.getZ(), level, Level.ExplosionInteraction.MOB);
+            WeaponExplosionUtil.explodeStandard(levelAccessor, player.getX(), player.getEyeY(), player.getZ(), level, player, true, true);
         }
     }
 
@@ -255,7 +257,8 @@ public final class CommonForgeEvents {
                 RadiationData.getFire(player),
                 RadiationData.getPhosphorus(player),
                 RadiationData.getBalefire(player),
-                RadiationData.getBlackFire(player)), player);
+                RadiationData.getBlackFire(player),
+                RadiationData.getContaminationEffects(player)), player);
     }
 
     @SubscribeEvent
@@ -266,9 +269,9 @@ public final class CommonForgeEvents {
 
     @SubscribeEvent
     public static void onChunkDataLoad(ChunkDataEvent.Load event) {
-        if (event.getChunk().getWorldForge() instanceof ServerLevel level
-                && event.getData().contains(ChunkRadiationManager.LEGACY_CHUNK_NBT_KEY, Tag.TAG_FLOAT)) {
-            ChunkRadiationManager.loadLegacyChunkRadiation(level, event.getChunk().getPos(), event.getData().getFloat(ChunkRadiationManager.LEGACY_CHUNK_NBT_KEY));
+        if (event.getChunk().getWorldForge() instanceof ServerLevel level) {
+            ChunkRadiationManager.loadLegacyChunkRadiation(level, event.getChunk().getPos(),
+                    event.getData().getFloat(ChunkRadiationManager.LEGACY_CHUNK_NBT_KEY));
         }
     }
 
@@ -597,7 +600,7 @@ public final class CommonForgeEvents {
         }
         if (entity.isOnFire() && entity.level() instanceof ServerLevel level) {
             RadiationData.setOil(entity, 0);
-            level.explode(null, entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ(), 3.0F, Level.ExplosionInteraction.MOB);
+            WeaponExplosionUtil.explodeStandard(level, entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ(), 3.0F, entity, true, true);
             return;
         }
         RadiationData.setOil(entity, oil - 1);

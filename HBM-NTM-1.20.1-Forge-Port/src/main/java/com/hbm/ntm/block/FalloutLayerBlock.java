@@ -14,17 +14,22 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class FalloutLayerBlock extends Block {
+    public static final IntegerProperty LAYERS = BlockStateProperties.LAYERS;
     private static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 2.0D, 16.0D);
 
     public FalloutLayerBlock(Properties properties) {
         super(properties);
+        registerDefaultState(stateDefinition.any().setValue(LAYERS, 1));
     }
 
     @Override
@@ -40,15 +45,26 @@ public class FalloutLayerBlock extends Block {
                 && !below.is(Blocks.PACKED_ICE)
                 && ((below.isSolidRender(level, belowPos) && below.blocksMotion())
                 || below.is(BlockTags.LEAVES)
-                || below.getBlock() instanceof FalloutLayerBlock);
+                || isFullFalloutLayer(below));
     }
 
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         super.neighborChanged(state, level, pos, block, fromPos, isMoving);
         if (!state.canSurvive(level, pos)) {
-            level.destroyBlock(pos, true);
+            level.removeBlock(pos, false);
         }
+    }
+
+    private static boolean isFullFalloutLayer(BlockState state) {
+        return state.getBlock() instanceof FalloutLayerBlock
+                && state.hasProperty(LAYERS)
+                && state.getValue(LAYERS) == 8;
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LAYERS);
     }
 
     @Override

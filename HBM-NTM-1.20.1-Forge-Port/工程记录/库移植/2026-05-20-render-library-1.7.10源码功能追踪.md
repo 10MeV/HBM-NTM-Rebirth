@@ -154,6 +154,19 @@
   - 当前 Forge OBJ JSON 的贴图是静态模型贴图；旧 `ItemRenderBatteryPack` 是按 stack/meta 动态绑定 12 张贴图。后续需要在 `LegacyItemRendererBridge` 下补一个支持按 `ItemStack` 选择纹理/模型的电池包 renderer，或建立 12 个具体 3D item model 入口。
   - 迁移 `RenderBatterySocket` 时应直接使用 `ObjMachineModels.BATTERY_SOCKET`，不要在 renderer 中重新拼 `battery.obj` 路径。
 
+### 2026-05-21 更新：battery_pack 物品动态贴图 renderer
+
+- 已补 `src/main/java/com/hbm/ntm/client/renderer/BatteryPackItemRenderer.java`：
+  - 现代 `HbmBatteryPackItem#initializeClient` 通过 `LegacyItemRendererBridge` 挂入 BEWLR。
+  - 复用 `battery.obj` 拆出的 `battery_pack_battery` / `battery_pack_capacitor` Forge OBJ part 模型。
+  - 按 `ItemStack` 的 `HbmBatteryPackItem#legacyTextureName` 动态绑定 `textures/block/machines/<name>.png`，对齐旧 `EnumBatteryPack#texture`。
+  - GUI 场景保留旧 `ItemRenderBatteryPack#renderInventory` 的核心比例：物品栏使用 5 倍 OBJ 缩放。
+- DataGen 已将 12 个电池/电容 item model 改为 `builtin/entity`，让自定义 renderer 承担显示。
+- 仍需实机截图验证：
+  - GUI 中是否居中、是否过大/过小。
+  - 第一/第三人称手持角度是否接近旧版。
+  - 地上掉落物是否可读。
+
 ## 分批对齐记录
 
 ### 第 1 轮
@@ -628,6 +641,64 @@
   - `Wires` 条件显示仍未迁移；后续若要严格复刻旧 TESR，需要为 `nuke_gadget` 建 BER 或找到可靠的 Forge OBJ group 过滤方案，在 fancy graphics 下叠加渲染 `Wires`。
   - 其他核装置仍按第 29 轮状态保留为“资源来源对齐，display/方位待校准”。
 
+### 第 31 轮
+
+- 继续推进渲染库本体，不新增服务端机器逻辑，先批量迁入低耦合 OBJ 资源入口。
+- 新增领域模型库：
+  - `ObjNetworkModels`：`connector`、`connector_super`、`fluid_diode`、`pipe_anchor`、`pylon_large`、`pylon_medium`、`substation`。
+  - `ObjDoorModels`：`silo_hatch`、`silo_hatch_large`、`blast_door_base`、`blast_door_tooth`、`blast_door_slider`、`blast_door_block`。
+- 扩展 `ObjMachineModels` 与 `ObjModelLibrary` facade：
+  - heaters/boilers：`firebox`、`oilburner`、`electric_heater`、`heatex`、`boiler`、`boiler_burst`、`industrial_boiler`。
+  - oil/utility：`derrick`、`pumpjack`、`fracking_tower`、`flare_stack`、`chimney_industrial`。
+  - 动态 part 样例：`hephaestus`、`fensu2`、`fensu`。
+- 资源迁入与对齐：
+  - 旧 OBJ 从 `assets/hbm/models/...` 复制到现代 `assets/hbm/models/block/...`。
+  - 旧贴图从 `textures/models/...` 复制到现代 `textures/block/...`。
+  - 为 network、doors、上述 machines 补 Forge OBJ model JSON 和本地 `.mtl`。
+  - `boiler_burst` 旧 `RenderBoiler` 绑定的是 `ResourceManager.boiler_tex`，现代 `boiler_burst.json` 同样复用 `textures/block/machines/boiler.png`，不创建 1.7.10 不存在的 `boiler_burst.png`。
+  - `heater_heatex` 旧贴图常量是 `textures/models/machines/heater_heatex.png`，现代 `heatex.json` 绑定 `heater_heatex`，不误用另一个 `heatex.png`。
+- 旧 `renderPart(...)` 语义处理：
+  - `firebox` 拆出 `InnerEmpty`、`InnerBurning`、`Door`、`Main` 四个 visibility JSON。
+  - `hephaestus` 拆出 `Rotor`、`Core`、`Main` 三个 visibility JSON。
+  - `fensu2` 拆出 `Wheel`、`Lights`、`Plasma`、`Base` 四个 visibility JSON。
+  - `silo_hatch` / `silo_hatch_large` 拆出 `Hatch`、`Frame` visibility JSON。
+  - 避免把旧 group 名全部映射到整模，防止后续 renderer 调 `renderPart("Main")` 时错误绘制整台模型。
+- 本轮没有迁移：
+  - `RenderConnector`、`RenderPipeAnchor`、`RenderPylon*`、`RenderSubstation` 的动态方向、线缆和变体贴图。
+  - `DoorDecl` / `RenderDoorGeneric` 的门动画、Collada seal door、silo hatch 实际开合。
+  - `RenderFirebox`、`RenderHephaestus`、`RenderBatteryREDD` 的状态驱动动画、发光分件、旋转/缩放。
+  - 炮塔模型库；旧炮塔 renderer 多 part 多贴图，不能用单贴图 Forge OBJ JSON 草率替代。
+- 验证：`.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` 通过。
+
+### 第 32 轮
+
+- 继续推进渲染库资源/入口层，本轮聚焦 1.7.10 `fusion` 模型组，不迁服务端 ITER/融合堆机器逻辑。
+- 1.7.10 事实源：
+  - `ResourceManager` 字段：`fusion_torus`、`fusion_klystron`、`fusion_breeder`、`fusion_collector`、`fusion_boiler`、`fusion_mhdt`、`fusion_coupler`、`fusion_plasma_forge`。
+  - 旧模型路径：`models/fusion/torus.obj`、`klystron.obj`、`breeder.obj`、`collector.obj`、`boiler.obj`、`mhdt.obj`、`coupler.obj`、`plasma_forge.obj`。
+  - 旧贴图路径：`textures/models/fusion/torus.png`、`plasma.png`、`plasma_glow.png`、`plasma_sparkle.png`、`klystron.png`、`klystron_creative.png`、`breeder.png`、`collector.png`、`boiler.png`、`mhdt.png`、`coupler.png`、`plasma_forge.png`。
+  - 旧 renderer：`RenderFusionTorus`、`RenderFusionKlystron`、`RenderFusionKlystronCreative`、`RenderFusionBreeder`、`RenderFusionCollector`、`RenderFusionBoiler`、`RenderFusionMHDT`、`RenderFusionCoupler`、`RenderFusionPlasmaForge`。
+- 新增 `ObjFusionModels`：
+  - `TORUS_PARTS` 保留 `Plasma`、`Bolts4`、`Bolts3`、`Bolts2`、`Bolts1`、`Magnet`、`Torus` group 顺序，并额外提供 `plasma_glow`、`plasma_sparkle` 两个旧贴图入口。
+  - `KLYSTRON_PARTS` / `KLYSTRON_CREATIVE_PARTS` 保留 `Pipes`、`Rotor`、`Klystron` group；creative 变体复用旧 OBJ、绑定旧 `klystron_creative.png`。
+  - `BREEDER_PARTS` 保留 `BreederAlt`、`Breeder`；`MHDT_PARTS` 保留 `Coils`、`Turbine`。
+  - `PLASMA_FORGE_PARTS` 保留旧 `RenderFusionPlasmaForge` 使用的 `Body`、`Plasma`、`SliderStriker`、`ArmLowerStriker`、`ArmUpperStriker`、`StrikerMount`、`StrikerLeft/Right`、`PistonLeft/Right`、`SliderJet`、`ArmLowerJet`、`ArmUpperJet`、`Jet`。
+- 扩展 `ObjModelLibrary` facade：
+  - 暴露 `FUSION_TORUS`、`FUSION_KLYSTRON`、`FUSION_KLYSTRON_CREATIVE`、`FUSION_BREEDER`、`FUSION_COLLECTOR`、`FUSION_BOILER`、`FUSION_MHDT`、`FUSION_COUPLER`、`FUSION_PLASMA_FORGE`。
+  - 新增 `fusionPart(String name)` 作为 `block/fusion/` 路径入口。
+- 资源迁入：
+  - 复制 8 个旧 OBJ 到 `models/block/fusion/`，按现代资源名加 `fusion_` 前缀，避免和已存在 `machines/boiler` 等普通机器资源冲突。
+  - 复制 12 张旧 fusion 贴图到 `textures/block/fusion/`。
+  - 为 8 个 OBJ 补本地 `.mtl`，并在 OBJ 头部补 `mtllib` / `usemtl default`，纹理仍由 Forge OBJ JSON 提供。
+  - 新增全模 JSON 与 visibility 分件 JSON，分件 JSON 明确列出同 OBJ 的所有旧 group，只有目标 group 为 `true`，避免未列 group 的默认显示行为造成误判。
+- 本轮没有迁移：
+  - `RenderFusionTorus` 的 `tilted` 位移/旋转、`Magnet` 插值旋转、四向 `connections[]` 螺栓显示、plasma 颜色/alpha/贴图滚动/additive glow/sparkle。
+  - `RenderFusionKlystron` / creative 的朝向、位移、`Rotor` 插值旋转。
+  - `RenderFusionMHDT` 的 turbine 旋转。
+  - `RenderFusionPlasmaForge` 的连接螺栓、双机械臂动画、黑色 inactive plasma、plasma glow 层、物品预览、beam、jet 手写特效。
+- 对齐清单：
+  - `工程记录/库移植/生成报告/render-library-alignment-2026-05-21.csv` 追加本轮 9 个 fusion 条目，状态均标为资源/分件入口已对齐但 renderer 行为未完整迁移，静态候选只限 `collector`、`boiler`、`coupler`。
+
 ## 旧版 renderer 分类
 
 - 方块实体 renderer：`src/main/java/com/hbm/render/tileentity`
@@ -679,6 +750,42 @@
 已完成：
 
 - 在 `renderOnlyInCallOrder(...)` 内补局部 `LinkedHashSet<String>`，保持调用顺序渲染时仍能去重。
+
+验证：
+
+- 2026-05-21 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-21 Radiation Fog Particle Bridge
+
+触发来源：
+
+- 辐射库复核发现 1.7.10 黄雾不是 vanilla 粒子，而是 `com.hbm.particle.ParticleRadiationFog`。
+- 旧粒子由 `ClientProxy#effectNT` 中的 `type == "radFog"` 创建。
+
+旧版契约：
+
+- 纹理：`assets/hbm/textures/particle/fog.png`
+- 颜色：`0.85F, 0.9F, 0.5F`
+- 生命周期：源码会把 `maxAge` 至少提升到 `400`
+- alpha：`sin(age * PI / 400F) * 0.125F`
+- scale：默认 `7.5F`
+- render layer：旧 `getFXLayer() == 3`，使用半透明 blend。
+- 旧 renderer 每个粒子绘制 25 个随机偏移 quad。
+
+本轮现代桥接：
+
+- 新增 `ModParticleTypes.RADIATION_FOG`，注册粒子类型 `hbm:radiation_fog`。
+- 新增 `RadiationFogParticle` / provider：
+  - 使用 `ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT`
+  - 使用旧颜色、旧 400 tick alpha 曲线、旧 `7.5F` scale
+  - 禁用物理碰撞，按旧版仅阻尼速度
+- 复制旧版 `fog.png` 到 `assets/hbm/textures/particle/radiation_fog.png`。
+- 新增 `assets/hbm/particles/radiation_fog.json`，让现代粒子图集加载旧 fog 纹理。
+
+仍未完全等价：
+
+- 现代桥接每个粒子是一张大 sprite，不是旧版 25 quad 手写 GL 雾团。
+- 如果后续需要完全复刻旧观感，应继续在渲染库中实现多 quad 粒子或自定义 render type。
 
 验证：
 

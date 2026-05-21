@@ -1,0 +1,10 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/doors/blast_door_base.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/doors/blast_door_base",
+    "default": "hbm:block/doors/blast_door_base"
+  }
+}

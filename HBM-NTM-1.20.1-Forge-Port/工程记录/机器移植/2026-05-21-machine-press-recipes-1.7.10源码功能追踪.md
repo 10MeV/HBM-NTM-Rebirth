@@ -31,6 +31,7 @@ This record covers the next small migration slice for the 1.7.10 burner press re
 ## Current 1.20.1 Integration
 
 - Existing recipe type: `hbm:press` with JSON fields `stamp`, `ingredient`, and `result`.
+- `PressRecipe#isSpecial()` returns `true` so these machine recipes stay out of the vanilla recipe book category sync; `machine_press` still queries them directly through `RecipeManager#getAllRecipesFor(hbm:press)`.
 - Existing stamp item before this pass: `stamp_iron_plate`.
 - This pass adds:
   - `stamp_iron_flat`

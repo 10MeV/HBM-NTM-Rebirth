@@ -1,0 +1,8 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/fensu2.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "parts": { "visibility": { "Wheel": false, "Lights": false, "Plasma": false, "Base": true } },
+  "textures": { "particle": "hbm:block/machines/fensu2", "default": "hbm:block/machines/fensu2" }
+}

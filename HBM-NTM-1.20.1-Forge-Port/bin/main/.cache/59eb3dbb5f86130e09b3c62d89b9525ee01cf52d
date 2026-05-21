@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-21T20:01:30.4013952	Loot Tables
+// 1.20.1	2026-05-21T22:41:50.8433703	Loot Tables
 1d566948370849820de3c0d2a03a1da2b54f3f8d data/hbm/loot_tables/blocks/ancient_scrap.json
 4dea21baadd671e0fc70004833537e05da50d388 data/hbm/loot_tables/blocks/asphalt.json
 fb8bbca081abce158c2e2c99aad65884a8ac42bc data/hbm/loot_tables/blocks/asphalt_light.json
@@ -118,6 +118,12 @@ fd834adbb6e466eefefdfa14ef475f8e27839d8c data/hbm/loot_tables/blocks/concrete_pi
 8fbab6284c349fbdbf14bb290e5fb5bcb6b9a6f4 data/hbm/loot_tables/blocks/concrete_rebar.json
 5896255b9582daa73195065fc7fdf968314dc8a7 data/hbm/loot_tables/blocks/concrete_smooth.json
 c1875e02b829f06956a7f41cbef47a0a0be20d2a data/hbm/loot_tables/blocks/concrete_super_broken.json
+174daec0b589cb0b93718b8bcc32a0f168704764 data/hbm/loot_tables/blocks/conveyor.json
+d33a59917ffe669f84817eaec058628b1a938fa7 data/hbm/loot_tables/blocks/conveyor_chute.json
+18dea9991e12ed7f24bf92082526e1a012cc66c1 data/hbm/loot_tables/blocks/conveyor_double.json
+4c4cff2725027d713f102baa28cd2a2879f430fd data/hbm/loot_tables/blocks/conveyor_express.json
+9dc373c89410e7d3a0beb8910f9ba266440c3f0b data/hbm/loot_tables/blocks/conveyor_lift.json
+06361cf35cd9672d8fdb63260dc0c0b995312d33 data/hbm/loot_tables/blocks/conveyor_triple.json
 bcb25065377f376b333828e4e2caac220b4ee895 data/hbm/loot_tables/blocks/decon.json
 7fb52e95a2aa0b713372efd554c093bb1c15737b data/hbm/loot_tables/blocks/deco_aluminium.json
 7654fcc8718fe74ba60745dd43460575e01bc421 data/hbm/loot_tables/blocks/deco_asbestos.json

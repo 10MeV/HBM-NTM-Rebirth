@@ -2,6 +2,8 @@ package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.energy.HbmBatteryItem;
+import com.hbm.ntm.energy.HbmBatteryPackItem;
+import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.DigammaDiagnosticItem;
 import com.hbm.ntm.item.EffectPillItem;
@@ -94,20 +96,22 @@ public final class ModItems {
     public static final RegistryObject<Item> CONTAINMENT_BOX = simpleStackOneItem("containment_box");
     public static final RegistryObject<Item> PLASTIC_BAG = simpleStackOneItem("plastic_bag");
     public static final RegistryObject<Item> TOOLBOX = registerLegacy("toolbox", () -> new ToolboxItem(new Item.Properties()));
+    public static final RegistryObject<Item> CONVEYOR_WAND = registerLegacy("conveyor_wand",
+            () -> new ConveyorWandItem(new Item.Properties().stacksTo(64)));
     public static final RegistryObject<Item> BATTERY_POTATO = registerLegacy("battery_potato",
             () -> new HbmBatteryItem(new Item.Properties(), 1_000L, 0L, 100L));
-    public static final RegistryObject<Item> BATTERY_REDSTONE = batteryPack("battery_redstone", 100L, false);
-    public static final RegistryObject<Item> BATTERY_LEAD = batteryPack("battery_lead", 1_000L, false);
-    public static final RegistryObject<Item> BATTERY_LITHIUM = batteryPack("battery_lithium", 10_000L, false);
-    public static final RegistryObject<Item> BATTERY_SODIUM = batteryPack("battery_sodium", 50_000L, false);
-    public static final RegistryObject<Item> BATTERY_SCHRABIDIUM = batteryPack("battery_schrabidium", 250_000L, false);
-    public static final RegistryObject<Item> BATTERY_QUANTUM = batteryPack("battery_quantum", 1_000_000L, 20L * 60L * 60L);
-    public static final RegistryObject<Item> CAPACITOR_COPPER = batteryPack("capacitor_copper", 1_000L, true);
-    public static final RegistryObject<Item> CAPACITOR_GOLD = batteryPack("capacitor_gold", 10_000L, true);
-    public static final RegistryObject<Item> CAPACITOR_NIOBIUM = batteryPack("capacitor_niobium", 100_000L, true);
-    public static final RegistryObject<Item> CAPACITOR_TANTALUM = batteryPack("capacitor_tantalum", 500_000L, true);
-    public static final RegistryObject<Item> CAPACITOR_BISMUTH = batteryPack("capacitor_bismuth", 2_500_000L, true);
-    public static final RegistryObject<Item> CAPACITOR_SPARK = batteryPack("capacitor_spark", 10_000_000L, true);
+    public static final RegistryObject<Item> BATTERY_REDSTONE = batteryPack("battery_redstone", 0, 100L, false);
+    public static final RegistryObject<Item> BATTERY_LEAD = batteryPack("battery_lead", 1, 1_000L, false);
+    public static final RegistryObject<Item> BATTERY_LITHIUM = batteryPack("battery_lithium", 2, 10_000L, false);
+    public static final RegistryObject<Item> BATTERY_SODIUM = batteryPack("battery_sodium", 3, 50_000L, false);
+    public static final RegistryObject<Item> BATTERY_SCHRABIDIUM = batteryPack("battery_schrabidium", 4, 250_000L, false);
+    public static final RegistryObject<Item> BATTERY_QUANTUM = batteryPack("battery_quantum", 5, 1_000_000L, 20L * 60L * 60L);
+    public static final RegistryObject<Item> CAPACITOR_COPPER = batteryPack("capacitor_copper", 6, 1_000L, true);
+    public static final RegistryObject<Item> CAPACITOR_GOLD = batteryPack("capacitor_gold", 7, 10_000L, true);
+    public static final RegistryObject<Item> CAPACITOR_NIOBIUM = batteryPack("capacitor_niobium", 8, 100_000L, true);
+    public static final RegistryObject<Item> CAPACITOR_TANTALUM = batteryPack("capacitor_tantalum", 9, 500_000L, true);
+    public static final RegistryObject<Item> CAPACITOR_BISMUTH = batteryPack("capacitor_bismuth", 10, 2_500_000L, true);
+    public static final RegistryObject<Item> CAPACITOR_SPARK = batteryPack("capacitor_spark", 11, 10_000_000L, true);
 
     public static final List<RegistryObject<Item>> BATTERY_PACK_ITEMS = List.of(
             BATTERY_REDSTONE,
@@ -429,6 +433,7 @@ public final class ModItems {
             CONTAINMENT_BOX,
             PLASTIC_BAG,
             TOOLBOX,
+            CONVEYOR_WAND,
             BATTERY_POTATO
     ), BATTERY_PACK_ITEMS.stream()).toList();
 
@@ -462,18 +467,28 @@ public final class ModItems {
         return item;
     }
 
-    private static RegistryObject<Item> batteryPack(String name, long dischargeRate, boolean capacitor) {
+    private static RegistryObject<Item> batteryPack(String name, int legacyMeta, long dischargeRate, boolean capacitor) {
         long maxCharge = capacitor ? dischargeRate * 20L * 30L : dischargeRate * 20L * 60L * 15L;
         long chargeRate = capacitor ? dischargeRate : dischargeRate * 10L;
-        return registerLegacy(name, () -> new HbmBatteryItem(new Item.Properties(), maxCharge, chargeRate, dischargeRate));
+        return registerLegacy(name, () -> new HbmBatteryPackItem(
+                new Item.Properties(),
+                maxCharge,
+                chargeRate,
+                dischargeRate,
+                name,
+                legacyMeta,
+                capacitor));
     }
 
-    private static RegistryObject<Item> batteryPack(String name, long dischargeRate, long duration) {
-        return registerLegacy(name, () -> new HbmBatteryItem(
+    private static RegistryObject<Item> batteryPack(String name, int legacyMeta, long dischargeRate, long duration) {
+        return registerLegacy(name, () -> new HbmBatteryPackItem(
                 new Item.Properties(),
                 dischargeRate * duration,
                 dischargeRate * 10L,
-                dischargeRate));
+                dischargeRate,
+                name,
+                legacyMeta,
+                false));
     }
 
     private static RegistryObject<Item> simpleItem(String name) {

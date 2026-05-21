@@ -786,3 +786,68 @@
   - `battery_pack` 旧 meta 到现代独立 ID 映射表尚未建立；配方、物品池、starter kit 迁移时必须补。
 - 本批验证：
   - `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` 通过。
+
+## 2026-05-21 继续推进：machine_battery 菜单/按钮/槽位行为
+
+- 本批新增/更新：
+  - `src/main/java/com/hbm/ntm/menu/MachineBatteryMenu.java`
+  - `src/main/java/com/hbm/ntm/client/screen/MachineBatteryScreen.java`
+  - `src/main/java/com/hbm/ntm/network/packet/MachineBatteryButtonPacket.java`
+  - `src/main/java/com/hbm/ntm/blockentity/MachineBatteryBlockEntity.java`
+  - `src/main/java/com/hbm/ntm/block/MachineBatteryBlock.java`
+  - `src/main/java/com/hbm/ntm/registry/ModMenuTypes.java`
+  - `src/main/java/com/hbm/ntm/network/ModMessages.java`
+  - `src/main/java/com/hbm/ntm/client/ClientModEvents.java`
+  - `src/main/resources/assets/hbm/textures/gui/storage/gui_battery.png`
+- 1.7.10 对照：
+  - `ContainerMachineBattery` 双槽布局：slot 0 放电输入，slot 1 充电输出/充电槽；玩家背包坐标为旧 GUI `84/142` 行。
+  - `GUIMachineBattery` 使用 `textures/gui/storage/gui_battery.png`，能量条区域 `62,17,52,52`，低/高红石按钮分别在 `133,16` 与 `133,52`，优先级按钮在 `152,35`。
+  - `AuxButtonPacket` 三个按钮语义：0 循环 `redLow`，1 循环 `redHigh`，2 循环优先级。
+  - 旧优先级虽然枚举有五档，但 `machine_battery` 会把 `LOWEST/HIGHEST/null` 纠正回 `LOW`，GUI 实际只展示 LOW/NORMAL/HIGH。
+- 现代迁移语义：
+  - `MachineBatteryBlock` 右键现在打开现代 Menu。
+  - `MachineBatteryBlockEntity` 实现 `MenuProvider`，暴露旧双槽菜单与显示名 `container.hbm.battery`。
+  - 槽位现在只接受 `HbmBatteryItem`，比旧 `isItemValidForSlot` 的表面 `return true` 更严格；这对齐旧自动化/充放电实际只处理 `IBatteryItem` 的行为，避免 FE 杂物进入旧机器槽。
+  - `MachineBatteryMenu` 同步 long HE 数值、delta、redLow、redHigh、priority，并保留旧 shift-click：机器槽进玩家背包，玩家背包优先合并进两个机器槽。
+  - `MachineBatteryButtonPacket` 提供现代 C2S 按钮入口，服务端校验距离和方块实体类型后修改模式/优先级。
+  - `MachineBatteryScreen` 使用旧 GUI 贴图和旧坐标渲染能量条、模式按钮、优先级按钮，并发送按钮 packet。
+- 当前限制：
+  - GUI tooltip 文案目前用现代 key 简化表达，尚未完全复刻旧 `battery.priority.*.desc` 多行说明。
+  - 自动化抽出规则只通过当前 item handler 的插入限制与机器 tick 生效，尚未按旧 `canExtractItem` 精确限制“slot 0 空电可抽、slot 1 满电可抽”。
+  - OpenComputers/ROR 交互函数仍未迁移，仅保留 HBM 侧命令/debug/EC info。
+  - 本批未新增运行中截图验证；只完成编译与资源处理验证。
+- 本批验证：
+  - 首次 `processResources` 因 Gradle 增量缓存缺失失败，清理 `build/resources/main/.cache` 后重跑。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-21 继续推进：battery_pack 3D 物品渲染与 tooltip 对齐
+
+- 本批新增/更新：
+  - `src/main/java/com/hbm/ntm/energy/HbmBatteryPackItem.java`
+  - `src/main/java/com/hbm/ntm/client/renderer/BatteryPackItemRenderer.java`
+  - `src/main/java/com/hbm/ntm/registry/ModItems.java`
+  - `src/main/java/com/hbm/ntm/datagen/HbmItemModelProvider.java`
+  - `src/main/resources/assets/hbm/textures/block/machines/battery_*.png`
+  - `src/main/resources/assets/hbm/textures/block/machines/capacitor_*.png`
+  - `src/generated/resources/assets/hbm/models/item/battery_*.json`
+  - `src/generated/resources/assets/hbm/models/item/capacitor_*.json`
+- 1.7.10 对照：
+  - `ItemBatteryPack.EnumBatteryPack` 的 12 个 meta 变体记录 texture/capacity/chargeRate/dischargeRate。
+  - `ItemRenderBatteryPack` 在物品栏平移 `0,-3,0` 并缩放 `5`，绑定 `EnumBatteryPack#texture` 后只渲染 `battery.obj` 的 `Battery` 或 `Capacitor` part。
+  - `ItemBatteryPack#addInformation` 显示短数字、百分比、充电速率、放电速率、充满耗时和持续时间。
+- 现代迁移语义：
+  - 12 个现代独立 ID 现在注册为 `HbmBatteryPackItem`，保存旧 texture 名、旧 meta、是否电容。
+  - `HbmBatteryPackItem` 仍继承 `HbmBatteryItem`，继续复用 `charge` NBT、HBM HE 语义和 Forge item energy capability。
+  - `BatteryPackItemRenderer` 通过 `LegacyItemRendererBridge` 挂入 BEWLR，按物品选择：
+    - battery 类：`models/block/machines/battery_pack_battery.json`
+    - capacitor 类：`models/block/machines/battery_pack_capacitor.json`
+    - 贴图：`textures/block/machines/<legacyTextureName>.png`
+  - DataGen 对 `HbmBatteryPackItem` 输出 `builtin/entity` item model，避免普通 2D generated 模型覆盖自定义 renderer。
+  - tooltip 改为旧 `ItemBatteryPack` 风格的短数字与时间信息。
+- 当前限制：
+  - 现代 `ItemDisplayContext` 的手持/地面变换是按旧 `ItemRenderBatteryPack` 近似迁移；仍需实机截图微调缩放和角度。
+  - 旧单 item + meta 的存档/配方/loot 映射表仍未建立；当前只是 12 个独立 ID 承载旧变体参数。
+  - `machine_battery_socket` 还未接入；本批先让物品 renderer 具备旧 OBJ part + 动态贴图语义。
+- 本批验证：
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。

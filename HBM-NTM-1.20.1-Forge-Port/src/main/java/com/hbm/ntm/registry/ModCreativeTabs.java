@@ -2,7 +2,9 @@ package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.energy.HbmBatteryItem;
+import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.TrinketBlockItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -32,7 +34,12 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm.machines"))
                     .icon(() -> ModBlocks.MACHINE_PRESS.get().asItem().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> output.accept(block.get())))
+                    .displayItems((parameters, output) -> {
+                        ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));
+                        if (ModItems.CONVEYOR_WAND.get() instanceof ConveyorWandItem conveyorWand) {
+                            ConveyorWandItem.addCreativeStacks(output, conveyorWand);
+                        }
+                    })
                     .build());
 
     public static final RegistryObject<CreativeModeTab> CONSUMABLES = CREATIVE_TABS.register("consumables",
@@ -59,13 +66,7 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm.blocks"))
                     .icon(() -> ModBlocks.WASTE_EARTH.get().asItem().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModBlocks.BLOCK_TAB_BLOCKS.forEach(block -> {
-                        if (block.get().asItem() instanceof TrinketBlockItem item) {
-                            TrinketBlockItem.addCreativeStacks(output, item);
-                        } else {
-                            output.accept(block.get());
-                        }
-                    }))
+                    .displayItems((parameters, output) -> ModBlocks.BLOCK_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem())))
                     .build());
 
     public static final RegistryObject<CreativeModeTab> NUKES = CREATIVE_TABS.register("nukes",
@@ -80,6 +81,16 @@ public final class ModCreativeTabs {
 
     public static void register(IEventBus modBus) {
         CREATIVE_TABS.register(modBus);
+    }
+
+    private static void acceptBlockItem(CreativeModeTab.Output output, net.minecraft.world.item.Item item) {
+        if (item instanceof TrinketBlockItem trinket) {
+            TrinketBlockItem.addCreativeStacks(output, trinket);
+        } else if (item instanceof LegacyStateBlockItem stateItem) {
+            stateItem.addCreativeStacks(output);
+        } else {
+            output.accept(item);
+        }
     }
 
     private ModCreativeTabs() {

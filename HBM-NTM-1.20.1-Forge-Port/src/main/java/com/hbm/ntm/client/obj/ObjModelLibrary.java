@@ -32,6 +32,47 @@ public final class ObjModelLibrary {
     public static final ObjModelPart MACHINE_CHIMNEY_BRICK = ObjMachineModels.CHIMNEY_BRICK;
     public static final ObjModelPart MACHINE_TURBINE = ObjMachineModels.TURBINE;
     public static final ObjModelPart MACHINE_DIESELGEN = ObjMachineModels.DIESELGEN;
+    public static final ObjModelPart MACHINE_FIREBOX = ObjMachineModels.FIREBOX;
+    public static final ObjModelPart MACHINE_OILBURNER = ObjMachineModels.OILBURNER;
+    public static final ObjModelPart MACHINE_ELECTRIC_HEATER = ObjMachineModels.ELECTRIC_HEATER;
+    public static final ObjModelPart MACHINE_HEATEX = ObjMachineModels.HEATEX;
+    public static final ObjModelPart MACHINE_BOILER = ObjMachineModels.BOILER;
+    public static final ObjModelPart MACHINE_BOILER_BURST = ObjMachineModels.BOILER_BURST;
+    public static final ObjModelPart MACHINE_INDUSTRIAL_BOILER = ObjMachineModels.INDUSTRIAL_BOILER;
+    public static final ObjModelPart MACHINE_HEPHAESTUS = ObjMachineModels.HEPHAESTUS;
+    public static final ObjModelPart MACHINE_DERRICK = ObjMachineModels.DERRICK;
+    public static final ObjModelPart MACHINE_PUMPJACK = ObjMachineModels.PUMPJACK;
+    public static final ObjModelPart MACHINE_FRACKING_TOWER = ObjMachineModels.FRACKING_TOWER;
+    public static final ObjModelPart MACHINE_OILFLARE = ObjMachineModels.OILFLARE;
+    public static final ObjModelPart MACHINE_CHIMNEY_INDUSTRIAL = ObjMachineModels.CHIMNEY_INDUSTRIAL;
+    public static final ObjModelPart MACHINE_BATTERY_REDD = ObjMachineModels.BATTERY_REDD;
+    public static final ObjModelPart MACHINE_FENSU = ObjMachineModels.FENSU;
+    public static final ObjPartModel MACHINE_ASSEMBLY_MACHINE = ObjMachineModels.ASSEMBLY_MACHINE;
+
+    public static final ObjModelPart NETWORK_CONNECTOR = ObjNetworkModels.CONNECTOR;
+    public static final ObjModelPart NETWORK_CONNECTOR_SUPER = ObjNetworkModels.CONNECTOR_SUPER;
+    public static final ObjModelPart NETWORK_FLUID_DIODE = ObjNetworkModels.FLUID_DIODE;
+    public static final ObjModelPart NETWORK_PIPE_ANCHOR = ObjNetworkModels.PIPE_ANCHOR;
+    public static final ObjModelPart NETWORK_PYLON_LARGE = ObjNetworkModels.PYLON_LARGE;
+    public static final ObjModelPart NETWORK_PYLON_MEDIUM = ObjNetworkModels.PYLON_MEDIUM;
+    public static final ObjModelPart NETWORK_SUBSTATION = ObjNetworkModels.SUBSTATION;
+
+    public static final ObjModelPart DOOR_SILO_HATCH = ObjDoorModels.SILO_HATCH;
+    public static final ObjModelPart DOOR_SILO_HATCH_LARGE = ObjDoorModels.SILO_HATCH_LARGE;
+    public static final ObjModelPart DOOR_BLAST_DOOR_BASE = ObjDoorModels.BLAST_DOOR_BASE;
+    public static final ObjModelPart DOOR_BLAST_DOOR_TOOTH = ObjDoorModels.BLAST_DOOR_TOOTH;
+    public static final ObjModelPart DOOR_BLAST_DOOR_SLIDER = ObjDoorModels.BLAST_DOOR_SLIDER;
+    public static final ObjModelPart DOOR_BLAST_DOOR_BLOCK = ObjDoorModels.BLAST_DOOR_BLOCK;
+
+    public static final ObjPartModel FUSION_TORUS = ObjFusionModels.TORUS_PARTS;
+    public static final ObjPartModel FUSION_KLYSTRON = ObjFusionModels.KLYSTRON_PARTS;
+    public static final ObjPartModel FUSION_KLYSTRON_CREATIVE = ObjFusionModels.KLYSTRON_CREATIVE_PARTS;
+    public static final ObjPartModel FUSION_BREEDER = ObjFusionModels.BREEDER_PARTS;
+    public static final ObjModelPart FUSION_COLLECTOR = ObjFusionModels.COLLECTOR;
+    public static final ObjModelPart FUSION_BOILER = ObjFusionModels.BOILER;
+    public static final ObjPartModel FUSION_MHDT = ObjFusionModels.MHDT_PARTS;
+    public static final ObjModelPart FUSION_COUPLER = ObjFusionModels.COUPLER;
+    public static final ObjPartModel FUSION_PLASMA_FORGE = ObjFusionModels.PLASMA_FORGE_PARTS;
 
     public static final ObjModelPart CAGE_LAMP = ObjLightModels.CAGE_LAMP;
     public static final ObjModelPart FLUORESCENT_LAMP_SINGLE = ObjLightModels.FLUORESCENT_LAMP_SINGLE;
@@ -71,6 +112,18 @@ public final class ObjModelLibrary {
 
     public static ObjModelPart machinePart(String name, RenderType renderType) {
         return ObjMachineModels.part(name, renderType);
+    }
+
+    public static ObjModelPart networkPart(String name) {
+        return ObjNetworkModels.part(name);
+    }
+
+    public static ObjModelPart doorPart(String name) {
+        return ObjDoorModels.part(name);
+    }
+
+    public static ObjModelPart fusionPart(String name) {
+        return ObjFusionModels.part(name);
     }
 
     public static ObjModelPartBuilder machinePartBuilder(String name, RenderType renderType) {

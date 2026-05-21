@@ -523,6 +523,22 @@
     "tooltip.hbm.plushie.yomi": "Yomi",
     "tooltip.hbm.plushie.numbernine": "Number Nine",
     "tooltip.hbm.plushie.hundun": "Hundun",
-    "tooltip.hbm.plushie.derg": "Derg"
+    "tooltip.hbm.plushie.derg": "Derg",
+    "block.hbm.conveyor": "传送带",
+    "block.hbm.conveyor_express": "高速传送带",
+    "block.hbm.conveyor_double": "双轨传送带",
+    "block.hbm.conveyor_triple": "三轨传送带",
+    "block.hbm.conveyor_lift": "传送带升降机",
+    "block.hbm.conveyor_chute": "传送带滑槽",
+    "block.hbm.rad_absorber": "辐射吸收器",
+    "block.hbm.rad_absorber.1": "红色辐射吸收器",
+    "block.hbm.rad_absorber.2": "绿色辐射吸收器",
+    "block.hbm.rad_absorber.3": "粉色辐射吸收器",
+    "block.hbm.sellafield": "放射性熔融凝固物",
+    "block.hbm.sellafield.1": "放射性熔融凝固物",
+    "block.hbm.sellafield.2": "放射性熔融凝固物",
+    "block.hbm.sellafield.3": "放射性熔融凝固物",
+    "block.hbm.sellafield.4": "放射性熔融凝固物",
+    "block.hbm.sellafield.5": "放射性熔融凝固物"
 }
 

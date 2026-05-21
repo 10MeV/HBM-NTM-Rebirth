@@ -1,0 +1,12 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/fusion/fusion_klystron.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "parts": { "visibility": {
+      "Pipes": true,
+      "Rotor": false,
+      "Klystron": false
+  } },
+  "textures": { "particle": "hbm:block/fusion/klystron_creative", "default": "hbm:block/fusion/klystron_creative" }
+}

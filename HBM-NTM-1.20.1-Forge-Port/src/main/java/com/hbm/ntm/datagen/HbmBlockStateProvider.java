@@ -5,9 +5,12 @@ import com.hbm.ntm.block.HbmEnergyNodeBlock;
 import com.hbm.ntm.block.HbmFluidNodeBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
+import com.hbm.ntm.block.conveyor.ConveyorBlock;
 import com.hbm.ntm.registry.ModBlocks;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
+import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
@@ -52,6 +55,12 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "decon_side");
         redCableWithItem();
         fluidPipeWithItem();
+        conveyorWithItem(ModBlocks.CONVEYOR, "conveyor");
+        conveyorWithItem(ModBlocks.CONVEYOR_EXPRESS, "conveyor_express");
+        conveyorWithItem(ModBlocks.CONVEYOR_DOUBLE, "conveyor_double");
+        conveyorWithItem(ModBlocks.CONVEYOR_TRIPLE, "conveyor_triple");
+        verticalConveyorWithItem(ModBlocks.CONVEYOR_LIFT, "conveyor");
+        verticalConveyorWithItem(ModBlocks.CONVEYOR_CHUTE, "conveyor");
         sidedCubeWithItem(ModBlocks.MACHINE_BATTERY,
                 "battery_top",
                 "battery_top",
@@ -59,8 +68,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "battery_front_alt",
                 "battery_side_alt",
                 "battery_side_alt");
+        existingModelBlockOnly(ModBlocks.MACHINE_ASSEMBLY_MACHINE, "machine_assembly_machine");
+        simpleCubeWithItem(ModBlocks.GAS_RADON, "gas_radon");
+        simpleCubeWithItem(ModBlocks.GAS_RADON_DENSE, "gas_radon_dense");
+        simpleCubeWithItem(ModBlocks.GAS_RADON_TOMB, "gas_radon_tomb");
         simpleCubeWithItem(ModBlocks.GAS_MELTDOWN, "gas_meltdown");
         radAbsorberWithItem();
+        simpleCubeWithItem(ModBlocks.DUMMY_BLOCK, "block_steel");
         sellafieldWithItem();
         simpleCubeWithItem(ModBlocks.SELLAFIELD_SLAKED, "sellafield_slaked");
         existingModelWithItem(ModBlocks.NUKE_GADGET, "nuke_gadget");
@@ -82,6 +96,11 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
         horizontalBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
+    }
+
+    private void existingModelBlockOnly(RegistryObject<Block> block, String modelName) {
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
+        horizontalBlock(block.get(), model);
     }
 
     private void difurnaceWithItem(RegistryObject<Block> block) {
@@ -183,6 +202,66 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .part().modelFile(side).rotationX(-90).addModel().condition(HbmFluidNodeBlock.UP, true).end()
                 .part().modelFile(side).rotationX(90).addModel().condition(HbmFluidNodeBlock.DOWN, true).end();
         simpleBlockItem(ModBlocks.FLUID_DUCT_NEO.get(), core);
+    }
+
+    private void conveyorWithItem(RegistryObject<Block> block, String textureName) {
+        ModelFile straight = models().withExistingParent(block.getId().getPath(), new ResourceLocation("block/block"))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
+                .texture("top", new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
+                .texture("side", new ResourceLocation(HbmNtm.MOD_ID, "block/conveyor_side"))
+                .element()
+                    .from(0.0F, 0.0F, 0.0F)
+                    .to(16.0F, 4.0F, 16.0F)
+                    .face(Direction.DOWN).texture("#side").cullface(Direction.DOWN).end()
+                    .face(Direction.UP).texture("#top").end()
+                    .face(Direction.NORTH).texture("#side").cullface(Direction.NORTH).end()
+                    .face(Direction.SOUTH).texture("#side").cullface(Direction.SOUTH).end()
+                    .face(Direction.WEST).texture("#side").cullface(Direction.WEST).end()
+                    .face(Direction.EAST).texture("#side").cullface(Direction.EAST).end()
+                    .end();
+        ModelFile left = conveyorCurveModel(block.getId().getPath() + "_curve_left", textureName + "_curve_left");
+        ModelFile right = conveyorCurveModel(block.getId().getPath() + "_curve_right", textureName + "_curve_right");
+
+        getVariantBuilder(block.get())
+                .forAllStates(state -> {
+                    Direction facing = state.getValue(ConveyorBlock.FACING);
+                    ModelFile model = switch (state.getValue(ConveyorBlock.PATH)) {
+                        case LEFT -> left;
+                        case RIGHT -> right;
+                        default -> straight;
+                    };
+                    return ConfiguredModel.builder()
+                            .modelFile(model)
+                            .rotationY(((int) facing.toYRot() + 180) % 360)
+                            .build();
+                });
+        simpleBlockItem(block.get(), straight);
+    }
+
+    private ModelFile conveyorCurveModel(String modelName, String textureName) {
+        return models().withExistingParent(modelName, new ResourceLocation("block/block"))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
+                .texture("top", new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
+                .texture("side", new ResourceLocation(HbmNtm.MOD_ID, "block/conveyor_side"))
+                .element()
+                    .from(0.0F, 0.0F, 0.0F)
+                    .to(16.0F, 4.0F, 16.0F)
+                    .face(Direction.DOWN).texture("#side").cullface(Direction.DOWN).end()
+                    .face(Direction.UP).texture("#top").end()
+                    .face(Direction.NORTH).texture("#side").cullface(Direction.NORTH).end()
+                    .face(Direction.SOUTH).texture("#side").cullface(Direction.SOUTH).end()
+                    .face(Direction.WEST).texture("#side").cullface(Direction.WEST).end()
+                    .face(Direction.EAST).texture("#side").cullface(Direction.EAST).end()
+                    .end();
+    }
+
+    private void verticalConveyorWithItem(RegistryObject<Block> block, String textureName) {
+        ModelFile model = models().cubeAll(block.getId().getPath(), new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
+        getVariantBuilder(block.get()).forAllStates(state -> ConfiguredModel.builder()
+                .modelFile(model)
+                .rotationY(((int) state.getValue(ConveyorBlock.FACING).toYRot() + 180) % 360)
+                .build());
+        simpleBlockItem(block.get(), model);
     }
 
     private void radAbsorberWithItem() {

@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.block.AssemblyMachineBlock;
 import com.hbm.ntm.block.BoilerBlock;
 import com.hbm.ntm.block.DeconBlock;
 import com.hbm.ntm.block.FalloutLayerBlock;
@@ -9,6 +10,7 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyComplexShapeBlock;
 import com.hbm.ntm.block.LegacyDemonLampBlock;
 import com.hbm.ntm.block.LegacyGasMeltdownBlock;
+import com.hbm.ntm.block.LegacyGasRadonBlock;
 import com.hbm.ntm.block.MachineBlockEntityBlock;
 import com.hbm.ntm.block.LegacyLanternBlock;
 import com.hbm.ntm.block.MachineBatteryBlock;
@@ -20,7 +22,16 @@ import com.hbm.ntm.block.RadioactiveWasteEarthBlock;
 import com.hbm.ntm.block.RedCableBlock;
 import com.hbm.ntm.block.TrinketBlock;
 import com.hbm.ntm.block.TrinketVariant;
+import com.hbm.ntm.block.conveyor.ChuteConveyorBlock;
+import com.hbm.ntm.block.conveyor.ConveyorBlock;
+import com.hbm.ntm.block.conveyor.DoubleConveyorBlock;
+import com.hbm.ntm.block.conveyor.ExpressConveyorBlock;
+import com.hbm.ntm.block.conveyor.LiftConveyorBlock;
+import com.hbm.ntm.block.conveyor.TripleConveyorBlock;
+import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.TrinketBlockItem;
+import com.hbm.ntm.multiblock.DummyBlock;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -54,13 +65,24 @@ public final class ModBlocks {
     public static final RegistryObject<Block> DECON = decon("decon");
     public static final RegistryObject<Block> RED_CABLE = redCable("red_cable");
     public static final RegistryObject<Block> FLUID_DUCT_NEO = fluidPipe("fluid_duct_neo");
+    public static final RegistryObject<Block> CONVEYOR = conveyor("conveyor", ConveyorBlock::new);
+    public static final RegistryObject<Block> CONVEYOR_EXPRESS = conveyor("conveyor_express", ExpressConveyorBlock::new);
+    public static final RegistryObject<Block> CONVEYOR_DOUBLE = conveyor("conveyor_double", DoubleConveyorBlock::new);
+    public static final RegistryObject<Block> CONVEYOR_TRIPLE = conveyor("conveyor_triple", TripleConveyorBlock::new);
+    public static final RegistryObject<Block> CONVEYOR_LIFT = conveyor("conveyor_lift", LiftConveyorBlock::new);
+    public static final RegistryObject<Block> CONVEYOR_CHUTE = conveyor("conveyor_chute", ChuteConveyorBlock::new);
     public static final RegistryObject<Block> MACHINE_BATTERY = machineBattery("machine_battery");
+    public static final RegistryObject<Block> GAS_RADON = gasRadon("gas_radon", LegacyGasRadonBlock.Kind.NORMAL);
+    public static final RegistryObject<Block> GAS_RADON_DENSE = gasRadon("gas_radon_dense", LegacyGasRadonBlock.Kind.DENSE);
+    public static final RegistryObject<Block> GAS_RADON_TOMB = gasRadon("gas_radon_tomb", LegacyGasRadonBlock.Kind.TOMB);
     public static final RegistryObject<Block> GAS_MELTDOWN = gasMeltdown("gas_meltdown");
     public static final RegistryObject<Block> RAD_ABSORBER = radAbsorber("rad_absorber");
+    public static final RegistryObject<Block> DUMMY_BLOCK = dummyBlock("dummy_block");
+    public static final RegistryObject<Block> MACHINE_ASSEMBLY_MACHINE = assemblyMachine("machine_assembly_machine");
 
     // Legacy 1.7.10 blockTab entries used as an early chunk-radiation test bed.
-    public static final RegistryObject<Block> WASTE_EARTH = wasteEarth("waste_earth", false, 5.0F);
-    public static final RegistryObject<Block> WASTE_MYCELIUM = wasteEarth("waste_mycelium", true, 15.0F);
+    public static final RegistryObject<Block> WASTE_EARTH = wasteEarth("waste_earth", false);
+    public static final RegistryObject<Block> WASTE_MYCELIUM = wasteEarth("waste_mycelium", true);
     public static final RegistryObject<Block> WASTE_LEAVES = registerBlockWithItem("waste_leaves", () -> new LeavesBlock(BlockBehaviour.Properties.of()
             .mapColor(MapColor.PLANT)
             .strength(0.1F)
@@ -88,6 +110,15 @@ public final class ModBlocks {
     public static final RegistryObject<Block> YELLOW_BARREL = radiationBarrel("yellow_barrel", 5.0F);
     public static final RegistryObject<Block> VITRIFIED_BARREL = radiationBarrel("vitrified_barrel", 0.5F);
 
+    public static final List<RegistryObject<Block>> CONVEYOR_BLOCKS = List.of(
+            CONVEYOR,
+            CONVEYOR_EXPRESS,
+            CONVEYOR_DOUBLE,
+            CONVEYOR_TRIPLE,
+            CONVEYOR_LIFT,
+            CONVEYOR_CHUTE
+    );
+
     public static final List<RegistryObject<Block>> MACHINE_TAB_BLOCKS = List.of(
             MACHINE_PRESS,
             MACHINE_DIFURNACE_OFF,
@@ -98,6 +129,10 @@ public final class ModBlocks {
             RED_CABLE,
             FLUID_DUCT_NEO,
             MACHINE_BATTERY,
+            MACHINE_ASSEMBLY_MACHINE,
+            GAS_RADON,
+            GAS_RADON_DENSE,
+            GAS_RADON_TOMB,
             GAS_MELTDOWN,
             RAD_ABSORBER
     );
@@ -414,6 +449,15 @@ public final class ModBlocks {
                 .noOcclusion()));
     }
 
+    private static <T extends Block> RegistryObject<T> conveyor(String name, Function<BlockBehaviour.Properties, T> factory) {
+        return registerBlockWithItem(name, () -> factory.apply(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(2.0F, 2.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion()));
+    }
+
     private static RegistryObject<Block> gasMeltdown(String name) {
         return registerBlockWithItem(name, () -> new LegacyGasMeltdownBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.NONE)
@@ -424,12 +468,48 @@ public final class ModBlocks {
                 .isViewBlocking((state, level, pos) -> false)));
     }
 
+    private static RegistryObject<Block> gasRadon(String name, LegacyGasRadonBlock.Kind kind) {
+        return registerBlockWithItem(name, () -> new LegacyGasRadonBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.NONE)
+                .strength(0.0F, 0.0F)
+                .noCollission()
+                .noOcclusion()
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false), kind));
+    }
+
     private static RegistryObject<Block> radAbsorber(String name) {
-        return registerBlockWithItem(name, () -> new LegacyRadAbsorberBlock(BlockBehaviour.Properties.of()
+        return registerBlockWithItem(
+                name,
+                () -> new LegacyRadAbsorberBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 10.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()),
+                block -> new LegacyStateBlockItem(block.get(), new Item.Properties(), LegacyRadAbsorberBlock.TIER, 4,
+                        variant -> Component.translatable(variant == 0
+                                ? "block.hbm.rad_absorber"
+                                : "block.hbm.rad_absorber." + variant)));
+    }
+
+    private static RegistryObject<Block> dummyBlock(String name) {
+        return registerBlockWithItem(name, () -> new DummyBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.METAL)
-                .requiresCorrectToolForDrops()));
+                .requiresCorrectToolForDrops()
+                .noOcclusion()
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false)));
+    }
+
+    private static RegistryObject<Block> assemblyMachine(String name) {
+        return registerBlockWithItem(name, () -> new AssemblyMachineBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 30.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion()));
     }
 
     private static RegistryObject<Block> machineBattery(String name) {
@@ -440,11 +520,11 @@ public final class ModBlocks {
                 .requiresCorrectToolForDrops()));
     }
 
-    private static RegistryObject<Block> wasteEarth(String name, boolean mycelium, float chunkRadiation) {
+    private static RegistryObject<Block> wasteEarth(String name, boolean mycelium) {
         return registerBlockWithItem(name, () -> new RadioactiveWasteEarthBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.GRASS)
                 .strength(0.6F)
-                .sound(SoundType.GRASS), mycelium, chunkRadiation));
+                .sound(SoundType.GRASS), mycelium));
     }
 
     private static RegistryObject<Block> falloutLayer(String name) {
@@ -461,11 +541,17 @@ public final class ModBlocks {
     }
 
     private static RegistryObject<Block> sellafield(String name) {
-        return registerBlockWithItem(name, () -> new LegacySellafieldBlock(BlockBehaviour.Properties.of()
-                .mapColor(MapColor.STONE)
-                .strength(5.0F, 10.0F)
-                .sound(SoundType.STONE)
-                .requiresCorrectToolForDrops()));
+        return registerBlockWithItem(
+                name,
+                () -> new LegacySellafieldBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.STONE)
+                        .strength(5.0F, 10.0F)
+                        .sound(SoundType.STONE)
+                        .requiresCorrectToolForDrops()),
+                block -> new LegacyStateBlockItem(block.get(), new Item.Properties(), LegacySellafieldBlock.LEVEL, 6,
+                        variant -> Component.translatable(variant == 0
+                                ? "block.hbm.sellafield"
+                                : "block.hbm.sellafield." + variant)));
     }
 
     private static RegistryObject<Block> simpleBlock(String name, String textureName) {

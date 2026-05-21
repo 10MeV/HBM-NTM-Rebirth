@@ -2,9 +2,8 @@ package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
@@ -12,13 +11,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
-import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.Map;
 
 public final class ChunkRadiationManager {
-    private static final DustParticleOptions RADIATION_FOG_PARTICLE = new DustParticleOptions(new Vector3f(0.85F, 0.9F, 0.5F), 3.0F);
     private static final int LEGACY_WORLD_EFFECT_CHUNKS = 5;
     private static final int LEGACY_WORLD_EFFECT_THRESHOLD = 10;
     private static int diffusionTimer;
@@ -52,8 +49,8 @@ public final class ChunkRadiationManager {
     }
 
     public static void loadLegacyChunkRadiation(ServerLevel level, ChunkPos chunkPos, float radiation) {
-        if (RadiationConfig.ENABLE_CHUNK_RADS.get() && radiation > 0.0F) {
-            getData(level).set(chunkPos, radiation);
+        if (RadiationConfig.ENABLE_CHUNK_RADS.get()) {
+            getData(level).loadChunk(chunkPos, radiation);
         }
     }
 
@@ -68,8 +65,8 @@ public final class ChunkRadiationManager {
 
         diffusionTimer++;
         if (diffusionTimer >= 20) {
-            getData(level).updateDiffusion(level);
-            spawnRadiationFog(level);
+            List<ChunkPos> fogCandidates = getData(level).updateDiffusion(level, RadiationConfig.FOG_RAD.get());
+            spawnRadiationFog(level, fogCandidates);
             diffusionTimer = 0;
         }
 
@@ -125,26 +122,26 @@ public final class ChunkRadiationManager {
         }
     }
 
-    private static void spawnRadiationFog(ServerLevel level) {
-        List<Map.Entry<Long, Float>> entries = getData(level).loadedEntries(level);
-        if (entries.isEmpty()) {
+    private static void spawnRadiationFog(ServerLevel level, List<ChunkPos> candidates) {
+        if (candidates.isEmpty()) {
             return;
         }
 
-        Map.Entry<Long, Float> entry = entries.get(level.random.nextInt(entries.size()));
-        if (entry.getValue() <= RadiationConfig.FOG_RAD.get() || level.random.nextInt(RadiationConfig.FOG_CHANCE.get()) != 0) {
-            return;
-        }
-        ChunkPos chunkPos = new ChunkPos(entry.getKey());
-        if (!level.hasChunk(chunkPos.x, chunkPos.z)) {
-            return;
-        }
+        int chance = RadiationConfig.FOG_CHANCE.get();
+        for (ChunkPos chunkPos : candidates) {
+            if (level.random.nextInt(chance) != 0 || !level.hasChunk(chunkPos.x, chunkPos.z)) {
+                continue;
+            }
 
+            spawnRadiationFog(level, chunkPos);
+        }
+    }
+
+    private static void spawnRadiationFog(ServerLevel level, ChunkPos chunkPos) {
         int x = chunkPos.getMinBlockX() + level.random.nextInt(16);
         int z = chunkPos.getMinBlockZ() + level.random.nextInt(16);
         BlockPos surface = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, new BlockPos(x, 0, z));
-        level.sendParticles(RADIATION_FOG_PARTICLE, x + 0.5D, surface.getY() + level.random.nextInt(5), z + 0.5D, 12, 2.5D, 0.2D, 2.5D, 0.0D);
-        level.sendParticles(ParticleTypes.SMOKE, x + 0.5D, surface.getY() + level.random.nextInt(5), z + 0.5D, 3, 2.0D, 0.1D, 2.0D, 0.01D);
+        level.sendParticles(ModParticleTypes.RADIATION_FOG.get(), x, surface.getY() + level.random.nextInt(5), z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
     }
 
     public static void unloadChunk(Level level, ChunkPos chunkPos) {

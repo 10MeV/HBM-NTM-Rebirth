@@ -6,11 +6,19 @@ import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.menu.MachineBatteryMenu;
+import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
+public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, HbmTileSyncable {
     private static final String TAG_INVENTORY = "Inventory";
     private static final long MAX_POWER = 1_000_000L;
     private static final long MAX_RECEIVE = MAX_POWER / 200L;
@@ -40,9 +48,13 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
     private static final String TAG_RED_HIGH = "redHigh";
     private static final String TAG_LAST_REDSTONE = "lastRedstone";
     private static final String TAG_PRIORITY = "priority";
+    private static final String TAG_CONTROL = "control";
 
     public static final int SLOT_DISCHARGE = 0;
     public static final int SLOT_CHARGE = 1;
+    public static final int CONTROL_RED_LOW = 0;
+    public static final int CONTROL_RED_HIGH = 1;
+    public static final int CONTROL_PRIORITY = 2;
 
     private final ItemStackHandler items = new ItemStackHandler(2) {
         @Override
@@ -52,7 +64,15 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == SLOT_DISCHARGE || slot == SLOT_CHARGE;
+            return (slot == SLOT_DISCHARGE || slot == SLOT_CHARGE) && HbmBatteryTransfer.isHbmBattery(stack);
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            if (!isItemValid(slot, stack)) {
+                return stack;
+            }
+            return super.insertItem(slot, stack, simulate);
         }
     };
     private final LazyOptional<ItemStackHandler> itemHandler = LazyOptional.of(() -> items);
@@ -179,6 +199,11 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
         return mode >= MODE_INPUT && mode <= MODE_NONE ? mode : MODE_INPUT;
     }
 
+    private static short cycleMode(short mode) {
+        short next = (short) (clampMode(mode) + 1);
+        return next > MODE_NONE ? MODE_INPUT : next;
+    }
+
     public ItemStackHandler getItems() {
         return items;
     }
@@ -197,6 +222,80 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
 
     public long getDelta() {
         return delta;
+    }
+
+    public long getPower() {
+        return energy.getPower();
+    }
+
+    public long getMaxPower() {
+        return energy.getMaxPower();
+    }
+
+    public short getRedLow() {
+        return redLow;
+    }
+
+    public short getRedHigh() {
+        return redHigh;
+    }
+
+    public HbmEnergyReceiver.ConnectionPriority getBatteryPriority() {
+        return batteryEnergy.getPriority();
+    }
+
+    public void cycleRedLowMode() {
+        redLow = cycleMode(redLow);
+        setChanged();
+    }
+
+    public void cycleRedHighMode() {
+        redHigh = cycleMode(redHigh);
+        setChanged();
+    }
+
+    public void cyclePriority() {
+        batteryEnergy.setPriority(switch (batteryEnergy.getPriority()) {
+            case LOW -> HbmEnergyReceiver.ConnectionPriority.NORMAL;
+            case NORMAL -> HbmEnergyReceiver.ConnectionPriority.HIGH;
+            default -> HbmEnergyReceiver.ConnectionPriority.LOW;
+        });
+        setChanged();
+    }
+
+    public int getPowerBarHeight(int maxHeight) {
+        return energy.getMaxPower() <= 0L ? 0 : (int) (energy.getPower() * maxHeight / energy.getMaxPower());
+    }
+
+    public long getDeltaPerSecond() {
+        return delta;
+    }
+
+    public void handleClientControl(ServerPlayer player, CompoundTag tag) {
+        switch (tag.getInt(TAG_CONTROL)) {
+            case CONTROL_RED_LOW -> cycleRedLowMode();
+            case CONTROL_RED_HIGH -> cycleRedHighMode();
+            case CONTROL_PRIORITY -> cyclePriority();
+            default -> {
+            }
+        }
+    }
+
+    public static CompoundTag controlTag(int control) {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt(TAG_CONTROL, control);
+        return tag;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("container.hbm.battery");
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+        return new MachineBatteryMenu(containerId, inventory, this);
     }
 
     private void updatePowerLog(long previousPower) {

@@ -72,6 +72,11 @@ public class PressRecipe implements Recipe<Container> {
     }
 
     @Override
+    public boolean isSpecial() {
+        return true;
+    }
+
+    @Override
     public ResourceLocation getId() {
         return id;
     }

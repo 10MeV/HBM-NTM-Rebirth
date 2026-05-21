@@ -1,37 +1,35 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.ntm.radiation.HazardType;
+import com.hbm.ntm.radiation.RadiationData;
+import com.hbm.ntm.radiation.RadiationUtil;
+import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
+import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.PathComputationType;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class LegacyGasMeltdownBlock extends Block {
+public class LegacyGasMeltdownBlock extends LegacyGasBlock {
     public LegacyGasMeltdownBlock(Properties properties) {
         super(properties);
     }
 
     @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
-        super.onPlace(state, level, pos, oldState, movedByPiston);
-        if (!level.isClientSide && state.getBlock() != oldState.getBlock()) {
-            level.scheduleTick(pos, this, 10);
-        }
-    }
-
-    @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        super.tick(state, level, pos, random);
+        Direction radonDirection = Direction.values()[random.nextInt(Direction.values().length)];
+        BlockPos radonPos = pos.relative(radonDirection);
+        if (random.nextInt(7) == 0 && level.isEmptyBlock(radonPos)) {
+            level.setBlock(radonPos, ModBlocks.GAS_RADON_DENSE.get().defaultBlockState(), Block.UPDATE_ALL);
+        }
         if (level.canSeeSky(pos)) {
             ChunkRadiationManager.incrementRadiation(level, pos, 5.0F);
         }
@@ -39,7 +37,21 @@ public class LegacyGasMeltdownBlock extends Block {
             level.removeBlock(pos, false);
             return;
         }
-        level.scheduleTick(pos, this, 2);
+        super.tick(state, level, pos, random);
+    }
+
+    @Override
+    public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        super.entityInside(state, level, pos, entity);
+        if (level.isClientSide || !(entity instanceof LivingEntity living)) {
+            return;
+        }
+
+        RadiationUtil.contaminate(living, HazardType.RADIATION, ContaminationType.CREATIVE, 0.5F);
+        RadiationUtil.addRadiationPoisoning(living, 60 * 20, 2);
+        if (!ArmorUtil.hasFineParticleProtection(living)) {
+            RadiationData.incrementAsbestos(living, 5);
+        }
     }
 
     @Override
@@ -53,32 +65,12 @@ public class LegacyGasMeltdownBlock extends Block {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return Shapes.empty();
+    protected Direction firstDirection(ServerLevel level, BlockPos pos, RandomSource random) {
+        return random.nextInt(2) == 0 ? Direction.UP : Direction.DOWN;
     }
 
     @Override
-    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return Shapes.empty();
-    }
-
-    @Override
-    public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
-        return Shapes.empty();
-    }
-
-    @Override
-    public boolean skipRendering(BlockState state, BlockState adjacentState, Direction direction) {
-        return adjacentState.is(this) || super.skipRendering(state, adjacentState, direction);
-    }
-
-    @Override
-    public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.INVISIBLE;
-    }
-
-    @Override
-    public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
-        return true;
+    protected Direction secondDirection(ServerLevel level, BlockPos pos, RandomSource random) {
+        return randomHorizontal(random);
     }
 }

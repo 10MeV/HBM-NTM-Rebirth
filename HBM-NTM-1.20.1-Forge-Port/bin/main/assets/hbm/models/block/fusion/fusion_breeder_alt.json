@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/fusion/fusion_breeder.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "parts": { "visibility": {
+      "BreederAlt": true,
+      "Breeder": false
+  } },
+  "textures": { "particle": "hbm:block/fusion/breeder", "default": "hbm:block/fusion/breeder" }
+}

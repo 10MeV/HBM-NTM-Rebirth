@@ -1,11 +1,11 @@
-// 1.20.1	2026-05-21T18:56:28.0666223	Item Models: hbm
-9aee3a921fe1212a97f1d7a3ff0480aeb1fb69f1 assets/hbm/models/item/battery_lead.json
-5a144f4829716a4f2d69b09c566eb1a0b6cf5108 assets/hbm/models/item/battery_lithium.json
+// 1.20.1	2026-05-21T22:41:50.8390125	Item Models: hbm
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lead.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lithium.json
 3027bba73e1fe9ca9001e4fa3f97e95548b9075b assets/hbm/models/item/battery_potato.json
-afde7e16fe8525d7aff8a535adee6d817cd1080c assets/hbm/models/item/battery_quantum.json
-813cfd616ade19f6938d5d3bb7e4165889866ef8 assets/hbm/models/item/battery_redstone.json
-9bccfaaed11489e8fea9a9e3d006bc8a1c91107a assets/hbm/models/item/battery_schrabidium.json
-4950a80f8d4f3c47ff2c030fb596424ec4adcccc assets/hbm/models/item/battery_sodium.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_quantum.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_redstone.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_schrabidium.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_sodium.json
 cdfd214c5c6c55600df213ad00db1fc2e2aa9249 assets/hbm/models/item/billet_actinium.json
 69148ec4a8b1ff83e4a53e95a194bd5f93d9bb13 assets/hbm/models/item/billet_am241.json
 7ac259170cdbe9bee033de0e801fd435f731cbbc assets/hbm/models/item/billet_am242.json
@@ -55,12 +55,12 @@ f8333a487901dce9def69ce4a5c7cc4746717a6f assets/hbm/models/item/billet_zfb_pu241
 09b6e171a5cf423a6b8c86022aa4ec23b7cbf2be assets/hbm/models/item/boy_bullet.json
 3ef7c6308aa5ae3f8ce6dabc5ccbd3e8eab3a0c0 assets/hbm/models/item/boy_propellant.json
 296512f154a274642ac189ea664cbd56358e49fa assets/hbm/models/item/boy_target.json
-743bc471106a7a49a9acf131ebc016f9fbfe03c5 assets/hbm/models/item/capacitor_bismuth.json
-0b5e45d6d7c6099deaff085a2f6e997a7385deb3 assets/hbm/models/item/capacitor_copper.json
-ce6c0efadfc1aae5974e537278a340e9586b26f2 assets/hbm/models/item/capacitor_gold.json
-6f10e336e10a22c8fd2cceff0da636e48e00d364 assets/hbm/models/item/capacitor_niobium.json
-d5e6db53c6f4b5caa8b9402bab4f3cd115fedd6d assets/hbm/models/item/capacitor_spark.json
-c5e49b8c92682108ecdff4d487382fdf4d652286 assets/hbm/models/item/capacitor_tantalum.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_bismuth.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_copper.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_gold.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_niobium.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_spark.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_tantalum.json
 8d00c230a332d579490ce486aa853463fa443868 assets/hbm/models/item/cell_empty.json
 ab1a38edded4cb0e90d28033028a0fead010e44c assets/hbm/models/item/cell_sas3.json
 6f8c104cf1f6c27fde25768a9f1ac8a258d1f8cc assets/hbm/models/item/cinnebar.json

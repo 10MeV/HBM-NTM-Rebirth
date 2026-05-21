@@ -11,6 +11,8 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.BooleanValue WORLD_RAD_EFFECTS;
     public static ForgeConfigSpec.IntValue WORLD_RAD;
     public static ForgeConfigSpec.IntValue WORLD_RAD_THRESHOLD;
+    public static ForgeConfigSpec.BooleanValue CLEANUP_DEAD_DIRT;
+    public static ForgeConfigSpec.BooleanValue ENABLE_MYCELIUM_SPREAD;
 
     public static ForgeConfigSpec.BooleanValue DISABLE_ASBESTOS;
     public static ForgeConfigSpec.BooleanValue DISABLE_BLINDING;
@@ -43,6 +45,12 @@ public final class RadiationConfig {
         WORLD_RAD_THRESHOLD = builder
                 .comment("Legacy RADWORLD_02_minimum: minimum chunk radiation for terrain mutation.")
                 .defineInRange("worldRadThreshold", 20, 0, Integer.MAX_VALUE);
+        CLEANUP_DEAD_DIRT = builder
+                .comment("Legacy RADWORLD_03_regrow: whether dead grass and mycelium should decay into dirt.")
+                .define("cleanupDeadDirt", false);
+        ENABLE_MYCELIUM_SPREAD = builder
+                .comment("Legacy general 1.01_enableMyceliumSpread: allows glowing waste mycelium to spread.")
+                .define("enableMyceliumSpread", false);
         ENABLE_CONTAMINATION = builder
                 .comment("Legacy RADIATION_00_enableContamination: toggles entity radiation contamination.")
                 .define("enableContamination", true);

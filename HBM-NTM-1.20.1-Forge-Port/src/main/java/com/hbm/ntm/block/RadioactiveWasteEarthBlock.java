@@ -1,13 +1,12 @@
 package com.hbm.ntm.block;
 
-import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.radiation.RadiationUtil;
+import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.BlockGetter;
@@ -19,28 +18,10 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class RadioactiveWasteEarthBlock extends Block {
     private final boolean mycelium;
-    private final float chunkRadiation;
 
-    public RadioactiveWasteEarthBlock(Properties properties, boolean mycelium, float chunkRadiation) {
+    public RadioactiveWasteEarthBlock(Properties properties, boolean mycelium) {
         super(properties.randomTicks());
         this.mycelium = mycelium;
-        this.chunkRadiation = chunkRadiation;
-    }
-
-    @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
-        super.onPlace(state, level, pos, oldState, isMoving);
-        if (!level.isClientSide && !oldState.is(state.getBlock())) {
-            ChunkRadiationManager.incrementRadiation(level, pos, chunkRadiation);
-        }
-    }
-
-    @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!level.isClientSide && !newState.is(state.getBlock())) {
-            ChunkRadiationManager.decrementRadiation(level, pos, chunkRadiation);
-        }
-        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override
@@ -66,19 +47,31 @@ public class RadioactiveWasteEarthBlock extends Block {
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         super.randomTick(state, level, pos, random);
-        if (mycelium) {
+        if (mycelium && RadiationConfig.ENABLE_MYCELIUM_SPREAD.get()) {
             for (BlockPos target : BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))) {
                 BlockPos above = target.above();
                 BlockState targetState = level.getBlockState(target);
                 if (!level.getBlockState(above).isSolidRender(level, above)
-                        && (targetState.is(Blocks.DIRT) || targetState.is(Blocks.GRASS_BLOCK) || targetState.is(Blocks.MYCELIUM))) {
+                        && (targetState.is(Blocks.DIRT) || targetState.is(Blocks.GRASS_BLOCK)
+                        || targetState.is(Blocks.MYCELIUM) || targetState.is(ModBlocks.WASTE_EARTH.get()))) {
                     level.setBlock(target, state, 2);
                 }
             }
-        } else if (level.getBlockState(pos.above()).is(Blocks.BROWN_MUSHROOM)
+        }
+
+        if (shouldDecayToDirt(level, pos)) {
+            level.setBlock(pos, Blocks.DIRT.defaultBlockState(), 2);
+        }
+
+        if (level.getBlockState(pos.above()).is(Blocks.BROWN_MUSHROOM)
                 || level.getBlockState(pos.above()).is(Blocks.RED_MUSHROOM)) {
             level.destroyBlock(pos.above(), false);
         }
+    }
+
+    private static boolean shouldDecayToDirt(ServerLevel level, BlockPos pos) {
+        return RadiationConfig.CLEANUP_DEAD_DIRT.get()
+                || (level.getRawBrightness(pos.above(), 0) < 4 && level.getBlockState(pos.above()).getLightBlock(level, pos.above()) > 2);
     }
 
     @Override

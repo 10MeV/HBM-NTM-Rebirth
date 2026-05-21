@@ -63,6 +63,8 @@
     "effect.hbm.radaway":  "RadAway",
     "death.attack.radiation":  "%1$s died from radiation",
     "death.attack.digamma":  "%1$s was erased by digamma radiation",
+    "death.attack.explosion":  "%1$s was blown up",
+    "death.attack.explosion.player":  "%1$s was blown up by %2$s",
     "geiger.title":  "Geiger Counter",
     "geiger.chunkRad":  "Chunk radiation: %s RAD/s",
     "geiger.envRad":  "Environmental dose: %s RAD/s",
@@ -517,6 +519,22 @@
     "tooltip.hbm.plushie.yomi": "Yomi",
     "tooltip.hbm.plushie.numbernine": "Number Nine",
     "tooltip.hbm.plushie.hundun": "Hundun",
-    "tooltip.hbm.plushie.derg": "Derg"
+    "tooltip.hbm.plushie.derg": "Derg",
+    "block.hbm.conveyor": "Conveyor Belt",
+    "block.hbm.conveyor_express": "Express Conveyor Belt",
+    "block.hbm.conveyor_double": "Double Conveyor Belt",
+    "block.hbm.conveyor_triple": "Triple Conveyor Belt",
+    "block.hbm.conveyor_lift": "Conveyor Lift",
+    "block.hbm.conveyor_chute": "Conveyor Chute",
+    "block.hbm.rad_absorber": "Radiation Absorber",
+    "block.hbm.rad_absorber.1": "Radiation Absorber Red",
+    "block.hbm.rad_absorber.2": "Radiation Absorber Green",
+    "block.hbm.rad_absorber.3": "Radiation Absorber Pink",
+    "block.hbm.sellafield": "Sellafite",
+    "block.hbm.sellafield.1": "Sellafite",
+    "block.hbm.sellafield.2": "Sellafite",
+    "block.hbm.sellafield.3": "Sellafite",
+    "block.hbm.sellafield.4": "Sellafite",
+    "block.hbm.sellafield.5": "Sellafite"
 }
 

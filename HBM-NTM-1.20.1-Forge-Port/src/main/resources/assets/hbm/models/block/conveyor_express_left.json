@@ -1,0 +1,7 @@
+{
+  "parent": "hbm:block/template_conveyor",
+  "textures": {
+    "top": "hbm:block/conveyor_express_curve_left",
+    "side": "hbm:block/conveyor_side"
+  }
+}

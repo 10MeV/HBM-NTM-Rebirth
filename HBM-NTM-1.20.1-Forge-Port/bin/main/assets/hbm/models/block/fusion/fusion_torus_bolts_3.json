@@ -1,0 +1,16 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/fusion/fusion_torus.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "parts": { "visibility": {
+      "Plasma": false,
+      "Bolts4": false,
+      "Bolts3": true,
+      "Bolts2": false,
+      "Bolts1": false,
+      "Magnet": false,
+      "Torus": false
+  } },
+  "textures": { "particle": "hbm:block/fusion/torus", "default": "hbm:block/fusion/torus" }
+}

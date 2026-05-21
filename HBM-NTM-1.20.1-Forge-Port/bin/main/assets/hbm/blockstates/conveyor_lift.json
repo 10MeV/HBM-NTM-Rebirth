@@ -1,0 +1,544 @@
+{
+  "variants": {
+    "facing=east,legacy_metadata=10,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=10,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=10,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=11,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=11,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=11,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=12,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=12,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=12,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=13,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=13,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=13,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=2,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=2,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=2,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=3,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=3,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=3,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=4,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=4,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=4,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=5,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=5,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=5,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=6,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=6,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=6,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=7,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=7,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=7,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=8,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=8,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=8,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=9,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=9,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=east,legacy_metadata=9,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 90
+    },
+    "facing=north,legacy_metadata=10,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=10,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=10,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=11,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=11,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=11,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=12,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=12,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=12,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=13,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=13,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=13,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=2,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=2,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=2,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=3,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=3,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=3,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=4,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=4,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=4,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=5,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=5,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=5,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=6,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=6,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=6,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=7,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=7,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=7,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=8,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=8,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=8,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=9,path=left": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=9,path=right": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=north,legacy_metadata=9,path=straight": {
+      "model": "hbm:block/conveyor_lift"
+    },
+    "facing=south,legacy_metadata=10,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=10,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=10,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=11,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=11,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=11,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=12,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=12,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=12,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=13,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=13,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=13,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=2,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=2,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=2,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=3,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=3,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=3,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=4,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=4,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=4,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=5,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=5,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=5,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=6,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=6,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=6,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=7,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=7,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=7,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=8,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=8,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=8,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=9,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=9,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=south,legacy_metadata=9,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 180
+    },
+    "facing=west,legacy_metadata=10,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=10,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=10,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=11,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=11,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=11,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=12,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=12,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=12,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=13,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=13,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=13,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=2,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=2,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=2,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=3,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=3,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=3,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=4,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=4,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=4,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=5,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=5,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=5,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=6,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=6,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=6,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=7,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=7,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=7,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=8,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=8,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=8,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=9,path=left": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=9,path=right": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    },
+    "facing=west,legacy_metadata=9,path=straight": {
+      "model": "hbm:block/conveyor_lift",
+      "y": 270
+    }
+  }
+}
