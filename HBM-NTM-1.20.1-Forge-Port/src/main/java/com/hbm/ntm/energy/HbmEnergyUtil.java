@@ -36,6 +36,15 @@ public final class HbmEnergyUtil {
         if (stack.isEmpty() || provider == null || maxTransfer <= 0L || provider.getPower() <= 0L) {
             return 0L;
         }
+        if (stack.getItem() instanceof HbmBatteryItem) {
+            long available = Math.min(provider.getPower(), maxTransfer);
+            long remaining = HbmBatteryTransfer.chargeItemsFromPower(stack, available, provider.getMaxPower());
+            long used = available - remaining;
+            if (used > 0L) {
+                provider.usePower(used);
+            }
+            return used;
+        }
         return stack.getCapability(ForgeCapabilities.ENERGY, null)
                 .map(itemEnergy -> {
                     long transfer = Math.min(maxTransfer, Math.min(provider.getPower(), provider.getProviderSpeed()));
@@ -51,6 +60,16 @@ public final class HbmEnergyUtil {
     public static long chargeStorageFromItem(ItemStack stack, HbmEnergyReceiver receiver, long maxTransfer) {
         if (stack.isEmpty() || receiver == null || maxTransfer <= 0L) {
             return 0L;
+        }
+        if (stack.getItem() instanceof HbmBatteryItem) {
+            long before = receiver.getPower();
+            long cappedMaxPower = Math.min(receiver.getMaxPower(), before + maxTransfer);
+            long after = HbmBatteryTransfer.chargePowerFromItem(stack, before, cappedMaxPower);
+            long accepted = after - before;
+            if (accepted > 0L) {
+                receiver.transferPower(accepted);
+            }
+            return accepted;
         }
         return stack.getCapability(ForgeCapabilities.ENERGY, null)
                 .map(itemEnergy -> extractIntoReceiver(itemEnergy, receiver, maxTransfer))
@@ -112,14 +131,18 @@ public final class HbmEnergyUtil {
         if (level == null || pos == null || side == null || provider == null) {
             return false;
         }
-        return subscribeProviderToNetwork(level, pos.relative(side), side.getOpposite(), provider);
+        boolean subscribed = subscribeProviderToNetwork(level, pos.relative(side), side.getOpposite(), provider);
+        HbmEnergyDebug.spawnProviderSubscription(level, pos, side, subscribed);
+        return subscribed;
     }
 
     public static boolean subscribeReceiverToNeighborNetwork(Level level, BlockPos pos, Direction side, HbmEnergyReceiver receiver) {
         if (level == null || pos == null || side == null || receiver == null) {
             return false;
         }
-        return subscribeReceiverToNetwork(level, pos.relative(side), side.getOpposite(), receiver);
+        boolean subscribed = subscribeReceiverToNetwork(level, pos.relative(side), side.getOpposite(), receiver);
+        HbmEnergyDebug.spawnReceiverSubscription(level, pos, side, subscribed);
+        return subscribed;
     }
 
     public static boolean subscribeProviderToNetwork(Level level, BlockPos conductorPos, Direction conductorSide, HbmEnergyProvider provider) {
@@ -137,6 +160,38 @@ public final class HbmEnergyUtil {
             return false;
         }
         powerNet.addReceiver(receiver);
+        return true;
+    }
+
+    public static boolean unsubscribeProviderFromNeighborNetwork(Level level, BlockPos pos, Direction side, HbmEnergyProvider provider) {
+        if (level == null || pos == null || side == null || provider == null) {
+            return false;
+        }
+        return unsubscribeProviderFromNetwork(level, pos.relative(side), side.getOpposite(), provider);
+    }
+
+    public static boolean unsubscribeReceiverFromNeighborNetwork(Level level, BlockPos pos, Direction side, HbmEnergyReceiver receiver) {
+        if (level == null || pos == null || side == null || receiver == null) {
+            return false;
+        }
+        return unsubscribeReceiverFromNetwork(level, pos.relative(side), side.getOpposite(), receiver);
+    }
+
+    public static boolean unsubscribeProviderFromNetwork(Level level, BlockPos conductorPos, Direction conductorSide, HbmEnergyProvider provider) {
+        HbmPowerNet powerNet = getConnectablePowerNet(level, conductorPos, conductorSide);
+        if (provider == null || powerNet == null || !powerNet.isProvider(provider)) {
+            return false;
+        }
+        powerNet.removeProvider(provider);
+        return true;
+    }
+
+    public static boolean unsubscribeReceiverFromNetwork(Level level, BlockPos conductorPos, Direction conductorSide, HbmEnergyReceiver receiver) {
+        HbmPowerNet powerNet = getConnectablePowerNet(level, conductorPos, conductorSide);
+        if (receiver == null || powerNet == null || !powerNet.isSubscribed(receiver)) {
+            return false;
+        }
+        powerNet.removeReceiver(receiver);
         return true;
     }
 
@@ -175,6 +230,26 @@ public final class HbmEnergyUtil {
             }
         }
         return subscribed;
+    }
+
+    public static int unsubscribeProviderFromAllNeighborNetworks(Level level, BlockPos pos, HbmEnergyProvider provider) {
+        int unsubscribed = 0;
+        for (Direction side : Direction.values()) {
+            if (unsubscribeProviderFromNeighborNetwork(level, pos, side, provider)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
+    }
+
+    public static int unsubscribeReceiverFromAllNeighborNetworks(Level level, BlockPos pos, HbmEnergyReceiver receiver) {
+        int unsubscribed = 0;
+        for (Direction side : Direction.values()) {
+            if (unsubscribeReceiverFromNeighborNetwork(level, pos, side, receiver)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
     }
 
     public static HbmPowerNet getConnectablePowerNet(Level level, BlockPos conductorPos, Direction conductorSide) {
@@ -245,7 +320,9 @@ public final class HbmEnergyUtil {
         if (neighbor instanceof HbmEnergyConnector connector && !connector.canConnectEnergy(neighborSide)) {
             return 0L;
         }
-        return movePower(provider, receiver, Math.min(provider.getProviderSpeed(), receiver.getReceiverSpeed()));
+        long transferred = movePower(provider, receiver, Math.min(provider.getProviderSpeed(), receiver.getReceiverSpeed()));
+        HbmEnergyDebug.spawnDirectTransfer(level, pos, side, transferred);
+        return transferred;
     }
 
     private static long extractIntoReceiver(IEnergyStorage itemEnergy, HbmEnergyReceiver receiver, long maxTransfer) {

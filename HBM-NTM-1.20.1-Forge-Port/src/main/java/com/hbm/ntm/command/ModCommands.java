@@ -1,8 +1,13 @@
 package com.hbm.ntm.command;
 
 import com.hbm.ntm.api.tile.InfoProviderEC;
+import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
+import com.hbm.ntm.energy.HbmEnergyDebug;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.event.CommonForgeEvents;
+import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidNodespace;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.RadiationConstants;
 import com.hbm.ntm.radiation.RadiationData;
@@ -10,6 +15,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -84,9 +90,10 @@ public final class ModCommands {
                                 .then(Commands.literal("clear")
                                         .then(Commands.argument("targets", EntityArgument.players())
                                                 .executes(context -> setPlayerDigamma(context.getSource(), EntityArgument.getPlayers(context, "targets"), 0.0F)))))
-                        .then(energyCommand())
                         .then(statusCommand())
-                        .then(contaminationCommand())));
+                        .then(contaminationCommand()))
+                .then(energyCommand())
+                .then(fluidCommand()));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> statusCommand() {
@@ -120,12 +127,52 @@ public final class ModCommands {
         return Commands.literal("energy")
                 .then(Commands.literal("nodespace")
                         .executes(context -> getEnergyNodespace(context.getSource())))
+                .then(Commands.literal("node")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .executes(context -> getEnergyNetwork(context.getSource(), BlockPosArgument.getLoadedBlockPos(context, "pos")))))
                 .then(Commands.literal("network")
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                 .executes(context -> getEnergyNetwork(context.getSource(), BlockPosArgument.getLoadedBlockPos(context, "pos")))))
                 .then(Commands.literal("info")
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                                .executes(context -> getEnergyInfo(context.getSource(), BlockPosArgument.getLoadedBlockPos(context, "pos")))));
+                                .executes(context -> getEnergyInfo(context.getSource(), BlockPosArgument.getLoadedBlockPos(context, "pos")))))
+                .then(Commands.literal("debug")
+                        .then(Commands.literal("particles")
+                                .executes(context -> toggleEnergyDebugParticles(context.getSource()))
+                                .then(Commands.argument("enabled", StringArgumentType.word())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{"false", "true"}, builder))
+                                        .executes(context -> setEnergyDebugParticles(context.getSource(), parseBoolean(StringArgumentType.getString(context, "enabled")))))));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> fluidCommand() {
+        return Commands.literal("fluid")
+                .then(Commands.literal("nodespace")
+                        .executes(context -> getFluidNodespace(context.getSource())))
+                .then(Commands.literal("node")
+                        .then(fluidNetworkArgument()))
+                .then(Commands.literal("network")
+                        .then(fluidNetworkArgument()))
+                .then(Commands.literal("pipe")
+                        .then(Commands.literal("set")
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .then(Commands.argument("fluid", StringArgumentType.word())
+                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                        HbmFluids.all().stream().map(FluidType::toPath), builder))
+                                                .executes(context -> setFluidPipeType(
+                                                        context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                        parseFluid(StringArgumentType.getString(context, "fluid"))))))));
+    }
+
+    private static ArgumentBuilder<CommandSourceStack, ?> fluidNetworkArgument() {
+        return Commands.argument("pos", BlockPosArgument.blockPos())
+                .then(Commands.argument("fluid", StringArgumentType.word())
+                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                HbmFluids.all().stream().map(FluidType::toPath), builder))
+                        .executes(context -> getFluidNetwork(
+                                context.getSource(),
+                                BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                parseFluid(StringArgumentType.getString(context, "fluid")))));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> contaminationCommand() {
@@ -200,23 +247,40 @@ public final class ModCommands {
     private static int getEnergyNodespace(CommandSourceStack source) {
         int nodes = HbmEnergyNodespace.getNodeCount(source.getLevel());
         int networks = HbmEnergyNodespace.getNetworkCount(source.getLevel());
-        source.sendSuccess(() -> Component.literal("Energy nodespace: nodes=" + nodes + " networks=" + networks), false);
+        source.sendSuccess(() -> Component.literal("Energy nodespace: nodes=" + nodes
+                + " networks=" + networks
+                + " debugParticles=" + HbmEnergyDebug.isParticleDebugEnabled()), false);
         return nodes;
     }
 
     private static int getEnergyNetwork(CommandSourceStack source, BlockPos pos) {
-        boolean valid = HbmEnergyNodespace.hasValidNetwork(source.getLevel(), pos);
-        int links = HbmEnergyNodespace.getNetworkLinkCount(source.getLevel(), pos);
-        int providers = HbmEnergyNodespace.getNetworkProviderCount(source.getLevel(), pos);
-        int receivers = HbmEnergyNodespace.getNetworkReceiverCount(source.getLevel(), pos);
-        long tracker = HbmEnergyNodespace.getNetworkEnergyTracker(source.getLevel(), pos);
+        HbmEnergyNodespace.NetworkDebugSnapshot snapshot = HbmEnergyNodespace.getNetworkDebugSnapshot(source.getLevel(), pos);
+        if (!snapshot.nodePresent()) {
+            source.sendFailure(Component.literal("No HBM energy node at " + pos.toShortString()));
+            return 0;
+        }
+        if (!snapshot.networkPresent() || snapshot.network() == null) {
+            source.sendSuccess(() -> Component.literal("Energy node at " + pos.toShortString()
+                    + ": nodeConnections=" + snapshot.nodeConnections()
+                    + " recentlyChanged=" + snapshot.recentlyChanged()
+                    + " network=none"), false);
+            return 0;
+        }
+        var network = snapshot.network();
         source.sendSuccess(() -> Component.literal("Energy network at " + pos.toShortString()
-                + ": valid=" + valid
-                + " links=" + links
-                + " providers=" + providers
-                + " receivers=" + receivers
-                + " lastTransfer=" + tracker + " HE"), false);
-        return links;
+                + ": valid=" + network.valid()
+                + " nodeConnections=" + snapshot.nodeConnections()
+                + " recentlyChanged=" + snapshot.recentlyChanged()
+                + " links=" + network.links()
+                + " providers=" + network.providers()
+                + " receivers=" + network.receivers()
+                + " providerPower=" + network.providerPower() + " HE"
+                + " providerRate=" + network.providerRate() + " HE/t"
+                + " receiverDemand=" + network.receiverDemand() + " HE"
+                + " receiverRate=" + network.receiverRate() + " HE/t"
+                + " receiverPriorities=" + network.receiversByPriority()
+                + " lastTransfer=" + network.lastTransfer() + " HE"), false);
+        return network.links();
     }
 
     private static int getEnergyInfo(CommandSourceStack source, BlockPos pos) {
@@ -229,6 +293,77 @@ public final class ModCommands {
         provider.provideExtraInfo(data);
         source.sendSuccess(() -> Component.literal("Energy info at " + pos.toShortString() + ": " + data), false);
         return data.size();
+    }
+
+    private static int getFluidNodespace(CommandSourceStack source) {
+        int nodes = HbmFluidNodespace.getNodeCount(source.getLevel());
+        int networks = HbmFluidNodespace.getNetworkCount(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Fluid nodespace: nodes=" + nodes + " networks=" + networks), false);
+        return nodes;
+    }
+
+    private static int getFluidNetwork(CommandSourceStack source, BlockPos pos, FluidType type) {
+        if (type == HbmFluids.NONE) {
+            source.sendFailure(Component.literal("Unknown or empty HBM fluid type."));
+            return 0;
+        }
+        HbmFluidNodespace.NetworkDebugSnapshot snapshot = HbmFluidNodespace.getNetworkDebugSnapshot(source.getLevel(), pos, type);
+        if (!snapshot.nodePresent()) {
+            source.sendFailure(Component.literal("No HBM fluid node for " + type.getName() + " at " + pos.toShortString()));
+            return 0;
+        }
+        if (!snapshot.networkPresent() || snapshot.network() == null) {
+            source.sendSuccess(() -> Component.literal("Fluid node at " + pos.toShortString()
+                    + " type=" + snapshot.fluid()
+                    + ": nodeConnections=" + snapshot.nodeConnections()
+                    + " recentlyChanged=" + snapshot.recentlyChanged()
+                    + " network=none"), false);
+            return 0;
+        }
+        var network = snapshot.network();
+        source.sendSuccess(() -> Component.literal("Fluid network at " + pos.toShortString()
+                + " type=" + network.fluid()
+                + ": valid=" + network.valid()
+                + " nodeConnections=" + snapshot.nodeConnections()
+                + " recentlyChanged=" + snapshot.recentlyChanged()
+                + " links=" + network.links()
+                + " providers=" + network.providers()
+                + " receivers=" + network.receivers()
+                + " providerAvailable=" + formatPressureArray(network.providerAvailable()) + " mB"
+                + " providerRate=" + formatPressureArray(network.providerRate()) + " mB/t"
+                + " receiverDemand=" + formatPressureArray(network.receiverDemand()) + " mB"
+                + " receiverRate=" + formatPressureArray(network.receiverRate()) + " mB/t"
+                + " receiverPriorities=" + network.receiversByPriority()
+                + " lastTransfer=" + network.lastTransfer() + " mB"), false);
+        return network.links();
+    }
+
+    private static int setFluidPipeType(CommandSourceStack source, BlockPos pos, FluidType type) {
+        if (type == HbmFluids.NONE) {
+            source.sendFailure(Component.literal("Unknown or empty HBM fluid type."));
+            return 0;
+        }
+        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        if (!(blockEntity instanceof FluidPipeBlockEntity pipe)) {
+            source.sendFailure(Component.literal("No HBM fluid pipe at " + pos.toShortString()));
+            return 0;
+        }
+        pipe.setFluidType(type);
+        source.sendSuccess(() -> Component.literal("Fluid pipe at " + pos.toShortString()
+                + " set to " + type.getName()), true);
+        return 1;
+    }
+
+    private static int toggleEnergyDebugParticles(CommandSourceStack source) {
+        boolean enabled = HbmEnergyDebug.toggleParticleDebug();
+        source.sendSuccess(() -> Component.literal("Energy debug particles: " + enabled), true);
+        return enabled ? 1 : 0;
+    }
+
+    private static int setEnergyDebugParticles(CommandSourceStack source, boolean enabled) {
+        HbmEnergyDebug.setParticleDebugEnabled(enabled);
+        source.sendSuccess(() -> Component.literal("Energy debug particles: " + enabled), true);
+        return enabled ? 1 : 0;
     }
 
     private static int getPlayerRadiation(CommandSourceStack source, Player player) {
@@ -401,6 +536,21 @@ public final class ModCommands {
 
     private static boolean parseBoolean(String value) {
         return "true".equalsIgnoreCase(value) || "yes".equalsIgnoreCase(value) || "1".equals(value);
+    }
+
+    private static FluidType parseFluid(String value) {
+        return HbmFluids.fromName(value);
+    }
+
+    private static String formatPressureArray(long[] values) {
+        StringBuilder builder = new StringBuilder("[");
+        for (int i = 0; i < values.length; i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+            builder.append(i).append('=').append(values[i]);
+        }
+        return builder.append(']').toString();
     }
 
     private static void syncPlayers(Collection<ServerPlayer> players) {

@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/radar_screen.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/machines/radar_screen",
+    "default": "hbm:block/machines/radar_screen",
+    "texture0": "hbm:block/machines/radar_screen"
+  }
+}

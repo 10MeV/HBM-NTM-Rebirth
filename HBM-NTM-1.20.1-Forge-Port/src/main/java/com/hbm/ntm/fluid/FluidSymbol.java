@@ -4,5 +4,9 @@ public enum FluidSymbol {
     NONE,
     ACID,
     ASPHYXIANT,
-    ANTIMATTER
+    ANTIMATTER,
+    CRYOGENIC,
+    NOWATER,
+    OXIDIZER,
+    RADIATION
 }

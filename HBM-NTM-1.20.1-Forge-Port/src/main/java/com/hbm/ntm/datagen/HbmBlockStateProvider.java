@@ -2,6 +2,9 @@ package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.HbmEnergyNodeBlock;
+import com.hbm.ntm.block.HbmFluidNodeBlock;
+import com.hbm.ntm.block.LegacyRadAbsorberBlock;
+import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -48,6 +51,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "decon_side",
                 "decon_side");
         redCableWithItem();
+        fluidPipeWithItem();
         sidedCubeWithItem(ModBlocks.MACHINE_BATTERY,
                 "battery_top",
                 "battery_top",
@@ -55,6 +59,10 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "battery_front_alt",
                 "battery_side_alt",
                 "battery_side_alt");
+        simpleCubeWithItem(ModBlocks.GAS_MELTDOWN, "gas_meltdown");
+        radAbsorberWithItem();
+        sellafieldWithItem();
+        simpleCubeWithItem(ModBlocks.SELLAFIELD_SLAKED, "sellafield_slaked");
         existingModelWithItem(ModBlocks.NUKE_GADGET, "nuke_gadget");
         existingModelWithItem(ModBlocks.NUKE_BOY, "nuke_boy");
         existingModelWithItem(ModBlocks.NUKE_MAN, "nuke_man");
@@ -66,6 +74,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         existingModelWithItem(ModBlocks.NUKE_N2, "nuke_n2");
         existingModelWithItem(ModBlocks.NUKE_FSTBMB, "nuke_fstbmb");
         existingModelWithItem(ModBlocks.BOMB_MULTI, "bomb_multi");
+        simpleCubeWithItem(ModBlocks.YELLOW_BARREL, "barrel_yellow");
+        simpleCubeWithItem(ModBlocks.VITRIFIED_BARREL, "barrel_vitrified");
     }
 
     private void existingModelWithItem(RegistryObject<Block> block, String modelName) {
@@ -93,6 +103,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         String blockName = block.getId().getPath();
         ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
         horizontalBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
+    private void simpleCubeWithItem(RegistryObject<Block> block, String textureName) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
+        simpleBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
     }
 
@@ -152,5 +169,49 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .part().modelFile(side).rotationX(-90).addModel().condition(HbmEnergyNodeBlock.UP, true).end()
                 .part().modelFile(side).rotationX(90).addModel().condition(HbmEnergyNodeBlock.DOWN, true).end();
         simpleBlockItem(ModBlocks.RED_CABLE.get(), core);
+    }
+
+    private void fluidPipeWithItem() {
+        ModelFile core = models().cubeAll("fluid_duct_neo_core", new ResourceLocation(HbmNtm.MOD_ID, "block/pipe_neo"));
+        ModelFile side = models().cubeAll("fluid_duct_neo_side", new ResourceLocation(HbmNtm.MOD_ID, "block/pipe_neo"));
+        getMultipartBuilder(ModBlocks.FLUID_DUCT_NEO.get())
+                .part().modelFile(core).addModel().end()
+                .part().modelFile(side).addModel().condition(HbmFluidNodeBlock.NORTH, true).end()
+                .part().modelFile(side).rotationY(90).addModel().condition(HbmFluidNodeBlock.EAST, true).end()
+                .part().modelFile(side).rotationY(180).addModel().condition(HbmFluidNodeBlock.SOUTH, true).end()
+                .part().modelFile(side).rotationY(270).addModel().condition(HbmFluidNodeBlock.WEST, true).end()
+                .part().modelFile(side).rotationX(-90).addModel().condition(HbmFluidNodeBlock.UP, true).end()
+                .part().modelFile(side).rotationX(90).addModel().condition(HbmFluidNodeBlock.DOWN, true).end();
+        simpleBlockItem(ModBlocks.FLUID_DUCT_NEO.get(), core);
+    }
+
+    private void radAbsorberWithItem() {
+        getVariantBuilder(ModBlocks.RAD_ABSORBER.get())
+                .partialState().with(LegacyRadAbsorberBlock.TIER, 0).modelForState()
+                .modelFile(models().cubeAll("rad_absorber", new ResourceLocation(HbmNtm.MOD_ID, "block/absorber"))).addModel()
+                .partialState().with(LegacyRadAbsorberBlock.TIER, 1).modelForState()
+                .modelFile(models().cubeAll("rad_absorber_red", new ResourceLocation(HbmNtm.MOD_ID, "block/absorber_red"))).addModel()
+                .partialState().with(LegacyRadAbsorberBlock.TIER, 2).modelForState()
+                .modelFile(models().cubeAll("rad_absorber_green", new ResourceLocation(HbmNtm.MOD_ID, "block/absorber_green"))).addModel()
+                .partialState().with(LegacyRadAbsorberBlock.TIER, 3).modelForState()
+                .modelFile(models().cubeAll("rad_absorber_pink", new ResourceLocation(HbmNtm.MOD_ID, "block/absorber_pink"))).addModel();
+        simpleBlockItem(ModBlocks.RAD_ABSORBER.get(), models().getExistingFile(new ResourceLocation(HbmNtm.MOD_ID, "block/rad_absorber")));
+    }
+
+    private void sellafieldWithItem() {
+        getVariantBuilder(ModBlocks.SELLAFIELD.get())
+                .partialState().with(LegacySellafieldBlock.LEVEL, 0).modelForState()
+                .modelFile(models().cubeAll("sellafield", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_0"))).addModel()
+                .partialState().with(LegacySellafieldBlock.LEVEL, 1).modelForState()
+                .modelFile(models().cubeAll("sellafield_1", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_1"))).addModel()
+                .partialState().with(LegacySellafieldBlock.LEVEL, 2).modelForState()
+                .modelFile(models().cubeAll("sellafield_2", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_2"))).addModel()
+                .partialState().with(LegacySellafieldBlock.LEVEL, 3).modelForState()
+                .modelFile(models().cubeAll("sellafield_3", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_3"))).addModel()
+                .partialState().with(LegacySellafieldBlock.LEVEL, 4).modelForState()
+                .modelFile(models().cubeAll("sellafield_4", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_4"))).addModel()
+                .partialState().with(LegacySellafieldBlock.LEVEL, 5).modelForState()
+                .modelFile(models().cubeAll("sellafield_5", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_5"))).addModel();
+        simpleBlockItem(ModBlocks.SELLAFIELD.get(), models().getExistingFile(new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield")));
     }
 }

@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.command.ModCommands;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
+import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.radiation.ArmorUtil;
@@ -14,7 +15,6 @@ import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.ItemRadiationRegistry;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationData;
-import com.hbm.ntm.radiation.RadiationResistance;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -64,6 +64,7 @@ import java.util.Set;
 @Mod.EventBusSubscriber(modid = HbmNtm.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class CommonForgeEvents {
     private static final String HAZARD_ENTITY_TICK_KEY = "hbmHazardTick";
+    private static final String CONTAGION_ITEM_TAG = "ntmContagion";
     private static final Map<ResourceKey<Level>, Set<Integer>> TRACKED_ITEM_ENTITIES = new HashMap<>();
 
     @SubscribeEvent
@@ -80,6 +81,7 @@ public final class CommonForgeEvents {
         for (ServerLevel level : event.getServer().getAllLevels()) {
             ChunkRadiationManager.tick(level);
             HbmEnergyNodespace.tick(level);
+            HbmFluidNodespace.tick(level);
         }
     }
 
@@ -281,7 +283,9 @@ public final class CommonForgeEvents {
     @SubscribeEvent
     public static void onChunkUnload(ChunkEvent.Unload event) {
         if (!event.getLevel().isClientSide() && event.getLevel() instanceof Level level) {
+            ChunkRadiationManager.unloadChunk(level, event.getChunk().getPos());
             HbmEnergyNodespace.unloadChunk(level, event.getChunk().getPos());
+            HbmFluidNodespace.unloadChunk(level, event.getChunk().getPos());
         }
     }
 
@@ -289,6 +293,7 @@ public final class CommonForgeEvents {
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (!event.getLevel().isClientSide() && event.getLevel() instanceof Level level) {
             HbmEnergyNodespace.unloadLevel(level);
+            HbmFluidNodespace.unloadLevel(level);
         }
     }
 
@@ -441,34 +446,47 @@ public final class CommonForgeEvents {
             int maxTime = Math.max(1, effect.getInt("maxTime"));
             float maxRad = effect.getFloat("maxRad");
             boolean ignoreArmor = effect.getBoolean("ignoreArmor");
-            if (time < maxTime) {
-                float delta = (maxRad / maxTime) * (ignoreArmor ? 1.0F : RadiationResistance.calculateRadiationModifier(entity));
-                RadiationData.incrementRadiation(entity, delta);
-                effect.putInt("time", time + 1);
-                next.add(effect);
+            if (time > 0) {
+                float delta = maxRad * ((float) time / (float) maxTime);
+                RadiationUtil.contaminate(entity, HazardType.RADIATION,
+                        ignoreArmor ? ContaminationType.RAD_BYPASS : ContaminationType.CREATIVE,
+                        delta);
+                effect.putInt("time", time - 1);
+                if (time - 1 > 0) {
+                    next.add(effect);
+                }
             }
         }
         RadiationData.setContamination(entity, next);
     }
 
     private static void handleContagion(LivingEntity entity) {
+        if (!RadiationConfig.ENABLE_MKU.get()) {
+            return;
+        }
+
         int contagion = RadiationData.getContagion(entity);
+        int hour = 60 * 60 * 20;
+        int minute = 60 * 20;
+
+        if (entity instanceof Player player) {
+            handlePlayerInventoryContagion(player, contagion, hour);
+        }
+
         if (contagion <= 0) {
             return;
         }
 
         RadiationData.setContagion(entity, contagion - 1);
-        int hour = 60 * 60 * 20;
-        int minute = 60 * 20;
 
         if (contagion < (2 * hour + 55 * minute) && contagion % 20 == 0 && entity.level() instanceof ServerLevel level) {
             double range = entity.isInWaterOrRain() ? 16.0D : 2.0D;
             AABB box = entity.getBoundingBox().inflate(range);
             for (Entity nearby : level.getEntities(entity, box)) {
-                if (nearby instanceof LivingEntity living && RadiationData.getContagion(living) <= 0 && !ArmorUtil.checkForHaz2(living)) {
+                if (nearby instanceof LivingEntity living && RadiationData.getContagion(living) <= 0 && !ArmorUtil.checkForMkuProtection(living)) {
                     RadiationData.setContagion(living, 3 * hour);
                 } else if (nearby instanceof ItemEntity itemEntity) {
-                    itemEntity.getItem().getOrCreateTag().putBoolean("ntmContagion", true);
+                    tagContagious(itemEntity.getItem());
                 }
             }
         }
@@ -481,10 +499,10 @@ public final class CommonForgeEvents {
             entity.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 300, 4));
         }
         if (contagion < 30 * minute && entity.getRandom().nextInt(400) == 0) {
-            entity.hurt(ModDamageSources.radiation(entity.level()), 1.0F);
+            entity.hurt(ModDamageSources.mku(entity.level()), 1.0F);
         }
         if (contagion < 5 * minute && entity.getRandom().nextInt(100) == 0) {
-            entity.hurt(ModDamageSources.radiation(entity.level()), 2.0F);
+            entity.hurt(ModDamageSources.mku(entity.level()), 2.0F);
         }
         if (contagion < 30 * minute && (contagion + entity.getId()) % 200 < 20 && entity.level() instanceof ServerLevel level) {
             spawnVomit(level, entity, true);
@@ -492,9 +510,36 @@ public final class CommonForgeEvents {
                 playVomit(level, entity);
             }
         }
-        if (contagion == 1) {
-            entity.hurt(ModDamageSources.radiation(entity.level()), 1000.0F);
+    }
+
+    private static void handlePlayerInventoryContagion(Player player, int contagion, int hour) {
+        ItemStack stack = randomInventoryContagionStack(player);
+        if (stack.isEmpty() || stack.getMaxStackSize() != 1) {
+            return;
         }
+
+        if (contagion > 0) {
+            tagContagious(stack);
+        } else if (isTaggedContagious(stack) && !ArmorUtil.checkForMkuProtection(player)) {
+            RadiationData.setContagion(player, 3 * hour);
+        }
+    }
+
+    private static ItemStack randomInventoryContagionStack(Player player) {
+        if (player.getRandom().nextInt(100) == 0) {
+            return player.getInventory().armor.get(player.getRandom().nextInt(player.getInventory().armor.size()));
+        }
+        return player.getInventory().items.get(player.getRandom().nextInt(player.getInventory().items.size()));
+    }
+
+    private static void tagContagious(ItemStack stack) {
+        if (!stack.isEmpty()) {
+            stack.getOrCreateTag().putBoolean(CONTAGION_ITEM_TAG, true);
+        }
+    }
+
+    private static boolean isTaggedContagious(ItemStack stack) {
+        return stack.hasTag() && stack.getTag().getBoolean(CONTAGION_ITEM_TAG);
     }
 
     private static void handleLungDisease(LivingEntity entity) {

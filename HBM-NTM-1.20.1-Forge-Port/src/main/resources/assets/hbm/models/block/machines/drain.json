@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/drain.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/machines/drain",
+    "default": "hbm:block/machines/drain",
+    "texture0": "hbm:block/machines/drain"
+  }
+}

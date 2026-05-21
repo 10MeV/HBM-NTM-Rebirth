@@ -1,6 +1,7 @@
 package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.level.block.Block;
@@ -18,6 +19,8 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
         ModBlocks.BLOCK_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
+        add(ModBlocks.GAS_MELTDOWN.get(), noDrop());
+        add(ModBlocks.FALLOUT.get(), block -> createSingleItemTable(ModItems.legacyItem("fallout").get()));
     }
 
     @Override

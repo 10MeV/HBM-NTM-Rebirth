@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/crucible.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/machines/crucible_heat",
+    "default": "hbm:block/machines/crucible_heat",
+    "texture0": "hbm:block/machines/crucible_heat"
+  }
+}

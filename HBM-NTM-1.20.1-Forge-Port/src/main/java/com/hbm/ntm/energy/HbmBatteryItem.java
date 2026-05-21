@@ -3,6 +3,7 @@ package com.hbm.ntm.energy;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -97,6 +98,21 @@ public class HbmBatteryItem extends Item {
         ItemStack copy = stack.copy();
         setCharge(copy, getMaxCharge(copy));
         return copy;
+    }
+
+    public void addCreativeStacks(CreativeModeTab.Output output, ItemStack stack) {
+        boolean added = false;
+        if (getChargeRate(stack) > 0L) {
+            output.accept(getEmptyBattery(stack));
+            added = true;
+        }
+        if (getDischargeRate(stack) > 0L) {
+            output.accept(getFullBattery(stack));
+            added = true;
+        }
+        if (!added) {
+            output.accept(stack);
+        }
     }
 
     @Override

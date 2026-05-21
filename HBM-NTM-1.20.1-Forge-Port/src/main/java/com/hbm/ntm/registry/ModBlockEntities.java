@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.blockentity.BoilerBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
+import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.blockentity.LegacyDemonLampBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLanternBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
@@ -35,6 +36,10 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<RedCableBlockEntity>> RED_CABLE =
             BLOCK_ENTITIES.register("red_cable", () ->
                     BlockEntityType.Builder.of(RedCableBlockEntity::new, ModBlocks.RED_CABLE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FluidPipeBlockEntity>> FLUID_PIPE =
+            BLOCK_ENTITIES.register("fluid_pipe", () ->
+                    BlockEntityType.Builder.of(FluidPipeBlockEntity::new, ModBlocks.FLUID_DUCT_NEO.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<MachineBatteryBlockEntity>> MACHINE_BATTERY =
             BLOCK_ENTITIES.register("machine_battery", () ->

@@ -192,11 +192,25 @@ public final class RadiationData {
     }
 
     public static ListTag getContamination(LivingEntity entity) {
-        return getTag(entity).getList(TAG_CONTAMINATION, Tag.TAG_COMPOUND);
+        CompoundTag tag = getTag(entity);
+        ListTag contamination = new ListTag();
+        int count = tag.getInt(TAG_LEGACY_CONTAMINATION_COUNT);
+        for (int i = 0; i < count; i++) {
+            String key = "cont_" + i;
+            if (tag.contains(key, Tag.TAG_COMPOUND)) {
+                contamination.add(tag.getCompound(key).copy());
+            }
+        }
+        return contamination;
     }
 
     public static void setContamination(LivingEntity entity, ListTag contamination) {
-        getTag(entity).put(TAG_CONTAMINATION, contamination.copy());
+        CompoundTag tag = getTag(entity);
+        clearLegacyContamination(tag);
+        tag.putInt(TAG_LEGACY_CONTAMINATION_COUNT, contamination.size());
+        for (int i = 0; i < contamination.size(); i++) {
+            tag.put("cont_" + i, contamination.getCompound(i).copy());
+        }
     }
 
     public static void addContamination(LivingEntity entity, float maxRad, int maxTime, int time, boolean ignoreArmor) {
@@ -259,31 +273,38 @@ public final class RadiationData {
             CompoundTag tag = persistentData.contains(TAG_PREVIOUS_ROOT, Tag.TAG_COMPOUND)
                     ? persistentData.getCompound(TAG_PREVIOUS_ROOT).copy()
                     : new CompoundTag();
-            migrateLegacyContamination(tag);
+            migrateTemporaryContaminationList(tag);
             persistentData.put(TAG_ROOT, tag);
         } else {
-            migrateLegacyContamination(persistentData.getCompound(TAG_ROOT));
+            migrateTemporaryContaminationList(persistentData.getCompound(TAG_ROOT));
         }
         return persistentData.getCompound(TAG_ROOT);
     }
 
-    private static void migrateLegacyContamination(CompoundTag tag) {
-        if (tag.contains(TAG_CONTAMINATION, Tag.TAG_LIST)) {
+    private static void migrateTemporaryContaminationList(CompoundTag tag) {
+        if (!tag.contains(TAG_CONTAMINATION, Tag.TAG_LIST)) {
             return;
         }
-        int count = tag.getInt(TAG_LEGACY_CONTAMINATION_COUNT);
-        if (count <= 0) {
+        if (tag.getInt(TAG_LEGACY_CONTAMINATION_COUNT) > 0) {
+            tag.remove(TAG_CONTAMINATION);
             return;
         }
 
-        ListTag contamination = new ListTag();
-        for (int i = 0; i < count; i++) {
-            String key = "cont_" + i;
-            if (tag.contains(key, Tag.TAG_COMPOUND)) {
-                contamination.add(tag.getCompound(key).copy());
-            }
+        ListTag contamination = tag.getList(TAG_CONTAMINATION, Tag.TAG_COMPOUND);
+        tag.putInt(TAG_LEGACY_CONTAMINATION_COUNT, contamination.size());
+        for (int i = 0; i < contamination.size(); i++) {
+            tag.put("cont_" + i, contamination.getCompound(i).copy());
         }
-        tag.put(TAG_CONTAMINATION, contamination);
+        tag.remove(TAG_CONTAMINATION);
+    }
+
+    private static void clearLegacyContamination(CompoundTag tag) {
+        int count = tag.getInt(TAG_LEGACY_CONTAMINATION_COUNT);
+        for (int i = 0; i < count; i++) {
+            tag.remove("cont_" + i);
+        }
+        tag.putInt(TAG_LEGACY_CONTAMINATION_COUNT, 0);
+        tag.remove(TAG_CONTAMINATION);
     }
 
     private static float clampPlayerRadiation(float value) {

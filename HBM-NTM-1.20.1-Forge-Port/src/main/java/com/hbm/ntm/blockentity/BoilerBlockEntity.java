@@ -1,9 +1,12 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -11,7 +14,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class BoilerBlockEntity extends HbmFluidBlockEntity {
+public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidReceiver, HbmStandardFluidSender {
     public static final int FEED_TANK = 0;
     public static final int STEAM_TANK = 1;
 
@@ -41,6 +44,26 @@ public class BoilerBlockEntity extends HbmFluidBlockEntity {
 
     public HbmFluidTank getSteamTank() {
         return steamTank;
+    }
+
+    @Override
+    public List<HbmFluidTank> getReceivingTanks() {
+        return List.of(feedTank);
+    }
+
+    @Override
+    public List<HbmFluidTank> getSendingTanks() {
+        return List.of(steamTank);
+    }
+
+    @Override
+    protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
+        return type == HbmFluids.WATER;
+    }
+
+    @Override
+    protected boolean shouldSubscribeAsFluidProvider(FluidType type) {
+        return type == HbmFluids.STEAM;
     }
 
     @Override

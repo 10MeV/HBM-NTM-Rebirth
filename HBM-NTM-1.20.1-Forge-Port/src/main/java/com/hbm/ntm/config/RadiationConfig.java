@@ -21,6 +21,7 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_LESS_BULLSHIT_MODE;
     public static ForgeConfigSpec.BooleanValue LBSM_SAFE_CRATES;
     public static ForgeConfigSpec.BooleanValue LBSM_SAFE_ME_DRIVES;
+    public static ForgeConfigSpec.BooleanValue ENABLE_MKU;
 
     static void define(ForgeConfigSpec.Builder builder) {
         builder.push("radiation");
@@ -66,6 +67,9 @@ public final class RadiationConfig {
         LBSM_SAFE_ME_DRIVES = builder
                 .comment("Legacy LBSM_safeMEDrives: when Less Bullshit Mode is enabled, prevents ME Drives and Portable Cells from becoming radioactive.")
                 .define("lbsmSafeMeDrives", true);
+        ENABLE_MKU = builder
+                .comment("Legacy ServerConfig.ENABLE_MKU: toggles MKU contagion ticking and infection behavior.")
+                .define("enableMku", true);
         builder.pop();
     }
 

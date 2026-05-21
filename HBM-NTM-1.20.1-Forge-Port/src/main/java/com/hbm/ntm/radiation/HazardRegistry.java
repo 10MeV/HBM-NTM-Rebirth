@@ -263,6 +263,7 @@ public final class HazardRegistry {
         registerRad("block_schrabidium_cluster", RadiationConstants.SA326 * RadiationConstants.BLOCK);
         registerRad("block_white_phosphorus", 1.0F);
         registerRad("block_tritium", 0.1F);
+        registerRad("fallout", RadiationConstants.FALLOUT * RadiationConstants.POWDER_MULTIPLIER * 2.0F);
         registerRad("block_fallout", RadiationConstants.YELLOWCAKE * RadiationConstants.BLOCK * RadiationConstants.POWDER_MULTIPLIER);
         registerRad("ore_gneiss_gas", 1.0F);
         registerRad("ore_asbestos", 1.0F);

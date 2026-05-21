@@ -1,5 +1,4 @@
 {
-  "replace": false,
   "values": [
     "hbm:machine_press",
     "hbm:machine_difurnace_off",
@@ -8,7 +7,10 @@
     "hbm:machine_shredder",
     "hbm:decon",
     "hbm:red_cable",
+    "hbm:fluid_duct_neo",
     "hbm:machine_battery",
+    "hbm:gas_meltdown",
+    "hbm:rad_absorber",
     "hbm:nuke_gadget",
     "hbm:nuke_boy",
     "hbm:nuke_man",
@@ -19,6 +21,8 @@
     "hbm:nuke_solinium",
     "hbm:nuke_n2",
     "hbm:nuke_fstbmb",
-    "hbm:bomb_multi"
+    "hbm:bomb_multi",
+    "hbm:yellow_barrel",
+    "hbm:vitrified_barrel"
   ]
 }

@@ -1,6 +1,7 @@
 package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.registry.ModEffects;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -19,6 +20,10 @@ public final class ArmorUtil {
             "fau", "dns");
     private static final Set<String> DIGAMMA2_KEYWORDS = Set.of(
             "robe", "robes");
+    private static final Set<String> BACTERIA_KEYWORDS = Set.of(
+            "gas_mask", "gasmask", "filter", "hazmat", "paa", "liquidator",
+            "schrabidium", "euphemium", "t51", "steamsuit", "ajr", "ajro",
+            "rpa", "ncrpa", "envsuit", "hev", "fau", "dns", "taurun");
 
     public static boolean checkForHazmat(LivingEntity entity) {
         if (entity.hasEffect(ModEffects.MUTATION.get())) {
@@ -29,6 +34,17 @@ public final class ArmorUtil {
 
     public static boolean checkForHaz2(LivingEntity entity) {
         return getWornPieces(entity) == 4 && HazmatRegistry.getResistance(entity) >= 1.7F;
+    }
+
+    public static boolean hasBacteriaProtection(LivingEntity entity) {
+        ItemStack helmet = getHelmet(entity);
+        return !helmet.isEmpty()
+                && (containsAnyKeyword(helmet, BACTERIA_KEYWORDS)
+                || HazmatRegistry.getResistance(helmet) >= 0.34D);
+    }
+
+    public static boolean checkForMkuProtection(LivingEntity entity) {
+        return checkForHaz2(entity) && hasBacteriaProtection(entity);
     }
 
     public static boolean checkForFaraday(Player player) {
@@ -77,6 +93,10 @@ public final class ArmorUtil {
             }
         }
         return pieces;
+    }
+
+    private static ItemStack getHelmet(LivingEntity entity) {
+        return entity.getItemBySlot(EquipmentSlot.HEAD);
     }
 
     private static boolean isWearingFullKeywordSet(Player player, Set<String> keywords) {

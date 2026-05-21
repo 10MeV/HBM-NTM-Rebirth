@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/combination_oven.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/machines/combination_oven",
+    "default": "hbm:block/machines/combination_oven",
+    "texture0": "hbm:block/machines/combination_oven"
+  }
+}

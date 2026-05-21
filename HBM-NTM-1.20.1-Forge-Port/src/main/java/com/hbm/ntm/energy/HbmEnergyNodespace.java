@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class HbmEnergyNodespace {
     private static final Map<ResourceKey<Level>, EnergyNodeWorld> WORLDS = new HashMap<>();
@@ -28,11 +29,16 @@ public final class HbmEnergyNodespace {
 
     public static HbmEnergyNode createNode(Level level, HbmEnergyNode node) {
         EnergyNodeWorld nodeWorld = WORLDS.computeIfAbsent(level.dimension(), ignored -> new EnergyNodeWorld());
-        HbmEnergyNode oldNode = nodeWorld.nodes.put(node.getPos(), node);
-        if (oldNode != null && oldNode != node) {
-            HbmPowerNet oldNet = oldNode.getPowerNet();
-            popNode(nodeWorld, oldNode);
-            rebuildNetworkAfterRemoval(nodeWorld, oldNet);
+        for (BlockPos pos : node.getPositions()) {
+            HbmEnergyNode oldNode = nodeWorld.nodes.get(pos);
+            if (oldNode != null && oldNode != node) {
+                HbmPowerNet oldNet = oldNode.getPowerNet();
+                popNode(nodeWorld, oldNode);
+                rebuildNetworkAfterRemoval(nodeWorld, oldNet);
+            }
+        }
+        for (BlockPos pos : node.getPositions()) {
+            nodeWorld.nodes.put(pos, node);
         }
         checkNodeConnection(nodeWorld, node);
         return node;
@@ -43,7 +49,7 @@ public final class HbmEnergyNodespace {
         if (nodeWorld == null) {
             return;
         }
-        HbmEnergyNode node = nodeWorld.nodes.remove(pos);
+        HbmEnergyNode node = nodeWorld.nodes.get(pos);
         if (node != null) {
             HbmPowerNet net = node.getPowerNet();
             popNode(nodeWorld, node);
@@ -72,7 +78,7 @@ public final class HbmEnergyNodespace {
 
         pruneUnloadedChunks(level, nodeWorld);
 
-        for (HbmEnergyNode node : new ArrayList<>(nodeWorld.nodes.values())) {
+        for (HbmEnergyNode node : new LinkedHashSet<>(nodeWorld.nodes.values())) {
             if (!node.hasValidNet() || node.isRecentlyChanged()) {
                 checkNodeConnection(nodeWorld, node);
                 node.clearRecentlyChanged();
@@ -84,7 +90,7 @@ public final class HbmEnergyNodespace {
 
     public static int getNodeCount(Level level) {
         EnergyNodeWorld nodeWorld = WORLDS.get(level.dimension());
-        return nodeWorld == null ? 0 : nodeWorld.nodes.size();
+        return nodeWorld == null ? 0 : new LinkedHashSet<>(nodeWorld.nodes.values()).size();
     }
 
     public static int getNetworkCount(Level level) {
@@ -112,9 +118,36 @@ public final class HbmEnergyNodespace {
         return powerNet == null ? 0L : powerNet.getEnergyTracker();
     }
 
+    public static NetworkDebugSnapshot getNetworkDebugSnapshot(Level level, BlockPos pos) {
+        HbmEnergyNode node = getNode(level, pos);
+        if (node == null) {
+            return NetworkDebugSnapshot.missing(pos);
+        }
+        HbmPowerNet powerNet = node.getPowerNet();
+        if (powerNet == null) {
+            return NetworkDebugSnapshot.noNetwork(pos, describeConnections(node), node.isRecentlyChanged());
+        }
+        return NetworkDebugSnapshot.present(
+                pos,
+                describeConnections(node),
+                node.isRecentlyChanged(),
+                powerNet.createDebugSnapshot());
+    }
+
     public static boolean hasValidNetwork(Level level, BlockPos pos) {
         HbmPowerNet powerNet = getPowerNet(level, pos);
         return powerNet != null && powerNet.isValid();
+    }
+
+    public static String describeNodeConnections(Level level, BlockPos pos) {
+        HbmEnergyNode node = getNode(level, pos);
+        if (node == null) {
+            return "none";
+        }
+        return node.getConnections().stream()
+                .map(direction -> direction.getName().toLowerCase())
+                .sorted()
+                .collect(Collectors.joining(","));
     }
 
     public static void unloadChunk(Level level, ChunkPos chunkPos) {
@@ -129,7 +162,7 @@ public final class HbmEnergyNodespace {
             }
         }
         for (BlockPos pos : toRemove) {
-            HbmEnergyNode node = nodeWorld.nodes.remove(pos);
+            HbmEnergyNode node = nodeWorld.nodes.get(pos);
             if (node != null) {
                 HbmPowerNet net = node.getPowerNet();
                 popNode(nodeWorld, node);
@@ -142,6 +175,14 @@ public final class HbmEnergyNodespace {
     private static HbmPowerNet getPowerNet(Level level, BlockPos pos) {
         HbmEnergyNode node = getNode(level, pos);
         return node == null ? null : node.getPowerNet();
+    }
+
+    private static String describeConnections(HbmEnergyNode node) {
+        String connections = node.getConnections().stream()
+                .map(direction -> direction.getName().toLowerCase())
+                .sorted()
+                .collect(Collectors.joining(","));
+        return connections.isEmpty() ? "none" : connections;
     }
 
     private static void updateNetworks(EnergyNodeWorld nodeWorld) {
@@ -170,9 +211,9 @@ public final class HbmEnergyNodespace {
     }
 
     private static void checkNodeConnection(EnergyNodeWorld nodeWorld, HbmEnergyNode node) {
-        for (Direction direction : node.getConnections()) {
-            HbmEnergyNode neighbor = nodeWorld.nodes.get(node.getPos().relative(direction));
-            if (neighbor == null || !neighbor.connects(direction.getOpposite())) {
+        for (HbmNetworkNode.NodeConnection connection : node.getConnectionPoints()) {
+            HbmEnergyNode neighbor = nodeWorld.nodes.get(connection.pos());
+            if (neighbor == null || !neighbor.connectsTo(connection)) {
                 continue;
             }
             connectToNode(node, neighbor);
@@ -226,7 +267,7 @@ public final class HbmEnergyNodespace {
         nodeWorld.activePowerNets.remove(oldNet);
 
         for (HbmEnergyNode link : oldLinks) {
-            if (nodeWorld.nodes.get(link.getPos()) == link) {
+            if (containsNode(nodeWorld, link)) {
                 link.markRecentlyChanged();
             }
         }
@@ -243,6 +284,11 @@ public final class HbmEnergyNodespace {
         }
         node.setExpired(true);
         node.setNet(null);
+        for (BlockPos pos : node.getPositions()) {
+            if (nodeWorld.nodes.get(pos) == node) {
+                nodeWorld.nodes.remove(pos);
+            }
+        }
     }
 
     private static void removeNetwork(HbmPowerNet net) {
@@ -259,7 +305,7 @@ public final class HbmEnergyNodespace {
             }
         }
         for (BlockPos pos : toRemove) {
-            HbmEnergyNode node = nodeWorld.nodes.remove(pos);
+            HbmEnergyNode node = nodeWorld.nodes.get(pos);
             if (node != null) {
                 HbmPowerNet net = node.getPowerNet();
                 popNode(nodeWorld, node);
@@ -269,9 +315,38 @@ public final class HbmEnergyNodespace {
         }
     }
 
+    private static boolean containsNode(EnergyNodeWorld nodeWorld, HbmEnergyNode node) {
+        for (BlockPos pos : node.getPositions()) {
+            if (nodeWorld.nodes.get(pos) == node) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static final class EnergyNodeWorld {
         private final Map<BlockPos, HbmEnergyNode> nodes = new LinkedHashMap<>();
         private final Set<HbmPowerNet> activePowerNets = new LinkedHashSet<>();
         private int reapTimer;
+    }
+
+    public record NetworkDebugSnapshot(
+            BlockPos pos,
+            boolean nodePresent,
+            String nodeConnections,
+            boolean recentlyChanged,
+            boolean networkPresent,
+            HbmPowerNet.DebugSnapshot network) {
+        private static NetworkDebugSnapshot missing(BlockPos pos) {
+            return new NetworkDebugSnapshot(pos, false, "none", false, false, null);
+        }
+
+        private static NetworkDebugSnapshot noNetwork(BlockPos pos, String connections, boolean recentlyChanged) {
+            return new NetworkDebugSnapshot(pos, true, connections, recentlyChanged, false, null);
+        }
+
+        private static NetworkDebugSnapshot present(BlockPos pos, String connections, boolean recentlyChanged, HbmPowerNet.DebugSnapshot network) {
+            return new NetworkDebugSnapshot(pos, true, connections, recentlyChanged, true, network);
+        }
     }
 }

@@ -96,6 +96,33 @@ public final class ModItems {
     public static final RegistryObject<Item> TOOLBOX = registerLegacy("toolbox", () -> new ToolboxItem(new Item.Properties()));
     public static final RegistryObject<Item> BATTERY_POTATO = registerLegacy("battery_potato",
             () -> new HbmBatteryItem(new Item.Properties(), 1_000L, 0L, 100L));
+    public static final RegistryObject<Item> BATTERY_REDSTONE = batteryPack("battery_redstone", 100L, false);
+    public static final RegistryObject<Item> BATTERY_LEAD = batteryPack("battery_lead", 1_000L, false);
+    public static final RegistryObject<Item> BATTERY_LITHIUM = batteryPack("battery_lithium", 10_000L, false);
+    public static final RegistryObject<Item> BATTERY_SODIUM = batteryPack("battery_sodium", 50_000L, false);
+    public static final RegistryObject<Item> BATTERY_SCHRABIDIUM = batteryPack("battery_schrabidium", 250_000L, false);
+    public static final RegistryObject<Item> BATTERY_QUANTUM = batteryPack("battery_quantum", 1_000_000L, 20L * 60L * 60L);
+    public static final RegistryObject<Item> CAPACITOR_COPPER = batteryPack("capacitor_copper", 1_000L, true);
+    public static final RegistryObject<Item> CAPACITOR_GOLD = batteryPack("capacitor_gold", 10_000L, true);
+    public static final RegistryObject<Item> CAPACITOR_NIOBIUM = batteryPack("capacitor_niobium", 100_000L, true);
+    public static final RegistryObject<Item> CAPACITOR_TANTALUM = batteryPack("capacitor_tantalum", 500_000L, true);
+    public static final RegistryObject<Item> CAPACITOR_BISMUTH = batteryPack("capacitor_bismuth", 2_500_000L, true);
+    public static final RegistryObject<Item> CAPACITOR_SPARK = batteryPack("capacitor_spark", 10_000_000L, true);
+
+    public static final List<RegistryObject<Item>> BATTERY_PACK_ITEMS = List.of(
+            BATTERY_REDSTONE,
+            BATTERY_LEAD,
+            BATTERY_LITHIUM,
+            BATTERY_SODIUM,
+            BATTERY_SCHRABIDIUM,
+            BATTERY_QUANTUM,
+            CAPACITOR_COPPER,
+            CAPACITOR_GOLD,
+            CAPACITOR_NIOBIUM,
+            CAPACITOR_TANTALUM,
+            CAPACITOR_BISMUTH,
+            CAPACITOR_SPARK
+    );
 
     public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = simpleParts(
             "ingot_pu_mix",
@@ -392,7 +419,7 @@ public final class ModItems {
             IRON_CIRCUIT_STAMP
     ), EXTRA_PARTS_TAB_ITEMS.stream()).toList();
 
-    public static final List<RegistryObject<Item>> CONSUMABLE_TAB_ITEMS = List.of(
+    public static final List<RegistryObject<Item>> CONSUMABLE_TAB_ITEMS = Stream.concat(Stream.of(
             GEIGER_COUNTER,
             DIGAMMA_DIAGNOSTIC,
             RADAWAY,
@@ -403,7 +430,7 @@ public final class ModItems {
             PLASTIC_BAG,
             TOOLBOX,
             BATTERY_POTATO
-    );
+    ), BATTERY_PACK_ITEMS.stream()).toList();
 
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
@@ -433,6 +460,20 @@ public final class ModItems {
         RegistryObject<Item> item = ITEMS.register(name, supplier);
         ITEMS_BY_LEGACY_NAME.put(name, item);
         return item;
+    }
+
+    private static RegistryObject<Item> batteryPack(String name, long dischargeRate, boolean capacitor) {
+        long maxCharge = capacitor ? dischargeRate * 20L * 30L : dischargeRate * 20L * 60L * 15L;
+        long chargeRate = capacitor ? dischargeRate : dischargeRate * 10L;
+        return registerLegacy(name, () -> new HbmBatteryItem(new Item.Properties(), maxCharge, chargeRate, dischargeRate));
+    }
+
+    private static RegistryObject<Item> batteryPack(String name, long dischargeRate, long duration) {
+        return registerLegacy(name, () -> new HbmBatteryItem(
+                new Item.Properties(),
+                dischargeRate * duration,
+                dischargeRate * 10L,
+                dischargeRate));
     }
 
     private static RegistryObject<Item> simpleItem(String name) {

@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "tier=0": {
+      "model": "hbm:block/rad_absorber"
+    },
+    "tier=1": {
+      "model": "hbm:block/rad_absorber_red"
+    },
+    "tier=2": {
+      "model": "hbm:block/rad_absorber_green"
+    },
+    "tier=3": {
+      "model": "hbm:block/rad_absorber_pink"
+    }
+  }
+}

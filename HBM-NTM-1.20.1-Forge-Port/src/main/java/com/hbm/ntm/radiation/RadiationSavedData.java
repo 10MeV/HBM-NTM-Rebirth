@@ -3,11 +3,17 @@ package com.hbm.ntm.radiation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,7 +76,33 @@ public class RadiationSavedData extends SavedData {
         }
     }
 
-    public void updateDiffusion() {
+    public void remove(ChunkPos pos) {
+        if (chunkRadiation.remove(pos.toLong()) != null) {
+            setDirty();
+        }
+    }
+
+    public List<Map.Entry<Long, Float>> loadedEntries(ServerLevel level) {
+        List<Map.Entry<Long, Float>> entries = new ArrayList<>();
+        boolean changed = false;
+        Iterator<Map.Entry<Long, Float>> iterator = chunkRadiation.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Long, Float> entry = iterator.next();
+            ChunkPos pos = new ChunkPos(entry.getKey());
+            if (!level.hasChunk(pos.x, pos.z)) {
+                iterator.remove();
+                changed = true;
+                continue;
+            }
+            entries.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue()));
+        }
+        if (changed) {
+            setDirty();
+        }
+        return entries;
+    }
+
+    public void updateDiffusion(ServerLevel level) {
         if (chunkRadiation.isEmpty()) {
             return;
         }
@@ -85,11 +117,19 @@ public class RadiationSavedData extends SavedData {
             }
 
             ChunkPos origin = new ChunkPos(entry.getKey());
+            if (!level.hasChunk(origin.x, origin.z)) {
+                continue;
+            }
+
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
                     int type = Math.abs(dx) + Math.abs(dz);
                     float percent = type == 0 ? 0.6F : type == 1 ? 0.075F : 0.025F;
                     ChunkPos target = new ChunkPos(origin.x + dx, origin.z + dz);
+                    if (!level.hasChunk(target.x, target.z)) {
+                        continue;
+                    }
+
                     float spread = value * percent;
                     float nextValue;
                     if (previous.containsKey(target.toLong())) {
@@ -116,7 +156,7 @@ public class RadiationSavedData extends SavedData {
     }
 
     public Set<Map.Entry<Long, Float>> entries() {
-        return Set.copyOf(chunkRadiation.entrySet());
+        return Collections.unmodifiableSet(chunkRadiation.entrySet());
     }
 
     private static float clamp(float value) {

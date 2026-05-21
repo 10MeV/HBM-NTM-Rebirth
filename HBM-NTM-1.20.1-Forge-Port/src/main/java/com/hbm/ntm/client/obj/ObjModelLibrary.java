@@ -14,6 +14,24 @@ public final class ObjModelLibrary {
 
     public static final ObjModelPart PRESS_HEAD = ObjMachineModels.PRESS_HEAD;
     public static final ObjPartModel PRESS = ObjMachineModels.PRESS;
+    public static final ObjModelPart MACHINE_RADAR_SCREEN = ObjMachineModels.RADAR_SCREEN;
+    public static final ObjModelPart MACHINE_SOLAR_MIRROR = ObjMachineModels.SOLAR_MIRROR;
+    public static final ObjModelPart MACHINE_DRAIN = ObjMachineModels.DRAIN;
+    public static final ObjModelPart MACHINE_INTAKE = ObjMachineModels.INTAKE;
+    public static final ObjModelPart MACHINE_COMBINATION_OVEN = ObjMachineModels.COMBINATION_OVEN;
+    public static final ObjModelPart MACHINE_RTG = ObjMachineModels.RTG;
+    public static final ObjModelPart MACHINE_TELEX = ObjMachineModels.TELEX;
+    public static final ObjModelPart MACHINE_FRACTION_TOWER = ObjMachineModels.FRACTION_TOWER;
+    public static final ObjModelPart MACHINE_FAN = ObjMachineModels.FAN;
+    public static final ObjModelPart MACHINE_FURNACE_IRON = ObjMachineModels.FURNACE_IRON;
+    public static final ObjModelPart MACHINE_ELEVATOR = ObjMachineModels.ELEVATOR;
+    public static final ObjModelPart MACHINE_CRUCIBLE = ObjMachineModels.CRUCIBLE;
+    public static final ObjModelPart MACHINE_DRUM = ObjMachineModels.DRUM;
+    public static final ObjModelPart MACHINE_FRACTION_SPACER = ObjMachineModels.FRACTION_SPACER;
+    public static final ObjModelPart MACHINE_HEATING_OVEN = ObjMachineModels.HEATING_OVEN;
+    public static final ObjModelPart MACHINE_CHIMNEY_BRICK = ObjMachineModels.CHIMNEY_BRICK;
+    public static final ObjModelPart MACHINE_TURBINE = ObjMachineModels.TURBINE;
+    public static final ObjModelPart MACHINE_DIESELGEN = ObjMachineModels.DIESELGEN;
 
     public static final ObjModelPart CAGE_LAMP = ObjLightModels.CAGE_LAMP;
     public static final ObjModelPart FLUORESCENT_LAMP_SINGLE = ObjLightModels.FLUORESCENT_LAMP_SINGLE;

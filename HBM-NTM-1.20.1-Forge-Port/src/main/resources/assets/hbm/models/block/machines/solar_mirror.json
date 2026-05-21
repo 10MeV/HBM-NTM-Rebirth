@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/solar_mirror.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/machines/solar_mirror",
+    "default": "hbm:block/machines/solar_mirror",
+    "texture0": "hbm:block/machines/solar_mirror"
+  }
+}

@@ -3,12 +3,19 @@ package com.hbm.ntm.registry;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.BoilerBlock;
 import com.hbm.ntm.block.DeconBlock;
+import com.hbm.ntm.block.FalloutLayerBlock;
+import com.hbm.ntm.block.FluidPipeBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyComplexShapeBlock;
 import com.hbm.ntm.block.LegacyDemonLampBlock;
+import com.hbm.ntm.block.LegacyGasMeltdownBlock;
 import com.hbm.ntm.block.MachineBlockEntityBlock;
 import com.hbm.ntm.block.LegacyLanternBlock;
 import com.hbm.ntm.block.MachineBatteryBlock;
+import com.hbm.ntm.block.LegacyRadAbsorberBlock;
+import com.hbm.ntm.block.LegacyRadiationBarrelBlock;
+import com.hbm.ntm.block.LegacySellafieldBlock;
+import com.hbm.ntm.block.RadiatingHazardBlock;
 import com.hbm.ntm.block.RadioactiveWasteEarthBlock;
 import com.hbm.ntm.block.RedCableBlock;
 import com.hbm.ntm.block.TrinketBlock;
@@ -46,7 +53,10 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_SHREDDER = machine("machine_shredder");
     public static final RegistryObject<Block> DECON = decon("decon");
     public static final RegistryObject<Block> RED_CABLE = redCable("red_cable");
+    public static final RegistryObject<Block> FLUID_DUCT_NEO = fluidPipe("fluid_duct_neo");
     public static final RegistryObject<Block> MACHINE_BATTERY = machineBattery("machine_battery");
+    public static final RegistryObject<Block> GAS_MELTDOWN = gasMeltdown("gas_meltdown");
+    public static final RegistryObject<Block> RAD_ABSORBER = radAbsorber("rad_absorber");
 
     // Legacy 1.7.10 blockTab entries used as an early chunk-radiation test bed.
     public static final RegistryObject<Block> WASTE_EARTH = wasteEarth("waste_earth", false, 5.0F);
@@ -59,6 +69,9 @@ public final class ModBlocks {
             .isValidSpawn((state, level, pos, type) -> false)
             .isSuffocating((state, level, pos) -> false)
             .isViewBlocking((state, level, pos) -> false)));
+    public static final RegistryObject<Block> FALLOUT = falloutLayer("fallout");
+    public static final RegistryObject<Block> SELLAFIELD = sellafield("sellafield");
+    public static final RegistryObject<Block> SELLAFIELD_SLAKED = simpleBlock("sellafield_slaked", "sellafield_slaked");
 
     // Legacy 1.7.10 nuclear device IDs. These are model-only placeholders for now.
     public static final RegistryObject<Block> NUKE_GADGET = nonOccludingMachine("nuke_gadget");
@@ -72,6 +85,8 @@ public final class ModBlocks {
     public static final RegistryObject<Block> NUKE_N2 = nonOccludingMachine("nuke_n2");
     public static final RegistryObject<Block> NUKE_FSTBMB = nonOccludingMachine("nuke_fstbmb");
     public static final RegistryObject<Block> BOMB_MULTI = nonOccludingMachine("bomb_multi");
+    public static final RegistryObject<Block> YELLOW_BARREL = radiationBarrel("yellow_barrel", 5.0F);
+    public static final RegistryObject<Block> VITRIFIED_BARREL = radiationBarrel("vitrified_barrel", 0.5F);
 
     public static final List<RegistryObject<Block>> MACHINE_TAB_BLOCKS = List.of(
             MACHINE_PRESS,
@@ -81,7 +96,10 @@ public final class ModBlocks {
             MACHINE_SHREDDER,
             DECON,
             RED_CABLE,
-            MACHINE_BATTERY
+            FLUID_DUCT_NEO,
+            MACHINE_BATTERY,
+            GAS_MELTDOWN,
+            RAD_ABSORBER
     );
 
     public static final List<RegistryObject<Block>> EXTRA_BLOCK_TAB_BLOCKS = simpleResourceBlocks(
@@ -309,7 +327,7 @@ public final class ModBlocks {
     );
 
     public static final List<RegistryObject<Block>> BLOCK_TAB_BLOCKS = Stream.concat(
-            Stream.of(WASTE_EARTH, WASTE_MYCELIUM, WASTE_LEAVES),
+            Stream.of(WASTE_EARTH, WASTE_MYCELIUM, WASTE_LEAVES, SELLAFIELD, SELLAFIELD_SLAKED),
             EXTRA_BLOCK_TAB_BLOCKS.stream()).toList();
 
     public static final List<RegistryObject<Block>> NUKE_TAB_BLOCKS = List.of(
@@ -323,7 +341,9 @@ public final class ModBlocks {
             NUKE_SOLINIUM,
             NUKE_N2,
             NUKE_FSTBMB,
-            BOMB_MULTI
+            BOMB_MULTI,
+            YELLOW_BARREL,
+            VITRIFIED_BARREL
     );
 
     public static void register(IEventBus modBus) {
@@ -385,6 +405,33 @@ public final class ModBlocks {
                 .noOcclusion()));
     }
 
+    private static RegistryObject<Block> fluidPipe(String name) {
+        return registerBlockWithItem(name, () -> new FluidPipeBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion()));
+    }
+
+    private static RegistryObject<Block> gasMeltdown(String name) {
+        return registerBlockWithItem(name, () -> new LegacyGasMeltdownBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.NONE)
+                .strength(0.0F, 0.0F)
+                .noCollission()
+                .noOcclusion()
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false)));
+    }
+
+    private static RegistryObject<Block> radAbsorber(String name) {
+        return registerBlockWithItem(name, () -> new LegacyRadAbsorberBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
+    }
+
     private static RegistryObject<Block> machineBattery(String name) {
         return registerBlockWithItem(name, () -> new MachineBatteryBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
@@ -398,6 +445,40 @@ public final class ModBlocks {
                 .mapColor(MapColor.GRASS)
                 .strength(0.6F)
                 .sound(SoundType.GRASS), mycelium, chunkRadiation));
+    }
+
+    private static RegistryObject<Block> falloutLayer(String name) {
+        RegistryObject<Block> block = BLOCKS.register(name, () -> new FalloutLayerBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.SAND)
+                .strength(0.1F)
+                .sound(SoundType.GRAVEL)
+                .noOcclusion()
+                .noCollission()
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false)));
+        BLOCKS_BY_LEGACY_NAME.put(name, block);
+        return block;
+    }
+
+    private static RegistryObject<Block> sellafield(String name) {
+        return registerBlockWithItem(name, () -> new LegacySellafieldBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.STONE)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.STONE)
+                .requiresCorrectToolForDrops()));
+    }
+
+    private static RegistryObject<Block> simpleBlock(String name, String textureName) {
+        return registerBlockWithItem(name, () -> new Block(simpleResourceProperties(name, textureName)));
+    }
+
+    private static RegistryObject<Block> radiationBarrel(String name, float chunkRadiationPerTick) {
+        return registerBlockWithItem(name, () -> new LegacyRadiationBarrelBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(0.5F, 2.5F)
+                .sound(SoundType.METAL)
+                .noOcclusion(),
+                chunkRadiationPerTick));
     }
 
     private static List<RegistryObject<Block>> simpleResourceBlocks(String... specs) {
@@ -430,7 +511,7 @@ public final class ModBlocks {
             case "rebar" -> LegacyComplexShapeBlock.rebar(simpleResourceProperties(name, textureName).noOcclusion());
             case "wood_barrier" -> LegacyComplexShapeBlock.woodBarrier(simpleResourceProperties(name, textureName).noOcclusion());
             case "sandbags" -> LegacyComplexShapeBlock.sandbags(simpleResourceProperties(name, textureName).noOcclusion());
-            default -> new Block(simpleResourceProperties(name, textureName));
+            default -> new RadiatingHazardBlock(name, simpleResourceProperties(name, textureName));
         });
     }
 

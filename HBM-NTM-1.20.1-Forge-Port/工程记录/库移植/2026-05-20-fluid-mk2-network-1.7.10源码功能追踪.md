@@ -159,3 +159,144 @@ Still deferred:
 - No concrete canister/gas tank item has been ported yet, so `HbmFluidItemTransfer` is only shared plumbing for future machine slots and container items.
 - Full `FluidLoadingHandler` slot rules, container replacement behavior, and machine GUI integration still need a dedicated pass once the relevant old source files are available again.
 - Full fluid network pressure distribution and `ConnectionPriority` scheduling remain deferred.
+
+## 2026-05-21 Modern Library Pass 5
+
+This pass re-checks and ports the reusable slot-level shape of the old fluid item loading handlers:
+
+- Legacy sources re-read:
+  - `api/hbm/fluidmk2/IFillableItem.java`
+  - `com/hbm/inventory/fluid/tank/FluidTank.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoadingHandler.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoaderStandard.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoaderFillableItem.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoaderInfinite.java`
+- Add slot-level helpers to `HbmFluidItemTransfer`:
+  - `loadTankFromSlot(items, inputSlot, outputSlot, tank, ...)`: input container drains into a tank and the resulting container is written to the output slot.
+  - `unloadTankToSlot(items, inputSlot, outputSlot, tank, ...)`: tank fills an input container and the resulting container is written to the output slot.
+- Modern standard containers use Forge `IFluidHandlerItem`, which replaces the old `FluidContainerRegistry` path while preserving the input/output slot split and output stack merge checks.
+- Legacy `IFillableItem` items keep the old in-place mutation behavior. They are written back to the input slot instead of consuming one container and producing an output-slot replacement.
+- Standard stack container handling refuses same-slot processing when the input stack has more than one item, preserving the old safety assumption that output replacement must not duplicate or erase stacked containers.
+
+Still deferred:
+
+- `FluidLoaderInfinite` is documented but not implemented generically yet; it depends on the old `ItemInfiniteFluid` item contract and should be ported with that concrete item family.
+- Armor mod fluid loading from `FluidLoaderFillableItem` is deferred until the armor mod/attachment system is migrated.
+- Machines still need to call the new slot-level helpers explicitly during their server tick after their inventories are migrated.
+
+## 2026-05-21 Modern Library Pass 6
+
+This pass scales the fluid library from slot helpers to an actual shared network layer, using the 1.7.10 `FluidNetMK2` contract as the blueprint:
+
+- Add modern fluid network contracts:
+  - `HbmFluidUser`
+  - `HbmFluidProvider`
+  - `HbmFluidReceiver`
+  - `HbmFluidConnector`
+  - `HbmFluidConnectorBlock`
+  - `HbmFluidNodeHost`
+  - `HbmFluidNode`
+- Add standard network mixins:
+  - `HbmStandardFluidSender`
+  - `HbmStandardFluidReceiver`
+  - `HbmStandardFluidTransceiver`
+- Add `HbmFluidNet`, which mirrors the old `FluidNetMK2` shape:
+  - per fluid type network
+  - pressure range `0..5`
+  - provider/receiver timeout pruning
+  - receiver distribution by priority, then demand weight
+  - provider depletion by available weight with a random leftover fallback
+- Add `HbmFluidNodespace` and `HbmFluidConnectionUtil` as the modern network registry/connection helpers.
+- Wire `CommonForgeEvents` to tick and unload fluid nodespaces alongside the existing energy nodespace.
+- Keep the implementation conservative: the network layer currently manages shared plumbing and algorithm shape, but no concrete pipe block or machine has been switched over to use it yet.
+
+Still deferred:
+
+- No actual fluid pipe block, valve, tank tower, or machine has been wired to `HbmFluidNetworkBlockEntity` yet.
+- No particle debug or command-side network inspector has been added for fluid nodes.
+- The new network layer should be treated as shared infrastructure for later machine passes, not as a finished user-facing system.
+
+## 2026-05-21 Modern Library Pass 7
+
+This pass turns the network layer into a minimally testable in-world fluid graph and fixes the first machine integration surface:
+
+- Legacy sources re-read:
+  - `api/hbm/fluidmk2/IFluidPipeMK2.java`
+  - `com/hbm/tileentity/network/TileEntityPipeBaseNT.java`
+  - `com/hbm/blocks/network/FluidDuctBase.java`
+  - `com/hbm/blocks/ModBlocks.java` fluid duct registrations/resources
+- Add debug inspection for fluid nodes/networks:
+  - `/hbm fluid nodespace`
+  - `/hbm fluid node <pos> <fluid>`
+  - `/hbm fluid network <pos> <fluid>`
+  - `/hbm fluid pipe set <pos> <fluid>` as a temporary test hook until old fluid identifier tools are migrated.
+- Add `HbmFluidNet.DebugSnapshot` and `HbmFluidNodespace.NetworkDebugSnapshot`, reporting links, providers, receivers, pressure-layer availability/rate/demand, receiver priorities, and last transfer.
+- Rework `HbmFluidBlockEntity`/`HbmFluidNetworkBlockEntity` to support more than one tracked fluid node per block entity. This is required for machines with separate input/output fluid types such as water input and steam output.
+- Fix `HbmFluidNetworkBlockEntity` node refresh semantics so nodes are created only when missing/expired, not destroyed and recreated every server tick.
+- Convert the temporary boiler scaffold into a real network participant:
+  - receives `WATER` through `HbmStandardFluidReceiver`
+  - provides `STEAM` through `HbmStandardFluidSender`
+  - owns distinct water/steam nodes and refreshes subscriptions from its server ticker
+- Add `HbmFluidNodeBlock`, mirroring the existing energy node block connection-state pattern for six-direction fluid network blocks.
+- Add `FluidPipeBlockEntity`, matching the old `TileEntityPipeBaseNT` core contract:
+  - stores one selected `FluidType`
+  - only connects to the same non-`NONE` fluid type
+  - saves both fluid name and legacy numeric ID fallback
+  - destroys/recreates its node when the type changes
+- Add `FluidPipeBlock` and register legacy `fluid_duct_neo` with block entity, machine tab placement, pickaxe/iron-tool tags, self loot, English/Chinese names, generated multipart state/model, and legacy `pipe_neo.png` copied from the 1.7.10 resource pack.
+
+Still deferred:
+
+- Real old fluid identifier items (`IItemFluidIdentifier`, `ItemFluidIDMulti`) and ctrl/alt recursive pipe retargeting are not ported yet; the debug command is only a temporary validation hook.
+- Box ducts, gauges, exhaust ducts, paintable ducts, duct overlays, and analyzer overlay text are still separate follow-up slices.
+- Pipe rendering currently reuses the legacy `pipe_neo` texture as a conservative generated multipart cube/arm model, not the final old renderer/overlay behavior.
+- No in-game end-to-end transfer test has been run yet; verification so far is command-line build/data generation.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
+- `.\gradlew.bat runData --no-daemon` passed and generated `fluid_duct_neo` blockstate/model/item/lang/loot/tag resources.
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` passed after data generation.
+
+## 2026-05-21 Modern Library Pass 8
+
+This pass expands the shared fluid identity table so later machine and pipe work can reference legacy fluid names safely before all behavior traits are complete:
+
+- Legacy source re-read:
+  - `com/hbm/inventory/fluid/Fluids.java`
+  - `com/hbm/inventory/fluid/FluidType.java`
+  - `com/hbm/inventory/fluid/trait/*`
+- Replace the starter `HbmFluids` table with the 1.7.10 `Fluids.init()` built-in registration order:
+  - 154 registered HBM fluid IDs from `NONE` through `DHC`
+  - `ACID` compatibility alias mapped to `PEROXIDE`, matching the old `renameMapping.put("ACID", PEROXIDE)` / `ACID = PEROXIDE` compatibility rule
+- Preserve the old stable numeric ID order for the built-in table as far as the modern port can before custom/foreign fluid loading is implemented.
+- Preserve core data for the expanded table:
+  - internal name
+  - approximate color
+  - poison / flammability / reactivity values
+  - temperature where explicit in old source
+  - basic marker traits currently available in the modern port: liquid, gaseous, gaseous-at-room-temperature, viscous, plasma, antimatter, lead-container, no-id, no-container, unsiphonable
+- Expand `FluidSymbol` with the old symbol categories currently referenced by the table: `CRYOGENIC`, `NOWATER`, `OXIDIZER`, and `RADIATION`.
+
+Still deferred:
+
+- Behavior-rich traits are only represented as coarse marker traits in this pass. The old `FT_Flammable`, `FT_Combustible`, `FT_Corrosive`, `FT_Toxin`, `FT_Poison`, `FT_Polluting`, `FT_VentRadiation`, `FT_Heatable`, `FT_Coolable`, `FT_PWRModerator`, and `FT_Pheromone` data/actions still need real modern equivalents.
+- Custom/foreign fluid loading from `hbmFluidTypes.json`, `CompatFluidRegistry`, and `IFluidRegisterListener` is not migrated.
+- `metaOrder`/nice-order UI sorting is not migrated yet.
+- Only the existing starter set is exposed as actual Forge source/flowing fluids through `ModFluids`; the expanded identity table does not automatically create world fluids or bucket items.
+
+Progress estimate after Pass 8:
+
+- Core `FluidType` identity/NBT lookup/table: about 80%.
+- Basic tank/conform/Forge capability bridge: about 65%.
+- Fluid network/provider/receiver algorithm: about 60%.
+- In-world pipe graph: about 20%.
+- Fluid item/container loading: about 30%.
+- Behavior traits and cross-system effects: about 15%.
+- Machine integration through the library: about 8%.
+- Overall fluid library migration: about 35%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` passed.

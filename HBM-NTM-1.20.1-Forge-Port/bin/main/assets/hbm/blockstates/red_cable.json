@@ -6,56 +6,56 @@
       }
     },
     {
-      "when": {
-        "north": "true"
-      },
       "apply": {
         "model": "hbm:block/red_cable_side"
+      },
+      "when": {
+        "north": "true"
       }
     },
     {
-      "when": {
-        "east": "true"
-      },
       "apply": {
         "model": "hbm:block/red_cable_side",
         "y": 90
+      },
+      "when": {
+        "east": "true"
       }
     },
     {
-      "when": {
-        "south": "true"
-      },
       "apply": {
         "model": "hbm:block/red_cable_side",
         "y": 180
+      },
+      "when": {
+        "south": "true"
       }
     },
     {
-      "when": {
-        "west": "true"
-      },
       "apply": {
         "model": "hbm:block/red_cable_side",
         "y": 270
+      },
+      "when": {
+        "west": "true"
       }
     },
     {
-      "when": {
-        "up": "true"
-      },
       "apply": {
         "model": "hbm:block/red_cable_side",
         "x": -90
+      },
+      "when": {
+        "up": "true"
       }
     },
     {
-      "when": {
-        "down": "true"
-      },
       "apply": {
         "model": "hbm:block/red_cable_side",
         "x": 90
+      },
+      "when": {
+        "down": "true"
       }
     }
   ]

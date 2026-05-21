@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/dieselgen.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/machines/dieselgen",
+    "default": "hbm:block/machines/dieselgen",
+    "texture0": "hbm:block/machines/dieselgen"
+  }
+}

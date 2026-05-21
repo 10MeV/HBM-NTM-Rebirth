@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/thin_block",
+  "textures": {
+    "texture": "hbm:block/ash"
+  }
+}

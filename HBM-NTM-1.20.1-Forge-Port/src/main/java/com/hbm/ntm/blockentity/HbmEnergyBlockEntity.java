@@ -4,6 +4,7 @@ import com.hbm.ntm.api.tile.InfoProviderEC;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyConnector;
+import com.hbm.ntm.energy.HbmLoadedEnergy;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -20,7 +21,7 @@ import net.minecraftforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, InfoProviderEC {
+public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmLoadedEnergy, InfoProviderEC {
     private static final String TAG_ENERGY = "Energy";
 
     protected final HbmEnergyStorage energy;
@@ -139,6 +140,38 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
         return subscribed;
     }
 
+    protected boolean unsubscribeEnergyProviderFromSide(Direction side) {
+        return level != null
+                && !level.isClientSide
+                && HbmEnergyUtil.unsubscribeProviderFromNeighborNetwork(level, worldPosition, side, energy);
+    }
+
+    protected boolean unsubscribeEnergyReceiverFromSide(Direction side) {
+        return level != null
+                && !level.isClientSide
+                && HbmEnergyUtil.unsubscribeReceiverFromNeighborNetwork(level, worldPosition, side, energy);
+    }
+
+    protected int unsubscribeEnergyProviderFromAllSides() {
+        int unsubscribed = 0;
+        for (Direction side : Direction.values()) {
+            if (unsubscribeEnergyProviderFromSide(side)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
+    }
+
+    protected int unsubscribeEnergyReceiverFromAllSides() {
+        int unsubscribed = 0;
+        for (Direction side : Direction.values()) {
+            if (unsubscribeEnergyReceiverFromSide(side)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
@@ -150,6 +183,11 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
         data.putString(CompatEnergyControl.KEY_EUTYPE, "HE");
         data.putLong(CompatEnergyControl.L_ENERGY_HE, energy.getPower());
         data.putLong(CompatEnergyControl.L_CAPACITY_HE, energy.getMaxPower());
+    }
+
+    @Override
+    public boolean isEnergyLoaded() {
+        return level != null && !isRemoved();
     }
 
     @Override

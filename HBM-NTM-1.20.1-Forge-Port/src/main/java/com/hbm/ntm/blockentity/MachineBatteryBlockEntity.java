@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.compat.CompatEnergyControl;
+import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -62,6 +63,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
     private short redLow = MODE_INPUT;
     private short redHigh = MODE_OUTPUT;
     private boolean lastRedstone;
+    private int lastMode = MODE_NONE;
 
     public MachineBatteryBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new BatteryEnergyStorage(MAX_POWER, MAX_RECEIVE, MAX_EXTRACT));
@@ -80,14 +82,16 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
         long previousPower = blockEntity.energy.getPower();
         boolean previousRedstone = blockEntity.lastRedstone;
         blockEntity.lastRedstone = level.hasNeighborSignal(pos);
+        int currentMode = blockEntity.getCurrentMode();
+        blockEntity.handleModeTransition(currentMode);
         boolean inventoryChanged = false;
 
-        inventoryChanged |= HbmEnergyUtil.chargeItemFromStorage(
+        inventoryChanged |= HbmBatteryTransfer.chargeItemFromStorage(
                 blockEntity.items.getStackInSlot(SLOT_CHARGE),
                 blockEntity.energy,
-                MAX_EXTRACT) > 0L;
+                blockEntity.energy.getMaxPower()) > 0L;
 
-        switch (blockEntity.getCurrentMode()) {
+        switch (currentMode) {
             case MODE_INPUT -> {
                 blockEntity.subscribeEnergyReceiverToAllSides();
                 blockEntity.pullEnergyFromAllSides(MAX_RECEIVE);
@@ -101,10 +105,10 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
             }
         }
 
-        inventoryChanged |= HbmEnergyUtil.chargeStorageFromItem(
+        inventoryChanged |= HbmBatteryTransfer.chargeStorageFromItem(
                 blockEntity.items.getStackInSlot(SLOT_DISCHARGE),
                 blockEntity.energy,
-                MAX_RECEIVE) > 0L;
+                blockEntity.energy.getMaxPower()) > 0L;
 
         blockEntity.updatePowerLog(previousPower);
 
@@ -159,6 +163,18 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
         return clampMode(powered ? redHigh : redLow);
     }
 
+    private void handleModeTransition(int currentMode) {
+        if (currentMode == lastMode) {
+            return;
+        }
+        unsubscribeEnergyProviderFromAllSides();
+        unsubscribeEnergyReceiverFromAllSides();
+        if (currentMode != MODE_BUFFER) {
+            removeEnergyNode();
+        }
+        lastMode = currentMode;
+    }
+
     private static short clampMode(short mode) {
         return mode >= MODE_INPUT && mode <= MODE_NONE ? mode : MODE_INPUT;
     }
@@ -208,6 +224,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
         tag.putLong("Delta", delta);
         tag.putLong("prevPowerState", previousPowerState);
         tag.putLongArray("PowerLog", powerLog);
+        tag.putInt("lastMode", lastMode);
         tag.putString(TAG_PRIORITY, batteryEnergy.getPriority().name());
     }
 
@@ -215,6 +232,9 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
     public void load(CompoundTag tag) {
         super.load(tag);
         items.deserializeNBT(tag.getCompound(TAG_INVENTORY));
+        if (tag.contains("power")) {
+            energy.setPower(tag.getLong("power"));
+        }
         redLow = clampMode(tag.getShort(TAG_RED_LOW));
         redHigh = clampMode(tag.getShort(TAG_RED_HIGH));
         lastRedstone = tag.getBoolean(TAG_LAST_REDSTONE);
@@ -224,6 +244,9 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity {
             long[] storedLog = tag.getLongArray("PowerLog");
             Arrays.fill(powerLog, 0L);
             System.arraycopy(storedLog, 0, powerLog, 0, Math.min(storedLog.length, powerLog.length));
+        }
+        if (tag.contains("lastMode")) {
+            lastMode = clampMode((short) tag.getInt("lastMode"));
         }
         if (tag.contains(TAG_PRIORITY)) {
             try {

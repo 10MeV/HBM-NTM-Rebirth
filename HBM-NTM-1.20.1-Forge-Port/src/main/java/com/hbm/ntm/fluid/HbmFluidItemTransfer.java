@@ -6,8 +6,54 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 public final class HbmFluidItemTransfer {
+    public static boolean loadTankFromSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank) {
+        return loadTankFromSlot(items, inputSlot, outputSlot, tank, Integer.MAX_VALUE, false);
+    }
+
+    public static boolean loadTankFromSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank, int maxAmount, boolean simulate) {
+        if (!isValidSlot(items, inputSlot) || !isValidSlot(items, outputSlot) || tank == null || maxAmount <= 0) {
+            return false;
+        }
+        ItemStack input = items.getStackInSlot(inputSlot);
+        if (input.isEmpty()) {
+            return false;
+        }
+        if (input.getItem() instanceof IFillableItem) {
+            TransferResult result = drainItemToTank(input, tank, maxAmount, simulate);
+            if (result.moved() && !simulate) {
+                items.setStackInSlot(inputSlot, result.stack());
+            }
+            return result.moved();
+        }
+        return transferContainerItem(items, inputSlot, outputSlot, tank, maxAmount, TransferDirection.ITEM_TO_TANK, simulate);
+    }
+
+    public static boolean unloadTankToSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank) {
+        return unloadTankToSlot(items, inputSlot, outputSlot, tank, Integer.MAX_VALUE, false);
+    }
+
+    public static boolean unloadTankToSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank, int maxAmount, boolean simulate) {
+        if (!isValidSlot(items, inputSlot) || !isValidSlot(items, outputSlot) || tank == null || maxAmount <= 0) {
+            return false;
+        }
+        ItemStack input = items.getStackInSlot(inputSlot);
+        if (input.isEmpty()) {
+            return false;
+        }
+        if (input.getItem() instanceof IFillableItem) {
+            TransferResult result = fillItemFromTank(input, tank, maxAmount, simulate);
+            if (result.moved() && !simulate) {
+                items.setStackInSlot(inputSlot, result.stack());
+            }
+            return result.moved();
+        }
+        return transferContainerItem(items, inputSlot, outputSlot, tank, maxAmount, TransferDirection.TANK_TO_ITEM, simulate);
+    }
+
     public static TransferResult fillItemFromTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {
         if (stack.isEmpty() || tank == null || tank.isEmpty() || maxAmount <= 0 || !HbmFluidForgeMappings.canExport(tank.getTankType())) {
             return TransferResult.empty(stack);
@@ -145,6 +191,85 @@ public final class HbmFluidItemTransfer {
                 .orElse(stack);
     }
 
+    private static boolean transferContainerItem(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank,
+            int maxAmount, TransferDirection direction, boolean simulate) {
+        ItemStack input = items.getStackInSlot(inputSlot);
+        if (input.isEmpty()) {
+            return false;
+        }
+        if (inputSlot == outputSlot && input.getCount() > 1) {
+            return false;
+        }
+
+        ItemStack single = input.copy();
+        single.setCount(1);
+        HbmFluidTank previewTank = copyTank(tank);
+        TransferResult preview = direction.transfer(single, previewTank, maxAmount, false);
+        if (!preview.moved() || !canMoveToOutput(items, outputSlot, preview.stack())) {
+            return false;
+        }
+        if (simulate) {
+            return true;
+        }
+
+        ItemStack actualSingle = input.copy();
+        actualSingle.setCount(1);
+        TransferResult actual = direction.transfer(actualSingle, tank, maxAmount, false);
+        if (!actual.moved() || !canMoveToOutput(items, outputSlot, actual.stack())) {
+            return false;
+        }
+        shrinkInput(items, inputSlot);
+        addToOutput(items, outputSlot, actual.stack());
+        return true;
+    }
+
+    private static boolean canMoveToOutput(IItemHandlerModifiable items, int outputSlot, ItemStack stack) {
+        if (stack.isEmpty()) {
+            return true;
+        }
+        ItemStack output = items.getStackInSlot(outputSlot);
+        if (output.isEmpty()) {
+            return stack.getCount() <= Math.min(stack.getMaxStackSize(), items.getSlotLimit(outputSlot));
+        }
+        return ItemHandlerHelper.canItemStacksStack(output, stack)
+                && output.getCount() + stack.getCount() <= Math.min(output.getMaxStackSize(), items.getSlotLimit(outputSlot));
+    }
+
+    private static void shrinkInput(IItemHandlerModifiable items, int inputSlot) {
+        ItemStack input = items.getStackInSlot(inputSlot);
+        if (input.getCount() <= 1) {
+            items.setStackInSlot(inputSlot, ItemStack.EMPTY);
+            return;
+        }
+        ItemStack remaining = input.copy();
+        remaining.shrink(1);
+        items.setStackInSlot(inputSlot, remaining);
+    }
+
+    private static void addToOutput(IItemHandlerModifiable items, int outputSlot, ItemStack stack) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        ItemStack output = items.getStackInSlot(outputSlot);
+        if (output.isEmpty()) {
+            items.setStackInSlot(outputSlot, stack.copy());
+            return;
+        }
+        ItemStack merged = output.copy();
+        merged.grow(stack.getCount());
+        items.setStackInSlot(outputSlot, merged);
+    }
+
+    private static HbmFluidTank copyTank(HbmFluidTank tank) {
+        HbmFluidTank copy = new HbmFluidTank(tank.getTankType(), tank.getMaxFill()).withPressure(tank.getPressure());
+        copy.setFill(tank.getFill());
+        return copy;
+    }
+
+    private static boolean isValidSlot(IItemHandlerModifiable items, int slot) {
+        return items != null && slot >= 0 && slot < items.getSlots();
+    }
+
     public record TransferResult(ItemStack stack, int amount) {
         public boolean moved() {
             return amount > 0;
@@ -153,6 +278,23 @@ public final class HbmFluidItemTransfer {
         private static TransferResult empty(ItemStack stack) {
             return new TransferResult(stack, 0);
         }
+    }
+
+    private enum TransferDirection {
+        ITEM_TO_TANK {
+            @Override
+            TransferResult transfer(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {
+                return drainItemToTank(stack, tank, maxAmount, simulate);
+            }
+        },
+        TANK_TO_ITEM {
+            @Override
+            TransferResult transfer(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {
+                return fillItemFromTank(stack, tank, maxAmount, simulate);
+            }
+        };
+
+        abstract TransferResult transfer(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate);
     }
 
     private HbmFluidItemTransfer() {

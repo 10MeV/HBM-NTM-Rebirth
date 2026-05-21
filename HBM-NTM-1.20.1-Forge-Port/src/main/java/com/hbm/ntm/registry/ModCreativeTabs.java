@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.TrinketBlockItem;
 import net.minecraft.core.registries.Registries;
@@ -38,7 +39,13 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm.consumables"))
                     .icon(() -> ModItems.GEIGER_COUNTER.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> output.accept(item.get())))
+                    .displayItems((parameters, output) -> ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> {
+                        if (item.get() instanceof HbmBatteryItem battery) {
+                            battery.addCreativeStacks(output, item.get().getDefaultInstance());
+                        } else {
+                            output.accept(item.get());
+                        }
+                    }))
                     .build());
 
     public static final RegistryObject<CreativeModeTab> CONTROL = CREATIVE_TABS.register("control",

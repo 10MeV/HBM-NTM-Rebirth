@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/fan.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/machines/fan",
+    "default": "hbm:block/machines/fan",
+    "texture0": "hbm:block/machines/fan"
+  }
+}
