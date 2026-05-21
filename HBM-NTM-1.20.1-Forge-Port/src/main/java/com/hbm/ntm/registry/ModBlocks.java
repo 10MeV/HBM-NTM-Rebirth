@@ -1,13 +1,16 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.block.BoilerBlock;
 import com.hbm.ntm.block.DeconBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyComplexShapeBlock;
 import com.hbm.ntm.block.LegacyDemonLampBlock;
 import com.hbm.ntm.block.MachineBlockEntityBlock;
 import com.hbm.ntm.block.LegacyLanternBlock;
+import com.hbm.ntm.block.MachineBatteryBlock;
 import com.hbm.ntm.block.RadioactiveWasteEarthBlock;
+import com.hbm.ntm.block.RedCableBlock;
 import com.hbm.ntm.block.TrinketBlock;
 import com.hbm.ntm.block.TrinketVariant;
 import com.hbm.ntm.item.TrinketBlockItem;
@@ -39,9 +42,11 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_PRESS = basicMachine("machine_press");
     public static final RegistryObject<Block> MACHINE_DIFURNACE_OFF = machine("machine_difurnace_off");
     public static final RegistryObject<Block> MACHINE_ELECTRIC_FURNACE_OFF = machine("machine_electric_furnace_off");
-    public static final RegistryObject<Block> MACHINE_BOILER_OFF = machine("machine_boiler_off");
+    public static final RegistryObject<Block> MACHINE_BOILER_OFF = boilerMachine("machine_boiler_off");
     public static final RegistryObject<Block> MACHINE_SHREDDER = machine("machine_shredder");
     public static final RegistryObject<Block> DECON = decon("decon");
+    public static final RegistryObject<Block> RED_CABLE = redCable("red_cable");
+    public static final RegistryObject<Block> MACHINE_BATTERY = machineBattery("machine_battery");
 
     // Legacy 1.7.10 blockTab entries used as an early chunk-radiation test bed.
     public static final RegistryObject<Block> WASTE_EARTH = wasteEarth("waste_earth", false, 5.0F);
@@ -74,7 +79,9 @@ public final class ModBlocks {
             MACHINE_ELECTRIC_FURNACE_OFF,
             MACHINE_BOILER_OFF,
             MACHINE_SHREDDER,
-            DECON
+            DECON,
+            RED_CABLE,
+            MACHINE_BATTERY
     );
 
     public static final List<RegistryObject<Block>> EXTRA_BLOCK_TAB_BLOCKS = simpleResourceBlocks(
@@ -353,8 +360,33 @@ public final class ModBlocks {
                 .noOcclusion(), false));
     }
 
+    private static RegistryObject<Block> boilerMachine(String name) {
+        return registerBlockWithItem(name, () -> new BoilerBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
+    }
+
     private static RegistryObject<Block> decon(String name) {
         return registerBlockWithItem(name, () -> new DeconBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
+    }
+
+    private static RegistryObject<Block> redCable(String name) {
+        return registerBlockWithItem(name, () -> new RedCableBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion()));
+    }
+
+    private static RegistryObject<Block> machineBattery(String name) {
+        return registerBlockWithItem(name, () -> new MachineBatteryBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.METAL)

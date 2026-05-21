@@ -1,6 +1,9 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.tile.InfoProviderEC;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyConnector;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -17,7 +20,7 @@ import net.minecraftforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class HbmEnergyBlockEntity extends BlockEntity {
+public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, InfoProviderEC {
     private static final String TAG_ENERGY = "Energy";
 
     protected final HbmEnergyStorage energy;
@@ -51,6 +54,11 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity {
 
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.BOTH;
+    }
+
+    @Override
+    public boolean canConnectEnergy(@Nullable Direction side) {
+        return canAccessEnergy(side);
     }
 
     protected long pullEnergyFromSide(Direction side, long maxTransfer) {
@@ -135,6 +143,13 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.put(TAG_ENERGY, energy.serializeNBT());
+    }
+
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        data.putString(CompatEnergyControl.KEY_EUTYPE, "HE");
+        data.putLong(CompatEnergyControl.L_ENERGY_HE, energy.getPower());
+        data.putLong(CompatEnergyControl.L_CAPACITY_HE, energy.getMaxPower());
     }
 
     @Override

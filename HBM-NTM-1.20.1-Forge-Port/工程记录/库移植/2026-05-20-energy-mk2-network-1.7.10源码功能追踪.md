@@ -349,3 +349,179 @@
   - 同优先级 receiver 按需求比例获得能量。
   - provider 扣能按可用输出比例分摊。
   - 订阅超过 3 秒未刷新后被剔除。
+
+## 2026-05-21 继续推进：基础 `machine_battery` 储能方块接入
+
+- 本批新增/更新：
+  - `src/main/java/com/hbm/ntm/block/MachineBatteryBlock.java`
+  - `src/main/java/com/hbm/ntm/blockentity/MachineBatteryBlockEntity.java`
+  - `src/main/java/com/hbm/ntm/registry/ModBlocks.java`
+  - `src/main/java/com/hbm/ntm/registry/ModBlockEntities.java`
+  - `src/main/java/com/hbm/ntm/datagen/HbmBlockStateProvider.java`
+  - `src/main/resources/assets/hbm/blockstates/machine_battery.json`
+  - `src/main/resources/assets/hbm/models/block/machine_battery.json`
+  - `src/main/resources/assets/hbm/models/item/machine_battery.json`
+  - `src/main/resources/assets/hbm/textures/block/battery_front_alt.png`
+  - `src/main/resources/assets/hbm/textures/block/battery_side_alt.png`
+  - `src/main/resources/assets/hbm/textures/block/battery_top.png`
+- 1.7.10 对照：
+  - `com.hbm.blocks.ModBlocks#machine_battery`：`new MachineBattery(Material.iron, 1_000_000)`，硬度 5，抗性 10，基础贴图为 `battery_front_alt` / `battery_side_alt` / `battery_top`。
+  - `com.hbm.blocks.machine.MachineBattery`：水平朝向、模拟比较器输出、破坏时保留持久 NBT/物品槽、GUI 打开、能量 tooltip。
+  - `com.hbm.tileentity.machine.storage.TileEntityMachineBattery`：容量 `1_000_000 HE`，接收速度 `maxPower / 200 = 5_000 HE/t`，输出速度 `maxPower / 600 = 1_666 HE/t`；默认 `redLow = input`、`redHigh = output`、`priority = LOW`。
+- 现代迁移语义：
+  - `MachineBatteryBlockEntity` 继承 `HbmEnergyBlockEntity`，使用 `HbmEnergyStorage` 保存 long 型 HE，并继续通过 `ForgeEnergyAdapter` 暴露 FE capability。
+  - 未通红石时按旧默认 `redLow` 作为输入端：订阅相邻红线网络的 receiver，并从相邻 FE/HBM 端直接拉取最多 `5_000 HE/t`。
+  - 通红石时按旧默认 `redHigh` 作为输出端：通过 `HbmEnergyUtil.tryProvideToAllNeighbors` 订阅相邻红线网络 provider，并尝试直接向 HBM receiver 或 FE 邻居输出最多 `1_666 HE/t`。
+  - `mode_buffer` 目前仅按“双向订阅/供电”处理，不创建自身导线节点，因此尚不能完整复刻旧版“储能方块桥接多个拆分网络视为共享网络”的行为。
+  - 比较器输出保留旧公式：空电为 0，非空按 `power / max * 15 + 1` 钳制到 0..15。
+  - NBT 保存复用能量库 `Energy.Power`，并保留 `redLow`、`redHigh`、`lastRedstone`、`priority` 字段；旧版掉落持久 NBT key 与命名迁移暂未接入。
+- 本批有意不迁移：
+  - GUI、Container/Menu/Screen、两个物品槽的电池物品充放电。
+  - 右键配置红石低/高模式、优先级切换、OC/ROR/EnergyControl 信息面板。
+  - `machine_lithium_battery`、`machine_schrabidium_battery`、`machine_dineutronium_battery`、`machine_battery_potato`、FEnSU 与 battery socket。
+  - 旧版 `IPersistentNBT` 掉落继承、已命名方块显示名和完整方块破坏库存掉落。
+- 新增验证项：
+  - `machine_battery` 应注册为机器标签页方块，拥有水平朝向、loot、pickaxe/iron tool tag 和旧版基础贴图。
+  - 未通红石且邻接 `red_cable` 网络时，应作为 LOW 优先级 receiver 被网络分配能量。
+  - 通红石且邻接 `red_cable` 网络或 FE receiver 时，应作为 provider 刷新订阅并按 `1_666 HE/t` 输出。
+  - 比较器在 0 电量输出 0，在非 0 电量至少输出 1，满电输出 15。
+
+## 2026-05-21 继续推进：首个真实 `HbmBatteryItem` 接入
+
+- 本批新增/更新：
+  - `src/main/java/com/hbm/ntm/energy/HbmBatteryItem.java`
+  - `src/main/java/com/hbm/ntm/registry/ModItems.java`
+  - `src/main/resources/assets/hbm/models/item/battery_potato.json`
+  - `src/main/resources/assets/hbm/textures/item/battery_potato.png`
+- 1.7.10 对照：
+  - `com.hbm.items.machine.ItemBattery`：旧版普通电池物品使用 `charge` NBT key；当物品没有 NBT 时，`getCharge` 会写入并返回 `maxCharge`，即默认满电。
+  - `com.hbm.items.ModItems#battery_potato`：`new ItemBattery(1000, 0, 100)`，控制标签页，贴图 `textures/items/battery_potato.png`。
+  - 旧语言：`item.battery_potato.name=Potato Battery` / `马铃薯电池`，电池 tooltip key 为 `desc.item.battery.charge`、`chargeRate`、`dischargeRate`。
+- 现代迁移语义：
+  - `HbmBatteryItem` 继续使用旧版 `charge` NBT key，并通过 `ForgeBatteryItemAdapter` 暴露 item FE capability。
+  - `HbmBatteryItem#getDefaultCharge` 对齐旧版：可充电物品默认空电；不可充电但可放电物品默认满电。这样 `battery_potato` 从创造栏/新堆栈取出时可直接放出 `1_000 HE`。
+  - `battery_potato` 注册为独立物品 ID，容量 `1_000 HE`、充电速率 `0 HE/t`、放电速率 `100 HE/t`，进入现代 `CONSUMABLE_TAB_ITEMS` 作为当前可见入口。
+- 本批有意不迁移：
+  - 完整 `battery_pack` 多变体、3D 电池包 OBJ item renderer、`ItemBatteryPack.EnumBatteryPack` 的容量/电容器集合。
+  - 自充电电池 `battery_sc`、creative battery、fusion core、energy core、HEV battery。
+  - `ItemBattery#getSubItems` 的空/满双堆栈展示；当前创造栏只给默认堆栈，旧版默认满电语义已覆盖 `battery_potato` 的使用场景。
+
+## 2026-05-21 继续推进：`machine_battery` 双物品槽充放电
+
+- 本批更新：
+  - `src/main/java/com/hbm/ntm/blockentity/MachineBatteryBlockEntity.java`
+  - `src/main/java/com/hbm/ntm/block/MachineBatteryBlock.java`
+- 1.7.10 对照：
+  - `TileEntityMachineBattery` 构造 2 槽 inventory。
+  - tick 顺序中，先执行 `Library.chargeItemsFromTE(slots, 1, power, getMaxPower())`，即用方块能量给 1 号槽电池物品充电。
+  - 网络输入/输出处理完成后，再执行 `Library.chargeTEFromItems(slots, 0, power, getMaxPower())`，即从 0 号槽电池物品向方块放电。
+  - 破坏方块时旧版会掉落 inventory 内容；完整 persistent NBT 掉落仍属于后续项。
+- 现代迁移语义：
+  - `MachineBatteryBlockEntity` 新增 2 槽 `ItemStackHandler`，通过 `ForgeCapabilities.ITEM_HANDLER` 暴露给自动化和后续 GUI。
+  - `SLOT_DISCHARGE = 0`：每 tick 通过 `HbmEnergyUtil.chargeStorageFromItem` 按 `MAX_RECEIVE = 5_000 HE/t` 从电池物品抽入方块。
+  - `SLOT_CHARGE = 1`：每 tick 通过 `HbmEnergyUtil.chargeItemFromStorage` 按 `MAX_EXTRACT = 1_666 HE/t` 从方块给电池物品充电。
+  - 保存 key 为 `Inventory`，复用 Forge `ItemStackHandler` NBT；破坏时弹出两槽内物品。
+- 本批有意不迁移：
+  - GUI/Menu/Screen 和旧版红石模式、优先级按钮。
+  - 自动化面向上下/侧面的旧版 `getAccessibleSlotsFromSide` 差异；当前先开放同一个 item handler，后续做 GUI/自动化细分时再拆 wrapper。
+  - 旧版 “空电池可从 0 号槽取出 / 满电池可从 1 号槽取出” 的 sided extraction 限制。
+
+## 2026-05-21 能量库检查与优先补齐：receiver 端舍入余量
+
+- 本次检查出的库层高优先级缺口：
+  - `HbmPowerNet` 已有 provider 端舍入补扣，但 receiver 端按同优先级需求权重分配时，`long` 截断会让小电量预算在多个 receiver 之间全部变成 `0`。
+  - 表现为：网络有 provider、receiver 也有需求，但每个同优先级 receiver 的 `toSend` 被截断为 0，导致该 tick 完全不传电。
+  - 这会直接影响后续所有小功率电池、导线和机器联调，因此优先级高于继续新增具体机器。
+- 本批更新：
+  - `src/main/java/com/hbm/ntm/energy/HbmPowerNet.java`
+- 现代修正语义：
+  - 每个优先级先按需求权重分配 `priorityBudget`。
+  - 权重分配后，如果由于整型截断或 receiver 剩余容量导致 `priorityBudget - priorityUsed` 仍大于 0，则在同优先级 receiver 中继续补发余量。
+  - 补发仍遵守 receiver 剩余容量和 `getReceiverSpeed()`，并保留最多 100 轮安全阀。
+  - provider 端仍沿用已有权重扣能 + 随机 provider 补扣舍入误差逻辑。
+- 本次检查后仍然缺失/待补齐的主要功能：
+  - 完整 `battery_pack` 多变体与电容器集合，包括旧版 3D item renderer 语义或现代替代展示。
+  - `machine_battery` GUI/Menu/Screen、红石模式按钮、优先级按钮、旧版 sided slot 自动化限制。
+  - `HbmEnergyNetworkBlockEntity` 的更完整自节点桥接语义，尤其 `mode_buffer` 作为导线节点桥接拆分网络的行为。
+  - 更多导线族：经典线、可涂漆线、盒式线、二极管、开关、检测线、功率计。
+  - 网络生命周期仍需游戏内验证：chunk 卸载、跨区块导线、导线拆分后网络重建、订阅超时剔除。
+  - EnergyControl/信息面板、调试粒子、旧版 `provideInfoForECMK2` 兼容层尚未迁移。
+
+## 2026-05-21 继续推进：普通 `red_cable` 导线实物接入
+
+- 本批新增/更新：
+  - `src/main/java/com/hbm/ntm/block/RedCableBlock.java`
+  - `src/main/java/com/hbm/ntm/blockentity/RedCableBlockEntity.java`
+  - `src/main/java/com/hbm/ntm/registry/ModBlocks.java`
+  - `src/main/java/com/hbm/ntm/registry/ModBlockEntities.java`
+  - `src/main/resources/assets/hbm/blockstates/red_cable.json`
+  - `src/main/resources/assets/hbm/models/block/red_cable_core.json`
+  - `src/main/resources/assets/hbm/models/block/red_cable_side.json`
+  - `src/main/resources/assets/hbm/models/item/red_cable.json`
+  - `src/main/resources/assets/hbm/textures/block/cable_neo.png`
+- 1.7.10 对照：
+  - `com.hbm.blocks.ModBlocks#red_cable`：`new BlockCable(Material.iron)`，硬度 5、抗性 10、`machineTab`，贴图 `hbm:cable_neo`。
+  - `com.hbm.blocks.network.BlockCable`：非完整方块；碰撞/选区按 `Library.canConnect` 六向连接拓展，中心截面为 5.5px 到 10.5px。
+  - `com.hbm.tileentity.network.TileEntityCableBaseNT`：服务端创建/销毁 `Nodespace.PowerNode`，六面 `canConnect`。
+  - `api.hbm.energymk2.IEnergyConductorMK2#createNode`：默认生成六向连接节点。
+- 现代迁移语义：
+  - `RedCableBlock` 继承 `HbmEnergyNodeBlock`，复用现有节点刷新、邻居连接刷新、六向 `BlockState` 连接状态。
+  - `RedCableBlockEntity` 继承 `HbmEnergyNodeBlockEntity`，通过 `HbmEnergyNodespace.createNode/destroyNode` 接入能量网络。
+  - `HbmEnergyBlockEntity` 现在实现 `HbmEnergyConnector`，按 `getEnergySideMode` 暴露连接面；这是对齐旧版 `IEnergyHandlerMK2 extends IEnergyConnectorMK2` 的共享库修正，避免后续每台普通能量机器重复写连接胶水。
+  - 碰撞/选区保留旧版 5.5px-10.5px 中心截面，并按 `north/east/south/west/up/down` 状态展开。
+  - 贴图使用 1.7.10 资源 `textures/blocks/cable_neo.png`，现代路径为 `textures/block/cable_neo.png`。
+- 本批有意不迁移：
+  - `red_cable_classic`、`red_cable_paintable`、`red_wire_coated`、`red_cable_box`。
+  - `cable_switch`、`cable_detector`、`cable_diode` 的红石/单向传输/功率计逻辑。
+  - 机器侧 provider/receiver 实物接入；下一批应选择一个简单发电或耗电机器做端到端验证。
+- 新增验证项：
+  - `red_cable` 应进入机器创造标签。
+  - 两根相邻 `red_cable` 放置后对应方向 `BlockState` 变为 true，破坏后相邻导线刷新为 false。
+  - `RedCableBlockEntity` 加载时创建 nodespace 节点，移除时销毁节点。
+  - 普通 HBM receiver/provider 邻接该导线时，可通过 `HbmEnergyUtil.subscribeProviderToNeighborNetwork` / `subscribeReceiverToNeighborNetwork` 找到 `HbmPowerNet`。
+
+## 2026-05-21 继续推进：网络桥接、生命周期观测与 EC 信息层
+
+- 本批新增/更新：
+  - `src/main/java/com/hbm/ntm/blockentity/HbmEnergyNetworkBlockEntity.java`
+  - `src/main/java/com/hbm/ntm/blockentity/MachineBatteryBlockEntity.java`
+  - `src/main/java/com/hbm/ntm/blockentity/HbmEnergyBlockEntity.java`
+  - `src/main/java/com/hbm/ntm/energy/HbmEnergyNodespace.java`
+  - `src/main/java/com/hbm/ntm/energy/HbmPowerNet.java`
+  - `src/main/java/com/hbm/ntm/event/CommonForgeEvents.java`
+  - `src/main/java/com/hbm/ntm/command/ModCommands.java`
+  - `src/main/java/com/hbm/ntm/compat/CompatEnergyControl.java`
+- 1.7.10 对照：
+  - `TileEntityMachineBattery#updateEntity` 在 `mode_buffer` 下会把自身变成导线节点：若 `node` 缺失或过期则创建 `PowerNode`，随后 `tryProvide(..., ForgeDirection.UNKNOWN)` 并向自身节点网络 `addReceiver(this)`。
+  - 非 buffer 模式下旧版会销毁自身 `PowerNode`，然后按六向相邻导线网络分别订阅 provider 或 receiver。
+  - 旧版 `IEnergyHandlerMK2#provideInfoForECMK2` 默认写入 `energy`、`capacity` 与 `euType=HE` 等 EnergyControl 兼容数据；`TileEntityMachineBattery#provideExtraInfo` 额外写入 `diff`。
+  - 旧版 provider/receiver 订阅仍使用 3 秒超时，机器每 tick 通过重新订阅刷新时间戳。
+- 现代迁移语义：
+  - `HbmEnergyNetworkBlockEntity` 增加 `shouldCreateEnergyNode()` 与 `refreshEnergyNodeState()`，允许机器按当前模式动态创建/释放节点；服务端 tick 会先同步节点状态，再刷新 provider/receiver 订阅。
+  - `MachineBatteryBlockEntity` 改为继承 `HbmEnergyNetworkBlockEntity`：
+    - `MODE_BUFFER` 时才创建自身 `HbmEnergyNode`，并向该节点所在 `HbmPowerNet` 同时订阅 provider 与 receiver。
+    - `MODE_INPUT` / `MODE_OUTPUT` / `MODE_NONE` 时不保留自身节点，继续使用相邻导线网络的旧式订阅/供电语义。
+    - 保留旧版 20 tick power log 与 `diff` 计算入口，为 EnergyControl/info panel 提供基础数据。
+  - `HbmEnergyNodespace` 增加 chunk unload 清理入口和节点/网络观测查询：
+    - `unloadChunk(Level, ChunkPos)` 在 Forge chunk unload 事件中剔除该 chunk 内节点，并触发剩余网络重建。
+    - tick 中也会剔除 `level.hasChunkAt(pos)` 已不可用的遗留节点，兜底处理跨 chunk 卸载。
+    - `getNodeCount`、`getNetworkCount`、`getNetworkLinkCount`、`getNetworkProviderCount`、`getNetworkReceiverCount`、`getNetworkEnergyTracker`、`hasValidNetwork` 供命令和后续测试使用。
+  - `HbmPowerNet` 暴露 provider/receiver 当前订阅数量，并在查询时复用超时剔除逻辑，便于验证 3 秒订阅超时。
+  - `HbmEnergyBlockEntity` 现在实现现代 `InfoProviderEC` 默认输出：
+    - `euType = HE`
+    - `energy = 当前 HE`
+    - `capacity = 最大 HE`
+  - `CompatEnergyControl` 暂迁旧版 EnergyControl key 常量的能量子集，后续流体/热量/进度类机器可继续扩展。
+  - 新增命令验证入口：
+    - `/hbm energy nodespace`：查看当前维度节点数与网络数。
+    - `/hbm energy network <pos>`：查看指定节点位置网络有效性、link/provider/receiver 数量与最近 tick 转移 HE。
+    - `/hbm energy info <pos>`：读取实现 `InfoProviderEC` 的方块实体输出数据。
+- 实机验证建议：
+  - buffer 模式 `machine_battery` 放在两段 `red_cable` 中间时，`/hbm energy network <battery_pos>` 应显示有效网络且 links 包含 battery 自节点。
+  - 用红石切换使 battery 离开 buffer 后，同位置网络应失效或不再包含 battery 自节点，相邻导线网络应在后续 tick 重建。
+  - 跨 chunk 摆放红线并卸载其中一个 chunk 后，`/hbm energy nodespace` 节点数应下降，剩余网络不应继续持有卸载 chunk 的节点。
+  - 让 provider/receiver 停止刷新订阅超过 3 秒后，`/hbm energy network <pos>` 的 provider/receiver 数应下降。
+- 当前仍未完成：
+  - 真实客户端 debug 粒子开关和网络包尚未迁移；本批先补服务端观测命令。
+  - EnergyControl 外部 mod 适配/卡片集成尚未接入；当前只迁移 HBM 侧 key 和 `InfoProviderEC` 数据出口。
+  - 没有自动化集成测试世界，本批通过编译验证，实机验证仍需后续在客户端/专服环境执行。

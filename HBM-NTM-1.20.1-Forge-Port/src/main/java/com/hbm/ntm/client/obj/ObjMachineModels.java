@@ -9,7 +9,8 @@ public final class ObjMachineModels {
             .withLightMultiplier(0.82F)
             .withOrigin(ObjPartTransform.BLOCK_CENTER.withScale(0.99F, 1.0F, 0.99F));
     public static final ObjPartModel PRESS = new ObjPartModel()
-            .part("Head", PRESS_HEAD);
+            .part("Cube.001_Cube.002", PRESS_HEAD, "Head")
+            .legacyOrder("Cube_Cube.000", "Cube.001_Cube.002");
 
     public static ObjModelPart part(String name) {
         return part(name, RenderType.cutout());

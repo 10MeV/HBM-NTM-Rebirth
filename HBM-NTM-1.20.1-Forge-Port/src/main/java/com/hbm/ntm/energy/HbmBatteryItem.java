@@ -42,8 +42,19 @@ public class HbmBatteryItem extends Item {
         return DEFAULT_CHARGE_TAG;
     }
 
+    protected long getDefaultCharge(ItemStack stack) {
+        return getChargeRate(stack) > 0L ? 0L : getMaxCharge(stack);
+    }
+
     public long getCharge(ItemStack stack) {
-        return stack.getOrCreateTag().getLong(getChargeTagName(stack));
+        CompoundTag tag = stack.getOrCreateTag();
+        String chargeTag = getChargeTagName(stack);
+        if (!tag.contains(chargeTag)) {
+            long defaultCharge = getDefaultCharge(stack);
+            tag.putLong(chargeTag, defaultCharge);
+            return defaultCharge;
+        }
+        return tag.getLong(chargeTag);
     }
 
     public void setCharge(ItemStack stack, long charge) {

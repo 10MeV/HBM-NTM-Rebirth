@@ -21,7 +21,10 @@ public class ItemPressStamp extends Item {
     }
 
     public enum StampType {
-        PLATE("plate");
+        FLAT("flat"),
+        PLATE("plate"),
+        WIRE("wire"),
+        CIRCUIT("circuit");
 
         private final String serializedName;
 

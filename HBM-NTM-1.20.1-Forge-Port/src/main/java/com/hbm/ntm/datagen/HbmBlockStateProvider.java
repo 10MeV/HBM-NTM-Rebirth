@@ -1,6 +1,7 @@
 package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.block.HbmEnergyNodeBlock;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -46,6 +47,14 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "decon_side",
                 "decon_side",
                 "decon_side");
+        redCableWithItem();
+        sidedCubeWithItem(ModBlocks.MACHINE_BATTERY,
+                "battery_top",
+                "battery_top",
+                "battery_side_alt",
+                "battery_front_alt",
+                "battery_side_alt",
+                "battery_side_alt");
         existingModelWithItem(ModBlocks.NUKE_GADGET, "nuke_gadget");
         existingModelWithItem(ModBlocks.NUKE_BOY, "nuke_boy");
         existingModelWithItem(ModBlocks.NUKE_MAN, "nuke_man");
@@ -129,5 +138,19 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + north));
         simpleBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
+    }
+
+    private void redCableWithItem() {
+        ModelFile core = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/red_cable_core"));
+        ModelFile side = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/red_cable_side"));
+        getMultipartBuilder(ModBlocks.RED_CABLE.get())
+                .part().modelFile(core).addModel().end()
+                .part().modelFile(side).addModel().condition(HbmEnergyNodeBlock.NORTH, true).end()
+                .part().modelFile(side).rotationY(90).addModel().condition(HbmEnergyNodeBlock.EAST, true).end()
+                .part().modelFile(side).rotationY(180).addModel().condition(HbmEnergyNodeBlock.SOUTH, true).end()
+                .part().modelFile(side).rotationY(270).addModel().condition(HbmEnergyNodeBlock.WEST, true).end()
+                .part().modelFile(side).rotationX(-90).addModel().condition(HbmEnergyNodeBlock.UP, true).end()
+                .part().modelFile(side).rotationX(90).addModel().condition(HbmEnergyNodeBlock.DOWN, true).end();
+        simpleBlockItem(ModBlocks.RED_CABLE.get(), core);
     }
 }

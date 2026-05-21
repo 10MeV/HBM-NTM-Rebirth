@@ -35,6 +35,16 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
         return energyTracker;
     }
 
+    public int getReceiverCount() {
+        pruneExpired(System.currentTimeMillis());
+        return receiverEntries.size();
+    }
+
+    public int getProviderCount() {
+        pruneExpired(System.currentTimeMillis());
+        return providerEntries.size();
+    }
+
     public boolean isSubscribed(HbmEnergyReceiver receiver) {
         return receiverEntries.containsKey(receiver);
     }
@@ -168,11 +178,40 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
             }
 
             long priorityUsed = 0L;
+            long priorityBudget = Math.min(toTransfer, priorityDemand);
             for (Entry<HbmEnergyReceiver> entry : receivers) {
                 double weight = (double) entry.amount / (double) priorityDemand;
-                long toSend = (long) Math.min(Math.max(toTransfer * weight, 0D), entry.amount);
+                long toSend = (long) Math.min(Math.max(priorityBudget * weight, 0D), entry.amount);
                 long accepted = toSend - entry.value.transferPower(toSend);
                 priorityUsed += accepted;
+            }
+
+            long leftover = priorityBudget - priorityUsed;
+            int iterationsLeft = 100;
+            while (iterationsLeft > 0 && leftover > 0L) {
+                iterationsLeft--;
+                boolean moved = false;
+                for (Entry<HbmEnergyReceiver> entry : receivers) {
+                    if (leftover <= 0L) {
+                        break;
+                    }
+                    long receiverDemandLeft = Math.min(
+                            Math.max(0L, entry.value.getMaxPower() - entry.value.getPower()),
+                            entry.value.getReceiverSpeed());
+                    if (receiverDemandLeft <= 0L) {
+                        continue;
+                    }
+                    long toSend = Math.min(leftover, receiverDemandLeft);
+                    long accepted = toSend - entry.value.transferPower(toSend);
+                    if (accepted > 0L) {
+                        priorityUsed += accepted;
+                        leftover -= accepted;
+                        moved = true;
+                    }
+                }
+                if (!moved) {
+                    break;
+                }
             }
 
             energyUsed += priorityUsed;

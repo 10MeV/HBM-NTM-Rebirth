@@ -26,6 +26,7 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
 
     public static <T extends HbmEnergyNetworkBlockEntity> void serverTick(Level level, BlockPos pos, BlockState state, T blockEntity) {
         if (!level.isClientSide) {
+            blockEntity.refreshEnergyNodeState();
             blockEntity.refreshEnergyNetworkSubscriptions();
         }
     }
@@ -59,6 +60,10 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
         if (level == null || level.isClientSide) {
             return;
         }
+        if (!shouldCreateEnergyNode()) {
+            removeEnergyNode();
+            return;
+        }
         if (energyNode != null) {
             HbmEnergyNodespace.destroyNode(level, worldPosition);
             energyNode = null;
@@ -70,12 +75,27 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
         if (level == null || level.isClientSide) {
             return;
         }
+        HbmPowerNet powerNet = getPowerNet();
+        if (powerNet == null || !powerNet.isValid()) {
+            return;
+        }
         if (shouldSubscribeAsProvider()) {
-            subscribeEnergyProvider(getNetworkEnergyProvider());
+            powerNet.addProvider(getNetworkEnergyProvider());
         }
         if (shouldSubscribeAsReceiver()) {
-            subscribeEnergyReceiver(getNetworkEnergyReceiver());
+            powerNet.addReceiver(getNetworkEnergyReceiver());
         }
+    }
+
+    protected void refreshEnergyNodeState() {
+        boolean hasNode = energyNode != null && !energyNode.isExpired();
+        if (shouldCreateEnergyNode() != hasNode) {
+            refreshEnergyNode();
+        }
+    }
+
+    protected boolean shouldCreateEnergyNode() {
+        return true;
     }
 
     protected boolean shouldSubscribeAsProvider() {
@@ -125,7 +145,7 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
     @Override
     public void onLoad() {
         super.onLoad();
-        refreshEnergyNode();
+        refreshEnergyNodeState();
     }
 
     @Override

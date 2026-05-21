@@ -2,10 +2,13 @@ package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
+import com.hbm.ntm.blockentity.BoilerBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
 import com.hbm.ntm.blockentity.LegacyDemonLampBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLanternBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
+import com.hbm.ntm.blockentity.MachineBatteryBlockEntity;
+import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -21,9 +24,21 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("basic_machine", () ->
                     BlockEntityType.Builder.of(BasicMachineBlockEntity::new, ModBlocks.MACHINE_PRESS.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<BoilerBlockEntity>> BOILER =
+            BLOCK_ENTITIES.register("boiler", () ->
+                    BlockEntityType.Builder.of(BoilerBlockEntity::new, ModBlocks.MACHINE_BOILER_OFF.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<DeconBlockEntity>> DECON =
             BLOCK_ENTITIES.register("decon", () ->
                     BlockEntityType.Builder.of(DeconBlockEntity::new, ModBlocks.DECON.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RedCableBlockEntity>> RED_CABLE =
+            BLOCK_ENTITIES.register("red_cable", () ->
+                    BlockEntityType.Builder.of(RedCableBlockEntity::new, ModBlocks.RED_CABLE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<MachineBatteryBlockEntity>> MACHINE_BATTERY =
+            BLOCK_ENTITIES.register("machine_battery", () ->
+                    BlockEntityType.Builder.of(MachineBatteryBlockEntity::new, ModBlocks.MACHINE_BATTERY.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<TrinketBlockEntity>> TRINKET =
             BLOCK_ENTITIES.register("trinket", () ->

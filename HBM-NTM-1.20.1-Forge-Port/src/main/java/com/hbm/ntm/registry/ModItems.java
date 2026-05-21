@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.DigammaDiagnosticItem;
 import com.hbm.ntm.item.EffectPillItem;
@@ -71,6 +72,12 @@ public final class ModItems {
 
     public static final RegistryObject<Item> IRON_PLATE_STAMP = ITEMS.register("stamp_iron_plate",
             () -> new ItemPressStamp(new Item.Properties().durability(64), ItemPressStamp.StampType.PLATE));
+    public static final RegistryObject<Item> IRON_FLAT_STAMP = ITEMS.register("stamp_iron_flat",
+            () -> new ItemPressStamp(new Item.Properties().durability(64), ItemPressStamp.StampType.FLAT));
+    public static final RegistryObject<Item> IRON_WIRE_STAMP = ITEMS.register("stamp_iron_wire",
+            () -> new ItemPressStamp(new Item.Properties().durability(64), ItemPressStamp.StampType.WIRE));
+    public static final RegistryObject<Item> IRON_CIRCUIT_STAMP = ITEMS.register("stamp_iron_circuit",
+            () -> new ItemPressStamp(new Item.Properties().durability(64), ItemPressStamp.StampType.CIRCUIT));
 
     public static final RegistryObject<Item> GEIGER_COUNTER = ITEMS.register("geiger_counter",
             () -> new GeigerCounterItem(new Item.Properties().stacksTo(1)));
@@ -87,6 +94,8 @@ public final class ModItems {
     public static final RegistryObject<Item> CONTAINMENT_BOX = simpleStackOneItem("containment_box");
     public static final RegistryObject<Item> PLASTIC_BAG = simpleStackOneItem("plastic_bag");
     public static final RegistryObject<Item> TOOLBOX = registerLegacy("toolbox", () -> new ToolboxItem(new Item.Properties()));
+    public static final RegistryObject<Item> BATTERY_POTATO = registerLegacy("battery_potato",
+            () -> new HbmBatteryItem(new Item.Properties(), 1_000L, 0L, 100L));
 
     public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = simpleParts(
             "ingot_pu_mix",
@@ -377,7 +386,10 @@ public final class ModItems {
             TUNGSTEN_COIL,
             GOLD_COIL,
             MOTOR,
-            IRON_PLATE_STAMP
+            IRON_PLATE_STAMP,
+            IRON_FLAT_STAMP,
+            IRON_WIRE_STAMP,
+            IRON_CIRCUIT_STAMP
     ), EXTRA_PARTS_TAB_ITEMS.stream()).toList();
 
     public static final List<RegistryObject<Item>> CONSUMABLE_TAB_ITEMS = List.of(
@@ -389,7 +401,8 @@ public final class ModItems {
             RADX,
             CONTAINMENT_BOX,
             PLASTIC_BAG,
-            TOOLBOX
+            TOOLBOX,
+            BATTERY_POTATO
     );
 
     public static void register(IEventBus modBus) {

@@ -87,3 +87,75 @@
 - 通过 Forge fluid capability fill/drain 时，HBM tank fill 与 type 同步变化。
 - Forge simulate fill/drain 不改变 HBM tank。
 - 未映射的 HBM 流体不会被错误导出为其他 Forge 流体。
+
+## 2026-05-21 Modern Library Pass 1
+
+This pass starts the clean-port code layer for the shared fluid library. Scope is intentionally limited to reusable data structures and the Forge capability bridge:
+
+- Add modern HBM `FluidType`, `HbmFluidStack`, and `HbmFluidTank` while preserving the legacy `type/fill/maxFill/pressure` and `conform/reset` contracts.
+- Add base fluid traits and simple tag traits for `GASEOUS`, `LIQUID`, `VISCOUS`, `PLASMA`, `ANTIMATTER`, `LEAD_CONTAINER`, `NO_ID`, `NO_CONTAINER`, and `UNSIPHONABLE`.
+- Add `HbmFluids` as the internal HBM fluid identity registry, with only a small starter set for water/lava/steam/coolant/oil/gas/sulfuric acid/hydrogen/deuterium/tritium.
+- Add an HBM `FluidType` <-> Forge `Fluid` mapping layer and `ForgeFluidHandlerAdapter` so later block entities expose Forge `IFluidHandler` without losing pressure and trait data.
+- Add the modern `IFillableItem` interface matching the old `acceptsFluid`, `tryFill`, `providesFluid`, `tryEmpty`, `getFirstFluidType`, and `getFill` surface.
+
+Deferred on purpose:
+
+- Full `FluidNetMK2` provider/receiver scheduling, pressure-layer distribution, and `ConnectionPriority` weighting.
+- `FluidLoadingHandler`, canister/gastank/meta-container compatibility, and fluid container GUI behavior.
+- Direct adoption of the reference port `BasicFluidTank extends Forge FluidTank` design, because that path drops HBM pressure/conform semantics.
+- World fluid blocks and bucket registration. The bridge only maps vanilla water/lava now and leaves HBM Forge fluid registration for a later pass.
+
+## 2026-05-21 Modern Library Pass 2
+
+This pass wires the fluid core into the first real block entity path without migrating a full machine yet:
+
+- Add `HbmFluidSideMode` and extend `ForgeFluidHandlerAdapter` so a capability view can be input-only, output-only, or both.
+- Add shared `HbmFluidBlockEntity`, which owns HBM tanks, saves/loads them under `hbm_fluids`, exposes `ForgeCapabilities.FLUID_HANDLER`, and invalidates all fluid capability optionals.
+- Convert `machine_boiler_off` from a plain horizontal block to a minimal `BoilerBlock`/`BoilerBlockEntity` fluid-capability scaffold.
+- Boiler scaffold tanks:
+  - feed tank: `WATER`, 16,000 mB, input-facing capability.
+  - steam tank: `STEAM`, 16,000 mB, output-facing capability.
+- Side rule for the temporary scaffold: bottom is output, all other explicit sides are input. `null` capability access remains an all-tank internal view.
+
+Still deferred:
+
+- No heat, fuel, boiling recipe, pressure explosion, sound loop, GUI, render animation, or old `TileEntityHeatBoiler` behavior has been migrated.
+- `machine_boiler_off` is only a safe test consumer for the fluid library; full boiler migration still needs its own machine trace and behavior pass.
+
+## 2026-05-21 Modern Library Pass 3
+
+This pass makes the starter HBM-only fluids visible to Forge `FluidStack` and external fluid capabilities without changing the internal tank semantics:
+
+- Add `HbmForgeFluidType`, a thin Forge `FluidType` wrapper around the internal HBM `FluidType`.
+- Add `ModFluids` with `DeferredRegister` entries for HBM source/flowing fluids: steam, hot steam, superhot steam, coolant, hot coolant, oil, gas, sulfuric acid, hydrogen, deuterium, and tritium.
+- Keep vanilla water/lava mapped to vanilla Forge fluids; do not register duplicate `hbm:water` or `hbm:lava`.
+- During `HbmFluids.bootstrap()`, register all new Forge source fluids back into `HbmFluidForgeMappings`, so `ForgeFluidHandlerAdapter` can export non-vanilla HBM tank contents.
+- Client render extensions currently reuse vanilla water still/flow textures with each HBM fluid's GUI tint. This is only a bridge visualization, not final legacy asset migration.
+
+Still deferred:
+
+- No bucket items, world fluid blocks, fluid block loot, language entries, or creative tab exposure were added in this pass.
+- No full old fluid network scheduling, container loader, pressure distribution, or machine-specific fluid recipes were migrated.
+- Full fluid textures should be revisited from 1.7.10 resources before adding visible world fluid blocks.
+
+## 2026-05-21 Modern Library Pass 4
+
+This pass fills two shared-library gaps needed before more machines can safely use fluid slots and automation:
+
+- Add small tank inspection helpers: `isEmpty`, `getSpace`, and `getFluidStack`.
+- Extend `ForgeFluidHandlerAdapter` with an optional change callback. Real fill/drain through Forge capability now marks the owning block entity dirty instead of silently mutating HBM tanks.
+- Rework `HbmFluidBlockEntity` to create fluid capability adapters per side. Side-specific tank lists from `getInputTanks(side)` / `getOutputTanks(side)` now matter, and `null` access still remains the internal all-tank view.
+- Add `getInputPressure(side)` as the modern hook for the legacy pressure-layer contract when later machines need non-zero pressure.
+- Add `HbmFluidItemTransfer`, a shared item/tank transfer helper. It first honors legacy `IFillableItem` (`acceptsFluid`, `tryFill`, `providesFluid`, `tryEmpty`, `getFirstFluidType`, `getFill`) and then falls back to Forge `IFluidHandlerItem` when a normal modded fluid container is used.
+
+Legacy correction after re-checking the source package at `E:\游戏\我的世界\源码包\Hbm-s-Nuclear-Tech-GIT-master`:
+
+- Old `api/hbm/fluidmk2/IFillableItem#tryFill` is documented and implemented as "return the remainder that could not be added". Modern `HbmFluidItemTransfer` therefore subtracts the returned remainder from the requested amount before draining the source tank.
+- Old `IFillableItem#tryEmpty` returns the amount actually provided to the machine tank, and the modern helper keeps that interpretation.
+- Old `com/hbm/inventory/fluid/tank/FluidTank#loadTank` rejects normal item loading when `pressure != 0`, except for the legacy infinite barrel item. Modern item loading currently preserves the conservative default by using the target tank's own pressure and only accepting tanks that can accept that pressure.
+
+Still deferred:
+
+- No concrete canister/gas tank item has been ported yet, so `HbmFluidItemTransfer` is only shared plumbing for future machine slots and container items.
+- Full `FluidLoadingHandler` slot rules, container replacement behavior, and machine GUI integration still need a dedicated pass once the relevant old source files are available again.
+- Full fluid network pressure distribution and `ConnectionPriority` scheduling remain deferred.

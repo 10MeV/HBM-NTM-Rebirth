@@ -58,6 +58,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.coil_gold", "Gold Coil");
         add("item.hbm.motor", "Motor");
         add("item.hbm.stamp_iron_plate", "Plate Stamp (Iron)");
+        add("item.hbm.stamp_iron_flat", "Flat Stamp (Iron)");
+        add("item.hbm.stamp_iron_wire", "Wire Stamp (Iron)");
+        add("item.hbm.stamp_iron_circuit", "Circuit Stamp (Iron)");
         add("item.hbm.geiger_counter", "Geiger Counter");
         add("item.hbm.digamma_diagnostic", "Digamma Diagnostic");
         add("item.hbm.radaway", "RadAway");
@@ -70,6 +73,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.toolbox", "Toolbox");
         add("item.hbm.toolbox.desc.swap", "Click with the toolbox to swap hotbars in/out of the toolbox.");
         add("item.hbm.toolbox.desc.open", "Shift-click with the toolbox to open the toolbox.");
+        add("item.hbm.battery_potato", "Potato Battery");
+        add("desc.item.battery.charge", "Charge: %s / %sHE");
+        add("desc.item.battery.chargePerc", "Charge: %s%%");
+        add("desc.item.battery.chargeRate", "Charge rate: %sHE/tick");
+        add("desc.item.battery.dischargeRate", "Discharge rate: %sHE/tick");
         add("desc.item.wasteCooling", "Cooling down");
         add("effect.hbm.radiation", "Radiation");
         add("effect.hbm.radaway", "RadAway");
@@ -105,6 +113,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_boiler_off", "Old Boiler");
         add("block.hbm.machine_shredder", "Shredder");
         add("block.hbm.decon", "Decontaminator");
+        add("block.hbm.red_cable", "Red Copper Cable");
+        add("block.hbm.machine_battery", "Energy Storage Block (LEGACY)");
         add("block.hbm.waste_earth", "Waste Earth");
         add("block.hbm.waste_mycelium", "Waste Mycelium");
         add("block.hbm.waste_leaves", "Waste Leaves");

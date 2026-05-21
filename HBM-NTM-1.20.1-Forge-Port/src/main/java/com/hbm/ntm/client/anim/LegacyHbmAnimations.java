@@ -6,7 +6,51 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 public final class LegacyHbmAnimations {
-    public static final Animation[][] HOTBAR = new Animation[9][8];
+    public static final int HOTBAR_SLOTS = 9;
+    public static final int PARALLEL_RAILS = 8;
+    public static final Animation[][] HOTBAR = new Animation[HOTBAR_SLOTS][PARALLEL_RAILS];
+
+    public static void tick() {
+        long now = System.currentTimeMillis();
+        for (int slot = 0; slot < HOTBAR.length; slot++) {
+            for (int rail = 0; rail < HOTBAR[slot].length; rail++) {
+                Animation animation = HOTBAR[slot][rail];
+                if (animation == null || animation.holdLastFrame()) {
+                    continue;
+                }
+                if (now - animation.startMillis() > animation.animation().getDuration()) {
+                    HOTBAR[slot][rail] = null;
+                }
+            }
+        }
+    }
+
+    public static void startForSelectedSlot(ItemStack stack, int rail, LegacyBusAnimation animation) {
+        startForSelectedSlot(stack, rail, animation, false);
+    }
+
+    public static void startForSelectedSlot(ItemStack stack, int rail, LegacyBusAnimation animation, boolean holdLastFrame) {
+        Minecraft minecraft = Minecraft.getInstance();
+        Player player = minecraft.player;
+        if (player == null) {
+            return;
+        }
+        start(player.getInventory().selected, rail, stack.getItem().getDescriptionId(), animation, holdLastFrame);
+    }
+
+    public static void start(int slot, int rail, String key, LegacyBusAnimation animation, boolean holdLastFrame) {
+        if (slot < 0 || slot >= HOTBAR.length || rail < 0 || rail >= HOTBAR[slot].length || animation == null) {
+            return;
+        }
+        HOTBAR[slot][rail] = new Animation(key, System.currentTimeMillis(), animation, holdLastFrame);
+    }
+
+    public static void clear(int slot, int rail) {
+        if (slot < 0 || slot >= HOTBAR.length || rail < 0 || rail >= HOTBAR[slot].length) {
+            return;
+        }
+        HOTBAR[slot][rail] = null;
+    }
 
     public static Animation getRelevantAnim() {
         return getRelevantAnim(0);

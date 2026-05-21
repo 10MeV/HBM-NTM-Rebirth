@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
@@ -69,6 +70,8 @@ public final class HbmEnergyNodespace {
             return;
         }
 
+        pruneUnloadedChunks(level, nodeWorld);
+
         for (HbmEnergyNode node : new ArrayList<>(nodeWorld.nodes.values())) {
             if (!node.hasValidNet() || node.isRecentlyChanged()) {
                 checkNodeConnection(nodeWorld, node);
@@ -87,6 +90,58 @@ public final class HbmEnergyNodespace {
     public static int getNetworkCount(Level level) {
         EnergyNodeWorld nodeWorld = WORLDS.get(level.dimension());
         return nodeWorld == null ? 0 : nodeWorld.activePowerNets.size();
+    }
+
+    public static int getNetworkLinkCount(Level level, BlockPos pos) {
+        HbmPowerNet powerNet = getPowerNet(level, pos);
+        return powerNet == null ? 0 : powerNet.linkCount();
+    }
+
+    public static int getNetworkProviderCount(Level level, BlockPos pos) {
+        HbmPowerNet powerNet = getPowerNet(level, pos);
+        return powerNet == null ? 0 : powerNet.getProviderCount();
+    }
+
+    public static int getNetworkReceiverCount(Level level, BlockPos pos) {
+        HbmPowerNet powerNet = getPowerNet(level, pos);
+        return powerNet == null ? 0 : powerNet.getReceiverCount();
+    }
+
+    public static long getNetworkEnergyTracker(Level level, BlockPos pos) {
+        HbmPowerNet powerNet = getPowerNet(level, pos);
+        return powerNet == null ? 0L : powerNet.getEnergyTracker();
+    }
+
+    public static boolean hasValidNetwork(Level level, BlockPos pos) {
+        HbmPowerNet powerNet = getPowerNet(level, pos);
+        return powerNet != null && powerNet.isValid();
+    }
+
+    public static void unloadChunk(Level level, ChunkPos chunkPos) {
+        EnergyNodeWorld nodeWorld = WORLDS.get(level.dimension());
+        if (nodeWorld == null) {
+            return;
+        }
+        ArrayList<BlockPos> toRemove = new ArrayList<>();
+        for (BlockPos pos : nodeWorld.nodes.keySet()) {
+            if (new ChunkPos(pos).equals(chunkPos)) {
+                toRemove.add(pos);
+            }
+        }
+        for (BlockPos pos : toRemove) {
+            HbmEnergyNode node = nodeWorld.nodes.remove(pos);
+            if (node != null) {
+                HbmPowerNet net = node.getPowerNet();
+                popNode(nodeWorld, node);
+                rebuildNetworkAfterRemoval(nodeWorld, net);
+                markNeighborsChanged(nodeWorld, pos);
+            }
+        }
+    }
+
+    private static HbmPowerNet getPowerNet(Level level, BlockPos pos) {
+        HbmEnergyNode node = getNode(level, pos);
+        return node == null ? null : node.getPowerNet();
     }
 
     private static void updateNetworks(EnergyNodeWorld nodeWorld) {
@@ -193,6 +248,24 @@ public final class HbmEnergyNodespace {
     private static void removeNetwork(HbmPowerNet net) {
         for (EnergyNodeWorld nodeWorld : WORLDS.values()) {
             nodeWorld.activePowerNets.remove(net);
+        }
+    }
+
+    private static void pruneUnloadedChunks(ServerLevel level, EnergyNodeWorld nodeWorld) {
+        ArrayList<BlockPos> toRemove = new ArrayList<>();
+        for (BlockPos pos : nodeWorld.nodes.keySet()) {
+            if (!level.hasChunkAt(pos)) {
+                toRemove.add(pos);
+            }
+        }
+        for (BlockPos pos : toRemove) {
+            HbmEnergyNode node = nodeWorld.nodes.remove(pos);
+            if (node != null) {
+                HbmPowerNet net = node.getPowerNet();
+                popNode(nodeWorld, node);
+                rebuildNetworkAfterRemoval(nodeWorld, net);
+                markNeighborsChanged(nodeWorld, pos);
+            }
         }
     }
 

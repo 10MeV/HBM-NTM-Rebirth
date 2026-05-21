@@ -1,6 +1,7 @@
 package com.hbm.ntm.event;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.command.ModCommands;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.network.ModMessages;
@@ -45,9 +46,11 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkDataEvent;
+import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -62,6 +65,11 @@ import java.util.Set;
 public final class CommonForgeEvents {
     private static final String HAZARD_ENTITY_TICK_KEY = "hbmHazardTick";
     private static final Map<ResourceKey<Level>, Set<Integer>> TRACKED_ITEM_ENTITIES = new HashMap<>();
+
+    @SubscribeEvent
+    public static void onRegisterCommands(RegisterCommandsEvent event) {
+        ModCommands.register(event.getDispatcher());
+    }
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -226,6 +234,10 @@ public final class CommonForgeEvents {
         }
     }
 
+    public static void syncRadiationNow(ServerPlayer player) {
+        syncRadiation(player);
+    }
+
     private static void syncRadiation(ServerPlayer player) {
         ModMessages.sendToPlayer(new PlayerRadiationSyncPacket(
                 RadiationData.getRadiation(player),
@@ -263,6 +275,13 @@ public final class CommonForgeEvents {
         if (event.getLevel() instanceof ServerLevel level) {
             ChunkPos pos = event.getChunk().getPos();
             event.getData().putFloat(ChunkRadiationManager.LEGACY_CHUNK_NBT_KEY, ChunkRadiationManager.getChunkRadiation(level, pos));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onChunkUnload(ChunkEvent.Unload event) {
+        if (!event.getLevel().isClientSide() && event.getLevel() instanceof Level level) {
+            HbmEnergyNodespace.unloadChunk(level, event.getChunk().getPos());
         }
     }
 

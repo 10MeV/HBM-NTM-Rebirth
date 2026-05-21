@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.obj;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -13,6 +14,7 @@ public final class ObjPartModel implements LegacyObjModel {
     private final Map<String, PartEntry> parts = new LinkedHashMap<>();
     private final Map<String, String> aliases = new LinkedHashMap<>();
     private final Map<String, String> aliasNames = new LinkedHashMap<>();
+    private final List<String> legacyOrder = new ArrayList<>();
 
     public ObjPartModel part(String legacyName, ObjModelPart part, String... legacyAliases) {
         String key = normalize(legacyName);
@@ -27,10 +29,22 @@ public final class ObjPartModel implements LegacyObjModel {
         return this;
     }
 
+    public ObjPartModel legacyOrder(String... legacyNames) {
+        legacyOrder.clear();
+        legacyOrder.addAll(Arrays.asList(legacyNames));
+        return this;
+    }
+
+    public ObjPartModel legacyOrder(List<String> legacyNames) {
+        legacyOrder.clear();
+        legacyOrder.addAll(legacyNames);
+        return this;
+    }
+
     @Override
     public void renderAll(ObjRenderContext context) {
-        for (PartEntry part : parts.values()) {
-            part.modelPart().render(context);
+        for (OrderedPart part : orderedParts()) {
+            part.entry().modelPart().render(context);
         }
     }
 
@@ -46,10 +60,9 @@ public final class ObjPartModel implements LegacyObjModel {
     public void renderOnly(ObjRenderContext context, String... names) {
         Set<String> included = new LinkedHashSet<>(Arrays.stream(names).map(this::resolve).toList());
         Set<String> rendered = new LinkedHashSet<>();
-        for (Map.Entry<String, PartEntry> entry : parts.entrySet()) {
-            String key = entry.getKey();
-            if (included.contains(key) && rendered.add(key)) {
-                entry.getValue().modelPart().render(context);
+        for (OrderedPart part : orderedParts()) {
+            if (included.contains(part.key()) && rendered.add(part.key())) {
+                part.entry().modelPart().render(context);
             }
         }
     }
@@ -70,9 +83,9 @@ public final class ObjPartModel implements LegacyObjModel {
     @Override
     public void renderAllExcept(ObjRenderContext context, String... excludedNames) {
         Set<String> excluded = new LinkedHashSet<>(Arrays.stream(excludedNames).map(this::resolve).toList());
-        for (Map.Entry<String, PartEntry> entry : parts.entrySet()) {
-            if (!excluded.contains(entry.getKey())) {
-                entry.getValue().modelPart().render(context);
+        for (OrderedPart part : orderedParts()) {
+            if (!excluded.contains(part.key())) {
+                part.entry().modelPart().render(context);
             }
         }
     }
@@ -86,6 +99,38 @@ public final class ObjPartModel implements LegacyObjModel {
         return Collections.unmodifiableList(aliasNames.values().stream().toList());
     }
 
+    public List<String> getLegacyOrder() {
+        return Collections.unmodifiableList(legacyOrder);
+    }
+
+    public boolean hasPart(String name) {
+        return parts.containsKey(resolve(name));
+    }
+
+    private List<OrderedPart> orderedParts() {
+        if (legacyOrder.isEmpty()) {
+            return parts.entrySet().stream()
+                    .map(entry -> new OrderedPart(entry.getKey(), entry.getValue()))
+                    .toList();
+        }
+
+        List<OrderedPart> ordered = new ArrayList<>();
+        Set<String> added = new LinkedHashSet<>();
+        for (String legacyName : legacyOrder) {
+            String key = resolve(legacyName);
+            PartEntry part = parts.get(key);
+            if (part != null && added.add(key)) {
+                ordered.add(new OrderedPart(key, part));
+            }
+        }
+        for (Map.Entry<String, PartEntry> entry : parts.entrySet()) {
+            if (added.add(entry.getKey())) {
+                ordered.add(new OrderedPart(entry.getKey(), entry.getValue()));
+            }
+        }
+        return ordered;
+    }
+
     private String resolve(String name) {
         String key = normalize(name);
         return aliases.getOrDefault(key, key);
@@ -96,5 +141,8 @@ public final class ObjPartModel implements LegacyObjModel {
     }
 
     private record PartEntry(String legacyName, ObjModelPart modelPart) {
+    }
+
+    private record OrderedPart(String key, PartEntry entry) {
     }
 }

@@ -1,6 +1,7 @@
 package com.hbm.ntm.client;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.anim.LegacyHbmAnimations;
 import com.hbm.ntm.radiation.HazardTooltipUtil;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.client.Minecraft;
@@ -42,6 +43,8 @@ public final class ClientForgeEvents {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        LegacyHbmAnimations.tick();
+
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
         if (player == null || !RadiationHud.hasGeigerCounter(player)) {

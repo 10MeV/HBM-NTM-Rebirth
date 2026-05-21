@@ -333,6 +333,96 @@
   - `HbmAnimationPacket`、hotbar 动画清理、`holdLastFrame` 生命周期仍待事件/网络层迁移。
 - 验证：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+### 第 18 轮
+
+- 继续补齐旧 JSON bus 动画生命周期入口。
+- 1.7.10 事实源：
+  - `com.hbm.main.ModEventHandlerClient` 客户端 tick 中遍历 `HbmAnimations.hotbar[9][8]`。
+  - 对 `null` 动画跳过；对 `holdLastFrame` 动画保留；其余动画在 `Clock.get_ms() - startMillis > animation.getDuration()` 后清空。
+  - `com.hbm.packet.toclient.HbmAnimationPacket` 后续会向当前 hotbar slot / rail 写入 `new HbmAnimations.Animation(...)`。
+- 现代端已完成：
+  - `LegacyHbmAnimations` 新增 `HOTBAR_SLOTS`、`PARALLEL_RAILS` 常量，保留旧 `9 x 8` 并行动画槽。
+  - 新增 `tick()`，按旧 tick 清理规则清空过期、非 `holdLastFrame` 动画。
+  - 新增 `startForSelectedSlot(...)`、`start(...)`、`clear(...)`，给后续现代 `HbmAnimationPacket`/武器 renderer 接入保留统一入口，避免直接散写 `HOTBAR` 数组。
+  - `ClientForgeEvents.onClientTick(...)` 在客户端 tick END 阶段调用 `LegacyHbmAnimations.tick()`。
+- 当前剩余边界：
+  - 仍未迁移现代网络包触发，`HbmAnimationPacket` 语义要等网络库/武器迁移时接入。
+  - 旧 `ClientConfig.GUN_ANIMATION_SPEED` duration 缩放仍未接现代配置库。
+  - 具体武器 renderer 对 bus 名称的调用仍待 `render/item/weapon/sedna` 专题迁移。
+
+### 第 19 轮
+
+- 继续收束旧 `HFRWavefrontObject` / `HFRWavefrontObjectVBO` 的 group 顺序语义。
+- 1.7.10 事实源：
+  - `HFRWavefrontObject.renderOnly(...)`、`renderAllExcept(...)` 与 VBO 版本均以模型内部 group/VBO group 顺序为外层遍历顺序。
+  - 调用参数只决定包含/排除，不改变实际绘制顺序。
+  - `getPartNames()` 返回旧 OBJ 内登记的原始 group 名，后续迁移排查需要能直接对照旧 group 名。
+- 现代端已完成：
+  - `ObjPartModel` 新增 `legacyOrder(String...)`，允许现代 split JSON/OBJ 分件显式记录旧 group 顺序。
+  - `renderAll(...)`、`renderOnly(...)`、`renderAllExcept(...)` 统一走 `orderedParts()`，优先按 `legacyOrder` 渲染已登记分件；未迁入的旧 group 会被安全跳过；未写入 `legacyOrder` 的现代分件会保留在登记顺序末尾。
+  - 新增 `getLegacyOrder()` 与 `hasPart(...)`，方便后续迁移机器时核对旧 group/alias 是否已映射。
+  - `ObjMachineModels.PRESS` 记录旧 press body/head 顺序为 `Body`、`Head`；当前 `Body` 由 blockstate/static model 承接，BER 只登记并渲染动态 `Head`。
+- 当前剩余边界：
+  - 仍未引入完整 OBJ group 几何解析器；本轮只让 split-model 路线能稳定表达旧 group 顺序。
+  - 如果后续遇到必须从单个旧 OBJ 动态读取 group 的机器，仍需在 `ObjPartModel` 下方补自定义 OBJ group parser/renderer。
+
+### 第 20 轮
+
+- 为后续机器动态分件迁移补旧 OBJ group 诊断入口。
+- 1.7.10 事实源：
+  - `HFRWavefrontObject.loadObjModel(...)` 对每行先 `replaceAll("\\s+", " ").trim()`。
+  - `g` / `o` 行通过旧正则 `[go] [\\w\\d.]+` 解析 group 名。
+  - 若先遇到 `f` 面且还没有当前 group，会创建名为 `Default` 的 group。
+  - `groupObjects` 顺序就是 OBJ 文件内 group 读取顺序，也是 `renderOnly(...)` / `renderAllExcept(...)` 的实际外层渲染顺序。
+- 现代端已完成：
+  - 新增 `LegacyObjGroupReader`，可从 `ResourceLocation` 或 `Reader` 读取旧 OBJ group 顺序。
+  - 读取逻辑保留旧版空白归一、`g/o` 识别和无 group 面的 `Default` 行为；只做 group 诊断，不解析几何、不参与渲染。
+  - `ObjPartModel` 新增 `legacyOrder(List<String>)`，后续可直接接 `LegacyObjGroupReader.readGroupOrder(...)` 的结果。
+- 当前剩余边界：
+  - 该工具依赖客户端资源管理器，适合 runtime/调试/后续客户端模型库初始化时使用；DataGen 或命令行资源扫描若需要，应另做文件系统版本。
+  - 本轮仍不实现完整 `HFRWavefrontObject` 几何解析、UV 修复或 VBO reload。
+
+### 第 21 轮
+
+- 补齐旧 OBJ group 读取器的文件系统入口，供 DataGen、命令行扫描和 1.7.10 源码资源核对使用。
+- 现代端已完成：
+  - `LegacyObjGroupReader.readGroupOrder(Path)` 使用 `Files.newBufferedReader(...)` 读取任意 OBJ 文件路径。
+  - 继续复用同一个 `Reader` 解析逻辑，避免客户端资源入口和文件系统入口出现不一致。
+- 本轮事实核对：
+  - 旧 `models/press_body.obj` group：`Cube_Cube.000`。
+  - 旧 `models/press_head.obj` group：`Cube.001_Cube.002`。
+  - 旧 `models/epress_body.obj` group：`Cube_Cube.001`。
+  - 旧 `models/epress_head.obj` group：`Cube.001_Cube.002`。
+- 迁移结论：
+  - `ObjMachineModels.PRESS` 已改为使用旧 `press_head.obj` 的原始 group 名 `Cube.001_Cube.002` 作为 canonical part name，并保留现代语义名 `Head` 作为 alias。
+  - `legacyOrder(...)` 已改为旧 group 顺序 `Cube_Cube.000`、`Cube.001_Cube.002`；其中 body 当前仍由 blockstate/static model 承接，未登记为 BER 动态 part，会被安全跳过。
+  - 后续新增机器动态分件时，应优先把旧 OBJ 原始 group 名作为 canonical name，把现代语义名作为 alias，便于 `getPartNames()` 直接和 1.7.10 group 清单对照。
+- 当前剩余边界：
+  - 该 reader 仍只读取 group 名，不检查 UV、面类型、材质或可 bake 性。
+  - 旧 Forge OBJ loader 与 HBM 自定义 OBJ 解析器对无 UV 面容忍度不同，UV/材质诊断仍按后续独立工具推进。
+
+### 第 22 轮
+
+- 开始补 OBJ 诊断层，用于判断旧 OBJ 更适合走 Forge baked split model、几何修复，还是后续自定义 `HFRWavefrontObject` 风格解析器。
+- 1.7.10 事实源：
+  - `HFRWavefrontObject` 支持 `f v/vt/vn`、`f v/vt`、`f v//vn`、`f v` 四类面。
+  - 非 `mixedMode` 下单个 group 不能混用 triangle 与 quad；`mixedMode()` 只允许 ISBRH 等手动访问顶点，不支持直接 `renderAll()`。
+  - `parseTextureCoordinate(...)` 会把 V 轴翻转为 `1 - v`，现代 baked OBJ 路线不等同于直接搬旧 parser。
+- 现代端已完成：
+  - 新增 `LegacyObjDiagnostics`，可从 `Path` 或 `Reader` 统计 group 顺序、`mtllib`、`usemtl`、顶点/UV/法线数量、face 数量、三角/四边/其他面数量、无 UV 面、无法线面。
+  - `Summary` 提供 `hasMixedTriangleQuadFaces()`、`hasFacesWithoutTextureCoordinates()`、`hasFacesWithoutNormals()`，供后续批量扫描和迁移决策使用。
+  - `LegacyObjGroupReader` 改为复用 `LegacyObjDiagnostics.parseLegacyGroupName(...)`，避免 group 识别规则分叉。
+- 本轮抽样核对：
+  - `trinkets/lantern.obj`：groups `Light,Lantern`，164 个三角面，其中 8 个 face 无 UV；这解释了静态 bake 需要跳过/拆出 `Light` 分件。
+  - `blocks/demon_lamp.obj`：group `Sphere`，552 个三角面，无缺 UV。
+  - `press_head.obj`：group `Cube.001_Cube.002`，28 个三角面，无缺 UV。
+  - `epress_head.obj`：group `Cube.001_Cube.002`，44 个三角面，无缺 UV。
+  - `machines/ammo_press.obj`：groups `Press,Shells,Bullets,Frame`，890 个三角面，无缺 UV。
+  - `rbmk/rbmk_rods.obj`：groups `Lid,Column`，96 个三角面，无缺 UV。
+- 当前剩余边界：
+  - `LegacyObjDiagnostics` 只统计文本结构，不验证 index 是否越界，也不读取 `.mtl` 文件内容。
+  - 后续可基于该类补批量扫描命令或 DataGen 检查，优先找出所有 `facesWithoutTextureCoordinates > 0` 的旧 OBJ。
+
 ## 旧版 renderer 分类
 
 - 方块实体 renderer：`src/main/java/com/hbm/render/tileentity`

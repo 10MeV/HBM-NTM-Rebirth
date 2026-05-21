@@ -10,6 +10,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public final class RadiationData {
@@ -208,6 +210,40 @@ public final class RadiationData {
         setContamination(entity, effects);
     }
 
+    public static List<ContaminationEffect> getContaminationEffects(LivingEntity entity) {
+        ListTag contamination = getContamination(entity);
+        List<ContaminationEffect> effects = new ArrayList<>(contamination.size());
+        for (int i = 0; i < contamination.size(); i++) {
+            CompoundTag effect = contamination.getCompound(i);
+            effects.add(new ContaminationEffect(
+                    effect.getFloat(TAG_CONTAMINATION_MAX_RAD),
+                    Math.max(1, effect.getInt(TAG_CONTAMINATION_MAX_TIME)),
+                    Math.max(0, effect.getInt(TAG_CONTAMINATION_TIME)),
+                    effect.getBoolean(TAG_CONTAMINATION_IGNORE_ARMOR)));
+        }
+        return effects;
+    }
+
+    public static int getContaminationCount(LivingEntity entity) {
+        return getContamination(entity).size();
+    }
+
+    public static boolean removeContamination(LivingEntity entity, int index) {
+        ListTag contamination = getContamination(entity).copy();
+        if (index < 0 || index >= contamination.size()) {
+            return false;
+        }
+        contamination.remove(index);
+        setContamination(entity, contamination);
+        return true;
+    }
+
+    public static int clearContamination(LivingEntity entity) {
+        int count = getContaminationCount(entity);
+        setContamination(entity, new ListTag());
+        return count;
+    }
+
     public static void copyForRespawn(LivingEntity original, LivingEntity replacement) {
         CompoundTag originalData = original.getPersistentData();
         if (originalData.contains(TAG_ROOT, Tag.TAG_COMPOUND)) {
@@ -252,6 +288,12 @@ public final class RadiationData {
 
     private static float clampPlayerRadiation(float value) {
         return Mth.clamp(value, 0.0F, RadiationConstants.MAX_PLAYER_RADIATION);
+    }
+
+    public record ContaminationEffect(float maxRad, int maxTime, int time, boolean ignoreArmor) {
+        public float currentRadiation() {
+            return maxRad * ((float) time / (float) Math.max(1, maxTime));
+        }
     }
 
     private RadiationData() {

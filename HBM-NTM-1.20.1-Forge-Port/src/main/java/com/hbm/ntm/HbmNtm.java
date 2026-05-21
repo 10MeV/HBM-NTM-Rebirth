@@ -2,10 +2,12 @@ package com.hbm.ntm;
 
 import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.datagen.HbmDataGenerators;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModCreativeTabs;
 import com.hbm.ntm.registry.ModEffects;
+import com.hbm.ntm.registry.ModFluids;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.registry.ModSounds;
@@ -30,6 +32,7 @@ public class HbmNtm {
     public HbmNtm() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
 
+        ModFluids.register(modBus);
         ModItems.register(modBus);
         ModBlocks.register(modBus);
         ModBlockEntities.register(modBus);
@@ -49,6 +52,7 @@ public class HbmNtm {
         event.enqueueWork(() -> {
             HazmatRegistry.registerDefaults();
             ItemRadiationRegistry.registerDefaults();
+            HbmFluids.bootstrap();
             ModMessages.register();
         });
         if (HbmCommonConfig.LOG_STARTUP.get()) {

@@ -58,6 +58,9 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.coil_gold", "\u91d1\u7ebf\u5708");
         add("item.hbm.motor", "\u9a6c\u8fbe");
         add("item.hbm.stamp_iron_plate", "\u677f\u6750\u6a21\u5177\uff08\u94c1\uff09");
+        add("item.hbm.stamp_iron_flat", "\u5e73\u677f\u6a21\u5177\uff08\u94c1\uff09");
+        add("item.hbm.stamp_iron_wire", "\u7ebf\u6750\u6a21\u5177\uff08\u94c1\uff09");
+        add("item.hbm.stamp_iron_circuit", "\u7535\u8def\u6a21\u5177\uff08\u94c1\uff09");
         add("item.hbm.geiger_counter", "\u76d6\u9769\u8ba1\u6570\u5668");
         add("item.hbm.digamma_diagnostic", "\u73a9\u5bb6F-\u8fea\u4f3d\u9a6c\u8f90\u5c04\u81ea\u68c0\u5668");
         add("item.hbm.radaway", "\u6d88\u8f90\u5b81");
@@ -70,6 +73,11 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.toolbox", "\u5de5\u5177\u7bb1");
         add("item.hbm.toolbox.desc.swap", "\u53f3\u952e\u5de5\u5177\u7bb1\u53ef\u5c06\u70ed\u952e\u680f\u5b58\u5165/\u53d6\u51fa\u5de5\u5177\u7bb1\u3002");
         add("item.hbm.toolbox.desc.open", "\u6f5c\u884c\u53f3\u952e\u6253\u5f00\u5de5\u5177\u7bb1\u3002");
+        add("item.hbm.battery_potato", "\u9a6c\u94c3\u85af\u7535\u6c60");
+        add("desc.item.battery.charge", "\u50a8\u80fd: %s / %sHE");
+        add("desc.item.battery.chargePerc", "\u50a8\u80fd: %s%%");
+        add("desc.item.battery.chargeRate", "\u5145\u7535\u6548\u7387: %sHE/\u523b");
+        add("desc.item.battery.dischargeRate", "\u653e\u7535\u6548\u7387: %sHE/\u523b");
         add("desc.item.wasteCooling", "\u6b63\u5728\u51b7\u5374");
         add("effect.hbm.radiation", "\u8f90\u5c04");
         add("effect.hbm.radaway", "\u6d88\u8f90\u5b81");
@@ -105,6 +113,8 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_boiler_off", "\u9505\u7089");
         add("block.hbm.machine_shredder", "\u7c89\u788e\u673a");
         add("block.hbm.decon", "\u6d88\u6c61\u5668");
+        add("block.hbm.red_cable", "\u7d2b\u94dc\u7535\u7ebf");
+        add("block.hbm.machine_battery", "\u84c4\u7535\u6c60\uff08\u9057\u7559\uff09");
         add("block.hbm.waste_earth", "\u5e9f\u571f");
         add("block.hbm.waste_mycelium", "\u5e9f\u571f\u83cc\u4e1d");
         add("block.hbm.waste_leaves", "\u5e9f\u571f\u6811\u53f6");

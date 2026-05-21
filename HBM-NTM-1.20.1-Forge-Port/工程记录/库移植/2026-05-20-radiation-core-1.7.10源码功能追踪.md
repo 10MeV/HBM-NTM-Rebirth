@@ -491,3 +491,116 @@
 验证：
 
 - 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+## 2026-05-21 Radiation Command Pass 1
+
+Legacy source:
+
+- `com.hbm.commands.CommandRadiation`
+  - command name: `ntmrad`
+  - usage: `/ntmrad <set/clear>`
+  - `clear`: calls `ChunkRadiationManager.proxy.clearSystem(world)` and reports `Cleared radiation data!`
+  - `set <amount>`: parses a float clamped to `0..100000`, then sets chunk radiation at the sender coordinates and reports `Radiation set.`
+
+Completed in the 1.20.1 port:
+
+- Added `com.hbm.ntm.command.ModCommands`.
+- Registered commands through `RegisterCommandsEvent` in `CommonForgeEvents`.
+- Preserved the legacy operator command surface:
+  - `/ntmrad clear`
+  - `/ntmrad set <amount>`
+- Added modern debug aliases for verification:
+  - `/hbm radiation chunk get`
+  - `/hbm radiation chunk set <amount>`
+  - `/hbm radiation chunk add <amount>`
+  - `/hbm radiation chunk clear`
+  - `/hbm radiation player get [targets]`
+  - `/hbm radiation player set <targets> <amount>`
+  - `/hbm radiation player add <targets> <amount>`
+  - `/hbm radiation player clear <targets>`
+  - `/hbm radiation digamma get [targets]`
+  - `/hbm radiation digamma set <targets> <amount>`
+  - `/hbm radiation digamma add <targets> <amount>`
+  - `/hbm radiation digamma clear <targets>`
+- Chunk commands use the command source position, matching the legacy sender-coordinate behavior while also working from non-player command sources that provide a position.
+- Player radiation and digamma commands write through `RadiationData`, so they reuse the same clamp/NBT/digamma health modifier behavior as the library.
+
+Still incomplete:
+
+- Commands do not force an immediate radiation sync packet; affected players receive the normal periodic sync from `CommonForgeEvents`.
+- No dedicated command for asbestos, blacklung, contagion, fire, phosphorus, balefire, blackFire, or contamination-list entries yet.
+- The legacy command did not include player radiation setters; these modern debug branches are verification helpers and should be kept aligned with future data-contract changes.
+
+Verification:
+
+- 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-21 Radiation Command Pass 2
+
+Completed in the 1.20.1 port:
+
+- Added immediate server-to-client radiation sync after debug command mutations for player radiation and digamma.
+- Exposed `CommonForgeEvents.syncRadiationNow(ServerPlayer)` as the public sync bridge while keeping the existing periodic sync implementation private.
+- Added `/hbm radiation status` debug commands for the long-term integer fields stored by `RadiationData`:
+  - `asbestos`
+  - `blacklung`
+  - `bomb_timer`
+  - `contagion`
+  - `oil`
+  - `fire`
+  - `phosphorus`
+  - `balefire`
+  - `black_fire`
+- Supported subcommands:
+  - `/hbm radiation status get <field> [targets]`
+  - `/hbm radiation status set <field> <targets> <amount>`
+  - `/hbm radiation status add <field> <targets> <amount>`
+  - `/hbm radiation status clear <field> <targets>`
+- Status mutations reuse `RadiationData` setters and clamp to non-negative values at the command boundary.
+
+Still incomplete:
+
+- Chunk radiation mutations still do not need a player sync packet unless a later HUD/debug flow expects immediate local chunk readback.
+
+Verification:
+
+- 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-21 Radiation Command Pass 3
+
+Legacy source:
+
+- `com.hbm.extprop.HbmLivingProps`
+  - `getCont(EntityLivingBase)` returns the active `List<ContaminationEffect>`.
+  - `addCont(EntityLivingBase, ContaminationEffect)` appends a new long-term contamination effect.
+  - `ContaminationEffect` fields:
+    - `maxRad`
+    - `maxTime`
+    - `time`
+    - `ignoreArmor`
+  - `getRad()` computes `maxRad * time / maxTime`.
+  - Legacy NBT stores the count in `hfr_cont_count` and entries as `cont_<index>` compounds with `maxRad/maxTime/time/ignoreArmor`.
+
+Completed in the 1.20.1 port:
+
+- Added safe contamination-list helpers to `RadiationData`:
+  - `getContaminationEffects`
+  - `getContaminationCount`
+  - `removeContamination`
+  - `clearContamination`
+  - `ContaminationEffect` record with `currentRadiation()`
+- Added `/hbm radiation contamination` debug commands:
+  - `/hbm radiation contamination list [targets]`
+  - `/hbm radiation contamination add <targets> <maxRad> <maxTime> [time] [ignoreArmor]`
+  - `/hbm radiation contamination remove <targets> <index>`
+  - `/hbm radiation contamination clear <targets>`
+- Commands route through `RadiationData` instead of mutating the entity NBT directly.
+- Added boolean suggestions for `ignoreArmor` (`false`, `true`) while accepting `true/yes/1` as truthy input.
+
+Still incomplete:
+
+- Actual gameplay sources for individual contamination-list entries still need follow-up migration where the source blocks/items/entities are ported. Existing obvious legacy source: `BlockFallout` adds `new ContaminationEffect(1F, 200, false)`.
+- The sync packet still does not serialize the contamination list itself; current command output is server-side debug feedback, while gameplay ticking reads the server NBT.
+
+Verification:
+
+- 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
