@@ -65,6 +65,12 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.radaway_flush", "RadAway Flush");
         add("item.hbm.radx", "Rad-X");
         add("item.hbm.radx.desc", "Increases radiation resistance by 0.2 (37%) for 3 minutes");
+        add("item.hbm.containment_box", "Lead-Lined Box");
+        add("item.hbm.plastic_bag", "Plastic Bag");
+        add("item.hbm.toolbox", "Toolbox");
+        add("item.hbm.toolbox.desc.swap", "Click with the toolbox to swap hotbars in/out of the toolbox.");
+        add("item.hbm.toolbox.desc.open", "Shift-click with the toolbox to open the toolbox.");
+        add("desc.item.wasteCooling", "Cooling down");
         add("effect.hbm.radiation", "Radiation");
         add("effect.hbm.radaway", "RadAway");
         add("effect.hbm.radx", "Rad-X");

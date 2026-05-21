@@ -1,9 +1,9 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.block.TrinketVariant;
+import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
 import com.hbm.ntm.client.renderer.TrinketItemRenderer;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
@@ -33,12 +33,7 @@ public class TrinketBlockItem extends BlockItem {
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        consumer.accept(new IClientItemExtensions() {
-            @Override
-            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                return TrinketItemRenderer.INSTANCE;
-            }
-        });
+        LegacyItemRendererBridge.accept(consumer, () -> TrinketItemRenderer.INSTANCE);
     }
 
     public static int getVariant(ItemStack stack) {

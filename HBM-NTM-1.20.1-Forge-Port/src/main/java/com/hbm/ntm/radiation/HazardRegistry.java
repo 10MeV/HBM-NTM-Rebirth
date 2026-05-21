@@ -1,6 +1,7 @@
 package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.registries.Registries;
@@ -79,7 +80,12 @@ public final class HazardRegistry {
 
     private static void registerTransformers() {
         TRANSFORMERS.add(new NbtRadiationHazardTransformer());
-        TRANSFORMERS.add(new ContainerRadiationHazardTransformer());
+        if (!(RadiationConfig.ENABLE_LESS_BULLSHIT_MODE.get() && RadiationConfig.LBSM_SAFE_CRATES.get())) {
+            TRANSFORMERS.add(new ContainerRadiationHazardTransformer());
+        }
+        if (!(RadiationConfig.ENABLE_LESS_BULLSHIT_MODE.get() && RadiationConfig.LBSM_SAFE_ME_DRIVES.get())) {
+            TRANSFORMERS.add(new MeRadiationHazardTransformer());
+        }
     }
 
     private static void registerVanillaHazards() {
@@ -541,11 +547,25 @@ public final class HazardRegistry {
     }
 
     private static void registerLegacyDepletedFuelWaste(String itemName, float base) {
-        registerByName(itemName, HazardType.RADIATION, base * 0.075F);
+        registerLegacyWasteVariant(itemName, base * 0.075F, base, true);
     }
 
     private static void registerLegacyRadSourceWaste(String itemName, float base) {
-        registerByName(itemName, HazardType.RADIATION, base);
+        registerLegacyWasteVariant(itemName, base, base, true);
+    }
+
+    private static void registerLegacyWasteVariant(String itemName, float cold, float hot, boolean hotHazard) {
+        RegistryObject<Item> item = ModItems.legacyItem(itemName);
+        if (item == null) {
+            return;
+        }
+        registerStack(DepletedFuelItem.stack(item.get(), DepletedFuelItem.COLD_DAMAGE),
+                new HazardData().addEntry(HazardType.RADIATION, cold));
+        HazardData hotData = new HazardData().addEntry(HazardType.RADIATION, hot);
+        if (hotHazard) {
+            hotData.addEntry(HazardType.HOT, 5.0F);
+        }
+        registerStack(DepletedFuelItem.stack(item.get(), DepletedFuelItem.HOT_DAMAGE), hotData);
     }
 
     public static void registerRbmkFuel(Item item, float base, float depleted, boolean hot, boolean linear, float blinding, float digamma) {

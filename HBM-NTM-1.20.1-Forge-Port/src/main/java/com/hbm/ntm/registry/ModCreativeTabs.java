@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.TrinketBlockItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -17,7 +18,13 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm.parts"))
                     .icon(() -> ModItems.URANIUM_INGOT.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModItems.PARTS_TAB_ITEMS.forEach(item -> output.accept(item.get())))
+                    .displayItems((parameters, output) -> ModItems.PARTS_TAB_ITEMS.forEach(item -> {
+                        if (item.get() instanceof DepletedFuelItem depletedFuel) {
+                            DepletedFuelItem.addCreativeStacks(output, depletedFuel);
+                        } else {
+                            output.accept(item.get());
+                        }
+                    }))
                     .build());
 
     public static final RegistryObject<CreativeModeTab> MACHINES = CREATIVE_TABS.register("machines",

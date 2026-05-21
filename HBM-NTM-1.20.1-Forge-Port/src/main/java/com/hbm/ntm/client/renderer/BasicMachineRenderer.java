@@ -4,7 +4,7 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.client.obj.ObjBlockEntityAnimation;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
-import com.hbm.ntm.client.obj.ObjModelLibrary;
+import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -42,7 +42,7 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
         poseStack.pushPose();
         LegacyObjTransforms.rotateAroundBlockCenterY(poseStack, facingRotation);
         PRESS_HEAD_ANIMATION.apply(blockEntity, partialTick, poseStack);
-        ObjModelLibrary.PRESS.renderPart("Head", new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
+        ObjMachineModels.PRESS.renderPart("Head", new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
         poseStack.popPose();
 
         ItemStack stack = blockEntity.getRenderStack();

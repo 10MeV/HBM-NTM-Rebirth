@@ -334,6 +334,84 @@
 验证：
 
 - 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+## 2026-05-21 Container Radiation Transformer 衰减倍率批次
+
+本批继续补 `ContainerRadiationHazardTransformer`，对齐旧版容器内物品辐射泄露倍率，并补最小物品承接。
+
+旧版来源：
+
+- `com.hbm.hazard.transformer.HazardTransformerRadiationContainer`
+  - `BlockStorageCrate`：扫描 `slot0..slot103`，内部辐射原样泄露。
+  - `ModItems.containment_box`：扫描 20 格，内部辐射经过 `BobMathUtil.squirt(...)` 衰减。
+  - `ModItems.plastic_bag`：扫描 1 格，内部辐射乘以 `2F`。
+  - `ModItems.toolbox`：扫描 24 格，内部辐射原样泄露。
+- `com.hbm.items.tool.ItemLeadBox`
+  - 20 格、最大堆叠 1、禁止放入 storage crate。
+- `com.hbm.items.tool.ItemPlasticBag`
+  - 1 格、最大堆叠 1。
+- `com.hbm.util.BobMathUtil.squirt(double)`
+  - 公式：`sqrt(x + 1 / ((x + 2) * (x + 2))) - 1 / (x + 2)`。
+
+已完成：
+
+- `ModItems` 新增 `containment_box` 与 `plastic_bag`，放入现代 consumables tab。
+- 复制旧版贴图：
+  - `textures/items/containment_box.png`
+  - `textures/items/plastic_bag.png`
+- `ContainerRadiationHazardTransformer` 对现代 `containment_box` 使用 20 格扫描并套用旧版 `squirt` 衰减。
+- `ContainerRadiationHazardTransformer` 对现代 `plastic_bag` 使用 1 格扫描并乘以 `2F`。
+- 保留原有默认扫描路径，用于尚未专门识别的旧/现代 `slotN` 或 `Items` 容器 NBT 兼容。
+
+仍未完成：
+
+- 现代端尚未迁 `ItemLeadBox` / `ItemPlasticBag` GUI 和实际库存交互，本批只补物品占位、贴图、语言和 hazard transformer 语义。
+- crate 104 格、toolbox 24 格的专门识别已由后续 “Container/Crate/Toolbox 识别补齐批次” 补上；实际 storage crate 方块/BlockEntity/Menu 仍待机器/容器库批次迁入。
+
+验证：
+
+- 2026-05-21 运行 `.\gradlew.bat runData --no-daemon` 通过。
+- 2026-05-21 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-20 ItemDepletedFuel meta 子型桥接
+
+本批补齐上一批留下的旧版 `ItemDepletedFuel` meta 0/1 基础契约，让现代 Hazard stack 层真正承接旧版冷热废料语义。
+
+旧版来源：
+
+- `com.hbm.items.machine.ItemDepletedFuel`
+  - `setHasSubtypes(true)`，`setMaxDamage(0)`。
+  - 创造栏加入 meta 0 和 meta 1 两个 `ItemStack`。
+  - meta 1 使用 `0xFFBFA5` 染色。
+  - meta 1 tooltip 添加 `desc.item.wasteCooling`。
+- `com.hbm.hazard.HazardRegistry`
+  - `registerOtherWaste(...)`：meta 0 = `base * 0.075`，meta 1 = `base` + HOT 5。
+  - `registerRadSourceWaste(...)`：meta 0 = `base`，meta 1 = `base` + HOT 5。
+
+已完成：
+
+- 新增 `DepletedFuelItem`：
+  - 用 `ItemStack#setDamageValue(0/1)` 桥接旧版 meta。
+  - `addCreativeStacks(...)` 输出冷态/热态两个 stack。
+  - 热态 stack 追加 `desc.item.wasteCooling` tooltip。
+  - 隐藏耐久条，避免 damage bridge 在 UI 上表现成损坏物品。
+- `ModItems` 中 `waste_*` / `waste_plate_*` 自动注册为 `DepletedFuelItem`。
+- `ModCreativeTabs.PARTS` 对 `DepletedFuelItem` 展开两个创造栏 stack。
+- `HazardRegistry.registerLegacyDepletedFuelWaste(...)` 和 `registerLegacyRadSourceWaste(...)` 改为 stack 层注册：
+  - damage 0：冷态辐射。
+  - damage 1：热态辐射 + HOT 5。
+- 语言生成补 `desc.item.wasteCooling`。
+- 客户端 item color 注册补旧版 meta 1 的 `0xFFBFA5` 热态染色。
+
+仍未完成：
+
+- 这次只处理 `ItemDepletedFuel`，其他旧版 meta item 仍需逐类确认是否适合继续使用 damage bridge，或改用 NBT/DataComponent。
+
+验证：
+
+- 2026-05-20 运行 `.\gradlew.bat runData --no-daemon` 通过。
+- 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-20 接入客户端 item color 后再次运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ## 2026-05-20 Reactor Component 基础物品 + Hazard 批次
 
 本批继续按旧版 `HazardRegistry.registerItems()` 向后推进，先补旧版 controlTab / partsTab 中和反应堆燃料链相关的基础物品，再接入已迁好的 fuel / RTG hazard modifier 库。
@@ -369,7 +447,7 @@
 
 仍未完成：
 
-- `ItemDepletedFuel` 的 meta 0/1 子型、热态染色、`desc.item.wasteCooling` tooltip 尚未迁入；现代项目需要先决定旧版 meta 到 1.20.1 ItemStack NBT/DataComponent 的映射方式。
+- `ItemDepletedFuel` 的 meta 0/1 子型、tooltip 与 stack hazard 已由后续 “ItemDepletedFuel meta 子型桥接” 批次补上；仅热态染色仍待客户端 item color 批次。
 - `plate_fuel_*` 目前只接入 hazard 语义，旧版 `ItemPlateFuel` 的燃耗函数、寿命、pile 反应堆逻辑仍待独立物品类/反应堆库迁移。
 - RTG pellet 目前只接入 hazard 语义，旧版 `ItemRTGPellet` 的热量、半衰期、衰变产物/container 行为尚未迁入。
 
@@ -396,3 +474,128 @@
 
 - 2026-05-20 运行 `.\gradlew.bat runData --no-daemon` 通过。
 - 2026-05-20 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-21 ME Radiation Transformer 批次
+
+本批继续补齐旧版 Hazard transformer 管线，把 AE2 ME 存储单元里的物品辐射汇总语义迁入现代 Hazard 库层。
+
+旧版来源：
+
+- `com.hbm.hazard.transformer.HazardTransformerRadiationME`
+  - 只识别类名完全等于 `appeng.items.storage.ItemBasicStorageCell` 或 `appeng.items.tools.powered.ToolPortableCell` 的物品。
+  - 对识别到的 ME drive / portable cell 调用 `Compat.scrapeItemFromME(stack)`。
+  - 汇总内部 `ItemStack` 的 `HazardSystem.getHazardLevelFromStack(..., HazardRegistry.RADIATION)`，并追加 radiation hazard。
+- `com.hbm.util.Compat#scrapeItemFromME`
+  - 使用旧 AE2 NBT：`it` 为条目数，`#i` 为第 i 个栈的 compound，`@i` 为第 i 个栈数量。
+- `com.hbm.hazard.HazardRegistry`
+  - 旧版 transformer 注册条件为 `!(GeneralConfig.enableLBSM && GeneralConfig.enableLBSMSafeMEDrives)`。
+- `com.hbm.config.GeneralConfig`
+  - `enableLessBullshitMode` 默认 `false`。
+  - `LBSM_safeMEDrives` 默认 `true`，注释语义为启用后阻止 ME Drives / Portable Cells 变成放射性。
+
+已完成：
+
+- 新增 `MeRadiationHazardTransformer`。
+  - 按旧版类名识别 AE2 ME storage cell / portable cell，不引入 AE2 编译依赖。
+  - 读取旧版 `it` / `#i` / `@i` NBT 结构。
+  - 对内部栈设置保存的数量后复用 `HazardRegistry.getStackRadiation(...)`，保持现代 tag/item/stack/modifier/transformer 管线一致。
+  - 只在汇总辐射大于 0 时追加 `HazardType.RADIATION`。
+- `HazardRegistry.registerTransformers()` 接入 `MeRadiationHazardTransformer`。
+  - 迁入旧版条件：仅当 `enableLessBullshitMode && lbsmSafeMeDrives` 同时为真时跳过 ME 辐射汇总。
+- `RadiationConfig` 补最小 LBSM hazard 兼容配置：
+  - `enableLessBullshitMode` 默认 `false`。
+  - `lbsmSafeMeDrives` 默认 `true`。
+
+暂未完成/保留：
+
+- 本批只对齐 1.7.10 AE2 类名与旧 NBT 契约；现代 AE2 1.20.1 的 item class / data component / capability 若不同，需要后续在 AE2 compat 批次中补桥接。
+- 旧版 LBSM 是全局配置组，现代端目前只补 hazard 所需的最小门控；完整 LBSM 配方/进程配置仍待独立配置库批次。
+
+验证：
+
+- 2026-05-21 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-21 Container/Crate/Toolbox 识别补齐批次
+
+本批继续补 `ContainerRadiationHazardTransformer` 剩余识别分支，目标是让旧版 crate/toolbox/ItemInventory 的 NBT 契约不再只依赖默认大范围扫描。
+
+旧版来源：
+
+- `com.hbm.hazard.transformer.HazardTransformerRadiationContainer`
+  - `BlockStorageCrate`：扫描 `slot0..slot103`，原样泄露辐射。
+  - `ModItems.toolbox`：通过 `ItemStackUtil.readStacksFromNBT(stack, 24)` 读取 24 格，原样泄露辐射。
+  - `ModItems.containment_box`：20 格，`BobMathUtil.squirt(...)` 衰减。
+  - `ModItems.plastic_bag`：1 格，辐射乘以 `2F`。
+- `com.hbm.util.ItemStackUtil`
+  - `ItemInventory` 使用小写 list key `items`，每项使用小写 byte key `slot`。
+- `com.hbm.hazard.HazardRegistry`
+  - container transformer 注册条件为 `!(GeneralConfig.enableLBSM && GeneralConfig.enableLBSMSafeCrates)`。
+- `com.hbm.config.GeneralConfig`
+  - `LBSM_safeCrates` 默认 `true`。
+
+已完成：
+
+- `ContainerRadiationHazardTransformer` 新增精确容器类型：
+  - `STORAGE_CRATE`：识别现代/后续迁入的 HBM registry path `crate_iron`、`crate_steel`、`crate_desh`、`crate_tungsten`、`safe`，扫描 104 个旧版 `slotN`。
+  - `TOOLBOX`：识别现代 `toolbox`，扫描 24 格。
+  - `LEAD_BOX`：保留 20 格 + `squirt`。
+  - `PLASTIC_BAG`：保留 1 格 + `* 2F`。
+- 补 `readLegacyItemInventoryRadiation(...)`，读取旧版小写 `items` / `slot` 列表，承接 toolbox、containment box、plastic bag 的旧 ItemInventory 契约。
+- 保留现代 `ContainerHelper` 大写 `Items` 兼容读取，用于后续 1.20.1 容器实现。
+- `RadiationConfig` 新增最小兼容配置 `lbsmSafeCrates`，默认 `true`。
+- `HazardRegistry.registerTransformers()` 按旧版条件门控 container transformer。
+- `ModItems` 新增 `toolbox` 占位物品，放入 consumables tab。
+- 复制旧版工具箱贴图：
+  - `textures/items/kit_toolbox.png` -> `textures/item/toolbox.png`
+  - `textures/items/kit_toolbox_empty.png` -> `textures/item/kit_toolbox_empty.png`
+
+暂未完成/保留：
+
+- `toolbox` 非潜行右键热键栏轮换和 24 格旧版 `items/slot` NBT 已由后续 “ToolboxItem 热键栏轮换批次” 补上；GUI、24 格手动库存交互、打开/关闭贴图层仍待后续批次迁入。
+- `crate_iron/crate_steel/crate_desh/crate_tungsten/safe` 的实际方块、BlockEntity、手持打开和锁/蜘蛛/stacklock 行为仍待 storage crate 库批次迁入；本批只提前让注册名落地后能被 hazard transformer 正确识别。
+
+验证：
+
+- 2026-05-21 运行 `.\gradlew.bat runData --no-daemon` 通过。
+- 2026-05-21 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-21 ToolboxItem 热键栏轮换批次
+
+本批在上一批 `toolbox` 占位物品和 container hazard 识别之后，补最小旧版物品行为，让工具箱能实际写入 `ContainerRadiationHazardTransformer` 已支持的旧版 `items/slot` NBT。
+
+旧版来源：
+
+- `com.hbm.items.tool.ItemToolBox`
+  - 最大堆叠 1。
+  - 非潜行右键调用 `moveRows(...)`。
+  - 当前热键栏中除工具箱本体外的 8 个槽位写入工具箱 24 格库存。
+  - 工具箱内最上方活动行换回玩家热键栏。
+  - 工具箱内部按 3 行 * 8 格组织。
+  - 若热键栏里存在额外工具箱，会把额外工具箱丢出，避免工具箱套工具箱。
+- `com.hbm.util.ItemStackUtil`
+  - 保存 key 为 `items`。
+  - 每项保存 byte key `slot`。
+- `com.hbm.hazard.transformer.HazardTransformerRadiationContainer`
+  - `toolbox` 读取 24 格并让内部辐射原样泄露。
+
+已完成：
+
+- 新增 `ToolboxItem`。
+  - 继承现代 `Item`，保持 `stacksTo(1)`。
+  - 主手非潜行右键执行旧版热键栏轮换。
+  - 使用 24 格数组和 3 行 * 8 格旧版布局。
+  - 写入旧版小写 `items` list 和 `slot` byte，直接喂给现有 container hazard transformer。
+  - 读取旧 NBT 时也按 `items/slot` 还原栈。
+  - 额外工具箱从热键栏丢出，保留旧版“不能工具箱套工具箱”的保护。
+- `ModItems.TOOLBOX` 改为注册 `ToolboxItem`，仍保留 legacy name map。
+- 补工具箱 tooltip 语言键。
+
+暂未完成/保留：
+
+- 潜行右键 GUI、`ContainerToolBox`、`GUIToolBox`、打开态 `isOpen`、关闭时 `rand` 刷新和双贴图 render pass 尚未迁入。
+- 旧版 6KB NBT 超限时把内容喷出的保护尚未迁入；本批先保证热键栏轮换和 hazard NBT 数据契约。
+
+验证：
+
+- 2026-05-21 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-21 运行 `.\gradlew.bat runData --no-daemon` 通过。

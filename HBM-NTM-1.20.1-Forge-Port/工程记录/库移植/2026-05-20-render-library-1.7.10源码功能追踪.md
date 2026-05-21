@@ -110,6 +110,10 @@
 - 已有客户端入口：`ClientModEvents`
 - 已有 OBJ 封装：
   - `ObjModelLibrary`
+  - `ObjMachineModels`
+  - `ObjLightModels`
+  - `ObjTrinketModels`
+  - `ObjPartModel`
   - `ObjModelPart`
   - `ObjRenderUtils`
   - `ObjAnimatedModel`
@@ -127,6 +131,9 @@
   - `TrinketBlockEntityRenderer`
   - `TrinketItemRenderer`
 - 已确认的渲染库策略：renderer 不直接拼资源路径，统一经由 `ObjModelLibrary` 或子库入口注册。
+- 已有现代物品渲染桥入口：
+  - `LegacyItemRendererBridge`
+  - 用于对齐旧 `IItemRendererProvider` 的“一个 renderer 同时供方块实体与物品显示复用”模式。
 
 ## 分批对齐记录
 
@@ -216,6 +223,116 @@
   - `render/icon`、`render/block/ct`、`render/shader`、`render/world` 与 `particle` 包此前只粗略提到或未提到，已补为独立迁移入口。
 - 结论：渲染库基础接口骨架仍约 `20% - 25%`，但“完整 render-library 入口追踪”从不完整提升到可继续逐项展开；真正 1.7.10 render 全覆盖仍约 `5% - 8%`。
 
+### 第 11 轮
+
+- 按领域拆分 `ObjModelLibrary`，避免继续膨胀成单文件资源表：
+  - `ObjMachineModels`：机器模型入口，当前收录 press head / press animated model，并提供 `part(...)`、`partBuilder(...)`、`directPart(...)`。
+  - `ObjLightModels`：灯具/旧光源模型入口，当前收录 cage lamp、fluorescent lamp、flood lamp、floodlight 三分件、demon lamp。
+  - `ObjTrinketModels`：trinket 模型路径入口，统一 `block/trinkets/...`。
+  - `ObjModelLibrary` 保留为统一注册与兼容 facade，继续负责 `ModelEvent.RegisterAdditional` 汇总注册。
+- renderer 接入规则更新：
+  - 新代码优先引用领域子库。
+  - 旧调用 `ObjModelLibrary.PRESS`、`ObjModelLibrary.CAGE_LAMP` 等常量暂保留兼容，后续迁移时逐步改为领域库。
+- 现代物品渲染桥第一层已补：
+  - 新增 `LegacyItemRendererBridge.accept(...)`。
+  - `TrinketBlockItem.initializeClient(...)` 改走该桥接入口，而不是每个 item 自己临时创建 `IClientItemExtensions`。
+- 该桥用于后续对齐旧 `IItemRendererProvider` 的集中注册思路；目前只迁入最小安全骨架，不自动扫描 item/block registry。
+- 本轮没有迁移 HMF、Collada、JSON bus 动画，也没有处理 OBJ group 解析；这些仍按后续顺序单独推进。
+
+### 第 12 轮
+
+- 复核 1.7.10 的真实拆分边界后，决定保留现代端“统一 facade + 领域子库”的结构，不合并回单文件：
+  - 旧 `ResourceManager` 本身是单文件，但内部通过注释按领域分段，例如 turrets、heaters、heat engines、oil pumps、refinery、tank、press、chemplant、RBMK、ISBRH 等。
+  - 旧 `render` 包按渲染机制拆分明确：`anim`、`block`、`entity`、`icon`、`item`、`loader`、`model`、`shader`、`tileentity`、`util`、`world`。
+  - 旧 `render/tileentity` 基本是平铺文件，只有 `door` 子包；旧 `render/item` 有 `block` 与 `weapon` 子包。
+- 现代端边界策略：
+  - `ObjModelLibrary` 保持 1.7.10 `ResourceManager` 风格的总入口与模型注册汇总。
+  - 领域子库按旧 `ResourceManager` 的注释分段继续拆，例如 `ObjMachineModels`、`ObjLightModels`、后续可扩展 `ObjTurretModels`、`ObjNukeModels`、`ObjRbmkModels`、`ObjMissileModels`、`ObjIsbrhModels`。
+  - 不把所有常量塞回 `ObjModelLibrary`，因为完整迁移时旧资源量超过千级常量，单文件会阻碍并行迁移和审查。
+  - 也不把每台机器拆一个模型库类；只有当旧分段或现代复用边界足够清楚时再拆，避免过度碎片化。
+- 结论：本轮第 11 轮拆分方向利于后续完整移植，保留。
+
+### 第 13 轮
+
+- 针对旧 `HFRWavefrontObject.renderPart(...)` / `renderOnly(...)` / `renderAllExcept(...)` 的 group 语义，新增现代承载类 `ObjPartModel`：
+  - 实现 `LegacyObjModel`。
+  - `part(String legacyName, ObjModelPart part, String... legacyAliases)` 用旧 OBJ group 名登记现代拆分后的 `ObjModelPart`。
+  - `renderPart(...)` 支持通过旧 group 名或 alias 查找现代 part。
+  - `renderOnly(...)` 会去重，避免同一 part 因多个 alias 被重复渲染。
+  - `renderAllExcept(...)` 可通过 alias 排除 canonical part。
+- `ObjMachineModels.PRESS` 已从 `ObjAnimatedModel` 改为 `ObjPartModel`，作为“旧 group/part 名 -> 现代拆分模型”样例。
+- 本轮决策：
+  - 先标准化 split model / split JSON 路线，不贸然写完整自定义 OBJ renderer。
+  - 原因是当前现代资源已经大量采用“每个动态 part 一个 JSON/OBJ”的方式，且 Forge baked model 路线能继续享受资源重载、RenderType、texture atlas 和模型缓存。
+  - 后续若遇到必须从单个旧 OBJ 动态读取 group 的机器，再补 `HFRWavefrontObject` 风格解析器；该解析器应接在 `ObjPartModel` 之下，而不是替代现有 API。
+- `ObjAnimatedModel` 暂不删除，后续保留给真正需要时间轴/关键帧/骨架语义的模型；普通旧 OBJ group 映射优先使用 `ObjPartModel`。
+
+### 第 14 轮
+
+- 继续对齐旧 `HFRWavefrontObject` / `HFRWavefrontObjectVBO` 的 group 顺序语义：
+  - 旧 `renderOnly(String... groupNames)` 是外层遍历模型内部 `groupObjects` / VBO `groups`，内层匹配传入名称，因此实际渲染顺序以 OBJ 文件内 group 顺序为准，而不是调用参数顺序。
+  - `ObjPartModel.renderOnly(...)` 与 `ObjAnimatedModel.renderOnly(...)` 已改为按登记顺序渲染匹配分件。
+  - `ObjPartModel` 仍对 alias 做 canonical 去重，避免现代 alias 同指向一个拆分 JSON part 时重复绘制。
+- 继续对齐旧 `getPartNames()` 契约：
+  - 旧实现返回 OBJ/VBO 内原始 group 名。
+  - `ObjPartModel` 与 `ObjAnimatedModel` 现在保留 `part(...)` 登记时的原始大小写名称，`getPartNames()` 不再返回小写化后的 key。
+  - `ObjPartModel.getAliases()` 也改为返回登记时的原始 alias 名称，便于工程记录和后续迁移排查直接比对 1.7.10 group 名。
+- 本轮仍未引入自定义 OBJ group 解析器；当前策略是把“旧 group 名/顺序/alias -> 现代拆分模型”的行为先稳定下来，再按机器逐个补模型分件。
+
+### 第 15 轮
+
+- 复核 1.7.10 `ClientProxy.registerItemRenderer()` 与 `IItemRendererProvider` 后，继续收束现代物品 renderer 桥：
+  - 旧版入口先注册 `ItemRenderLibrary`，再扫描所有 TESR 中实现 `IItemRendererProvider` 的 renderer，并为其 `getItemsForRenderer()` 返回的 item 注册 `IItemRenderer`。
+  - 旧版还会扫描 item registry 中直接实现 `IItemRendererProvider` 的 item。
+  - 现代端无法原样依赖旧 `MinecraftForgeClient.registerItemRenderer(...)`，但应保留“统一桥接入口，不在每个 item 里散落匿名扩展”的迁移模式。
+- `LegacyItemRendererBridge` 新增延迟 renderer supplier 入口：
+  - `accept(Consumer<IClientItemExtensions>, Supplier<? extends BlockEntityWithoutLevelRenderer>)`
+  - `extensions(Supplier<? extends BlockEntityWithoutLevelRenderer>)`
+  - 旧的 direct renderer overload 继续保留。
+- `TrinketBlockItem.initializeClient(...)` 改为通过 supplier 接入 `TrinketItemRenderer.INSTANCE`，后续机器 item renderer 可以复用该入口，避免 renderer 静态实例在声明处过早绑定。
+- 本轮仍未做全局扫描注册；后续若要完全贴近旧 `IItemRendererProvider`，建议基于现代 `RegisterClientExtensionsEvent` 或明确的 renderer provider 表做集中注册，而不是在 common registry 内反射扫描 client-only renderer。
+
+### 第 16 轮
+
+- 按后续顺序建议，开始单独建立旧 JSON bus 动画子库入口，避免把武器/机器动画继续塞进 OBJ 模型层。
+- 1.7.10 事实源：
+  - `com.hbm.render.anim.AnimationLoader`：从 `models/weapons/animations/*.json` 读取 `offset`、`rotmode`、`anim` 三段数据，生成 `HashMap<String, BusAnimation>`。
+  - `BusAnimation`：按 bus 名保存多个 `BusAnimationSequence`，总时长取最长 sequence。
+  - `BusAnimationSequence`：9 个维度 `TX/TY/TZ/RX/RY/RZ/SX/SY/SZ`，输出 15 位 transform 数组。
+  - `HbmAnimations`：客户端 hotbar 上保存 `Animation[9][8]`，renderer 通过 bus 名取当前手持物相关 transform，并按 `translate -> rotation order -> -offset -> scale` 应用。
+- 现代端新增入口：
+  - `client.anim.LegacyBusAnimation`
+  - `client.anim.LegacyBusAnimationSequence`
+  - `client.anim.LegacyBusAnimationKeyframe`
+  - `client.anim.LegacyBusAnimationLoader`
+  - `client.anim.LegacyBusAnimationTransforms`
+  - `client.anim.LegacyHbmAnimations`
+- 已迁入的契约：
+  - JSON loader 支持旧 `offset`、`rotmode`、`anim/location/rotation_euler/scale` 结构。
+  - transform 数组保持旧布局：`0..2` 平移、`3..5` 旋转、`6..8` 缩放、`9..11` offset、`12..14` rotation order。
+  - `LegacyBusAnimationTransforms.apply(...)` 使用现代 `PoseStack` 复刻旧 `HbmAnimations.applyRelevantTransformation(...)` 的应用顺序。
+  - `LegacyHbmAnimations.HOTBAR` 保留旧 `9 x 8` 并行动画槽结构，后续 `HbmAnimationPacket`/武器 renderer 可接入。
+- 已知未完成：
+  - `LegacyBusAnimationKeyframe` 在第 16 轮只完整实现旧 `LINEAR`、`CONSTANT` 相关保持逻辑与 `SIN_UP/SIN_DOWN/SIN_FULL` 时间曲线；`BEZIER` 与 Blender easing 系列字段已解析保留，但精确 easing 公式仍需从旧 `BusAnimationKeyframe` 继续移植。该项已在第 17 轮补齐。
+  - 旧 `ClientConfig.GUN_ANIMATION_SPEED` 暂未迁入，当前 keyframe duration 按原值保存；后续配置库完成后再接现代配置。
+  - 旧 `HbmAnimationPacket` 的触发、清理过期动画、`holdLastFrame` 生命周期还未接入事件/网络层。
+
+### 第 17 轮
+
+- 按用户要求继续补齐旧 `BusAnimationKeyframe` 的 easing 逻辑。
+- 1.7.10 事实源：`com.hbm.render.anim.BusAnimationKeyframe`。
+- 已迁入 `LegacyBusAnimationKeyframe` 的完整曲线行为：
+  - `BEZIER`：旧版 cubic root 求解、非循环 fcurve handle 修正、cubic bezier 采样。
+  - `BACK`：`EASE_IN` / `EASE_OUT` / `EASE_IN_OUT`。
+  - `BOUNCE`：`EASE_IN` / `EASE_OUT` / `EASE_IN_OUT`。
+  - `CIRC`、`CUBIC`、`EXPO`、`QUAD`、`QUART`、`QUINT`、`SINE`：三种 easing mode。
+  - `ELASTIC`：in/out/in-out、默认 period、amplitude blend 与 overshoot 行为。
+  - 旧 `SIN_UP` / `SIN_DOWN` / `SIN_FULL` 时间曲线继续保留。
+- 当前剩余边界：
+  - 旧构造器会用 `ClientConfig.GUN_ANIMATION_SPEED` 缩放 duration；现代配置库尚未对接，因此本轮保持 duration 原值，不在动画库内硬编码配置。
+  - `HbmAnimationPacket`、hotbar 动画清理、`holdLastFrame` 生命周期仍待事件/网络层迁移。
+- 验证：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ## 旧版 renderer 分类
 
 - 方块实体 renderer：`src/main/java/com/hbm/render/tileentity`
@@ -249,16 +366,25 @@
 
 ## 后续顺序建议
 
-1. 按领域把 `ObjModelLibrary` 再拆子库，避免单文件继续膨胀。
-2. 先补现代端的统一物品渲染桥，对齐旧 `IItemRendererProvider`，再让机器/方块实体 renderer 接入。
-3. 处理 `HFRWavefrontObject.renderPart(...)` / `tessellatePart(...)` / VBO reload 的 group 语义缺口，决定是拆 JSON 还是做自定义 OBJ group 解析。
-4. 单独建立 HMF、Collada DAE、JSON bus 动画三个子库入口，避免把所有动画塞进 OBJ 库。
-5. 迁移 `RenderEPress` / `RenderPress` 的完整 body/head 逻辑。
-6. 再推进流体罐、油处理机器、炉类机器的动态状态渲染。
-7. 后续专题展开 CT 贴图、粒子、shader/skybox、HUD overlay。
+1. 处理 `HFRWavefrontObject.renderPart(...)` / `tessellatePart(...)` / VBO reload 的 group 语义缺口，决定是拆 JSON 还是做自定义 OBJ group 解析。
+2. 单独建立 HMF、Collada DAE、JSON bus 动画三个子库入口，避免把所有动画塞进 OBJ 库。
+3. 迁移 `RenderEPress` / `RenderPress` 的完整 body/head 逻辑。
+4. 再推进流体罐、油处理机器、炉类机器的动态状态渲染。
+5. 后续专题展开 CT 贴图、粒子、shader/skybox、HUD overlay。
 
 ## 验证
 
 - 构建命令：`./gradlew.bat compileJava processResources --no-daemon`
 - 已通过多轮验证。
 - 未来每轮继续保持“少量改动 -> 编译验证 -> 文档补充”的节奏。
+## 2026-05-21 ObjPartModel 编译修正
+
+辐射库批次验证时发现 `ObjPartModel.renderOnlyInCallOrder(...)` 引用了未定义的 `rendered` 集合，导致 `compileJava` 失败。
+
+已完成：
+
+- 在 `renderOnlyInCallOrder(...)` 内补局部 `LinkedHashSet<String>`，保持调用顺序渲染时仍能去重。
+
+验证：
+
+- 2026-05-21 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。

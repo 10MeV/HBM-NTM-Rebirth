@@ -16,8 +16,6 @@ import java.util.Set;
 
 public final class HbmEnergyNodespace {
     private static final Map<ResourceKey<Level>, EnergyNodeWorld> WORLDS = new HashMap<>();
-    private static final Set<HbmPowerNet> ACTIVE_POWER_NETS = new LinkedHashSet<>();
-    private static int reapTimer;
 
     private HbmEnergyNodespace() {
     }
@@ -31,7 +29,9 @@ public final class HbmEnergyNodespace {
         EnergyNodeWorld nodeWorld = WORLDS.computeIfAbsent(level.dimension(), ignored -> new EnergyNodeWorld());
         HbmEnergyNode oldNode = nodeWorld.nodes.put(node.getPos(), node);
         if (oldNode != null && oldNode != node) {
-            popNode(oldNode);
+            HbmPowerNet oldNet = oldNode.getPowerNet();
+            popNode(nodeWorld, oldNode);
+            rebuildNetworkAfterRemoval(nodeWorld, oldNet);
         }
         checkNodeConnection(nodeWorld, node);
         return node;
@@ -44,7 +44,9 @@ public final class HbmEnergyNodespace {
         }
         HbmEnergyNode node = nodeWorld.nodes.remove(pos);
         if (node != null) {
-            popNode(node);
+            HbmPowerNet net = node.getPowerNet();
+            popNode(nodeWorld, node);
+            rebuildNetworkAfterRemoval(nodeWorld, net);
             markNeighborsChanged(nodeWorld, pos);
         }
     }
@@ -55,9 +57,10 @@ public final class HbmEnergyNodespace {
             return;
         }
         for (HbmEnergyNode node : new ArrayList<>(nodeWorld.nodes.values())) {
-            popNode(node);
+            popNode(nodeWorld, node);
         }
         nodeWorld.nodes.clear();
+        nodeWorld.activePowerNets.clear();
     }
 
     public static void tick(ServerLevel level) {
@@ -73,21 +76,31 @@ public final class HbmEnergyNodespace {
             }
         }
 
-        updateNetworks();
+        updateNetworks(nodeWorld);
     }
 
-    private static void updateNetworks() {
-        for (HbmPowerNet net : ACTIVE_POWER_NETS) {
+    public static int getNodeCount(Level level) {
+        EnergyNodeWorld nodeWorld = WORLDS.get(level.dimension());
+        return nodeWorld == null ? 0 : nodeWorld.nodes.size();
+    }
+
+    public static int getNetworkCount(Level level) {
+        EnergyNodeWorld nodeWorld = WORLDS.get(level.dimension());
+        return nodeWorld == null ? 0 : nodeWorld.activePowerNets.size();
+    }
+
+    private static void updateNetworks(EnergyNodeWorld nodeWorld) {
+        for (HbmPowerNet net : nodeWorld.activePowerNets) {
             net.resetTrackers();
         }
-        for (HbmPowerNet net : new ArrayList<>(ACTIVE_POWER_NETS)) {
+        for (HbmPowerNet net : new ArrayList<>(nodeWorld.activePowerNets)) {
             if (net.isValid()) {
                 net.update();
             }
         }
 
-        if (reapTimer <= 0) {
-            Iterator<HbmPowerNet> iterator = ACTIVE_POWER_NETS.iterator();
+        if (nodeWorld.reapTimer <= 0) {
+            Iterator<HbmPowerNet> iterator = nodeWorld.activePowerNets.iterator();
             while (iterator.hasNext()) {
                 HbmPowerNet net = iterator.next();
                 if (!net.isValid() || net.linkCount() <= 0) {
@@ -95,9 +108,9 @@ public final class HbmEnergyNodespace {
                     iterator.remove();
                 }
             }
-            reapTimer = 5 * 60 * 20;
+            nodeWorld.reapTimer = 5 * 60 * 20;
         } else {
-            reapTimer--;
+            nodeWorld.reapTimer--;
         }
     }
 
@@ -112,7 +125,7 @@ public final class HbmEnergyNodespace {
 
         if (!node.hasValidNet()) {
             HbmPowerNet net = new HbmPowerNet();
-            ACTIVE_POWER_NETS.add(net);
+            nodeWorld.activePowerNets.add(net);
             net.joinLink(node);
         }
     }
@@ -127,10 +140,10 @@ public final class HbmEnergyNodespace {
             }
             if (originNet.linkCount() > connectionNet.linkCount()) {
                 originNet.joinNetwork(connectionNet);
-                ACTIVE_POWER_NETS.remove(connectionNet);
+                removeNetwork(connectionNet);
             } else {
                 connectionNet.joinNetwork(originNet);
-                ACTIVE_POWER_NETS.remove(originNet);
+                removeNetwork(originNet);
             }
         } else if ((originNet == null || !originNet.isValid()) && connectionNet != null && connectionNet.isValid()) {
             connectionNet.joinLink(origin);
@@ -148,20 +161,44 @@ public final class HbmEnergyNodespace {
         }
     }
 
-    private static void popNode(HbmEnergyNode node) {
+    private static void rebuildNetworkAfterRemoval(EnergyNodeWorld nodeWorld, HbmPowerNet oldNet) {
+        if (oldNet == null) {
+            return;
+        }
+        Set<HbmEnergyNode> oldLinks = new LinkedHashSet<>(oldNet.getLinks());
+        oldLinks.removeIf(HbmNetworkNode::isExpired);
+        oldNet.destroy();
+        nodeWorld.activePowerNets.remove(oldNet);
+
+        for (HbmEnergyNode link : oldLinks) {
+            if (nodeWorld.nodes.get(link.getPos()) == link) {
+                link.markRecentlyChanged();
+            }
+        }
+    }
+
+    private static void popNode(EnergyNodeWorld nodeWorld, HbmEnergyNode node) {
         HbmPowerNet net = node.getPowerNet();
         if (net != null) {
             net.leaveLink(node);
             if (net.linkCount() <= 0) {
                 net.destroy();
-                ACTIVE_POWER_NETS.remove(net);
+                nodeWorld.activePowerNets.remove(net);
             }
         }
         node.setExpired(true);
         node.setNet(null);
     }
 
+    private static void removeNetwork(HbmPowerNet net) {
+        for (EnergyNodeWorld nodeWorld : WORLDS.values()) {
+            nodeWorld.activePowerNets.remove(net);
+        }
+    }
+
     private static final class EnergyNodeWorld {
         private final Map<BlockPos, HbmEnergyNode> nodes = new LinkedHashMap<>();
+        private final Set<HbmPowerNet> activePowerNets = new LinkedHashSet<>();
+        private int reapTimer;
     }
 }

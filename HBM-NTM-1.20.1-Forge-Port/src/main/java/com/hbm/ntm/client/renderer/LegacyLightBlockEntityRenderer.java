@@ -3,7 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyDirectionalShapeBlock;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
-import com.hbm.ntm.client.obj.ObjModelLibrary;
+import com.hbm.ntm.client.obj.ObjLightModels;
 import com.hbm.ntm.client.obj.ObjModelPart;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -37,9 +37,9 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
     private static void renderSpotlight(LegacyDirectionalShapeBlock.Kind kind, Direction face, BlockState state,
                                         PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ObjModelPart model = switch (kind) {
-            case SPOTLIGHT_FLUORO -> ObjModelLibrary.FLUORESCENT_LAMP_SINGLE;
-            case SPOTLIGHT_HALOGEN -> ObjModelLibrary.FLOOD_LAMP;
-            default -> ObjModelLibrary.CAGE_LAMP;
+            case SPOTLIGHT_FLUORO -> ObjLightModels.FLUORESCENT_LAMP_SINGLE;
+            case SPOTLIGHT_HALOGEN -> ObjLightModels.FLOOD_LAMP;
+            default -> ObjLightModels.CAGE_LAMP;
         };
 
         poseStack.pushPose();
@@ -65,7 +65,7 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         }
 
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        ObjModelLibrary.FLOODLIGHT_BASE.render(context);
+        ObjLightModels.FLOODLIGHT_BASE.render(context);
 
         float rotation = blockEntity.rotation();
         if (face == Direction.DOWN) {
@@ -80,8 +80,8 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
         poseStack.translate(0.0D, -0.5D, 0.0D);
         ObjRenderContext angledContext = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
-        ObjModelLibrary.FLOODLIGHT_LIGHTS.render(angledContext);
-        ObjModelLibrary.FLOODLIGHT_LAMPS.render(blockEntity.isOn()
+        ObjLightModels.FLOODLIGHT_LIGHTS.render(angledContext);
+        ObjLightModels.FLOODLIGHT_LAMPS.render(blockEntity.isOn()
                 ? angledContext.fullBright()
                 : angledContext.withColor(0x404040));
         poseStack.popPose();

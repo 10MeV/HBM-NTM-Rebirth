@@ -1,11 +1,13 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.DigammaDiagnosticItem;
 import com.hbm.ntm.item.EffectPillItem;
 import com.hbm.ntm.item.GeigerCounterItem;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.item.RadawayItem;
+import com.hbm.ntm.item.ToolboxItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -82,6 +84,9 @@ public final class ModItems {
             () -> new RadawayItem(new Item.Properties().stacksTo(16), 50, 19));
     public static final RegistryObject<Item> RADX = ITEMS.register("radx",
             () -> new EffectPillItem(new Item.Properties().stacksTo(16), ModEffects.RADX, 3 * 60 * 20, 0, null, true));
+    public static final RegistryObject<Item> CONTAINMENT_BOX = simpleStackOneItem("containment_box");
+    public static final RegistryObject<Item> PLASTIC_BAG = simpleStackOneItem("plastic_bag");
+    public static final RegistryObject<Item> TOOLBOX = registerLegacy("toolbox", () -> new ToolboxItem(new Item.Properties()));
 
     public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = simpleParts(
             "ingot_pu_mix",
@@ -381,7 +386,10 @@ public final class ModItems {
             RADAWAY,
             RADAWAY_STRONG,
             RADAWAY_FLUSH,
-            RADX
+            RADX,
+            CONTAINMENT_BOX,
+            PLASTIC_BAG,
+            TOOLBOX
     );
 
     public static void register(IEventBus modBus) {
@@ -408,16 +416,51 @@ public final class ModItems {
         return Stream.of(names).map(ModItems::simpleStackOneItem).toList();
     }
 
-    private static RegistryObject<Item> simpleItem(String name) {
-        RegistryObject<Item> item = ITEMS.register(name, () -> new Item(new Item.Properties()));
+    private static RegistryObject<Item> registerLegacy(String name, java.util.function.Supplier<Item> supplier) {
+        RegistryObject<Item> item = ITEMS.register(name, supplier);
         ITEMS_BY_LEGACY_NAME.put(name, item);
         return item;
+    }
+
+    private static RegistryObject<Item> simpleItem(String name) {
+        RegistryObject<Item> item = ITEMS.register(name, () -> createSimpleItem(name));
+        ITEMS_BY_LEGACY_NAME.put(name, item);
+        return item;
+    }
+
+    private static Item createSimpleItem(String name) {
+        if (isLegacyDepletedFuel(name)) {
+            return new DepletedFuelItem(new Item.Properties());
+        }
+        return new Item(new Item.Properties());
     }
 
     private static RegistryObject<Item> simpleStackOneItem(String name) {
         RegistryObject<Item> item = ITEMS.register(name, () -> new Item(new Item.Properties().stacksTo(1)));
         ITEMS_BY_LEGACY_NAME.put(name, item);
         return item;
+    }
+
+    private static boolean isLegacyDepletedFuel(String name) {
+        return switch (name) {
+            case "waste_natural_uranium",
+                 "waste_uranium",
+                 "waste_thorium",
+                 "waste_mox",
+                 "waste_plutonium",
+                 "waste_u233",
+                 "waste_u235",
+                 "waste_schrabidium",
+                 "waste_zfb_mox",
+                 "waste_plate_u233",
+                 "waste_plate_u235",
+                 "waste_plate_mox",
+                 "waste_plate_pu239",
+                 "waste_plate_sa326",
+                 "waste_plate_ra226be",
+                 "waste_plate_pu238be" -> true;
+            default -> false;
+        };
     }
 
     private ModItems() {

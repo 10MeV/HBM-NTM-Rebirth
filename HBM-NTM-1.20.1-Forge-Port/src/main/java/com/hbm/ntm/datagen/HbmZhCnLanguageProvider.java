@@ -65,6 +65,12 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.radaway_flush", "\u51b2\u5237\u578b\u6d88\u8f90\u5b81");
         add("item.hbm.radx", "\u9632\u8f90\u5c04\u836f");
         add("item.hbm.radx.desc", "\u57283\u5206\u949f\u5185\u589e\u52a00.2\uff0837%\uff09\u7684\u6297\u8f90\u5c04\u80fd\u529b");
+        add("item.hbm.containment_box", "\u94c5\u886c\u76d2");
+        add("item.hbm.plastic_bag", "\u5851\u6599\u888b");
+        add("item.hbm.toolbox", "\u5de5\u5177\u7bb1");
+        add("item.hbm.toolbox.desc.swap", "\u53f3\u952e\u5de5\u5177\u7bb1\u53ef\u5c06\u70ed\u952e\u680f\u5b58\u5165/\u53d6\u51fa\u5de5\u5177\u7bb1\u3002");
+        add("item.hbm.toolbox.desc.open", "\u6f5c\u884c\u53f3\u952e\u6253\u5f00\u5de5\u5177\u7bb1\u3002");
+        add("desc.item.wasteCooling", "\u6b63\u5728\u51b7\u5374");
         add("effect.hbm.radiation", "\u8f90\u5c04");
         add("effect.hbm.radaway", "\u6d88\u8f90\u5b81");
         add("effect.hbm.radx", "\u8f90\u7279\u5b81");

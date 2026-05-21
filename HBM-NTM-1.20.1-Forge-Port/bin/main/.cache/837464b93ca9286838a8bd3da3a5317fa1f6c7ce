@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-20T22:03:05.8734155	Item Models: hbm
+// 1.20.1	2026-05-21T12:09:16.0585436	Item Models: hbm
 cdfd214c5c6c55600df213ad00db1fc2e2aa9249 assets/hbm/models/item/billet_actinium.json
 69148ec4a8b1ff83e4a53e95a194bd5f93d9bb13 assets/hbm/models/item/billet_am241.json
 7ac259170cdbe9bee033de0e801fd435f731cbbc assets/hbm/models/item/billet_am242.json
@@ -57,6 +57,7 @@ be26c4ec348f32bb5e8b64b72a4a76f1c401ebb8 assets/hbm/models/item/coil_advanced_al
 71c34c241d64188706f8d8feaea606c214de5d58 assets/hbm/models/item/coil_copper.json
 15f426a8e2e369c95caa2dc61fc033b6aac79515 assets/hbm/models/item/coil_gold.json
 37ca295ab29bd6dd475090289f34bd9cc9bf6200 assets/hbm/models/item/coil_tungsten.json
+f847a8e9ce15b4a6a7cff9d4d523f2b63692497d assets/hbm/models/item/containment_box.json
 4bcf2670bdbe4b4d2a20de547a3de579edb36ae6 assets/hbm/models/item/crystal_lithium.json
 8354b19b4f34d765a228f962154fcf83057d24d3 assets/hbm/models/item/crystal_phosphorus.json
 08c446d4a95c466f96f13624686b957022575a52 assets/hbm/models/item/crystal_plutonium.json
@@ -201,6 +202,7 @@ f5c72dd35f9f0bf048c60e5bc9ebf9fa5a427461 assets/hbm/models/item/pile_rod_detecto
 b75cd16e80773dddc1757cd5b7e2bf6ec21a107d assets/hbm/models/item/pile_rod_source.json
 b05f9edc228d4af7b4dcefc88d5302e9c3a4057f assets/hbm/models/item/pile_rod_uranium.json
 3c357ba3801f3b62a55fbd137a9dacf22166ea07 assets/hbm/models/item/pipes_steel.json
+7881b8a2c96d55a38037dcaa157a2c82acb83230 assets/hbm/models/item/plastic_bag.json
 4d21537488898adcbf399cf5a1b9c63493160608 assets/hbm/models/item/plate_advanced_alloy.json
 64ce181c88a6e50fcaf46979799b738d31361276 assets/hbm/models/item/plate_aluminium.json
 937bf59a454647510714fa5a381d0e6068955887 assets/hbm/models/item/plate_armor_ajr.json
@@ -266,6 +268,7 @@ a17ea416c3c9488a2773284debac91e4024744ec assets/hbm/models/item/solid_fuel_prest
 373efa8358d469c6491898565ac019b953c45e82 assets/hbm/models/item/stamp_iron_plate.json
 a2a9de285d2fafa874e85947aaaaf2bfa599d7b4 assets/hbm/models/item/sulfur.json
 ce8563ec7d7d61f0770a8d7868de3a78834798e0 assets/hbm/models/item/thruster_nuclear.json
+c805b6dfab4da118aa3ff4bc67164ba9768bb003 assets/hbm/models/item/toolbox.json
 38758c995337a7961eb2b439f0343f55904b0cdf assets/hbm/models/item/trinitite.json
 f977e24eb465688f7ca7d9e2d91dd28c245780cf assets/hbm/models/item/tsar_core.json
 a7f3ce12e2d2504ff9d69d57040d938672f8fd18 assets/hbm/models/item/waste_mox.json

@@ -4,7 +4,7 @@ import com.hbm.ntm.block.LegacyDemonLampBlock;
 import com.hbm.ntm.blockentity.LegacyDemonLampBlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
-import com.hbm.ntm.client.obj.ObjModelLibrary;
+import com.hbm.ntm.client.obj.ObjLightModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -29,7 +29,7 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
         poseStack.translate(0.5D, 0.5D, 0.5D);
         LegacyObjTransforms.applySixFaceAttachmentRotation(poseStack, state.getValue(LegacyDemonLampBlock.FACE));
         poseStack.translate(-0.5D, -0.5D, -0.5D);
-        ObjModelLibrary.DEMON_LAMP.render(new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
+        ObjLightModels.DEMON_LAMP.render(new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
         renderAura(poseStack, buffer);
         poseStack.popPose();
     }

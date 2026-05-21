@@ -18,6 +18,9 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.BooleanValue DISABLE_EXPLOSIVE;
     public static ForgeConfigSpec.BooleanValue DISABLE_HOT;
     public static ForgeConfigSpec.BooleanValue DISABLE_HYDROACTIVE;
+    public static ForgeConfigSpec.BooleanValue ENABLE_LESS_BULLSHIT_MODE;
+    public static ForgeConfigSpec.BooleanValue LBSM_SAFE_CRATES;
+    public static ForgeConfigSpec.BooleanValue LBSM_SAFE_ME_DRIVES;
 
     static void define(ForgeConfigSpec.Builder builder) {
         builder.push("radiation");
@@ -54,6 +57,15 @@ public final class RadiationConfig {
         DISABLE_EXPLOSIVE = builder.define("disableExplosive", false);
         DISABLE_HOT = builder.define("disableHot", false);
         DISABLE_HYDROACTIVE = builder.define("disableHydroactive", false);
+        ENABLE_LESS_BULLSHIT_MODE = builder
+                .comment("Legacy enableLessBullshitMode. Currently used for hazard compatibility gates migrated before the full LBSM config.")
+                .define("enableLessBullshitMode", false);
+        LBSM_SAFE_CRATES = builder
+                .comment("Legacy LBSM_safeCrates: when Less Bullshit Mode is enabled, prevents crate-like item containers from becoming radioactive.")
+                .define("lbsmSafeCrates", true);
+        LBSM_SAFE_ME_DRIVES = builder
+                .comment("Legacy LBSM_safeMEDrives: when Less Bullshit Mode is enabled, prevents ME Drives and Portable Cells from becoming radioactive.")
+                .define("lbsmSafeMeDrives", true);
         builder.pop();
     }
 

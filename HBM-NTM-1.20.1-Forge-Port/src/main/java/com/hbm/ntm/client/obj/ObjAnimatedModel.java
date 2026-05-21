@@ -8,51 +8,57 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class ObjAnimatedModel implements LegacyObjModel {
-    private final Map<String, ObjModelPart> parts = new LinkedHashMap<>();
+    private final Map<String, PartEntry> parts = new LinkedHashMap<>();
 
     public ObjAnimatedModel part(String name, ObjModelPart part) {
-        parts.put(normalize(name), part);
+        parts.put(normalize(name), new PartEntry(name, part));
         return this;
     }
 
     @Override
     public void renderAll(ObjRenderContext context) {
-        for (ObjModelPart part : parts.values()) {
-            part.render(context);
+        for (PartEntry part : parts.values()) {
+            part.modelPart().render(context);
         }
     }
 
     @Override
     public void renderPart(String name, ObjRenderContext context) {
-        ObjModelPart part = parts.get(normalize(name));
+        PartEntry part = parts.get(normalize(name));
         if (part != null) {
-            part.render(context);
+            part.modelPart().render(context);
         }
     }
 
     @Override
     public void renderOnly(ObjRenderContext context, String... names) {
-        for (String name : names) {
-            renderPart(name, context);
+        List<String> included = Arrays.stream(names).map(ObjAnimatedModel::normalize).toList();
+        for (Map.Entry<String, PartEntry> entry : parts.entrySet()) {
+            if (included.contains(entry.getKey())) {
+                entry.getValue().modelPart().render(context);
+            }
         }
     }
 
     @Override
     public void renderAllExcept(ObjRenderContext context, String... excludedNames) {
         List<String> excluded = Arrays.stream(excludedNames).map(ObjAnimatedModel::normalize).toList();
-        for (Map.Entry<String, ObjModelPart> entry : parts.entrySet()) {
+        for (Map.Entry<String, PartEntry> entry : parts.entrySet()) {
             if (!excluded.contains(entry.getKey())) {
-                entry.getValue().render(context);
+                entry.getValue().modelPart().render(context);
             }
         }
     }
 
     @Override
     public List<String> getPartNames() {
-        return Collections.unmodifiableList(parts.keySet().stream().toList());
+        return Collections.unmodifiableList(parts.values().stream().map(PartEntry::legacyName).toList());
     }
 
     private static String normalize(String name) {
         return name.toLowerCase(Locale.ROOT);
+    }
+
+    private record PartEntry(String legacyName, ObjModelPart modelPart) {
     }
 }

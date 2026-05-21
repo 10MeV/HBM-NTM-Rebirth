@@ -179,6 +179,140 @@
   - 禁止直接用 Forge `EnergyStorage` 取代所有 HBM 能量逻辑。
   - 禁止每台机器各自写一套 FE 适配器；应复用 `ForgeEnergyAdapter` 或共享扩展类。
 
+## 2026-05-20 继续推进：节点 BlockEntity 接入层
+
+- 本批新增：
+  - `src/main/java/com/hbm/ntm/blockentity/HbmEnergyNodeBlockEntity.java`
+  - `src/main/java/com/hbm/ntm/blockentity/HbmEnergyNetworkBlockEntity.java`
+  - `src/main/java/com/hbm/ntm/energy/HbmEnergyNodespace.java` 维度内 active net 管理与拆网重建补强。
+- `HbmEnergyNodeBlockEntity` 用于纯导线/节点方块：
+  - 服务端 `onLoad()` 自动调用 `HbmEnergyNodespace.createNode(level, node)`。
+  - `setRemoved()` 自动调用 `HbmEnergyNodespace.destroyNode(level, pos)`。
+  - 默认 `getEnergyConnections()` 为六面连通；后续电缆、二极管、限定面导线应覆盖该方法返回真实可连接方向。
+  - `refreshEnergyNode()` 可在邻居、朝向、方块状态变化后由子类调用，重新写入节点连接面。
+- `HbmEnergyNetworkBlockEntity` 用于“既有 HBM long HE 储能，又需要挂入 PowerNet 节点”的机器：
+  - 继承 `HbmEnergyBlockEntity`，继续复用 `Energy` NBT 保存、FE capability 桥接、side mode。
+  - 额外持有一个 `HbmEnergyNode` 并复用同样的 create/destroy/refresh 生命周期。
+  - 后续迁移发电机、储能方块、机器输入输出口时，若旧版使用 Energy MK2 网络，应优先继承该类或按其生命周期接入。
+- `HbmEnergyNodespace` 本批修正：
+  - active `HbmPowerNet` 从全局集合下沉到每个 `EnergyNodeWorld`，避免多维度服务器 tick 时同一网络被重复 update。
+  - 增加 `getNodeCount(Level)` 与 `getNetworkCount(Level)`，用于后续调试、测试或信息面板。
+  - 节点移除或同位置替换时，会销毁旧网络并标记旧网络剩余节点 `recentlyChanged`，下一次 tick 按当前邻接关系重新合并为新的连通分量。
+- 当前仍未完成：
+  - 还没有具体 Energy MK2 cable/block 注册和模型资源迁移。
+  - 还没有机器每 tick 自动向所在 `HbmPowerNet` 刷新 provider/receiver 订阅的统一基类；后续可以在 `HbmEnergyNetworkBlockEntity` 上再加 tick helper。
+  - 还没有端到端游戏内验证电缆破坏后网络拆分，仅完成 `compileJava` 编译验证。
+
+## 2026-05-21 继续推进：订阅与方块刷新层
+
+- 本批新增/更新：
+  - `src/main/java/com/hbm/ntm/energy/HbmEnergyNodeHost.java`
+  - `src/main/java/com/hbm/ntm/block/HbmEnergyNodeBlock.java`
+  - `src/main/java/com/hbm/ntm/blockentity/HbmEnergyNodeBlockEntity.java`
+  - `src/main/java/com/hbm/ntm/blockentity/HbmEnergyNetworkBlockEntity.java`
+- `HbmEnergyNodeHost` 抽出节点宿主契约：
+  - `getEnergyNode()` 返回当前 BlockEntity 持有的 HBM 能量节点。
+  - `refreshEnergyNode()` 用于放置、邻居变化、朝向或连接状态变化后重建节点。
+  - `removeEnergyNode()` 用于方块真正移除时从 nodespace 拆除节点。
+- `HbmEnergyNodeBlock` 是后续导线/节点方块的通用方块基类：
+  - `onPlace` 时刷新自身和邻居节点。
+  - `neighborChanged` 时刷新自身节点。
+  - `onRemove` 时移除自身节点并刷新邻居节点。
+  - 子类仍需提供具体 BlockEntity，并在 BlockEntity 中覆盖 `getEnergyConnections()` 表达真实可连方向。
+- `HbmEnergyNetworkBlockEntity` 增加网络订阅辅助：
+  - `getPowerNet()` 返回当前节点所在 `HbmPowerNet`。
+  - `serverTick(Level, BlockPos, BlockState, T)` 可作为 BlockEntityTicker 的服务端入口。
+  - `refreshEnergyNetworkSubscriptions()` 按 `shouldSubscribeAsProvider()` / `shouldSubscribeAsReceiver()` 刷新订阅时间戳。
+  - 默认不自动订阅 provider 或 receiver，避免把储能、发电机、耗电机误接；具体机器按旧版语义覆盖开关或直接调用 `subscribeEnergyProvider` / `subscribeEnergyReceiver`。
+  - 默认 provider/receiver 对象是内部 `HbmEnergyStorage`，复杂机器可覆盖 `getNetworkEnergyProvider()` / `getNetworkEnergyReceiver()`。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+
+## 2026-05-21 继续推进：导线连接 BlockState 基类
+
+- 本批更新：
+  - `src/main/java/com/hbm/ntm/block/HbmEnergyNodeBlock.java`
+  - `src/main/java/com/hbm/ntm/energy/HbmEnergyConnectionUtil.java`
+- `HbmEnergyNodeBlock` 现在同时承担三层通用职责：
+  - 方块生命周期：放置、邻居变化、移除时刷新自身/邻居 `HbmEnergyNode`。
+  - 连接识别：实现 `HbmEnergyConnectorBlock`，让邻居即使在 BlockEntity 尚未加载时也能识别该方块可被能量导线连接。
+  - 可视状态：维护 `north/east/south/west/up/down` 六个 boolean `BlockStateProperties`，用于后续 multipart 模型或 OBJ/BER 渲染判断连接臂。
+- 新增连接状态行为：
+  - `getStateForPlacement` 会按当前邻居计算初始六向连接状态。
+  - `neighborChanged` 会刷新自身连接状态并重建节点。
+  - `onPlace` 会刷新自身和邻居连接状态，再刷新节点网络。
+  - `onRemove` 会移除自身节点，并刷新邻居连接状态与节点网络。
+  - `getConnectionState(...)` 统一通过 `HbmEnergyConnectionUtil.canConnect(...)` 计算视觉/状态连接。
+- `HbmEnergyConnectionUtil` 新增 block-level overload：
+  - `collectBlockConnections(BlockGetter, BlockPos, HbmEnergyConnectorBlock)`
+  - `canConnect(BlockGetter, BlockPos, HbmEnergyConnectorBlock, Direction)`
+- 后续具体电缆迁移建议：
+  - 普通红线/包线可继承 `HbmEnergyNodeBlock`，BlockEntity 继承 `HbmEnergyNodeBlockEntity`。
+  - 数据生成可用六个 boolean property 输出 multipart cable arm。
+  - 特殊导线若有单向、开关、检测器、颜色隔离等限制，覆盖 `canConnectEnergy(BlockGetter, BlockPos, Direction)` 或 BlockEntity 的 `canConnectEnergy(Direction)`。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - 仍有 `neighborChanged/onRemove` 相关弃用提示，当前项目已有同类生命周期用法；后续若统一迁移到新版回调再一起替换。
+
+## 2026-05-21 继续推进：tryProvide/trySubscribe 迁移辅助
+
+- 本批更新：
+  - `src/main/java/com/hbm/ntm/energy/HbmEnergyUtil.java`
+  - `src/main/java/com/hbm/ntm/blockentity/HbmEnergyBlockEntity.java`
+- 对齐 1.7.10 契约：
+  - 旧版 `IEnergyProviderMK2#tryProvide(world, x, y, z, dir)` 会在相邻方块是导线时把 provider 订阅进导线所在 `PowerNetMK2`。
+  - 同一方法也会在相邻方块是 receiver 且 `allowDirectProvision()` 为真时，绕过网络直接传输一次 HE。
+  - 旧版 `IEnergyReceiverMK2#trySubscribe(...)` 会在相邻导线可从对应面连接时，把 receiver 订阅进该导线所在网络。
+- `HbmEnergyUtil` 新增现代辅助：
+  - `subscribeProviderToNeighborNetwork(Level, BlockPos, Direction, HbmEnergyProvider)`
+  - `subscribeReceiverToNeighborNetwork(Level, BlockPos, Direction, HbmEnergyReceiver)`
+  - `subscribeProviderToNetwork(Level, BlockPos, Direction, HbmEnergyProvider)`
+  - `subscribeReceiverToNetwork(Level, BlockPos, Direction, HbmEnergyReceiver)`
+  - `tryProvideToNeighbor(Level, BlockPos, Direction, HbmEnergyProvider)`
+  - `tryProvideToAllNeighbors(Level, BlockPos, HbmEnergyProvider)`
+  - `subscribeReceiverToAllNeighborNetworks(Level, BlockPos, HbmEnergyReceiver)`
+  - `getConnectablePowerNet(Level, BlockPos, Direction)`
+- 现代桥接语义：
+  - 网络订阅仍要求相邻方块实体实现 `HbmEnergyConnector`，且相邻方块对应 side 允许连接。
+  - `tryProvideToNeighbor` 保留旧版两段式逻辑：先尝试订阅相邻导线网络，再尝试直接 HBM receiver 传输。
+  - 若相邻方块不是 HBM receiver，则走现有 `ForgeCapabilities.ENERGY` 推电桥接，保持 1.20.1 FE 通用互操作。
+- `HbmEnergyBlockEntity` 新增机器侧便利方法，并全部尊重 side mode：
+  - `pullEnergyFromSide(Direction, long)` / `pushEnergyToSide(Direction, long)`
+  - `pullEnergyFromAllSides(long)` / `pushEnergyToAllSides(long)`
+  - `subscribeEnergyProviderToSide(Direction)` / `subscribeEnergyReceiverToSide(Direction)`
+  - `subscribeEnergyProviderToAllSides()` / `subscribeEnergyReceiverToAllSides()`
+- 后续机器迁移建议：
+  - 普通耗电机 tick 中优先调用 `subscribeEnergyReceiverToAllSides()` 或按旧版方向调用单侧方法。
+  - 发电机 tick 中优先调用 `subscribeEnergyProviderToAllSides()`；若旧版允许直接贴脸供电，则调用 `HbmEnergyUtil.tryProvideToNeighbor/AllNeighbors`。
+  - 若机器已有 `HbmEnergyNetworkBlockEntity` 自身节点，仍可使用其 `refreshEnergyNetworkSubscriptions()`；若只是普通邻接机器，则使用 `HbmEnergyBlockEntity` helper。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - 当前仅有 `HbmEnergyNodeBlock` 使用/覆盖 Minecraft 弃用 API 的编译提示，属于 `neighborChanged/onRemove` 生命周期入口，后续如项目统一改为新版回调再一起调整。
+
+## 2026-05-21 继续推进：连接契约与连接面计算
+
+- 本批新增/更新：
+  - `src/main/java/com/hbm/ntm/energy/HbmEnergyConnector.java`
+  - `src/main/java/com/hbm/ntm/energy/HbmEnergyConnectorBlock.java`
+  - `src/main/java/com/hbm/ntm/energy/HbmEnergyConnectionUtil.java`
+  - `src/main/java/com/hbm/ntm/blockentity/HbmEnergyNodeBlockEntity.java`
+  - `src/main/java/com/hbm/ntm/blockentity/HbmEnergyNetworkBlockEntity.java`
+- 对齐 1.7.10 契约：
+  - 旧版 `IEnergyConnectorMK2#canConnect(ForgeDirection dir)` 中，`dir` 表示“当前方块的被连接面”。
+  - 旧版 `IEnergyConductorMK2#createNode()` 会按方向生成 `PowerNode` 连接点；现代版改为 `HbmEnergyConnectionUtil.collectNodeConnections(...)` 统一计算。
+  - 旧版 `IEnergyConnectorBlock` 是无 TileEntity 方块的视觉/连接辅助；现代版对应 `HbmEnergyConnectorBlock`。
+- 现代连接规则：
+  - `HbmEnergyConnector#canConnectEnergy(Direction side)` 默认拒绝 `null`，允许其他方向。
+  - 节点连接面只在“双向允许”时写入：本方 `canConnectEnergy(direction)` 为真，邻居方块实体或方块也允许 `direction.getOpposite()`。
+  - `HbmEnergyNodeBlockEntity` 默认使用 `HbmEnergyConnectionUtil.collectNodeConnections`，不再无条件六面连通。
+  - `HbmEnergyNetworkBlockEntity` 同样使用连接工具，并让 `canConnectEnergy(side)` 尊重 `HbmEnergyBlockEntity` 的 side mode；`NONE` 面不会接入网络。
+- 后续具体电缆迁移入口：
+  - 普通 Energy MK2 电缆：继承 `HbmEnergyNodeBlock` + `HbmEnergyNodeBlockEntity`，默认即可按邻居 connector 自动计算连接面。
+  - 二极管/开关/检测器：覆盖 `canConnectEnergy(Direction side)` 或 `getEnergyConnections()` 表达单向、红石开关、检测输出等旧版语义。
+  - 纯 Block 连接体或多方块 dummy：实现 `HbmEnergyConnectorBlock`，用于无独立能量节点但需要被电缆识别连接的方块。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+
 ## 验证清单
 
 - 多 provider、多 receiver、不同优先级时分配结果与旧算法一致。

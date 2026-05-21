@@ -108,6 +108,88 @@ public final class HbmEnergyUtil {
                 .orElse(0L);
     }
 
+    public static boolean subscribeProviderToNeighborNetwork(Level level, BlockPos pos, Direction side, HbmEnergyProvider provider) {
+        if (level == null || pos == null || side == null || provider == null) {
+            return false;
+        }
+        return subscribeProviderToNetwork(level, pos.relative(side), side.getOpposite(), provider);
+    }
+
+    public static boolean subscribeReceiverToNeighborNetwork(Level level, BlockPos pos, Direction side, HbmEnergyReceiver receiver) {
+        if (level == null || pos == null || side == null || receiver == null) {
+            return false;
+        }
+        return subscribeReceiverToNetwork(level, pos.relative(side), side.getOpposite(), receiver);
+    }
+
+    public static boolean subscribeProviderToNetwork(Level level, BlockPos conductorPos, Direction conductorSide, HbmEnergyProvider provider) {
+        HbmPowerNet powerNet = getConnectablePowerNet(level, conductorPos, conductorSide);
+        if (provider == null || powerNet == null) {
+            return false;
+        }
+        powerNet.addProvider(provider);
+        return true;
+    }
+
+    public static boolean subscribeReceiverToNetwork(Level level, BlockPos conductorPos, Direction conductorSide, HbmEnergyReceiver receiver) {
+        HbmPowerNet powerNet = getConnectablePowerNet(level, conductorPos, conductorSide);
+        if (receiver == null || powerNet == null) {
+            return false;
+        }
+        powerNet.addReceiver(receiver);
+        return true;
+    }
+
+    public static long tryProvideToNeighbor(Level level, BlockPos pos, Direction side, HbmEnergyProvider provider) {
+        if (level == null || pos == null || side == null || provider == null) {
+            return 0L;
+        }
+        subscribeProviderToNeighborNetwork(level, pos, side, provider);
+        long direct = provideDirectlyToNeighbor(level, pos, side, provider);
+        if (direct > 0L) {
+            return direct;
+        }
+        return pushToNeighbor(level, pos, side, provider, provider.getProviderSpeed());
+    }
+
+    public static int tryProvideToAllNeighbors(Level level, BlockPos pos, HbmEnergyProvider provider) {
+        int touched = 0;
+        for (Direction side : Direction.values()) {
+            boolean subscribed = subscribeProviderToNeighborNetwork(level, pos, side, provider);
+            long transferred = provideDirectlyToNeighbor(level, pos, side, provider);
+            if (transferred <= 0L) {
+                transferred = pushToNeighbor(level, pos, side, provider, provider.getProviderSpeed());
+            }
+            if (subscribed || transferred > 0L) {
+                touched++;
+            }
+        }
+        return touched;
+    }
+
+    public static int subscribeReceiverToAllNeighborNetworks(Level level, BlockPos pos, HbmEnergyReceiver receiver) {
+        int subscribed = 0;
+        for (Direction side : Direction.values()) {
+            if (subscribeReceiverToNeighborNetwork(level, pos, side, receiver)) {
+                subscribed++;
+            }
+        }
+        return subscribed;
+    }
+
+    public static HbmPowerNet getConnectablePowerNet(Level level, BlockPos conductorPos, Direction conductorSide) {
+        if (level == null || conductorPos == null || conductorSide == null) {
+            return null;
+        }
+        BlockEntity conductor = level.getBlockEntity(conductorPos);
+        if (!(conductor instanceof HbmEnergyConnector connector) || !connector.canConnectEnergy(conductorSide)) {
+            return null;
+        }
+        HbmEnergyNode node = HbmEnergyNodespace.getNode(level, conductorPos);
+        HbmPowerNet powerNet = node == null ? null : node.getPowerNet();
+        return powerNet != null && powerNet.isValid() ? powerNet : null;
+    }
+
     public static long pullFromAllNeighbors(Level level, BlockPos pos, HbmEnergyReceiver receiver, long maxTransferPerSide) {
         long transferred = 0L;
         for (Direction side : Direction.values()) {
@@ -152,6 +234,18 @@ public final class HbmEnergyUtil {
             transferred += pushToNeighbor(level, pos, side, provider, remaining);
         }
         return transferred;
+    }
+
+    private static long provideDirectlyToNeighbor(Level level, BlockPos pos, Direction side, HbmEnergyProvider provider) {
+        BlockEntity neighbor = level.getBlockEntity(pos.relative(side));
+        if (!(neighbor instanceof HbmEnergyReceiver receiver) || receiver == provider || !receiver.allowDirectProvision()) {
+            return 0L;
+        }
+        Direction neighborSide = side.getOpposite();
+        if (neighbor instanceof HbmEnergyConnector connector && !connector.canConnectEnergy(neighborSide)) {
+            return 0L;
+        }
+        return movePower(provider, receiver, Math.min(provider.getProviderSpeed(), receiver.getReceiverSpeed()));
     }
 
     private static long extractIntoReceiver(IEnergyStorage itemEnergy, HbmEnergyReceiver receiver, long maxTransfer) {

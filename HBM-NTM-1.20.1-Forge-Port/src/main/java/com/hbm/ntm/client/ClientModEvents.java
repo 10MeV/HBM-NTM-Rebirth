@@ -8,15 +8,19 @@ import com.hbm.ntm.client.renderer.LegacyLanternBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.LegacyLightBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
 import com.hbm.ntm.client.screen.BasicMachineScreen;
+import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.ModelEvent;
+import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.registries.RegistryObject;
 
 @Mod.EventBusSubscriber(modid = HbmNtm.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class ClientModEvents {
@@ -38,6 +42,15 @@ public final class ClientModEvents {
     public static void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
         TrinketBlockEntityRenderer.registerAdditionalModels();
         ObjModelLibrary.registerAdditionalModels(event);
+    }
+
+    @SubscribeEvent
+    public static void registerItemColors(RegisterColorHandlersEvent.Item event) {
+        ModItems.PARTS_TAB_ITEMS.stream()
+                .map(RegistryObject::get)
+                .filter(DepletedFuelItem.class::isInstance)
+                .forEach(item -> event.register((stack, tintIndex) ->
+                        DepletedFuelItem.isHot(stack) ? DepletedFuelItem.HOT_TINT : 0xFFFFFF, item));
     }
 
     private ClientModEvents() {

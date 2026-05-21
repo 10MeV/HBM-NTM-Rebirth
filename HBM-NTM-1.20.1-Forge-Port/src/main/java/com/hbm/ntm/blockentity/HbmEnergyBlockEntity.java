@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
+import com.hbm.ntm.energy.HbmEnergyUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -50,6 +51,84 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity {
 
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.BOTH;
+    }
+
+    protected long pullEnergyFromSide(Direction side, long maxTransfer) {
+        if (level == null || level.isClientSide || !canReceiveEnergy(side)) {
+            return 0L;
+        }
+        return HbmEnergyUtil.pullFromNeighbor(level, worldPosition, side, energy, maxTransfer);
+    }
+
+    protected long pushEnergyToSide(Direction side, long maxTransfer) {
+        if (level == null || level.isClientSide || !canExtractEnergy(side)) {
+            return 0L;
+        }
+        return HbmEnergyUtil.pushToNeighbor(level, worldPosition, side, energy, maxTransfer);
+    }
+
+    protected long pullEnergyFromAllSides(long totalMaxTransfer) {
+        if (level == null || level.isClientSide || totalMaxTransfer <= 0L) {
+            return 0L;
+        }
+        long transferred = 0L;
+        for (Direction side : Direction.values()) {
+            long remaining = totalMaxTransfer - transferred;
+            if (remaining <= 0L) {
+                break;
+            }
+            transferred += pullEnergyFromSide(side, remaining);
+        }
+        return transferred;
+    }
+
+    protected long pushEnergyToAllSides(long totalMaxTransfer) {
+        if (level == null || level.isClientSide || totalMaxTransfer <= 0L) {
+            return 0L;
+        }
+        long transferred = 0L;
+        for (Direction side : Direction.values()) {
+            long remaining = totalMaxTransfer - transferred;
+            if (remaining <= 0L) {
+                break;
+            }
+            transferred += pushEnergyToSide(side, remaining);
+        }
+        return transferred;
+    }
+
+    protected boolean subscribeEnergyProviderToSide(Direction side) {
+        return level != null
+                && !level.isClientSide
+                && canExtractEnergy(side)
+                && HbmEnergyUtil.subscribeProviderToNeighborNetwork(level, worldPosition, side, energy);
+    }
+
+    protected boolean subscribeEnergyReceiverToSide(Direction side) {
+        return level != null
+                && !level.isClientSide
+                && canReceiveEnergy(side)
+                && HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, worldPosition, side, energy);
+    }
+
+    protected int subscribeEnergyProviderToAllSides() {
+        int subscribed = 0;
+        for (Direction side : Direction.values()) {
+            if (subscribeEnergyProviderToSide(side)) {
+                subscribed++;
+            }
+        }
+        return subscribed;
+    }
+
+    protected int subscribeEnergyReceiverToAllSides() {
+        int subscribed = 0;
+        for (Direction side : Direction.values()) {
+            if (subscribeEnergyReceiverToSide(side)) {
+                subscribed++;
+            }
+        }
+        return subscribed;
     }
 
     @Override

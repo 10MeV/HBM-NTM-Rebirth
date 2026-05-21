@@ -2,8 +2,8 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.TrinketVariant;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
-import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.ObjModelPart;
+import com.hbm.ntm.client.obj.ObjTrinketModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -131,6 +131,6 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
     }
 
     private static ObjModelPart trinketPart(String name, RenderType renderType) {
-        return ObjModelLibrary.trinketPart(name, renderType);
+        return ObjTrinketModels.part(name, renderType);
     }
 }
