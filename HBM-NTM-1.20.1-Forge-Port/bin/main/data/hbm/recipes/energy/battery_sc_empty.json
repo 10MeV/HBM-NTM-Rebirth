@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": {
+      "tag": "forge:wires/gold"
+    },
+    "L": {
+      "item": "hbm:plate_lead"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    }
+  },
+  "pattern": [
+    "PGP",
+    "L L",
+    "PGP"
+  ],
+  "result": {
+    "item": "hbm:battery_sc.empty"
+  },
+  "show_notification": true
+}

@@ -363,6 +363,55 @@ Verification:
 
 - `.\gradlew.bat compileJava processResources --no-daemon` passed.
 
+## 2026-05-22 Modern Library Pass 14
+
+This pass expands the old fluid-container contract from generic slot transfer helpers into reusable container rules and data:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/FluidContainerRegistry.java`
+  - `com/hbm/items/machine/ItemCanister.java`
+  - `com/hbm/items/machine/ItemGasTank.java`
+  - `com/hbm/items/machine/ItemFluidTank.java`
+  - `com/hbm/items/machine/ItemInfiniteFluid.java`
+  - `com/hbm/items/weapon/ItemDisperser.java`
+  - `com/hbm/inventory/fluid/Fluids.java` container declarations
+- Add `ContainerFluidTrait`:
+  - Preserves old `CD_Canister` overlay color data.
+  - Preserves old `CD_Gastank` bottle and label color data.
+- Wire the old canister/gastank white lists into `HbmFluids` for all legacy fluids that had explicit `addContainers(new CD_Canister(...))` or `addContainers(new CD_Gastank(...))`.
+- Add `HbmFluidContainerRules`:
+  - Records old capacities for 1,000 mB small containers, 16,000 mB fluid barrels, 2,000 mB disperser canisters, and 4,000 mB glyphid glands.
+  - Separates canister/gastank explicit white lists from generic fluid tank / lead tank / fluid barrel rules.
+  - Keeps the old lead-container split: normal tanks/barrels reject lead-required fluids, while lead tanks accept all general container fluids.
+  - Keeps old disperser filtering through `FluidType.isDispersible()`.
+  - Keeps the old glyphid gland exception for pheromone and sulfuric acid.
+- Add reusable `HbmFluidContainerItem`:
+  - Implements modern `IFillableItem` with internal NBT fields for HBM fluid name, amount, and pressure.
+  - Uses `HbmFluidContainerRules` for acceptance instead of each future item reimplementing the old rules.
+  - Preserves the old `tryFill` contract by returning the unfilled remainder and `tryEmpty` by returning the amount provided.
+
+Still deferred:
+
+- The concrete legacy item IDs (`canister_empty`, `canister_full`, `gas_empty`, `gas_full`, `fluid_tank_full`, `fluid_barrel_full`, etc.) are not registered in this pass. The reusable item implementation is ready, but exact full/empty ID handling needs a separate registration/data pass because 1.7.10 used metadata subitems while 1.20.1 needs NBT/model handling.
+- Old `FluidContainerRegistry` discrete full/empty replacement behavior is not fully mirrored for metadata-style stacks yet.
+- Infinite barrel behavior is documented but still not connected to machine loading; its pressure exception will need a concrete `ItemInfiniteFluid` port.
+- Container tooltips, color tinting/render layers, item models, and creative-tab fluid variants remain deferred.
+
+Progress estimate after Pass 14:
+
+- Core `FluidType` identity/NBT lookup/table: about 86%.
+- Basic tank/conform/Forge capability bridge: about 72%.
+- Fluid network/provider/receiver algorithm: about 60%.
+- In-world pipe graph: about 20%.
+- Fluid item/container loading: about 40%.
+- Behavior traits and cross-system effects: about 60%.
+- Machine integration through the library: about 14%.
+- Overall fluid library migration: about 54%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
 ## 2026-05-22 Modern Library Pass 10
 
 This pass closes the largest remaining trait data gap by porting the legacy `FT_Toxin` shape as machine-readable data:

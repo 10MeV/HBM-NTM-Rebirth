@@ -170,3 +170,46 @@
 
 - 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
 - 结果：通过。
+
+## 2026-05-22 第四批推进：ParticleCreators 剩余入口批量桥接
+
+- 1.7.10 对照：
+  - `ParticleCreators.particleCreators` 在 `ClientProxy#effectNT` 的第一层分发中优先处理：
+    - `explosionLarge` -> `ExplosionCreator`
+    - `explosionSmall` -> `ExplosionSmallCreator`
+    - `blackPowder` -> `BlackPowderCreator`
+    - `ashes` -> `AshesCreator`
+    - `casingNT` -> `CasingCreator`
+    - `skeleton` -> `SkeletonCreator`
+    - `flamethrower` 此前已接入现代 `FlamethrowerParticle`
+  - 旧 `ExplosionCreator` 会生成冲击波、火焰烟柱、方块碎屑并按距离延迟播放爆炸声音。
+  - 旧 `BlackPowderCreator` 按 `hX/hY/hZ` 方向生成黑火药烟与 fullbright 火花。
+  - 旧 `AshesCreator` / `SkeletonCreator` 会调用 `ClientProxy.vanish(entityID)` 隐藏实体，并生成灰烬或骨骼分件粒子。
+  - 旧 `CasingCreator` 生成带模型和可选烟节点的弹壳粒子。
+- 本批现代迁移：
+  - 新增 `ModParticleTypes.BLACK_POWDER_SPARK` 与 `BlackPowderSparkParticle`，使用旧 `particle_base` 图集，保留短寿命、暖色 fullbright、重力和摩擦语义。
+  - 新增 `assets/hbm/particles/black_powder_spark.json`。
+  - `ClientModEvents#registerParticleProviders` 注册黑火药火花 provider。
+  - `ParticleUtil` 增加 common 侧 helper/常量：
+    - `spawnExplosionLarge`
+    - `spawnExplosionSmall`
+    - `spawnBlackPowder`
+    - `spawnAshes`
+    - `spawnCasing`
+    - `spawnSkeleton`
+  - `HbmParticleEffects` 增加旧 NBT type 的现代分发：
+    - `explosionLarge`：`EXPLOSION_EMITTER` + 环形冲击烟 + `rocket_flame`/`ex_smoke` 烟柱 + 邻近方块碎屑。
+    - `explosionSmall`：小型爆炸核心 + `rocket_flame`/`ex_smoke` + 邻近方块碎屑。
+    - `blackPowder`：按旧 heading 归一化后生成 `ex_smoke` 与 `black_powder_spark`。
+    - `ashes`：按实体或坐标周围生成 `ASH` + 少量火焰。
+    - `casingNT`：暂以火花与可选烟表现弹壳喷出，不生成旧 3D 弹壳实体。
+    - `skeleton`：暂以 `BONE_BLOCK` block particle 表现骨骼化/碎骨，不生成旧 `ParticleSkeleton` 模型分件。
+- 边界：
+  - 旧 `ParticleDebris` 的 `WorldInAJar` 碎块实体、`ParticleMukeWave` 的水平加色 shockwave quad、`ParticleSpentCasing` 的 3D 弹壳模型、`ParticleSkeleton` 的骨骼模型分件均未完整深迁；本批是“旧 NBT 协议可消费 + 视觉近似”的大面积桥接。
+  - 旧爆炸声音延迟播放未在本批接入，后续应通过声音库/`ModSounds` 单独补齐。
+  - `ClientProxy.vanish(entityID)` 的实体隐藏语义未迁移，避免在纯粒子库里直接改现代实体可见性状态。
+
+## 2026-05-22 第四批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。

@@ -573,7 +573,7 @@ Completed in the 1.20.1 port:
   - `HazardType.RADIATION + ContaminationType.CREATIVE`, amount `0.5F`.
   - radiation poisoning for `60 * 20` ticks, amplifier `2`.
   - asbestos `+5` when the entity lacks fine-particle protection.
-- Added `ArmorUtil.hasFineParticleProtection` as the current bridge for old `HazardClass.PARTICLE_FINE` level-3 checks. It maps to the existing full Haz2-level suit check until the old armor/filter registry is fully migrated.
+- Added `ArmorUtil.hasFineParticleProtection` as the current bridge for old `HazardClass.PARTICLE_FINE` level-3 checks. As of the 2026-05-22 gas-mask bridge pass, this routes through the legacy `HazardClass` helmet/filter mapping rather than the earlier Haz2-only shortcut.
 - `LegacyGasMeltdownBlock` now extends the migrated `LegacyGasBlock` base, so it uses the old gas movement contract:
   - first direction: 50% up, otherwise down
   - second direction: random horizontal
@@ -582,7 +582,7 @@ Completed in the 1.20.1 port:
 
 Still incomplete:
 
-- Old `ArmorUtil.damageGasMaskFilter(entityLiving, 1)` is not migrated yet because the modern port does not have the old gas-mask filter durability path wired in.
+- Full gas-mask/filter item implementations and filter-install UI remain deferred, but `ArmorUtil.damageGasMaskFilter(entityLiving, 1)` now has a modern `GasMask` interface bridge and the migrated gas/fluid callers consume it.
 - `gas_meltdown` still uses the temporary modern particle in `animateTick`; the old visual particle was `townaura`, while high-radiation yellow fog remains part of the chunk-radiation client/render pass rather than this block collision pass.
 
 Verification:
@@ -900,16 +900,15 @@ Completed in the 1.20.1 port:
 - Added modern `RadiationConfig.ENABLE_MKU` to mirror legacy `ServerConfig.ENABLE_MKU`.
 - `CommonForgeEvents#handleContagion` now respects `ENABLE_MKU`.
 - Removed the modern-only `contagion == 1` final death behavior; legacy source does not actually trigger that branch because it checks the pre-decrement local value.
-- Added `ArmorUtil#checkForMkuProtection` as a minimal bridge for the legacy Haz2 plus `HazardClass.BACTERIA` check:
-  - requires the existing Haz2 radiation-resistance threshold
-  - also requires a helmet that looks like known legacy bacteria-capable gear, or enough helmet resistance to represent a heavy suit head piece
-  - this remains a bridge until the full `ArmorRegistry`/gas-mask-filter hazard class system is migrated.
+- Added `ArmorUtil#checkForMkuProtection` as a bridge for the legacy Haz2 plus `HazardClass.BACTERIA` check:
+  - requires the existing Haz2 radiation-resistance threshold.
+  - as of the 2026-05-22 gas-mask bridge pass, the bacteria half routes through the legacy helmet/filter `HazardClass` mapping.
 - `FalloutLayerBlock` now allows survival on another fallout layer, matching the old stacked-fallout support intent without adding the non-legacy 8 visible height models.
 
 Still not fully aligned:
 
 - Strict fallout `metadata & 7 == 7` support cannot be represented exactly until a legacy metadata/state compatibility decision is made.
-- The MKU bacteria protection bridge is not a full `ArmorRegistry.hasProtection(..., HazardClass.BACTERIA)` port.
+- The MKU bacteria protection bridge now uses the migrated `HazardClass.BACTERIA` helmet/filter mapping, but armor-mod recursion is still deferred.
 - Radiation fog remains the modern particle bridge until `ParticleRadiationFog` and the old proxy effect path are migrated.
 - Creeper nuclear transformation and Duck to Quackos remain blocked on missing entity migrations.
 - PRISM/3D/NT/Blank radiation handlers and non-block radiation sources remain deferred.
@@ -939,7 +938,7 @@ Not aligned / needs correction:
 - Active contamination effects currently add radiation directly in `CommonForgeEvents#handleContaminationEffects`; legacy calls `ContaminationUtil.contaminate(..., RAD_BYPASS/CREATIVE, con.getRad())`. Current code therefore misses `radEnv` accumulation, player tick-age/creative checks, and radiation immunity checks for these entries.
 - `RadiationData` saves migrated contamination entries in a new `hfr_contamination` list. Legacy NBT only writes `hfr_cont_count` and `cont_<index>` compounds. If strict save compatibility is required, write the legacy shape as canonical and treat the list only as an internal bridge or remove it.
 - MKU contagion currently kills at `contagion == 1`; old `EntityEffectHandler` checks the local pre-decrement value `contagion == 0` inside `contagion > 0`, so the final kill does not actually fire in source behavior.
-- MKU infection protection currently checks only heavy hazmat in some paths. Legacy uses `!ArmorUtil.checkForHaz2(...) || !ArmorRegistry.hasProtection(..., HazardClass.BACTERIA)` and is gated by `ServerConfig.ENABLE_MKU`.
+- MKU infection protection now follows the legacy shape `checkForHaz2(...) && HazardClass.BACTERIA` through `ArmorUtil#checkForMkuProtection`; remaining gaps are actual gas-mask/filter item migration and armor-mod recursion.
 - Creeper radiation transformation is incomplete: old code has a 1/3 chance to spawn `EntityCreeperNuclear`, otherwise deals 100 radiation damage. Current code only damages vanilla creepers because the nuclear creeper entity is not migrated.
 - Duck to Quackos radiation transformation is missing because both legacy entities are not migrated.
 - Radiation fog is a modern `MYCELIUM` particle bridge. Legacy uses `ParticleRadiationFog` / `radFog` proxy effect with the legacy texture/render path.
@@ -1281,3 +1280,52 @@ Verification:
 - 2026-05-22 attempted `.\gradlew.bat compileJava processResources --no-daemon`.
 - Compile reached `:compileJava` and failed on an unrelated current battery-socket migration gap: `MachineBatterySocketBlockEntity` and `ModBlockEntities.MACHINE_BATTERY_SOCKET` are referenced but missing.
 - 2026-05-22 after render-library fog correction, `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-05-22 Gas Mask HazardClass Filter Bridge Pass
+
+Legacy source:
+
+- `com.hbm.util.ArmorRegistry`
+  - `hasProtection` / `hasAllProtection` / `hasAnyProtection` read only the requested armor slot, with helmet slot `3` used by gas/radiation hazards.
+  - direct item `HazardClass` registrations are merged with installed `IGasMask` filter hazard classes, then the mask blacklist removes classes that the mask cannot cover.
+- `com.hbm.util.ArmorUtil#register`
+  - `gas_mask_filter`: `PARTICLE_COARSE`, `PARTICLE_FINE`, `GAS_LUNG`, `GAS_BLISTERING`, `BACTERIA`.
+  - `gas_mask_filter_mono`: `PARTICLE_COARSE`, `GAS_MONOXIDE`.
+  - `gas_mask_filter_combo`: `PARTICLE_COARSE`, `PARTICLE_FINE`, `GAS_LUNG`, `GAS_BLISTERING`, `BACTERIA`, `GAS_MONOXIDE`.
+  - `gas_mask_filter_rag`: `PARTICLE_COARSE`.
+  - `gas_mask_filter_piss`: `PARTICLE_COARSE`, `GAS_LUNG`.
+  - helmet/direct items such as `gas_mask`, `gas_mask_m65`, `mask_rag`, `mask_piss`, `goggles`, `ashglasses`, hazmat helmets, `schrabidium_helmet`, and `euphemium_helmet` provide the old direct classes.
+- `com.hbm.util.ArmorUtil#damageGasMaskFilter`
+  - Gas exposure does not damage the helmet directly; it damages the installed filter, removing it when durability is exhausted.
+- Gas and toxin callers:
+  - `BlockGasRadon`, `BlockGasRadonDense`, and `BlockGasMeltdown` damage the filter when `PARTICLE_FINE` protects the entity.
+  - `BlockGasMonoxide` damages the filter when `GAS_MONOXIDE` protects the entity.
+  - `BlockGasClorine` damages the filter when `GAS_LUNG` protects the entity.
+  - `BlockGasAsbestos` and `BlockGasCoal` only suppress their long-term counters when protected; they do not call `damageGasMaskFilter` in the old source.
+  - `FT_Toxin.ToxinEntry#isProtected` damages the filter when the mask hazard class is present, then still requires a full hazmat suit when the toxin entry has `fullBody=true`.
+  - `ExplosionChaos#poison` accepts either `GAS_LUNG` or `GAS_BLISTERING` and damages the filter instead of damaging the helmet.
+
+Completed in the 1.20.1 port:
+
+- Reworked `ArmorUtil` gas/particle helpers through a legacy `HazardClass` bridge instead of broad keyword-only checks:
+  - added `hasProtection`, `hasAllProtection`, `hasAnyProtection`.
+  - added direct old-name hazard mappings for the known legacy masks, filters, goggles, hazmat helmets, and schrabidium/euphemium helmets.
+  - merged `GasMask#getFilter` classes while respecting `GasMask#getBlacklist`.
+  - added `damageGasMaskFilter(LivingEntity, int)` and routed it through the modern `GasMask` interface.
+- Added filter-damage parity to radiation/gas sources that old 1.7.10 damaged:
+  - radon gas and dense radon gas.
+  - meltdown gas.
+  - monoxide gas and chlorine gas.
+  - toxin fluid entries.
+  - chaos poison cloud.
+- Kept asbestos gas and coal gas aligned with the old source: protection suppresses asbestos/black-lung accumulation, but these blocks still do not consume filters.
+
+Still incomplete:
+
+- The actual 1.7.10 gas mask/filter item implementations and filter-install UI are not migrated yet. The bridge is ready for those items and is a no-op for non-`GasMask` helmets.
+- Legacy armor mod recursion (`ArmorModHandler` helmet-only attachment masks/filters) is still not migrated.
+- Some full-suite FSB armor direct `HazardClass` mappings will need a dedicated armor migration pass once those items are registered as real armor classes rather than name-only resources.
+
+Verification:
+
+- 2026-05-22 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.

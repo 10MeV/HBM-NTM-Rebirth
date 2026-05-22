@@ -1,5 +1,11 @@
 {
   "values": [
-    "hbm:powder_lignite"
+    "hbm:powder_lignite",
+    "hbm:powder_iron",
+    "hbm:powder_lithium",
+    "hbm:powder_cobalt",
+    "hbm:powder_sodium",
+    "hbm:powder_schrabidium",
+    "hbm:powder_spark_mix"
   ]
 }

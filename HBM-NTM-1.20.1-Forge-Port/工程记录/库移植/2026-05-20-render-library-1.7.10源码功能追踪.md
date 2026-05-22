@@ -260,6 +260,13 @@
 - `LegacyUntexturedQuadRenderer` 新增 `solid(...)`，使用专用 `hbm_legacy_solid_no_cull` RenderType：无贴图、`GameRenderer::getPositionColorShader`、`CullStateShard(false)`、`WriteMaskStateShard(true, true)`。
 - 规则：旧版“实体灯芯/灯罩内发光模型分件”使用 `solid(...)`；旧版“外扩透明光晕/光束”使用 `lightning(...)`。
 
+### 2026-05-22 粒子库交叉记录
+
+- 粒子库的实现进展已记录到 `2026-05-20-sound-particle-effects-library-1.7.10源码功能追踪.md`。
+- 本轮粒子侧批量桥接了旧 `ParticleCreators` 剩余高频入口：`explosionLarge`、`explosionSmall`、`blackPowder`、`ashes`、`casingNT`、`skeleton`。
+- 新增 `hbm:black_powder_spark` 现代粒子类型与 provider；其余入口先通过 `HbmParticleEffects` 组合现代粒子近似表现。
+- 仍未深迁旧自定义模型粒子和 world-last/手写 GL 粒子渲染，如 `ParticleDebris`、`ParticleMukeWave`、`ParticleSpentCasing`、`ParticleSkeleton`。
+
 ### 第 10 轮
 
 - 对 1.7.10 源码再次复查后，确认 render-library 文档此前仍有以下缺漏：
@@ -1123,6 +1130,32 @@
 
 - 现代实现仍走 `ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT` 与粒子图集，不直接复刻旧 GL11 状态切换。
 - 旧版 `glDepthMask(false)` / blend 状态由现代 translucent particle pipeline 承接，若后续截图仍有遮挡差异，再考虑专用 RenderType。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 Pumpjack Legacy Y Rotation Fix
+
+触发来源：
+
+- 实机观察到 `machine_pumpjack` 的模型与碰撞/占位区域相反：选框在泵模型底座一侧，但 OBJ 本体朝向另一侧。
+- 复核 1.7.10 `RenderPumpjack`：
+  - `NORTH(meta 2) -> 90`
+  - `WEST(meta 4) -> 180`
+  - `SOUTH(meta 3) -> 270`
+  - `EAST(meta 5) -> 0`
+- 现代 `facing.toYRot()` 映射为 `SOUTH=0, WEST=90, NORTH=180, EAST=270`；此前通用 renderer 使用 `offset + toYRot`，对泵机会把 NORTH/SOUTH 翻反。
+
+本轮现代修正：
+
+- `LegacyMachineDefinition` 增加可选 `yRotation(Function<Direction, Float>)`，允许单机按旧 renderer 的 metadata 表定义 Y 旋转。
+- `LegacyVisibleMachineRenderer` 改为调用 `definition.yRotation(state)`，默认仍保留原 `yRotationOffset + facing.toYRot()` 兼容路径。
+- `machine_pumpjack` 使用旧表等价公式 `270 - facing.toYRot()`。
+
+仍未完全等价：
+
+- 本轮只修泵机模型与 footprint 对齐；其他可见多方块机器如果后续发现模型朝向与 dummy 区域不一致，应逐台按 1.7.10 renderer 的 switch 表迁入 `yRotation(...)`。
 
 验证：
 

@@ -131,7 +131,7 @@ public final class HbmFluidContactEffects {
         }
 
         for (ToxinFluidTrait.ToxinEntry entry : trait.getEntries()) {
-            if (isProtected(living, entry)) {
+            if (isProtected(living, entry, apply)) {
                 report.protectedToxins++;
                 continue;
             }
@@ -175,16 +175,20 @@ public final class HbmFluidContactEffects {
         }
     }
 
-    private static boolean isProtected(LivingEntity entity, ToxinFluidTrait.ToxinEntry entry) {
-        boolean hazardProtected = switch (entry.getHazardClass()) {
-            case GAS_LUNG, GAS_BLISTERING -> ArmorUtil.hasLungGasProtection(entity);
-            case GAS_MONOXIDE, GAS_INERT -> ArmorUtil.hasMonoxideGasProtection(entity);
-            case PARTICLE_FINE -> ArmorUtil.hasFineParticleProtection(entity);
-            case PARTICLE_COARSE, SAND -> ArmorUtil.hasCoarseParticleProtection(entity);
-            case BACTERIA -> ArmorUtil.hasBacteriaProtection(entity);
+    private static boolean isProtected(LivingEntity entity, ToxinFluidTrait.ToxinEntry entry, boolean apply) {
+        HazardClass hazardClass = entry.getHazardClass();
+        boolean hazardProtected = hazardClass == null || ArmorUtil.hasProtection(entity, hazardClass);
+        if (hazardProtected && hazardClass != null && apply && usesGasMaskFilter(hazardClass)) {
+            ArmorUtil.damageGasMaskFilter(entity, 1);
+        }
+        return hazardProtected && (!entry.requiresFullBodyProtection() || ArmorUtil.checkForHazmat(entity));
+    }
+
+    private static boolean usesGasMaskFilter(HazardClass hazardClass) {
+        return switch (hazardClass) {
+            case GAS_LUNG, GAS_MONOXIDE, GAS_INERT, PARTICLE_COARSE, PARTICLE_FINE, BACTERIA, GAS_BLISTERING, SAND -> true;
             case LIGHT -> false;
         };
-        return hazardProtected && (!entry.requiresFullBodyProtection() || ArmorUtil.checkForHazmat(entity));
     }
 
     private static DamageSource resolveDamage(Level level, ResourceLocation damageType) {

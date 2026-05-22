@@ -42,6 +42,7 @@ public class LegacyGasRadonBlock extends LegacyGasBlock {
             return;
         }
         if (ArmorUtil.hasFineParticleProtection(living)) {
+            ArmorUtil.damageGasMaskFilter(living, 1);
             return;
         }
         if (kind == Kind.DENSE) {

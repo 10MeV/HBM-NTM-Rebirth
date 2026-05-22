@@ -26,6 +26,7 @@ import java.util.List;
 public class GenericMachineRecipe implements Recipe<Container> {
     private final ResourceLocation id;
     private final Machine machine;
+    private final String internalName;
     private final int duration;
     private final long power;
     private final List<ItemInput> itemInputs;
@@ -36,12 +37,13 @@ public class GenericMachineRecipe implements Recipe<Container> {
     @Nullable
     private final String autoSwitchGroup;
 
-    public GenericMachineRecipe(ResourceLocation id, Machine machine, int duration, long power,
+    public GenericMachineRecipe(ResourceLocation id, Machine machine, String internalName, int duration, long power,
             List<ItemInput> itemInputs, List<HbmFluidStack> fluidInputs,
             List<ItemStack> itemOutputs, List<HbmFluidStack> fluidOutputs,
             List<String> pools, @Nullable String autoSwitchGroup) {
         this.id = id;
         this.machine = machine;
+        this.internalName = internalName.isBlank() ? id.toString() : internalName;
         this.duration = Math.max(0, duration);
         this.power = Math.max(0L, power);
         this.itemInputs = List.copyOf(itemInputs);
@@ -54,6 +56,10 @@ public class GenericMachineRecipe implements Recipe<Container> {
 
     public Machine getMachine() {
         return machine;
+    }
+
+    public String getInternalName() {
+        return internalName;
     }
 
     public int getDuration() {
@@ -181,6 +187,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
 
         @Override
         public GenericMachineRecipe fromJson(ResourceLocation id, JsonObject json) {
+            String internalName = GsonHelper.getAsString(json, "internal_name", id.toString());
             int duration = GsonHelper.getAsInt(json, "duration", 0);
             long power = GsonHelper.getAsLong(json, "power", 0L);
             List<ItemInput> itemInputs = readItemInputs(GsonHelper.getAsJsonArray(json, "input_items", new JsonArray()));
@@ -189,12 +196,13 @@ public class GenericMachineRecipe implements Recipe<Container> {
             List<HbmFluidStack> fluidOutputs = readFluidStacks(GsonHelper.getAsJsonArray(json, "output_fluids", new JsonArray()));
             List<String> pools = readStrings(GsonHelper.getAsJsonArray(json, "pools", new JsonArray()));
             String autoSwitchGroup = GsonHelper.getAsString(json, "auto_switch_group", null);
-            return new GenericMachineRecipe(id, machine, duration, power, itemInputs, fluidInputs, itemOutputs, fluidOutputs, pools, autoSwitchGroup);
+            return new GenericMachineRecipe(id, machine, internalName, duration, power, itemInputs, fluidInputs, itemOutputs, fluidOutputs, pools, autoSwitchGroup);
         }
 
         @Nullable
         @Override
         public GenericMachineRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buffer) {
+            String internalName = buffer.readUtf();
             int duration = buffer.readVarInt();
             long power = buffer.readVarLong();
             List<ItemInput> itemInputs = buffer.readList(input -> new ItemInput(Ingredient.fromNetwork(input), input.readVarInt()));
@@ -203,11 +211,12 @@ public class GenericMachineRecipe implements Recipe<Container> {
             List<HbmFluidStack> fluidOutputs = buffer.readList(Serializer::readFluidStack);
             List<String> pools = buffer.readList(FriendlyByteBuf::readUtf);
             String autoSwitchGroup = buffer.readBoolean() ? buffer.readUtf() : null;
-            return new GenericMachineRecipe(id, machine, duration, power, itemInputs, fluidInputs, itemOutputs, fluidOutputs, pools, autoSwitchGroup);
+            return new GenericMachineRecipe(id, machine, internalName, duration, power, itemInputs, fluidInputs, itemOutputs, fluidOutputs, pools, autoSwitchGroup);
         }
 
         @Override
         public void toNetwork(FriendlyByteBuf buffer, GenericMachineRecipe recipe) {
+            buffer.writeUtf(recipe.internalName);
             buffer.writeVarInt(recipe.duration);
             buffer.writeVarLong(recipe.power);
             buffer.writeCollection(recipe.itemInputs, (output, input) -> {

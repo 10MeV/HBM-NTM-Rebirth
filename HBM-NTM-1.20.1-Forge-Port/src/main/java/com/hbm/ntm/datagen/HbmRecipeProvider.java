@@ -16,6 +16,7 @@ import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -73,6 +74,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_copper_block", has(block("block_copper")))
                 .save(consumer, id("energy/capacitor_copper"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, legacySelfChargingBattery(0))
+                .pattern("PGP")
+                .pattern("L L")
+                .pattern("PGP")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('G', forgeTag("wires/gold"))
+                .define('L', ModItems.LEAD_PLATE.get())
+                .unlockedBy("has_any_plastic", has(forgeTag("ingots/any_plastic")))
+                .save(consumer, id("energy/battery_sc_empty"));
+
         selfChargingConversion(consumer, legacySelfChargingBattery(1), "battery_sc_waste", item("billet_nuclear_waste"));
         selfChargingConversion(consumer, legacySelfChargingBattery(2), "battery_sc_ra226", item("billet_ra226"));
         selfChargingConversion(consumer, legacySelfChargingBattery(3), "battery_sc_tc99", item("billet_technetium"));
@@ -83,7 +94,8 @@ public final class HbmRecipeProvider extends RecipeProvider {
         selfChargingConversion(consumer, legacySelfChargingBattery(8), "battery_sc_pb209", item("billet_pb209"));
         selfChargingConversion(consumer, legacySelfChargingBattery(9), "battery_sc_am241", item("billet_am241"));
 
-        chemicalBatteryLead(consumer);
+        chemicalBatteryRecipes(consumer);
+        assemblyCapacitorRecipes(consumer);
     }
 
     private static void selfChargingConversion(Consumer<FinishedRecipe> consumer, ItemLike result, String recipeName, ItemLike isotopeBillet) {
@@ -94,13 +106,81 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("energy/" + recipeName));
     }
 
-    private static void chemicalBatteryLead(Consumer<FinishedRecipe> consumer) {
+    private static void chemicalBatteryRecipes(Consumer<FinishedRecipe> consumer) {
         GenericMachineRecipeBuilder.chemical("chem.batterylead", 100, 100)
                 .inputItem(ModItems.STEEL_PLATE.get(), 4)
                 .inputItem(ModItems.LEAD_INGOT.get(), 4)
                 .inputFluid(HbmFluids.SULFURIC_ACID, 8_000)
                 .outputItem(legacyBatteryPack(1))
                 .save(consumer, id("chemical_plant/batterylead"));
+
+        GenericMachineRecipeBuilder.chemical("chem.batterylithium", 100, 1_000)
+                .inputTag(forgeTag("dusts/lithium"), 12)
+                .inputTag(forgeTag("dusts/cobalt"), 8)
+                .inputTag(forgeTag("ingots/any_plastic"), 4)
+                .inputFluid(HbmFluids.OXYGEN, 2_000)
+                .outputItem(legacyBatteryPack(2))
+                .save(consumer, id("chemical_plant/batterylithium"));
+
+        GenericMachineRecipeBuilder.chemical("chem.batterysodium", 100, 10_000)
+                .inputTag(forgeTag("dusts/sodium"), 24)
+                .inputTag(forgeTag("dusts/iron"), 24)
+                .inputTag(forgeTag("ingots/any_hardplastic"), 12)
+                .outputItem(legacyBatteryPack(3))
+                .save(consumer, id("chemical_plant/batterysodium"));
+
+        GenericMachineRecipeBuilder.chemical("chem.batteryschrabidium", 100, 25_000)
+                .inputTag(forgeTag("dusts/schrabidium"), 24)
+                .inputTag(forgeTag("cast_plates/any_bismoid_bronze"), 8)
+                .inputFluid(HbmFluids.HELIUM4, 8_000)
+                .outputItem(legacyBatteryPack(4))
+                .save(consumer, id("chemical_plant/batteryschrabidium"));
+
+        GenericMachineRecipeBuilder.chemical("chem.batteryquantum", 100, 100_000)
+                .inputTag(forgeTag("dense_wires/bscco"), 24)
+                .inputItem(item("pellet_charged"), 32)
+                .inputItem(item("ingot_cft"), 16)
+                .inputFluid(HbmFluids.PERFLUOROMETHYL_COLD, 8_000)
+                .outputItem(legacyBatteryPack(5))
+                .outputFluid(HbmFluids.PERFLUOROMETHYL, 8_000)
+                .save(consumer, id("chemical_plant/batteryquantum"));
+    }
+
+    private static void assemblyCapacitorRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.assembly("ass.capacitorgold", 100, 100)
+                .inputItem(ModItems.STEEL_PLATE.get(), 8)
+                .inputTag(forgeTag("dense_wires/gold"), 16)
+                .outputItem(legacyBatteryPack(7))
+                .save(consumer, id("assembly_machine/capacitorgold"));
+
+        GenericMachineRecipeBuilder.assembly("ass.capacitorniobium", 100, 1_000)
+                .inputTag(forgeTag("ingots/any_plastic"), 12)
+                .inputTag(forgeTag("dense_wires/niobium"), 24)
+                .outputItem(legacyBatteryPack(8))
+                .save(consumer, id("assembly_machine/capacitorniobium"));
+
+        GenericMachineRecipeBuilder.assembly("ass.capacitortantalum", 100, 10_000)
+                .inputTag(forgeTag("ingots/any_hardplastic"), 16)
+                .inputTag(forgeTag("ingots/tantalum"), 24)
+                .outputItem(legacyBatteryPack(9))
+                .save(consumer, id("assembly_machine/capacitortantalum"));
+
+        GenericMachineRecipeBuilder.assembly("ass.capacitorbismuth", 100, 25_000)
+                .inputTag(forgeTag("ingots/any_hardplastic"), 24)
+                .inputTag(forgeTag("ingots/bismuth"), 24)
+                .inputTag(forgeTag("circuits/chip_quantum"), 1)
+                .outputItem(legacyBatteryPack(10))
+                .save(consumer, id("assembly_machine/capacitorbismuth"));
+
+        GenericMachineRecipeBuilder.assembly("ass.capacitorspark", 100, 100_000)
+                .inputTag(forgeTag("cast_plates/combine_steel"), 12)
+                .inputItem(item("powder_spark_mix"), 32)
+                .inputItem(item("pellet_charged"), 32)
+                .inputTag(forgeTag("circuits/chip_quantum"), 16)
+                .inputFluid(HbmFluids.PERFLUOROMETHYL_COLD, 8_000)
+                .outputItem(legacyBatteryPack(11))
+                .outputFluid(HbmFluids.PERFLUOROMETHYL, 8_000)
+                .save(consumer, id("assembly_machine/capacitorspark"));
     }
 
     private static ItemLike item(String legacyName) {
@@ -135,6 +215,10 @@ public final class HbmRecipeProvider extends RecipeProvider {
         return new ResourceLocation(HbmNtm.MOD_ID, path);
     }
 
+    private static TagKey<Item> forgeTag(String path) {
+        return HbmItemTagsProvider.forgeItemTag(path);
+    }
+
     private static final class GenericMachineRecipeBuilder {
         private final ResourceLocation serializerId;
         private final String internalName;
@@ -159,9 +243,21 @@ public final class HbmRecipeProvider extends RecipeProvider {
             return new GenericMachineRecipeBuilder(id("chemical_plant"), internalName, duration, power);
         }
 
+        private static GenericMachineRecipeBuilder assembly(String internalName, int duration, long power) {
+            return new GenericMachineRecipeBuilder(id("assembly_machine"), internalName, duration, power);
+        }
+
         private GenericMachineRecipeBuilder inputItem(ItemLike item, int count) {
+            return inputIngredient(Ingredient.of(item), count);
+        }
+
+        private GenericMachineRecipeBuilder inputTag(TagKey<Item> tag, int count) {
+            return inputIngredient(Ingredient.of(tag), count);
+        }
+
+        private GenericMachineRecipeBuilder inputIngredient(Ingredient ingredient, int count) {
             JsonObject entry = new JsonObject();
-            entry.add("ingredient", Ingredient.of(item).toJson());
+            entry.add("ingredient", ingredient.toJson());
             entry.addProperty("count", count);
             inputItems.add(entry);
             return this;
@@ -183,6 +279,11 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 object.addProperty("count", stack.getCount());
             }
             outputItems.add(object);
+            return this;
+        }
+
+        private GenericMachineRecipeBuilder outputFluid(FluidType fluid, int amount) {
+            outputFluids.add(fluidStack(fluid, amount));
             return this;
         }
 

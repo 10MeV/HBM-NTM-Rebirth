@@ -1,0 +1,13 @@
+{
+  "values": [
+    "hbm:ingot_lead",
+    "hbm:ingot_bismuth",
+    "hbm:ingot_niobium",
+    "hbm:ingot_tantalium",
+    "hbm:ingot_cft",
+    "hbm:ingot_polymer",
+    "hbm:ingot_bakelite",
+    "hbm:ingot_pc",
+    "hbm:ingot_pvc"
+  ]
+}

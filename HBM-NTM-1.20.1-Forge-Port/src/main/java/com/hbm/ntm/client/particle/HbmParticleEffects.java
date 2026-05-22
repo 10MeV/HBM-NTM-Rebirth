@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
@@ -59,6 +60,18 @@ public final class HbmParticleEffects {
             spawnExhaust(level, data, x, y, z);
         } else if ("flamethrower".equals(type)) {
             spawnFlamethrower(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_EXPLOSION_LARGE.equals(type)) {
+            spawnExplosionLarge(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_EXPLOSION_SMALL.equals(type)) {
+            spawnExplosionSmall(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_BLACK_POWDER.equals(type)) {
+            spawnBlackPowder(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_ASHES.equals(type)) {
+            spawnAshes(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_CASING.equals(type)) {
+            spawnCasing(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_SKELETON.equals(type)) {
+            spawnSkeleton(level, data, x, y, z);
         } else if ("sweat".equals(type)) {
             spawnEntitySweat(level, data);
         } else if ("vomit".equals(type)) {
@@ -292,6 +305,160 @@ public final class HbmParticleEffects {
         level.addParticle(ParticleTypes.CLOUD, x, y, z, data.getDouble("mX") * 0.35D, data.getDouble("mY") * 0.35D, data.getDouble("mZ") * 0.35D);
     }
 
+    private static void spawnExplosionLarge(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        RandomSource random = level.random;
+        int cloudCount = Math.max(1, getInt(data, "cloudCount", 15));
+        int debrisCount = Math.max(0, getInt(data, "debrisCount", 10));
+        float cloudScale = Math.max(0.25F, getFloat(data, "cloudScale", 5.0F));
+        float cloudSpeedMult = Math.max(0.1F, getFloat(data, "cloudSpeedMult", 1.0F));
+        float waveScale = Math.max(4.0F, getFloat(data, "waveScale", 45.0F));
+
+        level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 0.0D, 0.0D, 0.0D);
+        spawnRing(level, ParticleTypes.POOF, x, y + 0.25D, z, Math.max(16, (int) (waveScale * 0.8F)), waveScale * 0.05D);
+        spawnRadial(level, ParticleTypes.CLOUD, x, y + 0.15D, z, Math.max(12, (int) (waveScale * 0.5F)), waveScale * 0.02D);
+
+        for (int i = 0; i < cloudCount; i++) {
+            double motionX = random.nextGaussian() * 0.5D * cloudSpeedMult;
+            double motionY = random.nextDouble() * 3.0D * cloudSpeedMult;
+            double motionZ = random.nextGaussian() * 0.5D * cloudSpeedMult;
+            level.addParticle(ModParticleTypes.ROCKET_FLAME.get(), x, y, z, motionX, motionY, motionZ);
+            level.addParticle(ModParticleTypes.EX_SMOKE.get(), x, y, z, motionX * 0.6D, motionY * 0.6D, motionZ * 0.6D);
+        }
+
+        BlockState debrisState = nearbyBlockState(level, x, y, z);
+        for (int i = 0; i < debrisCount; i++) {
+            double motionX = random.nextGaussian() * 0.25D;
+            double motionY = 0.35D + random.nextDouble() * 0.75D;
+            double motionZ = random.nextGaussian() * 0.25D;
+            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, debrisState),
+                    x + random.nextGaussian() * 1.5D,
+                    y + random.nextDouble() * 0.8D,
+                    z + random.nextGaussian() * 1.5D,
+                    motionX, motionY, motionZ);
+        }
+    }
+
+    private static void spawnExplosionSmall(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        RandomSource random = level.random;
+        int cloudCount = Math.max(1, getInt(data, "cloudCount", 10));
+        int debris = Math.max(0, getInt(data, "debris", 15));
+        float cloudScale = Math.max(0.25F, getFloat(data, "cloudScale", 2.0F));
+        float cloudSpeedMult = Math.max(0.1F, getFloat(data, "cloudSpeedMult", 0.5F));
+
+        level.addParticle(ParticleTypes.EXPLOSION, x, y, z, 0.0D, 0.0D, 0.0D);
+        for (int i = 0; i < cloudCount; i++) {
+            double motionX = random.nextGaussian() * cloudSpeedMult;
+            double motionY = Math.abs(random.nextGaussian()) * 0.25D * cloudSpeedMult;
+            double motionZ = random.nextGaussian() * cloudSpeedMult;
+            level.addParticle(ModParticleTypes.ROCKET_FLAME.get(), x, y, z, motionX, motionY, motionZ);
+            if (i % 2 == 0) {
+                level.addParticle(ModParticleTypes.EX_SMOKE.get(), x, y, z, motionX * cloudScale * 0.2D, motionY, motionZ * cloudScale * 0.2D);
+            }
+        }
+
+        BlockState debrisState = nearbyBlockState(level, x, y, z);
+        for (int i = 0; i < debris; i++) {
+            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, debrisState), x, y + 0.1D, z,
+                    random.nextGaussian() * 0.2D, 0.5D + random.nextDouble() * 0.7D, random.nextGaussian() * 0.2D);
+        }
+    }
+
+    private static void spawnBlackPowder(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        RandomSource random = level.random;
+        double headingX = data.getDouble("hX");
+        double headingY = data.getDouble("hY");
+        double headingZ = data.getDouble("hZ");
+        double length = Math.sqrt(headingX * headingX + headingY * headingY + headingZ * headingZ);
+        if (length < 1.0E-5D) {
+            headingY = 1.0D;
+            length = 1.0D;
+        }
+        headingX /= length;
+        headingY /= length;
+        headingZ /= length;
+
+        int cloudCount = Math.max(0, getInt(data, "cloudCount", 8));
+        int sparkCount = Math.max(0, getInt(data, "sparkCount", 12));
+        float cloudSpeedMult = Math.max(0.0F, getFloat(data, "cloudSpeedMult", 0.35F));
+        float sparkSpeedMult = Math.max(0.0F, getFloat(data, "sparkSpeedMult", 0.5F));
+
+        for (int i = 0; i < cloudCount; i++) {
+            double speed = 0.85D + random.nextDouble() * 0.3D;
+            level.addParticle(ModParticleTypes.EX_SMOKE.get(), x, y, z,
+                    headingX * cloudSpeedMult * speed + random.nextGaussian() * 0.05D,
+                    headingY * cloudSpeedMult * speed + random.nextGaussian() * 0.05D,
+                    headingZ * cloudSpeedMult * speed + random.nextGaussian() * 0.05D);
+        }
+        for (int i = 0; i < sparkCount; i++) {
+            double speed = 0.85D + random.nextDouble() * 0.3D;
+            level.addParticle(ModParticleTypes.BLACK_POWDER_SPARK.get(), x, y, z,
+                    headingX * sparkSpeedMult * speed + random.nextGaussian() * 0.02D,
+                    headingY * sparkSpeedMult * speed + random.nextGaussian() * 0.02D,
+                    headingZ * sparkSpeedMult * speed + random.nextGaussian() * 0.02D);
+        }
+    }
+
+    private static void spawnAshes(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Entity entity = level.getEntity(data.getInt("entityID"));
+        double centerX = entity == null ? x : entity.getX();
+        double centerY = entity == null ? y : entity.getY();
+        double centerZ = entity == null ? z : entity.getZ();
+        double width = entity == null ? 0.6D : entity.getBbWidth();
+        double height = entity == null ? 1.8D : entity.getBbHeight();
+        int count = Math.max(1, getInt(data, "ashesCount", 16));
+        float scale = Math.max(0.1F, getFloat(data, "ashesScale", 1.0F));
+        RandomSource random = level.random;
+        for (int i = 0; i < count; i++) {
+            double px = centerX + (width + scale * 2.0D) * (random.nextDouble() - 0.5D);
+            double py = centerY + height * random.nextDouble();
+            double pz = centerZ + (width + scale * 2.0D) * (random.nextDouble() - 0.5D);
+            level.addParticle(ParticleTypes.ASH, px, py, pz, random.nextGaussian() * 0.02D, -0.01D, random.nextGaussian() * 0.02D);
+            if (i % 3 == 0) {
+                level.addParticle(ParticleTypes.FLAME, px, py, pz, 0.0D, 0.0D, 0.0D);
+            }
+        }
+    }
+
+    private static void spawnCasing(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        double motionX = data.getDouble("mX");
+        double motionY = data.getDouble("mY");
+        double motionZ = data.getDouble("mZ");
+        level.addParticle(ModParticleTypes.BLACK_POWDER_SPARK.get(), x, y, z, motionX * 0.15D, motionY * 0.15D, motionZ * 0.15D);
+        if (data.getBoolean("smoking")) {
+            int smokeCount = Mth.clamp(getInt(data, "smokeLife", 12) / 4, 1, 12);
+            double lift = data.contains("smokeLift") ? data.getDouble("smokeLift") : 0.03D;
+            for (int i = 0; i < smokeCount; i++) {
+                level.addParticle(ParticleTypes.SMOKE, x, y, z,
+                        motionX * 0.03D + level.random.nextGaussian() * 0.01D,
+                        lift,
+                        motionZ * 0.03D + level.random.nextGaussian() * 0.01D);
+            }
+        }
+    }
+
+    private static void spawnSkeleton(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Entity entity = level.getEntity(data.getInt("entityID"));
+        double centerX = entity == null ? x : entity.getX();
+        double centerY = entity == null ? y : entity.getY();
+        double centerZ = entity == null ? z : entity.getZ();
+        double width = entity == null ? 0.6D : entity.getBbWidth();
+        double height = entity == null ? 1.8D : entity.getBbHeight();
+        boolean gib = data.getBoolean("gib");
+        float force = Math.max(0.05F, getFloat(data, "force", 0.15F));
+        int count = gib ? 18 : 8;
+        RandomSource random = level.random;
+        BlockParticleOption bone = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.BONE_BLOCK.defaultBlockState());
+        for (int i = 0; i < count; i++) {
+            double px = centerX + (random.nextDouble() - 0.5D) * width;
+            double py = centerY + random.nextDouble() * height;
+            double pz = centerZ + (random.nextDouble() - 0.5D) * width;
+            level.addParticle(bone, px, py, pz,
+                    gib ? random.nextGaussian() * force : 0.0D,
+                    gib ? (random.nextGaussian() + 1.0D) * force : 0.03D,
+                    gib ? random.nextGaussian() * force : 0.0D);
+        }
+    }
+
     private static void spawnNamedVanilla(ClientLevel level, String mode, double x, double y, double z, double motionX, double motionY, double motionZ) {
         ParticleOptions particle = switch (mode) {
             case "flame" -> ParticleTypes.FLAME;
@@ -343,6 +510,29 @@ public final class HbmParticleEffects {
     private static BlockState blockStateFromLegacyId(int legacyId) {
         BlockState state = Block.stateById(legacyId);
         return state == null ? Blocks.STONE.defaultBlockState() : state;
+    }
+
+    private static BlockState nearbyBlockState(ClientLevel level, double x, double y, double z) {
+        BlockPos pos = BlockPos.containing(x, y, z);
+        BlockState state = level.getBlockState(pos);
+        if (!state.isAir()) {
+            return state;
+        }
+        for (Direction direction : Direction.values()) {
+            state = level.getBlockState(pos.relative(direction));
+            if (!state.isAir()) {
+                return state;
+            }
+        }
+        return Blocks.STONE.defaultBlockState();
+    }
+
+    private static int getInt(CompoundTag data, String key, int fallback) {
+        return data.contains(key) ? data.getInt(key) : fallback;
+    }
+
+    private static float getFloat(CompoundTag data, String key, float fallback) {
+        return data.contains(key) ? data.getFloat(key) : fallback;
     }
 
     private HbmParticleEffects() {

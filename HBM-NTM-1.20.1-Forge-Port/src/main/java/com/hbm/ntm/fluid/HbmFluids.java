@@ -3,6 +3,7 @@ package com.hbm.ntm.fluid;
 import com.hbm.ntm.fluid.trait.FluidTrait;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait.FuelGrade;
+import com.hbm.ntm.fluid.trait.ContainerFluidTrait;
 import com.hbm.ntm.fluid.trait.CoolableFluidTrait;
 import com.hbm.ntm.fluid.trait.CoolableFluidTrait.CoolingType;
 import com.hbm.ntm.fluid.trait.CorrosiveFluidTrait;
@@ -233,10 +234,91 @@ public final class HbmFluids {
     }
 
     private static void registerLegacyBehaviorTraits() {
+        addLegacyContainerTraits();
         addCorrosionAndSpecialTraits();
         addLegacyToxinTraits();
         addLegacyFuelTraits();
         addThermalTraits();
+    }
+
+    private static void addLegacyContainerTraits() {
+        addGasTank(DEUTERIUM, 0x0000FF, 0xFFFFFF);
+        addGasTank(TRITIUM, 0x000099, 0xE9FFAA);
+        addCanister(OIL, 0x424242);
+        addCanister(HEAVYOIL, 0x513F39);
+        addCanister(BITUMEN, 0x5A5877);
+        addCanister(SMEAR, 0x624F3B);
+        addCanister(HEATINGOIL, 0x694235);
+        addCanister(RECLAIMED, 0xF65723);
+        addCanister(PETROIL, 0x2369F6);
+        addCanister(LUBRICANT, 0xF1CC05);
+        addCanister(NAPHTHA, 0x5F6D44);
+        addCanister(DIESEL, 0xFF2C2C);
+        addCanister(LIGHTOIL, 0xB46B52);
+        addCanister(KEROSENE, 0xFF377D);
+        addGasTank(GAS, 0xFF4545, 0xFFE97F);
+        addGasTank(PETROLEUM, 0x5E7CFF, 0xFFE97F);
+        addGasTank(BIOGAS, 0xC8FF1F, 0x303030);
+        addCanister(BIOFUEL, 0x9EB623);
+        addCanister(NITAN, 0x6B238C);
+        addGasTank(HYDROGEN, 0x4286F4, 0xFFFFFF);
+        addGasTank(OXYGEN, 0x98BDF9, 0xFFFFFF);
+        addGasTank(XENON, 0x8C21FF, 0x303030);
+        addCanister(GASOLINE, 0x2F7747);
+        addCanister(COALGAS, 0x2E155F);
+        addCanister(FRACKSOL, 0x4F887F);
+        addGasTank(HELIUM3, 0xFD631F, 0xFFFFFF);
+        addCanister(ETHANOL, 0xEAFFF3);
+        addCanister(CRACKOIL, 0x424242);
+        addCanister(COALOIL, 0x424242);
+        addCanister(NAPHTHA_CRACK, 0x5F6D44);
+        addCanister(LIGHTOIL_CRACK, 0xB46B52);
+        addCanister(DIESEL_CRACK, 0xFF2C2C);
+        addGasTank(AROMATICS, 0x68A09A, 0xEDCF27);
+        addGasTank(UNSATURATEDS, 0x628FAE, 0xEDCF27);
+        addCanister(PETROIL_LEADED, 0x2331F6);
+        addCanister(GASOLINE_LEADED, 0x2F775A);
+        addCanister(COALGAS_LEADED, 0x1E155F);
+        addCanister(WOODOIL, 0xBF7E4F);
+        addCanister(COALCREOSOTE, 0x285A3F);
+        addCanister(SEEDSLURRY, 0x7CC35E);
+        addCanister(SOLVENT, 0xE4E3EF);
+        addGasTank(SYNGAS, 0xFFFFFF, 0x131313);
+        addGasTank(CHLORINE, 0xBAB572, 0x887B34);
+        addCanister(HEAVYOIL_VACUUM, 0x513F39);
+        addCanister(REFORMATE, 0xD180D6);
+        addCanister(LIGHTOIL_VACUUM, 0xB46B52);
+        addGasTank(SOURGAS, 0xC9BE0D, 0x303030);
+        addCanister(XYLENE, 0xA380D6);
+        addCanister(HEATINGOIL_VACUUM, 0x694235);
+        addCanister(DIESEL_REFORM, 0xFFC500);
+        addCanister(DIESEL_CRACK_REFORM, 0xFFC500);
+        addCanister(KEROSENE_REFORM, 0xFF377D);
+        addGasTank(REFORMGAS, 0x9392FF, 0xFFB992);
+        addGasTank(PHOSGENE, 0xCFC4A4, 0x361414);
+        addGasTank(MUSTARDGAS, 0xBAB572, 0x361414);
+        addGasTank(HELIUM4, 0xFD631F, 0xFFFF00);
+        addCanister(OIL_DS, 0x424242);
+        addCanister(CRACKOIL_DS, 0x424242);
+        addCanister(NAPHTHA_DS, 0x5F6D44);
+        addCanister(LIGHTOIL_DS, 0xB46B52);
+    }
+
+    private static void addCanister(FluidType type, int color) {
+        container(type).withCanister(color);
+    }
+
+    private static void addGasTank(FluidType type, int bottleColor, int labelColor) {
+        container(type).withGasTank(bottleColor, labelColor);
+    }
+
+    private static ContainerFluidTrait container(FluidType type) {
+        ContainerFluidTrait trait = type.getTrait(ContainerFluidTrait.class);
+        if (trait == null) {
+            trait = new ContainerFluidTrait();
+            type.addTraits(trait);
+        }
+        return trait;
     }
 
     private static void addCorrosionAndSpecialTraits() {

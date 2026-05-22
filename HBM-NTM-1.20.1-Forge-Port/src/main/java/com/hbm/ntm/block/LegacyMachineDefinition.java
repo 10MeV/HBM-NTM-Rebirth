@@ -20,6 +20,7 @@ public record LegacyMachineDefinition(
         boolean renderAll,
         List<String> renderParts,
         float yRotationOffset,
+        Function<Direction, Float> yRotationFactory,
         Function<BlockPos, AABB> renderBoundingBoxFactory) {
 
     public LegacyMultiblockLayout layout(BlockState state) {
@@ -31,6 +32,16 @@ public record LegacyMachineDefinition(
             return renderBoundingBoxFactory.apply(corePos);
         }
         return layout(state).renderBoundingBox(corePos, 1.0D);
+    }
+
+    public float yRotation(BlockState state) {
+        Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
+                ? state.getValue(HorizontalMachineBlock.FACING)
+                : Direction.SOUTH;
+        if (yRotationFactory != null) {
+            return yRotationFactory.apply(facing);
+        }
+        return yRotationOffset + facing.toYRot();
     }
 
     public static Builder builder(ResourceLocation modelLocation, ResourceLocation textureLocation) {
@@ -46,6 +57,7 @@ public record LegacyMachineDefinition(
         private boolean renderAll = true;
         private List<String> renderParts = List.of();
         private float yRotationOffset = 90.0F;
+        private Function<Direction, Float> yRotationFactory;
         private Function<BlockPos, AABB> renderBoundingBoxFactory;
 
         private Builder(ResourceLocation modelLocation, ResourceLocation textureLocation) {
@@ -84,6 +96,11 @@ public record LegacyMachineDefinition(
             return this;
         }
 
+        public Builder yRotation(Function<Direction, Float> yRotationFactory) {
+            this.yRotationFactory = yRotationFactory;
+            return this;
+        }
+
         public Builder renderBoundingBox(Function<BlockPos, AABB> renderBoundingBoxFactory) {
             this.renderBoundingBoxFactory = renderBoundingBoxFactory;
             return this;
@@ -94,7 +111,7 @@ public record LegacyMachineDefinition(
                     ? layoutFactory
                     : facing -> LegacyMultiblockLayout.ofLegacyXr(legacyXrDimensions, facing);
             return new LegacyMachineDefinition(legacyXrDimensions, legacyOffset, resolvedLayout, modelLocation,
-                    textureLocation, renderAll, renderParts, yRotationOffset, renderBoundingBoxFactory);
+                    textureLocation, renderAll, renderParts, yRotationOffset, yRotationFactory, renderBoundingBoxFactory);
         }
     }
 }

@@ -654,6 +654,7 @@ public final class ModBlocks {
                             .withCheckOnlyOffsets(pumpjackCheckOnlyOffsets(facing, offsetCore));
                 })
                 .renderParts("Base", "Rotor", "Head", "Carriage")
+                .yRotation(facing -> 270.0F - facing.toYRot())
                 .renderBoundingBox(pos -> new AABB(pos.offset(-7, 0, -7), pos.offset(8, 6, 8)))
                 .build();
     }

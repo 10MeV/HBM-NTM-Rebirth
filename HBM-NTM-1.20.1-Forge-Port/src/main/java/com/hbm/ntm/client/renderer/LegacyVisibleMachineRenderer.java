@@ -1,6 +1,5 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.LegacyVisibleMachineBlockEntity;
@@ -10,7 +9,6 @@ import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.IdentityHashMap;
@@ -41,7 +39,7 @@ public class LegacyVisibleMachineRenderer implements BlockEntityRenderer<LegacyV
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotationOffset() + yRotation(state)));
+        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
 
         if (definition.renderAll()) {
             model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
@@ -54,11 +52,4 @@ public class LegacyVisibleMachineRenderer implements BlockEntityRenderer<LegacyV
         poseStack.popPose();
     }
 
-    private static float yRotation(BlockState state) {
-        if (!state.hasProperty(HorizontalMachineBlock.FACING)) {
-            return 0.0F;
-        }
-        Direction facing = state.getValue(HorizontalMachineBlock.FACING);
-        return facing.toYRot();
-    }
 }

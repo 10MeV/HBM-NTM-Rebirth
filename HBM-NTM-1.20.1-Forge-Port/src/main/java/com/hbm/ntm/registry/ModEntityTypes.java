@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.entity.effect.FalloutRainEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
@@ -39,6 +40,15 @@ public final class ModEntityTypes {
                     .updateInterval(1)
                     .noSummon()
                     .build("entity_nuke_explosion_mk5"));
+
+    public static final RegistryObject<EntityType<FalloutRainEntity>> FALLOUT_RAIN =
+            ENTITY_TYPES.register("entity_fallout_rain", () -> EntityType.Builder
+                    .<FalloutRainEntity>of(FalloutRainEntity::new, MobCategory.MISC)
+                    .sized(4.0F, 20.0F)
+                    .clientTrackingRange(256)
+                    .updateInterval(20)
+                    .noSummon()
+                    .build("entity_fallout_rain"));
 
     public static void register(IEventBus modBus) {
         ENTITY_TYPES.register(modBus);

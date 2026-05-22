@@ -172,6 +172,10 @@
 - `pumpjackDefinition()` 的额外区域 origin 改为 `facing.getCounterClockWise() * 3`。
 - `pumpjackFilledOffsets(...)` 仍生成旧两段额外 dummy，但 proxy predicate 改为只标记旧 `makeExtra` 的四个角，不再把整片额外底座都标成 proxy。
 - OBJ 资源复核：`pumpjack.obj` 仅包含 `Base` / `Rotor` / `Carriage` / `Head` 四个 group，旧 `RenderPumpjack` 也只渲染这四组；“缺一层”不是漏 OBJ part，而是占位/朝向对齐问题。
+- 继续复核发现泵机模型与碰撞相反的直接原因在渲染旋转：
+  - 旧 `RenderPumpjack` 的 metadata 表等价于 `270 - facing.toYRot()`。
+  - 现代通用可见机器 renderer 原先使用 `yRotationOffset + facing.toYRot()`，会把泵机 NORTH/SOUTH 翻反。
+  - 已为 `LegacyMachineDefinition` 增加单机 `yRotation(...)`，泵机使用旧表等价公式。
 
 验证：
 

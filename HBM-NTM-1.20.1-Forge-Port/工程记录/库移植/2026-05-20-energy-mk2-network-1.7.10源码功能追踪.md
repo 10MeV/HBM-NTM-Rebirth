@@ -1144,3 +1144,52 @@
 - 当前移植估算：
   - 机器配方数据层和首个高阶电池配方落地后，能量库约 `89%`。
   - 剩余重点：材料/tag/旧 meta 族映射、化工厂/装配机 runtime、`battery_sc.EMPTY` 精确材料配方、`battery_sc` 放电事件、创造电池插座特效和兼容层。
+
+## 2026-05-22 继续推进：高阶电池/电容底层材料与机器配方批量补齐
+
+- 1.7.10 对照：
+  - `ChemicalPlantRecipes` 的电池段共 5 条：
+    - `chem.batterylead`：`STEEL.plate x4`、`PB.ingot x4`、`SULFURIC_ACID 8000` -> `BATTERY_LEAD`。
+    - `chem.batterylithium`：`LI.dust x12`、`CO.dust x8`、`ANY_PLASTIC.ingot x4`、`OXYGEN 2000` -> `BATTERY_LITHIUM`。
+    - `chem.batterysodium`：`NA.dust x24`、`IRON.dust x24`、`ANY_HARDPLASTIC.ingot x12` -> `BATTERY_SODIUM`。
+    - `chem.batteryschrabidium`：`SA326.dust x24`、`ANY_BISMOIDBRONZE.plateCast x8`、`HELIUM4 8000` -> `BATTERY_SCHRABIDIUM`。
+    - `chem.batteryquantum`：`BSCCO.wireDense x24`、`pellet_charged x32`、`ingot_cft x16`、`PERFLUOROMETHYL_COLD 8000` -> `BATTERY_QUANTUM` + `PERFLUOROMETHYL 8000`。
+  - `AssemblyMachineRecipes` 的电容段共 5 条：
+    - `ass.capacitorgold`：`STEEL.plate x8`、`GOLD.wireDense x16` -> `CAPACITOR_GOLD`。
+    - `ass.capacitorniobium`：`ANY_PLASTIC.ingot x12`、`NB.wireDense x24` -> `CAPACITOR_NIOBIUM`。
+    - `ass.capacitortantalum`：`ANY_HARDPLASTIC.ingot x16`、`TA.ingot x24` -> `CAPACITOR_TANTALUM`。
+    - `ass.capacitorbismuth`：`ANY_HARDPLASTIC.ingot x24`、`BI.ingot x24`、`circuit CHIP_QUANTUM x1` -> `CAPACITOR_BISMUTH`。
+    - `ass.capacitorspark`：`CMB.plateCast x12`、`powder_spark_mix x32`、`pellet_charged x32`、`circuit CHIP_QUANTUM x16`、`PERFLUOROMETHYL_COLD 8000` -> `CAPACITOR_SPARK` + `PERFLUOROMETHYL 8000`。
+  - 本批底层接入：
+  - 注册并拷贝旧贴图的精确旧 ID 材料：
+    - `ingot_polymer`、`ingot_bakelite`、`ingot_pc`、`ingot_pvc`
+    - `powder_lithium`、`powder_cobalt`、`powder_sodium`、`powder_schrabidium`、`powder_spark_mix`
+    - `ingot_bismuth`、`ingot_niobium`、`ingot_tantalium`
+    - `pellet_charged`
+  - 对旧 autogen/meta 族建立现代拆分落点：
+    - `wire_gold` 对应旧 `wire_fine` 的 GOLD meta，模型绑定旧 `wire_gold.png`。
+    - `wire_dense_gold`、`wire_dense_niobium`、`wire_dense_bscco` 对应旧 `wire_dense` meta 族，模型共用旧 `wire_dense.png`。
+    - `plate_cast_bismuth_bronze`、`plate_cast_arsenic_bronze`、`plate_cast_combine_steel` 对应旧 `plate_cast` meta 族，模型共用旧 `plate_cast.png`。
+    - `circuit_chip_quantum` 对应旧 `circuit` meta `EnumCircuitType.CHIP_QUANTUM`，模型绑定旧 `circuit.chip_quantum.png`。
+  - `HbmItemTagsProvider` 增加首批 ore dict -> Forge tag 桥：
+    - `forge:ingots/any_plastic` = `ingot_polymer` + `ingot_bakelite`。
+    - `forge:ingots/any_hardplastic` = `ingot_pc` + `ingot_pvc`。
+    - `forge:dusts/lithium|cobalt|sodium|schrabidium`、`forge:dense_wires/*`、`forge:cast_plates/*`、`forge:circuits/chip_quantum`。
+  - `HbmItemModelProvider` 增加旧资源名映射，避免 `pellet_charged`、dense wire、cast plate、quantum chip 因现代拆分 ID 找不到同名贴图而透明。
+- 本批配方接入：
+  - `HbmRecipeProvider` 现在生成：
+    - `energy/battery_sc_empty`，用 `ANY_PLASTIC.ingot`、`GOLD.wireFine`、`PB.plate` 对齐旧工作台配方。
+    - 5 条 `chemical_plant/battery*.json`。
+    - 5 条 `assembly_machine/capacitor*.json`。
+  - 所有高阶机器配方保留旧 `internal_name`、`duration`、`power`、流体输入/输出和 `battery_pack` 旧 meta -> 现代独立 ID 映射。
+- 当前限制：
+  - `wire_dense_*`、`plate_cast_*` 当前是旧 meta/autogen 族的拆分数据落点，视觉先共用旧基础贴图；后续材料库若迁移旧 `NTMMaterial` 调色/材质层，应替换为更完整的材质渲染或生成模型。
+  - `circuit_chip_quantum` 只迁了当前能量配方需要的旧 meta；完整 `circuit` meta 族仍应在电路/组装链条迁移时统一补齐。
+  - `GenericMachineRecipe#matches` 仍不运行机器处理逻辑，化工厂/装配机 BlockEntity 后续接入 `machine-module-recipe-runtime` 后才会真正消耗输入。
+- 本批验证：
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 抽查 `chemical_plant/batteryquantum.json`、`assembly_machine/capacitorspark.json`、`forge:ingots/any_plastic`，字段与旧配方和旧 ore dict 组一致。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 当前移植估算：
+  - 高阶 `battery_pack`/电容配方数据层和底层材料/tag 落点补齐后，能量库约 `92%`。
+  - 剩余重点：机器配方 runtime、旧 `NTMMaterial` autogen 族完整迁移、`battery_sc` 放电事件、创造电池插座特效、EnergyControl/info panel/debug particles 兼容层，以及实机跨区块/卸载/网络分裂生命周期验证。

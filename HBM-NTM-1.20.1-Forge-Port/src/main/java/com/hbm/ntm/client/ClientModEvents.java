@@ -3,6 +3,7 @@ package com.hbm.ntm.client;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyModelReloadListener;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
+import com.hbm.ntm.client.particle.BlackPowderSparkParticle;
 import com.hbm.ntm.client.particle.FlamethrowerParticle;
 import com.hbm.ntm.client.particle.FoamParticle;
 import com.hbm.ntm.client.particle.HbmSmokeParticle;
@@ -65,6 +66,7 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntityTypes.MOVING_ITEM.get(), MovingItemRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MOVING_PACKAGE.get(), MovingPackageRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK5.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.FALLOUT_RAIN.get(), NoopRenderer::new);
     }
 
     @SubscribeEvent
@@ -101,6 +103,7 @@ public final class ClientModEvents {
         event.registerSpriteSet(ModParticleTypes.EX_SMOKE.get(), HbmSmokeParticle.ExSmokeProvider::new);
         event.registerSpriteSet(ModParticleTypes.FOAM.get(), FoamParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.FLAMETHROWER.get(), FlamethrowerParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.BLACK_POWDER_SPARK.get(), BlackPowderSparkParticle.Provider::new);
     }
 
     private ClientModEvents() {

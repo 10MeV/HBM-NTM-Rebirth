@@ -26,23 +26,46 @@ public class HbmItemModelProvider extends ItemModelProvider {
     }
 
     private void itemModel(Item item) {
+        String path = ForgeRegistries.ITEMS.getKey(item).getPath();
         if (item instanceof HbmBatteryPackItem) {
-            getBuilder(ForgeRegistries.ITEMS.getKey(item).getPath())
+            getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
             return;
         }
         if (item == ModItems.BATTERY_CREATIVE.get()) {
-            getBuilder(ForgeRegistries.ITEMS.getKey(item).getPath())
+            getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
                     .texture("layer0", modLoc("item/battery_creative_new"));
             return;
         }
         if (item instanceof HbmSelfChargingBatteryItem battery) {
-            getBuilder(ForgeRegistries.ITEMS.getKey(item).getPath())
+            getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
                     .texture("layer0", modLoc("item/" + battery.getLegacyTexturePath()));
             return;
         }
+        if (path.startsWith("wire_dense_")) {
+            generatedItem(path, "wire_dense");
+            return;
+        }
+        if (path.startsWith("plate_cast_")) {
+            generatedItem(path, "plate_cast");
+            return;
+        }
+        if (path.equals("pellet_charged")) {
+            generatedItem(path, "pellets_charged");
+            return;
+        }
+        if (path.equals("circuit_chip_quantum")) {
+            generatedItem(path, "circuit.chip_quantum");
+            return;
+        }
         basicItem(item);
+    }
+
+    private void generatedItem(String itemPath, String texturePath) {
+        getBuilder(itemPath)
+                .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
+                .texture("layer0", modLoc("item/" + texturePath));
     }
 }

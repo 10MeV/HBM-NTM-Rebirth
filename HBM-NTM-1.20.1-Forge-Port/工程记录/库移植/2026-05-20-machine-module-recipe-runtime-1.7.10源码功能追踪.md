@@ -65,3 +65,17 @@
   - 机器 BlockEntity 不直接解析散落 JSON，应通过统一 HBM recipe query helper 读取 `GenericMachineRecipe`。
   - 旧 `recipe` internal name 字段应继续作为存档与 GUI/JEI 的稳定引用。
   - 高阶电池/电容机器配方先进入 datapack，再等化工厂/装配机运行模块完整后启用处理。
+
+## 2026-05-22 继续推进：高阶电池/电容配方已进 datapack，runtime 仍封口
+
+- 本批关联 `energy-mk2-network` 与 `recipes-common-loader`：
+  - `ChemicalPlantRecipes` 中 5 条 `chem.battery*` 已生成现代 datapack JSON。
+  - `AssemblyMachineRecipes` 中 5 条 `ass.capacitor*` 已生成现代 datapack JSON。
+  - `GenericMachineRecipe` 已保留并同步旧 `internal_name`，后续 `ModuleMachineBase` 迁移时可继续使用旧 `recipe` 字符串语义。
+- 仍未启用的运行时行为：
+  - 不在 `GenericMachineRecipe#matches` 中直接匹配槽位。
+  - 不在配方类中扣输入、重设 tank、推进 progress 或处理 auto switch。
+  - 化工厂/装配机迁移时必须接入统一 runtime helper，再读取这些 recipe type。
+- 验证：
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。

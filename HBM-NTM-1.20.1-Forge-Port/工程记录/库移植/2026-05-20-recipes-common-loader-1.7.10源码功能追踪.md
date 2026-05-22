@@ -110,3 +110,27 @@
 - 本批验证：
   - `.\gradlew.bat runData --no-daemon` 通过。
   - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 继续推进：tag 输入、internal name 同步与首批旧 ore dict 桥
+
+- 本批接入：
+  - `GenericMachineRecipe` 现在把 `internal_name` 保存为运行时字段，并在网络同步中读写，避免服务端/客户端或后续 JEI 查询只能依赖 recipe id。
+  - `HbmRecipeProvider.GenericMachineRecipeBuilder` 增加：
+    - `assembly(...)`
+    - `inputTag(TagKey<Item>, count)`
+    - `outputFluid(FluidType, amount)`
+  - 首批旧 `OreDictStack` 输入不再硬指向单个 item，而是生成现代 tag ingredient。
+- 已落地的旧 ore dict -> tag 映射：
+  - `ANY_PLASTIC.ingot()` -> `forge:ingots/any_plastic`
+  - `ANY_HARDPLASTIC.ingot()` -> `forge:ingots/any_hardplastic`
+  - `ANY_BISMOIDBRONZE.plateCast()` -> `forge:cast_plates/any_bismoid_bronze`
+  - `GOLD.wireFine()` -> `forge:wires/gold`
+  - `GOLD/NB/BSCCO.wireDense()` -> `forge:dense_wires/gold|niobium|bscco`
+  - `LI/CO/NA/SA326.dust()` -> `forge:dusts/lithium|cobalt|sodium|schrabidium`
+  - `circuit CHIP_QUANTUM` -> `forge:circuits/chip_quantum`
+- 当前限制：
+  - 这仍是数据包表达层；旧 `AStack.matchesRecipe` 的 NBT、wildcard meta、cycling display、container item 和 auto switch runtime 尚未迁移。
+  - `circuit_chip_quantum`、dense wire 和 cast plate 是旧 meta/autogen 拆分入口，完整 meta 映射表应后续扩展成通用 `HbmIngredient`/legacy map。
+- 本批验证：
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。

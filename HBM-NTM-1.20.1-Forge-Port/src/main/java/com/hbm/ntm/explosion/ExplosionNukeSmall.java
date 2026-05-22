@@ -1,5 +1,7 @@
 package com.hbm.ntm.explosion;
 
+import com.hbm.ntm.config.BombConfig;
+import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.explosion.ExplosionNT.ExAttrib;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
@@ -17,7 +19,8 @@ public final class ExplosionNukeSmall {
             .shrapnelCount(0).resolution(32).radiationLevel(1.0F);
     public static final MukeParams PARAMS_LOW = params().blastRadius(15.0F).killRadius(45.0F).radiationLevel(2.0F);
     public static final MukeParams PARAMS_MEDIUM = params().blastRadius(20.0F).killRadius(55.0F).radiationLevel(3.0F);
-    public static final MukeParams PARAMS_HIGH = params().largeNuke().blastRadius(35.0F).killRadius(75.0F).shrapnelCount(0).radiationLevel(5.0F);
+    public static final MukeParams PARAMS_HIGH = params().largeNuke().blastRadius(BombConfig.FATMAN_RADIUS_DEFAULT)
+            .killRadius(75.0F).shrapnelCount(0).radiationLevel(5.0F);
 
     public static void explode(Level level, double x, double y, double z, MukeParams params) {
         if (level == null || params == null || level.isClientSide()) {
@@ -51,6 +54,7 @@ public final class ExplosionNukeSmall {
             irradiateMiniNukeFootprint(level, x, y, z, params.radiationLevel);
         } else {
             ExplosionLarge.spawnParticles(level, x, y, z, ExplosionLarge.cloudFunction(Math.round(params.blastRadius)));
+            level.addFreshEntity(NukeExplosionMk5Entity.create(level, Math.round(params.blastRadius), x, y, z));
         }
     }
 
@@ -67,6 +71,14 @@ public final class ExplosionNukeSmall {
                 }
             }
         }
+    }
+
+    public static MukeParams configuredHighParams() {
+        return PARAMS_HIGH.copy().blastRadius(BombConfig.FATMAN_RADIUS.get());
+    }
+
+    public static void explodeConfiguredHigh(Level level, double x, double y, double z) {
+        explode(level, x, y, z, configuredHighParams());
     }
 
     private static MukeParams params() {

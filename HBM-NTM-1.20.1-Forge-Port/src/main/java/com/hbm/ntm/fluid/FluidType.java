@@ -1,6 +1,7 @@
 package com.hbm.ntm.fluid;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.fluid.trait.ContainerFluidTrait;
 import com.hbm.ntm.fluid.trait.FluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
 import java.util.Collection;
@@ -133,6 +134,16 @@ public final class FluidType {
         return !hasTrait(SimpleFluidTraits.Antimatter.class)
                 && !hasTrait(SimpleFluidTraits.NoContainer.class)
                 && !hasTrait(SimpleFluidTraits.Viscous.class);
+    }
+
+    public boolean hasCanisterContainer() {
+        ContainerFluidTrait trait = getTrait(ContainerFluidTrait.class);
+        return trait != null && trait.hasCanister();
+    }
+
+    public boolean hasGasTankContainer() {
+        ContainerFluidTrait trait = getTrait(ContainerFluidTrait.class);
+        return trait != null && trait.hasGasTank();
     }
 
     public HbmFluidReleaseEffects.ReleaseReport onFluidRelease(Level level, BlockPos pos, int amountMb, FluidReleaseType releaseType) {

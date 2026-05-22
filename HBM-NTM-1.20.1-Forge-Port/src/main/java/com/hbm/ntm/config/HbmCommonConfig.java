@@ -21,6 +21,7 @@ public final class HbmCommonConfig {
         builder.pop();
 
         RadiationConfig.define(builder);
+        BombConfig.define(builder);
 
         SPEC = builder.build();
     }

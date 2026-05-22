@@ -25,6 +25,8 @@ public final class ModParticleTypes {
             PARTICLE_TYPES.register("foam", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> FLAMETHROWER =
             PARTICLE_TYPES.register("flamethrower", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> BLACK_POWDER_SPARK =
+            PARTICLE_TYPES.register("black_powder_spark", () -> new SimpleParticleType(false));
 
     private ModParticleTypes() {
     }

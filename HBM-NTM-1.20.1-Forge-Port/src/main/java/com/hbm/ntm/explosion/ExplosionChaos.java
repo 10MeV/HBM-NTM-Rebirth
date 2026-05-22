@@ -1,6 +1,7 @@
 package com.hbm.ntm.explosion;
 
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
@@ -96,8 +97,8 @@ public final class ExplosionChaos {
             return;
         }
         for (LivingEntity entity : livingInRange(level, x, y, z, range)) {
-            if (ArmorUtil.hasLungGasProtection(entity)) {
-                hurtHelmet(entity, 1);
+            if (ArmorUtil.hasAnyProtection(entity, HazardClass.GAS_LUNG, HazardClass.GAS_BLISTERING)) {
+                ArmorUtil.damageGasMaskFilter(entity, 1);
             } else {
                 entity.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 5 * 20, 0));
                 entity.addEffect(new MobEffectInstance(MobEffects.POISON, 20 * 20, 2));
@@ -199,14 +200,6 @@ public final class ExplosionChaos {
                 stack.hurtAndBreak(amount, entity, ignored -> {
                 });
             }
-        }
-    }
-
-    private static void hurtHelmet(LivingEntity entity, int amount) {
-        net.minecraft.world.item.ItemStack helmet = entity.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
-        if (!helmet.isEmpty()) {
-            helmet.hurtAndBreak(amount, entity, ignored -> {
-            });
         }
     }
 

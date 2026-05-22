@@ -1,5 +1,7 @@
 package com.hbm.ntm.entity.logic;
 
+import com.hbm.ntm.config.BombConfig;
+import com.hbm.ntm.entity.effect.FalloutRainEntity;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.explosion.ExplosionNukeRayBatched;
 import com.hbm.ntm.explosion.ExplosionRay;
@@ -17,9 +19,6 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 public class NukeExplosionMk5Entity extends Entity {
-    private static final int DEFAULT_CACHE_BUDGET_MS = 25;
-    private static final int DEFAULT_FALLOUT_RANGE_PERCENT = 100;
-
     private int strength;
     private int speed;
     private int length;
@@ -42,7 +41,7 @@ public class NukeExplosionMk5Entity extends Entity {
 
     public static NukeExplosionMk5Entity create(Level level, int radius, double x, double y, double z) {
         if (radius == 0) {
-            radius = 25;
+            radius = BombConfig.NUKA_RADIUS.get();
         }
 
         int strength = radius * 2;
@@ -81,13 +80,14 @@ public class NukeExplosionMk5Entity extends Entity {
         }
 
         if (!explosion.isComplete()) {
-            explosion.cacheChunksTick(DEFAULT_CACHE_BUDGET_MS);
-            explosion.destructionTick(DEFAULT_CACHE_BUDGET_MS);
+            int budget = BombConfig.MK5_BUDGET_MS.get();
+            explosion.cacheChunksTick(budget);
+            explosion.destructionTick(budget);
             return;
         }
 
         if (fallout) {
-            placeFalloutFootprint();
+            level().addFreshEntity(FalloutRainEntity.create(level(), getX(), getY(), getZ(), falloutScale()));
         }
         discard();
     }
@@ -120,9 +120,8 @@ public class NukeExplosionMk5Entity extends Entity {
         return net.minecraft.core.BlockPos.containing(position);
     }
 
-    private void placeFalloutFootprint() {
-        int radius = Math.max(1, (int) (length * 2.5D + falloutAdd) * DEFAULT_FALLOUT_RANGE_PERCENT / 100);
-        ExplosionNukeGeneric.waste(level(), blockPosition().getX(), blockPosition().getY(), blockPosition().getZ(), Math.min(radius, length * 2));
+    private int falloutScale() {
+        return Math.max(1, (int) (length * 2.5D + falloutAdd) * BombConfig.FALLOUT_RANGE_PERCENT.get() / 100);
     }
 
     public NukeExplosionMk5Entity setFallout(boolean fallout) {

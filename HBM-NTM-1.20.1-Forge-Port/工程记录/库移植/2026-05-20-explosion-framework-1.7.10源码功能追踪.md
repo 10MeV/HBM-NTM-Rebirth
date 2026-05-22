@@ -592,6 +592,68 @@
 - 旧 `BombConfig.mk5` / `falloutRange` / `enableExtendedLogging` 尚未迁入现代 config，本批使用固定 25ms tick 预算和 100% fallout 范围。
 - Manhattan 成就系统尚未迁，现代实体不触发成就。
 
+## 2026-05-22 BombConfig 子集 / ExplosionNukeSmall 大核弹接线
+
+### 1.7.10 细化追踪
+
+- `BombConfig`：
+  - nuke radius 默认值：`gadget=150`、`boy=120`、`man=175`、`mike=250`、`tsar=500`、`prototype=150`、`fleija=50`、`solinium=150`、`n2=200`、`missile=100`、`mirv=100`、`fatman=35`、`nuka=25`、`aSchrab=20`。
+  - explosion 配置默认值：`mk5=50` ms、`blastSpeed=1024`、`falloutRange=100`、`fDelay=4`、`limitExplosionLifespan=0`、`chunkloading=true`、`explosionAlgorithm=2`。
+- `ExplosionNukeSmall.PARAMS_HIGH`：
+  - 旧版 `miniNuke=false`，`blastRadius=BombConfig.fatmanRadius`，`shrapnelCount=0`。
+  - `explode(...)` 中 `miniNuke=false` 时调用 `WorldUtil.loadAndSpawnEntityInWorld(EntityNukeExplosionMK5.statFac(...))`，真正进入 MK5 射线核爆。
+
+### 现代实现
+
+- 新增现代 `config.BombConfig`：
+  - 挂到 `hbm-common.toml`，分为 `nukes` 与 `explosions` 两段。
+  - 迁入旧半径默认值和 MK5/fallout/blastSpeed/chunkloading/explosionAlgorithm 等共享爆炸配置项。
+- 更新 `NukeExplosionMk5Entity`：
+  - `radius=0` 时使用 `BombConfig.NUKA_RADIUS`。
+  - tick 预算从 `BombConfig.MK5_BUDGET_MS` 读取。
+  - fallback fallout footprint 范围从 `BombConfig.FALLOUT_RANGE_PERCENT` 读取。
+- 更新 `ExplosionNukeSmall`：
+  - `PARAMS_HIGH` 的默认半径使用 `BombConfig.FATMAN_RADIUS_DEFAULT`。
+  - `miniNuke=false` 时除了已迁的烟云表现外，现在会 `addFreshEntity(NukeExplosionMk5Entity.create(...))`，恢复旧版大核弹进入 MK5 调度实体的路径。
+  - 新增 `configuredHighParams()` / `explodeConfiguredHigh(...)`，供后续 Fatman、Tier0 missile 等调用点按运行期 `BombConfig.FATMAN_RADIUS` 生成参数，避免静态 `PARAMS_HIGH` 缓存旧半径。
+
+### 有意降级/延期
+
+- 现代 `PARAMS_HIGH` 仍是静态默认参数；后续核弹方块/物品接线应优先使用 `configuredHighParams()` 或 `explodeConfiguredHigh(...)`。
+- `BombConfig.CHUNK_LOADING` 和 `EXPLOSION_ALGORITHM` 已迁配置入口，但当前现代实现仍采用安全 batched worker，不启用旧 direct chunk storage/threaded 写入。
+- `ExplosionNukeSmall` 的大核弹路径尚未接旧 `WorldUtil.loadAndSpawnEntityInWorld` 的强制加载语义；后续 chunk ticket 迁完后再补齐。
+
+## 2026-05-22 EntityFalloutRain 安全子集
+
+### 1.7.10 细化追踪
+
+- `EntityFalloutRain`：
+  - 继承旧 `EntityExplosionChunkloading`，尺寸 `4 x 20`，不可见、免疫火焰。
+  - `scale` 存在 data watcher 16；NBT 保存 `scale`、`chunks`、`outerChunks`。
+  - 首 tick 调 `gatherChunks()`，用中心向外的采样圆收集内圈 chunk 和外圈 chunk，之后按预算分批处理。
+  - 每 `BombConfig.fDelay` tick 执行一次 chunk 处理，每次处理时间受 `BombConfig.mk5` 限制。
+  - `stomp(x,z,dist)` 自世界顶部向下扫描，深度到 3 个 solid 后停止。
+  - 顶部可放置时按 `0.1 - (dist/100 - 0.7)^2` 概率铺 `fallout`。
+  - `dist < 65` 时可燃方块上方有 1/5 概率点火。
+  - 旧版还会处理 `volcano_core -> volcano_rad_core`、`FalloutConfigJSON` 地表替换、crater biome、下方空气时生成 `EntityFallingBlockNT`。
+
+### 现代实现
+
+- 新增 `FalloutRainEntity`：
+  - 注册为 `hbm:entity_fallout_rain`，客户端 `NoopRenderer`，保持不可见逻辑实体。
+  - 保留 `scale`、`chunksToProcess`、`outerChunksToProcess`、`firstTick`、`tickDelay` 和 NBT 保存/读取。
+  - 使用现代 `ChunkPos.asLong` / `long[]` 保存 chunk 队列。
+  - 按 `BombConfig.FALLOUT_DELAY` 与 `BombConfig.MK5_BUDGET_MS` 预算分批处理。
+  - 对已加载区域按 chunk 扫描，使用 `Heightmap.Types.WORLD_SURFACE` 找地表，迁入 fallout 铺设概率和近中心点火逻辑。
+- 更新 `NukeExplosionMk5Entity`：
+  - MK5 射线完成后不再直接调用一次性 `ExplosionNukeGeneric.waste` fallback，而是 spawn `FalloutRainEntity.create(...)`，恢复旧版“完成后落尘实体继续分批处理”的结构。
+
+### 有意降级/延期
+
+- 未迁 crater biome 与 `FalloutConfigJSON` 地表替换规则；现代先保留 fallout 层和点火这两个直接可运行行为。
+- 未迁 `EntityFallingBlockNT` 抛落地表方块，也未迁 volcano_core 特例；依赖方块/实体尚未进入 clean port。
+- 仍未接旧 `EntityExplosionChunkloading` 强制加载能力；落尘实体只处理当前已加载并 tick 的区域。
+
 ## 验证清单
 
 - 普通爆炸不会在客户端修改世界。
@@ -602,3 +664,5 @@
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `ExplosionChaos` 安全子集、`ExplosionTom`、`hbm:pc` / `hbm:cloud` damage type 后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `BlockAllocatorGlyphidDig`、`ExplosionNukeRayParallelized` 兼容入口后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `NukeExplosionMk5Entity` 核心调度实体和实体注册后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `BombConfig` 子集并接通 `ExplosionNukeSmall` 大核弹 -> `NukeExplosionMk5Entity` 后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `FalloutRainEntity` 安全子集并接通 MK5 完成后的落尘实体后通过。

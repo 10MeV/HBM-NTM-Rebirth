@@ -1,0 +1,28 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm:plate_steel"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:dense_wires/gold"
+      }
+    }
+  ],
+  "internal_name": "ass.capacitorgold",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:capacitor_gold"
+    }
+  ],
+  "pools": [],
+  "power": 100
+}

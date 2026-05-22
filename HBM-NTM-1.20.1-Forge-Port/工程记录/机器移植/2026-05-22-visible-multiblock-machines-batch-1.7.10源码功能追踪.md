@@ -80,6 +80,9 @@
 - 修正泵机额外底座：
   - 旧 `dir.getRotation(DOWN)` 对应现代 `getCounterClockWise()`。
   - 额外底座普通 dummy 与四角 `makeExtra` 分开表达，避免整片底座被误标为 proxy。
+- 修正泵机模型/碰撞反向：
+  - 旧 `RenderPumpjack` 方向表为 NORTH=90、WEST=180、SOUTH=270、EAST=0。
+  - 现代泵机 definition 使用 `270 - facing.toYRot()`，与旧表对齐。
 
 ## 暂缓内容
 
