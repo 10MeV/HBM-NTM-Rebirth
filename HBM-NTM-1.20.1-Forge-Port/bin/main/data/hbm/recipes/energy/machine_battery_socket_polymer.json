@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": {
+      "item": "hbm:plate_polymer"
+    },
+    "R": {
+      "item": "hbm:coil_copper"
+    }
+  },
+  "pattern": [
+    "I I",
+    "I I",
+    "IRI"
+  ],
+  "result": {
+    "item": "hbm:machine_battery_socket"
+  },
+  "show_notification": true
+}

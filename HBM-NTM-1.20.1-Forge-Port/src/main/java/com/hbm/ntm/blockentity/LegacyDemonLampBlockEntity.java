@@ -35,6 +35,7 @@ public class LegacyDemonLampBlockEntity extends BlockEntity {
         radiate(level, pos);
     }
 
+    @SuppressWarnings("deprecation")
     private static void radiate(Level level, BlockPos pos) {
         Vec3 center = Vec3.atCenterOf(pos);
         AABB box = new AABB(center, center).inflate(RANGE);

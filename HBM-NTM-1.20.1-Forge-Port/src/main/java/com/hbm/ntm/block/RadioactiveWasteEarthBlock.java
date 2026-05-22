@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
+@SuppressWarnings("deprecation")
 public class RadioactiveWasteEarthBlock extends Block {
     private final boolean mycelium;
 
@@ -79,3 +80,4 @@ public class RadioactiveWasteEarthBlock extends Block {
         return plantable.getPlantType((LevelReader) level, pos.relative(facing)) == net.minecraftforge.common.PlantType.CAVE;
     }
 }
+

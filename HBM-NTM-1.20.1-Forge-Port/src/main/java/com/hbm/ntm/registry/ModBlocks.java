@@ -11,14 +11,20 @@ import com.hbm.ntm.block.LegacyComplexShapeBlock;
 import com.hbm.ntm.block.LegacyDemonLampBlock;
 import com.hbm.ntm.block.LegacyGasMeltdownBlock;
 import com.hbm.ntm.block.LegacyGasRadonBlock;
+import com.hbm.ntm.block.LegacyNuclearWasteBlock;
+import com.hbm.ntm.block.LegacyOutgasBlock;
 import com.hbm.ntm.block.MachineBlockEntityBlock;
 import com.hbm.ntm.block.LegacyLanternBlock;
+import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.MachineBatteryBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacyRadiationBarrelBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
+import com.hbm.ntm.block.LegacyToxicGasBlock;
+import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.block.RadiatingHazardBlock;
 import com.hbm.ntm.block.RadioactiveWasteEarthBlock;
+import com.hbm.ntm.block.MachineBatterySocketBlock;
 import com.hbm.ntm.block.RedCableBlock;
 import com.hbm.ntm.block.TrinketBlock;
 import com.hbm.ntm.block.TrinketVariant;
@@ -29,9 +35,15 @@ import com.hbm.ntm.block.conveyor.ExpressConveyorBlock;
 import com.hbm.ntm.block.conveyor.LiftConveyorBlock;
 import com.hbm.ntm.block.conveyor.TripleConveyorBlock;
 import com.hbm.ntm.item.LegacyStateBlockItem;
+import com.hbm.ntm.item.MultiblockBlockItem;
 import com.hbm.ntm.item.TrinketBlockItem;
+import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.multiblock.DummyBlock;
+import com.hbm.ntm.multiblock.MultiblockExtents;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -39,6 +51,7 @@ import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -46,8 +59,10 @@ import net.minecraftforge.registries.RegistryObject;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -72,13 +87,28 @@ public final class ModBlocks {
     public static final RegistryObject<Block> CONVEYOR_LIFT = conveyor("conveyor_lift", LiftConveyorBlock::new);
     public static final RegistryObject<Block> CONVEYOR_CHUTE = conveyor("conveyor_chute", ChuteConveyorBlock::new);
     public static final RegistryObject<Block> MACHINE_BATTERY = machineBattery("machine_battery");
+    public static final RegistryObject<Block> MACHINE_BATTERY_SOCKET = machineBatterySocket("machine_battery_socket");
     public static final RegistryObject<Block> GAS_RADON = gasRadon("gas_radon", LegacyGasRadonBlock.Kind.NORMAL);
     public static final RegistryObject<Block> GAS_RADON_DENSE = gasRadon("gas_radon_dense", LegacyGasRadonBlock.Kind.DENSE);
     public static final RegistryObject<Block> GAS_RADON_TOMB = gasRadon("gas_radon_tomb", LegacyGasRadonBlock.Kind.TOMB);
     public static final RegistryObject<Block> GAS_MELTDOWN = gasMeltdown("gas_meltdown");
+    public static final RegistryObject<Block> GAS_MONOXIDE = toxicGas("gas_monoxide", LegacyToxicGasBlock.Kind.MONOXIDE);
+    public static final RegistryObject<Block> GAS_ASBESTOS = toxicGas("gas_asbestos", LegacyToxicGasBlock.Kind.ASBESTOS);
+    public static final RegistryObject<Block> GAS_COAL = toxicGas("gas_coal", LegacyToxicGasBlock.Kind.COAL);
+    public static final RegistryObject<Block> CHLORINE_GAS = toxicGas("chlorine_gas", LegacyToxicGasBlock.Kind.CHLORINE);
     public static final RegistryObject<Block> RAD_ABSORBER = radAbsorber("rad_absorber");
     public static final RegistryObject<Block> DUMMY_BLOCK = dummyBlock("dummy_block");
     public static final RegistryObject<Block> MACHINE_ASSEMBLY_MACHINE = assemblyMachine("machine_assembly_machine");
+    public static final RegistryObject<Block> MACHINE_CHEMICAL_PLANT = visibleMultiblockMachine("machine_chemical_plant",
+            chemicalPlantDefinition());
+    public static final RegistryObject<Block> MACHINE_CHEMICAL_FACTORY = visibleMultiblockMachine("machine_chemical_factory",
+            chemicalFactoryDefinition());
+    public static final RegistryObject<Block> MACHINE_REFINERY = visibleMultiblockMachine("machine_refinery",
+            refineryDefinition());
+    public static final RegistryObject<Block> MACHINE_FLUIDTANK = visibleMultiblockMachine("machine_fluidtank",
+            fluidTankDefinition());
+    public static final RegistryObject<Block> MACHINE_PUMPJACK = visibleMultiblockMachine("machine_pumpjack",
+            pumpjackDefinition());
 
     // Legacy 1.7.10 blockTab entries used as an early chunk-radiation test bed.
     public static final RegistryObject<Block> WASTE_EARTH = wasteEarth("waste_earth", false);
@@ -129,11 +159,21 @@ public final class ModBlocks {
             RED_CABLE,
             FLUID_DUCT_NEO,
             MACHINE_BATTERY,
+            MACHINE_BATTERY_SOCKET,
             MACHINE_ASSEMBLY_MACHINE,
+            MACHINE_CHEMICAL_PLANT,
+            MACHINE_CHEMICAL_FACTORY,
+            MACHINE_REFINERY,
+            MACHINE_FLUIDTANK,
+            MACHINE_PUMPJACK,
             GAS_RADON,
             GAS_RADON_DENSE,
             GAS_RADON_TOMB,
             GAS_MELTDOWN,
+            GAS_MONOXIDE,
+            GAS_ASBESTOS,
+            GAS_COAL,
+            CHLORINE_GAS,
             RAD_ABSORBER
     );
 
@@ -478,6 +518,16 @@ public final class ModBlocks {
                 .isViewBlocking((state, level, pos) -> false), kind));
     }
 
+    private static RegistryObject<Block> toxicGas(String name, LegacyToxicGasBlock.Kind kind) {
+        return registerBlockWithItem(name, () -> new LegacyToxicGasBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.NONE)
+                .strength(0.0F, 0.0F)
+                .noCollission()
+                .noOcclusion()
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false), kind));
+    }
+
     private static RegistryObject<Block> radAbsorber(String name) {
         return registerBlockWithItem(
                 name,
@@ -500,16 +550,159 @@ public final class ModBlocks {
                 .requiresCorrectToolForDrops()
                 .noOcclusion()
                 .isSuffocating((state, level, pos) -> false)
+                .isRedstoneConductor((state, level, pos) -> false)
                 .isViewBlocking((state, level, pos) -> false)));
     }
 
     private static RegistryObject<Block> assemblyMachine(String name) {
-        return registerBlockWithItem(name, () -> new AssemblyMachineBlock(BlockBehaviour.Properties.of()
-                .mapColor(MapColor.METAL)
-                .strength(5.0F, 30.0F)
-                .sound(SoundType.METAL)
-                .requiresCorrectToolForDrops()
-                .noOcclusion()));
+        return registerBlockWithItem(
+                name,
+                () -> new AssemblyMachineBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion()),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> visibleMultiblockMachine(String name, LegacyMachineDefinition definition) {
+        return registerBlockWithItem(
+                name,
+                () -> new LegacyVisibleMultiblockMachineBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), definition),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static LegacyMachineDefinition chemicalPlantDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("chemical_plant"), machineTexture("chemical_plant"))
+                .legacyXrDimensions(2, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
+                        .withProxyPredicate(offset -> offset.getY() == 0
+                                && Math.abs(offset.getX()) <= 1
+                                && Math.abs(offset.getZ()) <= 1
+                                && (offset.getX() != 0 || offset.getZ() != 0)))
+                .renderParts("Base", "Frame", "Slider", "Spinner")
+                .build();
+    }
+
+    private static LegacyMachineDefinition chemicalFactoryDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("chemical_factory"), machineTexture("chemical_factory"))
+                .legacyXrDimensions(2, 0, 2, 2, 2, 2)
+                .legacyOffset(2)
+                .layout(facing -> {
+                    Direction rot = facing.getClockWise();
+                    return LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 2, 2, 2, 2 }, facing)
+                            .withProxyPredicate(offset -> isChemicalFactoryProxyOffset(offset, facing, rot));
+                })
+                .renderParts("Base", "Frame", "Fan1", "Fan2")
+                .build();
+    }
+
+    private static boolean isChemicalFactoryProxyOffset(BlockPos offset, Direction facing, Direction rot) {
+        boolean floorRing = offset.getY() == 0
+                && (Math.abs(offset.getX()) == 2 || Math.abs(offset.getZ()) == 2)
+                && Math.abs(offset.getX()) <= 2
+                && Math.abs(offset.getZ()) <= 2;
+        if (floorRing) {
+            return true;
+        }
+        if (offset.getY() != 2) {
+            return false;
+        }
+        int alongFacing = offset.getX() * facing.getStepX() + offset.getZ() * facing.getStepZ();
+        int alongRot = offset.getX() * rot.getStepX() + offset.getZ() * rot.getStepZ();
+        return Math.abs(alongFacing) <= 2 && Math.abs(alongRot) == 2;
+    }
+
+    private static LegacyMachineDefinition refineryDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("refinery"), machineTexture("refinery"))
+                .legacyXrDimensions(8, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 8, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraProxyOffsets(cornerProxyOffsets(facing)))
+                .yRotationOffset(180.0F)
+                .build();
+    }
+
+    private static LegacyMachineDefinition fluidTankDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("fluidtank"), machineTexture("fluidtank"))
+                .legacyXrDimensions(2, 0, 1, 1, 2, 2)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 2, 2 }, facing)
+                        .withExtraProxyOffsets(cornerProxyOffsets(facing)))
+                .yRotationOffset(180.0F)
+                .build();
+    }
+
+    private static LegacyMachineDefinition pumpjackDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("pumpjack"), machineTexture("pumpjack"))
+                .legacyXrDimensions(3, 0, 0, 0, 0, 6)
+                .legacyOffset(0)
+                .layout(facing -> {
+                    Direction rot = facing.getCounterClockWise();
+                    BlockPos offsetCore = new BlockPos(rot.getStepX() * 3, 0, rot.getStepZ() * 3);
+                    List<BlockPos> filledOffsets = pumpjackFilledOffsets(facing, offsetCore);
+                    Set<BlockPos> proxyOffsets = new LinkedHashSet<>(pumpjackCornerProxyOffsets(offsetCore));
+                    return LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 0, 0, 0, 6 }, facing)
+                            .withExtraOffsets(filledOffsets, proxyOffsets::contains)
+                            .withCheckOnlyOffsets(pumpjackCheckOnlyOffsets(facing, offsetCore));
+                })
+                .renderParts("Base", "Rotor", "Head", "Carriage")
+                .renderBoundingBox(pos -> new AABB(pos.offset(-7, 0, -7), pos.offset(8, 6, 8)))
+                .build();
+    }
+
+    private static List<BlockPos> pumpjackFilledOffsets(Direction facing, BlockPos offsetCore) {
+        return Stream.concat(
+                offsetsForLegacyXrBox(new int[] { 0, 0, -1, 1, 1, 1 }, facing, offsetCore).stream(),
+                offsetsForLegacyXrBox(new int[] { 0, 0, 1, -1, 2, 2 }, facing, offsetCore).stream()).toList();
+    }
+
+    private static List<BlockPos> pumpjackCheckOnlyOffsets(Direction facing, BlockPos offsetCore) {
+        return Stream.concat(
+                offsetsForLegacyXrBox(new int[] { 0, 0, -1, 1, -2, 4 }, facing, BlockPos.ZERO).stream(),
+                offsetsForLegacyXrBox(new int[] { 0, 0, 1, -1, -1, 5 }, facing, BlockPos.ZERO).stream()).toList();
+    }
+
+    private static List<BlockPos> pumpjackCornerProxyOffsets(BlockPos offsetCore) {
+        return List.of(
+                offsetCore.offset(1, 0, 1),
+                offsetCore.offset(1, 0, -1),
+                offsetCore.offset(-1, 0, 1),
+                offsetCore.offset(-1, 0, -1));
+    }
+
+    private static List<BlockPos> offsetsForLegacyXrBox(int[] dimensions, Direction facing, BlockPos originOffset) {
+        int[] rotated = MultiblockExtents.rotateLegacyXr(dimensions, facing);
+        return Stream.iterate(originOffset.getX() - rotated[4], x -> x <= originOffset.getX() + rotated[5], x -> x + 1)
+                .flatMap(x -> Stream.iterate(originOffset.getY() - rotated[1], y -> y <= originOffset.getY() + rotated[0], y -> y + 1)
+                        .flatMap(y -> Stream.iterate(originOffset.getZ() - rotated[2], z -> z <= originOffset.getZ() + rotated[3], z -> z + 1)
+                                .map(z -> new BlockPos(x, y, z))))
+                .filter(offset -> !offset.equals(originOffset))
+                .filter(offset -> !offset.equals(BlockPos.ZERO))
+                .toList();
+    }
+
+    private static List<BlockPos> cornerProxyOffsets(Direction facing) {
+        return List.of(
+                new BlockPos(1, 0, 1),
+                new BlockPos(1, 0, -1),
+                new BlockPos(-1, 0, 1),
+                new BlockPos(-1, 0, -1));
+    }
+
+    private static ResourceLocation machineModel(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/" + name + ".obj");
+    }
+
+    private static ResourceLocation machineTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/" + name + ".png");
     }
 
     private static RegistryObject<Block> machineBattery(String name) {
@@ -518,6 +711,18 @@ public final class ModBlocks {
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.METAL)
                 .requiresCorrectToolForDrops()));
+    }
+
+    private static RegistryObject<Block> machineBatterySocket(String name) {
+        return registerBlockWithItem(
+                name,
+                () -> new MachineBatterySocketBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 10.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion()),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
     }
 
     private static RegistryObject<Block> wasteEarth(String name, boolean mycelium) {
@@ -597,6 +802,20 @@ public final class ModBlocks {
             case "rebar" -> LegacyComplexShapeBlock.rebar(simpleResourceProperties(name, textureName).noOcclusion());
             case "wood_barrier" -> LegacyComplexShapeBlock.woodBarrier(simpleResourceProperties(name, textureName).noOcclusion());
             case "sandbags" -> LegacyComplexShapeBlock.sandbags(simpleResourceProperties(name, textureName).noOcclusion());
+            case "block_waste", "block_waste_painted", "block_waste_vitrified" -> new LegacyNuclearWasteBlock(name, simpleResourceProperties(name, textureName));
+            case "ore_uranium", "ore_uranium_scorched", "ore_gneiss_uranium", "ore_gneiss_uranium_scorched",
+                    "ore_nether_uranium", "ore_nether_uranium_scorched" ->
+                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON::get, true, false);
+            case "ancient_scrap" ->
+                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON_TOMB::get, true, true);
+            case "block_corium_cobble" ->
+                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON::get, true, true);
+            case "ore_nether_coal" ->
+                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName), GAS_MONOXIDE::get, true, false);
+            case "ore_asbestos", "ore_gneiss_asbestos", "block_asbestos", "deco_asbestos", "brick_asbestos", "tile_lab_broken" ->
+                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_ASBESTOS::get, true, false, true);
+            case "tile_lab", "tile_lab_cracked" ->
+                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName), GAS_ASBESTOS::get, true, false);
             default -> new RadiatingHazardBlock(name, simpleResourceProperties(name, textureName));
         });
     }

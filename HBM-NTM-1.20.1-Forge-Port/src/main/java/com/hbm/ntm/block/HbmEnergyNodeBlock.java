@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("deprecation")
 public abstract class HbmEnergyNodeBlock extends BaseEntityBlock implements HbmEnergyConnectorBlock {
     public static final BooleanProperty NORTH = BlockStateProperties.NORTH;
     public static final BooleanProperty EAST = BlockStateProperties.EAST;
@@ -151,3 +152,4 @@ public abstract class HbmEnergyNodeBlock extends BaseEntityBlock implements HbmE
         };
     }
 }
+

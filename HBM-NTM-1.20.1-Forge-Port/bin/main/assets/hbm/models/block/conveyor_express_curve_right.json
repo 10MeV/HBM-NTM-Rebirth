@@ -1,47 +1,8 @@
 {
-  "parent": "minecraft:block/block",
-  "elements": [
-    {
-      "faces": {
-        "down": {
-          "cullface": "down",
-          "texture": "#side"
-        },
-        "east": {
-          "cullface": "east",
-          "texture": "#side"
-        },
-        "north": {
-          "cullface": "north",
-          "texture": "#side"
-        },
-        "south": {
-          "cullface": "south",
-          "texture": "#side"
-        },
-        "up": {
-          "texture": "#top"
-        },
-        "west": {
-          "cullface": "west",
-          "texture": "#side"
-        }
-      },
-      "from": [
-        0,
-        0,
-        0
-      ],
-      "to": [
-        16,
-        4,
-        16
-      ]
-    }
-  ],
+  "parent": "hbm:block/template_conveyor",
   "textures": {
-    "particle": "hbm:block/conveyor_express_curve_right",
+    "top": "hbm:block/conveyor_express_curve_right",
     "side": "hbm:block/conveyor_side",
-    "top": "hbm:block/conveyor_express_curve_right"
+    "particle": "hbm:block/conveyor_express_curve_right"
   }
 }

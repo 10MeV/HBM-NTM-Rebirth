@@ -63,6 +63,10 @@ public final class ExplosionLarge {
         spawnShrapnelVisuals(level, x, y, z, count, motion);
     }
 
+    public static void spawnShrapnels(Level level, double x, double y, double z, int count) {
+        spawnShrapnels(level, x, y, z, count, 1.0F);
+    }
+
     public static void spawnTracers(Level level, double x, double y, double z, int count, float motion) {
         spawnShrapnelVisuals(level, x, y, z, count, motion);
     }
@@ -122,14 +126,14 @@ public final class ExplosionLarge {
             for (int i = 0; i < strength; i++) {
                 BlockPos pos = BlockPos.containing(x + direction.x * i, y + direction.y * i, z + direction.z * i);
                 BlockState state = level.getBlockState(pos);
-                if (!state.getFluidState().isEmpty() || state.liquid()) {
+                if (!state.getFluidState().isEmpty()) {
                     level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                     continue;
                 }
                 if (state.isAir()) {
                     continue;
                 }
-                if (state.getBlock().getExplosionResistance() > 70.0F) {
+                if (hasHighExplosionResistance(state)) {
                     continue;
                 }
                 serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state),
@@ -139,6 +143,11 @@ public final class ExplosionLarge {
                 break;
             }
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private static boolean hasHighExplosionResistance(BlockState state) {
+        return state.getBlock().getExplosionResistance() > 70.0F;
     }
 
     public static int cloudFunction(int strength) {

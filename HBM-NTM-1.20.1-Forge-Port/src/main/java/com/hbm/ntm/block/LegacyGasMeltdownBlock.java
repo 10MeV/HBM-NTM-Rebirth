@@ -18,6 +18,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
+@SuppressWarnings("deprecation")
 public class LegacyGasMeltdownBlock extends LegacyGasBlock {
     public LegacyGasMeltdownBlock(Properties properties) {
         super(properties);
@@ -74,3 +75,4 @@ public class LegacyGasMeltdownBlock extends LegacyGasBlock {
         return randomHorizontal(random);
     }
 }
+

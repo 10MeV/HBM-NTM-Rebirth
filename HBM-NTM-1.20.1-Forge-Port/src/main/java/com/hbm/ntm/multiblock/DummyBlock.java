@@ -2,6 +2,7 @@ package com.hbm.ntm.multiblock;
 
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
+import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -21,8 +22,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
+
+@SuppressWarnings("deprecation")
 public class DummyBlock extends Block implements EntityBlock {
     private static final VoxelShape SHAPE = Shapes.block();
 
@@ -87,4 +92,16 @@ public class DummyBlock extends Block implements EntityBlock {
     public PushReaction getPistonPushReaction(BlockState state) {
         return PushReaction.BLOCK;
     }
+
+    @Override
+    public void initializeClient(Consumer<IClientBlockExtensions> consumer) {
+        consumer.accept(new IClientBlockExtensions() {
+            @Override
+            public boolean addDestroyEffects(BlockState state, Level level, BlockPos pos, ParticleEngine manager) {
+                manager.destroy(pos, MultiblockHelper.steelParticleState());
+                return true;
+            }
+        });
+    }
 }
+

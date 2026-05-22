@@ -300,7 +300,7 @@ public final class HbmEnergyNodespace {
     private static void pruneUnloadedChunks(ServerLevel level, EnergyNodeWorld nodeWorld) {
         ArrayList<BlockPos> toRemove = new ArrayList<>();
         for (BlockPos pos : nodeWorld.nodes.keySet()) {
-            if (!level.hasChunkAt(pos)) {
+            if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) {
                 toRemove.add(pos);
             }
         }

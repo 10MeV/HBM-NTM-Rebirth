@@ -8,6 +8,7 @@ import com.hbm.ntm.energy.HbmLoadedEnergy;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.network.HbmTileSyncable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -21,7 +22,7 @@ import net.minecraftforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmLoadedEnergy, InfoProviderEC {
+public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmLoadedEnergy, InfoProviderEC, HbmTileSyncable {
     private static final String TAG_ENERGY = "Energy";
 
     protected final HbmEnergyStorage energy;
@@ -176,6 +177,20 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.put(TAG_ENERGY, energy.serializeNBT());
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.put(TAG_ENERGY, energy.serializeNBT());
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        if (tag.contains(TAG_ENERGY)) {
+            energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
+        }
     }
 
     @Override

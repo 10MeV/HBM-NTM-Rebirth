@@ -24,6 +24,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("deprecation")
 public class LegacyLanternBlock extends BaseEntityBlock {
     public static final IntegerProperty SEGMENT = IntegerProperty.create("segment", 0, 4);
     private static final VoxelShape SHAPE = box(4.0D, 0.0D, 4.0D, 12.0D, 16.0D, 12.0D);
@@ -153,3 +154,4 @@ public class LegacyLanternBlock extends BaseEntityBlock {
         }
     }
 }
+

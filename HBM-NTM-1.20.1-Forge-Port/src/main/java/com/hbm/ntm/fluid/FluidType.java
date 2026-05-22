@@ -8,7 +8,10 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 
 public final class FluidType {
     public static final int ROOM_TEMPERATURE = 20;
@@ -130,5 +133,21 @@ public final class FluidType {
         return !hasTrait(SimpleFluidTraits.Antimatter.class)
                 && !hasTrait(SimpleFluidTraits.NoContainer.class)
                 && !hasTrait(SimpleFluidTraits.Viscous.class);
+    }
+
+    public HbmFluidReleaseEffects.ReleaseReport onFluidRelease(Level level, BlockPos pos, int amountMb, FluidReleaseType releaseType) {
+        return HbmFluidReleaseEffects.applyRelease(level, pos, this, amountMb, releaseType);
+    }
+
+    public HbmFluidReleaseEffects.ReleaseReport previewRelease(int amountMb, FluidReleaseType releaseType) {
+        return HbmFluidReleaseEffects.previewRelease(this, amountMb, releaseType);
+    }
+
+    public HbmFluidContactEffects.ContactReport affectEntity(Entity entity, float intensity) {
+        return HbmFluidContactEffects.affectEntity(this, entity, intensity);
+    }
+
+    public HbmFluidContactEffects.ContactReport previewEntityContact(Entity entity, float intensity) {
+        return HbmFluidContactEffects.previewContact(this, entity, intensity);
     }
 }

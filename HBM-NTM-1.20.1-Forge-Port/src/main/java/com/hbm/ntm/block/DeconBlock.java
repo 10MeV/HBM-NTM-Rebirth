@@ -16,6 +16,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("deprecation")
 public class DeconBlock extends BaseEntityBlock {
     public DeconBlock(Properties properties) {
         super(properties);
@@ -46,3 +47,4 @@ public class DeconBlock extends BaseEntityBlock {
         return createTickerHelper(type, ModBlockEntities.DECON.get(), DeconBlockEntity::serverTick);
     }
 }
+

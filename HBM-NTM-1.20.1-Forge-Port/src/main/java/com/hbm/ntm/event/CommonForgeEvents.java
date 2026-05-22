@@ -9,6 +9,7 @@ import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
+import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.HazardRegistry;
@@ -19,6 +20,9 @@ import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
+import com.hbm.ntm.registry.ModBlocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -44,17 +48,20 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ChunkDataEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.RegistryObject;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -99,6 +106,27 @@ public final class CommonForgeEvents {
     }
 
     @SubscribeEvent
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+        Block block = event.getState().getBlock();
+        if (!event.getState().is(Blocks.COAL_ORE)
+                && !event.getState().is(Blocks.DEEPSLATE_COAL_ORE)
+                && !event.getState().is(Blocks.COAL_BLOCK)
+                && block != legacyBlockOrNull("ore_lignite")) {
+            return;
+        }
+
+        for (Direction direction : Direction.values()) {
+            BlockPos target = event.getPos().relative(direction);
+            if (level.random.nextInt(2) == 0 && level.isEmptyBlock(target)) {
+                level.setBlock(target, ModBlocks.GAS_COAL.get().defaultBlockState(), Block.UPDATE_ALL);
+            }
+        }
+    }
+
+    @SubscribeEvent
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         LivingEntity entity = event.getEntity();
         if (entity.level().isClientSide || entity.isDeadOrDying()) {
@@ -116,6 +144,11 @@ public final class CommonForgeEvents {
                 syncRadiation(serverPlayer);
             }
         }
+    }
+
+    private static Block legacyBlockOrNull(String legacyName) {
+        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(legacyName);
+        return block == null ? null : block.get();
     }
 
     @SubscribeEvent
@@ -265,6 +298,16 @@ public final class CommonForgeEvents {
     public static void onPlayerClone(PlayerEvent.Clone event) {
         RadiationData.copyForRespawn(event.getOriginal(), event.getEntity());
         RadiationData.applyDigammaModifier(event.getEntity());
+        if (event.getOriginal() instanceof ServerPlayer oldPlayer) {
+            HbmServerKeybinds.clear(oldPlayer);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            HbmServerKeybinds.clear(player);
+        }
     }
 
     @SubscribeEvent

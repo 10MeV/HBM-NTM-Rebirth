@@ -1,6 +1,13 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyStorage;
+import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidForgeMappings;
+import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluids;
+import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -16,7 +23,15 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.energy.IEnergyStorage;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -29,6 +44,13 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private static final String TAG_RING_TARGET = "RingTarget";
     private static final String TAG_RING_SPEED = "RingSpeed";
     private static final String TAG_RING_DELAY = "RingDelay";
+    private static final String TAG_ENERGY = "Energy";
+    private static final String TAG_LEGACY_POWER = "power";
+    private static final String TAG_LEGACY_MAX_POWER = "maxPower";
+    private static final String TAG_INPUT_TANK = "i";
+    private static final String TAG_OUTPUT_TANK = "o";
+    private static final long DEFAULT_MAX_POWER = 100_000L;
+    private static final int TANK_CAPACITY = 4_000;
 
     private final ItemStackHandler items = new ItemStackHandler(17) {
         @Override
@@ -36,6 +58,12 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
             setChanged();
         }
     };
+    private final HbmEnergyStorage energy = new HbmEnergyStorage(DEFAULT_MAX_POWER, DEFAULT_MAX_POWER, 0L);
+    private final HbmFluidTank inputTank = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
+    private final HbmFluidTank outputTank = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
+    private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(AssemblyFluidHandler::new);
     private final AssemblerArm[] arms = new AssemblerArm[] { new AssemblerArm(1L), new AssemblerArm(2L) };
 
     private boolean didProcess;
@@ -74,6 +102,18 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     public ItemStackHandler getItems() {
         return items;
+    }
+
+    public HbmEnergyStorage getEnergyStorage() {
+        return energy;
+    }
+
+    public HbmFluidTank getInputTank() {
+        return inputTank;
+    }
+
+    public HbmFluidTank getOutputTank() {
+        return outputTank;
     }
 
     public List<ItemStack> getDrops() {
@@ -138,6 +178,11 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.put(TAG_INVENTORY, items.serializeNBT());
+        tag.put(TAG_ENERGY, energy.serializeNBT());
+        tag.putLong(TAG_LEGACY_POWER, energy.getPower());
+        tag.putLong(TAG_LEGACY_MAX_POWER, energy.getMaxPower());
+        inputTank.writeToNbt(tag, TAG_INPUT_TANK);
+        outputTank.writeToNbt(tag, TAG_OUTPUT_TANK);
         tag.putBoolean(TAG_DID_PROCESS, didProcess);
         tag.putDouble(TAG_RING, ring);
         tag.putDouble(TAG_RING_TARGET, ringTarget);
@@ -149,6 +194,17 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     public void load(CompoundTag tag) {
         super.load(tag);
         items.deserializeNBT(tag.getCompound(TAG_INVENTORY));
+        if (tag.contains(TAG_ENERGY)) {
+            energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
+        } else if (tag.contains(TAG_LEGACY_POWER)) {
+            energy.setPower(tag.getLong(TAG_LEGACY_POWER));
+        }
+        if (tag.contains(TAG_INPUT_TANK)) {
+            inputTank.readFromNbt(tag, TAG_INPUT_TANK);
+        }
+        if (tag.contains(TAG_OUTPUT_TANK)) {
+            outputTank.readFromNbt(tag, TAG_OUTPUT_TANK);
+        }
         didProcess = tag.getBoolean(TAG_DID_PROCESS);
         ring = tag.getDouble(TAG_RING);
         prevRing = ring;
@@ -182,6 +238,113 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
         return null;
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        itemHandler.invalidate();
+        energyHandler.invalidate();
+        fluidHandler.invalidate();
+    }
+
+    @Override
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
+        if (capability == ForgeCapabilities.ITEM_HANDLER) {
+            return itemHandler.cast();
+        }
+        if (capability == ForgeCapabilities.ENERGY) {
+            return energyHandler.cast();
+        }
+        if (capability == ForgeCapabilities.FLUID_HANDLER) {
+            return fluidHandler.cast();
+        }
+        return super.getCapability(capability, side);
+    }
+
+    private void onFluidContentsChanged() {
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    private class AssemblyFluidHandler implements IFluidHandler {
+        @Override
+        public int getTanks() {
+            return 2;
+        }
+
+        @Override
+        public FluidStack getFluidInTank(int tank) {
+            HbmFluidTank hbmTank = getTank(tank);
+            return hbmTank == null ? FluidStack.EMPTY : HbmFluidForgeMappings.toForge(hbmTank.getTankType(), hbmTank.getFill());
+        }
+
+        @Override
+        public int getTankCapacity(int tank) {
+            HbmFluidTank hbmTank = getTank(tank);
+            return hbmTank == null ? 0 : hbmTank.getMaxFill();
+        }
+
+        @Override
+        public boolean isFluidValid(int tank, FluidStack stack) {
+            if (tank != 0 || stack == null || stack.isEmpty()) {
+                return false;
+            }
+            FluidType type = HbmFluidForgeMappings.fromForge(stack);
+            return type != HbmFluids.NONE && inputTank.canAccept(type, 0);
+        }
+
+        @Override
+        public int fill(FluidStack resource, FluidAction action) {
+            if (resource == null || resource.isEmpty()) {
+                return 0;
+            }
+            FluidType type = HbmFluidForgeMappings.fromForge(resource);
+            if (type == HbmFluids.NONE) {
+                return 0;
+            }
+            int filled = inputTank.fill(type, resource.getAmount(), 0, action.simulate());
+            if (!action.simulate() && filled > 0) {
+                onFluidContentsChanged();
+            }
+            return filled;
+        }
+
+        @Override
+        public FluidStack drain(FluidStack resource, FluidAction action) {
+            if (resource == null || resource.isEmpty()) {
+                return FluidStack.EMPTY;
+            }
+            FluidType type = HbmFluidForgeMappings.fromForge(resource);
+            if (type == HbmFluids.NONE || outputTank.getTankType() != type) {
+                return FluidStack.EMPTY;
+            }
+            int drained = outputTank.drain(resource.getAmount(), action.simulate());
+            if (!action.simulate() && drained > 0) {
+                onFluidContentsChanged();
+            }
+            return drained <= 0 ? FluidStack.EMPTY : new FluidStack(resource.getFluid(), drained);
+        }
+
+        @Override
+        public FluidStack drain(int maxDrain, FluidAction action) {
+            if (maxDrain <= 0 || outputTank.isEmpty() || !HbmFluidForgeMappings.canExport(outputTank.getTankType())) {
+                return FluidStack.EMPTY;
+            }
+            FluidType type = outputTank.getTankType();
+            int drained = outputTank.drain(maxDrain, action.simulate());
+            if (!action.simulate() && drained > 0) {
+                onFluidContentsChanged();
+            }
+            return HbmFluidForgeMappings.toForge(type, drained);
+        }
+
+        @Nullable
+        private HbmFluidTank getTank(int tank) {
+            return tank == 0 ? inputTank : tank == 1 ? outputTank : null;
+        }
     }
 
     public static class AssemblerArm {

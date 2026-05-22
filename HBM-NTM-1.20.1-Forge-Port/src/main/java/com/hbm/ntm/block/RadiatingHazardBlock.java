@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Map;
 
+@SuppressWarnings("deprecation")
 public class RadiatingHazardBlock extends Block {
     private static final Map<String, Float> LEGACY_CHUNK_RADIATION_SOURCES = Map.ofEntries(
             Map.entry("block_actinium", 30.0F),
@@ -72,3 +73,4 @@ public class RadiatingHazardBlock extends Block {
         return 20;
     }
 }
+

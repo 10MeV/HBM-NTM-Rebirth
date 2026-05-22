@@ -59,7 +59,7 @@ public class BlockAllocatorWater implements BlockAllocator {
 
             BlockState state = level.getBlockState(blockPos);
             FluidState fluidState = level.getFluidState(blockPos);
-            boolean liquid = !fluidState.isEmpty() || state.liquid();
+            boolean liquid = !fluidState.isEmpty();
             if (!state.isAir() && !liquid) {
                 Optional<Float> resistance = explosion.damageCalculator().getBlockExplosionResistance(
                         explosion.compat(), level, blockPos, state, fluidState);

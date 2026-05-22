@@ -167,6 +167,23 @@
   - 第一/第三人称手持角度是否接近旧版。
   - 地上掉落物是否可读。
 
+### 2026-05-22 修正：battery_pack 透明/黑条图标
+
+- 实机症状：
+  - 12 个电池包/电容在创造栏 tooltip 正常，但物品图标基本透明，只剩局部黑条。
+- 根因核查：
+  - 旧版 `ItemRenderBatteryPack` 不是 atlas item model，而是直接 `bindTexture(pack.texture)` 后渲染 `ResourceManager.battery_socket.renderPart("Battery"/"Capacitor")`。
+  - 现代初版用 Forge baked OBJ part，再尝试用 `RenderType.entityCutoutNoCull(dynamicTexture)` 换贴图；但 baked quad 的 sprite 在模型烘焙时已固定，运行时换 RenderType 不能等价替换 OBJ UV 贴图。
+  - 初版 GUI 还把旧 `GL11.glScaled(5,5,5)` 直接搬到现代 item 坐标，导致 OBJ 被放大约 16 倍并被 slot 裁切，只剩黑色边缘/阴影。
+- 本批库修正：
+  - `LegacyWavefrontModel` 增加按调用传入 `ResourceLocation textureLocation` 的 `renderPart` / `renderAll` 重载。
+  - `BatteryPackItemRenderer` 改走 `LegacyWavefrontModel` 直绘 `models/block/machines/battery.obj` 的 `Battery` / `Capacitor` group，并按 stack 传入 `textures/block/machines/<legacyTextureName>.png`。
+  - GUI 缩放改为现代坐标下的 `0.36` 量级，等价于旧 5 像素级渲染，不再使用错误的 `5.0` block/model 缩放。
+- 迁移规则更新：
+  - 后续凡是 1.7.10 通过 `bindTexture(...) + HFRWavefrontObject.renderPart(...)` 动态换整张 OBJ 贴图的路径，应优先走 `LegacyWavefrontModel` 或补参数化 legacy OBJ 渲染库，不应依赖 Forge baked OBJ + RenderType 来动态替换 sprite。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ## 分批对齐记录
 
 ### 第 1 轮
@@ -699,6 +716,70 @@
 - 对齐清单：
   - `工程记录/库移植/生成报告/render-library-alignment-2026-05-21.csv` 追加本轮 9 个 fusion 条目，状态均标为资源/分件入口已对齐但 renderer 行为未完整迁移，静态候选只限 `collector`、`boiler`、`coupler`。
 
+### 第 33 轮
+
+- 继续补渲染库共享能力与发射台资源入口。
+- `LegacyWavefrontModel` 直渲染桥扩展：
+  - 实现 `LegacyObjModel`，新增 `renderAll(ObjRenderContext)`、`renderPart(...)`、`renderOnly(...)`、`renderAllExcept(...)`、`getPartNames()`。
+  - `renderOnly` / `renderAllExcept` 按旧 `HFRWavefrontObject` 语义使用大小写不敏感 group 名，并保持 OBJ group 顺序渲染。
+  - 新增 `groupOrder`，避免同名 `o/g` group 覆盖前面的 group；`renderPart` 会渲染所有同名 group。
+  - 面渲染补强：三角面继续补第 3 点为 quad；四边面直接输出；超过 4 点的面改用 fan 三角拆分，避免旧实现只按 4 点步进漏尾面。
+  - 法线计算增加退化面兜底，避免零长度 cross product 产生无效 normal。
+- 新增领域模型库：
+  - `ObjLaunchModels`：`launch_table_base`、大小 pad、大小 scaffold base/connector/empty，以及 Soyuz launcher 的 legs/table/tower_base/tower/support_base/support。
+  - `ObjModelLibrary` 暴露 `LAUNCH_TABLE_*`、`SOYUZ_LAUNCHER_*` facade，并新增 `launchPart(String name)`。
+- 1.7.10 事实源：
+  - `ResourceManager` 模型字段：`launch_table_base`、`launch_table_large_pad`、`launch_table_small_pad`、`launch_table_large_scaffold_base`、`launch_table_large_scaffold_connector`、`launch_table_large_scaffold_empty`、`launch_table_small_scaffold_base`、`launch_table_small_scaffold_connector`、`launch_table_small_scaffold_empty`、`soyuz_launcher_legs`、`soyuz_launcher_table`、`soyuz_launcher_tower_base`、`soyuz_launcher_tower`、`soyuz_launcher_support_base`、`soyuz_launcher_support`。
+  - 旧 renderer/helper：`RenderLaunchTable`、`SoyuzLauncherPronter`。
+  - 旧贴图路径：`textures/models/missile_parts/launch_table*.png` 与 `textures/models/soyuz_launcher/launcher_*.png`。
+- 资源迁入：
+  - 复制 15 个旧 OBJ 到 `models/block/launch_table/`。
+  - 复制 13 张旧贴图到 `textures/block/launch_table/`。
+  - 为所有 OBJ 补本地 `.mtl`、`mtllib`、`usemtl default` 和 Forge OBJ JSON。
+  - `launch_table_*_scaffold_empty` 对齐旧 `RenderLaunchTable`：旧代码渲染 empty 模型时绑定的是对应 scaffold base 贴图，现代 JSON 同样复用 base 贴图。
+- 本轮没有迁移：
+  - `RenderLaunchTable` 的 metadata 朝向、`padSize` 分支、按导弹高度循环渲染 scaffold、connector 层判断、`MissileMultipart` / `MissilePronter` 导弹本体渲染。
+  - `SoyuzLauncherPronter` 的完整支架/塔/支撑条件和 transform。
+  - `soyuz.obj` 火箭本体、Soyuz capsule/module、多套 `soyuz_luna` / `soyuz_authentic` 贴图变体；这组依赖大量 `renderOnly` 多贴图调用，放到后续火箭专题。
+- 对齐清单：
+  - `工程记录/库移植/生成报告/render-library-alignment-2026-05-21.csv` 追加本轮 launch table / Soyuz launcher 15 个条目。
+
+### 第 34 轮
+
+- 继续扩大上一轮 `LegacyWavefrontModel.renderOnly(...)` 的使用面，迁入 Soyuz / 胶囊 / 轨道舱模型资源与多贴图 helper。
+- 1.7.10 事实源：
+  - `ResourceManager` 模型字段：`soyuz`、`soyuz_lander`、`soyuz_module`。
+  - 旧模型路径：`models/soyuz.obj`、`models/soyuz_lander.obj`、`models/soyuz_module.obj`。
+  - 旧 renderer/helper：`SoyuzPronter`、`RenderCapsule`。
+  - 旧贴图路径：
+    - `textures/models/soyuz/*.png`
+    - `textures/models/soyuz_luna/*.png`
+    - `textures/models/soyuz_authentic/*.png`
+    - `textures/models/soyuz_capsule/*.png`
+    - `textures/items/polaroid_memento.png`
+- 新增 `ObjSoyuzModels`：
+  - `SOYUZ`、`LANDER`、`MODULE` 使用 `LegacyWavefrontModel`，保留旧 OBJ group 直接渲染路径。
+  - `SoyuzTextureSet` 复刻旧 `SoyuzPronter.SoyuzSkin` 的 11 张贴图字段：`engineBlock`、`bottomStage`、`topStage`、`payload`、`payloadBlocks`、`les`、`lesThrusters`、`mainEngines`、`sideEngines`、`booster`、`boosterSide`。
+  - 提供三套贴图集：`SOYUZ_TEXTURES`、`LUNA_TEXTURES`、`AUTHENTIC_TEXTURES`。
+  - 提供 helper：
+    - `renderSoyuz(...)`：按旧 `prontMain + prontBoosters` 顺序渲染整箭体。
+    - `renderMain(...)`：逐 group 绑定 `EngineBlock`、`BottomStage`、`TopStage`、`Payload`、`Memento`、`PayloadBlocks`、`LES`、`LESThrusters`、`MainEngines`、`SideEngines`。
+    - `renderBoosters(...)`：批量渲染 `Booster.*`、`BoosterEngines.*`、`BoosterSide.*`。
+    - `renderLanderCapsule(...)` / `renderLanderChute(...)`：对齐 `RenderCapsule` 和旧测试 renderer 的 `Capsule` / `Chute` 分件。
+    - `renderModule(...)`：对齐旧 `prontCapsule` 的 `Dome`、`Capsule`、`Propulsion`、`Solar` 多贴图顺序。
+  - `ObjModelLibrary` 暴露 `SOYUZ`、`SOYUZ_LANDER`、`SOYUZ_MODULE`。
+- 资源迁入：
+  - 复制 3 个旧 Soyuz OBJ 到 `models/block/soyuz/`。
+  - 复制普通、Luna、Authentic 三套 Soyuz 皮肤到 `textures/block/soyuz/soyuz*`。
+  - 复制 capsule/module 贴图到 `textures/block/soyuz/capsule/`。
+  - 复制旧 `polaroid_memento.png` 到 `textures/block/soyuz/polaroid_memento.png`，保持旧 `Memento` group 的贴图来源。
+- 本轮没有迁移：
+  - Soyuz 实体飞行、发射流程、分级动画、降落伞/返回舱物理。
+  - `RenderSoyuz` / `RenderSoyuzCapsule` 实体 renderer 的朝向、缩放、运动状态。
+  - launch table 与 Soyuz launcher 的组合渲染；本轮只让 Soyuz 旧 group 多贴图渲染具备现代库入口。
+- 对齐清单：
+  - `工程记录/库移植/生成报告/render-library-alignment-2026-05-21.csv` 追加 `soyuz`、`soyuz_lander`、`soyuz_module`。
+
 ## 旧版 renderer 分类
 
 - 方块实体 renderer：`src/main/java/com/hbm/render/tileentity`
@@ -755,6 +836,164 @@
 
 - 2026-05-21 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+## 2026-05-22 Battery Socket Dynamic OBJ Consumer
+
+触发来源：
+
+- `battery_pack` 物品图标透明问题修正后，`machine_battery_socket` 也需要复用同一个旧 `battery.obj`，并在插入电池包时按物品动态切换贴图与 OBJ part。
+
+本轮库使用/约束：
+
+- `MachineBatterySocketRenderer` 继续使用 `LegacyWavefrontModel` 直渲染旧 OBJ group。
+- 静态底座使用 `Socket` / `Supports`，动态插入物只在现代 item 是 `HbmBatteryPackItem` 时渲染：
+  - 电池包：`Battery`
+  - 电容：`Capacitor`
+  - 贴图：`textures/block/machines/<legacyTextureName>.png`
+- 这与 1.7.10 `RenderBatterySocket` 对 `battery_pack` 的分支一致；`battery_sc` 分支等待对应物品族迁移后再接入，当前不使用默认模型代替。
+
+仍未完全等价：
+
+- 尚未实现旧 VBO 缓存/reload。
+- `battery_sc` 的 `battery_sc.png` 插座渲染分支未接入。
+- 方块 item 的旧 `IItemRendererProvider` 手持/背包显示仍主要依赖现代 item model，需要后续截图校准。
+
+验证：
+
+- 2026-05-22 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 Battery Socket battery_sc 分支与创造电池特效缺口
+
+本轮对照修正：
+
+- 旧 `RenderBatterySocket` 对插入物有三个分支：
+  - `battery_pack`：按 pack 贴图渲染 `Battery` / `Capacitor`。
+  - `battery_sc`：绑定 `ResourceManager.battery_sc_tex`，渲染 `Battery`。
+  - `battery_creative`：不渲染普通电池模型，而是使用 `textures/models/horse/sunburst.png`、`HorsePronter` 和 `BeamPronter` 画旋转特效与随机光束。
+- 此前记录中“普通 `battery_creative` 不会以 3D 电池包模型显示”成立，但不等于“完全不显示”；现代仍缺创造电池插座特效。
+
+本轮现代接入：
+
+- `MachineBatterySocketRenderer` 对非空 `HbmSelfChargingBatteryItem` 增加旧 `battery_sc` 分支：
+  - OBJ part：`Battery`
+  - 贴图：`textures/block/machines/battery_sc.png`
+- `battery_creative` 仍不使用默认电池模型；待后续迁移 `HorsePronter` / `BeamPronter` 或建立等价现代特效渲染入口。
+
+仍未完全等价：
+
+- 旧 `HorsePronter` 与 `BeamPronter` 没有现代库入口。
+- 旧电击 beam/爆炸涉及实体 renderer、投射物和爆炸库，本轮只记录、不实现。
+
+验证：
+
+- 2026-05-22 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 BeamPronter SOLID/RANDOM 桥与创造电池光束
+
+1.7.10 对照：
+
+- `src/main/java/com/hbm/render/util/BeamPronter.java`
+  - `prontBeam(...)` 会把输入 `Vec3 skeleton` 旋转到局部 Y 轴方向。
+  - `EnumBeamType.SOLID` 路径关闭贴图/光照/cull，开启 `SRC_ALPHA, ONE` 加色混合，默认不写深度。
+  - `EnumWaveType.RANDOM` 使用 `rand.setSeed(start)` 后每段随机旋转 `spinner`，形成断续闪电状 beam。
+  - SOLID 每段按 `layers` 画四组 quad，颜色从 `outerColor` 插值到 `innerColor`，半径为 `thickness / layers * layer`。
+- `RenderBatterySocket` 的 `battery_creative` 分支：
+  - 随 `worldTime / 5` 建 `Random`，先 `nextBoolean()`，再对四个角点 `rand.nextInt(4) == 0` 触发。
+  - 每条 beam 在局部 `translate(0, 0.75, 0)` 后指向 `(0.4375 * i, 1.1875, 0.4375 * j)`。
+  - 先画 `segments=15, size=0.0625F, layers=3, thickness=0.025F` 的 RANDOM/SOLID beam，再叠一条 `segments=1, size=0` 的直 beam。
+  - 颜色参数为 `outer=0x404040`、`inner=0x002040`。
+
+本轮现代接入：
+
+- 新增 `src/main/java/com/hbm/ntm/client/obj/LegacyBeamRenderer.java`：
+  - 复刻旧 `BeamPronter` 的 SOLID beam 几何思路。
+  - 使用 `LegacyUntexturedQuadRenderer.lightning(...)`，继承专用 `hbm_legacy_additive_no_cull` RenderType 的无贴图、无 cull、加色混合、不写深度规则。
+  - 支持 `WaveType.RANDOM` / `WaveType.SPIRAL`，本轮创造电池只使用 RANDOM。
+- `MachineBatterySocketRenderer` 对 `ModItems.BATTERY_CREATIVE` 增加旧分支：
+  - 不渲染普通 `Battery`/`Capacitor` OBJ part。
+  - 按旧随机门槛和四角坐标生成间歇性蓝灰电弧。
+  - 保留旧 `System.currentTimeMillis() % 1000 / 50` 的 start 节奏。
+
+仍未完全等价：
+
+- 旧 `HorsePronter` 核心尚未迁移；创造电池现在恢复的是四角 `BeamPronter` 光束，不包含旧 `textures/models/horse/sunburst.png` + 独角小马模型。
+- `LegacyBeamRenderer` 目前只覆盖 SOLID beam，`EnumBeamType.LINE` 仍未迁移。
+- 旧 OpenGL 的 shade model/局部旋转矩阵细节仍需实机截图校准。
+
+验证：
+
+- 2026-05-22 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 HorsePronter 桥与 BeamPronter LINE
+
+1.7.10 对照：
+
+- `src/main/java/com/hbm/render/util/HorsePronter.java`
+  - 模型：`models/mobs/horse.obj`，旧端用 `HFRWavefrontObject(..., false).asVBO()`。
+  - 默认贴图：`textures/models/horse/horse_demo.png`。
+  - 重要 part：`Body`、`Head`、`Mane`、`NoseMale`、`NoseFemale`、`HornPointy`、`LeftFrontLeg`、`RightFrontLeg`、`LeftBackLeg`、`RightBackLeg`、`Tail`、`LeftWing`、`RightWing`。
+  - API：`reset()`、`enableHorn()`、`enableWings()`、`setMaleSnoot()`、`setAlicorn()`、`poseStandardSit()`、`pose(id,yaw,pitch,roll)`、`pront()`。
+  - 各部位旋转中心：
+    - head `(0, 1.125, 0.375)`
+    - front legs `(±0.125, 0.75, 0.3125)`
+    - back legs `(±0.125, 0.75, -0.25)`
+    - tail `(0, 1.125, -0.4375)`
+- `RenderBatterySocket` 的 `battery_creative` 核心：
+  - `scale(0.75)`。
+  - `rotate((worldTime % 360 + interp) * 25, 0, -1, 0)`。
+  - 绑定 `textures/models/horse/sunburst.png`。
+  - `HorsePronter.reset()` -> `enableHorn()` -> `pront()`。
+- `BeamPronter.EnumBeamType.LINE`：
+  - 逐段输出 outerColor 线段。
+  - 最后从原点到 skeleton length 画 innerColor 主线。
+
+本轮现代接入：
+
+- 新增 `src/main/java/com/hbm/ntm/client/obj/LegacyHorseRenderer.java`：
+  - 使用 `LegacyWavefrontModel` 直渲染 `models/block/mobs/horse.obj`。
+  - 复制旧贴图到 `textures/block/horse/`：`horse_demo.png`、`sunburst.png`、`dyx.png`、`numbernine.png`。
+  - 保留旧 pose/horn/wings/male snoot API 语义，但现代调用显式传入 `PoseStack`、`MultiBufferSource`、贴图、light/overlay。
+- `MachineBatterySocketRenderer` 的 `battery_creative`：
+  - 在旧 socket transform 下恢复 `scale(0.75)` 与 `Axis.YN` 旋转。
+  - 使用 `LegacyHorseRenderer.SUNBURST_TEXTURE` 渲染带 horn 的 horse 核心。
+  - 继续叠加上一轮恢复的四角随机 `BeamPronter` 风格光束。
+- `LegacyBeamRenderer` 新增 `lineBeam(...)`：
+  - 作为旧 `EnumBeamType.LINE` 的现代桥，使用 `LegacyUntexturedQuadRenderer.solid(...)` 画窄 quad 线段。
+  - 供后续炮塔、粒子加速器、core component 等旧 LINE beam 调用。
+
+仍未完全等价：
+
+- 旧 `HorsePronter` 用 VBO；现代当前仍走 `LegacyWavefrontModel` 逐帧顶点输出。
+- `lineBeam(...)` 以窄 quad 模拟旧 GL line primitive；宽度固定为 `0.01`，后续若实机和旧线宽差异明显再按调用点加参数。
+- 旧 `GL11.glDisable(GL_CULL_FACE)` 对 horse 模型的状态暂未单独建 textured no-cull RenderType；若 sunburst horse 局部背面消失，再补 `LegacyWavefrontModel` 的 textured no-cull 开关。
+
+验证：
+
+- 2026-05-22 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-21 LegacyWavefrontModel 直渲染桥
+
+触发来源：
+
+- 组装机放置后只显示多方块占位 hitbox/阴影，BER 中通过 Forge baked split OBJ 分件未可靠显示旧 `assembly_machine.obj`。
+- 旧版 `RenderAssemblyMachine` 直接调用 `ResourceManager.assembly_machine.renderPart("Base")` 等 `HFRWavefrontObject`/VBO group 渲染接口。
+
+本轮库推进：
+
+- 新增 `src/main/java/com/hbm/ntm/client/obj/LegacyWavefrontModel.java`。
+- 该类是旧 `HFRWavefrontObject` 的最小现代承载层：
+  - 从 resource manager 读取 OBJ。
+  - 支持 `o` / `g` group。
+  - 支持 `f v/vt/vn`、`f v/vt`、`f v//vn`、`f v` 与 OBJ 正/负索引。
+  - 对齐旧 loader 的 V 翻转：`vt.v -> 1 - v`。
+  - 提供 `renderPart(...)` 与 `renderAll(...)`，通过 `RenderType.entityCutoutNoCull(texture)` 直接向 BER 的 `MultiBufferSource` 输出顶点。
+- `AssemblyMachineRenderer` 先改用该桥作为验证样本，不再依赖 Forge baked model 分件输出。
+
+仍未完成：
+
+- 尚未实现旧 `HFRWavefrontObjectVBO` 的 VBO 缓存/reload。
+- 尚未实现 `renderOnly(...)`、`renderAllExcept(...)` 和 texture offset。
+- 尚未把 `ObjPartModel` 与该直渲染桥统一成同一个可替换后端；当前先保留两条路径：静态/拆分 baked model 与旧式动态 group 直渲染。
+
 ## 2026-05-21 Radiation Fog Particle Bridge
 
 触发来源：
@@ -790,3 +1029,412 @@
 验证：
 
 - 2026-05-21 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 Legacy OBJ Reload Listener
+
+触发来源：
+
+- 1.7.10 `ClientProxy#registerRenderInfo` 会向 `IReloadableResourceManager` 注册 `HFRModelReloader`。
+- 旧 `HFRModelReloader` 遍历 `HFRWavefrontObject.allModels`，销毁并重读 OBJ；随后遍历 `HFRWavefrontObject.allVBOs` 重建 VBO。
+- 现代 clean port 的 `LegacyWavefrontModel` 已承接 `HFRWavefrontObject` 的 group 直渲染语义，但此前静态 renderer 持有的模型不会响应客户端资源 reload。
+
+本轮现代桥接：
+
+- `LegacyWavefrontModel` 增加弱引用模型登记表，构造时登记所有现代旧 OBJ 直渲染模型。
+- `LegacyWavefrontModel.reloadAll(ResourceManager)` 会遍历登记模型，清空 group/part 数据并使用 Forge 传入的客户端 `ResourceManager` 重新读取 OBJ。
+- 新增 `LegacyModelReloadListener`，通过 `RegisterClientReloadListenersEvent` 接入 MOD bus。
+- `ClientModEvents` 注册该 listener，使 `AssemblyMachineRenderer`、`MachineBatterySocketRenderer`、`BatteryPackItemRenderer`、`ObjSoyuzModels` 等静态持有的 `LegacyWavefrontModel` 可随资源包刷新。
+
+仍未完全等价：
+
+- 旧 `HFRWavefrontObjectVBO` 的 GPU VBO 缓存尚未迁移；当前现代路径仍是每帧向 `MultiBufferSource` 发顶点。
+- Forge baked OBJ JSON 模型由 Minecraft/Forge 自身模型管线 reload，本 listener 只负责 `LegacyWavefrontModel` 直渲染模型。
+
+## 2026-05-22 ResourceManager Machine OBJ Batch
+
+触发来源：
+
+- 1.7.10 `ResourceManager` 中仍有大量机器 OBJ 静态字段尚未进入 clean port 的现代模型库。
+- 本轮选择低耦合模型入口批量迁移，只建立资源和 `LegacyWavefrontModel` 句柄，不提前迁入机器状态、流体、动画和多方块 renderer 逻辑。
+
+本轮资源/入口：
+
+- 拷贝 1.7.10 OBJ 到 `assets/hbm/models/block/machines/`：
+  - `refinery` / `refinery_exploded`
+  - `fluidtank` / `fluidtank_exploded`
+  - `vacuum_distill`、`catalytic_cracker`、`catalytic_reformer`、`hydrotreater`、`liquefactor`、`solidifier`、`compressor`、`coker`、`pyrooven`
+  - `bat9000`、`bigasstank`、`orbus`
+  - `turbofan`、`turbinegas`、`steam_engine`、`industrial_turbine`、`chungus`
+  - `tower_small`、`tower_large`、`condenser`、`wood_burner`、`combustion_engine`、`pump`
+  - `ammo_press`、`annihilator`、`assembly_factory`
+  - `chemical_plant`、`chemical_factory`、`purex`、`mixer`
+  - `arc_welder`、`soldering_station`、`arc_furnace`
+  - `centrifuge`、`gascent`、`silex`、`fel`
+  - `autosaw`、`mining_drill`、`ore_slopper`、`mining_laser`
+  - `acidizer`、`cyclotron`、`exposure_chamber`、`machine_deuterium_tower`、`radgen`
+- 拷贝对应默认贴图到 `assets/hbm/textures/block/machines/`，并补常见动态分层贴图：
+  - `fluidtank_inner`
+  - `turbofan_back`、`turbofan_afterburner`、`turbofan_blades`
+  - `pump_electric`
+  - `annihilator_belt`
+  - `assembly_factory_sparks`
+  - `chemical_plant_fluid`
+  - `mining_laser_pivot`、`mining_laser_laser`
+- `ObjMachineModels` 新增对应 `LegacyWavefrontModel` 字段；`ObjModelLibrary` 暴露 `MACHINE_*` facade，供后续 renderer 迁移使用。
+
+已确认的重要旧 group：
+
+- `fluidtank`：`Frame` / `Tank`
+- `fluidtank_exploded`：`TankInner` / `Tank` / `Frame`
+- `compressor`：`Pump` / `Fan` / `Compressor`
+- `liquefactor`、`solidifier`：`Fluid` / `Glass` / `Main`
+- `pyrooven`：`Fan` / `Slider` / `Oven`
+- `steam_engine`：`Shaft` / `Piston` / `Transmission` / `Flywheel` / `Base`
+- `industrial_turbine`：`Flywheel` / `Gauge` / `Turbine`
+- `turbofan`：`Blades` / `Afterburner` / `Body`
+- `assembly_factory`：`Base` / `Frame` / `Slider1..4` / `ArmLower1..4` / `ArmUpper1..4` / `Head1..4` / `Striker1..4` / `Blade2` / `Blade4`
+- `chemical_plant`：`Base` / `Slider` / `Frame` / `Spinner` / `Fluid`
+
+仍未完全等价：
+
+- 本轮未接任何机器 renderer；旧 `RenderFluidTank`、`RenderChemicalPlant`、`RenderAssemblyFactory` 等动画、流体颜色、动态贴图切换仍待对应机器迁移时处理。
+- `fluidtank.obj` 保留旧 `mtllib/usemtl` 行，但现代 `LegacyWavefrontModel` 直渲染路径当前按调用纹理统一绘制，不解析 MTL 材质。
+
+## 2026-05-22 Radiation Fog Legacy Multi-Quad
+
+触发来源：
+
+- 实机反馈区块辐射黄雾仍不明显，并且区块辐射更新疑似带来卡顿。
+- 复核 1.7.10 后确认旧 `ChunkRadiationHandlerSimple` 每次只发一个 `radFog` effect；单个 `ParticleRadiationFog` 内部再用固定随机种子绘制 25 个半透明 quad。
+
+旧版契约补充：
+
+- `ParticleRadiationFog#renderParticle` 每帧 `new Random(50)`，固定生成 25 个局部偏移 quad。
+- 偏移范围：X/Z 使用 `(gaussian - 1) * 2.5`，Y 使用 `(gaussian - 1) * 0.15`，每个 quad 还有 `gaussian * 0.5` 的位置抖动。
+- 每个 quad 尺寸为 `rand.nextDouble() * particleScale`，默认 `particleScale = 7.5F`。
+- 旧区块辐射只创建一个粒子事件，不是发送 25 个独立粒子。
+
+本轮现代修正：
+
+- `RadiationFogParticle#render(...)` 改为单粒子内部绘制 25 个 billboard quad，保留旧固定随机种子、颜色、alpha 曲线、fullbright 和尺寸规则。
+- `ChunkRadiationManager#spawnRadiationFog(...)` 将 `sendParticles` 数量从 `25` 改回 `1`，与旧 `radFog` effect 数量对齐，避免现代侧把“粒子个数”和“单粒子内部 quad 个数”重复放大。
+
+仍未完全等价：
+
+- 现代实现仍走 `ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT` 与粒子图集，不直接复刻旧 GL11 状态切换。
+- 旧版 `glDepthMask(false)` / blend 状态由现代 translucent particle pipeline 承接，若后续截图仍有遮挡差异，再考虑专用 RenderType。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 BlockEntity Render Bounding Box
+
+触发来源：
+
+- 实机观察到多方块 OBJ 在某些视角消失：看不见主方块时，虽然模型本体还在视野内，但 BE renderer 已被裁剪。
+- 1.7.10 TESR 体系中很多大型机器在 TileEntity 上覆写 `getRenderBoundingBox()`，锻压机现代移植也已有类似做法；新 `LegacyVisibleMachineRenderer` 只实现 `shouldRenderOffScreen()`，还缺少对应的 AABB 数据源。
+
+本轮现代修正：
+
+- 渲染范围不放在 renderer 里硬编码，而是由 `LegacyVisibleMachineBlockEntity#getRenderBoundingBox()` 从 `LegacyMachineDefinition` 获取。
+- `LegacyMachineDefinition` 支持两种策略：
+  - 默认：按多方块 `LegacyMultiblockLayout.checkOffsets()` 计算覆盖结构的 AABB，并额外扩 1 格。
+  - 特例：机器 definition 提供 1.7.10 同款 render AABB 覆写。
+- `machine_pumpjack` 已使用旧 `TileEntityMachinePumpjack` 的 `x-7,y,z-7` 到 `x+8,y+6,z+8` 范围，因为旧 renderer 有 Rotor/Head/Carriage 动态摆动和连杆绘制，足迹盒不足以覆盖全部视觉范围。
+
+仍未完全等价：
+
+- 化工厂、化工厂、精炼厂、流体储罐目前先走结构推导 + 1 格 padding；如果后续动态部件或流体面超出此范围，需要按对应 1.7.10 TileEntity 的 `getRenderBoundingBox()` 再加单机覆写。
+- `shouldRenderOffScreen()` 仍保留为 true，用于减少距离/边缘情况下的额外裁剪；核心修复是 BE AABB。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 Legacy Visible Multiblock Machine Renderer
+
+触发来源：
+
+- 多方块库开始从单台组装机扩展到一批旧 `BlockDummyable` 机器，需要一个可复用的 OBJ block entity renderer，而不是为每台静态可见机器立刻写完整旧 renderer。
+
+本轮现代接入：
+
+- 新增 `LegacyVisibleMachineRenderer`：
+  - 从 block 的 `LegacyMachineDefinition` 获取 OBJ 模型、贴图、part 列表和 Y 轴旋转偏移。
+  - 客户端按 definition 缓存 `LegacyWavefrontModel`，避免 common 侧引用 client-only 模型类。
+  - 支持 `renderAll` 和指定 part 渲染两种模式，用于先迁静态机体。
+- 已接入机器：
+  - `machine_chemical_plant`：静态绘制 `Base` / `Frame` / `Slider` / `Spinner`，动态流体面和配方动画暂缓。
+  - `machine_chemical_factory`：静态绘制 `Base` / `Frame` / `Fan1` / `Fan2`，动态 fan/recipe 逻辑暂缓。
+  - `machine_refinery`：先绘制普通完整模型；旧 exploded/repair 状态暂缓。
+  - `machine_fluidtank`：先绘制普通完整模型；旧 exploded/inner fluid 状态暂缓。
+  - `machine_pumpjack`：静态绘制 `Base` / `Rotor` / `Head` / `Carriage`；旧 `rot/prevRot` 驱动的连杆、驴头和滑块动画暂缓。
+
+资源入口：
+
+- 新增 Forge OBJ block model JSON：
+  - `assets/hbm/models/block/machines/chemical_plant.json`
+  - `assets/hbm/models/block/machines/chemical_factory.json`
+  - `assets/hbm/models/block/machines/refinery.json`
+  - `assets/hbm/models/block/machines/fluidtank.json`
+  - `assets/hbm/models/block/machines/pumpjack.json`
+- 对应 OBJ 与贴图均来自旧 1.7.10 资源树，路径统一落在 `assets/hbm/models/block/machines/` 与 `assets/hbm/textures/block/machines/`。
+
+仍未完全等价：
+
+- 本轮只迁静态可见层；旧 renderer 中依赖 TileEntity 状态的 progress、fluid texture、repair/exploded、风扇/滑块/pumpjack 连杆细动画尚未接入。
+- 当前 rotation offset 按旧 renderer 首次对齐值记录，仍需实机四向截图检查模型正面是否完全等价。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 Legacy Visible Machine 接线闭合
+
+- 本批为并行迁移中的可视多方块机器补齐 `LegacyVisibleMachineBlockEntity` 的 BlockEntityType 与 BER 注册：
+  - `machine_chemical_plant`
+  - `machine_chemical_factory`
+  - `machine_refinery`
+  - `machine_fluidtank`
+- 这些机器目前共用 `LegacyVisibleMachineRenderer`，通过 `LegacyVisibleMultiblockMachineBlock#definition()` 选择 OBJ 模型与贴图。
+- 这只是 render-library/BlockEntity 接线闭合，不新增机器运行时逻辑。
+- 验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 RBMK Legacy OBJ Batch
+
+触发来源：
+
+- 旧 `ResourceManager` 在 RBMK 段集中声明 `models/rbmk/*.obj`，覆盖燃料通道、控制棒、吊车、控制台、仪表、按钮、终端、自动装载机和 debris。
+- 旧 renderer 混合使用两类贴图：
+  - `textures/models/machines/*.png` 与 `textures/models/network/*.png`：控制台/吊车/网络显示部件的模型贴图。
+  - `textures/blocks/rbmk/*.png`：燃料通道、控制棒、debris 等旧 block icon 贴图，通过 `ObjUtil.renderPartWithIcon(...)` 喂给 OBJ 部件。
+- 旧 OBJ 扫描报告中 `rbmk/rbmk_element.obj` 是 RBMK 组内唯一 `REQUIRES_SPLIT_OR_CUSTOM_RENDERER`，含混合 triangle/quad group；继续走 `LegacyWavefrontModel` 直渲染路径更贴近旧端。
+
+本轮资源/入口：
+
+- 新增 `ObjRbmkModels`：
+  - 模型：`rbmk_element`、`rbmk_element_rods`、`rbmk_rods`、`crane_console`、`crane`、`autoloader`、`rbmk_console`、`button`、`gauge`、`numitron`、`lever`、`indicator`、`terminal`、`debris`。
+  - 贴图常量分两类：
+    - `modelTexture(...)` -> `textures/block/rbmk/models/`
+    - `iconTexture(...)` -> `textures/block/rbmk/icons/`
+  - 提供 `renderFuelChannelRods(...)`、`renderControlLid(...)`、`renderDebris(...)` 和 `manualControlTexture(...)`，承接旧 `RenderRBMKFuelChannel`、`RenderRBMKControlRod`、`RenderPribris` 的基础模型/贴图选择。
+- `LegacyWavefrontModel` 新增带 RGBA 顶点色的 `renderPart`、`renderAll`、`renderOnly`、`renderAllExcept` 重载，用来承接旧 `GL11.glColor3f(...)`：
+  - RBMK fuel rod 的 `rodColor` 染色。
+  - Crane console 指示灯、Gauge/Indicator/Numitron 等后续 fullbright 或着色层。
+- 资源拷贝：
+  - 14 个旧 `models/rbmk/*.obj` -> `assets/hbm/models/block/rbmk/`
+  - 11 个旧模型贴图 -> `assets/hbm/textures/block/rbmk/models/`
+  - 131 个旧 RBMK block icon -> `assets/hbm/textures/block/rbmk/icons/`
+
+已确认的重要旧 group：
+
+- `rbmk_element`：`Inner` / `Rods` / `Cap`
+- `rbmk_element_rods`：`Rods`
+- `rbmk_rods`：`Lid` / `Column`
+- `crane_console`：`Console_Coonsole` / `JoyStick` / `Meter1` / `Meter2` / `Lamp1` / `Lamp2`，另保留旧 OBJ 中未启用的 `Shotgun` / `MiniNuke` group。
+- `crane`：`Girder` / `Main` / `Tube` / `Carriage` / `Lift`
+- `autoloader`：`Base` / `Piston`
+- `gauge`：`Gauge` / `Needle`
+- `lever`：`Base` / `Lever`
+- `indicator`：`Base` / `Light`
+- `button`：`Socket` / `Button`
+
+仍未完全等价：
+
+- 本轮只迁 render-library 入口，不迁 RBMK blocks、TileEntities、GUI、网络/中子逻辑。
+- `RenderRBMKFuelChannel` 的 cherenkov additive quad、控制棒高度插值、crane console 的灯颜色/仪表抖动/吊车跨度循环、autoloader piston 插值等动态变换仍待对应 TileEntity renderer 迁移时接线。
+- 顶层 `textures/block/rbmk/*.png` 中已有/未跟踪的文件不作为本轮新规范；本轮新代码只引用 `rbmk/models/` 与 `rbmk/icons/`。
+
+验证：
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` 通过。
+
+## 2026-05-22 Missile Parts Legacy OBJ Batch
+
+触发来源：
+
+- 1.7.10 导弹组装渲染由 `MissilePart.registerAllParts()` + `MissilePronter.prontMissile(...)` 驱动，不是方块模型 JSON。
+- 旧 `ResourceManager` 只持有 `mp_t_*`、`mp_s_*`、`mp_f_*`、`mp_w_*` OBJ 模型字段；具体物品通过 `MissilePart` 绑定 `PartType`、高度、GUI 高度、模型和贴图。
+- 本轮目标是先把完整动态导弹部件渲染库迁入现代端，供后续导弹物品、发射台、实体 renderer 接线。
+
+本轮资源/入口：
+
+- 新增 `ObjMissilePartModels`：
+  - 迁入旧 `ResourceManager` 使用的 42 个导弹部件模型句柄：推进器、稳定翼、弹体、弹头。
+  - 复刻旧 `MissilePart.registerAllParts()` 的 117 项部件映射，保留旧模型复用、贴图复用、`height`、`guiHeight` 和 `PartType` 语义。
+  - 提供 `LegacyMissilePart` record 与 `PartKind` enum，供后续现代物品/实体从旧 item 名称查渲染数据。
+  - 提供 `renderMissile(...)`，按旧 `MissilePronter` 顺序渲染：推进器 -> 上移推进器高度 -> 弹体层先画稳定翼再画弹体 -> 上移弹体高度 -> 弹头。
+- `ObjModelLibrary` 新增：
+  - `missilePartModel(String legacyModelName)`
+  - `missilePart(String legacyItemName)`
+- 资源拷贝：
+  - 48 个旧 `models/missile_parts/*.obj` -> `assets/hbm/models/block/missile_parts/`
+  - 139 个贴图文件 -> `assets/hbm/textures/block/missile_parts/`
+  - 包含旧共享 `TheGadget3_.png` -> `universal.png`，以及 `boxcar.png`，用于 `mp_stability_20_flat` 与 `mp_warhead_15_boxcar`。
+
+已确认的重要旧契约：
+
+- `mp_thruster_15_kerosene_triple` 使用 triple 模型，但贴图复用 `mp_t_15_kerosene_dual`。
+- `mp_thruster_15_hydrogen` / `mp_thruster_15_hydrogen_dual` 复用 kerosene / kerosene_dual 模型，只换 hydrogen 贴图。
+- `mp_thruster_20_kerosene_triple` 使用 triple 模型，但贴图复用 `mp_t_20_kerosene_dual`。
+- `mp_thruster_20_solid_multier` 复用 `mp_t_20_solid_multi` 模型，只换 `mp_t_20_solid_multier` 贴图。
+- `mp_stability_20_flat` 使用 `mp_s_20` 模型和旧 `ResourceManager.universal` 贴图。
+- `mp_warhead_10_cloud` 复用 `mp_w_10_taint` 模型，只换 cloud 贴图。
+- `mp_warhead_15_nuclear_shark` / `mp_warhead_15_nuclear_mimi` 复用 `mp_w_15_nuclear` 模型。
+- `mp_warhead_15_boxcar` 使用 `mp_w_15_boxcar` 模型和旧 `boxcar_tex`。
+
+仍未完全等价：
+
+- 本轮只迁 render-library 与旧映射数据，不注册导弹部件物品。
+- `MissileMultipart`、发射台装载状态、导弹实体飞行/分级/爆炸行为、GUI 预览缩放与交互仍待后续系统迁移时接线。
+- 现代 `LegacyWavefrontModel` 仍按单次绑定纹理渲染，不解析旧 OBJ MTL；导弹部件旧路径本身也是外部绑定贴图，因此本轮契约可对齐。
+
+验证：
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` 通过。
+
+## 2026-05-22 ResourceManager Turret/Bomb/Projectile OBJ Batch
+
+触发来源：
+
+- 1.7.10 `ResourceManager` 顶部炮塔、地雷、投射物模型仍大量是 `HFRWavefrontObject` 静态字段。
+- 旧炮塔 renderer 通过 `renderPart(...)` 按 group 分层换贴图，例如炮塔通用 `Base` / `Carriage`，Howard 的 `Body` / `BarrelsTop` / `BarrelsBottom`，HIMARS 的 `TubeStandard` / `RocketStandard` / `TubeSingle` / `RocketSingle`。
+- 本轮只迁 render-library 资源入口，不迁炮塔 TileEntity、AI、旋转/俯仰动画、弹药状态和地雷方块行为。
+
+本轮资源/入口：
+
+- 新增 `ObjTurretModels`：
+  - 模型：`turret_chekhov`、`turret_jeremy`、`turret_tauon`、`turret_richard`、`turret_howard`、`turret_howard_damaged`、`turret_microwave`、`turret_fritz`、`turret_arty`、`turret_himars`、`turret_sentry`
+  - 贴图常量：通用 base/carriage/connector、friendly 变体、CIWS 变体、Howard barrel、Sentry damaged、rusted Howard/base/carriage 等。
+- 新增 `ObjBombModels`：
+  - 地雷/炸弹模型：`ap_mine`、`marelet`、`mine_fat`、`naval_mine`、`fat_man`、`fleija`、`gadget`、`ivymike`、`tsar`、`ufp`、`n2`、`fstbmb`、`dud_balefire`、`dud_conventional`、`dud_nuke`、`dud_salted`
+  - 贴图常量：AP mine 草地/沙漠/雪地/石头、shrapnel、marelet、fat/naval 等。
+- 新增 `ObjProjectileModels`：
+  - 模型：`projectiles`、`leadburster`
+  - 贴图常量：HIMARS standard/single 及 HE/lava/mini_nuke/TB/WP 变体，bullet/rocket/grenade/mini_nuke/leadburster 等。
+- `ObjModelLibrary` 暴露 `TURRET_*`、`BOMB_*`、`PROJECTILES` facade。
+- 拷贝资源到现代路径：
+  - `assets/hbm/models/block/turrets/`
+  - `assets/hbm/models/block/bombs/`
+  - `assets/hbm/models/block/projectiles/`
+  - `assets/hbm/textures/block/turrets/`
+  - `assets/hbm/textures/block/bombs/`
+  - `assets/hbm/textures/block/projectiles/`
+
+已确认的重要旧 group：
+
+- `turret_chekhov`：`Base` / `Connectors` / `Carriage` / `Body` / `Barrels`
+- `turret_howard`：`Carriage` / `Body` / `BarrelsTop` / `BarrelsBottom`
+- `turret_himars`：`Base` / `Carriage` / `Crane` / `Launcher` / `TubeStandard` / `RocketStandard` / `CapStandard1..6` / `TubeSingle` / `RocketSingle` / `CapSingle`
+- `turret_sentry`：`Base` / `Pivot` / `Body` / `Drum` / `BarrelL` / `BarrelR`
+- `turret_arty`：`Base` / `Carriage` / `Cannon` / `Barrel`
+- `projectiles`：`BulletPistol` / `BulletRifle` / `Buckshot` / `Flechette` / `Grenade` / `Rocket` / `MissileMIRV` / `MiniNuke` / `MiniMIRV` / `Balefire`
+- `leadburster`：`Based` / `Based.001` / `Backlight`
+
+仍未完全等价：
+
+- 炮塔 renderer 需要后续结合各 `TileEntityTurret*` 的 yaw/pitch/spin/ammo 字段迁移；本轮只提供模型和贴图句柄。
+- `RenderLandmine` 的 biome/遮挡贴图选择尚未接现代方块；本轮只保留 AP mine 多贴图常量。
+- `RenderArtilleryRocket` 和 Sedna/旧 bullet renderer 的投射物实体渲染还未接入。
+
+## 2026-05-22 Radiation Fog Legacy Particle RenderType
+
+触发来源：
+
+- 继续对齐旧 `ParticleRadiationFog#renderParticle` 的 GL 状态。
+- 1.20.1 vanilla `ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT` 在 begin 阶段会 `depthMask(true)`，而旧版黄雾明确 `GL11.glDepthMask(false)`。
+
+本轮现代修正：
+
+- `RadiationFogParticle` 新增专用 `ParticleRenderType`：
+  - 使用粒子图集和 `GameRenderer::getParticleShader`。
+  - 使用普通 alpha blend，对齐旧 `OpenGlHelper.glBlendFunc(770, 771, 1, 0)`。
+  - begin 时 `RenderSystem.depthMask(false)`，end 后恢复 `depthMask(true)`。
+- 该 RenderType 只用于辐射黄雾，不改变其他烟雾/火焰/泡沫粒子的渲染状态。
+
+仍未完全等价：
+
+- 仍未复刻旧 `GL12.GL_RESCALE_NORMAL`、`RenderHelper.disableStandardItemLighting()` 等固定管线调用；现代粒子管线中 fullbright 已承接亮度语义。
+- 若后续实机仍显示被地形/水体遮挡，需要继续检查粒子排序和 texture atlas alpha。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 Particle Accelerator / Reactor / RBMK OBJ Batch
+
+触发来源：
+
+- 1.7.10 `ResourceManager` 中 Albion 粒子加速器、反应堆、ZIRNOX 和 RBMK 控件仍是静态 OBJ 模型字段。
+- 这些资源被后续 `Render*`、核设施方块实体、RBMK 控制台/吊车/燃料棒渲染反复使用；本轮先迁 render-library 资源入口，不提前迁核反应堆或 RBMK 行为。
+
+本轮资源/入口：
+
+- 新增 `ObjParticleAcceleratorModels`：
+  - `source`、`beamline`、`rfc`、`quadrupole`、`dipole`、`detector`
+  - 资源路径：`assets/hbm/models/block/particleaccelerator/` 与 `textures/block/particleaccelerator/`
+- 新增 `ObjReactorModels`：
+  - `reactor_small_base`、`reactor_small_rods`、`breeder`、`icf`、`watz`、`watz_pump`、`lpw2`、`zirnox`、`zirnox_destroyed`
+  - 额外贴图常量：`lpw2_term`、`lpw2_term_error`、`zirnox_deb_element`
+  - 资源路径：`assets/hbm/models/block/reactors/` 与 `textures/block/reactors/`
+- 新增 `ObjRbmkModels`：
+  - `rbmk_element`、`rbmk_element_rods`、`rbmk_rods`、`crane_console`、`crane`、`autoloader`、`rbmk_console`、`button`、`gauge`、`numitron`、`lever`、`indicator`、`terminal`、`debris`
+  - 额外贴图常量：`numitron_lights`
+  - 资源路径：`assets/hbm/models/block/rbmk/` 与 `textures/block/rbmk/`
+- `ObjMachineModels` 同步补 `ResourceManager` 同段低耦合机器入口：
+  - `radiolysis`、`rotary_furnace`、`electrolyser`、`charger`、`refueler`、`solar_boiler`
+  - `core_emitter`、`core_receiver`、`core_injector`
+- `ObjModelLibrary` 暴露 PA / REACTOR / RBMK / DFC facade。
+
+已确认的重要旧 group：
+
+- `particleaccelerator/beamline`：`BeamlineGlass` / `BeamlineWindow` / `Beamline`
+- `rbmk_element`：`Inner` / `Rods` / `Cap`
+- `rbmk_rods`：`Lid` / `Column`
+- `rbmk_crane`：`Carriage` / `Girder` / `Tube` / `Lift` / `Main`
+- `rbmk_crane_console`：`Console_Coonsole` / `Joystick` / `Meter1` / `Meter2` / `Lamp1` / `Lamp2` / `MiniNuke` / `Shotgun` / `Shotgun1`
+- `rbmk_autoloader`：`Base` / `Piston`
+- `zirnox` 与 `zirnox_destroyed`：`Plane`
+
+仍未完全等价：
+
+- RBMK 旧代码存在非 VBO 和 VBO 双份模型加载：`rbmk_element`、`rbmk_element_rods`、`rbmk_rods`。现代端目前统一走 `LegacyWavefrontModel` 直渲染，尚未实现旧 VBO 缓存或 tessellation 分支。
+- RBMK 燃料棒/控制棒液位、ZIRNOX 碎片 projectile、PA 多方块形态、ICF/Watz/LPW2 状态动画还未接入；本轮只提供模型与贴图句柄。
+
+## 2026-05-22 Legacy OBJ API Parity Pass
+
+触发来源：
+
+- 后续机器 renderer 会大量复用旧 `HFRWavefrontObject` 风格调用：
+  - `renderPart(...)`
+  - `renderOnly(...)`
+  - `renderAllExcept(...)`
+  - `getPartNames()`
+- 现代端虽然已有 `LegacyWavefrontModel` 直渲染桥，但 `ObjRenderContext` 路径此前未完整承接颜色、fullbright 和 legacy shadow 语义；baked split model 与 legacy OBJ 直渲染路径的接口也不完全一致。
+
+本轮现代修正：
+
+- `LegacyObjModel` 接口补齐默认能力：
+  - `renderOnlyInCallOrder(...)`
+  - `hasPart(...)`
+  - `getAliases()`
+  - `getLegacyOrder()`
+- `LegacyWavefrontModel`：
+  - 增加 `modelLocation()` / `textureLocation()`，方便 renderer 或诊断工具追踪资源来源。
+  - `renderPart/renderAll/renderOnly/renderAllExcept` 的 `ObjRenderContext` 路径现在会读取 `context.color()`、`context.hasColor()`、`context.packedLight()`、`context.legacyShadow()`。
+  - `renderOnlyInCallOrder(...)` 可按调用参数顺序绘制 group，用于旧 renderer 依赖特定 part 顺序的场景。
+  - 增加 `hasPart(...)`，直接查询实际 OBJ group。
+  - 缺失 group 时按模型/part 限频 warn，并输出已知 group 列表，方便后续迁移 renderer 时快速发现 1.7.10 group 名拼写差异。
+  - legacy shadow 现在可按 OBJ face normal 估算亮度，向 `ObjRenderUtils` 的 baked quad 阴影语义靠拢。
+
+仍未完全等价：
+
+- 旧 `HFRWavefrontObject` 的 `tessellateAll/tessellateOnly/tessellateAllExcept` 系列仍未迁移。
+- 旧 VBO 缓存路径仍未迁移，现代 `LegacyWavefrontModel` 继续每帧向 `MultiBufferSource` 直接提交顶点。
+- 旧 `noSmooth()` 的法线/平滑差异尚未单独建模。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。

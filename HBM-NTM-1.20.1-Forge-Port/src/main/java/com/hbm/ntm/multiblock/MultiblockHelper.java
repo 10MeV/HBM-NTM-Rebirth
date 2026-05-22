@@ -1,14 +1,21 @@
 package com.hbm.ntm.multiblock;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public final class MultiblockHelper {
     private static final ThreadLocal<Set<ClearingKey>> CLEARING = ThreadLocal.withInitial(HashSet::new);
@@ -55,13 +62,40 @@ public final class MultiblockHelper {
     public static final MultiblockExtents UF6_DIMENSION = MultiblockExtents.ofLegacy(new int[] { 0, 0, 1, 0, 0, 0 });
 
     public static boolean checkSpace(Level level, BlockPos corePos, MultiblockExtents extents) {
-        for (BlockPos offset : extents.offsets()) {
+        return checkSpace(level, corePos, extents, null);
+    }
+
+    public static boolean checkSpace(Level level, BlockPos corePos, MultiblockExtents extents, @Nullable BlockPos temporaryPos) {
+        return checkSpace(level, corePos, extents.offsets(), temporaryPos);
+    }
+
+    public static boolean checkSpace(Level level, BlockPos corePos, Iterable<BlockPos> offsets) {
+        return checkSpace(level, corePos, offsets, null);
+    }
+
+    public static boolean checkSpace(Level level, BlockPos corePos, Iterable<BlockPos> offsets, @Nullable BlockPos temporaryPos) {
+        if (!isReplaceableOrTemporary(level, corePos, temporaryPos)) {
+            return false;
+        }
+        for (BlockPos offset : offsets) {
+            if (offset.equals(BlockPos.ZERO)) {
+                continue;
+            }
             BlockPos pos = corePos.offset(offset);
-            if (!level.getBlockState(pos).canBeReplaced()) {
+            if (!isReplaceableOrTemporary(level, pos, temporaryPos)) {
                 return false;
             }
         }
         return true;
+    }
+
+    public static BlockPos legacyCoreFromPlacement(BlockPos placedPos, Direction facing, int legacyOffset) {
+        return legacyOffset == 0 ? placedPos : placedPos.relative(facing.getOpposite(), legacyOffset);
+    }
+
+    public static BlockState steelParticleState() {
+        Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(HbmNtm.MOD_ID, "block_steel"));
+        return block == null ? Blocks.IRON_BLOCK.defaultBlockState() : block.defaultBlockState();
     }
 
     public static boolean fillUp(Level level, BlockPos corePos, MultiblockExtents extents) {
@@ -69,35 +103,82 @@ public final class MultiblockHelper {
     }
 
     public static boolean fillUp(Level level, BlockPos corePos, MultiblockExtents extents, BlockState dummyState) {
+        return fillUp(level, corePos, extents, dummyState, offset -> false);
+    }
+
+    public static boolean fillUp(Level level, BlockPos corePos, MultiblockExtents extents, Predicate<BlockPos> proxyOffsets) {
+        return fillUp(level, corePos, extents, ModBlocks.DUMMY_BLOCK.get().defaultBlockState(), proxyOffsets);
+    }
+
+    public static boolean fillUp(Level level, BlockPos corePos, MultiblockExtents extents, BlockState dummyState,
+            Predicate<BlockPos> proxyOffsets) {
+        return fillOffsets(level, corePos, extents.offsets(), dummyState, proxyOffsets);
+    }
+
+    public static boolean fillOffsets(Level level, BlockPos corePos, Iterable<BlockPos> offsets) {
+        return fillOffsets(level, corePos, offsets, ModBlocks.DUMMY_BLOCK.get().defaultBlockState());
+    }
+
+    public static boolean fillOffsets(Level level, BlockPos corePos, Iterable<BlockPos> offsets, BlockState dummyState) {
+        return fillOffsets(level, corePos, offsets, dummyState, offset -> false);
+    }
+
+    public static boolean fillOffsets(Level level, BlockPos corePos, Iterable<BlockPos> offsets, Predicate<BlockPos> proxyOffsets) {
+        return fillOffsets(level, corePos, offsets, ModBlocks.DUMMY_BLOCK.get().defaultBlockState(), proxyOffsets);
+    }
+
+    public static boolean fillOffsets(Level level, BlockPos corePos, Iterable<BlockPos> offsets, BlockState dummyState,
+            Predicate<BlockPos> proxyOffsets) {
         if (level.isClientSide) {
             return false;
         }
-        for (BlockPos offset : extents.offsets()) {
+        for (BlockPos offset : offsets) {
+            if (offset.equals(BlockPos.ZERO)) {
+                continue;
+            }
             BlockPos pos = corePos.offset(offset);
             level.setBlock(pos, dummyState, Block.UPDATE_ALL);
             if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
                 dummy.setCorePos(corePos);
+                dummy.setProxy(proxyOffsets.test(offset));
             }
         }
         return true;
     }
 
     public static boolean removeAll(Level level, BlockPos corePos, MultiblockExtents extents) {
+        return removeOffsets(level, corePos, extents.offsets());
+    }
+
+    public static boolean removeOffsets(Level level, BlockPos corePos, Iterable<BlockPos> offsets) {
         if (level.isClientSide) {
             return false;
         }
+        return withClearing(level, corePos, () -> {
+            for (BlockPos offset : offsets) {
+                if (offset.equals(BlockPos.ZERO)) {
+                    continue;
+                }
+                BlockPos pos = corePos.offset(offset);
+                if (level.getBlockState(pos).getBlock() instanceof DummyBlock) {
+                    level.removeBlock(pos, false);
+                }
+            }
+        });
+    }
+
+    private static boolean isReplaceableOrTemporary(Level level, BlockPos pos, @Nullable BlockPos temporaryPos) {
+        return pos.equals(temporaryPos) || level.getBlockState(pos).canBeReplaced();
+    }
+
+    public static boolean withClearing(Level level, BlockPos corePos, Runnable action) {
         ClearingKey key = new ClearingKey(level, corePos.immutable());
         Set<ClearingKey> active = CLEARING.get();
         if (!active.add(key)) {
             return false;
         }
         try {
-            for (BlockPos offset : extents.offsets()) {
-                BlockPos pos = corePos.offset(offset);
-                if (level.getBlockState(pos).getBlock() instanceof DummyBlock) {
-                    level.removeBlock(pos, false);
-                }
-            }
+            action.run();
             return true;
         } finally {
             active.remove(key);

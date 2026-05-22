@@ -24,6 +24,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("deprecation")
 public class LegacyDemonLampBlock extends BaseEntityBlock {
     public static final DirectionProperty FACE = DirectionProperty.create("face");
     private static final VoxelShape SHAPE = box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
@@ -90,3 +91,4 @@ public class LegacyDemonLampBlock extends BaseEntityBlock {
         return createTickerHelper(type, ModBlockEntities.LEGACY_DEMON_LAMP.get(), LegacyDemonLampBlockEntity::tick);
     }
 }
+

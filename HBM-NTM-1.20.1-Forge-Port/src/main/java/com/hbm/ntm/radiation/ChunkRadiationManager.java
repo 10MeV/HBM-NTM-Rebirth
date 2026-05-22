@@ -58,6 +58,10 @@ public final class ChunkRadiationManager {
         return RadiationConfig.ENABLE_CHUNK_RADS.get() ? getData(level).get(chunkPos) : 0.0F;
     }
 
+    public static void spawnDebugRadiationFog(ServerLevel level, BlockPos pos) {
+        level.sendParticles(ModParticleTypes.RADIATION_FOG.get(), pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+    }
+
     public static void tick(ServerLevel level) {
         if (!RadiationConfig.ENABLE_CHUNK_RADS.get()) {
             return;

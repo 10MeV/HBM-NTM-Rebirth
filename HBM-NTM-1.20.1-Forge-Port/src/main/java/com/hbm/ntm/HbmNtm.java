@@ -14,6 +14,7 @@ import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.registry.ModParticleTypes;
 import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.radiation.HazmatRegistry;
 import com.hbm.ntm.radiation.ItemRadiationRegistry;
 import com.hbm.ntm.recipe.ModRecipes;
@@ -58,6 +59,7 @@ public class HbmNtm {
             ItemRadiationRegistry.registerDefaults();
             HbmFluids.bootstrap();
             ModMessages.register();
+            HbmBatteryTransfer.setCreativeBatteryPredicate(stack -> stack.is(ModItems.BATTERY_CREATIVE.get()));
         });
         if (HbmCommonConfig.LOG_STARTUP.get()) {
             LOGGER.info("HBM NTM migration scaffold loaded. Source semantics: 1.7.10 first, 1.20.1 reference second.");

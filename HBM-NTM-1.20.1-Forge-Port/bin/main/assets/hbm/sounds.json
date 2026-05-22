@@ -61,5 +61,14 @@
     "sounds": [
       "hbm:player/vomit"
     ]
+  },
+  "weapon.muke_explosion": {
+    "subtitle": "subtitles.hbm.weapon.muke_explosion",
+    "sounds": [
+      {
+        "name": "hbm:weapon/muke_explosion",
+        "stream": false
+      }
+    ]
   }
 }

@@ -10,6 +10,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("deprecation")
 public class FluidPipeBlock extends HbmFluidNodeBlock {
     private static final VoxelShape CORE = box(5.0D, 5.0D, 5.0D, 11.0D, 11.0D, 11.0D);
     private static final VoxelShape NORTH_ARM = box(5.0D, 5.0D, 0.0D, 11.0D, 11.0D, 5.0D);
@@ -62,3 +63,4 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
         return shape;
     }
 }
+

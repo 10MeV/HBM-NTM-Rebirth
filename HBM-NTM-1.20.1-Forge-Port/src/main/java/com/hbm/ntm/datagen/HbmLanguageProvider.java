@@ -85,6 +85,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.conveyor_wand.not_enough", "Not enough conveyors");
         add("item.hbm.conveyor_wand.obstructed", "Conveyor obstructed");
         add("item.hbm.battery_potato", "Potato Battery");
+        add("item.hbm.battery_creative", "Infinite Battery");
         add("item.hbm.battery_redstone", "Redstone Battery");
         add("item.hbm.battery_lead", "Lead-Acid Battery");
         add("item.hbm.battery_lithium", "Lithium-Ion Battery");
@@ -97,6 +98,16 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.capacitor_tantalum", "Tantalum Capacitor");
         add("item.hbm.capacitor_bismuth", "Bismuth Capacitor");
         add("item.hbm.capacitor_spark", "Spark Capacitor");
+        add("item.hbm.battery_sc.empty", "Empty Self-Charging Battery");
+        add("item.hbm.battery_sc.waste", "Spent Fuel Self-Charging Battery");
+        add("item.hbm.battery_sc.ra226", "Radium-226 Self-Charging Battery");
+        add("item.hbm.battery_sc.tc99", "Technetium-99 Self-Charging Battery");
+        add("item.hbm.battery_sc.co60", "Cobalt-60 Self-Charging Battery");
+        add("item.hbm.battery_sc.pu238", "Plutonium-238 Self-Charging Battery");
+        add("item.hbm.battery_sc.po210", "Polonium-210 Self-Charging Battery");
+        add("item.hbm.battery_sc.au198", "Gold-198 Self-Charging Battery");
+        add("item.hbm.battery_sc.pb209", "Lead-209 Self-Charging Battery");
+        add("item.hbm.battery_sc.am241", "Americium-241 Self-Charging Battery");
         add("desc.item.battery.charge", "Charge: %s / %sHE");
         add("desc.item.battery.chargePerc", "Charge: %s%%");
         add("desc.item.battery.chargeRate", "Charge rate: %sHE/tick");
@@ -145,9 +156,16 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.conveyor_lift", "Conveyor Chain Lift");
         add("block.hbm.conveyor_chute", "Conveyor Chute");
         add("block.hbm.machine_battery", "Energy Storage Block (LEGACY)");
+        add("block.hbm.machine_battery_socket", "Battery Socket");
         add("block.hbm.machine_assembly_machine", "Assembly Machine");
+        add("block.hbm.machine_chemical_plant", "Chemical Plant");
+        add("block.hbm.machine_chemical_factory", "Chemical Factory");
+        add("block.hbm.machine_refinery", "Oil Refinery");
+        add("block.hbm.machine_fluidtank", "Fluid Tank");
+        add("block.hbm.machine_pumpjack", "Pumpjack");
         add("container.machineAssemblyMachine", "Assembly Machine");
         add("container.hbm.battery", "Energy Storage Block");
+        add("container.batterySocket", "Battery Socket");
         add("container.hbm.battery.red_low", "Low redstone mode");
         add("container.hbm.battery.red_high", "High redstone mode");
         add("container.hbm.battery.mode.input", "Input");
@@ -160,6 +178,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.hbm.battery.priority.high", "High");
         add("container.hbm.battery.priority.recommended", "Recommended: Low");
         add("block.hbm.gas_meltdown", "Meltdown Gas");
+        add("block.hbm.gas_monoxide", "Carbon Monoxide");
+        add("block.hbm.gas_asbestos", "Asbestos Dust");
+        add("block.hbm.gas_coal", "Coal Dust");
+        add("block.hbm.chlorine_gas", "Chlorine Gas");
+        add("death.attack.monoxide", "%1$s suffocated from carbon monoxide");
         add("block.hbm.rad_absorber", "Radiation Absorber");
         add("block.hbm.rad_absorber.1", "Radiation Absorber Red");
         add("block.hbm.rad_absorber.2", "Radiation Absorber Green");
@@ -189,8 +212,42 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.yellow_barrel", "Radioactive Barrel");
         add("block.hbm.vitrified_barrel", "Vitrified Nuclear Waste Drum");
         ModItems.EXTRA_PARTS_TAB_ITEMS.forEach(item -> addItem(item, title(item.getId().getPath())));
-        ModItems.CONTROL_TAB_ITEMS.forEach(item -> addItem(item, title(item.getId().getPath())));
+        ModItems.CONTROL_TAB_ITEMS.forEach(item -> {
+            if (!hasExplicitControlName(item.getId().getPath())) {
+                addItem(item, title(item.getId().getPath()));
+            }
+        });
         ModItems.NUKE_TAB_ITEMS.forEach(item -> addItem(item, title(item.getId().getPath())));
+    }
+
+    private static boolean hasExplicitControlName(String id) {
+        return switch (id) {
+            case "battery_potato",
+                 "battery_creative",
+                 "battery_redstone",
+                 "battery_lead",
+                 "battery_lithium",
+                 "battery_sodium",
+                 "battery_schrabidium",
+                 "battery_quantum",
+                 "capacitor_copper",
+                 "capacitor_gold",
+                 "capacitor_niobium",
+                 "capacitor_tantalum",
+                 "capacitor_bismuth",
+                 "capacitor_spark",
+                 "battery_sc.empty",
+                 "battery_sc.waste",
+                 "battery_sc.ra226",
+                 "battery_sc.tc99",
+                 "battery_sc.co60",
+                 "battery_sc.pu238",
+                 "battery_sc.po210",
+                 "battery_sc.au198",
+                 "battery_sc.pb209",
+                 "battery_sc.am241" -> true;
+            default -> false;
+        };
     }
 
     private static String title(String id) {

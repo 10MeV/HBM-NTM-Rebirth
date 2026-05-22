@@ -289,7 +289,7 @@ public final class HbmFluidNodespace {
     private static void pruneUnloadedChunks(ServerLevel level, FluidNodeWorld nodeWorld) {
         ArrayList<NodeKey> toRemove = new ArrayList<>();
         for (NodeKey key : nodeWorld.nodes.keySet()) {
-            if (!level.hasChunkAt(key.pos())) {
+            if (!level.hasChunk(key.pos().getX() >> 4, key.pos().getZ() >> 4)) {
                 toRemove.add(key);
             }
         }

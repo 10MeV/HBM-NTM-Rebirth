@@ -9,6 +9,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+@SuppressWarnings("deprecation")
 public class LegacyComplexShapeBlock extends Block {
     private static final VoxelShape BOBBLEHEAD = box(5.5D, 0.0D, 5.5D, 10.5D, 10.0D, 10.5D);
     private static final VoxelShape SNOWGLOBE = box(4.0D, 0.0D, 4.0D, 12.0D, 5.0D, 12.0D);
@@ -103,3 +104,4 @@ public class LegacyComplexShapeBlock extends Block {
         return true;
     }
 }
+

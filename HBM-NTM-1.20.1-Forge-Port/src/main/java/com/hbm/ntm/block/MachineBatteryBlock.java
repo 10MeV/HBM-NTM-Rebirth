@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 
+@SuppressWarnings("deprecation")
 public class MachineBatteryBlock extends HorizontalMachineBlock implements EntityBlock {
     public MachineBatteryBlock(Properties properties) {
         super(properties);
@@ -72,3 +73,4 @@ public class MachineBatteryBlock extends HorizontalMachineBlock implements Entit
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 }
+

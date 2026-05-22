@@ -51,3 +51,17 @@
 - tank 会随配方变化重设目标流体。
 - blueprint pool 不匹配时 recipe 归 null 且进度清零。
 - filter exact/wildcard/tag/bedrock 模式匹配正确。
+
+## 2026-05-22 继续推进：先接机器配方数据，暂不接运行模块
+
+- 本批关联 `recipes-common-loader`，为 `chemical_plant` / `assembly_machine` 注册了现代 recipe type。
+- 运行时仍未迁移：
+  - `ModuleMachineBase#canProcess/process/update`
+  - blueprint pool 筛选
+  - auto switch group
+  - input/output tank 约束重设
+  - `ModulePatternMatcher`
+- 后续机器接入原则：
+  - 机器 BlockEntity 不直接解析散落 JSON，应通过统一 HBM recipe query helper 读取 `GenericMachineRecipe`。
+  - 旧 `recipe` internal name 字段应继续作为存档与 GUI/JEI 的稳定引用。
+  - 高阶电池/电容机器配方先进入 datapack，再等化工厂/装配机运行模块完整后启用处理。

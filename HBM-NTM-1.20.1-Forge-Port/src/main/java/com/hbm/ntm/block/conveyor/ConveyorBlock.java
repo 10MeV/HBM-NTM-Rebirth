@@ -27,6 +27,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+@SuppressWarnings("deprecation")
 public class ConveyorBlock extends Block implements IConveyorBelt, Toolable {
     public static final DirectionProperty FACING = DirectionProperty.create("facing", Direction.Plane.HORIZONTAL);
     public static final EnumProperty<ConveyorPathType> PATH = EnumProperty.create("path", ConveyorPathType.class);
@@ -151,3 +152,4 @@ public class ConveyorBlock extends Block implements IConveyorBelt, Toolable {
         builder.add(FACING, PATH, LEGACY_METADATA);
     }
 }
+

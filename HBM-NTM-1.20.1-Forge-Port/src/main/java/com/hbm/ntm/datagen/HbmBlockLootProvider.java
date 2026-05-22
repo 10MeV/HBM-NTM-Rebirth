@@ -36,10 +36,15 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.GAS_RADON_DENSE.get(), noDrop());
         add(ModBlocks.GAS_RADON_TOMB.get(), noDrop());
         add(ModBlocks.GAS_MELTDOWN.get(), noDrop());
+        add(ModBlocks.GAS_MONOXIDE.get(), noDrop());
+        add(ModBlocks.GAS_ASBESTOS.get(), noDrop());
+        add(ModBlocks.GAS_COAL.get(), noDrop());
+        add(ModBlocks.CHLORINE_GAS.get(), noDrop());
         add(ModBlocks.DUMMY_BLOCK.get(), noDrop());
         add(ModBlocks.FALLOUT.get(), block -> createSingleItemTable(ModItems.legacyItem("fallout").get()));
     }
 
+    @SuppressWarnings("deprecation")
     private LootTable.Builder conveyorWandDrop(String type) {
         CompoundTag tag = new CompoundTag();
         tag.putString("Type", type);

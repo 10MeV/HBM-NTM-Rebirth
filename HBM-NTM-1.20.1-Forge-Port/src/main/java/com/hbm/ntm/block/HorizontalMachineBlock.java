@@ -14,6 +14,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+@SuppressWarnings("deprecation")
 public class HorizontalMachineBlock extends HorizontalDirectionalBlock {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     private static final VoxelShape FULL_BLOCK = box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
@@ -59,3 +60,4 @@ public class HorizontalMachineBlock extends HorizontalDirectionalBlock {
         return fullOcclusion ? FULL_BLOCK : Shapes.empty();
     }
 }
+

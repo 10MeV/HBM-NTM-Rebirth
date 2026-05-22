@@ -46,7 +46,7 @@ public record TileControlPacket(BlockPos pos, CompoundTag data) {
             return;
         }
         ServerLevel level = player.serverLevel();
-        if (!level.hasChunkAt(packet.pos)) {
+        if (!level.hasChunk(packet.pos.getX() >> 4, packet.pos.getZ() >> 4)) {
             return;
         }
         BlockEntity blockEntity = level.getBlockEntity(packet.pos);

@@ -10,6 +10,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("deprecation")
 public class RedCableBlock extends HbmEnergyNodeBlock {
     private static final VoxelShape CORE = box(5.5D, 5.5D, 5.5D, 10.5D, 10.5D, 10.5D);
     private static final VoxelShape NORTH_ARM = box(5.5D, 5.5D, 0.0D, 10.5D, 10.5D, 5.5D);
@@ -62,3 +63,4 @@ public class RedCableBlock extends HbmEnergyNodeBlock {
         return shape;
     }
 }
+

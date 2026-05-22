@@ -17,6 +17,10 @@ public final class ModRecipes {
             DeferredRegister.create(ForgeRegistries.RECIPE_SERIALIZERS, HbmNtm.MOD_ID);
 
     public static final RecipeHolder<PressRecipe> PRESS = register("press", PressRecipe.Serializer::new);
+    public static final RecipeHolder<GenericMachineRecipe> CHEMICAL_PLANT =
+            register("chemical_plant", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.CHEMICAL_PLANT));
+    public static final RecipeHolder<GenericMachineRecipe> ASSEMBLY_MACHINE =
+            register("assembly_machine", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.ASSEMBLY_MACHINE));
 
     public static void register(IEventBus modBus) {
         RECIPE_TYPES.register(modBus);

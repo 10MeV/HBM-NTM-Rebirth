@@ -132,6 +132,9 @@
     - 节点重建时的完整连通分量拆分。
     - chunk unload 细粒度剔除。
     - 旧版 recentlyChanged 二次复查的完整 CPU/稳定性补偿策略。
+- 2026-05-22 deprecation 清理：
+  - `HbmEnergyNodespace` 的 chunk 加载检查由 deprecated `hasChunkAt(BlockPos)` 改为 chunk 坐标版 `hasChunk(x >> 4, z >> 4)`，只改变 API 入口，不改变节点剔除语义。
+  - 同步复查 `-Xlint:deprecation`，能量网络相关源码不再产生 deprecation 警告。
 - 当前现代策略：
   - 内部继续使用 1.7.10 风格 long 型 HE。
   - 对外用 `ForgeEnergyAdapter implements IEnergyStorage` 暴露 Forge Energy capability。
@@ -851,3 +854,293 @@
 - 本批验证：
   - `.\gradlew.bat runData --no-daemon` 通过。
   - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 修正：battery_pack 物品图标透明问题
+
+- 1.7.10 对照复核：
+  - `ItemRenderBatteryPack#renderCommonWithStack` 每次按 `EnumBatteryPack#texture` 绑定独立整图贴图，然后只渲染 `battery.obj` 的 `Battery` 或 `Capacitor` part。
+  - 旧 GUI 缩放 `5` 是像素级矩阵下的缩放，不是现代 item model 坐标下的 5 倍 block/model 缩放。
+- 本批修正：
+  - `LegacyWavefrontModel` 补动态贴图重载，允许同一个 OBJ group 在调用时传入不同 texture。
+  - `BatteryPackItemRenderer` 不再使用 Forge baked OBJ part 尝试动态换 RenderType，改为直绘旧 OBJ 的 `Battery` / `Capacitor` group。
+  - GUI 缩放改到 `0.36` 量级，避免创造栏图标被 slot 裁切成黑条。
+- 当前仍需实机确认：
+  - 12 个电池/电容在创造栏是否都显示对应旧贴图。
+  - 手持、地上掉落物的大小和朝向是否需要继续微调。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 继续推进：machine_battery 自动化槽位方向与抽出规则
+
+- 本批更新：
+  - `src/main/java/com/hbm/ntm/energy/HbmBatteryTransfer.java`
+  - `src/main/java/com/hbm/ntm/blockentity/MachineBatteryBlockEntity.java`
+- 1.7.10 对照：
+  - `TileEntityMachineBattery#getAccessibleSlotsFromSide`：
+    - 顶面只暴露 slot 0。
+    - 底面暴露 slot 0 与 slot 1。
+    - 侧面只暴露 slot 1。
+  - `canExtractItem`：
+    - slot 0 只有电量为 0 的 `IBatteryItem` 可以被自动化抽出。
+    - slot 1 只有电量等于最大电量的 `IBatteryItem` 可以被自动化抽出。
+  - `canInsertItem` 仍走 `isItemValidForSlot`，实际充放电由 `Library.chargeItemsFromTE` / `chargeTEFromItems` 处理。
+- 现代迁移语义：
+  - `HbmBatteryTransfer` 增加 `isEmptyBattery` / `isFullBattery`，统一表达旧 `canExtractItem` 的空电/满电判定。
+  - `MachineBatteryBlockEntity` 的 `ForgeCapabilities.ITEM_HANDLER` 改为按查询方向返回不同 wrapper：
+    - `Direction.UP` 映射到旧顶面：只可见放电输入槽 slot 0。
+    - `Direction.DOWN` 映射到旧底面：可见 slot 0 与 slot 1。
+    - 水平方向映射到旧侧面：只可见充电槽 slot 1。
+    - `null` side 保留完整 handler，供内部/无方向调用维持现有行为。
+  - 新增 sided item handler wrapper，插入仍复用当前 HBM battery 有效性判断；抽出则严格限制为空电 slot 0、满电 slot 1。
+- 当前限制：
+  - `battery_creative` 尚未迁移，创造电池的特殊抽取语义仍等待实际 item 绑定到 `HbmBatteryTransfer#setCreativeBatteryPredicate`。
+  - `machine_battery_socket` 尚未接入，因此本批只覆盖 `machine_battery` 自身的自动化面向。
+  - GUI slot tooltip 与外部 OpenComputers/ROR 函数仍未补齐。
+- 本批验证：
+  - 首次 `.\gradlew.bat compileJava processResources --no-daemon` 命中已有 `TileSyncRequestPacket`/`ModMessages` 增量状态不一致；确认当前源码已有 `syncTileToPlayer` 与请求包注册后重跑。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 编译断点修正：machine_battery_socket 注册接入
+
+- 背景：
+  - clean port 已存在 `MachineBatterySocketBlock`、`MachineBatterySocketBlockEntity`、`MachineBatterySocketMenu`、`MachineBatterySocketScreen`、`MachineBatterySocketRenderer`。
+  - 但注册层缺少 `MACHINE_BATTERY_SOCKET` 方块、BlockEntity 与 MenuType，导致全量编译在插座类引用处失败。
+- 本批接入：
+  - `ModBlocks` 注册 `machine_battery_socket`，使用 `MachineBatterySocketBlock` 与 `MultiblockBlockItem`，并加入 machine tab 列表。
+  - `ModBlockEntities` 注册 `machine_battery_socket` BlockEntityType。
+  - `ModMenuTypes` 注册 `machine_battery_socket` MenuType。
+  - `ClientModEvents` 注册插座 screen 与 block entity renderer。
+  - `MachineBatterySocketBlockEntity` 修正 1.20.1 `Connection` 包名，并把内部 `SocketEnergyStorage` 的充/放电逻辑改成显式计算，避免内部类无法调用接口默认方法的编译错误。
+- 当前限制：
+  - 本批只是接上已有插座实现以恢复构建；GUI 贴图、blockstate/model/lang/loot 等完整资源接入仍应在 machine_battery_socket 独立迁移批次复核。
+  - 插座旧版行为与 1.7.10 多方块布局、端口连接规则仍需后续实机验证。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 继续推进：machine_battery_socket 资源与可见性闭环
+
+- 1.7.10 对照：
+  - `ModBlocks.machine_battery_socket` 注册到 `machineTab`，方块名 `machine_battery_socket`。
+  - `MachineBatterySocket` 是 2x2 占位方块，核心 TileEntity 打开 `ContainerBatterySocket` / `GUIBatterySocket`。
+  - `TileEntityBatterySocket#getName()` 返回 `container.batterySocket`。
+  - `RenderBatterySocket` 使用 `ResourceManager.battery_socket`，常态渲染 `Socket` part，有上方框架时渲染 `Supports`，插入电池包时按 `Battery` / `Capacitor` part 和动态贴图渲染。
+  - `canExtractItem` 对唯一槽位实际只允许满电 `IBatteryItem` 被自动化抽出；`getAccessibleSlotsFromSide` 对所有方向都只暴露 slot 0。
+- 本批接入：
+  - 补 `machine_battery_socket` 手工 blockstate，按 `facing` 指向已移植的 `machines/battery_socket_socket` OBJ part model。
+  - 补 `machine_battery_socket` item model，沿用当前大机器 item 显示变换，避免不跑 DataGen 时缺模型。
+  - 补 `machine_battery_socket` loot table，破坏后掉落自身。
+  - 补手工语言资源：
+    - `block.hbm.machine_battery_socket`
+    - `container.batterySocket`
+    - `container.hbm.battery` 与 battery/socket 共用 GUI mode/priority tooltip keys。
+- 复核结果：
+  - 现代 `MachineBatterySocketBlockEntity` 的 item handler 只接受 `HbmBatteryItem`，并且只允许满电电池被抽出；这与旧版唯一 slot 0 的 `canExtractItem` 实际行为对齐。
+  - `MachineBatterySocketBlockEntity#createEnergyNode` 已使用 2x2 `positions` 和 8 个 `NodeConnection`，对应旧 `getPortPos/getConPos` 的多位置节点形状。
+- 当前限制：
+  - 旧版 `battery_sc` 超级电容随机放电/电击爆炸行为仍未迁移，因为现代对应物品与弹丸/电击爆炸链路还未完全闭合。
+  - 旧 `ILookOverlay#printHook` 的准星能量提示尚未迁移。
+  - OpenComputers/ROR 函数仍未接入现代兼容层。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 继续推进：battery_creative 与旧 Library 特判闭合
+
+- 1.7.10 对照：
+  - `ModItems.battery_creative` 使用 `ItemBatteryCreative`，ID `battery_creative`，贴图 `battery_creative_new`，创造栏为 `controlTab`。
+  - `ItemBatteryCreative` 实现 `IBatteryItem`：
+    - `getCharge` 返回 `Long.MAX_VALUE / 2`。
+    - `getMaxCharge` 返回 `Long.MAX_VALUE`。
+    - `getChargeRate` / `getDischargeRate` 返回 `Long.MAX_VALUE / 100`。
+    - `chargeBattery` / `setCharge` / `dischargeBattery` 都为空操作。
+  - `Library#chargeItemsFromTE` 对创造电池直接返回 `0`，即机器能量被视作全部转移给电池。
+  - `Library#chargeTEFromItems` 对创造电池直接返回 `maxPower`，即机器能量被视作直接填满。
+- 本批接入：
+  - 新增 `HbmCreativeBatteryItem`，保留旧无限读数、无限速率和空操作充放电。
+  - 注册现代 ID `battery_creative`，加入当前电池/消耗品创造栏列表。
+  - `HbmNtm#commonSetup` 绑定 `HbmBatteryTransfer#setCreativeBatteryPredicate`，让旧 `Library` 两个特殊返回值在现代 helper 中生效。
+  - 从 1.7.10 资源复制 `textures/items/battery_creative_new.png` 到现代 `textures/item/battery_creative_new.png`。
+  - 补 `battery_creative` item model 与中英文名称。
+- 当前限制：
+  - 旧版位于 `controlTab`；现代当前还没有完全等价的控制/电池分类边界，本批先放入现有电池展示列表，后续创造栏整理时再按 1.7.10 tab 归位。
+  - 创造电池作为其他机器 recipe/fuel/shift-click 特判的入口已存在；对应机器尚未迁移时不会触发那些旧路径。
+- 本批验证：
+  - 首次 `.\gradlew.bat compileJava processResources --no-daemon` 命中 Gradle/Javac 增量 classpath 状态不一致，大量 `build/classes` 缺失类文件报错。
+  - 随后运行 `.\gradlew.bat clean compileJava processResources --no-daemon`：通过。
+
+## 2026-05-22 继续推进：machine_battery_socket 最小完整语义闭合
+
+- 1.7.10 对照：
+  - `MachineBatterySocket` 是 2x2 多方块，核心方块右键打开 `GUIBatterySocket`。
+  - `TileEntityBatterySocket` 只有 1 个电池槽，能量值直接读写槽内 `IBatteryItem`，自身不保存独立能量。
+  - 低/高红石模式和优先级继承 `TileEntityBatteryBase`：模式为 input/buffer/output/none，优先级 GUI 只循环 LOW/NORMAL/HIGH。
+  - `getPortPos` 覆盖 2x2 足迹，`getConPos` 暴露 8 个连接点，用于让插座像一个跨 2x2 区域的能量节点。
+  - 自动化唯一槽位对所有方向可见，实际 `canExtractItem` 只允许满电电池从 slot 0 抽出。
+  - `RenderBatterySocket` 只渲染底座 `Socket`、可选 `Supports`，以及插入的 `battery_pack` / `battery_sc`；普通 `battery_creative` 不会以 3D 电池包模型显示。
+- 本批接入：
+  - 新增 `MachineBatterySocketBlock`，使用现代多方块 helper 放置/清理 2x2 足迹，保留核心方块打开 GUI 与 comparator 输出。
+  - 新增 `MachineBatterySocketBlockEntity`，用 `SocketEnergyStorage` 将现代能量网络读写绑定到槽内电池 NBT；插座自身不额外持久化能量。
+  - 接入 2x2 `HbmEnergyNode` positions 与 8 个连接点，迁移旧 `getPortPos/getConPos` 的跨格节点形状。
+  - 新增 `MachineBatterySocketMenu` / `MachineBatterySocketScreen`，使用旧 `gui_battery_socket.png` 和旧按钮/能量条坐标。
+  - 新增 `MachineBatterySocketRenderer`，走 `LegacyWavefrontModel` 直渲染旧 `battery.obj` group；插入 `HbmBatteryPackItem` 时按 `Battery` / `Capacitor` 和旧动态贴图渲染。
+  - 注册层接入 `machine_battery_socket` 方块、BlockEntity、MenuType、screen、BER、语言、loot、blockstate/item model。
+  - `MultiblockHelper` 增加受保护清理入口，避免核心移除 dummy 时触发递归拆除。
+- 对齐修正：
+  - 插座 renderer 移除“任意 HBM 电池都显示默认铅电池模型”的现代扩展，只保留旧版已存在的 `battery_pack` 3D 显示；`battery_sc` 等对应物品未迁移前不伪造显示。
+  - DataGen 对 `battery_creative` 使用旧资源名 `item/battery_creative_new`，避免默认 `battery_creative` 层名导致缺贴图失败。
+  - 之前因现代资源路径规则修正 `weapon.mukeExplosion` 为 `weapon.muke_explosion`，保证 datagen 不被非法 ResourceLocation 阻断。
+- 当前限制：
+  - `battery_sc` 超级电容物品族、随机衰变倍数、插座放电/爆炸/电击逻辑仍未迁移；这是插座与旧能量库剩余最大缺口之一。
+  - `ILookOverlay#printHook`、OpenComputers/ROR 函数、完整 EnergyControl 兼容层仍未闭合。
+  - 插座 2x2 放置、区块卸载/重载、网络分裂/重建、跨区块连接与订阅超时仍需要实机生命周期验证。
+  - 插座 renderer 朝向和上方 `Supports` 判定已按旧逻辑迁移，但仍需游戏内截图确认模型与碰撞足迹完全重合。
+- 本批验证：
+  - `.\gradlew.bat runData --no-daemon` 通过，生成 `machine_battery_socket` blockstate/item model/loot 和 `battery_creative` 正确 item model。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 当前移植估算：
+  - 按本追踪文档口径，能量库核心网络、基础电池机器、电池包/电容物品、创造电池、插座基础语义已闭合，约 `84%`。
+  - 剩余约 `16%` 主要集中在 `battery_sc`、旧外部兼容层、look overlay/debug 粒子细节、真实世界生命周期验证和旧配方/创造栏归位。
+
+## 2026-05-22 继续推进：已迁移电池归位旧 controlTab 展示语义
+
+- 1.7.10 对照：
+  - `battery_pack`、`battery_creative`、`battery_potato` 均注册到 `MainRegistry.controlTab`。
+  - `ItemBattery#getSubItems`：可充电时展示空电栈，可放电时展示满电栈。
+  - `ItemBatteryPack#getSubItems`：每个电池/电容 meta 都展示空电与满电两个栈。
+- 本批接入：
+  - `ModItems` 将当前已迁移的电池组、创造电池和土豆电池从现代消耗品页归入 `CONTROL_TAB_ITEMS`，对齐旧 `controlTab`。
+  - `ModCreativeTabs.CONTROL` 现在与消耗品页一样识别 `HbmBatteryItem`，调用 `addCreativeStacks` 展示旧版空/满电变体。
+- 当前限制：
+  - `cube_power`、`battery_sc`、`battery_potatos`、`hev_battery`、`fusion_core`、`energy_core` 等旧 controlTab 电池仍未迁移；本批只归位已经存在的现代电池 ID。
+  - DataGen 仍会按 `CONTROL_TAB_ITEMS` 生成已迁移电池 item model；`HbmBatteryPackItem` 继续输出 `builtin/entity` 以保留 OBJ 物品渲染。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-22 继续推进：battery_sc 自充电电池族基础语义
+
+- 1.7.10 对照：
+  - `ItemBatterySC` 是 `ItemEnumMulti(EnumBatterySC, true, true)`，旧 ID 为 `battery_sc`，通过 meta 区分 10 个变体。
+  - 变体与功率：
+    - `EMPTY = 0`
+    - `WASTE = 150`
+    - `RA226 = 200`
+    - `TC99 = 500`
+    - `CO60 = 750`
+    - `PU238 = 1_000`
+    - `PO210 = 1_250`
+    - `AU198 = 1_500`
+    - `PB209 = 2_000`
+    - `AM241 = 2_500`
+  - `IBatteryItem` 行为：
+    - `getCharge` 恒等于 `getMaxCharge`。
+    - `getChargeRate` 恒为 `0`。
+    - `getDischargeRate` 等于 `getMaxCharge`。
+    - `chargeBattery` / `setCharge` / `dischargeBattery` 都为空操作。
+  - 旧贴图路径为 `textures/items/battery_sc.<variant>.png`。
+  - `TileEntityBatterySocket#hasSCLoaded` 只对非 `EMPTY` 的 `battery_sc` 生效；加载后：
+    - `getPower` 会乘以 `scPowerMult`。
+    - `scPowerMult` 每 tick 以 `1/100` 随机游走，并夹在 `0.1D..1D`。
+    - `damageTarget = 1200 + rand.nextInt(2400)`，达到后触发 `discharge()`，旧版会发射电击 beam 并触发电爆炸。
+- 本批接入：
+  - 新增 `HbmSelfChargingBatteryItem`，承载旧 `ItemBatterySC` 的只放电/不可充电/恒满电语义。
+  - `ModItems` 增加 10 个现代独立 ID：
+    - `battery_sc.empty`
+    - `battery_sc.waste`
+    - `battery_sc.ra226`
+    - `battery_sc.tc99`
+    - `battery_sc.co60`
+    - `battery_sc.pu238`
+    - `battery_sc.po210`
+    - `battery_sc.au198`
+    - `battery_sc.pb209`
+    - `battery_sc.am241`
+  - 10 个物品加入 `CONTROL_TAB_ITEMS`，继续按旧 controlTab 展示。
+  - 复制旧 `battery_sc.*.png` 到现代 `textures/item/`，DataGen 按旧点号贴图名生成 item model。
+  - `MachineBatterySocketBlockEntity` 保存/同步 `damageTimer`、`damageTarget`、`scPowerMult`，并在加载非空自充电电池时按旧逻辑随机波动能量读数。
+  - `MachineBatterySocketRenderer` 对非空 `HbmSelfChargingBatteryItem` 渲染旧 `battery.obj` 的 `Battery` part，并绑定旧 `textures/block/machines/battery_sc.png`。
+- 对齐修正：
+  - 语言 DataGen 对已手写名称的 controlTab 电池跳过 fallback，避免 `battery_potato` 等重复 key 阻断 runData。
+  - 旧 `RenderBatterySocket` 里 `battery_creative` 还有独立 HorsePronter/BeamPronter 特效；此前“普通创造电池不显示”记录不完整，后续应作为渲染库缺口补齐。
+- 当前限制：
+  - 本批没有迁移 `TileEntityBatterySocket#discharge()` 的实体 beam、方块破坏、电爆炸和音效，因为旧爆炸/投射物链路仍未完全对齐。
+  - 旧配方仍未接入：空自充电电池合成，以及用核废料/各同位素 billet 转换为对应变体。
+  - 旧 meta -> 现代独立 ID 的存档/配方映射表仍需后续统一梳理。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过，确认点号 ID 与点号贴图路径可正常生成模型/语言。
+- 当前移植估算：
+  - `battery_sc` 基础物品与插座能量/显示语义补齐后，能量库约 `87%`。
+  - 剩余重点：`battery_sc` 放电事件、创造电池插座特效、旧配方/映射、OC/ROR/look overlay/EnergyControl 完整兼容、真实跨区块/卸载生命周期验证。
+
+## 2026-05-22 继续推进：battery_pack / battery_sc 旧配方与 meta 映射入口
+
+- 1.7.10 对照：
+  - `CraftingManager` 里只有两个 `battery_pack` 变体走普通工作台：
+    - `EnumBatteryPack.BATTERY_REDSTONE`：`IRON.plate()` + `REDSTONE.block()` + `plate_polymer`。
+    - `EnumBatteryPack.CAPACITOR_COPPER`：`STEEL.plate()` + `CU.block()` + `plate_polymer`。
+  - `machine_battery_socket` 有两套普通工作台配方：
+    - `plate_polymer` + `coil_copper` 的 3x3 空心形。
+    - `STEEL.plate()` + `MINGRADE.ingot()` 的 `"PRP"` 形；现代端暂按当前 `ingot_copper` 承接旧 MINGRADE。
+  - `battery_sc` 的非空变体通过空壳 + 两个对应 billet 的 shapeless 配方转换。
+  - `battery_sc.EMPTY` 本体配方依赖 `GOLD.wireFine()`，现代注册里目前没有精确金细线物品。
+  - 更高阶 `battery_pack` / capacitor 不是普通工作台配方：
+    - `BATTERY_LEAD`、`BATTERY_LITHIUM`、`BATTERY_SODIUM`、`BATTERY_SCHRABIDIUM`、`BATTERY_QUANTUM` 来自 `ChemicalPlantRecipes`。
+    - `CAPACITOR_GOLD`、`CAPACITOR_NIOBIUM`、`CAPACITOR_TANTALUM`、`CAPACITOR_BISMUTH`、`CAPACITOR_SPARK` 来自 `AssemblyMachineRecipes`。
+- 本批接入：
+  - 新增 `HbmRecipeProvider`，接入 `HbmDataGenerators` server datagen。
+  - 生成 13 个普通 crafting recipe：
+    - `energy/machine_battery_socket_polymer`
+    - `energy/machine_battery_socket_steel`
+    - `energy/battery_redstone`
+    - `energy/capacitor_copper`
+    - `energy/battery_sc_waste`
+    - `energy/battery_sc_ra226`
+    - `energy/battery_sc_tc99`
+    - `energy/battery_sc_co60`
+    - `energy/battery_sc_pu238`
+    - `energy/battery_sc_po210`
+    - `energy/battery_sc_au198`
+    - `energy/battery_sc_pb209`
+    - `energy/battery_sc_am241`
+  - 新增 `HbmLegacyBatteryMaps`，集中保存：
+    - `battery_pack` 旧 meta `0..11` -> 现代 12 个独立 ID。
+    - `battery_sc` 旧 meta `0..9` -> 现代 10 个独立 ID。
+  - `HbmRecipeProvider` 使用该映射表产出 `BATTERY_REDSTONE`、`CAPACITOR_COPPER` 和全部 `battery_sc` 转换配方，避免后续配方/loot/starter kit/机器配方各自重复 switch。
+- 当前限制：
+  - `battery_sc.EMPTY` 工作台配方暂缓，原因是旧 `GOLD.wireFine()` 没有现代精确注册；不能用 `coil_gold` 伪代。
+  - 化工厂/装配机中的高阶电池与电容配方暂缓，原因是 `recipes-common-loader` / `machine-module-recipe-runtime` 已记录但现代端还没有完整 HBM 机器配方 runtime；本轮只保留旧 meta 映射入口供后续机器配方库使用。
+  - `battery_sc.PO210` 旧 `PO210.billet()` 暂映射到现代已存在的 `billet_polonium`，不使用 `billet_po210be`，因为后者是铍源相关变体，不等价于旧 PO210 billet。
+- 本批验证：
+  - `.\gradlew.bat runData --no-daemon` 通过，生成 `src/generated/resources/data/hbm/recipes/energy/*.json`。
+  - 抽查 `battery_redstone.json`、`battery_sc_po210.json`、`machine_battery_socket_polymer.json`，结果 ID 与旧配方目标一致。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 当前移植估算：
+  - 旧普通 crafting 配方与 meta 映射入口补齐后，能量库约 `88%`。
+  - 剩余重点：`battery_sc.EMPTY` 的金细线前置材料库、化工厂/装配机/等离子锻炉机器配方 runtime、`battery_sc` 放电事件、创造电池插座特效、OC/ROR/look overlay/EnergyControl 完整兼容、真实跨区块/卸载生命周期验证。
+
+## 2026-05-22 继续推进：高阶电池机器配方首个数据包落点
+
+- 1.7.10 对照：
+  - `ChemicalPlantRecipes#chem.batterylead`
+    - `setup(100, 100)`
+    - 输入 item：`STEEL.plate() x4`、`PB.ingot() x4`
+    - 输入 fluid：`SULFURIC_ACID 8000`
+    - 输出 item：`battery_pack` meta `BATTERY_LEAD`
+- 本批接入：
+  - 借助新增 `GenericMachineRecipe` / `hbm:chemical_plant` serializer 生成：
+    - `data/hbm/recipes/chemical_plant/batterylead.json`
+  - 输出使用 `HbmLegacyBatteryMaps` 的 `battery_pack` meta `1` -> `battery_lead` 映射。
+  - 生成 JSON 保留旧 internal name `chem.batterylead`、duration `100`、power `100`。
+- 同批构建修正：
+  - 给并行迁移中的 `LegacyVisibleMachineBlockEntity` 补 `LEGACY_VISIBLE_MACHINE` BlockEntityType 注册，绑定 `machine_chemical_plant`、`machine_chemical_factory`、`machine_refinery`、`machine_fluidtank`。
+  - 注册 `LegacyVisibleMachineRenderer`，让这些可视多方块机器走已有 render-library 桥。
+- 当前限制：
+  - `BATTERY_LITHIUM`、`BATTERY_SODIUM`、`BATTERY_SCHRABIDIUM`、`BATTERY_QUANTUM` 仍暂缓；旧配方输入中存在 `LI.dust()`、`NA.dust()`、`SA326.dust()`、`BSCCO.wireDense()`、`pellet_charged` 等现代端尚未完整/精确注册的材料或 wire/meta 族。
+  - 装配机电容配方仍暂缓；同样受 `wire_dense` 材料族、`circuit` meta、cast plate/tag 映射限制。
+  - `GenericMachineRecipe#matches` 暂不执行机器运行时逻辑，需等 `machine-module-recipe-runtime` 后续接入。
+- 本批验证：
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 抽查 `src/generated/resources/data/hbm/recipes/chemical_plant/batterylead.json`，字段与旧配方一致。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 当前移植估算：
+  - 机器配方数据层和首个高阶电池配方落地后，能量库约 `89%`。
+  - 剩余重点：材料/tag/旧 meta 族映射、化工厂/装配机 runtime、`battery_sc.EMPTY` 精确材料配方、`battery_sc` 放电事件、创造电池插座特效和兼容层。

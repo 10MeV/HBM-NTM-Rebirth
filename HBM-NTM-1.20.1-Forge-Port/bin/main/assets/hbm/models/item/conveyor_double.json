@@ -1,3 +1,1 @@
-{
-  "parent": "hbm:block/conveyor_double"
-}
+{ "parent": "hbm:block/conveyor_double" }

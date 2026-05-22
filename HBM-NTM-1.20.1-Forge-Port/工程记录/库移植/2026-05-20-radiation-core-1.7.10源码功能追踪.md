@@ -534,6 +534,25 @@ Verification:
 
 - 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
+## 2026-05-22 Radiation Fog Debug Command
+
+Legacy source:
+
+- `CommandRadiation` did not expose a direct fog command; this is a modern verification helper for the migrated render-library particle.
+- The old runtime fog path remains `ChunkRadiationHandlerSimple` -> `ClientProxy#effectNT(type="radFog")`.
+
+Completed in the 1.20.1 port:
+
+- Added `ChunkRadiationManager.spawnDebugRadiationFog(ServerLevel, BlockPos)` as a small server-side bridge that emits exactly one `RADIATION_FOG` particle event at a position.
+- Added `/hbm radiation fog [pos]`:
+  - without `pos`, spawns at the command source position.
+  - with `pos`, uses `BlockPosArgument.getLoadedBlockPos` for safe loaded-position lookup.
+- This command is intentionally under the modern `/hbm radiation` debug surface, not the legacy `/ntmrad` command surface.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ## 2026-05-21 Gas Meltdown Entity Collision Pass
 
 Legacy source:
@@ -693,9 +712,48 @@ Legacy source:
   - contact: removes `radaway` and `radx`, then applies `RAD_BYPASS` radiation `0.5F` and asbestos `+10`.
   - first direction: 1/3 up, otherwise down; second direction random horizontal.
   - 1/10 terrain decay check below the gas:
-    - grass -> dirt metadata 1 with 1/5 chance, otherwise `waste_earth`
+    - grass -> dirt metadata 1 (`coarse_dirt` in 1.20.1) with 1/5 chance, otherwise `waste_earth`
     - non-normal grass/leaves/plants/vine materials -> air
   - 1/600 chance to dissipate.
+- `com.hbm.blocks.gas.BlockGasAsbestos`
+  - contact: if no fine-particle protection, asbestos `+1`.
+  - first direction: 1/5 down, otherwise random 6-way; second direction random horizontal.
+  - 1/50 chance to dissipate.
+  - client occasionally emits old `townaura` dust.
+- `com.hbm.blocks.gas.BlockGasCoal`
+  - contact: if no coarse-particle protection, black lung `+10`.
+  - first direction: 1/5 down, otherwise random 6-way; second direction random horizontal.
+  - 1/20 chance to dissipate.
+  - client emits smoke.
+- `com.hbm.blocks.gas.BlockGasMonoxide`
+  - contact: if no monoxide gas protection, deals `ModDamageSource.monoxide` damage `1`.
+  - first direction down; second direction random horizontal.
+  - 1/100 chance to dissipate.
+- `com.hbm.blocks.gas.BlockGasClorine`
+  - contact: if no lung gas protection, applies blindness 5s, poison 20s amp 2, wither 1s amp 1, slowness 30s amp 1, mining fatigue 30s amp 2.
+  - first direction: 1/5 up, otherwise down; second direction random horizontal.
+  - 1/10 chance to dissipate.
+- `com.hbm.blocks.generic.BlockNuclearWaste`
+  - extends `BlockHazard`, so it keeps the normal scheduled chunk-radiation injection.
+  - before `super.updateTick`, picks a random side; with 1/2 chance, if the adjacent block is air, places `gas_radon_dense`.
+  - legacy registrations use this class for `block_waste`, `block_waste_painted`, and `block_waste_vitrified`.
+  - all three are configured with `ExtDisplayEffect.RADFOG`, which emits old `townaura` around adjacent air spaces.
+- `com.hbm.blocks.generic.BlockOutgas`
+  - extends `BlockOre`; it does not make the block a continuous chunk-radiation source by itself.
+  - random tick chooses one random side and places `getGas()` into adjacent air.
+  - `dropBlockAsItemWithChance` places `getGas()` at the broken block position when `onBreak=true`.
+  - neighbor changes place `getGas()` into all adjacent air blocks with 1/3 chance when `onNeighbour=true`.
+  - radon subset:
+    - uranium/scorched uranium/gneiss uranium/nether uranium variants -> `gas_radon`
+    - `block_corium_cobble` -> `gas_radon`
+    - `ancient_scrap` -> `gas_radon_tomb`
+  - toxic gas subset:
+    - asbestos ore/block/deco/brick/lab tile variants -> `gas_asbestos`
+    - `ore_nether_coal` -> `gas_monoxide`
+  - for random-ticking asbestos sources, walking on the block can also release `gas_asbestos` above the block with 1/10 chance and client `townaura`.
+- `com.hbm.main.ModEventHandler#onBlockBreak`
+  - breaking vanilla coal ore, vanilla coal block, or `ore_lignite` tries all 6 adjacent directions.
+  - for each side, with 1/2 chance, if the target is air, places `gas_coal`.
 - `com.hbm.blocks.generic.BlockAbsorber`
   - schedules every 10 ticks.
   - metadata tiers absorb chunk radiation by `2.5`, `10`, `100`, `10000`.
@@ -717,6 +775,28 @@ Completed in the 1.20.1 port:
 - Added the minimum gas/radon library bridge:
   - `LegacyGasBlock` for old invisible, replaceable, non-colliding gas movement.
   - `LegacyGasRadonBlock` for `gas_radon`, `gas_radon_dense`, and `gas_radon_tomb`.
+- Added `LegacyNuclearWasteBlock` for `block_waste`, `block_waste_painted`, and `block_waste_vitrified`:
+  - keeps the `RadiatingHazardBlock` continuous chunk-radiation source table.
+  - restores the scheduled random adjacent `gas_radon_dense` placement.
+  - restores the local RADFOG/townaura-style visual feedback through the modern `radiation_fog` particle.
+- Added `LegacyOutgasBlock` for the currently supported radon subset:
+  - uranium ore variants release `gas_radon` on random tick and when broken.
+  - `block_corium_cobble` releases `gas_radon` on random tick, break, and neighbor changes.
+  - `ancient_scrap` releases `gas_radon_tomb` on random tick, break, and neighbor changes.
+- Added `LegacyToxicGasBlock` and registered:
+  - `gas_asbestos`
+  - `gas_coal`
+  - `gas_monoxide`
+  - `chlorine_gas`
+- Added `monoxide` damage type and language key for the old carbon-monoxide damage path.
+- Expanded `LegacyOutgasBlock` toxic gas coverage:
+  - asbestos ore/block/deco/brick/lab tile variants now release `gas_asbestos`.
+  - `ore_nether_coal` now releases `gas_monoxide` when broken.
+- Added a Forge block-break event bridge for the old coal dust gas burst:
+  - `Blocks.COAL_ORE`
+  - `Blocks.DEEPSLATE_COAL_ORE` as the modern vanilla equivalent
+  - `Blocks.COAL_BLOCK`
+  - `ore_lignite`
 - Registered `gas_radon`, `gas_radon_dense`, and `gas_radon_tomb`; copied their legacy textures, added datagen model/blockstate/item coverage, and marked their block loot as no-drop.
 - `gas_meltdown` now uses the shared gas movement bridge and can spawn `gas_radon_dense` like 1.7.10.
 - Copied legacy textures for barrels, absorber tiers, meltdown gas, and sellafield/slaked variants.
@@ -730,6 +810,9 @@ Still incomplete:
 - `sellafield` uses modern blockstate `level=0..5`; worldgen/source placement for non-zero levels still needs the future sellafield worldgen/ore pass.
 - The ash-glasses-only gas visibility path is still deferred.
 - Old gas-mask filter durability damage is still deferred until the full armor/filter registry is migrated.
+- Toxic gas protection currently uses the existing helmet/keyword bridge until the full `ArmorRegistry` hazard-class/filter system is migrated.
+- `gas_coal` and `chlorine_gas` are registered and functional, but their legacy placement sources outside direct block placement are still tied to later event/machine/entity passes.
+- `gas_coal` coal/lignite block-break source is restored; remaining `gas_coal` sources, if any, need later source-specific passes.
 
 Verification:
 
@@ -737,6 +820,10 @@ Verification:
 - 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 - 2026-05-21 after adding `gas_radon`/`gas_radon_dense`, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 - 2026-05-21 after adding `gas_radon_tomb`, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- 2026-05-22 after adding `LegacyNuclearWasteBlock`, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- 2026-05-22 after adding the radon subset of `LegacyOutgasBlock`, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- 2026-05-22 after adding toxic gas blocks and outgas toxic branches, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- 2026-05-22 after adding the coal/lignite block-break `gas_coal` source, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
 ## 2026-05-21 1.7.10 Chunk Radiation Block Source Audit
 
@@ -785,8 +872,8 @@ Completed in the 1.20.1 port:
 
 Still incomplete:
 
-- Special source classes are not ported yet: `sellafield`, `yellow_barrel`, `vitrified_barrel`, `gas_meltdown`, `rad_absorber`.
-- `BlockNuclearWaste` radon/gas spreading side behavior is not represented by `RadiatingHazardBlock`; only its chunk radiation value is aligned in this pass.
+- `yellow_barrel` explosion/radon placement remains deferred to the explosion framework pass; its passive barrel radiation is already bridged.
+- `BlockOutgas` asbestos/monoxide branches are deferred until those gas blocks exist.
 - In-game verification still needs a chunk with corrected source blocks to confirm old-style rad fog and grass/dead dirt conversion.
 
 Verification:
@@ -1162,3 +1249,35 @@ Verification:
 
 - 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 - 2026-05-21 after adding contamination-list sync, ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-22 Radiation Fog Visibility Pass
+
+Legacy source:
+
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple`
+  - Every 20 server ticks, after the 3x3 Simple diffusion update, any propagated value above `RadiationConfig.fogRad` has a `1:fogCh` chance to spawn `radFog` in the source chunk at `heightValue + rand(5)`.
+- `com.hbm.particle.ParticleRadiationFog`
+  - The old `radFog` particle uses `textures/particle/fog.png`, fullbright rendering, yellow-green color `(0.85F, 0.9F, 0.5F)`, alpha `sin(age * PI / 400) * 0.125F`, and draws 25 fog quads around one particle origin.
+
+Completed in the 1.20.1 port:
+
+- Kept the existing Simple-handler fog threshold/chance timing and origin-chunk placement rule.
+- `ChunkRadiationManager#spawnRadiationFog` now emits one `RADIATION_FOG` particle event per selected old-style fog origin, matching legacy `radFog` event count.
+- `RadiationFogParticle` itself now draws the old 25-quad fog mass with the fixed legacy random seed, yellow-green color, 400 tick alpha curve, `7.5F` scale envelope, fullbright light, and no depth writes.
+- Added manual blockstate, block model, and item model resources for the registered radiation gases:
+  - `gas_radon`
+  - `gas_radon_dense`
+  - `gas_radon_tomb`
+  - `gas_meltdown`
+
+Still incomplete:
+
+- The modern particle renderer uses a dedicated particle render type and texture atlas, not direct legacy GL11 calls; blend/depth semantics are aligned, but exact old OpenGL state stack behavior is not reproduced.
+- Gas visibility with `ashglasses` is still only partially represented by current gas particles/resources and needs a later render-library slice if the item/armor path is migrated.
+
+Verification:
+
+- 2026-05-22 ran `.\gradlew.bat processResources --no-daemon`: passed.
+- 2026-05-22 attempted `.\gradlew.bat compileJava processResources --no-daemon`.
+- Compile reached `:compileJava` and failed on an unrelated current battery-socket migration gap: `MachineBatterySocketBlockEntity` and `ModBlockEntities.MACHINE_BATTERY_SOCKET` are referenced but missing.
+- 2026-05-22 after render-library fog correction, `.\gradlew.bat compileJava processResources --no-daemon` passed.

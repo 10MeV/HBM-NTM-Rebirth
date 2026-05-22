@@ -59,7 +59,7 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm.control"))
                     .icon(() -> ModItems.legacyItem("plate_fuel_u235").get().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModItems.CONTROL_TAB_ITEMS.forEach(item -> output.accept(item.get())))
+                    .displayItems((parameters, output) -> ModItems.CONTROL_TAB_ITEMS.forEach(item -> acceptItem(output, item)))
                     .build());
 
     public static final RegistryObject<CreativeModeTab> BLOCKS = CREATIVE_TABS.register("blocks",
@@ -90,6 +90,14 @@ public final class ModCreativeTabs {
             stateItem.addCreativeStacks(output);
         } else {
             output.accept(item);
+        }
+    }
+
+    private static void acceptItem(CreativeModeTab.Output output, RegistryObject<? extends net.minecraft.world.item.Item> item) {
+        if (item.get() instanceof HbmBatteryItem battery) {
+            battery.addCreativeStacks(output, item.get().getDefaultInstance());
+        } else {
+            output.accept(item.get());
         }
     }
 

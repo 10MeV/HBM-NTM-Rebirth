@@ -1,4 +1,4 @@
-# Fluid MK2 网络 1.7.10 源码功能追踪
+﻿# Fluid MK2 网络 1.7.10 源码功能追踪
 
 ## 范围
 
@@ -300,3 +300,243 @@ Verification:
 
 - `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
 - `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` passed.
+
+## 2026-05-22 Modern Library Pass 9
+
+This pass moves the fluid trait layer from coarse marker tags toward reusable legacy behavior data, without wiring destructive world/entity effects yet:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/fluid/trait/FluidTrait.java`
+  - `FluidTraitSimple.java`
+  - `FT_Flammable.java`
+  - `FT_Combustible.java`
+  - `FT_Corrosive.java`
+  - `FT_Polluting.java`
+  - `FT_Poison.java`
+  - `FT_VentRadiation.java`
+  - `FT_Heatable.java`
+  - `FT_Coolable.java`
+  - `FT_PWRModerator.java`
+  - `FT_Pheromone.java`
+  - `com/hbm/inventory/fluid/Fluids.java` trait initialization blocks
+- Add modern data traits:
+  - `FlammableFluidTrait`: legacy TU-per-bucket heat energy.
+  - `CombustibleFluidTrait`: legacy fuel grade and HE-per-bucket combustion energy.
+  - `CorrosiveFluidTrait`: legacy 0..100 corrosion rating and strong-corrosion threshold.
+  - `VentRadiationFluidTrait`: radiation per mB released.
+  - `PollutingFluidTrait`: spill/burn pollution maps for soot, poison, heavy metal, fallout.
+  - `PoisonFluidTrait`: deprecated old poison/withering data retained for compatibility.
+  - `HeatableFluidTrait`: heat steps and boiler/heat-exchanger/PWR/ICF/PA efficiencies.
+  - `CoolableFluidTrait`: cooling target, amount conversion, heat energy, turbine/heat-exchanger efficiencies.
+  - `PwrModeratorFluidTrait`: PWR flux multiplier.
+  - `PheromoneFluidTrait`: old glyphid pheromone type marker.
+- Add `HbmFluids.registerLegacyBehaviorTraits()` after the 154-fluid identity table:
+  - Ports old corrosive/radiation/poison/pheromone marker data for the fluids that had those traits in 1.7.10.
+  - Ports old calculated fuel spreadsheet formulas for petroleum, gas, coal, biofuel, reforming, vacuum, DS, and related fuels.
+  - Ports old heat/cool transitions for water/steam, oils, coolant, perfluoromethyl, mug, blood, heavy water, sodium, lead, and thorium salt.
+  - Ports old PWR moderator multipliers for mug, heavy water, lead, and thorium salt.
+- Pollution constants mirror the old `PollutionHandler` baselines:
+  - soot `1/25`
+  - heavy metal `1/50`
+  - poison `1/50`
+
+Still deferred:
+
+- `FT_Toxin` is not fully ported yet because it depends on hazard armor, damage source, potion/effect, and entity protection systems.
+- Trait `onFluidRelease` world effects are not invoked yet. Radiation/pollution/corrosion data is queryable, but spilling/burning fluids does not yet mutate world pollution or chunk radiation through this new trait layer.
+- Custom/foreign JSON trait serialization/deserialization is still deferred.
+- Container definitions (`CD_Canister`, `CD_Gastank`, infinite barrel, armor mods) are still not migrated.
+- Nice tooltip text from old trait `addInfo` / `addInfoHidden` is not fully recreated; modern traits prioritize stable machine-readable data first.
+
+Progress estimate after Pass 9:
+
+- Core `FluidType` identity/NBT lookup/table: about 82%.
+- Basic tank/conform/Forge capability bridge: about 65%.
+- Fluid network/provider/receiver algorithm: about 60%.
+- In-world pipe graph: about 20%.
+- Fluid item/container loading: about 30%.
+- Behavior traits and cross-system effects: about 35%.
+- Machine integration through the library: about 8%.
+- Overall fluid library migration: about 40%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-05-22 Modern Library Pass 10
+
+This pass closes the largest remaining trait data gap by porting the legacy `FT_Toxin` shape as machine-readable data:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/fluid/trait/FT_Toxin.java`
+  - `com/hbm/inventory/fluid/Fluids.java` toxin append block
+- Add `ToxinFluidTrait`:
+  - Stores a list of toxin entries.
+  - Preserves the old `HazardClass` requirement and `fullBody`/hazmat-suit flag.
+  - Supports direct damage entries with damage type id, amount, and tick delay.
+  - Supports effect entries with effect id, duration, amplifier, and ambient flag.
+- Wire the old built-in toxic fluids into `HbmFluids`:
+  - `CHLORINE`: cloud damage, 2 damage every 20 ticks, `GAS_LUNG`.
+  - `PHOSGENE`: cloud damage, 4 damage every 20 ticks, `GAS_LUNG`.
+  - `MUSTARDGAS`: cloud damage, 4 damage every 10 ticks, `GAS_BLISTERING`; plus full-body blistering effects for wither and nausea.
+  - `ESTRADIOL`: particle-fine effect data for old `HbmPotion.death` using `hbm:death` as a deferred effect id.
+  - `REDMUD`: blistering wither effect data.
+- The trait intentionally records `ResourceLocation` ids instead of invoking `DamageSource` or `MobEffect` directly. This keeps the fluid library independent from incomplete armor/effect wiring and lets later toxic-gas or spill systems resolve the ids when they actually apply effects.
+
+Still deferred:
+
+- `ToxinFluidTrait` does not yet check armor protection, consume gas-mask filters, damage entities, or apply effects.
+- The old `ArmorRegistry.hasAllProtection`, `ArmorUtil.damageGasMaskFilter`, and hazmat-suit checks still need a dedicated hazard/armor integration pass.
+- `hbm:death` is only recorded as legacy effect data for now; if the old death potion is migrated under another id, the resolver layer must map it explicitly.
+- JSON trait serialization/deserialization remains deferred.
+
+Progress estimate after Pass 10:
+
+- Core `FluidType` identity/NBT lookup/table: about 82%.
+- Basic tank/conform/Forge capability bridge: about 65%.
+- Fluid network/provider/receiver algorithm: about 60%.
+- In-world pipe graph: about 20%.
+- Fluid item/container loading: about 30%.
+- Behavior traits and cross-system effects: about 42%.
+- Machine integration through the library: about 8%.
+- Overall fluid library migration: about 42%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+
+## 2026-05-22 Modern Library Pass 11
+
+This pass starts turning the migrated trait data into a shared runtime release path, based on legacy `FluidTrait.FluidReleaseType`, `FT_Polluting.pollute(...)`, and `FT_VentRadiation.onFluidRelease(...)`:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/fluid/trait/FluidTrait.java`
+  - `com/hbm/inventory/fluid/trait/FT_Polluting.java`
+  - `com/hbm/inventory/fluid/trait/FT_VentRadiation.java`
+  - representative release call sites in `TileEntityMachineFluidTank`, `TileEntityBarrel`, `TileEntityMachineGasFlare`, and `TileEntityMachineDrain`
+- Add modern `FluidReleaseType` with the old release modes:
+  - `VOID`: fluid is deleted without release side effects.
+  - `BURN`: fluid is combusted/burned and uses burn pollution.
+  - `SPILL`: fluid leaks/spills and uses release pollution.
+- Add `HbmFluidReleaseEffects`:
+  - Computes release reports for radiation and pollution from a `FluidType` and amount in mB.
+  - Applies `VentRadiationFluidTrait` through `ChunkRadiationManager.incrementRadiation(level, pos, radiationPerMb * amountMb)`.
+  - Preserves `PollutingFluidTrait` as calculated report data, multiplying legacy per-mB pollution by released amount.
+  - Does not yet mutate world pollution, because the modern pollution saved-data/handler layer has not been migrated.
+- Add convenience entrypoints:
+  - `FluidType.onFluidRelease(level, pos, amountMb, releaseType)`.
+  - `FluidType.previewRelease(amountMb, releaseType)`.
+  - `HbmFluidTank.release(level, pos, amount, releaseType, simulate)`, which clamps to stored fill, returns the same release report, applies effects only when not simulated, and drains the released amount.
+
+Still deferred:
+
+- Real pollution mutation remains blocked on a modern `PollutionHandler`/saved-data migration. Current release reports intentionally make the amounts visible without inventing a parallel world pollution store.
+- Entity-facing mist/chemical effects are still not applied through this helper; toxin, corrosive, poison, flammable mist, and pheromone handling need the entity/hazard armor integration pass.
+- Machine call sites have not yet been rewired to `HbmFluidTank.release(...)`; the shared entrypoint is ready for the next storage tank, drain, gas flare, and turbine passes.
+
+Progress estimate after Pass 11:
+
+- Core `FluidType` identity/NBT lookup/table: about 84%.
+- Basic tank/conform/Forge capability bridge: about 70%.
+- Fluid network/provider/receiver algorithm: about 60%.
+- In-world pipe graph: about 20%.
+- Fluid item/container loading: about 30%.
+- Behavior traits and cross-system effects: about 48%.
+- Machine integration through the library: about 10%.
+- Overall fluid library migration: about 45%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-05-22 Modern Library Pass 12
+
+This pass ports the legacy `EntityChemical` / `EntityMist` fluid-contact behavior into a shared modern helper without wiring it into every gas block or projectile yet:
+
+- Legacy sources re-read:
+  - `com/hbm/entity/projectile/EntityChemical.java`
+  - `com/hbm/entity/effect/EntityMist.java`
+  - `com/hbm/inventory/fluid/trait/FT_Toxin.java`
+- Modern support checked:
+  - `ArmorUtil` already exposes lung gas, monoxide, coarse/fine particle, bacteria, and hazmat protection helpers.
+  - `ModDamageSources` already exposes `cloud`, `monoxide`, and `pc` damage sources.
+  - `RadiationData` and `RadiationUtil` already support oil timers and radiation contamination.
+- Add `HbmFluidContactEffects`:
+  - Applies hot/cold contact damage through vanilla fire/freeze damage where modern dedicated old acid/boil/cryolator sources are not yet present.
+  - Applies oil coating for liquid flammable fluids via `RadiationData.setOil`.
+  - Applies `VentRadiationFluidTrait` to living entities via `RadiationUtil.contaminate(..., bypassResistance=true)`.
+  - Applies old `PoisonFluidTrait` as poison/wither effects.
+  - Applies `ToxinFluidTrait` direct damage and resolvable effect entries with armor-protection checks.
+  - Preserves unresolved legacy effects such as `hbm:death` as report data instead of inventing a new effect.
+  - Applies basic pheromone buff effects recorded by the old mist/projectile behavior.
+- Add convenience entrypoints:
+  - `FluidType.affectEntity(entity, intensity)`.
+  - `FluidType.previewEntityContact(entity, intensity)`.
+
+Still deferred:
+
+- This helper is not yet wired into migrated gas blocks, chemical projectile entities, mist entities, or leaking tank visuals.
+- Dedicated old damage sources for acid/boil/cryolator are still not registered in the modern damage-type data, so this pass uses vanilla fire/freeze where safe and leaves corrosion suit damage deferred.
+- `hbm:death` remains unresolved until the old death potion/effect is migrated or explicitly mapped.
+- Gas-mask filter consumption is not implemented yet; protection checks are passive.
+
+Progress estimate after Pass 12:
+
+- Core `FluidType` identity/NBT lookup/table: about 85%.
+- Basic tank/conform/Forge capability bridge: about 70%.
+- Fluid network/provider/receiver algorithm: about 60%.
+- In-world pipe graph: about 20%.
+- Fluid item/container loading: about 30%.
+- Behavior traits and cross-system effects: about 55%.
+- Machine integration through the library: about 10%.
+- Overall fluid library migration: about 48%.
+
+Verification:
+
+- First validation hit a transient generated-file/cache issue in `build/resources/main/.cache`; the cache directory was removed after confirming it was inside the workspace.
+- `.\gradlew.bat compileJava processResources --no-daemon` passed after the cache refresh.
+
+## 2026-05-22 Modern Library Pass 13
+
+This pass turns the migrated `FT_Heatable` / `FT_Coolable` data into shared runtime conversion helpers and gives the modern boiler a safe library-backed boiling path:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/fluid/trait/FT_Heatable.java`
+  - `com/hbm/inventory/fluid/trait/FT_Coolable.java`
+  - `com/hbm/tileentity/machine/TileEntityHeatBoiler.java`
+  - representative turbine use in `TileEntityMachineTurbine.java`
+- Add `HbmFluidThermalExchange`:
+  - `heat(...)` consumes input fluid, output capacity, available heat, heating type, and efficiency.
+  - Uses the legacy formula `ceil(step.heatReq / (fluidEfficiency * machineEfficiency))` for heat cost per operation.
+  - Converts by exact legacy mB ratios from `HeatingStep.amountRequired` to `HeatingStep.amountProduced`.
+  - `cool(...)` converts coolable fluids by `CoolableFluidTrait` ratios and reports produced heat as `ops * heatEnergy * fluidEfficiency * machineEfficiency`.
+  - Both heating and cooling support simulation and return a `ThermalResult` report.
+- Add `HbmFluidTank.getSpaceFor(type)` so conversion code can check destination capacity without changing or clearing tank type.
+- Wire `BoilerBlockEntity` to the shared helper:
+  - Adds saved `heat` state.
+  - Adds `addHeat`, `previewBoiling`, and `tryBoil`.
+  - Server tick now calls `tryBoil(heat, false)` and only decays heat when no conversion happens.
+  - The boiler still does not generate heat by itself; it is ready for later `HeatSource` / adjacent heater integration.
+
+Still deferred:
+
+- No modern machine currently implements `HeatSource`, so boiler heating must be provided by later heater/industrial boiler work or debug/test hooks.
+- Turbine and heat-exchanger BlockEntity ports are not wired yet, but their core thermal math now has a shared implementation.
+- Explosion/overpressure behavior from old boilers remains deferred until the destructive machine behavior phase.
+
+Progress estimate after Pass 13:
+
+- Core `FluidType` identity/NBT lookup/table: about 85%.
+- Basic tank/conform/Forge capability bridge: about 72%.
+- Fluid network/provider/receiver algorithm: about 60%.
+- In-world pipe graph: about 20%.
+- Fluid item/container loading: about 30%.
+- Behavior traits and cross-system effects: about 60%.
+- Machine integration through the library: about 14%.
+- Overall fluid library migration: about 51%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+

@@ -40,6 +40,18 @@ public final class ArmorUtil {
         return checkForHaz2(entity);
     }
 
+    public static boolean hasCoarseParticleProtection(LivingEntity entity) {
+        return hasBacteriaProtection(entity);
+    }
+
+    public static boolean hasMonoxideGasProtection(LivingEntity entity) {
+        return hasBacteriaProtection(entity);
+    }
+
+    public static boolean hasLungGasProtection(LivingEntity entity) {
+        return hasBacteriaProtection(entity);
+    }
+
     public static boolean hasBacteriaProtection(LivingEntity entity) {
         ItemStack helmet = getHelmet(entity);
         return !helmet.isEmpty()

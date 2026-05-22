@@ -25,6 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,9 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     public static final int CONTROL_RED_LOW = 0;
     public static final int CONTROL_RED_HIGH = 1;
     public static final int CONTROL_PRIORITY = 2;
+    private static final int[] SLOTS_TOP = new int[]{SLOT_DISCHARGE};
+    private static final int[] SLOTS_BOTTOM = new int[]{SLOT_DISCHARGE, SLOT_CHARGE};
+    private static final int[] SLOTS_SIDE = new int[]{SLOT_CHARGE};
 
     private final ItemStackHandler items = new ItemStackHandler(2) {
         @Override
@@ -75,7 +79,10 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
             return super.insertItem(slot, stack, simulate);
         }
     };
-    private final LazyOptional<ItemStackHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> topItemHandler = LazyOptional.of(() -> new BatterySidedItemHandler(items, SLOTS_TOP));
+    private final LazyOptional<IItemHandler> bottomItemHandler = LazyOptional.of(() -> new BatterySidedItemHandler(items, SLOTS_BOTTOM));
+    private final LazyOptional<IItemHandler> sideItemHandler = LazyOptional.of(() -> new BatterySidedItemHandler(items, SLOTS_SIDE));
     private final BatteryEnergyStorage batteryEnergy;
     private final long[] powerLog = new long[20];
     private long delta;
@@ -360,14 +367,94 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        topItemHandler.invalidate();
+        bottomItemHandler.invalidate();
+        sideItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return getItemHandler(side).cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    private LazyOptional<IItemHandler> getItemHandler(@Nullable Direction side) {
+        if (side == null) {
+            return itemHandler;
+        }
+        if (side == Direction.UP) {
+            return topItemHandler;
+        }
+        if (side == Direction.DOWN) {
+            return bottomItemHandler;
+        }
+        return sideItemHandler;
+    }
+
+    private static final class BatterySidedItemHandler implements IItemHandler {
+        private final ItemStackHandler items;
+        private final int[] slots;
+
+        private BatterySidedItemHandler(ItemStackHandler items, int[] slots) {
+            this.items = items;
+            this.slots = slots;
+        }
+
+        @Override
+        public int getSlots() {
+            return slots.length;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return items.getStackInSlot(mapSlot(slot));
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            int mappedSlot = mapSlot(slot);
+            if (!items.isItemValid(mappedSlot, stack)) {
+                return stack;
+            }
+            return items.insertItem(mappedSlot, stack, simulate);
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            int mappedSlot = mapSlot(slot);
+            ItemStack stack = items.getStackInSlot(mappedSlot);
+            if (!canExtract(mappedSlot, stack)) {
+                return ItemStack.EMPTY;
+            }
+            return items.extractItem(mappedSlot, amount, simulate);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return items.getSlotLimit(mapSlot(slot));
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return items.isItemValid(mapSlot(slot), stack);
+        }
+
+        private int mapSlot(int slot) {
+            if (slot < 0 || slot >= slots.length) {
+                throw new RuntimeException("Slot " + slot + " not in valid range - [0," + slots.length + ")");
+            }
+            return slots[slot];
+        }
+
+        private static boolean canExtract(int slot, ItemStack stack) {
+            return switch (slot) {
+                case SLOT_DISCHARGE -> HbmBatteryTransfer.isEmptyBattery(stack);
+                case SLOT_CHARGE -> HbmBatteryTransfer.isFullBattery(stack);
+                default -> false;
+            };
+        }
     }
 
     private static final class BatteryEnergyStorage extends HbmEnergyStorage {

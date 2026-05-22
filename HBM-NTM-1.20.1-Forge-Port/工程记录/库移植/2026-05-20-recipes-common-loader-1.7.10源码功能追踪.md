@@ -85,3 +85,28 @@
 - 配方可在服务端和客户端同步。
 - datapack reload 后机器查询与 JEI 显示一致。
 - legacy id/meta 映射缺失时应显式跳过或报错，不得静默映射到错误物品。
+
+## 2026-05-22 继续推进：GenericMachineRecipe 最小数据包落点
+
+- 本批接入：
+  - 新增现代 `GenericMachineRecipe`，作为旧 `GenericRecipe` 的最小数据载体。
+  - 注册 `hbm:chemical_plant` 与 `hbm:assembly_machine` 两个 recipe type/serializer。
+  - 字段覆盖：
+    - `internal_name`
+    - `duration`
+    - `power`
+    - `input_items`
+    - `input_fluids`
+    - `output_items`
+    - `output_fluids`
+    - `pools`
+    - `auto_switch_group`
+  - item 输入暂用现代 `Ingredient + count`，可承接普通 item/tag 输入；旧 meta 拆分输入应通过统一 legacy 映射或 tag 表达。
+  - fluid 输入/输出使用当前 HBM `FluidType` 名称序列化，保留 pressure 字段入口。
+- 迁移边界：
+  - `matches` 暂不执行机器匹配，避免在机器模块 runtime 未迁移前把槽位/蓝图/流体罐逻辑散落到 recipe 类里。
+  - 暂不实现 chance output、NBTStack、ComparableStack wildcard、auto switch runtime 查询。
+  - 当前目标是让数据包、同步、JEI/机器后续查询有统一事实来源。
+- 本批验证：
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。

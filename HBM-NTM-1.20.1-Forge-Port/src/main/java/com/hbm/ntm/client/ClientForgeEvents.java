@@ -36,6 +36,7 @@ public final class ClientForgeEvents {
         if (RadiationHud.hasGeigerCounter(player)) {
             RadiationHud.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
         }
+        ClientInformMessages.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
     }
 
     @SubscribeEvent
@@ -44,6 +45,8 @@ public final class ClientForgeEvents {
             return;
         }
         LegacyHbmAnimations.tick();
+        HbmClientKeybinds.tick();
+        ClientMuzzleFlashEffects.tick();
 
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;

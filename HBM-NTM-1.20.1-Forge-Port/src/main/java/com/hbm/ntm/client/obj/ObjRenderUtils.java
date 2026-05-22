@@ -119,9 +119,9 @@ public final class ObjRenderUtils {
         RandomSource random = RandomSource.create(42L);
 
         for (Direction direction : DIRECTIONS) {
-            renderQuadList(poseStack.last(), consumer, model.getQuads(dummyState, direction, random), packedLight, packedOverlay, lightMultiplier, colorOverride, hasColorOverride, legacyShadow);
+            renderQuadList(poseStack.last(), consumer, model.getQuads(dummyState, direction, random, ModelData.EMPTY, renderType), packedLight, packedOverlay, lightMultiplier, colorOverride, hasColorOverride, legacyShadow);
         }
-        renderQuadList(poseStack.last(), consumer, model.getQuads(dummyState, null, random), packedLight, packedOverlay, lightMultiplier, colorOverride, hasColorOverride, legacyShadow);
+        renderQuadList(poseStack.last(), consumer, model.getQuads(dummyState, null, random, ModelData.EMPTY, renderType), packedLight, packedOverlay, lightMultiplier, colorOverride, hasColorOverride, legacyShadow);
     }
 
     private static void renderQuadList(

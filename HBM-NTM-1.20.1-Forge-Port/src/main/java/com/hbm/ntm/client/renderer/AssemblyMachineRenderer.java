@@ -2,18 +2,21 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
-import com.hbm.ntm.client.obj.ObjMachineModels;
-import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMachineBlockEntity> {
+    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(
+            new ResourceLocation("hbm", "models/block/machines/assembly_machine.obj"),
+            new ResourceLocation("hbm", "textures/block/machines/assembly_machine.png"));
+
     public AssemblyMachineRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -26,43 +29,42 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
     public void render(AssemblyMachineBlockEntity assembler, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = assembler.getBlockState();
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, OverlayTexture.NO_OVERLAY);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F + blockstateModelYRotation(state)));
 
-        ObjMachineModels.ASSEMBLY_MACHINE.renderPart("Base", context);
+        MODEL.renderPart("Base", poseStack, buffer, packedLight, packedOverlay);
         if (assembler.shouldRenderFrame()) {
-            ObjMachineModels.ASSEMBLY_MACHINE.renderPart("Frame", context);
+            MODEL.renderPart("Frame", poseStack, buffer, packedLight, packedOverlay);
         }
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees((float) assembler.getRing(partialTick)));
-        ObjMachineModels.ASSEMBLY_MACHINE.renderPart("Ring", context);
-        renderArm(context, poseStack, assembler.getArm(0).getPositions(partialTick), false);
-        renderArm(context, poseStack, assembler.getArm(1).getPositions(partialTick), true);
+        MODEL.renderPart("Ring", poseStack, buffer, packedLight, packedOverlay);
+        renderArm(poseStack, buffer, packedLight, packedOverlay, assembler.getArm(0).getPositions(partialTick), false);
+        renderArm(poseStack, buffer, packedLight, packedOverlay, assembler.getArm(1).getPositions(partialTick), true);
         poseStack.popPose();
 
         poseStack.popPose();
     }
 
-    private static void renderArm(ObjRenderContext context, PoseStack poseStack, double[] arm, boolean mirrored) {
+    private static void renderArm(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, double[] arm, boolean mirrored) {
         double zSign = mirrored ? -1.0D : 1.0D;
         String suffix = mirrored ? "2" : "1";
         double rotationSign = mirrored ? -1.0D : 1.0D;
 
         poseStack.pushPose();
         rotateAround(poseStack, 0.0D, 1.625D, 0.9375D * zSign, rotationSign * arm[0]);
-        ObjMachineModels.ASSEMBLY_MACHINE.renderPart("ArmLower" + suffix, context);
+        MODEL.renderPart("ArmLower" + suffix, poseStack, buffer, packedLight, packedOverlay);
 
         rotateAround(poseStack, 0.0D, 2.375D, 0.9375D * zSign, rotationSign * arm[1]);
-        ObjMachineModels.ASSEMBLY_MACHINE.renderPart("ArmUpper" + suffix, context);
+        MODEL.renderPart("ArmUpper" + suffix, poseStack, buffer, packedLight, packedOverlay);
 
         rotateAround(poseStack, 0.0D, 2.375D, 0.4375D * zSign, rotationSign * arm[2]);
-        ObjMachineModels.ASSEMBLY_MACHINE.renderPart("Head" + suffix, context);
+        MODEL.renderPart("Head" + suffix, poseStack, buffer, packedLight, packedOverlay);
         poseStack.translate(0.0D, arm[3], 0.0D);
-        ObjMachineModels.ASSEMBLY_MACHINE.renderPart("Spike" + suffix, context);
+        MODEL.renderPart("Spike" + suffix, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 

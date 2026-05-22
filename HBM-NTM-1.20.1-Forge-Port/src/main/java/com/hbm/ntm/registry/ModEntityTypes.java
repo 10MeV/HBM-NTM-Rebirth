@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
 import net.minecraft.world.entity.EntityType;
@@ -29,6 +30,15 @@ public final class ModEntityTypes {
                     .clientTrackingRange(64)
                     .updateInterval(3)
                     .build("entity_c_package"));
+
+    public static final RegistryObject<EntityType<NukeExplosionMk5Entity>> NUKE_EXPLOSION_MK5 =
+            ENTITY_TYPES.register("entity_nuke_explosion_mk5", () -> EntityType.Builder
+                    .<NukeExplosionMk5Entity>of(NukeExplosionMk5Entity::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F)
+                    .clientTrackingRange(256)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("entity_nuke_explosion_mk5"));
 
     public static void register(IEventBus modBus) {
         ENTITY_TYPES.register(modBus);

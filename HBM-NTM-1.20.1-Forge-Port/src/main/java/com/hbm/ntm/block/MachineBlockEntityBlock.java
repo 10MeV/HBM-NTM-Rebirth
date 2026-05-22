@@ -19,6 +19,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("deprecation")
 public class MachineBlockEntityBlock extends HorizontalMachineBlock implements EntityBlock {
     public MachineBlockEntityBlock(Properties properties, boolean fullOcclusion) {
         super(properties, fullOcclusion);
@@ -65,3 +66,4 @@ public class MachineBlockEntityBlock extends HorizontalMachineBlock implements E
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 }
+

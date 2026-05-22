@@ -9,7 +9,9 @@ import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.blockentity.LegacyDemonLampBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLanternBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
+import com.hbm.ntm.blockentity.LegacyVisibleMachineBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatteryBlockEntity;
+import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
@@ -47,6 +49,10 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("machine_battery", () ->
                     BlockEntityType.Builder.of(MachineBatteryBlockEntity::new, ModBlocks.MACHINE_BATTERY.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<MachineBatterySocketBlockEntity>> MACHINE_BATTERY_SOCKET =
+            BLOCK_ENTITIES.register("machine_battery_socket", () ->
+                    BlockEntityType.Builder.of(MachineBatterySocketBlockEntity::new, ModBlocks.MACHINE_BATTERY_SOCKET.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<MultiblockDummyBlockEntity>> MULTIBLOCK_DUMMY =
             BLOCK_ENTITIES.register("multiblock_dummy", () ->
                     BlockEntityType.Builder.of(MultiblockDummyBlockEntity::new, ModBlocks.DUMMY_BLOCK.get()).build(null));
@@ -54,6 +60,16 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<AssemblyMachineBlockEntity>> ASSEMBLY_MACHINE =
             BLOCK_ENTITIES.register("assembly_machine", () ->
                     BlockEntityType.Builder.of(AssemblyMachineBlockEntity::new, ModBlocks.MACHINE_ASSEMBLY_MACHINE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LegacyVisibleMachineBlockEntity>> LEGACY_VISIBLE_MACHINE =
+            BLOCK_ENTITIES.register("legacy_visible_machine", () ->
+                    BlockEntityType.Builder.of(
+                            LegacyVisibleMachineBlockEntity::new,
+                            ModBlocks.MACHINE_CHEMICAL_PLANT.get(),
+                            ModBlocks.MACHINE_CHEMICAL_FACTORY.get(),
+                            ModBlocks.MACHINE_REFINERY.get(),
+                            ModBlocks.MACHINE_FLUIDTANK.get(),
+                            ModBlocks.MACHINE_PUMPJACK.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<TrinketBlockEntity>> TRINKET =
             BLOCK_ENTITIES.register("trinket", () ->

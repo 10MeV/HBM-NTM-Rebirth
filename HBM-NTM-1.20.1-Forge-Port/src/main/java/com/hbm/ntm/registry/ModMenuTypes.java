@@ -3,6 +3,7 @@ package com.hbm.ntm.registry;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.BasicMachineMenu;
 import com.hbm.ntm.menu.MachineBatteryMenu;
+import com.hbm.ntm.menu.MachineBatterySocketMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -19,6 +20,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<MachineBatteryMenu>> MACHINE_BATTERY =
             MENUS.register("machine_battery", () -> IForgeMenuType.create(MachineBatteryMenu::new));
+
+    public static final RegistryObject<MenuType<MachineBatterySocketMenu>> MACHINE_BATTERY_SOCKET =
+            MENUS.register("machine_battery_socket", () -> IForgeMenuType.create(MachineBatterySocketMenu::new));
 
     public static void register(IEventBus modBus) {
         MENUS.register(modBus);

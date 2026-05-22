@@ -8,6 +8,10 @@ public interface HbmTileSyncable {
         return new CompoundTag();
     }
 
+    default boolean canSendClientSyncTo(ServerPlayer player) {
+        return true;
+    }
+
     default void handleClientSyncTag(CompoundTag tag) {
     }
 

@@ -68,11 +68,21 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "battery_front_alt",
                 "battery_side_alt",
                 "battery_side_alt");
+        existingModelWithItem(ModBlocks.MACHINE_BATTERY_SOCKET, "machines/battery_socket_socket");
         existingModelBlockOnly(ModBlocks.MACHINE_ASSEMBLY_MACHINE, "machine_assembly_machine");
+        existingModelWithItem(ModBlocks.MACHINE_CHEMICAL_PLANT, "machines/chemical_plant");
+        existingModelWithItem(ModBlocks.MACHINE_CHEMICAL_FACTORY, "machines/chemical_factory");
+        existingModelWithItem(ModBlocks.MACHINE_REFINERY, "machines/refinery");
+        existingModelWithItem(ModBlocks.MACHINE_FLUIDTANK, "machines/fluidtank");
+        existingModelWithItem(ModBlocks.MACHINE_PUMPJACK, "machines/pumpjack");
         simpleCubeWithItem(ModBlocks.GAS_RADON, "gas_radon");
         simpleCubeWithItem(ModBlocks.GAS_RADON_DENSE, "gas_radon_dense");
         simpleCubeWithItem(ModBlocks.GAS_RADON_TOMB, "gas_radon_tomb");
         simpleCubeWithItem(ModBlocks.GAS_MELTDOWN, "gas_meltdown");
+        simpleCubeWithItem(ModBlocks.GAS_MONOXIDE, "gas_monoxide");
+        simpleCubeWithItem(ModBlocks.GAS_ASBESTOS, "gas_asbestos");
+        simpleCubeWithItem(ModBlocks.GAS_COAL, "gas_coal");
+        simpleCubeWithItem(ModBlocks.CHLORINE_GAS, "chlorine_gas");
         radAbsorberWithItem();
         simpleCubeWithItem(ModBlocks.DUMMY_BLOCK, "block_steel");
         sellafieldWithItem();

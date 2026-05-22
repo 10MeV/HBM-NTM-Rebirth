@@ -1,0 +1,64 @@
+package com.hbm.ntm.energy;
+
+import com.hbm.ntm.registry.ModItems;
+import net.minecraft.world.item.Item;
+import net.minecraftforge.registries.RegistryObject;
+
+import java.util.List;
+import java.util.Optional;
+
+public final class HbmLegacyBatteryMaps {
+    private static final List<RegistryObject<Item>> BATTERY_PACK_BY_META = List.of(
+            ModItems.BATTERY_REDSTONE,
+            ModItems.BATTERY_LEAD,
+            ModItems.BATTERY_LITHIUM,
+            ModItems.BATTERY_SODIUM,
+            ModItems.BATTERY_SCHRABIDIUM,
+            ModItems.BATTERY_QUANTUM,
+            ModItems.CAPACITOR_COPPER,
+            ModItems.CAPACITOR_GOLD,
+            ModItems.CAPACITOR_NIOBIUM,
+            ModItems.CAPACITOR_TANTALUM,
+            ModItems.CAPACITOR_BISMUTH,
+            ModItems.CAPACITOR_SPARK
+    );
+
+    private static final List<RegistryObject<Item>> SELF_CHARGING_BY_META = List.of(
+            ModItems.BATTERY_SC_EMPTY,
+            ModItems.BATTERY_SC_WASTE,
+            ModItems.BATTERY_SC_RA226,
+            ModItems.BATTERY_SC_TC99,
+            ModItems.BATTERY_SC_CO60,
+            ModItems.BATTERY_SC_PU238,
+            ModItems.BATTERY_SC_PO210,
+            ModItems.BATTERY_SC_AU198,
+            ModItems.BATTERY_SC_PB209,
+            ModItems.BATTERY_SC_AM241
+    );
+
+    public static Optional<RegistryObject<Item>> batteryPackByLegacyMeta(int legacyMeta) {
+        return byMeta(BATTERY_PACK_BY_META, legacyMeta);
+    }
+
+    public static Optional<RegistryObject<Item>> selfChargingByLegacyMeta(int legacyMeta) {
+        return byMeta(SELF_CHARGING_BY_META, legacyMeta);
+    }
+
+    public static List<RegistryObject<Item>> batteryPacksByLegacyMeta() {
+        return BATTERY_PACK_BY_META;
+    }
+
+    public static List<RegistryObject<Item>> selfChargingByLegacyMeta() {
+        return SELF_CHARGING_BY_META;
+    }
+
+    private static Optional<RegistryObject<Item>> byMeta(List<RegistryObject<Item>> items, int legacyMeta) {
+        if (legacyMeta < 0 || legacyMeta >= items.size()) {
+            return Optional.empty();
+        }
+        return Optional.of(items.get(legacyMeta));
+    }
+
+    private HbmLegacyBatteryMaps() {
+    }
+}

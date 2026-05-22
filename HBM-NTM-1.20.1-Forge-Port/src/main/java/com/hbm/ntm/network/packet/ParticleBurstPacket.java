@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 
 public record ParticleBurstPacket(BlockPos pos, BlockState state) {
     public static ParticleBurstPacket decode(FriendlyByteBuf buffer) {
-        return new ParticleBurstPacket(buffer.readBlockPos(), Block.BLOCK_STATE_REGISTRY.byId(buffer.readVarInt()));
+        return new ParticleBurstPacket(buffer.readBlockPos(), Block.stateById(buffer.readVarInt()));
     }
 
     public static void encode(ParticleBurstPacket packet, FriendlyByteBuf buffer) {

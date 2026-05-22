@@ -76,6 +76,184 @@
 - `ModMessages.register()` 继续保持 append-only：新增 `TileSyncPacket` 与 `TileControlPacket` 追加在旧有 packet 之后，避免改变已存在 packet discriminator。
 - `MachineBatteryBlockEntity` 已接入 `HbmTileSyncable` 的 client-control 分支，`MachineBatteryScreen` 已改用 `TileControlPacket`。旧 `MachineBatteryButtonPacket` 保留注册并委派给同一控制方法，以免破坏已有协议顺序或临时调用点。
 
+## 2026-05-22 继续实施记录
+
+- 新增 C2S `TileSyncRequestPacket`，对齐参考版 `S2CSyncFailMessage` 的“客户端发现 tile sync 接收端缺失后请求服务端重发”思路。
+- `TileSyncPacket` 客户端处理现在在本地方块实体不是 `HbmTileSyncable` 时，限频发送 `TileSyncRequestPacket`：
+  - 每个 `BlockPos` 20 tick 内最多请求一次。
+  - 避免服务端立即重发导致客户端重复请求形成高频循环。
+- `TileSyncRequestPacket` 服务端安全边界：
+  - 必须存在 sender。
+  - 玩家必须在 32 格半径内。
+  - 目标 chunk 必须已加载。
+  - 目标方块实体必须实现 `HbmTileSyncable`。
+  - 目标实体自己的 `canSendClientSyncTo` 必须允许。
+  - handler 始终 enqueue 到服务端主线程。
+- `ModMessages.register()` 继续保持 append-only：`TileSyncRequestPacket` 追加在既有 packet 之后。
+- `ModMessages` 新增 `syncTileToPlayer(...)`，用于服务端对单个玩家重发 tile sync。
+- `HbmTileSyncable` 新增 `canSendClientSyncTo(ServerPlayer)`，供后续锁定机器、权限机器或跨维度/多方块端口限制同步响应。
+- `HbmEnergyBlockEntity` 默认实现 `HbmTileSyncable` 的能量同步：
+  - `getClientSyncTag` 写入 `Energy`。
+  - `handleClientSyncTag` 在客户端读取 `Energy`。
+  - 后续能量机器可直接调用 `ModMessages.syncTileToTracking(...)` 或通过 `TileSyncRequestPacket` 响应单玩家重发。
+
+## 2026-05-22 实体同步推进记录
+
+- 新增通用实体同步契约：`src/main/java/com/hbm/ntm/network/HbmEntitySyncable.java`。
+  - `getClientSyncTag`/`handleClientSyncTag` 对应参考版 `S2CEntitySyncPacket` 的最小安全形态。
+  - `canSendClientSyncTo(ServerPlayer)` 预留给后续导弹、炮塔、枪械或权限实体限制单玩家同步响应。
+- 新增 S2C `EntitySyncPacket`：
+  - 包体为 `entityId + CompoundTag`。
+  - 客户端按当前 level 的 entity id 查找实体。
+  - 只有实体实现 `HbmEntitySyncable` 时才应用同步数据。
+- `ModMessages.register()` 继续保持 append-only：`EntitySyncPacket` 追加在既有 packet 之后。
+- `ModMessages` 新增：
+  - `syncEntityToTracking(...)`
+  - `syncEntityToPlayer(...)`
+- `MovingPackageEntity` 已接入 `HbmEntitySyncable`：
+  - 包裹 contents 使用同一套 NBT 读写方法保存和同步。
+  - `setItemStacks` 标记需要同步。
+  - 服务端 tick 中对 tracking clients 发送一次实体同步，避免客户端只有实体壳但缺包裹内容。
+  - 后续包裹 renderer 或 GUI 若需要读取 contents，可直接依赖同步后的客户端数据。
+
+## 2026-05-22 按键包推进记录
+
+- 对齐旧版 `KeybindPacket` / `HbmKeybindsServer` 的网络层契约：
+  - 客户端向服务端发送 `keybind + pressed`。
+  - 服务端主线程更新玩家按键状态。
+  - 若玩家主手物品实现按键接收接口，则分发按键事件给该物品。
+- 新增 `HbmKeybind` 枚举，保留旧 `EnumKeybind` 顺序：
+  - `JETPACK`、`TOGGLE_JETPACK`、`TOGGLE_MAGNET`、`TOGGLE_HEAD`、`DASH`、`TRAIN`
+  - `CRANE_UP`、`CRANE_DOWN`、`CRANE_LEFT`、`CRANE_RIGHT`、`CRANE_LOAD`
+  - `ABILITY_CYCLE`、`ABILITY_ALT`、`TOOL_ALT`、`TOOL_CTRL`
+  - `GUN_PRIMARY`、`GUN_SECONDARY`、`GUN_TERTIARY`、`RELOAD`
+- 新增 `HbmKeybindReceiver`，作为现代 `IKeybindReceiver` 等价接口。
+- 新增 `HbmServerKeybinds`：
+  - 按玩家 UUID 保存当前按下的 `EnumSet<HbmKeybind>`。
+  - 提供 `isPressed`、`setPressed`、`handle`、`clear`。
+  - `handle` 会更新状态并分发给主手 `HbmKeybindReceiver`。
+- 新增 C2S `KeybindPacket`：
+  - 包体为 key ordinal + pressed boolean。
+  - 无效 ordinal 会被丢弃并记录 warn。
+  - handler 始终 enqueue 到服务端主线程。
+- `ModMessages.register()` 继续保持 append-only：`KeybindPacket` 追加在既有 packet 之后。
+- `CommonForgeEvents` 在玩家 clone/logout 时清理 `HbmServerKeybinds`，避免断线或死亡复制后残留“按住键”状态。
+- 当前限制：
+  - 本批只迁移网络与服务端分发层，尚未注册现代 `KeyMapping` 或实现客户端输入扫描。
+  - 旧 `HbmPlayerProps#setKeyPressed` 的喷气背包/磁铁/HUD/train GUI 副作用属于玩家扩展属性、装备和载具库，后续按对应库迁移。
+
+## 2026-05-22 客户端按键与常用 S2C 包推进记录
+
+- 新增客户端按键扫描入口：`src/main/java/com/hbm/ntm/client/HbmClientKeybinds.java`。
+  - 在 `RegisterKeyMappingsEvent` 注册现代 `KeyMapping`。
+  - 在客户端 tick 末尾比较本地按键状态，只在 pressed 状态变化时发送 `KeybindPacket`。
+  - 离开世界时发送释放状态并清理本地缓存，降低服务端残留“按住键”的风险。
+- `ClientForgeEvents` 已接入：
+  - `LegacyHbmAnimations.tick()`
+  - `HbmClientKeybinds.tick()`
+  - `ClientMuzzleFlashEffects.tick()`
+- 新增 S2C `ClientInformPacket`：
+  - 包体为 `Component + id + millis`。
+  - 客户端由 `ClientInformMessages` 维护按 id 覆盖的短时 HUD 提示，对应旧 `PlayerInformPacket` 的基础能力。
+- 新增 S2C `ItemAnimationPacket`：
+  - 包体为 hotbar slot、parallel rail、item translation key、动画 JSON `ResourceLocation`、动画名、是否保持最后一帧。
+  - 客户端由 `ClientItemAnimationHandler` 缓存加载 `LegacyBusAnimationLoader` 结果，并调用 `LegacyHbmAnimations.start(...)`。
+  - 该包是旧 `HbmAnimationPacket` 的现代化底层承载；具体枪械/工具的 legacy enum 到动画名映射后续随对应物品迁移。
+- 新增 S2C `MuzzleFlashPacket`：
+  - 包体为 `entityId`。
+  - 客户端由 `ClientMuzzleFlashEffects` 记录最近闪光时间，供后续枪械 renderer 查询。
+- `ModMessages.register()` 继续保持 append-only：`ClientInformPacket`、`ItemAnimationPacket`、`MuzzleFlashPacket` 追加在 `KeybindPacket` 之后。
+- `ModMessages` 新增便捷发送方法：
+  - `informPlayer(...)`
+  - `sendItemAnimation(...)`
+  - `sendMuzzleFlash(...)`
+- 当前限制：
+  - 按键默认值按旧版常用键位映射到 GLFW，部分按键与原版操作存在冲突，后续在具体功能迁移时再按玩法校准。
+  - `ClientInformMessages` 先提供轻量 HUD 文本层，未复刻旧 proxy tooltip 的全部 fancy 样式。
+  - 枪械 firing、reload、muzzle flash 渲染本体尚未迁移，本批只提供网络与客户端缓存底座。
+
+## 2026-05-22 物品控制、持久同步与爆炸击退推进记录
+
+- 新增 C2S `ItemControlPacket`，对应旧 `NBTItemControlPacket`：
+  - 包体为 `InteractionHand + CompoundTag`。
+  - 服务端只派发给当前手持物品实现的 `HbmItemControlReceiver`。
+  - handler 始终 enqueue 到服务端主线程。
+  - `HbmItemControlReceiver` 提供 `canReceiveItemControl(...)` 与 `handleItemControl(...)`，供后续工具、枪械、遥控器、配置器复用。
+- 新增 S2C `HeldItemNbtPacket`，对应旧 `HeldItemNBTPacket`：
+  - 包体为 `InteractionHand + item registry id + damageValue + CompoundTag`。
+  - 客户端仅在当前手持物品 id 与 damage 匹配时替换 NBT，避免误写玩家切换后的物品。
+  - `ModMessages.syncHeldItemNbt(...)` 提供服务端便捷同步方法。
+- 新增 C2S `LegacyButtonPacket`，作为旧 `AuxButtonPacket` 的安全兼容底座：
+  - 包体为 `BlockPos + value + id`。
+  - 服务端安全边界沿用 `TileControlPacket`：必须存在 sender、16 格内、chunk 已加载。
+  - 只派发给实现 `HbmLegacyButtonReceiver` 的方块实体。
+  - 旧 `AuxButtonPacket` 中直接写死的具体机器行为不在包层复刻，后续机器迁移时在各自 BlockEntity 中实现接口。
+- 新增 S2C `PermaSyncPacket`，对应旧 `PermaSyncPacket` / `PermaSyncHandler`：
+  - 现代包体暂用 `CompoundTag`，避免提前固化尚未迁移的 TOM impact、death potion、pollution 数组布局。
+  - 客户端状态放入 `ClientPermaSyncData`，提供 tag copy 与常用 boolean/float 读取方法。
+  - 后续污染、全局灾害、玩家扩展属性迁移时再定义具体 key。
+- 新增 S2C `ExplosionKnockbackPacket`，对应旧 `ExplosionKnockbackPacket`：
+  - 包体为三轴 float motion。
+  - 客户端对本地玩家 `deltaMovement` 叠加该向量。
+  - `ModMessages.sendExplosionKnockback(...)` 提供服务端便捷发送方法。
+- `ModMessages.register()` 继续保持 append-only：上述五个包全部追加在 `MuzzleFlashPacket` 之后。
+- 当前限制：
+  - `HeldItemNbtPacket` 只同步 NBT，不创建或替换整个 ItemStack。
+  - `PermaSyncPacket` 尚未接入固定 tick 发送器；发送频率需要等污染/全局灾害等数据源迁移后统一调度。
+  - `LegacyButtonPacket` 不实现旧鸭子彩蛋和具体机器 switch，避免在库层引入未迁移实体/机器依赖。
+
+## 2026-05-22 坐标动作、客户端数据与 tile 事件推进记录
+
+- 新增 C2S `CoordinateActionPacket`，覆盖旧 `ItemDesignatorPacket`、`SatCoordPacket`、`SatLaserPacket` 的共同网络形态：
+  - 包体为 `InteractionHand + BlockPos + action + value + frequency + CompoundTag`。
+  - 服务端只派发给当前手持物品实现的 `HbmCoordinateActionReceiver`。
+  - `HbmCoordinateActionReceiver` 提供 `canReceiveCoordinateAction(...)` 与 `handleCoordinateAction(...)`。
+  - 具体 designator 坐标加减、卫星频率校验、laser click/coord action 属于物品/卫星库，后续在对应 item 或 satellite system 中实现。
+- 新增 S2C `ClientBinaryDataPacket`，覆盖旧 `SerializableRecipePacket` 的通用二进制同步能力：
+  - 包体为 `channel + name + payload + clearChannel`。
+  - 客户端数据暂存于 `ClientBinaryData`，按 channel/name 查询。
+  - 单包 payload 上限为 1 MiB，后续若有大型配方文件再补分片协议。
+- 新增 S2C `ClientTileEventPacket`，作为旧 `TEVaultPacket`、`TESirenPacket`、`TEFFPacket` 等专用 tile packet 的现代底座：
+  - 包体为 `BlockPos + eventType + CompoundTag`。
+  - 客户端只派发给实现 `HbmClientTileEventReceiver` 的 BlockEntity。
+  - 具体 blast door 动画、siren loop sound、force field HUD/renderer 字段不在包层写死。
+- 新增 S2C `ClientPanelDataPacket`，覆盖旧 `SatPanelPacket` 的“服务端向客户端面板发送 typed NBT”的通用形态：
+  - 包体为 `panelType + legacyType + CompoundTag`。
+  - 客户端数据暂存于 `ClientPanelData`。
+  - 卫星面板对象重建留给卫星/GUI 迁移时接入。
+- 新增 S2C `PlayerPropertiesPacket`，作为旧 `ExtPropPacket` 的现代 NBT 版本：
+  - 包体为 `dataType + CompoundTag`。
+  - 客户端数据暂存于 `ClientPlayerSyncData`。
+  - 旧 `HbmLivingProps`/`HbmPlayerProps` 的二进制字段布局不在网络库层固化，后续按玩家扩展属性库迁移。
+- `ModMessages.register()` 继续保持 append-only：上述五个包全部追加在 `ExplosionKnockbackPacket` 之后。
+- 当前限制：
+  - `ClientBinaryData`、`ClientPanelData`、`ClientPlayerSyncData` 目前只是缓存层，不主动驱动 GUI 重载。
+  - `ClientTileEventPacket` 不做类型 switch，所有旧专用 tile 包行为需由目标 BlockEntity 实现接口。
+  - `CoordinateActionPacket` 不内置卫星保存数据访问，避免网络库依赖未迁移 satellite saved data。
+
+## 2026-05-22 菜单动作、biome 缓存与压缩爆炸效果推进记录
+
+- 新增 C2S `MenuActionPacket`，覆盖旧 `ItemBobmazonPacket` 与 `AnvilCraftPacket` 的共同 GUI/菜单动作形态：
+  - 包体为 `action + value + CompoundTag`。
+  - 服务端只派发给当前 `containerMenu` 实现的 `HbmMenuActionReceiver`。
+  - handler 始终 enqueue 到服务端主线程。
+  - Bobmazon offer 校验、caps 扣费、anvil recipe/tier 校验属于具体菜单迁移范围，不在网络库层硬编码。
+- 新增 S2C `ClientBiomeSyncPacket`，对应旧 `BiomeSyncPacket`：
+  - 支持单 cell：`blockX/blockZ + biome`。
+  - 支持整 chunk：256 个 short biome id。
+  - 客户端暂存于 `ClientBiomeSyncData`。
+  - 1.20.1 biome registry/Holder 写回 chunk 的稳定路径需要等世界/污染/辐射地形效果迁移时统一实现，本批不直接改客户端 chunk biome container。
+- 新增 S2C `CompressedExplosionEffectPacket`，对应旧 `ExplosionVanillaNewTechnologyCompressedAffectedBlockPositionDataForClientEffectsAndParticleHandlingPacket`：
+  - 包体保留旧思想：中心点 float xyz、size、受影响方块相对中心的 byte xyz。
+  - 编码时过滤超出 byte 相对范围的方块，并限制最多 32768 个位置。
+  - 客户端由 `ClientExplosionEffects.standard(...)` 播放本地爆炸音效、核心爆炸粒子，并抽样最多 64 个 affected block 生成轻量烟尘。
+  - 后续爆炸效果库成熟后可替换为更接近旧 `ExplosionEffectStandard.performClient(...)` 的完整表现。
+- `ModMessages.register()` 继续保持 append-only：上述三个包全部追加在 `PlayerPropertiesPacket` 之后。
+- 当前限制：
+  - `ClientBiomeSyncPacket` 只缓存，不写入真实 biome 数据。
+  - `CompressedExplosionEffectPacket` 只复刻网络压缩格式和轻量客户端表现，不执行完整旧版 block crack/debris 效果。
+  - 旧 `TEMissileMultipartPacket` 的具体导弹结构仍应随导弹/发射台库迁移，通过现有 `ClientTileEventPacket` 或后续导弹结构专用接口接入。
+
 ## 验证清单
 
 - 客户端/服务端协议版本一致。
@@ -83,3 +261,10 @@
 - GUI/NBT 控制包只允许合法玩家和合法方块实体。
 - 配方同步和爆炸效果包在客户端正确解码。
 - 2026-05-21：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-22：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-22 实体同步批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-22 按键包批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-22 客户端按键与常用 S2C 包批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-22 物品控制、持久同步与爆炸击退批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-22 坐标动作、客户端数据与 tile 事件批次：第一次 Gradle 依赖解析遇到 MCPRepo SSL handshake 失败；重跑 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-22 菜单动作、biome 缓存与压缩爆炸效果批次：第一次 Gradle 增量编译遇到 `build/classes` 中间产物缺失；重跑 `.\gradlew.bat compileJava processResources --no-daemon` 通过。

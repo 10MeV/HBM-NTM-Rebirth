@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
+@SuppressWarnings("deprecation")
 public class LegacyGasRadonBlock extends LegacyGasBlock {
     private final Kind kind;
 
@@ -71,7 +72,7 @@ public class LegacyGasRadonBlock extends LegacyGasBlock {
                 BlockState below = level.getBlockState(pos.below());
                 if (below.is(Blocks.GRASS_BLOCK)) {
                     level.setBlock(pos.below(), random.nextInt(5) == 0
-                            ? Blocks.DIRT.defaultBlockState()
+                            ? Blocks.COARSE_DIRT.defaultBlockState()
                             : ModBlocks.WASTE_EARTH.get().defaultBlockState(), Block.UPDATE_ALL);
                 } else if ((below.is(Blocks.GRASS)
                         || below.is(Blocks.FERN)
@@ -121,3 +122,4 @@ public class LegacyGasRadonBlock extends LegacyGasBlock {
         TOMB
     }
 }
+

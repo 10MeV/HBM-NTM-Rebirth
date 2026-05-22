@@ -1,6 +1,8 @@
 package com.hbm.ntm.client.obj;
 
+import com.hbm.ntm.HbmNtm;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
 
 public final class ObjMachineModels {
@@ -167,6 +169,77 @@ public final class ObjMachineModels {
     public static final ObjModelPart FENSU = directPart("fensu")
             .withOrigin(ObjPartTransform.BLOCK_CENTER);
 
+    public static final LegacyWavefrontModel REFINERY = legacyModel("refinery");
+    public static final LegacyWavefrontModel REFINERY_EXPLODED = legacyModel("refinery_exploded", "refinery");
+    public static final LegacyWavefrontModel FLUIDTANK = legacyModel("fluidtank");
+    public static final LegacyWavefrontModel FLUIDTANK_EXPLODED = legacyModel("fluidtank_exploded", "fluidtank");
+    public static final LegacyWavefrontModel VACUUM_DISTILL = legacyModel("vacuum_distill");
+    public static final LegacyWavefrontModel CATALYTIC_CRACKER = legacyModel("catalytic_cracker");
+    public static final LegacyWavefrontModel CATALYTIC_REFORMER = legacyModel("catalytic_reformer");
+    public static final LegacyWavefrontModel HYDROTREATER = legacyModel("hydrotreater");
+    public static final LegacyWavefrontModel LIQUEFACTOR = legacyModel("liquefactor");
+    public static final LegacyWavefrontModel SOLIDIFIER = legacyModel("solidifier");
+    public static final LegacyWavefrontModel COMPRESSOR = legacyModel("compressor");
+    public static final LegacyWavefrontModel COKER = legacyModel("coker");
+    public static final LegacyWavefrontModel PYROOVEN = legacyModel("pyrooven");
+    public static final LegacyWavefrontModel BAT9000 = legacyModel("bat9000");
+    public static final LegacyWavefrontModel BIGASSTANK = legacyModel("bigasstank");
+    public static final LegacyWavefrontModel ORBUS = legacyModel("orbus");
+    public static final LegacyWavefrontModel TURBOFAN = legacyModel("turbofan");
+    public static final LegacyWavefrontModel TURBINEGAS = legacyModel("turbinegas");
+    public static final LegacyWavefrontModel STEAM_ENGINE = legacyModel("steam_engine");
+    public static final LegacyWavefrontModel INDUSTRIAL_TURBINE = legacyModel("industrial_turbine");
+    public static final LegacyWavefrontModel CHUNGUS = legacyModel("chungus");
+    public static final LegacyWavefrontModel TOWER_SMALL = legacyModel("tower_small");
+    public static final LegacyWavefrontModel TOWER_LARGE = legacyModel("tower_large");
+    public static final LegacyWavefrontModel CONDENSER = legacyModel("condenser");
+    public static final LegacyWavefrontModel WOOD_BURNER = legacyModel("wood_burner");
+    public static final LegacyWavefrontModel COMBUSTION_ENGINE = legacyModel("combustion_engine");
+    public static final LegacyWavefrontModel PUMP = legacyModel("pump");
+    public static final LegacyWavefrontModel AMMO_PRESS = legacyModel("ammo_press");
+    public static final LegacyWavefrontModel ANNIHILATOR = legacyModel("annihilator");
+    public static final LegacyWavefrontModel ASSEMBLY_FACTORY = legacyModel("assembly_factory");
+    public static final LegacyWavefrontModel CHEMICAL_PLANT = legacyModel("chemical_plant");
+    public static final LegacyWavefrontModel CHEMICAL_FACTORY = legacyModel("chemical_factory");
+    public static final LegacyWavefrontModel PUREX = legacyModel("purex");
+    public static final LegacyWavefrontModel MIXER = legacyModel("mixer");
+    public static final LegacyWavefrontModel ARC_WELDER = legacyModel("arc_welder");
+    public static final LegacyWavefrontModel SOLDERING_STATION = legacyModel("soldering_station");
+    public static final LegacyWavefrontModel ARC_FURNACE = legacyModel("arc_furnace");
+    public static final LegacyWavefrontModel CENTRIFUGE = legacyModel("centrifuge");
+    public static final LegacyWavefrontModel GASCENT = legacyModel("gascent");
+    public static final LegacyWavefrontModel SILEX = legacyModel("silex");
+    public static final LegacyWavefrontModel FEL = legacyModel("fel");
+    public static final LegacyWavefrontModel AUTOSAW = legacyModel("autosaw");
+    public static final LegacyWavefrontModel MINING_DRILL = legacyModel("mining_drill");
+    public static final LegacyWavefrontModel ORE_SLOPPER = legacyModel("ore_slopper");
+    public static final LegacyWavefrontModel MINING_LASER = legacyModel("mining_laser");
+    public static final LegacyWavefrontModel ACIDIZER = legacyModel("acidizer");
+    public static final LegacyWavefrontModel CYCLOTRON = legacyModel("cyclotron");
+    public static final LegacyWavefrontModel EXPOSURE_CHAMBER = legacyModel("exposure_chamber");
+    public static final LegacyWavefrontModel DEUTERIUM_TOWER = legacyModel("machine_deuterium_tower");
+    public static final LegacyWavefrontModel RADGEN = legacyModel("radgen");
+    public static final LegacyWavefrontModel RADIOLYSIS = legacyModel("radiolysis");
+    public static final LegacyWavefrontModel ROTARY_FURNACE = legacyModel("rotary_furnace");
+    public static final LegacyWavefrontModel ELECTROLYSER = legacyModel("electrolyser");
+    public static final LegacyWavefrontModel CHARGER = legacyModel("charger");
+    public static final LegacyWavefrontModel REFUELER = legacyModel("refueler");
+    public static final LegacyWavefrontModel SOLAR_BOILER = legacyModel("solar_boiler");
+    public static final LegacyWavefrontModel DFC_EMITTER = legacyModel("core_emitter");
+    public static final LegacyWavefrontModel DFC_RECEIVER = legacyModel("core_receiver");
+    public static final LegacyWavefrontModel DFC_INJECTOR = legacyModel("core_injector");
+
+    public static final ResourceLocation FLUIDTANK_INNER_TEXTURE = machineTexture("fluidtank_inner");
+    public static final ResourceLocation TURBOFAN_BACK_TEXTURE = machineTexture("turbofan_back");
+    public static final ResourceLocation TURBOFAN_AFTERBURNER_TEXTURE = machineTexture("turbofan_afterburner");
+    public static final ResourceLocation TURBOFAN_BLADES_TEXTURE = machineTexture("turbofan_blades");
+    public static final ResourceLocation PUMP_ELECTRIC_TEXTURE = machineTexture("pump_electric");
+    public static final ResourceLocation ANNIHILATOR_BELT_TEXTURE = machineTexture("annihilator_belt");
+    public static final ResourceLocation ASSEMBLY_FACTORY_SPARKS_TEXTURE = machineTexture("assembly_factory_sparks");
+    public static final ResourceLocation CHEMICAL_PLANT_FLUID_TEXTURE = machineTexture("chemical_plant_fluid");
+    public static final ResourceLocation MINING_LASER_PIVOT_TEXTURE = machineTexture("mining_laser_pivot");
+    public static final ResourceLocation MINING_LASER_LASER_TEXTURE = machineTexture("mining_laser_laser");
+
     public static ObjModelPart part(String name) {
         return part(name, RenderType.cutout());
     }
@@ -181,6 +254,20 @@ public final class ObjMachineModels {
 
     public static ObjModelLibrary.ObjModelPartBuilder directPart(String name) {
         return partBuilder(name, RenderType.cutout()).direct();
+    }
+
+    public static LegacyWavefrontModel legacyModel(String name) {
+        return legacyModel(name, name);
+    }
+
+    public static LegacyWavefrontModel legacyModel(String modelName, String textureName) {
+        return new LegacyWavefrontModel(
+                new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/" + modelName + ".obj"),
+                machineTexture(textureName));
+    }
+
+    public static ResourceLocation machineTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/" + name + ".png");
     }
 
     private ObjMachineModels() {

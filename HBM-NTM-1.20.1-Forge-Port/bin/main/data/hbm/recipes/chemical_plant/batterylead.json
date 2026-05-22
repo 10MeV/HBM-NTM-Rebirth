@@ -1,0 +1,33 @@
+{
+  "type": "hbm:chemical_plant",
+  "duration": 100,
+  "input_fluids": [
+    {
+      "amount": 8000,
+      "fluid": "hbm:sulfuric_acid"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm:plate_steel"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm:ingot_lead"
+      }
+    }
+  ],
+  "internal_name": "chem.batterylead",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:battery_lead"
+    }
+  ],
+  "pools": [],
+  "power": 100
+}

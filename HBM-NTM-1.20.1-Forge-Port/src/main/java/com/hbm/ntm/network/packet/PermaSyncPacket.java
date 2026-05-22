@@ -1,0 +1,29 @@
+package com.hbm.ntm.network.packet;
+
+import com.hbm.ntm.client.ClientPermaSyncData;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.function.Supplier;
+
+public record PermaSyncPacket(CompoundTag data) {
+    public PermaSyncPacket {
+        data = data == null ? new CompoundTag() : data.copy();
+    }
+
+    public static PermaSyncPacket decode(FriendlyByteBuf buffer) {
+        CompoundTag tag = buffer.readNbt();
+        return new PermaSyncPacket(tag == null ? new CompoundTag() : tag);
+    }
+
+    public static void encode(PermaSyncPacket packet, FriendlyByteBuf buffer) {
+        buffer.writeNbt(packet.data);
+    }
+
+    public static void handle(PermaSyncPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
+        NetworkEvent.Context context = contextSupplier.get();
+        context.enqueueWork(() -> ClientPermaSyncData.update(packet.data));
+        context.setPacketHandled(true);
+    }
+}

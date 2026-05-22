@@ -3,6 +3,8 @@ package com.hbm.ntm.registry;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
+import com.hbm.ntm.energy.HbmCreativeBatteryItem;
+import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.DigammaDiagnosticItem;
@@ -100,6 +102,8 @@ public final class ModItems {
             () -> new ConveyorWandItem(new Item.Properties().stacksTo(64)));
     public static final RegistryObject<Item> BATTERY_POTATO = registerLegacy("battery_potato",
             () -> new HbmBatteryItem(new Item.Properties(), 1_000L, 0L, 100L));
+    public static final RegistryObject<Item> BATTERY_CREATIVE = registerLegacy("battery_creative",
+            () -> new HbmCreativeBatteryItem(new Item.Properties()));
     public static final RegistryObject<Item> BATTERY_REDSTONE = batteryPack("battery_redstone", 0, 100L, false);
     public static final RegistryObject<Item> BATTERY_LEAD = batteryPack("battery_lead", 1, 1_000L, false);
     public static final RegistryObject<Item> BATTERY_LITHIUM = batteryPack("battery_lithium", 2, 10_000L, false);
@@ -112,6 +116,16 @@ public final class ModItems {
     public static final RegistryObject<Item> CAPACITOR_TANTALUM = batteryPack("capacitor_tantalum", 9, 500_000L, true);
     public static final RegistryObject<Item> CAPACITOR_BISMUTH = batteryPack("capacitor_bismuth", 10, 2_500_000L, true);
     public static final RegistryObject<Item> CAPACITOR_SPARK = batteryPack("capacitor_spark", 11, 10_000_000L, true);
+    public static final RegistryObject<Item> BATTERY_SC_EMPTY = selfChargingBattery("battery_sc.empty", 0, 0L);
+    public static final RegistryObject<Item> BATTERY_SC_WASTE = selfChargingBattery("battery_sc.waste", 1, 150L);
+    public static final RegistryObject<Item> BATTERY_SC_RA226 = selfChargingBattery("battery_sc.ra226", 2, 200L);
+    public static final RegistryObject<Item> BATTERY_SC_TC99 = selfChargingBattery("battery_sc.tc99", 3, 500L);
+    public static final RegistryObject<Item> BATTERY_SC_CO60 = selfChargingBattery("battery_sc.co60", 4, 750L);
+    public static final RegistryObject<Item> BATTERY_SC_PU238 = selfChargingBattery("battery_sc.pu238", 5, 1_000L);
+    public static final RegistryObject<Item> BATTERY_SC_PO210 = selfChargingBattery("battery_sc.po210", 6, 1_250L);
+    public static final RegistryObject<Item> BATTERY_SC_AU198 = selfChargingBattery("battery_sc.au198", 7, 1_500L);
+    public static final RegistryObject<Item> BATTERY_SC_PB209 = selfChargingBattery("battery_sc.pb209", 8, 2_000L);
+    public static final RegistryObject<Item> BATTERY_SC_AM241 = selfChargingBattery("battery_sc.am241", 9, 2_500L);
 
     public static final List<RegistryObject<Item>> BATTERY_PACK_ITEMS = List.of(
             BATTERY_REDSTONE,
@@ -126,6 +140,19 @@ public final class ModItems {
             CAPACITOR_TANTALUM,
             CAPACITOR_BISMUTH,
             CAPACITOR_SPARK
+    );
+
+    public static final List<RegistryObject<Item>> BATTERY_SC_ITEMS = List.of(
+            BATTERY_SC_EMPTY,
+            BATTERY_SC_WASTE,
+            BATTERY_SC_RA226,
+            BATTERY_SC_TC99,
+            BATTERY_SC_CO60,
+            BATTERY_SC_PU238,
+            BATTERY_SC_PO210,
+            BATTERY_SC_AU198,
+            BATTERY_SC_PB209,
+            BATTERY_SC_AM241
     );
 
     public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = simpleParts(
@@ -347,7 +374,12 @@ public final class ModItems {
             "solinium_core"
     );
 
-    public static final List<RegistryObject<Item>> CONTROL_TAB_ITEMS = Stream.concat(simpleParts(
+    private static final List<RegistryObject<Item>> CONTROL_BATTERY_ITEMS = Stream.concat(Stream.of(
+            BATTERY_POTATO,
+            BATTERY_CREATIVE
+    ), Stream.concat(BATTERY_PACK_ITEMS.stream(), BATTERY_SC_ITEMS.stream())).toList();
+
+    public static final List<RegistryObject<Item>> CONTROL_TAB_ITEMS = Stream.concat(Stream.concat(simpleParts(
             "pile_rod_uranium",
             "pile_rod_pu239",
             "pile_rod_plutonium",
@@ -373,7 +405,7 @@ public final class ModItems {
             "pellet_rtg_polonium",
             "pellet_rtg_americium",
             "pellet_rtg_gold"
-    ).stream()).toList();
+    ).stream()), CONTROL_BATTERY_ITEMS.stream()).toList();
 
     public static final List<RegistryObject<Item>> PARTS_TAB_ITEMS = Stream.concat(Stream.of(
             URANIUM_INGOT,
@@ -423,7 +455,7 @@ public final class ModItems {
             IRON_CIRCUIT_STAMP
     ), EXTRA_PARTS_TAB_ITEMS.stream()).toList();
 
-    public static final List<RegistryObject<Item>> CONSUMABLE_TAB_ITEMS = Stream.concat(Stream.of(
+    public static final List<RegistryObject<Item>> CONSUMABLE_TAB_ITEMS = Stream.of(
             GEIGER_COUNTER,
             DIGAMMA_DIAGNOSTIC,
             RADAWAY,
@@ -433,9 +465,8 @@ public final class ModItems {
             CONTAINMENT_BOX,
             PLASTIC_BAG,
             TOOLBOX,
-            CONVEYOR_WAND,
-            BATTERY_POTATO
-    ), BATTERY_PACK_ITEMS.stream()).toList();
+            CONVEYOR_WAND
+    ).toList();
 
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
@@ -489,6 +520,10 @@ public final class ModItems {
                 name,
                 legacyMeta,
                 false));
+    }
+
+    private static RegistryObject<Item> selfChargingBattery(String name, int legacyMeta, long power) {
+        return registerLegacy(name, () -> new HbmSelfChargingBatteryItem(new Item.Properties(), power, name, legacyMeta));
     }
 
     private static RegistryObject<Item> simpleItem(String name) {

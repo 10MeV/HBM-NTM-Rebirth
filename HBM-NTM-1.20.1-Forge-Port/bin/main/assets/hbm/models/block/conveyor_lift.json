@@ -1,6 +1,7 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "block/cube_all",
   "textures": {
-    "all": "hbm:block/conveyor"
+    "all": "hbm:block/conveyor",
+    "particle": "hbm:block/conveyor"
   }
 }

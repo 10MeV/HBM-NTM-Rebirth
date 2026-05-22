@@ -2,6 +2,8 @@ package com.hbm.ntm.entity.item;
 
 import com.hbm.ntm.api.conveyor.IConveyorPackage;
 import com.hbm.ntm.api.conveyor.IEnterableBlock;
+import com.hbm.ntm.network.HbmEntitySyncable;
+import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,8 +19,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-public class MovingPackageEntity extends MovingConveyorObjectEntity implements IConveyorPackage {
+public class MovingPackageEntity extends MovingConveyorObjectEntity implements IConveyorPackage, HbmEntitySyncable {
+    private static final String TAG_CONTENTS = "contents";
+    private static final String TAG_COUNT = "count";
+    private static final String TAG_SLOT = "slot";
+
     private ItemStack[] contents = new ItemStack[0];
+    private boolean needsSync = true;
 
     public MovingPackageEntity(EntityType<? extends MovingPackageEntity> type, Level level) {
         super(type, level);
@@ -31,6 +38,7 @@ public class MovingPackageEntity extends MovingConveyorObjectEntity implements I
 
     public void setItemStacks(ItemStack[] stacks) {
         contents = copyStacks(stacks);
+        needsSync = true;
     }
 
     @Override
@@ -49,6 +57,15 @@ public class MovingPackageEntity extends MovingConveyorObjectEntity implements I
             discard();
         }
         return InteractionResult.sidedSuccess(level().isClientSide);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!level().isClientSide && !isRemoved() && needsSync) {
+            ModMessages.syncEntityToTracking(this, this);
+            needsSync = false;
+        }
     }
 
     @Override
@@ -91,11 +108,33 @@ public class MovingPackageEntity extends MovingConveyorObjectEntity implements I
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        contents = new ItemStack[tag.getInt("count")];
-        ListTag list = tag.getList("contents", 10);
+        readContents(tag);
+        needsSync = true;
+    }
+
+    @Override
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        writeContents(tag);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        writeContents(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        readContents(tag);
+    }
+
+    private void readContents(CompoundTag tag) {
+        contents = new ItemStack[tag.getInt(TAG_COUNT)];
+        ListTag list = tag.getList(TAG_CONTENTS, 10);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag stackTag = list.getCompound(i);
-            int slot = stackTag.getByte("slot") & 255;
+            int slot = stackTag.getByte(TAG_SLOT) & 255;
             if (slot >= 0 && slot < contents.length) {
                 contents[slot] = ItemStack.of(stackTag);
             }
@@ -103,18 +142,17 @@ public class MovingPackageEntity extends MovingConveyorObjectEntity implements I
         contents = copyStacks(contents);
     }
 
-    @Override
-    protected void addAdditionalSaveData(CompoundTag tag) {
+    private void writeContents(CompoundTag tag) {
         ListTag list = new ListTag();
         for (int i = 0; i < contents.length; i++) {
             if (!contents[i].isEmpty()) {
                 CompoundTag stackTag = contents[i].save(new CompoundTag());
-                stackTag.putByte("slot", (byte) i);
+                stackTag.putByte(TAG_SLOT, (byte) i);
                 list.add(stackTag);
             }
         }
-        tag.put("contents", list);
-        tag.putInt("count", contents.length);
+        tag.put(TAG_CONTENTS, list);
+        tag.putInt(TAG_COUNT, contents.length);
     }
 
     private void dropContents(Vec3 spawnPos, Vec3 motion) {

@@ -26,6 +26,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("deprecation")
 public class TrinketBlock extends BaseEntityBlock {
     private static final VoxelShape BOBBLEHEAD_SHAPE = box(5.5D, 0.0D, 5.5D, 10.5D, 10.0D, 10.5D);
     private static final VoxelShape SNOWGLOBE_SHAPE = box(4.0D, 0.0D, 4.0D, 12.0D, 5.0D, 12.0D);
@@ -128,3 +129,4 @@ public class TrinketBlock extends BaseEntityBlock {
         }
     }
 }
+

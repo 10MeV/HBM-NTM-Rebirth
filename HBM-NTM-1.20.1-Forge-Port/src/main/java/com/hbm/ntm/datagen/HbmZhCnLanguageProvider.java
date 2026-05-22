@@ -85,6 +85,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.conveyor_wand.not_enough", "\u8f93\u9001\u5e26\u6570\u91cf\u4e0d\u8db3");
         add("item.hbm.conveyor_wand.obstructed", "\u8f93\u9001\u5e26\u8def\u7ebf\u88ab\u963b\u6321");
         add("item.hbm.battery_potato", "\u9a6c\u94c3\u85af\u7535\u6c60");
+        add("item.hbm.battery_creative", "\u65e0\u9650\u7535\u6c60");
         add("item.hbm.battery_redstone", "\u7ea2\u77f3\u7535\u6c60");
         add("item.hbm.battery_lead", "\u94c5\u9178\u7535\u6c60");
         add("item.hbm.battery_lithium", "\u9502\u79bb\u5b50\u7535\u6c60");
@@ -97,6 +98,16 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.capacitor_tantalum", "\u94bd\u7535\u5bb9");
         add("item.hbm.capacitor_bismuth", "\u94cb\u7535\u5bb9");
         add("item.hbm.capacitor_spark", "Spark\u7535\u5bb9");
+        add("item.hbm.battery_sc.empty", "\u7a7a\u81ea\u5145\u7535\u7535\u6c60");
+        add("item.hbm.battery_sc.waste", "\u6838\u5e9f\u6599\u81ea\u5145\u7535\u7535\u6c60");
+        add("item.hbm.battery_sc.ra226", "\u956d-226\u81ea\u5145\u7535\u7535\u6c60");
+        add("item.hbm.battery_sc.tc99", "\u951d-99\u81ea\u5145\u7535\u7535\u6c60");
+        add("item.hbm.battery_sc.co60", "\u94b4-60\u81ea\u5145\u7535\u7535\u6c60");
+        add("item.hbm.battery_sc.pu238", "\u94b8-238\u81ea\u5145\u7535\u7535\u6c60");
+        add("item.hbm.battery_sc.po210", "\u948b-210\u81ea\u5145\u7535\u7535\u6c60");
+        add("item.hbm.battery_sc.au198", "\u91d1-198\u81ea\u5145\u7535\u7535\u6c60");
+        add("item.hbm.battery_sc.pb209", "\u94c5-209\u81ea\u5145\u7535\u7535\u6c60");
+        add("item.hbm.battery_sc.am241", "\u9545-241\u81ea\u5145\u7535\u7535\u6c60");
         add("desc.item.battery.charge", "\u50a8\u80fd: %s / %sHE");
         add("desc.item.battery.chargePerc", "\u50a8\u80fd: %s%%");
         add("desc.item.battery.chargeRate", "\u5145\u7535\u6548\u7387: %sHE/\u523b");
@@ -145,9 +156,16 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.conveyor_lift", "\u5782\u76f4\u8f93\u9001\u5e26");
         add("block.hbm.conveyor_chute", "\u8f93\u9001\u5e26\u6ed1\u69fd");
         add("block.hbm.machine_battery", "\u84c4\u7535\u6c60\uff08\u9057\u7559\uff09");
+        add("block.hbm.machine_battery_socket", "\u7535\u6c60\u63d2\u5ea7");
         add("block.hbm.machine_assembly_machine", "\u88c5\u914d\u673a");
+        add("block.hbm.machine_chemical_plant", "\u5316\u5de5\u5382");
+        add("block.hbm.machine_chemical_factory", "\u5316\u5b66\u5de5\u5382");
+        add("block.hbm.machine_refinery", "\u77f3\u6cb9\u7cbe\u70bc\u5382");
+        add("block.hbm.machine_fluidtank", "\u6d41\u4f53\u50a8\u7f50");
+        add("block.hbm.machine_pumpjack", "\u77f3\u6cb9\u94bb\u673a");
         add("container.machineAssemblyMachine", "\u88c5\u914d\u673a");
         add("container.hbm.battery", "\u84c4\u7535\u6c60");
+        add("container.batterySocket", "\u7535\u6c60\u63d2\u5ea7");
         add("container.hbm.battery.red_low", "\u4f4e\u7ea2\u77f3\u6a21\u5f0f");
         add("container.hbm.battery.red_high", "\u9ad8\u7ea2\u77f3\u6a21\u5f0f");
         add("container.hbm.battery.mode.input", "\u8f93\u5165");
@@ -160,6 +178,11 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("container.hbm.battery.priority.high", "\u9ad8");
         add("container.hbm.battery.priority.recommended", "\u63a8\u8350\uff1a\u4f4e");
         add("block.hbm.gas_meltdown", "\u7194\u6bc1\u6c14\u4f53");
+        add("block.hbm.gas_monoxide", "\u4e00\u6c27\u5316\u78b3");
+        add("block.hbm.gas_asbestos", "\u77f3\u68c9\u7c89\u5c18");
+        add("block.hbm.gas_coal", "\u7164\u5c18");
+        add("block.hbm.chlorine_gas", "\u6c2f\u6c14");
+        add("death.attack.monoxide", "%1$s\u6b7b\u4e8e\u4e00\u6c27\u5316\u78b3\u4e2d\u6bd2");
         add("block.hbm.rad_absorber", "\u8f90\u5c04\u5438\u6536\u5668");
         add("block.hbm.rad_absorber.1", "\u7ea2\u8272\u8f90\u5c04\u5438\u6536\u5668");
         add("block.hbm.rad_absorber.2", "\u7eff\u8272\u8f90\u5c04\u5438\u6536\u5668");
@@ -189,8 +212,42 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.yellow_barrel", "\u6838\u5e9f\u6599\u6876");
         add("block.hbm.vitrified_barrel", "\u73bb\u7483\u5316\u6838\u5e9f\u6599\u6876");
         ModItems.EXTRA_PARTS_TAB_ITEMS.forEach(item -> addItem(item, fallbackTitle(item.getId().getPath())));
-        ModItems.CONTROL_TAB_ITEMS.forEach(item -> addItem(item, fallbackTitle(item.getId().getPath())));
+        ModItems.CONTROL_TAB_ITEMS.forEach(item -> {
+            if (!hasExplicitControlName(item.getId().getPath())) {
+                addItem(item, fallbackTitle(item.getId().getPath()));
+            }
+        });
         ModItems.NUKE_TAB_ITEMS.forEach(item -> addItem(item, fallbackTitle(item.getId().getPath())));
+    }
+
+    private static boolean hasExplicitControlName(String id) {
+        return switch (id) {
+            case "battery_potato",
+                 "battery_creative",
+                 "battery_redstone",
+                 "battery_lead",
+                 "battery_lithium",
+                 "battery_sodium",
+                 "battery_schrabidium",
+                 "battery_quantum",
+                 "capacitor_copper",
+                 "capacitor_gold",
+                 "capacitor_niobium",
+                 "capacitor_tantalum",
+                 "capacitor_bismuth",
+                 "capacitor_spark",
+                 "battery_sc.empty",
+                 "battery_sc.waste",
+                 "battery_sc.ra226",
+                 "battery_sc.tc99",
+                 "battery_sc.co60",
+                 "battery_sc.pu238",
+                 "battery_sc.po210",
+                 "battery_sc.au198",
+                 "battery_sc.pb209",
+                 "battery_sc.am241" -> true;
+            default -> false;
+        };
     }
 
     private static String fallbackTitle(String id) {

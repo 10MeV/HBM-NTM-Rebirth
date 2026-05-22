@@ -16,6 +16,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+@SuppressWarnings("deprecation")
 public abstract class LegacyGasBlock extends Block {
     public LegacyGasBlock(Properties properties) {
         super(properties);
@@ -114,3 +115,4 @@ public abstract class LegacyGasBlock extends Block {
         return true;
     }
 }
+

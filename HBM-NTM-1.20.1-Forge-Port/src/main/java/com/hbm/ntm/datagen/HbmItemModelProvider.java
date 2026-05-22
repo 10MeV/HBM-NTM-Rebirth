@@ -2,13 +2,14 @@ package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
-import net.minecraft.core.registries.BuiltInRegistries;
+import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public class HbmItemModelProvider extends ItemModelProvider {
     public HbmItemModelProvider(PackOutput output, String modId, ExistingFileHelper existingFileHelper) {
@@ -26,8 +27,20 @@ public class HbmItemModelProvider extends ItemModelProvider {
 
     private void itemModel(Item item) {
         if (item instanceof HbmBatteryPackItem) {
-            getBuilder(BuiltInRegistries.ITEM.getKey(item).getPath())
+            getBuilder(ForgeRegistries.ITEMS.getKey(item).getPath())
                     .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
+            return;
+        }
+        if (item == ModItems.BATTERY_CREATIVE.get()) {
+            getBuilder(ForgeRegistries.ITEMS.getKey(item).getPath())
+                    .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
+                    .texture("layer0", modLoc("item/battery_creative_new"));
+            return;
+        }
+        if (item instanceof HbmSelfChargingBatteryItem battery) {
+            getBuilder(ForgeRegistries.ITEMS.getKey(item).getPath())
+                    .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
+                    .texture("layer0", modLoc("item/" + battery.getLegacyTexturePath()));
             return;
         }
         basicItem(item);

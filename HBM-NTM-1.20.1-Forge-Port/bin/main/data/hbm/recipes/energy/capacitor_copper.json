@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": {
+      "item": "hbm:plate_steel"
+    },
+    "P": {
+      "item": "hbm:plate_polymer"
+    },
+    "R": {
+      "item": "hbm:block_copper"
+    }
+  },
+  "pattern": [
+    "IRI",
+    "PRP",
+    "IRI"
+  ],
+  "result": {
+    "item": "hbm:capacitor_copper"
+  },
+  "show_notification": true
+}

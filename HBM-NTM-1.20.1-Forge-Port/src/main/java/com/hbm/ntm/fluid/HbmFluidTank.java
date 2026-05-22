@@ -1,7 +1,9 @@
 package com.hbm.ntm.fluid;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 
 public class HbmFluidTank {
     public static final int HIGHEST_VALID_PRESSURE = 5;
@@ -69,12 +71,34 @@ public class HbmFluidTank {
         return drained;
     }
 
+    public HbmFluidReleaseEffects.ReleaseReport release(Level level, BlockPos pos, int amount, FluidReleaseType releaseType, boolean simulate) {
+        if (amount <= 0 || isEmpty()) {
+            return HbmFluidReleaseEffects.previewRelease(type, 0, releaseType);
+        }
+        int released = Math.min(amount, fill);
+        HbmFluidReleaseEffects.ReleaseReport report = simulate
+                ? HbmFluidReleaseEffects.previewRelease(type, released, releaseType)
+                : HbmFluidReleaseEffects.applyRelease(level, pos, this, released, releaseType);
+        if (!simulate) {
+            fill -= released;
+        }
+        return report;
+    }
+
     public boolean isEmpty() {
         return type == HbmFluids.NONE || fill <= 0;
     }
 
     public int getSpace() {
         return Math.max(0, maxFill - fill);
+    }
+
+    public int getSpaceFor(FluidType type) {
+        FluidType incoming = type == null ? HbmFluids.NONE : type;
+        if (incoming == HbmFluids.NONE || (this.type != HbmFluids.NONE && this.type != incoming)) {
+            return 0;
+        }
+        return getSpace();
     }
 
     public HbmFluidStack getFluidStack() {

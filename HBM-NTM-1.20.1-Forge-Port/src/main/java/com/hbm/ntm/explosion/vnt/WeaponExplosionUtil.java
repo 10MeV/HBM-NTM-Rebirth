@@ -1,6 +1,7 @@
 package com.hbm.ntm.explosion.vnt;
 
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorBulkie;
+import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorGlyphidDig;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorStandard;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorWater;
 import com.hbm.ntm.explosion.vnt.standard.BlockMutatorFire;
@@ -59,6 +60,16 @@ public final class WeaponExplosionUtil {
             double maximumResistance, int resolution) {
         return new ExplosionVnt(level, x, y, z, size, source, false, Explosion.BlockInteraction.DESTROY_WITH_DECAY)
                 .setBlockAllocator(new BlockAllocatorBulkie(maximumResistance, resolution))
+                .setBlockProcessor(new BlockProcessorStandard())
+                .setEntityProcessor(new EntityProcessorStandard().allowSelfDamage())
+                .setPlayerProcessor(new PlayerProcessorStandard())
+                .setEffects(new ExplosionEffectStandard());
+    }
+
+    public static ExplosionVnt glyphidDig(Level level, double x, double y, double z, float size, @Nullable Entity source,
+            double maximumResistance, int resolution) {
+        return new ExplosionVnt(level, x, y, z, size, source, false, Explosion.BlockInteraction.DESTROY_WITH_DECAY)
+                .setBlockAllocator(new BlockAllocatorGlyphidDig(maximumResistance, resolution))
                 .setBlockProcessor(new BlockProcessorStandard())
                 .setEntityProcessor(new EntityProcessorStandard().allowSelfDamage())
                 .setPlayerProcessor(new PlayerProcessorStandard())

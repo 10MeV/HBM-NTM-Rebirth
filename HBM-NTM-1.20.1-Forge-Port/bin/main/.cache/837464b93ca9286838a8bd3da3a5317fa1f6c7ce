@@ -1,9 +1,20 @@
-// 1.20.1	2026-05-21T22:41:50.8390125	Item Models: hbm
+// 1.20.1	2026-05-22T16:31:48.7984104	Item Models: hbm
+e0dd9cc86e850dae1c5e94ee6463e6ef9b707966 assets/hbm/models/item/battery_creative.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lead.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lithium.json
 3027bba73e1fe9ca9001e4fa3f97e95548b9075b assets/hbm/models/item/battery_potato.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_quantum.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_redstone.json
+d697f65f720cd036c95a7486a2ad76efffd46b99 assets/hbm/models/item/battery_sc.am241.json
+bda8d6698d99d4fc9be9c804d9849fa3fad2c6c7 assets/hbm/models/item/battery_sc.au198.json
+5369bcf3dfd4150878a59e47306f89b83ac40dd2 assets/hbm/models/item/battery_sc.co60.json
+2a0acbc21526ecbd4e528a20017459fee5954c47 assets/hbm/models/item/battery_sc.empty.json
+7ef7c42121eebfa07ef36ff935e9632846905916 assets/hbm/models/item/battery_sc.pb209.json
+8ceb7d05bc05f5ac75b4de523c05be0b71135754 assets/hbm/models/item/battery_sc.po210.json
+501f7d72bc7545e86c89218ca2849e97d60b6bf1 assets/hbm/models/item/battery_sc.pu238.json
+20f6568e5bc000e97d2f21e8c55c2e245bbe573e assets/hbm/models/item/battery_sc.ra226.json
+313b020e1f939dc2a14484c668922bc0849bfcf0 assets/hbm/models/item/battery_sc.tc99.json
+c81d7b4b564bf9f62e651a098ef2f7b339e88328 assets/hbm/models/item/battery_sc.waste.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_schrabidium.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_sodium.json
 cdfd214c5c6c55600df213ad00db1fc2e2aa9249 assets/hbm/models/item/billet_actinium.json
@@ -71,6 +82,7 @@ be26c4ec348f32bb5e8b64b72a4a76f1c401ebb8 assets/hbm/models/item/coil_advanced_al
 15f426a8e2e369c95caa2dc61fc033b6aac79515 assets/hbm/models/item/coil_gold.json
 37ca295ab29bd6dd475090289f34bd9cc9bf6200 assets/hbm/models/item/coil_tungsten.json
 f847a8e9ce15b4a6a7cff9d4d523f2b63692497d assets/hbm/models/item/containment_box.json
+2b9298f2042aea77f5cab3df58d5ab831150009f assets/hbm/models/item/conveyor_wand.json
 4bcf2670bdbe4b4d2a20de547a3de579edb36ae6 assets/hbm/models/item/crystal_lithium.json
 8354b19b4f34d765a228f962154fcf83057d24d3 assets/hbm/models/item/crystal_phosphorus.json
 08c446d4a95c466f96f13624686b957022575a52 assets/hbm/models/item/crystal_plutonium.json

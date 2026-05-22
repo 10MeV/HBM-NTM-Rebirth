@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "hbm:battery_sc.empty"
+    },
+    {
+      "item": "hbm:billet_am241"
+    },
+    {
+      "item": "hbm:billet_am241"
+    }
+  ],
+  "result": {
+    "item": "hbm:battery_sc.am241"
+  }
+}

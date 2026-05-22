@@ -25,6 +25,18 @@ public final class HbmBatteryTransfer {
         return !stack.isEmpty() && creativeBatteryPredicate.test(stack);
     }
 
+    public static boolean isEmptyBattery(ItemStack stack) {
+        return !stack.isEmpty()
+                && stack.getItem() instanceof HbmBatteryItem battery
+                && battery.getCharge(stack) <= 0L;
+    }
+
+    public static boolean isFullBattery(ItemStack stack) {
+        return !stack.isEmpty()
+                && stack.getItem() instanceof HbmBatteryItem battery
+                && battery.getCharge(stack) >= battery.getMaxCharge(stack);
+    }
+
     public static long chargeItemFromStorage(ItemStack stack, HbmEnergyProvider provider, long maxPower) {
         if (provider == null) {
             return 0L;

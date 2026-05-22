@@ -58,6 +58,10 @@ public final class ModCommands {
                                                 .executes(context -> addChunkRadiation(context.getSource(), FloatArgumentType.getFloat(context, "amount")))))
                                 .then(Commands.literal("clear")
                                         .executes(context -> clearChunkRadiation(context.getSource()))))
+                        .then(Commands.literal("fog")
+                                .executes(context -> spawnRadiationFog(context.getSource(), BlockPos.containing(context.getSource().getPosition())))
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .executes(context -> spawnRadiationFog(context.getSource(), BlockPosArgument.getLoadedBlockPos(context, "pos")))))
                         .then(Commands.literal("player")
                                 .then(Commands.literal("get")
                                         .executes(context -> getPlayerRadiation(context.getSource(), context.getSource().getPlayerOrException()))
@@ -241,6 +245,12 @@ public final class ModCommands {
     private static int clearChunkRadiation(CommandSourceStack source) {
         ChunkRadiationManager.clear(source.getLevel());
         source.sendSuccess(() -> Component.literal("Cleared radiation data!"), true);
+        return 1;
+    }
+
+    private static int spawnRadiationFog(CommandSourceStack source, BlockPos pos) {
+        ChunkRadiationManager.spawnDebugRadiationFog(source.getLevel(), pos);
+        source.sendSuccess(() -> Component.literal("Spawned radiation fog at " + pos.toShortString()), false);
         return 1;
     }
 

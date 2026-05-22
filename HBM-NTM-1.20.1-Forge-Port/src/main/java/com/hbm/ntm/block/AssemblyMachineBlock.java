@@ -1,18 +1,16 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
-import com.hbm.ntm.multiblock.MultiblockCoreBlock;
 import com.hbm.ntm.multiblock.MultiblockExtents;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
+import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -25,45 +23,56 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
 import org.jetbrains.annotations.Nullable;
 
-public class AssemblyMachineBlock extends HorizontalMachineBlock implements EntityBlock, MultiblockCoreBlock {
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+@SuppressWarnings("deprecation")
+public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements EntityBlock {
     /**
      * Legacy MachineAssemblyMachine dimensions are XR ordered as {U,D,N,S,W,E} = {2,0,1,1,1,1}.
      * The shared helper stores axis extents as {+X,-X,+Y,-Y,+Z,-Z}.
      */
-    public static final MultiblockExtents EXTENTS = MultiblockExtents.ofLegacy(new int[] { 1, 1, 2, 0, 1, 1 });
+    private static final int[] LEGACY_XR_DIMENSIONS = new int[] { 2, 0, 1, 1, 1, 1 };
+    public static final MultiblockExtents EXTENTS = MultiblockExtents.ofLegacyXr(LEGACY_XR_DIMENSIONS, Direction.SOUTH);
+    private static final int LEGACY_OFFSET = 1;
     private static final VoxelShape SHAPE = Shapes.box(-1.5D, 0.0D, -1.5D, 2.5D, 2.0D, 2.5D);
-    private static final ThreadLocal<Boolean> RELOCATING = ThreadLocal.withInitial(() -> false);
 
     public AssemblyMachineBlock(Properties properties) {
-        super(properties, false);
+        super(properties);
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction facing = context.getHorizontalDirection().getOpposite();
-        BlockPos corePos = context.getClickedPos().relative(facing);
-        return canPlaceMultiblock(context.getLevel(), corePos, context.getClickedPos())
-                ? defaultBlockState().setValue(FACING, facing)
-                : null;
+    protected int[] getLegacyXrDimensions() {
+        return LEGACY_XR_DIMENSIONS;
     }
 
     @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (!level.isClientSide) {
-            BlockPos corePos = pos.relative(state.getValue(FACING));
-            if (!corePos.equals(pos)) {
-                RELOCATING.set(true);
-                level.removeBlock(pos, false);
-                RELOCATING.set(false);
-                level.setBlock(corePos, state, Block.UPDATE_ALL);
-                MultiblockHelper.fillUp(level, corePos, EXTENTS);
-            } else {
-                MultiblockHelper.fillUp(level, pos, EXTENTS);
+    protected int getLegacyOffset() {
+        return LEGACY_OFFSET;
+    }
+
+    @Override
+    protected Predicate<BlockPos> proxyOffsets(BlockState state) {
+        return AssemblyMachineBlock::isLegacyProxyOffset;
+    }
+
+    @Override
+    protected void onCoreRemoved(Level level, BlockPos pos, BlockState state) {
+        if (level.getBlockEntity(pos) instanceof AssemblyMachineBlockEntity assembler) {
+            for (ItemStack stack : assembler.getDrops()) {
+                Block.popResource(level, pos, stack);
             }
         }
-        super.setPlacedBy(level, pos, state, placer, stack);
+    }
+
+    private static boolean isLegacyProxyOffset(BlockPos offset) {
+        return offset.getY() == 0
+                && Math.abs(offset.getX()) <= 1
+                && Math.abs(offset.getZ()) <= 1
+                && (offset.getX() != 0 || offset.getZ() != 0);
     }
 
     @Nullable
@@ -101,25 +110,14 @@ public class AssemblyMachineBlock extends HorizontalMachineBlock implements Enti
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!RELOCATING.get() && !state.is(newState.getBlock()) && !level.isClientSide) {
-            MultiblockHelper.removeAll(level, pos, EXTENTS);
-            if (level.getBlockEntity(pos) instanceof AssemblyMachineBlockEntity assembler) {
-                for (ItemStack stack : assembler.getDrops()) {
-                    Block.popResource(level, pos, stack);
-                }
+    public void initializeClient(Consumer<IClientBlockExtensions> consumer) {
+        consumer.accept(new IClientBlockExtensions() {
+            @Override
+            public boolean addDestroyEffects(BlockState state, Level level, BlockPos pos, ParticleEngine manager) {
+                manager.destroy(pos, MultiblockHelper.steelParticleState());
+                return true;
             }
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
-
-    private static boolean canPlaceMultiblock(Level level, BlockPos corePos, BlockPos placedPos) {
-        for (BlockPos offset : EXTENTS.offsets()) {
-            BlockPos target = corePos.offset(offset);
-            if (!target.equals(placedPos) && !level.getBlockState(target).canBeReplaced()) {
-                return false;
-            }
-        }
-        return true;
+        });
     }
 }
+

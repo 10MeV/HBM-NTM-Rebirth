@@ -71,6 +71,10 @@ public final class HbmParticleEffects {
             spawnWeaponExplosion(level, data, x, y, z);
         } else if ("amat".equals(type)) {
             spawnAmat(level, data, x, y, z);
+        } else if ("muke".equals(type) || "tinytot".equals(type)) {
+            spawnMuke(level, data, x, y, z, "tinytot".equals(type));
+        } else if ("chaosCloud".equals(type)) {
+            spawnChaosCloud(level, data, x, y, z);
         }
     }
 
@@ -257,6 +261,37 @@ public final class HbmParticleEffects {
         level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 0.0D, 0.0D, 0.0D);
     }
 
+    private static void spawnMuke(ClientLevel level, CompoundTag data, double x, double y, double z, boolean tiny) {
+        int count = tiny ? 40 : 100;
+        double scale = tiny ? 0.8D : 1.8D;
+        level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 0.0D, 0.0D, 0.0D);
+        spawnRadial(level, data.getBoolean("balefire") ? ParticleTypes.WITCH : ModParticleTypes.EX_SMOKE.get(),
+                x, y + 0.5D, z, count, scale * 0.25D);
+        RandomSource random = level.random;
+        for (int i = 0; i < count; i++) {
+            double height = random.nextDouble() * scale * 5.0D;
+            double width = scale * (0.4D + height * 0.15D);
+            ParticleOptions particle = data.getBoolean("balefire") && i % 3 == 0 ? ParticleTypes.SOUL_FIRE_FLAME : ModParticleTypes.EX_SMOKE.get();
+            level.addParticle(particle,
+                    x + random.nextGaussian() * width,
+                    y + height,
+                    z + random.nextGaussian() * width,
+                    random.nextGaussian() * 0.05D,
+                    0.04D + random.nextDouble() * 0.08D,
+                    random.nextGaussian() * 0.05D);
+        }
+    }
+
+    private static void spawnChaosCloud(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        ParticleOptions particle = switch (data.getString("mode")) {
+            case "green" -> new DustParticleOptions(new Vector3f(0.35F, 0.9F, 0.15F), 1.3F);
+            case "pink" -> new DustParticleOptions(new Vector3f(0.95F, 0.25F, 0.85F), 1.3F);
+            default -> new DustParticleOptions(new Vector3f(1.0F, 0.45F, 0.05F), 1.3F);
+        };
+        level.addParticle(particle, x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"));
+        level.addParticle(ParticleTypes.CLOUD, x, y, z, data.getDouble("mX") * 0.35D, data.getDouble("mY") * 0.35D, data.getDouble("mZ") * 0.35D);
+    }
+
     private static void spawnNamedVanilla(ClientLevel level, String mode, double x, double y, double z, double motionX, double motionY, double motionZ) {
         ParticleOptions particle = switch (mode) {
             case "flame" -> ParticleTypes.FLAME;
@@ -306,7 +341,7 @@ public final class HbmParticleEffects {
     }
 
     private static BlockState blockStateFromLegacyId(int legacyId) {
-        BlockState state = Block.BLOCK_STATE_REGISTRY.byId(legacyId);
+        BlockState state = Block.stateById(legacyId);
         return state == null ? Blocks.STONE.defaultBlockState() : state;
     }
 

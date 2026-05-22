@@ -19,6 +19,12 @@ public final class ModDamageSources {
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "mku"));
     public static final ResourceKey<DamageType> EXPLOSION = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "explosion"));
+    public static final ResourceKey<DamageType> MONOXIDE = ResourceKey.create(
+            Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "monoxide"));
+    public static final ResourceKey<DamageType> PC = ResourceKey.create(
+            Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "pc"));
+    public static final ResourceKey<DamageType> CLOUD = ResourceKey.create(
+            Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "cloud"));
 
     public static DamageSource radiation(Level level) {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(RADIATION));
@@ -30,6 +36,18 @@ public final class ModDamageSources {
 
     public static DamageSource mku(Level level) {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(MKU));
+    }
+
+    public static DamageSource monoxide(Level level) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(MONOXIDE));
+    }
+
+    public static DamageSource pc(Level level) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(PC));
+    }
+
+    public static DamageSource cloud(Level level) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(CLOUD));
     }
 
     public static DamageSource explosion(Level level, @Nullable Entity source) {

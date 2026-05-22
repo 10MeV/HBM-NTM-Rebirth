@@ -30,6 +30,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("deprecation")
 public class LegacyDirectionalShapeBlock extends BaseEntityBlock {
     public static final DirectionProperty FACE = DirectionProperty.create("face");
     public static final BooleanProperty TOP_BOTTOM_ROTATED = BooleanProperty.create("top_bottom_rotated");
@@ -178,3 +179,4 @@ public class LegacyDirectionalShapeBlock extends BaseEntityBlock {
         }
     }
 }
+
