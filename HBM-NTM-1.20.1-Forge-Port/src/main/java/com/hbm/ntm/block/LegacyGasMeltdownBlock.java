@@ -7,6 +7,7 @@ import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -60,7 +61,7 @@ public class LegacyGasMeltdownBlock extends LegacyGasBlock {
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         super.animateTick(state, level, pos, random);
-        level.addParticle(ParticleTypes.MYCELIUM,
+        level.addParticle(ModParticleTypes.TOWN_AURA.get(),
                 pos.getX() + random.nextFloat(),
                 pos.getY() + random.nextFloat(),
                 pos.getZ() + random.nextFloat(),

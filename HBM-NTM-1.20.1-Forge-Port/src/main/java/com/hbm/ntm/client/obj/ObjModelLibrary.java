@@ -82,6 +82,15 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MACHINE_CHEMICAL_FACTORY = ObjMachineModels.CHEMICAL_FACTORY;
     public static final LegacyWavefrontModel MACHINE_PUREX = ObjMachineModels.PUREX;
     public static final LegacyWavefrontModel MACHINE_MIXER = ObjMachineModels.MIXER;
+    public static final LegacyWavefrontModel MACHINE_FIREBOX_LEGACY = ObjMachineModels.FIREBOX_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_HEATING_OVEN_LEGACY = ObjMachineModels.HEATING_OVEN_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_ELECTRIC_HEATER_LEGACY = ObjMachineModels.ELECTRIC_HEATER_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_RTG_LEGACY = ObjMachineModels.RTG_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_RADAR_BODY_LEGACY = ObjMachineModels.RADAR_BODY_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_RADAR_LEGACY = ObjMachineModels.RADAR_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_RADAR_LARGE_LEGACY = ObjMachineModels.RADAR_LARGE_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_RADAR_SCREEN_LEGACY = ObjMachineModels.RADAR_SCREEN_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_SOLAR_MIRROR_LEGACY = ObjMachineModels.SOLAR_MIRROR_LEGACY;
     public static final LegacyWavefrontModel MACHINE_ARC_WELDER = ObjMachineModels.ARC_WELDER;
     public static final LegacyWavefrontModel MACHINE_SOLDERING_STATION = ObjMachineModels.SOLDERING_STATION;
     public static final LegacyWavefrontModel MACHINE_ARC_FURNACE = ObjMachineModels.ARC_FURNACE;
@@ -115,6 +124,10 @@ public final class ObjModelLibrary {
     public static final ObjModelPart NETWORK_PYLON_LARGE = ObjNetworkModels.PYLON_LARGE;
     public static final ObjModelPart NETWORK_PYLON_MEDIUM = ObjNetworkModels.PYLON_MEDIUM;
     public static final ObjModelPart NETWORK_SUBSTATION = ObjNetworkModels.SUBSTATION;
+    public static final LegacyWavefrontModel NETWORK_CONNECTOR_LEGACY = ObjNetworkModels.CONNECTOR_LEGACY;
+    public static final LegacyWavefrontModel NETWORK_CONNECTOR_SUPER_LEGACY = ObjNetworkModels.CONNECTOR_SUPER_LEGACY;
+    public static final LegacyWavefrontModel NETWORK_PYLON_LARGE_LEGACY = ObjNetworkModels.PYLON_LARGE_LEGACY;
+    public static final LegacyWavefrontModel NETWORK_PYLON_MEDIUM_LEGACY = ObjNetworkModels.PYLON_MEDIUM_LEGACY;
 
     public static final ObjModelPart DOOR_SILO_HATCH = ObjDoorModels.SILO_HATCH;
     public static final ObjModelPart DOOR_SILO_HATCH_LARGE = ObjDoorModels.SILO_HATCH_LARGE;
@@ -138,6 +151,12 @@ public final class ObjModelLibrary {
     public static final ObjModelPart SOYUZ_LAUNCHER_TOWER = ObjLaunchModels.SOYUZ_LAUNCHER_TOWER;
     public static final ObjModelPart SOYUZ_LAUNCHER_SUPPORT_BASE = ObjLaunchModels.SOYUZ_LAUNCHER_SUPPORT_BASE;
     public static final ObjModelPart SOYUZ_LAUNCHER_SUPPORT = ObjLaunchModels.SOYUZ_LAUNCHER_SUPPORT;
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_LEGS_LEGACY = ObjLaunchModels.SOYUZ_LAUNCHER_LEGS_LEGACY;
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_TABLE_LEGACY = ObjLaunchModels.SOYUZ_LAUNCHER_TABLE_LEGACY;
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_TOWER_BASE_LEGACY = ObjLaunchModels.SOYUZ_LAUNCHER_TOWER_BASE_LEGACY;
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_TOWER_LEGACY = ObjLaunchModels.SOYUZ_LAUNCHER_TOWER_LEGACY;
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_SUPPORT_BASE_LEGACY = ObjLaunchModels.SOYUZ_LAUNCHER_SUPPORT_BASE_LEGACY;
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_SUPPORT_LEGACY = ObjLaunchModels.SOYUZ_LAUNCHER_SUPPORT_LEGACY;
     public static final LegacyWavefrontModel SOYUZ = ObjSoyuzModels.SOYUZ;
     public static final LegacyWavefrontModel SOYUZ_LANDER = ObjSoyuzModels.LANDER;
     public static final LegacyWavefrontModel SOYUZ_MODULE = ObjSoyuzModels.MODULE;
@@ -159,6 +178,53 @@ public final class ObjModelLibrary {
     public static final ObjModelPart FLOODLIGHT_LIGHTS = ObjLightModels.FLOODLIGHT_LIGHTS;
     public static final ObjModelPart FLOODLIGHT_LAMPS = ObjLightModels.FLOODLIGHT_LAMPS;
     public static final ObjModelPart DEMON_LAMP = ObjLightModels.DEMON_LAMP;
+    public static final LegacyWavefrontModel CAGE_LAMP_LEGACY = ObjLightModels.CAGE_LAMP_LEGACY;
+    public static final LegacyWavefrontModel FLUORESCENT_LAMP_LEGACY = ObjLightModels.FLUORESCENT_LAMP_LEGACY;
+    public static final LegacyWavefrontModel FLOOD_LAMP_LEGACY = ObjLightModels.FLOOD_LAMP_LEGACY;
+
+    public static final LegacyWavefrontModel BLOCK_SCAFFOLD = ObjBlockModels.SCAFFOLD;
+    public static final LegacyWavefrontModel BLOCK_BEAM = ObjBlockModels.BEAM;
+    public static final LegacyWavefrontModel BLOCK_BARREL = ObjBlockModels.BARREL;
+    public static final LegacyWavefrontModel BLOCK_POLE = ObjBlockModels.POLE;
+    public static final LegacyWavefrontModel BLOCK_PIPE = ObjBlockModels.PIPE;
+    public static final LegacyWavefrontModel BLOCK_TAPE_RECORDER = ObjBlockModels.TAPE_RECORDER;
+    public static final LegacyWavefrontModel BLOCK_BARBED_WIRE = ObjBlockModels.BARBED_WIRE;
+    public static final LegacyWavefrontModel BLOCK_SPIKES = ObjBlockModels.SPIKES;
+    public static final LegacyWavefrontModel BLOCK_ANTENNA_TOP = ObjBlockModels.ANTENNA_TOP;
+    public static final LegacyWavefrontModel BLOCK_CONSERVE_CRATE = ObjBlockModels.CONSERVE_CRATE;
+    public static final LegacyWavefrontModel BLOCK_PIPE_RIM = ObjBlockModels.PIPE_RIM;
+    public static final LegacyWavefrontModel BLOCK_PIPE_QUAD = ObjBlockModels.PIPE_QUAD;
+    public static final LegacyWavefrontModel BLOCK_PIPE_FRAME = ObjBlockModels.PIPE_FRAME;
+    public static final LegacyWavefrontModel BLOCK_RTTY = ObjBlockModels.RTTY;
+    public static final LegacyWavefrontModel BLOCK_CRT = ObjBlockModels.CRT;
+    public static final LegacyWavefrontModel BLOCK_TOASTER = ObjBlockModels.TOASTER;
+    public static final LegacyWavefrontModel BLOCK_DECO_COMPUTER = ObjBlockModels.DECO_COMPUTER;
+    public static final LegacyWavefrontModel BLOCK_HEV_BATTERY = ObjBlockModels.HEV_BATTERY;
+    public static final LegacyWavefrontModel BLOCK_SKELETON_HOLDER = ObjBlockModels.SKELETON_HOLDER;
+    public static final LegacyWavefrontModel BLOCK_ANVIL = ObjBlockModels.ANVIL;
+    public static final LegacyWavefrontModel BLOCK_CRYSTAL_POWER = ObjBlockModels.CRYSTAL_POWER;
+    public static final LegacyWavefrontModel BLOCK_CRYSTAL_ENERGY = ObjBlockModels.CRYSTAL_ENERGY;
+    public static final LegacyWavefrontModel BLOCK_CRYSTAL_ROBUST = ObjBlockModels.CRYSTAL_ROBUST;
+    public static final LegacyWavefrontModel BLOCK_CRYSTAL_TRIXITE = ObjBlockModels.CRYSTAL_TRIXITE;
+    public static final LegacyWavefrontModel BLOCK_CABLE_NEO = ObjBlockModels.CABLE_NEO;
+    public static final LegacyWavefrontModel BLOCK_DIFURNACE_EXTENSION = ObjBlockModels.DIFURNACE_EXTENSION;
+    public static final LegacyWavefrontModel BLOCK_SPLITTER = ObjBlockModels.SPLITTER;
+    public static final LegacyWavefrontModel BLOCK_CRANE_BUFFER = ObjBlockModels.CRANE_BUFFER;
+    public static final LegacyWavefrontModel BLOCK_RAIL_NARROW_STRAIGHT = ObjBlockModels.RAIL_NARROW_STRAIGHT;
+    public static final LegacyWavefrontModel BLOCK_RAIL_NARROW_CURVE = ObjBlockModels.RAIL_NARROW_CURVE;
+    public static final LegacyWavefrontModel BLOCK_RAIL_STANDARD_STRAIGHT = ObjBlockModels.RAIL_STANDARD_STRAIGHT;
+    public static final LegacyWavefrontModel BLOCK_RAIL_STANDARD_STRAIGHT_SHORT = ObjBlockModels.RAIL_STANDARD_STRAIGHT_SHORT;
+    public static final LegacyWavefrontModel BLOCK_RAIL_STANDARD_CURVE = ObjBlockModels.RAIL_STANDARD_CURVE;
+    public static final LegacyWavefrontModel BLOCK_RAIL_STANDARD_CURVE_WIDE7 = ObjBlockModels.RAIL_STANDARD_CURVE_WIDE7;
+    public static final LegacyWavefrontModel BLOCK_RAIL_STANDARD_CURVE_WIDE9 = ObjBlockModels.RAIL_STANDARD_CURVE_WIDE9;
+    public static final LegacyWavefrontModel BLOCK_RAIL_STANDARD_RAMP = ObjBlockModels.RAIL_STANDARD_RAMP;
+    public static final LegacyWavefrontModel BLOCK_RAIL_STANDARD_BUFFER = ObjBlockModels.RAIL_STANDARD_BUFFER;
+    public static final LegacyWavefrontModel BLOCK_RAIL_STANDARD_SWITCH = ObjBlockModels.RAIL_STANDARD_SWITCH;
+    public static final LegacyWavefrontModel BLOCK_RAIL_STANDARD_SWITCH_FLIPPED = ObjBlockModels.RAIL_STANDARD_SWITCH_FLIPPED;
+    public static final LegacyWavefrontModel BLOCK_CAPACITOR = ObjBlockModels.CAPACITOR;
+    public static final LegacyWavefrontModel BLOCK_FUNNEL = ObjBlockModels.FUNNEL;
+    public static final LegacyWavefrontModel BLOCK_CHARGE_DYNAMITE = ObjBlockModels.CHARGE_DYNAMITE;
+    public static final LegacyWavefrontModel BLOCK_CHARGE_C4 = ObjBlockModels.CHARGE_C4;
 
     public static final LegacyWavefrontModel TURRET_CHEKHOV = ObjTurretModels.CHEKHOV;
     public static final LegacyWavefrontModel TURRET_JEREMY = ObjTurretModels.JEREMY;
@@ -191,6 +257,10 @@ public final class ObjModelLibrary {
 
     public static final LegacyWavefrontModel PROJECTILES = ObjProjectileModels.PROJECTILES;
     public static final LegacyWavefrontModel PROJECTILE_LEADBURSTER = ObjProjectileModels.LEADBURSTER;
+    public static final LegacyWavefrontModel TRINKET_LANTERN = ObjTrinketModels.LANTERN;
+    public static final LegacyWavefrontModel WEAPON_CHAINSAW = ObjWeaponModels.CHAINSAW;
+    public static final LegacyWavefrontModel ARMOR_PLAYER_FEM = ObjArmorModels.PLAYER_FEM;
+    public static final LegacyWavefrontModel MISSILE_STEALTH = ObjMissilePartModels.MISSILE_STEALTH;
 
     public static final LegacyWavefrontModel PA_SOURCE = ObjParticleAcceleratorModels.SOURCE;
     public static final LegacyWavefrontModel PA_BEAMLINE = ObjParticleAcceleratorModels.BEAMLINE;

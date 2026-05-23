@@ -48,7 +48,7 @@ public class LegacyNuclearWasteBlock extends RadiatingHazardBlock {
                 z = pos.getZ() + 0.5D + direction.getStepZ() * 0.5D + random.nextDouble() * direction.getStepZ();
             }
 
-            level.addParticle(ModParticleTypes.RADIATION_FOG.get(), x, y, z, 0.0D, 0.0D, 0.0D);
+            level.addParticle(ModParticleTypes.TOWN_AURA.get(), x, y, z, 0.0D, 0.0D, 0.0D);
         }
     }
 }

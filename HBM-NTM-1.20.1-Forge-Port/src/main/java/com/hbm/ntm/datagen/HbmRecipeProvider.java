@@ -15,10 +15,12 @@ import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.ItemLike;
@@ -96,6 +98,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
         chemicalBatteryRecipes(consumer);
         assemblyCapacitorRecipes(consumer);
+        fluidContainerRecipes(consumer);
     }
 
     private static void selfChargingConversion(Consumer<FinishedRecipe> consumer, ItemLike result, String recipeName, ItemLike isotopeBillet) {
@@ -183,6 +186,82 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("assembly_machine/capacitorspark"));
     }
 
+    private static void fluidContainerRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.CANISTER_EMPTY.get(), 2)
+                .pattern("S ")
+                .pattern("AA")
+                .pattern("AA")
+                .define('S', ModItems.STEEL_PLATE.get())
+                .define('A', ModItems.ALUMINIUM_PLATE.get())
+                .unlockedBy("has_steel_plate", has(ModItems.STEEL_PLATE.get()))
+                .save(consumer, id("control/canister_empty"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.GAS_EMPTY.get(), 2)
+                .pattern("S ")
+                .pattern("AA")
+                .pattern("AA")
+                .define('S', ModItems.STEEL_PLATE.get())
+                .define('A', ModItems.COPPER_PLATE.get())
+                .unlockedBy("has_copper_plate", has(ModItems.COPPER_PLATE.get()))
+                .save(consumer, id("control/gas_empty"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.FLUID_TANK_LEAD_EMPTY.get(), 4)
+                .pattern("LUL")
+                .pattern("LTL")
+                .pattern("LUL")
+                .define('L', ModItems.LEAD_PLATE.get())
+                .define('U', ModItems.legacyItem("billet_u238").get())
+                .define('T', ModItems.FLUID_TANK_EMPTY.get())
+                .unlockedBy("has_lead_plate", has(ModItems.LEAD_PLATE.get()))
+                .save(consumer, id("control/fluid_tank_lead_empty"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.FLUID_PACK_EMPTY.get())
+                .pattern("TI ")
+                .pattern("ITI")
+                .pattern(" TI")
+                .define('T', ModItems.TITANIUM_PLATE.get())
+                .define('I', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_titanium_plate", has(ModItems.TITANIUM_PLATE.get()))
+                .save(consumer, id("control/fluid_pack_empty"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.DISPERSER_CANISTER_EMPTY.get(), 4)
+                .pattern(" P ")
+                .pattern("PGP")
+                .pattern(" P ")
+                .define('P', forgeTag("ingots/any_hardplastic"))
+                .define('G', block("glass_boron"))
+                .unlockedBy("has_hardplastic", has(forgeTag("ingots/any_hardplastic")))
+                .save(consumer, id("control/disperser_canister_empty"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, ModItems.CANISTER_NAPALM.get())
+                .requires(ModItems.CANISTER_FULL.get())
+                .requires(Items.SLIME_BALL)
+                .unlockedBy("has_canister_full", has(ModItems.CANISTER_FULL.get()))
+                .save(consumer, id("blast_furnace/canister_napalm"));
+
+        GenericMachineRecipeBuilder.assembly("ass.emptypackage", 40, 100)
+                .inputItem(ModItems.TITANIUM_PLATE.get(), 4)
+                .inputItem(ModItems.PLASTIC_BAG.get(), 2)
+                .outputItem(ModItems.FLUID_PACK_EMPTY.get())
+                .save(consumer, id("assembly_machine/emptypackage"));
+
+        HbmFluids.all().stream()
+                .filter(type -> type != HbmFluids.NONE && !type.hasNoContainer())
+                .forEach(type -> {
+                    GenericMachineRecipeBuilder.assembly("ass.package" + type.getName(), 40, 100)
+                            .inputItem(fluidContainerStack(ModItems.FLUID_PACK_EMPTY.get(), 1, null, 0, 0))
+                            .inputFluid(type, 32_000)
+                            .outputItem(fluidContainerStack(ModItems.FLUID_PACK_FULL.get(), 1, type, 32_000, 0))
+                            .save(consumer, id("assembly_machine/package_" + type.toPath()));
+
+                    GenericMachineRecipeBuilder.assembly("ass.unpackage" + type.getName(), 40, 100)
+                            .inputItem(fluidContainerStack(ModItems.FLUID_PACK_FULL.get(), 1, type, 32_000, 0))
+                            .outputFluid(type, 32_000)
+                            .outputItem(ModItems.FLUID_PACK_EMPTY.get())
+                            .save(consumer, id("assembly_machine/unpackage_" + type.toPath()));
+                });
+    }
+
     private static ItemLike item(String legacyName) {
         RegistryObject<Item> item = ModItems.legacyItem(legacyName);
         if (item == null) {
@@ -251,6 +330,10 @@ public final class HbmRecipeProvider extends RecipeProvider {
             return inputIngredient(Ingredient.of(item), count);
         }
 
+        private GenericMachineRecipeBuilder inputItem(ItemStack stack) {
+            return inputIngredient(Ingredient.of(stack), stack.getCount());
+        }
+
         private GenericMachineRecipeBuilder inputTag(TagKey<Item> tag, int count) {
             return inputIngredient(Ingredient.of(tag), count);
         }
@@ -277,6 +360,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
             object.addProperty("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
             if (stack.getCount() > 1) {
                 object.addProperty("count", stack.getCount());
+            }
+            if (stack.hasTag() && !stack.getTag().isEmpty()) {
+                object.addProperty("nbt", stack.getTag().toString());
             }
             outputItems.add(object);
             return this;
@@ -334,5 +420,17 @@ public final class HbmRecipeProvider extends RecipeProvider {
             object.addProperty("amount", amount);
             return object;
         }
+    }
+
+    private static ItemStack fluidContainerStack(ItemLike item, int count, @Nullable FluidType fluid, int amount, int pressure) {
+        ItemStack stack = new ItemStack(item, count);
+        if (fluid != null) {
+            CompoundTag tag = new CompoundTag();
+            tag.putString("hbm_fluid", fluid.getName());
+            tag.putInt("hbm_fluid_amount", amount);
+            tag.putInt("hbm_fluid_pressure", pressure);
+            stack.setTag(tag);
+        }
+        return stack;
     }
 }

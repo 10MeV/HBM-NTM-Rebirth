@@ -2,26 +2,19 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "bonus_rolls": 0.0,
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        }
-      ],
+      "rolls": 1.0,
       "entries": [
         {
           "type": "minecraft:item",
+          "name": "hbm:conveyor_wand",
           "functions": [
-            {
-              "function": "minecraft:set_nbt",
-              "tag": "{Type:\"REGULAR\"}"
-            }
-          ],
-          "name": "hbm:conveyor_wand"
+            { "function": "minecraft:set_nbt", "tag": "{Type:\"REGULAR\"}" }
+          ]
         }
       ],
-      "rolls": 1.0
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" }
+      ]
     }
-  ],
-  "random_sequence": "hbm:blocks/conveyor"
+  ]
 }

@@ -329,6 +329,7 @@
   - 旧 `renderOnly(String... groupNames)` 是外层遍历模型内部 `groupObjects` / VBO `groups`，内层匹配传入名称，因此实际渲染顺序以 OBJ 文件内 group 顺序为准，而不是调用参数顺序。
   - `ObjPartModel.renderOnly(...)` 与 `ObjAnimatedModel.renderOnly(...)` 已改为按登记顺序渲染匹配分件。
   - `ObjPartModel` 仍对 alias 做 canonical 去重，避免现代 alias 同指向一个拆分 JSON part 时重复绘制。
+  - 2026-05-23 复查修正：`LegacyWavefrontModel.renderOnlyInCallOrder(...)` 不再通过 name map 只取最后一个同名 group；现在按调用名逐个扫描 `groupOrder`，与旧 `renderPart(...)`/`renderOnly(...)` 的“同名 group 全部渲染”语义保持一致。
 - 继续对齐旧 `getPartNames()` 契约：
   - 旧实现返回 OBJ/VBO 内原始 group 名。
   - `ObjPartModel` 与 `ObjAnimatedModel` 现在保留 `part(...)` 登记时的原始大小写名称，`getPartNames()` 不再返回小写化后的 key。
@@ -1135,6 +1136,274 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+## 2026-05-23 ObjUtil Sprite Retexture Bridge
+
+触发来源：
+
+- 继续推进渲染库对齐，补齐旧 `ObjUtil.renderWithIcon(...)` / `renderPartWithIcon(...)` 这条 ISBRH 关键路径。
+- 旧调用面覆盖 RBMK rod/control、RTG、管道/电缆、铁砧、轨道、灯具、分流器、漏斗等，不应在后续每个 renderer 中重复手写 OBJ UV 到 block icon 的转换。
+
+旧版事实：
+
+- `ObjUtil.renderWithIcon(...)` 遍历模型所有 `groupObjects`，使用 OBJ 原始 UV 对传入 `IIcon` 做 `getInterpolatedU/V(t.u * 16)` 采样。
+- `ObjUtil.renderPartWithIcon(...)` 与 `HFRWavefrontObject.renderPart(...)` 不完全一致：它按 `obj.name.equals(name)` 精确匹配，并保留最后一个同名 group；找不到时直接返回。
+- `renderWithIcon(...)` 和 `renderPartWithIcon(...)` 的旧阴影公式不同：
+  - 全模型路径：`((normal.y + 0.7F) * 0.9F) - abs(normal.x) * 0.1F + abs(normal.z) * 0.1F`
+  - 单 part 路径：`normal.y * 0.3F + 0.7F - abs(normal.x) * 0.1F + abs(normal.z) * 0.1F`
+- 旧 `ObjUtil` 会把三角面第三个顶点重复提交一次，用 quad tessellator 渲染三角模型。
+
+本轮现代修正：
+
+- `LegacyWavefrontModel` 新增 `renderWithSprite(...)`：
+  - 接收 `TextureAtlasSprite`，走 `InventoryMenu.BLOCK_ATLAS`。
+  - 复用旧 `ObjUtil` yaw/pitch/roll 旋转顺序。
+  - 使用 OBJ UV 的 `u/v * 16` 对 sprite 做 `getU/getV` 采样。
+  - 三角面继续重复第 3 个顶点，保留旧 quad tessellator 兼容技巧。
+- `LegacyWavefrontModel` 新增 `renderPartWithSprite(...)`：
+  - 精确 group 名匹配，取最后一个同名 group，找不到时静默返回，避免污染普通 `renderPart(...)` 的 HFR 语义。
+  - 单 part 阴影公式按旧 `ObjUtil.renderPartWithIcon(...)` 独立实现。
+- `ObjRenderContext` 重载可直接带现代上下文、颜色和 legacy shadow 状态进入该路径。
+
+noSmooth 对照报告：
+
+- 新增 `工程记录/库移植/生成报告/render-library-nosmooth-audit-2026-05-23.csv`。
+- 该报告按旧 `ResourceManager` 中所有 `.noSmooth()` 资源列出：
+  - `legacy-nosmooth-hooked`：现代 `LegacyWavefrontModel` 已接 `.noSmooth()`。
+  - `modern-entry-needs-nosmooth-audit`：现代已有入口，但多为 split/baked model 或尚未接 `.noSmooth()`，需逐项决定是否回退 legacy OBJ 载体。
+  - `missing-modern-entry`：现代还没有对应资源入口。
+
+仍未完全等价：
+
+- `renderWithSprite(...)` 只覆盖旧 `ObjUtil` 的图集重贴图直渲染；仍未迁 `tessellateAll/tessellateOnly/tessellatePart/tessellateAllExcept` 的外部顶点遍历 API。
+- 旧固定管线的 `Tessellator.setNormal(...)` 与现代 `VertexConsumer.normal(...)` 已按面法线承接，但实际方块 AO/光照仍需后续实机核对。
+- 旧 `ObjUtil` 有全局 `setColor/clearColor` 状态；现代路径通过参数/`ObjRenderContext` 传色，不保留全局 mutable 状态。
+
+验证：
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` 当前被无关 `ModCommands` 缺失 `getRorFunctions/getRorValue/runRorFunction` 阻塞；本轮新增的 `TextureAtlasSprite#getU/getV` 与渲染库签名未触发编译错误。
+
+## 2026-05-23 Network / Soyuz noSmooth Legacy Entrypoints
+
+触发来源：
+
+- 继续按 `render-library-nosmooth-audit-2026-05-23.csv` 推进旧 `.noSmooth()` 资源对齐。
+- 网络连接器/电塔与 Soyuz 发射架现代端已有 baked OBJ 入口，但旧 `ResourceManager` 明确使用 `HFRWavefrontObject(...).noSmooth().asVBO()`；baked JSON 入口不能自动表达旧 HFR 面法线语义。
+
+本轮现代修正：
+
+- `ObjNetworkModels` 保留原 baked `ObjModelPart` 常量，同时新增 legacy noSmooth 入口：
+  - `CONNECTOR_LEGACY`
+  - `CONNECTOR_SUPER_LEGACY`
+  - `PYLON_LARGE_LEGACY`
+  - `PYLON_MEDIUM_LEGACY`
+- `ObjLaunchModels` 保留原 baked `ObjModelPart` 常量，同时新增 Soyuz launcher legacy noSmooth 入口：
+  - `SOYUZ_LAUNCHER_LEGS_LEGACY`
+  - `SOYUZ_LAUNCHER_TABLE_LEGACY`
+  - `SOYUZ_LAUNCHER_TOWER_BASE_LEGACY`
+  - `SOYUZ_LAUNCHER_TOWER_LEGACY`
+  - `SOYUZ_LAUNCHER_SUPPORT_BASE_LEGACY`
+  - `SOYUZ_LAUNCHER_SUPPORT_LEGACY`
+- `ObjModelLibrary` 暴露这些 legacy facade，后续迁旧 renderer 时可以选择 HFR 语义路径，不必继续依赖 baked fallback。
+- `render-library-nosmooth-audit-2026-05-23.csv` 状态更新：
+  - `legacy-nosmooth-hooked`: 19
+  - `modern-entry-needs-nosmooth-audit`: 17
+  - `missing-modern-entry`: 42
+
+仍未完全等价：
+
+- 旧 VBO 缓存仍未迁；这些 legacy 入口使用现代 `LegacyWavefrontModel` 直提交顶点。
+- 现有 baked 常量暂未移除，避免破坏已经接入的现代 renderer；真正迁某个旧 renderer 时应优先选择 `_LEGACY` 常量并做实机对照。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` 通过。
+
+## 2026-05-23 Machine noSmooth Legacy Entrypoints
+
+触发来源：
+
+- 继续推进 `render-library-nosmooth-audit-2026-05-23.csv` 中 `modern-entry-needs-nosmooth-audit` 项。
+- 本批选择现代端已有 OBJ/贴图资源，且旧 `ResourceManager` 明确 `.noSmooth()` 的机器模型；只新增 legacy HFR 语义入口，不替换现有 baked 分件入口。
+
+本轮现代修正：
+
+- `ObjMachineModels` 新增以下 legacy noSmooth 入口：
+  - `FIREBOX_LEGACY`
+  - `HEATING_OVEN_LEGACY`
+  - `ELECTRIC_HEATER_LEGACY`
+  - `RTG_LEGACY`
+  - `RADAR_SCREEN_LEGACY`
+  - `SOLAR_MIRROR_LEGACY`
+- `ObjModelLibrary` 同步暴露 `MACHINE_*_LEGACY` facade，供后续旧 renderer 迁移时选择对齐 1.7.10 HFR 面法线路径。
+- `render-library-nosmooth-audit-2026-05-23.csv` 当前状态：
+  - `legacy-nosmooth-hooked`: 25
+  - `modern-entry-needs-nosmooth-audit`: 11
+  - `missing-modern-entry`: 42
+
+仍未完全等价：
+
+- `radar` / `radar_large` / `radar_body` 旧三件套未在本批补齐；现代端当前只有 `radar_screen` 资源入口。
+- `firebox` 已有 split baked 分件和新 legacy 整体入口并存；具体 renderer 迁移时需按旧 `renderPart` 调用决定使用整体 HFR 入口还是继续维护分件桥。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` 通过。
+
+## 2026-05-23 noSmooth Audit Queue Cleared
+
+触发来源：
+
+- 继续推进 `render-library-nosmooth-audit-2026-05-23.csv`，一次性处理剩余 `modern-entry-needs-nosmooth-audit`。
+- 本批对象覆盖灯具、雷达本体、旧 ISBRH block OBJ，以及 HEV battery / capacitor 的旧 block 模型入口。
+
+本轮现代修正：
+
+- `ObjLightModels` 新增旧灯具 HFR noSmooth 入口：
+  - `CAGE_LAMP_LEGACY`
+  - `FLUORESCENT_LAMP_LEGACY`
+  - `FLOOD_LAMP_LEGACY`
+- `ObjMachineModels` 新增 `RADAR_LEGACY`，并从 1.7.10 复制 `models/machines/radar.obj` 到现代 `models/block/machines/radar.obj`。
+- 新增 `ObjBlockModels`，集中承接旧 `ResourceManager` 的 ISBRH block OBJ：
+  - `SCAFFOLD`
+  - `BEAM`
+  - `BARREL`
+  - `POLE`
+  - `PIPE`
+  - `HEV_BATTERY`
+  - `CAPACITOR`
+- 从 1.7.10 复制对应 OBJ 到 `models/block/legacy_blocks/`；默认贴图只作为直渲染兜底，旧 renderer 的真实动态贴图仍应通过 `renderWithSprite(...)` / `renderPartWithSprite(...)` 接入。
+- `ObjModelLibrary` 暴露灯具、ISBRH block、`MACHINE_RADAR_LEGACY` facade。
+- `render-library-nosmooth-audit-2026-05-23.csv` 当前状态：
+  - `legacy-nosmooth-hooked`: 36
+  - `missing-modern-entry`: 42
+  - `modern-entry-needs-nosmooth-audit`: 0
+
+旧调用点确认：
+
+- `RenderScaffoldBlock` / `RenderSteelBeam` / `RenderBattery` 使用 `ObjUtil.renderWithIcon(...)`。
+- `RenderPipe` / `RenderCapacitor` / `RenderBarrel` 使用 `ObjUtil.renderPartWithIcon(...)`，依赖 OBJ group 名如 `Top` / `Side` / `Barrel` / `InnerTop` 等。
+
+仍未完全等价：
+
+- 本批仅补模型载体和 noSmooth 入口；对应方块 renderer 尚未迁移到现代 `TextureAtlasSprite` 重贴图路径。
+- `pipe_rim` / `pipe_quad` / `pipe_frame` 等旧管道变体仍在 `missing-modern-entry`，后续迁 `RenderPipe` 前需要一起补齐。
+- `radar_body` / `radar_large` 仍缺现代入口；本批只补 `radar`。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` 通过。
+
+## 2026-05-23 Legacy Block OBJ noSmooth Batch
+
+触发来源：
+
+- `render-library-nosmooth-audit-2026-05-23.csv` 中剩余大多数 `missing-modern-entry` 都来自旧 `ResourceManager` 的 `models/blocks/*.obj`。
+- 这些对象后续会被旧 ISBRH / TESR 迁移直接引用，尤其 `RenderPipe` 依赖 `pipe_rim` / `pipe_quad` / `pipe_frame` 的 group 与 `ObjUtil.renderPartWithIcon(...)` 语义。
+
+本轮现代修正：
+
+- 从 1.7.10 复制旧 `models/blocks` noSmooth OBJ 到现代 `models/block/legacy_blocks/`，现代目录现有 42 个旧 block OBJ。
+- `ObjBlockModels` 新增以下 noSmooth 入口：
+  - `TAPE_RECORDER`, `BARBED_WIRE`, `SPIKES`, `ANTENNA_TOP`, `CONSERVE_CRATE`
+  - `PIPE_RIM`, `PIPE_QUAD`, `PIPE_FRAME`
+  - `RTTY`, `CRT`, `TOASTER`, `DECO_COMPUTER`
+  - `ANVIL`, `CRYSTAL_POWER`, `CRYSTAL_ENERGY`, `CRYSTAL_ROBUST`, `CRYSTAL_TRIXITE`
+  - `CABLE_NEO`, `DIFURNACE_EXTENSION`, `SPLITTER`, `CRANE_BUFFER`
+  - `RAIL_NARROW_STRAIGHT`, `RAIL_NARROW_CURVE`
+  - `RAIL_STANDARD_STRAIGHT`, `RAIL_STANDARD_STRAIGHT_SHORT`, `RAIL_STANDARD_CURVE`, `RAIL_STANDARD_CURVE_WIDE7`, `RAIL_STANDARD_CURVE_WIDE9`, `RAIL_STANDARD_RAMP`, `RAIL_STANDARD_BUFFER`, `RAIL_STANDARD_SWITCH`, `RAIL_STANDARD_SWITCH_FLIPPED`
+  - `FUNNEL`, `CHARGE_DYNAMITE`, `CHARGE_C4`
+- `ObjModelLibrary` 暴露对应 `BLOCK_*` facade。
+- 复制入口默认贴图所需的 1.7.10 `textures/blocks` 贴图到 `textures/block/legacy_blocks/`；这些默认贴图只用于普通直渲染兜底。
+- `render-library-nosmooth-audit-2026-05-23.csv` 当前状态：
+  - `legacy-nosmooth-hooked`: 71
+  - `missing-modern-entry`: 7
+
+仍未完全等价：
+
+- 本批仍未迁具体旧 renderer；动态 block icon 重贴图必须继续通过 `LegacyWavefrontModel.renderWithSprite(...)` / `renderPartWithSprite(...)` 对接。
+- 部分模型在旧代码中只作为 item/block 专用 renderer 使用，迁实际 renderer 前还需复查旧 metadata、旋转、group 调用顺序和 texture 选择。
+- 剩余缺口为 `radar_body`, `radar_large`, `skeleton_holder`, `lantern`, `chainsaw`, `player_manly_af`, `missileStealth`。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` 通过。
+
+## 2026-05-23 noSmooth Audit Missing Entrypoints Cleared
+
+触发来源：
+
+- `render-library-nosmooth-audit-2026-05-23.csv` 剩余 7 个 `missing-modern-entry` 横跨 radar、block、trinket、weapon、armor、missile 资源域。
+- 本轮目标是让旧 `ResourceManager` 中所有明确 `.noSmooth()` 的模型都至少拥有现代 `LegacyWavefrontModel.noSmooth()` 入口。
+
+本轮现代修正：
+
+- `ObjMachineModels` 新增：
+  - `RADAR_BODY_LEGACY`
+  - `RADAR_LARGE_LEGACY`
+- `ObjBlockModels` 新增：
+  - `SKELETON_HOLDER`
+- `ObjTrinketModels` 新增：
+  - `LANTERN`
+- 新增 `ObjWeaponModels`：
+  - `CHAINSAW`
+- 新增 `ObjArmorModels`：
+  - `PLAYER_FEM`
+- `ObjMissilePartModels` 新增：
+  - `MISSILE_STEALTH`
+- `ObjModelLibrary` 暴露对应 facade。
+- 从 1.7.10 复制对应 OBJ/贴图到现代资源目录。
+  - `ResourceManager.radar_body_tex` 旧字段声明为 `textures/models/radar_base.png`，但 1.7.10 实际资源位于 `textures/models/machines/radar_base.png`；现代端按实际资源复制到 `textures/block/machines/radar_base.png`。
+- `render-library-nosmooth-audit-2026-05-23.csv` 当前状态：
+  - `legacy-nosmooth-hooked`: 78
+  - `missing-modern-entry`: 0
+  - `modern-entry-needs-nosmooth-audit`: 0
+
+审计结论：
+
+- 按旧 `ResourceManager` 明确 `.noSmooth()` 的资源清单，现代渲染库已全部拥有 noSmooth 入口。
+
+仍未完全等价：
+
+- 旧 `asVBO()` 缓存生命周期仍未迁移；现代入口仍是 `LegacyWavefrontModel` 直提交顶点。
+- 旧 renderer 的动态贴图、旋转、分件调用、item/armor/missile 特殊坐标系尚未逐项迁移。
+- 下一步应转入具体旧 renderer 对接，优先 `RenderPipe` / `RenderCapacitor` / `RenderBarrel` 这类已具备 OBJ 和 `renderPartWithSprite(...)` 桥的路径。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` 通过。
+
+## 2026-05-23 ISBRH Sprite Renderer Bridge
+
+触发来源：
+
+- noSmooth 入口清零后，下一步应迁旧 ISBRH renderer。直接把旧 `RenderPipe` 挂到现代 `FLUID_DUCT_NEO` 会混淆 1.7.10 `BlockPipe` 与现代流体管道系统，因此先补旧 `ObjUtil` 调用面的可复用桥。
+
+旧版事实：
+
+- `RenderPipe` 对 `pipe` / `pipe_rim` / `pipe_quad` / `pipe_frame` 按 `rType` 调用 `ObjUtil.renderPartWithIcon(...)`，分件名为 `Top` / `Side` / `Frame` / `Mesh`。
+- `RenderCapacitor` 调用 `Top` / `Side` / `Bottom` / `InnerTop` / `InnerSide`。
+- `RenderBarrel` 调用 `Barrel`，`RenderFluidBarrel` 的连接口使用 `Connector`。
+
+本轮现代修正：
+
+- `LegacyWavefrontModel` 新增 `renderWithSprite(TextureAtlasSprite, ObjRenderContext, ...)`，与已有 `renderPartWithSprite(...)` 对称。
+- 新增 `LegacyIsbrhObjRenderer`：
+  - 将现代 `ResourceLocation` 图集贴图解析为 `TextureAtlasSprite`。
+  - 调用 `LegacyWavefrontModel.renderWithSprite(...)` / `renderPartWithSprite(...)`，保留旧 `ObjUtil` UV 采样和旋转语义。
+- 新增专用旧 renderer 桥：
+  - `LegacyPipeObjRenderer`
+  - `LegacyCapacitorObjRenderer`
+  - `LegacyBarrelObjRenderer`
+
+仍未完全等价：
+
+- 本批是旧 ISBRH 调用面的 API 桥，尚未注册具体方块 renderer。
+- 现代 `FLUID_DUCT_NEO` 仍沿用现有 multipart cube 模型；旧 `BlockPipe` / `MachineCapacitor` / `BlockFluidBarrel` 的完整方块注册和 metadata 语义需单独迁移后再接这些 helper。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` 通过。
+
 ## 2026-05-22 Pumpjack Legacy Y Rotation Fix
 
 触发来源：
@@ -1152,6 +1421,10 @@
 - `LegacyMachineDefinition` 增加可选 `yRotation(Function<Direction, Float>)`，允许单机按旧 renderer 的 metadata 表定义 Y 旋转。
 - `LegacyVisibleMachineRenderer` 改为调用 `definition.yRotation(state)`，默认仍保留原 `yRotationOffset + facing.toYRot()` 兼容路径。
 - `machine_pumpjack` 使用旧表等价公式 `270 - facing.toYRot()`。
+- 这次排查也确认了其他可见多方块不应盲目复用同一个旋转偏移：
+  - `machine_chemical_plant` / `machine_chemical_factory` 按各自旧 renderer 的 metadata 表迁入。
+  - `machine_refinery` 旧 renderer 本身就是固定 180。
+  - `machine_fluidtank` 需要单独对齐旧 metadata 表，而不是套用统一的 180。
 
 仍未完全等价：
 
@@ -1466,7 +1739,68 @@
 
 - 旧 `HFRWavefrontObject` 的 `tessellateAll/tessellateOnly/tessellateAllExcept` 系列仍未迁移。
 - 旧 VBO 缓存路径仍未迁移，现代 `LegacyWavefrontModel` 继续每帧向 `MultiBufferSource` 直接提交顶点。
-- 旧 `noSmooth()` 的法线/平滑差异尚未单独建模。
+  - 旧 `noSmooth()` 的法线/平滑差异已在 2026-05-23 对齐到 `LegacyWavefrontModel.noSmooth()`；split JSON / baked model 路径仍需逐项确认。
+
+## 2026-05-23 Render Library 1.7.10 Alignment Audit
+
+触发来源：
+
+- 用户要求对当前已迁渲染库按 1.7.10 代码进行大排查，目标是对齐旧实现本身，而不是只模仿旧效果。
+- 本轮只处理可由 1.7.10 `ResourceManager`、`HFRWavefrontObject`、`HFRWavefrontObjectVBO`、`S_Face` 明确证明的偏差；目录整理类差异单独记录，不误判为行为错误。
+
+已核准的旧语义：
+
+- `HFRWavefrontObject.renderOnly(...)` / `renderPart(...)` / `renderAllExcept(...)` 均按 `groupObjects` 顺序扫描，名称匹配为 `equalsIgnoreCase`。
+- 同名 OBJ group 在旧实现中不会被 name map 合并；只要名称匹配，所有同名 group 都会绘制。
+- `HFRWavefrontObject.noSmooth()` 令后续解析出来的 `S_Face` 使用面法线，不使用 OBJ 顶点法线；资源 reload 会重新按当前 `smoothing` 状态解析。
+- `HFRWavefrontObjectVBO` 也按 group 列表顺序匹配 `renderOnly(...)`，但其 VBO 数据在旧代码中固定按三角形数组提交。
+- RBMK 手动控制棒旧枚举顺序为 `RED, YELLOW, GREEN, BLUE, PURPLE`，现代 `manualControlTexture(int ordinal)` 映射与此一致。
+
+本轮现代修正：
+
+- `LegacyWavefrontModel.renderOnlyInCallOrder(...)` 改为按传入名称扫描完整 `groupOrder`，不再通过 `groups.get(key)` 丢失同名 group。
+- `LegacyWavefrontModel` 新增链式 `noSmooth()`，渲染顶点时在该模式下强制使用 `faceNormal`，对齐旧 `S_Face.addFaceForRender(...)` 的非平滑路径。
+- 已把旧 `ResourceManager` 明确 `.noSmooth()`、且现代端当前是 `LegacyWavefrontModel` 的入口接上：
+  - `ObjMachineModels.ARC_WELDER`
+  - `ObjMachineModels.SOLDERING_STATION`
+  - `ObjMachineModels.AUTOSAW`
+  - `ObjRbmkModels.ELEMENT`
+  - `ObjRbmkModels.ELEMENT_RODS`
+  - `ObjRbmkModels.RODS`
+  - `ObjRbmkModels.DEBRIS`
+
+审计结论：
+
+- 现代 `LegacyWavefrontModel` 的 group 匹配、大小写规则、同名 group 处理、`renderAllExcept(...)` 基本对齐旧 HFR OBJ 路径。
+- 现代资源目录中存在主动整理：例如旧 `lpw2` / `watz_pump` 模型和 `watz` / `lpw2` 贴图在 `ResourceManager` 中属于 `models/machines`、`textures/models/machines`，现代端集中放在 `models/block/reactors`、`textures/block/reactors`。只要资源内容来自 1.7.10，这属于现代资源树归档差异，不是新增内容；后续 renderer 文档必须记录旧字段名和旧路径，避免把现代目录当成旧事实源。
+- `rbmk_element` 旧字段为 mixed-mode 非 VBO 模型，旧直接 `renderAll/renderPart` 会因 `allowMixedMode` 抛错，实际用途依赖 tessellation/ISBRH 路径。现代端统一直渲染该模型是桥接实现差异，后续迁 RBMK 方块渲染时必须按旧调用点决定是否补 tessellation API。
+
+仍未完全等价：
+
+- `tessellateAll/tessellateOnly/tessellatePart/tessellateAllExcept` 仍未迁移；RBMK mixed-mode 和旧 ISBRH 路径会依赖它们。
+- 旧 VBO 缓存生命周期和 `HFRModelReloader` 的 VBO 重建路径仍未迁移；现代 `LegacyWavefrontModel` 当前每帧提交顶点。
+- split JSON / `ObjModelPart` 路径无法自动继承旧 `.noSmooth()` 语义；已知旧 noSmooth 资源如 firebox、heating_oven、electric_heater、rtg、radar、network connector/pylon、soyuz launch table、灯具、装饰方块等需要逐项核对 baked model 法线或改走 legacy OBJ 载体。
+- 旧 OBJ 解析只接受正索引和 3/4 顶点 face；现代解析器支持负索引和 n-gon 三角化。当前现代资源来自旧资产，风险较低，但若后续新资源进入渲染库，应按 1.7.10 兼容范围做校验。
+
+下一步计划：
+
+- 优先补 `LegacyWavefrontModel` 的 tessellation 风格 API，供 RBMK element、旧 ISBRH 和需要逐 face/icon 替换的 renderer 使用。
+- 对 `ResourceManager` 中所有 `.noSmooth()` 资源生成现代入口对照表，区分 `LegacyWavefrontModel`、split JSON、尚未迁入三类；对 split JSON 类决定是补 model JSON 法线配置还是回退到 legacy OBJ 载体。
+- 继续按旧 `ResourceManager` 字段名核查现代 `Obj*Models` 常量，记录“旧字段名/旧路径/现代路径/默认贴图/已迁状态”，避免出现 1.7.10 不存在的常量或贴图。
+- 迁 RBMK renderer 前，先核 `RenderRBMK*`、`ObjUtil.renderPartWithIcon` 和旧 block renderer 对 `rbmk_element` 的真实调用顺序。
+
+## 2026-05-23 Legacy OBJ Parity API补齐
+
+- 本轮按 1.7.10 `HFRWavefrontObject` / `HFRWavefrontObjectVBO` 的调用面补齐现代端老 API 门面：
+  - `LegacyObjModel` 增加 `mixedMode()` / `asVBO()` 默认入口。
+  - `LegacyWavefrontModel` 增加 `mixedMode()`、`asVBO()`，以及 `tessellateAll/tessellateOnly/tessellatePart/tessellateAllExcept` 兼容方法。
+- 语义说明：
+  - `mixedMode()` 目前只作为契约标记保留，供后续需要混合三角/四边形的 renderer 识别。
+  - `asVBO()` 先保留与旧端同名调用点，现代端仍由直渲路径承接，不额外引入旧 GL15 VBO 生命周期。
+- 已对齐的旧入口：
+  - `ObjRbmkModels.ELEMENT` 标记为 mixed-mode，对齐 1.7.10 `rbmk_element` 的构造参数。
+- 后续注意：
+  - 真正需要旧 VBO 生命周期的 renderer 仍要按 1.7.10 调用点继续核查，不能把 `asVBO()` 当成完整 VBO 移植完成。
 
 验证：
 

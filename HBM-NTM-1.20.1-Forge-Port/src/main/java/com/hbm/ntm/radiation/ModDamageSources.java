@@ -17,6 +17,10 @@ public final class ModDamageSources {
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "digamma"));
     public static final ResourceKey<DamageType> MKU = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "mku"));
+    public static final ResourceKey<DamageType> ASBESTOS = ResourceKey.create(
+            Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "asbestos"));
+    public static final ResourceKey<DamageType> BLACK_LUNG = ResourceKey.create(
+            Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "blacklung"));
     public static final ResourceKey<DamageType> EXPLOSION = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "explosion"));
     public static final ResourceKey<DamageType> MONOXIDE = ResourceKey.create(
@@ -25,6 +29,8 @@ public final class ModDamageSources {
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "pc"));
     public static final ResourceKey<DamageType> CLOUD = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "cloud"));
+    public static final ResourceKey<DamageType> ELECTRIC = ResourceKey.create(
+            Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "electric"));
 
     public static DamageSource radiation(Level level) {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(RADIATION));
@@ -38,6 +44,14 @@ public final class ModDamageSources {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(MKU));
     }
 
+    public static DamageSource asbestos(Level level) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ASBESTOS));
+    }
+
+    public static DamageSource blackLung(Level level) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(BLACK_LUNG));
+    }
+
     public static DamageSource monoxide(Level level) {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(MONOXIDE));
     }
@@ -48,6 +62,10 @@ public final class ModDamageSources {
 
     public static DamageSource cloud(Level level) {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(CLOUD));
+    }
+
+    public static DamageSource electric(Level level) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ELECTRIC));
     }
 
     public static DamageSource explosion(Level level, @Nullable Entity source) {

@@ -37,3 +37,26 @@
 - 命令解析错误能返回旧版等价错误。
 - 参数范围校验一致。
 - 可交互组件与只读数值组件分离。
+
+## 2026-05-23 能量库首批 ROR 本地兼容接入
+
+- 本批以 `TileEntityMachineBattery`、`TileEntityBatteryBase`、`TileEntityBatterySocket` 的 1.7.10 ROR 用法为落点：
+  - 迁入现代本地接口 `RORInfo`、`RORValueProvider`、`RORInteractive`、`RORFunctionException`。
+  - 保留旧字符串协议：
+    - `VAL:fill`
+    - `VAL:fillpercent`
+    - `VAL:delta`
+    - `FUN:setmode!mode(:fallback)`
+    - `FUN:setredmode!mode(:fallback)`
+    - `FUN:setpriority!priority`
+  - 保留旧异常文本：
+    - `Exception: Null Command`
+    - `Exception: Multiple Name Separators`
+    - `Exception: Parameter in Invalid Format`
+- 现代端接入：
+  - `MachineBatteryBlockEntity` 实现 ROR 值读取与交互函数。
+  - `MachineBatterySocketBlockEntity` 实现 ROR 值读取与交互函数，并补本地 OC 风格 `getEnergyInfo/getPackInfo/getModeInfo/getInfo` 数组返回。
+  - `/hbm energy ror functions <pos>`、`/hbm energy ror value <pos> <name>`、`/hbm energy ror run <pos> <command>` 作为无外部 mod 时的调试/验证入口。
+- 现代边界：
+  - 这不是完整无线红石方块网络或外部集成，只是把旧组件 API 与能量库消费者先固定下来。
+  - 后续迁移无线红石方块时，应直接调用这些接口，而不是重新定义一套命令格式。

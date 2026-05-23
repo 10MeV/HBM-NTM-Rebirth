@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "T": {
+      "item": "hbm:plate_titanium"
+    }
+  },
+  "pattern": [
+    "TI ",
+    "ITI",
+    " TI"
+  ],
+  "result": {
+    "item": "hbm:fluid_pack_empty"
+  },
+  "show_notification": true
+}

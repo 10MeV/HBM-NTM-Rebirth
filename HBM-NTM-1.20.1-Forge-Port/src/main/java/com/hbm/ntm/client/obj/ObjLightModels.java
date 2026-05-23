@@ -1,5 +1,8 @@
 package com.hbm.ntm.client.obj;
 
+import com.hbm.ntm.HbmNtm;
+import net.minecraft.resources.ResourceLocation;
+
 public final class ObjLightModels {
     public static final ObjModelPart CAGE_LAMP = ObjModelLibrary.directBlockPart("legacy/cage_lamp_render")
             .withOrigin(ObjPartTransform.IDENTITY);
@@ -15,6 +18,20 @@ public final class ObjLightModels {
             .withOrigin(ObjPartTransform.IDENTITY);
     public static final ObjModelPart DEMON_LAMP = ObjModelLibrary.directBlockPart("lamp_demon")
             .withOrigin(ObjPartTransform.IDENTITY);
+
+    public static final LegacyWavefrontModel CAGE_LAMP_LEGACY = legacyModel("cage_lamp").noSmooth();
+    public static final LegacyWavefrontModel FLUORESCENT_LAMP_LEGACY = legacyModel("fluorescent_lamp").noSmooth();
+    public static final LegacyWavefrontModel FLOOD_LAMP_LEGACY = legacyModel("flood_lamp").noSmooth();
+
+    public static LegacyWavefrontModel legacyModel(String name) {
+        return new LegacyWavefrontModel(
+                new ResourceLocation(HbmNtm.MOD_ID, "models/block/lights/" + name + ".obj"),
+                texture(name));
+    }
+
+    public static ResourceLocation texture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/" + name + ".png");
+    }
 
     private ObjLightModels() {
     }

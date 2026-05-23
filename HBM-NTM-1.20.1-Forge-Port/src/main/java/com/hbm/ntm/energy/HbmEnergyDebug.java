@@ -1,8 +1,9 @@
 package com.hbm.ntm.energy;
 
+import com.hbm.ntm.particle.ParticleUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
@@ -53,11 +54,15 @@ public final class HbmEnergyDebug {
         double dy = side.getStepY() * sign * 0.05D;
         double dz = side.getStepZ() * sign * 0.05D;
 
-        serverLevel.sendParticles(
-                connected ? ParticleTypes.END_ROD : ParticleTypes.SMOKE,
-                x, y, z,
-                1,
-                dx, dy, dz,
-                connected ? 0.02D : 0.08D);
+        CompoundTag data = new CompoundTag();
+        data.putString("type", ParticleUtil.TYPE_DEBUG_DRONE);
+        data.putDouble("mX", x + dx * 8.0D);
+        data.putDouble("mY", y + dy * 8.0D);
+        data.putDouble("mZ", z + dz * 8.0D);
+        data.putString("role", provider ? "provider" : "receiver");
+        data.putBoolean("connected", connected);
+        data.putString("side", side.getName());
+        data.putInt("color", connected ? (provider ? 0x66FF66 : 0x66AAFF) : 0x808080);
+        ParticleUtil.spawnAux(serverLevel, x, y, z, data, 25.0D);
     }
 }

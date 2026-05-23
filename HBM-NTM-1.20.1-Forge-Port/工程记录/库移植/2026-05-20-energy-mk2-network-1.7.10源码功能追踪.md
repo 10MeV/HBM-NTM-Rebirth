@@ -373,9 +373,9 @@
   - `com.hbm.tileentity.machine.storage.TileEntityMachineBattery`：容量 `1_000_000 HE`，接收速度 `maxPower / 200 = 5_000 HE/t`，输出速度 `maxPower / 600 = 1_666 HE/t`；默认 `redLow = input`、`redHigh = output`、`priority = LOW`。
 - 现代迁移语义：
   - `MachineBatteryBlockEntity` 继承 `HbmEnergyBlockEntity`，使用 `HbmEnergyStorage` 保存 long 型 HE，并继续通过 `ForgeEnergyAdapter` 暴露 FE capability。
-  - 未通红石时按旧默认 `redLow` 作为输入端：订阅相邻红线网络的 receiver，并从相邻 FE/HBM 端直接拉取最多 `5_000 HE/t`。
-  - 通红石时按旧默认 `redHigh` 作为输出端：通过 `HbmEnergyUtil.tryProvideToAllNeighbors` 订阅相邻红线网络 provider，并尝试直接向 HBM receiver 或 FE 邻居输出最多 `1_666 HE/t`。
-  - `mode_buffer` 目前仅按“双向订阅/供电”处理，不创建自身导线节点，因此尚不能完整复刻旧版“储能方块桥接多个拆分网络视为共享网络”的行为。
+  - 未通红石时按旧默认 `redLow` 作为输入端：只订阅相邻红线网络的 receiver；不主动从 FE/HBM 邻居 capability 拉电。
+  - 通红石时按旧默认 `redHigh` 作为输出端：通过 `HbmEnergyUtil.tryProvideToAllNeighbors` 订阅相邻红线网络 provider，并尝试直接向允许 direct provision 的 HBM receiver 输出最多 `1_666 HE/t`。
+  - `mode_buffer` 现在按现代 `HbmEnergyNetworkBlockEntity` 创建自身能量节点，并在同一网络内同时作为 provider/receiver 订阅，用于对齐旧版“储能方块桥接多个拆分网络视为共享网络”的外部语义；跨区块/卸载后的分裂重建仍需实机验证。
   - 比较器输出保留旧公式：空电为 0，非空按 `power / max * 15 + 1` 钳制到 0..15。
   - NBT 保存复用能量库 `Energy.Power`，并保留 `redLow`、`redHigh`、`lastRedstone`、`priority` 字段；旧版掉落持久 NBT key 与命名迁移暂未接入。
 - 本批有意不迁移：
@@ -402,7 +402,7 @@
   - 旧语言：`item.battery_potato.name=Potato Battery` / `马铃薯电池`，电池 tooltip key 为 `desc.item.battery.charge`、`chargeRate`、`dischargeRate`。
 - 现代迁移语义：
   - `HbmBatteryItem` 继续使用旧版 `charge` NBT key，并通过 `ForgeBatteryItemAdapter` 暴露 item FE capability。
-  - `HbmBatteryItem#getDefaultCharge` 对齐旧版：可充电物品默认空电；不可充电但可放电物品默认满电。这样 `battery_potato` 从创造栏/新堆栈取出时可直接放出 `1_000 HE`。
+  - `HbmBatteryItem#getDefaultCharge` 对齐旧版：没有 `charge` NBT 的新 stack 会写入并返回 `maxCharge`，即默认满电。这样 `battery_potato` 从创造栏/新堆栈取出时可直接放出 `1_000 HE`。
   - `battery_potato` 注册为独立物品 ID，容量 `1_000 HE`、充电速率 `0 HE/t`、放电速率 `100 HE/t`，进入现代 `CONSUMABLE_TAB_ITEMS` 作为当前可见入口。
 - 本批有意不迁移：
   - 完整 `battery_pack` 多变体、3D 电池包 OBJ item renderer、`ItemBatteryPack.EnumBatteryPack` 的容量/电容器集合。
@@ -649,7 +649,7 @@
   - `src/main/resources/assets/hbm/textures/item/capacitor_*.png`
 - 1.7.10 对照：
   - `api.hbm.energymk2.IBatteryItem`：物品电池契约使用 `charge` NBT，提供空/满电 stack 工具方法。
-  - `com.hbm.items.machine.ItemBatteryPack`：`battery_pack` 通过 meta 区分 12 种电池/电容，默认新 stack 电量为 0。
+  - `com.hbm.items.machine.ItemBatteryPack`：`battery_pack` 通过 meta 区分 12 种电池/电容；没有 `charge` NBT 的普通新 stack 默认写入并返回满电，创造栏额外显式加入空电 stack。
   - 旧创造栏会为每种可充/可放电电池同时加入空电和满电两个 stack。
 - 已迁移的旧枚举参数：
   - `battery_redstone`：输出 100 HE/t，容量 `100 * 20 * 60 * 15`，充电速率 1,000 HE/t。
@@ -723,12 +723,12 @@
   - `ConnectionPriority` 顺序与旧版一致：`LOWEST -> LOW -> NORMAL -> HIGH -> HIGHEST`，网络更新时从高到低遍历。
   - provider/receiver 订阅表使用 3 秒超时刷新模型，机器需要每 tick 重新订阅。
   - `allowDirectProvision()` 默认 true，provider 可在相邻 receiver 允许时绕过导线直接传电。
-  - `IBatteryItem` 的核心数据 key 仍为 `charge`；`battery_pack` 类变体默认新 stack 电量为 0。
+  - `IBatteryItem` 的核心数据 key 仍为 `charge`；旧 `ItemBattery` / `ItemBatteryPack` 没有 NBT 时默认写入满电。
   - UNINOS/Nodespace 的基本模型已经对齐：节点持有位置、连接面、net、expired、recentlyChanged；节点变化后按邻接关系合并网络。
   - `NodeNet.isBadLink` 的 loaded/invalid 失效清理已用 `HbmLoadedEnergy` 与 `BlockEntity#isRemoved` 近似迁移。
 - 已发现并修正的偏差：
   - 现代 `HbmPowerNet` 曾在 receiver 分配后对同优先级 leftover 做二次补发；旧 `PowerNetMK2` 没有 receiver 侧补发，只在 provider 扣能阶段做最多 100 次随机舍入补扣。
-  - 本批已移除 receiver 侧二次补发，使 `distributeToReceivers` 与旧版“按 priorityDemand 权重分配一次，再扣本优先级实际使用量”的行为一致。
+  - 本批已移除 receiver 侧二次补发，并继续修正为旧版“按 priorityDemand 权重分配一次，再按全局累计 `energyUsed` 扣 `toTransfer`”的优先级循环结果。
 - 允许保留但必须标注为现代适配/诊断的内容：
   - `ForgeEnergyAdapter`、`ForgeBatteryItemAdapter`、FE capability、side mode、FE 邻居 push/pull 都是 1.20.1 互操作层，1.7.10 不存在；它们不能改变内部 HE/PowerNet 行为。
   - `/hbm energy ...` 命令、结构化 debug snapshot、运行时 debug particles 开关是现代验证工具；旧版只有编译期常量 `particleDebug=false` 与 `AuxParticlePacketNT` 调试粒子路径。
@@ -737,9 +737,8 @@
   - `HbmEnergyUtil.chargeItemFromStorage` / `chargeStorageFromItem` 当前主要走 Forge item energy capability；旧版机器转移入口是 `Library.chargeItemsFromTE` / `chargeTEFromItems`，并且有 `battery_creative` 特判。下一步应补 `HbmBatteryTransfer` 或等价 helper，机器优先走 HBM battery 语义，再降级到 FE。
   - `MachineBatteryBlockEntity` 物品槽 `isItemValid` 当前两个槽都放行所有 stack；旧版代码表面上也 `return true`，但容器 shift-click 和自动化抽出规则依赖 `IBatteryItem` 与空/满电判断，现代 Menu/slot helper 尚未迁移，行为未完整。
   - `MachineBatteryBlockEntity` NBT 使用 `Energy.Power` 包装保存；旧版 `TileEntityMachineBattery` 顶层保存 `power`。若要兼容旧世界，需要读旧 `power` key。
-  - `MachineBatteryBlockEntity` 当前直接拉/推 FE 邻居是现代互操作扩展；旧 `TileEntityMachineBattery` 非 buffer 模式只对相邻 PowerNet 订阅/退订，direct provision 路径来自 `tryProvide`。是否保留 FE 直连应作为现代桥接层记录，不应视为旧版功能。
-  - `HbmEnergyNodespace` 当前只支持单 BlockPos 节点；旧 `GenNode` 支持多 positions，`TileEntityBatterySocket#getPortPos()` 明确是 2x2 多位置端口。迁移 `machine_battery_socket` 前必须扩展节点库或提供多端口节点等价层。
-  - `HbmEnergyConnectionUtil` 目前只处理方块/方块实体连接面；旧 `DirPos` 连接点是“邻接位置 + 连接方向”，可表达多方块端口与偏移连接，后续特殊线缆/插座会暴露差异。
+  - `MachineBatteryBlockEntity` 早期实现曾直接拉/推 FE 邻居；2026-05-23 已从旧 `tryProvide`/输入模式路径移除，FE 直连只作为显式现代桥接 API 保留，不再视为旧版功能。
+  - `HbmEnergyNodespace` 已支持多 BlockPos 节点与 `DirPos` 式偏移连接点，`machine_battery_socket` 端口已接入；剩余风险转为跨区块/卸载/拆网/重建生命周期实机验证，而不是节点表达能力缺失。
   - `HbmBatteryItem` tooltip 没有完全复刻旧 `ItemBatteryPack#addInformation` 的短数字、百分比、充满耗时、持续时间文案；这属于展示偏差，不影响能量语义，但应在物品 GUI/tooltip 批次补齐。
   - `battery_pack` 由旧单 item + metadata 拆为 12 个独立 ID；这是现代注册适配，仍需旧 meta -> 新 ID 的 recipe/loot/存档映射表，不能把当前独立 ID 当作完全等价迁移。
 - 下一步移植计划：
@@ -1193,3 +1192,292 @@
 - 当前移植估算：
   - 高阶 `battery_pack`/电容配方数据层和底层材料/tag 落点补齐后，能量库约 `92%`。
   - 剩余重点：机器配方 runtime、旧 `NTMMaterial` autogen 族完整迁移、`battery_sc` 放电事件、创造电池插座特效、EnergyControl/info panel/debug particles 兼容层，以及实机跨区块/卸载/网络分裂生命周期验证。
+
+## 2026-05-23 大排查：能量库 1.7.10 语义对齐修正
+
+- 本轮重新对照的 1.7.10 源码：
+  - `api/hbm/energymk2/PowerNetMK2.java`
+  - `api/hbm/energymk2/IEnergyProviderMK2.java`
+  - `api/hbm/energymk2/IEnergyReceiverMK2.java`
+  - `api/hbm/energymk2/IEnergyHandlerMK2.java`
+  - `api/hbm/energymk2/IBatteryItem.java`
+  - `api/hbm/energymk2/Nodespace/NodeNet.java`
+  - `api/hbm/energymk2/Nodespace/UniNodespace.java`
+  - `api/hbm/energymk2/Nodespace/GenNode.java`
+  - `com/hbm/lib/Library.java`
+  - `com/hbm/items/tool/ItemBattery.java`
+  - `com/hbm/items/tool/ItemBatteryPack.java`
+  - `com/hbm/items/tool/ItemBatteryCreative.java`
+  - `com/hbm/items/tool/ItemBatterySC.java`
+  - `com/hbm/tileentity/machine/TileEntityMachineBattery.java`
+  - `com/hbm/tileentity/machine/TileEntityBatteryBase.java`
+  - `com/hbm/tileentity/machine/TileEntityBatterySocket.java`
+- 已修正的现代端不对齐点：
+  - `HbmBatteryItem`：
+    - 无 NBT 的旧电池/电容默认是满电；现代端原先把可充电电池默认成空电，已改为默认 `maxCharge`。
+    - 旧 `ItemBattery#chargeBattery/dischargeBattery` 本身不做速率限流，速率由 `Library#chargeItemsFromTE/chargeTEFromItems` 调用侧限制；现代端已移除物品方法内部的 charge/discharge rate 二次限流，保留 `HbmBatteryTransfer` 调用侧限流。
+  - `HbmPowerNet`：
+    - 旧 `NodeNet#joinNetworks` 合网时会把旧网 provider/receiver entries 重新加入新网并刷新时间戳；现代端已在 `HbmPowerNet#joinNetwork` 合并订阅表。
+    - 旧 `PowerNetMK2#update` 的优先级循环每个优先级结束后用全局累计 `energyUsed` 扣 `toTransfer`，不是只扣本优先级实际使用量；现代端已按这个外部可见分配结果对齐。
+    - 旧普通网络分发会把 `toSend` clamp 到本接收器需求；旧 `sendPowerDiode` 不 clamp 到 entry demand，只依赖接收器返回 leftover；现代端已区分普通分发和 diode 分发。
+    - 旧 provider 扣能的加权阶段按计算的 `toUse` 扣 `leftover`，不看 `usePower` 返回值；随机补余阶段最多 100 次且不因 0 使用量提前退出；现代端已按旧结果对齐。`HbmEnergyProvider#usePower` 仍保留现代安全返回值，但核心网络分配不再依赖它改变旧算法结果。
+  - `HbmEnergyUtil`：
+    - 旧 `tryProvide` 只做导线网络订阅与 `IEnergyReceiverMK2` 直连转移；现代端已要求直连目标同时是 `HbmEnergyConnector` 且连接面可用。
+    - 旧 `tryProvide` 没有 Forge Energy 兜底推送；现代端已把 FE 推送从 `tryProvideToNeighbor/tryProvideToAllNeighbors` 旧语义路径移除，只保留 `pushToNeighbor/pushToAllNeighbors` 作为显式现代桥接 API。
+  - `MachineBatteryBlockEntity` / `MachineBatterySocketBlockEntity`：
+    - 旧 `TileEntityMachineBattery` / `TileEntityBatteryBase` 以 byte ordinal 保存 `priority`；现代端原先只读字符串名，已兼容读取旧 ordinal。
+    - 旧电池类每 tick 会把 `LOWEST/HIGHEST` 归一为 `LOW`，GUI 只实际循环 `LOW/NORMAL/HIGH`；现代端已在电池存储 setter 中统一归一。
+- 核查后保留的现代结构差异：
+  - `HbmEnergyNodespace#popNode` 不逐字照搬旧 `UniNodespace#popNode` 的“销毁整网后等待全局重连”写法，而是移除节点后立即销毁旧网、标记幸存节点 changed，再由同一套 `checkNodeConnection` 重建；行为目标仍是旧端的区块卸载/断线/分网后重建，不额外保留旧实现的无谓等待窗口。
+  - `HbmEnergyProvider#usePower` / `HbmEnergyReceiver#transferPower` 保留现代 clamp 和返回值安全语义，但核心 `HbmPowerNet` 分配逻辑已按 1.7.10 计算结果使用，不把现代安全返回值当作旧算法依据。
+  - Forge Energy 能力桥仍作为 1.20.1 兼容层存在，但不再被旧 `tryProvide` 语义自动触发；需要 FE 互通的现代机器必须显式调用桥接 API。
+- 尚未完全对齐/需要继续推进：
+  - `battery_sc` 放电事件与伤害/爆炸/辐射效果仍未完全移植。
+  - 创造电池插座的自充电视觉/电弧/爆炸副作用仍是部分实现。
+  - OpenComputers / RedstoneOnRails 旧回调未迁移；EnergyControl 当前只有本地 info provider 风格数据键和 `/hbm energy info` 调试入口，尚不是完整外部 mod 兼容层。
+  - `HbmEnergyNodespace` 的跨区块、卸载、网络分裂、buffer 模式桥接、订阅超时需要实机验证矩阵；代码路径已更贴近旧端，但还缺世界生命周期回放测试。
+  - 流体库 `HbmFluidNet` 仍使用现代化的“本优先级实际使用量”扣减方式；这属于流体库后续单独对照项，本轮只修能量库。
+- 本轮验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+- 当前移植估算：
+  - 本轮语义对齐修正后，能量库约 `93%`。
+  - 下一步优先级：先做 `battery_sc` 放电/副作用，再做创造电池插座特效和 EnergyControl/debug particles 兼容层，最后用实机矩阵压跨区块/卸载/分裂/重建生命周期。
+
+## 2026-05-23 继续推进：`battery_sc` 电池插座放电副作用
+
+- 1.7.10 对照：
+  - `ItemBatterySC`：
+    - `EnumBatterySC.EMPTY/WASTE/RA226/TC99/CO60/PU238/PO210/AU198/PB209/AM241` 容量分别为 `0/150/200/500/750/1000/1250/1500/2000/2500 HE`。
+    - `chargeBattery/setCharge/dischargeBattery` 均为空实现。
+    - `getCharge()` 恒等于 `getMaxCharge()`，`getChargeRate()` 为 `0`，`getDischargeRate()` 等于 `getMaxCharge()`。
+  - `TileEntityBatterySocket#hasSCLoaded()`：
+    - 槽 0 为 `battery_sc` 且 meta 不是 `EMPTY` 时视为加载自充电电池。
+  - `TileEntityBatterySocket#updateEntity()`：
+    - 非客户端、已加载自充电电池时，若 `damageTarget == 0` 则重新抽取目标时间。
+    - `damageTimer++`；达到目标时调用 `discharge()`；每 tick 调用 `fluctuate()`。
+    - 目标时间为 `1200 + rand.nextInt(2400)` tick，即 1-3 分钟。
+    - `fluctuate()` 每 tick 让 `scPowerMult` 以 `1/100` 步长随机上下波动，并 clamp 到 `0.1..1.0`。
+  - `TileEntityBatterySocket#discharge()`：
+    - 重新抽取下一次目标时间。
+    - 在插座一侧计算放电起点，扫描 15 格内 `EntityLivingBase`，随机顺序对每个目标发射 `EntityBulletBeamBase` 电击束。
+    - 电击束配置为 `DamageClass.ELECTRIC`、`50F` 基础伤害、穿透、命中方块会破坏方块并在命中点 `explodeDischarge()`。
+    - `explodeDischarge()` 使用半径 5 的 `ExplosionVNT`，实体处理器为 `EntityProcessorCrossSmooth(1, 20).setDamageClass(ELECTRIC)`，播放旧音效 `hbm:entity.ufoBlast`。
+- 本批接入：
+  - 新增 `HbmEnergyDischargeEffects`：
+    - `dischargeSelfChargingSocket(ServerLevel, BlockPos, Direction)` 作为能量库可复用放电效果入口。
+    - 按旧参数扫描 15 格内存活生物，随机顺序逐个生成电弧。
+    - 电弧命中方块时破坏命中方块并在命中点触发电击爆点；未被方块遮挡时对目标造成 `50F` electric 伤害并触发命中爆点。
+    - 电击爆点半径 5，按距离造成最多 `20F` electric 伤害，并生成 `EXPLOSION`/`END_ROD` 服务端粒子。
+  - `MachineBatterySocketBlockEntity#tickSelfChargingBattery()` 达到 `damageTarget` 后现在调用 `dischargeSelfChargingBattery()`，不再只是重置计时。
+  - 新增 `hbm:electric` damage type 与 `ModDamageSources.electric(Level)`。
+  - 从 1.7.10 资源复制旧音效：
+    - 旧源 `assets/hbm/sounds/entity/ufoBlast.ogg`
+    - 现代落点 `assets/hbm/sounds/entity/ufo_blast.ogg`，使用全小写资源路径。
+  - 注册现代 sound event：
+    - `hbm:entity.ufo_blast` -> `sounds/entity/ufo_blast.ogg`
+  - 更新英文/中文语言与 datagen provider：
+    - `death.attack.electric`
+    - `subtitles.hbm.entity.ufo_blast`
+- 现代等价边界：
+  - 旧 `EntityBulletBeamBase` 和 Sedna `BulletConfig` 尚未整体迁移；本批没有创建平行弹丸系统，而是在能量库中实现服务端命中/破坏/爆点/伤害等价层。
+  - 旧 `EntityProcessorCrossSmooth` 的节点采样与密度判定未逐字迁移；现代爆点按半径 5、最大 20F、线性衰减执行。后续若 Sedna 弹丸/电击伤害抗性库完整迁移，应把 `HbmEnergyDischargeEffects` 的内部伤害处理替换为统一弹丸/伤害类库。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过，生成语言更新。
+- 当前移植估算：
+  - `battery_sc` 插座放电副作用落地后，能量库约 `94%`。
+  - 剩余重点：创造电池插座更完整视觉/危险副作用、EnergyControl/info panel/debug particles 兼容层、OC/ROR 旧回调、实机跨区块/卸载/分裂/重建生命周期验证。
+
+## 2026-05-23 继续推进：EnergyControl/info/debug particles 兼容层
+
+- 1.7.10 对照：
+  - `CompatEnergyControl` 是 EnergyControl 跨 mod 数据桥：
+    - `getEnergyData(TileEntity, NBTTagCompound)` 对 `IEnergyHandlerMK2` 写入 `KEY_EUTYPE="HE"`、`L_ENERGY_HE`、`L_CAPACITY_HE`。
+    - `getExtraData(TileEntity, NBTTagCompound)` 调用 `IInfoProviderEC#provideExtraInfo`。
+    - 常量表包含 `energy/capacity/diff/output/consumption/progress/active/tank/...` 等多个标准 key。
+  - `IEnergyHandlerMK2#provideInfoForECMK2` 的默认行为只写 `L_ENERGY_HE` 与 `L_CAPACITY_HE`。
+  - `IEnergyHandlerMK2.particleDebug=false` 是旧编译期常量；`IEnergyProviderMK2/IEnergyReceiverMK2#tryProvide/trySubscribe` 只有在开启时才发送 `AuxParticlePacketNT` 调试粒子。
+- 本批接入：
+  - `CompatEnergyControl` 从 3 个 key 扩展为旧版常量表的现代等价集合，补齐：
+    - `KEY_EUTYPE`
+    - `L_ENERGY_HE/TU/_`
+    - `L_CAPACITY_HE/TU/_`
+    - `D_CONSUMPTION_HE/MB`
+    - `D_OUTPUT_HE/MB/TU`
+    - `L_DIFF_HE`
+    - `I_PROGRESS`
+    - `B_ACTIVE`
+    - 以及 RBMK/热量/流体 tank/旧 deprecated key。
+  - 新增现代 helper：
+    - `CompatEnergyControl.isElectricItem(ItemStack)`
+    - `CompatEnergyControl.dischargeItem(ItemStack, double)`
+    - `CompatEnergyControl.getEnergyData(BlockEntity, CompoundTag)`
+    - `CompatEnergyControl.getExtraData(BlockEntity, CompoundTag)`
+  - `HbmEnergyBlockEntity#provideExtraInfo` 改为调用 `CompatEnergyControl.getEnergyData`，让能量设备信息输出走统一兼容层。
+  - `/hbm energy info <pos>` 现在先走 `getEnergyData`，再走 `getExtraData`，并按 key 排序输出，便于对照旧 EnergyControl payload。
+  - `HbmEnergyDebug` 的 provider/receiver/direct-transfer 调试粒子从直接 `sendParticles` 改成走现代 `AuxParticlePacket`/`ParticleUtil.TYPE_DEBUG_DRONE`：
+    - payload 保留 `role`、`connected`、`side`、`color`。
+    - 客户端 `HbmParticleEffects` 的 debug line 读取 `color` 并用 `DustParticleOptions` 渲染彩色线段。
+- 现代等价边界：
+  - 当前仍是本 mod 内兼容层与调试命令，不是对外部 EnergyControl mod 的正式 IMC/API 集成。
+  - `getAllTanks/getFluidTexture/findTileEntity/getHeat` 等 EnergyControl 旧入口尚未补齐；这些需要等流体库、RBMK 与多方块 core lookup 进一步稳定后统一接入。
+  - OC/ROR 旧回调仍未迁移。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+- 当前移植估算：
+  - EnergyControl/info/debug particles 兼容层补强后，能量库约 `95%`。
+  - 剩余重点：外部 EnergyControl 真兼容入口、OC/ROR 旧回调、创造电池插座更完整视觉/危险副作用、实机跨区块/卸载/分裂/重建生命周期验证。
+
+## 2026-05-23 继续推进：OC/ROR 本地兼容语义与 EnergyControl 数据修正
+
+- 1.7.10 对照：
+  - `TileEntityMachineBattery`：
+    - OC `getComponentName()` 为 `ntm_energy_storage_legacy`。
+    - OC `getEnergyInfo/getInfo` 返回 `{power, maxPower}`。
+    - ROR 暴露 `VAL:fill`、`VAL:fillpercent`、`VAL:delta` 与 `FUN:setmode`、`FUN:setredmode`、`FUN:setpriority`。
+  - `TileEntityBatteryBase`：
+    - OC `getComponentName()` 为 `ntm_energy_storage`。
+    - OC `getEnergyInfo` 返回 `{power, maxPower}`，`getModeInfo` 返回 `{redLow, redHigh, priority.ordinal() - 1}`，`getInfo` 返回 `{power, maxPower, redLow, redHigh, priority.ordinal() - 1}`。
+  - `TileEntityBatterySocket`：
+    - ROR 值同电池基类。
+    - OC `getEnergyInfo` 返回 `{power, maxPower, delta}`。
+    - OC `getPackInfo` 返回 `{unlocalizedName, chargeRate, dischargeRate}`，空/非电池返回 `{"", 0, 0}`。
+    - OC `getInfo` 合并 energy/mode/pack 三组数据。
+  - `CompatEnergyControl#dischargeItem` 按 `min(dischargeRate, charge, needed)` 限制外部放电量。
+- 本批接入：
+  - 新增现代本地 ROR API：
+    - `com.hbm.ntm.api.redstoneoverradio.RORInfo`
+    - `RORValueProvider`
+    - `RORInteractive`
+    - `RORFunctionException`
+  - `MachineBatteryBlockEntity`：
+    - 实现 ROR 值读取和 `setmode/setredmode/setpriority`。
+    - 补本地 OC 风格 `getEnergyInfo/getInfo` 返回数组。
+  - `MachineBatterySocketBlockEntity`：
+    - 实现 ROR 值读取和交互函数。
+    - 补本地 OC 风格 `getEnergyInfo/getPackInfo/getModeInfo/getInfo`。
+  - `/hbm energy ror functions|value|run <pos>` 提供无外部 mod 的旧 ROR 语义验证入口。
+  - `HbmEnergyBlockEntity` 实现 `HbmEnergyHandler`，修复通用 EnergyControl 数据导出对基类机器只写 `euType` 的问题。
+  - `CompatEnergyControl.dischargeItem` 恢复 1.7.10 外层放电速率限制。
+- 现代等价边界：
+  - 当前没有引入 OpenComputers 或无线红石方块的外部依赖；只是先把旧 API 语义固定为现代内部接口和可命令验证入口。
+  - `MachineBatteryBlockEntity#getInfo()` 保持普通旧电池 `{power, maxPower}`，插座使用旧插座扩展数组。
+  - 后续真正迁移 ROR reader/controller 或 OC 外部桥时，应直接调用本批接口。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+- 当前移植估算：
+  - OC/ROR 本地语义与 EnergyControl 修正后，能量库约 `96%`。
+  - 剩余重点：外部 mod 真桥接、创造电池插座更完整视觉/危险副作用、实机跨区块/卸载/分裂/重建生命周期验证、机器配方 runtime 与材料库尾项。
+
+## 2026-05-23 继续推进：EnergyControl fluid/heat/core helper 尾项
+
+- 1.7.10 对照：
+  - `CompatEnergyControl#getAllTanks(TileEntity)` 对 `IFluidUserMK2` 输出 `{fluidName, fill, capacity}`。
+  - `CompatEnergyControl#getFluidTexture(String)` 返回 `FluidType#getTexture()`。
+  - `CompatEnergyControl#findTileEntity(World,x,y,z)` 通过兼容层解析 dummy/multiblock core。
+  - `CompatEnergyControl#getHeat(TileEntity)` 是 EnergyControl 侧热量读取入口，旧端针对 RBMK base。
+- 本批接入：
+  - `CompatEnergyControl.findTileEntity(BlockEntity/Level, BlockPos)` 可解析现代 `MultiblockDummyBlockEntity` 到 core BlockEntity。
+  - `CompatEnergyControl.getAllTanks(BlockEntity)` 可读取现代 `HbmFluidBlockEntity#getAllTanks()`，输出旧 EnergyControl 数组形态。
+  - `CompatEnergyControl.getFluidTexture(String)` 可返回现代 `FluidType#getTexture()`。
+  - `CompatEnergyControl.getHeat(BlockEntity)` 可读取现代 `HeatSource`，无热源返回 `-1`。
+  - `BoilerBlockEntity` 实现 `HeatSource`，为旧 info panel/外部桥提供第一个现代热量读取对象。
+  - `/hbm energy info <pos>` 现在会先解析 dummy core，并输出 EnergyControl data、heat、tanks 和 tank texture。
+- 复核结果：
+  - `ItemBatteryCreative` 旧端 `charge/discharge/setCharge` 全空、`charge=Long.MAX_VALUE/2`、`capacity=Long.MAX_VALUE`、速率 `Long.MAX_VALUE/100`；现代 `HbmCreativeBatteryItem` 已保持该语义，本轮不重复改动。
+  - `TileEntityBatterySocket#discharge()` 旧端无论是否命中目标，最后都会在插座附近触发一次随机电爆；现代 `HbmEnergyDischargeEffects#dischargeSelfChargingSocket` 已有同等随机爆点，本轮确认无需补写。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+- 当前移植估算：
+  - EnergyControl 旧 helper 尾项落地后，能量库约 `96.5%`。
+  - 剩余重点：外部 EnergyControl/OC/ROR 真桥接、创造电池插座更完整客户端视觉、跨区块/卸载/网络分裂生命周期实机验证、机器配方 runtime 与材料库尾项。
+
+## 2026-05-23 继续推进：网络生命周期诊断与强制重建入口
+
+- 1.7.10 对照：
+  - `UniNodespace#updateNodespace()` 每 tick 检查无网或 `recentlyChanged` 节点，调用 `checkNodeConnection`。
+  - `UniNodeWorld#popNode()` 销毁旧网、移除所有 positions、标记节点 expired；旧网中的剩余节点会因失去有效网络而在后续 update 中重建。
+  - `PowerNetMK2` provider/receiver 订阅以 `System.currentTimeMillis()` 时间戳刷新，超过 `3000ms` 移除。
+  - `Nodespace.PowerNode` 注释明确提到 recentlyChanged 是为了处理 joining operation 偶发失败后的冗余重查。
+- 本批现代接入：
+  - `HbmEnergyNodespace.Diagnostics`：
+    - `nodePositions`
+    - `uniqueNodes`
+    - `networks`
+    - `invalidNetworks`
+    - `linkRefs`
+    - `dirtyNodes`
+    - `expiredNodes`
+    - `orphanNodes`
+    - `providerEntries`
+    - `receiverEntries`
+    - `reapTimer`
+  - `/hbm energy nodespace` 现在输出完整诊断，用于实机观察跨区块/卸载/分裂/重建是否留下孤儿节点、脏节点或无效网络。
+  - `HbmEnergyNodespace.forceRebuild(Level)`：
+    - 销毁当前维度所有 active power nets。
+    - 保留仍在 nodespace map 中的节点，清空 net、标记 recentlyChanged，再立即重建。
+    - `/hbm energy nodespace rebuild` 暴露该入口，用于实机压测后手动验证网络能否从当前节点集合重建到一致状态。
+  - `HbmEnergyNodespace.markNodeAndNeighborsChanged(Level, BlockPos)`：
+    - 给目标节点和六向邻接节点标记 changed。
+    - `MachineBatteryBlock` 与 `MachineBatterySocketBlock` 的 neighbor change 现在调用该入口，减少机器侧面/红石/邻接网络变化后的等待窗口。
+  - `HbmEnergyNodeBlock#neighborChanged` 现在刷新自身节点后也刷新邻接节点，避免线缆连接态改变时只有自身重建而邻居仍保留旧连接。
+  - `HbmPowerNet.DebugSnapshot` 增加：
+    - `timeoutMs`
+    - `oldestProviderAgeMs`
+    - `oldestReceiverAgeMs`
+    用于观察 3000ms 订阅超时是否按预期刷新/清理。
+- 现代等价边界：
+  - 强制重建命令是调试/验证入口，不是旧 1.7.10 的玩家功能。
+  - 当前仍没有自动化 GameTest 世界矩阵；但命令和诊断字段已经足够实机记录 buffer 桥接、跨区块、卸载、分网重建和订阅超时。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+- 当前移植估算：
+  - 生命周期诊断和重建工具补齐后，能量库约 `97%`。
+  - 剩余重点：实机矩阵截图/日志验证、外部 EnergyControl/OC/ROR 真桥接、创造电池插座客户端视觉、机器配方 runtime 与材料库尾项。
+
+## 2026-05-23 继续推进：电容族所需装配机配方 runtime 底层接入
+
+- 本批关联 `machine-module-recipe-runtime`：
+  - 新增统一 `GenericMachineRecipeRuntime`，用于承载旧 `ModuleMachineBase` 的配方查询、输入/输出检查、消耗和产出。
+  - `AssemblyMachineBlockEntity` 现在按旧槽位保存 `recipe0/progress0`，并能处理已迁入 datapack 的 `ass.capacitor*` 配方。
+  - 装配机 tank 按旧 `ModuleMachineAssembler#setupTanks` 扩容，`ass.capacitorspark` 的 8000mB perfluoromethyl 输入/输出不再被 4000mB 默认 tank 卡死。
+  - 装配机能量容量随 recipe 调整，保持旧 `maxPower = max(power, recipe.power * 100, 100000)` 语义。
+- 对能量库影响：
+  - 电池/电容物品族的“能量物品 + 配方数据 + 装配机底层处理”链路进一步闭合。
+  - 化工厂电池包路线还缺完整化工厂 BE/Menu/recipe selector 接入。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 当前移植估算：
+  - 装配机 runtime 底层接入后，能量库约 `97.5%`。
+  - 剩余重点：装配机 GUI/recipe selector packet、化工厂 runtime 接入、实机矩阵截图/日志验证、外部 EnergyControl/OC/ROR 真桥接、创造电池插座客户端视觉。
+
+## 2026-05-23 继续推进：装配机电容配方选择入口
+
+- 本批关联 `machine-module-recipe-runtime`：
+  - 装配机支持旧 `index/selection` 控制语义，可通过现有 `TileControlPacket` 设置 `recipe0`。
+  - 新增 `/hbm machine assembly recipes|info|set|clear`，用于列出/选择/清空/诊断装配机 recipe。
+  - 电容族 `ass.capacitor*` 现在可以在实机中通过命令选中并观察 `canProcess/progress/tank/power`。
+- 同批修正：
+  - 补 `HbmRecipeProvider` 的 `Items` import 与 `inputItem(ItemStack)` builder 重载，使流体包机器配方 datagen 代码重新可编译。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 当前移植估算：
+  - 装配机选择入口与实机诊断命令落地后，能量库约 `97.8%`。
+  - 剩余重点：装配机正式 Menu/Screen/recipe selector、化工厂 runtime 接入、blueprint pool gating、实机矩阵截图/日志验证、外部 EnergyControl/OC/ROR 真桥接。
+
+## 2026-05-23 继续推进：装配机界面闭环已补齐
+
+- 本批关联 `machine-module-recipe-runtime`：
+  - 装配机终于有现代 `Menu` / `Screen` / 选择器屏幕：
+    - 主界面按旧纹理显示电量、进度、输入/输出 tank 和 recipe 入口。
+    - 选择器按旧纹理支持搜索、翻页和 recipe 选择。
+  - `AssemblyMachineBlock#use` 现在会真实开屏，不再只是空的 sidedSuccess。
+  - `AssemblyMachineMenu` 继续沿用旧槽位结构和数据同步。
+- 对能量库影响：
+  - `ass.capacitor*` 电容物品族可以从数据、运行时到交互界面完整走通。
+  - 仍未迁移 blueprint pool gating，因此若要继续严格贴旧版，还需补 `ItemBlueprints` 和 pool 选择逻辑。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 当前移植估算：
+  - 装配机选择界面闭环落地后，能量库约 `98%`。
+  - 剩余重点：化工厂 runtime 接入、blueprint pool gating、实机矩阵截图/日志验证、外部 EnergyControl/OC/ROR 真桥接。

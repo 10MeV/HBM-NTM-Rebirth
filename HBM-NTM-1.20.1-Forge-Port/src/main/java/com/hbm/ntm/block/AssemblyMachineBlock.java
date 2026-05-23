@@ -11,6 +11,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -24,6 +25,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
+import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
@@ -38,7 +40,7 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
     private static final int[] LEGACY_XR_DIMENSIONS = new int[] { 2, 0, 1, 1, 1, 1 };
     public static final MultiblockExtents EXTENTS = MultiblockExtents.ofLegacyXr(LEGACY_XR_DIMENSIONS, Direction.SOUTH);
     private static final int LEGACY_OFFSET = 1;
-    private static final VoxelShape SHAPE = Shapes.box(-1.5D, 0.0D, -1.5D, 2.5D, 2.0D, 2.5D);
+    public static final VoxelShape SHAPE = Shapes.box(-1.5D, 0.0D, -1.5D, 2.5D, 2.0D, 2.5D);
 
     public AssemblyMachineBlock(Properties properties) {
         super(properties);
@@ -83,6 +85,10 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
+                && level.getBlockEntity(pos) instanceof AssemblyMachineBlockEntity assembler) {
+            NetworkHooks.openScreen(serverPlayer, assembler, pos);
+        }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 

@@ -204,7 +204,7 @@ public final class HbmEnergyUtil {
         if (direct > 0L) {
             return direct;
         }
-        return pushToNeighbor(level, pos, side, provider, provider.getProviderSpeed());
+        return 0L;
     }
 
     public static int tryProvideToAllNeighbors(Level level, BlockPos pos, HbmEnergyProvider provider) {
@@ -212,9 +212,6 @@ public final class HbmEnergyUtil {
         for (Direction side : Direction.values()) {
             boolean subscribed = subscribeProviderToNeighborNetwork(level, pos, side, provider);
             long transferred = provideDirectlyToNeighbor(level, pos, side, provider);
-            if (transferred <= 0L) {
-                transferred = pushToNeighbor(level, pos, side, provider, provider.getProviderSpeed());
-            }
             if (subscribed || transferred > 0L) {
                 touched++;
             }
@@ -313,11 +310,14 @@ public final class HbmEnergyUtil {
 
     private static long provideDirectlyToNeighbor(Level level, BlockPos pos, Direction side, HbmEnergyProvider provider) {
         BlockEntity neighbor = level.getBlockEntity(pos.relative(side));
-        if (!(neighbor instanceof HbmEnergyReceiver receiver) || receiver == provider || !receiver.allowDirectProvision()) {
+        if (!(neighbor instanceof HbmEnergyReceiver receiver)
+                || !(neighbor instanceof HbmEnergyConnector connector)
+                || receiver == provider
+                || !receiver.allowDirectProvision()) {
             return 0L;
         }
         Direction neighborSide = side.getOpposite();
-        if (neighbor instanceof HbmEnergyConnector connector && !connector.canConnectEnergy(neighborSide)) {
+        if (!connector.canConnectEnergy(neighborSide)) {
             return 0L;
         }
         long transferred = movePower(provider, receiver, Math.min(provider.getProviderSpeed(), receiver.getReceiverSpeed()));

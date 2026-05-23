@@ -4,6 +4,8 @@ import com.hbm.ntm.api.fluid.IFillableItem;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidContainerRules;
 import com.hbm.ntm.fluid.HbmFluids;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -83,6 +85,30 @@ public class HbmFluidContainerItem extends Item implements IFillableItem {
         return tag == null ? 0 : Math.max(0, Math.min(capacity, tag.getInt(TAG_AMOUNT)));
     }
 
+    public ItemStack createFilledStack(FluidType type) {
+        return createFilledStack(type, capacity, 0);
+    }
+
+    public ItemStack createFilledStack(FluidType type, int amount, int pressure) {
+        ItemStack stack = new ItemStack(this);
+        setFluid(stack, type, amount, pressure);
+        return stack;
+    }
+
+    public void addCreativeStacks(CreativeModeTab.Output output) {
+        for (FluidType type : HbmFluids.all()) {
+            if (type == HbmFluids.NONE || !HbmFluidContainerRules.accepts(kind, type)) {
+                continue;
+            }
+            output.accept(createFilledStack(type));
+        }
+    }
+
+    public int getTintColor(ItemStack stack) {
+        FluidType type = getFirstFluidType(stack);
+        return type == HbmFluids.NONE ? 0xFFFFFF : type.getColor();
+    }
+
     public int getCapacity() {
         return capacity;
     }
@@ -118,5 +144,31 @@ public class HbmFluidContainerItem extends Item implements IFillableItem {
         if (tag.isEmpty()) {
             stack.setTag(null);
         }
+    }
+
+    @Override
+    public Component getName(ItemStack stack) {
+        FluidType type = getFirstFluidType(stack);
+        if (type == HbmFluids.NONE) {
+            return super.getName(stack);
+        }
+        return Component.literal(pretty(kind.name()) + " " + pretty(type.getName()));
+    }
+
+    private static String pretty(String raw) {
+        StringBuilder builder = new StringBuilder();
+        for (String part : raw.toLowerCase().split("_")) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            if (!builder.isEmpty()) {
+                builder.append(' ');
+            }
+            builder.append(Character.toUpperCase(part.charAt(0)));
+            if (part.length() > 1) {
+                builder.append(part.substring(1));
+            }
+        }
+        return builder.toString();
     }
 }

@@ -1,6 +1,8 @@
 package com.hbm.ntm.client.obj;
 
+import com.hbm.ntm.HbmNtm;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 
 public final class ObjLaunchModels {
     public static final ObjModelPart LAUNCH_TABLE_BASE = part("launch_table_base");
@@ -20,8 +22,25 @@ public final class ObjLaunchModels {
     public static final ObjModelPart SOYUZ_LAUNCHER_SUPPORT_BASE = part("soyuz_launcher_support_base");
     public static final ObjModelPart SOYUZ_LAUNCHER_SUPPORT = part("soyuz_launcher_support");
 
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_LEGS_LEGACY = legacyModel("soyuz_launcher_legs").noSmooth();
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_TABLE_LEGACY = legacyModel("soyuz_launcher_table").noSmooth();
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_TOWER_BASE_LEGACY = legacyModel("soyuz_launcher_tower_base").noSmooth();
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_TOWER_LEGACY = legacyModel("soyuz_launcher_tower").noSmooth();
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_SUPPORT_BASE_LEGACY = legacyModel("soyuz_launcher_support_base").noSmooth();
+    public static final LegacyWavefrontModel SOYUZ_LAUNCHER_SUPPORT_LEGACY = legacyModel("soyuz_launcher_support").noSmooth();
+
     public static ObjModelPart part(String name) {
         return ObjModelLibrary.blockPart("launch_table/" + name, RenderType.cutout());
+    }
+
+    public static LegacyWavefrontModel legacyModel(String name) {
+        return new LegacyWavefrontModel(
+                new ResourceLocation(HbmNtm.MOD_ID, "models/block/launch_table/" + name + ".obj"),
+                texture(name));
+    }
+
+    public static ResourceLocation texture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/launch_table/" + name + ".png");
     }
 
     private ObjLaunchModels() {

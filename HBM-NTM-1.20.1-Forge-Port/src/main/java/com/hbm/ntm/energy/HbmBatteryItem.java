@@ -44,7 +44,7 @@ public class HbmBatteryItem extends Item {
     }
 
     protected long getDefaultCharge(ItemStack stack) {
-        return getChargeRate(stack) > 0L ? 0L : getMaxCharge(stack);
+        return getMaxCharge(stack);
     }
 
     public long getCharge(ItemStack stack) {
@@ -68,7 +68,6 @@ public class HbmBatteryItem extends Item {
         }
         long charge = getCharge(stack);
         long accepted = Math.min(amount, Math.max(0L, getMaxCharge(stack) - charge));
-        accepted = Math.min(accepted, getChargeRate(stack));
         if (accepted > 0L) {
             setCharge(stack, charge + accepted);
         }
@@ -80,7 +79,6 @@ public class HbmBatteryItem extends Item {
             return 0L;
         }
         long extracted = Math.min(amount, getCharge(stack));
-        extracted = Math.min(extracted, getDischargeRate(stack));
         if (extracted > 0L) {
             setCharge(stack, getCharge(stack) - extracted);
         }

@@ -15,6 +15,14 @@ public interface LegacyObjModel {
 
     List<String> getPartNames();
 
+    default LegacyObjModel mixedMode() {
+        return this;
+    }
+
+    default LegacyObjModel asVBO() {
+        return this;
+    }
+
     default void renderOnlyInCallOrder(ObjRenderContext context, String... names) {
         renderOnly(context, names);
     }

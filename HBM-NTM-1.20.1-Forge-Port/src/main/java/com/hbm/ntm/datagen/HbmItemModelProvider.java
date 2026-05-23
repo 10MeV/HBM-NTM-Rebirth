@@ -44,6 +44,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
                     .texture("layer0", modLoc("item/" + battery.getLegacyTexturePath()));
             return;
         }
+        if (item instanceof com.hbm.ntm.item.HbmFluidContainerItem || item instanceof com.hbm.ntm.item.HbmInfiniteFluidItem) {
+            basicItem(item);
+            return;
+        }
         if (path.startsWith("wire_dense_")) {
             generatedItem(path, "wire_dense");
             return;

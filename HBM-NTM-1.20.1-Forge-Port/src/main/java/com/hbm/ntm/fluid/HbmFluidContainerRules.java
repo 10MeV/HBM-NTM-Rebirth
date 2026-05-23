@@ -7,6 +7,7 @@ public final class HbmFluidContainerRules {
     public static final int BOTTLE_CAPACITY = 250;
     public static final int SMALL_CONTAINER_CAPACITY = 1_000;
     public static final int BARREL_CAPACITY = 16_000;
+    public static final int FLUID_PACK_CAPACITY = 32_000;
     public static final int DISPERSER_CAPACITY = 2_000;
     public static final int GLYPHID_GLAND_CAPACITY = 4_000;
 
@@ -20,6 +21,7 @@ public final class HbmFluidContainerRules {
             case FLUID_TANK -> canFillFluidTank(type);
             case LEAD_FLUID_TANK -> canFillLeadFluidTank(type);
             case FLUID_BARREL -> canFillFluidBarrel(type);
+            case FLUID_PACK -> canFillFluidPack(type);
             case DISPERSER_CANISTER -> canFillDisperserCanister(type);
             case GLYPHID_GLAND -> canFillGlyphidGland(type);
         };
@@ -28,6 +30,7 @@ public final class HbmFluidContainerRules {
     public static int capacity(ContainerKind kind) {
         return switch (kind) {
             case FLUID_BARREL -> BARREL_CAPACITY;
+            case FLUID_PACK -> FLUID_PACK_CAPACITY;
             case DISPERSER_CANISTER -> DISPERSER_CAPACITY;
             case GLYPHID_GLAND -> GLYPHID_GLAND_CAPACITY;
             default -> SMALL_CONTAINER_CAPACITY;
@@ -56,6 +59,10 @@ public final class HbmFluidContainerRules {
         return canUseGeneralContainer(type) && !type.needsLeadContainer();
     }
 
+    public static boolean canFillFluidPack(FluidType type) {
+        return canUseGeneralContainer(type) && !type.needsLeadContainer();
+    }
+
     public static boolean canFillDisperserCanister(FluidType type) {
         return type != null && type.isDispersible();
     }
@@ -74,6 +81,7 @@ public final class HbmFluidContainerRules {
         FLUID_TANK("fluid_tank_empty", "fluid_tank_full"),
         LEAD_FLUID_TANK("fluid_tank_lead_empty", "fluid_tank_lead_full"),
         FLUID_BARREL("fluid_barrel_empty", "fluid_barrel_full"),
+        FLUID_PACK("fluid_pack_empty", "fluid_pack_full"),
         DISPERSER_CANISTER("disperser_canister_empty", "disperser_canister"),
         GLYPHID_GLAND("glyphid_gland_empty", "glyphid_gland");
 

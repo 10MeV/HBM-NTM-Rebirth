@@ -1,7 +1,5 @@
 {
   "variants": {
-    "": {
-      "model": "hbm:block/gas_monoxide"
-    }
+    "": { "model": "hbm:block/gas_monoxide" }
   }
 }

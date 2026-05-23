@@ -17,6 +17,7 @@ import com.hbm.ntm.block.MachineBlockEntityBlock;
 import com.hbm.ntm.block.LegacyLanternBlock;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.MachineBatteryBlock;
+import com.hbm.ntm.block.LegacyHazardSourceBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacyRadiationBarrelBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
@@ -50,8 +51,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -109,6 +113,12 @@ public final class ModBlocks {
             fluidTankDefinition());
     public static final RegistryObject<Block> MACHINE_PUMPJACK = visibleMultiblockMachine("machine_pumpjack",
             pumpjackDefinition());
+    public static final RegistryObject<Block> MACHINE_CENTRIFUGE = visibleMultiblockMachine("machine_centrifuge",
+            centrifugeDefinition());
+    public static final RegistryObject<Block> MACHINE_ORE_SLOPPER = visibleMultiblockMachine("machine_ore_slopper",
+            oreSlopperDefinition());
+    public static final RegistryObject<Block> MACHINE_GASFLARE = visibleMultiblockMachine("machine_gasflare",
+            gasFlareDefinition());
 
     // Legacy 1.7.10 blockTab entries used as an early chunk-radiation test bed.
     public static final RegistryObject<Block> WASTE_EARTH = wasteEarth("waste_earth", false);
@@ -166,6 +176,9 @@ public final class ModBlocks {
             MACHINE_REFINERY,
             MACHINE_FLUIDTANK,
             MACHINE_PUMPJACK,
+            MACHINE_CENTRIFUGE,
+            MACHINE_ORE_SLOPPER,
+            MACHINE_GASFLARE,
             GAS_RADON,
             GAS_RADON_DENSE,
             GAS_RADON_TOMB,
@@ -588,6 +601,7 @@ public final class ModBlocks {
                                 && Math.abs(offset.getZ()) <= 1
                                 && (offset.getX() != 0 || offset.getZ() != 0)))
                 .renderParts("Base", "Frame", "Slider", "Spinner")
+                .yRotation(facing -> 270.0F - facing.toYRot())
                 .build();
     }
 
@@ -601,6 +615,7 @@ public final class ModBlocks {
                             .withProxyPredicate(offset -> isChemicalFactoryProxyOffset(offset, facing, rot));
                 })
                 .renderParts("Base", "Frame", "Fan1", "Fan2")
+                .yRotation(facing -> 270.0F - facing.toYRot())
                 .build();
     }
 
@@ -626,7 +641,7 @@ public final class ModBlocks {
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 8, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(cornerProxyOffsets(facing)))
-                .yRotationOffset(180.0F)
+                .yRotation(facing -> 180.0F)
                 .build();
     }
 
@@ -636,7 +651,7 @@ public final class ModBlocks {
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 2, 2 }, facing)
                         .withExtraProxyOffsets(cornerProxyOffsets(facing)))
-                .yRotationOffset(180.0F)
+                .yRotation(facing -> (360.0F - facing.toYRot()) % 360.0F)
                 .build();
     }
 
@@ -657,6 +672,129 @@ public final class ModBlocks {
                 .yRotation(facing -> 270.0F - facing.toYRot())
                 .renderBoundingBox(pos -> new AABB(pos.offset(-7, 0, -7), pos.offset(8, 6, 8)))
                 .build();
+    }
+
+    private static LegacyMachineDefinition centrifugeDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("centrifuge"), machineTexture("centrifuge"))
+                .legacyXrDimensions(3, 0, 0, 0, 0, 0)
+                .legacyOffset(0)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 0, 0, 0, 0 }, facing)
+                        .withProxyPredicate(offset -> offset.getY() > 0))
+                .yRotation(ModBlocks::centrifugeRotation)
+                .collisionShape(state -> legacyRotatedShape(state,
+                        new AABB(-0.5D, 0.0D, -0.5D, 0.5D, 1.0D, 0.5D),
+                        new AABB(-0.375D, 1.0D, -0.375D, 0.375D, 4.0D, 0.375D)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-1, 0, -1), pos.offset(2, 5, 2)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition oreSlopperDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("ore_slopper"), machineTexture("ore_slopper"))
+                .legacyXrDimensions(3, 0, 3, 3, 1, 1)
+                .legacyOffset(3)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 3, 3, 1, 1 }, facing)
+                        .withProxyOffsets(oreSlopperProxyOffsets(facing)))
+                .yRotation(ModBlocks::oreSlopperRotation)
+                .collisionShape(state -> legacyRotatedShape(state,
+                        new AABB(-3.5D, 0.0D, -1.5D, 3.5D, 1.0D, 1.5D),
+                        new AABB(0.5D, 1.0D, -1.5D, 3.5D, 3.25D, 1.5D),
+                        new AABB(-2.25D, 1.0D, -1.5D, 0.25D, 3.25D, -0.75D),
+                        new AABB(-2.25D, 1.0D, 0.75D, 0.25D, 3.25D, 1.5D),
+                        new AABB(-2.25D, 1.0D, -1.5D, -2.0D, 3.25D, 1.5D),
+                        new AABB(0.0D, 1.0D, -1.5D, 0.25D, 3.25D, 1.5D),
+                        new AABB(-2.0D, 1.0D, -0.75D, 0.0D, 2.0D, 0.75D),
+                        new AABB(-3.25D, 1.0D, -1.0D, -2.25D, 3.0D, 1.0D)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-4, 0, -2), pos.offset(4, 7, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition gasFlareDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("flare_stack"), machineTexture("flare_stack"))
+                .legacyXrDimensions(11, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 11, 0, 1, 1, 1, 1 }, facing)
+                        .withProxyOffsets(crossProxyOffsets()))
+                .yRotation(facing -> 180.0F)
+                .collisionShape(state -> legacyRotatedShape(state,
+                        new AABB(-1.5D, 0.0D, -1.5D, 1.5D, 3.875D, 1.5D),
+                        new AABB(-0.75D, 3.875D, -0.75D, 0.75D, 9.0D, 0.75D),
+                        new AABB(-1.5D, 9.0D, -1.5D, 1.5D, 9.375D, 1.5D),
+                        new AABB(-0.75D, 9.375D, -0.75D, 0.75D, 12.0D, 0.75D)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 13, 3)))
+                .build();
+    }
+
+    private static List<BlockPos> oreSlopperProxyOffsets(Direction facing) {
+        Direction rot = facing.getClockWise();
+        return List.of(
+                new BlockPos(facing.getStepX() * 3, 0, facing.getStepZ() * 3),
+                new BlockPos(-facing.getStepX() * 3, 0, -facing.getStepZ() * 3),
+                new BlockPos(rot.getStepX(), 0, rot.getStepZ()),
+                new BlockPos(-rot.getStepX(), 0, -rot.getStepZ()),
+                new BlockPos(facing.getStepX() * 2 + rot.getStepX(), 0, facing.getStepZ() * 2 + rot.getStepZ()),
+                new BlockPos(facing.getStepX() * 2 - rot.getStepX(), 0, facing.getStepZ() * 2 - rot.getStepZ()),
+                new BlockPos(-facing.getStepX() * 2 + rot.getStepX(), 0, -facing.getStepZ() * 2 + rot.getStepZ()),
+                new BlockPos(-facing.getStepX() * 2 - rot.getStepX(), 0, -facing.getStepZ() * 2 - rot.getStepZ()));
+    }
+
+    private static List<BlockPos> crossProxyOffsets() {
+        return List.of(
+                new BlockPos(1, 0, 0),
+                new BlockPos(-1, 0, 0),
+                new BlockPos(0, 0, 1),
+                new BlockPos(0, 0, -1));
+    }
+
+    private static VoxelShape legacyRotatedShape(BlockState state, AABB... boxes) {
+        Direction facing = state.getValue(LegacyVisibleMultiblockMachineBlock.FACING);
+        VoxelShape shape = Shapes.empty();
+        for (AABB box : boxes) {
+            AABB rotated = rotateLegacyBox(box, legacyDetailedHitboxRotation(facing));
+            shape = Shapes.or(shape, Shapes.box(
+                    rotated.minX + 0.5D,
+                    rotated.minY,
+                    rotated.minZ + 0.5D,
+                    rotated.maxX + 0.5D,
+                    rotated.maxY,
+                    rotated.maxZ + 0.5D));
+        }
+        return shape;
+    }
+
+    private static Direction legacyDetailedHitboxRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> Direction.EAST;
+            case SOUTH -> Direction.WEST;
+            case WEST -> Direction.NORTH;
+            default -> Direction.SOUTH;
+        };
+    }
+
+    private static AABB rotateLegacyBox(AABB box, Direction rotation) {
+        return switch (rotation) {
+            case EAST -> new AABB(-box.maxZ, box.minY, box.minX, -box.minZ, box.maxY, box.maxX);
+            case SOUTH -> new AABB(-box.maxX, box.minY, -box.maxZ, -box.minX, box.maxY, -box.minZ);
+            case WEST -> new AABB(box.minZ, box.minY, -box.maxX, box.maxZ, box.maxY, -box.minX);
+            default -> box;
+        };
+    }
+
+    private static float centrifugeRotation(Direction facing) {
+        return switch (facing) {
+            case SOUTH -> 90.0F;
+            case WEST -> 180.0F;
+            case NORTH -> 270.0F;
+            default -> 0.0F;
+        };
+    }
+
+    private static float oreSlopperRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 180.0F;
+            case EAST -> 270.0F;
+            case SOUTH -> 0.0F;
+            default -> 90.0F;
+        };
     }
 
     private static List<BlockPos> pumpjackFilledOffsets(Direction facing, BlockPos offsetCore) {
@@ -804,6 +942,12 @@ public final class ModBlocks {
             case "wood_barrier" -> LegacyComplexShapeBlock.woodBarrier(simpleResourceProperties(name, textureName).noOcclusion());
             case "sandbags" -> LegacyComplexShapeBlock.sandbags(simpleResourceProperties(name, textureName).noOcclusion());
             case "block_waste", "block_waste_painted", "block_waste_vitrified" -> new LegacyNuclearWasteBlock(name, simpleResourceProperties(name, textureName));
+            case "block_u233", "block_u235", "block_neptunium", "block_polonium", "block_mox_fuel",
+                    "block_plutonium", "block_pu238", "block_pu239", "block_pu240", "block_pu_mix",
+                    "block_plutonium_fuel" ->
+                    new LegacyHazardSourceBlock(name, simpleResourceProperties(name, textureName), LegacyHazardSourceBlock.Effect.RADFOG, true);
+            case "block_schraranium", "block_schrabidium", "block_schrabidate", "block_solinium", "block_schrabidium_fuel" ->
+                    new LegacyHazardSourceBlock(name, simpleResourceProperties(name, textureName), LegacyHazardSourceBlock.Effect.SCHRAB, true);
             case "ore_uranium", "ore_uranium_scorched", "ore_gneiss_uranium", "ore_gneiss_uranium_scorched",
                     "ore_nether_uranium", "ore_nether_uranium_scorched" ->
                     new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON::get, true, false);

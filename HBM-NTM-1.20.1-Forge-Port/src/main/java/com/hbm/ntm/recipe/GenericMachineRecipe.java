@@ -163,7 +163,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
         CHEMICAL_PLANT,
         ASSEMBLY_MACHINE;
 
-        private RecipeType<GenericMachineRecipe> type() {
+        public RecipeType<GenericMachineRecipe> type() {
             return switch (this) {
                 case CHEMICAL_PLANT -> ModRecipes.CHEMICAL_PLANT.type().get();
                 case ASSEMBLY_MACHINE -> ModRecipes.ASSEMBLY_MACHINE.type().get();

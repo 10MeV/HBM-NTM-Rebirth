@@ -3,6 +3,7 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationData;
+import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -102,7 +103,7 @@ public class LegacyToxicGasBlock extends LegacyGasBlock {
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         super.animateTick(state, level, pos, random);
         if (kind == Kind.ASBESTOS && random.nextInt(5) == 0) {
-            level.addParticle(ParticleTypes.MYCELIUM,
+            level.addParticle(ModParticleTypes.TOWN_AURA.get(),
                     pos.getX() + random.nextFloat(),
                     pos.getY() + random.nextFloat(),
                     pos.getZ() + random.nextFloat(),

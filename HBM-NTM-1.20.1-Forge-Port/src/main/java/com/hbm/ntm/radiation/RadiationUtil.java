@@ -85,7 +85,13 @@ public final class RadiationUtil {
     }
 
     public static void applyDigammaDirect(LivingEntity entity, float amount) {
-        contaminate(entity, HazardType.DIGAMMA, ContaminationType.CREATIVE, amount);
+        if (amount <= 0.0F || entity instanceof RadiationImmune || isLegacyImmuneEntityName(entity)) {
+            return;
+        }
+        if (entity instanceof Player player && player.isCreative()) {
+            return;
+        }
+        RadiationData.incrementDigamma(entity, amount);
     }
 
     public static boolean isRadImmune(LivingEntity entity) {
@@ -126,8 +132,6 @@ public final class RadiationUtil {
 
     public static void applyRadaway(LivingEntity entity, float amount) {
         RadiationData.incrementRadiation(entity, -amount);
-        RadiationData.setRadEnv(entity, Math.max(RadiationData.getRadEnv(entity) - amount, 0.0F));
-        entity.removeEffect(ModEffects.RADIATION.get());
     }
 
     public static void printGeigerData(Player player) {

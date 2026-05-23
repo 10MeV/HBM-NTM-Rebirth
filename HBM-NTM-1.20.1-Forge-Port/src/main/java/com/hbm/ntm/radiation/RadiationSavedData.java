@@ -147,6 +147,8 @@ public class RadiationSavedData extends SavedData {
                     }
                     if (nextValue > 0.0F || existed) {
                         next.put(targetKey, nextValue);
+                    } else {
+                        next.remove(targetKey);
                     }
                     if (nextValue > fogThreshold) {
                         fogCandidates.add(origin);

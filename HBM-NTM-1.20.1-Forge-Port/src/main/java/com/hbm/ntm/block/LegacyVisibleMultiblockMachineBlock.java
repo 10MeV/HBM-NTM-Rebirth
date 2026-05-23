@@ -3,11 +3,15 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.blockentity.LegacyVisibleMachineBlockEntity;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
@@ -47,6 +51,16 @@ public class LegacyVisibleMultiblockMachineBlock extends LegacyXrMultiblockBlock
     @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return definition.hasCollisionShapeFactory() ? definition.collisionShape(state) : Shapes.block();
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return definition.hasCollisionShapeFactory() ? definition.collisionShape(state) : Shapes.block();
     }
 
     @Override

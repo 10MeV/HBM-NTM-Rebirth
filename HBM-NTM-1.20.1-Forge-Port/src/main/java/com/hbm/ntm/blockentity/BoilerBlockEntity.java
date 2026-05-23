@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -18,7 +19,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidReceiver, HbmStandardFluidSender {
+public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidReceiver, HbmStandardFluidSender, HeatSource {
     public static final int FEED_TANK = 0;
     public static final int STEAM_TANK = 1;
 
@@ -53,6 +54,16 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
 
     public int getHeat() {
         return heat;
+    }
+
+    @Override
+    public int getHeatStored() {
+        return heat;
+    }
+
+    @Override
+    public void useUpHeat(int heat) {
+        this.heat = Math.max(0, this.heat - Math.max(0, heat));
     }
 
     public void addHeat(int heat) {

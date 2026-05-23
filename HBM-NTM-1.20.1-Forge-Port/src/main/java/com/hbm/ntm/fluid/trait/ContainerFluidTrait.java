@@ -35,4 +35,12 @@ public class ContainerFluidTrait extends FluidTrait {
     public int getGasTankLabelColor() {
         return gasTankLabelColor == null ? 0xFFFFFF : gasTankLabelColor;
     }
+
+    public int getGasTankBottleColorOr(int fallback) {
+        return gasTankBottleColor == null ? fallback : gasTankBottleColor;
+    }
+
+    public int getGasTankLabelColorOr(int fallback) {
+        return gasTankLabelColor == null ? fallback : gasTankLabelColor;
+    }
 }

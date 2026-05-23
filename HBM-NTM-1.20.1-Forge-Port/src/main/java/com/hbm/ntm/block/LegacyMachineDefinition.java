@@ -6,6 +6,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.List;
 import java.util.function.Function;
@@ -21,7 +22,8 @@ public record LegacyMachineDefinition(
         List<String> renderParts,
         float yRotationOffset,
         Function<Direction, Float> yRotationFactory,
-        Function<BlockPos, AABB> renderBoundingBoxFactory) {
+        Function<BlockPos, AABB> renderBoundingBoxFactory,
+        Function<BlockState, VoxelShape> collisionShapeFactory) {
 
     public LegacyMultiblockLayout layout(BlockState state) {
         return layoutFactory.apply(state.getValue(HorizontalMachineBlock.FACING));
@@ -44,6 +46,17 @@ public record LegacyMachineDefinition(
         return yRotationOffset + facing.toYRot();
     }
 
+    public VoxelShape collisionShape(BlockState state) {
+        if (collisionShapeFactory != null) {
+            return collisionShapeFactory.apply(state);
+        }
+        return layout(state).shape(1.0D);
+    }
+
+    public boolean hasCollisionShapeFactory() {
+        return collisionShapeFactory != null;
+    }
+
     public static Builder builder(ResourceLocation modelLocation, ResourceLocation textureLocation) {
         return new Builder(modelLocation, textureLocation);
     }
@@ -59,6 +72,7 @@ public record LegacyMachineDefinition(
         private float yRotationOffset = 90.0F;
         private Function<Direction, Float> yRotationFactory;
         private Function<BlockPos, AABB> renderBoundingBoxFactory;
+        private Function<BlockState, VoxelShape> collisionShapeFactory;
 
         private Builder(ResourceLocation modelLocation, ResourceLocation textureLocation) {
             this.modelLocation = modelLocation;
@@ -106,12 +120,18 @@ public record LegacyMachineDefinition(
             return this;
         }
 
+        public Builder collisionShape(Function<BlockState, VoxelShape> collisionShapeFactory) {
+            this.collisionShapeFactory = collisionShapeFactory;
+            return this;
+        }
+
         public LegacyMachineDefinition build() {
             Function<Direction, LegacyMultiblockLayout> resolvedLayout = layoutFactory != null
                     ? layoutFactory
                     : facing -> LegacyMultiblockLayout.ofLegacyXr(legacyXrDimensions, facing);
             return new LegacyMachineDefinition(legacyXrDimensions, legacyOffset, resolvedLayout, modelLocation,
-                    textureLocation, renderAll, renderParts, yRotationOffset, yRotationFactory, renderBoundingBoxFactory);
+                    textureLocation, renderAll, renderParts, yRotationOffset, yRotationFactory, renderBoundingBoxFactory,
+                    collisionShapeFactory);
         }
     }
 }

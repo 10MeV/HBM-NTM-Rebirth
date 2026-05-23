@@ -13,6 +13,10 @@ public final class ModParticleTypes {
 
     public static final RegistryObject<SimpleParticleType> RADIATION_FOG =
             PARTICLE_TYPES.register("radiation_fog", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> TOWN_AURA =
+            PARTICLE_TYPES.register("town_aura", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> SCHRAB_FOG =
+            PARTICLE_TYPES.register("schrab_fog", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> ROCKET_FLAME =
             PARTICLE_TYPES.register("rocket_flame", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> CONTRAIL =

@@ -10,9 +10,13 @@ import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.DigammaDiagnosticItem;
 import com.hbm.ntm.item.EffectPillItem;
 import com.hbm.ntm.item.GeigerCounterItem;
+import com.hbm.ntm.item.HbmFluidContainerItem;
+import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.item.RadawayItem;
 import com.hbm.ntm.item.ToolboxItem;
+import com.hbm.ntm.fluid.HbmFluidContainerRules;
+import com.hbm.ntm.fluid.HbmFluids;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -100,6 +104,48 @@ public final class ModItems {
     public static final RegistryObject<Item> TOOLBOX = registerLegacy("toolbox", () -> new ToolboxItem(new Item.Properties()));
     public static final RegistryObject<Item> CONVEYOR_WAND = registerLegacy("conveyor_wand",
             () -> new ConveyorWandItem(new Item.Properties().stacksTo(64)));
+    public static final RegistryObject<Item> CANISTER_EMPTY = registerLegacy("canister_empty",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> CANISTER_FULL = registerLegacy("canister_full",
+            () -> new HbmFluidContainerItem(new Item.Properties().craftRemainder(CANISTER_EMPTY.get()), HbmFluidContainerRules.ContainerKind.CANISTER));
+    public static final RegistryObject<Item> CANISTER_NAPALM = registerLegacy("canister_napalm",
+            () -> new Item(new Item.Properties().craftRemainder(CANISTER_EMPTY.get())));
+    public static final RegistryObject<Item> GAS_EMPTY = registerLegacy("gas_empty",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> GAS_FULL = registerLegacy("gas_full",
+            () -> new HbmFluidContainerItem(new Item.Properties().craftRemainder(GAS_EMPTY.get()), HbmFluidContainerRules.ContainerKind.GAS_TANK));
+    public static final RegistryObject<Item> FLUID_TANK_EMPTY = registerLegacy("fluid_tank_empty",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> FLUID_TANK_FULL = registerLegacy("fluid_tank_full",
+            () -> new HbmFluidContainerItem(new Item.Properties().craftRemainder(FLUID_TANK_EMPTY.get()), HbmFluidContainerRules.ContainerKind.FLUID_TANK));
+    public static final RegistryObject<Item> FLUID_TANK_LEAD_EMPTY = registerLegacy("fluid_tank_lead_empty",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> FLUID_TANK_LEAD_FULL = registerLegacy("fluid_tank_lead_full",
+            () -> new HbmFluidContainerItem(new Item.Properties().craftRemainder(FLUID_TANK_LEAD_EMPTY.get()), HbmFluidContainerRules.ContainerKind.LEAD_FLUID_TANK));
+    public static final RegistryObject<Item> FLUID_BARREL_EMPTY = registerLegacy("fluid_barrel_empty",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> FLUID_BARREL_FULL = registerLegacy("fluid_barrel_full",
+            () -> new HbmFluidContainerItem(new Item.Properties().craftRemainder(FLUID_BARREL_EMPTY.get()), HbmFluidContainerRules.ContainerKind.FLUID_BARREL, HbmFluidContainerRules.BARREL_CAPACITY));
+    public static final RegistryObject<Item> FLUID_BARREL_INFINITE = registerLegacy("fluid_barrel_infinite",
+            () -> new HbmInfiniteFluidItem(new Item.Properties(), null, 1_000_000_000, 1, "Infinite Fluid Barrel"));
+    public static final RegistryObject<Item> FLUID_PACK_EMPTY = registerLegacy("fluid_pack_empty",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> FLUID_PACK_FULL = registerLegacy("fluid_pack_full",
+            () -> new HbmFluidContainerItem(new Item.Properties().craftRemainder(FLUID_PACK_EMPTY.get()), HbmFluidContainerRules.ContainerKind.FLUID_PACK, HbmFluidContainerRules.FLUID_PACK_CAPACITY));
+    public static final RegistryObject<Item> DISPERSER_CANISTER_EMPTY = registerLegacy("disperser_canister_empty",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> DISPERSER_CANISTER = registerLegacy("disperser_canister",
+            () -> new HbmFluidContainerItem(new Item.Properties().craftRemainder(DISPERSER_CANISTER_EMPTY.get()), HbmFluidContainerRules.ContainerKind.DISPERSER_CANISTER, HbmFluidContainerRules.DISPERSER_CAPACITY));
+    public static final RegistryObject<Item> GLYPHID_GLAND_EMPTY = registerLegacy("glyphid_gland_empty",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> GLYPHID_GLAND = registerLegacy("glyphid_gland",
+            () -> new HbmFluidContainerItem(new Item.Properties().craftRemainder(GLYPHID_GLAND_EMPTY.get()), HbmFluidContainerRules.ContainerKind.GLYPHID_GLAND, HbmFluidContainerRules.GLYPHID_GLAND_CAPACITY));
+    public static final RegistryObject<Item> INF_WATER = registerLegacy("inf_water",
+            () -> new HbmInfiniteFluidItem(new Item.Properties(), HbmFluids.WATER, 50, 1, "Infinite Water"));
+    public static final RegistryObject<Item> INF_WATER_MK2 = registerLegacy("inf_water_mk2",
+            () -> new HbmInfiniteFluidItem(new Item.Properties(), HbmFluids.WATER, 500, 1, "Infinite Water Mk2"));
+    public static final RegistryObject<Item> CHLORINE_PINWHEEL = registerLegacy("chlorine_pinwheel",
+            () -> new HbmInfiniteFluidItem(new Item.Properties(), HbmFluids.CHLORINE, 1, 2, "Chlorine Pinwheel"));
     public static final RegistryObject<Item> BATTERY_POTATO = registerLegacy("battery_potato",
             () -> new HbmBatteryItem(new Item.Properties(), 1_000L, 0L, 100L));
     public static final RegistryObject<Item> BATTERY_CREATIVE = registerLegacy("battery_creative",
@@ -487,6 +533,30 @@ public final class ModItems {
             PLASTIC_BAG,
             TOOLBOX,
             CONVEYOR_WAND
+    ).toList();
+
+    public static final List<RegistryObject<Item>> CONTROL_FLUID_ITEMS = Stream.of(
+            CANISTER_EMPTY,
+            CANISTER_FULL,
+            CANISTER_NAPALM,
+            GAS_EMPTY,
+            GAS_FULL,
+            FLUID_TANK_EMPTY,
+            FLUID_TANK_FULL,
+            FLUID_TANK_LEAD_EMPTY,
+            FLUID_TANK_LEAD_FULL,
+            FLUID_BARREL_EMPTY,
+            FLUID_BARREL_FULL,
+            FLUID_BARREL_INFINITE,
+            FLUID_PACK_EMPTY,
+            FLUID_PACK_FULL,
+            DISPERSER_CANISTER_EMPTY,
+            DISPERSER_CANISTER,
+            GLYPHID_GLAND_EMPTY,
+            GLYPHID_GLAND,
+            INF_WATER,
+            INF_WATER_MK2,
+            CHLORINE_PINWHEEL
     ).toList();
 
     public static void register(IEventBus modBus) {

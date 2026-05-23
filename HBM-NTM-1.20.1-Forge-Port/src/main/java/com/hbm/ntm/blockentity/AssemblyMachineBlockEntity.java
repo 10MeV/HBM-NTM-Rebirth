@@ -2,16 +2,24 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
+import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidForgeMappings;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.network.HbmTileSyncable;
+import com.hbm.ntm.recipe.GenericMachineRecipe;
+import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
+import com.hbm.ntm.menu.AssemblyMachineMenu;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -37,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvider {
+public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver, HbmTileSyncable {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_DID_PROCESS = "DidProcess";
     private static final String TAG_RING = "Ring";
@@ -49,13 +57,39 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private static final String TAG_LEGACY_MAX_POWER = "maxPower";
     private static final String TAG_INPUT_TANK = "i";
     private static final String TAG_OUTPUT_TANK = "o";
+    private static final String TAG_PROGRESS = "progress0";
+    private static final String TAG_RECIPE = "recipe0";
+    private static final String TAG_CONTROL_INDEX = "index";
+    private static final String TAG_CONTROL_SELECTION = "selection";
     private static final long DEFAULT_MAX_POWER = 100_000L;
     private static final int TANK_CAPACITY = 4_000;
+    public static final int SLOT_BATTERY = 0;
+    public static final int SLOT_BLUEPRINT = 1;
+    public static final int SLOT_UPGRADE_START = 2;
+    public static final int SLOT_UPGRADE_END = 3;
+    public static final int SLOT_INPUT_START = 4;
+    public static final int SLOT_INPUT_END = 15;
+    public static final int SLOT_OUTPUT = 16;
+    public static final int[] INPUT_SLOTS = new int[] { 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+    public static final int[] OUTPUT_SLOTS = new int[] { SLOT_OUTPUT };
 
     private final ItemStackHandler items = new ItemStackHandler(17) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return slot != SLOT_OUTPUT;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            if (!isItemValid(slot, stack)) {
+                return stack;
+            }
+            return super.insertItem(slot, stack, simulate);
         }
     };
     private final HbmEnergyStorage energy = new HbmEnergyStorage(DEFAULT_MAX_POWER, DEFAULT_MAX_POWER, 0L);
@@ -72,14 +106,23 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private double ringTarget;
     private double ringSpeed;
     private int ringDelay;
+    private double progress;
+    private String selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
 
     public AssemblyMachineBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ASSEMBLY_MACHINE.get(), pos, state);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, AssemblyMachineBlockEntity blockEntity) {
-        blockEntity.setChanged();
-        if (level.getGameTime() % 20L == 0L) {
+        long oldPower = blockEntity.energy.getPower();
+        HbmEnergyUtil.chargeStorageFromItem(blockEntity.items.getStackInSlot(SLOT_BATTERY), blockEntity, blockEntity.getReceiverSpeed());
+        HbmEnergyUtil.subscribeReceiverToAllNeighborNetworks(level, pos, blockEntity);
+        boolean changed = blockEntity.tickRecipe(level);
+        changed = changed || oldPower != blockEntity.energy.getPower();
+        if (changed) {
+            blockEntity.setChanged();
+        }
+        if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -114,6 +157,63 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     public HbmFluidTank getOutputTank() {
         return outputTank;
+    }
+
+    public double getProgress() {
+        return progress;
+    }
+
+    public String getSelectedRecipeName() {
+        return selectedRecipe;
+    }
+
+    public void setSelectedRecipe(String selectedRecipe) {
+        this.selectedRecipe = selectedRecipe == null || selectedRecipe.isBlank()
+                ? GenericMachineRecipeRuntime.NULL_RECIPE
+                : selectedRecipe;
+        this.progress = 0.0D;
+        setChanged();
+    }
+
+    public boolean selectRecipe(String selectedRecipe) {
+        if (level == null || GenericMachineRecipeRuntime.NULL_RECIPE.equals(selectedRecipe)) {
+            setSelectedRecipe(GenericMachineRecipeRuntime.NULL_RECIPE);
+            return true;
+        }
+        if (!GenericMachineRecipeRuntime.hasRecipe(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, selectedRecipe)) {
+            return false;
+        }
+        setSelectedRecipe(selectedRecipe);
+        GenericMachineRecipe recipe = getSelectedRecipeDefinition();
+        setupTanks(recipe);
+        updateDynamicCapacity(recipe);
+        if (!level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+        return true;
+    }
+
+    @Nullable
+    public GenericMachineRecipe getSelectedRecipeDefinition() {
+        if (level == null) {
+            return null;
+        }
+        return GenericMachineRecipeRuntime.findByInternalName(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, selectedRecipe);
+    }
+
+    public boolean canProcessSelectedRecipe() {
+        GenericMachineRecipe recipe = getSelectedRecipeDefinition();
+        return recipe != null
+                && energy.getPower() >= recipe.getPower()
+                && GenericMachineRecipeRuntime.canProcess(recipe, items, INPUT_SLOTS, OUTPUT_SLOTS,
+                List.of(inputTank), List.of(outputTank));
+    }
+
+    public static CompoundTag recipeSelectionTag(String selection) {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt(TAG_CONTROL_INDEX, 0);
+        tag.putString(TAG_CONTROL_SELECTION, selection == null ? GenericMachineRecipeRuntime.NULL_RECIPE : selection);
+        return tag;
     }
 
     public List<ItemStack> getDrops() {
@@ -183,6 +283,8 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         tag.putLong(TAG_LEGACY_MAX_POWER, energy.getMaxPower());
         inputTank.writeToNbt(tag, TAG_INPUT_TANK);
         outputTank.writeToNbt(tag, TAG_OUTPUT_TANK);
+        tag.putDouble(TAG_PROGRESS, progress);
+        tag.putString(TAG_RECIPE, selectedRecipe);
         tag.putBoolean(TAG_DID_PROCESS, didProcess);
         tag.putDouble(TAG_RING, ring);
         tag.putDouble(TAG_RING_TARGET, ringTarget);
@@ -204,6 +306,11 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         }
         if (tag.contains(TAG_OUTPUT_TANK)) {
             outputTank.readFromNbt(tag, TAG_OUTPUT_TANK);
+        }
+        progress = tag.getDouble(TAG_PROGRESS);
+        selectedRecipe = tag.getString(TAG_RECIPE);
+        if (selectedRecipe.isBlank()) {
+            selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
         }
         didProcess = tag.getBoolean(TAG_DID_PROCESS);
         ring = tag.getDouble(TAG_RING);
@@ -234,10 +341,42 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         return Component.translatable("container.machineAssemblyMachine");
     }
 
+    @Override
+    public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
+        return tag.getInt(TAG_CONTROL_INDEX) == 0 && tag.contains(TAG_CONTROL_SELECTION);
+    }
+
+    @Override
+    public void handleClientControl(ServerPlayer player, CompoundTag tag) {
+        if (tag.getInt(TAG_CONTROL_INDEX) == 0) {
+            selectRecipe(tag.getString(TAG_CONTROL_SELECTION));
+        }
+    }
+
+    @Override
+    public long getPower() {
+        return energy.getPower();
+    }
+
+    @Override
+    public void setPower(long power) {
+        energy.setPower(power);
+    }
+
+    @Override
+    public long getMaxPower() {
+        return energy.getMaxPower();
+    }
+
+    @Override
+    public long getReceiverSpeed() {
+        return energy.getReceiverSpeed();
+    }
+
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
-        return null;
+        return new AssemblyMachineMenu(containerId, inventory, this);
     }
 
     @Override
@@ -267,6 +406,85 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
+    }
+
+    private boolean tickRecipe(Level level) {
+        boolean wasProcessing = didProcess;
+        double oldProgress = progress;
+        long oldPower = energy.getPower();
+        didProcess = false;
+
+        GenericMachineRecipe recipe = GenericMachineRecipeRuntime.findByInternalName(
+                level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, selectedRecipe);
+        if (recipe == null) {
+            progress = 0.0D;
+            updateDynamicCapacity(null);
+            return wasProcessing || oldProgress != progress;
+        }
+
+        GenericMachineRecipe switchedRecipe = GenericMachineRecipeRuntime.findAutoSwitchRecipe(
+                level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, recipe, items.getStackInSlot(INPUT_SLOTS[0]));
+        if (switchedRecipe != null) {
+            selectedRecipe = switchedRecipe.getInternalName();
+            progress = 0.0D;
+            setupTanks(switchedRecipe);
+            updateDynamicCapacity(switchedRecipe);
+            return true;
+        }
+
+        setupTanks(recipe);
+        updateDynamicCapacity(recipe);
+        boolean canProcess = energy.getPower() >= recipe.getPower()
+                && GenericMachineRecipeRuntime.canProcess(recipe, items, INPUT_SLOTS, OUTPUT_SLOTS,
+                List.of(inputTank), List.of(outputTank));
+        if (!canProcess) {
+            progress = 0.0D;
+            return wasProcessing || oldProgress != progress;
+        }
+
+        energy.setPower(energy.getPower() - recipe.getPower());
+        int duration = Math.max(recipe.getDuration(), 1);
+        progress = Math.min(1.0D, progress + 1.0D / duration);
+        didProcess = true;
+
+        if (progress >= 1.0D) {
+            GenericMachineRecipeRuntime.consumeInputs(recipe, items, INPUT_SLOTS, List.of(inputTank));
+            GenericMachineRecipeRuntime.produceOutputs(recipe, items, OUTPUT_SLOTS, List.of(outputTank));
+            if (GenericMachineRecipeRuntime.canProcess(recipe, items, INPUT_SLOTS, OUTPUT_SLOTS,
+                    List.of(inputTank), List.of(outputTank))
+                    && energy.getPower() >= recipe.getPower()) {
+                progress -= 1.0D;
+            } else {
+                progress = 0.0D;
+            }
+        }
+
+        return wasProcessing != didProcess || oldProgress != progress || oldPower != energy.getPower();
+    }
+
+    private void setupTanks(@Nullable GenericMachineRecipe recipe) {
+        if (recipe == null) {
+            return;
+        }
+        conformTank(inputTank, recipe.getFluidInputs().isEmpty() ? null : recipe.getFluidInputs().get(0));
+        conformTank(outputTank, recipe.getFluidOutputs().isEmpty() ? null : recipe.getFluidOutputs().get(0));
+    }
+
+    private void conformTank(HbmFluidTank tank, @Nullable HbmFluidStack stack) {
+        if (stack == null) {
+            tank.resetTank();
+            tank.changeTankSize(TANK_CAPACITY);
+            return;
+        }
+        tank.conform(stack);
+        tank.changeTankSize(Math.max(Math.max(tank.getFill(), stack.amount() * 2), TANK_CAPACITY));
+    }
+
+    private void updateDynamicCapacity(@Nullable GenericMachineRecipe recipe) {
+        long targetMax = recipe == null ? DEFAULT_MAX_POWER : Math.max(DEFAULT_MAX_POWER, recipe.getPower() * 100L);
+        targetMax = Math.max(targetMax, energy.getPower());
+        energy.setMaxPower(targetMax);
+        energy.setTransferRates(targetMax, 0L);
     }
 
     private class AssemblyFluidHandler implements IFluidHandler {

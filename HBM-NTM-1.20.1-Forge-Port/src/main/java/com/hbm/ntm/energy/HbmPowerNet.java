@@ -48,17 +48,23 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
     }
 
     public DebugSnapshot createDebugSnapshot() {
-        pruneStale(System.currentTimeMillis());
+        long timestamp = System.currentTimeMillis();
+        pruneStale(timestamp);
 
         long providerPower = 0L;
         long providerRate = 0L;
+        long oldestProviderAgeMs = 0L;
         for (HbmEnergyProvider provider : providerEntries.keySet()) {
             providerPower += Math.max(0L, provider.getPower());
             providerRate += Math.max(0L, provider.getProviderSpeed());
         }
+        for (Long lastSeen : providerEntries.values()) {
+            oldestProviderAgeMs = Math.max(oldestProviderAgeMs, Math.max(0L, timestamp - lastSeen));
+        }
 
         long receiverDemand = 0L;
         long receiverRate = 0L;
+        long oldestReceiverAgeMs = 0L;
         Map<HbmEnergyReceiver.ConnectionPriority, Integer> receiversByPriority =
                 new EnumMap<>(HbmEnergyReceiver.ConnectionPriority.class);
         for (HbmEnergyReceiver.ConnectionPriority priority : HbmEnergyReceiver.ConnectionPriority.values()) {
@@ -69,6 +75,9 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
             receiverRate += Math.max(0L, receiver.getReceiverSpeed());
             HbmEnergyReceiver.ConnectionPriority priority = receiver.getPriority();
             receiversByPriority.put(priority, receiversByPriority.get(priority) + 1);
+        }
+        for (Long lastSeen : receiverEntries.values()) {
+            oldestReceiverAgeMs = Math.max(oldestReceiverAgeMs, Math.max(0L, timestamp - lastSeen));
         }
 
         return new DebugSnapshot(
@@ -81,7 +90,10 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
                 receiverDemand,
                 receiverRate,
                 energyTracker,
-                receiversByPriority);
+                receiversByPriority,
+                timeoutMs,
+                oldestProviderAgeMs,
+                oldestReceiverAgeMs);
     }
 
     public boolean isSubscribed(HbmEnergyReceiver receiver) {
@@ -124,6 +136,24 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
         clearSubscriptions();
     }
 
+    @Override
+    public void joinNetwork(HbmNodeNet<HbmEnergyNode> network) {
+        if (!(network instanceof HbmPowerNet powerNet) || powerNet == this) {
+            super.joinNetwork(network);
+            return;
+        }
+
+        List<HbmEnergyReceiver> receivers = new ArrayList<>(powerNet.receiverEntries.keySet());
+        List<HbmEnergyProvider> providers = new ArrayList<>(powerNet.providerEntries.keySet());
+        super.joinNetwork(network);
+        for (HbmEnergyReceiver receiver : receivers) {
+            addReceiver(receiver);
+        }
+        for (HbmEnergyProvider provider : providers) {
+            addProvider(provider);
+        }
+    }
+
     public long update() {
         if (providerEntries.isEmpty() || receiverEntries.isEmpty()) {
             pruneStale(System.currentTimeMillis());
@@ -142,7 +172,7 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
             return 0L;
         }
 
-        long energyUsed = distributeToReceivers(receiverDemand, Math.min(powerAvailable, receiverDemand.totalDemand));
+        long energyUsed = distributeToReceivers(receiverDemand, Math.min(powerAvailable, receiverDemand.totalDemand), true);
         if (energyUsed <= 0L) {
             return 0L;
         }
@@ -162,7 +192,7 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
             return power;
         }
 
-        long energyUsed = distributeToReceivers(receiverDemand, Math.min(power, receiverDemand.totalDemand));
+        long energyUsed = distributeToReceivers(receiverDemand, Math.min(power, receiverDemand.totalDemand), false);
         energyTracker += energyUsed;
         return power - energyUsed;
     }
@@ -205,7 +235,7 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
         return result;
     }
 
-    private long distributeToReceivers(ReceiverDemand receiverDemand, long toTransfer) {
+    private long distributeToReceivers(ReceiverDemand receiverDemand, long toTransfer, boolean clampToReceiverDemand) {
         long energyUsed = 0L;
         HbmEnergyReceiver.ConnectionPriority[] priorities = HbmEnergyReceiver.ConnectionPriority.values();
         for (int i = priorities.length - 1; i >= 0; i--) {
@@ -216,17 +246,15 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
                 continue;
             }
 
-            long priorityUsed = 0L;
-            long priorityBudget = Math.min(toTransfer, priorityDemand);
             for (Entry<HbmEnergyReceiver> entry : receivers) {
                 double weight = (double) entry.amount / (double) priorityDemand;
-                long toSend = (long) Math.min(Math.max(priorityBudget * weight, 0D), entry.amount);
+                long weightedTransfer = (long) Math.max(toTransfer * weight, 0D);
+                long toSend = clampToReceiverDemand ? Math.min(weightedTransfer, entry.amount) : weightedTransfer;
                 long accepted = toSend - entry.value.transferPower(toSend);
-                priorityUsed += accepted;
+                energyUsed += accepted;
             }
 
-            energyUsed += priorityUsed;
-            toTransfer -= priorityUsed;
+            toTransfer -= energyUsed;
         }
         return energyUsed;
     }
@@ -236,19 +264,17 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
         for (Entry<HbmEnergyProvider> entry : providers) {
             double weight = powerAvailable > 0L ? (double) entry.amount / (double) powerAvailable : 0D;
             long toUse = (long) Math.max(energyUsed * weight, 0D);
-            long used = entry.value.usePower(toUse);
-            leftover -= used;
+            entry.value.usePower(toUse);
+            leftover -= toUse;
         }
 
         int iterationsLeft = 100;
         while (iterationsLeft > 0 && leftover > 0L && !providers.isEmpty()) {
             iterationsLeft--;
             HbmEnergyProvider provider = providers.get(RANDOM.nextInt(providers.size())).value;
-            long used = provider.usePower(Math.min(leftover, provider.getPower()));
-            leftover -= used;
-            if (used <= 0L) {
-                break;
-            }
+            long toUse = Math.min(leftover, provider.getPower());
+            provider.usePower(toUse);
+            leftover -= toUse;
         }
     }
 
@@ -322,6 +348,9 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
             long receiverDemand,
             long receiverRate,
             long lastTransfer,
-            Map<HbmEnergyReceiver.ConnectionPriority, Integer> receiversByPriority) {
+            Map<HbmEnergyReceiver.ConnectionPriority, Integer> receiversByPriority,
+            long timeoutMs,
+            long oldestProviderAgeMs,
+            long oldestReceiverAgeMs) {
     }
 }

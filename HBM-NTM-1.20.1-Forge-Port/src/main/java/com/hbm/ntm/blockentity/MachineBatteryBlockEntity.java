@@ -1,5 +1,8 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.redstoneoverradio.RORInfo;
+import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
+import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
@@ -12,6 +15,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -34,7 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, HbmTileSyncable {
+public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, HbmTileSyncable, RORValueProvider, RORInteractive {
     private static final String TAG_INVENTORY = "Inventory";
     private static final long MAX_POWER = 1_000_000L;
     private static final long MAX_RECEIVE = MAX_POWER / 200L;
@@ -121,7 +125,6 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         switch (currentMode) {
             case MODE_INPUT -> {
                 blockEntity.subscribeEnergyReceiverToAllSides();
-                blockEntity.pullEnergyFromAllSides(MAX_RECEIVE);
             }
             case MODE_BUFFER -> {
                 blockEntity.refreshEnergyNodeState();
@@ -211,6 +214,28 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         return next > MODE_NONE ? MODE_INPUT : next;
     }
 
+    private static HbmEnergyReceiver.ConnectionPriority readLegacyPriority(CompoundTag tag) {
+        if (tag.getTagType(TAG_PRIORITY) == Tag.TAG_STRING) {
+            try {
+                return sanitizeBatteryPriority(HbmEnergyReceiver.ConnectionPriority.valueOf(tag.getString(TAG_PRIORITY)));
+            } catch (IllegalArgumentException ignored) {
+                return HbmEnergyReceiver.ConnectionPriority.LOW;
+            }
+        }
+        HbmEnergyReceiver.ConnectionPriority[] values = HbmEnergyReceiver.ConnectionPriority.values();
+        int ordinal = tag.getInt(TAG_PRIORITY);
+        return ordinal >= 0 && ordinal < values.length ? sanitizeBatteryPriority(values[ordinal]) : HbmEnergyReceiver.ConnectionPriority.LOW;
+    }
+
+    private static HbmEnergyReceiver.ConnectionPriority sanitizeBatteryPriority(HbmEnergyReceiver.ConnectionPriority priority) {
+        if (priority == null
+                || priority == HbmEnergyReceiver.ConnectionPriority.LOWEST
+                || priority == HbmEnergyReceiver.ConnectionPriority.HIGHEST) {
+            return HbmEnergyReceiver.ConnectionPriority.LOW;
+        }
+        return priority;
+    }
+
     public ItemStackHandler getItems() {
         return items;
     }
@@ -270,12 +295,83 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         setChanged();
     }
 
+    private void setPriorityByLegacyOrdinal(int ordinal) {
+        HbmEnergyReceiver.ConnectionPriority[] values = HbmEnergyReceiver.ConnectionPriority.values();
+        batteryEnergy.setPriority(ordinal >= 0 && ordinal < values.length ? values[ordinal] : HbmEnergyReceiver.ConnectionPriority.LOW);
+    }
+
     public int getPowerBarHeight(int maxHeight) {
         return energy.getMaxPower() <= 0L ? 0 : (int) (energy.getPower() * maxHeight / energy.getMaxPower());
     }
 
     public long getDeltaPerSecond() {
         return delta;
+    }
+
+    public Object[] getEnergyInfo() {
+        return new Object[]{getPower(), getMaxPower()};
+    }
+
+    public Object[] getInfo() {
+        return new Object[]{getPower(), getMaxPower()};
+    }
+
+    @Override
+    public String[] getFunctionInfo() {
+        return new String[]{
+                RORInfo.PREFIX_VALUE + "fill",
+                RORInfo.PREFIX_VALUE + "fillpercent",
+                RORInfo.PREFIX_VALUE + "delta",
+                RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "mode (0-3)",
+                RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)",
+                RORInfo.PREFIX_FUNCTION + "setredmode" + RORInteractive.NAME_SEPARATOR + "mode (0-3)",
+                RORInfo.PREFIX_FUNCTION + "setredmode" + RORInteractive.NAME_SEPARATOR + "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)",
+                RORInfo.PREFIX_FUNCTION + "setpriority" + RORInteractive.NAME_SEPARATOR + "priority (0-2)"
+        };
+    }
+
+    @Override
+    public String provideRORValue(String name) {
+        if ((RORInfo.PREFIX_VALUE + "fill").equals(name)) {
+            return Long.toString(getPower());
+        }
+        if ((RORInfo.PREFIX_VALUE + "fillpercent").equals(name)) {
+            return Long.toString(getPowerBarHeight(100));
+        }
+        if ((RORInfo.PREFIX_VALUE + "delta").equals(name)) {
+            return Long.toString(delta);
+        }
+        return null;
+    }
+
+    @Override
+    public String runRORFunction(String name, String[] params) {
+        if ((RORInfo.PREFIX_FUNCTION + "setmode").equals(name) && params.length > 0) {
+            short mode = (short) RORInteractive.parseInt(params[0], MODE_INPUT, MODE_NONE);
+            if (mode != redLow) {
+                redLow = mode;
+            } else if (params.length > 1) {
+                redLow = (short) RORInteractive.parseInt(params[1], MODE_INPUT, MODE_NONE);
+            }
+            setChanged();
+            return null;
+        }
+        if ((RORInfo.PREFIX_FUNCTION + "setredmode").equals(name) && params.length > 0) {
+            short mode = (short) RORInteractive.parseInt(params[0], MODE_INPUT, MODE_NONE);
+            if (mode != redHigh) {
+                redHigh = mode;
+            } else if (params.length > 1) {
+                redHigh = (short) RORInteractive.parseInt(params[1], MODE_INPUT, MODE_NONE);
+            }
+            setChanged();
+            return null;
+        }
+        if ((RORInfo.PREFIX_FUNCTION + "setpriority").equals(name) && params.length > 0) {
+            setPriorityByLegacyOrdinal(RORInteractive.parseInt(params[0], 0, 2) + 1);
+            setChanged();
+            return null;
+        }
+        return null;
     }
 
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
@@ -355,11 +451,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
             lastMode = clampMode((short) tag.getInt("lastMode"));
         }
         if (tag.contains(TAG_PRIORITY)) {
-            try {
-                batteryEnergy.setPriority(HbmEnergyReceiver.ConnectionPriority.valueOf(tag.getString(TAG_PRIORITY)));
-            } catch (IllegalArgumentException ignored) {
-                batteryEnergy.setPriority(HbmEnergyReceiver.ConnectionPriority.LOW);
-            }
+            batteryEnergy.setPriority(readLegacyPriority(tag));
         }
     }
 
@@ -470,7 +562,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         }
 
         private void setPriority(HbmEnergyReceiver.ConnectionPriority priority) {
-            this.priority = priority == null ? HbmEnergyReceiver.ConnectionPriority.LOW : priority;
+            this.priority = sanitizeBatteryPriority(priority);
         }
     }
 }

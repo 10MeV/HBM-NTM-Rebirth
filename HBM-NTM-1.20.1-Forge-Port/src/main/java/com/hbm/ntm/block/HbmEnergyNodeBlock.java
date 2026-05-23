@@ -64,6 +64,7 @@ public abstract class HbmEnergyNodeBlock extends BaseEntityBlock implements HbmE
         super.neighborChanged(state, level, pos, block, neighborPos, movedByPiston);
         updateConnectionState(level, pos);
         refreshNode(level, pos);
+        refreshNeighborNodes(level, pos);
     }
 
     @Override

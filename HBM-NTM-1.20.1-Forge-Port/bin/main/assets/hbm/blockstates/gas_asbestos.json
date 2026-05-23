@@ -1,7 +1,5 @@
 {
   "variants": {
-    "": {
-      "model": "hbm:block/gas_asbestos"
-    }
+    "": { "model": "hbm:block/gas_asbestos" }
   }
 }

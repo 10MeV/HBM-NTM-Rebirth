@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.menu.AssemblyMachineMenu;
 import com.hbm.ntm.menu.BasicMachineMenu;
 import com.hbm.ntm.menu.MachineBatteryMenu;
 import com.hbm.ntm.menu.MachineBatterySocketMenu;
@@ -17,6 +18,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<BasicMachineMenu>> BASIC_MACHINE =
             MENUS.register("basic_machine", () -> IForgeMenuType.create(BasicMachineMenu::new));
+
+    public static final RegistryObject<MenuType<AssemblyMachineMenu>> ASSEMBLY_MACHINE =
+            MENUS.register("assembly_machine", () -> IForgeMenuType.create(AssemblyMachineMenu::new));
 
     public static final RegistryObject<MenuType<MachineBatteryMenu>> MACHINE_BATTERY =
             MENUS.register("machine_battery", () -> IForgeMenuType.create(MachineBatteryMenu::new));

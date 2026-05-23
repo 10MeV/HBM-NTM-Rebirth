@@ -232,7 +232,7 @@ public final class HazardRegistry {
         registerBlockRad("block_pu238", RadiationConstants.PU238 * RadiationConstants.BLOCK);
         registerBlockRad("block_pu239", RadiationConstants.PU239 * RadiationConstants.BLOCK);
         registerBlockRad("block_pu240", RadiationConstants.PU240 * RadiationConstants.BLOCK);
-        registerBlockRad("block_pu_mix", RadiationConstants.PU * RadiationConstants.BLOCK);
+        registerBlockRad("block_pu_mix", 6.25F * RadiationConstants.BLOCK);
         registerBlockRad("block_plutonium_fuel", RadiationConstants.PU_FUEL * RadiationConstants.BLOCK);
         registerBlockRad("block_trinitite", RadiationConstants.TRINITITE * RadiationConstants.BLOCK);
         registerBlockRad("block_waste", RadiationConstants.WASTE * RadiationConstants.BLOCK);
@@ -243,7 +243,8 @@ public final class HazardRegistry {
         registerBlockRad("block_corium_cobble", 150.0F);
         registerBlockRad("block_schraranium", RadiationConstants.SCHRARANIUM * RadiationConstants.BLOCK);
         registerBlockRad("block_schrabidium", RadiationConstants.SA326 * RadiationConstants.BLOCK);
-        registerBlockRad("block_solinium", RadiationConstants.SA326 * RadiationConstants.BLOCK);
+        registerBlockRad("block_schrabidate", RadiationConstants.SA326 * 0.1F * RadiationConstants.BLOCK);
+        registerBlockRad("block_solinium", RadiationConstants.SA327 * RadiationConstants.BLOCK);
         registerBlockRad("block_schrabidium_fuel", RadiationConstants.SA_FUEL * RadiationConstants.BLOCK);
         registerBlockByName("block_schrabidium_fuel", HazardType.BLINDING, 5.0F * RadiationConstants.BLOCK);
         registerBlockRad("block_ra226", RadiationConstants.RA226 * RadiationConstants.BLOCK);
@@ -268,7 +269,7 @@ public final class HazardRegistry {
         registerRad("ore_gneiss_gas", 1.0F);
         registerRad("ore_asbestos", 1.0F);
         registerRad("ore_gneiss_asbestos", 1.0F);
-        registerRad("block_schrabidate", 17.5F * RadiationConstants.BLOCK);
+        registerRad("block_schrabidate", RadiationConstants.SA326 * 0.1F * RadiationConstants.BLOCK);
         registerRad("block_red_phosphorus", 1.0F);
         registerRad("block_ra226", RadiationConstants.RA226 * RadiationConstants.BLOCK);
         registerRad("block_actinium", RadiationConstants.AC227 * RadiationConstants.BLOCK);

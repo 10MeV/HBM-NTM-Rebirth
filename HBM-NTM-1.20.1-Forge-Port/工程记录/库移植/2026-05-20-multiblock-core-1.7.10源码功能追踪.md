@@ -177,6 +177,49 @@
   - 现代通用可见机器 renderer 原先使用 `yRotationOffset + facing.toYRot()`，会把泵机 NORTH/SOUTH 翻反。
   - 已为 `LegacyMachineDefinition` 增加单机 `yRotation(...)`，泵机使用旧表等价公式。
 
+## 2026-05-23 多方块库大排查结论
+
+触发来源：
+
+- 用户要求对现有多方块库进行一次大排查，目标是对齐 1.7.10，而不是仅仅“看起来像”旧版。
+- 本轮重点复核了：
+  - 放置 core / dummy / extra 的偏移
+  - proxy 与普通 dummy 的划分
+  - 渲染 AABB
+  - 泵机和其他可见多方块的旧 renderer 朝向表
+
+本轮结论：
+
+- 结构层整体方向是对的，但不能用一个统一的 `yRotationOffset + facing.toYRot()` 覆盖所有机器。
+- 旧 1.7.10 的 `BlockDummyable` 机器经常在 renderer 里单独写 metadata->角度表，尤其是泵机、流体罐、化工机、精炼类。
+- 现代端需要把这些差异保留在 `LegacyMachineDefinition` 级别，而不是强行收敛到一个共享旋转公式。
+- 已保留的库能力：
+  - `checkOffsets()` 表达“只检查、不填充”的旧净空
+  - `renderBoundingBox(...)` 表达单机渲染范围
+  - `yRotation(...)` 表达单机旧 renderer 旋转表
+
+后续建议：
+
+- 新迁入的可见多方块都先查旧 renderer 的 metadata switch，再决定是否走共享 `yRotationOffset`。
+- 如果 1.7.10 原版 renderer 有独立 AABB，就优先按旧 AABB 对齐，不要只靠 layout 推导。
+
+## 2026-05-23 详细碰撞盒契约补记
+
+触发来源：
+
+- 再次核对旧 `BlockDummyable` 后确认：它除了 `checkSpace` / `fillSpace` / `makeExtra` 之外，还允许机器在 `bounding` 列表里声明更细的碰撞与射线盒。
+- 这层能力在 1.7.10 里直接影响 `addCollisionBoxesToList`、`collisionRayTrace`、`setBlockBoundsBasedOnState` 和 `drawHighlight`，不应和渲染 AABB 混为一谈。
+
+本轮补进现代库：
+
+- `LegacyMachineDefinition` 新增碰撞形状工厂入口，后续可按单机定义更细的 `VoxelShape`。
+- `LegacyVisibleMultiblockMachineBlock` 现在会优先使用定义好的碰撞形状；没有显式配置时仍保持保守方块形状，避免一次性改坏现有机器的手感。
+
+当前判断：
+
+- 这次补的是“库能力”，不是某一台机器的最终碰撞迁移。
+- 后续若某台 1.7.10 机器在 `bounding` 上有独立几何，就应把那组 AABB 单独迁成现代 `VoxelShape`，而不是继续复用默认方块盒。
+
 验证：
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
@@ -204,3 +247,41 @@
 验证：
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-23 可见多方块详细碰撞与第二批机器
+
+触发来源：
+
+- 用户要求继续推进多方块库移植，并允许一次迁更多。
+- 复核旧 `BlockDummyable` 发现详细 `bounding` 不只用于 core：dummy 被命中时会先 `findCore`，再用 core 的朝向和整机 AABB 列表参与碰撞、射线命中和高亮。
+
+本轮补齐的库能力：
+
+- `DummyBlock` 在目标 core 是 `LegacyVisibleMultiblockMachineBlock` 且机器声明了详细碰撞盒时，会把 core 的 `VoxelShape` 平移到当前 dummy 局部坐标系。
+- 这对齐旧 `BlockDummyable.addCollisionBoxesToList(...)` / `collisionRayTrace(...)` 的“dummy 回溯 core 后按整机盒计算”契约，避免 dummy 仍然只是满方块碰撞。
+
+本轮按 1.7.10 原码接入的资源齐全机器：
+
+- `machine_centrifuge`：
+  - 旧类：`MachineCentrifuge`、`TileEntityMachineCentrifuge`、`RenderCentrifuge`。
+  - 旧尺寸：`getDimensions() = {3,0,0,0,0,0}`，`getOffset() = 0`。
+  - 旧 proxy：上方 dummy 使用 `TileEntityProxyCombo(false, true, true)`，现代端暂按 `offset.y > 0` 标记 proxy。
+  - 旧详细碰撞：底部 1x1x1，加上 0.75x3x0.75 的竖筒。
+  - 旧渲染旋转表：SOUTH=90、WEST=180、NORTH=270、EAST=0。
+- `machine_ore_slopper`：
+  - 旧类：`MachineOreSlopper`、`TileEntityMachineOreSlopper`、`RenderOreSlopper`。
+  - 旧尺寸：`getDimensions() = {3,0,3,3,1,1}`，`getOffset() = 3`。
+  - 旧 `makeExtra`：沿 facing 正负 3、左右 1，以及 facing 正负 2 + 左右 1 的八个 proxy 位。
+  - 旧详细碰撞：底座、翻斗、破碎机和出口共 8 个 AABB 已迁入。
+  - 旧渲染旋转表：NORTH=180、EAST=270、SOUTH=0、WEST=90。
+- `machine_gasflare`：
+  - 旧类：`MachineGasFlare`、`TileEntityMachineGasFlare`、`RenderGasFlare`。
+  - 旧尺寸：`getDimensions() = {11,0,1,1,1,1}`，`getOffset() = 1`。
+  - 旧 `makeExtra`：地面十字四个 proxy 位。
+  - 旧详细碰撞：底座、主烟囱、顶部平台、顶段烟囱共 4 个 AABB 已迁入。
+  - 现代端使用现有 `flare_stack.obj/png` 资源；倾斜/燃烧动态效果留给后续真实 BlockEntity 逻辑切片。
+
+暂缓内容：
+
+- `machine_sawmill` 旧代码已经确认有独立 `bounding`、proxy 和动态锯片，但现代端当前没有对应 OBJ/贴图资源；不在本轮硬接空模型。
+- 三台机器本轮仍是可见多方块 scaffold：GUI、库存、能量/流体规则、动画状态、配方运行和声音粒子留给机器逻辑切片。

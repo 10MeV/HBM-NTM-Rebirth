@@ -75,6 +75,9 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         existingModelWithItem(ModBlocks.MACHINE_REFINERY, "machines/refinery");
         existingModelWithItem(ModBlocks.MACHINE_FLUIDTANK, "machines/fluidtank");
         existingModelWithItem(ModBlocks.MACHINE_PUMPJACK, "machines/pumpjack");
+        existingModelWithItem(ModBlocks.MACHINE_CENTRIFUGE, "machines/centrifuge");
+        existingModelWithItem(ModBlocks.MACHINE_ORE_SLOPPER, "machines/ore_slopper");
+        existingModelWithItem(ModBlocks.MACHINE_GASFLARE, "machines/flare_stack");
         simpleCubeWithItem(ModBlocks.GAS_RADON, "gas_radon");
         simpleCubeWithItem(ModBlocks.GAS_RADON_DENSE, "gas_radon_dense");
         simpleCubeWithItem(ModBlocks.GAS_RADON_TOMB, "gas_radon_tomb");

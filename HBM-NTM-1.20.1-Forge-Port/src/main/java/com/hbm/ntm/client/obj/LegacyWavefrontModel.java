@@ -6,8 +6,10 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.inventory.InventoryMenu;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -38,8 +40,10 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     private final Map<String, Group> groups = new LinkedHashMap<>();
     private final List<Group> groupOrder = new ArrayList<>();
     private final Set<String> missingPartWarnings = new LinkedHashSet<>();
+    private boolean smoothing = true;
     private boolean loaded;
     private boolean failed;
+    private LegacyWavefrontModel vboView;
 
     public LegacyWavefrontModel(ResourceLocation modelLocation, ResourceLocation textureLocation) {
         this.modelLocation = modelLocation;
@@ -55,6 +59,24 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     public ResourceLocation textureLocation() {
         return textureLocation;
+    }
+
+    public LegacyWavefrontModel noSmooth() {
+        this.smoothing = false;
+        return this;
+    }
+
+    @Override
+    public synchronized LegacyWavefrontModel mixedMode() {
+        return this;
+    }
+
+    @Override
+    public synchronized LegacyWavefrontModel asVBO() {
+        if (vboView == null) {
+            vboView = this;
+        }
+        return vboView;
     }
 
     public synchronized void renderPart(String partName, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
@@ -80,13 +102,76 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         boolean rendered = false;
         for (Group group : groupOrder) {
             if (normalize(group.name()).equals(normalized)) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
+                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
                 rendered = true;
             }
         }
         if (!rendered) {
             warnMissingPart(partName);
         }
+    }
+
+    public synchronized void renderWithSprite(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, float yawRadians, float pitchRadians, float rollRadians, boolean legacyShadow) {
+        renderWithSprite(sprite, poseStack, buffer, packedLight, packedOverlay, yawRadians, pitchRadians, rollRadians,
+                255, 255, 255, 255, legacyShadow);
+    }
+
+    public synchronized void renderWithSprite(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, float yawRadians, float pitchRadians, float rollRadians,
+            int red, int green, int blue, int alpha, boolean legacyShadow) {
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        poseStack.pushPose();
+        LegacyObjTransforms.applyObjUtilRotation(poseStack, yawRadians, pitchRadians, rollRadians);
+        for (Group group : groupOrder) {
+            renderGroupWithSprite(group, sprite, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, false);
+        }
+        poseStack.popPose();
+    }
+
+    public synchronized void renderPartWithSprite(String partName, TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, float yawRadians, float pitchRadians, float rollRadians, boolean legacyShadow) {
+        renderPartWithSprite(partName, sprite, poseStack, buffer, packedLight, packedOverlay, yawRadians, pitchRadians, rollRadians,
+                255, 255, 255, 255, legacyShadow);
+    }
+
+    public synchronized void renderPartWithSprite(String partName, TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, float yawRadians, float pitchRadians, float rollRadians,
+            int red, int green, int blue, int alpha, boolean legacyShadow) {
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        Group selected = null;
+        for (Group group : groupOrder) {
+            if (group.name().equals(partName)) {
+                selected = group;
+            }
+        }
+        if (selected == null) {
+            return;
+        }
+        poseStack.pushPose();
+        LegacyObjTransforms.applyObjUtilRotation(poseStack, yawRadians, pitchRadians, rollRadians);
+        renderGroupWithSprite(selected, sprite, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, true);
+        poseStack.popPose();
+    }
+
+    public synchronized void renderPartWithSprite(String partName, TextureAtlasSprite sprite, ObjRenderContext context,
+            float yawRadians, float pitchRadians, float rollRadians) {
+        int color = context.hasColor() ? context.color() : 0xFFFFFF;
+        renderPartWithSprite(partName, sprite, context.poseStack(), context.buffer(), context.packedLight(), context.packedOverlay(),
+                yawRadians, pitchRadians, rollRadians, color >> 16 & 255, color >> 8 & 255, color & 255, 255, context.legacyShadow());
+    }
+
+    public synchronized void renderWithSprite(TextureAtlasSprite sprite, ObjRenderContext context,
+            float yawRadians, float pitchRadians, float rollRadians) {
+        int color = context.hasColor() ? context.color() : 0xFFFFFF;
+        renderWithSprite(sprite, context.poseStack(), context.buffer(), context.packedLight(), context.packedOverlay(),
+                yawRadians, pitchRadians, rollRadians, color >> 16 & 255, color >> 8 & 255, color & 255, 255, context.legacyShadow());
     }
 
     @Override
@@ -116,7 +201,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
             return;
         }
         for (Group group : groupOrder) {
-            renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
+            renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
         }
     }
 
@@ -146,7 +231,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         for (Group group : groupOrder) {
             String key = normalize(group.name());
             if (included.contains(key)) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false);
+                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false, smoothing);
                 rendered.add(key);
             }
         }
@@ -171,7 +256,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         for (Group group : groupOrder) {
             String key = normalize(group.name());
             if (included.contains(key)) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
+                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
                 rendered.add(key);
             }
         }
@@ -194,10 +279,15 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         Set<String> rendered = new LinkedHashSet<>();
         for (String groupName : groupNames) {
             String key = normalize(groupName);
-            Group group = groups.get(key);
-            if (group != null && rendered.add(key)) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
-            } else if (group == null) {
+            boolean found = false;
+            for (Group group : groupOrder) {
+                if (normalize(group.name()).equals(key)) {
+                    renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+                    rendered.add(key);
+                    found = true;
+                }
+            }
+            if (!found) {
                 warnMissingPart(groupName);
             }
         }
@@ -220,7 +310,7 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         Set<String> excluded = normalizedSet(excludedGroupNames);
         for (Group group : groupOrder) {
             if (!excluded.contains(normalize(group.name()))) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false);
+                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false, smoothing);
             }
         }
     }
@@ -241,9 +331,25 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         Set<String> excluded = normalizedSet(excludedGroupNames);
         for (Group group : groupOrder) {
             if (!excluded.contains(normalize(group.name()))) {
-                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
+                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
             }
         }
+    }
+
+    public synchronized void tessellateAll(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderAll(textureLocation, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public synchronized void tessellateOnly(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... groupNames) {
+        renderOnly(textureLocation, poseStack, buffer, packedLight, packedOverlay, groupNames);
+    }
+
+    public synchronized void tessellatePart(String partName, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public synchronized void tessellateAllExcept(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... excludedGroupNames) {
+        renderAllExcept(textureLocation, poseStack, buffer, packedLight, packedOverlay, excludedGroupNames);
     }
 
     @Override
@@ -272,52 +378,119 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     }
 
     private static void renderGroup(Group group, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
-            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow) {
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing) {
         VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(textureLocation));
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
         Matrix3f normal = pose.normal();
         for (Face face : group.faces()) {
-            emitFace(face, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
+            emitFace(face, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+        }
+    }
+
+    private static void renderGroupWithSprite(Group group, TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, boolean partBrightness) {
+        VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(InventoryMenu.BLOCK_ATLAS));
+        PoseStack.Pose pose = poseStack.last();
+        Matrix4f position = pose.pose();
+        Matrix3f normal = pose.normal();
+        for (Face face : group.faces()) {
+            emitFaceWithSprite(face, sprite, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
         }
     }
 
     private static void emitFace(Face face, VertexConsumer consumer, Matrix4f position, Matrix3f normal, int packedLight, int packedOverlay,
-            int red, int green, int blue, int alpha, boolean legacyShadow) {
+            int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing) {
         if (face.vertices().size() < 3) {
             return;
         }
         if (face.vertices().size() == 3) {
-            emitVertex(face, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
-            emitVertex(face, 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
-            emitVertex(face, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
-            emitVertex(face, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
+            emitVertex(face, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+            emitVertex(face, 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+            emitVertex(face, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+            emitVertex(face, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
             return;
         }
         if (face.vertices().size() == 4) {
-            emitVertex(face, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
-            emitVertex(face, 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
-            emitVertex(face, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
-            emitVertex(face, 3, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
+            emitVertex(face, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+            emitVertex(face, 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+            emitVertex(face, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+            emitVertex(face, 3, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
             return;
         }
         for (int i = 1; i + 1 < face.vertices().size(); i++) {
-            emitVertex(face, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
-            emitVertex(face, i, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
-            emitVertex(face, i + 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
-            emitVertex(face, i + 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow);
+            emitVertex(face, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+            emitVertex(face, i, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+            emitVertex(face, i + 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+            emitVertex(face, i + 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing);
+        }
+    }
+
+    private static void emitFaceWithSprite(Face face, TextureAtlasSprite sprite, VertexConsumer consumer, Matrix4f position, Matrix3f normal,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, boolean partBrightness) {
+        if (face.vertices().size() < 3) {
+            return;
+        }
+        if (face.vertices().size() == 3) {
+            emitVertexWithSprite(face, sprite, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
+            emitVertexWithSprite(face, sprite, 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
+            emitVertexWithSprite(face, sprite, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
+            emitVertexWithSprite(face, sprite, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
+            return;
+        }
+        if (face.vertices().size() == 4) {
+            emitVertexWithSprite(face, sprite, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
+            emitVertexWithSprite(face, sprite, 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
+            emitVertexWithSprite(face, sprite, 2, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
+            emitVertexWithSprite(face, sprite, 3, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
+            return;
+        }
+        for (int i = 1; i + 1 < face.vertices().size(); i++) {
+            emitVertexWithSprite(face, sprite, 0, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
+            emitVertexWithSprite(face, sprite, i, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
+            emitVertexWithSprite(face, sprite, i + 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
+            emitVertexWithSprite(face, sprite, i + 1, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
+                    legacyShadow, partBrightness);
         }
     }
 
     private static void emitVertex(Face face, int index, VertexConsumer consumer, Matrix4f position, Matrix3f normal,
-            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow) {
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing) {
         Vector3f vertex = face.vertices().get(index);
         UV uv = index < face.uvs().size() ? face.uvs().get(index) : UV.ZERO;
-        Vector3f vertexNormal = index < face.normals().size() ? face.normals().get(index) : face.faceNormal();
+        Vector3f vertexNormal = smoothing && index < face.normals().size() ? face.normals().get(index) : face.faceNormal();
         float shadow = legacyShadow ? legacyShadowFactor(normal, vertexNormal) : 1.0F;
         consumer.vertex(position, vertex.x(), vertex.y(), vertex.z())
                 .color(clampColor(red * shadow), clampColor(green * shadow), clampColor(blue * shadow), alpha)
                 .uv(uv.u(), uv.v())
+                .overlayCoords(packedOverlay)
+                .uv2(packedLight)
+                .normal(normal, vertexNormal.x(), vertexNormal.y(), vertexNormal.z())
+                .endVertex();
+    }
+
+    private static void emitVertexWithSprite(Face face, TextureAtlasSprite sprite, int index, VertexConsumer consumer, Matrix4f position,
+            Matrix3f normal, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+            boolean legacyShadow, boolean partBrightness) {
+        Vector3f vertex = face.vertices().get(index);
+        UV uv = index < face.uvs().size() ? face.uvs().get(index) : UV.ZERO;
+        Vector3f vertexNormal = face.faceNormal();
+        float shadow = legacyShadow ? legacyObjUtilShadowFactor(normal, vertexNormal, partBrightness) : 1.0F;
+        consumer.vertex(position, vertex.x(), vertex.y(), vertex.z())
+                .color(clampColor(red * shadow), clampColor(green * shadow), clampColor(blue * shadow), alpha)
+                .uv(sprite.getU(uv.u() * 16.0D), sprite.getV(uv.v() * 16.0D))
                 .overlayCoords(packedOverlay)
                 .uv2(packedLight)
                 .normal(normal, vertexNormal.x(), vertexNormal.y(), vertexNormal.z())
@@ -477,6 +650,14 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     private static float legacyShadowFactor(Matrix3f normalMatrix, Vector3f faceNormal) {
         Vector3f transformed = new Vector3f(faceNormal).mul(normalMatrix);
         float brightness = (transformed.y() + 0.7F) * 0.9F - Math.abs(transformed.x()) * 0.1F + Math.abs(transformed.z()) * 0.1F;
+        return Math.max(0.45F, brightness);
+    }
+
+    private static float legacyObjUtilShadowFactor(Matrix3f normalMatrix, Vector3f faceNormal, boolean partBrightness) {
+        Vector3f transformed = new Vector3f(faceNormal).mul(normalMatrix);
+        float brightness = partBrightness
+                ? transformed.y() * 0.3F + 0.7F - Math.abs(transformed.x()) * 0.1F + Math.abs(transformed.z()) * 0.1F
+                : (transformed.y() + 0.7F) * 0.9F - Math.abs(transformed.x()) * 0.1F + Math.abs(transformed.z()) * 0.1F;
         return Math.max(0.45F, brightness);
     }
 

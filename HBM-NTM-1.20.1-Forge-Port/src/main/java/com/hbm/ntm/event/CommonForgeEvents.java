@@ -10,6 +10,7 @@ import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.network.HbmServerKeybinds;
+import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.HazardRegistry;
@@ -102,7 +103,6 @@ public final class CommonForgeEvents {
 
         Player player = event.player;
         applyInventoryRadiation(player);
-        applyNetherAmbientRadiation(player);
     }
 
     @SubscribeEvent
@@ -247,14 +247,24 @@ public final class CommonForgeEvents {
         if (level <= 0.0F) {
             return;
         }
-        int amount = (int) Math.min(level * Math.max(1, stack.getCount()), 10.0F);
-        if (type == HazardType.ASBESTOS && !ArmorUtil.checkForHazmat(player)) {
-            RadiationData.incrementAsbestos(player, amount);
-        } else if (type == HazardType.COAL && !ArmorUtil.checkForHazmat(player)) {
-            RadiationData.incrementBlackLung(player, amount);
+        if (type == HazardType.ASBESTOS) {
+            if (ArmorUtil.hasProtection(player, HazardClass.PARTICLE_FINE)) {
+                ArmorUtil.damageGasMaskFilter(player, (int) level);
+            } else {
+                RadiationData.incrementAsbestos(player, (int) Math.min(level, 10.0F));
+            }
+        } else if (type == HazardType.COAL) {
+            if (ArmorUtil.hasProtection(player, HazardClass.PARTICLE_COARSE)) {
+                int chance = Math.max(65 - stack.getCount(), 1);
+                if (player.getRandom().nextInt(chance) == 0) {
+                    ArmorUtil.damageGasMaskFilter(player, (int) level);
+                }
+            } else {
+                RadiationData.incrementBlackLung(player, (int) Math.min(level * stack.getCount(), 10.0F));
+            }
         } else if (type == HazardType.HOT && !player.isInWaterOrRain()) {
             player.setSecondsOnFire((int) Math.ceil(level));
-        } else if (type == HazardType.BLINDING) {
+        } else if (type == HazardType.BLINDING && !ArmorUtil.hasProtection(player, HazardClass.LIGHT)) {
             player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, (int) Math.ceil(level), 0));
         } else if (type == HazardType.HYDROACTIVE && player.isInWaterOrRain() && player.level() instanceof ServerLevel levelAccessor) {
             stack.shrink(stack.getCount());
@@ -262,12 +272,6 @@ public final class CommonForgeEvents {
         } else if (type == HazardType.EXPLOSIVE && player.isOnFire() && player.level() instanceof ServerLevel levelAccessor) {
             stack.shrink(stack.getCount());
             WeaponExplosionUtil.explodeStandard(levelAccessor, player.getX(), player.getEyeY(), player.getZ(), level, player, true, true);
-        }
-    }
-
-    private static void applyNetherAmbientRadiation(Player player) {
-        if (player.level().dimension() == Level.NETHER) {
-            RadiationUtil.contaminate(player, HazardType.RADIATION, ContaminationType.CREATIVE, RadiationConfig.HELL_RAD.get().floatValue() / 20.0F);
         }
     }
 
@@ -338,6 +342,7 @@ public final class CommonForgeEvents {
     @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (!event.getLevel().isClientSide() && event.getLevel() instanceof Level level) {
+            ChunkRadiationManager.unloadLevel(level);
             HbmEnergyNodespace.unloadLevel(level);
             HbmFluidNodespace.unloadLevel(level);
         }
@@ -348,9 +353,15 @@ public final class CommonForgeEvents {
             return;
         }
 
-        float chunkRadiation = ChunkRadiationManager.getRadiation(entity.level(), entity.blockPosition());
-        if (chunkRadiation > 0.0F) {
-            RadiationUtil.contaminate(entity, HazardType.RADIATION, ContaminationType.CREATIVE, chunkRadiation / 20.0F);
+        float radiation = ChunkRadiationManager.getRadiation(entity.level(), entity.blockPosition());
+        if (entity.level().dimension() == Level.NETHER) {
+            float hellRadiation = RadiationConfig.HELL_RAD.get().floatValue();
+            if (hellRadiation > 0.0F && radiation < hellRadiation) {
+                radiation = hellRadiation;
+            }
+        }
+        if (radiation > 0.0F) {
+            RadiationUtil.contaminate(entity, HazardType.RADIATION, ContaminationType.CREATIVE, radiation / 20.0F);
         }
     }
 
@@ -394,7 +405,6 @@ public final class CommonForgeEvents {
             addRandomEffect(entity, 500, MobEffects.MOVEMENT_SLOWDOWN, 5 * 20, 0);
             addRandomEffect(entity, 300, MobEffects.WEAKNESS, 5 * 20, 1);
         } else {
-            RadiationUtil.addRadiationPoisoning(entity, 20 * 10, 0);
             addRandomEffect(entity, 300, MobEffects.CONFUSION, 5 * 20, 0);
             addRandomEffect(entity, 500, MobEffects.WEAKNESS, 5 * 20, 0);
         }

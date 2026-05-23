@@ -13,6 +13,8 @@ public final class ObjMissilePartModels {
     public static final ResourceLocation UNIVERSAL_TEXTURE = texture("universal");
     public static final ResourceLocation BOXCAR_TEXTURE = texture("boxcar");
 
+    public static final LegacyWavefrontModel MISSILE_STEALTH = missileModel("missile_stealth").noSmooth();
+
     public static final LegacyWavefrontModel MP_T_10_KEROSENE = legacyModel("mp_t_10_kerosene");
     public static final LegacyWavefrontModel MP_T_10_SOLID = legacyModel("mp_t_10_solid");
     public static final LegacyWavefrontModel MP_T_10_XENON = legacyModel("mp_t_10_xenon");
@@ -280,6 +282,12 @@ public final class ObjMissilePartModels {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/block/missile_parts/" + name + ".obj"),
                 UNIVERSAL_TEXTURE);
+    }
+
+    private static LegacyWavefrontModel missileModel(String name) {
+        return new LegacyWavefrontModel(
+                new ResourceLocation(HbmNtm.MOD_ID, "models/block/missiles/" + name + ".obj"),
+                new ResourceLocation(HbmNtm.MOD_ID, "textures/block/missiles/" + name + ".png"));
     }
 
     private static ResourceLocation texture(String path) {

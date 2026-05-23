@@ -1,6 +1,7 @@
 package com.hbm.ntm.multiblock;
 
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
+import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.BlockPos;
@@ -80,7 +81,12 @@ public class DummyBlock extends Block implements EntityBlock {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE;
+        return forwardedDetailedShape(level, pos);
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return forwardedDetailedShape(level, pos);
     }
 
     @Override
@@ -91,6 +97,21 @@ public class DummyBlock extends Block implements EntityBlock {
     @Override
     public PushReaction getPistonPushReaction(BlockState state) {
         return PushReaction.BLOCK;
+    }
+
+    private VoxelShape forwardedDetailedShape(BlockGetter level, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy && dummy.getCorePos() != null) {
+            BlockPos corePos = dummy.getCorePos();
+            BlockState coreState = level.getBlockState(corePos);
+            if (coreState.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block
+                    && block.definition().hasCollisionShapeFactory()) {
+                return block.definition().collisionShape(coreState).move(
+                        corePos.getX() - pos.getX(),
+                        corePos.getY() - pos.getY(),
+                        corePos.getZ() - pos.getZ());
+            }
+        }
+        return SHAPE;
     }
 
     @Override

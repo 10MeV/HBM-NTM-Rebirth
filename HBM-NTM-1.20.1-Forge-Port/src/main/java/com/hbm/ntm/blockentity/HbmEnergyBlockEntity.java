@@ -4,6 +4,7 @@ import com.hbm.ntm.api.tile.InfoProviderEC;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyConnector;
+import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.energy.HbmLoadedEnergy;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -22,7 +23,7 @@ import net.minecraftforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmLoadedEnergy, InfoProviderEC, HbmTileSyncable {
+public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmEnergyHandler, HbmLoadedEnergy, InfoProviderEC, HbmTileSyncable {
     private static final String TAG_ENERGY = "Energy";
 
     protected final HbmEnergyStorage energy;
@@ -40,6 +41,21 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
 
     public HbmEnergyStorage getEnergyStorage() {
         return energy;
+    }
+
+    @Override
+    public long getPower() {
+        return energy.getPower();
+    }
+
+    @Override
+    public void setPower(long power) {
+        energy.setPower(power);
+    }
+
+    @Override
+    public long getMaxPower() {
+        return energy.getMaxPower();
     }
 
     protected boolean canAccessEnergy(@Nullable Direction side) {
@@ -195,9 +211,7 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
 
     @Override
     public void provideExtraInfo(CompoundTag data) {
-        data.putString(CompatEnergyControl.KEY_EUTYPE, "HE");
-        data.putLong(CompatEnergyControl.L_ENERGY_HE, energy.getPower());
-        data.putLong(CompatEnergyControl.L_CAPACITY_HE, energy.getMaxPower());
+        CompatEnergyControl.getEnergyData(this, data);
     }
 
     @Override

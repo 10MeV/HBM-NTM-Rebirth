@@ -363,6 +363,102 @@ Verification:
 
 - `.\gradlew.bat compileJava processResources --no-daemon` passed.
 
+## 2026-05-23 Modern Library Pass 16
+
+This pass closes the concrete `FluidLoaderInfinite` gap left after the container item registration pass:
+
+- Legacy sources re-read:
+  - `com/hbm/items/machine/ItemInfiniteFluid.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoaderInfinite.java`
+  - `com/hbm/inventory/fluid/tank/FluidTank.java`
+- Wire `HbmInfiniteFluidItem` into `HbmFluidItemTransfer` before the generic `IFillableItem` path, preserving the old special loader semantics:
+  - `loadTankFromSlot(...)` can now fill a typed tank from `inf_water`, `inf_water_mk2`, `chlorine_pinwheel`, or the untyped infinite fluid barrel.
+  - `unloadTankToSlot(...)` can now drain matching tanks through the same infinite item family.
+  - Non-zero pressure is rejected for typed infinite items, while the untyped infinite barrel keeps the old pressure exception through `allowPressure(...)`.
+  - `chance` now gates the actual transfer, matching the old `FluidLoaderInfinite` random tick behavior for items such as `chlorine_pinwheel`.
+  - The untyped infinite barrel uses the target tank's current type instead of inventing a fluid identity, matching the old `type == null` contract.
+- Keep normal NBT-backed containers on the existing `IFillableItem` path so canisters, gas bottles, fluid tanks, barrels, packs, dispersers, and glyphid glands continue to use the shared fill/empty contract.
+
+Still deferred:
+
+- No concrete machine slot has been newly wired in this pass; future machine BlockEntities must call `HbmFluidItemTransfer` to inherit the infinite item behavior.
+- Old `FluidTank.noDualUnload` is still only documented; dual-slot GUI behavior needs the relevant machine/inventory migration.
+- Dedicated liquefactor recipes such as `glyphid_gland_empty -> BIOGAS 2000 mB` are confirmed in 1.7.10 but remain deferred because the modern port does not yet have a `liquefactor` machine recipe type/runtime.
+
+Progress estimate after Pass 16:
+
+- Core `FluidType` identity/NBT lookup/table: about 86%.
+- Basic tank/conform/Forge capability bridge: about 73%.
+- Fluid network/provider/receiver algorithm: about 60%.
+- In-world pipe graph: about 20%.
+- Fluid item/container loading: about 60%.
+- Behavior traits and cross-system effects: about 60%.
+- Machine integration through the library: about 15%.
+- Overall fluid library migration: about 60%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-05-23 Modern Library Pass 15
+
+This pass moves the legacy fluid-container family from shared rules into actual registered items and resource-backed presentation:
+
+- Legacy sources re-read:
+  - `com/hbm/items/ModItems.java` fluid item block
+  - `com/hbm/inventory/fluid/tank/FluidLoaderInfinite.java`
+  - `com/hbm/inventory/fluid/tank/FluidTank.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoadingHandler.java`
+- Register the legacy container family in modern `ModItems`:
+  - `canister_empty`
+  - `canister_full`
+  - `canister_napalm`
+  - `gas_empty`
+  - `gas_full`
+  - `fluid_tank_empty`
+  - `fluid_tank_full`
+  - `fluid_tank_lead_empty`
+  - `fluid_tank_lead_full`
+  - `fluid_barrel_empty`
+  - `fluid_barrel_full`
+  - `fluid_barrel_infinite`
+  - `fluid_pack_empty`
+  - `fluid_pack_full`
+  - `disperser_canister_empty`
+  - `disperser_canister`
+  - `glyphid_gland_empty`
+  - `glyphid_gland`
+  - `inf_water`
+  - `inf_water_mk2`
+  - `chlorine_pinwheel`
+- Add `CONTROL_FLUID_ITEMS` so the old control-tab fluids sit with the rest of the container family instead of being mixed into the consumables tab.
+- Keep the reusable `HbmFluidContainerItem` / `HbmInfiniteFluidItem` implementation as the shared behavior layer, but expose the family as real registered items now.
+- Copy legacy resource textures into the modern resource tree and add minimal item model JSONs for each container entry.
+- Add English and Chinese display names for the new registered items.
+- Hook item tinting so fluid containers colorize from their stored HBM fluid type.
+
+Still deferred:
+
+- Full legacy metadata-style container swapping is still not identical to 1.7.10. The modern port now has named items and NBT-backed fluid content, but it still needs final remainder/container-item behavior tuning in recipes and machine slots.
+- `ItemInfiniteFluid` is only partially ported as a reusable shared item; the old random drain/fill chance behavior is not yet wired into every machine path that used `FluidLoaderInfinite`.
+- Old `FluidContainerRegistry` recipe/crafting remainder integration still needs a dedicated pass to ensure every recipe slot returns the correct empty container item automatically.
+- The old `ItemFluidIDMulti` / fluid identifier control flow is not yet migrated.
+
+Progress estimate after Pass 15:
+
+- Core `FluidType` identity/NBT lookup/table: about 86%.
+- Basic tank/conform/Forge capability bridge: about 72%.
+- Fluid network/provider/receiver algorithm: about 60%.
+- In-world pipe graph: about 20%.
+- Fluid item/container loading: about 55%.
+- Behavior traits and cross-system effects: about 60%.
+- Machine integration through the library: about 14%.
+- Overall fluid library migration: about 58%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
 ## 2026-05-22 Modern Library Pass 14
 
 This pass expands the old fluid-container contract from generic slot transfer helpers into reusable container rules and data:

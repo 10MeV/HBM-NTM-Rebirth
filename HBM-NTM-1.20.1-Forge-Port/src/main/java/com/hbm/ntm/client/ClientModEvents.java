@@ -8,6 +8,8 @@ import com.hbm.ntm.client.particle.FlamethrowerParticle;
 import com.hbm.ntm.client.particle.FoamParticle;
 import com.hbm.ntm.client.particle.HbmSmokeParticle;
 import com.hbm.ntm.client.particle.RadiationFogParticle;
+import com.hbm.ntm.client.particle.SchrabFogParticle;
+import com.hbm.ntm.client.particle.TownAuraParticle;
 import com.hbm.ntm.client.particle.RocketFlameParticle;
 import com.hbm.ntm.client.renderer.AssemblyMachineRenderer;
 import com.hbm.ntm.client.renderer.BasicMachineRenderer;
@@ -20,9 +22,11 @@ import com.hbm.ntm.client.renderer.MovingPackageRenderer;
 import com.hbm.ntm.client.renderer.MovingItemRenderer;
 import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
 import com.hbm.ntm.client.screen.BasicMachineScreen;
+import com.hbm.ntm.client.screen.AssemblyMachineScreen;
 import com.hbm.ntm.client.screen.MachineBatteryScreen;
 import com.hbm.ntm.client.screen.MachineBatterySocketScreen;
 import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModItems;
@@ -48,6 +52,7 @@ public final class ClientModEvents {
     public static void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             MenuScreens.register(ModMenuTypes.BASIC_MACHINE.get(), BasicMachineScreen::new);
+            MenuScreens.register(ModMenuTypes.ASSEMBLY_MACHINE.get(), AssemblyMachineScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY.get(), MachineBatteryScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY_SOCKET.get(), MachineBatterySocketScreen::new);
         });
@@ -87,6 +92,10 @@ public final class ClientModEvents {
                 .filter(DepletedFuelItem.class::isInstance)
                 .forEach(item -> event.register((stack, tintIndex) ->
                         DepletedFuelItem.isHot(stack) ? DepletedFuelItem.HOT_TINT : 0xFFFFFF, item));
+        ModItems.CONSUMABLE_TAB_ITEMS.stream()
+                .map(RegistryObject::get)
+                .filter(HbmFluidContainerItem.class::isInstance)
+                .forEach(item -> event.register((stack, tintIndex) -> ((HbmFluidContainerItem) item).getTintColor(stack), item));
     }
 
     @SubscribeEvent
@@ -104,6 +113,8 @@ public final class ClientModEvents {
         event.registerSpriteSet(ModParticleTypes.FOAM.get(), FoamParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.FLAMETHROWER.get(), FlamethrowerParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.BLACK_POWDER_SPARK.get(), BlackPowderSparkParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.TOWN_AURA.get(), TownAuraParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.SCHRAB_FOG.get(), SchrabFogParticle.Provider::new);
     }
 
     private ClientModEvents() {

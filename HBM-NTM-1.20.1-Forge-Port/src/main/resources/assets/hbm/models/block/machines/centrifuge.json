@@ -1,0 +1,7 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/centrifuge.obj",
+  "flip-v": true,
+  "detectCullableFaces": false,
+  "textures": { "particle": "hbm:block/machines/centrifuge", "default": "hbm:block/machines/centrifuge" }
+}

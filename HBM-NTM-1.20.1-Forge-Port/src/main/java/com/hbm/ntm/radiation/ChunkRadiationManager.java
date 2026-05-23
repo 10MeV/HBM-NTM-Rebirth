@@ -4,6 +4,7 @@ import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
@@ -12,13 +13,15 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class ChunkRadiationManager {
     private static final int LEGACY_WORLD_EFFECT_CHUNKS = 5;
+    private static final int LEGACY_WORLD_EFFECT_OPERATIONS = 10;
     private static final int LEGACY_WORLD_EFFECT_THRESHOLD = 10;
-    private static int diffusionTimer;
+    private static final Map<ResourceKey<Level>, Integer> DIFFUSION_TIMERS = new HashMap<>();
     public static final String LEGACY_CHUNK_NBT_KEY = "hfr_simple_radiation";
 
     public static float getRadiation(Level level, BlockPos pos) {
@@ -67,12 +70,14 @@ public final class ChunkRadiationManager {
             return;
         }
 
-        diffusionTimer++;
-        if (diffusionTimer >= 20) {
+        ResourceKey<Level> dimension = level.dimension();
+        int timer = DIFFUSION_TIMERS.getOrDefault(dimension, 0) + 1;
+        if (timer >= 20) {
             List<ChunkPos> fogCandidates = getData(level).updateDiffusion(level, RadiationConfig.FOG_RAD.get());
             spawnRadiationFog(level, fogCandidates);
-            diffusionTimer = 0;
+            timer = 0;
         }
+        DIFFUSION_TIMERS.put(dimension, timer);
 
         if (RadiationConfig.WORLD_RAD_EFFECTS.get()) {
             handleWorldEffects(level);
@@ -85,12 +90,9 @@ public final class ChunkRadiationManager {
             return;
         }
 
-        int chunks = Math.min(LEGACY_WORLD_EFFECT_CHUNKS, entries.size());
-        int operations = Math.max(0, RadiationConfig.WORLD_RAD.get());
-        int threshold = Math.min(LEGACY_WORLD_EFFECT_THRESHOLD, RadiationConfig.WORLD_RAD_THRESHOLD.get());
-        for (int c = 0; c < chunks; c++) {
+        for (int c = 0; c < LEGACY_WORLD_EFFECT_CHUNKS; c++) {
             Map.Entry<Long, Float> entry = entries.get(level.random.nextInt(entries.size()));
-            if (entry.getValue() < threshold) {
+            if (entry.getValue() < LEGACY_WORLD_EFFECT_THRESHOLD) {
                 continue;
             }
             ChunkPos chunkPos = new ChunkPos(entry.getKey());
@@ -98,7 +100,7 @@ public final class ChunkRadiationManager {
                 continue;
             }
 
-            for (int i = 0; i < operations; i++) {
+            for (int i = 0; i < LEGACY_WORLD_EFFECT_OPERATIONS; i++) {
                 for (int a = 0; a < 16; a++) {
                     for (int b = 0; b < 16; b++) {
                         if (level.random.nextInt(3) != 0) {
@@ -151,6 +153,12 @@ public final class ChunkRadiationManager {
     public static void unloadChunk(Level level, ChunkPos chunkPos) {
         if (level instanceof ServerLevel serverLevel) {
             getData(serverLevel).remove(chunkPos);
+        }
+    }
+
+    public static void unloadLevel(Level level) {
+        if (level instanceof ServerLevel serverLevel) {
+            DIFFUSION_TIMERS.remove(serverLevel.dimension());
         }
     }
 

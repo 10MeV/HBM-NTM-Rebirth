@@ -1,13 +1,22 @@
 package com.hbm.ntm.command;
 
 import com.hbm.ntm.api.tile.InfoProviderEC;
+import com.hbm.ntm.api.redstoneoverradio.RORFunctionException;
+import com.hbm.ntm.api.redstoneoverradio.RORInfo;
+import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
+import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
+import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergyDebug;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.event.CommonForgeEvents;
+import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.recipe.GenericMachineRecipe;
+import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.RadiationConstants;
 import com.hbm.ntm.radiation.RadiationData;
@@ -25,11 +34,15 @@ import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.ToIntFunction;
@@ -97,6 +110,7 @@ public final class ModCommands {
                         .then(statusCommand())
                         .then(contaminationCommand()))
                 .then(energyCommand())
+                .then(machineCommand())
                 .then(fluidCommand()));
     }
 
@@ -130,7 +144,9 @@ public final class ModCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> energyCommand() {
         return Commands.literal("energy")
                 .then(Commands.literal("nodespace")
-                        .executes(context -> getEnergyNodespace(context.getSource())))
+                        .executes(context -> getEnergyNodespace(context.getSource()))
+                        .then(Commands.literal("rebuild")
+                                .executes(context -> rebuildEnergyNodespace(context.getSource()))))
                 .then(Commands.literal("node")
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                 .executes(context -> getEnergyNetwork(context.getSource(), BlockPosArgument.getLoadedBlockPos(context, "pos")))))
@@ -140,6 +156,34 @@ public final class ModCommands {
                 .then(Commands.literal("info")
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                 .executes(context -> getEnergyInfo(context.getSource(), BlockPosArgument.getLoadedBlockPos(context, "pos")))))
+                .then(Commands.literal("ror")
+                        .then(Commands.literal("functions")
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .executes(context -> getRorFunctions(context.getSource(), BlockPosArgument.getLoadedBlockPos(context, "pos")))))
+                        .then(Commands.literal("value")
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .then(Commands.argument("name", StringArgumentType.greedyString())
+                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{
+                                                        RORInfo.PREFIX_VALUE + "fill",
+                                                        RORInfo.PREFIX_VALUE + "fillpercent",
+                                                        RORInfo.PREFIX_VALUE + "delta"
+                                                }, builder))
+                                                .executes(context -> getRorValue(
+                                                        context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                        StringArgumentType.getString(context, "name"))))))
+                        .then(Commands.literal("run")
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .then(Commands.argument("command", StringArgumentType.greedyString())
+                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{
+                                                        RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "0",
+                                                        RORInfo.PREFIX_FUNCTION + "setredmode" + RORInteractive.NAME_SEPARATOR + "2",
+                                                        RORInfo.PREFIX_FUNCTION + "setpriority" + RORInteractive.NAME_SEPARATOR + "1"
+                                                }, builder))
+                                                .executes(context -> runRorFunction(
+                                                        context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                        StringArgumentType.getString(context, "command")))))))
                 .then(Commands.literal("debug")
                         .then(Commands.literal("particles")
                                 .executes(context -> toggleEnergyDebugParticles(context.getSource()))
@@ -166,6 +210,35 @@ public final class ModCommands {
                                                         context.getSource(),
                                                         BlockPosArgument.getLoadedBlockPos(context, "pos"),
                                                         parseFluid(StringArgumentType.getString(context, "fluid"))))))));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> machineCommand() {
+        return Commands.literal("machine")
+                .then(Commands.literal("assembly")
+                        .then(Commands.literal("recipes")
+                                .executes(context -> listAssemblyRecipes(context.getSource())))
+                        .then(Commands.literal("info")
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .executes(context -> getAssemblyInfo(
+                                                context.getSource(),
+                                                BlockPosArgument.getLoadedBlockPos(context, "pos")))))
+                        .then(Commands.literal("set")
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .then(Commands.argument("recipe", StringArgumentType.word())
+                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                        GenericMachineRecipeRuntime.recipeNames(
+                                                                context.getSource().getLevel(),
+                                                                GenericMachineRecipe.Machine.ASSEMBLY_MACHINE),
+                                                        builder))
+                                                .executes(context -> setAssemblyRecipe(
+                                                        context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                        StringArgumentType.getString(context, "recipe"))))))
+                        .then(Commands.literal("clear")
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .executes(context -> clearAssemblyRecipe(
+                                                context.getSource(),
+                                                BlockPosArgument.getLoadedBlockPos(context, "pos"))))));
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> fluidNetworkArgument() {
@@ -255,12 +328,29 @@ public final class ModCommands {
     }
 
     private static int getEnergyNodespace(CommandSourceStack source) {
-        int nodes = HbmEnergyNodespace.getNodeCount(source.getLevel());
-        int networks = HbmEnergyNodespace.getNetworkCount(source.getLevel());
-        source.sendSuccess(() -> Component.literal("Energy nodespace: nodes=" + nodes
-                + " networks=" + networks
+        HbmEnergyNodespace.Diagnostics diagnostics = HbmEnergyNodespace.getDiagnostics(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Energy nodespace: positions=" + diagnostics.nodePositions()
+                + " nodes=" + diagnostics.uniqueNodes()
+                + " networks=" + diagnostics.networks()
+                + " invalidNetworks=" + diagnostics.invalidNetworks()
+                + " linkRefs=" + diagnostics.linkRefs()
+                + " dirtyNodes=" + diagnostics.dirtyNodes()
+                + " expiredNodes=" + diagnostics.expiredNodes()
+                + " orphanNodes=" + diagnostics.orphanNodes()
+                + " providers=" + diagnostics.providerEntries()
+                + " receivers=" + diagnostics.receiverEntries()
+                + " reapTimer=" + diagnostics.reapTimer()
                 + " debugParticles=" + HbmEnergyDebug.isParticleDebugEnabled()), false);
-        return nodes;
+        return diagnostics.uniqueNodes();
+    }
+
+    private static int rebuildEnergyNodespace(CommandSourceStack source) {
+        HbmEnergyNodespace.ForceRebuildResult result = HbmEnergyNodespace.forceRebuild(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Energy nodespace rebuilt: nodes=" + result.nodes()
+                + " oldNetworks=" + result.oldNetworks()
+                + " newNetworks=" + result.newNetworks()
+                + " reapTimer=" + result.reapTimer()), true);
+        return result.newNetworks();
     }
 
     private static int getEnergyNetwork(CommandSourceStack source, BlockPos pos) {
@@ -289,20 +379,103 @@ public final class ModCommands {
                 + " receiverDemand=" + network.receiverDemand() + " HE"
                 + " receiverRate=" + network.receiverRate() + " HE/t"
                 + " receiverPriorities=" + network.receiversByPriority()
+                + " timeout=" + network.timeoutMs() + "ms"
+                + " oldestProvider=" + network.oldestProviderAgeMs() + "ms"
+                + " oldestReceiver=" + network.oldestReceiverAgeMs() + "ms"
                 + " lastTransfer=" + network.lastTransfer() + " HE"), false);
         return network.links();
     }
 
     private static int getEnergyInfo(CommandSourceStack source, BlockPos pos) {
-        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
-        if (!(blockEntity instanceof InfoProviderEC provider)) {
+        BlockEntity blockEntity = CompatEnergyControl.findTileEntity(source.getLevel(), pos);
+        if (!(blockEntity instanceof InfoProviderEC)
+                && CompatEnergyControl.getAllTanks(blockEntity) == null
+                && CompatEnergyControl.getHeat(blockEntity) < 0) {
             source.sendFailure(Component.literal("No HBM EnergyControl info provider at " + pos.toShortString()));
             return 0;
         }
         CompoundTag data = new CompoundTag();
-        provider.provideExtraInfo(data);
-        source.sendSuccess(() -> Component.literal("Energy info at " + pos.toShortString() + ": " + data), false);
+        CompatEnergyControl.getEnergyData(blockEntity, data);
+        CompatEnergyControl.getExtraData(blockEntity, data);
+        List<Object[]> tanks = CompatEnergyControl.getAllTanks(blockEntity);
+        int heat = CompatEnergyControl.getHeat(blockEntity);
+        source.sendSuccess(() -> Component.literal("Energy info at " + pos.toShortString()
+                + ": " + formatEnergyControlInfo(data)
+                + " heat=" + heat
+                + " tanks=" + formatEnergyControlTanks(tanks)), false);
         return data.size();
+    }
+
+    private static String formatEnergyControlInfo(CompoundTag data) {
+        List<String> keys = new ArrayList<>(data.getAllKeys());
+        Collections.sort(keys);
+        List<String> entries = new ArrayList<>();
+        for (String key : keys) {
+            entries.add(key + "=" + data.get(key));
+        }
+        return "{ " + String.join(", ", entries) + " }";
+    }
+
+    private static String formatEnergyControlTanks(List<Object[]> tanks) {
+        if (tanks == null || tanks.isEmpty()) {
+            return "[]";
+        }
+        List<String> entries = new ArrayList<>();
+        for (Object[] tank : tanks) {
+            String fluid = String.valueOf(tank[0]);
+            ResourceLocation texture = CompatEnergyControl.getFluidTexture(fluid);
+            entries.add("{ fluid=" + fluid
+                    + ", fill=" + tank[1]
+                    + ", capacity=" + tank[2]
+                    + ", texture=" + texture
+                    + " }");
+        }
+        return "[" + String.join(", ", entries) + "]";
+    }
+
+    private static int getRorFunctions(CommandSourceStack source, BlockPos pos) {
+        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        if (!(blockEntity instanceof RORInfo info)) {
+            source.sendFailure(Component.literal("No HBM ROR component at " + pos.toShortString()));
+            return 0;
+        }
+        String[] functions = info.getFunctionInfo();
+        source.sendSuccess(() -> Component.literal("ROR functions at " + pos.toShortString() + ": " + String.join(", ", functions)), false);
+        return functions.length;
+    }
+
+    private static int getRorValue(CommandSourceStack source, BlockPos pos, String name) {
+        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        if (!(blockEntity instanceof RORValueProvider provider)) {
+            source.sendFailure(Component.literal("No HBM ROR value provider at " + pos.toShortString()));
+            return 0;
+        }
+        String value = provider.provideRORValue(name);
+        if (value == null) {
+            source.sendFailure(Component.literal("No ROR value '" + name + "' at " + pos.toShortString()));
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("ROR value " + name + " at " + pos.toShortString() + ": " + value), false);
+        return 1;
+    }
+
+    private static int runRorFunction(CommandSourceStack source, BlockPos pos, String command) {
+        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        if (!(blockEntity instanceof RORInteractive interactive)) {
+            source.sendFailure(Component.literal("No HBM ROR interactive component at " + pos.toShortString()));
+            return 0;
+        }
+        try {
+            String name = RORInteractive.getCommand(command);
+            String[] params = RORInteractive.getParams(command);
+            String result = interactive.runRORFunction(name, params);
+            source.sendSuccess(() -> Component.literal("ROR function " + name + " at " + pos.toShortString()
+                    + (result == null ? ": ok" : ": " + result)), true);
+            return 1;
+        } catch (RORFunctionException ex) {
+            source.sendFailure(Component.literal(ex.getMessage()));
+            return 0;
+        }
     }
 
     private static int getFluidNodespace(CommandSourceStack source) {
@@ -362,6 +535,72 @@ public final class ModCommands {
         source.sendSuccess(() -> Component.literal("Fluid pipe at " + pos.toShortString()
                 + " set to " + type.getName()), true);
         return 1;
+    }
+
+    private static int listAssemblyRecipes(CommandSourceStack source) {
+        List<String> recipes = GenericMachineRecipeRuntime.recipeNames(source.getLevel(), GenericMachineRecipe.Machine.ASSEMBLY_MACHINE);
+        source.sendSuccess(() -> Component.literal("Assembly recipes (" + recipes.size() + "): " + String.join(", ", recipes)), false);
+        return recipes.size();
+    }
+
+    private static int getAssemblyInfo(CommandSourceStack source, BlockPos pos) {
+        AssemblyMachineBlockEntity assembler = getAssemblyMachine(source, pos);
+        if (assembler == null) {
+            return 0;
+        }
+        GenericMachineRecipe recipe = assembler.getSelectedRecipeDefinition();
+        String recipeInfo = recipe == null
+                ? "none"
+                : recipe.getInternalName() + " duration=" + recipe.getDuration() + " power=" + recipe.getPower();
+        source.sendSuccess(() -> Component.literal("Assembly machine at " + pos.toShortString()
+                + ": recipe=" + recipeInfo
+                + " progress=" + Math.round(assembler.getProgress() * 1000.0D) / 10.0D + "%"
+                + " power=" + assembler.getPower() + "/" + assembler.getMaxPower() + " HE"
+                + " canProcess=" + assembler.canProcessSelectedRecipe()
+                + " inputTank=" + formatTank(assembler.getInputTank())
+                + " outputTank=" + formatTank(assembler.getOutputTank())), false);
+        return recipe == null ? 0 : 1;
+    }
+
+    private static int setAssemblyRecipe(CommandSourceStack source, BlockPos pos, String recipeName) {
+        AssemblyMachineBlockEntity assembler = getAssemblyMachine(source, pos);
+        if (assembler == null) {
+            return 0;
+        }
+        if (!assembler.selectRecipe(recipeName)) {
+            source.sendFailure(Component.literal("Unknown assembly recipe '" + recipeName + "'."));
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("Assembly machine at " + pos.toShortString()
+                + " selected recipe " + assembler.getSelectedRecipeName()), true);
+        return 1;
+    }
+
+    private static int clearAssemblyRecipe(CommandSourceStack source, BlockPos pos) {
+        AssemblyMachineBlockEntity assembler = getAssemblyMachine(source, pos);
+        if (assembler == null) {
+            return 0;
+        }
+        assembler.selectRecipe(GenericMachineRecipeRuntime.NULL_RECIPE);
+        source.sendSuccess(() -> Component.literal("Assembly machine at " + pos.toShortString() + " recipe cleared."), true);
+        return 1;
+    }
+
+    private static AssemblyMachineBlockEntity getAssemblyMachine(CommandSourceStack source, BlockPos pos) {
+        BlockEntity blockEntity = CompatEnergyControl.findTileEntity(source.getLevel(), pos);
+        if (blockEntity instanceof AssemblyMachineBlockEntity assembler) {
+            return assembler;
+        }
+        source.sendFailure(Component.literal("No HBM assembly machine at " + pos.toShortString()));
+        return null;
+    }
+
+    private static String formatTank(HbmFluidTank tank) {
+        return "{fluid=" + tank.getTankType().getName()
+                + ", fill=" + tank.getFill()
+                + ", capacity=" + tank.getMaxFill()
+                + ", pressure=" + tank.getPressure()
+                + "}";
     }
 
     private static int toggleEnergyDebugParticles(CommandSourceStack source) {

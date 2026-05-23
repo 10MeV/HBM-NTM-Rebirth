@@ -6,9 +6,9 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ObjRbmkModels {
-    public static final LegacyWavefrontModel ELEMENT = model("rbmk_element", iconTexture("rbmk_element"));
-    public static final LegacyWavefrontModel ELEMENT_RODS = model("rbmk_element_rods", iconTexture("rbmk_element_fuel"));
-    public static final LegacyWavefrontModel RODS = model("rbmk_rods", iconTexture("rbmk_control"));
+    public static final LegacyWavefrontModel ELEMENT = model("rbmk_element", iconTexture("rbmk_element")).noSmooth().mixedMode();
+    public static final LegacyWavefrontModel ELEMENT_RODS = model("rbmk_element_rods", iconTexture("rbmk_element_fuel")).noSmooth();
+    public static final LegacyWavefrontModel RODS = model("rbmk_rods", iconTexture("rbmk_control")).noSmooth();
     public static final LegacyWavefrontModel CRANE_CONSOLE = model("crane_console", modelTexture("crane_console"));
     public static final LegacyWavefrontModel CRANE = model("crane", modelTexture("rbmk_crane"));
     public static final LegacyWavefrontModel AUTOLOADER = model("autoloader", modelTexture("rbmk_autoloader"));
@@ -19,7 +19,7 @@ public final class ObjRbmkModels {
     public static final LegacyWavefrontModel LEVER = model("lever", modelTexture("lever"));
     public static final LegacyWavefrontModel INDICATOR = model("indicator", modelTexture("indicator"));
     public static final LegacyWavefrontModel TERMINAL = model("terminal", modelTexture("terminal"));
-    public static final LegacyWavefrontModel DEBRIS = model("debris", iconTexture("rbmk_debris"));
+    public static final LegacyWavefrontModel DEBRIS = model("debris", iconTexture("rbmk_debris")).noSmooth();
 
     public static final ResourceLocation CRANE_CONSOLE_TEXTURE = modelTexture("crane_console");
     public static final ResourceLocation CRANE_TEXTURE = modelTexture("rbmk_crane");

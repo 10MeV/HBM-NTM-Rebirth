@@ -1329,3 +1329,245 @@ Still incomplete:
 Verification:
 
 - 2026-05-22 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-23 Radiation Core Parity Audit Pass
+
+Audit report:
+
+- `工程记录/库移植/生成报告/radiation-core-parity-audit-2026-05-23.md`
+
+Legacy source re-checked:
+
+- `com.hbm.util.ContaminationUtil`
+- `com.hbm.extprop.HbmLivingProps`
+- `com.hbm.handler.EntityEffectHandler`
+- `com.hbm.handler.radiation.ChunkRadiationManager`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple`
+- `com.hbm.config.RadiationConfig`
+- `com.hbm.hazard.type.HazardTypeAsbestos`
+- `com.hbm.hazard.type.HazardTypeCoal`
+- `com.hbm.hazard.type.HazardTypeBlinding`
+- `com.hbm.util.ArmorRegistry`
+- `com.hbm.util.ArmorUtil`
+
+Confirmed:
+
+- Current `RadiationUtil#contaminate` matches the old contamination ordering: radiation adds `radEnv` before protection checks, player armor/creative/tick-age gates run before immunity, and `RAD_BYPASS` skips resistance.
+- Contamination effect storage now uses the legacy `hfr_cont_count` and `cont_<index>` shape; the earlier temporary list shape is migrated away when encountered.
+- Simple chunk radiation weights, fog threshold/chance, chunk NBT key, and high-radiation terrain mutation target blocks are broadly aligned with the default 1.7.10 handler.
+
+Corrected in this pass:
+
+- Restored the old `ChunkRadiationHandlerSimple#handleWorldDestruction` constants:
+  - `chunks = 5`
+  - `count = 10`
+  - `threshold = 10`
+  - the modern `worldRad` and `worldRadThreshold` config mirrors remain available but are not used by the Simple handler, matching the 1.7.10 source.
+- Corrected inventory hazard protection:
+  - asbestos now checks `HazardClass.PARTICLE_FINE`, increments asbestos by `min(level, 10)` when unprotected, and damages the gas-mask filter by `(int) level` when protected.
+  - coal dust now checks `HazardClass.PARTICLE_COARSE`, increments black lung by `min(level * stackSize, 10)` when unprotected, and has the old `1 / max(65 - stackSize, 1)` filter damage chance when protected.
+  - blinding hazards now respect `HazardClass.LIGHT`.
+- Added old `HbmLivingProps` long-term disease gates to `RadiationData`:
+  - `DISABLE_ASBESTOS` and `DISABLE_COAL` suppress getters/setters.
+  - asbestos and black lung reset to 0 and deal lethal damage at their old thresholds.
+  - added `hbm:asbestos` and `hbm:blacklung` damage types plus bypass tags.
+
+Still not fully aligned:
+
+- PRISM/NT/3D/Blank chunk radiation handlers remain deferred; current port targets the default Simple handler.
+- The modern world-level saved-data backing for chunk radiation is not a legacy save shape, though chunk NBT compatibility is kept.
+- The old chunk-unload map-key bug is intentionally not preserved.
+- Creeper nuclear transformation and duck-to-quackos transformation remain blocked on missing entity migrations.
+- Pollution coupling is incomplete: soot contribution to coughs, heavy-metal lead poisoning, and poison pollution need a pollution-library pass.
+- Actual gas mask/filter items, filter install UI, and armor-mod recursion remain deferred.
+- Non-block radiation emitters still need a separate audit: machines, reactors, fluids, bombs, entities, and worldgen.
+
+Verification:
+
+- 2026-05-23 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-23 Source Source-Block Reconciliation Pass
+
+Legacy source re-checked:
+
+- `com.hbm.blocks.generic.BlockHazard`
+- `com.hbm.blocks.generic.BlockOre`
+- `com.hbm.blocks.generic.BlockNuclearWaste`
+- `com.hbm.blocks.generic.YellowBarrel`
+- `com.hbm.blocks.generic.BlockSellafield`
+- `com.hbm.blocks.generic.BlockAbsorber`
+- `com.hbm.hazard.HazardRegistry`
+- `com.hbm.inventory.OreDictManager`
+
+Corrected in this pass:
+
+- Re-separated a few legacy block-world radiation values from their item hazard values in `HazardRegistry`.
+  - `ore_schrabidium` remains a 1.7.10-style continuous block source at the old ore-radiation level.
+  - `block_pu_mix`, `block_schrabidate`, and `block_solinium` now use the old legacy block-source values rather than the accidental modern cross-map values.
+- This pass did not change the dedicated world-effect blocks themselves:
+  - `sellafield` still belongs to its own special block class.
+  - `rad_absorber` still belongs to its own special negative-source block class.
+  - `gas_meltdown` still belongs to its own gas block class.
+
+Still incomplete:
+
+- The larger chunk-radiation source table still contains several legacy special cases that need dedicated block-class treatment rather than registry-only values.
+- A few entries in the old audit table are really item-hazard rows and should stay out of the continuous chunk source list even when their block/item names are similar.
+
+Verification:
+
+- 2026-05-23 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-23 Radiation Runtime Semantics Alignment Pass
+
+Legacy source re-checked:
+
+- `com.hbm.handler.EntityEffectHandler#handleRadiationFX`
+- `com.hbm.potion.HbmPotion#performEffect`
+- `com.hbm.extprop.HbmLivingProps#handleRadiation`
+- `com.hbm.util.ContaminationUtil#applyDigammaData`
+- `com.hbm.util.ContaminationUtil#applyDigammaDirect`
+
+Corrected in this pass:
+
+- Nether ambient radiation now follows the old runtime rule:
+  - old `hellRad` is a floor for the radiation value used by `handleRadiationFX`.
+  - it applies through the same living-entity chunk radiation path, not as a second player-only tick source.
+  - if a Nether chunk already has more radiation than `hellRad`, the higher chunk value wins.
+- Removed the modern extra radiation potion application from the `200..399` stored-radiation band.
+  - 1.7.10 `HbmLivingProps#handleRadiation` only adds random confusion/weakness in that band.
+  - `HbmPotion.radiation` still contaminates every tick when some block, gas, item, or explicit source applies that potion.
+- `RadawayMobEffect` now mirrors old `HbmPotion.radaway` by only decreasing stored radiation by `amplifier + 1` per tick.
+  - it no longer clears the radiation potion effect.
+  - it no longer directly lowers the transient `radEnv` buffer.
+- `RadiationUtil#applyDigammaDirect` now mirrors old direct digamma application more closely:
+  - rejects non-positive amounts.
+  - ignores `RadiationImmune`/legacy immune entity classes.
+  - ignores creative players.
+  - increments digamma directly instead of passing through the generic contamination gate.
+
+Still incomplete:
+
+- Yellow chunk-radiation fog now has the correct library-side threshold/chance rules from previous passes, but client visual verification still needs an in-game run after this semantic cleanup.
+- PRISM/NT/3D chunk handlers remain deferred; current behavior remains aligned to the default Simple handler.
+
+Verification:
+
+- Pending this pass: `.\gradlew.bat compileJava processResources --no-daemon`.
+
+## 2026-05-23 Radiation Diffusion Timing Fix
+
+Legacy source re-checked:
+
+- `com.hbm.handler.radiation.ChunkRadiationManager#updateSystem`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple#updateSystem`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple#handleWorldDestruction`
+- `com.hbm.handler.EntityEffectHandler#handleRadiationFX`
+- `com.hbm.particle.ParticleRadiationFog`
+
+Corrected in this pass:
+
+- Chunk-radiation diffusion timing now tracks per-dimension instead of using one global counter.
+  - this matches the old per-world handler timer contract more closely.
+  - it prevents one dimension from suppressing or bunching the diffusion/fog cycle of another dimension.
+- `LevelEvent.Unload` now clears the per-dimension diffusion timer alongside the other world-scoped library state.
+- Radiation fog candidate generation remains tied to the diffusion pass and still uses the old 3x3 spread weights and `fogRad` threshold.
+
+Still incomplete:
+
+- The client-side yellow fog renderer is already migrated, but in-game visibility still needs a live check after this timing correction.
+- PRISM/NT/3D chunk handlers remain deferred; current behavior remains aligned to the default Simple handler.
+
+Verification:
+
+- 2026-05-23 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-23 Town Aura Separation Pass
+
+Legacy source re-checked:
+
+- `com.hbm.main.ClientProxy#effectNT`
+- `com.hbm.blocks.generic.BlockHazard`
+- `com.hbm.blocks.generic.WasteEarth`
+- `com.hbm.blocks.generic.YellowBarrel`
+- `com.hbm.blocks.gas.BlockGasAsbestos`
+- `com.hbm.blocks.gas.BlockGasRadonDense`
+- `com.hbm.blocks.gas.BlockGasMeltdown`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple`
+- `com.hbm.particle.ParticleRadiationFog`
+
+Corrected in this pass:
+
+- Added a dedicated modern `town_aura` particle so legacy `townaura` effects no longer reuse the block-true `MYCELIUM` placeholder.
+- Routed the known legacy near-field yellow-gas/ash effects through `town_aura`:
+  - gas meltdown
+  - dense radon
+  - asbestos gas
+  - radioactive waste earth mycelium
+  - the generic `townaura` effect NT path
+- Left chunk-radiation fog on `radiation_fog`; that is still the separate `radFog` path from the 1.7.10 chunk handler.
+- Cleared zero-value leftovers more aggressively from the diffusion working map so old chunks stop lingering as empty entries after diffusion.
+
+Still incomplete:
+
+- This pass is only the near-field `townaura` side; the live in-game look still needs a check after the resource is built.
+- The full 1.7.10 `EntityAuraFX` look is approximated with a modern particle, not the original GL-era client effect class.
+
+Verification:
+
+- Pending this pass: `.\gradlew.bat compileJava processResources --no-daemon`.
+
+## 2026-05-23 Radiation Barrel Explosion Pass
+
+Legacy source re-checked:
+
+- `com.hbm.blocks.generic.YellowBarrel`
+- `com.hbm.blocks.generic.BlockDetonatable`
+- `com.hbm.explosion.ExplosionNukeGeneric#waste`
+- `com.hbm.handler.radiation.ChunkRadiationManager`
+
+Corrected in this pass:
+
+- `yellow_barrel` now has the old-style explosion aftermath bridge:
+  - adds one-shot `+35` chunk radiation at the blast center.
+  - sprays dense radon into the surrounding 11x11x11 cube when cells are air.
+- `yellow_barrel` and `vitrified_barrel` keep separate per-tick radiation rates:
+  - yellow: `5.0F`
+  - vitrified: `0.5F`
+- The near-field yellow haze stays on `town_aura`; chunk radiation fog stays on `radiation_fog`.
+
+Still incomplete:
+
+- The old `BlockDetonatable` priming/fuse chain is broader than this barrel-only bridge; the full detonation family still needs its own pass.
+
+Verification:
+
+- Pending this pass: `.\gradlew.bat compileJava processResources --no-daemon`.
+
+## 2026-05-23 Special Source Visual Alignment Pass
+
+Legacy source re-checked:
+
+- `com.hbm.blocks.ModBlocks`
+- `com.hbm.blocks.generic.BlockHazard`
+- `com.hbm.blocks.generic.BlockNuclearWaste`
+- `com.hbm.main.ClientProxy#effectNT`
+- `com.hbm.particle.ParticleHaze`
+
+Corrected in this pass:
+
+- Added a dedicated `schrab_fog` particle using the old `haze.png` asset path.
+- Routed legacy `schrabfog` packet effects to the dedicated particle instead of piggybacking on unrelated visuals.
+- Restored the old visible hazard-source split for the schrab / radfog blocks:
+  - `block_u233`, `block_u235`, `block_neptunium`, `block_polonium`, `block_mox_fuel`, `block_plutonium`, `block_pu238`, `block_pu239`, `block_pu240`, `block_pu_mix`, `block_plutonium_fuel` now emit the old yellow haze.
+  - `block_schraranium`, `block_schrabidium`, `block_schrabidate`, `block_solinium`, `block_schrabidium_fuel` now emit the old schrab fog.
+- Kept the continuous chunk-radiation values on the same blocks, so the visual and pollution sides now line up again.
+
+Still incomplete:
+
+- The legacy aura look is still a modern particle approximation, not the old GL particle implementation.
+- The broader `BlockHazard` family still has some old client-side nuance left to audit.
+
+Verification:
+
+- Pending this pass: `.\gradlew.bat compileJava processResources --no-daemon`.

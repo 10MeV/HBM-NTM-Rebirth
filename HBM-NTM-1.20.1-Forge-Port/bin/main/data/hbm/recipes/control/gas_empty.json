@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": {
+      "item": "hbm:plate_copper"
+    },
+    "S": {
+      "item": "hbm:plate_steel"
+    }
+  },
+  "pattern": [
+    "S ",
+    "AA",
+    "AA"
+  ],
+  "result": {
+    "count": 2,
+    "item": "hbm:gas_empty"
+  },
+  "show_notification": true
+}

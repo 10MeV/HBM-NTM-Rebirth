@@ -98,6 +98,108 @@ public final class HbmEnergyNodespace {
         return nodeWorld == null ? 0 : nodeWorld.activePowerNets.size();
     }
 
+    public static Diagnostics getDiagnostics(Level level) {
+        EnergyNodeWorld nodeWorld = WORLDS.get(level.dimension());
+        if (nodeWorld == null) {
+            return Diagnostics.empty();
+        }
+
+        LinkedHashSet<HbmEnergyNode> uniqueNodes = new LinkedHashSet<>(nodeWorld.nodes.values());
+        int dirtyNodes = 0;
+        int expiredNodes = 0;
+        int orphanNodes = 0;
+        int linkRefs = 0;
+        int providerEntries = 0;
+        int receiverEntries = 0;
+        int invalidNetworks = 0;
+        for (HbmEnergyNode node : uniqueNodes) {
+            if (node.isRecentlyChanged()) {
+                dirtyNodes++;
+            }
+            if (node.isExpired()) {
+                expiredNodes++;
+            }
+            if (!node.hasValidNet()) {
+                orphanNodes++;
+            }
+        }
+        for (HbmPowerNet net : nodeWorld.activePowerNets) {
+            if (!net.isValid()) {
+                invalidNetworks++;
+            }
+            HbmPowerNet.DebugSnapshot snapshot = net.createDebugSnapshot();
+            linkRefs += snapshot.links();
+            providerEntries += snapshot.providers();
+            receiverEntries += snapshot.receivers();
+        }
+
+        return new Diagnostics(
+                nodeWorld.nodes.size(),
+                uniqueNodes.size(),
+                nodeWorld.activePowerNets.size(),
+                invalidNetworks,
+                linkRefs,
+                dirtyNodes,
+                expiredNodes,
+                orphanNodes,
+                providerEntries,
+                receiverEntries,
+                nodeWorld.reapTimer);
+    }
+
+    public static ForceRebuildResult forceRebuild(Level level) {
+        EnergyNodeWorld nodeWorld = WORLDS.get(level.dimension());
+        if (nodeWorld == null) {
+            return new ForceRebuildResult(0, 0, 0, 0);
+        }
+        LinkedHashSet<HbmEnergyNode> nodes = new LinkedHashSet<>(nodeWorld.nodes.values());
+        int oldNetworks = nodeWorld.activePowerNets.size();
+        for (HbmPowerNet net : new ArrayList<>(nodeWorld.activePowerNets)) {
+            net.destroy();
+        }
+        nodeWorld.activePowerNets.clear();
+
+        int reusableNodes = 0;
+        for (HbmEnergyNode node : nodes) {
+            if (!containsNode(nodeWorld, node)) {
+                continue;
+            }
+            node.setExpired(false);
+            node.setNet(null);
+            node.markRecentlyChanged();
+            reusableNodes++;
+        }
+        for (HbmEnergyNode node : nodes) {
+            if (!containsNode(nodeWorld, node)) {
+                continue;
+            }
+            checkNodeConnection(nodeWorld, node);
+            node.clearRecentlyChanged();
+        }
+        return new ForceRebuildResult(reusableNodes, oldNetworks, nodeWorld.activePowerNets.size(), nodeWorld.reapTimer);
+    }
+
+    public static boolean markNodeAndNeighborsChanged(Level level, BlockPos pos) {
+        EnergyNodeWorld nodeWorld = WORLDS.get(level.dimension());
+        if (nodeWorld == null) {
+            return false;
+        }
+        boolean marked = false;
+        HbmEnergyNode node = nodeWorld.nodes.get(pos);
+        if (node != null) {
+            node.markRecentlyChanged();
+            marked = true;
+        }
+        for (Direction direction : Direction.values()) {
+            HbmEnergyNode neighbor = nodeWorld.nodes.get(pos.relative(direction));
+            if (neighbor != null) {
+                neighbor.markRecentlyChanged();
+                marked = true;
+            }
+        }
+        return marked;
+    }
+
     public static int getNetworkLinkCount(Level level, BlockPos pos) {
         HbmPowerNet powerNet = getPowerNet(level, pos);
         return powerNet == null ? 0 : powerNet.linkCount();
@@ -348,5 +450,29 @@ public final class HbmEnergyNodespace {
         private static NetworkDebugSnapshot present(BlockPos pos, String connections, boolean recentlyChanged, HbmPowerNet.DebugSnapshot network) {
             return new NetworkDebugSnapshot(pos, true, connections, recentlyChanged, true, network);
         }
+    }
+
+    public record Diagnostics(
+            int nodePositions,
+            int uniqueNodes,
+            int networks,
+            int invalidNetworks,
+            int linkRefs,
+            int dirtyNodes,
+            int expiredNodes,
+            int orphanNodes,
+            int providerEntries,
+            int receiverEntries,
+            int reapTimer) {
+        private static Diagnostics empty() {
+            return new Diagnostics(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+    }
+
+    public record ForceRebuildResult(
+            int nodes,
+            int oldNetworks,
+            int newNetworks,
+            int reapTimer) {
     }
 }

@@ -38,7 +38,7 @@ public final class HbmParticleEffects {
             level.addParticle(ParticleTypes.FLAME, x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"));
             level.addParticle(ParticleTypes.SMOKE, x, y, z, data.getDouble("mX") * 0.5D, data.getDouble("mY") * 0.5D, data.getDouble("mZ") * 0.5D);
         } else if (ParticleUtil.TYPE_DEBUG_DRONE.equals(type)) {
-            spawnDebugLine(level, x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"));
+            spawnDebugLine(level, x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"), data.getInt("color"));
         } else if ("waterSplash".equals(type)) {
             burstSimple(level, ParticleTypes.CLOUD, x, y, z, 10, 1.0D);
         } else if ("cloudFX2".equals(type)) {
@@ -80,6 +80,8 @@ public final class HbmParticleEffects {
             level.addParticle(ModParticleTypes.RADIATION_FOG.get(), x, y, z, 0.0D, 0.0D, 0.0D);
         } else if ("radFog".equals(type)) {
             level.addParticle(ModParticleTypes.RADIATION_FOG.get(), x, y, z, 0.0D, 0.0D, 0.0D);
+        } else if ("schrabfog".equals(type)) {
+            level.addParticle(ModParticleTypes.SCHRAB_FOG.get(), x, y, z, 0.0D, 0.0D, 0.0D);
         } else if ("weaponExplosion".equals(type)) {
             spawnWeaponExplosion(level, data, x, y, z);
         } else if ("amat".equals(type)) {
@@ -98,15 +100,21 @@ public final class HbmParticleEffects {
         }
     }
 
-    private static void spawnDebugLine(ClientLevel level, double x, double y, double z, double targetX, double targetY, double targetZ) {
+    private static void spawnDebugLine(ClientLevel level, double x, double y, double z, double targetX, double targetY, double targetZ, int color) {
         int steps = Math.max(1, Mth.ceil(Math.sqrt(BlockPos.containing(x, y, z).distSqr(BlockPos.containing(targetX, targetY, targetZ))) * 2.0D));
+        if (color == 0) {
+            color = 0xFFFFFF;
+        }
         for (int i = 0; i <= steps; i++) {
             double progress = (double) i / (double) steps;
-            level.addParticle(ParticleTypes.END_ROD,
-                    Mth.lerp(progress, x, targetX),
-                    Mth.lerp(progress, y, targetY),
-                    Mth.lerp(progress, z, targetZ),
-                    0.0D, 0.0D, 0.0D);
+            double px = Mth.lerp(progress, x, targetX);
+            double py = Mth.lerp(progress, y, targetY);
+            double pz = Mth.lerp(progress, z, targetZ);
+            level.addParticle(new DustParticleOptions(new Vector3f(
+                            ((color >> 16) & 255) / 255.0F,
+                            ((color >> 8) & 255) / 255.0F,
+                            (color & 255) / 255.0F), 0.55F),
+                    px, py, pz, 0.0D, 0.0D, 0.0D);
         }
     }
 
@@ -142,7 +150,7 @@ public final class HbmParticleEffects {
             return;
         }
         if ("townaura".equals(mode)) {
-            level.addParticle(ParticleTypes.MYCELIUM, x, y, z, motionX, motionY, motionZ);
+            level.addParticle(ModParticleTypes.TOWN_AURA.get(), x, y, z, motionX, motionY, motionZ);
             return;
         }
         spawnNamedVanilla(level, mode, x, y, z, motionX, motionY, motionZ);

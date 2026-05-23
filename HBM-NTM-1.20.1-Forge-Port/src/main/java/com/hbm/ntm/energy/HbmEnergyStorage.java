@@ -5,9 +5,9 @@ import net.minecraft.nbt.CompoundTag;
 public class HbmEnergyStorage implements HbmEnergyProvider, HbmEnergyReceiver {
     public static final String DEFAULT_POWER_TAG = "Power";
 
-    private final long maxPower;
-    private final long maxReceive;
-    private final long maxExtract;
+    private long maxPower;
+    private long maxReceive;
+    private long maxExtract;
     private long power;
 
     public HbmEnergyStorage(long maxPower) {
@@ -37,6 +37,16 @@ public class HbmEnergyStorage implements HbmEnergyProvider, HbmEnergyReceiver {
     @Override
     public long getMaxPower() {
         return maxPower;
+    }
+
+    public void setMaxPower(long maxPower) {
+        this.maxPower = Math.max(0L, maxPower);
+        setPower(power);
+    }
+
+    public void setTransferRates(long maxReceive, long maxExtract) {
+        this.maxReceive = Math.max(0L, maxReceive);
+        this.maxExtract = Math.max(0L, maxExtract);
     }
 
     @Override

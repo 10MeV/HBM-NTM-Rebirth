@@ -1,7 +1,5 @@
 {
   "variants": {
-    "": {
-      "model": "hbm:block/gas_coal"
-    }
+    "": { "model": "hbm:block/gas_coal" }
   }
 }

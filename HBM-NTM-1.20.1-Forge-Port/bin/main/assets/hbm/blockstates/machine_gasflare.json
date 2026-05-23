@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "hbm:block/machines/flare_stack",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "hbm:block/machines/flare_stack"
+    },
+    "facing=south": {
+      "model": "hbm:block/machines/flare_stack",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "hbm:block/machines/flare_stack",
+      "y": 270
+    }
+  }
+}

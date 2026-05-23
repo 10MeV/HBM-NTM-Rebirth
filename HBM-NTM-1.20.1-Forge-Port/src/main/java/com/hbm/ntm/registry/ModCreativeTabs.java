@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.TrinketBlockItem;
 import net.minecraft.core.registries.Registries;
@@ -59,7 +60,10 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm.control"))
                     .icon(() -> ModItems.legacyItem("plate_fuel_u235").get().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModItems.CONTROL_TAB_ITEMS.forEach(item -> acceptItem(output, item)))
+                    .displayItems((parameters, output) -> {
+                        ModItems.CONTROL_TAB_ITEMS.forEach(item -> acceptItem(output, item));
+                        ModItems.CONTROL_FLUID_ITEMS.forEach(item -> acceptItem(output, item));
+                    })
                     .build());
 
     public static final RegistryObject<CreativeModeTab> BLOCKS = CREATIVE_TABS.register("blocks",
@@ -96,6 +100,8 @@ public final class ModCreativeTabs {
     private static void acceptItem(CreativeModeTab.Output output, RegistryObject<? extends net.minecraft.world.item.Item> item) {
         if (item.get() instanceof HbmBatteryItem battery) {
             battery.addCreativeStacks(output, item.get().getDefaultInstance());
+        } else if (item.get() instanceof HbmFluidContainerItem container) {
+            output.accept(item.get().getDefaultInstance());
         } else {
             output.accept(item.get());
         }

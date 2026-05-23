@@ -1,6 +1,7 @@
 package com.hbm.ntm.fluid;
 
 import com.hbm.ntm.api.fluid.IFillableItem;
+import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.FluidStack;
@@ -9,7 +10,11 @@ import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemHandlerHelper;
 
+import java.util.Random;
+
 public final class HbmFluidItemTransfer {
+    private static final Random RANDOM = new Random();
+
     public static boolean loadTankFromSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank) {
         return loadTankFromSlot(items, inputSlot, outputSlot, tank, Integer.MAX_VALUE, false);
     }
@@ -21,6 +26,9 @@ public final class HbmFluidItemTransfer {
         ItemStack input = items.getStackInSlot(inputSlot);
         if (input.isEmpty()) {
             return false;
+        }
+        if (input.getItem() instanceof HbmInfiniteFluidItem infinite) {
+            return drainInfiniteItemToTank(infinite, tank, simulate);
         }
         if (input.getItem() instanceof IFillableItem) {
             TransferResult result = drainItemToTank(input, tank, maxAmount, simulate);
@@ -43,6 +51,9 @@ public final class HbmFluidItemTransfer {
         ItemStack input = items.getStackInSlot(inputSlot);
         if (input.isEmpty()) {
             return false;
+        }
+        if (input.getItem() instanceof HbmInfiniteFluidItem infinite) {
+            return fillTankToInfiniteItem(infinite, tank, simulate);
         }
         if (input.getItem() instanceof IFillableItem) {
             TransferResult result = fillItemFromTank(input, tank, maxAmount, simulate);
@@ -104,6 +115,10 @@ public final class HbmFluidItemTransfer {
         if (stack.isEmpty()) {
             return new HbmFluidStack(HbmFluids.NONE, 0);
         }
+        if (stack.getItem() instanceof HbmInfiniteFluidItem infinite) {
+            FluidType type = infinite.getType();
+            return type == null || type == HbmFluids.NONE ? new HbmFluidStack(HbmFluids.NONE, 0) : new HbmFluidStack(type, infinite.getAmount(), 0);
+        }
         HbmFluidStack hbmFluid = getHbmItemFluid(stack);
         if (!hbmFluid.isEmpty()) {
             return hbmFluid;
@@ -114,6 +129,9 @@ public final class HbmFluidItemTransfer {
     }
 
     private static int fillHbmItem(ItemStack stack, FluidType type, int amount, boolean simulate) {
+        if (stack.getItem() instanceof HbmInfiniteFluidItem) {
+            return 0;
+        }
         if (!(stack.getItem() instanceof IFillableItem fillable) || !fillable.acceptsFluid(type, stack)) {
             return 0;
         }
@@ -134,6 +152,9 @@ public final class HbmFluidItemTransfer {
     }
 
     private static HbmFluidStack getHbmItemFluid(ItemStack stack) {
+        if (stack.getItem() instanceof HbmInfiniteFluidItem) {
+            return new HbmFluidStack(HbmFluids.NONE, 0);
+        }
         if (!(stack.getItem() instanceof IFillableItem fillable)) {
             return new HbmFluidStack(HbmFluids.NONE, 0);
         }
@@ -145,11 +166,59 @@ public final class HbmFluidItemTransfer {
     }
 
     private static int drainHbmItem(ItemStack stack, FluidType type, int amount, boolean simulate) {
+        if (stack.getItem() instanceof HbmInfiniteFluidItem) {
+            return 0;
+        }
         if (!(stack.getItem() instanceof IFillableItem fillable) || !fillable.providesFluid(type, stack)) {
             return 0;
         }
         ItemStack target = simulate ? stack.copy() : stack;
         return fillable.tryEmpty(type, amount, target);
+    }
+
+    private static boolean drainInfiniteItemToTank(HbmInfiniteFluidItem item, HbmFluidTank tank, boolean simulate) {
+        FluidType type = item.getType();
+        if (tank.getTankType() == HbmFluids.NONE || type == HbmFluids.NONE || !item.allowPressure(tank.getPressure())) {
+            return false;
+        }
+        if (type != null && tank.getTankType() != type) {
+            return false;
+        }
+        if (simulate) {
+            return tank.getFill() < tank.getMaxFill();
+        }
+        if (item.getChance() > 1 && !simulate && RANDOM.nextInt(item.getChance()) != 0) {
+            return false;
+        }
+        int previous = tank.getFill();
+        if (type == null) {
+            tank.setFill(Math.min(tank.getFill() + item.getAmount(), tank.getMaxFill()));
+        } else {
+            tank.fill(type, item.getAmount(), tank.getPressure(), false);
+        }
+        return tank.getFill() > previous;
+    }
+
+    private static boolean fillTankToInfiniteItem(HbmInfiniteFluidItem item, HbmFluidTank tank, boolean simulate) {
+        FluidType type = item.getType();
+        if (tank.getTankType() == HbmFluids.NONE) {
+            return false;
+        }
+        if (!item.allowPressure(tank.getPressure())) {
+            return false;
+        }
+        if (type != null && type != HbmFluids.NONE && tank.getTankType() != type) {
+            return false;
+        }
+        if (simulate) {
+            return tank.getFill() > 0;
+        }
+        if (item.getChance() > 1 && !simulate && RANDOM.nextInt(item.getChance()) != 0) {
+            return false;
+        }
+        int previous = tank.getFill();
+        tank.drain(item.getAmount(), false);
+        return tank.getFill() < previous;
     }
 
     private static TransferResult drainForgeItemToTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {

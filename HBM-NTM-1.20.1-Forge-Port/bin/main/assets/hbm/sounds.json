@@ -62,6 +62,15 @@
       "hbm:player/vomit"
     ]
   },
+  "entity.ufo_blast": {
+    "subtitle": "subtitles.hbm.entity.ufo_blast",
+    "sounds": [
+      {
+        "name": "hbm:entity/ufo_blast",
+        "stream": false
+      }
+    ]
+  },
   "weapon.muke_explosion": {
     "subtitle": "subtitles.hbm.weapon.muke_explosion",
     "sounds": [

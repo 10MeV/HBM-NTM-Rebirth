@@ -16,6 +16,8 @@ import java.util.UUID;
 
 public final class RadiationData {
     public static final UUID DIGAMMA_UUID = UUID.fromString("2a3d8aec-5ab9-4218-9b8b-ca812bdf378b");
+    public static final int MAX_ASBESTOS = 60 * 60 * 20;
+    public static final int MAX_BLACK_LUNG = 2 * 60 * 60 * 20;
     private static final String TAG_ROOT = "HbmLivingProps";
     private static final String TAG_PREVIOUS_ROOT = "hbm_radiation";
     private static final String TAG_RADIATION = "hfr_radiation";
@@ -112,11 +114,23 @@ public final class RadiationData {
     }
 
     public static int getAsbestos(LivingEntity entity) {
+        if (RadiationConfig.DISABLE_ASBESTOS.get()) {
+            return 0;
+        }
         return getTag(entity).getInt(TAG_ASBESTOS);
     }
 
     public static void setAsbestos(LivingEntity entity, int asbestos) {
-        getTag(entity).putInt(TAG_ASBESTOS, Math.max(0, asbestos));
+        if (RadiationConfig.DISABLE_ASBESTOS.get()) {
+            return;
+        }
+        int value = Math.max(0, asbestos);
+        if (value >= MAX_ASBESTOS) {
+            getTag(entity).putInt(TAG_ASBESTOS, 0);
+            entity.hurt(ModDamageSources.asbestos(entity.level()), 1000.0F);
+        } else {
+            getTag(entity).putInt(TAG_ASBESTOS, value);
+        }
     }
 
     public static void incrementAsbestos(LivingEntity entity, int amount) {
@@ -140,11 +154,23 @@ public final class RadiationData {
     }
 
     public static int getBlackLung(LivingEntity entity) {
+        if (RadiationConfig.DISABLE_COAL.get()) {
+            return 0;
+        }
         return getTag(entity).getInt(TAG_BLACK_LUNG);
     }
 
     public static void setBlackLung(LivingEntity entity, int blackLung) {
-        getTag(entity).putInt(TAG_BLACK_LUNG, Math.max(0, blackLung));
+        if (RadiationConfig.DISABLE_COAL.get()) {
+            return;
+        }
+        int value = Math.max(0, blackLung);
+        if (value >= MAX_BLACK_LUNG) {
+            getTag(entity).putInt(TAG_BLACK_LUNG, 0);
+            entity.hurt(ModDamageSources.blackLung(entity.level()), 1000.0F);
+        } else {
+            getTag(entity).putInt(TAG_BLACK_LUNG, value);
+        }
     }
 
     public static void incrementBlackLung(LivingEntity entity, int amount) {

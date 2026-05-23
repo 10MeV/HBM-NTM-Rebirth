@@ -1,6 +1,7 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
+import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -87,6 +88,14 @@ public class MachineBatterySocketBlock extends LegacyOffsetMultiblockBlock imple
     public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
         BlockEntity blockEntity = level.getBlockEntity(pos);
         return blockEntity instanceof MachineBatterySocketBlockEntity socket ? socket.getComparatorPower() : 0;
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, block, neighborPos, movedByPiston);
+        if (!level.isClientSide) {
+            HbmEnergyNodespace.markNodeAndNeighborsChanged(level, pos);
+        }
     }
 
     @Override

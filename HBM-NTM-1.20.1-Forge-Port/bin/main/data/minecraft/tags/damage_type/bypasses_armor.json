@@ -3,6 +3,8 @@
   "values": [
     "hbm:radiation",
     "hbm:digamma",
-    "hbm:mku"
+    "hbm:mku",
+    "hbm:asbestos",
+    "hbm:blacklung"
   ]
 }

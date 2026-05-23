@@ -39,3 +39,31 @@
 - 未安装兼容 mod 时不加载其类。
 - 配方注入在服务端和客户端一致。
 - JEI 展示不改变实际机器配方数据。
+
+## 2026-05-23 能量库兼容层推进
+
+- `CompatEnergyControl.dischargeItem` 已按 1.7.10 外层限速语义修正：
+  - 实际放电量为 `min(dischargeRate, storedCharge, requested)`。
+  - 这与旧 `CompatEnergyControl#dischargeItem` 对 `IBatteryItem` 的处理一致，也避免物品底层去掉内部限速后外部兼容层无限速抽电。
+- `HbmEnergyBlockEntity` 现在实现 `HbmEnergyHandler` 并委托内部 `HbmEnergyStorage`：
+  - 使 EnergyControl 数据导出、核爆能量识别、通用能量查询都能识别基于该基类的机器。
+  - 修正此前 `CompatEnergyControl.getEnergyData(BlockEntity, CompoundTag)` 对这类方块实体只写 `euType`、不写 `energy/capacity` 的问题。
+- 外部 OpenComputers/EnergyControl mod 的正式 API 桥仍未接入；本批只迁移 HBM 侧稳定接口与无外部依赖的验证入口。
+
+## 2026-05-23 EnergyControl 旧 helper 尾项接入
+
+- 1.7.10 对照 `com.hbm.util.CompatEnergyControl`：
+  - `getHeat(TileEntity)`：旧端只识别 RBMK base，其他反应堆/研究堆未进入该入口。
+  - `getAllTanks(TileEntity)`：旧端对 `IFluidUserMK2` 返回 `{fluidName, fill, capacity}` 数组列表，并跳过 smoke/smoke_leaded/smoke_poison。
+  - `findTileEntity(World,x,y,z)`：旧端通过 `CompatExternal.getCoreFromPos` 解析 dummy/multiblock core。
+  - `getFluidTexture(String)`：旧端通过 `Fluids.fromName(name).getTexture()` 返回 GUI 贴图。
+- 现代接入：
+  - `CompatEnergyControl.getHeat(BlockEntity)` 现在解析 dummy core 后读取现代 `HeatSource`，没有热源时返回 `-1`。
+  - `CompatEnergyControl.getAllTanks(BlockEntity)` 现在解析 dummy core 后读取 `HbmFluidBlockEntity#getAllTanks()`，返回 `{fluidName, fill, capacity}`，空列表返回 `null`。
+  - `CompatEnergyControl.findTileEntity(...)` 现在能把 `MultiblockDummyBlockEntity` 解析到 core BlockEntity。
+  - `CompatEnergyControl.getFluidTexture(String)` 现在返回现代 `FluidType#getTexture()`。
+  - `BoilerBlockEntity` 实现 `HeatSource`，使流体/热量 info panel 和后续外部 EnergyControl 桥能读到 heat。
+  - `/hbm energy info <pos>` 现在会通过 `findTileEntity` 解析 dummy，并在输出中附带 `heat` 与 `tanks`。
+- 边界：
+  - 现代端目前没有完整 RBMK base 运行时对象；热量 helper 先以通用 `HeatSource` 承载旧入口语义。
+  - tank 过滤暂不硬编码旧 smoke 三种流体，因为现代 `HbmFluids` 当前未完整暴露对应类型；后续烟雾流体迁入时应按旧入口补过滤。
