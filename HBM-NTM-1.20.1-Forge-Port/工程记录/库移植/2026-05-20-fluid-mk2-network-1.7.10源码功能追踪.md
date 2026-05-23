@@ -363,6 +363,136 @@ Verification:
 
 - `.\gradlew.bat compileJava processResources --no-daemon` passed.
 
+## 2026-05-24 Modern Library Pass 17
+
+This pass expands the fluid library into the first substantial legacy fluid-processing machine: `machine_liquefactor`.
+
+Legacy sources re-read:
+
+- `com/hbm/inventory/recipes/LiquefactionRecipes.java`
+- `com/hbm/tileentity/machine/oil/TileEntityMachineLiquefactor.java`
+- `com/hbm/blocks/machine/MachineLiquefactor.java`
+- `com/hbm/inventory/container/ContainerLiquefactor.java`
+- `com/hbm/inventory/gui/GUILiquefactor.java`
+- `com/hbm/render/tileentity/RenderLiquefactor.java`
+- `com/hbm/items/ModItems.java` entries for `biomass` and `biomass_compressed`
+- related legacy crafting and machine recipe call sites for biomass/fish oil/sunflower oil/seed slurry
+
+Modern additions:
+
+- Add `hbm:liquefaction` recipe type through `LiquefactionRecipe` and `ModRecipes`.
+  - JSON contract: `ingredient` plus `output.fluid`, `output.amount`, and optional `output.pressure`.
+  - Fluid names accept both legacy names such as `BIOGAS` and namespaced datapack ids such as `hbm:biogas`.
+- Add data-generated liquefaction recipes for the directly mappable legacy set:
+  - biomass/glyphid gland to biogas
+  - snow/ice to water
+  - netherrack/cobblestone/stone/obsidian to lava
+  - ender pearl to ender juice
+  - sugar to ethanol
+  - seeds/vine/kelp/grass/fern to seed slurry
+  - cod/salmon/tropical fish/pufferfish to fish oil
+  - sunflower to sunflower oil
+- Add `machine_liquefactor` as a modern multiblock machine:
+  - `LiquefactorBlock`
+  - `LiquefactorBlockEntity`
+  - `LiquefactorMenu`
+  - `LiquefactorScreen`
+  - `LiquefactorRenderer`
+  - `HbmEnergyAndFluidBlockEntity` shared base for machines needing both Forge energy and HBM fluid tanks/network behavior
+- Preserve the main legacy processing contract:
+  - 4 slots: input, battery, speed-upgrade slot placeholder, power-upgrade slot placeholder
+  - tank capacity 24,000 mB
+  - base energy storage 100,000 HE
+  - base use 250 HE/t
+  - base process time 100 ticks
+  - output only fills when the tank is empty or already contains the same fluid and has enough space
+  - battery slot can charge the internal energy store through the migrated HBM/Forge energy bridge
+  - filled tank participates as a modern `HbmStandardFluidSender`
+- Add legacy biomass items and resources:
+  - `biomass`
+  - `biomass_compressed`
+  - Item creative placement follows 1.7.10 `partsTab`, not the modern control/fluid tab.
+- Add legacy GUI texture and OBJ-backed rendering:
+  - `textures/gui/processing/gui_liquefactor.png`
+  - OBJ parts `Main`, `Fluid`, and `Glass`
+  - fluid part scales by tank fill and uses the migrated fluid color.
+
+Still deferred:
+
+- Legacy upgrade behavior is not active yet. The two upgrade slots are present for layout/NBT compatibility, but reject items until the old `UpgradeManagerNT`/speed/power upgrade item family is migrated.
+- Exact old MK2 energy-network subscription is not implemented for the liquefactor yet; the machine currently uses internal HBM energy storage, battery charging, and Forge energy capability input.
+- Exact old custom fluid connection offsets from `getConPos()` are not fully represented yet. The machine sends through the modern HBM fluid network from its current node/capability surface.
+- Coal/oil-tar/ore-dictionary liquid fuel recipes from `LiquefactionRecipes` are still deferred until their item/fluid inputs are present and tag equivalents are defined.
+- Legacy `ItemFood -> SALIENT` fallback is deferred, because broad food-to-fluid fallback needs a recipe matching policy decision for 1.20 datapacks.
+- In-game visual verification of the multiblock proxy footprint and glass/fluid alpha ordering is still needed.
+
+Progress estimate after Pass 17:
+
+- Core `FluidType` identity/NBT lookup/table: about 86%.
+- Basic tank/conform/Forge capability bridge: about 74%.
+- Fluid network/provider/receiver algorithm: about 61%.
+- In-world pipe graph: about 22%.
+- Fluid item/container loading: about 60%.
+- Behavior traits and cross-system effects: about 60%.
+- Machine integration through the library: about 24%.
+- Overall fluid library migration: about 63%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+- `.\gradlew.bat runData --no-daemon` passed and generated 22 `hbm:liquefaction` recipes.
+
+## 2026-05-24 Modern Library Pass 18
+
+This pass fills in the tag-backed portion of the legacy liquefaction table where the modern port already has safe item/block or Forge-tag equivalents.
+
+Legacy sources re-read:
+
+- `com/hbm/inventory/recipes/LiquefactionRecipes.java`
+- `com/hbm/inventory/OreDictManager.java`
+- modern datagen providers for Forge item/block tags
+
+Modern additions:
+
+- Extend `LiquefactionRecipeBuilder` to accept `TagKey<Item>` ingredients.
+- Add tag-backed liquefaction recipes for old ore-dictionary inputs:
+  - `forge:gems/coal -> COALOIL 100`
+  - `forge:dusts/coal -> COALOIL 100`
+  - `forge:gems/lignite -> COALOIL 50`
+  - `forge:dusts/lignite -> COALOIL 50`
+  - `forge:dusts/sodium -> SODIUM 100`
+  - `forge:ingots/lead -> LEAD 100`
+  - `forge:dusts/lead -> LEAD 100`
+  - `forge:storage_blocks/lead -> LEAD 900`
+  - `minecraft:logs -> MUG 100`
+  - `ore_oil_sand -> BITUMEN 100`
+- Extend Forge tags used by the recipes:
+  - `forge:dusts/lead`
+  - aggregate `forge:dusts` now includes `powder_lead`
+  - `forge:storage_blocks/lead` block and item tags
+
+Still deferred:
+
+- `oiltar`, `cracktar`, and `coaltar` inputs are still deferred because the old tar metadata item family is not yet migrated.
+- Legacy ethanol outputs from `plant_flower` metadata 3/4 are deferred until the old custom flower block/metas are represented in modern registration.
+- The `ItemFood -> SALIENT` fallback remains deferred for the recipe-policy reason recorded in Pass 17.
+
+Progress estimate after Pass 18:
+
+- Core `FluidType` identity/NBT lookup/table: about 86%.
+- Basic tank/conform/Forge capability bridge: about 74%.
+- Fluid network/provider/receiver algorithm: about 61%.
+- In-world pipe graph: about 22%.
+- Fluid item/container loading: about 60%.
+- Behavior traits and cross-system effects: about 60%.
+- Machine integration through the library: about 26%.
+- Overall fluid library migration: about 64%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+- `.\gradlew.bat runData --no-daemon` passed and generated 32 `hbm:liquefaction` recipes.
+
 ## 2026-05-23 Modern Library Pass 16
 
 This pass closes the concrete `FluidLoaderInfinite` gap left after the container item registration pass:

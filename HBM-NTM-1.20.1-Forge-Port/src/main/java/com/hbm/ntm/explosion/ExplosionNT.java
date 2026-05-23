@@ -3,14 +3,17 @@ package com.hbm.ntm.explosion;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorStandard;
 import com.hbm.ntm.explosion.vnt.standard.BlockMutatorBalefire;
+import com.hbm.ntm.explosion.vnt.standard.BlockMutatorDigamma;
 import com.hbm.ntm.explosion.vnt.standard.BlockMutatorErode;
 import com.hbm.ntm.explosion.vnt.standard.BlockMutatorFire;
 import com.hbm.ntm.explosion.vnt.standard.BlockMutatorLava;
+import com.hbm.ntm.explosion.vnt.standard.BlockMutatorPlaceBlock;
 import com.hbm.ntm.explosion.vnt.standard.BlockProcessorStandard;
 import com.hbm.ntm.explosion.vnt.standard.CompositeBlockMutator;
 import com.hbm.ntm.explosion.vnt.standard.EntityProcessorStandard;
 import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectStandard;
 import com.hbm.ntm.explosion.vnt.standard.PlayerProcessorStandard;
+import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
@@ -66,8 +69,20 @@ public class ExplosionNT {
         return this;
     }
 
+    public ExplosionNT addAllAttrib(ExAttrib... attributes) {
+        return addAttrib(attributes);
+    }
+
+    public ExplosionNT addAllAttrib(Collection<ExAttrib> attributes) {
+        return addAttrib(attributes);
+    }
+
     public ExplosionNT addNukeAttribs() {
         return addAttrib(NUKE_ATTRIBS);
+    }
+
+    public boolean hasAttrib(ExAttrib attribute) {
+        return attributes.contains(attribute);
     }
 
     public ExplosionNT overrideResolution(int resolution) {
@@ -110,6 +125,17 @@ public class ExplosionNT {
         }
         if (attributes.contains(ExAttrib.LAVA)) {
             mutators.add(new BlockMutatorLava(allMod));
+        }
+        if (attributes.contains(ExAttrib.DIGAMMA_CIRCUIT)) {
+            mutators.add(new BlockMutatorDigamma(true));
+        } else if (attributes.contains(ExAttrib.DIGAMMA)) {
+            mutators.add(new BlockMutatorDigamma(false));
+        }
+        if (attributes.contains(ExAttrib.LAVA_V)) {
+            mutators.add(new BlockMutatorPlaceBlock(ModBlocks.VOLCANIC_LAVA_BLOCK.get().defaultBlockState()));
+        }
+        if (attributes.contains(ExAttrib.LAVA_R)) {
+            mutators.add(new BlockMutatorPlaceBlock(ModBlocks.RAD_LAVA_BLOCK.get().defaultBlockState()));
         }
         if (!mutators.isEmpty()) {
             processor.withBlockEffect(mutators);

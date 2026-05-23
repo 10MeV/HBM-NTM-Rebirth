@@ -1,0 +1,28 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 40,
+  "input_fluids": [
+    {
+      "amount": 32000,
+      "fluid": "hbm:diesel_crack_reform"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm:fluid_pack_empty"
+      }
+    }
+  ],
+  "internal_name": "ass.packageDIESEL_CRACK_REFORM",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:fluid_pack_full",
+      "nbt": "{hbm_fluid:\"DIESEL_CRACK_REFORM\",hbm_fluid_amount:32000,hbm_fluid_pressure:0}"
+    }
+  ],
+  "pools": [],
+  "power": 100
+}

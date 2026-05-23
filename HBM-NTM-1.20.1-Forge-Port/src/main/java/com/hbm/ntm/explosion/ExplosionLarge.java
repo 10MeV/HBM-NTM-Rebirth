@@ -1,10 +1,10 @@
 package com.hbm.ntm.explosion;
 
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
+import com.hbm.ntm.entity.projectile.RubbleEntity;
+import com.hbm.ntm.entity.projectile.ShrapnelEntity;
 import com.hbm.ntm.particle.ParticleUtil;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -53,14 +53,24 @@ public final class ExplosionLarge {
     }
 
     public static void spawnRubble(Level level, double x, double y, double z, int count) {
-        if (level instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState()),
-                    x, y, z, count, 1.0D, 1.0D, 1.0D, 0.35D);
+        if (!(level instanceof ServerLevel) || count <= 0) {
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            RubbleEntity rubble = new RubbleEntity(level);
+            rubble.setBlockState(Blocks.STONE.defaultBlockState());
+            rubble.setPos(x, y, z);
+            double speedScale = 1.0D + (double) (count + level.random.nextInt(Math.max(1, count * 5))) / 25.0D;
+            rubble.setDeltaMovement(
+                    level.random.nextGaussian() * 0.75D * (1.0D + count / 50.0D),
+                    0.75D * speedScale,
+                    level.random.nextGaussian() * 0.75D * (1.0D + count / 50.0D));
+            level.addFreshEntity(rubble);
         }
     }
 
     public static void spawnShrapnels(Level level, double x, double y, double z, int count, float motion) {
-        spawnShrapnelVisuals(level, x, y, z, count, motion);
+        spawnShrapnelEntities(level, x, y, z, count, motion, false);
     }
 
     public static void spawnShrapnels(Level level, double x, double y, double z, int count) {
@@ -68,11 +78,34 @@ public final class ExplosionLarge {
     }
 
     public static void spawnTracers(Level level, double x, double y, double z, int count, float motion) {
-        spawnShrapnelVisuals(level, x, y, z, count, motion);
+        spawnShrapnelEntities(level, x, y, z, count, motion, true);
+    }
+
+    public static void spawnTracers(Level level, double x, double y, double z, int count) {
+        spawnTracers(level, x, y, z, count, 0.25F);
     }
 
     public static void spawnShrapnelShower(Level level, double x, double y, double z, int count, float motion) {
-        spawnShrapnelVisuals(level, x, y, z, count, motion);
+        spawnShrapnelEntities(level, x, y, z, count, motion, false);
+    }
+
+    public static void spawnShrapnelShower(Level level, double x, double y, double z, double motionX, double motionY,
+            double motionZ, int count, double deviation) {
+        if (!(level instanceof ServerLevel) || count <= 0) {
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            ShrapnelEntity shrapnel = new ShrapnelEntity(level);
+            shrapnel.setPos(x, y, z);
+            shrapnel.setDeltaMovement(
+                    motionX + level.random.nextGaussian() * deviation,
+                    motionY + level.random.nextGaussian() * deviation,
+                    motionZ + level.random.nextGaussian() * deviation);
+            if (level.random.nextInt(3) == 0) {
+                shrapnel.setTrail();
+            }
+            level.addFreshEntity(shrapnel);
+        }
     }
 
     public static void spawnMissileDebris(Level level, double x, double y, double z, List<ItemStack> debris, @Nullable ItemStack rareDrop) {
@@ -84,6 +117,35 @@ public final class ExplosionLarge {
         }
         if (rareDrop != null && !rareDrop.isEmpty() && level.random.nextInt(25) == 0) {
             spawnDebrisItem(level, x, y, z, rareDrop);
+        }
+    }
+
+    public static void spawnMissileDebris(Level level, double x, double y, double z, double motionX, double motionY,
+            double motionZ, double deviation, List<ItemStack> debris, @Nullable ItemStack rareDrop) {
+        if (level == null || level.isClientSide() || debris == null) {
+            return;
+        }
+        for (ItemStack stack : debris) {
+            if (stack.isEmpty()) {
+                continue;
+            }
+            int amount = level.random.nextInt(stack.getCount() + 1);
+            for (int i = 0; i < amount; i++) {
+                ItemStack copy = stack.copy();
+                copy.setCount(1);
+                Vec3 motion = new Vec3(
+                        motionX + level.random.nextGaussian() * deviation,
+                        motionY + level.random.nextGaussian() * deviation,
+                        motionZ + level.random.nextGaussian() * deviation).scale(0.85D);
+                spawnDebrisItem(level, x, y, z, copy, motion, true);
+            }
+        }
+        if (rareDrop != null && !rareDrop.isEmpty() && level.random.nextInt(10) == 0) {
+            Vec3 motion = new Vec3(
+                    motionX + level.random.nextGaussian() * deviation * 0.1D,
+                    motionY + level.random.nextGaussian() * deviation * 0.1D,
+                    motionZ + level.random.nextGaussian() * deviation * 0.1D).scale(0.85D);
+            spawnDebrisItem(level, x, y, z, rareDrop, motion, true);
         }
     }
 
@@ -103,27 +165,52 @@ public final class ExplosionLarge {
         spawnLegacyExtras(level, x, y, z, strength, cloud, rubble, shrapnel);
     }
 
+    public static void explodeFire(Level level, double x, double y, double z, float strength, boolean cloud, boolean rubble,
+            boolean shrapnel) {
+        explodeFire(level, x, y, z, strength, cloud, rubble, shrapnel, null);
+    }
+
     public static void buster(Level level, double x, double y, double z, Vec3 direction, float strength, int depth) {
         buster(level, x, y, z, direction, strength, depth, null);
     }
 
     public static void buster(Level level, double x, double y, double z, Vec3 direction, float strength, int depth, @Nullable Entity source) {
+        buster(level, x, y, z, direction, strength, (double) depth, 1.0D, source);
+    }
+
+    public static void buster(Level level, double x, double y, double z, Vec3 direction, float strength, float depth) {
+        buster(level, x, y, z, direction, strength, depth, null);
+    }
+
+    public static void buster(Level level, double x, double y, double z, Vec3 direction, float strength, float depth,
+            @Nullable Entity source) {
+        buster(level, x, y, z, direction, strength, depth, 2.0D, source);
+    }
+
+    private static void buster(Level level, double x, double y, double z, Vec3 direction, float strength, double depth,
+            double stepLength, @Nullable Entity source) {
         if (direction.lengthSqr() <= 1.0E-7D) {
             return;
         }
-        Vec3 step = direction.normalize();
-        for (int i = 0; i < depth; i++) {
-            WeaponExplosionUtil.explodeStandard(level, x + step.x * i, y + step.y * i, z + step.z * i, strength, source, true, false);
+        Vec3 step = direction.normalize().scale(stepLength);
+        for (double distance = 0.0D; distance < depth; distance += stepLength) {
+            double factor = distance / stepLength;
+            WeaponExplosionUtil.explodeStandard(level, x + step.x * factor, y + step.y * factor, z + step.z * factor,
+                    strength, source, true, false);
         }
     }
 
     public static void jolt(Level level, double x, double y, double z, int strength, int count, double velocity) {
+        jolt(level, x, y, z, (double) strength, count, velocity);
+    }
+
+    public static void jolt(Level level, double x, double y, double z, double strength, int count, double velocity) {
         if (!(level instanceof ServerLevel serverLevel) || strength <= 0 || count <= 0) {
             return;
         }
         for (int c = 0; c < count; c++) {
             Vec3 direction = randomDirection(level);
-            for (int i = 0; i < strength; i++) {
+            for (double i = 0.0D; i < strength; i++) {
                 BlockPos pos = BlockPos.containing(x + direction.x * i, y + direction.y * i, z + direction.z * i);
                 BlockState state = level.getBlockState(pos);
                 if (!state.getFluidState().isEmpty()) {
@@ -136,9 +223,17 @@ public final class ExplosionLarge {
                 if (hasHighExplosionResistance(state)) {
                     continue;
                 }
-                serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state),
-                        pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 12,
-                        Math.max(0.1D, velocity), Math.max(0.1D, velocity), Math.max(0.1D, velocity), 0.2D);
+                RubbleEntity rubble = new RubbleEntity(level);
+                rubble.setBlockState(state);
+                rubble.setPos(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+                Vec3 motion = new Vec3(x - rubble.getX(), y - rubble.getY(), z - rubble.getZ());
+                if (motion.lengthSqr() > 1.0E-7D) {
+                    motion = motion.normalize().scale(velocity);
+                } else {
+                    motion = randomDirection(level).scale(velocity);
+                }
+                rubble.setDeltaMovement(motion);
+                serverLevel.addFreshEntity(rubble);
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 break;
             }
@@ -179,14 +274,46 @@ public final class ExplosionLarge {
         if (stack.isEmpty()) {
             return;
         }
-        ItemEntity item = new ItemEntity(level, x, y, z, stack.copy());
-        item.setDeltaMovement(randomDirection(level).scale(0.2D + level.random.nextDouble() * 0.6D));
+        spawnDebrisItem(level, x, y, z, stack, randomDirection(level).scale(0.2D + level.random.nextDouble() * 0.6D), false);
+    }
+
+    private static void spawnDebrisItem(Level level, double x, double y, double z, ItemStack stack, Vec3 motion,
+            boolean projectFromOrigin) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        double itemX = projectFromOrigin ? x + motion.x * 2.0D : x;
+        double itemY = projectFromOrigin ? y + motion.y * 2.0D : y;
+        double itemZ = projectFromOrigin ? z + motion.z * 2.0D : z;
+        ItemEntity item = new ItemEntity(level, itemX, itemY, itemZ, stack.copy());
+        item.setDeltaMovement(motion);
         level.addFreshEntity(item);
     }
 
-    private static void spawnShrapnelVisuals(Level level, double x, double y, double z, int count, float motion) {
-        if (level instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.CRIT, x, y, z, count, 1.0D, 1.0D, 1.0D, motion);
+    private static void spawnShrapnelEntities(Level level, double x, double y, double z, int count, float motion, boolean tracer) {
+        if (!(level instanceof ServerLevel) || count <= 0) {
+            return;
+        }
+        double speed = Math.max(0.0D, motion);
+        for (int i = 0; i < count; i++) {
+            ShrapnelEntity shrapnel = new ShrapnelEntity(level);
+            shrapnel.setPos(x, y, z);
+            double motionY = ((level.random.nextFloat() * 0.5D) + 0.5D)
+                    * (1.0D + (count / (double) (15 + level.random.nextInt(21))))
+                    + (level.random.nextFloat() / 50.0D * count);
+            double horizontalScale = 1.0D + count / 50.0D;
+            if (tracer) {
+                motionY *= 0.25D;
+                horizontalScale *= 0.25D;
+            }
+            shrapnel.setDeltaMovement(
+                    level.random.nextGaussian() * horizontalScale * speed,
+                    motionY * speed,
+                    level.random.nextGaussian() * horizontalScale * speed);
+            if (level.random.nextInt(3) == 0 || tracer) {
+                shrapnel.setTrail();
+            }
+            level.addFreshEntity(shrapnel);
         }
     }
 

@@ -258,6 +258,32 @@
   - `RenderLantern` 的 `Light` 分件只关闭贴图/光照并设置 fullbright RGB，没有开启 blend，也没有关闭 depth mask，因此应是不透明、写深度的模型分件。
   - `RenderDemonLamp` 的 aura 明确开启 `SRC_ALPHA/ONE` 加色混合并 `glDepthMask(false)`，应是透明光晕。
 - `LegacyUntexturedQuadRenderer` 新增 `solid(...)`，使用专用 `hbm_legacy_solid_no_cull` RenderType：无贴图、`GameRenderer::getPositionColorShader`、`CullStateShard(false)`、`WriteMaskStateShard(true, true)`。
+
+### 2026-05-24 修正：方块实体渲染距离
+
+- 实机症状：
+  - 远距离俯视大型机器时，地面仍出现机器阴影/黑块，但 OBJ 机器模型消失。
+- 1.7.10 对照：
+  - 大量机器 TileEntity 同时覆盖 `getRenderBoundingBox()` 与 `getMaxRenderDistanceSquared()`。
+  - 已核对样例：
+    - `TileEntityMachinePumpjack` 的 AABB 在自身类中给出，最大渲染距离继承 `TileEntityOilDrillBase#getMaxRenderDistanceSquared()`。
+    - `TileEntityOilDrillBase#getMaxRenderDistanceSquared()` 返回 `65536.0D`。
+    - `TileEntityMachineAssemblyMachine`、`TileEntityMachineChemicalPlant`、`TileEntityMachineLiquefactor`、`TileEntityMachinePress` 也返回 `65536.0D`。
+  - `65536.0D` 对应 256 格视距。
+- 现代根因：
+  - 现有 renderer 只实现 `shouldRenderOffScreen() == true`，这只能避免视锥/离屏裁剪造成的大 AABB 问题。
+  - Forge 1.20.1 的 `BlockEntityRenderer` 仍有独立 view distance；默认距离会让远处 BER 不再调用，导致“阴影/占位仍可见但模型被距离裁掉”。
+- 本批修正：
+  - 新增 `LegacyBlockEntityRenderDistances.MACHINE = 256`，作为 1.7.10 `65536.0D` 的现代常量入口。
+  - 为现有机器 BER 覆盖 `getViewDistance()`：
+    - `LegacyVisibleMachineRenderer`
+    - `AssemblyMachineRenderer`
+    - `ChemicalPlantRenderer`
+    - `LiquefactorRenderer`
+    - `BasicMachineRenderer`
+    - `MachineBatterySocketRenderer`
+- 后续规则：
+  - 后续移植旧 TileEntity renderer 时，凡 1.7.10 覆盖 `getMaxRenderDistanceSquared()`，现代 BER 必须同步覆盖 `getViewDistance()`；不能只补 `shouldRenderOffScreen()`。
 - 规则：旧版“实体灯芯/灯罩内发光模型分件”使用 `solid(...)`；旧版“外扩透明光晕/光束”使用 `lightning(...)`。
 
 ### 2026-05-22 粒子库交叉记录
@@ -1659,6 +1685,32 @@ noSmooth 对照报告：
   - 使用普通 alpha blend，对齐旧 `OpenGlHelper.glBlendFunc(770, 771, 1, 0)`。
   - begin 时 `RenderSystem.depthMask(false)`，end 后恢复 `depthMask(true)`。
 - 该 RenderType 只用于辐射黄雾，不改变其他烟雾/火焰/泡沫粒子的渲染状态。
+
+## 2026-05-23 BlockNTMGlassCT / Boron Glass 追踪
+
+触发来源：
+
+- `runData` 生成配方时在 `HbmRecipeProvider.fluidContainerRecipes(...)` 命中 `block("glass_boron")`，但现代注册表尚无真实 `glass_boron` 方块。
+- 1.7.10 `ModBlocks` 中 `glass_boron = new BlockNTMGlassCT(0, RefStrings.MODID + ":glass_boron", Material.glass).setBlockName("glass_boron").setStepSound(Block.soundTypeGlass).setCreativeTab(MainRegistry.machineTab).setHardness(0.3F)`。
+
+旧版契约：
+
+- 旧类：`blocks/generic/BlockNTMGlass` 与 `BlockNTMGlassCT`。
+- 行为：非普通整块渲染、透明/不遮挡，普通破坏不掉落，丝触可采。
+- 渲染：`BlockNTMGlassCT#getRenderType()` 使用 `render/block/ct/CT.renderID`，通过 `IBlockCT.primeReceiver(...)` 和 `glass_boron_ct.png` 接入 connected texture。
+- 集成：矿辞 `blockGlass`，机器创造栏，配方中作为喷散罐、移液管、化学套装、RBMK 玻璃盖等硼玻璃输入。
+
+现代本轮实现：
+
+- 新增 `LegacyNtmGlassBlock` 承接透明、不遮挡、同类相邻面剔除与 skylight 行为。
+- 注册 `glass_boron` 到机器创造栏额外列表；该列表不再自动继承机器金属块的铁镐/掉落规则。
+- 数据生成使用 `minecraft:translucent` cube model；loot 使用丝触限定掉落，普通破坏无掉落。
+- 对齐旧 `OreDictionary.registerOre("blockGlass", glass_boron)`，现代端加入 `forge:glass` block/item tag。
+
+待补：
+
+- CT 子体系仍未完整迁移；当前 `glass_boron` 使用基础透明立方模型，不复刻旧 `glass_boron_ct.png` 的连接纹理拼接。
+- 后续迁移 `render/block/ct` 时应把 `BlockNTMGlassCT` 家族统一接入，而不是给每种玻璃单独写 renderer。
 
 仍未完全等价：
 

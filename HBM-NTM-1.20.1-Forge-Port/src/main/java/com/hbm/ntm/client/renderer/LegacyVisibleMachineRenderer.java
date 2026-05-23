@@ -26,6 +26,11 @@ public class LegacyVisibleMachineRenderer implements BlockEntityRenderer<LegacyV
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.MACHINE;
+    }
+
+    @Override
     public void render(LegacyVisibleMachineBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = blockEntity.getBlockState();

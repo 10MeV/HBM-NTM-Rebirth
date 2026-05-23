@@ -134,6 +134,24 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
         clearSubscriptions();
     }
 
+    @Override
+    public void joinNetwork(com.hbm.ntm.uninos.HbmNodeNet<HbmFluidNode> network) {
+        if (!(network instanceof HbmFluidNet fluidNet) || fluidNet == this) {
+            super.joinNetwork(network);
+            return;
+        }
+
+        List<HbmFluidReceiver> receivers = new ArrayList<>(fluidNet.receiverEntries.keySet());
+        List<HbmFluidProvider> providers = new ArrayList<>(fluidNet.providerEntries.keySet());
+        super.joinNetwork(network);
+        for (HbmFluidReceiver receiver : receivers) {
+            addReceiver(receiver);
+        }
+        for (HbmFluidProvider provider : providers) {
+            addProvider(provider);
+        }
+    }
+
     public long update() {
         if (type == HbmFluids.NONE || providerEntries.isEmpty() || receiverEntries.isEmpty()) {
             pruneExpired(System.currentTimeMillis());

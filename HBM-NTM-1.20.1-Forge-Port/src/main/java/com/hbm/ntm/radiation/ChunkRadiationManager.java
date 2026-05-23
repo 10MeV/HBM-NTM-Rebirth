@@ -11,7 +11,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +48,20 @@ public final class ChunkRadiationManager {
         if (level instanceof ServerLevel serverLevel) {
             getData(serverLevel).clear();
         }
+    }
+
+    public static RadiationSavedData.Stats getStats(Level level) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return new RadiationSavedData.Stats(0, 0, 0, 0, 0.0F, 0.0F, 0.0F, 0.0F);
+        }
+        return getData(serverLevel).stats(serverLevel);
+    }
+
+    public static int pruneUnloaded(Level level) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return 0;
+        }
+        return getData(serverLevel).pruneUnloaded(serverLevel);
     }
 
     public static void loadLegacyChunkRadiation(ServerLevel level, ChunkPos chunkPos, float radiation) {
@@ -109,7 +122,7 @@ public final class ChunkRadiationManager {
 
                         int x = chunkPos.getMinBlockX() + a;
                         int z = chunkPos.getMinBlockZ() + b;
-                        BlockPos surface = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, new BlockPos(x, 0, z)).below(level.random.nextInt(2));
+                        BlockPos surface = legacyWorldEffectSurface(level, x, z);
                         BlockState state = level.getBlockState(surface);
                         if (state.is(Blocks.GRASS_BLOCK)) {
                             level.setBlock(surface, ModBlocks.WASTE_EARTH.get().defaultBlockState(), 2);
@@ -146,8 +159,23 @@ public final class ChunkRadiationManager {
     private static void spawnRadiationFog(ServerLevel level, ChunkPos chunkPos) {
         int x = chunkPos.getMinBlockX() + level.random.nextInt(16);
         int z = chunkPos.getMinBlockZ() + level.random.nextInt(16);
-        BlockPos surface = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, new BlockPos(x, 0, z));
-        level.sendParticles(ModParticleTypes.RADIATION_FOG.get(), x, surface.getY() + level.random.nextInt(5), z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        level.sendParticles(ModParticleTypes.RADIATION_FOG.get(), x, legacyHeightValue(level, x, z) + level.random.nextInt(5), z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+    }
+
+    private static BlockPos legacyWorldEffectSurface(ServerLevel level, int x, int z) {
+        return new BlockPos(x, legacyHeightValue(level, x, z) - level.random.nextInt(2), z);
+    }
+
+    private static int legacyHeightValue(ServerLevel level, int x, int z) {
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(x, level.getMaxBuildHeight() - 1, z);
+        for (int y = level.getMaxBuildHeight() - 1; y >= level.getMinBuildHeight(); y--) {
+            cursor.setY(y);
+            BlockState state = level.getBlockState(cursor);
+            if (!state.isAir() && state.getLightBlock(level, cursor) > 0) {
+                return y + 1;
+            }
+        }
+        return level.getMinBuildHeight();
     }
 
     public static void unloadChunk(Level level, ChunkPos chunkPos) {

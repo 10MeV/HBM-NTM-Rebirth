@@ -56,9 +56,9 @@ public final class HbmEnergyDebug {
 
         CompoundTag data = new CompoundTag();
         data.putString("type", ParticleUtil.TYPE_DEBUG_DRONE);
-        data.putDouble("mX", x + dx * 8.0D);
-        data.putDouble("mY", y + dy * 8.0D);
-        data.putDouble("mZ", z + dz * 8.0D);
+        data.putDouble("mX", dx * 8.0D);
+        data.putDouble("mY", dy * 8.0D);
+        data.putDouble("mZ", dz * 8.0D);
         data.putString("role", provider ? "provider" : "receiver");
         data.putBoolean("connected", connected);
         data.putString("side", side.getName());

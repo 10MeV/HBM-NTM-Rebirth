@@ -1,0 +1,11 @@
+{
+  "type": "hbm:liquefaction",
+  "ingredient": {
+    "tag": "forge:gems/coal"
+  },
+  "output": {
+    "amount": 100,
+    "fluid": "COALOIL",
+    "pressure": 0
+  }
+}

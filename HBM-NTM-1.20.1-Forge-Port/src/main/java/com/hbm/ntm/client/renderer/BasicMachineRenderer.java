@@ -33,6 +33,11 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.MACHINE;
+    }
+
+    @Override
     public void render(BasicMachineBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
         double press = Math.max(0.0D, Math.min(1.0D, blockEntity.getInterpolatedPress(partialTick) / (double) BasicMachineBlockEntity.MAX_PRESS));

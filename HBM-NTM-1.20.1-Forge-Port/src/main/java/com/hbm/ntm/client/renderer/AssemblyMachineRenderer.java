@@ -26,6 +26,11 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.MACHINE;
+    }
+
+    @Override
     public void render(AssemblyMachineBlockEntity assembler, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = assembler.getBlockState();

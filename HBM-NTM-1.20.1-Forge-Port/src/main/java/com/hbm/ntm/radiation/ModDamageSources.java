@@ -31,6 +31,10 @@ public final class ModDamageSources {
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "cloud"));
     public static final ResourceKey<DamageType> ELECTRIC = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "electric"));
+    public static final ResourceKey<DamageType> SHRAPNEL = ResourceKey.create(
+            Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "shrapnel"));
+    public static final ResourceKey<DamageType> RUBBLE = ResourceKey.create(
+            Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "rubble"));
 
     public static DamageSource radiation(Level level) {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(RADIATION));
@@ -66,6 +70,14 @@ public final class ModDamageSources {
 
     public static DamageSource electric(Level level) {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ELECTRIC));
+    }
+
+    public static DamageSource shrapnel(Level level) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SHRAPNEL));
+    }
+
+    public static DamageSource rubble(Level level) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(RUBBLE));
     }
 
     public static DamageSource explosion(Level level, @Nullable Entity source) {

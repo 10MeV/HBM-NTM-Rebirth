@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-22T21:02:46.517242	Item Models: hbm
+// 1.20.1	2026-05-24T00:12:10.186317	Item Models: hbm
 e0dd9cc86e850dae1c5e94ee6463e6ef9b707966 assets/hbm/models/item/battery_creative.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lead.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lithium.json
@@ -63,6 +63,8 @@ daf80fc38b3da65f0ba7630ebac7736beca56870 assets/hbm/models/item/billet_zfb_am_mi
 86ddc2d054777680515cbb7a14fc5368d1aa2494 assets/hbm/models/item/billet_zfb_bismuth.json
 f8333a487901dce9def69ce4a5c7cc4746717a6f assets/hbm/models/item/billet_zfb_pu241.json
 5945df172ebd29cff3a01422e928e0044adb93a3 assets/hbm/models/item/billet_zirconium.json
+018aa89c5e59ed7bfd6bb169c126e2d5a2026aa8 assets/hbm/models/item/biomass.json
+058e0604c3e75c0687875418098f46894fb161b5 assets/hbm/models/item/biomass_compressed.json
 09b6e171a5cf423a6b8c86022aa4ec23b7cbf2be assets/hbm/models/item/boy_bullet.json
 3ef7c6308aa5ae3f8ce6dabc5ccbd3e8eab3a0c0 assets/hbm/models/item/boy_propellant.json
 296512f154a274642ac189ea664cbd56358e49fa assets/hbm/models/item/boy_target.json

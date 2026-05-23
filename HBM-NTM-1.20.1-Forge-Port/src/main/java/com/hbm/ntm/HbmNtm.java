@@ -2,6 +2,7 @@ package com.hbm.ntm;
 
 import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.datagen.HbmDataGenerators;
+import com.hbm.ntm.entity.logic.ExplosionChunkLoading;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
@@ -58,6 +59,7 @@ public class HbmNtm {
             HazmatRegistry.registerDefaults();
             ItemRadiationRegistry.registerDefaults();
             HbmFluids.bootstrap();
+            ExplosionChunkLoading.registerValidationCallback();
             ModMessages.register();
             HbmBatteryTransfer.setCreativeBatteryPredicate(stack -> stack.is(ModItems.BATTERY_CREATIVE.get()));
         });

@@ -71,13 +71,25 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         existingModelWithItem(ModBlocks.MACHINE_BATTERY_SOCKET, "machines/battery_socket_socket");
         existingModelBlockOnly(ModBlocks.MACHINE_ASSEMBLY_MACHINE, "machine_assembly_machine");
         existingModelWithItem(ModBlocks.MACHINE_CHEMICAL_PLANT, "machines/chemical_plant");
+        existingModelWithItem(ModBlocks.MACHINE_LIQUEFACTOR, "machines/liquefactor");
         existingModelWithItem(ModBlocks.MACHINE_CHEMICAL_FACTORY, "machines/chemical_factory");
         existingModelWithItem(ModBlocks.MACHINE_REFINERY, "machines/refinery");
+        existingModelWithItem(ModBlocks.MACHINE_CATALYTIC_CRACKER, "machines/catalytic_cracker");
+        existingModelWithItem(ModBlocks.MACHINE_CATALYTIC_REFORMER, "machines/catalytic_reformer");
+        existingModelWithItem(ModBlocks.MACHINE_VACUUM_DISTILL, "machines/vacuum_distill");
+        existingModelWithItem(ModBlocks.MACHINE_FRACTION_TOWER, "machines/fraction_tower");
+        existingModelWithItem(ModBlocks.MACHINE_HYDROTREATER, "machines/hydrotreater");
+        existingModelWithItem(ModBlocks.MACHINE_COKER, "machines/coker");
+        existingModelWithItem(ModBlocks.MACHINE_PYROOVEN, "machines/pyrooven");
+        existingModelWithItem(ModBlocks.MACHINE_SOLIDIFIER, "machines/solidifier");
+        existingModelWithItem(ModBlocks.MACHINE_COMPRESSOR, "machines/compressor");
+        existingModelWithItem(ModBlocks.MACHINE_BIGASSTANK, "machines/bigasstank");
         existingModelWithItem(ModBlocks.MACHINE_FLUIDTANK, "machines/fluidtank");
         existingModelWithItem(ModBlocks.MACHINE_PUMPJACK, "machines/pumpjack");
         existingModelWithItem(ModBlocks.MACHINE_CENTRIFUGE, "machines/centrifuge");
         existingModelWithItem(ModBlocks.MACHINE_ORE_SLOPPER, "machines/ore_slopper");
         existingModelWithItem(ModBlocks.MACHINE_GASFLARE, "machines/flare_stack");
+        translucentCubeWithItem(ModBlocks.GLASS_BORON, "glass_boron");
         simpleCubeWithItem(ModBlocks.GAS_RADON, "gas_radon");
         simpleCubeWithItem(ModBlocks.GAS_RADON_DENSE, "gas_radon_dense");
         simpleCubeWithItem(ModBlocks.GAS_RADON_TOMB, "gas_radon_tomb");
@@ -88,8 +100,16 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.CHLORINE_GAS, "chlorine_gas");
         radAbsorberWithItem();
         simpleCubeWithItem(ModBlocks.DUMMY_BLOCK, "block_steel");
+        wasteLogWithItem();
+        simpleCubeWithItem(ModBlocks.WASTE_PLANKS, "waste_planks");
+        leavesLayerWithItem();
         sellafieldWithItem();
         simpleCubeWithItem(ModBlocks.SELLAFIELD_SLAKED, "sellafield_slaked");
+        simpleCubeWithItem(ModBlocks.ASH_DIGAMMA, "ash_digamma");
+        crossBlockOnly(ModBlocks.FIRE_DIGAMMA, "fire_digamma");
+        simpleCubeWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk_debris_digamma");
+        simpleCubeWithItem(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still");
+        simpleCubeWithItem(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still");
         existingModelWithItem(ModBlocks.NUKE_GADGET, "nuke_gadget");
         existingModelWithItem(ModBlocks.NUKE_BOY, "nuke_boy");
         existingModelWithItem(ModBlocks.NUKE_MAN, "nuke_man");
@@ -143,6 +163,36 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
         simpleBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
+    }
+
+    private void crossBlockOnly(RegistryObject<Block> block, String textureName) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cross(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
+                .renderType("minecraft:cutout");
+        simpleBlock(block.get(), model);
+    }
+
+    private void translucentCubeWithItem(RegistryObject<Block> block, String textureName) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
+                .renderType("minecraft:translucent");
+        simpleBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
+    private void wasteLogWithItem() {
+        ResourceLocation side = new ResourceLocation(HbmNtm.MOD_ID, "block/waste_log_side");
+        ResourceLocation top = new ResourceLocation(HbmNtm.MOD_ID, "block/waste_log_top");
+        axisBlock((net.minecraft.world.level.block.RotatedPillarBlock) ModBlocks.WASTE_LOG.get(), side, top);
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/waste_log"));
+        simpleBlockItem(ModBlocks.WASTE_LOG.get(), model);
+    }
+
+    private void leavesLayerWithItem() {
+        ModelFile model = models().withExistingParent("leaves_layer", new ResourceLocation("block/carpet"))
+                .texture("wool", new ResourceLocation(HbmNtm.MOD_ID, "block/waste_leaves"));
+        simpleBlock(ModBlocks.LEAVES_LAYER.get(), model);
+        simpleBlockItem(ModBlocks.LEAVES_LAYER.get(), model);
     }
 
     private void sidedCubeWithItem(

@@ -3,9 +3,13 @@ package com.hbm.ntm.network;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.network.packet.AuxParticlePacket;
 import com.hbm.ntm.network.packet.ClientBinaryDataPacket;
+import com.hbm.ntm.network.packet.ClientBinaryDataChunkPacket;
+import com.hbm.ntm.network.packet.ClientBinaryDataReadyPacket;
 import com.hbm.ntm.network.packet.ClientBiomeSyncPacket;
 import com.hbm.ntm.network.packet.ClientInformPacket;
 import com.hbm.ntm.network.packet.ClientPanelDataPacket;
+import com.hbm.ntm.network.packet.ClientTileBinaryDataPacket;
+import com.hbm.ntm.network.packet.ClientTileBinaryDataChunkPacket;
 import com.hbm.ntm.network.packet.ClientTileEventPacket;
 import com.hbm.ntm.network.packet.CompressedExplosionEffectPacket;
 import com.hbm.ntm.network.packet.CoordinateActionPacket;
@@ -23,6 +27,8 @@ import com.hbm.ntm.network.packet.ParticleBurstPacket;
 import com.hbm.ntm.network.packet.PermaSyncPacket;
 import com.hbm.ntm.network.packet.PlayerPropertiesPacket;
 import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
+import com.hbm.ntm.network.packet.ServerTileBinaryControlPacket;
+import com.hbm.ntm.network.packet.ServerTileBinaryControlChunkPacket;
 import com.hbm.ntm.network.packet.TileControlPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.network.packet.TileSyncRequestPacket;
@@ -32,6 +38,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import io.netty.buffer.Unpooled;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.ChunkPos;
@@ -48,6 +55,9 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 import java.util.Optional;
 import java.util.List;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -174,6 +184,30 @@ public final class ModMessages {
                 CompressedExplosionEffectPacket::decode,
                 CompressedExplosionEffectPacket::encode,
                 CompressedExplosionEffectPacket::handle);
+        registerServerToClient(ClientBinaryDataChunkPacket.class,
+                ClientBinaryDataChunkPacket::decode,
+                ClientBinaryDataChunkPacket::encode,
+                ClientBinaryDataChunkPacket::handle);
+        registerServerToClient(ClientBinaryDataReadyPacket.class,
+                ClientBinaryDataReadyPacket::decode,
+                ClientBinaryDataReadyPacket::encode,
+                ClientBinaryDataReadyPacket::handle);
+        registerServerToClient(ClientTileBinaryDataPacket.class,
+                ClientTileBinaryDataPacket::decode,
+                ClientTileBinaryDataPacket::encode,
+                ClientTileBinaryDataPacket::handle);
+        registerServerToClient(ClientTileBinaryDataChunkPacket.class,
+                ClientTileBinaryDataChunkPacket::decode,
+                ClientTileBinaryDataChunkPacket::encode,
+                ClientTileBinaryDataChunkPacket::handle);
+        registerClientToServer(ServerTileBinaryControlPacket.class,
+                ServerTileBinaryControlPacket::decode,
+                ServerTileBinaryControlPacket::encode,
+                ServerTileBinaryControlPacket::handle);
+        registerClientToServer(ServerTileBinaryControlChunkPacket.class,
+                ServerTileBinaryControlChunkPacket::decode,
+                ServerTileBinaryControlChunkPacket::encode,
+                ServerTileBinaryControlChunkPacket::handle);
     }
 
     public static void sendToServer(Object message) {
@@ -273,6 +307,41 @@ public final class ModMessages {
         sendToServer(new LegacyButtonPacket(pos, value, id));
     }
 
+    public static void sendTileBinaryControl(BlockPos pos, ResourceLocation channel,
+                                             java.util.function.Consumer<FriendlyByteBuf> writer) {
+        FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
+        try {
+            writer.accept(buffer);
+            byte[] payload = new byte[buffer.readableBytes()];
+            buffer.getBytes(buffer.readerIndex(), payload);
+            sendTileBinaryControl(pos, channel, payload);
+        } finally {
+            buffer.release();
+        }
+    }
+
+    public static void sendTileBinaryControl(BlockPos pos, ResourceLocation channel, byte[] payload) {
+        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        if (safePayload.length <= ServerTileBinaryControlPacket.MAX_PAYLOAD_BYTES) {
+            sendToServer(new ServerTileBinaryControlPacket(pos, channel, safePayload));
+            return;
+        }
+        UUID transferId = UUID.randomUUID();
+        int chunkSize = ServerTileBinaryControlChunkPacket.MAX_CHUNK_BYTES;
+        int chunkCount = (safePayload.length + chunkSize - 1) / chunkSize;
+        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+            int start = chunkIndex * chunkSize;
+            int end = Math.min(start + chunkSize, safePayload.length);
+            sendToServer(new ServerTileBinaryControlChunkPacket(
+                    transferId,
+                    pos,
+                    channel,
+                    chunkIndex,
+                    chunkCount,
+                    Arrays.copyOfRange(safePayload, start, end)));
+        }
+    }
+
     public static void syncPermaData(ServerPlayer player, net.minecraft.nbt.CompoundTag data) {
         sendToPlayer(new PermaSyncPacket(data), player);
     }
@@ -287,15 +356,126 @@ public final class ModMessages {
     }
 
     public static void syncClientBinaryData(ServerPlayer player, ResourceLocation channel, String name, byte[] payload) {
-        sendToPlayer(new ClientBinaryDataPacket(channel, name, payload, false), player);
+        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        if (safePayload.length <= ClientBinaryDataPacket.MAX_PAYLOAD_BYTES) {
+            sendToPlayer(new ClientBinaryDataPacket(channel, name, safePayload, false), player);
+            return;
+        }
+        UUID transferId = UUID.randomUUID();
+        int chunkSize = ClientBinaryDataChunkPacket.MAX_CHUNK_BYTES;
+        int chunkCount = (safePayload.length + chunkSize - 1) / chunkSize;
+        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+            int start = chunkIndex * chunkSize;
+            int end = Math.min(start + chunkSize, safePayload.length);
+            sendToPlayer(new ClientBinaryDataChunkPacket(
+                    transferId,
+                    channel,
+                    name,
+                    chunkIndex,
+                    chunkCount,
+                    Arrays.copyOfRange(safePayload, start, end)), player);
+        }
+    }
+
+    public static void syncClientBinaryDataBatch(ServerPlayer player, ResourceLocation channel, Map<String, byte[]> payloads,
+                                                 boolean clearFirst, boolean markReady) {
+        if (clearFirst) {
+            clearClientBinaryData(player, channel);
+        }
+        Map<String, byte[]> safePayloads = payloads == null ? Map.of() : payloads;
+        safePayloads.forEach((name, payload) -> syncClientBinaryData(player, channel, name, payload));
+        if (markReady) {
+            markClientBinaryDataReady(player, channel);
+        }
     }
 
     public static void clearClientBinaryData(ServerPlayer player, ResourceLocation channel) {
         sendToPlayer(new ClientBinaryDataPacket(channel, "", new byte[0], true), player);
     }
 
+    public static void markClientBinaryDataReady(ServerPlayer player, ResourceLocation channel) {
+        sendToPlayer(new ClientBinaryDataReadyPacket(channel), player);
+    }
+
     public static void sendClientTileEvent(BlockEntity blockEntity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
         sendToTrackingChunk(new ClientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
+    }
+
+    public static void sendClientTileBinaryData(BlockEntity blockEntity, ResourceLocation channel,
+                                                java.util.function.Consumer<FriendlyByteBuf> writer) {
+        FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
+        try {
+            writer.accept(buffer);
+            byte[] payload = new byte[buffer.readableBytes()];
+            buffer.getBytes(buffer.readerIndex(), payload);
+            sendClientTileBinaryData(blockEntity, channel, payload);
+        } finally {
+            buffer.release();
+        }
+    }
+
+    public static void sendClientTileBinaryData(ServerPlayer player, BlockPos pos, ResourceLocation channel,
+                                                java.util.function.Consumer<FriendlyByteBuf> writer) {
+        FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
+        try {
+            writer.accept(buffer);
+            byte[] payload = new byte[buffer.readableBytes()];
+            buffer.getBytes(buffer.readerIndex(), payload);
+            sendClientTileBinaryData(player, pos, channel, payload);
+        } finally {
+            buffer.release();
+        }
+    }
+
+    public static void sendClientTileBinaryData(BlockEntity blockEntity, ResourceLocation channel, byte[] payload) {
+        sendClientTileBinaryData(blockEntity.getLevel(), blockEntity.getBlockPos(), channel, payload);
+    }
+
+    public static void sendClientTileBinaryData(ServerPlayer player, BlockPos pos, ResourceLocation channel, byte[] payload) {
+        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
+            sendToPlayer(new ClientTileBinaryDataPacket(pos, channel, safePayload), player);
+            return;
+        }
+        UUID transferId = UUID.randomUUID();
+        int chunkSize = ClientTileBinaryDataChunkPacket.MAX_CHUNK_BYTES;
+        int chunkCount = (safePayload.length + chunkSize - 1) / chunkSize;
+        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+            int start = chunkIndex * chunkSize;
+            int end = Math.min(start + chunkSize, safePayload.length);
+            sendToPlayer(new ClientTileBinaryDataChunkPacket(
+                    transferId,
+                    pos,
+                    channel,
+                    chunkIndex,
+                    chunkCount,
+                    Arrays.copyOfRange(safePayload, start, end)), player);
+        }
+    }
+
+    public static void sendClientTileBinaryData(Level level, BlockPos pos, ResourceLocation channel, byte[] payload) {
+        if (!(level instanceof ServerLevel)) {
+            return;
+        }
+        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
+            sendToTrackingChunk(new ClientTileBinaryDataPacket(pos, channel, safePayload), level, pos);
+            return;
+        }
+        UUID transferId = UUID.randomUUID();
+        int chunkSize = ClientTileBinaryDataChunkPacket.MAX_CHUNK_BYTES;
+        int chunkCount = (safePayload.length + chunkSize - 1) / chunkSize;
+        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+            int start = chunkIndex * chunkSize;
+            int end = Math.min(start + chunkSize, safePayload.length);
+            sendToTrackingChunk(new ClientTileBinaryDataChunkPacket(
+                    transferId,
+                    pos,
+                    channel,
+                    chunkIndex,
+                    chunkCount,
+                    Arrays.copyOfRange(safePayload, start, end)), level, pos);
+        }
     }
 
     public static void syncClientPanelData(ServerPlayer player, ResourceLocation panelType, int legacyType,

@@ -1,0 +1,28 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 40,
+  "input_fluids": [
+    {
+      "amount": 32000,
+      "fluid": "hbm:crackoil_ds"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm:fluid_pack_empty"
+      }
+    }
+  ],
+  "internal_name": "ass.packageCRACKOIL_DS",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:fluid_pack_full",
+      "nbt": "{hbm_fluid:\"CRACKOIL_DS\",hbm_fluid_amount:32000,hbm_fluid_pressure:0}"
+    }
+  ],
+  "pools": [],
+  "power": 100
+}

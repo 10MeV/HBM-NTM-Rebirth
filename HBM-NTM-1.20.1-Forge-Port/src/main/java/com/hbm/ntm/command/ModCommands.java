@@ -15,11 +15,17 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
+import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.RadiationConstants;
 import com.hbm.ntm.radiation.RadiationData;
+import com.hbm.ntm.radiation.RadiationSavedData;
+import com.hbm.ntm.uninos.HbmNodespace;
+import com.hbm.ntm.uninos.HbmUninosDiagnostics;
+import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNodespace;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -69,6 +75,10 @@ public final class ModCommands {
                                 .then(Commands.literal("add")
                                         .then(Commands.argument("amount", FloatArgumentType.floatArg(-RadiationConstants.MAX_CHUNK_RADIATION, RadiationConstants.MAX_CHUNK_RADIATION))
                                                 .executes(context -> addChunkRadiation(context.getSource(), FloatArgumentType.getFloat(context, "amount")))))
+                                .then(Commands.literal("stats")
+                                        .executes(context -> getChunkRadiationStats(context.getSource())))
+                                .then(Commands.literal("prune")
+                                        .executes(context -> pruneChunkRadiation(context.getSource())))
                                 .then(Commands.literal("clear")
                                         .executes(context -> clearChunkRadiation(context.getSource()))))
                         .then(Commands.literal("fog")
@@ -111,7 +121,8 @@ public final class ModCommands {
                         .then(contaminationCommand()))
                 .then(energyCommand())
                 .then(machineCommand())
-                .then(fluidCommand()));
+                .then(fluidCommand())
+                .then(networkCommand()));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> statusCommand() {
@@ -210,6 +221,28 @@ public final class ModCommands {
                                                         context.getSource(),
                                                         BlockPosArgument.getLoadedBlockPos(context, "pos"),
                                                         parseFluid(StringArgumentType.getString(context, "fluid"))))))));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> networkCommand() {
+        return Commands.literal("network")
+                .then(Commands.literal("uninos")
+                        .executes(context -> getUninosNodespace(context.getSource())))
+                .then(Commands.literal("pneumatic")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .executes(context -> getPneumaticNetwork(
+                                        context.getSource(),
+                                        BlockPosArgument.getLoadedBlockPos(context, "pos")))))
+                .then(Commands.literal("packetthreading")
+                        .then(Commands.literal("stats")
+                                .executes(context -> getPacketThreadingStats(context.getSource())))
+                        .then(Commands.literal("toggle")
+                                .executes(context -> togglePacketThreading(context.getSource())))
+                        .then(Commands.literal("enable")
+                                .executes(context -> setPacketThreading(context.getSource(), true)))
+                        .then(Commands.literal("disable")
+                                .executes(context -> setPacketThreading(context.getSource(), false)))
+                        .then(Commands.literal("reset")
+                                .executes(context -> resetPacketThreading(context.getSource()))));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> machineCommand() {
@@ -319,6 +352,25 @@ public final class ModCommands {
         ChunkRadiationManager.clear(source.getLevel());
         source.sendSuccess(() -> Component.literal("Cleared radiation data!"), true);
         return 1;
+    }
+
+    private static int getChunkRadiationStats(CommandSourceStack source) {
+        RadiationSavedData.Stats stats = ChunkRadiationManager.getStats(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Chunk radiation stats: entries=" + stats.totalEntries()
+                + " loaded=" + stats.loadedEntries()
+                + " positive=" + stats.positiveEntries()
+                + " loadedPositive=" + stats.loadedPositiveEntries()
+                + " totalRad=" + round(stats.totalRadiation())
+                + " loadedRad=" + round(stats.loadedRadiation())
+                + " maxRad=" + round(stats.maxRadiation())
+                + " loadedMaxRad=" + round(stats.loadedMaxRadiation())), false);
+        return stats.totalEntries();
+    }
+
+    private static int pruneChunkRadiation(CommandSourceStack source) {
+        int removed = ChunkRadiationManager.pruneUnloaded(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Pruned " + removed + " unloaded chunk radiation entrie(s)."), true);
+        return removed;
     }
 
     private static int spawnRadiationFog(CommandSourceStack source, BlockPos pos) {
@@ -518,6 +570,60 @@ public final class ModCommands {
                 + " receiverRate=" + formatPressureArray(network.receiverRate()) + " mB/t"
                 + " receiverPriorities=" + network.receiversByPriority()
                 + " lastTransfer=" + network.lastTransfer() + " mB"), false);
+        return network.links();
+    }
+
+    private static int getUninosNodespace(CommandSourceStack source) {
+        HbmUninosDiagnostics.Totals totals = HbmUninosDiagnostics.totals(source.getLevel());
+        source.sendSuccess(() -> Component.literal("UNINOS nodespace: positions=" + totals.nodePositions()
+                + " nodes=" + totals.uniqueNodes()
+                + " networks=" + totals.networks()
+                + " invalidNetworks=" + totals.invalidNetworks()
+                + " linkRefs=" + totals.linkRefs()
+                + " dirtyNodes=" + totals.dirtyNodes()
+                + " expiredNodes=" + totals.expiredNodes()
+                + " orphanNodes=" + totals.orphanNodes()
+                + " providers=" + totals.providers()
+                + " receivers=" + totals.receivers()), false);
+        for (HbmUninosDiagnostics.Entry entry : HbmUninosDiagnostics.collect(source.getLevel())) {
+            HbmNodespace.Diagnostics core = entry.core();
+            source.sendSuccess(() -> Component.literal(" - " + entry.name()
+                    + ": positions=" + core.nodePositions()
+                    + " nodes=" + core.uniqueNodes()
+                    + " networks=" + core.networks()
+                    + " links=" + core.linkRefs()
+                    + " dirty=" + core.dirtyNodes()
+                    + " orphan=" + core.orphanNodes()
+                    + " providers=" + entry.providers()
+                    + " receivers=" + entry.receivers()), false);
+        }
+        return totals.uniqueNodes();
+    }
+
+    private static int getPneumaticNetwork(CommandSourceStack source, BlockPos pos) {
+        PneumaticNodespace.NetworkDebugSnapshot snapshot = PneumaticNodespace.getNetworkDebugSnapshot(source.getLevel(), pos);
+        if (!snapshot.nodePresent()) {
+            source.sendFailure(Component.literal("No HBM pneumatic node at " + pos.toShortString()));
+            return 0;
+        }
+        if (!snapshot.networkPresent() || snapshot.network() == null) {
+            source.sendSuccess(() -> Component.literal("Pneumatic node at " + pos.toShortString()
+                    + ": nodeConnections=" + snapshot.nodeConnections()
+                    + " recentlyChanged=" + snapshot.recentlyChanged()
+                    + " network=none"), false);
+            return 0;
+        }
+        var network = snapshot.network();
+        source.sendSuccess(() -> Component.literal("Pneumatic network at " + pos.toShortString()
+                + ": valid=" + network.valid()
+                + " nodeConnections=" + snapshot.nodeConnections()
+                + " recentlyChanged=" + snapshot.recentlyChanged()
+                + " links=" + network.links()
+                + " receivers=" + network.receivers()
+                + " accessors=" + network.accessors()
+                + " storages=" + network.storages()
+                + " timeout=" + network.timeoutMs() + "ms"
+                + " lastTransfer=" + network.lastTransfer() + " items"), false);
         return network.links();
     }
 
@@ -781,6 +887,46 @@ public final class ModCommands {
         int removedCount = removed;
         source.sendSuccess(() -> Component.literal("Removed " + removedCount + " contamination entrie(s)."), true);
         return removed;
+    }
+
+    private static int getPacketThreadingStats(CommandSourceStack source) {
+        ThreadedPacketDispatcher.Snapshot snapshot = ThreadedPacketDispatcher.snapshot();
+        source.sendSuccess(() -> Component.literal("Packet threading: pending=" + snapshot.pending()
+                + " enabled=" + snapshot.enabled()
+                + " fallback=" + snapshot.fallbackToMainThread()
+                + " totalQueued=" + snapshot.totalQueued()
+                + " totalSent=" + snapshot.totalSent()
+                + " totalFailed=" + snapshot.totalFailed()
+                + " totalDiscarded=" + snapshot.totalDiscarded()), false);
+        source.sendSuccess(() -> Component.literal("Last flush: queued=" + snapshot.lastFlushQueued()
+                + " completed=" + snapshot.lastFlushCompleted()
+                + " discarded=" + snapshot.lastFlushDiscarded()
+                + " wait=" + snapshot.lastFlushWaitMillis()
+                + "ms clears=" + snapshot.consecutiveClears()), false);
+        source.sendSuccess(() -> Component.literal("Tile binary control uploads: pending="
+                + ServerTileBinaryControlTransfers.pendingTransfers()), false);
+        if (!snapshot.lastFailureMessage().isBlank()) {
+            source.sendSuccess(() -> Component.literal("Last packet threading issue: " + snapshot.lastFailureMessage()), false);
+        }
+        return snapshot.pending();
+    }
+
+    private static int togglePacketThreading(CommandSourceStack source) {
+        boolean enabled = ThreadedPacketDispatcher.toggleEnabled();
+        source.sendSuccess(() -> Component.literal("Packet threading enabled: " + enabled), true);
+        return enabled ? 1 : 0;
+    }
+
+    private static int setPacketThreading(CommandSourceStack source, boolean enabled) {
+        ThreadedPacketDispatcher.setEnabled(enabled);
+        source.sendSuccess(() -> Component.literal("Packet threading enabled: " + enabled), true);
+        return enabled ? 1 : 0;
+    }
+
+    private static int resetPacketThreading(CommandSourceStack source) {
+        ThreadedPacketDispatcher.resetState();
+        source.sendSuccess(() -> Component.literal("Reset packet threading dispatcher state."), true);
+        return 1;
     }
 
     private static boolean parseBoolean(String value) {

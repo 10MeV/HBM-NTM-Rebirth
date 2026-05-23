@@ -2,6 +2,7 @@
   "values": [
     "hbm:powder_lignite",
     "hbm:powder_iron",
+    "hbm:powder_lead",
     "hbm:powder_lithium",
     "hbm:powder_cobalt",
     "hbm:powder_sodium",

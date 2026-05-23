@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/hydrotreater.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/machines/hydrotreater",
+    "default": "hbm:block/machines/hydrotreater",
+    "texture0": "hbm:block/machines/hydrotreater"
+  }
+}

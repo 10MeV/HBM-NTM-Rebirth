@@ -1,0 +1,28 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 40,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm:plate_titanium"
+      }
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm:plastic_bag"
+      }
+    }
+  ],
+  "internal_name": "ass.emptypackage",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:fluid_pack_empty"
+    }
+  ],
+  "pools": [],
+  "power": 100
+}

@@ -1,0 +1,27 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 40,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm:fluid_pack_full"
+      }
+    }
+  ],
+  "internal_name": "ass.unpackageETHANOL",
+  "output_fluids": [
+    {
+      "amount": 32000,
+      "fluid": "hbm:ethanol"
+    }
+  ],
+  "output_items": [
+    {
+      "item": "hbm:fluid_pack_empty"
+    }
+  ],
+  "pools": [],
+  "power": 100
+}

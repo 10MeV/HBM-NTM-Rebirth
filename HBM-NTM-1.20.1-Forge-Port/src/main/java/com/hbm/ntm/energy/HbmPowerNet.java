@@ -137,7 +137,7 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
     }
 
     @Override
-    public void joinNetwork(HbmNodeNet<HbmEnergyNode> network) {
+    public void joinNetwork(com.hbm.ntm.uninos.HbmNodeNet<HbmEnergyNode> network) {
         if (!(network instanceof HbmPowerNet powerNet) || powerNet == this) {
             super.joinNetwork(network);
             return;

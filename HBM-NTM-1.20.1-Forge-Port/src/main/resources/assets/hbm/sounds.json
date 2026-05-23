@@ -79,5 +79,63 @@
         "stream": false
       }
     ]
+  },
+  "weapon.explosion_large_near": {
+    "subtitle": "subtitles.hbm.weapon.explosion",
+    "sounds": [
+      {
+        "name": "hbm:weapon/explosion_large_near",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.explosion_large_far": {
+    "subtitle": "subtitles.hbm.weapon.explosion",
+    "sounds": [
+      {
+        "name": "hbm:weapon/explosion_large_far",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.explosion_small_near": {
+    "subtitle": "subtitles.hbm.weapon.explosion",
+    "sounds": [
+      "hbm:weapon/explosion_small_near1",
+      "hbm:weapon/explosion_small_near2",
+      "hbm:weapon/explosion_small_near3"
+    ]
+  },
+  "weapon.explosion_small_far": {
+    "subtitle": "subtitles.hbm.weapon.explosion",
+    "sounds": [
+      "hbm:weapon/explosion_small_far1",
+      "hbm:weapon/explosion_small_far2"
+    ]
+  },
+  "weapon.explosion_tiny": {
+    "subtitle": "subtitles.hbm.weapon.explosion",
+    "sounds": [
+      "hbm:weapon/explosion_tiny1",
+      "hbm:weapon/explosion_tiny2"
+    ]
+  },
+  "weapon.explosion_medium": {
+    "subtitle": "subtitles.hbm.weapon.explosion",
+    "sounds": [
+      {
+        "name": "hbm:weapon/explosion_medium",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.reload.tubeFwoomp": {
+    "subtitle": "subtitles.hbm.weapon.reload.tubeFwoomp",
+    "sounds": [
+      {
+        "name": "hbm:weapon/reload/tubeFwoomp",
+        "stream": false
+      }
+    ]
   }
 }

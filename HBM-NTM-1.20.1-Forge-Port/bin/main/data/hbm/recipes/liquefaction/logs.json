@@ -1,0 +1,11 @@
+{
+  "type": "hbm:liquefaction",
+  "ingredient": {
+    "tag": "minecraft:logs"
+  },
+  "output": {
+    "amount": 100,
+    "fluid": "MUG",
+    "pressure": 0
+  }
+}

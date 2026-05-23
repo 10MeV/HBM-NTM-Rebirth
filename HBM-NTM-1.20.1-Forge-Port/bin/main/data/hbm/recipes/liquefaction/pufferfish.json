@@ -1,0 +1,11 @@
+{
+  "type": "hbm:liquefaction",
+  "ingredient": {
+    "item": "minecraft:pufferfish"
+  },
+  "output": {
+    "amount": 100,
+    "fluid": "FISHOIL",
+    "pressure": 0
+  }
+}

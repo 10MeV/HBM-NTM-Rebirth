@@ -2,25 +2,27 @@ package com.hbm.ntm.entity.effect;
 
 import com.hbm.ntm.block.FalloutLayerBlock;
 import com.hbm.ntm.config.BombConfig;
+import com.hbm.ntm.entity.logic.ExplosionChunkLoadingEntity;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseFireBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraftforge.registries.RegistryObject;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class FalloutRainEntity extends Entity {
+public class FalloutRainEntity extends ExplosionChunkLoadingEntity {
     private final List<Long> chunksToProcess = new ArrayList<>();
     private final List<Long> outerChunksToProcess = new ArrayList<>();
     private boolean firstTick = true;
@@ -51,6 +53,7 @@ public class FalloutRainEntity extends Entity {
         }
 
         if (firstTick) {
+            forceCenterChunk();
             if (chunksToProcess.isEmpty() && outerChunksToProcess.isEmpty()) {
                 gatherChunks();
             }
@@ -117,6 +120,7 @@ public class FalloutRainEntity extends Entity {
 
     private void processChunk(long packedChunk, boolean checkDistance) {
         ChunkPos chunkPos = new ChunkPos(packedChunk);
+        loadChunk(chunkPos.x, chunkPos.z);
         for (int x = chunkPos.getMinBlockX(); x <= chunkPos.getMaxBlockX(); x++) {
             for (int z = chunkPos.getMinBlockZ(); z <= chunkPos.getMaxBlockZ(); z++) {
                 double distance = Math.hypot(x - getX(), z - getZ());
@@ -132,7 +136,7 @@ public class FalloutRainEntity extends Entity {
 
     private void stomp(int x, int z, double percent) {
         int depth = 0;
-        int yStart = Math.min(level().getMaxBuildHeight() - 1, level().getHeight(Heightmap.Types.WORLD_SURFACE, x, z));
+        int yStart = Math.min(level().getMaxBuildHeight() - 1, legacyHeightValue(x, z));
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
         for (int y = yStart; y >= level().getMinBuildHeight(); y--) {
@@ -162,14 +166,150 @@ public class FalloutRainEntity extends Entity {
                 level().setBlock(above, BaseFireBlock.getState(level(), above), 3);
             }
 
-            if (state.isCollisionShapeFullBlock(level(), pos) && !(state.getBlock() instanceof FalloutLayerBlock)) {
+            FalloutEval falloutEval = applyLegacyFalloutConversion(pos, state, percent);
+            if (falloutEval.restrictDepth()) {
+                depth++;
+            } else if (!falloutEval.matched()
+                    && state.isCollisionShapeFullBlock(level(), pos)
+                    && !(state.getBlock() instanceof FalloutLayerBlock)) {
                 depth++;
             }
         }
     }
 
+    private FalloutEval applyLegacyFalloutConversion(BlockPos pos, BlockState state, double percent) {
+        if (percent <= 65.0D) {
+            if (state.is(ModBlocks.WASTE_LEAVES.get()) || state.is(BlockTags.LEAVES) || isLegacyPlantOrVine(state)) {
+                level().setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                return FalloutEval.match();
+            }
+
+            BlockState replacement = null;
+            if (state.is(BlockTags.LOGS)
+                    || state.is(Blocks.RED_MUSHROOM_BLOCK)
+                    || state.is(Blocks.BROWN_MUSHROOM_BLOCK)) {
+                replacement = legacyState("waste_log");
+            } else if (state.is(BlockTags.PLANKS)) {
+                replacement = legacyState("waste_planks");
+            } else if (isLegacyWoodenMaterial(state)) {
+                replacement = Blocks.AIR.defaultBlockState();
+            } else if (state.is(Blocks.SNOW)) {
+                replacement = Blocks.AIR.defaultBlockState();
+            } else if (state.is(Blocks.MYCELIUM)) {
+                replacement = ModBlocks.WASTE_MYCELIUM.get().defaultBlockState();
+            } else if (state.is(Blocks.GRASS_BLOCK)) {
+                replacement = ModBlocks.WASTE_EARTH.get().defaultBlockState();
+            } else if (isLegacySellafieldSurface(state, percent)) {
+                replacement = ModBlocks.SELLAFIELD_SLAKED.get().defaultBlockState();
+                if (setFalloutReplacement(pos, replacement)) {
+                    return FalloutEval.matchAndRestrictDepth();
+                }
+                return FalloutEval.noMatch();
+            } else if (state.is(Blocks.CLAY)) {
+                replacement = Blocks.TERRACOTTA.defaultBlockState();
+            }
+
+            if (setFalloutReplacement(pos, replacement)) {
+                return FalloutEval.match();
+            }
+        }
+
+        if (percent >= 60.0D && state.is(BlockTags.LEAVES) && !state.is(ModBlocks.WASTE_LEAVES.get())) {
+            level().setBlock(pos, ModBlocks.WASTE_LEAVES.get().defaultBlockState(), 3);
+            return FalloutEval.match();
+        }
+
+        return FalloutEval.noMatch();
+    }
+
+    private boolean setFalloutReplacement(BlockPos pos, BlockState replacement) {
+        if (replacement == null) {
+            return false;
+        }
+        level().setBlock(pos, replacement, 3);
+        return true;
+    }
+
+    private boolean isLegacySellafieldSurface(BlockState state, double percent) {
+        if (percent > 45.0D) {
+            return false;
+        }
+        return state.is(Blocks.GRASS_BLOCK)
+                || state.is(Blocks.DIRT)
+                || state.is(Blocks.COARSE_DIRT)
+                || state.is(Blocks.PODZOL)
+                || state.is(Blocks.ROOTED_DIRT)
+                || state.is(Blocks.MUD)
+                || state.is(Blocks.STONE)
+                || state.is(Blocks.DEEPSLATE)
+                || state.is(Blocks.GRANITE)
+                || state.is(Blocks.DIORITE)
+                || state.is(Blocks.ANDESITE)
+                || state.is(Blocks.SAND)
+                || state.is(Blocks.RED_SAND)
+                || state.is(Blocks.GRAVEL);
+    }
+
+    private boolean isLegacyPlantOrVine(BlockState state) {
+        return state.is(Blocks.GRASS)
+                || state.is(Blocks.TALL_GRASS)
+                || state.is(Blocks.FERN)
+                || state.is(Blocks.LARGE_FERN)
+                || state.is(Blocks.DEAD_BUSH)
+                || state.is(Blocks.VINE)
+                || state.is(Blocks.TWISTING_VINES)
+                || state.is(Blocks.TWISTING_VINES_PLANT)
+                || state.is(Blocks.WEEPING_VINES)
+                || state.is(Blocks.WEEPING_VINES_PLANT)
+                || state.is(BlockTags.FLOWERS)
+                || state.is(BlockTags.SAPLINGS)
+                || state.is(BlockTags.CROPS);
+    }
+
+    private boolean isLegacyWoodenMaterial(BlockState state) {
+        return state.is(BlockTags.WOODEN_BUTTONS)
+                || state.is(BlockTags.WOODEN_DOORS)
+                || state.is(BlockTags.WOODEN_FENCES)
+                || state.is(BlockTags.WOODEN_PRESSURE_PLATES)
+                || state.is(BlockTags.WOODEN_SLABS)
+                || state.is(BlockTags.WOODEN_STAIRS)
+                || state.is(BlockTags.WOODEN_TRAPDOORS)
+                || state.is(BlockTags.SIGNS);
+    }
+
+    private static BlockState legacyState(String name) {
+        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
+        return block == null ? null : block.get().defaultBlockState();
+    }
+
+    private record FalloutEval(boolean matched, boolean restrictDepth) {
+        private static FalloutEval noMatch() {
+            return new FalloutEval(false, false);
+        }
+
+        private static FalloutEval match() {
+            return new FalloutEval(true, false);
+        }
+
+        private static FalloutEval matchAndRestrictDepth() {
+            return new FalloutEval(true, true);
+        }
+    }
+
     private boolean canReplaceWithFallout(BlockState state, BlockPos pos) {
         return state.isAir() || (state.canBeReplaced() && state.getFluidState().isEmpty() && !state.is(Blocks.FIRE));
+    }
+
+    private int legacyHeightValue(int x, int z) {
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(x, level().getMaxBuildHeight() - 1, z);
+        for (int y = level().getMaxBuildHeight() - 1; y >= level().getMinBuildHeight(); y--) {
+            cursor.setY(y);
+            BlockState state = level().getBlockState(cursor);
+            if (!state.isAir() && state.getLightBlock(level(), cursor) > 0) {
+                return y + 1;
+            }
+        }
+        return level().getMinBuildHeight();
     }
 
     private double chunkCenterDistance(long packedChunk) {
@@ -200,6 +340,7 @@ public class FalloutRainEntity extends Entity {
         firstTick = tag.getBoolean("firstTick");
         readChunkList(tag.getLongArray("chunks"), chunksToProcess);
         readChunkList(tag.getLongArray("outerChunks"), outerChunksToProcess);
+        readChunkLoader(tag);
     }
 
     @Override
@@ -209,6 +350,7 @@ public class FalloutRainEntity extends Entity {
         tag.putBoolean("firstTick", firstTick);
         tag.putLongArray("chunks", chunksToProcess);
         tag.putLongArray("outerChunks", outerChunksToProcess);
+        saveChunkLoader(tag);
     }
 
     private static void readChunkList(long[] packedChunks, List<Long> target) {

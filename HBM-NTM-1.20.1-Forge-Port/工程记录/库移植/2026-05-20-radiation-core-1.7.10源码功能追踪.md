@@ -1453,7 +1453,112 @@ Still incomplete:
 
 Verification:
 
-- Pending this pass: `.\gradlew.bat compileJava processResources --no-daemon`.
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-24 Covered Grass/Leaves Re-Audit
+
+Legacy source re-checked:
+
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple#handleWorldDestruction`
+- `com.hbm.entity.effect.EntityFalloutRain#stomp`
+- `com.hbm.config.FalloutConfigJSON`
+- `com.hbm.blocks.generic.WasteEarth`
+- `com.hbm.blocks.generic.WasteLog`
+- `com.hbm.blocks.ModBlocks`
+- `com.hbm.main.ModEventHandlerImpact#populateChunkPost`
+- `com.hbm.handler.pollution.PollutionHandler#handleWorldDestruction`
+
+Findings:
+
+- `WasteEarth` itself does not turn nearby covered grass/leaves into waste variants. It only spreads `waste_mycelium`, decays waste ground back to dirt under darkness/cleanup, and mutates mushrooms.
+- `ChunkRadiationHandlerSimple` is still a surface/top-canopy sampler and does not perform a fallout-style full vertical column mutation. Covered blocks under opaque roofs are not expected to be reached by this Simple handler alone.
+- The old full-column mutation path is `EntityFalloutRain#stomp` plus the default `FalloutConfigJSON` table.
+- The modern fallout pass was missing legacy `waste_log` and `waste_planks`. When these IDs are absent, legacy fallout conversions for logs/planks fail, so the modern scan treats wooden roof/wall blocks as normal solid blocks and reaches `depth >= 3` too early. That prevents lower covered grass/leaves from being reached.
+- 1.7.10 `world.getHeightValue(x, z)` was used by both Simple chunk radiation effects and fallout logic. Using modern `Heightmap.Types.WORLD_SURFACE` directly can differ because modern heightmaps include some blocks that should not terminate the old effect sampling in the same way.
+
+Corrected in this pass:
+
+- Added legacy block ids:
+  - `waste_log`
+  - `waste_planks`
+- Added `LegacyWasteLogBlock` as a rotated-pillar block so old fallout and explosion replacement calls can resolve `legacyState("waste_log")`.
+- Added legacy textures copied from 1.7.10:
+  - `waste_log_side.png`
+  - `waste_log_top.png`
+  - `waste_planks.png`
+- Added blockstates, block models, item models, language entries, and loot tables for `waste_log` and `waste_planks`.
+- `waste_log` now drops 2-4 charcoal, matching the main legacy drop path.
+- `FalloutRainEntity` now converts covered `GRASS_BLOCK` to `waste_earth` before the sellafield/slaked-surface fallback.
+- Replaced direct `WORLD_SURFACE` reads in the migrated radiation/fallout legacy paths with a local `legacyHeightValue` scan that searches downward for the first non-air block with positive light blocking, closer to the old `getHeightValue` use.
+
+Still incomplete:
+
+- Legacy `waste_log` has a 1/1000 `burnt_bark` drop; `burnt_bark` is not registered in the clean port yet, so that rare drop remains deferred.
+- This pass does not change the default Simple chunk-radiation contract into a full-column scan; doing so would diverge from 1.7.10 Simple handler. Covered block conversion under roofs should come from fallout/impact/pollution-style systems, not Simple chunk radiation alone.
+- `ModEventHandlerImpact` and pollution world-destruction parity remain separate migration slices.
+
+Verification:
+
+- Targeted JSON parse for new `waste_log`/`waste_planks` assets and loot tables: passed.
+- 2026-05-24 attempted `.\gradlew.bat compileJava processResources --no-daemon`, but current workspace compilation is blocked by unrelated pre-existing `PneumaticTube` references to missing `ModBlockEntities.PNEUMATIC_TUBE` and `ModSounds.WEAPON_RELOAD_TUBE_FWOOMP`.
+
+## 2026-05-24 Waste Leaves And Fallout Vegetation Parity Pass
+
+Legacy source re-checked:
+
+- `com.hbm.blocks.generic.WasteLeaves`
+- `com.hbm.blocks.generic.BlockLayering`
+- `com.hbm.particle.ParticleDeadLeaf`
+- `com.hbm.main.ClientProxy#effectNT` branch `type == "deadleaf"`
+- `com.hbm.config.FalloutConfigJSON`
+- `com.hbm.entity.effect.EntityFalloutRain#stomp`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple#handleWorldDestruction`
+
+Findings:
+
+- `ChunkRadiationHandlerSimple` still has no Y-axis radiation falloff in default 1.7.10. High and low positions inside the same chunk column read the same chunk radiation value.
+- The Simple handler's world-destruction pass only samples `world.getHeightValue(x, z) - rand.nextInt(2)`, so it is a surface/top-canopy mutation pass.
+- Covered or inner tree leaves seen changing in 1.7.10 are primarily explained by fallout rain's full-column `stomp` pass and `FalloutConfigJSON`, not by Simple chunk-radiation surface sampling.
+- Legacy `WasteLeaves` is not a normal vanilla leaf:
+  - random tick, 1/30 chance: remove itself;
+  - if the block below is air, spawn falling `ModBlocks.leaves_layer`;
+  - no item drop and no silk harvest;
+  - client random display tick, 1/7 chance over air: emit `deadleaf`.
+- Legacy `leaves_layer` uses the waste-leaves texture, has a 2/16 block visual/collision height at metadata 0, is replaceable, and drops no item.
+- `FalloutConfigJSON` default wood/vegetation rules include:
+  - `Material.leaves` within 65% distance -> air;
+  - `waste_leaves` within 65% distance -> air;
+  - vanilla leaves outside the inner wood-effect range (`min 60%`) -> `waste_leaves`;
+  - plants/vines within 65% -> air;
+  - logs/planks/wooden materials are petrified or destroyed depending on rule.
+
+Corrected in this pass:
+
+- Added `LegacyWasteLeavesBlock` and routed `ModBlocks.WASTE_LEAVES` through it.
+- Added `LegacyLeavesLayerBlock` and registered legacy block id `leaves_layer`.
+- Added blockstate/model/item model/loot/lang resources for `leaves_layer`.
+- Copied the legacy `textures/blocks/particle/dead_leaf.png` into the modern particle texture path.
+- Added `ModParticleTypes.DEAD_LEAF`, `DeadLeafParticle`, and client provider registration.
+- `WasteLeaves` random tick now removes itself and spawns falling `leaves_layer` over air, with no drops.
+- `WasteLeaves` animate tick now spawns the custom dead-leaf particle over air.
+- `waste_leaves` and `leaves_layer` loot tables now explicitly no-drop.
+- `FalloutRainEntity#stomp` now applies the core legacy fallout vegetation conversion rules:
+  - inner leaves / waste leaves / plants / vines -> air;
+  - outer vanilla leaves -> `waste_leaves`;
+  - vanilla mycelium -> `waste_mycelium`;
+  - key soil/stone/sand surfaces near the blast -> `sellafield_slaked`;
+  - logs/planks use existing migrated legacy block ids when available.
+
+Still incomplete:
+
+- The full configurable `FalloutConfigJSON` loader/editor is not yet ported; this pass hard-codes the core default rules needed for vegetation parity.
+- Legacy falling-block debris behavior in `EntityFalloutRain#stomp` remains deferred.
+- Biome conversion and every ore/sellafield weighted substitution in the old fallout table are still not complete.
+
+Verification:
+
+- 2026-05-24 first `.\gradlew.bat compileJava processResources --no-daemon` hit a stale Gradle output hash for a missing `.class`.
+- 2026-05-24 ran `.\gradlew.bat clean compileJava processResources --no-daemon`: passed.
 
 ## 2026-05-23 Radiation Diffusion Timing Fix
 
@@ -1515,7 +1620,7 @@ Still incomplete:
 
 Verification:
 
-- Pending this pass: `.\gradlew.bat compileJava processResources --no-daemon`.
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
 ## 2026-05-23 Radiation Barrel Explosion Pass
 
@@ -1542,7 +1647,7 @@ Still incomplete:
 
 Verification:
 
-- Pending this pass: `.\gradlew.bat compileJava processResources --no-daemon`.
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
 ## 2026-05-23 Special Source Visual Alignment Pass
 
@@ -1556,7 +1661,7 @@ Legacy source re-checked:
 
 Corrected in this pass:
 
-- Added a dedicated `schrab_fog` particle using the old `haze.png` asset path.
+- Added a dedicated `schrab_fog` particle for legacy `EntityAuraFX`-style schrab hazard display. Follow-up on 2026-05-24 confirmed this effect is not radiation fog and not `haze.png`; it now uses the single-pixel vanilla `minecraft:generic_0` sprite.
 - Routed legacy `schrabfog` packet effects to the dedicated particle instead of piggybacking on unrelated visuals.
 - Restored the old visible hazard-source split for the schrab / radfog blocks:
   - `block_u233`, `block_u235`, `block_neptunium`, `block_polonium`, `block_mox_fuel`, `block_plutonium`, `block_pu238`, `block_pu239`, `block_pu240`, `block_pu_mix`, `block_plutonium_fuel` now emit the old yellow haze.
@@ -1565,9 +1670,222 @@ Corrected in this pass:
 
 Still incomplete:
 
-- The legacy aura look is still a modern particle approximation, not the old GL particle implementation.
+- The legacy aura look is implemented through the modern particle pipeline, but its source contract is now the 1.7.10 `EntityAuraFX` path rather than the old fog renderer.
 - The broader `BlockHazard` family still has some old client-side nuance left to audit.
 
 Verification:
 
-- Pending this pass: `.\gradlew.bat compileJava processResources --no-daemon`.
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-23 Beacon Base Reconciliation Pass
+
+Legacy source re-checked:
+
+- `com.hbm.blocks.ModBlocks`
+- `com.hbm.blocks.generic.BlockBeaconable`
+- `com.hbm.blocks.generic.BlockHazard`
+- `com.hbm.blocks.generic.BlockHazardFalling`
+
+Corrected in this pass:
+
+- Moved the old `makeBeaconable()` hazard family onto the modern `minecraft:beacon_base_blocks` tag instead of keeping a dead per-block hook.
+- Added the missing legacy beacon-compatible radiation blocks:
+  - `block_u238`
+  - `block_uranium_fuel`
+  - `block_thorium`
+  - `block_thorium_fuel`
+  - `block_trinitite`
+  - `block_waste`
+  - `block_waste_painted`
+  - `block_waste_vitrified`
+  - `block_yellowcake`
+  - `block_white_phosphorus`
+  - `block_red_phosphorus`
+  - `block_ra226`
+  - `block_actinium`
+- Removed the unused beaconable placeholder from `LegacyHazardSourceBlock` and kept the visual/radiation split entirely data-driven.
+
+Still incomplete:
+
+- The remaining `BlockBeaconable` family outside radiation is not yet fully tag-mirrored.
+
+Verification:
+
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-24 Diffusion Merge Parity Fix
+
+Legacy source re-checked:
+
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple`
+- `com.hbm.ntm.radiation.RadiationSavedData`
+
+Corrected in this pass:
+
+- Restored the legacy simple-handler merge shape for chunk diffusion:
+  - if the target chunk already existed in the previous buffer, the new spread merges with the current tick's written value and then applies the decay step;
+  - if the target chunk did not exist in the previous buffer, the new spread overwrites instead of accumulating.
+- Kept zero-valued pre-existing chunks in the working map so old boundary semantics stay visible to later diffusion steps.
+- This should reduce the modern over-accumulation that made far chunks behave hotter than the 1.7.10 simple handler would allow.
+
+Still incomplete:
+
+- The fog particle still depends on live gameplay verification after the merge-shape fix.
+
+Verification:
+
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-24 Radiation Fog Texture Parity Fix
+
+Legacy source re-checked:
+
+- `com.hbm.particle.ParticleRadiationFog`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple`
+- `com.hbm.main.ClientProxy#effectNT`
+
+Corrected in this pass:
+
+- Pointed the modern `radiation_fog` particle definition back at the legacy `fog.png` sprite name instead of the newer standalone texture name.
+- Kept the compatibility copy of the particle texture in place so any existing references to the modern path do not break immediately.
+
+Still incomplete:
+
+- The render path is still the modern particle engine, just with the legacy sprite and timing/profile.
+
+Verification:
+
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-24 Non-Radiation Beacon Base Parity Pass
+
+Legacy source re-checked:
+
+- `com.hbm.blocks.ModBlocks`
+- `com.hbm.blocks.generic.BlockBeaconable`
+- `src/main/java/com/hbm/ntm/registry/ModBlocks.java`
+- `src/main/resources/data/minecraft/tags/blocks/beacon_base_blocks.json`
+
+Corrected in this pass:
+
+- Mirrored the registered non-radiation legacy `BlockBeaconable` resource blocks into the modern `minecraft:beacon_base_blocks` tag:
+  - `block_titanium`
+  - `block_sulfur`
+  - `block_niter`
+  - `block_copper`
+  - `block_red_copper`
+  - `block_tungsten`
+  - `block_aluminium`
+  - `block_fluorite`
+  - `block_steel`
+  - `block_tcalloy`
+  - `block_cdalloy`
+  - `block_lead`
+  - `block_bismuth`
+  - `block_cadmium`
+  - `block_coltan`
+  - `block_tantalium`
+  - `block_beryllium`
+  - `block_euphemium`
+  - `block_dineutronium`
+  - `block_advanced_alloy`
+  - `block_magnetized_tungsten`
+  - `block_combine_steel`
+  - `block_desh`
+  - `block_dura_steel`
+  - `block_starmetal`
+  - `block_polymer`
+  - `block_bakelite`
+  - `block_rubber`
+  - `block_cobalt`
+  - `block_zirconium`
+  - `block_boron`
+  - `block_lanthanium`
+  - `block_australium`
+
+Still incomplete:
+
+- Legacy `block_niobium` is also `BlockBeaconable`, but it is not currently registered in the clean 1.20.1 port, so it was not added to the tag in this pass.
+
+Verification:
+
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-24 Chunk Radiation SavedData Diagnostics Pass
+
+Legacy source re-checked:
+
+- `com.hbm.handler.radiation.ChunkRadiationManager`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple`
+- `src/main/java/com/hbm/ntm/radiation/RadiationSavedData.java`
+- `src/main/java/com/hbm/ntm/radiation/ChunkRadiationManager.java`
+- `src/main/java/com/hbm/ntm/command/ModCommands.java`
+
+Corrected in this pass:
+
+- Added library-level diagnostics for the modern global chunk-radiation saved-data bridge:
+  - total stored entries
+  - loaded entries
+  - positive entries
+  - loaded positive entries
+  - total / loaded radiation sums
+  - max / loaded max radiation values
+- Added an explicit unloaded-entry prune path to remove saved-data entries whose chunks are no longer loaded.
+- Added debug commands:
+  - `/hbm radiation chunk stats`
+  - `/hbm radiation chunk prune`
+- Kept old `/ntmrad clear` and `/hbm radiation chunk clear` behavior unchanged.
+
+Migration note:
+
+- This is a modern bridge diagnostic for the current `hbm_chunk_radiation` saved-data backing. The 1.7.10 Simple handler only keeps runtime entries for loaded chunks and writes values back to each chunk NBT, so this command helps clean old test worlds where the global bridge already accumulated stale offloaded entries.
+
+Still incomplete:
+
+- A future stricter port should replace the modern world-level `hbm_chunk_radiation` saved-data shape with chunk-attached runtime data to match 1.7.10 more literally.
+
+Verification:
+
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-24 Vertical Falloff And World Surface Audit
+
+Legacy source re-checked:
+
+- `com.hbm.config.RadiationConfig`
+- `com.hbm.handler.radiation.ChunkRadiationManager`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerPRISM`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerNT`
+- `src/main/java/com/hbm/ntm/radiation/ChunkRadiationManager.java`
+
+Findings:
+
+- The default 1.7.10 chunk radiation handler is `ChunkRadiationHandlerSimple`.
+  - `RadiationConfig.enablePRISM` defaults to `false`.
+  - `ChunkRadiationManager.proxy` starts as `new ChunkRadiationHandlerSimple()`.
+- The default Simple handler is strictly 2D:
+  - `getRadiation(world, x, y, z)` uses only `x >> 4` and `z >> 4`.
+  - `setRadiation` and `incrementRad` also write the whole chunk column, not a Y slice.
+  - therefore high altitude positions in the same chunk column should report the same chunk-radiation value as ground level.
+- 1.7.10 has 3D/Y-aware handlers (`PRISM`, `NT`, and older 3D variants), but they are not the default 1.7.10 behavior being mirrored by the current port.
+- `ChunkRadiationHandlerSimple#handleWorldDestruction` does not scan a full vertical column:
+  - it samples `world.getHeightValue(x, z) - rand.nextInt(2)`;
+  - it only mutates grass, tallgrass, and leaves found at that sampled top position;
+  - grass/leaves hidden under roofs, opaque blocks, or upper tree canopy are normally shielded from this terrain-mutation pass.
+
+Corrected in this pass:
+
+- Refactored the modern Simple-handler surface sampling into explicit legacy helper methods:
+  - `legacyHeightValue`
+  - `legacyWorldEffectSurface`
+- Kept fog height on `legacyHeightValue + rand(5)`, matching the old `radFog` spawn height.
+- Did not add Y-axis falloff to the default Simple handler, because that would diverge from 1.7.10 default behavior.
+
+Still incomplete:
+
+- PRISM/NT/3D radiation handlers remain deferred optional systems. If the port later exposes `enablePRISM`, that path should implement true sub-chunk/Y-aware radiation and shielding separately from Simple.
+
+Verification:
+
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.

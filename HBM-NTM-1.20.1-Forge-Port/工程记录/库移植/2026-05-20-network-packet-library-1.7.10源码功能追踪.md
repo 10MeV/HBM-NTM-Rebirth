@@ -254,6 +254,130 @@
   - `CompressedExplosionEffectPacket` 只复刻网络压缩格式和轻量客户端表现，不执行完整旧版 block crack/debris 效果。
   - 旧 `TEMissileMultipartPacket` 的具体导弹结构仍应随导弹/发射台库迁移，通过现有 `ClientTileEventPacket` 或后续导弹结构专用接口接入。
 
+## 2026-05-24 线程包调度与诊断推进记录
+
+- 对齐旧版 `PacketThreading` 的运行契约，扩展 `ThreadedPacketDispatcher`：
+  - 线程名继续使用 `NTM-Packet-Thread-` 前缀。
+  - 保留 50 ms 单任务等待预算，对超时任务执行取消/清队。
+  - 记录 total queued/sent/failed/discarded、last flush queued/completed/discarded/wait、连续清队次数与最后错误。
+  - 连续清队超过 5 次后触发 main-thread fallback，后续线程化发送会直接在调用线程执行，避免无限堆积。
+  - 队列 pending 上限为 4096，超过上限会清理旧队列并对当前包走 fallback 发送。
+- `ThreadedPacketDispatcher` 现在覆盖旧 `PacketDispatcher` 常用发送目标：
+  - `sendToAllAround`
+  - `sendToPlayer`
+  - `sendToEntityTrackers`
+  - `sendToEntityAndSelf`
+  - `sendToDimension`
+  - `sendToAll`
+  - `sendToTrackingChunk`
+- 新增 `/hbm network packetthreading stats`：
+  - 输出当前 pending、fallback、累计发送/失败/丢弃、上次 flush 统计和最后一次问题。
+- 新增 `/hbm network packetthreading reset`：
+  - 清空 pending/执行器队列与统计，并解除 main-thread fallback。
+- 当前限制：
+  - 现代实现仍不复刻旧 `PrecompilingNetworkCodec`/`PrecompiledPacket` 的 ByteBuf 预编码。
+  - executor 中已开始执行的任务无法强制停止；超时清理主要用于丢弃尚未开始和后续排队任务。
+  - 线程化入口只应给服务端高频 S2C 使用，C2S handler 仍必须通过 packet 自身 `enqueueWork` 进入服务端主线程。
+
+## 2026-05-24 大二进制同步与 ready 信号推进记录
+
+- 旧版 `SerializableRecipePacket` 行为：
+  - 普通包：`filename + fileBytes`，客户端 `SerializableRecipe.receiveRecipes(...)`。
+  - 结束包：`reinit = true`，客户端收到后 `SerializableRecipe.initialize()`。
+- 现代网络库已有 S2C `ClientBinaryDataPacket`，本批保留其旧 wire layout 不变，并在注册表末尾追加：
+  - S2C `ClientBinaryDataChunkPacket`：按 `transferId + channel + name + chunkIndex + chunkCount + payload` 传输大二进制数据。
+  - S2C `ClientBinaryDataReadyPacket`：按 channel 标记“该批数据已发送完成”，对应旧 `SerializableRecipePacket(true)` 的库层信号。
+- `ClientBinaryData` 新增：
+  - chunk 重组缓存，全部 chunk 到齐后写入原 `channel/name` 数据表。
+  - `markReady(...)` 与 `readyVersion(...)`，供后续配方/GUI 数据同步在客户端检测批次完成。
+  - `pendingTransfers()` 供调试或后续诊断界面查询未完成分片传输数量。
+- `ModMessages` 新增/增强：
+  - `syncClientBinaryData(...)` 自动判断 payload 大小，小于等于 1 MiB 走旧 `ClientBinaryDataPacket`，更大时按 256 KiB chunk 分片发送。
+  - `syncClientBinaryDataBatch(...)` 支持 clear-first、逐项发送与 mark-ready，作为旧配方目录批量同步的现代底座。
+  - `markClientBinaryDataReady(...)` 发送独立 ready packet，不改变旧 packet discriminator 的包体格式。
+- 当前限制：
+  - 分片重组没有落盘；只作为客户端运行期缓存。
+  - 分片包最多 512 片，单次 logical payload 当前上限约 128 MiB。
+  - ready 信号只是版本号递增，不直接调用具体配方系统；后续配方库接入时监听或比较 `readyVersion(...)`。
+
+## 2026-05-24 tile 二进制同步推进记录
+
+- 旧版 `BufPacket` 行为：
+  - 包体为 `x/y/z + ByteBuf payload`。
+  - 服务端由实现 `IBufPacketReceiver#serialize(ByteBuf)` 的 TileEntity 写入二进制数据。
+  - 客户端按坐标找 TileEntity，若实现 `IBufPacketReceiver` 则调用 `deserialize(ByteBuf)`。
+  - 读取异常时只记录 warn，避免单个 tile 同步错误打断客户端。
+- 旧版 `TEMissileMultipartPacket` 行为：
+  - 包体为 `x/y/z + MissileStruct` 的二进制结构。
+  - 客户端按坐标找 compact launcher、launch table 或 missile assembly，再写入 `load` 字段。
+  - 具体 `MissileStruct` 解析与目标机器类型仍属于导弹/发射台库，不在网络库硬编码。
+- 新增通用客户端接收接口：`HbmClientTileBinaryReceiver`：
+  - `handleClientTileBinaryData(ResourceLocation channel, FriendlyByteBuf data)`。
+  - 用 `channel` 区分旧 BufPacket 风格同步、导弹 multipart、或机器自定义二进制子协议。
+- 新增 S2C `ClientTileBinaryDataPacket`：
+  - 包体为 `BlockPos + channel + payload byte[]`。
+  - 单包 payload 上限 1 MiB。
+  - 客户端只派发给实现 `HbmClientTileBinaryReceiver` 的 BlockEntity。
+  - handler 捕获接收端异常并记录 warn，对齐旧 `BufPacket` 的容错思想。
+- 新增 S2C `ClientTileBinaryDataChunkPacket` 与客户端 `ClientTileBinaryData` 重组缓存：
+  - 大于 1 MiB 的 tile 二进制数据按 256 KiB 分片。
+  - 全部分片到齐后按原 `BlockPos + channel` 派发给接收端。
+  - 单次 logical tile payload 当前上限约 128 MiB。
+- `ModMessages` 新增：
+  - `sendClientTileBinaryData(BlockEntity, ResourceLocation, Consumer<FriendlyByteBuf>)`
+  - `sendClientTileBinaryData(ServerPlayer, BlockPos, ResourceLocation, Consumer<FriendlyByteBuf>)`
+  - byte[] overload 与自动分片发送路径。
+- 当前限制：
+  - 该层只提供通用 ByteBuf 派发，不复刻 `MissileStruct` 字段布局。
+  - tile binary 分片重组只保存在客户端内存中；没有超时清理，后续若出现长期未完成传输再补诊断/TTL。
+  - 服务端写 buffer 的调用方必须保证 writer 不跨线程访问不安全对象；高频发送可配合 `ThreadedPacketDispatcher`。
+
+## 2026-05-24 C2S tile 二进制控制推进记录
+
+- 旧版网络库中 C2S 控制主要由 `NBTControlPacket`、`AuxButtonPacket`、`SatCoordPacket`、`NBTItemControlPacket` 等承担；复杂 GUI/机器仍有旧 ByteBuf 风格数据需求。
+- 本批新增通用服务端接收接口：`HbmTileBinaryControlReceiver`：
+  - `canReceiveClientTileBinaryData(ServerPlayer, ResourceLocation, int readableBytes)` 用于权限、距离以外的机器自定义校验。
+  - `handleClientTileBinaryData(ServerPlayer, ResourceLocation, FriendlyByteBuf)` 在服务端主线程执行。
+- 新增 C2S `ServerTileBinaryControlPacket`：
+  - 包体为 `BlockPos + channel + payload byte[]`。
+  - 单包 payload 上限 256 KiB。
+  - 安全边界沿用 `TileControlPacket`：必须有 sender、玩家 16 格内、chunk 已加载、目标 BlockEntity 显式实现接收接口。
+  - 派发后调用 `setChanged()` 与 `sendBlockUpdated(...)`，保持与 NBT tile control 一致。
+- 新增 C2S `ServerTileBinaryControlChunkPacket` 与 `ServerTileBinaryControlTransfers`：
+  - 客户端上传超过 256 KiB 时按 64 KiB 分片。
+  - 服务端按 `player UUID + transferId` 隔离重组，避免不同玩家或不同上传混淆。
+  - 重组完成后复用 `ServerTileBinaryControlPacket` 的安全校验与派发逻辑。
+  - 玩家退出时通过 `CommonForgeEvents.onPlayerLogout` 清理该玩家未完成上传。
+- `ModMessages` 新增：
+  - `sendTileBinaryControl(BlockPos, ResourceLocation, Consumer<FriendlyByteBuf>)`
+  - `sendTileBinaryControl(BlockPos, ResourceLocation, byte[])`
+  - 自动小包/分片上传路径。
+- `/hbm network packetthreading stats` 现在额外输出 `Tile binary control uploads: pending=...`。
+- 当前限制：
+  - C2S 分片没有 TTL；目前依赖玩家退出清理，后续可在网络诊断中增加 tick 级超时剪枝。
+  - 该层不解释 payload 结构，所有 channel 语义由具体机器/GUI/导弹库实现。
+  - C2S 默认范围仍是 16 格；远程设备若需要跨距离控制，目标 BlockEntity 应在后续库中显式设计专用包或权限规则。
+
+## 2026-05-24 分片传输生命周期与 packet threading 开关推进记录
+
+- 对齐旧 `CommandPacketInfo` 中 reset/toggle/诊断能力，继续扩展现代网络诊断：
+  - `ThreadedPacketDispatcher` 新增 enabled 状态。
+  - 关闭 packet threading 时清空 pending/执行器队列，后续线程化发送直接同步执行。
+  - `resetState()` 会恢复 enabled=true 并清除 fallback/统计。
+  - `/hbm network packetthreading stats` 显示 enabled。
+  - 新增 `/hbm network packetthreading toggle`、`enable`、`disable`。
+- 给三类分片缓存补生命周期管理：
+  - `ClientBinaryData`：S2C 大二进制数据缓存，30 秒未更新自动 prune。
+  - `ClientTileBinaryData`：S2C tile 二进制数据缓存，30 秒未更新自动 prune。
+  - `ServerTileBinaryControlTransfers`：C2S tile binary 上传缓存，30 秒未更新自动 prune。
+- tick 接入：
+  - 客户端 tick 每 100 tick 检查并清理 `ClientBinaryData` 与 `ClientTileBinaryData` 的过期分片。
+  - 服务端 tick 末尾清理 `ServerTileBinaryControlTransfers` 的过期上传。
+  - 玩家登出仍会清理该玩家未完成的 C2S tile binary 上传。
+- 当前限制：
+  - TTL 只做内存清理，不向对端发送重传/失败通知。
+  - 客户端分片缓存的 pending 计数尚未接入可见命令；后续可加客户端调试 HUD 或专用诊断命令。
+
 ## 验证清单
 
 - 客户端/服务端协议版本一致。

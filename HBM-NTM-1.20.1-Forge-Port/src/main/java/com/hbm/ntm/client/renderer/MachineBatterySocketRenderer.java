@@ -40,6 +40,11 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.MACHINE;
+    }
+
+    @Override
     public void render(MachineBatterySocketBlockEntity socket, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();

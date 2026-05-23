@@ -257,7 +257,7 @@
 
 - 旧 `EntityRubble` 与 `EntityShrapnel` 尚未迁移；`ExplosionLarge.spawnRubble` / shrapnel/tracer/shower 当前只生成粒子表现，不产生实体碰撞伤害或可拾取碎块。
 - `ExplosionLarge.jolt` 不生成旧 rubble 实体，只清方块并发送 block particle；破坏阈值仍保留爆炸抗性 `<= 70`。
-- `ExplosionNT.DIGAMMA` / `DIGAMMA_CIRCUIT` / `LAVA_V` / `LAVA_R` 仅保留枚举位，具体 digamma、pribris/ash/fire、volcanic/rad lava 需要等相关方块/辐射液体迁移后再补。
+- `ExplosionNT.DIGAMMA` / `DIGAMMA_CIRCUIT` / `LAVA_V` / `LAVA_R` 已在 2026-05-24 补齐爆炸属性所需的旧 ID 方块落点；完整 volcanic/rad lava 流体反应仍后续迁。
 - `ExplosionNT` 不继承 vanilla `Explosion`，而是作为旧调用语义到 VNT 的兼容适配器；后续迁调用点时应优先直接使用 VNT/WeaponExplosionUtil，只有旧代码属性组合复杂时才用该适配器。
 
 ## 2026-05-22 环境后处理与小型核爆入口
@@ -587,8 +587,8 @@
 
 ### 有意降级/延期
 
-- 未迁旧 `EntityExplosionChunkloading` 的强制 chunk loader；现代实体只在已加载区域 tick，后续需要专门迁 chunk ticket 机制。
-- 未迁旧 `EntityFalloutRain`；完成时暂用 `ExplosionNukeGeneric.waste` 对爆心附近做核爆废土后处理，作为已迁库能力内的可运行近似。
+- 旧 `EntityExplosionChunkloading` 的强制 chunk loader 已在 2026-05-24 迁入现代 forced chunk 基类；本段为 MK5 初始迁入时的历史限制。
+- 旧 `EntityFalloutRain` 已在后续批次迁入安全子集并接回 MK5 完成路径；本段为 MK5 初始迁入时的历史限制。
 - 旧 `BombConfig.mk5` / `falloutRange` / `enableExtendedLogging` 尚未迁入现代 config，本批使用固定 25ms tick 预算和 100% fallout 范围。
 - Manhattan 成就系统尚未迁，现代实体不触发成就。
 
@@ -621,7 +621,7 @@
 
 - 现代 `PARAMS_HIGH` 仍是静态默认参数；后续核弹方块/物品接线应优先使用 `configuredHighParams()` 或 `explodeConfiguredHigh(...)`。
 - `BombConfig.CHUNK_LOADING` 和 `EXPLOSION_ALGORITHM` 已迁配置入口，但当前现代实现仍采用安全 batched worker，不启用旧 direct chunk storage/threaded 写入。
-- `ExplosionNukeSmall` 的大核弹路径尚未接旧 `WorldUtil.loadAndSpawnEntityInWorld` 的强制加载语义；后续 chunk ticket 迁完后再补齐。
+- `ExplosionNukeSmall` 的大核弹路径已通过 `NukeExplosionMk5Entity` 继承的现代 forced chunk 基类承接旧强制加载语义；仍未迁 `WorldUtil.loadAndSpawnEntityInWorld` 的其它通用行为。
 
 ## 2026-05-22 EntityFalloutRain 安全子集
 
@@ -652,7 +652,198 @@
 
 - 未迁 crater biome 与 `FalloutConfigJSON` 地表替换规则；现代先保留 fallout 层和点火这两个直接可运行行为。
 - 未迁 `EntityFallingBlockNT` 抛落地表方块，也未迁 volcano_core 特例；依赖方块/实体尚未进入 clean port。
-- 仍未接旧 `EntityExplosionChunkloading` 强制加载能力；落尘实体只处理当前已加载并 tick 的区域。
+- 旧 `EntityExplosionChunkloading` 强制加载能力已在 2026-05-24 接入；落尘实体现在会保持爆心 chunk，并在处理每个 chunk 前切换工作 chunk ticket。
+
+## 2026-05-24 EntityNukeExplosionMK3 核心调度实体
+
+### 1.7.10 细化追踪
+
+- `EntityNukeExplosionMK3`：
+  - 继承旧 `EntityExplosionChunkloading`，注册 ID 为 `entity_nuke_mk3`。
+  - 字段包含 `age/destructionRange/speed/coefficient/coefficient2/did/did2/waste/extType`。
+  - `waste=true` 时持有三个 `ExplosionNukeAdvanced`：destruction 半径 `range`、waste 半径 `range * 1.8`、vapor 半径 `range * 2.5`。
+  - `waste=false && extType=0` 时持有 `ExplosionFleija`；`extType=1` 时持有 `ExplosionSolinium`。
+  - 首 tick 初始化处理器；每 tick `speed += 1`，循环执行处理器 update。
+  - destruction 未完成时，普通/Fleija 路径调用 `ExplosionNukeGeneric.dealDamage(range * 2)`；Solinium 路径调用 `ExplosionHurtUtil.doRadiation(15000, 250000, range)`。
+  - waste destruction 完成后只生成一次 `EntityFalloutRain`，scale 为 `range * 1.8`。
+  - `statFacFleija(...)` 创建 `waste=false` 的 Fleija 实体，`makeSol()` 切为 Solinium。
+  - `ATEntry` 反瞬移/干扰器逻辑可取消 300 格内的 Fleija 爆炸，并播放 ufoBlast/plasmablast 效果。
+
+### 现代实现
+
+- 新增 `NukeExplosionMk3Entity`：
+  - 注册为 `hbm:entity_nuke_mk3`，客户端 `NoopRenderer`。
+  - 保留 `createFleija(...)`、`createWaste(...)`、`makeSol()` 入口，后续核弹方块和武器可直接 spawn。
+  - 复用现代 `ExplosionNukeAdvanced`、`ExplosionFleija`、`ExplosionSolinium`、`ExplosionHurtUtil` 和 `FalloutRainEntity`。
+  - NBT 保存/读取旧字段名和各处理器进度前缀：`exp_`、`wst_`、`vap_`、`expl_`、`sol_`。
+  - `speed` 初始值从现代 `BombConfig.BLAST_SPEED` 读取，并按旧逻辑每 tick 自增。
+
+### 有意降级/延期
+
+- 旧 `EntityExplosionChunkloading` 强制加载能力已在 2026-05-24 接入，MK3 现在会保持爆心 chunk ticket。
+- 未迁 `ATEntry` 的 field disturber 抵消逻辑、ufoBlast 音效与 plasmablast 粒子；相关机器/粒子还未完整迁入。
+- 未触发旧 Manhattan 成就和 extended logging。
+
+## 2026-05-24 ExplosionLarge / ExplosionNT 旧调用签名兼容
+
+### 1.7.10 细化追踪
+
+- `ExplosionLarge.spawnTracers(world, x, y, z, count)`：旧普通武器常用的无 motion 参数入口，内部生成低速 tracer。
+- `ExplosionLarge.spawnShrapnelShower(world, x, y, z, motionX, motionY, motionZ, count, deviation)`：旧版按给定基准速度和高斯偏差发射碎片雨。
+- `ExplosionLarge.spawnMissileDebris(world, x, y, z, motionX, motionY, motionZ, deviation, debris, rareDrop)`：
+  - 对每个 debris stack 随机生成 `0..stackSize` 个 1-count 掉落物。
+  - 掉落物速度继承传入 motion，并叠加 deviation 后乘 `0.85`。
+  - 稀有掉落为 `1/10` 概率，偏差缩小到 `deviation * 0.1`。
+  - 初始位置沿速度方向前推两格，避免全部堆在爆心。
+- `ExplosionLarge.explodeFire(...)`、`buster(...)`、`jolt(...)` 在旧调用点里存在无 source、float depth、double strength 等重载形态。
+- `ExplosionNT` 旧代码常用 `addAllAttrib(...)` 链式 API，而当前现代实现只有 `addAttrib(...)`。
+
+### 现代实现
+
+- 扩展 `ExplosionLarge`：
+  - 新增无 motion 的 `spawnTracers(...)`，委托到现代 tracer 粒子视觉。
+  - 新增带方向/偏差的 `spawnShrapnelShower(...)`，使用 `ServerLevel.sendParticles(..., count=0)` 保留单粒子速度语义。
+  - 新增带方向/偏差的 `spawnMissileDebris(...)`，按旧版 stack 随机散落、稀有掉落概率和速度继承逻辑生成 `ItemEntity`。
+  - 新增 `explodeFire(..., source=null)`、`buster(..., float depth)`、`jolt(..., double strength)` 兼容入口，减少后续普通武器调用点迁移时的业务改写。
+- 扩展 `ExplosionNT`：
+  - 新增 `addAllAttrib(ExAttrib...)` 和 `addAllAttrib(Collection<ExAttrib>)`，直接委托现代 `addAttrib`。
+  - 新增 `hasAttrib(...)` 供后续迁移旧属性判断逻辑时复用。
+
+### 有意延期
+
+- 旧 `EntityShrapnel` / `EntityRubble` / tracer projectile 已在 2026-05-24 后续批次迁入；本段保留为旧调用签名批次时的历史限制。
+- `ExplosionNT.ExAttrib.DIGAMMA`、`DIGAMMA_CIRCUIT`、`LAVA_V`、`LAVA_R` 的爆炸落点已在 2026-05-24 后续批次接通；本段保留为旧调用签名批次时的历史限制。
+
+## 2026-05-24 EntityExplosionChunkloading 现代等价
+
+### 1.7.10 细化追踪
+
+- `EntityExplosionChunkloading`：
+  - 继承旧 `Entity`，实现 `IChunkLoader`。
+  - `entityInit()` 通过 `ForgeChunkManager.requestTicket(MainRegistry.instance, worldObj, Type.ENTITY)` 获取 entity ticket。
+  - `init(ticket)` 在服务端绑定实体并强制加载实体当前 `chunkCoordX/chunkCoordZ`。
+  - `loadChunk(x, z)` 只记录并 force 一个额外工作 chunk；旧实现未在切换时主动释放旧工作 chunk。
+  - `clearChunkLoader()` 在实体结束时释放 ticket。
+- 旧使用方：
+  - `EntityNukeExplosionMK5`：持续处理 MK5 射线爆炸，必须保持爆心区域 tick。
+  - `EntityNukeExplosionMK3`：持续处理 Fleija/Solinium/waste 三类大爆炸。
+  - `EntityFalloutRain`：分批处理落尘 chunk，旧结构允许在处理 chunk 时调用 `loadChunk`。
+
+### 现代实现
+
+- 新增 `ExplosionChunkLoadingEntity`：
+  - 使用 Forge 1.20.1 `ForgeChunkManager.forceChunk(ServerLevel, modId, Entity, chunkX, chunkZ, add, ticking)` 迁入 entity ticket 语义。
+  - `forceCenterChunk()` 保持爆心 chunk 强制加载。
+  - `loadChunk(chunkX, chunkZ)` 迁入旧“当前工作 chunk”入口；现代实现切换时释放上一工作 chunk，避免大范围落尘处理留下过多持久 ticket。
+  - `clearChunkLoader()` 在 `remove(...)` 时释放中心 chunk 与工作 chunk。
+  - NBT 保存 `loaderCenterChunk` / `loaderWorkChunk`，实体重载后可继续释放/刷新对应 ticket。
+- 新增 `ExplosionChunkLoading.registerValidationCallback()`：
+  - 在 common setup 中注册 Forge forced chunk 校验回调。
+  - 世界加载重建 ticket 时，若 UUID 对应实体不存在或不是 `ExplosionChunkLoadingEntity`，移除该实体 ticket。
+- 接入现代实体：
+  - `NukeExplosionMk5Entity`、`NukeExplosionMk3Entity` 改为继承 `ExplosionChunkLoadingEntity`，服务端 tick 时刷新爆心 chunk。
+  - `FalloutRainEntity` 改为继承 `ExplosionChunkLoadingEntity`，首 tick 刷新爆心 chunk，处理每个 chunk 前调用 `loadChunk(...)`。
+
+### 有意差异
+
+- 现代 `loadChunk` 会释放上一工作 chunk；这是对旧实现的资源安全修正，不改变“当前正在处理的 chunk 需要被加载”的功能契约。
+- 仍未迁旧 `IChunkLoader` 接口本身；现代 Forge 已经不需要 request ticket 回调接口，爆炸实体通过基类直接持有 ticket 语义。
+
+## 2026-05-24 ExplosionNT DIGAMMA / volcanic lava 属性落点
+
+### 1.7.10 细化追踪
+
+- `ExplosionNT.ExAttrib.DIGAMMA`：
+  - 旧版在被破坏的 normal cube 位置放置 `ModBlocks.ash_digamma`。
+  - `1/5` 概率在上方为空气时放置 `ModBlocks.fire_digamma`。
+- `ExplosionNT.ExAttrib.DIGAMMA_CIRCUIT`：
+  - 若 `x % 3 == 0 && z % 3 == 0`，放置 `ModBlocks.pribris_digamma`。
+  - 若 `x % 3 == 0 || z % 3 == 0` 且随机 boolean 为 true，也放置 `pribris_digamma`。
+  - 其它位置按 `DIGAMMA` 放置 `ash_digamma`，并保留 `1/5` 上方 `fire_digamma`。
+- `ExplosionNT.ExAttrib.LAVA_V` / `LAVA_R`：
+  - 旧版分别在被破坏 normal cube 位置放置 `volcanic_lava_block` / `rad_lava_block`。
+- `DigammaFlame`：
+  - 无碰撞、非完整渲染、无掉落。
+  - 只能存在于下方有实心顶面的方块上，否则邻居更新时消失。
+  - living 实体碰撞时施加 `HazardType.DIGAMMA`、`ContaminationType.DIGAMMA`、`0.05F`。
+- `VolcanicBlock` / `RadBlock`：
+  - 旧版是 `BlockFluidClassic`，带流体扩散、相邻水/木/叶/矿石反应、随机固化为 basalt/sellafield 系列矿物。
+  - `RadBlock` 额外对 living 实体施加 `HazardType.RADIATION`、`ContaminationType.CREATIVE`、`5F`。
+
+### 现代实现
+
+- 新增旧 ID 方块支撑：
+  - `ash_digamma`：按旧爆炸残留灰烬方块注册，保留高爆抗。
+  - `fire_digamma`：新增 `DigammaFlameBlock`，迁入无碰撞、支撑面存活、碰撞 DIGAMMA 污染、无掉落。
+  - `pribris_digamma`：按旧黑化 RBMK 残骸注册，保留高硬度/高爆抗。
+  - `volcanic_lava_block` / `rad_lava_block`：新增 `LegacyHotBlock` 作为爆炸残留旧 ID；触碰造成热地板伤害，`rad_lava_block` 额外施加 bypass radiation。
+- 新增 VNT mutator：
+  - `BlockMutatorDigamma` 按旧 `DIGAMMA` / `DIGAMMA_CIRCUIT` 方块替换规则运行。
+  - `BlockMutatorPlaceBlock` 给 `LAVA_V` / `LAVA_R` 直接放置对应旧 ID 方块。
+- 更新 `ExplosionNT.createBlockProcessor()`：
+  - `DIGAMMA_CIRCUIT` 优先于 `DIGAMMA`。
+  - `LAVA_V` / `LAVA_R` 现在不再是空枚举，会进入 block mutator。
+- 资源/数据：
+  - 从 1.7.10 资源复制 `ash_digamma`、`fire_digamma`、`rbmk_debris_digamma`、`volcanic_lava_still`、`rad_lava_still` 贴图。
+  - 新增 blockstate/model/item model、loot、mineable tag、英文/中文名称。
+
+### 有意延期
+
+- `volcanic_lava_block` / `rad_lava_block` 当前只迁爆炸属性所需的放置旧 ID 和实体接触危险；完整 `BlockFluidClassic` 扩散、邻居反应、随机固化为 basalt/sellafield 矿物仍需等现代流体/矿物支撑迁入后补齐。
+- `digamma_matter` 不属于本批 `ExplosionNT` 属性直接放置方块，暂未迁入。
+
+## 2026-05-24 EntityShrapnel / EntityRubble
+
+### 1.7.10 细化追踪
+
+- `EntityShrapnel`：
+  - 继承旧 `EntityThrowable`，`dataWatcher[16]` 存模式 byte。
+  - 默认火焰免疫，`setTrail()` 模式 1 在客户端生成火焰轨迹。
+  - 命中实体时用 `ModDamageSource.shrapnel` 造成 15 点伤害。
+  - `ticksExisted > 5` 后命中会结束实体并播放 fizz。
+  - 火山模式 2 / 放射火山模式 4：
+    - 下落速度 `< -0.2` 时在命中方块上方放置 `volcanic_lava_block` / `rad_lava_block`，并在 3x3x3 区域空气中生成 `gas_monoxide`。
+    - 上升速度 `> 0` 时创建强度 7 的 `ExplosionNT`，带 `NODROP`、`LAVA_V`/`LAVA_R`、`NOSOUND`、`ALLMOD`、`NOHURT`。
+  - Watz 模式 3 在命中方块上方放置 `mud_block`。
+  - 其它模式命中后生成 5 个 lava particle。
+- `EntityRubble`：
+  - 继承旧 `EntityThrowableNT`，`dataWatcher[16]`/`[17]` 存 block id/meta。
+  - 命中实体时用 `ModDamageSource.rubble` 造成 15 点伤害。
+  - `ticksExisted > 2` 后命中会结束实体，播放 `hbm:block.debris`，并发送 `ParticleBurstPacket` 在 50 格范围生成该方块的碎裂粒子。
+  - 空气阻力为 `1F`，不额外衰减水平速度。
+- `ExplosionLarge`：
+  - `spawnRubble` 按旧速度公式生成石头 `EntityRubble`。
+  - `spawnShrapnels` / `spawnTracers` / `spawnShrapnelShower` 生成 `EntityShrapnel`，其中约 `1/3` 启用 trail。
+  - `jolt` 沿随机射线移除液体或低抗性方块，被击碎的方块以 `EntityRubble` 抛出并保留原方块状态。
+
+### 现代实现
+
+- 新增 `LegacyThrowableEntity`：
+  - 迁入旧 `EntityThrowableNT` 的基础运动、方块 raytrace、实体碰撞扫描、重力、空气/水阻力、地面超时字段。
+  - 作为爆炸库 projectile 的共享基类，避免普通武器调用点重复实现旧投射物物理。
+- 新增 `ShrapnelEntity`：
+  - 注册为 `hbm:entity_shrapnel`，尺寸 `0.25F`，火焰免疫。
+  - 同步旧 mode byte，保留 `setTrail()`、`setVolcano()`、`setWatz()`、`setRadVolcano()` 入口。
+  - 命中实体造成 `hbm:shrapnel` 15 点伤害。
+  - 火山/放射火山模式接入 `volcanic_lava_block`、`rad_lava_block`、`gas_monoxide` 和 `ExplosionNT` 的 `LAVA_V` / `LAVA_R` 属性。
+  - Watz 模式通过 `ModBlocks.legacyBlock("mud_block")` 查找旧 ID；clean port 尚未迁入 `mud_block` 时保持无放置，不用原版方块替代。
+- 新增 `RubbleEntity`：
+  - 注册为 `hbm:entity_rubble`，同步 block state id。
+  - 命中实体造成 `hbm:rubble` 15 点伤害。
+  - 落地后复用现有 `ParticleBurstPacket`，客户端按保存的 block state 生成碎裂粒子。
+- 新增 damage type：
+  - `data/hbm/damage_type/shrapnel.json`
+  - `data/hbm/damage_type/rubble.json`
+  - 静态 lang 与 datagen lang 均补充死亡文本。
+- 更新 `ExplosionLarge`：
+  - rubble/shrapnel/tracer/shower 入口不再只发送粒子，改为生成对应实体。
+  - `jolt` 现在会抛出带原方块状态的 `RubbleEntity`，再清除方块。
+
+### 有意延期
+
+- 旧 `RenderShrapnel` / `RenderRubble` 的可见飞行模型尚未迁入；当前客户端注册 `NoopRenderer`，依赖 shrapnel trail 和 rubble 落地 burst 表现。后续 render library 继续迁移后补 OBJ/方块飞行渲染。
+- 旧 `hbm:block.debris` 声音资源尚未在 clean port 确认注册；现代暂用 `SoundEvents.STONE_BREAK` 表示 rubble 命中碎裂。
+- `mud_block` 仍等待流体/机器链路迁移；Watz shrapnel 已保留旧 ID 查找入口。
 
 ## 验证清单
 
@@ -666,3 +857,8 @@
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `NukeExplosionMk5Entity` 核心调度实体和实体注册后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `BombConfig` 子集并接通 `ExplosionNukeSmall` 大核弹 -> `NukeExplosionMk5Entity` 后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `FalloutRainEntity` 安全子集并接通 MK5 完成后的落尘实体后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `NukeExplosionMk3Entity` 核心调度实体和实体注册后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在补齐 `ExplosionLarge` / `ExplosionNT` 旧调用签名兼容入口后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `EntityExplosionChunkloading` 现代 forced chunk 基类并接入 MK3/MK5/FalloutRain 后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `ExplosionNT` 的 `DIGAMMA` / `DIGAMMA_CIRCUIT` / `LAVA_V` / `LAVA_R` 方块落点后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `EntityShrapnel` / `EntityRubble`、注册 damage type 并接回 `ExplosionLarge` 实体生成入口后通过。

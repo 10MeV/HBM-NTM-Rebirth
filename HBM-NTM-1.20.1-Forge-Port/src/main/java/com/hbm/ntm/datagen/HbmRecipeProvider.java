@@ -17,6 +17,7 @@ import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -99,6 +100,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         chemicalBatteryRecipes(consumer);
         assemblyCapacitorRecipes(consumer);
         fluidContainerRecipes(consumer);
+        liquefactionRecipes(consumer);
     }
 
     private static void selfChargingConversion(Consumer<FinishedRecipe> consumer, ItemLike result, String recipeName, ItemLike isotopeBillet) {
@@ -262,6 +264,73 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 });
     }
 
+    private static void liquefactionRecipes(Consumer<FinishedRecipe> consumer) {
+        LiquefactionRecipeBuilder.liquefaction(ModItems.BIOMASS.get(), HbmFluids.BIOGAS, 125)
+                .save(consumer, id("liquefaction/biomass"));
+        LiquefactionRecipeBuilder.liquefaction(ModItems.GLYPHID_GLAND_EMPTY.get(), HbmFluids.BIOGAS, 2_000)
+                .save(consumer, id("liquefaction/glyphid_gland_empty"));
+        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("gems/coal"), HbmFluids.COALOIL, 100)
+                .save(consumer, id("liquefaction/coal_gem"));
+        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("dusts/coal"), HbmFluids.COALOIL, 100)
+                .save(consumer, id("liquefaction/coal_dust"));
+        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("gems/lignite"), HbmFluids.COALOIL, 50)
+                .save(consumer, id("liquefaction/lignite_gem"));
+        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("dusts/lignite"), HbmFluids.COALOIL, 50)
+                .save(consumer, id("liquefaction/lignite_dust"));
+        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("dusts/sodium"), HbmFluids.SODIUM, 100)
+                .save(consumer, id("liquefaction/sodium_dust"));
+        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("ingots/lead"), HbmFluids.LEAD, 100)
+                .save(consumer, id("liquefaction/lead_ingot"));
+        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("dusts/lead"), HbmFluids.LEAD, 100)
+                .save(consumer, id("liquefaction/lead_dust"));
+        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("storage_blocks/lead"), HbmFluids.LEAD, 900)
+                .save(consumer, id("liquefaction/lead_block"));
+        LiquefactionRecipeBuilder.liquefaction(ItemTags.LOGS, HbmFluids.MUG, 100)
+                .save(consumer, id("liquefaction/logs"));
+        LiquefactionRecipeBuilder.liquefaction(block("ore_oil_sand"), HbmFluids.BITUMEN, 100)
+                .save(consumer, id("liquefaction/ore_oil_sand"));
+        LiquefactionRecipeBuilder.liquefaction(Items.SNOWBALL, HbmFluids.WATER, 125)
+                .save(consumer, id("liquefaction/snowball"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.SNOW_BLOCK, HbmFluids.WATER, 500)
+                .save(consumer, id("liquefaction/snow_block"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.ICE, HbmFluids.WATER, 1_000)
+                .save(consumer, id("liquefaction/ice"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.PACKED_ICE, HbmFluids.WATER, 1_000)
+                .save(consumer, id("liquefaction/packed_ice"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.NETHERRACK, HbmFluids.LAVA, 250)
+                .save(consumer, id("liquefaction/netherrack"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.COBBLESTONE, HbmFluids.LAVA, 250)
+                .save(consumer, id("liquefaction/cobblestone"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.STONE, HbmFluids.LAVA, 250)
+                .save(consumer, id("liquefaction/stone"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.OBSIDIAN, HbmFluids.LAVA, 500)
+                .save(consumer, id("liquefaction/obsidian"));
+        LiquefactionRecipeBuilder.liquefaction(Items.ENDER_PEARL, HbmFluids.ENDERJUICE, 100)
+                .save(consumer, id("liquefaction/ender_pearl"));
+        LiquefactionRecipeBuilder.liquefaction(Items.SUGAR, HbmFluids.ETHANOL, 100)
+                .save(consumer, id("liquefaction/sugar"));
+        LiquefactionRecipeBuilder.liquefaction(Items.WHEAT_SEEDS, HbmFluids.SEEDSLURRY, 50)
+                .save(consumer, id("liquefaction/wheat_seeds"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.VINE, HbmFluids.SEEDSLURRY, 100)
+                .save(consumer, id("liquefaction/vine"));
+        LiquefactionRecipeBuilder.liquefaction(Items.KELP, HbmFluids.SEEDSLURRY, 100)
+                .save(consumer, id("liquefaction/kelp"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.GRASS, HbmFluids.SEEDSLURRY, 100)
+                .save(consumer, id("liquefaction/grass"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.FERN, HbmFluids.SEEDSLURRY, 100)
+                .save(consumer, id("liquefaction/fern"));
+        LiquefactionRecipeBuilder.liquefaction(Items.COD, HbmFluids.FISHOIL, 100)
+                .save(consumer, id("liquefaction/cod"));
+        LiquefactionRecipeBuilder.liquefaction(Items.SALMON, HbmFluids.FISHOIL, 100)
+                .save(consumer, id("liquefaction/salmon"));
+        LiquefactionRecipeBuilder.liquefaction(Items.TROPICAL_FISH, HbmFluids.FISHOIL, 100)
+                .save(consumer, id("liquefaction/tropical_fish"));
+        LiquefactionRecipeBuilder.liquefaction(Items.PUFFERFISH, HbmFluids.FISHOIL, 100)
+                .save(consumer, id("liquefaction/pufferfish"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.SUNFLOWER, HbmFluids.SUNFLOWEROIL, 100)
+                .save(consumer, id("liquefaction/sunflower"));
+    }
+
     private static ItemLike item(String legacyName) {
         RegistryObject<Item> item = ModItems.legacyItem(legacyName);
         if (item == null) {
@@ -419,6 +488,62 @@ public final class HbmRecipeProvider extends RecipeProvider {
             object.addProperty("fluid", new ResourceLocation(HbmNtm.MOD_ID, fluid.toPath()).toString());
             object.addProperty("amount", amount);
             return object;
+        }
+    }
+
+    private static final class LiquefactionRecipeBuilder {
+        private final Ingredient input;
+        private final FluidType output;
+        private final int amount;
+
+        private LiquefactionRecipeBuilder(Ingredient input, FluidType output, int amount) {
+            this.input = input;
+            this.output = output;
+            this.amount = amount;
+        }
+
+        private static LiquefactionRecipeBuilder liquefaction(ItemLike input, FluidType output, int amount) {
+            return new LiquefactionRecipeBuilder(Ingredient.of(input), output, amount);
+        }
+
+        private static LiquefactionRecipeBuilder liquefaction(TagKey<Item> input, FluidType output, int amount) {
+            return new LiquefactionRecipeBuilder(Ingredient.of(input), output, amount);
+        }
+
+        private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId) {
+            consumer.accept(new FinishedRecipe() {
+                @Override
+                public void serializeRecipeData(JsonObject json) {
+                    json.add("ingredient", input.toJson());
+                    JsonObject fluid = new JsonObject();
+                    fluid.addProperty("fluid", output.getName());
+                    fluid.addProperty("amount", amount);
+                    fluid.addProperty("pressure", 0);
+                    json.add("output", fluid);
+                }
+
+                @Override
+                public ResourceLocation getId() {
+                    return recipeId;
+                }
+
+                @Override
+                public RecipeSerializer<?> getType() {
+                    return BuiltInRegistries.RECIPE_SERIALIZER.get(id("liquefaction"));
+                }
+
+                @Nullable
+                @Override
+                public JsonObject serializeAdvancement() {
+                    return null;
+                }
+
+                @Nullable
+                @Override
+                public ResourceLocation getAdvancementId() {
+                    return null;
+                }
+            });
         }
     }
 

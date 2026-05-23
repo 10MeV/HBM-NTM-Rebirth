@@ -88,7 +88,17 @@ public class RadiationSavedData extends SavedData {
 
     public List<Map.Entry<Long, Float>> loadedEntries(ServerLevel level) {
         List<Map.Entry<Long, Float>> entries = new ArrayList<>();
+        pruneUnloaded(level, entries);
+        return entries;
+    }
+
+    public int pruneUnloaded(ServerLevel level) {
+        return pruneUnloaded(level, null);
+    }
+
+    private int pruneUnloaded(ServerLevel level, List<Map.Entry<Long, Float>> loadedEntries) {
         boolean changed = false;
+        int removed = 0;
         Iterator<Map.Entry<Long, Float>> iterator = chunkRadiation.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Long, Float> entry = iterator.next();
@@ -96,14 +106,47 @@ public class RadiationSavedData extends SavedData {
             if (!level.hasChunk(pos.x, pos.z)) {
                 iterator.remove();
                 changed = true;
+                removed++;
                 continue;
             }
-            entries.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue()));
+            if (loadedEntries != null) {
+                loadedEntries.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue()));
+            }
         }
         if (changed) {
             setDirty();
         }
-        return entries;
+        return removed;
+    }
+
+    public Stats stats(ServerLevel level) {
+        int total = 0;
+        int loaded = 0;
+        int positive = 0;
+        int loadedPositive = 0;
+        float totalRadiation = 0.0F;
+        float loadedRadiation = 0.0F;
+        float maxRadiation = 0.0F;
+        float loadedMaxRadiation = 0.0F;
+        for (Map.Entry<Long, Float> entry : chunkRadiation.entrySet()) {
+            float radiation = clamp(entry.getValue());
+            total++;
+            if (radiation > 0.0F) {
+                positive++;
+                totalRadiation += radiation;
+                maxRadiation = Math.max(maxRadiation, radiation);
+            }
+            ChunkPos pos = new ChunkPos(entry.getKey());
+            if (level.hasChunk(pos.x, pos.z)) {
+                loaded++;
+                if (radiation > 0.0F) {
+                    loadedPositive++;
+                    loadedRadiation += radiation;
+                    loadedMaxRadiation = Math.max(loadedMaxRadiation, radiation);
+                }
+            }
+        }
+        return new Stats(total, loaded, positive, loadedPositive, totalRadiation, loadedRadiation, maxRadiation, loadedMaxRadiation);
     }
 
     public List<ChunkPos> updateDiffusion(ServerLevel level, float fogThreshold) {
@@ -136,22 +179,19 @@ public class RadiationSavedData extends SavedData {
                     }
 
                     long targetKey = target.toLong();
-                    boolean existed = previous.containsKey(targetKey);
                     float spread = value * percent;
-                    float nextValue;
-                    if (existed) {
+                    if (previous.containsKey(targetKey)) {
                         float current = next.getOrDefault(targetKey, 0.0F);
-                        nextValue = Math.max((current + spread) * 0.99F - 0.05F, 0.0F);
-                    } else {
-                        nextValue = spread;
-                    }
-                    if (nextValue > 0.0F || existed) {
+                        float nextValue = Math.max((current + spread) * 0.99F - 0.05F, 0.0F);
                         next.put(targetKey, nextValue);
+                        if (nextValue > fogThreshold) {
+                            fogCandidates.add(origin);
+                        }
                     } else {
-                        next.remove(targetKey);
-                    }
-                    if (nextValue > fogThreshold) {
-                        fogCandidates.add(origin);
+                        next.put(targetKey, spread);
+                        if (spread > fogThreshold) {
+                            fogCandidates.add(origin);
+                        }
                     }
                 }
             }
@@ -172,5 +212,9 @@ public class RadiationSavedData extends SavedData {
 
     private static float clamp(float value) {
         return Mth.clamp(value, 0.0F, RadiationConstants.MAX_CHUNK_RADIATION);
+    }
+
+    public record Stats(int totalEntries, int loadedEntries, int positiveEntries, int loadedPositiveEntries,
+                        float totalRadiation, float loadedRadiation, float maxRadiation, float loadedMaxRadiation) {
     }
 }

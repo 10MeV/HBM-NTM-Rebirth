@@ -9,7 +9,6 @@ import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
@@ -18,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-public class NukeExplosionMk5Entity extends Entity {
+public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
     private int strength;
     private int speed;
     private int length;
@@ -66,6 +65,8 @@ public class NukeExplosionMk5Entity extends Entity {
             discard();
             return;
         }
+
+        forceCenterChunk();
 
         if (fallout && explosion != null && tickCount < 10 && strength >= 75) {
             radiate(2_500_000.0F / (tickCount * 5 + 1), length * 2.0D);
@@ -154,6 +155,7 @@ public class NukeExplosionMk5Entity extends Entity {
         length = tag.getInt("length");
         fallout = !tag.contains("fallout") || tag.getBoolean("fallout");
         falloutAdd = tag.getInt("falloutAdd");
+        readChunkLoader(tag);
     }
 
     @Override
@@ -164,5 +166,6 @@ public class NukeExplosionMk5Entity extends Entity {
         tag.putInt("length", length);
         tag.putBoolean("fallout", fallout);
         tag.putInt("falloutAdd", falloutAdd);
+        saveChunkLoader(tag);
     }
 }

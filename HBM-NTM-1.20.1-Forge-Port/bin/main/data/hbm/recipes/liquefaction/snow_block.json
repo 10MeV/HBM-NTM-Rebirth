@@ -1,0 +1,11 @@
+{
+  "type": "hbm:liquefaction",
+  "ingredient": {
+    "item": "minecraft:snow_block"
+  },
+  "output": {
+    "amount": 500,
+    "fluid": "WATER",
+    "pressure": 0
+  }
+}

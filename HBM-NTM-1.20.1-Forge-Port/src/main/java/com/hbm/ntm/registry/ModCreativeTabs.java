@@ -37,6 +37,7 @@ public final class ModCreativeTabs {
                     .icon(() -> ModBlocks.MACHINE_PRESS.get().asItem().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));
+                        ModBlocks.MACHINE_TAB_EXTRA_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));
                         if (ModItems.CONVEYOR_WAND.get() instanceof ConveyorWandItem conveyorWand) {
                             ConveyorWandItem.addCreativeStacks(output, conveyorWand);
                         }

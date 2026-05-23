@@ -30,16 +30,18 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/lignite"), forgeItemTag("ores/lignite"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/asbestos"), forgeItemTag("ores/asbestos"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/coal"), forgeItemTag("ores/coal"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("glass"), forgeItemTag("glass"));
 
         addLegacyForgeTag("dusts/lignite", "powder_lignite");
         addLegacyForgeTag("dusts", "powder_lignite");
+        addLegacyForgeTag("dusts/lead", "powder_lead");
         addLegacyForgeTag("dusts/iron", "powder_iron");
         addLegacyForgeTag("dusts/lithium", "powder_lithium");
         addLegacyForgeTag("dusts/cobalt", "powder_cobalt");
         addLegacyForgeTag("dusts/sodium", "powder_sodium");
         addLegacyForgeTag("dusts/schrabidium", "powder_schrabidium");
         addLegacyForgeTag("dusts/spark_mix", "powder_spark_mix");
-        addLegacyForgeTag("dusts", "powder_iron", "powder_lithium", "powder_cobalt", "powder_sodium", "powder_schrabidium", "powder_spark_mix");
+        addLegacyForgeTag("dusts", "powder_iron", "powder_lead", "powder_lithium", "powder_cobalt", "powder_sodium", "powder_schrabidium", "powder_spark_mix");
         addLegacyForgeTag("ingots/lead", "ingot_lead");
         addLegacyForgeTag("ingots/bismuth", "ingot_bismuth");
         addLegacyForgeTag("ingots/niobium", "ingot_niobium");
@@ -72,6 +74,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("circuits", "circuit_chip_quantum");
         addLegacyForgeTag("gems/coal", net.minecraft.world.item.Items.COAL, net.minecraft.world.item.Items.CHARCOAL);
         addLegacyForgeTag("gems/lignite", "lignite", "coal_infernal");
+        copy(HbmBlockTagsProvider.forgeBlockTag("storage_blocks/lead"), forgeItemTag("storage_blocks/lead"));
     }
 
     private void addLegacyForgeTag(String path, String... itemNames) {

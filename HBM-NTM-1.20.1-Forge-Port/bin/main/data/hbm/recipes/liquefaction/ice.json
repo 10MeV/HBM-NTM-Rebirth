@@ -1,0 +1,11 @@
+{
+  "type": "hbm:liquefaction",
+  "ingredient": {
+    "item": "minecraft:ice"
+  },
+  "output": {
+    "amount": 1000,
+    "fluid": "WATER",
+    "pressure": 0
+  }
+}

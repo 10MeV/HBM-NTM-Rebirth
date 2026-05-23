@@ -15,8 +15,8 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 public class BatteryPackItemRenderer extends BlockEntityWithoutLevelRenderer {
-    private static final ResourceLocation MODEL_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/battery.obj");
-    private static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/battery_lead.png");
+    private static final ResourceLocation MODEL_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "models/machines/battery.obj");
+    private static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/battery_lead.png");
     private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, DEFAULT_TEXTURE);
 
     public static final BatteryPackItemRenderer INSTANCE = new BatteryPackItemRenderer(
@@ -38,7 +38,7 @@ public class BatteryPackItemRenderer extends BlockEntityWithoutLevelRenderer {
         applyDisplay(displayContext, poseStack);
 
         ResourceLocation texture = new ResourceLocation(HbmNtm.MOD_ID,
-                "textures/block/machines/" + batteryPack.getLegacyTextureName() + ".png");
+                "textures/models/machines/" + batteryPack.getLegacyTextureName() + ".png");
         MODEL.renderPart(batteryPack.isCapacitor() ? "Capacitor" : "Battery",
                 texture,
                 poseStack,

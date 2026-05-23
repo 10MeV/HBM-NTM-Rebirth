@@ -91,6 +91,8 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MACHINE_RADAR_LARGE_LEGACY = ObjMachineModels.RADAR_LARGE_LEGACY;
     public static final LegacyWavefrontModel MACHINE_RADAR_SCREEN_LEGACY = ObjMachineModels.RADAR_SCREEN_LEGACY;
     public static final LegacyWavefrontModel MACHINE_SOLAR_MIRROR_LEGACY = ObjMachineModels.SOLAR_MIRROR_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_ARC_WELDER_LEGACY = ObjMachineModels.ARC_WELDER;
+    public static final LegacyWavefrontModel MACHINE_SOLDERING_STATION_LEGACY = ObjMachineModels.SOLDERING_STATION;
     public static final LegacyWavefrontModel MACHINE_ARC_WELDER = ObjMachineModels.ARC_WELDER;
     public static final LegacyWavefrontModel MACHINE_SOLDERING_STATION = ObjMachineModels.SOLDERING_STATION;
     public static final LegacyWavefrontModel MACHINE_ARC_FURNACE = ObjMachineModels.ARC_FURNACE;
@@ -128,7 +130,6 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel NETWORK_CONNECTOR_SUPER_LEGACY = ObjNetworkModels.CONNECTOR_SUPER_LEGACY;
     public static final LegacyWavefrontModel NETWORK_PYLON_LARGE_LEGACY = ObjNetworkModels.PYLON_LARGE_LEGACY;
     public static final LegacyWavefrontModel NETWORK_PYLON_MEDIUM_LEGACY = ObjNetworkModels.PYLON_MEDIUM_LEGACY;
-
     public static final ObjModelPart DOOR_SILO_HATCH = ObjDoorModels.SILO_HATCH;
     public static final ObjModelPart DOOR_SILO_HATCH_LARGE = ObjDoorModels.SILO_HATCH_LARGE;
     public static final ObjModelPart DOOR_BLAST_DOOR_BASE = ObjDoorModels.BLAST_DOOR_BASE;

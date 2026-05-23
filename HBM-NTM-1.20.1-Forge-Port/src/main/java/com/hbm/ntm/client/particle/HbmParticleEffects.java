@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.client.sound.HbmDelayedSounds;
 import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -35,9 +36,8 @@ public final class HbmParticleEffects {
         double z = data.getDouble("posZ");
         String type = data.getString("type");
         if (ParticleUtil.TYPE_GAS_FLAME.equals(type)) {
-            level.addParticle(ParticleTypes.FLAME, x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"));
-            level.addParticle(ParticleTypes.SMOKE, x, y, z, data.getDouble("mX") * 0.5D, data.getDouble("mY") * 0.5D, data.getDouble("mZ") * 0.5D);
-        } else if (ParticleUtil.TYPE_DEBUG_DRONE.equals(type)) {
+            level.addParticle(ModParticleTypes.GAS_FLAME.get(), x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"));
+        } else if (ParticleUtil.TYPE_DEBUG_DRONE.equals(type) || ParticleUtil.TYPE_DEBUG_LINE.equals(type)) {
             spawnDebugLine(level, x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"), data.getInt("color"));
         } else if ("waterSplash".equals(type)) {
             burstSimple(level, ParticleTypes.CLOUD, x, y, z, 10, 1.0D);
@@ -52,7 +52,7 @@ public final class HbmParticleEffects {
         } else if ("smoke".equals(type)) {
             spawnSmoke(level, data, x, y, z);
         } else if ("launchSmoke".equals(type)) {
-            level.addParticle(ModParticleTypes.LAUNCH_SMOKE.get(), x, y, z, data.getDouble("moX"), data.getDouble("moY"), data.getDouble("moZ"));
+            level.addParticle(ModParticleTypes.SMOKE_PLUME.get(), x, y, z, data.getDouble("moX"), data.getDouble("moY"), data.getDouble("moZ"));
         } else if ("missileContrail".equals(type) || "ABMContrail".equals(type) || "exKerosene".equals(type)
                 || "exSolid".equals(type) || "exHydrogen".equals(type) || "exBalefire".equals(type)) {
             spawnContrail(level, data, x, y, z, type);
@@ -100,22 +100,8 @@ public final class HbmParticleEffects {
         }
     }
 
-    private static void spawnDebugLine(ClientLevel level, double x, double y, double z, double targetX, double targetY, double targetZ, int color) {
-        int steps = Math.max(1, Mth.ceil(Math.sqrt(BlockPos.containing(x, y, z).distSqr(BlockPos.containing(targetX, targetY, targetZ))) * 2.0D));
-        if (color == 0) {
-            color = 0xFFFFFF;
-        }
-        for (int i = 0; i <= steps; i++) {
-            double progress = (double) i / (double) steps;
-            double px = Mth.lerp(progress, x, targetX);
-            double py = Mth.lerp(progress, y, targetY);
-            double pz = Mth.lerp(progress, z, targetZ);
-            level.addParticle(new DustParticleOptions(new Vector3f(
-                            ((color >> 16) & 255) / 255.0F,
-                            ((color >> 8) & 255) / 255.0F,
-                            (color & 255) / 255.0F), 0.55F),
-                    px, py, pz, 0.0D, 0.0D, 0.0D);
-        }
+    private static void spawnDebugLine(ClientLevel level, double x, double y, double z, double lineX, double lineY, double lineZ, int color) {
+        Minecraft.getInstance().particleEngine.add(new DebugLineParticle(level, x, y, z, lineX, lineY, lineZ, color));
     }
 
     private static void spawnVanillaBurst(ClientLevel level, CompoundTag data, double x, double y, double z) {
@@ -186,6 +172,10 @@ public final class HbmParticleEffects {
         double motionX = data.contains("moX") ? data.getDouble("moX") : 0.0D;
         double motionY = data.contains("moY") ? data.getDouble("moY") : 0.0D;
         double motionZ = data.contains("moZ") ? data.getDouble("moZ") : 0.0D;
+        if ("ABMContrail".equals(type)) {
+            level.addParticle(ModParticleTypes.SMOKE_PLUME.get(), x, y, z, motionX, motionY, motionZ);
+            return;
+        }
         ParticleOptions particle = "missileContrail".equals(type) ? ModParticleTypes.ROCKET_FLAME.get() : ModParticleTypes.CONTRAIL.get();
         level.addParticle(particle, x, y, z, motionX, motionY, motionZ);
         if ("missileContrail".equals(type)) {
@@ -212,12 +202,13 @@ public final class HbmParticleEffects {
     private static void spawnFlamethrower(ClientLevel level, CompoundTag data, double x, double y, double z) {
         int meta = data.getInt("meta");
         ParticleOptions particle = switch (meta) {
-            case 1 -> ParticleTypes.SOUL_FIRE_FLAME;
-            case 2 -> ParticleTypes.WITCH;
-            case 4 -> ParticleTypes.LARGE_SMOKE;
+            case FlamethrowerParticle.META_BALEFIRE -> ModParticleTypes.FLAMETHROWER_BALEFIRE.get();
+            case FlamethrowerParticle.META_DIGAMMA -> ModParticleTypes.FLAMETHROWER_DIGAMMA.get();
+            case FlamethrowerParticle.META_OXY -> ModParticleTypes.FLAMETHROWER_OXY.get();
+            case FlamethrowerParticle.META_BLACK -> ModParticleTypes.FLAMETHROWER_BLACK.get();
             default -> ModParticleTypes.FLAMETHROWER.get();
         };
-        level.addParticle(particle, x, y, z, level.random.nextGaussian() * 0.015D, 0.02D, level.random.nextGaussian() * 0.015D);
+        level.addParticle(particle, x, y, z, 0.0D, 0.0D, 0.0D);
     }
 
     private static void spawnEntitySweat(ClientLevel level, CompoundTag data) {
@@ -320,7 +311,9 @@ public final class HbmParticleEffects {
         float cloudScale = Math.max(0.25F, getFloat(data, "cloudScale", 5.0F));
         float cloudSpeedMult = Math.max(0.1F, getFloat(data, "cloudSpeedMult", 1.0F));
         float waveScale = Math.max(4.0F, getFloat(data, "waveScale", 45.0F));
+        float soundRange = Math.max(1.0F, getFloat(data, "soundRange", 200.0F));
 
+        HbmDelayedSounds.playExplosionLarge(x, y, z, soundRange);
         level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 0.0D, 0.0D, 0.0D);
         spawnRing(level, ParticleTypes.POOF, x, y + 0.25D, z, Math.max(16, (int) (waveScale * 0.8F)), waveScale * 0.05D);
         spawnRadial(level, ParticleTypes.CLOUD, x, y + 0.15D, z, Math.max(12, (int) (waveScale * 0.5F)), waveScale * 0.02D);
@@ -353,14 +346,12 @@ public final class HbmParticleEffects {
         float cloudScale = Math.max(0.25F, getFloat(data, "cloudScale", 2.0F));
         float cloudSpeedMult = Math.max(0.1F, getFloat(data, "cloudSpeedMult", 0.5F));
 
+        HbmDelayedSounds.playExplosionSmall(x, y, z);
         level.addParticle(ParticleTypes.EXPLOSION, x, y, z, 0.0D, 0.0D, 0.0D);
         for (int i = 0; i < cloudCount; i++) {
-            double motionX = random.nextGaussian() * cloudSpeedMult;
-            double motionY = Math.abs(random.nextGaussian()) * 0.25D * cloudSpeedMult;
-            double motionZ = random.nextGaussian() * cloudSpeedMult;
-            level.addParticle(ModParticleTypes.ROCKET_FLAME.get(), x, y, z, motionX, motionY, motionZ);
-            if (i % 2 == 0) {
-                level.addParticle(ModParticleTypes.EX_SMOKE.get(), x, y, z, motionX * cloudScale * 0.2D, motionY, motionZ * cloudScale * 0.2D);
+            Particle particle = ExplosionSmallParticle.create(level, x, y, z, cloudScale, cloudSpeedMult);
+            if (particle != null) {
+                Minecraft.getInstance().particleEngine.add(particle);
             }
         }
 
@@ -392,10 +383,14 @@ public final class HbmParticleEffects {
 
         for (int i = 0; i < cloudCount; i++) {
             double speed = 0.85D + random.nextDouble() * 0.3D;
-            level.addParticle(ModParticleTypes.EX_SMOKE.get(), x, y, z,
+            Particle particle = BlackPowderSmokeParticle.create(level, x, y, z,
                     headingX * cloudSpeedMult * speed + random.nextGaussian() * 0.05D,
                     headingY * cloudSpeedMult * speed + random.nextGaussian() * 0.05D,
-                    headingZ * cloudSpeedMult * speed + random.nextGaussian() * 0.05D);
+                    headingZ * cloudSpeedMult * speed + random.nextGaussian() * 0.05D,
+                    getFloat(data, "cloudScale", 1.0F));
+            if (particle != null) {
+                Minecraft.getInstance().particleEngine.add(particle);
+            }
         }
         for (int i = 0; i < sparkCount; i++) {
             double speed = 0.85D + random.nextDouble() * 0.3D;
@@ -420,10 +415,11 @@ public final class HbmParticleEffects {
             double px = centerX + (width + scale * 2.0D) * (random.nextDouble() - 0.5D);
             double py = centerY + height * random.nextDouble();
             double pz = centerZ + (width + scale * 2.0D) * (random.nextDouble() - 0.5D);
-            level.addParticle(ParticleTypes.ASH, px, py, pz, random.nextGaussian() * 0.02D, -0.01D, random.nextGaussian() * 0.02D);
-            if (i % 3 == 0) {
-                level.addParticle(ParticleTypes.FLAME, px, py, pz, 0.0D, 0.0D, 0.0D);
+            Particle particle = AshesParticle.create(level, px, py, pz, scale);
+            if (particle != null) {
+                Minecraft.getInstance().particleEngine.add(particle);
             }
+            level.addParticle(ParticleTypes.FLAME, px, py, pz, 0.0D, 0.0D, 0.0D);
         }
     }
 

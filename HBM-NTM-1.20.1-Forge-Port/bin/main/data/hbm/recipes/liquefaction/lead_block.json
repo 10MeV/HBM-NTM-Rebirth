@@ -1,0 +1,11 @@
+{
+  "type": "hbm:liquefaction",
+  "ingredient": {
+    "tag": "forge:storage_blocks/lead"
+  },
+  "output": {
+    "amount": 900,
+    "fluid": "LEAD",
+    "pressure": 0
+  }
+}

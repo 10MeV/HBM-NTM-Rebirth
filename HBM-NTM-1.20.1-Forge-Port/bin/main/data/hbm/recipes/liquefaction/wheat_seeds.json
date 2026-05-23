@@ -1,0 +1,11 @@
+{
+  "type": "hbm:liquefaction",
+  "ingredient": {
+    "item": "minecraft:wheat_seeds"
+  },
+  "output": {
+    "amount": 50,
+    "fluid": "SEEDSLURRY",
+    "pressure": 0
+  }
+}

@@ -124,9 +124,10 @@ public class GenericMachineRecipe implements Recipe<Container> {
 
     @Override
     public ItemStack getToastSymbol() {
-        return machine == Machine.ASSEMBLY_MACHINE
-                ? new ItemStack(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get())
-                : new ItemStack(ModBlocks.MACHINE_BATTERY.get());
+        return switch (machine) {
+            case ASSEMBLY_MACHINE -> new ItemStack(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get());
+            case CHEMICAL_PLANT -> new ItemStack(ModBlocks.MACHINE_CHEMICAL_PLANT.get());
+        };
     }
 
     @Override

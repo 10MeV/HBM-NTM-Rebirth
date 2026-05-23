@@ -4,15 +4,18 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.blockentity.BoilerBlockEntity;
+import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.blockentity.LegacyDemonLampBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLanternBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
 import com.hbm.ntm.blockentity.LegacyVisibleMachineBlockEntity;
+import com.hbm.ntm.blockentity.LiquefactorBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatteryBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
+import com.hbm.ntm.blockentity.PneumaticTubeBlockEntity;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -45,6 +48,10 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("fluid_pipe", () ->
                     BlockEntityType.Builder.of(FluidPipeBlockEntity::new, ModBlocks.FLUID_DUCT_NEO.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<PneumaticTubeBlockEntity>> PNEUMATIC_TUBE =
+            BLOCK_ENTITIES.register("pneumatic_tube", () ->
+                    BlockEntityType.Builder.of(PneumaticTubeBlockEntity::new, ModBlocks.PNEUMATIC_TUBE.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<MachineBatteryBlockEntity>> MACHINE_BATTERY =
             BLOCK_ENTITIES.register("machine_battery", () ->
                     BlockEntityType.Builder.of(MachineBatteryBlockEntity::new, ModBlocks.MACHINE_BATTERY.get()).build(null));
@@ -61,15 +68,35 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("assembly_machine", () ->
                     BlockEntityType.Builder.of(AssemblyMachineBlockEntity::new, ModBlocks.MACHINE_ASSEMBLY_MACHINE.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<ChemicalPlantBlockEntity>> CHEMICAL_PLANT =
+            BLOCK_ENTITIES.register("chemical_plant", () ->
+                    BlockEntityType.Builder.of(ChemicalPlantBlockEntity::new, ModBlocks.MACHINE_CHEMICAL_PLANT.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LiquefactorBlockEntity>> LIQUEFACTOR =
+            BLOCK_ENTITIES.register("liquefactor", () ->
+                    BlockEntityType.Builder.of(LiquefactorBlockEntity::new, ModBlocks.MACHINE_LIQUEFACTOR.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<LegacyVisibleMachineBlockEntity>> LEGACY_VISIBLE_MACHINE =
             BLOCK_ENTITIES.register("legacy_visible_machine", () ->
                     BlockEntityType.Builder.of(
                             LegacyVisibleMachineBlockEntity::new,
-                            ModBlocks.MACHINE_CHEMICAL_PLANT.get(),
                             ModBlocks.MACHINE_CHEMICAL_FACTORY.get(),
                             ModBlocks.MACHINE_REFINERY.get(),
+                            ModBlocks.MACHINE_CATALYTIC_CRACKER.get(),
+                            ModBlocks.MACHINE_CATALYTIC_REFORMER.get(),
+                            ModBlocks.MACHINE_VACUUM_DISTILL.get(),
+                            ModBlocks.MACHINE_FRACTION_TOWER.get(),
+                            ModBlocks.MACHINE_HYDROTREATER.get(),
+                            ModBlocks.MACHINE_COKER.get(),
+                            ModBlocks.MACHINE_PYROOVEN.get(),
+                            ModBlocks.MACHINE_SOLIDIFIER.get(),
+                            ModBlocks.MACHINE_COMPRESSOR.get(),
+                            ModBlocks.MACHINE_BIGASSTANK.get(),
                             ModBlocks.MACHINE_FLUIDTANK.get(),
-                            ModBlocks.MACHINE_PUMPJACK.get()).build(null));
+                            ModBlocks.MACHINE_PUMPJACK.get(),
+                            ModBlocks.MACHINE_CENTRIFUGE.get(),
+                            ModBlocks.MACHINE_ORE_SLOPPER.get(),
+                            ModBlocks.MACHINE_GASFLARE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<TrinketBlockEntity>> TRINKET =
             BLOCK_ENTITIES.register("trinket", () ->

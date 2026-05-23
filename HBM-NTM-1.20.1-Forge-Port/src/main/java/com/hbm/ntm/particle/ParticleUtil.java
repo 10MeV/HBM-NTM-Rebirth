@@ -8,6 +8,7 @@ import net.minecraft.world.level.Level;
 
 public final class ParticleUtil {
     public static final String TYPE_GAS_FLAME = "gasfire";
+    public static final String TYPE_DEBUG_LINE = "debugline";
     public static final String TYPE_DEBUG_DRONE = "debugdrone";
     public static final String TYPE_EXPLOSION_LARGE = "explosionLarge";
     public static final String TYPE_EXPLOSION_SMALL = "explosionSmall";
@@ -25,12 +26,22 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
-    public static void spawnDroneLine(Level level, double x, double y, double z, double targetX, double targetY, double targetZ, int color) {
+    public static void spawnDroneLine(Level level, double x, double y, double z, double lineX, double lineY, double lineZ, int color) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_DEBUG_DRONE);
-        data.putDouble("mX", targetX);
-        data.putDouble("mY", targetY);
-        data.putDouble("mZ", targetZ);
+        data.putDouble("mX", lineX);
+        data.putDouble("mY", lineY);
+        data.putDouble("mZ", lineZ);
+        data.putInt("color", color);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnDebugLine(Level level, double x, double y, double z, double lineX, double lineY, double lineZ, int color) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_DEBUG_LINE);
+        data.putDouble("mX", lineX);
+        data.putDouble("mY", lineY);
+        data.putDouble("mZ", lineZ);
         data.putInt("color", color);
         spawnAux(level, x, y, z, data, 150.0D);
     }

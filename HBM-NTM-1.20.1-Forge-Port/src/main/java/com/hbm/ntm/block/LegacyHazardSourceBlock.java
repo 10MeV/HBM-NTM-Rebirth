@@ -3,8 +3,6 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -12,12 +10,10 @@ import net.minecraft.world.level.block.state.BlockState;
 @SuppressWarnings("deprecation")
 public class LegacyHazardSourceBlock extends RadiatingHazardBlock {
     private final Effect effect;
-    private final boolean beaconable;
 
-    public LegacyHazardSourceBlock(String legacyName, Properties properties, Effect effect, boolean beaconable) {
+    public LegacyHazardSourceBlock(String legacyName, Properties properties, Effect effect) {
         super(legacyName, properties);
         this.effect = effect;
-        this.beaconable = beaconable;
     }
 
     @Override
@@ -32,10 +28,9 @@ public class LegacyHazardSourceBlock extends RadiatingHazardBlock {
             if (!level.isEmptyBlock(target)) {
                 continue;
             }
-
-            double ix = pos.getX() + 0.5D + direction.getStepX() + random.nextDouble() * 3.0D - 1.5D;
-            double iy = pos.getY() + 0.5D + direction.getStepY() + random.nextDouble() * 3.0D - 1.5D;
-            double iz = pos.getZ() + 0.5D + direction.getStepZ() + random.nextDouble() * 3.0D - 1.5D;
+            double ix = pos.getX() + 0.5D + random.nextDouble() * 2.0D - 1.0D;
+            double iy = pos.getY() + 0.5D + random.nextDouble() * 2.0D - 1.0D;
+            double iz = pos.getZ() + 0.5D + random.nextDouble() * 2.0D - 1.0D;
             if (direction.getStepX() != 0) {
                 ix = pos.getX() + 0.5D + direction.getStepX() * 0.5D + random.nextDouble() * direction.getStepX();
             }

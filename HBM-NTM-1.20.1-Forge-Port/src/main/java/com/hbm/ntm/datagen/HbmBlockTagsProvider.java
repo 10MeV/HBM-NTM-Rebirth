@@ -24,10 +24,16 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.DUMMY_BLOCK.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.DUMMY_BLOCK.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
+                ModBlocks.RAD_LAVA_BLOCK.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
+                ModBlocks.RAD_LAVA_BLOCK.get());
+        tag(BlockTags.MINEABLE_WITH_SHOVEL).add(ModBlocks.ASH_DIGAMMA.get());
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
+        tag(forgeBlockTag("glass")).add(ModBlocks.GLASS_BORON.get());
 
         addLegacyForgeOreTag("uranium", "ore_uranium", "ore_uranium_scorched", "ore_nether_uranium", "ore_nether_uranium_scorched", "ore_gneiss_uranium", "ore_gneiss_uranium_scorched");
         addLegacyForgeOreTag("thorium", "ore_thorium");
@@ -35,6 +41,7 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         addLegacyForgeOreTag("lignite", "ore_lignite");
         addLegacyForgeOreTag("asbestos", "ore_asbestos", "ore_gneiss_asbestos");
         addLegacyForgeOreTag("coal", "ore_nether_coal");
+        addLegacyForgeTag("storage_blocks/lead", "block_lead");
     }
 
     private void addLegacyForgeOreTag(String material, String... blockNames) {
@@ -44,6 +51,16 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
             if (block != null) {
                 tag(materialTag).add(block.get());
                 tag(forgeBlockTag("ores")).add(block.get());
+            }
+        }
+    }
+
+    private void addLegacyForgeTag(String path, String... blockNames) {
+        TagKey<Block> tag = forgeBlockTag(path);
+        for (String blockName : blockNames) {
+            RegistryObject<? extends Block> block = ModBlocks.legacyBlock(blockName);
+            if (block != null) {
+                tag(tag).add(block.get());
             }
         }
     }

@@ -213,3 +213,185 @@
 
 - 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
 - 结果：通过。
+
+## 2026-05-23 SCHRAB 粒子形态修正
+
+- 旧版对照：
+  - `com.hbm.blocks.fluid.SchrabidicBlock#randomDisplayTick`
+  - `com.hbm.blocks.generic.BlockHazard#randomDisplayTick`
+  - `com.hbm.main.ClientProxy#effectNT`
+- 1.7.10 结论：
+  - `type="schrabfog"` 走的是单个 `EntityAuraFX`，颜色为青蓝色，属于小型 aura 粒子，不是整团雾幕。
+  - `type="radFog"` 走的是 `ParticleRadiationFog`，同样不应与 `schrabfog` 混用。
+- 现代修正：
+  - `SchrabFogParticle` 已从多 quad 大雾改为 `EntityAuraFX` 等价的小型青蓝 aura 粒子。
+  - 2026-05-24 三次修正：`schrab_fog.json` 不再引用雾状 `haze` 或 HBM 的多点 `particle_base` 贴图，改用 Minecraft 自带单像素 `minecraft:generic_0`；粒子通过 `Particle` 构造函数获得旧端 aura 类似的初始微小随机速度，生命周期内轻微漂移并淡出。
+  - `LegacyHazardSourceBlock` 对 `SCHRAB` 的外露面坐标生成恢复为旧 `BlockHazard#randomDisplayTick` 的方向面偏移逻辑，实际表现应为方块放置后自带的小颗粒，不是辐射雾。
+- 边界：
+  - 本次只修 `SCHRAB` 显示形态，不改辐射数值和伤害。
+  - `radiation_fog` 仍单独保留为区块辐射雾效，后续如仍显得过大再按旧版 `ParticleRadiationFog` 继续收敛。
+
+## 2026-05-24 第五批推进：gasfire 与烟柱底层粒子
+
+- 1.7.10 对照：
+  - `ParticleGasFlame`：
+    - 继承旧 `EntitySmokeFX`，构造时 `motionY * 1.5`，默认 scale 由 `ClientProxy#effectNT` 在 `scale <= 0` 时设为 `6.5F`。
+    - 寿命 `30 + rand.nextInt(13)`，`noClip=true`，fullbright。
+    - 每 tick 保留上一帧 Y 速度，再 `motionX/Z *= 0.75`、`motionY += 0.005`。
+    - 颜色按年龄从黄/橙向暗色过渡，并乘 `0.8F..1.0F` 随机色偏。
+  - `ParticleSmokePlume`：
+    - 使用 `textures/particle/contrail.png`，寿命 `80..99`。
+    - 每个粒子渲染 6 个随机偏移 quad，颜色为灰阶随机值，fullbright，透明度随年龄线性下降。
+    - scale 从 `0.25F` 增长到约 `2.25F`，移动时额外叠加 scale 增量形成上涌烟柱感。
+  - 旧调用点：
+    - `ParticleUtil.spawnGasFlame` 被爆炸火焰喷发、矿工火箭、飞机燃烧、炼油厂、gas flare、RBMK 棒、湮灭机、流体罐、turbofan、deco geysir、PartEmitter 等复用。
+    - `launchSmoke` 在 `ClientProxy#effectNT` 中生成 `ParticleSmokePlume` 并读取 `moX/moY/moZ`。
+- 本批现代迁移：
+  - 新增粒子类型：
+    - `ModParticleTypes.GAS_FLAME`
+    - `ModParticleTypes.SMOKE_PLUME`
+  - 新增 provider/particle：
+    - `GasFlameParticle`：使用旧 `particle_base` 图集，保留 gasfire 的 fullbright、寿命、Y 速度保持、上升、X/Z 衰减、颜色曲线与默认 `6.5F` scale。
+    - `SmokePlumeParticle`：使用旧 `contrail` 图集，手写 6 个 billboard quad，保留旧 `ParticleSmokePlume` 的多 quad、随机灰阶、fullbright、scale 增长、透明衰减与上涌运动。
+  - 新增粒子图集 JSON：
+    - `assets/hbm/particles/gas_flame.json`
+    - `assets/hbm/particles/smoke_plume.json`
+  - `ClientModEvents#registerParticleProviders` 注册两个 provider。
+  - `HbmParticleEffects` 分发更新：
+    - `type=gasfire` 从 vanilla `FLAME + SMOKE` 桥接改为 `hbm:gas_flame`。
+    - `type=launchSmoke` 从轻量 `launch_smoke` 改为 `hbm:smoke_plume`，并保留 `moX/moY/moZ`。
+    - `type=ABMContrail` 改走 `hbm:smoke_plume`，避免继续和普通 `contrail` 混在一起。
+- 边界：
+  - `gasfire` 的少量旧调用会传 `scale` NBT；当前现代 `SimpleParticleType` provider 固定旧默认 `6.5F`。如后续发现依赖动态 scale 的调用，需要补自定义 `ParticleOptions` 或在 Aux 分发中建立客户端 sprite 工厂。
+  - `SmokePlumeParticle` 使用现代 particle atlas 与 `TextureSheetParticle`，不是旧 GL11 直接绑定纹理；多 quad/亮度/透明/运动已按旧语义对齐。
+
+## 2026-05-24 第五批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+
+## 2026-05-24 第六批推进：调试线与喷火器 meta 变体深迁
+
+- 1.7.10 对照：
+  - `ParticleDebugLine`：
+    - `motionX/Y/Z` 不是速度，而是从粒子起点延伸出去的线段向量。
+    - 寿命 60 tick，`getFXLayer()=3`，渲染时禁用纹理/光照/深度测试，直接画 `GL_LINES`。
+    - 颜色使用 NBT `color`，亮度/可见性随年龄衰减。
+  - `ClientProxy#effectNT`：
+    - `debugline` 无额外门槛，直接生成 `ParticleDebugLine`。
+    - `debugdrone` 在旧版会检查玩家是否持有无人机/无人机网络相关物品，再生成同一个 `ParticleDebugLine`。
+  - `FlameCreator` / `ParticleFlamethrower`：
+    - `meta=0` 普通火焰、`1` balefire、`2` digamma、`3` oxy、`4` black。
+    - 寿命 `20..29`，初始 X/Z 高斯扰动 `0.02`，每 tick 速度乘 `0.91`、Y 速度加 `0.01`、旋转。
+    - 普通/balefire/digamma 使用 HSB 初始色区间；oxy/black 从白色按各自曲线衰减；fullbright。
+- 本批现代迁移：
+  - 新增 `DebugLineParticle`：
+    - 使用现代 `ParticleRenderType` 的 `LINES + POSITION_COLOR` 渲染路径。
+    - 保留旧版 60 tick、无深度测试、无贴图、线段向量、颜色和透明度衰减语义。
+    - `HbmParticleEffects` 同时支持旧 `type=debugline` 与 `type=debugdrone`。
+  - `ParticleUtil` 增加 `TYPE_DEBUG_LINE` 与 `spawnDebugLine(...)` helper，并把 `spawnDroneLine(...)` 参数命名收敛为旧版线段向量语义。
+  - `HbmEnergyDebug` 修正 `debugdrone` 载荷：`mX/mY/mZ` 改回线段向量，而不是世界终点坐标。
+  - `FlamethrowerParticle` 深化为带 `legacyType` 的旧版 meta 实现：
+    - 保留普通、balefire、digamma、oxy、black 的颜色曲线、透明度、fullbright、上升与旋转。
+    - 新增粒子类型与图集：
+      - `flamethrower_balefire`
+      - `flamethrower_digamma`
+      - `flamethrower_oxy`
+      - `flamethrower_black`
+    - `HbmParticleEffects#spawnFlamethrower` 按旧 `meta` 选择 HBM 自定义粒子，不再把 balefire/digamma/black 映射到 vanilla 粒子。
+- 边界：
+  - 现代端暂不复刻旧 `debugdrone` 的“玩家必须手持无人机相关物品”门槛，因为干净 port 目前尚未迁入对应无人机物品/方块；当前调试线库保持 packet 可见性，由调用方决定是否发送。
+  - `ParticleFlamethrower` 仍使用现代单 quad `TextureSheetParticle`，未迁入旧 `EntityFXRotating#renderParticleRotated` 的完全等价顶点路径；运动、颜色、透明度、亮度和 meta 分发表已对齐。
+
+## 2026-05-24 第六批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+
+## 2026-05-24 第七批推进：ParticleCreators 贴图粒子深迁
+
+- 1.7.10 对照：
+  - `ExplosionSmallCreator`：
+    - 旧 NBT `type=explosionSmall`，字段 `cloudCount/cloudScale/cloudSpeedMult/debris`。
+    - 每个云粒子生成 `ParticleExplosionSmall(world, x, y, z, cloudScale, cloudSpeedMult)`。
+    - `ParticleExplosionSmall` 使用 `particle_base`，寿命 `25..34`，scale 为 `cloudScale * 0.9 + rand * 0.2`，X/Z 高斯速度乘 `cloudSpeedMult`，随机负重力形成上飘，X/Z 速度每 tick 乘 `0.65`。
+    - 颜色 HSB hue `20..40`，随年龄降低饱和度/亮度，透明度 `pow(1-age, 0.25) * 0.5`，scale 随年龄膨胀。
+  - `BlackPowderCreator`：
+    - 旧 NBT `type=blackPowder`，字段 `hX/hY/hZ/cloudCount/cloudScale/cloudSpeedMult/sparkCount/sparkSpeedMult`。
+    - 先归一化 heading；烟粒子为 `ParticleBlackPowderSmoke`，速度沿 heading 加随机扰动；火花为 `ParticleBlackPowderSpark`。
+    - `ParticleBlackPowderSmoke` 使用 `particle_base`，寿命 `30..44`，scale 为 `cloudScale * 0.9 + rand * 0.2`，速度每 tick 全轴乘 `0.65`，颜色从橙色向淡烟色衰减，透明度 `pow(1-age, 0.25) * 0.25`。
+  - `AshesCreator`：
+    - 旧 NBT `type=ashes`，字段 `entityID/ashesCount/ashesScale`。
+    - 旧客户端先 `ClientProxy.vanish(entityID)`，再围绕实体体积生成 `ParticleAshes` 和 vanilla flame。
+    - `ParticleAshes` 使用 `particle_base`，寿命 `1200..1219`，scale 为 `ashesScale * 0.9 + rand * 0.2`，灰黑色，重力 `0.01`，X/Z 摩擦 `0.95`、Y 摩擦 `0.99`；落地后不再 billboard，而是贴地水平 quad，最后 40 tick 淡出。
+- 本批现代迁移：
+  - 新增粒子类型与图集：
+    - `explosion_small` -> `hbm:particle/particle_base`
+    - `black_powder_smoke` -> `hbm:particle/particle_base`
+    - `ashes` -> `hbm:particle/particle_base`
+  - 新增现代粒子类：
+    - `ExplosionSmallParticle`：保留旧小爆炸云的寿命、scale、X/Z 速度衰减、上飘、旋转、HSB 颜色曲线、透明度和膨胀曲线。
+    - `BlackPowderSmokeParticle`：保留旧黑火药烟的 heading 速度、scale、寿命、速度阻尼、颜色/透明衰减和旋转。
+    - `AshesParticle`：保留旧灰烬长寿命、灰黑色、重力/阻尼、落地后贴地 quad 和末段淡出。
+  - `ClientModEvents#registerParticleProviders` 注册三个 provider；provider 同时缓存 `SpriteSet`，供 Aux NBT 分发按旧参数直接构造粒子。
+  - `HbmParticleEffects` 分发更新：
+    - `explosionSmall` 的云体从 `rocket_flame + ex_smoke` 近似改为 `ExplosionSmallParticle`。
+    - `blackPowder` 的烟体从通用 `ex_smoke` 改为 `BlackPowderSmokeParticle`，火花继续使用已迁移的 `BlackPowderSparkParticle`。
+    - `ashes` 从 vanilla `ASH` 改为 `AshesParticle`，并按旧版每个灰烬粒子附带一枚 vanilla flame。
+- 边界：
+  - `ExplosionSmallCreator` 的近/远爆炸声音延迟播放仍未接入；应在声音事件和爆炸声音切片中补 `weapon.explosionSmallNear/Far` 的现代注册与延迟播放。
+  - `AshesCreator` 的 `ClientProxy.vanish(entityID)` 暂未复刻，因为现代实体隐藏生命周期需要单独迁移，不能在粒子库里粗暴改实体可见性。
+  - 小爆炸 debris 仍用现代 block particle 表现；旧 `ParticleDebris` / `WorldInAJar` 碎块实体仍待后续深迁。
+
+## 2026-05-24 第七批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：未通过；当前失败来自本批外的 `src/main/java/com/hbm/ntm/explosion/vnt/standard/BlockMutatorDigamma.java` 引用尚未注册的 `ModBlocks.PRIBRIS_DIGAMMA`、`ModBlocks.FIRE_DIGAMMA`、`ModBlocks.ASH_DIGAMMA`。本批新增粒子类未出现编译错误。
+
+## 2026-05-24 第八批推进：爆炸粒子联动声音
+
+- 1.7.10 对照：
+  - `ExplosionSmallCreator`：
+    - 客户端按玩家距离选择 `hbm:weapon.explosionSmallNear` 或 `hbm:weapon.explosionSmallFar`。
+    - 声音范围固定 `200F`；距离小于 `soundRange * 0.4` 使用 near。
+    - 音量 `100F`，音调 `0.9F + rand.nextFloat() * 0.2F`。
+    - 延迟 tick 为 `dist / (17.15 * 0.5)`，模拟音速。
+  - `ExplosionCreator`：
+    - 读取 NBT `soundRange`，按同一 near/far 规则选择 `hbm:weapon.explosionLargeNear` 或 `hbm:weapon.explosionLargeFar`。
+    - 音量 `1000F`，音调同上，延迟同上。
+  - 旧资源：
+    - `sounds/weapon/explosionLargeNear.ogg`
+    - `sounds/weapon/explosionLargeFar.ogg`
+    - `sounds/weapon/explosionSmallNear1..3.ogg`
+    - `sounds/weapon/explosionSmallFar1..2.ogg`
+    - 同目录还包含 `explosionTiny1..2.ogg` 与 `explosion_medium.ogg`，供爆炸/武器切片复用。
+- 本批现代迁移：
+  - 从 1.7.10 资源复制并按现代命名落位：
+    - `weapon/explosion_large_near.ogg`
+    - `weapon/explosion_large_far.ogg`
+    - `weapon/explosion_small_near1..3.ogg`
+    - `weapon/explosion_small_far1..2.ogg`
+    - `weapon/explosion_tiny1..2.ogg`
+    - `weapon/explosion_medium.ogg`
+  - `ModSounds` 新增事件：
+    - `weapon.explosion_large_near`
+    - `weapon.explosion_large_far`
+    - `weapon.explosion_small_near`
+    - `weapon.explosion_small_far`
+    - `weapon.explosion_tiny`
+    - `weapon.explosion_medium`
+  - `sounds.json` 登记上述事件，并保持小爆炸 near/far 与 tiny 的多样本随机选择。
+  - 新增 `HbmDelayedSounds`：
+    - 客户端按当前玩家距离、旧 near/far 阈值和 `17.15 * 0.5` 音速常量计算延迟。
+    - 使用 `SimpleSoundInstance` + `SoundManager#playDelayed` 播放本地位置声音。
+  - `HbmParticleEffects` 更新：
+    - `explosionLarge` 在生成视觉前调用 `HbmDelayedSounds.playExplosionLarge(...)`，读取旧 NBT `soundRange`。
+    - `explosionSmall` 在生成视觉前调用 `HbmDelayedSounds.playExplosionSmall(...)`，使用旧固定 200 格范围。
+- 边界：
+  - 本批只接入 ParticleCreators 的客户端联动爆炸声；其他爆炸逻辑中仍直接使用 vanilla `GENERIC_EXPLODE` 的地方，后续可按爆炸框架切片逐步替换为 HBM 声音事件。
+  - 旧事件名 `weapon.explosionSmallNear` 等未直接保留为 registry id；现代端采用现有工程风格的 snake_case 事件名，并在本库分发处统一映射。
+
+## 2026-05-24 第八批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。

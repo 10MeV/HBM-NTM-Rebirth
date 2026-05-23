@@ -181,3 +181,43 @@
   - 还没做旧版那种精细 tooltip/NEI 协作，但功能闭环已可实机验证。
 - 验证：
   - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-24 继续推进：化工厂 machine_chemical_plant 运行时接入
+
+- 1.7.10 对照：
+  - `TileEntityMachineChemicalPlant`：
+    - 槽 `0` 电池。
+    - 槽 `1` blueprint/schematic。
+    - 槽 `2-3` upgrades。
+    - 槽 `4-6` 固体输入。
+    - 槽 `7-9` 固体输出。
+    - 槽 `10-12` 输入流体容器插槽。
+    - 槽 `13-15` 输入流体容器返回槽。
+    - 槽 `16-18` 输出流体容器插槽。
+    - 槽 `19-21` 输出流体容器返回槽。
+  - 旧机器拥有 3 个输入 tank 与 3 个输出 tank，默认容量均为 `24_000`。
+  - 旧 NBT 使用 `power` / `maxPower`、`i0..i2`、`o0..o2`、`progress0`、`recipe0`、`didProcess/anim/frame` 语义。
+  - `GUIMachineChemicalPlant` 使用 `gui_chemplant.png`，进度条、电量条、三输入/三输出 tank、recipe selector 入口均固定在旧坐标。
+  - `RenderChemicalPlant` 渲染 OBJ 部件 `Base`、`Frame`、`Slider`、`Spinner`，处理时推进 `anim`。
+- 本批现代接入：
+  - 新增 `ChemicalPlantBlock`，让 `machine_chemical_plant` 从纯可见多方块升级为专用可运行多方块。
+  - 新增 `ChemicalPlantBlockEntity`：
+    - 使用现有 `HbmEnergyReceiver` / `HbmEnergyStorage` / `HbmEnergyUtil` 接入 HE 电池充电和邻接能量网络订阅。
+    - 使用现有 `HbmFluidTank` / `ForgeFluidHandlerAdapter` / `HbmFluidItemTransfer` 接入 3 输入 tank、3 输出 tank、Forge fluid capability 与容器槽装卸。
+    - 使用 `GenericMachineRecipeRuntime` 跑 `GenericMachineRecipe.Machine.CHEMICAL_PLANT`，恢复 `chem.battery*` 等 datapack 配方的机器运行入口。
+    - 输出槽和容器返回槽禁止插入。
+    - 保存旧 key：`Inventory`、`Energy`、`power`、`maxPower`、`i0..i2`、`o0..o2`、`progress0`、`recipe0`、`DidProcess`、`Anim`、`Frame`。
+  - 新增 `ChemicalPlantMenu`，按 1.7.10 `ContainerMachineChemicalPlant` 坐标恢复 22 槽布局，并同步 power/progress/tank fill。
+  - 新增 `ChemicalPlantScreen` 和 `ChemicalPlantRecipeSelectorScreen`，使用旧 `gui_chemplant.png` 与现有 `gui_recipe_selector.png`，通过 `TileControlPacket index=0 selection=<internal_name|null>` 选择 recipe。
+  - 新增 `ChemicalPlantRenderer`，继续使用 `chemical_plant.obj` / `chemical_plant.png`，并恢复 `Slider`/`Spinner` 基础动画。
+  - `ModBlockEntities` 新增 `CHEMICAL_PLANT`，并从 `LEGACY_VISIBLE_MACHINE` 列表移除 `machine_chemical_plant`，避免同一方块绑定两个 BE 类型。
+  - `GenericMachineRecipe#getToastSymbol` 对 `CHEMICAL_PLANT` 返回化工厂方块，不再用电池方块占位。
+- 现代等价边界：
+  - 旧 `getConPos()` 的 12 个外圈端口订阅尚未完整迁移；当前先复用现有邻接能量网络订阅与 Forge fluid capability。后续需要在多方块代理/端口层补“核心 BE 的远端端口连接”。
+  - 旧 `UpgradeManager` 的 speed/power/overdrive 倍率还未启用，因为现代 upgrade item family 与 tooltip 库仍未迁移。
+  - blueprint pool gating 仍未启用，因为现代 blueprint/schematic 物品族尚未完成。
+  - 旧渲染中的处理液体半透明 `Fluid` 部件与音频循环尚未补齐；本批先恢复基础模型部件动画和 GUI tank 显示。
+  - 旧 `meteorite_sword_treated` 电池槽特殊变换暂未迁移，等待相关物品族存在后补。
+- 验证：
+  - 复制 1.7.10 资源：`assets/hbm/textures/gui/processing/gui_chemplant.png`。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。

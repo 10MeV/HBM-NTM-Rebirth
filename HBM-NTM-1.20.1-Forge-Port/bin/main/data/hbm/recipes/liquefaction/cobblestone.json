@@ -1,0 +1,11 @@
+{
+  "type": "hbm:liquefaction",
+  "ingredient": {
+    "item": "minecraft:cobblestone"
+  },
+  "output": {
+    "amount": 250,
+    "fluid": "LAVA",
+    "pressure": 0
+  }
+}

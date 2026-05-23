@@ -47,6 +47,7 @@ public final class ClientForgeEvents {
         LegacyHbmAnimations.tick();
         HbmClientKeybinds.tick();
         ClientMuzzleFlashEffects.tick();
+        pruneNetworkTransfers();
 
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
@@ -79,6 +80,15 @@ public final class ClientForgeEvents {
             sound = 1;
         }
         player.playSound(ModSounds.geiger(sound), 1.0F, 1.0F);
+    }
+
+    private static void pruneNetworkTransfers() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || minecraft.level.getGameTime() % 100L != 0L) {
+            return;
+        }
+        ClientBinaryData.pruneExpired(minecraft.level.getGameTime());
+        ClientTileBinaryData.pruneExpired(minecraft.level.getGameTime());
     }
 
     private ClientForgeEvents() {

@@ -1,0 +1,11 @@
+{
+  "type": "hbm:liquefaction",
+  "ingredient": {
+    "item": "minecraft:obsidian"
+  },
+  "output": {
+    "amount": 500,
+    "fluid": "LAVA",
+    "pressure": 0
+  }
+}

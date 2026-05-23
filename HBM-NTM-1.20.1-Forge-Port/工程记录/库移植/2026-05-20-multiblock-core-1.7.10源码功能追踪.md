@@ -285,3 +285,205 @@
 
 - `machine_sawmill` 旧代码已经确认有独立 `bounding`、proxy 和动态锯片，但现代端当前没有对应 OBJ/贴图资源；不在本轮硬接空模型。
 - 三台机器本轮仍是可见多方块 scaffold：GUI、库存、能量/流体规则、动画状态、配方运行和声音粒子留给机器逻辑切片。
+
+## 2026-05-23 炼油后段可见多方块批次
+
+触发来源：
+
+- 用户要求继续推进多方块库移植，并允许一次推进更多。
+- 本轮选择 1.7.10 中同属炼油/裂化后段、且现代端 OBJ/贴图资源已经齐全的四台 `BlockDummyable` 静态大机器，继续验证通用可见多方块库是否能承载更多旧 XR 结构。
+
+1.7.10 事实来源：
+
+- 注册：`com.hbm.blocks.ModBlocks`
+  - `machine_vacuum_distill = new MachineVacuumDistill(...)`
+  - `machine_fraction_tower = new MachineFractionTower(...)`
+  - `machine_hydrotreater = new MachineHydrotreater(...)`
+  - `machine_coker = new MachineCoker(...)`
+- 方块：
+  - `com.hbm.blocks.machine.MachineVacuumDistill`
+  - `com.hbm.blocks.machine.MachineFractionTower`
+  - `com.hbm.blocks.machine.MachineHydrotreater`
+  - `com.hbm.blocks.machine.MachineCoker`
+- 渲染：
+  - `RenderVacuumDistill`：`x + 0.5, y, z + 0.5`，不按 metadata 旋转，平滑着色。
+  - `RenderFractionTower`：`x + 0.5, y, z + 0.5`，不按 metadata 旋转，禁用背面剔除。
+  - `RenderHydrotreater`：`x + 0.5, y, z + 0.5`，不按 metadata 旋转，平滑着色。
+  - `RenderCoker`：`x + 0.5, y, z + 0.5`，不按 metadata 旋转，禁用背面剔除并平滑着色。
+- 旧资源：
+  - `models/block/machines/vacuum_distill.obj` + `textures/block/machines/vacuum_distill.png`
+  - `models/block/machines/fraction_tower.obj` + `textures/block/machines/fraction_tower.png`
+  - `models/block/machines/hydrotreater.obj` + `textures/block/machines/hydrotreater.png`
+  - `models/block/machines/coker.obj` + `textures/block/machines/coker.png`
+
+旧结构契约：
+
+- `machine_vacuum_distill`
+  - `getDimensions() = {8,0,1,1,1,1}`，`getOffset() = 1`。
+  - core metadata >= 12；extra/proxy metadata >= 6，旧 `TileEntityProxyCombo().fluid().power()`。
+  - `fillSpace` 先填主 XR，再在 core 平面四角 `makeExtra`。
+- `machine_fraction_tower`
+  - `getDimensions() = {2,0,1,1,1,1}`，`getOffset() = 1`。
+  - core metadata >= 12；extra/proxy 使用流体 proxy。
+  - `fillSpace` 先填主 XR，再以 core 为中心把东西南北四格 `makeExtra`。
+  - 手持 `IItemFluidIdentifier` 右击可切换底部分馏塔流体类型，并有 `ILookOverlay` 显示油品；本轮暂不迁 GUI/流体交互。
+- `machine_hydrotreater`
+  - `getDimensions() = {6,0,1,1,1,1}`，`getOffset() = 1`。
+  - core metadata >= 12；extra/proxy 为 fluid + power。
+  - `fillSpace` 与真空炼油厂相同，四角 `makeExtra`。
+  - 物品 persistent NBT 会显示四个流体槽；本轮暂不迁 tooltip/persistent 内容。
+- `machine_coker`
+  - `getDimensions() = {22,0,1,1,1,1}`，`getOffset() = 1`。
+  - core metadata >= 12；extra/proxy 为 inventory + fluid。
+  - `checkRequirement/fillSpace` 除主 XR 外，还以 core 为原点填固定 NORTH 朝向的额外塔体：
+    - `x,y+1,z` 的 `{5,0,2,2,2,2}`。
+    - `x±2,y+1,z±2` 的四根 `{0,1,0,0,0,0}` 竖向占位。
+  - 最后只把 core 平面四角 `makeExtra`，额外塔体本身是普通 dummy。
+
+本轮现代迁移：
+
+- 将四台机器接入 `LegacyVisibleMultiblockMachineBlock` / `LegacyMachineDefinition`。
+- 四台都显式设置 `yRotation(facing -> 0.0F)`，对齐旧 renderer 的“无 metadata 旋转”行为，避免默认可见机器旋转偏移。
+- 真空炼油厂、加氢装置使用 `cornerProxyOffsets(...)` 表达旧四角 `makeExtra`。
+- 分馏塔使用 `crossProxyOffsets()` 表达旧四向 `makeExtra`。
+- 焦化装置额外迁入旧 `MultiblockHandlerXR.checkSpace/fillSpace` 的固定 NORTH 塔体占位；只把旧 `makeExtra` 的四角标记为 proxy。
+- `LEGACY_VISIBLE_MACHINE` BlockEntityType 同步加入四台新机器，确保 BER/渲染剔除盒生效。
+- 补齐 block model JSON、DataGen blockstate/item model、loot/tag 和双语名称。
+- 顺手补正第二批可见机器的 BlockEntityType 覆盖：`machine_centrifuge`、`machine_ore_slopper`、`machine_gasflare` 也加入 `LEGACY_VISIBLE_MACHINE`，避免只有方块没有 BER 的注册缺口。
+- `offsetsForLegacyXrBox(...)` 增加“只跳过 core，不跳过额外盒原点”的模式，用于焦化装置这种旧 `fillSpace` 原点不是 core 的结构；否则 `{0,1,0,0,0,0}` 小柱会少掉旧版会放置的原点格。
+
+暂缓内容：
+
+- 四台仍是可见多方块 scaffold：真实 GUI、库存、能量/流体网络、recipe tick、声音/粒子、NEI/JEI 分类、persistent tooltip、分馏塔流体识别工具交互后续按机器逻辑切片迁入。
+- 旧 renderer 的 `GL_SMOOTH`、局部禁用背面剔除还未在 `LegacyWavefrontModel` 中分机器表达；若出现模型背面缺面或法线观感问题，应在渲染库补 per-machine render state，而不是在单机方块里绕过。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- `.\gradlew.bat runData --no-daemon --rerun-tasks` 通过。
+- `runData` 已生成/刷新四台机器的 blockstate、item model、loot table、pickaxe/needs_iron_tool tag 和 en_us/zh_cn lang。
+
+## 2026-05-24 催化裂化与催化重整批次
+
+触发来源：
+
+- 用户要求继续推进多方块库移植，可以一次推进更多。
+- 本轮选择旧版已经有完整 OBJ/贴图、且 renderer 朝向表与 XR 占位规则都明确的两台机器：`machine_catalytic_cracker` 与 `machine_catalytic_reformer`。
+
+1.7.10 事实来源：
+
+- 注册：`com.hbm.blocks.ModBlocks`
+  - `machine_catalytic_cracker = new MachineCatalyticCracker(...)`
+  - `machine_catalytic_reformer = new MachineCatalyticReformer(...)`
+- 方块：
+  - `com.hbm.blocks.machine.MachineCatalyticCracker`
+  - `com.hbm.blocks.machine.MachineCatalyticReformer`
+- 渲染：
+  - `RenderCatalyticCracker`：`x + 0.5, y, z + 0.5`，禁用背面剔除，按 metadata 相对 `BlockDummyable.offset` 旋转。
+  - `RenderCatalyticReformer`：同样禁用背面剔除、按 metadata 旋转，并带 `polaroidID == 11` 的彩蛋覆盖层；本轮只迁基础渲染，不迁彩蛋特效。
+- 旧资源：
+  - `models/block/machines/catalytic_cracker.obj` + `textures/block/machines/catalytic_cracker.png`
+  - `models/block/machines/catalytic_reformer.obj` + `textures/block/machines/catalytic_reformer.png`
+
+旧结构契约：
+
+- `machine_catalytic_cracker`
+  - `getDimensions() = {0,0,3,3,2,3}`，`getOffset() = 3`。
+  - core metadata >= 12；extra/proxy metadata >= 6，旧 `TileEntityProxyCombo(false,false,true)`。
+  - `checkRequirement` 在 core 周围检查 4 个 XR 大盒：
+    - `{8,-1,3,-1,2,0}`
+    - `{13,0,0,3,2,1}`
+    - `{14,-13,-1,2,1,0}`
+    - `{3,-1,2,3,-1,3}`
+  - `fillSpace` 先铺同样 4 个 XR 大盒，再放 8 个 `makeExtra`，这些 extra 由 `dir.getRotation(UP)` 决定横向偏移。
+  - 右击 `IItemFluidIdentifier` 可切换 tank type，`ILookOverlay` 会显示 4 个槽位信息；本轮暂不迁 GUI/overlay。
+- `machine_catalytic_reformer`
+  - `getDimensions() = {2,0,1,1,2,2}`，`getOffset() = 1`。
+  - core metadata >= 12；extra/proxy metadata >= 6，旧 `TileEntityProxyCombo().fluid().power()`。
+  - `checkRequirement` 在 core 周围检查 2 个 XR 大盒：
+    - `{3,-3,1,0,-1,2}`
+    - `{6,-3,1,1,2,0}`
+  - `fillSpace` 先铺上述 2 个 XR 大盒，再放 6 个 `makeExtra`，其中 4 个是四角，2 个是按 `rot` 偏移的侧向点。
+  - 物品 persistent NBT 显示 4 个流体槽；本轮暂不迁 tooltip/persistent 内容。
+
+本轮现代迁移：
+
+- 将两台机器接入 `LegacyVisibleMultiblockMachineBlock` / `LegacyMachineDefinition`。
+- 采用旧版 renderer 的方向表，而不是共享默认旋转：
+  - `NORTH -> 90`
+  - `WEST -> 180`
+  - `SOUTH -> 270`
+  - `EAST -> 0`
+- 以 `LegacyMultiblockLayout` 组合主 XR 和额外 XR 盒，保留旧 `checkRequirement` / `fillSpace` 的远端占位结构。
+- `legacyVisibleMachine` BlockEntityType 继续统一承载这些可见多方块。
+
+暂缓内容：
+
+- `RenderCatalyticReformer` 的 `polaroidID == 11` 彩蛋覆盖层不迁入；这属于独立渲染彩蛋，不影响主结构契约。
+- `GL_CULL_FACE` 的逐机启停目前仍未进入 `LegacyVisibleMachineRenderer`；如果后续发现催化塔背面缺面或透明面异常，再补渲染状态开关。
+- GUI、真实配方、流体切换与 persistent tooltip 仍在机器逻辑切片处理。
+
+验证：
+
+- 本轮代码改动完成后会执行 `compileJava processResources runData`。
+
+## 2026-05-24 热解炉/固化机/压缩机/大型流体罐批次
+
+触发来源：
+
+- 用户要求继续推进多方块库移植，并允许一次推进更多；如涉及其他库功能，则补其他库。
+- 本轮选择现代端 OBJ/贴图已齐全、1.7.10 方块类和 renderer 都明确的四台 `BlockDummyable` 机器。
+
+1.7.10 事实来源：
+
+- 方块：
+  - `com.hbm.blocks.machine.MachinePyroOven`
+  - `com.hbm.blocks.machine.MachineSolidifier`
+  - `com.hbm.blocks.machine.MachineCompressor`
+  - `com.hbm.blocks.machine.MachineBigAssTank`
+- 方块实体：
+  - `TileEntityMachinePyroOven`
+  - `TileEntityMachineSolidifier`
+  - `TileEntityMachineCompressor`
+  - `TileEntityMachineBigAssTank`
+- 渲染：
+  - `RenderPyroOven`：渲染 `Oven`、动画 `Slider`、动画 `Fan`，朝向表 `NORTH=180,EAST=90,SOUTH=0,WEST=270`。
+  - `RenderSolidifier`：渲染 `Main`、按流体量渲染 `Fluid`、透明渲染 `Glass`，朝向表 `NORTH=90,EAST=0,SOUTH=270,WEST=180`。
+  - `RenderCompressor`：渲染 `Compressor`、动画 `Pump`、动画 `Fan`，朝向表 `NORTH=90,EAST=0,SOUTH=270,WEST=180`。
+  - `RenderBigAssTank`：渲染 `bigasstank` 全模型，朝向表按 `metadata - 10` 计算，等价 `NORTH=270,EAST=180,SOUTH=90,WEST=0`；流体条和危险菱形属于真实逻辑/流体渲染后续切片。
+- 旧资源：
+  - `models/block/machines/pyrooven.obj` + `textures/block/machines/pyrooven.png`
+  - `models/block/machines/solidifier.obj` + `textures/block/machines/solidifier.png`
+  - `models/block/machines/compressor.obj` + `textures/block/machines/compressor.png`
+  - `models/block/machines/bigasstank.obj` + `textures/block/machines/bigasstank.png`
+
+旧结构契约：
+
+- `machine_pyrooven`
+  - `getDimensions() = {2,0,3,3,2,2}`，`getOffset() = 3`。
+  - core metadata >= 12；extra/proxy metadata >= 6，旧 `TileEntityProxyCombo().inventory().power().fluid()`。
+  - `fillSpace` 先铺主 XR，再沿面对方向从 `-2..2` 于右侧 2 格放一排 `makeExtra`，再在 core 后侧顶层放一个 `makeExtra`。
+- `machine_solidifier`
+  - `getDimensions() = {3,0,1,1,1,1}`，`getOffset() = 1`。
+  - core metadata >= 12；extra/proxy 为 inventory + power + fluid。
+  - `fillSpace` 先铺主 XR，再额外放顶端一格和 y+1 十字四格 `makeExtra`。
+- `machine_compressor`
+  - `getDimensions() = {2,0,1,2,1,1}`，`getOffset() = 2`。
+  - core metadata >= 12；extra/proxy 为 fluid + power。
+  - 额外 XR 填充 `{3,-3,1,1,1,1}` 与 `{8,-4,0,0,1,1}`，并在 core 前后/左右局部放 3 个 `makeExtra`。
+- `machine_bigasstank`
+  - `getDimensions() = {5,0,4,4,4,4}`，`getOffset() = 6`。
+  - core metadata >= 12；extra/proxy 为 fluid proxy。
+  - 额外 XR 填充六个环/管段盒，并在 facing 正负 6 格放两个 `makeExtra`。
+
+本轮现代迁移：
+
+- 四台机器接入 `LegacyVisibleMultiblockMachineBlock` / `LegacyMachineDefinition`，沿用统一多方块放置、dummy 清理、proxy capability 转发和 BER 渲染盒。
+- 按旧 renderer 为每台设置独立 `yRotation(...)`，不走默认旋转公式。
+- 热解炉、固化机、压缩机暂渲染静态关键部件；动画部件先保持默认位置，真实 tick 状态后续随对应 BlockEntity 迁入。
+- 大型流体罐本轮只迁可见外壳、占位与边界；流体持久 NBT、比较器、流体类型切换、危险菱形和液位条留给储罐逻辑切片。
+- 为本批机器显式使用结构 `layout(...).shape(1.0D)` 作为碰撞/选择形状，避免可见多方块默认只是一格满方块。
+
+暂缓内容：
+
+- GUI、库存、能量/流体 side 规则、recipe tick、声音/粒子、动画插值、流体显示与 persistent tooltip 均暂缓到机器逻辑切片。

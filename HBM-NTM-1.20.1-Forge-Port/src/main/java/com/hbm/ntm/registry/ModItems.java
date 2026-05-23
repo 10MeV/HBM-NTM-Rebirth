@@ -132,6 +132,10 @@ public final class ModItems {
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> FLUID_PACK_FULL = registerLegacy("fluid_pack_full",
             () -> new HbmFluidContainerItem(new Item.Properties().craftRemainder(FLUID_PACK_EMPTY.get()), HbmFluidContainerRules.ContainerKind.FLUID_PACK, HbmFluidContainerRules.FLUID_PACK_CAPACITY));
+    public static final RegistryObject<Item> BIOMASS = registerLegacy("biomass",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> BIOMASS_COMPRESSED = registerLegacy("biomass_compressed",
+            () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> DISPERSER_CANISTER_EMPTY = registerLegacy("disperser_canister_empty",
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> DISPERSER_CANISTER = registerLegacy("disperser_canister",
@@ -503,6 +507,8 @@ public final class ModItems {
             LEAD_PLATE,
             TITANIUM_PLATE,
             ALUMINIUM_PLATE,
+            BIOMASS,
+            BIOMASS_COMPRESSED,
             URANIUM_POWDER,
             PLUTONIUM_POWDER,
             THORIUM_POWDER,
