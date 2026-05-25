@@ -64,4 +64,16 @@ public record EntitySyncPacket(int entityId, CompoundTag data) {
         LAST_SYNC_REQUESTS.put(entityId, gameTime);
         ModMessages.sendToServer(new EntitySyncRequestPacket(entityId));
     }
+
+    public static void clearClientResyncRequests() {
+        LAST_SYNC_REQUESTS.clear();
+    }
+
+    public static int pendingClientResyncRequests() {
+        return LAST_SYNC_REQUESTS.size();
+    }
+
+    public static long clientResyncRequestCooldownTicks() {
+        return REQUEST_COOLDOWN_TICKS;
+    }
 }

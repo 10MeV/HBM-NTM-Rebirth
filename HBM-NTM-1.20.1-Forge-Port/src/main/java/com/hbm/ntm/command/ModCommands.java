@@ -7,6 +7,15 @@ import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
+import com.hbm.ntm.client.ClientBinaryData;
+import com.hbm.ntm.client.ClientBiomeSyncData;
+import com.hbm.ntm.client.ClientInformMessages;
+import com.hbm.ntm.client.ClientMuzzleFlashEffects;
+import com.hbm.ntm.client.ClientPanelData;
+import com.hbm.ntm.client.ClientPermaSyncData;
+import com.hbm.ntm.client.ClientPlayerSyncData;
+import com.hbm.ntm.client.ClientRadiationData;
+import com.hbm.ntm.client.ClientTileBinaryData;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergyDebug;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
@@ -18,9 +27,13 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
+import com.hbm.ntm.network.packet.EntitySyncPacket;
+import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.ntm.radiation.CraterRadiationData;
+import com.hbm.ntm.radiation.LegacyFalloutConversions;
 import com.hbm.ntm.radiation.RadiationConstants;
 import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationSavedData;
@@ -45,6 +58,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -82,6 +96,16 @@ public final class ModCommands {
                                         .executes(context -> pruneChunkRadiation(context.getSource())))
                                 .then(Commands.literal("clear")
                                         .executes(context -> clearChunkRadiation(context.getSource()))))
+                        .then(Commands.literal("crater")
+                                .then(Commands.literal("stats")
+                                        .executes(context -> getCraterRadiationStats(context.getSource())))
+                                .then(Commands.literal("resync")
+                                        .executes(context -> resyncCraterBiomes(context.getSource()))))
+                        .then(Commands.literal("fallout")
+                                .then(Commands.literal("status")
+                                        .executes(context -> getFalloutTableStatus(context.getSource())))
+                                .then(Commands.literal("reload")
+                                        .executes(context -> reloadFalloutTable(context.getSource()))))
                         .then(Commands.literal("fog")
                                 .executes(context -> spawnRadiationFog(context.getSource(), BlockPos.containing(context.getSource().getPosition())))
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
@@ -238,7 +262,9 @@ public final class ModCommands {
                         .then(Commands.literal("summary")
                                 .executes(context -> getNetworkProtocolSummary(context.getSource())))
                         .then(Commands.literal("packets")
-                                .executes(context -> listNetworkProtocolPackets(context.getSource()))))
+                                .executes(context -> listNetworkProtocolPackets(context.getSource())))
+                        .then(Commands.literal("mappings")
+                                .executes(context -> listNetworkProtocolMappings(context.getSource()))))
                 .then(Commands.literal("packetthreading")
                         .then(Commands.literal("stats")
                                 .executes(context -> getPacketThreadingStats(context.getSource())))
@@ -380,6 +406,47 @@ public final class ModCommands {
         int removed = ChunkRadiationManager.pruneUnloaded(source.getLevel());
         source.sendSuccess(() -> Component.literal("Pruned " + removed + " unloaded chunk radiation entrie(s)."), true);
         return removed;
+    }
+
+    private static int getCraterRadiationStats(CommandSourceStack source) {
+        CraterRadiationData.Stats stats = CraterRadiationData.getStats(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Crater radiation markers: entries=" + stats.totalMarkers()
+                + " loaded=" + stats.loadedMarkers()
+                + " outer=" + stats.outerMarkers()
+                + " crater=" + stats.craterMarkers()
+                + " inner=" + stats.innerMarkers()
+                + " loadedOuter=" + stats.loadedOuterMarkers()
+                + " loadedCrater=" + stats.loadedCraterMarkers()
+                + " loadedInner=" + stats.loadedInnerMarkers()), false);
+        return stats.totalMarkers();
+    }
+
+    private static int resyncCraterBiomes(CommandSourceStack source) {
+        CraterRadiationData.ResyncResult result = CraterRadiationData.resyncLoadedBiomes(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Crater biome resync: markers=" + result.totalMarkers()
+                + " loaded=" + result.loadedMarkers()
+                + " changedCells=" + result.changedCells()
+                + " changedChunks=" + result.changedChunks()), true);
+        return result.changedCells();
+    }
+
+    private static int getFalloutTableStatus(CommandSourceStack source) {
+        LegacyFalloutConversions.LoadReport report = LegacyFalloutConversions.loadReport();
+        source.sendSuccess(() -> Component.literal("Fallout conversions: " + report.summary()
+                + " config=" + String.valueOf(report.configFile())), false);
+        for (String warning : report.warnings()) {
+            source.sendSuccess(() -> Component.literal("Fallout warning: " + warning), false);
+        }
+        return report.entryCount();
+    }
+
+    private static int reloadFalloutTable(CommandSourceStack source) {
+        LegacyFalloutConversions.LoadReport report = LegacyFalloutConversions.initialize(FMLPaths.CONFIGDIR.get());
+        source.sendSuccess(() -> Component.literal("Reloaded " + report.summary()), true);
+        for (String warning : report.warnings()) {
+            source.sendFailure(Component.literal("Fallout warning: " + warning));
+        }
+        return report.entryCount();
     }
 
     private static int spawnRadiationFog(CommandSourceStack source, BlockPos pos) {
@@ -906,7 +973,8 @@ public final class ModCommands {
                 + ModMessages.protocolVersion()
                 + " packets=" + ModMessages.registeredPacketCount()
                 + " s2c=" + clientbound
-                + " c2s=" + serverbound), false);
+                + " c2s=" + serverbound
+                + " legacyMappings=" + ModMessages.legacyPacketMappingCount()), false);
         if (!registrations.isEmpty()) {
             ModMessages.PacketRegistration first = registrations.get(0);
             ModMessages.PacketRegistration last = registrations.get(registrations.size() - 1);
@@ -925,11 +993,31 @@ public final class ModCommands {
         }
         source.sendSuccess(() -> Component.literal("HBM network packets:"), false);
         for (ModMessages.PacketRegistration registration : registrations) {
+            long legacyMappings = ModMessages.legacyPacketMappings().stream()
+                    .filter(mapping -> registration.typeName().equals(mapping.modernName()))
+                    .count();
             source.sendSuccess(() -> Component.literal("#" + registration.id()
                     + " " + registration.direction()
-                    + " " + registration.typeName()), false);
+                    + " " + registration.typeName()
+                    + (legacyMappings > 0 ? " legacyMappings=" + legacyMappings : "")), false);
         }
         return registrations.size();
+    }
+
+    private static int listNetworkProtocolMappings(CommandSourceStack source) {
+        List<ModMessages.LegacyPacketMapping> mappings = ModMessages.legacyPacketMappings();
+        if (mappings.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("HBM network protocol has no legacy packet mappings."), false);
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("HBM legacy packet mappings:"), false);
+        for (ModMessages.LegacyPacketMapping mapping : mappings) {
+            source.sendSuccess(() -> Component.literal(mapping.direction()
+                    + " " + mapping.legacyName()
+                    + " -> " + mapping.modernName()
+                    + " (" + mapping.notes() + ")"), false);
+        }
+        return mappings.size();
     }
 
     private static int getPacketThreadingStats(CommandSourceStack source) {
@@ -954,6 +1042,26 @@ public final class ModCommands {
                 + " completed=" + snapshot.completedTaskCount()), false);
         source.sendSuccess(() -> Component.literal("Tile binary control uploads: pending="
                 + ServerTileBinaryControlTransfers.pendingTransfers()), false);
+        source.sendSuccess(() -> Component.literal("Client resync cooldowns: tile="
+                + TileSyncPacket.pendingClientResyncRequests()
+                + " entity=" + EntitySyncPacket.pendingClientResyncRequests()
+                + " cooldownTicks=" + TileSyncPacket.clientResyncRequestCooldownTicks()), false);
+        source.sendSuccess(() -> Component.literal("Client network caches: binaryChannels="
+                + ClientBinaryData.channelCount()
+                + " binaryEntries=" + ClientBinaryData.entryCount()
+                + " readyChannels=" + ClientBinaryData.readyChannelCount()
+                + " binaryTransfers=" + ClientBinaryData.pendingTransfers()
+                + " tileBinaryTransfers=" + ClientTileBinaryData.pendingTransfers()
+                + " tileBinaryChunks=" + ClientTileBinaryData.pendingChunkCount()), false);
+        source.sendSuccess(() -> Component.literal("Client sync caches: biomeChunks="
+                + ClientBiomeSyncData.chunkCount()
+                + " panelTypes=" + ClientPanelData.panelCount()
+                + " playerData=" + ClientPlayerSyncData.entryCount()
+                + " permaKeys=" + ClientPermaSyncData.keyCount()
+                + " radiationEffects=" + ClientRadiationData.getContaminationCount()), false);
+        source.sendSuccess(() -> Component.literal("Client transient effects: notices="
+                + ClientInformMessages.noticeCount()
+                + " muzzleFlashes=" + ClientMuzzleFlashEffects.flashCount()), false);
         if (!snapshot.lastFailureMessage().isBlank()) {
             source.sendSuccess(() -> Component.literal("Last packet threading issue: " + snapshot.lastFailureMessage()), false);
         }

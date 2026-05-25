@@ -431,19 +431,31 @@ public final class ModItems {
             "nugget_ra226"
     );
 
-    public static final List<RegistryObject<Item>> NUKE_TAB_ITEMS = simpleParts(
+    public static final List<RegistryObject<Item>> NUKE_TAB_ITEMS = Stream.concat(simpleParts(
+            "early_explosive_lenses",
+            "explosive_lenses"
+    ).stream(), simpleStackOneItems(
+            "gadget_wireing",
             "boy_propellant",
             "gadget_core",
+            "boy_igniter",
+            "boy_shielding",
             "boy_target",
             "boy_bullet",
+            "man_igniter",
             "man_core",
             "mike_core",
+            "mike_deut",
+            "mike_cooling_unit",
             "tsar_core",
+            "fleija_igniter",
             "fleija_propellant",
             "fleija_core",
+            "solinium_igniter",
             "solinium_propellant",
-            "solinium_core"
-    );
+            "solinium_core",
+            "n2_charge"
+    ).stream()).toList();
 
     private static final List<RegistryObject<Item>> CONTROL_BATTERY_ITEMS = Stream.concat(Stream.of(
             BATTERY_POTATO,

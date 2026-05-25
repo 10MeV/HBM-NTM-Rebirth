@@ -1481,3 +1481,72 @@
 - 当前移植估算：
   - 装配机选择界面闭环落地后，能量库约 `98%`。
   - 剩余重点：化工厂 runtime 接入、blueprint pool gating、实机矩阵截图/日志验证、外部 EnergyControl/OC/ROR 真桥接。
+
+## 2026-05-25 继续推进：远端端口订阅 helper 与化工厂 12 端口接入
+
+- 1.7.10 对照：
+  - `IEnergyReceiverMK2#trySubscribe(World, DirPos)` 接收的是旧 `DirPos`：
+    - 目标导线坐标 `x/y/z`。
+    - 机器相对导线的方向 `dir`。
+    - 订阅时检查导线 `canConnect(dir.getOpposite())`，再把 receiver 加入导线节点所在 `PowerNetMK2`。
+  - `IEnergyProviderMK2#tryProvide(World,x,y,z,dir)` 同样支持远端坐标，先尝试导线网络订阅，再尝试直连 receiver。
+  - `TileEntityMachineChemicalPlant#getConPos()` 不是核心六面，而是核心周围 12 个外圈底面端口：
+    - `x+2,z-1/0/+1`，方向 `POS_X`
+    - `x-2,z-1/0/+1`，方向 `NEG_X`
+    - `x-1/0/+1,z+2`，方向 `POS_Z`
+    - `x-1/0/+1,z-2`，方向 `NEG_Z`
+- 本批现代接入：
+  - `HbmEnergyUtil` 新增通用值对象 `EnergyPort`：
+    - `offset`：相对核心的导线/端口坐标。
+    - `direction`：旧 `DirPos` 方向，即机器端口朝向导线外侧的方向。
+    - `conductorSide()` 自动返回 `direction.getOpposite()`，保持旧 `canConnect(dir.getOpposite())` 语义。
+  - `HbmEnergyUtil` 新增远端端口 API：
+    - `subscribeProviderToPort`
+    - `subscribeReceiverToPort`
+    - `subscribeProviderToPorts`
+    - `subscribeReceiverToPorts`
+    - `unsubscribeProviderFromPort`
+    - `unsubscribeReceiverFromPort`
+    - `tryProvideToPorts`
+  - `HbmEnergyDebug` 新增 remote port provider/receiver 调试粒子入口，payload 标记 `remotePort=true`。
+  - `ChemicalPlantBlockEntity` 的服务端 tick 从核心六面订阅改为旧版 12 个外圈 `EnergyPort` 订阅，避免把多方块端口压扁成核心邻接。
+- 现代等价边界：
+  - 本批只补能量远端端口；流体 MK2 的远端 `IFluidStandardTransceiverMK2` 端口订阅还在流体库后续项。
+  - `tryProvideToPorts` 已支持远端导线订阅、HBM receiver 直连和 FE capability 直推；当前化工厂作为 receiver 只使用 `subscribeReceiverToPorts`。
+  - 端口列表目前由具体机器按 1.7.10 `getConPos()` 提供；后续可把常见 XR 多方块端口生成器再抽入 multiblock 库。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+- 当前移植估算：
+  - 远端端口订阅 helper 落地后，能量库约 `98.3%`。
+  - 剩余重点：流体库远端端口配套、实机跨区块/卸载/分裂/重建矩阵、外部 EnergyControl/OC/ROR 真桥接、blueprint/upgrade 等机器依赖库尾项。
+
+## 2026-05-25 继续推进：远端端口 API 下沉到能量基类
+
+- 本批目的：
+  - 上一批 `EnergyPort` 仍主要是 `HbmEnergyUtil` 工具函数；后续每台旧多方块机器若直接散调工具函数，容易再次出现核心六面/远端端口混用。
+  - 本批把远端端口订阅沉入 `HbmEnergyBlockEntity` / `HbmEnergyNetworkBlockEntity`，让“声明端口列表、库层刷新订阅”成为默认迁移路径。
+- 本批现代接入：
+  - `HbmEnergyBlockEntity` 新增可覆盖端口入口：
+    - `getEnergyPorts()`
+    - `subscribeEnergyProviderToPort`
+    - `subscribeEnergyReceiverToPort`
+    - `subscribeEnergyProviderToPorts`
+    - `subscribeEnergyReceiverToPorts`
+    - `unsubscribeEnergyProviderFromPort`
+    - `unsubscribeEnergyReceiverFromPort`
+    - `unsubscribeEnergyProviderFromPorts`
+    - `unsubscribeEnergyReceiverFromPorts`
+    - `tryProvideEnergyToPorts`
+  - `HbmEnergyNetworkBlockEntity#refreshEnergyNetworkSubscriptions()` 现在除自身节点网络外，也会刷新 `getNetworkEnergyPorts()`：
+    - provider 机器：本地节点可订阅时加 provider，同时对远端端口执行 provider 订阅。
+    - receiver 机器：本地节点可订阅时加 receiver，同时对远端端口执行 receiver 订阅。
+  - `getNetworkEnergyPorts()` 默认返回 `getEnergyPorts()`，复杂机器可把“capability 暴露端口”和“网络订阅端口”分开覆盖。
+  - `ChemicalPlantBlockEntity` 因 Java 单继承限制仍直接继承 `BlockEntity`，本批保留一个本地小包装调用同一 `HbmEnergyUtil.subscribeReceiverToPorts`，不复制订阅算法。
+- 迁移规则更新：
+  - 后续若机器能继承 `HbmEnergyBlockEntity` 或 `HbmEnergyNetworkBlockEntity`，应优先覆盖 `getEnergyPorts()` / `getNetworkEnergyPorts()`，而不是在 tick 里手写 `HbmEnergyUtil.subscribe*ToPorts`。
+  - 只有像化工厂这种已经需要直接继承别的 BlockEntity 形态、或者需要同时承载独立菜单/流体/渲染状态的机器，才保留本地包装。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+- 当前移植估算：
+  - 远端端口 API 下沉后，能量库约 `98.5%`。
+  - 剩余重点：流体库远端端口配套、实机生命周期矩阵、外部 EnergyControl/OC/ROR 真桥接、upgrade/blueprint 机器依赖库尾项。

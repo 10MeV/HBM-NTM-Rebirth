@@ -54,6 +54,10 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         }
     }
 
+    public LegacyWavefrontModel(ResourceLocation modelLocation) {
+        this(modelLocation, InventoryMenu.BLOCK_ATLAS);
+    }
+
     public ResourceLocation modelLocation() {
         return modelLocation;
     }
@@ -91,6 +95,25 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     public synchronized void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha) {
         renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false);
+    }
+
+    public synchronized void renderPartTranslucent(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha) {
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        String normalized = normalize(partName);
+        boolean rendered = false;
+        for (Group group : groupOrder) {
+            if (normalize(group.name()).equals(normalized)) {
+                renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false, smoothing, true);
+                rendered = true;
+            }
+        }
+        if (!rendered) {
+            warnMissingPart(partName);
+        }
     }
 
     public synchronized void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
@@ -182,6 +205,42 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
                 color >> 16 & 255, color >> 8 & 255, color & 255, 255, context.legacyShadow());
     }
 
+    public synchronized void renderPartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int red, int green, int blue, int alpha) {
+        renderPartUntextured(partName, poseStack, buffer, red, green, blue, alpha, false);
+    }
+
+    public synchronized void renderPartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int red, int green, int blue, int alpha, boolean additive) {
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        String normalized = normalize(partName);
+        boolean rendered = false;
+        for (Group group : groupOrder) {
+            if (normalize(group.name()).equals(normalized)) {
+                renderGroupUntextured(group, poseStack, buffer, red, green, blue, alpha, additive);
+                rendered = true;
+            }
+        }
+        if (!rendered) {
+            warnMissingPart(partName);
+        }
+    }
+
+    public synchronized void renderPartUntextured(String partName, ObjRenderContext context) {
+        int color = context.hasColor() ? context.color() : 0xFFFFFF;
+        renderPartUntextured(partName, context.poseStack(), context.buffer(),
+                color >> 16 & 255, color >> 8 & 255, color & 255, 255, false);
+    }
+
+    public synchronized void renderPartUntexturedAdditive(String partName, ObjRenderContext context) {
+        int color = context.hasColor() ? context.color() : 0xFFFFFF;
+        renderPartUntextured(partName, context.poseStack(), context.buffer(),
+                color >> 16 & 255, color >> 8 & 255, color & 255, 255, true);
+    }
+
     public synchronized void renderAll(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         renderAll(textureLocation, poseStack, buffer, packedLight, packedOverlay);
     }
@@ -211,6 +270,43 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         int color = context.hasColor() ? context.color() : 0xFFFFFF;
         renderAll(textureLocation, context.poseStack(), context.buffer(), context.packedLight(), context.packedOverlay(),
                 color >> 16 & 255, color >> 8 & 255, color & 255, 255, context.legacyShadow());
+    }
+
+    public synchronized void renderAllUntextured(PoseStack poseStack, MultiBufferSource buffer, int red, int green, int blue, int alpha) {
+        renderAllUntextured(poseStack, buffer, red, green, blue, alpha, false);
+    }
+
+    public synchronized void renderAllUntextured(PoseStack poseStack, MultiBufferSource buffer,
+            int red, int green, int blue, int alpha, boolean additive) {
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        for (Group group : groupOrder) {
+            renderGroupUntextured(group, poseStack, buffer, red, green, blue, alpha, additive);
+        }
+    }
+
+    public synchronized void renderAllUntextured(VertexConsumer consumer, Matrix4f position, int red, int green, int blue, int alpha) {
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        for (Group group : groupOrder) {
+            for (Face face : group.faces()) {
+                emitFaceUntextured(face, consumer, position, red, green, blue, alpha);
+            }
+        }
+    }
+
+    public synchronized void renderAllUntextured(ObjRenderContext context) {
+        int color = context.hasColor() ? context.color() : 0xFFFFFF;
+        renderAllUntextured(context.poseStack(), context.buffer(), color >> 16 & 255, color >> 8 & 255, color & 255, 255, false);
+    }
+
+    public synchronized void renderAllUntexturedAdditive(ObjRenderContext context) {
+        int color = context.hasColor() ? context.color() : 0xFFFFFF;
+        renderAllUntextured(context.poseStack(), context.buffer(), color >> 16 & 255, color >> 8 & 255, color & 255, 255, true);
     }
 
     public synchronized void renderOnly(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... groupNames) {
@@ -244,6 +340,39 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         int color = context.hasColor() ? context.color() : 0xFFFFFF;
         renderOnly(textureLocation, context.poseStack(), context.buffer(), context.packedLight(), context.packedOverlay(),
                 color >> 16 & 255, color >> 8 & 255, color & 255, 255, context.legacyShadow(), names);
+    }
+
+    public synchronized void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
+            int red, int green, int blue, int alpha, String... groupNames) {
+        renderOnlyUntextured(poseStack, buffer, red, green, blue, alpha, false, groupNames);
+    }
+
+    public synchronized void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
+            int red, int green, int blue, int alpha, boolean additive, String... groupNames) {
+        ensureLoaded();
+        if (failed) {
+            return;
+        }
+        Set<String> included = normalizedSet(groupNames);
+        Set<String> rendered = new LinkedHashSet<>();
+        for (Group group : groupOrder) {
+            String key = normalize(group.name());
+            if (included.contains(key)) {
+                renderGroupUntextured(group, poseStack, buffer, red, green, blue, alpha, additive);
+                rendered.add(key);
+            }
+        }
+        warnMissingParts(included, rendered);
+    }
+
+    public synchronized void renderOnlyUntextured(ObjRenderContext context, String... names) {
+        int color = context.hasColor() ? context.color() : 0xFFFFFF;
+        renderOnlyUntextured(context.poseStack(), context.buffer(), color >> 16 & 255, color >> 8 & 255, color & 255, 255, false, names);
+    }
+
+    public synchronized void renderOnlyUntexturedAdditive(ObjRenderContext context, String... names) {
+        int color = context.hasColor() ? context.color() : 0xFFFFFF;
+        renderOnlyUntextured(context.poseStack(), context.buffer(), color >> 16 & 255, color >> 8 & 255, color & 255, 255, true, names);
     }
 
     public synchronized void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
@@ -403,7 +532,12 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     private static void renderGroup(Group group, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing) {
-        VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(textureLocation));
+        renderGroup(group, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, false);
+    }
+
+    private static void renderGroup(Group group, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing, boolean translucent) {
+        VertexConsumer consumer = buffer.getBuffer(translucent ? RenderType.entityTranslucent(textureLocation) : RenderType.entityCutoutNoCull(textureLocation));
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
         Matrix3f normal = pose.normal();
@@ -421,6 +555,18 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         for (Face face : group.faces()) {
             emitFaceWithSprite(face, sprite, consumer, position, normal, packedLight, packedOverlay, red, green, blue, alpha,
                     legacyShadow, partBrightness);
+        }
+    }
+
+    private static void renderGroupUntextured(Group group, PoseStack poseStack, MultiBufferSource buffer,
+            int red, int green, int blue, int alpha, boolean additive) {
+        VertexConsumer consumer = buffer.getBuffer(additive
+                ? LegacyUntexturedQuadRenderer.additiveNoCullType()
+                : LegacyUntexturedQuadRenderer.solidNoCullType());
+        PoseStack.Pose pose = poseStack.last();
+        Matrix4f position = pose.pose();
+        for (Face face : group.faces()) {
+            emitFaceUntextured(face, consumer, position, red, green, blue, alpha);
         }
     }
 
@@ -490,6 +636,33 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         }
     }
 
+    private static void emitFaceUntextured(Face face, VertexConsumer consumer, Matrix4f position,
+            int red, int green, int blue, int alpha) {
+        if (face.vertices().size() < 3) {
+            return;
+        }
+        if (face.vertices().size() == 3) {
+            emitVertexUntextured(face, 0, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 1, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 2, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 2, consumer, position, red, green, blue, alpha);
+            return;
+        }
+        if (face.vertices().size() == 4) {
+            emitVertexUntextured(face, 0, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 1, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 2, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, 3, consumer, position, red, green, blue, alpha);
+            return;
+        }
+        for (int i = 1; i + 1 < face.vertices().size(); i++) {
+            emitVertexUntextured(face, 0, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, i, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, i + 1, consumer, position, red, green, blue, alpha);
+            emitVertexUntextured(face, i + 1, consumer, position, red, green, blue, alpha);
+        }
+    }
+
     private static void emitVertex(Face face, int index, VertexConsumer consumer, Matrix4f position, Matrix3f normal,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing) {
         Vector3f vertex = face.vertices().get(index);
@@ -518,6 +691,14 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
                 .overlayCoords(packedOverlay)
                 .uv2(packedLight)
                 .normal(normal, vertexNormal.x(), vertexNormal.y(), vertexNormal.z())
+                .endVertex();
+    }
+
+    private static void emitVertexUntextured(Face face, int index, VertexConsumer consumer, Matrix4f position,
+            int red, int green, int blue, int alpha) {
+        Vector3f vertex = face.vertices().get(index);
+        consumer.vertex(position, vertex.x(), vertex.y(), vertex.z())
+                .color(red, green, blue, alpha)
                 .endVertex();
     }
 

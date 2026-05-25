@@ -57,6 +57,32 @@ public final class WeaponExplosionUtil {
         tiny(level, x, y, z, size, source).explode();
     }
 
+    public static ExplosionVnt tinySmooth(Level level, double x, double y, double z, float size, @Nullable Entity source,
+            float fixedDamage) {
+        return tinySmooth(level, x, y, z, size, source, fixedDamage, 0.5D, 0.0F, 0.0F, 0.25D);
+    }
+
+    public static ExplosionVnt tinySmooth(Level level, double x, double y, double z, float size, @Nullable Entity source,
+            float fixedDamage, double nodeDistance, float pierceDamageThreshold, float pierceDamageResistance, double knockback) {
+        EntityProcessorCrossSmooth processor = new EntityProcessorCrossSmooth(nodeDistance, fixedDamage)
+                .setupPiercing(pierceDamageThreshold, pierceDamageResistance);
+        processor.setKnockback(knockback);
+        return new ExplosionVnt(level, x, y, z, size, source, false, Explosion.BlockInteraction.KEEP)
+                .setEntityProcessor(processor)
+                .setPlayerProcessor(new PlayerProcessorStandard())
+                .setEffects(new ExplosionEffectTiny());
+    }
+
+    public static void explodeTinySmooth(Level level, double x, double y, double z, float size, @Nullable Entity source,
+            float fixedDamage) {
+        tinySmooth(level, x, y, z, size, source, fixedDamage).explode();
+    }
+
+    public static void explodeTinySmooth(Level level, double x, double y, double z, float size, @Nullable Entity source,
+            float fixedDamage, double nodeDistance, float pierceDamageThreshold, float pierceDamageResistance, double knockback) {
+        tinySmooth(level, x, y, z, size, source, fixedDamage, nodeDistance, pierceDamageThreshold, pierceDamageResistance, knockback).explode();
+    }
+
     public static ExplosionVnt bulkie(Level level, double x, double y, double z, float size, @Nullable Entity source,
             double maximumResistance, int resolution) {
         return new ExplosionVnt(level, x, y, z, size, source, false, Explosion.BlockInteraction.DESTROY_WITH_DECAY)
@@ -79,9 +105,15 @@ public final class WeaponExplosionUtil {
 
     public static ExplosionVnt smooth(Level level, double x, double y, double z, float size, @Nullable Entity source,
             float fixedDamage, double nodeDistance, boolean blockDamage) {
+        return smooth(level, x, y, z, size, source, fixedDamage, nodeDistance, blockDamage, 0.0F, 0.0F);
+    }
+
+    public static ExplosionVnt smooth(Level level, double x, double y, double z, float size, @Nullable Entity source,
+            float fixedDamage, double nodeDistance, boolean blockDamage, float pierceDamageThreshold, float pierceDamageResistance) {
         ExplosionVnt explosion = new ExplosionVnt(level, x, y, z, size, source, false,
                 blockDamage ? Explosion.BlockInteraction.DESTROY_WITH_DECAY : Explosion.BlockInteraction.KEEP);
-        explosion.setEntityProcessor(new EntityProcessorCrossSmooth(nodeDistance, fixedDamage));
+        explosion.setEntityProcessor(new EntityProcessorCrossSmooth(nodeDistance, fixedDamage)
+                .setupPiercing(pierceDamageThreshold, pierceDamageResistance));
         explosion.setPlayerProcessor(new PlayerProcessorStandard());
         explosion.setEffects(new ExplosionEffectWeapon(10, 2.5F, 1.0F));
         if (blockDamage) {

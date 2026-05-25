@@ -65,4 +65,16 @@ public record TileSyncPacket(BlockPos pos, CompoundTag data) {
         LAST_SYNC_REQUESTS.put(pos.immutable(), gameTime);
         ModMessages.sendToServer(new TileSyncRequestPacket(pos));
     }
+
+    public static void clearClientResyncRequests() {
+        LAST_SYNC_REQUESTS.clear();
+    }
+
+    public static int pendingClientResyncRequests() {
+        return LAST_SYNC_REQUESTS.size();
+    }
+
+    public static long clientResyncRequestCooldownTicks() {
+        return REQUEST_COOLDOWN_TICKS;
+    }
 }

@@ -5,6 +5,8 @@ import com.hbm.ntm.fluid.HbmFluidNode;
 import com.hbm.ntm.fluid.HbmFluidNodeHost;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidUtil;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,6 +55,28 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
         return HbmFluidSideMode.BOTH;
+    }
+
+    protected Iterable<FluidPort> getFluidPorts() {
+        return List.of();
+    }
+
+    protected int subscribeFluidProviderToPorts(com.hbm.ntm.fluid.FluidType type, com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmFluidUtil.subscribeProviderToPorts(level, worldPosition, getFluidPorts(), type, provider);
+    }
+
+    protected int subscribeFluidReceiverToPorts(com.hbm.ntm.fluid.FluidType type, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmFluidUtil.subscribeReceiverToPorts(level, worldPosition, getFluidPorts(), type, receiver);
+    }
+
+    protected int tryProvideFluidToPorts(com.hbm.ntm.fluid.FluidType type, int pressure, com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmFluidUtil.tryProvideToPorts(level, worldPosition, getFluidPorts(), type, pressure, provider);
     }
 
     @Override

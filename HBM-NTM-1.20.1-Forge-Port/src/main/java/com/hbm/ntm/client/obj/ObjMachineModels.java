@@ -245,6 +245,7 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel MICROWAVE = legacyModel("microwave");
     public static final LegacyWavefrontModel PISTON_INSERTER = legacyModel("piston_inserter");
     public static final LegacyWavefrontModel IGEN = legacyModel("igen");
+    public static final LegacyWavefrontModel DELIVERY_DRONE = legacyModel("drone");
 
     public static final ResourceLocation FLUIDTANK_INNER_TEXTURE = machineTexture("fluidtank_inner");
     public static final ResourceLocation TURBOFAN_BACK_TEXTURE = machineTexture("turbofan_back");
@@ -267,6 +268,9 @@ public final class ObjMachineModels {
     public static final ResourceLocation MICROWAVE_TEXTURE = machineTexture("microwave");
     public static final ResourceLocation PISTON_INSERTER_TEXTURE = machineTexture("piston_inserter");
     public static final ResourceLocation IGEN_TEXTURE = machineTexture("igen");
+    public static final ResourceLocation DELIVERY_DRONE_TEXTURE = machineTexture("drone");
+    public static final ResourceLocation DELIVERY_DRONE_EXPRESS_TEXTURE = machineTexture("drone_express");
+    public static final ResourceLocation DELIVERY_DRONE_REQUEST_TEXTURE = machineTexture("drone_request");
 
     public static ObjModelPart part(String name) {
         return part(name, RenderType.cutout());

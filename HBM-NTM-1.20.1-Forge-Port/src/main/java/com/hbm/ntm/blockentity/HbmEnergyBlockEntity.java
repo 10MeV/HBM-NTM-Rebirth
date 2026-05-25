@@ -9,6 +9,7 @@ import com.hbm.ntm.energy.HbmLoadedEnergy;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.network.HbmTileSyncable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,6 +23,8 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmEnergyHandler, HbmLoadedEnergy, InfoProviderEC, HbmTileSyncable {
     private static final String TAG_ENERGY = "Energy";
@@ -72,6 +75,10 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
 
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.BOTH;
+    }
+
+    protected Iterable<EnergyPort> getEnergyPorts() {
+        return List.of();
     }
 
     @Override
@@ -157,6 +164,38 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
         return subscribed;
     }
 
+    protected boolean subscribeEnergyProviderToPort(EnergyPort port) {
+        return level != null
+                && !level.isClientSide
+                && port != null
+                && HbmEnergyUtil.subscribeProviderToPort(level, worldPosition, port, energy);
+    }
+
+    protected boolean subscribeEnergyReceiverToPort(EnergyPort port) {
+        return level != null
+                && !level.isClientSide
+                && port != null
+                && HbmEnergyUtil.subscribeReceiverToPort(level, worldPosition, port, energy);
+    }
+
+    protected int subscribeEnergyProviderToPorts() {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmEnergyUtil.subscribeProviderToPorts(level, worldPosition, getEnergyPorts(), energy);
+    }
+
+    protected int subscribeEnergyReceiverToPorts() {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, getEnergyPorts(), energy);
+    }
+
+    protected int tryProvideEnergyToPorts() {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmEnergyUtil.tryProvideToPorts(level, worldPosition, getEnergyPorts(), energy);
+    }
+
     protected boolean unsubscribeEnergyProviderFromSide(Direction side) {
         return level != null
                 && !level.isClientSide
@@ -183,6 +222,46 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
         int unsubscribed = 0;
         for (Direction side : Direction.values()) {
             if (unsubscribeEnergyReceiverFromSide(side)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
+    }
+
+    protected boolean unsubscribeEnergyProviderFromPort(EnergyPort port) {
+        return level != null
+                && !level.isClientSide
+                && port != null
+                && HbmEnergyUtil.unsubscribeProviderFromPort(level, worldPosition, port, energy);
+    }
+
+    protected boolean unsubscribeEnergyReceiverFromPort(EnergyPort port) {
+        return level != null
+                && !level.isClientSide
+                && port != null
+                && HbmEnergyUtil.unsubscribeReceiverFromPort(level, worldPosition, port, energy);
+    }
+
+    protected int unsubscribeEnergyProviderFromPorts() {
+        if (level == null || level.isClientSide) {
+            return 0;
+        }
+        int unsubscribed = 0;
+        for (EnergyPort port : getEnergyPorts()) {
+            if (unsubscribeEnergyProviderFromPort(port)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
+    }
+
+    protected int unsubscribeEnergyReceiverFromPorts() {
+        if (level == null || level.isClientSide) {
+            return 0;
+        }
+        int unsubscribed = 0;
+        for (EnergyPort port : getEnergyPorts()) {
+            if (unsubscribeEnergyReceiverFromPort(port)) {
                 unsubscribed++;
             }
         }

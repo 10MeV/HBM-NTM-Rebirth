@@ -24,6 +24,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
     private boolean fallout = true;
     private int falloutAdd;
     private long explosionStart;
+    private boolean expiredFromSave;
     private ExplosionRay explosion;
 
     public NukeExplosionMk5Entity(EntityType<? extends NukeExplosionMk5Entity> type, Level level) {
@@ -54,10 +55,23 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         return create(level, radius, x, y, z).setFallout(false);
     }
 
+    public static NukeExplosionMk5Entity statFac(Level level, int radius, double x, double y, double z) {
+        return create(level, radius, x, y, z);
+    }
+
+    public static NukeExplosionMk5Entity statFacNoRad(Level level, int radius, double x, double y, double z) {
+        return createNoFallout(level, radius, x, y, z);
+    }
+
     @Override
     public void tick() {
         super.tick();
         if (level().isClientSide()) {
+            return;
+        }
+
+        if (expiredFromSave) {
+            discard();
             return;
         }
 
@@ -156,6 +170,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         fallout = !tag.contains("fallout") || tag.getBoolean("fallout");
         falloutAdd = tag.getInt("falloutAdd");
         readChunkLoader(tag);
+        expiredFromSave = shouldExpireFromSave(tag);
     }
 
     @Override

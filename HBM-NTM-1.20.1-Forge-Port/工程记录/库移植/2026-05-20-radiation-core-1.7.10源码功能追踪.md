@@ -1455,6 +1455,118 @@ Verification:
 
 - 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
+## 2026-05-25 Fallout Rain Collapse And Crater Ambient Radiation Pass
+
+Legacy source re-checked:
+
+- `com.hbm.entity.effect.EntityFalloutRain#stomp`
+- `com.hbm.entity.item.EntityFallingBlockNT`
+- `com.hbm.config.WorldConfig`
+- `com.hbm.world.biome.BiomeGenCraterBase`
+- `com.hbm.handler.EntityEffectHandler#onUpdate`
+
+Findings:
+
+- 1.7.10 fallout rain is the full-column environmental mutation path that reaches under wood/vegetation cover; the default Simple chunk-radiation handler remains only a surface/top-canopy sampler.
+- After evaluating `FalloutConfigJSON`, old `stomp` also checks whether blocks within `65%` distance are light enough to collapse:
+  - source hardness must be non-negative and no higher than stone brick explosion resistance;
+  - the block below must be air;
+  - up to the current `depth` stack above the position is spawned as `EntityFallingBlockNT`;
+  - `canDrop=false`, so collapse debris should not create item drops.
+- Fallout rain also writes crater biomes:
+  - scale `>=150` and distance `<15%` -> inner crater;
+  - scale `>=100` and distance `<55%` -> crater unless already inner;
+  - scale `>=25` -> outer crater unless already crater/inner.
+- The old crater biomes apply ambient radiation in `EntityEffectHandler`:
+  - outer crater `0.5 RAD/s`;
+  - crater `5 RAD/s`;
+  - inner crater `25 RAD/s`;
+  - wet entities multiply this by `5`.
+
+Corrected in this pass:
+
+- `FalloutRainEntity#stomp` now restores the old collapse side effect using vanilla `FallingBlockEntity`:
+  - hardness threshold mirrors the old stone-brick resistance gate;
+  - modern multiblock dummy blocks are excluded like old `BlockDummyable`;
+  - spawned falling blocks have `dropItem=false`.
+- Added `CraterRadiationData`, a per-level SavedData bridge for the radiation side of crater biomes:
+  - stores per-column outer/crater/inner zone markers;
+  - stronger zones overwrite weaker zones, matching old no-downgrade biome replacement behavior;
+  - uses key `hbm_crater_radiation`.
+- Fallout rain now records crater radiation zones during chunk processing with the old scale/distance thresholds.
+- Added modern datapack biome resources:
+  - `hbm:crater`
+  - `hbm:crater_inner`
+  - `hbm:crater_outer`
+- Added `CraterBiomeUtil` to write the matching crater biome into loaded chunk biome palettes.
+  - 1.20.1 stores biomes at 4x4x4 noise-cell granularity, so this is the closest modern equivalent of 1.7.10's 16x16 per-block biome array.
+  - The bridge writes all vertical biome cells for the affected X/Z noise cell.
+  - It resends biome data once per processed chunk through vanilla `ChunkMap#resendBiomesForChunks`, matching the old chunk-level sync cadence.
+- `CommonForgeEvents#handleChunkRadiation` now applies crater ambient radiation through `RadiationUtil.contaminate(... CREATIVE, rad / 20F)` before the normal chunk-radiation Simple-handler path.
+- Added config mirrors in `RadiationConfig`:
+  - `enableCraterBiomeRadiation`
+  - `craterBiomeRad`
+  - `craterBiomeInnerRad`
+  - `craterBiomeOuterRad`
+  - `craterBiomeWaterMult`
+
+Still incomplete:
+
+- The old 1.7.10 biome IDs `80/81/82` do not exist in 1.20.1; modern datapack biome keys are used instead.
+- The old numeric biome ID config values remain intentionally unmigrated; modern worlds should address the biomes by resource key.
+
+Verification:
+
+- 2026-05-25 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- 2026-05-25 parsed crater biome JSON resources with `python -m json.tool`: passed.
+
+## 2026-05-25 Crater Biome Resync And Legacy Dictionary Tag Pass
+
+Legacy source re-checked:
+
+- `com.hbm.world.biome.BiomeGenCraterBase#initDictionary`
+- `com.hbm.entity.effect.EntityFalloutRain#tryGetBiome`
+- `com.hbm.handler.EntityEffectHandler#onUpdate`
+- Forge 1.20.1 `net.minecraftforge.common.Tags.Biomes`
+- Minecraft 1.20.1 `net.minecraft.tags.BiomeTags`
+
+Findings:
+
+- 1.7.10 registers all three crater biomes with `BiomeDictionary.Type.DRY`, `DEAD`, and `WASTELAND`.
+- Forge 1.20.1 exposes direct biome tag equivalents:
+  - `forge:is_dry`
+  - `forge:is_dry/overworld`
+  - `forge:is_dead`
+  - `forge:is_wasteland`
+- Vanilla also exposes behavior tags that fit the old disabled-rain barren crater behavior:
+  - `minecraft:is_badlands`
+  - `minecraft:snow_golem_melts`
+  - `minecraft:without_patrol_spawns`
+  - `minecraft:without_wandering_trader_spawns`
+  - `minecraft:without_zombie_sieges`
+
+Corrected in this pass:
+
+- Added the Forge and vanilla biome tags above for `hbm:crater`, `hbm:crater_inner`, and `hbm:crater_outer`.
+- `CraterRadiationData#getAmbientRadiation` now falls back to the actual biome resource key when a marker is absent, so manually written crater biomes still apply the old `0.5/5/25 RAD/s` ambient radiation behavior.
+- Added crater SavedData diagnostics and repair helpers:
+  - total/loaded marker counts;
+  - per-zone outer/crater/inner counts;
+  - loaded biome palette resync for stored crater markers.
+- Added commands:
+  - `/hbm radiation crater stats`
+  - `/hbm radiation crater resync`
+
+Migration note:
+
+- The resync command is a modern repair tool for early test worlds whose `hbm_crater_radiation` markers were saved before biome palette writing was added. It only touches loaded chunks, avoiding forced world-wide chunk loading.
+- The actual fallout rain path still writes and syncs crater palettes immediately while processing loaded chunks.
+
+Verification:
+
+- 2026-05-25 parsed all crater biome JSON and newly added biome tag JSON resources with `python -m json.tool`: passed.
+- 2026-05-25 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
 ## 2026-05-24 Entity Radiation Buffer And Geiger HUD Timing Fix
 
 Legacy source re-checked:
@@ -1707,14 +1819,114 @@ Corrected in this pass:
 
 Still incomplete:
 
-- The full configurable `FalloutConfigJSON` loader/editor is not yet ported; this pass hard-codes the core default rules needed for vegetation parity.
-- Legacy falling-block debris behavior in `EntityFalloutRain#stomp` remains deferred.
+- The full configurable `FalloutConfigJSON` file loader/editor is not yet ported, but the default table now has a dedicated modern library path in `LegacyFalloutConversions`.
 - Biome conversion and every ore/sellafield weighted substitution in the old fallout table are still not complete.
 
 Verification:
 
 - 2026-05-24 first `.\gradlew.bat compileJava processResources --no-daemon` hit a stale Gradle output hash for a missing `.class`.
 - 2026-05-24 ran `.\gradlew.bat clean compileJava processResources --no-daemon`: passed.
+
+## 2026-05-25 FalloutConfigJSON Default Table Library Pass
+
+Legacy source re-checked:
+
+- `com.hbm.config.FalloutConfigJSON`
+- `com.hbm.config.FalloutConfigJSON.FalloutEntry`
+- `com.hbm.entity.effect.EntityFalloutRain#stomp`
+- `com.hbm.blocks.ModBlocks`
+
+Findings:
+
+- 1.7.10 does not hard-code fallout conversions directly in `EntityFalloutRain`; it iterates `FalloutConfigJSON.entries`.
+- The default table covers more than vegetation:
+  - logs, planks, mushroom stems/caps, generic wood material, leaves, plants, vines, snow;
+  - mossy cobblestone -> coal ore;
+  - nether uranium -> nether schrabidium or scorched uranium by weighted outcome;
+  - mycelium -> waste mycelium;
+  - sand/clay conversions;
+  - multiple Sellafield ore/stone/material substitutions with `restrictDepth`.
+- `FalloutEntry` semantics:
+  - match by block, metadata, material, or opaque block;
+  - distance min/max gates use percent distance from blast center;
+  - far end of the range can probabilistically skip using a Gaussian falloff;
+  - primary/secondary substitutions are weighted;
+  - `restrictDepth` increments the column-scan depth when a conversion occurs.
+
+Corrected in this pass:
+
+- Added `LegacyFalloutConversions` as the modern radiation-library owner for the default fallout conversion table.
+- Moved `FalloutRainEntity` conversion responsibility to `LegacyFalloutConversions.apply(...)`, leaving the entity focused on the old column scan, fallout layer placement, fire, collapse, crater biome, and chunk scheduling.
+- Preserved current migrated vegetation parity while adding default-table coverage for modern-available entries:
+  - mushroom stem/logs -> `waste_log` while preserving axis where possible;
+  - mushroom caps/snow/wooden construction/leaves/plants/vines -> air in the old inner range;
+  - vanilla leaves in the outer leaf band -> `waste_leaves`;
+  - mossy cobblestone -> coal ore;
+  - `ore_nether_uranium` -> weighted `ore_nether_schrabidium` / `ore_nether_uranium_scorched`;
+  - mycelium -> `waste_mycelium`;
+  - simple rock/sand/ground Sellafield surfaces -> `sellafield_slaked` with `restrictDepth`;
+  - clay -> terracotta.
+- The conversion library resolves legacy-name blocks through `ModBlocks.legacyBlock` and skips absent targets instead of introducing placeholders.
+
+Still incomplete:
+
+- Metadata-sensitive Sellafield ore progression and old special targets that are not yet registered in the clean port remain deferred:
+  - `ore_sellafield_*`
+  - `sellafield_bedrock`
+  - `waste_trinitite`
+  - `waste_trinitite_red`
+  - `glyphid_base`
+  - `glyphid_spawner`
+- The old `matchesMaterial` table cannot be represented perfectly until the port owns a clear material/tag mapping for all migrated blocks; this pass uses explicit modern block/tag predicates for the covered defaults.
+
+Verification:
+
+- 2026-05-25 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
+- 2026-05-25 ran `.\gradlew.bat runData --no-daemon`: passed; generated `sellafield_slaked` state variants include `level=0..15`.
+
+## 2026-05-25 FalloutConfigJSON Loader And Slaked State Pass
+
+Legacy source re-checked:
+
+- `com.hbm.config.FalloutConfigJSON#initialize`
+- `com.hbm.config.FalloutConfigJSON.FalloutEntry#readEntry`
+- `com.hbm.config.FalloutConfigJSON.FalloutEntry#eval`
+- `com.hbm.blocks.generic.BlockSellafieldSlaked`
+
+Findings:
+
+- The old config path is `config/hbmConfig/hbmFallout.json`; when it is absent, 1.7.10 writes `_hbmFallout.json` as an editable template and continues with its defaults.
+- The legacy JSON format stores `matchesBlock`, `matchesMeta`, `mustBeOpaque`, `matchesMaterial`, `restrictDepth`, substitutions, chance, distance bounds, and falloff.
+- The 1.7.10 reader contains a typo: its `matchesMaterial` branch reads `mustBeOpaque` instead. The modern port preserves the file format but reads the intended `matchesMaterial` value.
+- `sellafield_slaked` keeps metadata intensity in 1.7.10. Fallout entries write levels `9..0` by distance band, refuse to downgrade an existing stronger slaked block, and refuse ordinary replacement at world bottom unless the output is the old Sellafield bedrock target.
+
+Corrected in this pass:
+
+- `LegacyFalloutConversions.initialize(...)` now creates/loads `config/hbmConfig/hbmFallout.json` and writes `_hbmFallout.json` when no custom file is present.
+- The loader supports the migrated old fields and a modern `matchesTag` extension used by the generated template for logs, planks, and leaves.
+- The loader warns and skips entries whose target block or old metadata state is not yet available, instead of silently flattening unsupported Sellafield ore/bedrock metadata.
+- Registered startup loading and added runtime diagnostics:
+  - `/hbm radiation fallout status`
+  - `/hbm radiation fallout reload`
+- Added `LegacySellafieldSlakedBlock` with a `level=0..15` state bridge and a corresponding blockstate datagen path.
+- Restored the supported ground/rock/sand/grass Sellafield substitution bands to write `sellafield_slaked` levels `9..0`, including the old no-downgrade and world-bottom protection behavior.
+- Corrected the earlier simplified grass rule: default fallout no longer converts grass directly to `waste_earth`; within the old inner bands grass block and mycelium first match the Sellafield `Material.grass` rules, with mycelium only reaching its later `waste_mycelium` rule outside those bands.
+
+Still incomplete:
+
+- The old `sellafield_slaked` position-randomized texture variants and level-based darkening tint are not yet migrated; all state levels currently render through the available base texture.
+- Full old metadata targets still await registered modern blocks/states:
+  - `ore_sellafield_*`
+  - `sellafield_bedrock`
+  - `waste_trinitite`
+  - `waste_trinitite_red`
+  - `glyphid_base`
+  - `glyphid_spawner`
+- Material names without a reliable modern block/tag mapping remain rejected with a loader warning rather than guessed.
+
+Verification:
+
+- 2026-05-25 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
 
 ## 2026-05-23 Radiation Diffusion Timing Fix
 

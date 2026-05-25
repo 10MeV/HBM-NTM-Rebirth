@@ -11,6 +11,8 @@ import com.hbm.ntm.fluid.HbmFluidProvider;
 import com.hbm.ntm.fluid.HbmFluidReceiver;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.HbmFluidUtil;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
@@ -109,14 +111,18 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         }
         for (FluidType type : getFluidNodeTypes()) {
             HbmFluidNet fluidNet = getFluidNet(type);
-            if (fluidNet == null || !fluidNet.isValid()) {
-                continue;
-            }
+            boolean hasLocalNet = fluidNet != null && fluidNet.isValid();
             if (shouldSubscribeAsFluidProvider(type)) {
-                fluidNet.addProvider(getNetworkFluidProvider());
+                if (hasLocalNet) {
+                    fluidNet.addProvider(getNetworkFluidProvider());
+                }
+                HbmFluidUtil.subscribeProviderToPorts(level, worldPosition, getNetworkFluidPorts(type), type, getNetworkFluidProvider());
             }
             if (shouldSubscribeAsFluidReceiver(type)) {
-                fluidNet.addReceiver(getNetworkFluidReceiver());
+                if (hasLocalNet) {
+                    fluidNet.addReceiver(getNetworkFluidReceiver());
+                }
+                HbmFluidUtil.subscribeReceiverToPorts(level, worldPosition, getNetworkFluidPorts(type), type, getNetworkFluidReceiver());
             }
         }
     }
@@ -127,6 +133,10 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
 
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return shouldSubscribeAsFluidReceiver();
+    }
+
+    protected Iterable<FluidPort> getNetworkFluidPorts(FluidType type) {
+        return getFluidPorts();
     }
 
     private void removeObsoleteFluidNodes() {

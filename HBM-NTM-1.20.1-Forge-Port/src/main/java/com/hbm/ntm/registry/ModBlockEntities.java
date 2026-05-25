@@ -15,8 +15,10 @@ import com.hbm.ntm.blockentity.LiquefactorBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatteryBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
+import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
 import com.hbm.ntm.blockentity.PneumaticTubeBlockEntity;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
+import com.hbm.ntm.blockentity.SteamTurbineBlockEntity;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -35,6 +37,10 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<BoilerBlockEntity>> BOILER =
             BLOCK_ENTITIES.register("boiler", () ->
                     BlockEntityType.Builder.of(BoilerBlockEntity::new, ModBlocks.MACHINE_BOILER_OFF.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<SteamTurbineBlockEntity>> STEAM_TURBINE =
+            BLOCK_ENTITIES.register("steam_turbine", () ->
+                    BlockEntityType.Builder.of(SteamTurbineBlockEntity::new, ModBlocks.MACHINE_TURBINE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<DeconBlockEntity>> DECON =
             BLOCK_ENTITIES.register("decon", () ->
@@ -143,6 +149,20 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(
                             LegacyLanternBlockEntity::new,
                             ModBlocks.legacyBlock("lantern").get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<NuclearDeviceBlockEntity>> NUCLEAR_DEVICE =
+            BLOCK_ENTITIES.register("nuclear_device", () ->
+                    BlockEntityType.Builder.of(
+                            NuclearDeviceBlockEntity::new,
+                            ModBlocks.NUKE_GADGET.get(),
+                            ModBlocks.NUKE_BOY.get(),
+                            ModBlocks.NUKE_MAN.get(),
+                            ModBlocks.NUKE_TSAR.get(),
+                            ModBlocks.NUKE_MIKE.get(),
+                            ModBlocks.NUKE_PROTOTYPE.get(),
+                            ModBlocks.NUKE_FLEIJA.get(),
+                            ModBlocks.NUKE_SOLINIUM.get(),
+                            ModBlocks.NUKE_N2.get()).build(null));
 
     public static void register(IEventBus modBus) {
         BLOCK_ENTITIES.register(modBus);

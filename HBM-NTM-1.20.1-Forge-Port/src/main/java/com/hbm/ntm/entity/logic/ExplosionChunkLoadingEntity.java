@@ -1,6 +1,7 @@
 package com.hbm.ntm.entity.logic;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.config.BombConfig;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -10,6 +11,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.common.world.ForgeChunkManager;
 
 public abstract class ExplosionChunkLoadingEntity extends Entity {
+    private static final String TAG_SAVED_MILLIS = "loaderSavedMillis";
     private long centerChunk = Long.MIN_VALUE;
     private long workChunk = Long.MIN_VALUE;
 
@@ -18,6 +20,10 @@ public abstract class ExplosionChunkLoadingEntity extends Entity {
     }
 
     protected void forceCenterChunk() {
+        if (!chunkLoadingEnabled()) {
+            clearChunkLoader();
+            return;
+        }
         ChunkPos chunkPos = chunkPosition();
         long packed = chunkPos.toLong();
         if (centerChunk == packed) {
@@ -29,6 +35,10 @@ public abstract class ExplosionChunkLoadingEntity extends Entity {
     }
 
     protected void loadChunk(int chunkX, int chunkZ) {
+        if (!chunkLoadingEnabled()) {
+            clearChunkLoader();
+            return;
+        }
         long packed = ChunkPos.asLong(chunkX, chunkZ);
         if (workChunk == packed) {
             return;
@@ -48,11 +58,28 @@ public abstract class ExplosionChunkLoadingEntity extends Entity {
     protected void saveChunkLoader(CompoundTag tag) {
         tag.putLong("loaderCenterChunk", centerChunk);
         tag.putLong("loaderWorkChunk", workChunk);
+        tag.putLong(TAG_SAVED_MILLIS, System.currentTimeMillis());
     }
 
     protected void readChunkLoader(CompoundTag tag) {
         centerChunk = tag.contains("loaderCenterChunk") ? tag.getLong("loaderCenterChunk") : Long.MIN_VALUE;
         workChunk = tag.contains("loaderWorkChunk") ? tag.getLong("loaderWorkChunk") : Long.MIN_VALUE;
+    }
+
+    protected boolean shouldExpireFromSave(CompoundTag tag) {
+        if (BombConfig.LIMIT_EXPLOSION_LIFESPAN == null) {
+            return false;
+        }
+        int limitSeconds = BombConfig.LIMIT_EXPLOSION_LIFESPAN.get();
+        if (limitSeconds <= 0) {
+            return false;
+        }
+        long savedMillis = tag.contains("milliTime") ? tag.getLong("milliTime") : tag.getLong(TAG_SAVED_MILLIS);
+        return savedMillis > 0L && System.currentTimeMillis() - savedMillis > limitSeconds * 1000L;
+    }
+
+    private static boolean chunkLoadingEnabled() {
+        return BombConfig.CHUNK_LOADING == null || BombConfig.CHUNK_LOADING.get();
     }
 
     private void forceChunk(int chunkX, int chunkZ) {

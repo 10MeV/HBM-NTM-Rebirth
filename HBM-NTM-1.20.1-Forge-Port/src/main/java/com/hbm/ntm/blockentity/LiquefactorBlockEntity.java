@@ -8,6 +8,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.menu.LiquefactorMenu;
@@ -48,6 +49,13 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     private static final int USAGE_BASE = 250;
     private static final int PROCESS_TIME_BASE = 100;
     private static final int TANK_CAPACITY = 24_000;
+    private static final List<FluidPort> FLUID_PORTS = List.of(
+            FluidPort.of(0, 4, 0, Direction.UP),
+            FluidPort.of(0, -1, 0, Direction.DOWN),
+            FluidPort.of(2, 1, 0, Direction.EAST),
+            FluidPort.of(-2, 1, 0, Direction.WEST),
+            FluidPort.of(0, 1, 2, Direction.SOUTH),
+            FluidPort.of(0, 1, -2, Direction.NORTH));
 
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_BATTERY = 1;
@@ -114,6 +122,9 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         } else if (blockEntity.progress != 0) {
             blockEntity.progress = 0;
             changed = true;
+        }
+        if (blockEntity.tank.getTankType() != HbmFluids.NONE && blockEntity.tank.getFill() > 0) {
+            blockEntity.tryProvideFluidToPorts(blockEntity.tank.getTankType(), blockEntity.tank.getPressure(), blockEntity);
         }
 
         if (changed) {
@@ -186,8 +197,22 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     }
 
     @Override
+    public void useUpFluid(FluidType type, int pressure, long amount) {
+        HbmStandardFluidSender.super.useUpFluid(type, pressure, amount);
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidProvider(FluidType type) {
         return type != HbmFluids.NONE && tank.getTankType() == type && tank.getFill() > 0;
+    }
+
+    @Override
+    protected Iterable<FluidPort> getFluidPorts() {
+        return FLUID_PORTS;
     }
 
     @Override
@@ -202,7 +227,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
 
     @Override
     protected boolean shouldCreateFluidNode() {
-        return tank.getTankType() != HbmFluids.NONE && tank.getFill() > 0;
+        return false;
     }
 
     @Override

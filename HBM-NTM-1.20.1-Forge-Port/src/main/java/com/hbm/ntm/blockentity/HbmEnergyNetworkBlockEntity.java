@@ -8,6 +8,8 @@ import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.energy.HbmEnergyProvider;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
+import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.energy.HbmPowerNet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -76,14 +78,18 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
             return;
         }
         HbmPowerNet powerNet = getPowerNet();
-        if (powerNet == null || !powerNet.isValid()) {
-            return;
-        }
+        boolean hasLocalNet = powerNet != null && powerNet.isValid();
         if (shouldSubscribeAsProvider()) {
-            powerNet.addProvider(getNetworkEnergyProvider());
+            if (hasLocalNet) {
+                powerNet.addProvider(getNetworkEnergyProvider());
+            }
+            HbmEnergyUtil.subscribeProviderToPorts(level, worldPosition, getNetworkEnergyPorts(), getNetworkEnergyProvider());
         }
         if (shouldSubscribeAsReceiver()) {
-            powerNet.addReceiver(getNetworkEnergyReceiver());
+            if (hasLocalNet) {
+                powerNet.addReceiver(getNetworkEnergyReceiver());
+            }
+            HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, getNetworkEnergyPorts(), getNetworkEnergyReceiver());
         }
     }
 
@@ -112,6 +118,10 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
 
     protected HbmEnergyReceiver getNetworkEnergyReceiver() {
         return energy;
+    }
+
+    protected Iterable<EnergyPort> getNetworkEnergyPorts() {
+        return getEnergyPorts();
     }
 
     protected boolean subscribeEnergyProvider(HbmEnergyProvider provider) {

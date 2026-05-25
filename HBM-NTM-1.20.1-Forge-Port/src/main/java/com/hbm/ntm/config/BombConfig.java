@@ -76,7 +76,7 @@ public final class BombConfig {
                 .comment("Legacy 6.04_falloutDelay: ticks to wait before the next fallout chunk computation.")
                 .defineInRange("falloutDelay", 4, 0, Integer.MAX_VALUE);
         CHUNK_LOADING = builder
-                .comment("Legacy 6.05_enableChunkLoading. Modern chunk ticket support is not yet migrated.")
+                .comment("Legacy 6.05_enableChunkLoading: allows procedural nuclear explosions to keep their work chunks loaded.")
                 .define("enableChunkLoading", true);
         EXPLOSION_ALGORITHM = builder
                 .comment("Legacy 6.06_explosionAlgorithm: 0 legacy, 1 threaded DDA, 2 threaded DDA with damage accumulation. Modern port safely delegates threaded mode to the batched worker.")

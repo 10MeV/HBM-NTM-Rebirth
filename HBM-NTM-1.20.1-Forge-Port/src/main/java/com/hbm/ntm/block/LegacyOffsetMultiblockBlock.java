@@ -90,6 +90,6 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
 
     private void fillLayout(Level level, BlockPos corePos, BlockState state) {
         LegacyMultiblockLayout layout = getLayout(state);
-        MultiblockHelper.fillOffsets(level, corePos, layout.offsets(), layout::isProxyOffset);
+        MultiblockHelper.fillOffsetsWithProxyModes(level, corePos, layout.offsets(), layout::proxyMode);
     }
 }

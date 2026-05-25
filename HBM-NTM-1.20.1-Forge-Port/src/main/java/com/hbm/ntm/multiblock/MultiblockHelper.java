@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class MultiblockHelper {
@@ -115,6 +116,11 @@ public final class MultiblockHelper {
         return fillOffsets(level, corePos, extents.offsets(), dummyState, proxyOffsets);
     }
 
+    public static boolean fillUpWithProxyModes(Level level, BlockPos corePos, MultiblockExtents extents,
+            BlockState dummyState, Function<BlockPos, LegacyProxyMode> proxyModes) {
+        return fillOffsetsWithProxyModes(level, corePos, extents.offsets(), dummyState, proxyModes);
+    }
+
     public static boolean fillOffsets(Level level, BlockPos corePos, Iterable<BlockPos> offsets) {
         return fillOffsets(level, corePos, offsets, ModBlocks.DUMMY_BLOCK.get().defaultBlockState());
     }
@@ -129,6 +135,17 @@ public final class MultiblockHelper {
 
     public static boolean fillOffsets(Level level, BlockPos corePos, Iterable<BlockPos> offsets, BlockState dummyState,
             Predicate<BlockPos> proxyOffsets) {
+        return fillOffsetsWithProxyModes(level, corePos, offsets, dummyState,
+                offset -> proxyOffsets.test(offset) ? LegacyProxyMode.all() : LegacyProxyMode.none());
+    }
+
+    public static boolean fillOffsetsWithProxyModes(Level level, BlockPos corePos, Iterable<BlockPos> offsets,
+            Function<BlockPos, LegacyProxyMode> proxyModes) {
+        return fillOffsetsWithProxyModes(level, corePos, offsets, ModBlocks.DUMMY_BLOCK.get().defaultBlockState(), proxyModes);
+    }
+
+    public static boolean fillOffsetsWithProxyModes(Level level, BlockPos corePos, Iterable<BlockPos> offsets,
+            BlockState dummyState, Function<BlockPos, LegacyProxyMode> proxyModes) {
         if (level.isClientSide) {
             return false;
         }
@@ -140,7 +157,7 @@ public final class MultiblockHelper {
             level.setBlock(pos, dummyState, Block.UPDATE_ALL);
             if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
                 dummy.setCorePos(corePos);
-                dummy.setProxy(proxyOffsets.test(offset));
+                dummy.setProxyMode(proxyModes.apply(offset));
             }
         }
         return true;
@@ -168,7 +185,8 @@ public final class MultiblockHelper {
     }
 
     private static boolean isReplaceableOrTemporary(Level level, BlockPos pos, @Nullable BlockPos temporaryPos) {
-        return pos.equals(temporaryPos) || level.getBlockState(pos).canBeReplaced();
+        return (pos.equals(temporaryPos) && level.hasChunkAt(pos))
+                || (level.hasChunkAt(pos) && level.getBlockState(pos).canBeReplaced());
     }
 
     public static boolean withClearing(Level level, BlockPos corePos, Runnable action) {

@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "hbm:crater",
+    "hbm:crater_inner",
+    "hbm:crater_outer"
+  ]
+}

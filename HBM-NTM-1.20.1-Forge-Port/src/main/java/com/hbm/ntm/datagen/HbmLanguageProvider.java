@@ -139,6 +139,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("effect.hbm.radiation", "Radiation");
         add("effect.hbm.radaway", "RadAway");
         add("effect.hbm.radx", "Rad-X");
+        add("effect.hbm.taint", "Taint");
         add("effect.hbm.mutation", "Tainted Heart");
         add("effect.hbm.stability", "Stability");
         add("geiger.title", "Geiger Counter");
@@ -170,6 +171,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_electric_furnace_off", "Electric Furnace");
         add("block.hbm.machine_boiler_off", "Old Boiler");
         add("block.hbm.machine_shredder", "Shredder");
+        add("block.hbm.machine_turbine", "Steam Turbine");
         add("block.hbm.decon", "Decontaminator");
         add("block.hbm.red_cable", "Red Copper Cable");
         add("block.hbm.fluid_duct_neo", "Fluid Duct");
@@ -239,6 +241,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.gas_coal", "Coal Dust");
         add("block.hbm.chlorine_gas", "Chlorine Gas");
         add("death.attack.monoxide", "%1$s suffocated from carbon monoxide");
+        add("death.attack.taint", "%1$s was consumed by taint");
         add("death.attack.electric", "%1$s was electrocuted");
         add("death.attack.shrapnel", "%1$s was shredded by shrapnel");
         add("death.attack.rubble", "%1$s was crushed by flying rubble");

@@ -155,6 +155,31 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+## 2026-05-25 dummy 跨区块加载保护
+
+触发来源：
+
+- 继续复核 1.7.10 `BlockDummyable.destroyIfOrphan(...)` 后确认，旧版 dummy 在判断自己是否成为孤儿前，会先用 `world.checkChunksExist(...)` 确认周围区块已加载。
+- 现代端此前在 `MultiblockDummyBlockEntity.serverTick(...)` 中只要读不到 core 方块就移除 dummy；当 core 所在区块未加载或跨区块边界加载顺序不一致时，可能误删仍属于有效多方块的 dummy。
+
+本轮现代侧补齐：
+
+- `MultiblockDummyBlockEntity.serverTick(...)` 现在只有在 `CorePos` 所在区块已加载，且该位置确实不是 `MultiblockCoreBlock` 时才清理 dummy。
+- dummy 右键转发、破坏 core 联动和 capability proxy 转发都会先检查 core 区块是否已加载：
+  - 未加载时不强行读取 core block entity。
+  - 未加载时不把 dummy 当成孤儿处理。
+- `DummyBlock` 的 shape 回溯在 core 区块未加载时回退到单格 shape，避免客户端/服务端为了选择盒读取未加载 core。
+- `MultiblockHelper.checkSpace(...)` 的可替换判断增加区块加载门槛；未加载目标位置不再被当作空气或可替换方块处理。
+
+效果：
+
+- 该补丁对齐旧 `destroyIfOrphan` 的防误删语义，降低大型多方块跨区块加载、卸载、远距离重进视野时出现 dummy 自删或错误破坏 core 的风险。
+- capability/右键/shape 的未加载 core 行为现在偏向保守等待，而不是制造一次错误世界修改。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ### 2026-05-24 多方块 item fit 默认值回调
 
 - 多方块库的库存图标已经改由 OBJ bounds 计算中心与缩放，但上一轮公共默认 `itemFitSize = 0.58` 对大多数 1.7.10 机器偏保守。
@@ -711,3 +736,100 @@
 验证：
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-25 proxy dummy 分类型能力迁移
+
+触发来源：
+
+- 回到多方块库基础移植后，复核 1.7.10 `TileEntityProxyCombo` 发现旧版 proxy 不是“所有能力全转发”，而是由 `inventory()`、`power()`、`conductor()`、`fluid()`、`heatSource()`、`moltenMetal()` 逐项开关控制。
+- 现代端此前只有 `Proxy=true/false`，会把所有 Forge capability 请求转发到 core，后续接入真实机器逻辑和网络时会过宽。
+
+本轮现代侧补齐：
+
+- 新增 `LegacyProxyMode`，表达旧 `TileEntityProxyCombo` 的 inventory/power/conductor/fluid/heat/moltenMetal 开关。
+- `MultiblockDummyBlockEntity` 的 `getCapability(...)` 改为按 `LegacyProxyMode` 过滤：
+  - `inventory` 对应 `ForgeCapabilities.ITEM_HANDLER`。
+  - `power` 或 `conductor` 对应 `ForgeCapabilities.ENERGY`。
+  - `fluid` 或 `moltenMetal` 对应 `ForgeCapabilities.FLUID_HANDLER`。
+- dummy NBT 继续保存旧 `Proxy` 布尔值，并新增 `ProxyInventory`、`ProxyPower`、`ProxyConductor`、`ProxyFluid`、`ProxyHeat`、`ProxyMoltenMetal`、`ProxyAll`。
+  - 旧存档只有 `Proxy=true` 且没有细分字段时，仍按 `ProxyAll` 读取，保证兼容。
+- `LegacyMultiblockLayout` 从 `Predicate<BlockPos>` 升级为 offset -> `LegacyProxyMode`：
+  - 旧 `withProxyPredicate(...)` / `withProxyOffsets(...)` 仍保留，默认映射为 `LegacyProxyMode.all()`，避免破坏已有调用。
+  - 新增带 `LegacyProxyMode` 的 overload，供机器按 1.7.10 proxy 类型精确声明。
+- `MultiblockHelper` 新增 `fillOffsetsWithProxyModes(...)` / `fillUpWithProxyModes(...)`，核心填充路径现在把 proxy mode 写入 dummy。
+- `LegacyXrMultiblockBlock` 与 `LegacyOffsetMultiblockBlock` 已改用 typed proxy 填充路径。
+
+已按 1.7.10 方块类核对并接入的 proxy 类型：
+
+- `inventory + power + fluid`：组装机、化工厂、流体固化机、热解炉、PUREX、装配工厂、回旋加速器、辐射分解、矿泥机等。
+- `inventory + power`：电池座、辐射发电机、辐照舱。
+- `inventory + fluid`：SILEX、回转炉、焦化塔。
+- `power + fluid`：泵机、离心机、压缩机、真空蒸馏/加氢/催化重整、涡扇、燃气轮机、蒸汽机等。
+- `fluid`：流体罐、大小塔、大型流体罐、催化裂化、分馏塔、太阳锅炉等。
+
+暂缓内容：
+
+- 旧 `heatSource()` 与 `moltenMetal()` 已在 mode 层保留字段，但现代端尚无对应完整热力/熔融金属 capability；当前只把 `moltenMetal` 映射到 Forge fluid handler。
+- `TileEntityProxyDyn` 的动态代理细节暂按其继承的 `TileEntityProxyCombo` 开关处理；OpenComputers/ROR 等外围接口留给对应库切片。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-25 dummy 形状回溯 core 接口化
+
+触发来源：
+
+- 复核 1.7.10 `BlockDummyable` 后确认，旧版详细 `bounding` 会通过 `findCore(...)` 从任意 dummy 回到 core，再按 core 朝向参与碰撞、射线命中和高亮。
+- 现代端此前 `DummyBlock` 只对 `LegacyVisibleMultiblockMachineBlock` 特判转发详细 shape；真实 BlockEntity 机器如组装机、流体固化机、电池座不在这条类型判断内，dummy 会退回满方块。
+
+本轮现代侧补齐：
+
+- `MultiblockCoreBlock` 从纯 marker 扩展为多方块形状接口：
+  - `getMultiblockShape(...)`
+  - `getMultiblockCollisionShape(...)`
+  - 默认仍返回单个满方块，保持未接入机器行为不变。
+- `DummyBlock` 的选择盒/碰撞盒不再判断具体 core 类，而是统一通过 `MultiblockCoreBlock` 读取整机 shape，并平移到当前 dummy 的局部坐标。
+- `LegacyVisibleMultiblockMachineBlock`、`AssemblyMachineBlock`、`MachineBatterySocketBlock`、`LiquefactorBlock` 已接入该接口。
+
+效果：
+
+- 多方块库现在有统一的 core -> dummy shape 回溯入口，后续新机器只要实现/继承 `MultiblockCoreBlock` 并提供整机 shape，dummy 侧无需再增加特判。
+- 这更接近旧 `BlockDummyable.addCollisionBoxesToList(...)` / `collisionRayTrace(...)` 的“从 dummy 找 core 再用 core 几何”的契约。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-25 dummy 破坏/硬度/拾取回溯 core
+
+触发来源：
+
+- 用户要求继续推进多方块库移植；本轮继续核对 1.7.10 `BlockDummyable` 的通用底层契约，而不是新增单机占位。
+- 旧版 `BlockDummyable` 中 dummy 与 core 使用同一个方块 ID/物品，`findCore(...)` 是所有 dummy 回溯 core 的入口；玩家破坏 dummy 时由 `onBlockHarvested(...)` 掉落一个机器方块物品，创造模式不掉落，随后 `breakBlock(...)` 沿 dummy 指向链清理到 core。
+
+问题定位：
+
+- 现代端 dummy 是独立 `hbm:dummy_block`，此前 `DummyBlock#onRemove` 无论移除来源都会 `destroyBlock(core, true)`。
+- 这会偏离旧版行为：创造模式破坏 dummy 或非玩家移除 dummy 时也可能让 core 掉落机器物品；同时 dummy 的破坏速度和中键拾取没有统一按 core 回溯。
+
+本轮现代侧补齐：
+
+- `MultiblockDummyBlockEntity` 新增瞬时 `dropCoreOnRemoval` 标记与 `destroyCore(boolean drop)`，不写入 NBT，只用于本次玩家破坏事件。
+- `DummyBlock#playerWillDestroy(...)` 根据玩家是否创造模式设置是否允许 core 掉落：
+  - 生存/非创造玩家破坏 dummy：销毁 core 并掉落 core 机器物品与 core 方块实体内容。
+  - 创造模式破坏 dummy：销毁 core 与其 dummy 结构，但不掉落 core 机器物品。
+  - 非玩家来源移除 dummy：默认不掉落 core，避免爆炸/结构清理等路径凭空吐出整机。
+- `DummyBlock#getDestroyProgress(...)` 现在回溯 core state 计算破坏速度，让 dummy 区域的挖掘手感按真正机器硬度/工具规则走。
+- `DummyBlock#getCloneItemStack(...)` 现在回溯 core block，避免中键拾取拿到不可见 dummy 方块或空物品。
+- `DummyBlock` 内部提取 `findCore(...)` 小 helper，形状、硬度与拾取共享同一 core 查找路径，并保持 chunk 未加载时的保守 fallback。
+
+效果：
+
+- 现代 dummy 的掉落/破坏/拾取更接近旧 `BlockDummyable` 的“dummy 只是整机的一部分，物品语义属于 core/原机器”的契约。
+- 这为后续更多真实 BlockEntity 多方块机器接入菜单、库存、能量/流体代理时减少底层行为分叉。
+
+验证：
+
+- 首次 `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks` 发现 Forge 1.20.1 的 `BlockState#getCloneItemStack` 签名与 vanilla `Block` 签名不同，已改为调用 core block 的 `getCloneItemStack(...)`。
+- 修正后 `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks` 通过。

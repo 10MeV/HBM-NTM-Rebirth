@@ -1,14 +1,18 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidThermalExchange;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
+import com.hbm.ntm.fluid.trait.HeatableFluidTrait;
+import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingStep;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingType;
 import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
@@ -16,12 +20,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidReceiver, HbmStandardFluidSender, HeatSource {
     public static final int FEED_TANK = 0;
     public static final int STEAM_TANK = 1;
+    private static final int FEED_TANK_CAPACITY = 16_000;
+    private static final int STEAM_TANK_CAPACITY = FEED_TANK_CAPACITY * 100;
+    private static final int MAX_HEAT = 3_200_000;
+    private static final double HEAT_DIFFUSION = 0.1D;
 
     private final HbmFluidTank feedTank;
     private final HbmFluidTank steamTank;
@@ -31,8 +40,8 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
         this(
                 pos,
                 state,
-                new HbmFluidTank(HbmFluids.WATER, 16_000),
-                new HbmFluidTank(HbmFluids.STEAM, 16_000)
+                new HbmFluidTank(HbmFluids.WATER, FEED_TANK_CAPACITY),
+                new HbmFluidTank(HbmFluids.STEAM, STEAM_TANK_CAPACITY)
         );
     }
 
@@ -67,14 +76,18 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     }
 
     public void addHeat(int heat) {
-        this.heat = Math.max(0, this.heat + Math.max(0, heat));
+        this.heat = Math.min(MAX_HEAT, Math.max(0, this.heat + Math.max(0, heat)));
     }
 
     public HbmFluidThermalExchange.ThermalResult previewBoiling() {
+        prepareOutputTank();
         return HbmFluidThermalExchange.heat(feedTank, steamTank, HeatingType.BOILER, heat, true);
     }
 
     public HbmFluidThermalExchange.ThermalResult tryBoil(int availableHeat, boolean simulate) {
+        if (!simulate) {
+            prepareOutputTank();
+        }
         HbmFluidThermalExchange.ThermalResult result = HbmFluidThermalExchange.heat(feedTank, steamTank, HeatingType.BOILER, availableHeat, simulate);
         if (!simulate && result.converted()) {
             heat = Math.max(0, heat - result.heatUsed());
@@ -83,12 +96,49 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
         return result;
     }
 
+    private void prepareOutputTank() {
+        HeatableFluidTrait trait = feedTank.getTankType().getTrait(HeatableFluidTrait.class);
+        HeatingStep step = trait == null || trait.getEfficiency(HeatingType.BOILER) <= 0.0D ? null : trait.getFirstStep();
+        if (step == null || step.amountRequired() <= 0 || step.amountProduced() <= 0) {
+            steamTank.setTankType(HbmFluids.NONE);
+            return;
+        }
+        steamTank.setTankType(step.producedType());
+        steamTank.changeTankSize(feedTank.getMaxFill() * step.amountProduced() / step.amountRequired());
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, BoilerBlockEntity blockEntity) {
+        blockEntity.prepareOutputTank();
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, blockEntity);
+        blockEntity.pullHeatFromBelow(level, pos);
         HbmFluidThermalExchange.ThermalResult result = blockEntity.tryBoil(blockEntity.heat, false);
-        if (result.converted()) {
-        } else if (blockEntity.heat > 0) {
-            blockEntity.heat = Math.max(blockEntity.heat - Math.max(blockEntity.heat / 1000, 1), 0);
+        if (blockEntity.steamTank.getTankType() != HbmFluids.NONE && blockEntity.steamTank.getFill() > 0) {
+            blockEntity.tryProvideFluidToPorts(blockEntity.steamTank.getTankType(), blockEntity.steamTank.getPressure(), blockEntity);
+        }
+        if (result.converted() || level.getGameTime() % 20L == 0L) {
+            blockEntity.setChanged();
+        }
+    }
+
+    private void pullHeatFromBelow(Level level, BlockPos pos) {
+        BlockEntity sourceBlockEntity = level.getBlockEntity(pos.below());
+        if (sourceBlockEntity instanceof HeatSource source) {
+            int diff = source.getHeatStored() - heat;
+            if (diff > 0) {
+                int transferred = (int) Math.ceil(diff * HEAT_DIFFUSION);
+                transferred = Math.min(transferred, MAX_HEAT - heat);
+                if (transferred > 0) {
+                    source.useUpHeat(transferred);
+                    heat = Math.min(MAX_HEAT, heat + transferred);
+                    return;
+                }
+            }
+            if (diff == 0) {
+                return;
+            }
+        }
+        if (heat > 0) {
+            heat = Math.max(heat - Math.max(heat / 1000, 1), 0);
         }
     }
 
@@ -103,13 +153,46 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     }
 
     @Override
+    public long transferFluid(FluidType type, int pressure, long amount) {
+        long leftover = HbmStandardFluidReceiver.super.transferFluid(type, pressure, amount);
+        if (leftover != amount) {
+            onFluidContentsChanged();
+        }
+        return leftover;
+    }
+
+    @Override
+    public void useUpFluid(FluidType type, int pressure, long amount) {
+        HbmStandardFluidSender.super.useUpFluid(type, pressure, amount);
+        if (amount > 0L) {
+            onFluidContentsChanged();
+        }
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return type == HbmFluids.WATER;
+        return type != HbmFluids.NONE && type == feedTank.getTankType();
     }
 
     @Override
     protected boolean shouldSubscribeAsFluidProvider(FluidType type) {
-        return type == HbmFluids.STEAM;
+        return type != HbmFluids.NONE && type == steamTank.getTankType();
+    }
+
+    @Override
+    protected Iterable<FluidPort> getFluidPorts() {
+        Direction facing = getBlockState().hasProperty(HorizontalMachineBlock.FACING)
+                ? getBlockState().getValue(HorizontalMachineBlock.FACING)
+                : Direction.SOUTH;
+        return List.of(
+                FluidPort.of(facing.getStepX() * 2, 0, facing.getStepZ() * 2, facing),
+                FluidPort.of(-facing.getStepX() * 2, 0, -facing.getStepZ() * 2, facing.getOpposite()),
+                FluidPort.of(0, 4, 0, Direction.UP));
+    }
+
+    @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
     }
 
     @Override
@@ -139,6 +222,6 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        heat = Math.max(0, tag.getInt("heat"));
+        heat = Math.min(MAX_HEAT, Math.max(0, tag.getInt("heat")));
     }
 }

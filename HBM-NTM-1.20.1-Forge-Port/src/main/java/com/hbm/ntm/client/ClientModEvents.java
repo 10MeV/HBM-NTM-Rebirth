@@ -6,14 +6,20 @@ import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.particle.AshesParticle;
 import com.hbm.ntm.client.particle.BlackPowderSmokeParticle;
 import com.hbm.ntm.client.particle.BlackPowderSparkParticle;
+import com.hbm.ntm.client.particle.CoolingTowerParticle;
 import com.hbm.ntm.client.particle.DeadLeafParticle;
 import com.hbm.ntm.client.particle.ExplosionSmallParticle;
 import com.hbm.ntm.client.particle.FlamethrowerParticle;
+import com.hbm.ntm.client.particle.FluidFillParticle;
 import com.hbm.ntm.client.particle.FoamParticle;
 import com.hbm.ntm.client.particle.GasFlameParticle;
+import com.hbm.ntm.client.particle.GibletParticle;
+import com.hbm.ntm.client.particle.HadronParticle;
 import com.hbm.ntm.client.particle.HbmSmokeParticle;
+import com.hbm.ntm.client.particle.LegacySplashParticle;
 import com.hbm.ntm.client.particle.MukeWaveParticle;
 import com.hbm.ntm.client.particle.RadiationFogParticle;
+import com.hbm.ntm.client.particle.RbmkAnimatedParticle;
 import com.hbm.ntm.client.particle.SchrabFogParticle;
 import com.hbm.ntm.client.particle.SmokePlumeParticle;
 import com.hbm.ntm.client.particle.TownAuraParticle;
@@ -29,6 +35,7 @@ import com.hbm.ntm.client.renderer.LiquefactorRenderer;
 import com.hbm.ntm.client.renderer.MachineBatterySocketRenderer;
 import com.hbm.ntm.client.renderer.MovingPackageRenderer;
 import com.hbm.ntm.client.renderer.MovingItemRenderer;
+import com.hbm.ntm.client.renderer.NuclearDeviceRenderer;
 import com.hbm.ntm.client.renderer.RubbleRenderer;
 import com.hbm.ntm.client.renderer.ShrapnelRenderer;
 import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
@@ -38,6 +45,7 @@ import com.hbm.ntm.client.screen.ChemicalPlantScreen;
 import com.hbm.ntm.client.screen.LiquefactorScreen;
 import com.hbm.ntm.client.screen.MachineBatteryScreen;
 import com.hbm.ntm.client.screen.MachineBatterySocketScreen;
+import com.hbm.ntm.client.screen.NuclearDeviceScreen;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -70,6 +78,7 @@ public final class ClientModEvents {
             MenuScreens.register(ModMenuTypes.LIQUEFACTOR.get(), LiquefactorScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY.get(), MachineBatteryScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY_SOCKET.get(), MachineBatterySocketScreen::new);
+            MenuScreens.register(ModMenuTypes.NUCLEAR_DEVICE.get(), NuclearDeviceScreen::new);
         });
     }
 
@@ -85,6 +94,7 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_LIGHT.get(), LegacyLightBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_DEMON_LAMP.get(), LegacyDemonLampBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_LANTERN.get(), LegacyLanternBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.NUCLEAR_DEVICE.get(), NuclearDeviceRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MOVING_ITEM.get(), MovingItemRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MOVING_PACKAGE.get(), MovingPackageRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK5.get(), NoopRenderer::new);
@@ -152,6 +162,16 @@ public final class ClientModEvents {
         event.registerSpriteSet(ModParticleTypes.TOWN_AURA.get(), TownAuraParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.SCHRAB_FOG.get(), SchrabFogParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.DEAD_LEAF.get(), DeadLeafParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.GIBLET_MEAT.get(), sprites -> new GibletParticle.Provider(sprites, GibletParticle.TYPE_MEAT));
+        event.registerSpriteSet(ModParticleTypes.GIBLET_SLIME.get(), sprites -> new GibletParticle.Provider(sprites, GibletParticle.TYPE_SLIME));
+        event.registerSpriteSet(ModParticleTypes.GIBLET_METAL.get(), sprites -> new GibletParticle.Provider(sprites, GibletParticle.TYPE_METAL));
+        event.registerSpriteSet(ModParticleTypes.HADRON.get(), HadronParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.RBMK_FLAME.get(), RbmkAnimatedParticle.FlameProvider::new);
+        event.registerSpriteSet(ModParticleTypes.RBMK_STEAM.get(), RbmkAnimatedParticle.SteamProvider::new);
+        event.registerSpriteSet(ModParticleTypes.RBMK_MUSH.get(), RbmkAnimatedParticle.MushProvider::new);
+        event.registerSpriteSet(ModParticleTypes.COOLING_TOWER.get(), CoolingTowerParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.SPLASH.get(), LegacySplashParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.FLUID_FILL.get(), FluidFillParticle.Provider::new);
     }
 
     private ClientModEvents() {

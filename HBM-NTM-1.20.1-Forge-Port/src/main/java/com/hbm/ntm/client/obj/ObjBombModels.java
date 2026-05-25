@@ -8,7 +8,7 @@ public final class ObjBombModels {
     public static final LegacyWavefrontModel MINE_MARELET = model("marelet", "mine_marelet");
     public static final LegacyWavefrontModel MINE_FAT = model("mine_fat", "mine_fat");
     public static final LegacyWavefrontModel MINE_NAVAL = model("naval_mine", "naval_mine");
-    public static final LegacyWavefrontModel FAT_MAN = model("fat_man", "gadget");
+    public static final LegacyWavefrontModel FAT_MAN = model("fat_man", "fat_man");
     public static final LegacyWavefrontModel FLEIJA = model("fleija", "fleija");
     public static final LegacyWavefrontModel GADGET = model("gadget", "gadget");
     public static final LegacyWavefrontModel IVYMIKE = model("ivymike", "ivymike");

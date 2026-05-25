@@ -1,7 +1,6 @@
 package com.hbm.ntm.explosion;
 
 import com.hbm.ntm.config.BombConfig;
-import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.explosion.ExplosionNT.ExAttrib;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
@@ -54,7 +53,7 @@ public final class ExplosionNukeSmall {
             irradiateMiniNukeFootprint(level, x, y, z, params.radiationLevel);
         } else {
             ExplosionLarge.spawnParticles(level, x, y, z, ExplosionLarge.cloudFunction(Math.round(params.blastRadius)));
-            level.addFreshEntity(NukeExplosionMk5Entity.create(level, Math.round(params.blastRadius), x, y, z));
+            NuclearExplosionUtil.spawnNuclear(level, Math.round(params.blastRadius), x, y, z);
         }
     }
 

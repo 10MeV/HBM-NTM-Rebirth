@@ -26,6 +26,10 @@ public final class ClientPanelData {
         return data == null ? Optional.empty() : Optional.of(new PanelData(data.legacyType, data.data.copy()));
     }
 
+    public static int panelCount() {
+        return DATA.size();
+    }
+
     public static void addListener(ClientPanelDataListener listener) {
         if (listener != null && !LISTENERS.contains(listener)) {
             LISTENERS.add(listener);

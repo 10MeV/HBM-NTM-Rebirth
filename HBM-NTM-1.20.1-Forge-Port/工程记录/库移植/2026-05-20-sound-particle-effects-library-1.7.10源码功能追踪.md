@@ -483,3 +483,257 @@
 
 - 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
 - 结果：通过；编译器仅提示部分文件使用/覆盖已过时 API。
+
+## 2026-05-25 第十一批推进：骨骼 OBJ 粒子与实体短暂隐藏
+
+- 1.7.10 对照：
+  - `SkeletonCreator`：
+    - 旧 NBT `type=skeleton`，字段 `entityID/brightness/gib/force`。
+    - 客户端按 `entityID` 找到 `EntityLivingBase`，调用 `ClientProxy.vanish(entityID)` 隐藏原实体约 2 秒。
+    - 骨架分解表分为 biped、zombie/skeleton、villager/witch 三类；每类生成头、躯干、四肢 6 个 `BoneDefinition`。
+    - gib 模式下，非骷髅实体随机跳过部分骨块；骷髅实体 gib 保持普通骨骼贴图而非血迹贴图。
+  - `ParticleSkeleton`：
+    - 旧模型：`assets/hbm/models/effect/skeleton.obj`，OBJ 分组 `Skull/Torso/Limb/SkullVillager`。
+    - 旧贴图：`textures/particle/skeleton.png`、`skeleton_blood.png`、`skoilet.png`、`skoilet_blood.png`。
+    - 普通模式寿命 `1200 + rand(20)`，初始延迟 20 tick，重力 `0.02`。
+    - gib 模式寿命 `600 + rand(20)`，跳过初始延迟随机化，重力 `0.04`。
+    - 落地后清零速度，并播放 `mob.skeleton.hurt`，音量 0.25、pitch `0.8 + rand * 0.4`。
+    - 最后 40 tick 线性淡出。
+- 本批现代迁移：
+  - 复制旧资源：
+    - `assets/hbm/models/effect/skeleton.obj`
+    - `assets/hbm/textures/particle/skeleton.png`
+    - `assets/hbm/textures/particle/skeleton_blood.png`
+    - `assets/hbm/textures/particle/skoilet.png`
+    - `assets/hbm/textures/particle/skoilet_blood.png`
+  - 新增 `SkeletonParticle`：
+    - 使用 `LegacyWavefrontModel` 渲染旧 OBJ 分组。
+    - 保留初始延迟、随机旋转动量、普通/gib 寿命、重力、落地停住、骷髅受伤音效和 40 tick 淡出。
+    - villager 头部使用 `skoilet*` 贴图，其他部件使用 skeleton 贴图；gib 按旧逻辑切血迹贴图。
+  - `HbmParticleEffects#spawnSkeleton`：
+    - 从骨块占位粒子替换为真正 legacy 骨位分解。
+    - 按现代实体类型映射 `Zombie/AbstractSkeleton/ZombifiedPiglin`、`Villager/Witch`，并保留旧 techguns 简名兼容分支。
+    - 读取旧 `brightness/gib/force` 字段并实例化对应 `SkeletonParticle`。
+  - `ClientForgeEvents` 新增客户端 vanish 表：
+    - `RenderLivingEvent.Pre` 中取消短暂隐藏实体渲染。
+    - 每 tick 清理过期项，换世界时清空。
+    - `spawnSkeleton` 与已有 `spawnAshes` 均接入该隐藏路径，补齐旧 `SkeletonCreator/AshesCreator` 的共同客户端行为。
+  - `LegacyWavefrontModel` 新增窄接口 `renderPartTranslucent(...)`，仅供需要 alpha 淡出的 OBJ 粒子使用，不改变已有机器/弹壳 OBJ 的默认 cutout 渲染。
+- 边界：
+  - 旧 `EntityDummy` 与 HBM 自定义 undead soldier 现代实体尚未完整迁移；本批对未知 living entity 默认走 biped 骨架分解。
+  - vanish 目前只覆盖客户端渲染隐藏，不改变实体逻辑、碰撞或服务端状态；这与旧 `RenderLivingEvent.Pre` 取消渲染的合同一致。
+  - 旧标准物品光照/GL cull/blend 细节通过现代 `entityTranslucent` RenderType 近似承载，主要模型、贴图、透明淡出和声音合同已保留。
+
+## 2026-05-25 第十一批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+
+## 2026-05-25 第十二批推进：giblets 血肉/史莱姆/金属碎块粒子
+
+- 1.7.10 对照：
+  - `ClientProxy` aux 类型 `giblets`：
+    - 旧 NBT 字段 `ent/gibType/cDiv`。
+    - 客户端先 `vanish(ent)`，再按实体宽高估算碎块数：`(int)(width / 0.25) * 1.5 * (int)(height / 0.25)`。
+    - 若存在 `cDiv`，碎块数按 `ceil(count / cDiv)` 降低。
+    - `rand.nextInt(15)==0` 时速度倍率提升到 10。
+    - 每块 `ParticleGiblet` 从 aux 位置喷出，速度为高斯 X/Z `0.25 * mult`、Y `rand * mult`。
+  - `ParticleGiblet`：
+    - 旧贴图：
+      - `textures/particle/meat.png`
+      - `textures/particle/slime.png`
+      - `textures/particle/metal.png`
+    - `gibType=0` 肉块，`gibType=1` 史莱姆，`gibType=2` 金属。
+    - 寿命 `140 + rand(20)`，重力 `2F`；金属重力翻倍。
+    - 飞行中持续旋转；非金属碎块飞行时生成方块尘拖尾，肉为红石块尘，史莱姆为西瓜块尘；金属无拖尾。
+  - 旧调用点包括 sawblade/cog/turbofan/ore slopper/glyphid death/confetti 等，常用 `cDiv=5` 做数量削减。
+- 本批现代迁移：
+  - 复制旧资源：
+    - `assets/hbm/textures/particle/meat.png`
+    - `assets/hbm/textures/particle/slime.png`
+    - `assets/hbm/textures/particle/metal.png`
+  - 新增粒子类型与图集：
+    - `giblet_meat` -> `hbm:particle/meat`
+    - `giblet_slime` -> `hbm:particle/slime`
+    - `giblet_metal` -> `hbm:particle/metal`
+  - 新增 `GibletParticle`：
+    - 保留旧寿命、重力、速度阻尼、飞行旋转和非金属方块尘拖尾。
+    - 现代端用 `TextureSheetParticle`/sprite atlas 承载旧单贴图 quad。
+  - `ParticleUtil` 新增公共入口：
+    - `TYPE_GIBLETS = "giblets"`
+    - `GIBLET_MEAT/GIBLET_SLIME/GIBLET_METAL`
+    - `spawnGiblets(Entity, gibType, countDivisor)` 与坐标/实体 id 重载。
+  - `HbmParticleEffects` 新增 `spawnGiblets`：
+    - 读取旧 `ent/gibType/cDiv` 字段。
+    - 复用第十一批客户端 vanish 表隐藏实体。
+    - 按旧实体尺寸公式生成碎块，并保留 1/15 的高速度倍率。
+  - `CommonForgeEvents` 中高辐射直接致死路径改为调用 `ParticleUtil.spawnGiblets(entity, GIBLET_MEAT)`，开始让现代死亡效果走本库入口。
+- 边界：
+  - 旧 `ParticleGiblet` 渲染代码保存了 pitch/yaw 两轴旋转；现代 `TextureSheetParticle` 主要以 roll 承载可见旋转，物理/贴图/拖尾/数量/速度合同已保留。
+  - 旧 sawblade/cog/turbofan/ore slopper 等调用点在 clean port 中尚未完整对应；本批先迁通库和高辐射致死调用点，后续迁对应实体/机器时应改为 `ParticleUtil.spawnGiblets(...)`。
+
+## 2026-05-25 第十二批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过；编译器仅提示部分输入文件使用/覆盖已过时 API。
+
+## 2026-05-25 第十三批推进：Tau/Hadron/Amat 闪光粒子
+
+- 1.7.10 对照：
+  - `ClientProxy` aux 类型：
+    - `hadron`：直接生成 `ParticleHadron`。
+    - `tau`：读取 `small/count`，生成 `count` 个 `ParticleSpark.makeSmall(small)`，并生成一个 `ParticleHadron.makeSmall(small)`。
+    - `amat`：读取 `scale`，生成 `ParticleAmatFlash`。
+  - `ParticleSpark`：
+    - 无贴图线段粒子，`getFXLayer()=3`。
+    - 记录最近 `thresh=4+rand(3)` 个速度 step，寿命 `20+rand(10)`，重力 `0.5`。
+    - 落地时反弹 Y 速度 `-lastY * 0.8`。
+    - small 模式：`thresh=3`、寿命 `2+rand(3)`、Y 速度强制向下。
+  - `ParticleHadron`：
+    - 旧贴图 `textures/particle/hadron.png`。
+    - 寿命 10 tick，small 模式 5 tick。
+    - 加色混合、fullbright、深度不写入；scale 曲线 `(age + partial) * 0.15 * particleScale`，alpha 线性衰减。
+  - `ParticleAmatFlash`：
+    - 无贴图三角光束，固定随机种子 `432L`。
+    - 寿命 10 tick，按 `0.2 * scale` 缩放。
+    - 渲染 100 组三角扇式白色加色光束，随时间伸长并淡出。
+- 本批现代迁移：
+  - 复制旧资源：
+    - `assets/hbm/textures/particle/hadron.png`
+  - 新增粒子类型与图集：
+    - `hadron` -> `hbm:particle/hadron`
+  - 新增 `HadronParticle`：
+    - 使用旧 hadron 贴图，保留 fullbright、加色混合、深度不写入、10/5 tick 寿命、scale/alpha 曲线。
+    - provider 缓存 sprite，供 `tau` 组合效果直接实例化 small 变体。
+  - 新增 `TauSparkParticle`：
+    - 保留旧无贴图白线轨迹、step 队列、寿命、重力、落地反弹和 small 模式。
+  - 新增 `AmatFlashParticle`：
+    - 使用固定随机种子重建 100 组无贴图加色三角光束，保留 `scale`、寿命和淡出合同。
+  - `ParticleUtil` 新增公共入口：
+    - `TYPE_TAU/TYPE_HADRON/TYPE_AMAT_FLASH`
+    - `spawnTau(...)`、`spawnHadron(...)`、`spawnAmatFlash(...)`
+  - `HbmParticleEffects` 更新：
+    - `tau` 从未实现状态接入真实 `TauSparkParticle + HadronParticle` 组合。
+    - `hadron` 接入真实 hadron 贴图闪光。
+    - `amat` 从 `WITCH`/`EXPLOSION_EMITTER` 近似替换为 `AmatFlashParticle`。
+- 边界：
+  - 旧 `ParticleSpark` 的线宽依赖 GL 固定管线；现代端通过 `RenderSystem.lineWidth(3.0F)` 和 `DEBUG_LINE_STRIP` 承载，实际线宽可能受显卡/驱动限制。
+  - `ParticleAmatFlash` 现代实现用三角列表重建旧三角扇效果，保留固定随机、加色、淡出和 scale；旧 GL shade model 的平滑插值由顶点 alpha 渐变近似承载。
+  - `rift` 仍未迁移，虽然旧端也使用 `hadron.png`；后续可在本批 hadron 贴图基础上继续补。
+
+## 2026-05-25 第十三批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过；编译器仅提示 `HadronParticle` 使用/覆盖已过时 API。
+
+## 2026-05-25 第十四批推进：RBMK 动画粒子、冷却塔烟与 splash 粒子
+
+- 1.7.10 对照：
+  - `ClientProxy` aux 类型：
+    - `rbmkflame`：读取 `maxAge`，生成 `ParticleRBMKFlame`。
+    - `rbmksteam`：生成 `ParticleRBMKSteam`。
+    - `rbmkmush`：读取 `scale`，生成 `ParticleRBMKMush`。
+    - `tower`：读取 `lift/base/max/life/strafe/noWind/alpha/color`，生成 `ParticleCoolingTower`。
+    - `splash`：读取可选 `color`，生成 `ParticleSplash`。
+  - `ParticleRBMKFlame`：
+    - 旧贴图 `textures/particle/rbmk_fire.png`，14 个横向帧。
+    - 寿命来自 NBT；scale 为 `randFloat + 1`；加色混合、fullbright、深度不写入。
+    - 帧序号 `particleAge * 5 % 14`；前 20 tick 淡入，末 20 tick 淡出，并整体乘 `0.5` alpha。
+  - `ParticleRBMKSteam`：
+    - 旧贴图 `textures/particle/rbmk_jet_steam.png`，20 个横向帧。
+    - 寿命 10 tick，scale 4，alpha 0.25，加色混合、fullbright、深度不写入。
+  - `ParticleRBMKMush`：
+    - 旧贴图 `textures/particle/rbmk_mush.png`，30 个纵向帧。
+    - 寿命 50 tick，scale 来自 NBT，按生命进度播放纵向帧，加色混合、fullbright。
+  - `ParticleCoolingTower`：
+    - 旧贴图来自 block atlas 的 `textures/blocks/particle/particle_base.png`。
+    - 默认颜色 0.9-0.95；alpha 线性衰减；scale 按 `base + pow(max * ageScale - base, 2)` 增长。
+    - `lift` 控制 Y 速度趋近，`strafe` 增加随机横移，未设置 `noWind` 时持续施加 +X/-Z 风向，速度阻尼 0.925。
+  - `ParticleSplash`：
+    - 旧贴图来自 block atlas 的 `textures/blocks/particle/particle_splash.png`。
+    - 可选 RGB 着色，否则随机灰白色；alpha 0.5，scale 0.4，寿命 `200+rand(50)`，重力 0.4。
+    - 空中随机 X/Z 扰动，Y 下落速度封顶 -0.5，落地移除。
+- 本批现代迁移：
+  - 复制旧资源：
+    - `assets/hbm/textures/particle/rbmk_fire.png`
+    - `assets/hbm/textures/particle/rbmk_jet_steam.png`
+    - `assets/hbm/textures/particle/rbmk_mush.png`
+    - `assets/hbm/textures/particle/particles.png`
+    - `assets/hbm/textures/particle/particle_splash.png`
+  - 新增粒子类型与图集：
+    - `rbmk_flame` -> `hbm:particle/rbmk_fire`
+    - `rbmk_steam` -> `hbm:particle/rbmk_jet_steam`
+    - `rbmk_mush` -> `hbm:particle/rbmk_mush`
+    - `cooling_tower` -> `hbm:particle/particle_base`
+    - `splash` -> `hbm:particle/particle_splash`
+  - 新增 `RbmkAnimatedParticle`：
+    - 使用一张 legacy 条带贴图作为 atlas sprite，并在 sprite 内部按 14/20 横帧与 30 纵帧切 UV。
+    - 保留 RBMK flame/steam/mush 的寿命、scale、alpha、fullbright 和加色混合合同。
+  - 新增 `CoolingTowerParticle`：
+    - 保留旧 `lift/base/max/life/strafe/noWind/alpha/color` 字段与扩散/风向/阻尼逻辑。
+  - 新增 `LegacySplashParticle`：
+    - 保留旧着色、alpha、寿命、重力、随机扰动、下落封顶和落地移除行为。
+  - `ParticleUtil` 新增公共入口：
+    - `TYPE_RBMK_FLAME/TYPE_RBMK_STEAM/TYPE_RBMK_MUSH/TYPE_COOLING_TOWER/TYPE_SPLASH`
+    - `spawnRbmkFlame(...)`、`spawnRbmkSteam(...)`、`spawnRbmkMush(...)`、`spawnCoolingTower(...)`、`spawnSplash(...)`
+  - `HbmParticleEffects` 新增以上 aux 类型分发，后续 RBMK、冷却塔和流体效果迁移可直接走本库入口。
+- 边界：
+  - 旧 flame/steam 使用接近 yaw billboard 的手写四边形；现代端通过相机 billboard 旋转承载，尺寸、偏移、动画帧和透明曲线已保留。
+  - 旧 `ParticleSplash` 根据实体 id 随机翻转 UV；现代端目前使用 atlas 默认方向，物理、颜色和贴图合同已保留，UV 翻转可在后续视觉精修中补。
+  - `fluidfill`、`rift` 等仍未迁移；本批优先补齐 RBMK/tower/splash 这一组高复用视觉效果。
+
+## 2026-05-25 第十四批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+
+## 2026-05-25 第十五批推进：rift、deadleaf、fluidfill 与 foundry 粒子
+
+- 1.7.10 对照：
+  - `ClientProxy` aux 类型：
+    - `rift`：生成 `ParticleRift`。
+    - `deadleaf`：受粒子设置控制后生成 `ParticleDeadLeaf`。
+    - `fluidfill`：读取 `mX/mY/mZ/color`，生成 `EntityCritFX`，调用 `nextTextureIndexX()`，可选 RGB 着色。
+    - `foundry`：读取 `color/dir/len/base/off`，生成 `ParticleFoundry`。
+  - `ParticleRift`：
+    - 寿命 10 tick，无物理。
+    - 旧代码绑定 `hadron.png` 后禁用纹理，使用 `ONE_MINUS_DST_COLOR/ONE_MINUS_SRC_COLOR` 反色混合。
+    - scale 为 `(age + partial) * 0.5`，连续渲染 5 层 `sphere_uv` 球体，每层略微放大。
+  - `ParticleDeadLeaf`：
+    - 旧 block atlas 图标 `particle/dead_leaf`。
+    - 灰白色随机 0.8-1.0，scale 0.1，寿命 `200+rand(50)`，重力 0.2。
+    - 空中随机 X/Z 漂移，Y 下落速度封顶 -0.025。
+  - `ParticleFoundry`：
+    - 旧贴图 `textures/blocks/lava_gray.png`。
+    - 寿命 20 tick，无移动；按 `ForgeDirection dir` 与 `dir.getRotation(UP)` 生成下落段、上部回流段和弯折段几何。
+    - 宽度从 0.0625 扩到 0.125；girth 从 0.125 衰减到 0；颜色取传入 RGB 的 brighter 结果再向白色提亮。
+- 本批现代迁移：
+  - 复用/补充资源与模型：
+    - 复用已存在 `assets/hbm/textures/particle/dead_leaf.png` 与 `dead_leaf` 粒子类型。
+    - 复用已迁入 `ObjEffectModels.SPHERE_UV`。
+    - 复制旧 `textures/blocks/lava_gray.png` 到 `assets/hbm/textures/particle/lava_gray.png`。
+  - 新增 `RiftParticle`：
+    - 使用现代无贴图 position/color 粒子渲染和反色混合。
+    - 通过 `ObjEffectModels.SPHERE_UV` 保留旧五层球体扩张合同。
+    - 为此在 `LegacyWavefrontModel` 增加窄接口 `renderAllUntextured(VertexConsumer, Matrix4f, ...)`，不改变机器 OBJ 默认渲染路径。
+  - 新增 `FluidFillParticle`：
+    - 作为旧 `EntityCritFX + nextTextureIndexX + color` 的现代承载；读取 `mX/mY/mZ/color`，保留短寿命飞散和着色合同。
+  - 新增 `FoundryParticle`：
+    - 使用 legacy `lava_gray.png`，以 fullbright 顶点几何重建旧 foundry sploosh 的下落、上部、弯折段。
+    - 保留 `color/dir/len/base/off` 字段、20 tick 寿命、宽度/girth 进度和流动 UV 偏移。
+  - `ParticleUtil` 新增公共入口：
+    - `TYPE_RIFT/TYPE_DEAD_LEAF/TYPE_FLUID_FILL/TYPE_FOUNDRY`
+    - `spawnRift(...)`、`spawnDeadLeaf(...)`、`spawnFluidFill(...)`、`spawnFoundry(...)`
+  - `HbmParticleEffects` 新增以上 aux 分发：
+    - `deadleaf` 直接接入已存在 `ModParticleTypes.DEAD_LEAF`。
+    - `rift/fluidfill/foundry` 接入本批真实粒子类。
+- 边界：
+  - 旧 `fluidfill` 使用原版 crit 粒子的内部贴图序列；现代端使用已有 hadron sprite 承载小型填充飞点，运动和 RGB 着色合同已保留，具体图案后续可用专用 sprite 精修。
+  - `ParticleFoundry` 的 ForgeDirection 映射按 1.7.10 方向 ordinal 迁入水平四向；若后续调用传入上下方向，本批会退化为中心竖流。
+  - `RiftParticle` 保留反色混合和 `sphere_uv` 多层扩张，但旧固定管线 alpha/depth 状态与现代 RenderType 状态可能存在轻微视觉差异。
+  - 本批验证过程中遇到并修复了外部迁移分支留下的 `ModMenuTypes.NUCLEAR_DEVICE` 注册缺口，属于构建恢复项，不改变本库粒子合同。
+
+## 2026-05-25 第十五批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过；编译器仅提示部分输入文件使用/覆盖已过时 API。

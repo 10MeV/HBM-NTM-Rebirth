@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -18,21 +19,21 @@ import java.util.function.Predicate;
 public final class LegacyMultiblockLayout {
     private final List<BlockPos> offsets;
     private final List<BlockPos> checkOnlyOffsets;
-    private final Predicate<BlockPos> proxyOffsets;
+    private final Function<BlockPos, LegacyProxyMode> proxyModes;
 
-    private LegacyMultiblockLayout(Iterable<BlockPos> offsets, Predicate<BlockPos> proxyOffsets) {
-        this(offsets, List.of(), proxyOffsets);
+    private LegacyMultiblockLayout(Iterable<BlockPos> offsets, Function<BlockPos, LegacyProxyMode> proxyModes) {
+        this(offsets, List.of(), proxyModes);
     }
 
     private LegacyMultiblockLayout(Iterable<BlockPos> offsets, Iterable<BlockPos> checkOnlyOffsets,
-            Predicate<BlockPos> proxyOffsets) {
+            Function<BlockPos, LegacyProxyMode> proxyModes) {
         this.offsets = List.copyOf(copyOffsets(offsets));
         this.checkOnlyOffsets = List.copyOf(copyOffsets(checkOnlyOffsets));
-        this.proxyOffsets = proxyOffsets;
+        this.proxyModes = proxyModes;
     }
 
     public static LegacyMultiblockLayout ofOffsets(Iterable<BlockPos> offsets) {
-        return new LegacyMultiblockLayout(offsets, offset -> false);
+        return new LegacyMultiblockLayout(offsets, offset -> LegacyProxyMode.none());
     }
 
     public static LegacyMultiblockLayout ofLegacyXr(int[] dimensions, Direction facing) {
@@ -51,35 +52,60 @@ public final class LegacyMultiblockLayout {
     }
 
     public LegacyMultiblockLayout withProxyPredicate(Predicate<BlockPos> proxyOffsets) {
-        return new LegacyMultiblockLayout(offsets, checkOnlyOffsets, proxyOffsets);
+        return withProxyPredicate(proxyOffsets, LegacyProxyMode.all());
+    }
+
+    public LegacyMultiblockLayout withProxyPredicate(Predicate<BlockPos> proxyOffsets, LegacyProxyMode mode) {
+        return withProxyModes(offset -> proxyOffsets.test(offset) ? mode : LegacyProxyMode.none());
+    }
+
+    public LegacyMultiblockLayout withProxyModes(Function<BlockPos, LegacyProxyMode> proxyModes) {
+        return new LegacyMultiblockLayout(offsets, checkOnlyOffsets, proxyModes);
     }
 
     public LegacyMultiblockLayout withProxyOffsets(Iterable<BlockPos> proxyOffsets) {
+        return withProxyOffsets(proxyOffsets, LegacyProxyMode.all());
+    }
+
+    public LegacyMultiblockLayout withProxyOffsets(Iterable<BlockPos> proxyOffsets, LegacyProxyMode mode) {
         Set<BlockPos> proxies = copyOffsets(proxyOffsets);
-        return withProxyPredicate(proxies::contains);
+        return withProxyPredicate(proxies::contains, mode);
     }
 
     public LegacyMultiblockLayout withExtraOffsets(Iterable<BlockPos> extraOffsets) {
-        return withExtraOffsets(extraOffsets, offset -> false);
+        return withExtraOffsets(extraOffsets, (Function<BlockPos, LegacyProxyMode>) offset -> LegacyProxyMode.none());
     }
 
     public LegacyMultiblockLayout withExtraProxyOffsets(Iterable<BlockPos> extraOffsets) {
+        return withExtraProxyOffsets(extraOffsets, LegacyProxyMode.all());
+    }
+
+    public LegacyMultiblockLayout withExtraProxyOffsets(Iterable<BlockPos> extraOffsets, LegacyProxyMode mode) {
         Set<BlockPos> extras = copyOffsets(extraOffsets);
-        return withExtraOffsets(extras, extras::contains);
+        return withExtraOffsets(extras,
+                (Function<BlockPos, LegacyProxyMode>) offset -> extras.contains(offset) ? mode : LegacyProxyMode.none());
     }
 
     public LegacyMultiblockLayout withExtraOffsets(Iterable<BlockPos> extraOffsets, Predicate<BlockPos> extraProxyOffsets) {
+        return withExtraOffsets(extraOffsets,
+                (Function<BlockPos, LegacyProxyMode>) offset -> extraProxyOffsets.test(offset) ? LegacyProxyMode.all() : LegacyProxyMode.none());
+    }
+
+    public LegacyMultiblockLayout withExtraOffsets(Iterable<BlockPos> extraOffsets,
+            Function<BlockPos, LegacyProxyMode> extraProxyModes) {
         Set<BlockPos> merged = copyOffsets(offsets);
         merged.addAll(copyOffsets(extraOffsets));
-        Predicate<BlockPos> previousProxyOffsets = proxyOffsets;
-        return new LegacyMultiblockLayout(merged, checkOnlyOffsets,
-                offset -> previousProxyOffsets.test(offset) || extraProxyOffsets.test(offset));
+        Function<BlockPos, LegacyProxyMode> previousProxyModes = proxyModes;
+        return new LegacyMultiblockLayout(merged, checkOnlyOffsets, offset -> {
+            LegacyProxyMode previous = previousProxyModes.apply(offset);
+            return previous.isProxy() ? previous : extraProxyModes.apply(offset);
+        });
     }
 
     public LegacyMultiblockLayout withCheckOnlyOffsets(Iterable<BlockPos> extraOffsets) {
         Set<BlockPos> merged = copyOffsets(checkOffsets());
         merged.addAll(copyOffsets(extraOffsets));
-        return new LegacyMultiblockLayout(offsets, merged, proxyOffsets);
+        return new LegacyMultiblockLayout(offsets, merged, proxyModes);
     }
 
     public List<BlockPos> offsets() {
@@ -93,7 +119,12 @@ public final class LegacyMultiblockLayout {
     }
 
     public boolean isProxyOffset(BlockPos offset) {
-        return proxyOffsets.test(offset);
+        return proxyMode(offset).isProxy();
+    }
+
+    public LegacyProxyMode proxyMode(BlockPos offset) {
+        LegacyProxyMode mode = proxyModes.apply(offset);
+        return mode == null ? LegacyProxyMode.none() : mode;
     }
 
     public AABB renderBoundingBox(BlockPos corePos, double padding) {

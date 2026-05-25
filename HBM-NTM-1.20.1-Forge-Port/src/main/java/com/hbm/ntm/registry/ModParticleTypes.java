@@ -53,6 +53,26 @@ public final class ModParticleTypes {
             PARTICLE_TYPES.register("muke_wave", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> DEAD_LEAF =
             PARTICLE_TYPES.register("dead_leaf", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> GIBLET_MEAT =
+            PARTICLE_TYPES.register("giblet_meat", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> GIBLET_SLIME =
+            PARTICLE_TYPES.register("giblet_slime", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> GIBLET_METAL =
+            PARTICLE_TYPES.register("giblet_metal", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> HADRON =
+            PARTICLE_TYPES.register("hadron", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> RBMK_FLAME =
+            PARTICLE_TYPES.register("rbmk_flame", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> RBMK_STEAM =
+            PARTICLE_TYPES.register("rbmk_steam", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> RBMK_MUSH =
+            PARTICLE_TYPES.register("rbmk_mush", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> COOLING_TOWER =
+            PARTICLE_TYPES.register("cooling_tower", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> SPLASH =
+            PARTICLE_TYPES.register("splash", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> FLUID_FILL =
+            PARTICLE_TYPES.register("fluid_fill", () -> new SimpleParticleType(false));
 
     private ModParticleTypes() {
     }

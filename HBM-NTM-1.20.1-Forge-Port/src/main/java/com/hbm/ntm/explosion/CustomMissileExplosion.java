@@ -1,6 +1,5 @@
 package com.hbm.ntm.explosion;
 
-import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -55,7 +54,7 @@ public final class CustomMissileExplosion {
                 return true;
             }
             case NUCLEAR, TX -> {
-                level.addFreshEntity(NukeExplosionMk5Entity.create(level, (int) strength, x, y, z));
+                NuclearExplosionUtil.spawnNuclear(level, (int) strength, x, y, z);
                 return true;
             }
             case BALEFIRE -> {
@@ -63,7 +62,7 @@ public final class CustomMissileExplosion {
                 return true;
             }
             case N2 -> {
-                level.addFreshEntity(NukeExplosionMk5Entity.createNoFallout(level, (int) strength, x, y, z));
+                NuclearExplosionUtil.spawnNuclearNoFallout(level, (int) strength, x, y, z);
                 return true;
             }
             case CLOUD -> {

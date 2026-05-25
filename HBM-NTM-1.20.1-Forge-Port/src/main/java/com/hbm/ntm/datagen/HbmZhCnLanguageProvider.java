@@ -137,6 +137,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("effect.hbm.radiation", "\u8f90\u5c04");
         add("effect.hbm.radaway", "\u6d88\u8f90\u5b81");
         add("effect.hbm.radx", "\u8f90\u7279\u5b81");
+        add("effect.hbm.taint", "\u6c61\u79fd");
         add("effect.hbm.mutation", "\u7a81\u53d8");
         add("effect.hbm.stability", "\u7a33\u5b9a");
         add("geiger.title", "\u76d6\u9769\u8ba1\u6570\u5668");
@@ -168,6 +169,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_electric_furnace_off", "\u7535\u7089");
         add("block.hbm.machine_boiler_off", "\u9505\u7089");
         add("block.hbm.machine_shredder", "\u7c89\u788e\u673a");
+        add("block.hbm.machine_turbine", "\u84b8\u6c7d\u8f6e\u673a");
         add("block.hbm.decon", "\u6d88\u6c61\u5668");
         add("block.hbm.red_cable", "\u7d2b\u94dc\u7535\u7ebf");
         add("block.hbm.fluid_duct_neo", "\u6d41\u4f53\u7ba1\u9053");
@@ -236,6 +238,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.gas_coal", "\u7164\u5c18");
         add("block.hbm.chlorine_gas", "\u6c2f\u6c14");
         add("death.attack.monoxide", "%1$s\u6b7b\u4e8e\u4e00\u6c27\u5316\u78b3\u4e2d\u6bd2");
+        add("death.attack.taint", "%1$s\u88ab\u6c61\u79fd\u541e\u566c");
         add("death.attack.electric", "%1$s\u88ab\u7535\u51fb\u81f4\u6b7b");
         add("death.attack.shrapnel", "%1$s\u88ab\u5f39\u7247\u6495\u788e");
         add("death.attack.rubble", "%1$s\u88ab\u98de\u6563\u74e6\u783e\u7838\u6b7b");

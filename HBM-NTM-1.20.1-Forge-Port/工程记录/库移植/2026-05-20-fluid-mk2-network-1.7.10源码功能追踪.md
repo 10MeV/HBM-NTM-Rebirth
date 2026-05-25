@@ -493,6 +493,198 @@ Verification:
 - `.\gradlew.bat compileJava processResources --no-daemon` passed.
 - `.\gradlew.bat runData --no-daemon` passed and generated 32 `hbm:liquefaction` recipes.
 
+## 2026-05-25 Modern Library Pass 19：远端端口订阅 helper 与化工厂 12 端口闭合
+
+- 1.7.10 对照：
+  - `IFluidReceiverMK2#trySubscribe(type, world, DirPos)`：
+    - 读取旧 `DirPos` 的目标导线坐标和方向。
+    - 检查 `IFluidConnectorMK2#canConnect(type, dir.getOpposite())`。
+    - 通过 `UniNodespace.getNode(world, x, y, z, type.getNetworkProvider())` 找到该流体类型的网络，并把 receiver 加入网络。
+  - `IFluidStandardSenderMK2#tryProvide(type, pressure, world, DirPos)`：
+    - 先按同样端口规则尝试把 provider 加入导线网络。
+    - 如果端口位置就是 receiver，则按 `min(available/providerSpeed, demand/receiverSpeed)` 直连传输。
+  - `TileEntityMachineChemicalPlant#updateEntity()` 在同一批 `getConPos()` 上：
+    - 对每个非 `NONE` 输入 tank 调 `trySubscribe(tank.type, world, pos)`。
+    - 对每个 fill > 0 的输出 tank 调 `tryProvide(tank, world, pos)`。
+- 本批现代接入：
+  - 新增 `HbmFluidUtil`：
+    - `FluidPort`：记录相对核心偏移和旧 `DirPos` 方向。
+    - `subscribeProviderToPort(s)`
+    - `subscribeReceiverToPort(s)`
+    - `subscribeProviderToNetwork`
+    - `subscribeReceiverToNetwork`
+    - `tryProvideToPorts`
+    - `getConnectableFluidNet`
+  - `FluidPort#connectorSide()` 固定为 `direction.getOpposite()`，对齐旧 `canConnect(type, dir.getOpposite())`。
+  - `HbmFluidBlockEntity` 新增可覆盖端口入口与 helper：
+    - `getFluidPorts()`
+    - `subscribeFluidProviderToPorts`
+    - `subscribeFluidReceiverToPorts`
+    - `tryProvideFluidToPorts`
+  - `HbmFluidNetworkBlockEntity#refreshFluidNetworkSubscriptions()` 现在除本地节点网络外，也会刷新 `getNetworkFluidPorts(type)` 上的 provider/receiver 订阅。
+  - `ChemicalPlantBlockEntity` 实现 `HbmStandardFluidTransceiver`：
+    - `getReceivingTanks()` 返回 3 个输入 tank。
+    - `getSendingTanks()` 返回 3 个输出 tank。
+    - `getAllTanks()` 返回 6 个 tank，供标准流体接口/兼容层读取。
+    - 服务端 tick 中对旧化工厂 12 个端口刷新：
+      - 输入 tank 非 `NONE`：`subscribeReceiverToPorts`。
+      - 输出 tank 非 `NONE` 且 fill > 0：`tryProvideToPorts`，包含网络订阅与端口直连 receiver 传输。
+- 现代等价边界：
+  - 这批只补远端端口订阅与直连传输；完整流体 pipe 渲染、标识工具、阀门、压力调试粒子仍属于后续流体网络内容。
+  - 化工厂仍因 Java 单继承直接继承 `BlockEntity`，因此用本地包装调 `HbmFluidUtil`；能继承 `HbmFluidNetworkBlockEntity` 的后续机器应优先覆盖 `getFluidPorts()` / `getNetworkFluidPorts(type)`。
+  - 旧 `type.getNetworkProvider()` 在现代端由 `HbmFluidNodespace` 的 `(pos, FluidType)` key 表达，当前内建流体均走 `FluidType` 本体网络。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+
+Progress estimate after Pass 19:
+
+- Core `FluidType` identity/NBT lookup/table: about 86%.
+- Basic tank/conform/Forge capability bridge: about 74%.
+- Fluid network/provider/receiver algorithm: about 63%.
+- In-world pipe graph: about 22%.
+- Fluid item/container loading: about 60%.
+- Behavior traits and cross-system effects: about 60%.
+- Machine integration through the library: about 34%.
+- Overall fluid library migration: about 66%.
+
+## 2026-05-25 Modern Library Pass 20
+
+This pass wires the modern liquefactor into the remote fluid-port helper introduced in Pass 19.
+
+Legacy sources re-read:
+
+- `com/hbm/tileentity/machine/oil/TileEntityMachineLiquefactor.java`
+- current modern `HbmFluidBlockEntity`, `HbmFluidNetworkBlockEntity`, `HbmFluidUtil`, and `ChemicalPlantBlockEntity`
+
+Legacy behavior preserved:
+
+- Old `getConPos()` exposes six fixed world-axis output connector positions:
+  - `(x, y + 4, z)` toward `POS_Y`
+  - `(x, y - 1, z)` toward `NEG_Y`
+  - `(x + 2, y + 1, z)` toward `POS_X`
+  - `(x - 2, y + 1, z)` toward `NEG_X`
+  - `(x, y + 1, z + 2)` toward `POS_Z`
+  - `(x, y + 1, z - 2)` toward `NEG_Z`
+- `LiquefactorBlockEntity` now declares the same six offsets as `FluidPort`s and calls `tryProvideFluidToPorts(...)` each server tick while the output tank is filled.
+- The liquefactor no longer creates an extra HBM fluid node at the core block; HBM network exposure now goes through the old remote ports. The core still keeps Forge fluid capability output for modern capability integration.
+- `useUpFluid(...)` now marks/syncs the block entity when a remote HBM fluid network drains the tank, keeping saved fill state and the client fluid-height render in sync.
+
+Still deferred:
+
+- In-game verification should place fluid pipes/receivers at all six old connector positions and confirm output routing plus OBJ fluid-height updates.
+- Energy MK2 remote port parity is separate and belongs to the energy-network trace/work.
+- Upgrade slots/effects remain deferred as recorded in Pass 17.
+
+Progress estimate after Pass 20:
+
+- Core `FluidType` identity/NBT lookup/table: about 86%.
+- Basic tank/conform/Forge capability bridge: about 75%.
+- Fluid network/provider/receiver algorithm: about 64%.
+- In-world pipe graph: about 24%.
+- Fluid item/container loading: about 60%.
+- Behavior traits and cross-system effects: about 60%.
+- Machine integration through the library: about 36%.
+- Overall fluid library migration: about 67%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-05-25 Modern Library Pass 21
+
+This pass expands the fluid-library machine integration around the legacy heat boiler, using `TileEntityHeatBoiler` as the source of truth:
+
+- Legacy sources re-read:
+  - `com/hbm/tileentity/machine/TileEntityHeatBoiler.java`
+  - `com/hbm/inventory/fluid/trait/FT_Heatable.java`
+  - modern support files `BoilerBlockEntity`, `HbmFluidThermalExchange`, `HbmFluidUtil.FluidPort`, and `HbmStandardFluidReceiver/Sender`
+- Update `BoilerBlockEntity`:
+  - Restores the old heat buffer constants in code form: `maxHeat = 3_200_000` and heat diffusion `0.1D`.
+  - Restores old below-block `IHeatSource` behavior through modern `HeatSource`: positive difference transfers `ceil(diff * 0.1)`, capped by remaining boiler heat capacity; no positive transfer decays stored heat by `max(heat / 1000, 1)`.
+  - Raises the steam/output tank from the earlier temporary `16_000` mB to the old `16_000 * 100` water-to-steam capacity.
+  - Adds `prepareOutputTank()` so the output tank type and capacity follow the current input fluid's first `HeatableFluidTrait` BOILER step instead of hard-coding steam forever. Water remains `16_000 -> 1_600_000` steam; oil/crack oil can follow the already migrated hot-fluid heat pairs.
+  - Adds 1.7.10-style remote fluid ports from `getConPos()`:
+    - facing-forward connector at `facing * 2`, same direction
+    - facing-back connector at `-facing * 2`, opposite direction
+    - top connector at `y + 4`, upward direction
+  - Disables the local HBM fluid node for the boiler body so HBM MK2 network participation happens through those old remote ports. Forge fluid capability on the core block remains available through the base block entity.
+  - Sends produced output fluid to remote ports every server tick when the output tank is non-empty.
+  - Overrides receiver/sender mutation hooks so network fill/drain marks the block entity changed and sends client updates.
+
+Still deferred:
+
+- Legacy overpressure explosion, burst model state, boiler loop/groan sounds, and ROR values are still deferred to the destructive/visual machine behavior passes.
+- Boiler item/container UI support is still limited to whatever the current Forge fluid capability bridge exposes; old tank GUI work remains in the machine UI backlog.
+- Generic remote input subscription still follows the tank's current type, matching the old tank-driven behavior closely enough for migrated water/oil use, but full copy/configurator workflows are still deferred.
+
+Progress estimate after Pass 21:
+
+- Core `FluidType` identity/NBT lookup/table: about 86%.
+- Basic tank/conform/Forge capability bridge: about 74%.
+- Fluid network/provider/receiver algorithm: about 68%.
+- In-world pipe graph: about 28%.
+- Fluid item/container loading: about 52%.
+- Behavior traits and cross-system effects: about 66%.
+- Machine integration through the library: about 44%.
+- Overall fluid library migration: about 69%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-05-25 Modern Library Pass 22
+
+This pass closes the first boiler-to-turbine runtime loop by adding the normal single-block steam turbine as a fluid-library consumer and energy producer:
+
+- Legacy sources re-read:
+  - `com/hbm/tileentity/machine/TileEntityMachineTurbine.java`
+  - `com/hbm/tileentity/machine/TileEntityTurbineBase.java`
+  - `com/hbm/tileentity/machine/TileEntityMachineLargeTurbine.java`
+  - `com/hbm/tileentity/machine/TileEntityMachineIndustrialTurbine.java`
+  - `com/hbm/blocks/machine/MachineTurbine.java`
+  - `com/hbm/inventory/fluid/trait/FT_Coolable.java`
+  - legacy textures `textures/blocks/machine_turbine_base.png` and `textures/blocks/machine_turbine_top.png`
+- Add `HbmTurbineConversion`:
+  - Shared `CoolableFluidTrait` turbine runtime wrapper around `HbmFluidThermalExchange.cool(...)`.
+  - Preserves the old `CoolingType.TURBINE` efficiency multiplier and reports consumed input, produced output, and generated HE.
+  - Adds output-tank preparation so the output fluid follows the current input fluid's `coolsTo` type.
+- Add modern normal steam turbine:
+  - Registers `machine_turbine` and `steam_turbine` BlockEntity.
+  - Adds `SteamTurbineBlock` and `SteamTurbineBlockEntity`.
+  - Uses old normal turbine constants: max power `1_000_000`, input tank `64_000`, output tank `128_000`, max steam per tick `6_000`, efficiency `0.85`.
+  - Defaults to `STEAM -> SPENTSTEAM`, while the shared conversion helper also supports the already migrated hot/superhot/ultrahot steam coolable chain once UI/copy controls expose type switching.
+  - Decays stored power by `0.95` each server tick before adding new turbine output, matching old normal turbine behavior.
+  - Subscribes and direct-transfers HBM fluid on the six adjacent sides, matching old `subscribeToAllAround(...)` / `sendFluidToAll(...)` rather than a remote multiblock port layout.
+  - Pushes generated HE to all adjacent energy connections via the modern energy helper.
+  - Keeps Forge fluid and Forge energy capabilities available on the core block.
+- Add generated/data resources:
+  - Blockstate/model/item model for `machine_turbine`.
+  - Loot table, pickaxe/iron-tool tags, English and Chinese lang entries.
+  - Copies old top/base turbine textures into modern `assets/hbm/textures/block`.
+
+Still deferred:
+
+- Normal turbine GUI, item slots, battery charging slot, manual fluid container loading/unloading, and OpenComputers/ROR outputs are not ported yet.
+- The old lever/copy workflow for switching among STEAM/HOTSTEAM/SUPERHOTSTEAM/ULTRAHOTSTEAM remains deferred; current no-GUI block accepts the current tank type and defaults to STEAM.
+- Large turbine and industrial Mk2 turbine have been analyzed and can reuse `HbmTurbineConversion`, but their multiblock shapes, remote fluid/power ports, flywheel state, sounds, and render animation are still future passes.
+
+Progress estimate after Pass 22:
+
+- Core `FluidType` identity/NBT lookup/table: about 86%.
+- Basic tank/conform/Forge capability bridge: about 75%.
+- Fluid network/provider/receiver algorithm: about 69%.
+- In-world pipe graph: about 30%.
+- Fluid item/container loading: about 52%.
+- Behavior traits and cross-system effects: about 67%.
+- Machine integration through the library: about 49%.
+- Overall fluid library migration: about 72%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+- `.\gradlew.bat runData --no-daemon` passed and generated `machine_turbine` blockstate/model/item model/loot/tag/lang resources.
+- A transient Gradle `build/resources/main/.cache` hash miss appeared after `runData`; the `.cache` directory was verified inside the workspace, removed, and `compileJava processResources` passed on rerun.
+
 ## 2026-05-23 Modern Library Pass 16
 
 This pass closes the concrete `FluidLoaderInfinite` gap left after the container item registration pass:

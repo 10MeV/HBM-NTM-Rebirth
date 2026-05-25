@@ -30,6 +30,7 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
     private boolean spawnedFallout;
     private boolean waste = true;
     private int extType = EXT_FLEIJA;
+    private boolean expiredFromSave;
 
     public NukeExplosionMk3Entity(EntityType<? extends NukeExplosionMk3Entity> type, Level level) {
         super(type, level);
@@ -61,6 +62,14 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
         return entity;
     }
 
+    public static NukeExplosionMk3Entity createSolinium(Level level, double x, double y, double z, int range) {
+        return createFleija(level, x, y, z, range).makeSol();
+    }
+
+    public static NukeExplosionMk3Entity statFacFleija(Level level, double x, double y, double z, int range) {
+        return createFleija(level, x, y, z, range);
+    }
+
     public NukeExplosionMk3Entity makeSol() {
         extType = EXT_SOLINIUM;
         return this;
@@ -70,6 +79,11 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
     public void tick() {
         super.tick();
         if (level().isClientSide()) {
+            return;
+        }
+
+        if (expiredFromSave) {
+            discard();
             return;
         }
 
@@ -160,8 +174,9 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
         waste = !tag.contains("waste") || tag.getBoolean("waste");
         extType = tag.getInt("extType");
         readChunkLoader(tag);
+        expiredFromSave = shouldExpireFromSave(tag);
 
-        if (initialized) {
+        if (initialized && !expiredFromSave) {
             initProcessors();
             if (exp != null) {
                 exp.readFromNbt(tag, "exp_");

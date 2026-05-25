@@ -1168,6 +1168,185 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+## 2026-05-25 核弹 OBJ / 物品 renderer 接入修正
+
+触发来源：
+
+- 核弹 GUI 仍反馈无法打开，同时 `nuke_prototype` 实机丢贴图，核弹在物品栏的大小/位置需要按 1.7.10 重校。
+- 这类问题属于 1.7.10 `TileEntitySpecialRenderer implements IItemRendererProvider` 到现代渲染库的迁移，而不是机器逻辑库或爆炸算法库本体。
+
+1.7.10 对齐依据：
+
+- `ResourceManager` 中核弹模型/贴图：
+  - `bomb_gadget` / `textures/models/bombs/gadget.png`
+  - `bomb_boy` / `textures/models/lilboy.png`
+  - `bomb_man` / `textures/models/FatMan.png`
+  - `bomb_mike` / `textures/models/bombs/ivymike.png`
+  - `bomb_tsar` / `textures/models/bombs/tsar.png`
+  - `bomb_prototype` / `textures/models/bombs/Prototype.png`
+  - `bomb_fleija` / `textures/models/bombs/fleija.png`
+  - `bomb_solinium` / `textures/models/bombs/ufp.png`
+  - `n2` / `textures/models/bombs/n2.png`
+- 已逐项核对现代 `textures/block/nuke/*.png`，尺寸与字节数均与上述旧模型贴图一致；`nuke_prototype` 不是误用了 16x16 方块图标。
+- 旧物品 renderer 统一走 `ItemRenderBase`，库存基础姿态为 `glTranslated(8,10,0)`、`glRotated(-30,X)`、`glRotated(45,Y)`，各核弹再追加自身 `renderInventory()` / `renderCommon()`：
+  - Gadget：库存 `translate(0,-3,0)`、`scale(5)`；common `rotateY(-90)`，只渲染 `Body`，fancy 时渲染 `Wires`。
+  - Fat Man：库存 `translate(0,-2,0)`、`scale(5)`；common `rotateY(180)`、`translate(-0.75,0,0)`。
+  - Ivy Mike / N2：库存 `translate(0,-5,0)`、`scale(2.25)`。
+  - Tsar：库存 `scale(2.25)`；common `translate(1.5,0,0)`。
+  - Prototype：库存 `translate(0,0.125,0)`、`scale(3)`；common `rotateY(90)`、`translate(0,0.125,0)`。
+  - Fleija：库存 `scale(6.8)`；common `translate(0.125,0,0)`、`rotateY(90)`。
+  - Solinium：库存 `translate(0,-0.125,0)`、`scale(5)`；common `rotateY(90)`、`translate(0,-0.125,0)`。
+  - Little Boy 旧 TESR 没有 `IItemRendererProvider`，现代先使用核弹统一 renderer，并以实际 OBJ bounds 居中，后续实机可继续微调。
+
+现代实现：
+
+- 新增 `ObjNukeModels`，把九个核弹模型放入专用 `models/block/nuke` / `textures/block/nuke` 入口，避免混用 `ObjBombModels`。
+- 新增 `NuclearDeviceRenderer`，核弹方块改走 `BlockEntityRenderer` + `LegacyWavefrontModel` 直绘，继承旧 TESR 的朝向修正、模型贴图绑定和远距离渲染常量。
+- 新增 `NuclearDeviceItemRenderer` 与 `NuclearDeviceBlockItem`，核弹物品模型改为 `minecraft:builtin/entity`，通过 `LegacyItemRendererBridge` 执行专用 BEWLR：
+  - 用 legacy OBJ bounds 自动居中。
+  - 按 1.7.10 `renderInventory()` 的 scale / translation 计算 GUI 占位大小。
+  - 按旧 `renderCommon()` 追加各核弹旋转/偏移。
+- `HbmBlockStateProvider` 中九个核弹改为 `existingModelWithCustomItem(...)`，防止 runData 再把 item model 覆盖回普通 block parent。
+- 旁路修正：`ObjBombModels.FAT_MAN` 贴图从错误的 `gadget` 改为 `fat_man`，并补入旧 `textures/models/FatMan.png` 到 `textures/block/bombs/fat_man.png`，避免后续复用 bomb 模型库时 Fat Man 贴图错绑。
+
+仍未完全等价：
+
+- 旧 Gadget 在 fancy graphics 下额外渲染 `Wires`；现代当前核弹 renderer 先渲染完整模型，后续若需要可按 group 拆成 `Body` / `Wires` 并接客户端图形设置。
+- 旧 Little Boy 只有世界 TESR，没有专用物品 renderer；现代为了避免 baked OBJ item parent 的贴图/中心点问题，将它纳入统一核弹 item renderer。
+- 本批通过构建验证，仍需实机截图确认创造栏九个核弹的最终比例和原型贴图是否恢复。
+
+## 2026-05-25 ResourceManager 效果/实体/工具 OBJ 批量接入
+
+触发来源：
+
+- 继续推进基础渲染库，不只迁移单台机器 renderer，而是补齐 1.7.10 `ResourceManager` 里被多类 renderer 共用的 OBJ 资源与 API。
+
+1.7.10 对齐依据：
+
+- 无贴图 OBJ：
+  - `ResourceManager.sphere_ruv/sphere_iuv/sphere_uv/sphere_new` 来自 `models/sphere_*.obj`。
+  - `RenderCore`、`ParticleRift`、`RenderCloudFleija`、`RenderCloudSolinium` 等调用这些球体前会 `GL11.glDisable(GL11.GL_TEXTURE_2D)`，颜色来自当前 GL color，不是绑定贴图。
+- 工具/效果类：
+  - `geiger` -> `models/blocks/geiger_counter.obj` + `textures/blocks/geiger.png`。
+  - `forcefield_top` -> `models/forcefield_top.obj` + `textures/models/forcefield_top.png`，底座贴图为 `forcefield_base.png`。
+  - `sat_foeq_burning` / `sat_foeq_fire` -> 对应 OBJ；旧资源包只存在 `textures/models/sat_foeq_burning.png`，`sat_foeq_tex` 在代码中声明但缺少实际 PNG。
+  - `satDock` -> `models/sat_dock.obj` + `textures/models/sat_dock.png`。
+  - `tesla` -> `models/tesla.obj` + `textures/models/tesla.png`。
+  - `file_cabinet` -> `models/file_cabinet.obj`，按 renderer 在普通/钢制贴图间切换。
+- 实体/武器/护甲/机器类：
+  - `teslacrab/maskman/blockspider/ufo/mini_ufo/siege_ufo/glyphid/quadcopter` 及 glyphid 变体贴图来自 `textures/entity`。
+  - `meteor` 使用 `models/weapons/meteor.obj`，`RenderBullet` 绑定 `textures/blocks/block_meteor_molten.png`。
+  - `tesla_cannon` 使用 `models/weapons/tesla_cannon.obj` 与 `textures/models/weapons/tesla_cannon.png`，旧 renderer 分组为 `Gun/Extension/Cog/Capacitor`。
+  - `armor_mod_tesla` 使用 `models/armor/mod_tesla.obj` 与 `textures/armor/mod_tesla.png`。
+  - `delivery_drone` 使用 `models/machines/drone.obj` 与 `drone/drone_express/drone_request` 三张贴图。
+
+本轮现代侧改动：
+
+- `LegacyUntexturedQuadRenderer` 暴露 solid/additive no-cull `RenderType`，供 OBJ 几何直接输出 position+color。
+- `LegacyWavefrontModel` 新增无贴图渲染入口：
+  - `renderAllUntextured(...)` / `renderAllUntexturedAdditive(...)`
+  - `renderOnlyUntextured(...)` / `renderOnlyUntexturedAdditive(...)`
+  - `renderPartUntextured(...)` / `renderPartUntexturedAdditive(...)`
+  - 增加仅传 model location 的构造器，用于 1.7.10 中本来就关闭贴图的 OBJ。
+- 新增资源分组：
+  - `ObjEffectModels`：`sphere_ruv/iuv/uv/new`。
+  - `ObjUtilityModels`：Geiger、forcefield、FOEQ、sat dock、Tesla、file cabinet。
+  - `ObjEntityModels`：Tesla crab、maskman、block spider、UFO、glyphid、quadcopter。
+- 扩展已有分组与门面：
+  - `ObjWeaponModels`：`METEOR`、`TESLA_CANNON`。
+  - `ObjArmorModels`：`MOD_TESLA`。
+  - `ObjMachineModels`：`DELIVERY_DRONE` 与三张 drone 贴图。
+  - `ObjModelLibrary` 暴露对应 `EFFECT_*`、`UTILITY_*`、`ENTITY_*`、`WEAPON_*`、`ARMOR_*`、`MACHINE_DELIVERY_DRONE` 字段。
+- 已从 1.7.10 资源包复制 53 个 OBJ/PNG 到现代 `assets/hbm/models/block/...` 与 `textures/block/...` 分区。
+
+后续注意：
+
+- `sat_foeq_tex` 在 1.7.10 代码中存在声明，但旧资源包缺少 `textures/models/sat_foeq.png`；现代端没有生成替代贴图，后续 FOEQ renderer 应按实际可用的 burning/fire 路径处理，或在确认旧运行包外资源后再补。
+- 本轮只接入基础库与资源，不主动注册实体 renderer、物品 renderer 或机器逻辑；后续迁移具体 renderer 时应直接复用这些字段。
+
+## 2026-05-25 projectile debris 与 vehicle OBJ 批量接入
+
+触发来源：
+
+- 继续核查 1.7.10 `ResourceManager` 剩余共享 OBJ；确认 `RenderRBMKDebris`、`RenderZirnoxDebris`、矿车/列车 renderer 依赖的模型仍未在现代渲染库中形成门面。
+
+1.7.10 对齐依据：
+
+- RBMK debris：
+  - `ResourceManager.deb_blank/deb_element/deb_fuel/deb_rod/deb_lid/deb_graphite` 分别来自 `models/projectiles/deb_*.obj`。
+  - `RenderRBMKDebris` 按 `DebrisType` 选择模型与贴图：
+    - `BLANK` -> `textures/blocks/rbmk/rbmk_blank_side.png`
+    - `ELEMENT` -> `textures/blocks/rbmk/rbmk_side.png`
+    - `FUEL` -> `textures/blocks/rbmk/rbmk_fuel.png`
+    - `GRAPHITE` -> `textures/blocks/block_graphite.png`
+    - `LID` -> `textures/blocks/rbmk/rbmk_blank_cover_top.png`
+    - `ROD` -> `textures/blocks/rbmk/rbmk_control.png`
+- ZIRNOX debris：
+  - `ResourceManager.deb_zirnox_blank/deb_zirnox_concrete/deb_zirnox_element/deb_zirnox_exchanger/deb_zirnox_shrapnel` 分别来自 `models/zirnox/deb_*.obj`。
+  - `RenderZirnoxDebris` 中 `BLANK/SHRAPNEL/EXCHANGER` 使用 `zirnox_tex`，`CONCRETE` 使用 `zirnox_destroyed_tex`，`ELEMENT` 使用 `textures/models/machines/zirnox_deb_element.png`，`GRAPHITE` 复用 RBMK graphite debris 模型与 `block_graphite`。
+- 载具：
+  - `cart/cart_destroyer/cart_powder/tram/tram_trailer` 来自 `models/vehicles`。
+  - `RenderNeoCart` 使用 `cart` 的 `Carriage` / `Bucket` group，并在 `cart_metal/cart_metal_naked/cart_wood` 间切换贴图。
+  - `EntityMinecartPowder` / `EntityMinecartSemtex` 对 `cart_powder` 的 `Powder/SemtexTop/SemtexSide` 分组分别绑定 `block_gunpowder`、`semtex_bottom`、`semtex_side`。
+  - `EntityMinecartDestroyer` 使用 `cart_destroyer` + `textures/entity/cart_destroyer.png`。
+  - `RenderTrainCargoTram` / `RenderTrainCargoTramTrailer` 使用 `tram` / `tram_trailer` 与 `textures/models/trains` 下对应贴图。
+
+本轮现代侧改动：
+
+- 从 1.7.10 资源包复制 34 个 debris/vehicle OBJ 与贴图资源：
+  - 现代 OBJ 位置：`models/block/projectiles`、`models/block/vehicles`。
+  - 现代贴图位置：`textures/block/projectiles`、`textures/block/vehicles`。
+- `ObjProjectileModels` 增加：
+  - `DEBRIS_BLANK/ELEMENT/FUEL/ROD/LID/GRAPHITE`
+  - `ZIRNOX_DEBRIS_BLANK/CONCRETE/ELEMENT/EXCHANGER/SHRAPNEL`
+  - 对应 RBMK、graphite、zirnox 贴图常量。
+- 新增 `ObjVehicleModels`：
+  - `CART/CART_DESTROYER/CART_POWDER/TRAM/TRAM_TRAILER`
+  - 对应 `cart_metal/cart_metal_naked/cart_wood/cart_destroyer/cart_powder/cart_semtex_side/cart_semtex_top/tram/tram_trailer` 贴图常量。
+- `ObjModelLibrary` 暴露 projectile debris 与 vehicle facade 字段，后续实体 renderer 可直接复用。
+
+后续注意：
+
+- 本轮只接模型与贴图，不迁 `EntityRBMKDebris`、`EntityZirnoxDebris`、矿车/列车实体和 renderer 的逻辑。
+- 迁 debris renderer 时要保留旧实现的位移 `y + 0.125D` 与按 entityId/rot 的旋转规则；ZIRNOX debris 还会临时关闭背面剔除。
+
+## 2026-05-25 ResourceManager 武器 OBJ 批量接入
+
+触发来源：
+
+- 继续推进基础渲染库，优先把 1.7.10 `ResourceManager` 中被 `render/item/weapon`、`render/item/weapon/sedna` 和若干实体/装饰 renderer 共用的武器 OBJ 资源接入现代模型门面。
+
+1.7.10 对齐依据：
+
+- `ResourceManager` 中本批明确存在 OBJ 的字段包括：
+  - 近战/道具：`stopsign`、`gavel`、`crucible`、`chainsaw`、`lance`、`grenades`。
+  - 枪械/发射器：`boltgun`、`bolter`、`detonator_laser`、`fireext`、`coilgun`、`pepperbox`、`bio_revolver`、`henry`、`greasegun`、`maresleg`、`flaregun`、`am180`、`liberator`、`congolake`、`flamethrower`、`lilmac`、`carbine`、`uzi`、`spas_12`、`panzerschreck`、`star_f`、`g3`、`stinger`、`mk108`、`chemthrower`、`amat`、`m2`、`shredder`、`sexy`、`whiskey`、`quadro`、`mike_hawk`、`minigun`、`missile_launcher`、`tesla_cannon`、`laser_pistol`、`stg77`、`tau`、`fatman`、`lasrifle`、`lasrifle_mods`、`hangman`、`folly`、`double_barrel`、`aberrator`、`mas36`、`charge_thrower`、`drill`、`n_i_4_n_i`。
+  - 旧字段 `double_barrel` 实际加载 `models/weapons/sacred_dragon.obj`。
+  - 旧字段 `m2` 实际加载 `models/weapons/m2_browning.obj`。
+  - 旧字段 `mike_hawk` 使用 `mike_hawk.obj`，默认贴图字段为 `mike_hawk_tex = textures/models/weapons/lag.png`。
+  - 旧字段 `folly` 使用 `folly.obj`，默认贴图字段为 `folly_tex = textures/models/weapons/moonlight.png`。
+- 旧端多个 renderer 会动态切 part 与贴图：
+  - `ItemRenderCrucible` 按 `Hilt/GuardLeft/GuardRight/Blade` 分别绑定 hilt/guard/blade 贴图。
+  - `ItemRenderChainsaw` 渲染 `Saw` 与循环的 `Tooth`。
+  - Sedna 系列枪械普遍按状态渲染 `Gun/Mag/Bolt/Slide/Silencer/Bullet` 等 group。
+  - `RenderBobble` 也复用 `n_i_4_n_i`、`fatman`、`double_barrel` 等武器模型。
+
+本轮现代侧改动：
+
+- 从 1.7.10 资源包复制 53 个武器 OBJ 到 `models/block/weapons`。
+- 从 1.7.10 资源包复制 101 张实际存在的武器贴图到 `textures/block/weapons`。
+- `ObjWeaponModels` 批量增加上述武器模型入口，并按旧 `ResourceManager` 默认贴图/变体贴图暴露 `ResourceLocation` 常量。
+- `ObjModelLibrary` 暴露主要 `WEAPON_*` facade 字段，后续 item/entity renderer 可统一从渲染库取模型。
+
+后续注意：
+
+- 本轮不迁移 `AnimationLoader` / `BusAnimation` / `HbmAnimations`；`spas12`、`congolake`、`am180`、`flamethrower`、`stg77`、`lag` 等动画 JSON 仍需在枪械 renderer 专题中迁移。
+- 1.7.10 `ResourceManager` 中存在声明但旧资源包缺少实际 PNG 的武器贴图：
+  - `pch_tex = textures/models/weapons/pch.png`，当前未发现 renderer 使用。
+  - `bolter_digamma_tex = textures/models/weapons/bolter_digamma.png`。
+  - `sky_stinger_tex = textures/models/weapons/sky_stinger.png`。
+  - 现代端没有生造这些缺失贴图；后续若发现运行包额外资源，再按真实资源补入。
+
 ### 2026-05-24 多方块库存图标默认比例回调
 
 - 实机反馈：一批已经挂上 OBJ 的机器图标又偏小，未达到 1.7.10 库存渲染中“接近一个槽位但保留边距”的观感。

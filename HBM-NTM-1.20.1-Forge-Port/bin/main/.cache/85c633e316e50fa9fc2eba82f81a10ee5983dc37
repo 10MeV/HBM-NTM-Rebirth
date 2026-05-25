@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-24T16:36:23.2982104	Block States: hbm
+// 1.20.1	2026-05-25T14:07:11.6933216	Block States: hbm
 f4eb25b664a0458dbb40546da729386871750a3d assets/hbm/blockstates/ash_digamma.json
 8c6c51f054fa20e59275bf5c7c77e28e7790b34c assets/hbm/blockstates/balefire.json
 cba35d35e4f0682b55e9cc361bbbf6247efa3976 assets/hbm/blockstates/bomb_multi.json
@@ -63,6 +63,7 @@ d008eec783a43cce888f55816e7937fb49b2ffe3 assets/hbm/blockstates/machine_solidifi
 ffff23a5e72ae5f3d70c7a142bc93ecbc3a280f0 assets/hbm/blockstates/machine_steam_engine.json
 60d5d431c90feeb40aac9eb58eec40f095710304 assets/hbm/blockstates/machine_tower_large.json
 557ec6bc78768db7a0591aedede0b7805090a923 assets/hbm/blockstates/machine_tower_small.json
+8479ecf04762c7772d71ce365b585172c5febbb7 assets/hbm/blockstates/machine_turbine.json
 32dc04ed2a20925bc407c591a48c6237779a70b7 assets/hbm/blockstates/machine_turbinegas.json
 60a512966e8c7e522116d55bf5c92ef7ca0b16a3 assets/hbm/blockstates/machine_turbofan.json
 5d25e9fe2a86a8afc5b7b0ca55a3c2378316e44d assets/hbm/blockstates/machine_vacuum_distill.json
@@ -81,7 +82,7 @@ a0e65f052c993c4b3dcc1210e59b99d0a66f4693 assets/hbm/blockstates/rad_absorber.jso
 c0082be33edf22a7f350c858d0c221ef600ca48a assets/hbm/blockstates/rad_lava_block.json
 d24c15397dbfce1f654e1d931771a8188577b1d9 assets/hbm/blockstates/red_cable.json
 af6986d44062976170bd71d6897a55ecd632d089 assets/hbm/blockstates/sellafield.json
-bc6f94cbfbff8e6febc2ac243071eb949e46fa44 assets/hbm/blockstates/sellafield_slaked.json
+0bb0a23d934f3a39e66b9e94c11a0cacd24220a9 assets/hbm/blockstates/sellafield_slaked.json
 1c72732f75de8a64cc2d0f4449f6b170a0b7fadb assets/hbm/blockstates/vitrified_barrel.json
 44c1718baacfab9bceb20a3486826984cd50de3d assets/hbm/blockstates/volcanic_lava_block.json
 33d3c6314ba9be6775e9964c0d696156d046a52b assets/hbm/blockstates/waste_log.json
@@ -123,6 +124,7 @@ ed5076ce211b2c2eac15315f33af0a70f54dbd46 assets/hbm/models/block/machine_battery
 9f7ed1f9b9b6dad07059bc8062655a9f99af55f6 assets/hbm/models/block/machine_difurnace_off.json
 4c262a41e0747122f0b79b98f6ff2f9cf700e736 assets/hbm/models/block/machine_electric_furnace_off.json
 3de4a84e3d0ae1b4b102405ea368d794d8a95d2f assets/hbm/models/block/machine_shredder.json
+365a186276756d69ab615af0d0c9b5070c67901c assets/hbm/models/block/machine_turbine.json
 76eb3a837e3825a9f5a2ea46ae3d1462d294213d assets/hbm/models/block/pribris_digamma.json
 0067f1666e733d093358dd4a4c960433c4391b54 assets/hbm/models/block/rad_absorber.json
 ab7d8e92a0d6253f8289864d54840f841bbb40a6 assets/hbm/models/block/rad_absorber_green.json
@@ -204,6 +206,7 @@ e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_solidifi
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_steam_engine.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_tower_large.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_tower_small.json
+725697b49fd0bf2fd495f4986429515e6d07151a assets/hbm/models/item/machine_turbine.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_turbinegas.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_turbofan.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_vacuum_distill.json

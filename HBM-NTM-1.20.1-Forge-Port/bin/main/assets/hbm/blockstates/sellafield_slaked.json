@@ -1,6 +1,51 @@
 {
   "variants": {
-    "": {
+    "level=0": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=1": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=10": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=11": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=12": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=13": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=14": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=15": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=2": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=3": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=4": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=5": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=6": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=7": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=8": {
+      "model": "hbm:block/sellafield_slaked"
+    },
+    "level=9": {
       "model": "hbm:block/sellafield_slaked"
     }
   }

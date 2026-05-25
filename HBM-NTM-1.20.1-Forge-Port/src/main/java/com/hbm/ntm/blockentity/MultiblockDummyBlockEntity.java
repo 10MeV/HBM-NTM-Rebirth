@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.multiblock.MultiblockCoreBlock;
+import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,17 +27,32 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
     private static final String TAG_LEGACY_TARGET_Y = "ty";
     private static final String TAG_LEGACY_TARGET_Z = "tz";
     private static final String TAG_PROXY = "Proxy";
+    private static final String TAG_PROXY_INVENTORY = "ProxyInventory";
+    private static final String TAG_PROXY_POWER = "ProxyPower";
+    private static final String TAG_PROXY_CONDUCTOR = "ProxyConductor";
+    private static final String TAG_PROXY_FLUID = "ProxyFluid";
+    private static final String TAG_PROXY_HEAT = "ProxyHeat";
+    private static final String TAG_PROXY_MOLTEN_METAL = "ProxyMoltenMetal";
+    private static final String TAG_PROXY_ALL = "ProxyAll";
 
     @Nullable
     private BlockPos corePos;
-    private boolean proxy;
+    private LegacyProxyMode proxyMode = LegacyProxyMode.none();
+    private boolean dropCoreOnRemoval;
 
     public MultiblockDummyBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MULTIBLOCK_DUMMY.get(), pos, state);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, MultiblockDummyBlockEntity blockEntity) {
-        if (blockEntity.corePos == null || !(level.getBlockState(blockEntity.corePos).getBlock() instanceof MultiblockCoreBlock)) {
+        if (blockEntity.corePos == null) {
+            level.removeBlock(pos, false);
+            return;
+        }
+        if (!level.hasChunkAt(blockEntity.corePos)) {
+            return;
+        }
+        if (!(level.getBlockState(blockEntity.corePos).getBlock() instanceof MultiblockCoreBlock)) {
             level.removeBlock(pos, false);
         }
     }
@@ -55,11 +71,19 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
     }
 
     public boolean isProxy() {
-        return proxy;
+        return proxyMode.isProxy();
     }
 
     public void setProxy(boolean proxy) {
-        this.proxy = proxy;
+        setProxyMode(proxy ? LegacyProxyMode.all() : LegacyProxyMode.none());
+    }
+
+    public LegacyProxyMode getProxyMode() {
+        return proxyMode;
+    }
+
+    public void setProxyMode(LegacyProxyMode proxyMode) {
+        this.proxyMode = proxyMode == null ? LegacyProxyMode.none() : proxyMode;
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
@@ -67,7 +91,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
     }
 
     public InteractionResult forwardUse(ServerPlayer player, InteractionHand hand, BlockHitResult hit) {
-        if (level == null || corePos == null || corePos.equals(worldPosition)) {
+        if (level == null || corePos == null || corePos.equals(worldPosition) || !level.hasChunkAt(corePos)) {
             return InteractionResult.PASS;
         }
         BlockState coreState = level.getBlockState(corePos);
@@ -77,16 +101,27 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
         return coreState.use(level, player, hand, hit.withPosition(corePos));
     }
 
+    public void setDropCoreOnRemoval(boolean dropCoreOnRemoval) {
+        this.dropCoreOnRemoval = dropCoreOnRemoval;
+    }
+
     public void destroyCore() {
+        destroyCore(dropCoreOnRemoval);
+    }
+
+    public void destroyCore(boolean drop) {
+        dropCoreOnRemoval = false;
         if (level != null && corePos != null && !corePos.equals(worldPosition)
+                && level.hasChunkAt(corePos)
                 && level.getBlockState(corePos).getBlock() instanceof MultiblockCoreBlock) {
-            level.destroyBlock(corePos, true);
+            level.destroyBlock(corePos, drop);
         }
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        if (proxy && level != null && corePos != null && !corePos.equals(worldPosition)) {
+        if (proxyMode.allows(capability) && level != null && corePos != null && !corePos.equals(worldPosition)
+                && level.hasChunkAt(corePos)) {
             BlockEntity coreEntity = level.getBlockEntity(corePos);
             if (coreEntity != null && !coreEntity.isRemoved()) {
                 return coreEntity.getCapability(capability, side);
@@ -98,7 +133,14 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putBoolean(TAG_PROXY, proxy);
+        tag.putBoolean(TAG_PROXY, proxyMode.isProxy());
+        tag.putBoolean(TAG_PROXY_INVENTORY, proxyMode.inventory());
+        tag.putBoolean(TAG_PROXY_POWER, proxyMode.power());
+        tag.putBoolean(TAG_PROXY_CONDUCTOR, proxyMode.conductor());
+        tag.putBoolean(TAG_PROXY_FLUID, proxyMode.fluid());
+        tag.putBoolean(TAG_PROXY_HEAT, proxyMode.heat());
+        tag.putBoolean(TAG_PROXY_MOLTEN_METAL, proxyMode.moltenMetal());
+        tag.putBoolean(TAG_PROXY_ALL, proxyMode.allCapabilities());
         if (corePos != null) {
             tag.put(TAG_CORE_POS, NbtUtils.writeBlockPos(corePos));
             tag.putInt(TAG_LEGACY_TARGET_X, corePos.getX());
@@ -110,7 +152,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        proxy = tag.getBoolean(TAG_PROXY);
+        proxyMode = readProxyMode(tag);
         if (tag.contains(TAG_CORE_POS)) {
             corePos = NbtUtils.readBlockPos(tag.getCompound(TAG_CORE_POS));
         } else if (tag.contains(TAG_LEGACY_TARGET_X) && tag.contains(TAG_LEGACY_TARGET_Y) && tag.contains(TAG_LEGACY_TARGET_Z)) {
@@ -118,6 +160,32 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
         } else {
             corePos = null;
         }
+    }
+
+    private static LegacyProxyMode readProxyMode(CompoundTag tag) {
+        if (!tag.getBoolean(TAG_PROXY)) {
+            return LegacyProxyMode.none();
+        }
+        if (tag.getBoolean(TAG_PROXY_ALL) || !hasProxyModeTags(tag)) {
+            return LegacyProxyMode.all();
+        }
+        return LegacyProxyMode.passive()
+                .withInventory(tag.getBoolean(TAG_PROXY_INVENTORY))
+                .withPower(tag.getBoolean(TAG_PROXY_POWER))
+                .withConductor(tag.getBoolean(TAG_PROXY_CONDUCTOR))
+                .withFluid(tag.getBoolean(TAG_PROXY_FLUID))
+                .withHeat(tag.getBoolean(TAG_PROXY_HEAT))
+                .withMoltenMetal(tag.getBoolean(TAG_PROXY_MOLTEN_METAL));
+    }
+
+    private static boolean hasProxyModeTags(CompoundTag tag) {
+        return tag.contains(TAG_PROXY_INVENTORY)
+                || tag.contains(TAG_PROXY_POWER)
+                || tag.contains(TAG_PROXY_CONDUCTOR)
+                || tag.contains(TAG_PROXY_FLUID)
+                || tag.contains(TAG_PROXY_HEAT)
+                || tag.contains(TAG_PROXY_MOLTEN_METAL)
+                || tag.contains(TAG_PROXY_ALL);
     }
 
     @Override

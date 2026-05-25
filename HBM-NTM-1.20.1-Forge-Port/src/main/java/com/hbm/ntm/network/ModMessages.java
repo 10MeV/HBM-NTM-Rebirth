@@ -35,6 +35,7 @@ import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.network.packet.ServerTileBinaryControlPacket;
 import com.hbm.ntm.network.packet.ServerTileBinaryControlChunkPacket;
 import com.hbm.ntm.network.packet.ServerEntityActionPacket;
+import com.hbm.ntm.network.packet.ServerTileActionPacket;
 import com.hbm.ntm.network.packet.TileControlPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.network.packet.TileSyncRequestPacket;
@@ -76,6 +77,76 @@ public final class ModMessages {
     private static int packetId;
     private static final AtomicBoolean REGISTERED = new AtomicBoolean();
     private static final List<PacketRegistration> PACKET_REGISTRATIONS = new ArrayList<>();
+    private static final List<LegacyPacketMapping> LEGACY_PACKET_MAPPINGS = List.of(
+            new LegacyPacketMapping("ExtPropPacket", "PlayerRadiationSyncPacket", "S2C",
+                    "radiation/status fields split out of legacy extended properties"),
+            new LegacyPacketMapping("ExtPropPacket", "PlayerPropertiesPacket", "S2C",
+                    "typed player property payloads not owned by radiation"),
+            new LegacyPacketMapping("PermaSyncPacket", "PermaSyncPacket", "S2C",
+                    "global/per-player persistent sync compound"),
+            new LegacyPacketMapping("AuxParticlePacketNT", "AuxParticlePacket", "S2C",
+                    "NBT particle payload with position fields"),
+            new LegacyPacketMapping("ParticleBurstPacket", "ParticleBurstPacket", "S2C",
+                    "block break particle burst by position and block state"),
+            new LegacyPacketMapping("PlayerInformPacket", "ClientInformPacket", "S2C",
+                    "HUD notice text with id and duration"),
+            new LegacyPacketMapping("HbmAnimationPacket", "ItemAnimationPacket", "S2C",
+                    "modern typed item animation payload"),
+            new LegacyPacketMapping("HbmAnimationPacket", "LegacyItemAnimationPacket", "S2C",
+                    "legacy small integer animation compatibility path"),
+            new LegacyPacketMapping("MuzzleFlashPacket", "MuzzleFlashPacket", "S2C",
+                    "entity muzzle flash timestamp marker"),
+            new LegacyPacketMapping("HeldItemNBTPacket", "HeldItemNbtPacket", "S2C",
+                    "held item NBT mirror for client render/HUD"),
+            new LegacyPacketMapping("TEVaultPacket", "ClientTileEventPacket", "S2C",
+                    "vault door client tile event hbm:vault_door"),
+            new LegacyPacketMapping("TESirenPacket", "ClientTileEventPacket", "S2C",
+                    "siren client tile event hbm:siren"),
+            new LegacyPacketMapping("TEFFPacket", "TileSyncPacket", "S2C",
+                    "force field state sync compound"),
+            new LegacyPacketMapping("TEMissileMultipartPacket", "ClientMissileMultipartPacket", "S2C",
+                    "missile multipart snapshot by block position"),
+            new LegacyPacketMapping("SatPanelPacket", "ClientPanelDataPacket", "S2C",
+                    "satellite panel type and NBT payload hbm:satellite_panel"),
+            new LegacyPacketMapping("BiomeSyncPacket", "ClientBiomeSyncPacket", "S2C",
+                    "single-cell or whole-chunk biome short array"),
+            new LegacyPacketMapping("BufPacket", "ClientTileBinaryDataPacket", "S2C",
+                    "small tile binary payload by channel"),
+            new LegacyPacketMapping("BufPacket", "ClientTileBinaryDataChunkPacket", "S2C",
+                    "large tile binary payload split by transfer id"),
+            new LegacyPacketMapping("SerializableRecipePacket", "ClientBinaryDataPacket", "S2C",
+                    "generic non-recipe-manager client binary data fallback"),
+            new LegacyPacketMapping("SerializableRecipePacket", "ClientBinaryDataChunkPacket", "S2C",
+                    "large generic client binary data fallback"),
+            new LegacyPacketMapping("ExplosionKnockbackPacket", "ExplosionKnockbackPacket", "S2C",
+                    "client motion impulse for explosion effects"),
+            new LegacyPacketMapping("ExplosionVanillaNewTechnologyCompressedAffectedBlockPositionDataForClientEffectsAndParticleHandlingPacket",
+                    "CompressedExplosionEffectPacket", "S2C",
+                    "compressed affected block positions for client explosion effects"),
+            new LegacyPacketMapping("AuxButtonPacket", "LegacyButtonPacket", "C2S",
+                    "legacy block position plus value/id button packet"),
+            new LegacyPacketMapping("AuxButtonPacket", "ServerTileActionPacket", "C2S",
+                    "typed tile action replacement for migrated machines"),
+            new LegacyPacketMapping("NBTControlPacket", "TileControlPacket", "C2S",
+                    "legacy block position plus NBT control compound"),
+            new LegacyPacketMapping("NBTControlPacket", "ServerTileActionPacket", "C2S",
+                    "typed tile action replacement for named controls"),
+            new LegacyPacketMapping("NBTItemControlPacket", "ItemControlPacket", "C2S",
+                    "held item NBT control compound"),
+            new LegacyPacketMapping("ItemDesignatorPacket", "ItemActionPacket", "C2S",
+                    "hbm:designator typed held item action"),
+            new LegacyPacketMapping("ItemBobmazonPacket", "ItemActionPacket", "C2S",
+                    "hbm:bobmazon_offer typed held item action"),
+            new LegacyPacketMapping("SatCoordPacket", "CoordinateActionPacket", "C2S",
+                    "satellite coordinate action with frequency"),
+            new LegacyPacketMapping("SatLaserPacket", "CoordinateActionPacket", "C2S",
+                    "satellite laser/click action with frequency"),
+            new LegacyPacketMapping("AnvilCraftPacket", "TypedMenuActionPacket", "C2S",
+                    "hbm:anvil_craft typed menu action"),
+            new LegacyPacketMapping("KeybindPacket", "KeybindPacket", "C2S",
+                    "key id plus pressed state"),
+            new LegacyPacketMapping("MachineBatteryButtonPacket", "MachineBatteryButtonPacket", "C2S",
+                    "early dedicated machine battery button compatibility"));
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(new ResourceLocation(HbmNtm.MOD_ID, "main"))
@@ -94,6 +165,14 @@ public final class ModMessages {
 
     public static List<PacketRegistration> packetRegistrations() {
         return List.copyOf(PACKET_REGISTRATIONS);
+    }
+
+    public static List<LegacyPacketMapping> legacyPacketMappings() {
+        return LEGACY_PACKET_MAPPINGS;
+    }
+
+    public static int legacyPacketMappingCount() {
+        return LEGACY_PACKET_MAPPINGS.size();
     }
 
     public static void register() {
@@ -257,6 +336,10 @@ public final class ModMessages {
                 ClientMissileMultipartPacket::decode,
                 ClientMissileMultipartPacket::encode,
                 ClientMissileMultipartPacket::handle);
+        registerClientToServer(ServerTileActionPacket.class,
+                ServerTileActionPacket::decode,
+                ServerTileActionPacket::encode,
+                ServerTileActionPacket::handle);
     }
 
     public static void sendToServer(Object message) {
@@ -386,8 +469,18 @@ public final class ModMessages {
         sendToServer(new ItemControlPacket(hand, tag));
     }
 
+    public static void sendNbtItemControl(InteractionHand hand, net.minecraft.nbt.CompoundTag tag) {
+        net.minecraft.nbt.CompoundTag data = tag == null ? new net.minecraft.nbt.CompoundTag() : tag.copy();
+        data.putString("legacyPacket", HbmNetworkActions.NBT_ITEM_CONTROL.toString());
+        sendItemControl(hand, data);
+    }
+
     public static void sendItemAction(InteractionHand hand, ResourceLocation actionType, net.minecraft.nbt.CompoundTag data) {
         sendToServer(new ItemActionPacket(hand, actionType, data));
+    }
+
+    public static void sendItemAction(InteractionHand hand, ResourceLocation actionType) {
+        sendItemAction(hand, actionType, new net.minecraft.nbt.CompoundTag());
     }
 
     public static void sendDesignatorAction(InteractionHand hand, int operator, int value, int reference) {
@@ -395,23 +488,34 @@ public final class ModMessages {
         data.putInt("operator", operator);
         data.putInt("value", value);
         data.putInt("reference", reference);
-        sendItemAction(hand, new ResourceLocation(HbmNtm.MOD_ID, "designator"), data);
+        sendItemAction(hand, HbmNetworkActions.DESIGNATOR, data);
     }
 
     public static void sendBobmazonOffer(InteractionHand hand, int offerIndex) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putInt("offer", offerIndex);
-        sendItemAction(hand, new ResourceLocation(HbmNtm.MOD_ID, "bobmazon_offer"), data);
+        sendItemAction(hand, HbmNetworkActions.BOBMAZON_OFFER, data);
     }
 
     public static void sendSatelliteCoordinateAction(InteractionHand hand, BlockPos pos, int frequency) {
-        sendCoordinateAction(hand, pos, 0, 0, frequency, new net.minecraft.nbt.CompoundTag());
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putString("actionType", HbmNetworkActions.SATELLITE_COORDINATE.toString());
+        sendCoordinateAction(hand, pos, 0, 0, frequency, data);
     }
 
     public static void sendSatelliteLaserAction(InteractionHand hand, int x, int z, int frequency) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putBoolean("laser", true);
+        data.putString("actionType", HbmNetworkActions.SATELLITE_LASER.toString());
         sendCoordinateAction(hand, new BlockPos(x, 0, z), 1, 0, frequency, data);
+    }
+
+    public static void sendSatCoord(InteractionHand hand, int x, int y, int z, int frequency) {
+        sendSatelliteCoordinateAction(hand, new BlockPos(x, y, z), frequency);
+    }
+
+    public static void sendSatLaser(InteractionHand hand, int x, int z, int frequency) {
+        sendSatelliteLaserAction(hand, x, z, frequency);
     }
 
     public static void syncHeldItemNbt(ServerPlayer player, InteractionHand hand, ItemStack stack) {
@@ -423,6 +527,31 @@ public final class ModMessages {
 
     public static void sendLegacyButton(BlockPos pos, int value, int id) {
         sendToServer(new LegacyButtonPacket(pos, value, id));
+    }
+
+    public static void sendAuxButton(BlockPos pos, int value, int id) {
+        sendLegacyButton(pos, value, id);
+    }
+
+    public static void sendTileControl(BlockPos pos, net.minecraft.nbt.CompoundTag data) {
+        sendToServer(new TileControlPacket(pos, data));
+    }
+
+    public static void sendNbtControl(BlockPos pos, net.minecraft.nbt.CompoundTag data) {
+        sendTileControl(pos, data);
+    }
+
+    public static void sendTypedTileAction(BlockPos pos, ResourceLocation actionType, int value,
+                                           net.minecraft.nbt.CompoundTag data) {
+        sendToServer(new ServerTileActionPacket(pos, actionType, value, data));
+    }
+
+    public static void sendTypedTileAction(BlockPos pos, ResourceLocation actionType) {
+        sendTypedTileAction(pos, actionType, 0, new net.minecraft.nbt.CompoundTag());
+    }
+
+    public static void sendTypedTileAction(BlockPos pos, ResourceLocation actionType, int value) {
+        sendTypedTileAction(pos, actionType, value, new net.minecraft.nbt.CompoundTag());
     }
 
     public static void sendTileBinaryControl(BlockPos pos, ResourceLocation channel,
@@ -547,14 +676,14 @@ public final class ModMessages {
         data.putInt("state", state);
         data.putBoolean("resetClientTime", resetClientTime);
         data.putInt("type", type);
-        sendClientTileEvent(blockEntity, new ResourceLocation(HbmNtm.MOD_ID, "vault_door"), data);
+        sendClientTileEvent(blockEntity, HbmNetworkActions.VAULT_DOOR, data);
     }
 
     public static void sendSirenEvent(BlockEntity blockEntity, int trackId, boolean active) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putInt("trackId", trackId);
         data.putBoolean("active", active);
-        sendClientTileEvent(blockEntity, new ResourceLocation(HbmNtm.MOD_ID, "siren"), data);
+        sendClientTileEvent(blockEntity, HbmNetworkActions.SIREN, data);
     }
 
     public static void syncForceFieldState(BlockEntity blockEntity, float radius, int health, int maxHealth,
@@ -568,6 +697,11 @@ public final class ModMessages {
         data.putInt("color", color);
         data.putInt("cooldown", cooldown);
         sendToTrackingChunk(new TileSyncPacket(blockEntity.getBlockPos(), data), blockEntity);
+    }
+
+    public static void sendForceFieldState(BlockEntity blockEntity, float radius, int health, int maxHealth,
+                                           int power, boolean active, int color, int cooldown) {
+        syncForceFieldState(blockEntity, radius, health, maxHealth, power, active, color, cooldown);
     }
 
     public static void sendClientTileBinaryData(BlockEntity blockEntity, ResourceLocation channel,
@@ -652,6 +786,10 @@ public final class ModMessages {
         sendToPlayer(new ClientPanelDataPacket(panelType, legacyType, data), player);
     }
 
+    public static void syncSatellitePanelData(ServerPlayer player, int legacyType, net.minecraft.nbt.CompoundTag data) {
+        syncClientPanelData(player, HbmNetworkActions.SATELLITE_PANEL, legacyType, data);
+    }
+
     public static void syncPlayerProperties(ServerPlayer player, ResourceLocation dataType, net.minecraft.nbt.CompoundTag data) {
         sendToPlayer(new PlayerPropertiesPacket(dataType, data), player);
     }
@@ -670,11 +808,23 @@ public final class ModMessages {
         sendToServer(new TypedMenuActionPacket(actionType, value, data));
     }
 
+    public static void sendTypedMenuAction(ResourceLocation actionType, int value) {
+        sendTypedMenuAction(actionType, value, new net.minecraft.nbt.CompoundTag());
+    }
+
+    public static void sendTypedMenuAction(ResourceLocation actionType) {
+        sendTypedMenuAction(actionType, 0, new net.minecraft.nbt.CompoundTag());
+    }
+
     public static void sendAnvilCraftAction(int recipeIndex, int mode) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putInt("recipeIndex", recipeIndex);
         data.putInt("mode", mode);
-        sendTypedMenuAction(new ResourceLocation(HbmNtm.MOD_ID, "anvil_craft"), recipeIndex, data);
+        sendTypedMenuAction(HbmNetworkActions.ANVIL_CRAFT, recipeIndex, data);
+    }
+
+    public static void sendAnvilCraft(int recipeIndex, int mode) {
+        sendAnvilCraftAction(recipeIndex, mode);
     }
 
     public static void syncClientBiome(ServerPlayer player, int blockX, int blockZ, short biome) {
@@ -719,6 +869,9 @@ public final class ModMessages {
     }
 
     public record PacketRegistration(int id, String direction, String typeName) {
+    }
+
+    public record LegacyPacketMapping(String legacyName, String modernName, String direction, String notes) {
     }
 
     private ModMessages() {

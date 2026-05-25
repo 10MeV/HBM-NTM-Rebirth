@@ -35,6 +35,14 @@ public final class HbmEnergyDebug {
         spawn(level, receiverPos, side, connected, false);
     }
 
+    public static void spawnRemoteProviderSubscription(Level level, BlockPos conductorPos, Direction portDirection, boolean connected) {
+        spawnRemote(level, conductorPos, portDirection, connected, true);
+    }
+
+    public static void spawnRemoteReceiverSubscription(Level level, BlockPos conductorPos, Direction portDirection, boolean connected) {
+        spawnRemote(level, conductorPos, portDirection, connected, false);
+    }
+
     public static void spawnDirectTransfer(Level level, BlockPos providerPos, Direction side, long transferred) {
         if (transferred > 0L) {
             spawn(level, providerPos, side, true, true);
@@ -62,6 +70,36 @@ public final class HbmEnergyDebug {
         data.putString("role", provider ? "provider" : "receiver");
         data.putBoolean("connected", connected);
         data.putString("side", side.getName());
+        data.putInt("color", connected ? (provider ? 0x66FF66 : 0x66AAFF) : 0x808080);
+        ParticleUtil.spawnAux(serverLevel, x, y, z, data, 25.0D);
+    }
+
+    private static void spawnRemote(Level level, BlockPos conductorPos, Direction portDirection, boolean connected, boolean provider) {
+        if (!particleDebug || !(level instanceof ServerLevel serverLevel) || conductorPos == null || portDirection == null) {
+            return;
+        }
+
+        double sideSign = provider ? -1.0D : 1.0D;
+        double motionSign = provider ? 1.0D : -1.0D;
+        double x = conductorPos.getX() + 0.5D + portDirection.getStepX() * sideSign * 0.5D
+                + (serverLevel.random.nextDouble() - 0.5D) * 0.3D;
+        double y = conductorPos.getY() + 0.5D + portDirection.getStepY() * sideSign * 0.5D
+                + (serverLevel.random.nextDouble() - 0.5D) * 0.3D;
+        double z = conductorPos.getZ() + 0.5D + portDirection.getStepZ() * sideSign * 0.5D
+                + (serverLevel.random.nextDouble() - 0.5D) * 0.3D;
+        double dx = portDirection.getStepX() * motionSign * 0.05D;
+        double dy = portDirection.getStepY() * motionSign * 0.05D;
+        double dz = portDirection.getStepZ() * motionSign * 0.05D;
+
+        CompoundTag data = new CompoundTag();
+        data.putString("type", ParticleUtil.TYPE_DEBUG_DRONE);
+        data.putDouble("mX", dx * 8.0D);
+        data.putDouble("mY", dy * 8.0D);
+        data.putDouble("mZ", dz * 8.0D);
+        data.putString("role", provider ? "provider" : "receiver");
+        data.putBoolean("connected", connected);
+        data.putString("side", portDirection.getName());
+        data.putBoolean("remotePort", true);
         data.putInt("color", connected ? (provider ? 0x66FF66 : 0x66AAFF) : 0x808080);
         ParticleUtil.spawnAux(serverLevel, x, y, z, data, 25.0D);
     }

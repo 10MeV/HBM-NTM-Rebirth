@@ -1,6 +1,8 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
+import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
+import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.multiblock.MultiblockExtents;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -29,7 +31,6 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 @SuppressWarnings("deprecation")
 public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements EntityBlock {
@@ -57,8 +58,10 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
     }
 
     @Override
-    protected Predicate<BlockPos> proxyOffsets(BlockState state) {
-        return AssemblyMachineBlock::isLegacyProxyOffset;
+    protected LegacyMultiblockLayout getLayout(BlockState state) {
+        return LegacyMultiblockLayout.ofLegacyXr(LEGACY_XR_DIMENSIONS, state.getValue(FACING))
+                .withProxyPredicate(AssemblyMachineBlock::isLegacyProxyOffset,
+                        LegacyProxyMode.combo(true, true, true));
     }
 
     @Override
@@ -107,6 +110,24 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
 
     @Override
     public VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, CollisionContext context) {
+        return getMultiblockShape(state, level, pos, context);
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos,
+            CollisionContext context) {
+        return getMultiblockCollisionShape(state, level, pos, context);
+    }
+
+    @Override
+    public VoxelShape getMultiblockShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos corePos,
+            CollisionContext context) {
+        return SHAPE;
+    }
+
+    @Override
+    public VoxelShape getMultiblockCollisionShape(BlockState state, net.minecraft.world.level.BlockGetter level,
+            BlockPos corePos, CollisionContext context) {
         return SHAPE;
     }
 

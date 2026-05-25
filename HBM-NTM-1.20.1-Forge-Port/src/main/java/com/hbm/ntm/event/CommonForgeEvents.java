@@ -12,8 +12,10 @@ import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.api.item.HazardClass;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.ntm.radiation.CraterRadiationData;
 import com.hbm.ntm.radiation.HazardRegistry;
 import com.hbm.ntm.radiation.HazmatRegistry;
 import com.hbm.ntm.radiation.HazardType;
@@ -356,6 +358,11 @@ public final class CommonForgeEvents {
     }
 
     private static void handleChunkRadiation(LivingEntity entity) {
+        float craterRadiation = CraterRadiationData.getAmbientRadiation(entity);
+        if (craterRadiation > 0.0F) {
+            RadiationUtil.contaminate(entity, HazardType.RADIATION, ContaminationType.CREATIVE, craterRadiation / 20.0F);
+        }
+
         if (RadiationUtil.isRadImmune(entity)) {
             return;
         }
@@ -395,6 +402,9 @@ public final class CommonForgeEvents {
             RadiationData.setRadiation(entity, 0.0F);
             if (entity.isAlive()) {
                 entity.setHealth(0.0F);
+            }
+            if (entity.isDeadOrDying()) {
+                ParticleUtil.spawnGiblets(entity, ParticleUtil.GIBLET_MEAT);
             }
         } else if (radiation >= 800.0F) {
             addRandomEffect(entity, 300, MobEffects.CONFUSION, 5 * 30, 0);

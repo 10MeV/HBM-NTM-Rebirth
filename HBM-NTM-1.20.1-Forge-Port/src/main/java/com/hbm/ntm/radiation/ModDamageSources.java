@@ -29,6 +29,8 @@ public final class ModDamageSources {
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "pc"));
     public static final ResourceKey<DamageType> CLOUD = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "cloud"));
+    public static final ResourceKey<DamageType> TAINT = ResourceKey.create(
+            Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "taint"));
     public static final ResourceKey<DamageType> ELECTRIC = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "electric"));
     public static final ResourceKey<DamageType> SHRAPNEL = ResourceKey.create(
@@ -66,6 +68,10 @@ public final class ModDamageSources {
 
     public static DamageSource cloud(Level level) {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(CLOUD));
+    }
+
+    public static DamageSource taint(Level level) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(TAINT));
     }
 
     public static DamageSource electric(Level level) {

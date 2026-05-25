@@ -5,6 +5,7 @@ import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModEffects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -127,6 +128,10 @@ public final class ExplosionChaos {
             hurtArmor(entity, 25);
             if (ArmorUtil.checkForHazmat(entity)) {
                 continue;
+            }
+            if (entity.hasEffect(ModEffects.TAINT.get())) {
+                entity.removeEffect(ModEffects.TAINT.get());
+                entity.addEffect(new MobEffectInstance(ModEffects.MUTATION.get(), 60 * 60 * 20, 0, false, true));
             }
             entity.hurt(ModDamageSources.cloud(level), 5.0F);
         }

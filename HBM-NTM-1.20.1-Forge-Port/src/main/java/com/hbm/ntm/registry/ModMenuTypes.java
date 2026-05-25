@@ -7,6 +7,7 @@ import com.hbm.ntm.menu.ChemicalPlantMenu;
 import com.hbm.ntm.menu.LiquefactorMenu;
 import com.hbm.ntm.menu.MachineBatteryMenu;
 import com.hbm.ntm.menu.MachineBatterySocketMenu;
+import com.hbm.ntm.menu.NuclearDeviceMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -35,6 +36,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<MachineBatterySocketMenu>> MACHINE_BATTERY_SOCKET =
             MENUS.register("machine_battery_socket", () -> IForgeMenuType.create(MachineBatterySocketMenu::new));
+
+    public static final RegistryObject<MenuType<NuclearDeviceMenu>> NUCLEAR_DEVICE =
+            MENUS.register("nuclear_device", () -> IForgeMenuType.create(NuclearDeviceMenu::new));
 
     public static void register(IEventBus modBus) {
         MENUS.register(modBus);

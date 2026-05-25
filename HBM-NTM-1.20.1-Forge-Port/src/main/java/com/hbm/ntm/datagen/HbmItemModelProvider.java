@@ -64,6 +64,14 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "circuit.chip_quantum");
             return;
         }
+        if (path.equals("early_explosive_lenses")) {
+            generatedItem(path, "gadget_explosive8");
+            return;
+        }
+        if (path.equals("explosive_lenses")) {
+            generatedItem(path, "man_explosive8");
+            return;
+        }
         basicItem(item);
     }
 

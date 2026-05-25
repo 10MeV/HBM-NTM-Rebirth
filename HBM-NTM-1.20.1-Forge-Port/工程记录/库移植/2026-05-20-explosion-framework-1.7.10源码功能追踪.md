@@ -107,9 +107,9 @@
 
 ### 有意延期
 
-- 未迁移旧 `ExplosionVanillaNewTechnologyCompressedAffectedBlockPositionDataForClientEffectsAndParticleHandlingPacket`，因为当前声音/粒子库只有通用 Aux/ParticleBurst；后续如果需要高保真客户端烟尘再补专用 packet。
-- 未迁移 `EntityProcessorCross` / `EntityProcessorCrossSmooth`，因为 Smooth 与旧 bullet config、confetti、damage resistance 深耦合。
-- 未迁移 `BlockAllocatorWater`、`BlockAllocatorBulkie`、`BlockMutatorBalefire`、`BlockMutatorDebris` 等特殊爆炸件。
+- 本段为首批迁移时的历史限制；VNT 标准 affected-block 客户端烟尘已在 2026-05-25 通过 Aux 粒子桥补入。
+- 本段为首批迁移时的历史限制；`EntityProcessorCross` / `EntityProcessorCrossSmooth` 已在 2026-05-21 后续批次补入，穿甲 DT/DR 仍延期。
+- 本段为首批迁移时的历史限制；`BlockAllocatorWater`、`BlockAllocatorBulkie`、`BlockMutatorBalefire`、`BlockMutatorDebris` 已由后续批次补入。
 - 未迁移核爆射线、并行爆炸、辐射/污染/fallout 环境后效应。
 
 ## 2026-05-21 Water/Bulkie allocator 与普通爆炸入口
@@ -200,9 +200,81 @@
 ### 有意降级/延期
 
 - `BlockMutatorBalefire` 已在 2026-05-24 后续批次接回旧 `balefire` 方块；本段保留为 Cross/CrossSmooth 迁移批次时的历史限制。
+- `ExplosionEffectStandard` 已在 2026-05-25 后续批次补回 VNT affected-block 客户端 smoke/explode 表现；本段的现代粒子桥限制只保留为历史记录。
 - `EntityProcessorCrossSmooth.setupPiercing(...)` 只保存 DT/DR 参数，不实际应用。旧穿甲依赖 `EntityDamageUtil.attackEntityFromNT` 与 `DamageResistanceHandler.DamageClass`，需等伤害抗性核心深化。
 - `EntityProcessorCross.shouldDealKnockback(...)` 暂不排除旧 `EntityBulletBaseMK4` / `EntityGrenadeUniversal`，因为这些实体尚未迁入 clean port；后续迁入后再以接口或类型标记排除。
-- `ExplosionEffectWeapon` 使用现代粒子桥的烟/火最小表现，不复制旧 `ExplosionSmallCreator` 的完整自定义粒子。
+- `ExplosionEffectWeapon` 已在 2026-05-25 改回 `ParticleUtil.spawnExplosionSmall(...)` 路径，复用现代 `explosionSmall` aux 粒子、近/远小爆炸延迟音和 debris 表现；旧 `ParticleExplosionSmall` 的逐像素完全一致性仍不追求。
+
+## 2026-05-25 VNT 标准 affected-block 客户端效果桥
+
+### 1.7.10 细化追踪
+
+- `ExplosionEffectStandard.doEffect(...)`：
+  - 服务端播放 `random.explode`。
+  - 向 250 格范围客户端发送 `ExplosionVanillaNewTechnologyCompressedAffectedBlockPositionDataForClientEffectsAndParticleHandlingPacket`。
+  - packet 包含爆心 `x/y/z`、`size` 与 `explosion.compat.affectedBlockPositions`。
+- 旧客户端 `performClient(...)`：
+  - `size >= 2` 时生成 `hugeexplosion`，否则生成 `largeexplode`。
+  - 对每个 affected block：
+    - 在方块内部随机取一点。
+    - 计算从爆心到该点的归一化方向。
+    - `mod = 0.5 / (distance / size + 0.1) * (rand^2 + 0.3)`。
+    - 在爆心与方块随机点中点生成 `explode` 粒子，在方块随机点生成 `smoke` 粒子。
+
+### 现代实现
+
+- `ParticleUtil` 新增 `TYPE_VNT_EXPLOSION` 与 `spawnVntExplosion(...)`，通过现有 `AuxParticlePacket` 发送：
+  - `size`
+  - `blocks` long array，使用 `BlockPos.asLong()`。
+- `ExplosionEffectStandard`：
+  - 保留旧爆炸声音音量/音高。
+  - `particles=true` 时发送 `vntExplosion` aux payload。
+  - 对 affected block 坐标最多抽样 512 个，避免大型程序爆炸生成过大网络包；核爆/大型云已有专用实体和效果系统承担主表现。
+- `HbmParticleEffects`：
+  - 新增 `vntExplosion` 客户端处理。
+  - 按旧公式生成中心爆炸粒子、每方块 `POOF` + `SMOKE` 方向粒子。
+
+### 有意延期
+
+- 未完全复刻旧压缩 packet 格式；现代复用已有 Aux 粒子网络管线，保留客户端表现契约。
+- 超过 512 个 affected block 的 VNT 标准烟尘会抽样，而不是逐方块全量发送；这是现代网络安全边界，后续如需要可追加专用压缩包。
+
+## 2026-05-25 VNT Tiny 效果与 smooth tiny 入口
+
+### 1.7.10 细化追踪
+
+- `ExplosionEffectTiny.doEffect(...)`：
+  - 服务端播放 `hbm:weapon.explosionTiny`，音量 `15.0F`，音高 `1.0F`。
+  - 发送 `type=vanillaExt` aux particle，`mode=largeexplode`，`size=1.5F`，`count=1`，范围 100。
+- Sedna `Lego.tinyExplode(...)`：
+  - 命中面外偏移 `0.25` 后创建 `ExplosionVNT`。
+  - `EntityProcessorCrossSmooth(0.5, bullet.damage * damageMod)`。
+  - `setupPiercing(config.armorThresholdNegation, config.armorPiercingPercent)`。
+  - `setKnockback(0.25D)`，`PlayerProcessorStandard`，`ExplosionEffectTiny`。
+- `ItemGrenadeFilling.tinyExplode(...)`：
+  - 直接在手雷位置创建 `ExplosionVNT`。
+  - `EntityProcessorCrossSmooth(0.5, damage)`，可带 DT/DR，击退 `0.25D`。
+  - `PlayerProcessorStandard`，`ExplosionEffectTiny`。
+
+### 现代实现
+
+- `ExplosionEffectTiny`：
+  - 改用已注册的 `ModSounds.WEAPON_EXPLOSION_TINY`。
+  - 通过 `ParticleUtil.spawnAux(...)` 发送旧 `vanillaExt/largeexplode` payload，复用现有客户端 aux 粒子处理。
+- `WeaponExplosionUtil` 新增 tiny smooth 入口：
+  - `tinySmooth(...)`
+  - `explodeTinySmooth(...)`
+  - 默认参数对齐旧 Sedna/手雷 tiny 爆炸：`nodeDistance=0.5`、`knockback=0.25`、无方块破坏、`ExplosionEffectTiny`。
+  - 完整重载保留 `pierceDamageThreshold` / `pierceDamageResistance` 参数，供后续 Sedna、手雷、landmine 等调用点无损接入。
+- `WeaponExplosionUtil.smooth(...)` 增加 DT/DR 重载，给旧 `standardExplode(...)` / 手雷标准小武器爆炸路径预留穿甲参数。
+- `ExplosionEffectWeapon`：
+  - 旧版只调用 `ExplosionSmallCreator.composeEffect(...)`，由客户端播放小爆炸近/远声音并生成云团/debris。
+  - 现代改为直接调用 `ParticleUtil.spawnExplosionSmall(...)`，不再额外播放原版 `GENERIC_EXPLODE`，避免与客户端旧式小爆炸音叠加。
+
+### 有意延期
+
+- `EntityProcessorCrossSmooth.setupPiercing(...)` 目前仍只保存 DT/DR 参数，实际穿甲计算等待伤害抗性核心迁移。
+- 旧 Sedna 子弹、通用手雷、landmine 等具体调用点尚未迁入；本批只补爆炸库公共入口。
 
 ## 2026-05-21 旧爆炸工具层兼容迁移
 
@@ -513,7 +585,8 @@
   - 粒子表现改走现代 `ParticleUtil.spawnAux`，客户端 `HbmParticleEffects` 新增 `chaosCloud`，用 dust + cloud 近似旧彩色 FX。
   - `poison` 使用现代 `ArmorUtil.hasLungGasProtection` 近似旧 GAS_LUNG/GAS_BLISTERING；有防护时损耗头盔耐久。
   - `pc` / `c` 新增现代 damage type：`hbm:pc`、`hbm:cloud`，并损耗穿戴护甲。
-  - `c` 暂不处理旧 taint -> mutation，因为现代 clean port 尚无 taint effect。
+  - `c` 已补回旧 taint -> mutation 联动：命中带 `hbm:taint` 的 living 时移除 taint，并施加 1 小时 `hbm:mutation`。
+  - 新增 `hbm:taint` MobEffect 与 `hbm:taint` damage type，保留旧 taint 每 2 tick 判定、约 1/40 概率造成 `amplifier + 1` 伤害的最小效果契约。
   - `move` 对 sheep 命名 `jeb_`，其它非玩家 living 随机命名 Dinnerbone/Grumm，并按旧逻辑平移实体。
 - 新增 `ExplosionTom`：
   - 保留旧字段名、构造参数形状、NBT 保存/读取、螺旋推进公式。
@@ -526,6 +599,7 @@
 - `ExplosionChaos.cluster` 未迁：依赖旧 `EntityBulletBaseMK4` 与 Sedna `XFactoryCatapult` 弹药系统，clean port 当前没有对应实体/工厂。
 - 旧 `EntityCloudFX` / `EntityOrangeFX` / `EntityPinkCloudFX` 未逐个迁移；现代先用 Aux 粒子近似，不创建持久客户端实体。
 - 旧 `ArmorRegistry.hasAnyProtection` 与 gas mask filter 真实滤芯损耗尚未完整迁；现代只通过 helmet 耐久近似防护消耗。
+- `hbm:taint` 本批只迁药水效果与 cloud 转 mutation 联动；旧 taint trail 铺方块、tainted mob 免疫、taint 方块 meta 行为等待 taint 方块/生物批次。
 - `ExplosionTom` 的 tektite 方块与 osmiridium tektite 矿尚未注册，因此当前 fallback 只保证行为/地形流程可运行，后续资源方块迁入后无需改算法即可自动使用 legacy 方块。
 
 ## 2026-05-22 VNT GlyphidDig / Parallelized 兼容入口
@@ -579,17 +653,18 @@
 
 - 新增 `NukeExplosionMk5Entity`：
   - 注册为 `hbm:entity_nuke_explosion_mk5`，客户端用 `NoopRenderer`，实体本身不可见。
-  - 保留 `strength/speed/length/fallout/falloutAdd` 与 `create(...)` / `createNoFallout(...)` / `moreFallout(...)` 入口。
-  - 服务端首 tick 初始化 `ExplosionNukeRayBatched`，每 tick按固定 25ms 预算调用 cache/destruction。
+  - 保留 `strength/speed/length/fallout/falloutAdd` 与 `create(...)` / `createNoFallout(...)` / `statFac(...)` / `statFacNoRad(...)` / `moreFallout(...)` 入口。
+  - 服务端首 tick 初始化 `ExplosionNukeRayBatched`，每 tick 按 `BombConfig.MK5_BUDGET_MS` 预算调用 cache/destruction。
   - 保留中心衰减伤害：每 tick 调 `ExplosionNukeGeneric.dealDamage(..., length * 2)`。
   - 迁入早期辐射：对 `length * 2` 范围内 living 按视线路径方块抗性衰减，并通过现代 `RadiationUtil` 施加 `RAD_BYPASS` 辐射。
+  - 读取 NBT 时按 `BombConfig.LIMIT_EXPLOSION_LIFESPAN` 检查保存时间，过期的长时核爆会在下一 tick 自动结束，迁入旧配置的存档寿命约束。
   - `remove` 时取消 ray worker，避免实体被移除后继续持有破坏任务。
 
 ### 有意降级/延期
 
 - 旧 `EntityExplosionChunkloading` 的强制 chunk loader 已在 2026-05-24 迁入现代 forced chunk 基类；本段为 MK5 初始迁入时的历史限制。
 - 旧 `EntityFalloutRain` 已在后续批次迁入安全子集并接回 MK5 完成路径；本段为 MK5 初始迁入时的历史限制。
-- 旧 `BombConfig.mk5` / `falloutRange` / `enableExtendedLogging` 尚未迁入现代 config，本批使用固定 25ms tick 预算和 100% fallout 范围。
+- 旧 `enableExtendedLogging` 尚未迁入现代 config。
 - Manhattan 成就系统尚未迁，现代实体不触发成就。
 
 ## 2026-05-22 BombConfig 子集 / ExplosionNukeSmall 大核弹接线
@@ -614,13 +689,13 @@
   - fallback fallout footprint 范围从 `BombConfig.FALLOUT_RANGE_PERCENT` 读取。
 - 更新 `ExplosionNukeSmall`：
   - `PARAMS_HIGH` 的默认半径使用 `BombConfig.FATMAN_RADIUS_DEFAULT`。
-  - `miniNuke=false` 时除了已迁的烟云表现外，现在会 `addFreshEntity(NukeExplosionMk5Entity.create(...))`，恢复旧版大核弹进入 MK5 调度实体的路径。
+  - `miniNuke=false` 时除了已迁的烟云表现外，现在会通过 `NuclearExplosionUtil.spawnNuclear(...)` 进入 MK5 调度实体，恢复旧版大核弹路径。
   - 新增 `configuredHighParams()` / `explodeConfiguredHigh(...)`，供后续 Fatman、Tier0 missile 等调用点按运行期 `BombConfig.FATMAN_RADIUS` 生成参数，避免静态 `PARAMS_HIGH` 缓存旧半径。
 
 ### 有意降级/延期
 
 - 现代 `PARAMS_HIGH` 仍是静态默认参数；后续核弹方块/物品接线应优先使用 `configuredHighParams()` 或 `explodeConfiguredHigh(...)`。
-- `BombConfig.CHUNK_LOADING` 和 `EXPLOSION_ALGORITHM` 已迁配置入口，但当前现代实现仍采用安全 batched worker，不启用旧 direct chunk storage/threaded 写入。
+- `BombConfig.CHUNK_LOADING` 已接入现代 forced chunk 基类；`EXPLOSION_ALGORITHM` 已迁配置入口，但当前现代实现仍采用安全 batched worker，不启用旧 direct chunk storage/threaded 写入。
 - `ExplosionNukeSmall` 的大核弹路径已通过 `NukeExplosionMk5Entity` 继承的现代 forced chunk 基类承接旧强制加载语义；仍未迁 `WorldUtil.loadAndSpawnEntityInWorld` 的其它通用行为。
 
 ## 2026-05-22 EntityFalloutRain 安全子集
@@ -673,10 +748,11 @@
 
 - 新增 `NukeExplosionMk3Entity`：
   - 注册为 `hbm:entity_nuke_mk3`，客户端 `NoopRenderer`。
-  - 保留 `createFleija(...)`、`createWaste(...)`、`makeSol()` 入口，后续核弹方块和武器可直接 spawn。
+  - 保留 `createFleija(...)`、`createWaste(...)`、`createSolinium(...)`、`statFacFleija(...)`、`makeSol()` 入口，后续核弹方块和武器可直接 spawn。
   - 复用现代 `ExplosionNukeAdvanced`、`ExplosionFleija`、`ExplosionSolinium`、`ExplosionHurtUtil` 和 `FalloutRainEntity`。
   - NBT 保存/读取旧字段名和各处理器进度前缀：`exp_`、`wst_`、`vap_`、`expl_`、`sol_`。
   - `speed` 初始值从现代 `BombConfig.BLAST_SPEED` 读取，并按旧逻辑每 tick 自增。
+  - 读取 NBT 时按 `BombConfig.LIMIT_EXPLOSION_LIFESPAN` 检查保存时间，过期的长时 Fleija/Solinium/waste 实体会在下一 tick 自动结束。
 
 ### 有意降级/延期
 
@@ -733,10 +809,10 @@
 
 - 新增 `ExplosionChunkLoadingEntity`：
   - 使用 Forge 1.20.1 `ForgeChunkManager.forceChunk(ServerLevel, modId, Entity, chunkX, chunkZ, add, ticking)` 迁入 entity ticket 语义。
-  - `forceCenterChunk()` 保持爆心 chunk 强制加载。
-  - `loadChunk(chunkX, chunkZ)` 迁入旧“当前工作 chunk”入口；现代实现切换时释放上一工作 chunk，避免大范围落尘处理留下过多持久 ticket。
+  - `forceCenterChunk()` 保持爆心 chunk 强制加载，并受 `BombConfig.CHUNK_LOADING` 控制；配置关闭时会释放已持有 ticket。
+  - `loadChunk(chunkX, chunkZ)` 迁入旧“当前工作 chunk”入口；现代实现切换时释放上一工作 chunk，避免大范围落尘处理留下过多持久 ticket，并同样受 `BombConfig.CHUNK_LOADING` 控制。
   - `clearChunkLoader()` 在 `remove(...)` 时释放中心 chunk 与工作 chunk。
-  - NBT 保存 `loaderCenterChunk` / `loaderWorkChunk`，实体重载后可继续释放/刷新对应 ticket。
+  - NBT 保存 `loaderCenterChunk` / `loaderWorkChunk` / `loaderSavedMillis`，实体重载后可继续释放/刷新对应 ticket，并供 `LIMIT_EXPLOSION_LIFESPAN` 判断存档后的过期爆炸。
 - 新增 `ExplosionChunkLoading.registerValidationCallback()`：
   - 在 common setup 中注册 Forge forced chunk 校验回调。
   - 世界加载重建 ticket 时，若 UUID 对应实体不存在或不是 `ExplosionChunkLoadingEntity`，移除该实体 ticket。
@@ -748,6 +824,137 @@
 
 - 现代 `loadChunk` 会释放上一工作 chunk；这是对旧实现的资源安全修正，不改变“当前正在处理的 chunk 需要被加载”的功能契约。
 - 仍未迁旧 `IChunkLoader` 接口本身；现代 Forge 已经不需要 request ticket 回调接口，爆炸实体通过基类直接持有 ticket 语义。
+
+## 2026-05-25 NuclearExplosionUtil 核爆调度门面
+
+### 1.7.10 细化追踪
+
+- 旧版普通弹药、导弹、核弹方块会直接散落调用：
+  - `EntityNukeExplosionMK5.statFac(...)` / `statFacNoRad(...)`
+  - `EntityNukeExplosionMK3.statFacFleija(...)` / `makeSol()`
+  - `ExplosionNukeSmall.explode(..., PARAMS_HIGH/PARAMS_MEDIUM)`
+  - `BombConfig.missileRadius` / `mirvRadius` / `fatmanRadius` / `nukaRadius` / `aSchrabRadius`
+- 已确认旧调用点：
+  - Tier4 nuclear / MIRV / doomsday / rusted doomsday missile。
+  - Tier0 micro missile、schrabidium missile。
+  - `EntityBulletBaseNT` 的 rainbow / nuke 配置分支。
+  - Fatman/Nuka/anti-schrabidium 相关普通武器与掉落物。
+
+### 现代实现
+
+- 新增 `NuclearExplosionUtil`：
+  - 集中提供 `spawnNuclear(...)`、`spawnNuclearNoFallout(...)`、`spawnNuclearWithFallout(...)`。
+  - 集中提供 `spawnFleija(...)`、`spawnSolinium(...)`、`spawnAntiSchrabidium(...)`。
+  - 集中提供核弹方块语义入口：`spawnGadget(...)`、`spawnBoy(...)`、`spawnMan(...)`、`spawnMike(...)`、`spawnTsar(...)`、`spawnPrototype(...)`、`spawnFleijaBomb(...)`、`spawnSoliniumBomb(...)`、`spawnN2(...)`。
+  - 集中提供旧导弹语义入口：`spawnMissileNuclear(...)`、`spawnMissileMirv(...)`、`spawnMissileDoomsday(...)`、`spawnMissileDoomsdayRusted(...)`。
+  - 集中提供普通武器/小核弹语义入口：`explodeFatman(...)`、`explodeNuka(...)`。
+  - 半径读取通过 `BombConfig` 运行期值，config 尚未初始化时回退旧默认值。
+- 改接现有调用库：
+  - `CustomNukeExplosion` 的 MK3/MK5 分支走 `NuclearExplosionUtil`。
+  - `CustomMissileExplosion` 的 `NUCLEAR` / `TX` / `N2` 分支走 `NuclearExplosionUtil`。
+  - `ExplosionNukeSmall` 的大核弹路径走 `NuclearExplosionUtil.spawnNuclear(...)`。
+- 新增 `NuclearDeviceBlock`：
+  - 替换 `nuke_gadget`、`nuke_boy`、`nuke_man`、`nuke_tsar`、`nuke_mike`、`nuke_prototype`、`nuke_fleija`、`nuke_solinium`、`nuke_n2` 的纯 `HorizontalMachineBlock` 占位类型。
+  - 保存 `Kind` 枚举，未来 BlockEntity/雷管/GUI 判定 `isReady()` 后可调用 `detonateArmed(...)`，统一移除方块、播放旧 `random.explode` 等价声音并进入对应 MK3/MK5 调度。
+  - 当前不在 `neighborChanged` / `use` 中无条件引爆，避免绕过旧版 TileEntity 库存组件和 `isReady()` 保险。
+
+## 2026-05-25 核弹方块库存与红石 ready 判定
+
+### 1.7.10 细化追踪
+
+- 旧核弹方块均通过对应 `TileEntityNuke*` 保存 `ItemStack[] slots`，红石触发前必须通过 `isReady()` / `isFilled()`：
+  - Gadget：6 格，0 为 `gadget_wireing`，1-4 为 `early_explosive_lenses`，5 为 `gadget_core`。
+  - Boy：5 格，依次为 `boy_shielding`、`boy_target`、`boy_bullet`、`boy_propellant`、`boy_igniter`。
+  - Man：6 格，0 为 `man_igniter`，1-4 为 `early_explosive_lenses`，5 为 `man_core`。
+  - Tsar：6 格，0-3 为 `explosive_lenses`，4 为 `man_core` 时可按 Man 半径起爆；额外 5 为 `tsar_core` 时按 Tsar 半径起爆。
+  - Mike：8 格，0-3 为 `explosive_lenses`，4 为 `man_core` 时可起爆；额外 5 `mike_core`、6 `mike_deut`、7 `mike_cooling_unit` 时视为 filled。
+  - Prototype：14 格，0/1/12/13 为 `cell_sas3`，2/3/10/11 为 `rod_quad` uranium，4/5/8/9 为 `rod_quad` lead，6/7 为 `rod_quad` NP237。
+  - Fleija：11 格，0/1 为 `fleija_igniter`，2/3/4 为 `fleija_propellant`，5-10 为 `fleija_core`。
+  - Solinium：9 格，0/3/5/8 为 `solinium_igniter`，1/2/6/7 为 `solinium_propellant`，4 为 `solinium_core`。
+  - N2：12 格均为 `n2_charge`。
+- `NukeTsar.igniteTestBomb(..., r)` 使用传入半径；未 filled 时实际为 Man，filled 时为 Tsar。
+- `NukeMike.igniteTestBomb(..., r)` 旧源码实际忽略 `r` 并总是使用 `BombConfig.mikeRadius`；现代端保留这个实际行为，避免与旧存档/玩法差异。
+- 旧方块破坏时掉落库存；红石起爆前会先 `clearSlots()` 再移除方块，避免装药掉落。
+
+### 现代实现
+
+- 新增 `NuclearDeviceBlockEntity`：
+  - 单一 BE 类型覆盖 9 个核弹方块，按 `NuclearDeviceBlock.Kind` 建立旧版槽位数量。
+  - 使用 `ItemStackHandler` 保存 `Inventory` NBT，并通过 Forge item capability 暴露库存。
+  - `isItemValid(...)`、`isReady()`、`isFilled()` 按旧版槽位和旧 item ID 严格判定；缺失的旧物品不会被近似替代。
+  - `detonationKind()` 保留 Tsar 半填充 -> Man、Ivy Mike 半填充 -> Mike 的旧实际语义。
+- `NuclearDeviceBlock` 改为 `EntityBlock`：
+  - `neighborChanged` / `onPlace` 遇红石信号时调用 `detonateArmed(...)`。
+  - `detonateArmed(...)` 必须找到 BE 且 `isReady()` 成功才会清空槽位、移除方块并进入 `NuclearExplosionUtil`。
+  - 普通破坏通过 `onRemove(...)` 掉落 BE 库存；起爆路径先清空槽位，因此不会掉落装药。
+- 注册与资源：
+  - `ModBlockEntities.NUCLEAR_DEVICE` 绑定全部核弹方块。
+  - 补入核弹装配组件旧 ID：`early_explosive_lenses`、`explosive_lenses`、`gadget_wireing`、`boy_igniter`、`boy_shielding`、`man_igniter`、`mike_deut`、`mike_cooling_unit`、`fleija_igniter`、`solinium_igniter`、`n2_charge`。
+  - 除两种旧爆炸镜片外，核弹装配组件按旧版 `maxStackSize(1)` 注册为单堆叠物品。
+  - 从 1.7.10 资源复制对应贴图；`early_explosive_lenses` / `explosive_lenses` 分别映射旧贴图 `gadget_explosive8` / `man_explosive8`。
+
+### 有意延期
+
+- 核弹菜单、GUI、玩家右键打开界面、slot 坐标和同步包尚未迁入；当前库存主要供后续 GUI/自动化/测试接入。
+- `rod_quad` 及其旧 `BreedingRodType` metadata 物品体系尚未迁入，Prototype ready 判定已预留 `BreedingRodType` NBT 钩子，但在燃料棒迁入前不会完整可用。
+- `ItemFleija`、`ItemSolinium`、`ItemN2` 的特殊 tooltip/效果类本批未迁，只先恢复注册 ID、贴图和装药判定。
+- 验证：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-25 核弹装填菜单与旧 GUI 贴图
+
+### 1.7.10 细化追踪
+
+- 旧版 `ContainerNuke*` 只允许 shift-click 从核弹槽合并回玩家背包；玩家背包物品不会自动合并进核弹槽，必须手动放入指定槽位。
+- 槽位布局来自：
+  - `ContainerNukeGadget` / `ContainerNukeMan`：6 格，窗口 `176x166`，玩家包从 `8,84` 开始。
+  - `ContainerNukeBoy`：5 格，窗口 `176x222`，玩家包从 `8,140` 开始。
+  - `ContainerNukeTsar`：6 格，窗口 `256x233`，玩家包从 `48,151` 开始。
+  - `ContainerNukeMike`：8 格，窗口 `176x217`，玩家包从 `8,135` 开始。
+  - `ContainerNukePrototype`：14 格，窗口 `176x166`，玩家包从 `8,84` 开始。
+  - `ContainerNukeFleija`：11 格，窗口 `176x222`，玩家包从 `8,140` 开始。
+  - `ContainerNukeSolinium`：9 格，窗口 `176x222`，玩家包从 `8,140` 开始。
+  - `ContainerNukeN2`：12 格，窗口 `176x222`，玩家包从 `8,140` 开始。
+- 旧 GUI 贴图路径：
+  - `textures/gui/weapon/gadgetSchematic.png`
+  - `fatManSchematic.png`
+  - `lilBoySchematic.png`
+  - `tsarBombaSchematic.png`
+  - `ivyMikeSchematic.png`
+  - `gui_prototype.png`
+  - `fleijaSchematic.png`
+  - `soliniumSchematic.png`
+  - `n2Schematic.png`
+
+### 现代实现
+
+- 新增 `NuclearDeviceMenu`：
+  - 放在现代 `menu` 层并通过 `ModMenuTypes.NUCLEAR_DEVICE` 注册。
+  - 使用 `Layout.forKind(...)` 按核弹类型选择旧版 slot 坐标、窗口尺寸、玩家背包偏移和贴图名。
+  - `quickMoveStack(...)` 保留旧版保守语义：核弹槽 -> 玩家背包；玩家背包 -> 核弹槽不自动合并。
+- `NuclearDeviceBlockEntity` 实现 `MenuProvider`：
+  - `getDisplayName()` 返回对应 `block.hbm.nuke_*`。
+  - `createMenu(...)` 返回 `NuclearDeviceMenu`。
+- `NuclearDeviceBlock.use(...)`：
+  - 非潜行右键在服务端通过 `NetworkHooks.openScreen(...)` 打开装填界面。
+  - 潜行右键保持 pass，给后续工具/雷管交互留空间。
+- 新增 `NuclearDeviceScreen`：
+  - 放在现代 `client.screen` 层并在 `ClientModEvents` 注册。
+  - 复用旧 GUI 贴图，按 menu layout 设置窗口尺寸。
+  - 迁入 Gadget/Man、Boy、Tsar 的主要旧 ready/组件叠层；Mike/Fleija/Solinium/N2 先迁 ready/filled 关键叠层。
+- 从 1.7.10 复制全部上述核弹 GUI 贴图到 `assets/hbm/textures/gui/weapon/`。
+
+### 有意延期
+
+- 旧 `GuiInfoContainer` 左侧 info panel、`desc.gui.nuke*.desc` 多行说明未迁入；需要等通用 GUI info panel/tooltip 样式库稳定后再统一接入。
+- Mike/Fleija/Solinium/N2 的部分逐组件视觉贴片尚未完全复刻，本批优先保证装填交互、slot 布局和 ready/filled 状态反馈。
+- Prototype 的装填界面已可打开并保留 14 格布局，但 `rod_quad` 物品体系未迁入前仍无法完整 ready。
+- 验证：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 有意延期
+
+- `EntityNukeTorex` 是完整客户端爆云实体，本批没有用一次性粒子替代，避免破坏旧视觉契约；后续应迁实体/粒子生命周期本身。
+- 核弹方块菜单/GUI、库存配方、右键 ready 判定尚未迁入；本批已补方块实体、库存持久化和红石 ready 触发。
+- Tier0/Tier4 missile 实体、Sedna 枪弹、Fatman/Nuka/anti-schrabidium 物品尚未迁入；本批先铺好可直接复用的核爆库入口。
 
 ## 2026-05-24 ExplosionNT DIGAMMA / volcanic lava 属性落点
 
@@ -1042,9 +1249,9 @@
     - `HE` -> `ExplosionLarge.explode` + `jolt`
     - `INC` -> `ExplosionLarge.explodeFire` + `jolt`
     - `BUSTER` -> `ExplosionLarge.buster`
-    - `NUCLEAR` / `TX` -> `NukeExplosionMk5Entity.create`
+    - `NUCLEAR` / `TX` -> `NuclearExplosionUtil.spawnNuclear`
     - `BALEFIRE` -> `WeaponExplosionUtil.spawnBalefire`
-    - `N2` -> `NukeExplosionMk5Entity.createNoFallout`
+    - `N2` -> `NuclearExplosionUtil.spawnNuclearNoFallout`
     - `CLOUD` -> `levelEvent(2002)` + `ExplosionChaos.spawnPoisonCloud`
   - 保留 `double motionX/Y/Z` 重载，方便旧实体迁移时少做临时 `Vec3` 包装。
 
@@ -1057,6 +1264,27 @@
 - `TURBINE` 依赖旧 `EntityBulletBaseNT` 与 `BulletConfigSyncingUtil.TURBINE`，等待 Sedna/弹药实体迁移。
 - Torex 大型爆炸视觉仍等待特效实体迁移；现代工具只恢复地形/伤害/后效应调度。
 
+## 2026-05-25 核弹 GUI 打开入口复核
+
+触发来源：
+
+- 实机反馈九个基础核弹方块 GUI 仍打不开；本轮只处理 GUI/渲染接入，不新增真实核爆算法。
+
+复核结论：
+
+- `NuclearDeviceBlock` / `NuclearDeviceBlockEntity` / `NuclearDeviceMenu` / `NuclearDeviceScreen` 已存在，`ModMenuTypes.NUCLEAR_DEVICE` 与客户端 `MenuScreens.register(...)` 也已注册。
+- 当前问题不属于爆炸算法库，而是新迁核弹方块与现代菜单/渲染库的接入稳定性问题。
+
+现代修正：
+
+- `NuclearDeviceBlock#use(...)` 改为通过 `getMenuProvider(state, level, pos)` 获取菜单 provider，再调用 `NetworkHooks.openScreen(...)`，并与其他机器方块一致返回 `InteractionResult.sidedSuccess(...)`。
+- `NuclearDeviceBlock` 显式覆盖 `getMenuProvider(...)`，从当前位置的 `NuclearDeviceBlockEntity` 返回菜单 provider，给现代方块菜单路径一个稳定入口。
+- 核弹方块渲染改由渲染库 `NuclearDeviceRenderer` 承担，因此 `NuclearDeviceBlock#getRenderShape(...)` 返回 `INVISIBLE`，避免 baked OBJ 与 BER 双重渲染。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ## 验证清单
 
 - 普通爆炸不会在客户端修改世界。
@@ -1065,11 +1293,15 @@
 - 客户端效果 packet 解码后只生成表现，不重复破坏世界。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `ExplosionFleija`、`ExplosionNukeRayBatched`、`ExplosionNukeRayBalefire` 后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `ExplosionChaos` 安全子集、`ExplosionTom`、`hbm:pc` / `hbm:cloud` damage type 后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在补回 `hbm:taint` effect/damage type 与 `ExplosionChaos.c` 的 taint -> mutation 联动后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `BlockAllocatorGlyphidDig`、`ExplosionNukeRayParallelized` 兼容入口后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `NukeExplosionMk5Entity` 核心调度实体和实体注册后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `BombConfig` 子集并接通 `ExplosionNukeSmall` 大核弹 -> `NukeExplosionMk5Entity` 后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `FalloutRainEntity` 安全子集并接通 MK5 完成后的落尘实体后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `NukeExplosionMk3Entity` 核心调度实体和实体注册后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在补齐 MK3/MK5 旧 `statFac` 入口、`BombConfig.CHUNK_LOADING` forced chunk 开关与 `LIMIT_EXPLOSION_LIFESPAN` 存档过期检查后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在新增 `NuclearExplosionUtil` 核爆调度门面，并将 `CustomNukeExplosion` / `CustomMissileExplosion` / `ExplosionNukeSmall` 改接到统一入口后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在扩展 `NuclearExplosionUtil` 核弹方块入口、添加 `NuclearDeviceBlock` 并替换九个核装置占位方块类型后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在补齐 `ExplosionLarge` / `ExplosionNT` 旧调用签名兼容入口后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `EntityExplosionChunkloading` 现代 forced chunk 基类并接入 MK3/MK5/FalloutRain 后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `ExplosionNT` 的 `DIGAMMA` / `DIGAMMA_CIRCUIT` / `LAVA_V` / `LAVA_R` 方块落点后通过。
@@ -1079,3 +1311,6 @@
 - `.\gradlew.bat compileJava processResources --no-daemon` 在新增 `WeaponExplosionUtil.spawnBalefire`、`BalefireBombBlock`、`nuke_fstbmb` 红石/火焰触发骨架和旧 FSTBMB 声音资源后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在新增 `CustomNukeExplosion`、`FallingNukeEntity`、实体注册与客户端空渲染后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在新增 `CustomMissileExplosion` 默认弹头 impact 工具后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在补回 VNT 标准 affected-block 客户端烟尘效果桥后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在对齐 VNT Tiny 旧声音/vanillaExt 粒子并新增 smooth tiny 公共入口后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在将 `ExplosionEffectWeapon` 改回 `explosionSmall` aux 粒子路径后通过。

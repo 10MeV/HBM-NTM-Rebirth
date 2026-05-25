@@ -5,6 +5,9 @@ import net.minecraft.resources.ResourceLocation;
 
 public final class ObjArmorModels {
     public static final LegacyWavefrontModel PLAYER_FEM = model("player_fem").noSmooth();
+    public static final LegacyWavefrontModel MOD_TESLA = model("mod_tesla").asVBO();
+
+    public static final ResourceLocation MOD_TESLA_TEXTURE = texture("mod_tesla");
 
     public static LegacyWavefrontModel model(String name) {
         return new LegacyWavefrontModel(

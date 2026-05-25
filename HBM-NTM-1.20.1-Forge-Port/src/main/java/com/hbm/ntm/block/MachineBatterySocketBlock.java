@@ -3,6 +3,7 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
+import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -44,7 +45,8 @@ public class MachineBatterySocketBlock extends LegacyOffsetMultiblockBlock imple
     @Override
     protected LegacyMultiblockLayout getLayout(BlockState state) {
         return LegacyMultiblockLayout.ofOffsets(socketOffsets(state.getValue(FACING)))
-                .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO));
+                .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO),
+                        LegacyProxyMode.passive().inventoryProxy().powerProxy().conductorProxy());
     }
 
     @Override
@@ -76,7 +78,23 @@ public class MachineBatterySocketBlock extends LegacyOffsetMultiblockBlock imple
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return getMultiblockShape(state, level, pos, context);
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return getMultiblockCollisionShape(state, level, pos, context);
+    }
+
+    @Override
+    public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos, CollisionContext context) {
         return shapeFor(state.getValue(FACING));
+    }
+
+    @Override
+    public VoxelShape getMultiblockCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
+            CollisionContext context) {
+        return getMultiblockShape(state, level, corePos, context);
     }
 
     @Override

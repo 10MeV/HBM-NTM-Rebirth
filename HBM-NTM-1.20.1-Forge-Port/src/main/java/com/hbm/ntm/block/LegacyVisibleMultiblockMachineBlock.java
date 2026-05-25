@@ -65,12 +65,23 @@ public class LegacyVisibleMultiblockMachineBlock extends LegacyXrMultiblockBlock
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return definition.hasCollisionShapeFactory() ? definition.collisionShape(state) : Shapes.block();
+        return getMultiblockShape(state, level, pos, context);
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return getMultiblockCollisionShape(state, level, pos, context);
+    }
+
+    @Override
+    public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos, CollisionContext context) {
         return definition.hasCollisionShapeFactory() ? definition.collisionShape(state) : Shapes.block();
+    }
+
+    @Override
+    public VoxelShape getMultiblockCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
+            CollisionContext context) {
+        return getMultiblockShape(state, level, corePos, context);
     }
 
     @Override

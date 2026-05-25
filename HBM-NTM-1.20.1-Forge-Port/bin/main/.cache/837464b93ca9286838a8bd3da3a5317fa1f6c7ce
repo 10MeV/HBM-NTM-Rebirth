@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-24T00:12:10.186317	Item Models: hbm
+// 1.20.1	2026-05-25T14:07:11.6898244	Item Models: hbm
 e0dd9cc86e850dae1c5e94ee6463e6ef9b707966 assets/hbm/models/item/battery_creative.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lead.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lithium.json
@@ -66,7 +66,9 @@ f8333a487901dce9def69ce4a5c7cc4746717a6f assets/hbm/models/item/billet_zfb_pu241
 018aa89c5e59ed7bfd6bb169c126e2d5a2026aa8 assets/hbm/models/item/biomass.json
 058e0604c3e75c0687875418098f46894fb161b5 assets/hbm/models/item/biomass_compressed.json
 09b6e171a5cf423a6b8c86022aa4ec23b7cbf2be assets/hbm/models/item/boy_bullet.json
+bf5cda10409de1e8737458a3b7aecc96512674b3 assets/hbm/models/item/boy_igniter.json
 3ef7c6308aa5ae3f8ce6dabc5ccbd3e8eab3a0c0 assets/hbm/models/item/boy_propellant.json
+d59cb6ee7da5c1c41e383b3450b5a8afad7ee994 assets/hbm/models/item/boy_shielding.json
 296512f154a274642ac189ea664cbd56358e49fa assets/hbm/models/item/boy_target.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_bismuth.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_copper.json
@@ -96,11 +98,15 @@ a79c6209ed27a2dd87862d8d4c8cde0ac24a0715 assets/hbm/models/item/crystal_thorium.
 717138e2327b0dfad433d85e77dddd88fd5cb7c1 assets/hbm/models/item/crystal_uranium.json
 df6b0c1af6edbc0000a3c8f18f2af66d4ee1b8cd assets/hbm/models/item/digamma_diagnostic.json
 857cc86931a9aa2b0c31625d1b434fc0f9583ffc assets/hbm/models/item/drill_titanium.json
+9ae3884ff8570898db78c333117faeb8617eed38 assets/hbm/models/item/early_explosive_lenses.json
+f7ce31d6fef1cc13a9793b3418627f10992adab2 assets/hbm/models/item/explosive_lenses.json
 fb64e40d5be4b387a10b8db09fdd2144a09b1ce9 assets/hbm/models/item/fallout.json
 78d6cc15605dd8ba7022fee2d2ab97670d40cfe7 assets/hbm/models/item/fleija_core.json
+130e3ecd44268f266b92b2d927122bab51e7a8c0 assets/hbm/models/item/fleija_igniter.json
 ec19dcfa24eed803616aeb1144e862a612b4dff8 assets/hbm/models/item/fleija_propellant.json
 1a2d5e2743f80fe2886e8b48c53f081335259b84 assets/hbm/models/item/fluorite.json
 5ad528a6dcd9019a093e5e92f114d8e15084c1a6 assets/hbm/models/item/gadget_core.json
+b980a960c44be9a12a42365a8c003a9a1bbdc366 assets/hbm/models/item/gadget_wireing.json
 82f65799b13016f6749a5764a551fc650429b92a assets/hbm/models/item/geiger_counter.json
 9720f3f4fc139ffae642b0315f9e361a62d90b17 assets/hbm/models/item/gem_rad.json
 ee15a9a541574ad1e1bfdf69dbc43a5468889be1 assets/hbm/models/item/ingot_advanced_alloy.json
@@ -171,8 +177,12 @@ c40effc73e3599852caad529d0ae71d882c7e588 assets/hbm/models/item/ingot_uranium.js
 1d28d25428e9c3e08db4f11fe812fe5372b55684 assets/hbm/models/item/lignite.json
 4f93c22b2e1bc455e728c0e9fc39456ba13a71e7 assets/hbm/models/item/lithium.json
 7b696bfee4905df31b9ed0bca4a838dbb778ed70 assets/hbm/models/item/man_core.json
+a36b086ffb5fef0f0bc5e5d3e58bad3d8deb1e46 assets/hbm/models/item/man_igniter.json
+d60148a4f53efa0b58cfcbbad2d7903729c3eef7 assets/hbm/models/item/mike_cooling_unit.json
 efdadebed8f78eae67dfaa2f3cac26fbe5ecda52 assets/hbm/models/item/mike_core.json
+e52ad90603e39a56ec7caaf87231e48424411f7c assets/hbm/models/item/mike_deut.json
 125d18f9a433f9422472f8359ed35808e7d09cbb assets/hbm/models/item/motor.json
+432e889fec1472e13e590bb9d0976ed61cf1c210 assets/hbm/models/item/n2_charge.json
 50614ce7d72737b00d4cf357dd1b817db7da1723 assets/hbm/models/item/nitra.json
 b46d14ded21c955890c6754fdbddf58d219e07d3 assets/hbm/models/item/nitra_small.json
 b9da60f091c98e5f193a5300bc73580d6ad929ff assets/hbm/models/item/nuclear_waste.json
@@ -308,6 +318,7 @@ dc0ecf3d0a5a1a2e76d8ea7744d25f09f2e49439 assets/hbm/models/item/solid_fuel_prest
 a17ea416c3c9488a2773284debac91e4024744ec assets/hbm/models/item/solid_fuel_presto_triplet.json
 87846cdc8351731bab2d372e6ba0628791390294 assets/hbm/models/item/solid_fuel_presto_triplet_bf.json
 5cdda94021b24d2cdf3dbe774909b20f4ac3ca02 assets/hbm/models/item/solinium_core.json
+04c626f5d6c88ff3fcc7fac5fd74b61c3c2383de assets/hbm/models/item/solinium_igniter.json
 2aab5d5107b926a6ba80600e496e76f2e00d73e1 assets/hbm/models/item/solinium_propellant.json
 377599a104530392c4b9f213b6f44220d823e32e assets/hbm/models/item/stamp_iron_circuit.json
 6e48017e26b50e11c671e5a0747d15e7306ac10e assets/hbm/models/item/stamp_iron_flat.json

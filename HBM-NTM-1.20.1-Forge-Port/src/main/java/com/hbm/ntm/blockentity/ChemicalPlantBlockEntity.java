@@ -5,10 +5,14 @@ import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidStack;
+import com.hbm.ntm.fluid.HbmFluidUtil;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
+import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.menu.ChemicalPlantMenu;
@@ -46,7 +50,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver, HbmTileSyncable {
+public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver, HbmTileSyncable, HbmStandardFluidTransceiver {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_LEGACY_POWER = "power";
@@ -82,6 +86,32 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     public static final int ITEM_COUNT = 22;
     public static final int[] INPUT_SLOTS = new int[] { 4, 5, 6 };
     public static final int[] OUTPUT_SLOTS = new int[] { 7, 8, 9 };
+    private static final List<EnergyPort> ENERGY_PORTS = List.of(
+            EnergyPort.of(2, 0, -1, Direction.EAST),
+            EnergyPort.of(2, 0, 0, Direction.EAST),
+            EnergyPort.of(2, 0, 1, Direction.EAST),
+            EnergyPort.of(-2, 0, -1, Direction.WEST),
+            EnergyPort.of(-2, 0, 0, Direction.WEST),
+            EnergyPort.of(-2, 0, 1, Direction.WEST),
+            EnergyPort.of(-1, 0, 2, Direction.SOUTH),
+            EnergyPort.of(0, 0, 2, Direction.SOUTH),
+            EnergyPort.of(1, 0, 2, Direction.SOUTH),
+            EnergyPort.of(-1, 0, -2, Direction.NORTH),
+            EnergyPort.of(0, 0, -2, Direction.NORTH),
+            EnergyPort.of(1, 0, -2, Direction.NORTH));
+    private static final List<FluidPort> FLUID_PORTS = List.of(
+            FluidPort.of(2, 0, -1, Direction.EAST),
+            FluidPort.of(2, 0, 0, Direction.EAST),
+            FluidPort.of(2, 0, 1, Direction.EAST),
+            FluidPort.of(-2, 0, -1, Direction.WEST),
+            FluidPort.of(-2, 0, 0, Direction.WEST),
+            FluidPort.of(-2, 0, 1, Direction.WEST),
+            FluidPort.of(-1, 0, 2, Direction.SOUTH),
+            FluidPort.of(0, 0, 2, Direction.SOUTH),
+            FluidPort.of(1, 0, 2, Direction.SOUTH),
+            FluidPort.of(-1, 0, -2, Direction.NORTH),
+            FluidPort.of(0, 0, -2, Direction.NORTH),
+            FluidPort.of(1, 0, -2, Direction.NORTH));
 
     private final ItemStackHandler items = new ItemStackHandler(ITEM_COUNT) {
         @Override
@@ -115,6 +145,9 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     };
     private final List<HbmFluidTank> inputTankList = Arrays.asList(inputTanks);
     private final List<HbmFluidTank> outputTankList = Arrays.asList(outputTanks);
+    private final List<HbmFluidTank> allTankList = List.of(
+            inputTanks[0], inputTanks[1], inputTanks[2],
+            outputTanks[0], outputTanks[1], outputTanks[2]);
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
@@ -139,7 +172,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
         long oldPower = blockEntity.energy.getPower();
         HbmEnergyUtil.chargeStorageFromItem(blockEntity.items.getStackInSlot(SLOT_BATTERY), blockEntity,
                 blockEntity.getReceiverSpeed());
-        HbmEnergyUtil.subscribeReceiverToAllNeighborNetworks(level, pos, blockEntity);
+        blockEntity.subscribeEnergyReceiverToPorts();
 
         boolean changed = false;
         for (int i = 0; i < 3; i++) {
@@ -148,6 +181,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
             changed |= HbmFluidItemTransfer.unloadTankToSlot(blockEntity.items,
                     SLOT_FLUID_OUTPUT_START + i, SLOT_FLUID_OUTPUT_RETURN_START + i, blockEntity.outputTanks[i]);
         }
+        blockEntity.refreshFluidPortSubscriptions();
         changed |= blockEntity.tickRecipe(level);
         changed |= oldPower != blockEntity.energy.getPower();
         if (changed) {
@@ -182,6 +216,21 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
 
     public HbmFluidTank getOutputTank(int index) {
         return outputTanks[index];
+    }
+
+    @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return allTankList;
+    }
+
+    @Override
+    public List<HbmFluidTank> getReceivingTanks() {
+        return inputTankList;
+    }
+
+    @Override
+    public List<HbmFluidTank> getSendingTanks() {
+        return outputTankList;
     }
 
     public double getProgress() {
@@ -492,6 +541,28 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
         targetMax = Math.max(targetMax, energy.getPower());
         energy.setMaxPower(targetMax);
         energy.setTransferRates(targetMax, 0L);
+    }
+
+    private int subscribeEnergyReceiverToPorts() {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, ENERGY_PORTS, this);
+    }
+
+    private void refreshFluidPortSubscriptions() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        for (HbmFluidTank tank : inputTanks) {
+            if (tank.getTankType() != HbmFluids.NONE) {
+                HbmFluidUtil.subscribeReceiverToPorts(level, worldPosition, FLUID_PORTS, tank.getTankType(), this);
+            }
+        }
+        for (HbmFluidTank tank : outputTanks) {
+            if (tank.getTankType() != HbmFluids.NONE && tank.getFill() > 0) {
+                HbmFluidUtil.tryProvideToPorts(level, worldPosition, FLUID_PORTS, tank.getTankType(), tank.getPressure(), this);
+            }
+        }
     }
 
     private static boolean isOutputOnlySlot(int slot) {

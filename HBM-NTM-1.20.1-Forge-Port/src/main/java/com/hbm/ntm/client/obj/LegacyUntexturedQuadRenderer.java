@@ -59,6 +59,14 @@ public final class LegacyUntexturedQuadRenderer {
         return buffer.getBuffer(LEGACY_SOLID_NO_CULL);
     }
 
+    public static RenderType additiveNoCullType() {
+        return LEGACY_ADDITIVE_NO_CULL;
+    }
+
+    public static RenderType solidNoCullType() {
+        return LEGACY_SOLID_NO_CULL;
+    }
+
     public static void vertex(VertexConsumer consumer, PoseStack.Pose pose, double x, double y, double z,
                               int red, int green, int blue, int alpha) {
         consumer.vertex(pose.pose(), (float) x, (float) y, (float) z)

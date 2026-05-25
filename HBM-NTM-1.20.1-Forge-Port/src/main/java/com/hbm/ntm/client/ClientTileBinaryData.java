@@ -62,6 +62,14 @@ public final class ClientTileBinaryData {
         return CHUNKS.size();
     }
 
+    public static int pendingChunkCount() {
+        int count = 0;
+        for (ChunkAssembly assembly : CHUNKS.values()) {
+            count += assembly.received;
+        }
+        return count;
+    }
+
     public static void clearAll() {
         CHUNKS.clear();
     }

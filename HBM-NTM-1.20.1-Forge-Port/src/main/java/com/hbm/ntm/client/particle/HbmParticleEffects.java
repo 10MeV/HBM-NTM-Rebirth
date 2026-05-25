@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.particle;
 
+import com.hbm.ntm.client.ClientForgeEvents;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.client.sound.HbmDelayedSounds;
 import com.hbm.ntm.registry.ModParticleTypes;
@@ -16,9 +17,16 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.AbstractSkeleton;
+import net.minecraft.world.entity.monster.Witch;
+import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.monster.ZombifiedPiglin;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Vector3f;
@@ -64,6 +72,8 @@ public final class HbmParticleEffects {
             spawnExplosionLarge(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_EXPLOSION_SMALL.equals(type)) {
             spawnExplosionSmall(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_VNT_EXPLOSION.equals(type)) {
+            spawnVntExplosion(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_BLACK_POWDER.equals(type)) {
             spawnBlackPowder(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_ASHES.equals(type)) {
@@ -72,6 +82,8 @@ public final class HbmParticleEffects {
             spawnCasing(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_SKELETON.equals(type)) {
             spawnSkeleton(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_GIBLETS.equals(type)) {
+            spawnGiblets(level, data, x, y, z);
         } else if ("sweat".equals(type)) {
             spawnEntitySweat(level, data);
         } else if ("vomit".equals(type)) {
@@ -84,8 +96,30 @@ public final class HbmParticleEffects {
             level.addParticle(ModParticleTypes.SCHRAB_FOG.get(), x, y, z, 0.0D, 0.0D, 0.0D);
         } else if ("weaponExplosion".equals(type)) {
             spawnWeaponExplosion(level, data, x, y, z);
-        } else if ("amat".equals(type)) {
+        } else if (ParticleUtil.TYPE_TAU.equals(type)) {
+            spawnTau(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_HADRON.equals(type)) {
+            spawnHadron(level, x, y, z, false);
+        } else if (ParticleUtil.TYPE_AMAT_FLASH.equals(type)) {
             spawnAmat(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_RBMK_FLAME.equals(type)) {
+            spawnRbmkFlame(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_RBMK_STEAM.equals(type)) {
+            spawnRbmkSteam(level, x, y, z);
+        } else if (ParticleUtil.TYPE_RBMK_MUSH.equals(type)) {
+            spawnRbmkMush(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_COOLING_TOWER.equals(type)) {
+            spawnCoolingTower(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_SPLASH.equals(type)) {
+            spawnSplash(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_RIFT.equals(type)) {
+            spawnRift(level, x, y, z);
+        } else if (ParticleUtil.TYPE_DEAD_LEAF.equals(type)) {
+            level.addParticle(ModParticleTypes.DEAD_LEAF.get(), x, y, z, 0.0D, 0.0D, 0.0D);
+        } else if (ParticleUtil.TYPE_FLUID_FILL.equals(type)) {
+            spawnFluidFill(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_FOUNDRY.equals(type)) {
+            spawnFoundry(level, data, x, y, z);
         } else if ("muke".equals(type) || "tinytot".equals(type)) {
             spawnMuke(level, data, x, y, z, "tinytot".equals(type));
         } else if ("chaosCloud".equals(type)) {
@@ -268,9 +302,90 @@ public final class HbmParticleEffects {
     }
 
     private static void spawnAmat(ClientLevel level, CompoundTag data, double x, double y, double z) {
-        int count = Mth.clamp((int) (data.getFloat("scale") * 4.0F), 12, 160);
-        spawnRadial(level, ParticleTypes.WITCH, x, y, z, count, Math.max(0.5D, data.getFloat("scale") * 0.12D));
-        level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 0.0D, 0.0D, 0.0D);
+        Minecraft.getInstance().particleEngine.add(new AmatFlashParticle(level, x, y, z, Math.max(0.1F, data.getFloat("scale"))));
+    }
+
+    private static void spawnTau(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        boolean small = data.getBoolean("small");
+        int count = data.contains("count") ? Byte.toUnsignedInt(data.getByte("count")) : 1;
+        RandomSource random = level.random;
+        for (int i = 0; i < count; i++) {
+            Minecraft.getInstance().particleEngine.add(new TauSparkParticle(level, x, y, z,
+                    random.nextGaussian() * 0.05D, 0.05D, random.nextGaussian() * 0.05D, small));
+        }
+        spawnHadron(level, x, y, z, small);
+    }
+
+    private static void spawnHadron(ClientLevel level, double x, double y, double z, boolean small) {
+        Particle particle = HadronParticle.create(level, x, y, z, small);
+        if (particle != null) {
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
+    }
+
+    private static void spawnRbmkFlame(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Particle particle = RbmkAnimatedParticle.flame(level, x, y, z, Math.max(1, getInt(data, "maxAge", 40)));
+        if (particle != null) {
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
+    }
+
+    private static void spawnRbmkSteam(ClientLevel level, double x, double y, double z) {
+        Particle particle = RbmkAnimatedParticle.steam(level, x, y, z);
+        if (particle != null) {
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
+    }
+
+    private static void spawnRbmkMush(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Particle particle = RbmkAnimatedParticle.mush(level, x, y, z, Math.max(0.1F, getFloat(data, "scale", 1.0F)));
+        if (particle != null) {
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
+    }
+
+    private static void spawnCoolingTower(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Particle particle = CoolingTowerParticle.create(level, x, y, z,
+                getFloat(data, "lift", 0.3F),
+                getFloat(data, "base", 1.0F),
+                getFloat(data, "max", 1.0F),
+                Math.max(1, getInt(data, "life", 80)),
+                !data.contains("noWind"),
+                getFloat(data, "strafe", 0.075F),
+                getFloat(data, "alpha", 0.25F),
+                data.contains("color") ? data.getInt("color") : -1);
+        if (particle != null) {
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
+    }
+
+    private static void spawnSplash(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Particle particle = LegacySplashParticle.create(level, x, y, z, data.contains("color") ? data.getInt("color") : -1);
+        if (particle != null) {
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
+    }
+
+    private static void spawnRift(ClientLevel level, double x, double y, double z) {
+        Minecraft.getInstance().particleEngine.add(new RiftParticle(level, x, y, z));
+    }
+
+    private static void spawnFluidFill(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Particle particle = FluidFillParticle.create(level, x, y, z,
+                data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"),
+                data.contains("color") ? data.getInt("color") : -1);
+        if (particle != null) {
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
+    }
+
+    private static void spawnFoundry(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Minecraft.getInstance().particleEngine.add(new FoundryParticle(level, x, y, z,
+                data.getInt("color"),
+                data.getByte("dir"),
+                getFloat(data, "len", 1.0F),
+                getFloat(data, "base", 0.0F),
+                getFloat(data, "off", 0.0F)));
     }
 
     private static void spawnMuke(ClientLevel level, CompoundTag data, double x, double y, double z, boolean tiny) {
@@ -364,6 +479,43 @@ public final class HbmParticleEffects {
         }
     }
 
+    private static void spawnVntExplosion(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        RandomSource random = level.random;
+        float size = Math.max(0.0F, getFloat(data, "size", 0.0F));
+        if (size >= 2.0F) {
+            level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 1.0D, 0.0D, 0.0D);
+        } else {
+            level.addParticle(ParticleTypes.EXPLOSION, x, y, z, 1.0D, 0.0D, 0.0D);
+        }
+
+        long[] blocks = data.getLongArray("blocks");
+        for (long packed : blocks) {
+            BlockPos pos = BlockPos.of(packed);
+            double originX = pos.getX() + random.nextFloat();
+            double originY = pos.getY() + random.nextFloat();
+            double originZ = pos.getZ() + random.nextFloat();
+            double motionX = originX - x;
+            double motionY = originY - y;
+            double motionZ = originZ - z;
+            double distance = Math.sqrt(motionX * motionX + motionY * motionY + motionZ * motionZ);
+            if (distance < 1.0E-5D) {
+                distance = 1.0D;
+            }
+            motionX /= distance;
+            motionY /= distance;
+            motionZ /= distance;
+            double modifier = 0.5D / (distance / Math.max(size, 0.1D) + 0.1D);
+            modifier *= random.nextFloat() * random.nextFloat() + 0.3F;
+            motionX *= modifier;
+            motionY *= modifier;
+            motionZ *= modifier;
+
+            level.addParticle(ParticleTypes.POOF, (originX + x) * 0.5D, (originY + y) * 0.5D, (originZ + z) * 0.5D,
+                    motionX, motionY, motionZ);
+            level.addParticle(ParticleTypes.SMOKE, originX, originY, originZ, motionX, motionY, motionZ);
+        }
+    }
+
     private static void spawnBlackPowder(ClientLevel level, CompoundTag data, double x, double y, double z) {
         RandomSource random = level.random;
         double headingX = data.getDouble("hX");
@@ -405,6 +557,9 @@ public final class HbmParticleEffects {
 
     private static void spawnAshes(ClientLevel level, CompoundTag data, double x, double y, double z) {
         Entity entity = level.getEntity(data.getInt("entityID"));
+        if (entity != null) {
+            ClientForgeEvents.vanishEntity(entity.getId());
+        }
         double centerX = entity == null ? x : entity.getX();
         double centerY = entity == null ? y : entity.getY();
         double centerZ = entity == null ? z : entity.getZ();
@@ -444,25 +599,145 @@ public final class HbmParticleEffects {
 
     private static void spawnSkeleton(ClientLevel level, CompoundTag data, double x, double y, double z) {
         Entity entity = level.getEntity(data.getInt("entityID"));
-        double centerX = entity == null ? x : entity.getX();
-        double centerY = entity == null ? y : entity.getY();
-        double centerZ = entity == null ? z : entity.getZ();
-        double width = entity == null ? 0.6D : entity.getBbWidth();
-        double height = entity == null ? 1.8D : entity.getBbHeight();
-        boolean gib = data.getBoolean("gib");
-        float force = Math.max(0.05F, getFloat(data, "force", 0.15F));
-        int count = gib ? 18 : 8;
-        RandomSource random = level.random;
-        BlockParticleOption bone = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.BONE_BLOCK.defaultBlockState());
-        for (int i = 0; i < count; i++) {
-            double px = centerX + (random.nextDouble() - 0.5D) * width;
-            double py = centerY + random.nextDouble() * height;
-            double pz = centerZ + (random.nextDouble() - 0.5D) * width;
-            level.addParticle(bone, px, py, pz,
-                    gib ? random.nextGaussian() * force : 0.0D,
-                    gib ? (random.nextGaussian() + 1.0D) * force : 0.03D,
-                    gib ? random.nextGaussian() * force : 0.0D);
+        if (!(entity instanceof LivingEntity living)) {
+            return;
         }
+        ClientForgeEvents.vanishEntity(entity.getId());
+        boolean gib = data.getBoolean("gib");
+        boolean skeletonEntity = living instanceof AbstractSkeleton || "SkeletonSoldier".equals(living.getClass().getSimpleName());
+        float force = Math.max(0.0F, getFloat(data, "force", 0.15F));
+        float brightness = Mth.clamp(getFloat(data, "brightness", 1.0F), 0.0F, 1.0F);
+        RandomSource random = level.random;
+        for (BoneDefinition bone : boneDefinitions(living)) {
+            if (gib && random.nextBoolean() && !skeletonEntity) {
+                continue;
+            }
+            SkeletonParticle particle = new SkeletonParticle(level, bone.x(), bone.y(), bone.z(), brightness,
+                    bone.type(), bone.yaw(), bone.pitch());
+            if (gib) {
+                particle.makeGib(skeletonEntity);
+                particle.setParticleSpeed(random.nextGaussian() * force, (random.nextGaussian() + 1.0D) * force, random.nextGaussian() * force);
+            }
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
+    }
+
+    private static void spawnGiblets(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Entity entity = level.getEntity(data.getInt("ent"));
+        if (entity == null) {
+            return;
+        }
+        ClientForgeEvents.vanishEntity(entity.getId());
+        float width = entity.getBbWidth();
+        float height = entity.getBbHeight();
+        int gridWidth = (int) (width / 0.25F);
+        int gridHeight = (int) (height / 0.25F);
+        int count = (int) (gridWidth * 1.5D * gridHeight);
+        if (data.contains("cDiv")) {
+            count = (int) Math.ceil(count / (double) Math.max(1, data.getInt("cDiv")));
+        }
+        count = Mth.clamp(count, 1, 256);
+        int gibType = Mth.clamp(data.getInt("gibType"), ParticleUtil.GIBLET_MEAT, ParticleUtil.GIBLET_METAL);
+        ParticleOptions particle = switch (gibType) {
+            case ParticleUtil.GIBLET_SLIME -> ModParticleTypes.GIBLET_SLIME.get();
+            case ParticleUtil.GIBLET_METAL -> ModParticleTypes.GIBLET_METAL.get();
+            default -> ModParticleTypes.GIBLET_MEAT.get();
+        };
+        RandomSource random = level.random;
+        double multiplier = random.nextInt(15) == 0 ? 10.0D : 1.0D;
+        for (int i = 0; i < count; i++) {
+            level.addParticle(particle, x, y, z,
+                    random.nextGaussian() * 0.25D * multiplier,
+                    random.nextDouble() * multiplier,
+                    random.nextGaussian() * 0.25D * multiplier);
+        }
+    }
+
+    private static BoneDefinition[] boneDefinitions(LivingEntity entity) {
+        if (usesVillagerSkeleton(entity)) {
+            return villagerBones(entity);
+        }
+        if (usesZombieSkeleton(entity)) {
+            return zombieBones(entity);
+        }
+        return bipedBones(entity);
+    }
+
+    private static BoneDefinition[] bipedBones(LivingEntity entity) {
+        float bodyYaw = entity.yBodyRot;
+        Vec3 leftArm = rotateLegacyY(0.375D, 0.0D, -bodyYaw);
+        Vec3 leftLeg = rotateLegacyY(0.125D, 0.0D, -bodyYaw);
+        double x = entity.getX();
+        double y = entity.getY();
+        double z = entity.getZ();
+        return new BoneDefinition[] {
+                new BoneDefinition(SkeletonParticle.BoneType.SKULL, -entity.yHeadRot, entity.getXRot(), x, y + 1.75D, z),
+                new BoneDefinition(SkeletonParticle.BoneType.TORSO, -bodyYaw, 0.0F, x, y + 1.125D, z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftArm.x, y + 1.125D, z + leftArm.z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftArm.x, y + 1.125D, z - leftArm.z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftLeg.x, y + 0.375D, z + leftLeg.z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftLeg.x, y + 0.375D, z - leftLeg.z)
+        };
+    }
+
+    private static BoneDefinition[] zombieBones(LivingEntity entity) {
+        float bodyYaw = entity.yBodyRot;
+        Vec3 leftArm = rotateLegacyY(0.375D, 0.0D, -bodyYaw);
+        Vec3 forward = rotateLegacyY(0.0D, 0.25D, -bodyYaw);
+        Vec3 leftLeg = rotateLegacyY(0.125D, 0.0D, -bodyYaw);
+        double x = entity.getX();
+        double y = entity.getY();
+        double z = entity.getZ();
+        return new BoneDefinition[] {
+                new BoneDefinition(SkeletonParticle.BoneType.SKULL, -entity.yHeadRot, entity.getXRot(), x, y + 1.75D, z),
+                new BoneDefinition(SkeletonParticle.BoneType.TORSO, -bodyYaw, 0.0F, x, y + 1.125D, z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, -90.0F, x + leftArm.x + forward.x, y + 1.375D, z + leftArm.z + forward.z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, -90.0F, x - leftArm.x + forward.x, y + 1.375D, z - leftArm.z + forward.z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftLeg.x, y + 0.375D, z + leftLeg.z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftLeg.x, y + 0.375D, z - leftLeg.z)
+        };
+    }
+
+    private static BoneDefinition[] villagerBones(LivingEntity entity) {
+        float bodyYaw = entity.yBodyRot;
+        Vec3 leftArm = rotateLegacyY(0.375D, 0.0D, -bodyYaw);
+        Vec3 forward = rotateLegacyY(0.0D, 0.25D, -bodyYaw);
+        Vec3 leftLeg = rotateLegacyY(0.125D, 0.0D, -bodyYaw);
+        double x = entity.getX();
+        double y = entity.getY();
+        double z = entity.getZ();
+        return new BoneDefinition[] {
+                new BoneDefinition(SkeletonParticle.BoneType.SKULL_VILLAGER, -entity.yHeadRot, entity.getXRot(), x, y + 1.6875D, z),
+                new BoneDefinition(SkeletonParticle.BoneType.TORSO, -bodyYaw, 0.0F, x, y + 1.0D, z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, -45.0F, x + leftArm.x + forward.x, y + 1.125D, z + leftArm.z + forward.z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, -45.0F, x - leftArm.x + forward.x, y + 1.125D, z - leftArm.z + forward.z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftLeg.x, y + 0.375D, z + leftLeg.z),
+                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftLeg.x, y + 0.375D, z - leftLeg.z)
+        };
+    }
+
+    private static boolean usesZombieSkeleton(LivingEntity entity) {
+        String name = entity.getClass().getSimpleName();
+        return entity instanceof Zombie || entity instanceof AbstractSkeleton || entity instanceof ZombifiedPiglin
+                || "EntityUndeadSoldier".equals(name)
+                || "ArmySoldier".equals(name)
+                || "PsychoSteve".equals(name)
+                || "SkeletonSoldier".equals(name)
+                || "ZombieFarmer".equals(name)
+                || "ZombieMiner".equals(name)
+                || "ZombiePigmanSoldier".equals(name)
+                || "ZombieSoldier".equals(name);
+    }
+
+    private static boolean usesVillagerSkeleton(LivingEntity entity) {
+        return entity instanceof Villager || entity instanceof Witch;
+    }
+
+    private static Vec3 rotateLegacyY(double x, double z, double degrees) {
+        double radians = degrees / 180.0D * Math.PI;
+        double cos = Math.cos(radians);
+        double sin = Math.sin(radians);
+        return new Vec3(x * cos + z * sin, 0.0D, z * cos - x * sin);
     }
 
     private static void spawnNamedVanilla(ClientLevel level, String mode, double x, double y, double z, double motionX, double motionY, double motionZ) {
@@ -539,6 +814,9 @@ public final class HbmParticleEffects {
 
     private static float getFloat(CompoundTag data, String key, float fallback) {
         return data.contains(key) ? data.getFloat(key) : fallback;
+    }
+
+    private record BoneDefinition(SkeletonParticle.BoneType type, float yaw, float pitch, double x, double y, double z) {
     }
 
     private HbmParticleEffects() {

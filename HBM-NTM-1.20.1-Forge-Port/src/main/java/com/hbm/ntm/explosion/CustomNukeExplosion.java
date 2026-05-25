@@ -1,7 +1,5 @@
 package com.hbm.ntm.explosion;
 
-import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
-import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import net.minecraft.world.level.Level;
 
@@ -21,13 +19,13 @@ public final class CustomNukeExplosion {
         dirty = Math.min(dirty, 100.0F);
 
         if (euph > 0.0F) {
-            level.addFreshEntity(NukeExplosionMk3Entity.createFleija(level, x, y, z, 150));
+            NuclearExplosionUtil.spawnFleija(level, x, y, z, 150);
             return;
         }
 
         if (schrab > 0.0F) {
             schrab = adjustedSchrab(tnt, nuke, hydro, amat, schrab);
-            level.addFreshEntity(NukeExplosionMk3Entity.createFleija(level, x + 0.5D, y + 0.5D, z + 0.5D, (int) schrab));
+            NuclearExplosionUtil.spawnFleija(level, x + 0.5D, y + 0.5D, z + 0.5D, (int) schrab);
             return;
         }
 
@@ -40,21 +38,19 @@ public final class CustomNukeExplosion {
         if (hydro > 0.0F) {
             hydro = adjustedHydrogen(tnt, nuke, hydro);
             dirty *= 0.25F;
-            level.addFreshEntity(NukeExplosionMk5Entity.create(level, (int) hydro, x + 0.5D, y + 0.5D, z + 0.5D)
-                    .moreFallout((int) dirty));
+            NuclearExplosionUtil.spawnNuclearWithFallout(level, (int) hydro, x + 0.5D, y + 0.5D, z + 0.5D, (int) dirty);
             return;
         }
 
         if (nuke > 0.0F) {
             nuke = adjustedNuclear(tnt, nuke);
-            level.addFreshEntity(NukeExplosionMk5Entity.create(level, (int) nuke, x + 0.5D, y + 5.0D, z + 0.5D)
-                    .moreFallout((int) dirty));
+            NuclearExplosionUtil.spawnNuclearWithFallout(level, (int) nuke, x + 0.5D, y + 5.0D, z + 0.5D, (int) dirty);
             return;
         }
 
         if (tnt >= 75.0F) {
             tnt = Math.min(tnt, MAX_TNT);
-            level.addFreshEntity(NukeExplosionMk5Entity.createNoFallout(level, (int) tnt, x + 0.5D, y + 0.5D, z + 0.5D));
+            NuclearExplosionUtil.spawnNuclearNoFallout(level, (int) tnt, x + 0.5D, y + 0.5D, z + 0.5D);
         } else if (tnt > 0.0F) {
             ExplosionLarge.explode(level, x + 0.5D, y + 0.5D, z + 0.5D, tnt, true, true, true);
         }

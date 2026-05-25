@@ -619,6 +619,220 @@
   - 本批不迁移导弹部件物品、发射台、组装机或客户端渲染，只提供网络承载与接收接口。
   - 旧 `MissileStruct` 中 null/0 item id 在现代等价为空 `ResourceLocation`。
 
+## 2026-05-25 typed Tile action 与旧 AuxButton/NBTControl helper 推进记录
+
+- 旧版 `AuxButtonPacket` 行为：
+  - C2S 包体为 `x/y/z + value + id`。
+  - Handler 在服务端按坐标查找 TileEntity，并硬编码处理 ForceField、MissileAssembly、LaunchTable、CoreEmitter、CoreStabilizer、Barrel、MachineBattery、SoyuzLauncher、MiningLaser、`TileEntityMachineBase.handleButtonPacket(...)`、`TileEntityTickingBase.handleButtonPacket(...)`。
+  - 文件本身标记 `@Deprecated`，注释要求改用 `NBTControlPacket`。
+  - 特例：当 `te == null && value == 999` 时触发 duck 生成，这是实体/事件业务，不属于通用 tile action。
+- 旧版 `NBTControlPacket` 行为：
+  - C2S 包体为 `x/y/z + NBTTagCompound`。
+  - 服务端按坐标找 TileEntity；若实现 `IControlReceiver` 且 `hasPermission(player)` 通过，则调用 `receiveControl(player, nbt)` 与 `receiveControl(nbt)`。
+- 现代已有兼容路径：
+  - `LegacyButtonPacket`：保留 `BlockPos + value + id` wire 语义，派发给 `HbmLegacyButtonReceiver`。
+  - `TileControlPacket`：保留 `BlockPos + CompoundTag` 控制语义，派发给 `HbmTileSyncable.canReceiveClientControl(...)` / `handleClientControl(...)`。
+- 本批新增 typed tile action 路径：
+  - 新增 `HbmTypedTileActionReceiver`：
+    - `canReceiveTypedTileAction(ServerPlayer, ResourceLocation actionType, int value, CompoundTag data)`。
+    - `handleTypedTileAction(ServerPlayer, ResourceLocation actionType, int value, CompoundTag data)`。
+  - 新增 C2S `ServerTileActionPacket`：
+    - 包体为 `BlockPos + actionType + value + CompoundTag data`。
+    - 服务端要求 sender 存在。
+    - 默认只允许 16 格内方块实体动作，对应旧 GUI/机器按钮交互距离。
+    - 目标 chunk 未加载时丢弃；目标 BlockEntity 必须实现 `HbmTypedTileActionReceiver` 且权限 hook 通过。
+    - 处理后调用 `setChanged()` 与 `sendBlockUpdated(..., 3)`。
+  - `ModMessages.register()` 继续 append-only：
+    - `ServerTileActionPacket` 追加在当前注册表尾部。
+- `ModMessages` 新增 helper：
+  - `sendAuxButton(BlockPos, value, id)`：旧 `AuxButtonPacket` 字段名别名，内部走 `LegacyButtonPacket`。
+  - `sendTileControl(BlockPos, CompoundTag)`：旧 `NBTControlPacket` 的现代直接入口。
+  - `sendNbtControl(BlockPos, CompoundTag)`：保留旧包名语义的别名。
+  - `sendTypedTileAction(BlockPos, ResourceLocation, int, CompoundTag)` 及简化 overload。
+- 当前限制：
+  - 本批不把旧 `AuxButtonPacket` 中硬编码的每台机器行为塞入网络库；机器迁移时由对应 BlockEntity 实现 receiver 并保留自己的权限/状态校验。
+  - duck 生成特例不迁入 tile action；它应在后续实体/事件或彩蛋逻辑中单独迁移。
+  - `TileControlPacket` 与 `ServerTileActionPacket` 并存：前者用于旧 NBT blob 兼容，后者用于后续新迁移 GUI 的稳定命名动作。
+
+## 2026-05-25 玩家/perma/辐射客户端同步监听推进记录
+
+- 旧版 `ExtPropPacket` 行为：
+  - 服务端把 `HbmLivingProps` 与 `HbmPlayerProps` 串行写入同一个 buffer。
+  - 客户端只应用到本地玩家扩展属性；HUD、装备能力和状态显示直接读这些客户端属性对象。
+- 旧版 `PermaSyncPacket` 行为：
+  - 服务端通过 `PermaSyncHandler.writePacket(...)` 写入玩家相关全局/持久状态。
+  - 客户端通过 `PermaSyncHandler.readPacket(...)` 更新本地可读状态。
+- 现代已有拆分：
+  - `PlayerRadiationSyncPacket` 更新 `ClientRadiationData`。
+  - `PlayerPropertiesPacket` 更新 `ClientPlayerSyncData` 的 typed `ResourceLocation -> CompoundTag`。
+  - `PermaSyncPacket` 更新 `ClientPermaSyncData` 的全局 `CompoundTag`。
+- 本批补齐客户端监听能力：
+  - 新增 `ClientPlayerSyncDataListener`：
+    - `onClientPlayerSyncData(ResourceLocation dataType, CompoundTag data)`。
+    - `ClientPlayerSyncData.update(...)` 写入缓存后通知监听器。
+    - 新增 `addListener/removeListener/clearListeners`。
+  - 新增 `ClientPermaSyncDataListener`：
+    - `onClientPermaSyncData(CompoundTag data)`。
+    - `ClientPermaSyncData.update(...)` 写入缓存后通知监听器。
+    - 新增 `addListener/removeListener/clearListeners`。
+  - 新增 `ClientRadiationDataListener`：
+    - `onClientRadiationData(PlayerRadiationSyncData data)`。
+    - `ClientRadiationData.update(...)` 写入字段后用 `snapshot()` 通知监听器。
+    - 新增 `snapshot()`、`addListener/removeListener/clearListeners/clearAll`。
+- 客户端 world lifecycle 清理增强：
+  - `ClientForgeEvents.clearNetworkState()` 现在也调用 `ClientRadiationData.clearAll()`。
+  - 玩家 typed data、perma data、radiation data、panel data 的 listener 都会在离开世界时清掉，避免 GUI/HUD 对象残留到下一次进世界。
+- 当前限制：
+  - listener 是轻量进程内列表，不做弱引用；GUI/Screen 关闭时仍应主动 remove，离开世界清理只是保险。
+  - 本批只提供更新通知和缓存快照，不定义具体 `dataType`；旧 `HbmLivingProps` / `HbmPlayerProps` 字段拆分仍由后续玩家属性/辐射库迁移决定。
+  - `ClientRadiationData.clearAll()` 不通知 listener；它用于世界卸载时的静默清理。
+
+## 2026-05-25 通用客户端网络缓存监听推进记录
+
+- 现代网络库已有多组客户端缓存：
+  - `ClientBinaryData`：承载旧 `SerializableRecipePacket` 替代路径、配方/配置/大块客户端数据等 `channel + name -> byte[]`。
+  - `ClientBiomeSyncData`：承载旧 `BiomeSyncPacket` 的单格/整 chunk biome short 数组。
+  - `ClientInformMessages`：承载旧 `PlayerInformPacket` 的 HUD 文本通知。
+  - `ClientMuzzleFlashEffects`：承载旧 `MuzzleFlashPacket` 的实体 muzzle flash 时间戳。
+- 本批补齐这些缓存的事件通知能力：
+  - 新增 `ClientBinaryDataListener`：
+    - `onClientBinaryData(ResourceLocation channel, String name, byte[] payload, boolean cleared, int readyVersion)`。
+    - `put(...)`、`clear(...)`、`markReady(...)` 后通知监听器。
+    - 大数据分片完成后仍经 `put(...)`，因此也会通知。
+  - 新增 `ClientBiomeSyncDataListener`：
+    - `onClientBiomeSyncData(int chunkX, int chunkZ, short[] biomes, boolean fullChunk)`。
+    - 单格更新会传回更新后的 chunk 快照并标记 `fullChunk=false`。
+    - 整 chunk 更新标记 `fullChunk=true`。
+  - 新增 `ClientInformMessageListener`：
+    - `onClientInformMessage(Component message, int id, int millis)`。
+    - `ClientInformMessages.show(...)` 更新 HUD 缓存后通知。
+  - 新增 `ClientMuzzleFlashListener`：
+    - `onClientMuzzleFlash(int entityId, long timestampMillis)`。
+    - `ClientMuzzleFlashEffects.mark(...)` 写入时间戳后通知。
+- 生命周期规则：
+  - 上述缓存的 `clearAll()` 均清掉 listener。
+  - `ClientForgeEvents.clearNetworkState()` 既有离开世界清理路径会间接清理这些 listener，避免 GUI/HUD/渲染对象跨世界残留。
+- 当前限制：
+  - listener 仍为进程内轻量列表，不做弱引用；注册者在关闭 GUI 或 renderer 生命周期结束时应主动 remove。
+  - `ClientBinaryData.markReady(...)` 的通知使用空 `name/payload`，消费者应通过 `readyVersion` 判断批次完成，而不是把它当作数据条目。
+  - `ClientBiomeSyncDataListener` 接收的是 short[] 快照；具体 biome id 到 Holder/ResourceKey 的现代解析仍由世界/biome 库负责。
+
+## 2026-05-25 Tile/Entity 同步重发缓存生命周期与诊断推进记录
+
+- 现代已有可靠恢复路径：
+  - `EntitySyncPacket` 客户端找不到 `HbmEntitySyncable` 接收端时，会限频发送 `EntitySyncRequestPacket`。
+  - `TileSyncPacket` 客户端找不到 `HbmTileSyncable` 接收端时，会限频发送 `TileSyncRequestPacket`。
+  - 二者当前 cooldown 均为 20 tick，避免实体/方块实体还没创建好时形成请求风暴。
+- 本批补齐重发请求缓存生命周期：
+  - `EntitySyncPacket` 新增：
+    - `clearClientResyncRequests()`
+    - `pendingClientResyncRequests()`
+    - `clientResyncRequestCooldownTicks()`
+  - `TileSyncPacket` 新增同名 API。
+  - `ClientForgeEvents.clearNetworkState()` 离开世界时清理 tile/entity resync cooldown 表，避免换存档或重连后旧位置/旧 entity id 影响新世界同步恢复。
+- 诊断命令增强：
+  - `/hbm network packetthreading stats` 追加输出：
+    - `Client resync cooldowns: tile=<count> entity=<count> cooldownTicks=<ticks>`。
+  - 这项主要服务集成客户端/调试环境；dedicated server 上客户端静态缓存通常为 0。
+- 当前限制：
+  - 该诊断只统计本 JVM 内的客户端 cooldown map，不代表服务端所有玩家的重发请求状态。
+  - 本批不改变请求距离限制：Tile 仍为 32 格，Entity 仍为 64 格。
+  - 未增加自动延迟重放；若接收端长期不存在，仍由已有 cooldown 限频重发请求。
+
+## 2026-05-25 旧 C2S 特化操作包 helper 收束推进记录
+
+- 旧版剩余 C2S 特化包确认：
+  - `SatCoordPacket`：`x/y/z/freq`，服务端要求玩家手持 `ItemSatInterface`，且手持物品频率等于包内频率，随后调用卫星 `onCoordAction(world, player, x, y, z)`。
+  - `SatLaserPacket`：`x/z/freq`，同样校验手持卫星接口和频率，随后调用卫星 `onClick(world, x, z)`。
+  - `AnvilCraftPacket`：`recipeIndex/mode`，服务端要求当前 container 为 `ContainerAnvil`、recipe index 合法、铁砧 tier 合法，然后按 mode 尝试批量扣输入并给产物。
+  - `NBTItemControlPacket`：单个 `NBTTagCompound`，服务端只派发给手持物品实现 `IItemControlReceiver` 的情况。
+  - `ItemDesignatorPacket` 与 `ItemBobmazonPacket` 已可由现代 `ItemActionPacket` 承载。
+- 现代承载路径：
+  - 卫星坐标/激光仍走 `CoordinateActionPacket` + `HbmCoordinateActionReceiver`，让后续 `sat_interface` 物品保留旧频率校验和卫星 saved data 业务。
+  - 铁砧构造动作走 `TypedMenuActionPacket` + `HbmTypedMenuActionReceiver`，让后续现代 anvil menu 在自身权限/recipe/tier 校验后处理。
+  - 物品 NBT 控制走 `ItemControlPacket` + `HbmItemControlReceiver`，对应旧 `NBTItemControlPacket`。
+- 本批新增 `HbmNetworkActions` 常量表：
+  - `DESIGNATOR`
+  - `BOBMAZON_OFFER`
+  - `ANVIL_CRAFT`
+  - `SATELLITE_COORDINATE`
+  - `SATELLITE_LASER`
+  - `NBT_ITEM_CONTROL`
+  - `VAULT_DOOR`
+  - `SIREN`
+- `ModMessages` helper 收束：
+  - `sendNbtItemControl(...)`：旧 `NBTItemControlPacket` 名义入口，内部走 `ItemControlPacket`，并写入 `legacyPacket=hbm:nbt_item_control` 便于接收端区分来源。
+  - `sendItemAction(hand, actionType)` overload：发送空 tag typed item action。
+  - `sendDesignatorAction(...)` / `sendBobmazonOffer(...)` 改用 `HbmNetworkActions` 常量。
+  - `sendSatelliteCoordinateAction(...)` / `sendSatelliteLaserAction(...)` 在 data 中写入 typed action 标识。
+  - 新增旧名别名 `sendSatCoord(...)` / `sendSatLaser(...)`。
+  - `sendTypedMenuAction(...)` 增加空 tag overload；`sendAnvilCraftAction(...)` 改用 `HbmNetworkActions.ANVIL_CRAFT`；新增旧名别名 `sendAnvilCraft(...)`。
+  - `sendVaultDoorEvent(...)` / `sendSirenEvent(...)` 也改用统一常量，避免客户端 tile event 类型字符串散落。
+- 当前限制：
+  - 本批不实现卫星 saved data、sat interface 物品、Bobmazon 商品逻辑或 anvil recipe 执行；网络库只提供旧包语义的安全入口。
+  - 旧 `AnvilCraftPacket` 的批量 craft 规则仍由后续 anvil menu/recipe runtime 迁移时实现。
+  - `sendNbtItemControl(...)` 不强制接收端必须识别 `legacyPacket`，它只是兼容调试与逐步迁移标记。
+
+## 2026-05-25 旧 S2C 特化包 helper 与客户端缓存诊断推进记录
+
+- 旧版剩余 S2C 特化包承载确认：
+  - `TEVaultPacket`：`x/y/z + isOpening + state + sysTime + type`，客户端直接改 `TileEntityBlastDoor` 的开门状态；现代通过 `ClientTileEventPacket` + `HbmClientTileEventReceiver` 承载。
+  - `TESirenPacket`：`x/y/z + id + active`，客户端启动/停止 siren loop sound；现代通过 `ClientTileEventPacket` 承载，并保留 `sendSirenEvent(...)` helper。
+  - `TEFFPacket`：`x/y/z + radius + health + maxHealth + power + active + color + cooldown`，客户端更新 force field TE 字段；现代通过 `TileSyncPacket` + `HbmTileSyncable` 承载。
+  - `SatPanelPacket`：`type + satellite NBT`，客户端更新卫星面板当前数据；现代通过 `ClientPanelDataPacket` + `ClientPanelData` 承载。
+- 本批新增/收束的 action 常量：
+  - `SATELLITE_PANEL`
+  - `FORCE_FIELD`
+- `ModMessages` helper 增强：
+  - 新增 `syncSatellitePanelData(ServerPlayer, legacyType, CompoundTag)`，作为旧 `SatPanelPacket` 的现代入口。
+  - 新增 `sendForceFieldState(...)` 别名，内部复用既有 `syncForceFieldState(...)`，便于后续旧 `TEFFPacket` 调用点按旧语义迁移。
+  - `sendVaultDoorEvent(...)`、`sendSirenEvent(...)` 继续通过 `HbmNetworkActions` 常量走 tile event。
+- 客户端缓存只读诊断：
+  - `ClientBinaryData` 新增 `channelCount()`、`entryCount()`、`readyChannelCount()`。
+  - `ClientBiomeSyncData` 新增 `chunkCount()`。
+  - `ClientPanelData` 新增 `panelCount()`。
+  - `ClientInformMessages` 新增 `noticeCount()`。
+  - `ClientMuzzleFlashEffects` 新增 `flashCount()`。
+  - `ClientPermaSyncData` 新增 `keyCount()`。
+  - `ClientPlayerSyncData` 新增 `entryCount()`。
+  - `ClientTileBinaryData` 新增 `pendingChunkCount()`。
+- `/hbm network packetthreading stats` 追加输出：
+  - `Client network caches: binaryChannels=... binaryEntries=... readyChannels=... binaryTransfers=... tileBinaryTransfers=... tileBinaryChunks=...`
+  - `Client sync caches: biomeChunks=... panelTypes=... playerData=... permaKeys=... radiationEffects=...`
+  - `Client transient effects: notices=... muzzleFlashes=...`
+- 当前限制：
+  - 这些诊断统计的是当前 JVM 静态客户端缓存；dedicated server 上通常为 0。
+  - 本批不实现 siren sound 细节、blast door renderer 或卫星对象反序列化，只把网络承载入口和诊断面补齐。
+  - `FORCE_FIELD` 目前是常量标识；实际 force field BlockEntity 仍应通过 `HbmTileSyncable` 应用字段。
+
+## 2026-05-25 旧包到现代协议映射诊断推进记录
+
+- 迁移痛点：
+  - 1.7.10 `PacketDispatcher` 使用数字 discriminator 注册旧包，很多旧包现在被拆分或合并进 typed action/tile event/cache 包。
+  - 只看现代 `SimpleChannel` 注册表时，后续迁移机器/GUI 很难快速判断“旧调用点应该走哪个现代 helper”。
+- 本批新增 `ModMessages.LegacyPacketMapping` 只读表：
+  - 字段：`legacyName`、`modernName`、`direction`、`notes`。
+  - 不参与 `SimpleChannel` 注册，不改变 packet id 或协议兼容顺序。
+  - 记录一对多/多对一路径，例如：
+    - `ExtPropPacket -> PlayerRadiationSyncPacket / PlayerPropertiesPacket`
+    - `AuxButtonPacket -> LegacyButtonPacket / ServerTileActionPacket`
+    - `BufPacket -> ClientTileBinaryDataPacket / ClientTileBinaryDataChunkPacket`
+    - `SerializableRecipePacket -> ClientBinaryDataPacket / ClientBinaryDataChunkPacket`
+    - `TEVaultPacket`、`TESirenPacket` -> `ClientTileEventPacket`
+    - `TEFFPacket -> TileSyncPacket`
+    - `SatPanelPacket -> ClientPanelDataPacket`
+    - `AnvilCraftPacket -> TypedMenuActionPacket`
+- `ModMessages` 新增：
+  - `legacyPacketMappings()`
+  - `legacyPacketMappingCount()`
+- 网络诊断命令增强：
+  - `/hbm network protocol summary` 现在显示 `legacyMappings=<count>`。
+  - `/hbm network protocol packets` 会在每个现代包后显示 `legacyMappings=<count>`。
+  - 新增 `/hbm network protocol mappings`，逐条输出旧包名、现代包名、方向和迁移说明。
+- 当前限制：
+  - 该表是人工维护的工程迁移索引，不是运行时兼容层；后续新增/替换包时需要同步更新。
+  - 旧包业务行为仍以各 receiver/menu/item/block entity 迁移为准，mapping 只说明网络承载路径。
+
 ## 验证清单
 
 - 客户端/服务端协议版本一致。
@@ -640,3 +854,10 @@
 - 2026-05-24 实体同步重发与客户端临时状态清理批次：首次编译遇到并行工作区新增 `BalefireBombBlock` 未进入增量编译视图；重跑 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 - 2026-05-24 协议注册表快照与网络诊断命令批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
 - 2026-05-24 导弹 multipart 快照与旧 BufPacket 映射批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-25 typed Tile action 与旧 AuxButton/NBTControl helper 批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-25 玩家/perma/辐射客户端同步监听批次：首次编译遇到并行工作区 `HbmParticleEffects` 中 `BoneDefinition` record accessor 未使用导致编译失败；修正后 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-25 通用客户端网络缓存监听批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-25 Tile/Entity 同步重发缓存生命周期与诊断批次：首次编译遇到并行工作区 `ChemicalPlantBlockEntity` 流体接口和 `AmatFlashParticle`/`TauSparkParticle` 1.20.1 渲染 API 编译断点；最小修正后 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-25 旧 C2S 特化操作包 helper 收束批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-25 旧 S2C 特化包 helper 与客户端缓存诊断批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-25 旧包到现代协议映射诊断批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。

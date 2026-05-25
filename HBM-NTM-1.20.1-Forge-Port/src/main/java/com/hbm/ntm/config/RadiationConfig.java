@@ -13,6 +13,11 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.IntValue WORLD_RAD_THRESHOLD;
     public static ForgeConfigSpec.BooleanValue CLEANUP_DEAD_DIRT;
     public static ForgeConfigSpec.BooleanValue ENABLE_MYCELIUM_SPREAD;
+    public static ForgeConfigSpec.BooleanValue ENABLE_CRATER_BIOME_RADIATION;
+    public static ForgeConfigSpec.DoubleValue CRATER_BIOME_RAD;
+    public static ForgeConfigSpec.DoubleValue CRATER_BIOME_INNER_RAD;
+    public static ForgeConfigSpec.DoubleValue CRATER_BIOME_OUTER_RAD;
+    public static ForgeConfigSpec.DoubleValue CRATER_BIOME_WATER_MULT;
 
     public static ForgeConfigSpec.BooleanValue DISABLE_ASBESTOS;
     public static ForgeConfigSpec.BooleanValue DISABLE_BLINDING;
@@ -51,6 +56,21 @@ public final class RadiationConfig {
         ENABLE_MYCELIUM_SPREAD = builder
                 .comment("Legacy general 1.01_enableMyceliumSpread: allows glowing waste mycelium to spread.")
                 .define("enableMyceliumSpread", false);
+        ENABLE_CRATER_BIOME_RADIATION = builder
+                .comment("Legacy WorldConfig 17.B_toggle radiation side: nuclear fallout marks crater zones that apply ambient radiation.")
+                .define("enableCraterBiomeRadiation", true);
+        CRATER_BIOME_RAD = builder
+                .comment("Legacy WorldConfig 17.R00_craterBiomeRad: RAD/s for the crater zone.")
+                .defineInRange("craterBiomeRad", 5.0D, 0.0D, Double.MAX_VALUE);
+        CRATER_BIOME_INNER_RAD = builder
+                .comment("Legacy WorldConfig 17.R01_craterBiomeInnerRad: RAD/s for the inner crater zone.")
+                .defineInRange("craterBiomeInnerRad", 25.0D, 0.0D, Double.MAX_VALUE);
+        CRATER_BIOME_OUTER_RAD = builder
+                .comment("Legacy WorldConfig 17.R02_craterBiomeOuterRad: RAD/s for the outer crater zone.")
+                .defineInRange("craterBiomeOuterRad", 0.5D, 0.0D, Double.MAX_VALUE);
+        CRATER_BIOME_WATER_MULT = builder
+                .comment("Legacy WorldConfig 17.R03_craterBiomeWaterMult: multiplier while wet in crater zones.")
+                .defineInRange("craterBiomeWaterMult", 5.0D, 0.0D, Double.MAX_VALUE);
         ENABLE_CONTAMINATION = builder
                 .comment("Legacy RADIATION_00_enableContamination: toggles entity radiation contamination.")
                 .define("enableContamination", true);

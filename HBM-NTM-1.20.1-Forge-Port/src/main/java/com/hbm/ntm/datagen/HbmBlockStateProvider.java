@@ -5,6 +5,7 @@ import com.hbm.ntm.block.HbmEnergyNodeBlock;
 import com.hbm.ntm.block.HbmFluidNodeBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
+import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.block.conveyor.ConveyorBlock;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.Direction;
@@ -46,6 +47,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "machine_shredder_front_alt",
                 "machine_shredder_side_alt",
                 "machine_shredder_side_alt");
+        sidedCubeWithItem(ModBlocks.MACHINE_TURBINE,
+                "machine_turbine_top",
+                "machine_turbine_top",
+                "machine_turbine_base",
+                "machine_turbine_base",
+                "machine_turbine_base",
+                "machine_turbine_base");
         simpleSidedCubeWithItem(ModBlocks.DECON,
                 "decon_side",
                 "decon_top",
@@ -122,22 +130,22 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.WASTE_PLANKS, "waste_planks");
         leavesLayerWithItem();
         sellafieldWithItem();
-        simpleCubeWithItem(ModBlocks.SELLAFIELD_SLAKED, "sellafield_slaked");
+        sellafieldSlakedWithItem();
         simpleCubeWithItem(ModBlocks.ASH_DIGAMMA, "ash_digamma");
         crossBlockOnly(ModBlocks.FIRE_DIGAMMA, "fire_digamma");
         crossBlockOnly(ModBlocks.BALEFIRE, "balefire");
         simpleCubeWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk_debris_digamma");
         simpleCubeWithItem(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still");
         simpleCubeWithItem(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still");
-        existingModelWithItem(ModBlocks.NUKE_GADGET, "nuke_gadget");
-        existingModelWithItem(ModBlocks.NUKE_BOY, "nuke_boy");
-        existingModelWithItem(ModBlocks.NUKE_MAN, "nuke_man");
-        existingModelWithItem(ModBlocks.NUKE_TSAR, "nuke_tsar");
-        existingModelWithItem(ModBlocks.NUKE_MIKE, "nuke_mike");
-        existingModelWithItem(ModBlocks.NUKE_PROTOTYPE, "nuke_prototype");
-        existingModelWithItem(ModBlocks.NUKE_FLEIJA, "nuke_fleija");
-        existingModelWithItem(ModBlocks.NUKE_SOLINIUM, "nuke_solinium");
-        existingModelWithItem(ModBlocks.NUKE_N2, "nuke_n2");
+        existingModelWithCustomItem(ModBlocks.NUKE_GADGET, "nuke_gadget");
+        existingModelWithCustomItem(ModBlocks.NUKE_BOY, "nuke_boy");
+        existingModelWithCustomItem(ModBlocks.NUKE_MAN, "nuke_man");
+        existingModelWithCustomItem(ModBlocks.NUKE_TSAR, "nuke_tsar");
+        existingModelWithCustomItem(ModBlocks.NUKE_MIKE, "nuke_mike");
+        existingModelWithCustomItem(ModBlocks.NUKE_PROTOTYPE, "nuke_prototype");
+        existingModelWithCustomItem(ModBlocks.NUKE_FLEIJA, "nuke_fleija");
+        existingModelWithCustomItem(ModBlocks.NUKE_SOLINIUM, "nuke_solinium");
+        existingModelWithCustomItem(ModBlocks.NUKE_N2, "nuke_n2");
         existingModelWithItem(ModBlocks.NUKE_FSTBMB, "nuke_fstbmb");
         existingModelWithItem(ModBlocks.BOMB_MULTI, "bomb_multi");
         simpleCubeWithItem(ModBlocks.YELLOW_BARREL, "barrel_yellow");
@@ -391,5 +399,15 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .partialState().with(LegacySellafieldBlock.LEVEL, 5).modelForState()
                 .modelFile(models().cubeAll("sellafield_5", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_5"))).addModel();
         simpleBlockItem(ModBlocks.SELLAFIELD.get(), models().getExistingFile(new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield")));
+    }
+
+    private void sellafieldSlakedWithItem() {
+        ModelFile model = models().cubeAll("sellafield_slaked", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked"));
+        for (int level = 0; level <= 15; level++) {
+            getVariantBuilder(ModBlocks.SELLAFIELD_SLAKED.get())
+                    .partialState().with(LegacySellafieldSlakedBlock.LEVEL, level).modelForState()
+                    .modelFile(model).addModel();
+        }
+        simpleBlockItem(ModBlocks.SELLAFIELD_SLAKED.get(), model);
     }
 }

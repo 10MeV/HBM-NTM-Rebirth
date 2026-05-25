@@ -2,9 +2,11 @@ package com.hbm.ntm.client;
 
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.ArrayList;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,22 +16,27 @@ public final class ClientBinaryData {
     private static final Map<ResourceLocation, Map<String, byte[]>> DATA = new HashMap<>();
     private static final Map<UUID, ChunkAssembly> CHUNKS = new HashMap<>();
     private static final Map<ResourceLocation, Integer> READY_VERSIONS = new HashMap<>();
+    private static final List<ClientBinaryDataListener> LISTENERS = new ArrayList<>();
 
     public static void put(ResourceLocation channel, String name, byte[] payload) {
+        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
         DATA.computeIfAbsent(channel, ignored -> new HashMap<>())
-                .put(name, Arrays.copyOf(payload, payload.length));
+                .put(name, safePayload);
+        notifyListeners(channel, name, safePayload, false);
     }
 
     public static void clear(ResourceLocation channel) {
         DATA.remove(channel);
         READY_VERSIONS.remove(channel);
         CHUNKS.values().removeIf(assembly -> assembly.channel.equals(channel));
+        notifyListeners(channel, "", new byte[0], true);
     }
 
     public static void clearAll() {
         DATA.clear();
         READY_VERSIONS.clear();
         CHUNKS.clear();
+        LISTENERS.clear();
     }
 
     public static Optional<byte[]> get(ResourceLocation channel, String name) {
@@ -39,10 +46,27 @@ public final class ClientBinaryData {
 
     public static void markReady(ResourceLocation channel) {
         READY_VERSIONS.merge(channel, 1, Integer::sum);
+        notifyListeners(channel, "", new byte[0], false);
     }
 
     public static int readyVersion(ResourceLocation channel) {
         return READY_VERSIONS.getOrDefault(channel, 0);
+    }
+
+    public static int channelCount() {
+        return DATA.size();
+    }
+
+    public static int entryCount() {
+        int count = 0;
+        for (Map<String, byte[]> entries : DATA.values()) {
+            count += entries.size();
+        }
+        return count;
+    }
+
+    public static int readyChannelCount() {
+        return READY_VERSIONS.size();
     }
 
     public static boolean putChunk(UUID transferId, ResourceLocation channel, String name, int chunkIndex, int chunkCount, byte[] chunk, long gameTime) {
@@ -75,6 +99,28 @@ public final class ClientBinaryData {
 
     public static long transferTimeoutTicks() {
         return TRANSFER_TIMEOUT_TICKS;
+    }
+
+    public static void addListener(ClientBinaryDataListener listener) {
+        if (listener != null && !LISTENERS.contains(listener)) {
+            LISTENERS.add(listener);
+        }
+    }
+
+    public static void removeListener(ClientBinaryDataListener listener) {
+        LISTENERS.remove(listener);
+    }
+
+    public static void clearListeners() {
+        LISTENERS.clear();
+    }
+
+    private static void notifyListeners(ResourceLocation channel, String name, byte[] payload, boolean cleared) {
+        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        for (ClientBinaryDataListener listener : List.copyOf(LISTENERS)) {
+            listener.onClientBinaryData(channel, name == null ? "" : name, Arrays.copyOf(safePayload, safePayload.length),
+                    cleared, readyVersion(channel));
+        }
     }
 
     private ClientBinaryData() {
