@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.StainedGlassBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
@@ -269,7 +270,8 @@ public final class ExplosionNukeGeneric {
             return;
         }
 
-        if (state.is(BlockTags.DOORS) || state.is(BlockTags.LEAVES) || state.is(Blocks.GLASS) || state.is(Blocks.TINTED_GLASS)) {
+        if (state.is(BlockTags.DOORS)
+                || (!allowSchrabidium && (state.is(BlockTags.LEAVES) || isLegacyGlass(state)))) {
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
         } else if (state.is(Blocks.GRASS_BLOCK)) {
             level.setBlock(pos, ModBlocks.WASTE_EARTH.get().defaultBlockState(), 3);
@@ -277,12 +279,13 @@ public final class ExplosionNukeGeneric {
             level.setBlock(pos, ModBlocks.WASTE_MYCELIUM.get().defaultBlockState(), 3);
         } else if (state.is(Blocks.SAND) || state.is(Blocks.RED_SAND)) {
             if (level.random.nextInt(20) == 1) {
-                setLegacy(level, pos, "waste_trinitite", legacyState("block_trinitite", Blocks.GLASS.defaultBlockState()));
+                setLegacy(level, pos, state.is(Blocks.RED_SAND) ? "waste_trinitite_red" : "waste_trinitite",
+                        legacyState("block_trinitite", Blocks.GLASS.defaultBlockState()));
             }
         } else if (state.is(Blocks.CLAY)) {
             level.setBlock(pos, Blocks.TERRACOTTA.defaultBlockState(), 3);
         } else if (state.is(Blocks.MOSSY_COBBLESTONE)) {
-            level.setBlock(pos, allowSchrabidium ? legacyState("ore_oil", Blocks.COAL_ORE.defaultBlockState()) : Blocks.COAL_ORE.defaultBlockState(), 3);
+            level.setBlock(pos, Blocks.COAL_ORE.defaultBlockState(), 3);
         } else if (state.is(Blocks.COAL_ORE) || state.is(Blocks.DEEPSLATE_COAL_ORE)) {
             int bound = allowSchrabidium ? 10 : 30;
             int random = level.random.nextInt(bound);
@@ -295,8 +298,10 @@ public final class ExplosionNukeGeneric {
             setLegacy(level, pos, "waste_log", ModBlocks.WASTE_LEAVES.get().defaultBlockState());
         } else if (state.is(BlockTags.PLANKS)) {
             setLegacy(level, pos, "waste_planks", Blocks.DARK_OAK_PLANKS.defaultBlockState());
-        } else if (state.is(Blocks.BROWN_MUSHROOM_BLOCK) || state.is(Blocks.RED_MUSHROOM_BLOCK)) {
+        } else if (state.is(Blocks.MUSHROOM_STEM)) {
             setLegacy(level, pos, "waste_log", Blocks.AIR.defaultBlockState());
+        } else if (state.is(Blocks.BROWN_MUSHROOM_BLOCK) || state.is(Blocks.RED_MUSHROOM_BLOCK)) {
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
         } else if (allowSchrabidium && isLegacy(state, "ore_uranium")) {
             setLegacy(level, pos, level.random.nextInt(10) == 1 ? "ore_schrabidium" : "ore_uranium_scorched");
         } else if (allowSchrabidium && isLegacy(state, "ore_nether_uranium")) {
@@ -333,6 +338,12 @@ public final class ExplosionNukeGeneric {
                 || state.is(Blocks.WET_SPONGE)
                 || state.getBlock() instanceof BushBlock
                 || state.canBeReplaced();
+    }
+
+    private static boolean isLegacyGlass(BlockState state) {
+        return state.is(Blocks.GLASS)
+                || state.is(Blocks.TINTED_GLASS)
+                || state.getBlock() instanceof StainedGlassBlock;
     }
 
     private static void applySphere(Level level, int x, int y, int z, int radius, boolean jagged, BlockOperation operation) {

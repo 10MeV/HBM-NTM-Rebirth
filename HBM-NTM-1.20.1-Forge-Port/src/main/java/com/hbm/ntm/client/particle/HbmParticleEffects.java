@@ -145,8 +145,8 @@ public final class HbmParticleEffects {
             spawnColoredJetpack(level, data, ParticleUtil.TYPE_JETPACK_DNS.equals(type));
         } else if (ParticleUtil.TYPE_RADIATION.equals(type)) {
             spawnRadiationAura(level, data);
-        } else if ("muke".equals(type) || "tinytot".equals(type)) {
-            spawnMuke(level, data, x, y, z, "tinytot".equals(type));
+        } else if (ParticleUtil.TYPE_MUKE.equals(type) || ParticleUtil.TYPE_TINY_TOT.equals(type)) {
+            spawnMuke(level, data, x, y, z, ParticleUtil.TYPE_TINY_TOT.equals(type));
         } else if ("chaosCloud".equals(type)) {
             spawnChaosCloud(level, data, x, y, z);
         }
@@ -580,24 +580,53 @@ public final class HbmParticleEffects {
     }
 
     private static void spawnMuke(ClientLevel level, CompoundTag data, double x, double y, double z, boolean tiny) {
-        int count = tiny ? 40 : 100;
-        double scale = tiny ? 0.8D : 1.8D;
+        int stemCount = tiny ? 17 : 19;
+        int groundCount = tiny ? 50 : 100;
+        int mushCount = tiny ? 15 : 75;
+        double stemHeight = tiny ? 1.6D : 1.8D;
+        double groundY = y + 0.5D;
+        double mushHeight = tiny ? 1.6D : 1.8D;
+        double mushRangeLimit = tiny ? 0.75D : 1.5D;
+        double mushVerticalSpread = tiny ? 0.5D : 0.75D;
+        boolean balefire = data.getBoolean("balefire");
+        ParticleOptions cloudParticle = balefire ? ParticleTypes.WITCH : ModParticleTypes.EX_SMOKE.get();
+
+        Particle wave = MukeWaveParticle.create(level, x, y, z, 45.0F, 25);
+        if (wave != null) {
+            Minecraft.getInstance().particleEngine.add(wave);
+        }
         level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 0.0D, 0.0D, 0.0D);
-        spawnRadial(level, data.getBoolean("balefire") ? ParticleTypes.WITCH : ModParticleTypes.EX_SMOKE.get(),
-                x, y + 0.5D, z, count, scale * 0.25D);
         RandomSource random = level.random;
-        for (int i = 0; i < count; i++) {
-            double height = random.nextDouble() * scale * 5.0D;
-            double width = scale * (0.4D + height * 0.15D);
-            ParticleOptions particle = data.getBoolean("balefire") && i % 3 == 0 ? ParticleTypes.SOUL_FIRE_FLAME : ModParticleTypes.EX_SMOKE.get();
-            level.addParticle(particle,
-                    x + random.nextGaussian() * width,
-                    y + height,
-                    z + random.nextGaussian() * width,
+        for (int i = 0; i < stemCount; i++) {
+            double lift = stemCount == 1 ? 0.0D : stemHeight * i / (stemCount - 1.0D);
+            spawnMukeCloud(level, cloudParticle, x, y, z,
                     random.nextGaussian() * 0.05D,
-                    0.04D + random.nextDouble() * 0.08D,
+                    lift + random.nextGaussian() * 0.02D,
                     random.nextGaussian() * 0.05D);
         }
+        for (int i = 0; i < groundCount; i++) {
+            spawnMukeCloud(level, balefire && i % 3 == 0 ? ParticleTypes.SOUL_FIRE_FLAME : cloudParticle,
+                    x, groundY, z,
+                    random.nextGaussian() * 0.5D,
+                    random.nextInt(5) == 0 ? 0.02D : 0.0D,
+                    random.nextGaussian() * 0.5D);
+        }
+        for (int i = 0; i < mushCount; i++) {
+            double motionX = random.nextGaussian() * (tiny ? 0.2D : 0.5D);
+            double motionZ = random.nextGaussian() * (tiny ? 0.2D : 0.5D);
+            if (motionX * motionX + motionZ * motionZ > mushRangeLimit) {
+                motionX *= 0.5D;
+                motionZ *= 0.5D;
+            }
+            double motionY = mushHeight + (random.nextDouble() * 2.0D - 1.0D) * (mushVerticalSpread - (motionX * motionX + motionZ * motionZ)) * 0.5D;
+            spawnMukeCloud(level, cloudParticle, x, y, z, motionX, motionY + random.nextGaussian() * 0.02D, motionZ);
+        }
+        applyClientJolt(15, 15);
+    }
+
+    private static void spawnMukeCloud(ClientLevel level, ParticleOptions particle, double x, double y, double z,
+            double motionX, double motionY, double motionZ) {
+        level.addParticle(particle, x, y, z, motionX, motionY, motionZ);
     }
 
     private static void spawnChaosCloud(ClientLevel level, CompoundTag data, double x, double y, double z) {

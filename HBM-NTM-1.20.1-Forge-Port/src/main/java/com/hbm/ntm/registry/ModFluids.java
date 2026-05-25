@@ -5,7 +5,8 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidForgeMappings;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmForgeFluidType;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.material.Fluid;
@@ -20,6 +21,8 @@ public final class ModFluids {
     public static final DeferredRegister<net.minecraftforge.fluids.FluidType> FLUID_TYPES =
             DeferredRegister.create(ForgeRegistries.Keys.FLUID_TYPES, HbmNtm.MOD_ID);
 
+    private static final Map<FluidType, HbmFluidRegistryEntry> ENTRIES = new LinkedHashMap<>();
+
     public static final HbmFluidRegistryEntry STEAM = register(HbmFluids.STEAM);
     public static final HbmFluidRegistryEntry HOTSTEAM = register(HbmFluids.HOTSTEAM);
     public static final HbmFluidRegistryEntry SUPERHOTSTEAM = register(HbmFluids.SUPERHOTSTEAM);
@@ -32,18 +35,9 @@ public final class ModFluids {
     public static final HbmFluidRegistryEntry DEUTERIUM = register(HbmFluids.DEUTERIUM);
     public static final HbmFluidRegistryEntry TRITIUM = register(HbmFluids.TRITIUM);
 
-    private static final List<HbmFluidRegistryEntry> ENTRIES = List.of(
-            STEAM,
-            HOTSTEAM,
-            SUPERHOTSTEAM,
-            COOLANT,
-            COOLANT_HOT,
-            OIL,
-            GAS,
-            SULFURIC_ACID,
-            HYDROGEN,
-            DEUTERIUM,
-            TRITIUM);
+    static {
+        registerRemainingHbmFluids();
+    }
 
     public static void register(IEventBus modBus) {
         FLUID_TYPES.register(modBus);
@@ -51,12 +45,15 @@ public final class ModFluids {
     }
 
     public static void registerMappings() {
-        for (HbmFluidRegistryEntry entry : ENTRIES) {
+        for (HbmFluidRegistryEntry entry : ENTRIES.values()) {
             HbmFluidForgeMappings.register(entry.hbmType(), entry.source().get());
         }
     }
 
     private static HbmFluidRegistryEntry register(FluidType hbmType) {
+        if (ENTRIES.containsKey(hbmType)) {
+            return ENTRIES.get(hbmType);
+        }
         String name = hbmType.toPath();
         ForgeFlowingFluid.Properties[] properties = new ForgeFlowingFluid.Properties[1];
         RegistryObject<HbmForgeFluidType> forgeType = FLUID_TYPES.register(name, () -> new HbmForgeFluidType(hbmType));
@@ -65,7 +62,18 @@ public final class ModFluids {
         RegistryObject<ForgeFlowingFluid.Flowing> flowing =
                 FLUIDS.register(name + "_flowing", () -> new ForgeFlowingFluid.Flowing(properties[0]));
         properties[0] = new ForgeFlowingFluid.Properties(forgeType, source, flowing);
-        return new HbmFluidRegistryEntry(hbmType, forgeType, source, flowing);
+        HbmFluidRegistryEntry entry = new HbmFluidRegistryEntry(hbmType, forgeType, source, flowing);
+        ENTRIES.put(hbmType, entry);
+        return entry;
+    }
+
+    private static void registerRemainingHbmFluids() {
+        for (FluidType type : HbmFluids.all()) {
+            if (type == HbmFluids.NONE || type == HbmFluids.WATER || type == HbmFluids.LAVA || type.hasNoId()) {
+                continue;
+            }
+            register(type);
+        }
     }
 
     public record HbmFluidRegistryEntry(

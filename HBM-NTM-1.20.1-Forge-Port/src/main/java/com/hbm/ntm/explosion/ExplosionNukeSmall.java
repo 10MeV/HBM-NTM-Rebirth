@@ -6,7 +6,6 @@ import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 
@@ -27,12 +26,8 @@ public final class ExplosionNukeSmall {
         }
 
         if (params.particle != null) {
-            CompoundTag data = new CompoundTag();
-            data.putString("type", params.particle);
-            if ("muke".equals(params.particle) && level.random.nextInt(100) == 0) {
-                data.putBoolean("balefire", true);
-            }
-            ParticleUtil.spawnAux(level, x, y + 0.5D, z, data, 250.0D);
+            ParticleUtil.spawnNuclearBurstVisual(level, x, y + 0.5D, z, params.particle,
+                    ParticleUtil.TYPE_MUKE.equals(params.particle) && level.random.nextInt(100) == 0);
         }
 
         level.playSound(null, x, y, z, ModSounds.WEAPON_MUKE_EXPLOSION.get(), SoundSource.BLOCKS, 15.0F, 1.0F);

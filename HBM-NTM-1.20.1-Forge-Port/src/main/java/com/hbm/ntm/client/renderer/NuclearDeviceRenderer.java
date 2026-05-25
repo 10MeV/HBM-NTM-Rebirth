@@ -66,6 +66,14 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
         };
     }
 
+    public static void renderCustomNuke(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ObjNukeModels.BOY.renderAll(ObjNukeModels.texture("custom_nuke"), poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void applyCustomNukeLegacyCommon(PoseStack poseStack) {
+        poseStack.translate(-1.0D, 0.0D, 0.0D);
+    }
+
     private static void applyLegacyBlockTranslation(NuclearDeviceBlock.Kind kind, PoseStack poseStack) {
         if (kind == NuclearDeviceBlock.Kind.BOY) {
             poseStack.translate(-2.0D, 0.0D, 0.0D);

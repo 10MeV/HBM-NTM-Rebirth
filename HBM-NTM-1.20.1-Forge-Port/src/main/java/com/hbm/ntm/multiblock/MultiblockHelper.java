@@ -92,6 +92,11 @@ public final class MultiblockHelper {
         return true;
     }
 
+    public static boolean checkLayout(Level level, BlockPos corePos, LegacyMultiblockLayout layout,
+            @Nullable BlockPos temporaryPos) {
+        return checkSpace(level, corePos, layout.checkOffsets(), temporaryPos);
+    }
+
     public static BlockPos legacyCoreFromPlacement(BlockPos placedPos, Direction facing, int legacyOffset) {
         return legacyOffset == 0 ? placedPos : placedPos.relative(facing.getOpposite(), legacyOffset);
     }
@@ -184,8 +189,17 @@ public final class MultiblockHelper {
         return true;
     }
 
+    public static boolean fillLayout(Level level, BlockPos corePos, LegacyMultiblockLayout layout) {
+        return fillOffsetsWithProxyModes(level, corePos, layout.offsets(), layout::proxyMode,
+                layout::isLegacyExtraOffset);
+    }
+
     public static boolean removeAll(Level level, BlockPos corePos, MultiblockExtents extents) {
         return removeOffsets(level, corePos, extents.offsets());
+    }
+
+    public static boolean removeLayout(Level level, BlockPos corePos, LegacyMultiblockLayout layout) {
+        return removeOffsets(level, corePos, layout.offsets());
     }
 
     public static boolean removeOffsets(Level level, BlockPos corePos, Iterable<BlockPos> offsets) {
@@ -235,7 +249,14 @@ public final class MultiblockHelper {
     }
 
     @Nullable
-    public static CoreLookup findCore(BlockGetter level, BlockPos pos) {
+    public static CoreLookup findCore(BlockGetter level, @Nullable BlockPos pos) {
+        CoreLookup directCore = findCoreAt(level, pos);
+        if (directCore != null) {
+            return directCore;
+        }
+        if (pos == null) {
+            return null;
+        }
         if (!(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) || dummy.getCorePos() == null) {
             return null;
         }
@@ -259,12 +280,26 @@ public final class MultiblockHelper {
         if (blockEntity == null || blockEntity.getLevel() == null) {
             return blockEntity;
         }
-        CoreLookup core = findCore(blockEntity.getLevel(), blockEntity.getBlockPos());
-        if (core == null) {
-            return blockEntity;
+        return resolveCoreBlockEntity(blockEntity.getLevel(), blockEntity.getBlockPos(), blockEntity);
+    }
+
+    @Nullable
+    public static BlockEntity resolveCoreBlockEntity(BlockGetter level, @Nullable BlockPos pos) {
+        return resolveCoreBlockEntity(level, pos, pos == null ? null : level.getBlockEntity(pos));
+    }
+
+    @Nullable
+    private static BlockEntity resolveCoreBlockEntity(BlockGetter level, @Nullable BlockPos pos,
+            @Nullable BlockEntity fallback) {
+        if (pos == null) {
+            return fallback;
         }
-        BlockEntity coreEntity = blockEntity.getLevel().getBlockEntity(core.pos());
-        return coreEntity == null ? blockEntity : coreEntity;
+        CoreLookup core = findCore(level, pos);
+        if (core == null) {
+            return fallback;
+        }
+        BlockEntity coreEntity = level.getBlockEntity(core.pos());
+        return coreEntity == null ? fallback : coreEntity;
     }
 
     private static boolean isReplaceableOrTemporary(Level level, BlockPos pos, @Nullable BlockPos temporaryPos) {

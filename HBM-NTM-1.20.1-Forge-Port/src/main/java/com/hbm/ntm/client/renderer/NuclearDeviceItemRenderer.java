@@ -1,7 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.NuclearDeviceBlock;
+import com.hbm.ntm.block.CustomNukeBlock;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjNukeModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -30,8 +32,16 @@ public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
     @Override
     public void renderByItem(ItemStack stack, ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!(stack.getItem() instanceof BlockItem blockItem)
-                || !(blockItem.getBlock() instanceof NuclearDeviceBlock block)) {
+        if (!(stack.getItem() instanceof BlockItem blockItem)) {
+            return;
+        }
+
+        if (blockItem.getBlock() instanceof CustomNukeBlock) {
+            renderCustomNuke(displayContext, poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
+
+        if (!(blockItem.getBlock() instanceof NuclearDeviceBlock block)) {
             return;
         }
 
@@ -49,6 +59,26 @@ public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         applyLegacyCommon(kind, poseStack);
         NuclearDeviceRenderer.renderKind(kind, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderCustomNuke(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyWavefrontModel model = ObjNukeModels.BOY;
+        boolean gui = displayContext == ItemDisplayContext.GUI;
+        AABB bounds = gui
+                ? transformBounds(model.boundsAll(), point -> point.add(-1.0D, 0.0D, 0.0D).scale(5.0D))
+                : transformBounds(model.boundsAll(), point -> point.add(-1.0D, 0.0D, 0.0D));
+        Vec3 center = bounds.getCenter();
+        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
+
+        poseStack.pushPose();
+        applyBaseDisplay(displayContext, poseStack, center, maxSize, gui);
+        if (gui) {
+            poseStack.scale(5.0F, 5.0F, 5.0F);
+        }
+        NuclearDeviceRenderer.applyCustomNukeLegacyCommon(poseStack);
+        NuclearDeviceRenderer.renderCustomNuke(poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 

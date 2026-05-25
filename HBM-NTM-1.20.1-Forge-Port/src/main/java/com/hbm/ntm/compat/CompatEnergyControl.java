@@ -124,7 +124,7 @@ public final class CompatEnergyControl {
     }
 
     public static BlockEntity findTileEntity(Level level, BlockPos pos) {
-        return level == null || pos == null ? null : findTileEntity(level.getBlockEntity(pos));
+        return level == null || pos == null ? null : MultiblockHelper.resolveCoreBlockEntity(level, pos);
     }
 
     public static ResourceLocation getFluidTexture(String name) {

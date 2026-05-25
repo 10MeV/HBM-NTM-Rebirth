@@ -1523,11 +1523,138 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks` 通过。
 
+### 2026-05-25 追加：核爆冲击波粒子与屏幕 jolt 接线复核
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionNukeSmall`
+- `com.hbm.explosion.ExplosionLarge`
+- `com.hbm.main.ClientProxy`
+- `com.hbm.particle.ParticleMukeWave`
+- `com.hbm.entity.effect.EntityNukeTorex`
+- `com.hbm.render.entity.effect.RenderTorex`
+
+旧版实现位置结论：
+
+- 小/中型 `ExplosionNukeSmall#explode(...)` 的核爆视觉不是直接生成粒子类，而是服务端发送 `type=muke/tinytot` 的 `AuxParticlePacketNT`，客户端由 `ClientProxy` 创建 `ParticleMukeWave` 并设置本地玩家 `hurtTime/maxHurtTime=15`。
+- `ParticleMukeWave` 是用户可见的地面冲击波环，使用 `textures/particle/shockwave.png`，默认 25 tick 和 `waveScale=45`。
+- 大型 MK5 核爆使用 `EntityNukeTorex` 的 shock cloud；客户端在声波范围到达玩家后播放 `weapon.nuclearExplosion`，`RenderTorex` 随后触发一次 15 tick hurt 动画抖动。
+
+现代接线：
+
+- `ExplosionNukeSmall#explode(...)` 改为通过 `ParticleUtil.spawnNuclearBurstVisual(...)` 发出 `muke/tinytot`，仍保持旧范围 250 和 `muke` 1% `balefire` 标志。
+- `HbmParticleEffects#spawnMuke(...)` 补回 `MukeWaveParticle` 冲击波和 15 tick 客户端 jolt；大型 Torex 的声波抖动仍在 `NukeTorexRenderer` 中按旧时机触发。
+- 验证：`.\gradlew.bat clean compileJava processResources --no-daemon` 通过。
+
 仍缺/延期：
 
 - `NukeCustom` 方块、完整 `TileEntityNukeCustom` GUI/库存与 custom missile 实体仍待后续迁入；本批只补齐当前已有核爆/野火爆炸入口的 Torex 视觉云。
 - `EntityCloudFleijaRainbow` 的武器/子弹/TileEntityCore 等其他调用点属于武器或机器迁移范围，本批没有扩线接入。
 - 本批不改变辐射库/区块辐射数据算法，只补核爆大型视觉实体与旧音效。
+
+### 2026-05-25 追加：NukeCustom 方块/库存/GUI 安全闭环
+
+复核来源：
+
+- `com.hbm.blocks.bomb.NukeCustom`
+- `com.hbm.tileentity.bomb.TileEntityNukeCustom`
+- `com.hbm.inventory.container.ContainerNukeCustom`
+- `com.hbm.inventory.gui.GUINukeCustom`
+- `com.hbm.render.item.ItemRenderLibrary` 中 `ModBlocks.nuke_custom` 物品渲染
+- `ResourceManager.bomb_boy` / `ResourceManager.bomb_custom_tex`
+- `assets/hbm/textures/gui/weapon/gunBombSchematic.png`
+- `assets/hbm/textures/models/CustomNuke.png`
+- `assets/hbm/textures/items/custom_tnt.png` 等 `custom_*` 装料贴图
+
+旧版行为要点：
+
+- `nuke_custom` 是独立自定义核弹，不等同 `bomb_multi` 多用途炸弹。
+- 方块为非完整模型，右键打开 `ContainerNukeCustom` / `GUINukeCustom`，潜行右键不打开 GUI。
+- 红石供能时调用 `explode(...)`。
+- `TileEntityNukeCustom` 有 27 槽库存，所有槽普通容器交互，SidedInventory 不允许自动插入/抽出。
+- 每 tick 根据 `registerBombItems()` 条目表重算 `tnt/nuke/hydro/amat/dirty/schrab/euph`：
+  - ADD 条目累加强度，MULT 条目用 `value * stackSize` 连乘倍率；
+  - 计算后执行门槛：`tnt < 16 -> nuke=0`，`nuke < 100 -> hydro=0`，`nuke < 50 -> amat/schrab=0`，`schrab == 0 -> euph=0`。
+- `custom_fall` 存在时旧版起爆不立即爆炸，而生成 `EntityFallingNuke`；该实体承载七项强度。
+- 物品渲染复用 Little Boy 模型 `bomb_boy`，贴图换成 `CustomNuke.png`，inventory 缩放 5。
+- GUI 使用 `gunBombSchematic.png`，27 槽为 3x9，玩家物品栏从 y=140 起；右侧图标按最高优先级阶段渲染，dirty 在核/热核路径叠加。
+
+现代迁入：
+
+- 新增 `CustomNukeBlock`，注册旧 ID `nuke_custom` 到核弹创造栏：
+  - 右键打开独立 `CustomNukeMenu`；
+  - 红石供能按当前统计值起爆；
+  - 起爆前清空 27 槽并移除方块；
+  - 当前批次不实现 falling 路径，见延期。
+- 新增 `CustomNukeBlockEntity`：
+  - 27 槽 `ItemStackHandler`；
+  - 保存到 `Inventory` NBT；
+  - 服务端 tick/cache 重算 `CustomNukeStats`；
+  - 条目表按旧 `registerBombItems()` 迁入，现代端尚未存在的 item/block 条目采用“注册存在才接入”的条件式条目，避免硬依赖未迁内容。
+- 新增 `CustomNukeMenu` / `CustomNukeScreen`：
+  - 保留旧 3x9 槽位布局和 `gunBombSchematic` 背景；
+  - 同步七项强度和 falling 标记；
+  - 补回旧 GUI 阶段图标与 tooltip 要点。
+- 新增 custom 装料物品：
+  - `custom_tnt`
+  - `custom_nuke`
+  - `custom_hydro`
+  - `custom_amat`
+  - `custom_dirty`
+  - `custom_schrab`
+  - `custom_fall`
+- 2026-05-25 启动修正：`custom_*` 物品已由字段显式注册，`NUKE_TAB_ITEMS` 必须复用这些 `RegistryObject`，不能再通过 `simpleStackOneItems("custom_tnt", ...)` 二次注册，否则 Forge 会报 `Duplicate registration custom_tnt`。
+- 复制旧资源：
+  - `textures/items/custom_*.png` -> `textures/item/custom_*.png`
+  - `textures/gui/weapon/gunBombSchematic.png` -> `textures/gui/weapon/gun_bomb_schematic.png`
+  - `textures/models/CustomNuke.png` -> `textures/block/nuke/custom_nuke.png`
+- 自定义核弹 BER/item renderer 复用 modern Little Boy OBJ，贴图换成 `custom_nuke`，对齐旧 `ResourceManager.bomb_boy + bomb_custom_tex`。
+
+仍缺/延期：
+
+- `custom_fall` 当前只参与统计/GUI 标记，尚未恢复旧 `EntityFallingNuke` 的七强度坠落实体路径。
+- 旧 `TileEntityNukeCustom.registerBombItems()` 中依赖未迁物品/方块的条目暂未激活；对应内容迁入后应扩展条件式条目表或转为完整注册。
+- `EntityMissileCustom`、missile part item/metadata、发射台结构仍待后续迁入。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks` 通过。
+
+### 2026-05-25 追加：普通核爆 waste 后处理与落尘资源复核
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionNukeGeneric#wasteDest`
+- `com.hbm.explosion.ExplosionNukeGeneric#wasteDestNoSchrab`
+- `com.hbm.entity.effect.EntityFalloutRain#stomp`
+- `com.hbm.config.FalloutConfigJSON#initDefault`
+- `com.hbm.crafting.SmeltingRecipes`
+
+旧版行为要点：
+
+- `wasteDest` 和 `wasteDestNoSchrab` 不是同一个方块替换表：
+  - 普通 `wasteDest` 只直接清除木门/铁门；
+  - `wasteDestNoSchrab` 额外清除玻璃、染色玻璃和树叶；
+  - 两者的 mossy cobblestone 都转 `coal_ore`，不转油矿。
+- 蘑菇方块旧 metadata 10 是 stem -> `waste_log`，其他蘑菇方块清空；现代端对应 `Blocks.MUSHROOM_STEM` 与红/棕蘑菇方块。
+- 核爆和 fallout 直接生成的是 `waste_trinitite` / `waste_trinitite_red`；`glass_trinitite` 来自烧炼两种 waste trinitite，不是爆炸直接落点。
+- `EntityFalloutRain` 里还有 `volcano_core -> volcano_rad_core` 特例，但现代端 `BlockVolcano` / `TileEntityVolcanoCore` 尚未迁入，不能安全接入。
+
+现代修正：
+
+- `ExplosionNukeGeneric#wasteDest` 拆回旧分支差异：
+  - `allowSchrabidium=true` 的普通 waste 不再错误清掉玻璃/树叶；
+  - `allowSchrabidium=false` 的 NoSchrab waste 才清玻璃/树叶；
+  - mossy cobblestone 统一改回 `coal_ore`；
+  - `MUSHROOM_STEM` -> `waste_log`，红/棕蘑菇块 -> air。
+- 注册并接入 `waste_trinitite` / `waste_trinitite_red` 后，`ExplosionNukeGeneric` 的 sand/red sand 低概率替换不再回退到 `block_trinitite`。
+- Deprecated 但仍存在的 `NukeEnvironmentalEffect#applyStandardEffect` 也从旧占位 `block_trinitite` 改回 sand -> `waste_trinitite`、red sand -> `waste_trinitite_red`。
+- 相关 fallout table、实体落尘雨 renderer、Sellafield/Trinitite 资源和 hazard 接线记录在 radiation-core 文档的 “Nuclear Fallout Sellafield/Trinitite Parity Pass” 中。
+
+仍缺/延期：
+
+- `volcano_core` / `volcano_rad_core` 需要随火山核心方块与 TileEntity 一起迁入；本批只记录差异，不使用其它方块替代。
+- `VersatileConfig.getSchrabOreChance()` 仍未迁入现代配置；schrabidium 分支仍是当前固定概率路径。
 
 验证：
 

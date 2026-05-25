@@ -153,6 +153,13 @@ public final class ModItems {
             () -> new HbmInfiniteFluidItem(new Item.Properties(), HbmFluids.CHLORINE, 1, 2, "Chlorine Pinwheel"));
     public static final RegistryObject<Item> FLUID_IDENTIFIER_MULTI = registerLegacy("fluid_identifier_multi",
             () -> new FluidIdentifierItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> CUSTOM_TNT = simpleItem("custom_tnt");
+    public static final RegistryObject<Item> CUSTOM_NUKE = simpleItem("custom_nuke");
+    public static final RegistryObject<Item> CUSTOM_HYDRO = simpleItem("custom_hydro");
+    public static final RegistryObject<Item> CUSTOM_AMAT = simpleItem("custom_amat");
+    public static final RegistryObject<Item> CUSTOM_DIRTY = simpleItem("custom_dirty");
+    public static final RegistryObject<Item> CUSTOM_SCHRAB = simpleItem("custom_schrab");
+    public static final RegistryObject<Item> CUSTOM_FALL = simpleStackOneItem("custom_fall");
     public static final RegistryObject<Item> BATTERY_POTATO = registerLegacy("battery_potato",
             () -> new HbmBatteryItem(new Item.Properties(), 1_000L, 0L, 100L));
     public static final RegistryObject<Item> BATTERY_CREATIVE = registerLegacy("battery_creative",
@@ -434,7 +441,7 @@ public final class ModItems {
             "nugget_ra226"
     );
 
-    public static final List<RegistryObject<Item>> NUKE_TAB_ITEMS = Stream.concat(simpleParts(
+    public static final List<RegistryObject<Item>> NUKE_TAB_ITEMS = Stream.concat(Stream.concat(simpleParts(
             "early_explosive_lenses",
             "explosive_lenses"
     ).stream(), simpleStackOneItems(
@@ -459,7 +466,15 @@ public final class ModItems {
             "solinium_propellant",
             "solinium_core",
             "n2_charge"
-    ).stream()).toList();
+    ).stream()), Stream.of(
+            CUSTOM_TNT,
+            CUSTOM_NUKE,
+            CUSTOM_HYDRO,
+            CUSTOM_AMAT,
+            CUSTOM_DIRTY,
+            CUSTOM_SCHRAB,
+            CUSTOM_FALL
+    )).toList();
 
     private static final List<RegistryObject<Item>> CONTROL_BATTERY_ITEMS = Stream.concat(Stream.of(
             BATTERY_POTATO,

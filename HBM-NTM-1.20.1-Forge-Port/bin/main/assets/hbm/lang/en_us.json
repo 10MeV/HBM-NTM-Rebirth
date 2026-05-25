@@ -1,4 +1,4 @@
-{
+﻿{
   "itemGroup.hbm.parts": "HBM Parts",
   "itemGroup.hbm.machines": "HBM Machines",
   "itemGroup.hbm.consumables": "HBM Consumables",
@@ -129,8 +129,18 @@
   "block.hbm.nuke_fleija": "F.L.E.I.J.A.",
   "block.hbm.nuke_solinium": "The Blue Rinse",
   "block.hbm.nuke_n2": "N2 Mine",
+  "block.hbm.nuke_custom": "Custom Nuke",
   "block.hbm.nuke_fstbmb": "Balefire Bomb",
   "block.hbm.bomb_multi": "Multi Purpose Bomb",
+  "container.nukeCustom": "Custom Nuke",
+  "item.hbm.custom_tnt": "Custom Nuke Explosive Charge",
+  "item.hbm.custom_nuke": "Custom Nuke Nuclear Rod",
+  "item.hbm.custom_hydro": "Custom Nuke Hydrogen Rod",
+  "item.hbm.custom_amat": "Custom Nuke Antimatter Rod",
+  "item.hbm.custom_dirty": "Custom Nuke Dirty Rod",
+  "item.hbm.custom_schrab": "Custom Nuke Schrabidium Rod",
+  "item.hbm.custom_fall": "Custom Nuke Drop Upgrade",
+  "item.hbm.custom_fall.desc": "Makes bomb drop upon activation",
   "item.hbm.ingot_pu_mix": "Ingot Pu Mix",
   "item.hbm.ingot_am241": "Ingot Am-241",
   "item.hbm.ingot_am242": "Ingot Am-242",
@@ -561,6 +571,16 @@
   "block.hbm.sellafield.3": "Sellafite",
   "block.hbm.sellafield.4": "Sellafite",
   "block.hbm.sellafield.5": "Sellafite",
+  "block.hbm.sellafield_slaked": "Slaked Sellafite",
+  "block.hbm.sellafield_bedrock": "Bedrock Sellafite",
+  "block.hbm.ore_sellafield_diamond": "Sellafite Diamond Ore",
+  "block.hbm.ore_sellafield_emerald": "Sellafite Emerald Ore",
+  "block.hbm.ore_sellafield_radgem": "Sellafite Radioactive Gem Ore",
+  "block.hbm.ore_sellafield_schrabidium": "Sellafite Schrabidium Ore",
+  "block.hbm.ore_sellafield_uranium_scorched": "Scorched Sellafite Uranium Ore",
+  "block.hbm.waste_trinitite": "Trinitite Ore",
+  "block.hbm.waste_trinitite_red": "Red Trinitite Ore",
+  "block.hbm.glass_trinitite": "Trinity Glass",
   "block.hbm.machine_battery_socket": "Battery Socket",
   "container.hbm.battery": "Energy Storage Block",
   "container.batterySocket": "Battery Socket",
@@ -744,3 +764,4 @@
   "hbmfluid.xpjuice": "Experience Juice",
   "hbmfluid.xylene": "BTX"
 }
+

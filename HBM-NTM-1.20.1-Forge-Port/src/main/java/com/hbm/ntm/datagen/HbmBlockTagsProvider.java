@@ -25,15 +25,24 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.DUMMY_BLOCK.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.DUMMY_BLOCK.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
-                ModBlocks.RAD_LAVA_BLOCK.get());
+                ModBlocks.RAD_LAVA_BLOCK.get(), ModBlocks.SELLAFIELD.get(), ModBlocks.SELLAFIELD_SLAKED.get(),
+                ModBlocks.SELLAFIELD_BEDROCK.get(), ModBlocks.ORE_SELLAFIELD_DIAMOND.get(),
+                ModBlocks.ORE_SELLAFIELD_EMERALD.get(), ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED.get(),
+                ModBlocks.ORE_SELLAFIELD_SCHRABIDIUM.get(), ModBlocks.ORE_SELLAFIELD_RADGEM.get(),
+                ModBlocks.GLASS_TRINITITE.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
-                ModBlocks.RAD_LAVA_BLOCK.get());
-        tag(BlockTags.MINEABLE_WITH_SHOVEL).add(ModBlocks.ASH_DIGAMMA.get());
+                ModBlocks.RAD_LAVA_BLOCK.get(), ModBlocks.SELLAFIELD.get(), ModBlocks.SELLAFIELD_SLAKED.get(),
+                ModBlocks.SELLAFIELD_BEDROCK.get(), ModBlocks.ORE_SELLAFIELD_DIAMOND.get(),
+                ModBlocks.ORE_SELLAFIELD_EMERALD.get(), ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED.get(),
+                ModBlocks.ORE_SELLAFIELD_SCHRABIDIUM.get(), ModBlocks.ORE_SELLAFIELD_RADGEM.get(),
+                ModBlocks.GLASS_TRINITITE.get());
+        tag(BlockTags.MINEABLE_WITH_SHOVEL).add(ModBlocks.ASH_DIGAMMA.get(), ModBlocks.WASTE_TRINITITE.get(),
+                ModBlocks.WASTE_TRINITITE_RED.get());
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
-        tag(forgeBlockTag("glass")).add(ModBlocks.GLASS_BORON.get());
+        tag(forgeBlockTag("glass")).add(ModBlocks.GLASS_BORON.get(), ModBlocks.GLASS_TRINITITE.get());
 
         addLegacyForgeOreTag("uranium", "ore_uranium", "ore_uranium_scorched", "ore_nether_uranium", "ore_nether_uranium_scorched", "ore_gneiss_uranium", "ore_gneiss_uranium_scorched");
         addLegacyForgeOreTag("thorium", "ore_thorium");

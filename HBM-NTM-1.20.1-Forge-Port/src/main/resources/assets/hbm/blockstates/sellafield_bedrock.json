@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "level=0": { "model": "hbm:block/sellafield_bedrock" },
+    "level=1": { "model": "hbm:block/sellafield_bedrock" },
+    "level=2": { "model": "hbm:block/sellafield_bedrock" },
+    "level=3": { "model": "hbm:block/sellafield_bedrock" },
+    "level=4": { "model": "hbm:block/sellafield_bedrock" },
+    "level=5": { "model": "hbm:block/sellafield_bedrock" },
+    "level=6": { "model": "hbm:block/sellafield_bedrock" },
+    "level=7": { "model": "hbm:block/sellafield_bedrock" },
+    "level=8": { "model": "hbm:block/sellafield_bedrock" },
+    "level=9": { "model": "hbm:block/sellafield_bedrock" },
+    "level=10": { "model": "hbm:block/sellafield_bedrock" },
+    "level=11": { "model": "hbm:block/sellafield_bedrock" },
+    "level=12": { "model": "hbm:block/sellafield_bedrock" },
+    "level=13": { "model": "hbm:block/sellafield_bedrock" },
+    "level=14": { "model": "hbm:block/sellafield_bedrock" },
+    "level=15": { "model": "hbm:block/sellafield_bedrock" }
+  }
+}

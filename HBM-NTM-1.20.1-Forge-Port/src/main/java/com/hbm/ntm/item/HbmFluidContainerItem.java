@@ -2,13 +2,17 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.api.fluid.IFillableItem;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidContainerItemCapabilityProvider;
 import com.hbm.ntm.fluid.HbmFluidContainerRules;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.trait.ContainerFluidTrait;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import org.jetbrains.annotations.Nullable;
 
 public class HbmFluidContainerItem extends Item implements IFillableItem {
     private static final String TAG_FLUID = "hbm_fluid";
@@ -105,8 +109,30 @@ public class HbmFluidContainerItem extends Item implements IFillableItem {
     }
 
     public int getTintColor(ItemStack stack) {
+        return getTintColor(stack, 1);
+    }
+
+    public int getTintColor(ItemStack stack, int tintIndex) {
+        if (tintIndex <= 0) {
+            return 0xFFFFFF;
+        }
         FluidType type = getFirstFluidType(stack);
-        return type == HbmFluids.NONE ? 0xFFFFFF : type.getColor();
+        if (type == HbmFluids.NONE) {
+            return 0xFFFFFF;
+        }
+        ContainerFluidTrait container = type.getTrait(ContainerFluidTrait.class);
+        return switch (kind) {
+            case CANISTER -> tintIndex == 1
+                    ? container == null ? type.getColor() : container.getCanisterColor()
+                    : 0xFFFFFF;
+            case GAS_TANK -> tintIndex == 1
+                    ? container == null ? type.getColor() : container.getGasTankBottleColorOr(type.getColor())
+                    : tintIndex == 2
+                            ? container == null ? 0xFFFFFF : container.getGasTankLabelColorOr(0xFFFFFF)
+                            : 0xFFFFFF;
+            case FLUID_TANK, LEAD_FLUID_TANK, FLUID_BARREL, FLUID_PACK, DISPERSER_CANISTER, GLYPHID_GLAND ->
+                    tintIndex == 1 ? type.getColor() : 0xFFFFFF;
+        };
     }
 
     public int getCapacity() {
@@ -115,6 +141,14 @@ public class HbmFluidContainerItem extends Item implements IFillableItem {
 
     public HbmFluidContainerRules.ContainerKind getContainerKind() {
         return kind;
+    }
+
+    @Override
+    public @Nullable ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
+        if (this instanceof HbmInfiniteFluidItem) {
+            return super.initCapabilities(stack, nbt);
+        }
+        return new HbmFluidContainerItemCapabilityProvider(stack, this);
     }
 
     public int getPressure(ItemStack stack) {

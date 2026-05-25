@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-25T18:59:06.7206177	Item Models: hbm
+// 1.20.1	2026-05-25T21:07:49.8191561	Item Models: hbm
 e0dd9cc86e850dae1c5e94ee6463e6ef9b707966 assets/hbm/models/item/battery_creative.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lead.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lithium.json
@@ -70,6 +70,9 @@ bf5cda10409de1e8737458a3b7aecc96512674b3 assets/hbm/models/item/boy_igniter.json
 3ef7c6308aa5ae3f8ce6dabc5ccbd3e8eab3a0c0 assets/hbm/models/item/boy_propellant.json
 d59cb6ee7da5c1c41e383b3450b5a8afad7ee994 assets/hbm/models/item/boy_shielding.json
 296512f154a274642ac189ea664cbd56358e49fa assets/hbm/models/item/boy_target.json
+1c05568aadc86a9bf0f42f656041a1f9cc56eebf assets/hbm/models/item/canister_empty.json
+25f9be429426613a5b77bd4f1d46f3dca663ef63 assets/hbm/models/item/canister_full.json
+a9cee0733103f3f724c082cb7004cda233cd9cb0 assets/hbm/models/item/canister_napalm.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_bismuth.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_copper.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_gold.json
@@ -78,6 +81,7 @@ e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_spark.
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/capacitor_tantalum.json
 8d00c230a332d579490ce486aa853463fa443868 assets/hbm/models/item/cell_empty.json
 ab1a38edded4cb0e90d28033028a0fead010e44c assets/hbm/models/item/cell_sas3.json
+437320f70d7af7eaabbea3a28650df1f68f30dff assets/hbm/models/item/chlorine_pinwheel.json
 6f8c104cf1f6c27fde25768a9f1ac8a258d1f8cc assets/hbm/models/item/cinnebar.json
 66346b62490aada67c666de9fb0962c05d999f6a assets/hbm/models/item/circuit_chip_quantum.json
 b81d1327a154f8dac98db3111fa888f6f3b1749f assets/hbm/models/item/coal_infernal.json
@@ -97,6 +101,8 @@ a79c6209ed27a2dd87862d8d4c8cde0ac24a0715 assets/hbm/models/item/crystal_thorium.
 1c0116c04f8984249c6f68b2a27129720f7b91bf assets/hbm/models/item/crystal_trixite.json
 717138e2327b0dfad433d85e77dddd88fd5cb7c1 assets/hbm/models/item/crystal_uranium.json
 df6b0c1af6edbc0000a3c8f18f2af66d4ee1b8cd assets/hbm/models/item/digamma_diagnostic.json
+430374e77be25475dba8347ad32f827f56b23797 assets/hbm/models/item/disperser_canister.json
+4fd8e2da8f166f814afafe6d7def2ed5ee59510c assets/hbm/models/item/disperser_canister_empty.json
 857cc86931a9aa2b0c31625d1b434fc0f9583ffc assets/hbm/models/item/drill_titanium.json
 9ae3884ff8570898db78c333117faeb8617eed38 assets/hbm/models/item/early_explosive_lenses.json
 f7ce31d6fef1cc13a9793b3418627f10992adab2 assets/hbm/models/item/explosive_lenses.json
@@ -104,13 +110,28 @@ fb64e40d5be4b387a10b8db09fdd2144a09b1ce9 assets/hbm/models/item/fallout.json
 78d6cc15605dd8ba7022fee2d2ab97670d40cfe7 assets/hbm/models/item/fleija_core.json
 130e3ecd44268f266b92b2d927122bab51e7a8c0 assets/hbm/models/item/fleija_igniter.json
 ec19dcfa24eed803616aeb1144e862a612b4dff8 assets/hbm/models/item/fleija_propellant.json
+17f1c56d8c8129bf2a13aac7e30a5e776d811a18 assets/hbm/models/item/fluid_barrel_empty.json
+ca1a3443e92c01a2687f28b58827ac0d55d8a3e5 assets/hbm/models/item/fluid_barrel_full.json
+04cf29315c02eb131bf05f2ccb64848249775e6f assets/hbm/models/item/fluid_barrel_infinite.json
 de3068fd92540f82bd2977b2ad743953bcf0b31e assets/hbm/models/item/fluid_identifier_multi.json
+7eb9117a1b40d863a7bb95e620eb45806e749ee9 assets/hbm/models/item/fluid_pack_empty.json
+bbf7e88f56679a9ded82e9eea4b3b3cbe44f6766 assets/hbm/models/item/fluid_pack_full.json
+f931a8cd0875e45475a459e1949c566aa31dd33f assets/hbm/models/item/fluid_tank_empty.json
+83dfb2e534cf7c40c47cde67977e33c5d14afbca assets/hbm/models/item/fluid_tank_full.json
+73a8ac450972698d85c64c696e2c0e6735331dd3 assets/hbm/models/item/fluid_tank_lead_empty.json
+f2e0718f5d69edde46dd35dfd3a3c1fbef1d025f assets/hbm/models/item/fluid_tank_lead_full.json
 1a2d5e2743f80fe2886e8b48c53f081335259b84 assets/hbm/models/item/fluorite.json
 5ad528a6dcd9019a093e5e92f114d8e15084c1a6 assets/hbm/models/item/gadget_core.json
 b980a960c44be9a12a42365a8c003a9a1bbdc366 assets/hbm/models/item/gadget_wireing.json
+b8b32bd068e09a0c304399abaf5e9b0b60ee0096 assets/hbm/models/item/gas_empty.json
+eca4dc16421a5b45f8116092a17667ba220c7edd assets/hbm/models/item/gas_full.json
 82f65799b13016f6749a5764a551fc650429b92a assets/hbm/models/item/geiger_counter.json
 9720f3f4fc139ffae642b0315f9e361a62d90b17 assets/hbm/models/item/gem_rad.json
+4a711e9e9a0931ef516f9c7240fe9c590a59220d assets/hbm/models/item/glyphid_gland.json
+08fb7e9f8bcbaf456ce769aab0e08d25c0fd65cb assets/hbm/models/item/glyphid_gland_empty.json
 7bdb079e15a69693eacd5b6feb045e194d304b60 assets/hbm/models/item/igniter.json
+41f3f242764cea15ee759afa52cacd50578f869f assets/hbm/models/item/inf_water.json
+cad5a4714d230a4cf14db36cb88cea40ec1fe06b assets/hbm/models/item/inf_water_mk2.json
 ee15a9a541574ad1e1bfdf69dbc43a5468889be1 assets/hbm/models/item/ingot_advanced_alloy.json
 ff72c5516b4190fe4967ab4211af3da45f934944 assets/hbm/models/item/ingot_aluminium.json
 573962c5beeaab88c36d958c7641c79f9579b99a assets/hbm/models/item/ingot_am241.json

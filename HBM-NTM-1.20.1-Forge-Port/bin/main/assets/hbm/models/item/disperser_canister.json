@@ -1,6 +1,7 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "hbm:item/disperser_canister"
+    "layer0": "hbm:item/disperser_canister",
+    "layer1": "hbm:item/disperser_canister_overlay"
   }
 }

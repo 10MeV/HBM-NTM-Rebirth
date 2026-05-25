@@ -37,6 +37,8 @@ public final class ParticleUtil {
     public static final String TYPE_PLASMA_BLAST = "plasmablast";
     public static final String TYPE_JUST_TILT = "justTilt";
     public static final String TYPE_PROPER_JOLT = "properJolt";
+    public static final String TYPE_MUKE = "muke";
+    public static final String TYPE_TINY_TOT = "tinytot";
     public static final String TYPE_JETPACK = "jetpack";
     public static final String TYPE_BNUUY = "bnuuy";
     public static final String TYPE_JETPACK_BJ = "jetpack_bj";
@@ -145,6 +147,26 @@ public final class ParticleUtil {
         data.putInt("time", time);
         data.putInt("maxTime", maxTime);
         spawnAux(level, 0.0D, 0.0D, 0.0D, data, 0.0D);
+    }
+
+    public static void spawnMuke(Level level, double x, double y, double z, boolean balefire) {
+        spawnNuclearBurstVisual(level, x, y, z, TYPE_MUKE, balefire);
+    }
+
+    public static void spawnTinyTot(Level level, double x, double y, double z) {
+        spawnNuclearBurstVisual(level, x, y, z, TYPE_TINY_TOT, false);
+    }
+
+    public static void spawnNuclearBurstVisual(Level level, double x, double y, double z, String particle, boolean balefire) {
+        if (particle == null || particle.isEmpty()) {
+            return;
+        }
+        CompoundTag data = new CompoundTag();
+        data.putString("type", particle);
+        if (TYPE_MUKE.equals(particle) && balefire) {
+            data.putBoolean("balefire", true);
+        }
+        spawnAux(level, x, y, z, data, 250.0D);
     }
 
     public static void spawnJetpack(Level level, Entity player, int mode) {

@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
 import com.hbm.ntm.menu.BasicMachineMenu;
 import com.hbm.ntm.menu.ChemicalPlantMenu;
+import com.hbm.ntm.menu.CustomNukeMenu;
 import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.menu.LiquefactorMenu;
 import com.hbm.ntm.menu.MachineBatteryMenu;
@@ -43,6 +44,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<NuclearDeviceMenu>> NUCLEAR_DEVICE =
             MENUS.register("nuclear_device", () -> IForgeMenuType.create(NuclearDeviceMenu::new));
+
+    public static final RegistryObject<MenuType<CustomNukeMenu>> CUSTOM_NUKE =
+            MENUS.register("custom_nuke", () -> IForgeMenuType.create(CustomNukeMenu::new));
 
     public static void register(IEventBus modBus) {
         MENUS.register(modBus);

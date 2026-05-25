@@ -6,6 +6,7 @@ import com.hbm.ntm.block.BalefireBombBlock;
 import com.hbm.ntm.block.BalefireBlock;
 import com.hbm.ntm.block.BoilerBlock;
 import com.hbm.ntm.block.ChemicalPlantBlock;
+import com.hbm.ntm.block.CustomNukeBlock;
 import com.hbm.ntm.block.DeconBlock;
 import com.hbm.ntm.block.DigammaFlameBlock;
 import com.hbm.ntm.block.FalloutLayerBlock;
@@ -31,8 +32,10 @@ import com.hbm.ntm.block.LegacyHazardSourceBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacyRadiationBarrelBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
+import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.block.LegacyToxicGasBlock;
+import com.hbm.ntm.block.LegacyTrinititeOreBlock;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.block.LiquefactorBlock;
 import com.hbm.ntm.block.NuclearDeviceBlock;
@@ -227,6 +230,15 @@ public final class ModBlocks {
     public static final RegistryObject<Block> FALLOUT = falloutLayer("fallout");
     public static final RegistryObject<Block> SELLAFIELD = sellafield("sellafield");
     public static final RegistryObject<Block> SELLAFIELD_SLAKED = sellafieldSlaked("sellafield_slaked");
+    public static final RegistryObject<Block> SELLAFIELD_BEDROCK = sellafieldBedrock("sellafield_bedrock");
+    public static final RegistryObject<Block> ORE_SELLAFIELD_DIAMOND = sellafieldOre("ore_sellafield_diamond", LegacySellafieldOreBlock.Kind.DIAMOND);
+    public static final RegistryObject<Block> ORE_SELLAFIELD_EMERALD = sellafieldOre("ore_sellafield_emerald", LegacySellafieldOreBlock.Kind.EMERALD);
+    public static final RegistryObject<Block> ORE_SELLAFIELD_URANIUM_SCORCHED = sellafieldOre("ore_sellafield_uranium_scorched", LegacySellafieldOreBlock.Kind.URANIUM_SCORCHED);
+    public static final RegistryObject<Block> ORE_SELLAFIELD_SCHRABIDIUM = sellafieldOre("ore_sellafield_schrabidium", LegacySellafieldOreBlock.Kind.SCHRABIDIUM);
+    public static final RegistryObject<Block> ORE_SELLAFIELD_RADGEM = sellafieldOre("ore_sellafield_radgem", LegacySellafieldOreBlock.Kind.RADGEM);
+    public static final RegistryObject<Block> WASTE_TRINITITE = trinititeOre("waste_trinitite");
+    public static final RegistryObject<Block> WASTE_TRINITITE_RED = trinititeOre("waste_trinitite_red");
+    public static final RegistryObject<Block> GLASS_TRINITITE = trinititeGlass("glass_trinitite");
     public static final RegistryObject<Block> ASH_DIGAMMA = ashDigamma("ash_digamma");
     public static final RegistryObject<Block> FIRE_DIGAMMA = fireDigamma("fire_digamma");
     public static final RegistryObject<Block> BALEFIRE = balefire("balefire");
@@ -244,6 +256,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> NUKE_FLEIJA = nuclearDevice("nuke_fleija", NuclearDeviceBlock.Kind.FLEIJA);
     public static final RegistryObject<Block> NUKE_SOLINIUM = nuclearDevice("nuke_solinium", NuclearDeviceBlock.Kind.SOLINIUM);
     public static final RegistryObject<Block> NUKE_N2 = nuclearDevice("nuke_n2", NuclearDeviceBlock.Kind.N2);
+    public static final RegistryObject<Block> NUKE_CUSTOM = customNuke("nuke_custom");
     public static final RegistryObject<Block> NUKE_FSTBMB = balefireBomb("nuke_fstbmb");
     public static final RegistryObject<Block> BOMB_MULTI = nonOccludingMachine("bomb_multi");
     public static final RegistryObject<Block> YELLOW_BARREL = radiationBarrel("yellow_barrel", 5.0F);
@@ -550,6 +563,8 @@ public final class ModBlocks {
 
     public static final List<RegistryObject<Block>> BLOCK_TAB_BLOCKS = Stream.concat(
             Stream.of(WASTE_EARTH, WASTE_MYCELIUM, WASTE_LEAVES, WASTE_LOG, WASTE_PLANKS, LEAVES_LAYER, SELLAFIELD, SELLAFIELD_SLAKED,
+                    SELLAFIELD_BEDROCK, ORE_SELLAFIELD_DIAMOND, ORE_SELLAFIELD_EMERALD, ORE_SELLAFIELD_URANIUM_SCORCHED,
+                    ORE_SELLAFIELD_SCHRABIDIUM, ORE_SELLAFIELD_RADGEM, WASTE_TRINITITE, WASTE_TRINITITE_RED, GLASS_TRINITITE,
                     ASH_DIGAMMA, BALEFIRE, PRIBRIS_DIGAMMA, VOLCANIC_LAVA_BLOCK, RAD_LAVA_BLOCK),
             EXTRA_BLOCK_TAB_BLOCKS.stream()).toList();
 
@@ -563,6 +578,7 @@ public final class ModBlocks {
             NUKE_FLEIJA,
             NUKE_SOLINIUM,
             NUKE_N2,
+            NUKE_CUSTOM,
             NUKE_FSTBMB,
             BOMB_MULTI,
             YELLOW_BARREL,
@@ -610,6 +626,16 @@ public final class ModBlocks {
                 .sound(SoundType.METAL)
                 .requiresCorrectToolForDrops()
                 .noOcclusion(), kind),
+                block -> new NuclearDeviceBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> customNuke(String name) {
+        return registerBlockWithItem(name, () -> new CustomNukeBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion()),
                 block -> new NuclearDeviceBlockItem(block.get(), new Item.Properties()));
     }
 
@@ -1063,8 +1089,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("centrifuge"), machineTexture("centrifuge"))
                 .legacyXrDimensions(3, 0, 0, 0, 0, 0)
                 .legacyOffset(0)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 0, 0, 0, 0 }, facing)
-                        .withProxyPredicate(offset -> offset.getY() > 0, proxyPowerFluid()))
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 0, 0, 0, 0 }, facing))
                 .legacyItemScale(3.5F)
                 .yRotation(ModBlocks::centrifugeRotation)
                 .collisionShape(state -> legacyRotatedShape(state,
@@ -1911,11 +1936,42 @@ public final class ModBlocks {
     }
 
     private static RegistryObject<Block> sellafieldSlaked(String name) {
-        return registerBlockWithItem(name, () -> new LegacySellafieldSlakedBlock(BlockBehaviour.Properties.of()
+        return registerSlakedStateBlock(name, () -> new LegacySellafieldSlakedBlock(sellafieldSlakedProperties()));
+    }
+
+    private static RegistryObject<Block> sellafieldBedrock(String name) {
+        return registerSlakedStateBlock(name, () -> new LegacySellafieldSlakedBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.STONE)
+                .strength(-1.0F, 3_600_000.0F)
+                .sound(SoundType.STONE)
+                .isValidSpawn((state, level, pos, type) -> false)));
+    }
+
+    private static RegistryObject<Block> sellafieldOre(String name, LegacySellafieldOreBlock.Kind kind) {
+        return registerSlakedStateBlock(name, () -> new LegacySellafieldOreBlock(sellafieldSlakedProperties(), kind));
+    }
+
+    private static RegistryObject<Block> registerSlakedStateBlock(String name, Supplier<Block> blockFactory) {
+        return registerBlockWithItem(
+                name,
+                blockFactory,
+                block -> new LegacyStateBlockItem(block.get(), new Item.Properties(), LegacySellafieldSlakedBlock.LEVEL, 16,
+                        variant -> Component.translatable("block.hbm." + name)));
+    }
+
+    private static BlockBehaviour.Properties sellafieldSlakedProperties() {
+        return BlockBehaviour.Properties.of()
                 .mapColor(MapColor.STONE)
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.STONE)
-                .requiresCorrectToolForDrops()));
+                .requiresCorrectToolForDrops();
+    }
+
+    private static RegistryObject<Block> trinititeOre(String name) {
+        return registerBlockWithItem(name, () -> new LegacyTrinititeOreBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.SAND)
+                .strength(0.5F, 2.5F)
+                .sound(SoundType.SAND)));
     }
 
     private static RegistryObject<Block> simpleBlock(String name, String textureName) {
@@ -1989,6 +2045,18 @@ public final class ModBlocks {
         return registerBlockWithItem(name, () -> new LegacyNtmGlassBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.COLOR_CYAN)
                 .strength(0.3F)
+                .sound(SoundType.GLASS)
+                .noOcclusion()
+                .isValidSpawn((state, level, pos, type) -> false)
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false)));
+    }
+
+    private static RegistryObject<Block> trinititeGlass(String name) {
+        return registerBlockWithItem(name, () -> new LegacyNtmGlassBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_CYAN)
+                .strength(0.3F)
+                .lightLevel(state -> 5)
                 .sound(SoundType.GLASS)
                 .noOcclusion()
                 .isValidSpawn((state, level, pos, type) -> false)

@@ -1955,6 +1955,62 @@ Verification:
 
 - 2026-05-25 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
 
+## 2026-05-25 Nuclear Fallout Sellafield/Trinitite Parity Pass
+
+Legacy source re-checked:
+
+- `com.hbm.config.FalloutConfigJSON#initDefault`
+- `com.hbm.config.FalloutConfigJSON.FalloutEntry#eval`
+- `com.hbm.entity.effect.EntityFalloutRain#stomp`
+- `com.hbm.blocks.generic.BlockSellafieldSlaked`
+- `com.hbm.blocks.generic.BlockSellafieldOre`
+- `com.hbm.blocks.generic.BlockOre`
+- `com.hbm.render.entity.effect.RenderFallout`
+- `com.hbm.crafting.SmeltingRecipes`
+
+Findings:
+
+- The old fallout table's inner-band Sellafield targets are not one texture: it uses metadata-bearing `sellafield_slaked`, `sellafield_bedrock`, and five `ore_sellafield_*` variants.
+- Bedrock fallout is special:
+  - world-bottom replacement is only allowed when the output is `sellafield_bedrock`;
+  - existing `sellafield_bedrock` cannot be replaced by a non-bedrock target;
+  - existing `sellafield_slaked` / `sellafield_bedrock` refuse same-or-weaker metadata downgrades.
+- `waste_trinitite` and `waste_trinitite_red` are the nuclear fallout sand products. `glass_trinitite` is not placed directly by `EntityFalloutRain` or `ExplosionNukeGeneric`; old recipes smelt the two waste trinitite blocks into `glass_trinitite` with 0.25 XP.
+- Old fallout rain has a visible gray dust renderer using `textures/entity/fallout.png`.
+
+Corrected in this pass:
+
+- Registered the missing fallout result blocks and resources:
+  - `sellafield_bedrock`
+  - `ore_sellafield_diamond`
+  - `ore_sellafield_emerald`
+  - `ore_sellafield_uranium_scorched`
+  - `ore_sellafield_schrabidium`
+  - `ore_sellafield_radgem`
+  - `waste_trinitite`
+  - `waste_trinitite_red`
+  - `glass_trinitite`
+- Copied the legacy textures for slaked side variants, Sellafield ore overlays, trinitite waste/glass, and fallout rain.
+- Expanded `LegacyFalloutConversions` to include the old ore/bedrock/sand table entries now that the target blocks exist.
+- Corrected no-downgrade behavior to match the old `FalloutEntry#eval` rules exactly for `sellafield_slaked` and `sellafield_bedrock`, without applying that rule to every Sellafield ore block.
+- `FalloutRainEntity#stomp` now starts from the modern world max build height and scans down to min build height, preserving the old full-column nature beyond 1.7.10's fixed 0..255 range.
+- Registered a visible `FalloutRainRenderer` using the old fallout rain texture.
+- Added hazards for the new radioactive fallout products and Sellafield ore variants.
+- Added smelting recipes for `waste_trinitite(_red)` -> `glass_trinitite`.
+- Adjusted crater biome water fog color to match the old crater water color (`0xE0FFAE`) so nuclear crater water no longer appears with the vanilla-ish fog color.
+
+Still incomplete:
+
+- `volcano_core -> volcano_rad_core` in `EntityFalloutRain#stomp` is still deferred because the `BlockVolcano` / `TileEntityVolcanoCore` family is not yet migrated in the clean port.
+- `glyphid_base` / `glyphid_spawner` metadata fallout rules remain deferred until the glyphid block/entity slice exists.
+- `sellafield_slaked` still approximates the old position-randomized texture and level darkening; it now has legacy texture variants available, but not the exact old color multiplier path.
+- Trinitite townaura random particles and mushroom growth-on-trinitite integration are not yet migrated.
+
+Verification:
+
+- 2026-05-25 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
+- 2026-05-25 attempted `.\gradlew.bat runData --no-daemon`, but it is currently blocked by an unrelated duplicate `custom_tnt` registration in `ModItems`; resource JSON for this pass was therefore added manually and validated through `processResources`.
+
 ## 2026-05-23 Radiation Diffusion Timing Fix
 
 Legacy source re-checked:

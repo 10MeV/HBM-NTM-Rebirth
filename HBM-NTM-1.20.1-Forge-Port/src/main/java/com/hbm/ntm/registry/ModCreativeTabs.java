@@ -7,6 +7,7 @@ import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
+import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.TrinketBlockItem;
 import net.minecraft.core.registries.Registries;
@@ -113,8 +114,10 @@ public final class ModCreativeTabs {
             battery.addCreativeStacks(output, item.get().getDefaultInstance());
         } else if (item.get() instanceof FluidIdentifierItem identifier) {
             identifier.addCreativeStacks(output);
-        } else if (item.get() instanceof HbmFluidContainerItem container) {
+        } else if (item.get() instanceof HbmInfiniteFluidItem) {
             output.accept(item.get().getDefaultInstance());
+        } else if (item.get() instanceof HbmFluidContainerItem container) {
+            container.addCreativeStacks(output);
         } else {
             acceptSingleStack(output, item.get());
         }

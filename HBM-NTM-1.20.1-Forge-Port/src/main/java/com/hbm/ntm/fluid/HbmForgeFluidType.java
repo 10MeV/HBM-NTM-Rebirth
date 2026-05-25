@@ -1,6 +1,5 @@
 package com.hbm.ntm.fluid;
 
-import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
 import java.util.function.Consumer;
 import net.minecraft.resources.ResourceLocation;
@@ -43,7 +42,7 @@ public class HbmForgeFluidType extends net.minecraftforge.fluids.FluidType {
 
     private static Properties propertiesFor(FluidType hbmType) {
         Properties properties = Properties.create()
-                .descriptionId("fluid." + HbmNtm.MOD_ID + "." + hbmType.toPath())
+                .descriptionId(hbmType.getTranslationKey())
                 .temperature(Math.max(0, hbmType.getTemperature() + 273));
 
         if (hbmType.hasTrait(SimpleFluidTraits.Gaseous.class)) {

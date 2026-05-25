@@ -1043,7 +1043,6 @@ Still deferred:
 
 - The old danger-diamond texture overlay (`DiamondPronter` / `danger_diamond.png`) is still not drawn on fluid containers, tank renderers, or pipe overlays; this pass only ports text tooltip data.
 - Some command/debug string output intentionally keeps raw internal fluid IDs where stable diagnostics are more useful than localized text.
-- The generated language resources still need to be refreshed by `runData` after this source change.
 
 Progress estimate after Pass 29:
 
@@ -1061,6 +1060,137 @@ Verification:
 - `.\gradlew.bat runData --no-daemon` passed and generated the fluid/hazard language resources.
 - `.\gradlew.bat compileJava processResources --no-daemon` passed.
 - Verified `build/resources/main/assets/hbm/lang/{en_us,zh_cn}.json` contains `hbmfluid.water`, `hazard.gasChlorine`, and `hbmfluid.info.hold_shift`.
+
+## 2026-05-25 Modern Library Pass 30
+
+This pass migrates another broad client/resource slice for typed ducts and concrete fluid containers, based on the old multipass item renderers and pipe renderer:
+
+- Legacy sources re-read:
+  - `com/hbm/items/machine/ItemFluidDuct.java`
+  - `com/hbm/render/block/RenderTestPipe.java`
+  - `com/hbm/items/machine/ItemCanister.java`
+  - `com/hbm/items/machine/ItemGasTank.java`
+  - `com/hbm/items/machine/ItemFluidTank.java`
+  - `com/hbm/items/weapon/ItemDisperser.java`
+  - Old textures: `pipe_neo_overlay`, `canister_overlay`, `gas_bottle`, `gas_label`, `fluid_tank*_overlay`, `fluid_barrel_overlay`, `fluid_pack_overlay`, `disperser_canister_overlay`.
+- Add the missing modern world-color path for `fluid_duct_neo`:
+  - `ClientModEvents` now registers a block color handler for `fluid_duct_neo`.
+  - The handler reads `FluidPipeBlockEntity#getFluidType()` and returns the stored fluid color for tint index 1.
+  - Generated block models now split the duct into old-sized core/arm boxes (`5..11` px) with an untinted `pipe_neo` layer and a tinted `pipe_neo_overlay` layer.
+- Expand container item presentation:
+  - `HbmItemModelProvider` now generates all `CONTROL_FLUID_ITEMS`, including concrete container family models.
+  - Full canisters, gas tanks, fluid tanks, lead tanks, barrels, packs, disperser canisters, and glyphid glands use old-style layered models instead of single-layer full-item tinting.
+  - `HbmFluidContainerItem#getTintColor(stack, tintIndex)` now respects the old canister and gas tank container colors from `ContainerFluidTrait`; general fluid tanks/barrels/packs use the fluid color on layer 1.
+  - `ClientModEvents` registers item color handlers for fluid containers in `CONTROL_FLUID_ITEMS`.
+  - The control creative tab now expands normal fluid containers into all accepted filled variants, while infinite fluid items remain single default entries.
+- Remove hand-written single-layer main-resource models for the filled container IDs that are now datagen-owned, so `processResources` picks the generated layered models.
+
+Still deferred:
+
+- `DiamondPronter` / `danger_diamond.png` is still not drawn as an actual GUI/icon overlay; hazard data is text-only for now.
+- Duct geometry is a modern block-model equivalent of the old OBJ renderer, but it does not yet recreate every old corner part name from `pipe_neo.obj`.
+- Fluid container recipe remainder and machine-slot replacement behavior still need a focused pass against old `FluidLoadingHandler` and crafting hooks.
+
+Progress estimate after Pass 30:
+
+- Core `FluidType` identity/NBT lookup/table: about 91%.
+- Basic tank/conform/Forge capability bridge: about 80%.
+- Fluid network/provider/receiver algorithm: about 75%.
+- In-world pipe graph: about 48%.
+- Fluid item/container loading: about 74%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 62%.
+- Overall fluid library migration: about 86%.
+
+Verification:
+
+- First `.\gradlew.bat runData --no-daemon` pass succeeded for the new duct models, then a later rerun hit a transient Forge resource scan `NoSuchFileException` for unrelated `bio_revolver_atlas.png`; the file existed in both main and build resources, and a direct rerun passed.
+- `.\gradlew.bat runData --no-daemon` passed and generated the layered container/duct models.
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-05-25 Modern Library Pass 31
+
+This pass closes the Forge item-capability bridge for the concrete HBM fluid container family, while keeping the old `IFillableItem` NBT contract as the authoritative internal state:
+
+- Legacy sources re-read:
+  - `api/hbm/fluidmk2/IFillableItem.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoaderFillableItem.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoaderStandard.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoaderInfinite.java`
+  - `com/hbm/items/machine/ItemCanister.java`
+  - `com/hbm/items/machine/ItemGasTank.java`
+  - `com/hbm/items/machine/ItemFluidTank.java`
+- Add `HbmFluidContainerItemHandler implements IFluidHandlerItem`:
+  - Exposes normal NBT-backed `HbmFluidContainerItem` stacks as one Forge item-fluid tank.
+  - Maps Forge `FluidStack` to internal `FluidType` through `HbmFluidForgeMappings`; unmapped Forge fluids are rejected instead of becoming water/empty.
+  - Exports only HBM fluids with an explicit Forge mapping, preserving the existing "unmapped HBM fluid is not silently exported" rule.
+  - Honors Forge `SIMULATE` by operating on a copied stack, and honors `EXECUTE` by mutating the same container stack through old `tryFill` / `tryEmpty`.
+- Add `HbmFluidContainerItemCapabilityProvider` and attach it from `HbmFluidContainerItem#initCapabilities`.
+- Keep `HbmInfiniteFluidItem` out of the generic Forge item capability path for now; it continues to use the dedicated old `FluidLoaderInfinite` semantics already represented in `HbmFluidItemTransfer`, including pressure/random-chance handling.
+- Correct `HbmFluidItemTransfer.fillItemFromTank` so HBM-owned containers can be filled with valid internal fluids even when that fluid has not yet been registered as a Forge fluid. The Forge fallback path still requires an export mapping.
+- Minimal unrelated compile unblock: `CustomNukeBlockEntity#isBlock` now accepts `RegistryObject<? extends Block>` to match `ModBlocks.legacyBlock(...)`; this was required because an in-progress custom nuke migration was blocking project compilation.
+
+Still deferred:
+
+- Crafting-time fluid remainder behavior still relies on current item `craftRemainder`; exact old metadata container replacement in shaped/shapeless recipes needs a later recipe/crafting hook pass.
+- No Forge item capability is exposed for infinite fluid items yet, because old infinite barrel/pinwheel behavior is not a normal finite container contract.
+- Full Forge fluid registration still covers only the currently registered mapped fluids; all other HBM internal fluids remain HBM-only until their Forge fluid entries are migrated.
+
+Progress estimate after Pass 31:
+
+- Core `FluidType` identity/NBT lookup/table: about 91%.
+- Basic tank/conform/Forge capability bridge: about 82%.
+- Fluid network/provider/receiver algorithm: about 75%.
+- In-world pipe graph: about 48%.
+- Fluid item/container loading: about 78%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 63%.
+- Overall fluid library migration: about 87%.
+
+Verification:
+
+- First `.\gradlew.bat compileJava processResources --no-daemon` attempt was blocked by unrelated in-progress custom nuke registry/generic compile errors.
+- After the minimal generic fix noted above, `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-05-25 Modern Library Pass 32
+
+This pass expands the HBM `FluidType` <-> Forge `FluidStack` bridge from the starter subset to the broad legacy fluid table, so machines, tanks, pipes, and normal HBM containers can interoperate with external Forge fluid handlers for far more old fluids:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/fluid/Fluids.java`
+  - `com/hbm/inventory/fluid/FluidType.java`
+  - Current modern `HbmFluids`, `ModFluids`, `HbmFluidForgeMappings`, and `HbmForgeFluidType`.
+- Rework `ModFluids` registration storage:
+  - Keep the existing public starter constants for code that may refer to them directly.
+  - Store all modern HBM Forge-fluid entries in an identity-keyed map.
+  - After the starter constants are created, automatically register every migrated HBM fluid except:
+    - `NONE`
+    - vanilla-backed `WATER` and `LAVA`
+    - old `NO_ID` fluids such as plasma/smoke entries that were intentionally not normal identifier/container fluids.
+- `registerMappings()` now registers the full map into `HbmFluidForgeMappings`, preserving the rule that only explicitly registered Forge fluids are exported.
+- `HbmForgeFluidType` now uses the existing old `hbmfluid.*` translation key directly, so external Forge fluid UIs can reuse the migrated legacy language table instead of showing `fluid.hbm.*` fallback IDs.
+- This is still a no-world-block/no-bucket bridge: the generated Forge fluids exist for `FluidStack` capability interoperability, not as placeable source blocks or bucket items.
+
+Still deferred:
+
+- Real fluid world blocks, buckets, blockstate/model data, and flowing/still legacy textures remain deferred until a dedicated world-fluid slice.
+- `NO_ID` / plasma / smoke fluids remain intentionally HBM-internal for now; if a later machine needs an external Forge representation for one, it should be migrated explicitly with its old behavior notes.
+- The Forge fluid visual extension still reuses water still/flow textures with tint; old fluid textures need a separate legacy asset/resource pass before visible world fluids are added.
+
+Progress estimate after Pass 32:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 88%.
+- Fluid network/provider/receiver algorithm: about 75%.
+- In-world pipe graph: about 48%.
+- Fluid item/container loading: about 81%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 64%.
+- Overall fluid library migration: about 88%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed before and after aligning Forge fluid description ids to `hbmfluid.*`.
 
 ## 2026-05-23 Modern Library Pass 16
 

@@ -217,6 +217,11 @@ public final class HazardRegistry {
         registerBlockRad("ore_gneiss_uranium", RadiationConstants.U);
         registerBlockRad("ore_gneiss_uranium_scorched", RadiationConstants.U);
         registerBlockRad("ore_gneiss_schrabidium", RadiationConstants.SA326);
+        registerBlockRad("ore_sellafield_uranium_scorched", RadiationConstants.U);
+        registerBlockRad("ore_sellafield_schrabidium", RadiationConstants.SA326);
+        registerBlockRad("ore_sellafield_radgem", 25.0F);
+        registerBlockRad("waste_trinitite", RadiationConstants.TRINITITE * RadiationConstants.BLOCK);
+        registerBlockRad("waste_trinitite_red", RadiationConstants.TRINITITE * RadiationConstants.BLOCK);
 
         registerBlockRad("block_uranium", RadiationConstants.U * RadiationConstants.BLOCK);
         registerBlockRad("block_u233", RadiationConstants.U233 * RadiationConstants.BLOCK);

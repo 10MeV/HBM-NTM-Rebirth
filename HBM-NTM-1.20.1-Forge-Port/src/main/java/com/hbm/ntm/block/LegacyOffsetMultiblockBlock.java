@@ -57,7 +57,7 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
 
     @Override
     public boolean canPlaceDirectMultiblock(Level level, BlockPos corePos, BlockPos temporaryPos, BlockState state) {
-        return MultiblockHelper.checkSpace(level, corePos, getLayout(state).offsets(), temporaryPos);
+        return MultiblockHelper.checkLayout(level, corePos, getLayout(state), temporaryPos);
     }
 
     @Override
@@ -85,7 +85,7 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
-            MultiblockHelper.removeOffsets(level, pos, getLayout(state).offsets());
+            MultiblockHelper.removeLayout(level, pos, getLayout(state));
             onCoreRemoved(level, pos, state);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
@@ -95,8 +95,6 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
     }
 
     private void fillLayout(Level level, BlockPos corePos, BlockState state) {
-        LegacyMultiblockLayout layout = getLayout(state);
-        MultiblockHelper.fillOffsetsWithProxyModes(level, corePos, layout.offsets(), layout::proxyMode,
-                layout::isLegacyExtraOffset);
+        MultiblockHelper.fillLayout(level, corePos, getLayout(state));
     }
 }

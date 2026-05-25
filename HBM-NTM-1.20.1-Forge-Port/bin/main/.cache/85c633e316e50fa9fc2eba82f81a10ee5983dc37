@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-25T19:09:10.5164558	Block States: hbm
+// 1.20.1	2026-05-25T21:03:52.9597491	Block States: hbm
 f4eb25b664a0458dbb40546da729386871750a3d assets/hbm/blockstates/ash_digamma.json
 8c6c51f054fa20e59275bf5c7c77e28e7790b34c assets/hbm/blockstates/balefire.json
 cba35d35e4f0682b55e9cc361bbbf6247efa3976 assets/hbm/blockstates/bomb_multi.json
@@ -109,8 +109,8 @@ c692f25fa5e927aec0f0177e73a37060f78df5d5 assets/hbm/models/block/conveyor_triple
 d96d6a49aed64ac9311811f36079e43e025163c3 assets/hbm/models/block/decon.json
 50c0eac656f89fc17b996e5c348f53a44c0e7c2c assets/hbm/models/block/dummy_block.json
 526bff72792e9275b004d545854e3b24239bacdb assets/hbm/models/block/fire_digamma.json
-e68c662f556deea1d1787f6368c55cdd84c09791 assets/hbm/models/block/fluid_duct_neo_core.json
-e68c662f556deea1d1787f6368c55cdd84c09791 assets/hbm/models/block/fluid_duct_neo_side.json
+272bf5096655a11061e48bceb8c552acdd889cb6 assets/hbm/models/block/fluid_duct_neo_core.json
+00ae14e3d8417812be061597b21afe952c8fb655 assets/hbm/models/block/fluid_duct_neo_side.json
 7f02776185bb86296071b018bf37ea9b24b9cbcd assets/hbm/models/block/gas_asbestos.json
 6960bb52cbbf65c35de8ace11bb025f9c5f99b76 assets/hbm/models/block/gas_coal.json
 a163b2a094ef685e1f766be82b038ccf84b84881 assets/hbm/models/block/gas_meltdown.json

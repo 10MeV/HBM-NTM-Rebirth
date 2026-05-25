@@ -33,6 +33,8 @@ import com.hbm.ntm.client.renderer.ChemicalPlantRenderer;
 import com.hbm.ntm.client.renderer.CloudFleijaRenderer;
 import com.hbm.ntm.client.renderer.CloudFleijaRainbowRenderer;
 import com.hbm.ntm.client.renderer.CloudSoliniumRenderer;
+import com.hbm.ntm.client.renderer.CustomNukeRenderer;
+import com.hbm.ntm.client.renderer.FalloutRainRenderer;
 import com.hbm.ntm.client.renderer.FluidTankRenderer;
 import com.hbm.ntm.client.renderer.LegacyDemonLampBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.LegacyLanternBlockEntityRenderer;
@@ -50,11 +52,13 @@ import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
 import com.hbm.ntm.client.screen.BasicMachineScreen;
 import com.hbm.ntm.client.screen.AssemblyMachineScreen;
 import com.hbm.ntm.client.screen.ChemicalPlantScreen;
+import com.hbm.ntm.client.screen.CustomNukeScreen;
 import com.hbm.ntm.client.screen.FluidTankScreen;
 import com.hbm.ntm.client.screen.LiquefactorScreen;
 import com.hbm.ntm.client.screen.MachineBatteryScreen;
 import com.hbm.ntm.client.screen.MachineBatterySocketScreen;
 import com.hbm.ntm.client.screen.NuclearDeviceScreen;
+import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
@@ -92,6 +96,7 @@ public final class ClientModEvents {
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY.get(), MachineBatteryScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY_SOCKET.get(), MachineBatterySocketScreen::new);
             MenuScreens.register(ModMenuTypes.NUCLEAR_DEVICE.get(), NuclearDeviceScreen::new);
+            MenuScreens.register(ModMenuTypes.CUSTOM_NUKE.get(), CustomNukeScreen::new);
         });
     }
 
@@ -109,12 +114,13 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_DEMON_LAMP.get(), LegacyDemonLampBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_LANTERN.get(), LegacyLanternBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.NUCLEAR_DEVICE.get(), NuclearDeviceRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.CUSTOM_NUKE.get(), CustomNukeRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MOVING_ITEM.get(), MovingItemRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MOVING_PACKAGE.get(), MovingPackageRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK5.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK3.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_TOREX.get(), NukeTorexRenderer::new);
-        event.registerEntityRenderer(ModEntityTypes.FALLOUT_RAIN.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.FALLOUT_RAIN.get(), FalloutRainRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLOUD_FLEIJA.get(), CloudFleijaRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLOUD_SOLINIUM.get(), CloudSoliniumRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLOUD_FLEIJA_RAINBOW.get(), CloudFleijaRainbowRenderer::new);
@@ -148,6 +154,10 @@ public final class ClientModEvents {
                 .forEach(item -> event.register((stack, tintIndex) -> ((HbmFluidContainerItem) item).getTintColor(stack), item));
         ModItems.CONTROL_FLUID_ITEMS.stream()
                 .map(RegistryObject::get)
+                .filter(HbmFluidContainerItem.class::isInstance)
+                .forEach(item -> event.register((stack, tintIndex) -> ((HbmFluidContainerItem) item).getTintColor(stack, tintIndex), item));
+        ModItems.CONTROL_FLUID_ITEMS.stream()
+                .map(RegistryObject::get)
                 .filter(FluidIdentifierItem.class::isInstance)
                 .forEach(item -> event.register((stack, tintIndex) -> ((FluidIdentifierItem) item).getTintColor(stack, tintIndex), item));
         event.register((stack, tintIndex) -> {
@@ -156,6 +166,17 @@ public final class ClientModEvents {
             }
             return 0xFFFFFF;
         }, ModBlocks.FLUID_DUCT_NEO.get().asItem());
+    }
+
+    @SubscribeEvent
+    public static void registerBlockColors(RegisterColorHandlersEvent.Block event) {
+        event.register((state, level, pos, tintIndex) -> {
+            if (tintIndex == 1 && level != null && pos != null
+                    && level.getBlockEntity(pos) instanceof FluidPipeBlockEntity pipe) {
+                return pipe.getFluidType().getColor();
+            }
+            return 0xFFFFFF;
+        }, ModBlocks.FLUID_DUCT_NEO.get());
     }
 
     @SubscribeEvent

@@ -871,3 +871,31 @@
 
 - 已运行：`.\gradlew.bat clean compileJava processResources --no-daemon`
 - 结果：通过；曾遇到 Gradle 增量编译输出缓存导致的 `bad class file/NoSuchFileException build/classes/...`，执行 `clean` 后通过。
+
+## 2026-05-25 第十九批推进：muke/tinytot 核爆冲击波与客户端 jolt
+
+- 1.7.10 对照：
+  - 服务端触发：
+    - `ExplosionNukeSmall#explode(...)` 在 `params.particle != null` 时发送 `AuxParticlePacketNT`，`type=muke/tinytot`，范围 250；`muke` 有 1% 概率附带 `balefire=true`。
+    - `ExplosionLarge#spawnShock(...)` 是普通烟尘 shock mode，不是小核爆的 `ParticleMukeWave` 入口。
+  - 客户端实现：
+    - `ClientProxy` 的 `muke` 分支生成 `ParticleMukeWave` 与 `ParticleMukeFlash`，随后设置本地玩家 `hurtTime=maxHurtTime=15`、`attackedAtYaw=0`。
+    - `ClientProxy` 的 `tinytot` 分支生成 `ParticleMukeWave` 与较小 mushroom cloud，同样触发 15 tick 屏幕 jolt。
+    - `ParticleMukeWave` 使用旧 `textures/particle/shockwave.png`，寿命 25 tick，地面加色扩散环，默认 `waveScale=45`。
+- 本批现代迁移：
+  - `ParticleUtil` 新增公共核爆视觉入口：
+    - `TYPE_MUKE/TYPE_TINY_TOT`
+    - `spawnMuke(...)`、`spawnTinyTot(...)`、`spawnNuclearBurstVisual(...)`
+  - `HbmParticleEffects` 的 `muke/tinytot` 分发改用常量匹配，并补回：
+    - `MukeWaveParticle.create(..., 45, 25)`，复用旧 `shockwave.png` 粒子图集；
+    - `muke/tinytot` 对应的 stem/ground/mush cloud 数量级；
+    - `applyClientJolt(15, 15)`，对齐旧客户端 hurt 动画抖动主体。
+  - 现代端仍保留 `Player#hurtDir` 访问边界：1.20 字段受保护，本批不能像旧版一样强制 `attackedAtYaw=0`。
+- 边界：
+  - 本批只补用户点名的冲击波粒子与屏幕抖动；旧 `ParticleMukeFlash` 的 20 tick flare billboard 与 15 tick 延迟吐云可在后续视觉精修中单独迁入。
+  - 大型 MK5/Torex 核爆的 shock cloud 与声波到达后的屏幕 jolt 已由爆炸框架的 `NukeTorexEntity` / `NukeTorexRenderer` 承载，本批不重复在核弹方块层触发。
+
+## 2026-05-25 第十九批验证
+
+- 已运行：`.\gradlew.bat clean compileJava processResources --no-daemon`
+- 结果：通过；编译器仅提示部分输入文件使用/覆盖已过时 API。

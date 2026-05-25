@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.multiblock.MultiblockCoreBlock;
+import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -17,6 +18,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -138,7 +140,14 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
                 && level.hasChunkAt(corePos)) {
             BlockEntity coreEntity = level.getBlockEntity(corePos);
             if (coreEntity != null && !coreEntity.isRemoved()) {
-                return coreEntity.getCapability(capability, side);
+                ICapabilityProvider target = coreEntity;
+                if (coreEntity instanceof LegacyProxyDelegateProvider delegateProvider) {
+                    ICapabilityProvider delegate = delegateProvider.getLegacyProxyDelegate(worldPosition);
+                    if (delegate != null) {
+                        target = delegate;
+                    }
+                }
+                return target.getCapability(capability, side);
             }
         }
         return super.getCapability(capability, side);

@@ -5,6 +5,7 @@ import com.hbm.ntm.block.HbmEnergyNodeBlock;
 import com.hbm.ntm.block.HbmFluidNodeBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
+import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.block.conveyor.ConveyorBlock;
 import com.hbm.ntm.registry.ModBlocks;
@@ -131,7 +132,16 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.WASTE_PLANKS, "waste_planks");
         leavesLayerWithItem();
         sellafieldWithItem();
-        sellafieldSlakedWithItem();
+        sellafieldSlakedWithItem(ModBlocks.SELLAFIELD_SLAKED, "sellafield_slaked");
+        sellafieldSlakedWithItem(ModBlocks.SELLAFIELD_BEDROCK, "sellafield_bedrock");
+        sellafieldOreWithItem(ModBlocks.ORE_SELLAFIELD_DIAMOND, LegacySellafieldOreBlock.Kind.DIAMOND);
+        sellafieldOreWithItem(ModBlocks.ORE_SELLAFIELD_EMERALD, LegacySellafieldOreBlock.Kind.EMERALD);
+        sellafieldOreWithItem(ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED, LegacySellafieldOreBlock.Kind.URANIUM_SCORCHED);
+        sellafieldOreWithItem(ModBlocks.ORE_SELLAFIELD_SCHRABIDIUM, LegacySellafieldOreBlock.Kind.SCHRABIDIUM);
+        sellafieldOreWithItem(ModBlocks.ORE_SELLAFIELD_RADGEM, LegacySellafieldOreBlock.Kind.RADGEM);
+        simpleCubeWithItem(ModBlocks.WASTE_TRINITITE, "waste_trinitite");
+        simpleCubeWithItem(ModBlocks.WASTE_TRINITITE_RED, "waste_trinitite_red");
+        translucentCubeWithItem(ModBlocks.GLASS_TRINITITE, "glass_trinitite");
         simpleCubeWithItem(ModBlocks.ASH_DIGAMMA, "ash_digamma");
         crossBlockOnly(ModBlocks.FIRE_DIGAMMA, "fire_digamma");
         crossBlockOnly(ModBlocks.BALEFIRE, "balefire");
@@ -147,6 +157,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         existingModelWithCustomItem(ModBlocks.NUKE_FLEIJA, "nuke_fleija");
         existingModelWithCustomItem(ModBlocks.NUKE_SOLINIUM, "nuke_solinium");
         existingModelWithCustomItem(ModBlocks.NUKE_N2, "nuke_n2");
+        existingModelWithCustomItem(ModBlocks.NUKE_CUSTOM, "nuke_custom");
         existingModelWithItem(ModBlocks.NUKE_FSTBMB, "nuke_fstbmb");
         existingModelWithItem(ModBlocks.BOMB_MULTI, "bomb_multi");
         simpleCubeWithItem(ModBlocks.YELLOW_BARREL, "barrel_yellow");
@@ -299,8 +310,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     }
 
     private void fluidPipeWithItem() {
-        ModelFile core = models().cubeAll("fluid_duct_neo_core", new ResourceLocation(HbmNtm.MOD_ID, "block/pipe_neo"));
-        ModelFile side = models().cubeAll("fluid_duct_neo_side", new ResourceLocation(HbmNtm.MOD_ID, "block/pipe_neo"));
+        ModelFile core = fluidPipeModel("fluid_duct_neo_core", 5.0F, 5.0F, 5.0F, 11.0F, 11.0F, 11.0F);
+        ModelFile side = fluidPipeModel("fluid_duct_neo_side", 5.0F, 5.0F, 0.0F, 11.0F, 11.0F, 5.0F);
         getMultipartBuilder(ModBlocks.FLUID_DUCT_NEO.get())
                 .part().modelFile(core).addModel().end()
                 .part().modelFile(side).addModel().condition(HbmFluidNodeBlock.NORTH, true).end()
@@ -313,6 +324,24 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
                 .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))
                 .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
+    }
+
+    private ModelFile fluidPipeModel(String name, float x1, float y1, float z1, float x2, float y2, float z2) {
+        return models().withExistingParent(name, new ResourceLocation("block/block"))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/pipe_neo"))
+                .texture("pipe", new ResourceLocation(HbmNtm.MOD_ID, "block/pipe_neo"))
+                .texture("overlay", new ResourceLocation(HbmNtm.MOD_ID, "block/pipe_neo_overlay"))
+                .renderType("minecraft:cutout")
+                .element()
+                    .from(x1, y1, z1)
+                    .to(x2, y2, z2)
+                    .allFaces((direction, face) -> face.texture("#pipe"))
+                    .end()
+                .element()
+                    .from(x1, y1, z1)
+                    .to(x2, y2, z2)
+                    .allFaces((direction, face) -> face.texture("#overlay").tintindex(1))
+                    .end();
     }
 
     private void conveyorWithItem(RegistryObject<Block> block, String textureName) {
@@ -405,13 +434,51 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(ModBlocks.SELLAFIELD.get(), models().getExistingFile(new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield")));
     }
 
-    private void sellafieldSlakedWithItem() {
-        ModelFile model = models().cubeAll("sellafield_slaked", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked"));
+    private void sellafieldSlakedWithItem(RegistryObject<Block> block, String modelName) {
+        ModelFile model = sellafieldSlakedModel(modelName);
         for (int level = 0; level <= 15; level++) {
-            getVariantBuilder(ModBlocks.SELLAFIELD_SLAKED.get())
+            getVariantBuilder(block.get())
                     .partialState().with(LegacySellafieldSlakedBlock.LEVEL, level).modelForState()
                     .modelFile(model).addModel();
         }
-        simpleBlockItem(ModBlocks.SELLAFIELD_SLAKED.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
+    private void sellafieldOreWithItem(RegistryObject<Block> block, LegacySellafieldOreBlock.Kind kind) {
+        String name = block.getId().getPath();
+        ModelFile model = models().withExistingParent(name, new ResourceLocation("block/block"))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked"))
+                .texture("base", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked"))
+                .texture("base1", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_1"))
+                .texture("base2", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_2"))
+                .texture("base3", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_3"))
+                .texture("overlay", new ResourceLocation(HbmNtm.MOD_ID, "block/ore_overlay_" + kind.overlayTexture()))
+                .element()
+                    .from(0.0F, 0.0F, 0.0F)
+                    .to(16.0F, 16.0F, 16.0F)
+                    .allFaces((direction, face) -> face.texture("#base"))
+                    .end()
+                .element()
+                    .from(0.0F, 0.0F, 0.0F)
+                    .to(16.0F, 16.0F, 16.0F)
+                    .allFaces((direction, face) -> face.texture("#overlay").cullface(direction))
+                    .end();
+        for (int level = 0; level <= 15; level++) {
+            getVariantBuilder(block.get())
+                    .partialState().with(LegacySellafieldSlakedBlock.LEVEL, level).modelForState()
+                    .modelFile(model).addModel();
+        }
+        simpleBlockItem(block.get(), model);
+    }
+
+    private ModelFile sellafieldSlakedModel(String modelName) {
+        return models().withExistingParent(modelName, new ResourceLocation("block/cube"))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked"))
+                .texture("down", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked"))
+                .texture("up", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_1"))
+                .texture("north", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_2"))
+                .texture("south", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_3"))
+                .texture("east", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_1"))
+                .texture("west", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_2"));
     }
 }

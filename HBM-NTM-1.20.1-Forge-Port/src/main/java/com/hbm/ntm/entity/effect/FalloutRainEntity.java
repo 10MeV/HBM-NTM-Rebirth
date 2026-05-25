@@ -7,7 +7,6 @@ import com.hbm.ntm.multiblock.DummyBlock;
 import com.hbm.ntm.radiation.CraterBiomeUtil;
 import com.hbm.ntm.radiation.CraterRadiationData;
 import com.hbm.ntm.radiation.LegacyFalloutConversions;
-import com.hbm.ntm.radiation.LegacyRadiationWorldUtil;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.core.BlockPos;
@@ -145,7 +144,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity {
 
     private void stomp(int x, int z, double percent) {
         int depth = 0;
-        int yStart = Math.min(level().getMaxBuildHeight() - 1, LegacyRadiationWorldUtil.legacyHeightValue(level(), x, z));
+        int yStart = level().getMaxBuildHeight() - 1;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
         for (int y = yStart; y >= level().getMinBuildHeight(); y--) {

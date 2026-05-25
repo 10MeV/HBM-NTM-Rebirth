@@ -25,6 +25,15 @@
     "hbm:nuke_solinium",
     "hbm:nuke_n2",
     "hbm:nuke_fstbmb",
-    "hbm:bomb_multi"
+    "hbm:bomb_multi",
+    "hbm:sellafield",
+    "hbm:sellafield_slaked",
+    "hbm:sellafield_bedrock",
+    "hbm:ore_sellafield_diamond",
+    "hbm:ore_sellafield_emerald",
+    "hbm:ore_sellafield_uranium_scorched",
+    "hbm:ore_sellafield_schrabidium",
+    "hbm:ore_sellafield_radgem",
+    "hbm:glass_trinitite"
   ]
 }

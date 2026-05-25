@@ -117,6 +117,31 @@ public final class LegacyFalloutConversions {
         for (int distanceBand = 1; distanceBand <= 10; distanceBand++) {
             double maxDistance = distanceBand * 5.0D;
             int level = 10 - distanceBand;
+            defaults.add(entry(matchesBlock(Blocks.COAL_ORE), 0.0D, maxDistance, 0.5D, true,
+                    legacyLevel("ore_sellafield_diamond", level, 3),
+                    legacyLevel("ore_sellafield_emerald", level, 2)));
+            defaults.add(entry(matchesBlock(Blocks.DEEPSLATE_COAL_ORE), 0.0D, maxDistance, 0.5D, true,
+                    legacyLevel("ore_sellafield_diamond", level, 3),
+                    legacyLevel("ore_sellafield_emerald", level, 2)));
+            defaults.add(entry(matchesLegacy("ore_lignite"), 0.0D, maxDistance, 0.2D, true,
+                    legacyLevel("ore_sellafield_diamond", level, 1)));
+            defaults.add(entry(matchesLegacy("ore_beryllium"), 0.0D, maxDistance, true,
+                    legacyLevel("ore_sellafield_emerald", level, 1)));
+            if (level > 4) {
+                defaults.add(entry(matchesLegacy("ore_uranium"), 0.0D, maxDistance, true,
+                        legacyLevel("ore_sellafield_schrabidium", level, 1),
+                        legacyLevel("ore_sellafield_uranium_scorched", level, 9)));
+                defaults.add(entry(matchesLegacy("ore_gneiss_uranium"), 0.0D, maxDistance, true,
+                        legacyLevel("ore_sellafield_schrabidium", level, 1),
+                        legacyLevel("ore_sellafield_uranium_scorched", level, 9)));
+            }
+            defaults.add(entry(matchesBlock(Blocks.DIAMOND_ORE), 0.0D, maxDistance, true, legacyLevel("ore_sellafield_radgem", level, 1)));
+            defaults.add(entry(matchesBlock(Blocks.DEEPSLATE_DIAMOND_ORE), 0.0D, maxDistance, true, legacyLevel("ore_sellafield_radgem", level, 1)));
+            defaults.add(entry(matchesBlock(Blocks.BEDROCK), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
+            defaults.add(entry(matchesLegacy("ore_bedrock"), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
+            defaults.add(entry(matchesLegacy("ore_bedrock_oil"), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
+            defaults.add(entry(matchesLegacy("sellafield_bedrock"), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
+            defaults.add(entry(LegacyFalloutConversions::isLegacyIronMaterial, 0.0D, maxDistance, true, slaked(level, 1)));
             defaults.add(entry(LegacyFalloutConversions::isLegacyRockMaterial, 0.0D, maxDistance, true, slaked(level, 1)));
             defaults.add(entry(LegacyFalloutConversions::isLegacySandMaterial, 0.0D, maxDistance, true, slaked(level, 1)));
             defaults.add(entry(LegacyFalloutConversions::isLegacyGroundMaterial, 0.0D, maxDistance, true, slaked(level, 1)));
@@ -125,6 +150,8 @@ public final class LegacyFalloutConversions {
             }
         }
         defaults.add(entry(matchesBlock(Blocks.MYCELIUM), 100.0D, false, legacy("waste_mycelium", 1)));
+        defaults.add(entry(matchesBlock(Blocks.SAND), 0.0D, 100.0D, 0.05D, false, legacy("waste_trinitite", 1)));
+        defaults.add(entry(matchesBlock(Blocks.RED_SAND), 0.0D, 100.0D, 0.05D, false, legacy("waste_trinitite_red", 1)));
         defaults.add(entry(matchesBlock(Blocks.CLAY), 100.0D, false, block(Blocks.TERRACOTTA, 1)));
 
         return List.copyOf(defaults);
@@ -268,6 +295,7 @@ public final class LegacyFalloutConversions {
             case "ground" -> LegacyFalloutConversions::isLegacyGroundMaterial;
             case "rock" -> LegacyFalloutConversions::isLegacyRockMaterial;
             case "sand" -> LegacyFalloutConversions::isLegacySandMaterial;
+            case "iron", "anvil" -> LegacyFalloutConversions::isLegacyIronMaterial;
             case "clay" -> matchesBlock(Blocks.CLAY);
             case "snow" -> matchesBlock(Blocks.SNOW);
             default -> {
@@ -383,6 +411,34 @@ public final class LegacyFalloutConversions {
         for (int distanceBand = 1; distanceBand <= 10; distanceBand++) {
             int level = 10 - distanceBand;
             double maxDistance = distanceBand * 5.0D;
+            templateEntries.add(templateEntryWithChance("matchesBlock", "minecraft:coal_ore", 0.0D, maxDistance, 0.5D, true,
+                    outcome("hbm:ore_sellafield_diamond", level, 3), outcome("hbm:ore_sellafield_emerald", level, 2)));
+            templateEntries.add(templateEntryWithChance("matchesBlock", "minecraft:deepslate_coal_ore", 0.0D, maxDistance, 0.5D, true,
+                    outcome("hbm:ore_sellafield_diamond", level, 3), outcome("hbm:ore_sellafield_emerald", level, 2)));
+            templateEntries.add(templateEntryWithChance("matchesBlock", "hbm:ore_lignite", 0.0D, maxDistance, 0.2D, true,
+                    outcome("hbm:ore_sellafield_diamond", level, 1)));
+            templateEntries.add(templateEntry("matchesBlock", "hbm:ore_beryllium", 0.0D, maxDistance, true,
+                    outcome("hbm:ore_sellafield_emerald", level, 1)));
+            if (level > 4) {
+                templateEntries.add(templateEntry("matchesBlock", "hbm:ore_uranium", 0.0D, maxDistance, true,
+                        outcome("hbm:ore_sellafield_schrabidium", level, 1), outcome("hbm:ore_sellafield_uranium_scorched", level, 9)));
+                templateEntries.add(templateEntry("matchesBlock", "hbm:ore_gneiss_uranium", 0.0D, maxDistance, true,
+                        outcome("hbm:ore_sellafield_schrabidium", level, 1), outcome("hbm:ore_sellafield_uranium_scorched", level, 9)));
+            }
+            templateEntries.add(templateEntry("matchesBlock", "minecraft:diamond_ore", 0.0D, maxDistance, true,
+                    outcome("hbm:ore_sellafield_radgem", level, 1)));
+            templateEntries.add(templateEntry("matchesBlock", "minecraft:deepslate_diamond_ore", 0.0D, maxDistance, true,
+                    outcome("hbm:ore_sellafield_radgem", level, 1)));
+            templateEntries.add(templateEntry("matchesBlock", "minecraft:bedrock", 0.0D, maxDistance, true,
+                    outcome("hbm:sellafield_bedrock", level, 1)));
+            templateEntries.add(templateEntry("matchesBlock", "hbm:ore_bedrock", 0.0D, maxDistance, true,
+                    outcome("hbm:sellafield_bedrock", level, 1)));
+            templateEntries.add(templateEntry("matchesBlock", "hbm:ore_bedrock_oil", 0.0D, maxDistance, true,
+                    outcome("hbm:sellafield_bedrock", level, 1)));
+            templateEntries.add(templateEntry("matchesBlock", "hbm:sellafield_bedrock", 0.0D, maxDistance, true,
+                    outcome("hbm:sellafield_bedrock", level, 1)));
+            templateEntries.add(templateEntry("matchesMaterial", "iron", 0.0D, maxDistance, true,
+                    outcome("hbm:sellafield_slaked", level, 1)));
             templateEntries.add(templateEntry("matchesMaterial", "ground", 0.0D, maxDistance, true,
                     outcome("hbm:sellafield_slaked", level, 1)));
             templateEntries.add(templateEntry("matchesMaterial", "rock", 0.0D, maxDistance, true,
@@ -395,6 +451,10 @@ public final class LegacyFalloutConversions {
             }
         }
         templateEntries.add(templateEntry("matchesBlock", "minecraft:mycelium", 0.0D, 100.0D, false, outcome("hbm:waste_mycelium", 0, 1)));
+        templateEntries.add(templateEntryWithChance("matchesBlock", "minecraft:sand", 0.0D, 100.0D, 0.05D, false,
+                outcome("hbm:waste_trinitite", 0, 1)));
+        templateEntries.add(templateEntryWithChance("matchesBlock", "minecraft:red_sand", 0.0D, 100.0D, 0.05D, false,
+                outcome("hbm:waste_trinitite_red", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:clay", 0.0D, 100.0D, false, outcome("minecraft:terracotta", 0, 1)));
         root.add("entries", templateEntries);
         try (Writer writer = Files.newBufferedWriter(template, StandardCharsets.UTF_8)) {
@@ -423,6 +483,13 @@ public final class LegacyFalloutConversions {
         return entry;
     }
 
+    private static JsonObject templateEntryWithChance(String matcher, String value, double min, double max, double chance,
+                                                      boolean restrictDepth, JsonArray... outcomes) {
+        JsonObject entry = templateEntry(matcher, value, min, max, restrictDepth, outcomes);
+        entry.addProperty("chance", chance);
+        return entry;
+    }
+
     private static JsonArray outcome(String block, int metadata, int weight) {
         JsonArray outcome = new JsonArray();
         outcome.add(block);
@@ -437,6 +504,11 @@ public final class LegacyFalloutConversions {
 
     private static Entry entry(Predicate<Context> matcher, double minDistance, double maxDistance, boolean restrictDepth, WeightedOutcome... primary) {
         return new Entry(matcher, List.of(primary), List.of(), 1.0D, minDistance, maxDistance, 0.9D, restrictDepth);
+    }
+
+    private static Entry entry(Predicate<Context> matcher, double minDistance, double maxDistance, double chance,
+                               boolean restrictDepth, WeightedOutcome... primary) {
+        return new Entry(matcher, List.of(primary), List.of(), chance, minDistance, maxDistance, 0.9D, restrictDepth);
     }
 
     private static Predicate<Context> matchesBlock(Block block) {
@@ -463,13 +535,15 @@ public final class LegacyFalloutConversions {
     }
 
     private static WeightedOutcome slaked(int level, int weight) {
-        return new WeightedOutcome(weight, context -> {
-            BlockState replacement = legacyState("sellafield_slaked");
-            if (replacement == null || !replacement.hasProperty(LegacySellafieldSlakedBlock.LEVEL)) {
-                return replacement;
-            }
-            return replacement.setValue(LegacySellafieldSlakedBlock.LEVEL, clamp(level, 0, 15));
-        });
+        return legacyLevel("sellafield_slaked", level, weight);
+    }
+
+    private static WeightedOutcome bedrockSellafield(int level, int weight) {
+        return legacyLevel("sellafield_bedrock", level, weight);
+    }
+
+    private static WeightedOutcome legacyLevel(String legacyName, int level, int weight) {
+        return new WeightedOutcome(weight, context -> withSlakedLevel(legacyState(legacyName), level));
     }
 
     private static WeightedOutcome preserveAxisLegacy(String legacyName, int weight) {
@@ -488,6 +562,13 @@ public final class LegacyFalloutConversions {
     private static BlockState legacyState(String legacyName) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(legacyName);
         return block == null || !block.isPresent() ? null : block.get().defaultBlockState();
+    }
+
+    private static BlockState withSlakedLevel(BlockState replacement, int level) {
+        if (replacement == null || !replacement.hasProperty(LegacySellafieldSlakedBlock.LEVEL)) {
+            return replacement;
+        }
+        return replacement.setValue(LegacySellafieldSlakedBlock.LEVEL, clamp(level, 0, 15));
     }
 
     private static boolean isLegacyLeafOrPlant(Context context) {
@@ -547,6 +628,7 @@ public final class LegacyFalloutConversions {
     private static boolean isLegacyRockMaterial(Context context) {
         BlockState state = context.state();
         return state.is(ModBlocks.SELLAFIELD_SLAKED.get())
+                || state.is(ModBlocks.SELLAFIELD_BEDROCK.get())
                 || state.is(Blocks.STONE)
                 || state.is(Blocks.DEEPSLATE)
                 || state.is(Blocks.GRANITE)
@@ -559,15 +641,36 @@ public final class LegacyFalloutConversions {
         return state.is(Blocks.SAND) || state.is(Blocks.RED_SAND) || state.is(Blocks.GRAVEL);
     }
 
+    private static boolean isLegacyIronMaterial(Context context) {
+        BlockState state = context.state();
+        return state.is(Blocks.IRON_BLOCK)
+                || state.is(Blocks.IRON_BARS)
+                || state.is(Blocks.IRON_DOOR)
+                || state.is(Blocks.IRON_TRAPDOOR)
+                || state.is(Blocks.CHAIN)
+                || state.is(Blocks.ANVIL)
+                || state.is(Blocks.CHIPPED_ANVIL)
+                || state.is(Blocks.DAMAGED_ANVIL);
+    }
+
     private static boolean blocksLegacyReplacement(Context context, BlockState replacement) {
-        if (context.pos().getY() <= context.level().getMinBuildHeight()) {
+        boolean replacementIsBedrockSellafield = replacement.is(ModBlocks.SELLAFIELD_BEDROCK.get());
+        if (context.pos().getY() <= context.level().getMinBuildHeight() && !replacementIsBedrockSellafield) {
             return true;
         }
         BlockState original = context.state();
-        return original.is(ModBlocks.SELLAFIELD_SLAKED.get())
-                && replacement.is(ModBlocks.SELLAFIELD_SLAKED.get())
-                && replacement.getValue(LegacySellafieldSlakedBlock.LEVEL)
-                <= original.getValue(LegacySellafieldSlakedBlock.LEVEL);
+        if (original.is(ModBlocks.SELLAFIELD_BEDROCK.get()) && !replacementIsBedrockSellafield) {
+            return true;
+        }
+        if (original.is(ModBlocks.SELLAFIELD_SLAKED.get()) && replacement.is(ModBlocks.SELLAFIELD_SLAKED.get())) {
+            return replacement.getValue(LegacySellafieldSlakedBlock.LEVEL)
+                    <= original.getValue(LegacySellafieldSlakedBlock.LEVEL);
+        }
+        if (original.is(ModBlocks.SELLAFIELD_BEDROCK.get()) && replacementIsBedrockSellafield) {
+            return replacement.getValue(LegacySellafieldSlakedBlock.LEVEL)
+                    <= original.getValue(LegacySellafieldSlakedBlock.LEVEL);
+        }
+        return false;
     }
 
     private static String optionalString(JsonObject json, String key) {

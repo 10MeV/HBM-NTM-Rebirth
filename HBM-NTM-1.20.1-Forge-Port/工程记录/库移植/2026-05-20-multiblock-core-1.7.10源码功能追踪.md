@@ -194,20 +194,21 @@
 本轮现代侧补齐：
 
 - `MultiblockHelper` 新增公共解析入口：
-  - `findCore(BlockGetter, BlockPos)`：从 dummy 位置解析到 `CoreLookup`。
+  - `findCore(BlockGetter, BlockPos)`：从 core 或 dummy 位置解析到 `CoreLookup`。
   - `findCoreAt(BlockGetter, BlockPos corePos)`：验证目标 core 区块已加载且方块实现 `MultiblockCoreBlock`。
   - `resolveCoreBlockEntity(BlockEntity)`：如果传入 dummy BE，则返回 core BE；无法解析时保守返回原 BE。
+  - `resolveCoreBlockEntity(BlockGetter, BlockPos)`：从世界坐标解析 core BE；坐标本身为 core 时返回自身 BE。
 - `DummyBlock` 的选择盒/碰撞盒、破坏速度、中键拾取改用 `MultiblockHelper.findCore(...)`。
 - `CompatEnergyControl.findTileEntity(...)` 改用 `MultiblockHelper.resolveCoreBlockEntity(...)`，避免兼容层复制 dummy 解析规则。
 
 对 1.7.10 的对齐说明：
 
-- 旧版 `findCoreRec(...)` 通过同方块 metadata 指向链寻找 core；现代端 dummy 已直接保存 `CorePos`，因此不复刻递归 metadata 链，而是复刻“任意 dummy 可统一解析 core”的功能合同。
+- 旧版 `findCoreRec(...)` 通过同方块 metadata 指向链寻找 core，且输入 core 自身时也返回 core；现代端 dummy 已直接保存 `CorePos`，因此不复刻递归 metadata 链，而是复刻“core/dummy 坐标可统一解析 core”的功能合同。
 - 解析过程中保留现代端已有跨区块保护：core 区块未加载时不强行读取，也不把 dummy 当成孤儿。
 
 验证：
 
-- 待跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`。
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
 
 ## 2026-05-25 可见多方块默认 shape 勘误
 
@@ -394,7 +395,7 @@
 - `machine_centrifuge`：
   - 旧类：`MachineCentrifuge`、`TileEntityMachineCentrifuge`、`RenderCentrifuge`。
   - 旧尺寸：`getDimensions() = {3,0,0,0,0,0}`，`getOffset() = 0`。
-  - 旧 proxy：上方 dummy 使用 `TileEntityProxyCombo(false, true, true)`，现代端暂按 `offset.y > 0` 标记 proxy。
+  - 勘误：旧 `MachineCentrifuge#fillSpace(...)` 只调用 `super.fillSpace(...)`，没有 `makeExtra(...)`；XR 填出的上方结构是普通 dummy，不生成 `TileEntityProxyCombo(false, true, true)`。
   - 旧详细碰撞：底部 1x1x1，加上 0.75x3x0.75 的竖筒。
   - 旧渲染旋转表：SOUTH=90、WEST=180、NORTH=270、EAST=0。
 - `machine_ore_slopper`：
@@ -851,7 +852,7 @@
 暂缓内容：
 
 - 旧 `heatSource()` 与 `moltenMetal()` 已在 mode 层保留字段，但现代端尚无对应完整热力/熔融金属 capability；当前只把 `moltenMetal` 映射到 Forge fluid handler。
-- `TileEntityProxyDyn` 的动态代理细节暂按其继承的 `TileEntityProxyCombo` 开关处理；OpenComputers/ROR 等外围接口留给对应库切片。
+- 勘误：旧 `TileEntityProxyDyn` 不只是继承 `TileEntityProxyCombo` 开关；它会在 core 实现 `IProxyDelegateProvider` 时按 proxy 位置返回 delegate。现代端已补 `LegacyProxyDelegateProvider` 库钩子，具体化学工厂/大型装配厂的 delegate 行为留给对应 BlockEntity 迁移切片。
 
 验证：
 
@@ -943,3 +944,62 @@
 验证：
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-25 layout 级 check/fill/remove 收口
+
+触发来源：
+
+- 继续推进多方块库时复查现代端 `LegacyXrMultiblockBlock` 与 `LegacyOffsetMultiblockBlock`，发现两条基类各自手写了 layout 空间检查、dummy 填充和 core 移除清理。
+- 1.7.10 `BlockDummyable`/`MultiblockHandlerXR` 的核心契约是“结构定义决定 check/fill/remove”，不是每个现代基类各自复制一套行为；后续继续迁入新多方块 core 时，重复逻辑容易导致 dummy 漏填、proxy mode 漏写或 core 拆除后外围残留。
+
+本轮现代侧补齐：
+
+- `MultiblockHelper` 新增 layout 级公共入口：
+  - `checkLayout(level, corePos, layout, temporaryPos)`：统一使用 `layout.checkOffsets()`，包含“只检查不填充”的旧额外净空。
+  - `fillLayout(level, corePos, layout)`：统一写入 dummy 的 core 坐标、typed proxy mode 和 legacy extra 身份。
+  - `removeLayout(level, corePos, layout)`：统一按 layout 清理 dummy，并继续走现有 clearing guard。
+- `LegacyXrMultiblockBlock` 与 `LegacyOffsetMultiblockBlock` 改为调用上述公共入口。
+- `LegacyOffsetMultiblockBlock` 的直接放置空间检查从 `layout.offsets()` 改为 `layout.checkOffsets()`；未来 offset 型结构如果带旧 `checkRequirement` 额外净空，不会只检查实际填充位。
+
+对 1.7.10 的对齐说明：
+
+- 旧版 XR 机器在 `checkRequirement(...)` 与 `fillSpace(...)` 中经常既有真实 dummy 填充，也有额外“只检查不填充”的占位区域；现代 `LegacyMultiblockLayout` 已记录这两类 offset，本轮把消费入口收束到库层。
+- 这一步不改变已有机器足迹，只减少后续机器移植时复制底层结构操作的机会。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
+## 2026-05-25 1.7.10 对齐审计：方向与离心机 proxy 勘误
+
+审计触发：
+
+- 用户要求进行 1.7.10 对齐检查，重点清理未对齐且存在猜测内容的部分。
+- 本轮先从多方块库文档中带“暂按/可能/约定”的位置抽查，优先核对会影响 proxy/extra offset 的方向旋转和早期可见机器 proxy 标记。
+
+1.7.10 事实来源：
+
+- 本机 Forge 1.7.10 jar：`net.minecraftforge.common.util.ForgeDirection#getRotation(...)`。
+- `com.hbm.blocks.machine.MachineCentrifuge`。
+- `com.hbm.handler.MultiblockHandlerXR`。
+- `com.hbm.tileentity.TileEntityProxyDyn`。
+- `com.hbm.tileentity.machine.TileEntityMachineChemicalFactory`。
+- `com.hbm.tileentity.machine.TileEntityMachineAssemblyFactory`。
+
+审计结论：
+
+- 已用 `jshell` 加载 Forge `1.7.10-10.13.4.1614` 直接验证：
+  - `NORTH.getRotation(UP)=EAST`、`EAST.getRotation(UP)=SOUTH`、`SOUTH.getRotation(UP)=WEST`、`WEST.getRotation(UP)=NORTH`，等价现代 `Direction#getClockWise()`。
+  - `NORTH.getRotation(DOWN)=WEST`、`EAST.getRotation(DOWN)=NORTH`、`SOUTH.getRotation(DOWN)=EAST`、`WEST.getRotation(DOWN)=SOUTH`，等价现代 `Direction#getCounterClockWise()`。
+- 旧 `MachineCentrifuge#createNewTileEntity(...)` 虽然对 `meta >= 6` 返回 `TileEntityProxyCombo(false,true,true)`，但 `MachineCentrifuge#fillSpace(...)` 没有 `makeExtra(...)`，只走 `MultiblockHandlerXR.fillSpace(...)`；因此实际放置的上方结构是普通 metadata `UP` dummy，不会生成 proxy tile。
+- 旧 `TileEntityProxyDyn#getCoreObject()` 会先取得 core，再在 core 实现 `IProxyDelegateProvider` 时调用 `getDelegateForPosition(x,y,z)`；化学工厂和大型装配厂用这个 delegate 把 coolant line proxy 的流体/能量访问限制到水和低压蒸汽侧。
+
+本轮现代侧修正：
+
+- `machine_centrifuge` 的 `LegacyMachineDefinition.layout(...)` 移除 `offset.getY() > 0` 的 proxy 猜测标记，回到纯 XR 普通 dummy 足迹。
+- 文档中原“上方 dummy 使用 proxy”的记录改为勘误说明，避免后续以该错误为基础继续扩展 capability/流体网络接入。
+- 新增 `LegacyProxyDelegateProvider`，`MultiblockDummyBlockEntity#getCapability(...)` 在 core 提供 delegate 时把 capability 请求转给 delegate，否则保持转发到 core；这补回旧 `TileEntityProxyDyn` 的库级合同，但不凭空实现尚未迁移的具体机器 delegate。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。

@@ -5,6 +5,7 @@ import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.blockentity.BoilerBlockEntity;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
+import com.hbm.ntm.blockentity.CustomNukeBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
@@ -173,6 +174,10 @@ public final class ModBlockEntities {
                             ModBlocks.NUKE_FLEIJA.get(),
                             ModBlocks.NUKE_SOLINIUM.get(),
                             ModBlocks.NUKE_N2.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<CustomNukeBlockEntity>> CUSTOM_NUKE =
+            BLOCK_ENTITIES.register("custom_nuke", () ->
+                    BlockEntityType.Builder.of(CustomNukeBlockEntity::new, ModBlocks.NUKE_CUSTOM.get()).build(null));
 
     public static void register(IEventBus modBus) {
         BLOCK_ENTITIES.register(modBus);

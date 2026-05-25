@@ -66,7 +66,7 @@ public final class HbmFluidItemTransfer {
     }
 
     public static TransferResult fillItemFromTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {
-        if (stack.isEmpty() || tank == null || tank.isEmpty() || maxAmount <= 0 || !HbmFluidForgeMappings.canExport(tank.getTankType())) {
+        if (stack.isEmpty() || tank == null || tank.isEmpty() || maxAmount <= 0) {
             return TransferResult.empty(stack);
         }
         int amount = Math.min(maxAmount, tank.getFill());

@@ -55,7 +55,7 @@ public final class NukeEnvironmentalEffect {
         int chance = 100;
 
         if (input.is(Blocks.SAND) || input.is(Blocks.RED_SAND)) {
-            replacement = legacyState("block_trinitite");
+            replacement = legacyState(input.is(Blocks.RED_SAND) ? "waste_trinitite_red" : "waste_trinitite");
             chance = 20;
         } else if (input.is(Blocks.MYCELIUM)) {
             replacement = ModBlocks.WASTE_MYCELIUM.get().defaultBlockState();
