@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 
 public class HeatableFluidTrait extends FluidTrait {
     private final List<HeatingStep> steps = new ArrayList<>();
@@ -33,14 +35,39 @@ public class HeatableFluidTrait extends FluidTrait {
         return steps.isEmpty() ? null : steps.get(0);
     }
 
+    @Override
+    public void addHiddenInfo(List<Component> info) {
+        HeatingStep first = getFirstStep();
+        if (first != null) {
+            info.add(Component.literal("Thermal capacity: " + first.heatRequired() + " TU per "
+                    + first.amountRequired() + "mB").withStyle(ChatFormatting.RED));
+        }
+        for (HeatingType type : HeatingType.values()) {
+            double efficiency = getEfficiency(type);
+            if (efficiency > 0.0D) {
+                info.add(FluidTooltipUtil.efficiency(type.displayName(), efficiency));
+            }
+        }
+    }
+
     public record HeatingStep(int amountRequired, int heatRequired, FluidType producedType, int amountProduced) {
     }
 
     public enum HeatingType {
-        BOILER,
-        HEATEXCHANGER,
-        PWR,
-        ICF,
-        PA
+        BOILER("Boilable"),
+        HEATEXCHANGER("Heatable"),
+        PWR("PWR Coolant"),
+        ICF("ICF Coolant"),
+        PA("Particle Accelerator Coolant");
+
+        private final String displayName;
+
+        HeatingType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String displayName() {
+            return displayName;
+        }
     }
 }

@@ -3,12 +3,12 @@ package com.hbm.ntm.compat;
 import com.hbm.ntm.api.tile.InfoProviderEC;
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.blockentity.HbmFluidBlockEntity;
-import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -120,13 +120,7 @@ public final class CompatEnergyControl {
         if (blockEntity == null) {
             return null;
         }
-        if (blockEntity instanceof MultiblockDummyBlockEntity dummy
-                && blockEntity.getLevel() != null
-                && dummy.getCorePos() != null) {
-            BlockEntity core = blockEntity.getLevel().getBlockEntity(dummy.getCorePos());
-            return core == null ? blockEntity : core;
-        }
-        return blockEntity;
+        return MultiblockHelper.resolveCoreBlockEntity(blockEntity);
     }
 
     public static BlockEntity findTileEntity(Level level, BlockPos pos) {

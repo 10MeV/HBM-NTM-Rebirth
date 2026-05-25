@@ -13,8 +13,10 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -113,6 +115,17 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
         if (type == HbmFluids.NONE && tag.contains(TAG_TYPE + "_id")) {
             type = HbmFluids.fromId(tag.getInt(TAG_TYPE + "_id"));
         }
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return saveWithoutMetadata();
+    }
+
+    @Nullable
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override

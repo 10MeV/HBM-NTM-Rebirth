@@ -5,6 +5,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -96,11 +97,11 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
         return outputCapacity[index] <= 0 ? 0 : outputFill[index] * maxHeight / outputCapacity[index];
     }
 
-    public String getInputTankInfo(int index) {
+    public Component getInputTankInfo(int index) {
         return tankInfo(blockEntity.getInputTank(index), inputFill[index], inputCapacity[index]);
     }
 
-    public String getOutputTankInfo(int index) {
+    public Component getOutputTankInfo(int index) {
         return tankInfo(blockEntity.getOutputTank(index), outputFill[index], outputCapacity[index]);
     }
 
@@ -256,8 +257,8 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
         });
     }
 
-    private static String tankInfo(HbmFluidTank tank, int fill, int capacity) {
-        return tank.getTankType().getName() + ": " + fill + " / " + capacity + " mB";
+    private static Component tankInfo(HbmFluidTank tank, int fill, int capacity) {
+        return tank.getTankType().getDisplayName().copy().append(": " + fill + " / " + capacity + " mB");
     }
 
     private static ChemicalPlantBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

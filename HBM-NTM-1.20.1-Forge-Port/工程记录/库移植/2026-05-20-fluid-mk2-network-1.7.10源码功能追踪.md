@@ -685,6 +685,383 @@ Verification:
 - `.\gradlew.bat runData --no-daemon` passed and generated `machine_turbine` blockstate/model/item model/loot/tag/lang resources.
 - A transient Gradle `build/resources/main/.cache` hash miss appeared after `runData`; the `.cache` directory was verified inside the workspace, removed, and `compileJava processResources` passed on rerun.
 
+## 2026-05-25 Modern Library Pass 23
+
+This pass expands the turbine runtime path to the industrial steam turbine family, using the shared fluid turbine conversion helper instead of adding per-machine conversion math. A first draft also added `machine_large_turbine`, but that block has since been confirmed removed from the active target scope and was removed again in the same migration pass.
+
+- Legacy sources re-read:
+  - `com/hbm/blocks/machine/MachineIndustrialTurbine.java`
+  - `com/hbm/tileentity/machine/TileEntityMachineIndustrialTurbine.java`
+  - `com/hbm/tileentity/machine/TileEntityTurbineBase.java`
+  - OBJ resource `models/block/machines/industrial_turbine.obj`
+- Extend `HbmTurbineConversion`:
+  - Adds percent-of-available conversion for old Mk2 turbine behavior.
+  - Adds max-power preview from a tank's current coolable fluid type for industrial flywheel target output.
+- Add shared `LegacySteamTurbineBlockEntity`:
+  - Handles two-tank turbine conversion, HBM fluid receiver/provider contracts, Forge fluid capability, HBM/Forge energy output, common NBT sync fields, and remote port pushing.
+  - Keeps `shouldCreateFluidNode=false`, matching the current port-proxy machine pattern.
+- Add `machine_industrial_turbine`:
+  - Registers `IndustrialSteamTurbineBlockEntity` and `SteamTurbineMultiblockBlock.Kind.INDUSTRIAL`.
+  - Uses old constants: input tank `750_000`, output tank `3_000_000`, efficiency `1.0`, 20% per-tick operation cap, and `50_000_000` flywheel max energy.
+  - Ports flywheel state (`spin`, `flywheelEnergy`, `lastPowerTarget`, `maxPowerTarget`) so generated heat first charges the flywheel and then becomes an output power target.
+  - Wires the six legacy remote fluid ports and one rear upper energy port.
+- Add block registration and generated/data resources:
+  - `machine_industrial_turbine` blockstate, item model, loot table, pickaxe/iron-tool tags, and English/Chinese language entries.
+  - Reuses already migrated OBJ/texture assets: `machines/industrial_turbine`.
+
+Still deferred:
+
+- Animated rotor/flywheel rendering, sound loops, GUI/container slots, manual fluid container loading, redstone/control toggles, and OpenComputers/ROR outputs remain deferred.
+- The old copy/lever fluid-type switching workflow is still not exposed through UI; the tanks default to STEAM/SPENTSTEAM while the conversion helper remains type-generic for migrated coolable steam variants.
+- Multiblock dummy placement uses the modern proxy layout that matches the functional port positions; in-game inspection should still verify old visual offset/orientation against the renderer once animation work starts.
+- `machine_large_turbine` is intentionally not registered because the user confirmed the large turbine was removed and should not be included.
+
+Progress estimate after Pass 23:
+
+- Core `FluidType` identity/NBT lookup/table: about 86%.
+- Basic tank/conform/Forge capability bridge: about 76%.
+- Fluid network/provider/receiver algorithm: about 71%.
+- In-world pipe graph: about 31%.
+- Fluid item/container loading: about 52%.
+- Behavior traits and cross-system effects: about 67%.
+- Machine integration through the library: about 53%.
+- Overall fluid library migration: about 74%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed.
+- `.\gradlew.bat runData --no-daemon` passed and generated the industrial turbine blockstate/item/loot/tag/lang resources.
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-05-25 Modern Library Pass 24
+
+This pass moves the legacy `machine_fluidtank` from a visible shell into a real fluid-library consumer. It also keeps the user's scope correction from Pass 23: `machine_large_turbine` is not part of the active target because the large turbine has been removed.
+
+- Legacy sources re-read:
+  - `com/hbm/blocks/machine/MachineFluidTank.java`
+  - `com/hbm/tileentity/machine/TileEntityMachineFluidTank.java`
+  - `com/hbm/inventory/container/ContainerMachineFluidTank.java`
+  - `com/hbm/inventory/gui/GUIMachineFluidTank.java`
+  - GUI texture `textures/gui/storage/gui_tank.png`
+- Add `FluidTankBlockEntity`:
+  - Ports the old `256_000` mB tank capacity and six-slot inventory layout.
+  - Ports four modes: input, buffer, output, and disabled.
+  - Routes the block through `HbmFluidNetworkBlockEntity`, `HbmStandardFluidReceiver`, and `HbmStandardFluidSender`.
+  - Preserves the old mode meaning: input subscribes as receiver, output pushes to remote ports, buffer creates a local fluid node and can both receive and provide, disabled does neither.
+  - Wires the eight old remote horizontal fluid port positions used by the multiblock tank.
+  - Adds Forge fluid capability exposure and item load/unload behavior through `HbmFluidItemTransfer` for the old load/unload slot pairs.
+  - Saves and syncs tank state, inventory, mode, explosion/fire flags, tick age, and comparator output.
+  - Ports comparator strength as the old fill-ratio signal.
+  - Ports the old antimatter/corrosive damage flags into the modern `HbmFluidTank.release(...)` leak path, using burn release when the exploded tank is on fire.
+- Add `FluidTankBlock`, `FluidTankMenu`, and `FluidTankScreen`:
+  - Right-click opens the old-style storage GUI when the tank is not exploded.
+  - Menu slot coordinates match the old container layout.
+  - Mode button sends the existing legacy-button packet path and cycles the four modes server-side.
+  - GUI uses the copied 1.7.10 `gui_tank.png` texture, the old mode icon strip, and a simple colored fill preview.
+- Add renderer and registration:
+  - Registers `ModBlockEntities.FLUID_TANK`, `ModMenuTypes.FLUID_TANK`, menu screen, and block entity renderer.
+  - `FluidTankRenderer` renders the old normal or exploded OBJ through `ObjModelLibrary.MACHINE_FLUIDTANK` / `MACHINE_FLUIDTANK_EXPLODED`.
+  - `machine_fluidtank` now uses `FluidTankBlock` instead of the generic visible multiblock shell.
+- Data/resource updates:
+  - Adds English and Chinese GUI/mode/status language keys.
+  - Copies the legacy GUI texture into `assets/hbm/textures/gui/storage/gui_tank.png`.
+  - `runData` keeps the existing blockstate/item/loot/tag/lang resources for `machine_fluidtank`.
+
+Still deferred:
+
+- Exact legacy `tank.setType(0, 1, slots)` type-copy slot behavior is not fully ported yet; the modern tank can accept its first fluid directly through capability/network input, but the old identifier-slot workflow needs a dedicated item-identity pass.
+- Persistent fluid NBT on block drops, repair/extinguisher interactions, and torch/fire interaction details remain deferred.
+- Old explosion side effects, particles, entity burning, and pollution mutation are limited to the currently migrated fluid release behavior until the explosion/pollution/effect libraries are ready for a deeper integration.
+- OpenComputers/ROR data exposure and any old automation names remain deferred.
+- The block entity renderer does not yet render the old inner fluid surface/level OBJ piece.
+
+Progress estimate after Pass 24:
+
+- Core `FluidType` identity/NBT lookup/table: about 86%.
+- Basic tank/conform/Forge capability bridge: about 78%.
+- Fluid network/provider/receiver algorithm: about 73%.
+- In-world pipe graph: about 32%.
+- Fluid item/container loading: about 56%.
+- Behavior traits and cross-system effects: about 69%.
+- Machine integration through the library: about 58%.
+- Overall fluid library migration: about 77%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed during the implementation pass.
+- `.\gradlew.bat runData --no-daemon` passed after wiring the block/menu/renderer path.
+- `machine_large_turbine` / `LargeSteamTurbine` / `MACHINE_LARGE_TURBINE` source and generated-resource scans found no remaining active registrations.
+- Final `.\gradlew.bat compileJava processResources --no-daemon` rerun passed after this documentation update.
+
+## 2026-05-25 Modern Library Pass 25
+
+This pass fills the main legacy identification gap left by the first `machine_fluidtank` runtime pass and makes the behavior reusable by later machines.
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/fluid/tank/FluidTank.java`
+  - `com/hbm/items/machine/IItemFluidIdentifier.java`
+  - `com/hbm/items/machine/ItemFluidIDMulti.java`
+  - `com/hbm/tileentity/machine/storage/TileEntityMachineFluidTank.java`
+  - Textures `textures/items/fluid_identifier_multi.png` and `textures/items/fluid_identifier_overlay.png`
+- Add modern fluid identifier API and item:
+  - Adds `IFluidIdentifierItem`, the modern equivalent of old `IItemFluidIdentifier`.
+  - Adds `fluid_identifier_multi` through `FluidIdentifierItem`.
+  - Stores primary/secondary fluid identities in NBT using the old-style `fluid1` / `fluid2` keys, with name and numeric-id fallback for migration resilience.
+  - Right-click swaps primary and secondary identities, matching the old non-sneak air-use behavior.
+  - Creative tab variants are generated for every modern `FluidType` that is not `NONE` and does not carry the `NoId` trait.
+  - Registers item tinting so the legacy overlay is colored by the primary identified fluid.
+  - Copies the legacy base and overlay textures, adds English/Chinese lang keys, and generates a two-layer item model.
+- Finish `machine_fluidtank` identification behavior:
+  - Type slot input now only accepts `IFluidIdentifierItem`.
+  - Output slot rejects manual insertion.
+  - Server tick applies the old `tank.setType(0, 1, slots)` rule: when the output slot is empty and the identifier points to a different fluid, the tank type changes, current fill is cleared by `setTankType`, and the identifier moves from input to output.
+  - Sneak-right-clicking the tank core with a fluid identifier now sets the tank type directly, preserving the old external identification workflow for storage blocks that expose it.
+- Finish legacy dynamic fluid speed on the storage tank:
+  - Receiver speed: `max(500, (maxFill - fill) / 100)`.
+  - Provider speed: `max(500, fill / 100)`.
+  - These override the generic billion-mB default and are now used by both HBM net transfer and direct port transfer helpers.
+
+Still deferred:
+
+- The fluid identifier selection GUI (`GUIScreenFluid`) is not ported yet; current creative variants and right-click primary/secondary swap cover the old runtime consumer contract.
+- Pipe bulk-identification with shift-right-click and 64-block flood fill remains deferred to a pipe-network interaction pass.
+- Persistent fluid-on-block-drop NBT, repair/extinguisher interactions, and the old full explosion/pollution/entity-fire effects remain deferred.
+- Datagen for all old fluid container item models is still intentionally not broadened in this pass because several container texture names do not match their registry names yet.
+
+Progress estimate after Pass 25:
+
+- Core `FluidType` identity/NBT lookup/table: about 88%.
+- Basic tank/conform/Forge capability bridge: about 79%.
+- Fluid network/provider/receiver algorithm: about 74%.
+- In-world pipe graph: about 33%.
+- Fluid item/container loading: about 60%.
+- Behavior traits and cross-system effects: about 69%.
+- Machine integration through the library: about 60%.
+- Overall fluid library migration: about 79%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed after adding the API, item, and tank behavior.
+- `.\gradlew.bat runData --no-daemon` passed after generating the new identifier model/lang resources.
+- A first `runData` attempt exposed unrelated broad model-generation debt for old fluid containers (`canister_full` texture naming); the pass was narrowed back to the newly migrated identifier model and rerun successfully.
+- Final `.\gradlew.bat compileJava processResources --no-daemon` passed after this documentation update.
+
+## 2026-05-25 Modern Library Pass 26
+
+This pass closes the main pipe-side fluid identification gap and restores typed duct placement behavior from the legacy `fluid_duct_neo` item.
+
+- Legacy sources re-read:
+  - `com/hbm/blocks/generic/FluidDuctBase.java`
+  - `com/hbm/tileentity/network/TileEntityPipeBaseNT.java`
+  - `com/hbm/items/machine/ItemFluidDuct.java`
+  - `com/hbm/items/machine/IItemFluidIdentifier.java`
+  - Textures `textures/items/duct.png` and `textures/items/duct_overlay.png`
+- Add fluid identifier interaction to `FluidPipeBlock`:
+  - Right-clicking a pipe with any `IFluidIdentifierItem` sets that pipe's `FluidType`, matching the old non-sneak interaction.
+  - Sneak-right-clicking performs a connected-pipe type replacement with a 64-step breadth-first traversal, matching the old recursive `changeTypeRecursively(..., 64)` contract while avoiding Java call-stack recursion.
+  - Only pipes whose current type matches the clicked pipe's previous type are changed, preserving the legacy “retag this connected typed run” behavior.
+- Improve pipe BlockEntity sync:
+  - Adds update tag and update packet support so server-side type changes are sent to clients through the normal block-entity sync path.
+- Add `FluidPipeBlockItem` for typed duct stacks:
+  - Stores the old item-damage-style fluid identity in modern stack NBT.
+  - Creative tab variants are emitted for every identified modern `FluidType` except `NONE` and old `NoId` fluids.
+  - Placement copies the stack's fluid type into the placed pipe BlockEntity.
+  - Tooltip/name decoration exposes the stored fluid identity without splitting the duct into hundreds of separate registered items.
+  - Item tinting colors the overlay layer from the stored fluid type.
+- Resource/data updates:
+  - Copies old `duct.png` and `duct_overlay.png` into the modern item texture folder.
+  - Generates a two-layer `fluid_duct_neo` item model using the old base/overlay texture split.
+  - Maps old `igniter` item model generation to `trigger`, matching legacy `ModItems.igniter.setTextureName(hbm:trigger)`; this was exposed by `runData` while validating the broader generated resources.
+- Scope correction kept:
+  - `machine_large_turbine` remains intentionally excluded because the user confirmed the large turbine was removed.
+  - `machine_industrial_turbine` remains active because the 1.7.10 source has a separate `MachineIndustrialTurbine` / `TileEntityMachineIndustrialTurbine` path and only `machine_large_turbine` is the deprecated/removed large turbine target.
+
+Still deferred:
+
+- The old Alt/Ctrl keybind path that copies a pipe's type back into `ItemFluidIDMulti` is not ported yet; the modern input/keybind layer needs a dedicated pass before this can be exact.
+- Typed pipe drops and old metadata-to-NBT world migration are not finalized; placed pipes save their BlockEntity type, and newly placed typed stacks work, but block drops still need explicit NBT preservation.
+- Pipe visuals still use the connected duct block model; in-world verification should check item tint, placement type, and client sync under multiplayer/client-server conditions.
+- Fluid identifier selection GUI (`GUIScreenFluid`) is still deferred.
+
+Progress estimate after Pass 26:
+
+- Core `FluidType` identity/NBT lookup/table: about 88%.
+- Basic tank/conform/Forge capability bridge: about 80%.
+- Fluid network/provider/receiver algorithm: about 75%.
+- In-world pipe graph: about 39%.
+- Fluid item/container loading: about 61%.
+- Behavior traits and cross-system effects: about 69%.
+- Machine integration through the library: about 61%.
+- Overall fluid library migration: about 81%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed after adding pipe interactions and the typed duct item.
+- First `.\gradlew.bat runData --no-daemon` found the unrelated old `igniter` texture-name mismatch; `igniter -> trigger` was confirmed from 1.7.10 source and fixed in item-model datagen.
+- `.\gradlew.bat runData --no-daemon` passed after the model mapping fix and regenerated the duct/identifier resources.
+- `machine_large_turbine` / `LargeSteamTurbine` / `MACHINE_LARGE_TURBINE` source and generated-resource scans found no active registrations.
+- Final `.\gradlew.bat compileJava processResources --no-daemon` passed after this documentation update.
+
+## 2026-05-25 Modern Library Pass 27
+
+This pass tightens the typed duct and multi-fluid identifier behavior against the exact old interaction contracts instead of broadening the system beyond 1.7.10.
+
+- Legacy sources re-read:
+  - `com/hbm/blocks/network/FluidDuctBase.java`
+  - `com/hbm/blocks/network/FluidDuctStandard.java`
+  - `com/hbm/tileentity/network/TileEntityPipeBaseNT.java`
+  - `com/hbm/items/machine/ItemFluidIDMulti.java`
+  - `com/hbm/items/machine/IItemFluidIdentifier.java`
+  - `com/hbm/handler/HbmKeybinds.java` and the modern `HbmServerKeybinds` bridge
+- Extend `IFluidIdentifierItem` with a conservative optional write-back hook:
+  - Read-only identifiers can keep the default `false`.
+  - `FluidIdentifierItem` writes primary/secondary NBT through the existing `fluid1`/`fluid2` keys.
+- Port the old duct keybind interaction:
+  - `TOOL_ALT` on a pipe copies the pipe's current type back into the held identifier's primary slot, plays the old orb-style feedback sound, and consumes the interaction.
+  - `TOOL_CTRL` now triggers the same 64-depth connected-pipe retagging path as sneak-right-click.
+  - Sneak-right-click still works as the old fallback bulk retarget path.
+- Port `ItemFluidIDMulti` quality-of-life behavior:
+  - Non-sneak right-click swaps primary and secondary fluid selections on the server.
+  - The swap plays the old orb-style sound and sends the already-migrated `ClientInformPacket` HUD notice using legacy notice id `7` and 3000 ms duration.
+  - The identifier now acts as its own crafting remaining item with NBT preserved, matching old `getContainerItem`.
+  - `doesSneakBypassUse` returns true so sneak interactions can pass through to pipes/tanks as in 1.7.10.
+- Port old typed pick-block behavior from `FluidDuctStandard#getPickBlock`:
+  - Middle-clicking a placed typed pipe returns a `fluid_duct_neo` stack with the pipe's fluid type NBT.
+  - Ordinary block drops intentionally remain normal block drops, because old `FluidDuctStandard#damageDropped` preserves duct material metadata, not the pipe's internal fluid type.
+- Scope correction kept:
+  - `machine_large_turbine` remains intentionally excluded because the user confirmed the large turbine was removed.
+  - `machine_industrial_turbine` remains active as the separate old industrial turbine path.
+
+Still deferred:
+
+- The old sneak client fluid selection GUI (`GUIScreenFluid`) is still not ported.
+- The exact localized old `FluidType#getConditionalName()` table is not fully migrated; HUD notices currently use the modern pretty fluid name derived from the library id.
+- Generic settings-tool copy/paste (`getFluidIDToCopy`, `pasteSettings`, and wider tool interfaces) remains deferred beyond direct pipe identifier interaction.
+- Pipe in-world visuals still use the connected duct model path; more precise old overlay/tint rendering can be revisited after the network behavior is stable.
+
+Progress estimate after Pass 27:
+
+- Core `FluidType` identity/NBT lookup/table: about 88%.
+- Basic tank/conform/Forge capability bridge: about 80%.
+- Fluid network/provider/receiver algorithm: about 75%.
+- In-world pipe graph: about 43%.
+- Fluid item/container loading: about 64%.
+- Behavior traits and cross-system effects: about 69%.
+- Machine integration through the library: about 61%.
+- Overall fluid library migration: about 82%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed after adding Alt/Ctrl interaction, identifier write-back, self-container behavior, and typed pipe pick-block support.
+- Final `.\gradlew.bat compileJava processResources --no-daemon` passed after this documentation update.
+
+## 2026-05-25 Modern Library Pass 28
+
+This pass ports the old multi-fluid identifier selection screen and the old fluid listing order so the pipe/identifier loop is no longer limited to creative variants or Alt-copy.
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/gui/GUIScreenFluid.java`
+  - `com/hbm/items/machine/ItemFluidIDMulti.java`
+  - `com/hbm/packet/toserver/NBTItemControlPacket.java` call path through `PacketDispatcher`
+  - `com/hbm/inventory/fluid/Fluids.java` `metaOrder` / `getInNiceOrder()`
+  - Texture `assets/hbm/textures/gui/machine/gui_fluid.png`
+- Add `FluidIdentifierScreen`:
+  - Opens from sneak-right-clicking `fluid_identifier_multi`, matching old client-side `player.openGui(...)` behavior.
+  - Uses the old `gui_fluid.png` panel texture.
+  - Provides the old focused search field at the same panel coordinates.
+  - Shows 9 visible matching fluids, with old-style tinted 8x14 fluid bars and primary/secondary selection overlays.
+  - Left click sends `primary`, right click sends `secondary`, matching old `GUIScreenFluid#mouseClicked`.
+  - Closes automatically when the player is no longer holding the identifier, matching old `updateScreen`.
+  - Does not pause the game.
+- Add a client bridge (`FluidIdentifierScreenBridge`) so the common item class does not directly link client-only Screen classes outside the `DistExecutor` path.
+- Wire `FluidIdentifierItem` into the existing migrated item-control packet path:
+  - Implements `HbmItemControlReceiver`.
+  - Handles `primary` and `secondary` integer fields from `ItemControlPacket` / legacy `NBTItemControlPacket` mapping.
+  - Keeps the existing non-sneak right-click primary/secondary swap from Pass 27.
+- Add `HbmFluids.niceOrder()`:
+  - Ports the old `Fluids.metaOrder` list as the first ordering source.
+  - Appends any modern registered fluids not present in the old list so future additions remain selectable.
+  - Uses the same order for `FluidIdentifierScreen`, `fluid_identifier_multi` creative variants, and typed `fluid_duct_neo` creative variants.
+- Resource update:
+  - Copies old `textures/gui/machine/gui_fluid.png` into the modern asset tree.
+- Scope correction kept:
+  - `machine_large_turbine` remains intentionally excluded because the user confirmed the large turbine was removed.
+  - `machine_industrial_turbine` remains active as the separate old industrial turbine path.
+
+Still deferred:
+
+- Old `FluidType#getLocalizedName()` and `FluidType#addInfo(...)` tooltip text is only approximated by the modern pretty internal name until the fluid localization/trait-info table is fully migrated.
+- The old GUI has no scrolling beyond the 9 search matches; this pass preserves that limitation and does not add a new paged selector.
+- Generic settings-tool copy/paste (`getFluidIDToCopy`, `pasteSettings`, and wider tool interfaces) remains deferred beyond direct pipe/identifier interaction.
+- Pipe in-world overlay/tint rendering remains deferred.
+
+Progress estimate after Pass 28:
+
+- Core `FluidType` identity/NBT lookup/table: about 89%.
+- Basic tank/conform/Forge capability bridge: about 80%.
+- Fluid network/provider/receiver algorithm: about 75%.
+- In-world pipe graph: about 44%.
+- Fluid item/container loading: about 68%.
+- Behavior traits and cross-system effects: about 69%.
+- Machine integration through the library: about 61%.
+- Overall fluid library migration: about 83%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed after adding the screen, client bridge, item control receiver, old GUI texture, and fluid nice-order helper.
+- Final `.\gradlew.bat compileJava processResources --no-daemon` passed after this documentation update.
+
+## 2026-05-25 Modern Library Pass 29
+
+This pass closes the main `FluidType#getLocalizedName()` / `FluidType#addInfo(...)` gap left by Pass 28 and pushes localized fluid names through the visible migrated UI paths:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/fluid/FluidType.java`
+  - `com/hbm/inventory/fluid/trait/FluidTrait.java`
+  - `com/hbm/inventory/fluid/trait/FluidTraitSimple.java`
+  - `FT_Combustible`, `FT_Flammable`, `FT_Corrosive`, `FT_Polluting`, `FT_VentRadiation`, `FT_PWRModerator`, `FT_Pheromone`, `FT_Poison`, `FT_Toxin`, `FT_Heatable`, `FT_Coolable`
+  - Legacy language keys `assets/hbm/lang/en_US.lang` and `zh_CN.lang` for `hbmfluid.*` and `hazard.*`
+- Add modern `FluidType` display helpers:
+  - `getTranslationKey()` returns the old `hbmfluid.<path>` key.
+  - `getDisplayName()` returns a translatable component with a safe pretty-name fallback.
+  - `appendInfo(...)` preserves the old tooltip contract: non-room temperature first, then each trait's visible info, with hidden trait details gated behind Shift and a hint when hidden details exist.
+- Port old trait tooltip text into the modern trait classes:
+  - Simple tags: gaseous, gaseous at room temperature, liquid, viscous, plasma, antimatter, lead-container, unsiphonable.
+  - Value traits: combustible fuel grade/HE, flammable TU, corrosive/strongly corrosive, polluting spill/burn maps, radioactive, PWR flux multiplier, pheromone type, toxic fumes, toxin direct/effect summaries, heatable/coolable thermal capacity and efficiency labels.
+- Add datagen-backed language entries:
+  - `HbmFluidLangEntries` carries the legacy English and Chinese `hbmfluid.*` names.
+  - Hazard protection keys used by toxin tooltip summaries are migrated with the same table.
+  - Adds the modern Shift hint key `hbmfluid.info.hold_shift`.
+- Update visible fluid name call sites:
+  - `fluid_identifier_multi` HUD swap message, tooltip, GUI hover, and GUI search now use localized fluid names.
+  - Typed `fluid_duct_neo` item names/tooltips now use localized names and show migrated fluid info.
+  - Filled fluid container item names use localized fluid names.
+  - Fluid tank, liquefactor, assembly machine, and chemical plant tank tooltips now use localized components.
+  - Fluid pipe debug command messages now use localized names where they are player-facing.
+
+Still deferred:
+
+- The old danger-diamond texture overlay (`DiamondPronter` / `danger_diamond.png`) is still not drawn on fluid containers, tank renderers, or pipe overlays; this pass only ports text tooltip data.
+- Some command/debug string output intentionally keeps raw internal fluid IDs where stable diagnostics are more useful than localized text.
+- The generated language resources still need to be refreshed by `runData` after this source change.
+
+Progress estimate after Pass 29:
+
+- Core `FluidType` identity/NBT lookup/table: about 91%.
+- Basic tank/conform/Forge capability bridge: about 80%.
+- Fluid network/provider/receiver algorithm: about 75%.
+- In-world pipe graph: about 44%.
+- Fluid item/container loading: about 71%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 62%.
+- Overall fluid library migration: about 85%.
+
+Verification:
+
+- `.\gradlew.bat runData --no-daemon` passed and generated the fluid/hazard language resources.
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+- Verified `build/resources/main/assets/hbm/lang/{en_us,zh_cn}.json` contains `hbmfluid.water`, `hazard.gasChlorine`, and `hbmfluid.info.hold_shift`.
+
 ## 2026-05-23 Modern Library Pass 16
 
 This pass closes the concrete `FluidLoaderInfinite` gap left after the container item registration pass:

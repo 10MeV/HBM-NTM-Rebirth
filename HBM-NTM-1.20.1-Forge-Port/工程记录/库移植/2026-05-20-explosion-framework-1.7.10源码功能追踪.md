@@ -1285,6 +1285,254 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+### 2026-05-25 追加：核弹右键失败容错
+
+- 实机反馈放置后仍打不开 UI。现代端在 `NuclearDeviceBlock#use(...)` 里增加容错：如果当前位置状态确认为当前核弹方块，但缺失 `NuclearDeviceBlockEntity`，服务端会按当前 `BlockState` 立即创建并绑定一个新的 `NuclearDeviceBlockEntity`，再打开菜单。
+- 该容错用于修复迁移过程中的旧占位方块、已有存档或方块实体注册切换造成的“方块在但 BE 不在”状态；正常新放置核弹仍应由 `EntityBlock#newBlockEntity` 创建 BE。
+- 右键成功打开时返回 `InteractionResult.CONSUME`，没有菜单 provider 时不再伪成功，便于后续实机发现真实交互失败。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 追加：核弹客户端右键返回值修正
+
+- 继续实机反馈：核弹模型可见但 UI 仍打不开，且手持核弹右键容易继续放置新方块。
+- 1.7.10 对照：`NukeGadget` / `NukeMan` / `NukeBoy` 等 `onBlockActivated(...)` 在 `world.isRemote` 时直接返回 `true`；服务端非潜行时取 tile entity 并 `FMLNetworkHandler.openGui(...)`，最后也返回 `true`。
+- 现代根因：此前 `NuclearDeviceBlock#use(...)` 会先在客户端尝试取菜单 provider；客户端若没有同步到 BE 或 provider 为 `null`，会返回 `PASS`，导致右键交互被手中物品继续处理。
+- 现代修正：
+  - 潜行仍返回 `PASS`，保留旧版潜行不打开 GUI 的语义。
+  - 客户端非潜行固定返回 `InteractionResult.SUCCESS`，对齐旧版 `world.isRemote -> true`，阻止手持物品抢走交互。
+  - 服务端非潜行继续通过 `getOrCreateMenuProvider(...)` 容错创建/获取 `NuclearDeviceBlockEntity` 并 `NetworkHooks.openScreen(...)`。
+  - 若服务端仍无法取得 provider，也返回 `CONSUME`，避免核弹右键失败时继续触发手持方块放置。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 追加：核弹客户端菜单构造兜底
+
+- 继续实机反馈 UI 仍打不开后，复查注册链：`NUCLEAR_DEVICE` block entity type 已包含九个核弹方块，`ModMenuTypes.NUCLEAR_DEVICE` 已注册，客户端 `MenuScreens.register(...)` 也存在。
+- 现代可疑点收敛到客户端 `NuclearDeviceMenu(int, Inventory, FriendlyByteBuf)`：`NetworkHooks.openScreen(...)` 只把 `BlockPos` 发给客户端，客户端在菜单构造瞬间如果还未拿到该位置的 `NuclearDeviceBlockEntity`，此前会直接抛出 `IllegalStateException("Expected nuclear device block entity...")`，表现为服务端尝试打开但客户端界面打不开。
+- 现代修正：
+  - `NuclearDeviceMenu#getBlockEntity(...)` 在客户端找不到 BE 时，若当前位置仍是 `NuclearDeviceBlock`，用该 `BlockState` 创建一个轻量 `NuclearDeviceBlockEntity` 作为菜单布局/slot 数量载体。
+  - 该兜底只服务客户端菜单构造，不写回世界、不保存数据；服务端菜单仍使用真实 BE。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 追加：核弹主体右键代理
+
+- 继续实机反馈 GUI 仍打不开后，复查 1.7.10 GUI 打开路径：
+  - 核弹方块 `onBlockActivated(...)` 非客户端/非潜行时调用 `FMLNetworkHandler.openGui(player, MainRegistry.instance, 0, world, x, y, z)`。
+  - `GUIHandler#getServerGuiElement(...)` / `getClientGuiElement(...)` 均先查 `world.getTileEntity(x,y,z)`，若 tile entity 实现 `IGUIProvider` 则分别返回 container/gui。
+  - 即旧版 GUI 开启完全依赖“被右键的位置就是核弹 TileEntity 所在核心块”。
+- 现代问题：
+  - 核弹 OBJ 在现代端是大模型，玩家常点到可见主体所在的相邻方块空间；普通 `VoxelShape` 超出一格不足以可靠让相邻格把右键发送到核心块。
+  - 这会造成没有异常日志、菜单注册完整，但实际右键没有进入 `NuclearDeviceBlock#use(...)`。
+- 现代修正：
+  - `NuclearDeviceBlock` 接入现有 `MultiblockCoreBlock` / `DummyBlock` 代理体系。
+  - 按中心化后的核弹模型 bounds 生成 dummy offset，放置和首次右键时填充 `dummy_block`，dummy 会把右键转发回核心核弹块。
+  - 移除核心核弹时同步移除这些 dummy。
+- 当前限制：
+  - 本轮先恢复交互可靠性；dummy 代理范围来自模型 AABB，后续若需要更细致避免覆盖已有方块，应补放置前空间检查与提示。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 最终追加：核弹 GUI 打开链路修正
+
+- 后续实机日志已确认服务端持续输出 `Opening nuclear device menu...`，说明右键已进入核心核弹方块，且 `NetworkHooks.openScreen(...)` 已被调用；问题不再是模型、选择框或右键代理。
+- Forge 1.20.1 `openScreen(player, provider, pos)` 只会稳定发送 `BlockPos`；核弹 GUI 的 layout/slot 数量还依赖核弹 kind。现代修正改为服务端显式写入 `BlockPos + kind.ordinal()`，客户端 `NuclearDeviceMenu` 优先使用 payload kind 构造菜单。
+- 客户端菜单不再强依赖当前位置已经同步出 `NuclearDeviceBlockEntity`：
+  - 若客户端已有同 kind 的真实 BE，则直接使用真实 item handler。
+  - 若客户端 BE 尚未到达，则创建轻量 `ItemStackHandler(kind.slots())` 用于 screen/layout 构造，避免客户端菜单构造阶段因 BE 同步时序失败而界面打不开。
+  - `NuclearDeviceBlockEntity.isReady/isFilled` 抽为静态 helper，真实 BE 和客户端轻量 handler 共用同一套组件判断。
+- 另一个实际风险点是 1.7.10 GUI 贴图文件名使用驼峰写法，如 `fatManSchematic.png`、`ivyMikeSchematic.png`。1.20 `ResourceLocation` 路径应使用小写资源名；现代资源改名为 `fat_man_schematic.png`、`ivy_mike_schematic.png` 等，并同步 `NuclearDeviceMenu.Layout` / `NuclearDeviceScreen` 引用。
+- 本节覆盖前面“客户端菜单构造兜底”的旧方案；后续以显式 payload kind + 小写 GUI 资源路径为核弹 GUI 打开问题的当前修复口径。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 追加：核弹 GUI 组件槽堆叠限制
+
+- 继续实机反馈：核弹 GUI 已能打开，但部分组件槽可塞入一整组物品。
+- 1.7.10 复核：
+  - `TileEntityNukeGadget` / `TileEntityNukeMan` / `TileEntityNukeMike` / `TileEntityNukeTsar` 的 `getInventoryStackLimit()` 为 `1`。
+  - `TileEntityNukeBoy` / `TileEntityNukePrototype` / `TileEntityNukeFleija` / `TileEntityNukeSolinium` / `TileEntityNukeN2` 的库存上限为 `64`，但其核弹部件在 `ModItems` 中大多以 `setMaxStackSize(1)` 注册；GUI 每个部件槽在实际装配语义上仍代表一个实体部件。
+  - `early_explosive_lenses` / `explosive_lenses` 旧物品本身可堆叠，因此在现代 `ItemStackHandler` 里必须由槽位侧补充约束，否则可堆叠镜片会绕过旧 GUI 的一槽一件观感。
+- 现代修正：
+  - `NuclearDeviceBlockEntity#createItemHandler(...)` 统一作为真实 BE 与客户端菜单兜底 handler 的创建入口。
+  - 核弹设备槽 `getSlotLimit(...)` 统一返回 `1`，并在 `setStackInSlot(...)` / `insertItem(...)` / `deserializeNBT(...)` 路径中夹紧已有或新插入堆叠。
+  - `NuclearDeviceMenu` 的客户端轻量 handler 复用同一工厂，避免客户端 GUI 先构造时显示出与服务端不同的堆叠上限。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 核爆/辐射后效应缺口复核与 Prototype 点火器
+
+复核来源：
+
+- `com.hbm.entity.logic.EntityNukeExplosionMK5`
+- `com.hbm.entity.logic.EntityNukeExplosionMK3`
+- `com.hbm.entity.effect.EntityFalloutRain`
+- `com.hbm.explosion.ExplosionNukeSmall`
+- `com.hbm.blocks.bomb.NukePrototype`
+- `com.hbm.blocks.bomb.NukeMike`
+- `com.hbm.blocks.bomb.NukeTsar`
+- `com.hbm.items.ModItems`
+
+核爆/辐射链路结论：
+
+- MK5 旧版完成爆炸后只生成 `EntityFalloutRain`，并在前 10 tick 对实体做一次强直射辐射；当前现代 `NukeExplosionMk5Entity` 已保留该结构。
+- MK3 waste 旧版在破坏阶段完成后生成 `EntityFalloutRain`；当前现代 `NukeExplosionMk3Entity` 已保留该结构。
+- 旧 `EntityFalloutRain` 不直接增加 `ChunkRadiationManager` 的区块辐射值，而是做落尘层、废土/废木/废叶替换和陨坑生物群系；当前现代 `FalloutRainEntity` 使用 `LegacyFalloutConversions` 与 `CraterRadiationData` 承接该后效应。
+- `ExplosionNukeSmall` 的 mini-nuke 区块辐射脚印公式 `50 / (abs(i)+abs(j)+1) * radiationLevel/3` 已在现代 `ExplosionNukeSmall#irradiateMiniNukeFootprint(...)` 中存在。
+- `NukeEnvironmentalEffect.applyStandardAOE(...)` 在旧源码中标注 deprecated，且主 MK5/MK3 链路没有调用；当前现代类存在但不作为本轮核爆后效应入口。
+- `NukeMike` 旧源码有半装载分支传入 `manRadius`，但 `igniteTestBomb(...)` 内部实际硬编码生成 `BombConfig.mikeRadius` 的 MK5；现代 `MIKE` 继续按 `mikeRadius` 起爆，不改成半装载降级，避免偏离旧实现细节。
+
+现代修正：
+
+- 补回旧通用 `ModItems.igniter`：
+  - 注册旧 ID `igniter` 到核弹创造栏。
+  - 复制旧贴图 `assets/hbm/textures/items/trigger.png` 到现代 `assets/hbm/textures/item/trigger.png`。
+  - 新增 `models/item/igniter.json`，使用旧 `trigger` 贴图。
+  - 新增英文/中文语言项。
+- `NuclearDeviceBlock#use(...)` 对 `Kind.PROTOTYPE` 增加旧版特殊右键：
+  - 非潜行且手持 `hbm:igniter` 时，不打开 GUI；
+  - 服务端调用 `detonateArmed(...)`，因此仍要求 Prototype 装载 `isReady()` 成功；
+  - 复用当前统一核弹方块起爆路径清空槽位、移除方块并调度 `NuclearExplosionUtil.spawnPrototype(...)`。
+
+当时仍缺/延期：
+
+- 旧 `EntityNukeTorex`、`EntityCloudFleija`、`EntityCloudSolinium` 大型视觉云当时仍未完整迁入；后续 2026-05-25 已补 Fleija/Solinium/Rainbow 与 Torex 大型视觉云。
+- `NukeCustom` 方块、完整 `TileEntityNukeCustom` GUI/库存与 custom missile 实体仍待后续迁入。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 追加：Fleija / Solinium / Euphemium 大型云实体
+
+复核来源：
+
+- `com.hbm.entity.effect.EntityCloudFleija`
+- `com.hbm.entity.effect.EntityCloudSolinium`
+- `com.hbm.entity.effect.EntityCloudFleijaRainbow`
+- `com.hbm.render.entity.effect.RenderCloudFleija`
+- `com.hbm.render.entity.effect.RenderCloudSolinium`
+- `com.hbm.render.entity.effect.RenderCloudRainbow`
+- `com.hbm.entity.EntityMappings`
+- `com.hbm.blocks.bomb.NukePrototype`
+- `com.hbm.blocks.bomb.NukeFleija`
+- `com.hbm.blocks.bomb.NukeSolinium`
+- `com.hbm.blocks.bomb.NukeCustom`
+
+旧版行为要点：
+
+- `NukePrototype` / `NukeFleija` 起爆时：
+  - MK3 爆炸实体位置为 `(x + 0.5, y + 0.5, z + 0.5)`；
+  - 同时生成 `EntityCloudFleija(world, r)`，位置为方块坐标 `(x, y, z)`；
+  - 云实体每 tick 增加 `age/scale`，设置 `worldObj.lastLightningBolt = 2`，服务端 `age >= maxAge` 后移除。
+- `NukeSolinium` 起爆时：
+  - MK3 爆炸实体位置同样为方块中心；
+  - 同时生成 `EntityCloudSolinium(world, r)`，位置为方块坐标 `(x, y, z)`；
+  - 云实体每 tick 在 `(posX, posY + 200, posZ)` 生成闪电实体，`age >= maxAge` 后移除。
+- `NukeCustom`：
+  - `euph > 0` 分支生成 `EntityNukeExplosionMK3`，`destructionRange = 150`，并生成 `EntityCloudFleijaRainbow(world, 50)`；
+  - `schrab > 0` 分支生成 `EntityCloudFleija(world, schrab)`，位置为 `(x + 0.5, y + 0.5, z + 0.5)`。
+- 旧 `EntityMappings` 中 `EntityCloudFleija` 注册名为 `entity_cloud_fleija`，`EntityCloudFleijaRainbow` 注册名为 `entity_cloud_rainbow`；`EntityCloudSolinium` 旧源码也写成了 `entity_cloud_rainbow`，但这是旧注册表可容忍的重复名风险。
+- 旧 renderer：
+  - Fleija 使用 `ResourceManager.sphere_new`，青色核心、暗青加法外层和灰白 shockwave。
+  - Solinium 使用 `ResourceManager.sphere_new`，颜色 `0x27FFDA`，外层 alpha `0.125` 加法混合。
+  - Rainbow 使用 `models/Sphere.obj`，每次渲染随机 RGB，先 `age` 缩放，再渲染 0.5 内核和 0.6 到 1.0 的外层。
+
+现代迁入：
+
+- 新增现代实体：
+  - `CloudFleijaEntity`
+  - `CloudSoliniumEntity`
+  - `CloudFleijaRainbowEntity`
+- 新增客户端 renderer：
+  - `CloudFleijaRenderer`
+  - `CloudSoliniumRenderer`
+  - `CloudFleijaRainbowRenderer`
+- 复用现代 OBJ 库中的 `ObjEffectModels.SPHERE_NEW` 渲染 Fleija/Solinium；补入旧 `Sphere.obj` 到 `assets/hbm/models/block/effects/sphere.obj` 并暴露为 `ObjEffectModels.SPHERE`，用于 Rainbow 云。
+- `ModEntityTypes` 新增：
+  - `entity_cloud_fleija`
+  - `entity_cloud_rainbow`
+  - `entity_cloud_solinium`
+- Solinium 现代注册名使用 `entity_cloud_solinium`，避免旧源码中与 rainbow 重名导致 1.20 注册冲突。
+- `NuclearExplosionUtil` 现在在 MK3 Fleija/Solinium 爆炸实体成功加入世界后同步生成对应云实体：
+  - 普通 `spawnFleija/spawnSolinium` 保持云位置等于传入爆心，用于 custom/导弹/投掷物语义。
+  - 方块核弹入口 `spawnPrototype/spawnFleijaBomb/spawnSoliniumBomb` 使用云位置 `(center - 0.5)`，对齐旧 `NukePrototype/NukeFleija/NukeSolinium` 的方块坐标云。
+  - 新增 `spawnFleijaRainbow(...)`，`CustomNukeExplosion.euph > 0` 改回旧彩虹 Fleija 云，半径 150，云寿命 50。
+
+### 2026-05-25 追加：EntityNukeTorex 普通/野火大核爆云
+
+复核来源：
+
+- `com.hbm.entity.effect.EntityNukeTorex`
+- `com.hbm.render.entity.effect.RenderTorex`
+- `com.hbm.entity.EntityMappings`
+- `assets/hbm/textures/particle/particle_base.png`
+- `assets/hbm/textures/particle/flare.png`
+- `assets/hbm/sounds/weapon/nuclearExplosion.ogg`
+- `assets/hbm/sounds.json` 中旧 `weapon.nuclearExplosion`
+- 参考版 `com.hbm.entity.effect.EntityNukeTorex` / `EntityTorexRender` 仅作 1.20 API 适配参考；缩放和 cloudlet 生成公式回到 1.7.10。
+
+旧版行为要点：
+
+- `EntityMappings` 注册名为 `entity_effect_torex`，追踪距离旧代码后续通过 `TrackerUtil.setTrackingRange(..., 1000)` 提升。
+- 服务端只同步 `scale` 与 `type` 并按 `45 * 20 * scale` 生命周期移除；实体不保存，读取 NBT 时直接死亡。
+- `statFacStandard` / `statFacBale` 都调用 `statFac`，缩放公式为 `clamp(squirt(radius * 0.01) * 1.5, 0.5, 5)`；`type=1` 为野火绿色云。
+- 客户端模拟 cloudlet：
+  - tick 1 将局部仿真 scale 固定为 1.5；
+  - 前 100 tick sky flash；
+  - 普通 mushroom cloud 每 tick 按 `ceil(10 * simSpeed^2)` 生成；
+  - 前 150 tick 生成 shock cloud，并在玩家进入声波半径时播放旧 `weapon.nuclearExplosion`；
+  - `tick < 130 * 1.5` 生成 ring cloud；
+  - `tick > 130 * 1.5 && tick < 600 * 1.5` 与 `tick > 200 * 1.5 && tick < 600 * 1.5` 生成两层 condensation cloud；
+  - core/torus/roller/heat 更新公式沿用 1.7.10。
+- 旧 renderer 使用 `particle_base.png` billboard 渲染 cloudlet，按玩家距离从远到近排序；前 100 tick 用 `flare.png` 叠加三张闪光 billboard；播放核爆声后触发玩家 hurtTime 震动。
+
+现代迁入：
+
+- 新增 `NukeTorexEntity`：
+  - 注册名 `entity_effect_torex`；
+  - `SynchedEntityData` 同步 scale/type；
+  - 保留 1.7.10 `squirt(radius * 0.01) * 1.5` 缩放、`45 * 20 * scale` 生命周期、cloudlet 阶段和颜色公式；
+  - 客户端播放独立声事件 `weapon.nuclear_explosion`，对应旧 `weapon.nuclearExplosion`。1.20 `ResourceLocation` 不允许大写，因此现代 ID 使用 snake_case，资源来自旧 `nuclearExplosion.ogg`。
+- 新增 `NukeTorexRenderer`：
+  - 使用普通 `VertexConsumer` billboard 渲染 `particle_base.png` cloudlet；
+  - 复刻旧 flare 前 100 tick 闪光；
+  - 保留 sound 后客户端 hurtTime 震动。
+- `ModEntityTypes` / `ClientModEvents` 接入实体和 renderer。
+- `ModSounds`、`sounds.json`、语言项新增 `weapon.nuclear_explosion` / `subtitles.hbm.weapon.nuclear_explosion`。
+- 复制旧资源：
+  - `textures/particle/flare.png`
+  - `sounds/weapon/nuclearExplosion.ogg` -> `sounds/weapon/nuclear_explosion.ogg`
+- `NuclearExplosionUtil` 现在在普通 MK5/N2/no-fallout/dirty fallout 核爆实体成功加入世界后同步生成 standard Torex。
+- `WeaponExplosionUtil.spawnBalefire(...)` 在生成 `BalefireExplosionEntity` 后同步生成 balefire Torex。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks` 通过。
+
+仍缺/延期：
+
+- `NukeCustom` 方块、完整 `TileEntityNukeCustom` GUI/库存与 custom missile 实体仍待后续迁入；本批只补齐当前已有核爆/野火爆炸入口的 Torex 视觉云。
+- `EntityCloudFleijaRainbow` 的武器/子弹/TileEntityCore 等其他调用点属于武器或机器迁移范围，本批没有扩线接入。
+- 本批不改变辐射库/区块辐射数据算法，只补核爆大型视觉实体与旧音效。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks` 通过。
+
 ## 验证清单
 
 - 普通爆炸不会在客户端修改世界。

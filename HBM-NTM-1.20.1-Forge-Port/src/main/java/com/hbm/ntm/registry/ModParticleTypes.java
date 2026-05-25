@@ -73,6 +73,14 @@ public final class ModParticleTypes {
             PARTICLE_TYPES.register("splash", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> FLUID_FILL =
             PARTICLE_TYPES.register("fluid_fill", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> NETWORK_POWER =
+            PARTICLE_TYPES.register("network_power", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> NETWORK_FLUID =
+            PARTICLE_TYPES.register("network_fluid", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> PLASMA_BLAST =
+            PARTICLE_TYPES.register("plasma_blast", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> HAZE =
+            PARTICLE_TYPES.register("haze", () -> new SimpleParticleType(false));
 
     private ModParticleTypes() {
     }

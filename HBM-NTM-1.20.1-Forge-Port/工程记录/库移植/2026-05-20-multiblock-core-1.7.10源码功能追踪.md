@@ -155,6 +155,87 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+## 2026-05-25 直接放置 core 后置钩子补齐
+
+触发来源：
+
+- 继续复核 1.7.10 `BlockDummyable.onBlockPlacedBy(...)` 后确认，旧版多方块即使最终 core 被迁移到偏移位置，也仍会在放置流程中处理 core 初始化、持久 NBT 恢复、后续方块初始化钩子和 dummy 填充。
+- 现代 `MultiblockBlockItem` 为避免原版 `BlockItem` 的大碰撞盒临时放置问题，直接在最终 core 位置 `setBlock(...)`，但此前只调用 `completeDirectMultiblockPlacement(...)` 填充 dummy，没有给 core 一个等价的放置后初始化入口。
+
+问题定位：
+
+- 不能直接在 `MultiblockBlockItem` 中调用 block 的 `setPlacedBy(...)`：
+  - `LegacyXrMultiblockBlock#setPlacedBy(...)` 是给原版临时格放置路径保留的兼容入口，会按旧 `getOffset()` 再次迁移 core。
+  - 直接放置路径若调用该 override，会把已经正确落在最终位置的 core 二次偏移。
+
+本轮现代侧补齐：
+
+- `LegacyMultiblockPlaceable` 新增 `afterDirectCorePlaced(...)` 钩子，专用于 `MultiblockBlockItem` 已经把 core 放到最终位置后的初始化。
+- `MultiblockBlockItem` 在写入方块实体 item NBT 后、填充 dummy 前调用 `afterDirectCorePlaced(...)`。
+- `LegacyXrMultiblockBlock` 与 `LegacyOffsetMultiblockBlock` 的 direct-placement 实现只调用 `super.setPlacedBy(...)`，跳过自身兼容 relocation 逻辑，避免二次迁移。
+- dummy 填充仍保留在 `completeDirectMultiblockPlacement(...)`，因此直接放置路径的 core 初始化和 dummy 填充顺序明确且不会重复。
+
+效果：
+
+- 后续多方块 core 若依赖 vanilla/modern `setPlacedBy(...)` 链上的初始化，直接放置路径可以稳定触发。
+- 保留旧 `BlockDummyable` 的“临时格路径”和现代 `MultiblockBlockItem` 的“最终 core 直放路径”之间的职责分离，减少后续迁入高偏移机器时出现 core 二次偏移。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks` 通过。
+
+## 2026-05-25 公共 core lookup 抽出
+
+触发来源：
+
+- 继续核对 1.7.10 `BlockDummyable#findCore(...)` 后确认，旧版从任意 dummy / extra 回溯 core 是一个共享入口：GUI 打开、碰撞/射线、复制配置、兼容层等都依赖它。
+- 现代端此前 `DummyBlock` 内部有私有 `findCore(...)`，`CompatEnergyControl` 又手写了一套 `MultiblockDummyBlockEntity -> core BlockEntity` 解析；后续机器、命令和兼容层继续扩展时容易分叉。
+
+本轮现代侧补齐：
+
+- `MultiblockHelper` 新增公共解析入口：
+  - `findCore(BlockGetter, BlockPos)`：从 dummy 位置解析到 `CoreLookup`。
+  - `findCoreAt(BlockGetter, BlockPos corePos)`：验证目标 core 区块已加载且方块实现 `MultiblockCoreBlock`。
+  - `resolveCoreBlockEntity(BlockEntity)`：如果传入 dummy BE，则返回 core BE；无法解析时保守返回原 BE。
+- `DummyBlock` 的选择盒/碰撞盒、破坏速度、中键拾取改用 `MultiblockHelper.findCore(...)`。
+- `CompatEnergyControl.findTileEntity(...)` 改用 `MultiblockHelper.resolveCoreBlockEntity(...)`，避免兼容层复制 dummy 解析规则。
+
+对 1.7.10 的对齐说明：
+
+- 旧版 `findCoreRec(...)` 通过同方块 metadata 指向链寻找 core；现代端 dummy 已直接保存 `CorePos`，因此不复刻递归 metadata 链，而是复刻“任意 dummy 可统一解析 core”的功能合同。
+- 解析过程中保留现代端已有跨区块保护：core 区块未加载时不强行读取，也不把 dummy 当成孤儿。
+
+验证：
+
+- 待跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`。
+
+## 2026-05-25 可见多方块默认 shape 勘误
+
+触发来源：
+
+- 继续推进多方块库时发现，当前大部分可见机器在游戏中容易表现为“只有核心方块和 OBJ 模型，外围像没有填充方块”。
+- 复核 1.7.10 `BlockDummyable` 后确认，外围 dummy 本来就不负责独立渲染；它们的核心职责是占位、碰撞/选择、右键转发、破坏联动和 proxy 能力。
+- 现代端的 `hbm:dummy_block` 也刻意使用 `RenderShape.INVISIBLE`，因此“看不见钢块外壳”不是错误；真正错误是可见多方块默认选择/碰撞 shape 退回了单格核心。
+
+勘误结论：
+
+- `LegacyMachineDefinition#collisionShape(...)` 已经提供正确默认值：没有单台精细碰撞盒时，应使用 `layout(state).shape(1.0D)` 覆盖整机 layout。
+- `LegacyVisibleMultiblockMachineBlock#getMultiblockShape(...)` 此前在没有显式碰撞工厂时返回 `Shapes.block()`，导致 dummy 通过 `DummyBlock` 回溯 core shape 后，只拿到一格核心形状；外围 dummy 实际存在，但选中/碰撞体验像不存在。
+
+本轮现代侧修正：
+
+- `LegacyVisibleMultiblockMachineBlock#getMultiblockShape(...)` 统一返回 `definition.collisionShape(state)`。
+- 单台已有 `.collisionShape(...)` 的机器仍使用精细/显式 shape；没有显式配置的可见多方块机器现在默认使用旧 XR layout 的整机占位形状。
+
+对 1.7.10 的对齐说明：
+
+- 1.7.10 `BlockDummyable` 的 dummy 是同一个方块 ID 的 metadata 形态，普通 dummy 并不绘制 OBJ 外围块；现代端用独立隐形 dummy block 表达同一语义是正确路线。
+- 1.7.10 `addCollisionBoxesToList(...)` / `collisionRayTrace(...)` 会从任意 dummy `findCore(...)` 回到 core，再按整机 `bounding` 或默认方块盒参与碰撞与射线；现代端现在通过 `MultiblockCoreBlock#getMultiblockShape(...)` 恢复这条路径。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ## 2026-05-25 dummy 跨区块加载保护
 
 触发来源：
@@ -833,3 +914,32 @@
 
 - 首次 `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks` 发现 Forge 1.20.1 的 `BlockState#getCloneItemStack` 签名与 vanilla `Block` 签名不同，已改为调用 core block 的 `getCloneItemStack(...)`。
 - 修正后 `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks` 通过。
+
+## 2026-05-25 legacy extra dummy 身份补齐
+
+触发来源：
+
+- 继续核对 1.7.10 `BlockDummyable` 后确认，旧版 metadata `6-11` 是普通 dummy 的 `extra` 变体。
+- 旧 `makeExtra(...)` / `removeExtra(...)` 不只是“额外占位”，还会让 `createNewTileEntity(...)` 走 `TileEntityProxyCombo`、门开闭状态、RBMK 顶部代理、涡扇连接点等分支。
+- 现代端此前只保存 `Proxy` / typed proxy mode，没有单独保存“这是旧 extra metadata”的身份；后续移植运行时结构切换时会缺少 `hasExtra(meta)` 的等价判断点。
+
+本轮现代侧补齐：
+
+- `MultiblockDummyBlockEntity` 新增 `LegacyExtra` NBT 字段与 `isLegacyExtra()` / `setLegacyExtra(...)`。
+- `LegacyMultiblockLayout` 新增 legacy extra offset 记录：
+  - proxy offset 自动视为 legacy extra，对齐旧版 `meta >= extra` 才生成 proxy tile 的约定。
+  - 保留 `withLegacyExtraOffsets(...)`，用于后续表达“extra 但不是 capability proxy”的旧结构状态。
+- `LegacyXrMultiblockBlock` 与 `LegacyOffsetMultiblockBlock` 的填充路径会把 `layout::isLegacyExtraOffset` 写入 dummy。
+- `MultiblockHelper` 新增运行时 API：
+  - `makeLegacyExtra(level, pos, proxyMode)`
+  - `removeLegacyExtra(level, pos[, restoredProxyMode])`
+  - `isLegacyExtra(level, pos)`
+
+效果：
+
+- 多方块库现在保留了旧 `BlockDummyable` metadata `6-11` 的语义层，而不是只用 Forge capability proxy 近似表达。
+- 后续迁移涡扇重构、门开闭、RBMK 顶部/侧边代理、发射台和其他动态 dummy 升级逻辑时，可以通过库级 API 对齐旧 `makeExtra/removeExtra/hasExtra`。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。

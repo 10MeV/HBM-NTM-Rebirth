@@ -26,6 +26,9 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -47,6 +50,10 @@ public final class HbmParticleEffects {
             level.addParticle(ModParticleTypes.GAS_FLAME.get(), x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"));
         } else if (ParticleUtil.TYPE_DEBUG_DRONE.equals(type) || ParticleUtil.TYPE_DEBUG_LINE.equals(type)) {
             spawnDebugLine(level, x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"), data.getInt("color"));
+        } else if (ParticleUtil.TYPE_DEBUG_TEXT.equals(type)) {
+            spawnDebugText(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_NETWORK.equals(type)) {
+            spawnNetworkDebug(level, data, x, y, z);
         } else if ("waterSplash".equals(type)) {
             burstSimple(level, ParticleTypes.CLOUD, x, y, z, 10, 1.0D);
         } else if ("cloudFX2".equals(type)) {
@@ -120,6 +127,24 @@ public final class HbmParticleEffects {
             spawnFluidFill(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_FOUNDRY.equals(type)) {
             spawnFoundry(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_FIREWORKS.equals(type)) {
+            spawnFireworks(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_HAZE.equals(type)) {
+            spawnHaze(level, x, y, z);
+        } else if (ParticleUtil.TYPE_PLASMA_BLAST.equals(type)) {
+            spawnPlasmaBlast(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_JUST_TILT.equals(type)) {
+            applyClientJolt(data.getInt("time"), data.getInt("time"));
+        } else if (ParticleUtil.TYPE_PROPER_JOLT.equals(type)) {
+            applyClientJolt(data.getInt("time"), data.getInt("maxTime"));
+        } else if (ParticleUtil.TYPE_JETPACK.equals(type)) {
+            spawnJetpack(level, data);
+        } else if (ParticleUtil.TYPE_BNUUY.equals(type)) {
+            spawnBnuuy(level, data);
+        } else if (ParticleUtil.TYPE_JETPACK_BJ.equals(type) || ParticleUtil.TYPE_JETPACK_DNS.equals(type)) {
+            spawnColoredJetpack(level, data, ParticleUtil.TYPE_JETPACK_DNS.equals(type));
+        } else if (ParticleUtil.TYPE_RADIATION.equals(type)) {
+            spawnRadiationAura(level, data);
         } else if ("muke".equals(type) || "tinytot".equals(type)) {
             spawnMuke(level, data, x, y, z, "tinytot".equals(type));
         } else if ("chaosCloud".equals(type)) {
@@ -136,6 +161,172 @@ public final class HbmParticleEffects {
 
     private static void spawnDebugLine(ClientLevel level, double x, double y, double z, double lineX, double lineY, double lineZ, int color) {
         Minecraft.getInstance().particleEngine.add(new DebugLineParticle(level, x, y, z, lineX, lineY, lineZ, color));
+    }
+
+    private static void spawnDebugText(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Minecraft.getInstance().particleEngine.add(new DebugTextParticle(level, x, y, z,
+                data.getInt("color"),
+                data.getString("text"),
+                Math.max(0.1F, getFloat(data, "scale", 1.0F))));
+    }
+
+    private static void spawnNetworkDebug(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Particle particle = null;
+        double motionX = data.getDouble("mX");
+        double motionY = data.getDouble("mY");
+        double motionZ = data.getDouble("mZ");
+        if ("power".equals(data.getString("mode"))) {
+            particle = NetworkDebugParticle.power(level, x, y, z, motionX, motionY, motionZ);
+        } else if ("fluid".equals(data.getString("mode"))) {
+            particle = NetworkDebugParticle.fluid(level, x, y, z, motionX, motionY, motionZ, data.getInt("color"));
+        }
+        if (particle != null) {
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
+    }
+
+    private static void spawnFireworks(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        int color = data.getInt("color");
+        Minecraft.getInstance().particleEngine.add(new FireworkLetterParticle(level, x, y, z, color, (char) data.getInt("char")));
+        RandomSource random = level.random;
+        for (int i = 0; i < 50; i++) {
+            level.addParticle(ParticleTypes.FIREWORK, x, y, z,
+                    random.nextGaussian() * 0.4D,
+                    random.nextGaussian() * 0.4D,
+                    random.nextGaussian() * 0.4D);
+        }
+    }
+
+    private static void spawnHaze(ClientLevel level, double x, double y, double z) {
+        Particle particle = HazeParticle.create(level, x, y, z);
+        if (particle != null) {
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
+    }
+
+    private static void spawnPlasmaBlast(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        Particle particle = PlasmaBlastParticle.create(level, x, y, z,
+                getFloat(data, "r", 1.0F),
+                getFloat(data, "g", 1.0F),
+                getFloat(data, "b", 1.0F),
+                getFloat(data, "pitch", 0.0F),
+                getFloat(data, "yaw", 0.0F),
+                Math.max(0.1F, getFloat(data, "scale", 1.0F)));
+        if (particle != null) {
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
+    }
+
+    private static void applyClientJolt(int time, int maxTime) {
+        if (Minecraft.getInstance().player != null) {
+            Minecraft.getInstance().player.hurtTime = time;
+            Minecraft.getInstance().player.hurtDuration = Math.max(time, maxTime);
+        }
+    }
+
+    private static void spawnJetpack(ClientLevel level, CompoundTag data) {
+        Entity entity = level.getEntity(data.getInt("player"));
+        if (entity == null) {
+            return;
+        }
+        JetpackPose pose = jetpackPose(entity, 0.25D, 0.125D, entity.getEyeHeight() - 1.0D);
+        int mode = data.getInt("mode");
+        Vec3 thrust = Vec3.ZERO;
+        if (mode == 0) {
+            thrust = new Vec3(0.0D, -0.2D, 0.0D);
+        } else if (mode == 1) {
+            thrust = entity.getLookAngle().scale(-0.1D);
+        }
+        Vec3 motion2 = clamp(entity.getDeltaMovement().add(thrust.scale(2.0D)), 5.0D);
+        Vec3 motion3 = clamp(entity.getDeltaMovement().add(thrust.scale(2.0D)), 10.0D);
+        spawnDual(level, ParticleTypes.FLAME, pose, motion2);
+        spawnGroundKick(level, pose.center(), thrust.normalize());
+        spawnDual(level, ParticleTypes.SMOKE, pose, motion3);
+    }
+
+    private static void spawnBnuuy(ClientLevel level, CompoundTag data) {
+        Entity entity = level.getEntity(data.getInt("player"));
+        if (entity == null) {
+            return;
+        }
+        JetpackPose pose = jetpackPose(entity, 0.6D, 0.275D, entity.getEyeHeight() - 0.6D);
+        Vec3 backward = pose.backward().normalize().scale(0.025D);
+        spawnDual(level, ParticleTypes.SMOKE, pose, new Vec3(backward.x(), 0.0D, backward.z()));
+    }
+
+    private static void spawnColoredJetpack(ClientLevel level, CompoundTag data, boolean dns) {
+        Entity entity = level.getEntity(data.getInt("player"));
+        if (entity == null) {
+            return;
+        }
+        JetpackPose pose = dns
+                ? jetpackPose(entity, 0.0D, 0.125D, -0.5D)
+                : jetpackPose(entity, 0.3125D, 0.125D, entity.getEyeHeight() - 0.9375D);
+        spawnGroundKick(level, pose.center(), new Vec3(0.0D, -1.0D, 0.0D));
+        Vec3 motion = entity.getDeltaMovement();
+        ParticleOptions dust = dns
+                ? new DustParticleOptions(new Vector3f(0.01F, 1.0F, 1.0F), 1.0F)
+                : new DustParticleOptions(new Vector3f(0.8F, 0.5F, 1.0F), 1.0F);
+        spawnDual(level, dust, pose, motion);
+    }
+
+    private static void spawnRadiationAura(ClientLevel level, CompoundTag data) {
+        Entity player = Minecraft.getInstance().player;
+        if (player == null) {
+            return;
+        }
+        int count = Math.max(1, data.getInt("count"));
+        RandomSource random = level.random;
+        for (int i = 0; i < count; i++) {
+            level.addParticle(ModParticleTypes.SCHRAB_FOG.get(),
+                    player.getX() + random.nextGaussian() * 4.0D,
+                    player.getY() + random.nextGaussian() * 2.0D,
+                    player.getZ() + random.nextGaussian() * 4.0D,
+                    random.nextGaussian(), random.nextGaussian(), random.nextGaussian());
+        }
+    }
+
+    private static JetpackPose jetpackPose(Entity entity, double backwardOffset, double sideOffset, double yOffset) {
+        double yaw = Math.toRadians(entity.getYRot());
+        Vec3 backward = new Vec3(Math.sin(yaw) * backwardOffset, 0.0D, -Math.cos(yaw) * backwardOffset);
+        Vec3 side = new Vec3(Math.cos(yaw) * sideOffset, 0.0D, Math.sin(yaw) * sideOffset);
+        Vec3 center = new Vec3(entity.getX(), entity.getY() + yOffset, entity.getZ()).add(backward);
+        return new JetpackPose(center, side, backward);
+    }
+
+    private static void spawnDual(ClientLevel level, ParticleOptions particle, JetpackPose pose, Vec3 motion) {
+        Vec3 left = pose.center().add(pose.side());
+        Vec3 right = pose.center().subtract(pose.side());
+        level.addParticle(particle, left.x(), left.y(), left.z(), motion.x(), motion.y(), motion.z());
+        level.addParticle(particle, right.x(), right.y(), right.z(), motion.x(), motion.y(), motion.z());
+    }
+
+    private static void spawnGroundKick(ClientLevel level, Vec3 origin, Vec3 thrust) {
+        if (thrust.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+        Vec3 target = origin.add(thrust.normalize().scale(10.0D));
+        BlockHitResult hit = level.clip(new ClipContext(origin, target, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, Minecraft.getInstance().player));
+        if (hit.getType() != HitResult.Type.BLOCK || hit.getDirection() != Direction.UP) {
+            return;
+        }
+        BlockState state = level.getBlockState(hit.getBlockPos());
+        Vec3 delta = origin.subtract(hit.getLocation());
+        int count = Math.max(0, (int) (10.0D - delta.length()));
+        for (int i = 0; i < count; i++) {
+            double theta = level.random.nextDouble() * Math.PI * 2.0D;
+            double speed = 0.75D - delta.length() * 0.075D;
+            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, state),
+                    hit.getLocation().x(), hit.getLocation().y() + 0.1D, hit.getLocation().z(),
+                    Math.cos(theta) * speed, 0.1D, Math.sin(theta) * speed);
+        }
+    }
+
+    private static Vec3 clamp(Vec3 vec, double max) {
+        return new Vec3(Mth.clamp(vec.x(), -max, max), Mth.clamp(vec.y(), -max, max), Mth.clamp(vec.z(), -max, max));
+    }
+
+    private record JetpackPose(Vec3 center, Vec3 side, Vec3 backward) {
     }
 
     private static void spawnVanillaBurst(ClientLevel level, CompoundTag data, double x, double y, double z) {

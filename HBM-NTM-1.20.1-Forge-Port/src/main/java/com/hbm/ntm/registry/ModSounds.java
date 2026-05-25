@@ -24,6 +24,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> PLAYER_VOMIT = register("player.vomit");
     public static final RegistryObject<SoundEvent> ENTITY_UFO_BLAST = register("entity.ufo_blast");
     public static final RegistryObject<SoundEvent> WEAPON_MUKE_EXPLOSION = register("weapon.muke_explosion");
+    public static final RegistryObject<SoundEvent> WEAPON_NUCLEAR_EXPLOSION = register("weapon.nuclear_explosion");
     public static final RegistryObject<SoundEvent> WEAPON_FSTBMB_START = register("weapon.fstbmb_start");
     public static final RegistryObject<SoundEvent> WEAPON_FSTBMB_PING = register("weapon.fstbmb_ping");
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_LARGE_NEAR = register("weapon.explosion_large_near");

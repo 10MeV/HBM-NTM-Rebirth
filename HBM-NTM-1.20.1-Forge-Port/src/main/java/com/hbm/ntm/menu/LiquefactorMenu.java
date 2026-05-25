@@ -5,6 +5,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -73,9 +74,9 @@ public class LiquefactorMenu extends AbstractContainerMenu {
         return tankCapacity <= 0 ? 0 : tankFill * maxHeight / tankCapacity;
     }
 
-    public String getTankInfo() {
+    public Component getTankInfo() {
         HbmFluidTank tank = blockEntity.getTank();
-        return tank.getTankType().getName() + ": " + tankFill + " / " + tankCapacity + " mB";
+        return tank.getTankType().getDisplayName().copy().append(": " + tankFill + " / " + tankCapacity + " mB");
     }
 
     @Override

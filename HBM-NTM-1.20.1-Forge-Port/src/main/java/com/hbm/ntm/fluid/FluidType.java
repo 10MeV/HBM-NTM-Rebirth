@@ -4,12 +4,16 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.trait.ContainerFluidTrait;
 import com.hbm.ntm.fluid.trait.FluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -78,6 +82,22 @@ public final class FluidType {
         return name.toLowerCase(Locale.US);
     }
 
+    public String getTranslationKey() {
+        return "hbmfluid." + toPath();
+    }
+
+    public Component getDisplayName() {
+        return Component.translatableWithFallback(getTranslationKey(), prettyName(name));
+    }
+
+    public Component getFallbackDisplayName() {
+        return getDisplayName();
+    }
+
+    public Component getDebugName() {
+        return getDisplayName().copy().append(Component.literal(" (" + name + ")").withStyle(ChatFormatting.DARK_GRAY));
+    }
+
     public int getColor() {
         return color;
     }
@@ -108,6 +128,28 @@ public final class FluidType {
 
     public ResourceLocation getTexture() {
         return texture;
+    }
+
+    public void appendInfo(List<Component> info, boolean showHidden) {
+        if (temperature != ROOM_TEMPERATURE) {
+            info.add(Component.literal(temperature + "\u00b0C")
+                    .withStyle(temperature < ROOM_TEMPERATURE ? ChatFormatting.BLUE : ChatFormatting.RED));
+        }
+
+        List<Component> hidden = new ArrayList<>();
+        for (FluidTrait trait : traits.values()) {
+            trait.addInfo(info);
+            if (showHidden) {
+                trait.addHiddenInfo(info);
+            } else {
+                trait.addHiddenInfo(hidden);
+            }
+        }
+
+        if (!hidden.isEmpty() && !showHidden) {
+            info.add(Component.translatable("hbmfluid.info.hold_shift")
+                    .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+        }
     }
 
     public boolean isHot() {
@@ -160,5 +202,22 @@ public final class FluidType {
 
     public HbmFluidContactEffects.ContactReport previewEntityContact(Entity entity, float intensity) {
         return HbmFluidContactEffects.previewContact(this, entity, intensity);
+    }
+
+    private static String prettyName(String raw) {
+        StringBuilder builder = new StringBuilder();
+        for (String part : raw.toLowerCase(Locale.US).split("_")) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            if (!builder.isEmpty()) {
+                builder.append(' ');
+            }
+            builder.append(Character.toUpperCase(part.charAt(0)));
+            if (part.length() > 1) {
+                builder.append(part.substring(1));
+            }
+        }
+        return builder.toString();
     }
 }

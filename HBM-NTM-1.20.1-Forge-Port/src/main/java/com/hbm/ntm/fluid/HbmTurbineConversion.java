@@ -22,6 +22,15 @@ public final class HbmTurbineConversion {
                 powerProduced);
     }
 
+    public static TurbineResult runPercentOfAvailable(HbmFluidTank input, HbmFluidTank output, double efficiency,
+            double consumptionPercent, boolean simulate) {
+        if (input == null || consumptionPercent <= 0.0D) {
+            return TurbineResult.empty();
+        }
+        int maxInputMb = getPercentInputLimit(input, consumptionPercent);
+        return run(input, output, efficiency, maxInputMb, simulate);
+    }
+
     public static void prepareOutputTank(HbmFluidTank input, HbmFluidTank output) {
         if (input == null || output == null) {
             return;
@@ -33,6 +42,27 @@ public final class HbmTurbineConversion {
             return;
         }
         output.setTankType(trait.getCoolsTo());
+    }
+
+    public static long previewMaxPowerForPercent(HbmFluidTank input, double efficiency, double consumptionPercent) {
+        CoolableFluidTrait trait = input == null ? null : input.getTankType().getTrait(CoolableFluidTrait.class);
+        if (trait == null || trait.getEfficiency(CoolingType.TURBINE) <= 0.0D || trait.getAmountRequired() <= 0
+                || consumptionPercent <= 0.0D || efficiency <= 0.0D) {
+            return 0L;
+        }
+        int operations = (int) Math.ceil((input.getMaxFill() * consumptionPercent) / trait.getAmountRequired());
+        return Math.max(0L,
+                (long) (operations * trait.getHeatEnergy() * trait.getEfficiency(CoolingType.TURBINE) * efficiency));
+    }
+
+    private static int getPercentInputLimit(HbmFluidTank input, double consumptionPercent) {
+        CoolableFluidTrait trait = input.getTankType().getTrait(CoolableFluidTrait.class);
+        if (trait == null || trait.getAmountRequired() <= 0) {
+            return 0;
+        }
+        int inputOperations = input.getFill() / trait.getAmountRequired();
+        int cappedOperations = (int) Math.ceil(inputOperations * consumptionPercent);
+        return Math.max(0, cappedOperations * trait.getAmountRequired());
     }
 
     private HbmTurbineConversion() {

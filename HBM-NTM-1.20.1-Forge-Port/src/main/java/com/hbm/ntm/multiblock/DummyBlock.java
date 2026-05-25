@@ -66,14 +66,14 @@ public class DummyBlock extends Block implements EntityBlock {
 
     @Override
     public float getDestroyProgress(BlockState state, Player player, BlockGetter level, BlockPos pos) {
-        CoreLookup core = findCore(level, pos);
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
         return core == null ? super.getDestroyProgress(state, player, level, pos)
                 : core.state().getDestroyProgress(player, level, core.pos());
     }
 
     @Override
     public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
-        CoreLookup core = findCore(level, pos);
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
         return core == null ? ItemStack.EMPTY
                 : core.state().getBlock().getCloneItemStack(level, core.pos(), core.state());
     }
@@ -122,7 +122,7 @@ public class DummyBlock extends Block implements EntityBlock {
     }
 
     private VoxelShape forwardedShape(BlockGetter level, BlockPos pos, CollisionContext context, boolean collision) {
-        CoreLookup core = findCore(level, pos);
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
         if (core != null && core.state().getBlock() instanceof MultiblockCoreBlock coreBlock) {
             VoxelShape shape = collision
                     ? coreBlock.getMultiblockCollisionShape(core.state(), level, core.pos(), context)
@@ -133,22 +133,6 @@ public class DummyBlock extends Block implements EntityBlock {
                     core.pos().getZ() - pos.getZ());
         }
         return SHAPE;
-    }
-
-    @Nullable
-    private static CoreLookup findCore(BlockGetter level, BlockPos pos) {
-        if (!(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) || dummy.getCorePos() == null) {
-            return null;
-        }
-        BlockPos corePos = dummy.getCorePos();
-        if (level instanceof Level worldLevel && !worldLevel.hasChunkAt(corePos)) {
-            return null;
-        }
-        BlockState coreState = level.getBlockState(corePos);
-        return coreState.getBlock() instanceof MultiblockCoreBlock ? new CoreLookup(corePos, coreState) : null;
-    }
-
-    private record CoreLookup(BlockPos pos, BlockState state) {
     }
 
     @Override

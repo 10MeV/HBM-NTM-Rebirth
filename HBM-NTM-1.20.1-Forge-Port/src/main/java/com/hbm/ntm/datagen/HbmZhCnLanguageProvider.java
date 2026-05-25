@@ -105,6 +105,9 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.inf_water", "\u65e0\u9650\u6c34");
         add("item.hbm.inf_water_mk2", "\u65e0\u9650\u6c34 Mk2");
         add("item.hbm.chlorine_pinwheel", "\u6c2f\u6c14\u98ce\u8f6e");
+        add("item.hbm.fluid_identifier_multi", "\u591a\u7c7b\u578b\u6d41\u4f53\u8bc6\u522b\u7801");
+        add("item.hbm.fluid_identifier_multi.info", "\u6d41\u4f53\uff1a");
+        add("item.hbm.fluid_identifier_multi.info2", "\u6b21\u8981\u7c7b\u578b\uff1a");
         add("item.hbm.battery_potato", "\u9a6c\u94c3\u85af\u7535\u6c60");
         add("item.hbm.battery_creative", "\u65e0\u9650\u7535\u6c60");
         add("item.hbm.battery_redstone", "\u7ea2\u77f3\u7535\u6c60");
@@ -170,6 +173,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_boiler_off", "\u9505\u7089");
         add("block.hbm.machine_shredder", "\u7c89\u788e\u673a");
         add("block.hbm.machine_turbine", "\u84b8\u6c7d\u8f6e\u673a");
+        add("block.hbm.machine_industrial_turbine", "\u5de5\u4e1a\u84b8\u6c7d\u8f6e\u673a");
         add("block.hbm.decon", "\u6d88\u6c61\u5668");
         add("block.hbm.red_cable", "\u7d2b\u94dc\u7535\u7ebf");
         add("block.hbm.fluid_duct_neo", "\u6d41\u4f53\u7ba1\u9053");
@@ -232,6 +236,15 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("container.hbm.battery.priority.normal", "\u666e\u901a");
         add("container.hbm.battery.priority.high", "\u9ad8");
         add("container.hbm.battery.priority.recommended", "\u63a8\u8350\uff1a\u4f4e");
+        HbmFluidLangEntries.addChinese(this::add);
+        add("container.fluidtank", "\u6d41\u4f53\u50a8\u7f50");
+        add("container.fluidtank.mode", "\u6a21\u5f0f");
+        add("container.fluidtank.mode.input", "\u8f93\u5165");
+        add("container.fluidtank.mode.buffer", "\u7f13\u51b2");
+        add("container.fluidtank.mode.output", "\u8f93\u51fa");
+        add("container.fluidtank.mode.none", "\u505c\u7528");
+        add("container.fluidtank.damaged", "\u635f\u574f");
+        add("container.fluidtank.burning", "\u71c3\u70e7");
         add("block.hbm.gas_meltdown", "\u7194\u6bc1\u6c14\u4f53");
         add("block.hbm.gas_monoxide", "\u4e00\u6c27\u5316\u78b3");
         add("block.hbm.gas_asbestos", "\u77f3\u68c9\u7c89\u5c18");
@@ -278,6 +291,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.nuke_fstbmb", "\u91ce\u706b\u70b8\u5f39");
         add("block.hbm.bomb_multi", "\u591a\u529f\u80fd\u70b8\u5f39");
         add("subtitles.hbm.weapon.fstbmb", "\u91ce\u706b\u70b8\u5f39\u4fe1\u53f7");
+        add("subtitles.hbm.weapon.nuclear_explosion", "\u6838\u7206");
         add("block.hbm.yellow_barrel", "\u6838\u5e9f\u6599\u6876");
         add("block.hbm.vitrified_barrel", "\u73bb\u7483\u5316\u6838\u5e9f\u6599\u6876");
         ModItems.EXTRA_PARTS_TAB_ITEMS.forEach(item -> addItem(item, fallbackTitle(item.getId().getPath())));

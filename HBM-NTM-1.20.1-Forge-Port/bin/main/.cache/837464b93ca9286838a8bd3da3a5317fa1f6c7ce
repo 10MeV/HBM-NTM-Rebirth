@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-25T14:07:11.6898244	Item Models: hbm
+// 1.20.1	2026-05-25T18:59:06.7206177	Item Models: hbm
 e0dd9cc86e850dae1c5e94ee6463e6ef9b707966 assets/hbm/models/item/battery_creative.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lead.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lithium.json
@@ -104,11 +104,13 @@ fb64e40d5be4b387a10b8db09fdd2144a09b1ce9 assets/hbm/models/item/fallout.json
 78d6cc15605dd8ba7022fee2d2ab97670d40cfe7 assets/hbm/models/item/fleija_core.json
 130e3ecd44268f266b92b2d927122bab51e7a8c0 assets/hbm/models/item/fleija_igniter.json
 ec19dcfa24eed803616aeb1144e862a612b4dff8 assets/hbm/models/item/fleija_propellant.json
+de3068fd92540f82bd2977b2ad743953bcf0b31e assets/hbm/models/item/fluid_identifier_multi.json
 1a2d5e2743f80fe2886e8b48c53f081335259b84 assets/hbm/models/item/fluorite.json
 5ad528a6dcd9019a093e5e92f114d8e15084c1a6 assets/hbm/models/item/gadget_core.json
 b980a960c44be9a12a42365a8c003a9a1bbdc366 assets/hbm/models/item/gadget_wireing.json
 82f65799b13016f6749a5764a551fc650429b92a assets/hbm/models/item/geiger_counter.json
 9720f3f4fc139ffae642b0315f9e361a62d90b17 assets/hbm/models/item/gem_rad.json
+7bdb079e15a69693eacd5b6feb045e194d304b60 assets/hbm/models/item/igniter.json
 ee15a9a541574ad1e1bfdf69dbc43a5468889be1 assets/hbm/models/item/ingot_advanced_alloy.json
 ff72c5516b4190fe4967ab4211af3da45f934944 assets/hbm/models/item/ingot_aluminium.json
 573962c5beeaab88c36d958c7641c79f9579b99a assets/hbm/models/item/ingot_am241.json

@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
 import com.hbm.ntm.menu.BasicMachineMenu;
 import com.hbm.ntm.menu.ChemicalPlantMenu;
+import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.menu.LiquefactorMenu;
 import com.hbm.ntm.menu.MachineBatteryMenu;
 import com.hbm.ntm.menu.MachineBatterySocketMenu;
@@ -30,6 +31,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<LiquefactorMenu>> LIQUEFACTOR =
             MENUS.register("liquefactor", () -> IForgeMenuType.create(LiquefactorMenu::new));
+
+    public static final RegistryObject<MenuType<FluidTankMenu>> FLUID_TANK =
+            MENUS.register("fluid_tank", () -> IForgeMenuType.create(FluidTankMenu::new));
 
     public static final RegistryObject<MenuType<MachineBatteryMenu>> MACHINE_BATTERY =
             MENUS.register("machine_battery", () -> IForgeMenuType.create(MachineBatteryMenu::new));

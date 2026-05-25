@@ -52,7 +52,7 @@ public class LiquefactorScreen extends AbstractContainerScreen<LiquefactorMenu> 
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(71, 36, 16, 52, mouseX, mouseY) || isHovering(71, 88, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getTankInfo()), mouseX, mouseY);
+            graphics.renderTooltip(font, menu.getTankInfo(), mouseX, mouseY);
         } else if (isHovering(134, 18, 16, 52, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);
         } else if (isHovering(98, 36, 18, 36, mouseX, mouseY)) {

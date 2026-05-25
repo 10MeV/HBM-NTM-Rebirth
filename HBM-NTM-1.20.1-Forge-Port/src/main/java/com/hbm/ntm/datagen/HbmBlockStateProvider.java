@@ -115,6 +115,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TOWER_LARGE, "machines/tower_large");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBOFAN, "machines/turbofan");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBINEGAS, "machines/turbinegas");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_INDUSTRIAL_TURBINE, "machines/industrial_turbine");
         translucentCubeWithItem(ModBlocks.GLASS_BORON, "glass_boron");
         simpleCubeWithItem(ModBlocks.GAS_RADON, "gas_radon");
         simpleCubeWithItem(ModBlocks.GAS_RADON_DENSE, "gas_radon_dense");
@@ -308,7 +309,10 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .part().modelFile(side).rotationY(270).addModel().condition(HbmFluidNodeBlock.WEST, true).end()
                 .part().modelFile(side).rotationX(-90).addModel().condition(HbmFluidNodeBlock.UP, true).end()
                 .part().modelFile(side).rotationX(90).addModel().condition(HbmFluidNodeBlock.DOWN, true).end();
-        simpleBlockItem(ModBlocks.FLUID_DUCT_NEO.get(), core);
+        itemModels().getBuilder(ModBlocks.FLUID_DUCT_NEO.getId().getPath())
+                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
+                .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))
+                .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
     }
 
     private void conveyorWithItem(RegistryObject<Block> block, String textureName) {

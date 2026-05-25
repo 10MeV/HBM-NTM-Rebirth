@@ -4,6 +4,9 @@ import com.hbm.ntm.api.item.HazardClass;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 public class ToxinFluidTrait extends FluidTrait {
@@ -16,6 +19,14 @@ public class ToxinFluidTrait extends FluidTrait {
 
     public List<ToxinEntry> getEntries() {
         return Collections.unmodifiableList(entries);
+    }
+
+    @Override
+    public void addHiddenInfo(List<Component> info) {
+        info.add(Component.literal("[Toxin]").withStyle(ChatFormatting.LIGHT_PURPLE));
+        for (ToxinEntry entry : entries) {
+            entry.addInfo(info);
+        }
     }
 
     public abstract static class ToxinEntry {
@@ -34,6 +45,17 @@ public class ToxinFluidTrait extends FluidTrait {
         public boolean requiresFullBodyProtection() {
             return fullBodyProtection;
         }
+
+        protected Component protectionLabel() {
+            Component label = hazardClass == null ? Component.literal("Unprotected")
+                    : Component.translatableWithFallback(hazardClass.translationKey(), prettyHazardName(hazardClass));
+            if (fullBodyProtection) {
+                return label.copy().append(Component.literal(" (requires hazmat suit)").withStyle(ChatFormatting.RED));
+            }
+            return label;
+        }
+
+        abstract void addInfo(List<Component> info);
     }
 
     public static final class DirectDamage extends ToxinEntry {
@@ -59,6 +81,15 @@ public class ToxinFluidTrait extends FluidTrait {
         public int getDelayTicks() {
             return delayTicks;
         }
+
+        @Override
+        void addInfo(List<Component> info) {
+            float dps = delayTicks <= 0 ? amount * 20.0F : amount * 20.0F / delayTicks;
+            info.add(Component.literal("- ").withStyle(ChatFormatting.YELLOW)
+                    .append(protectionLabel())
+                    .append(Component.literal(": " + String.format(Locale.US, "%,.1f", dps) + " DPS")
+                            .withStyle(ChatFormatting.YELLOW)));
+        }
     }
 
     public static final class EffectApplication extends ToxinEntry {
@@ -76,8 +107,42 @@ public class ToxinFluidTrait extends FluidTrait {
         public List<EffectSpec> getEffects() {
             return Collections.unmodifiableList(effects);
         }
+
+        @Override
+        void addInfo(List<Component> info) {
+            info.add(Component.literal("- ").withStyle(ChatFormatting.YELLOW)
+                    .append(protectionLabel())
+                    .append(Component.literal(":").withStyle(ChatFormatting.YELLOW)));
+            for (EffectSpec effect : effects) {
+                info.add(Component.literal("   - ").withStyle(ChatFormatting.YELLOW)
+                        .append(Component.translatableWithFallback(effect.effect().toLanguageKey("effect"), effect.effect().toString()))
+                        .append(Component.literal(" " + formatDuration(effect.durationTicks())).withStyle(ChatFormatting.YELLOW)));
+            }
+        }
     }
 
     public record EffectSpec(ResourceLocation effect, int durationTicks, int amplifier, boolean ambient) {
+    }
+
+    private static String formatDuration(int ticks) {
+        int seconds = Math.max(0, ticks / 20);
+        return seconds / 60 + ":" + String.format(Locale.US, "%02d", seconds % 60);
+    }
+
+    private static String prettyHazardName(HazardClass hazardClass) {
+        StringBuilder builder = new StringBuilder();
+        for (String part : hazardClass.name().toLowerCase(Locale.US).split("_")) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            if (!builder.isEmpty()) {
+                builder.append(' ');
+            }
+            builder.append(Character.toUpperCase(part.charAt(0)));
+            if (part.length() > 1) {
+                builder.append(part.substring(1));
+            }
+        }
+        return builder.toString();
     }
 }

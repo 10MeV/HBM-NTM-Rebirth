@@ -20,6 +20,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
     protected void registerModels() {
         ModItems.PARTS_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.CONTROL_TAB_ITEMS.forEach(item -> itemModel(item.get()));
+        itemModel(ModItems.FLUID_IDENTIFIER_MULTI.get());
         ModItems.NUKE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         itemModel(ModItems.CONVEYOR_WAND.get());
@@ -42,6 +43,13 @@ public class HbmItemModelProvider extends ItemModelProvider {
             getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
                     .texture("layer0", modLoc("item/" + battery.getLegacyTexturePath()));
+            return;
+        }
+        if (item instanceof com.hbm.ntm.item.FluidIdentifierItem) {
+            getBuilder(path)
+                    .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
+                    .texture("layer0", modLoc("item/fluid_identifier_multi"))
+                    .texture("layer1", modLoc("item/fluid_identifier_overlay"));
             return;
         }
         if (item instanceof com.hbm.ntm.item.HbmFluidContainerItem || item instanceof com.hbm.ntm.item.HbmInfiniteFluidItem) {
@@ -70,6 +78,17 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.equals("explosive_lenses")) {
             generatedItem(path, "man_explosive8");
+            return;
+        }
+        if (path.equals("igniter")) {
+            generatedItem(path, "trigger");
+            return;
+        }
+        if (path.equals("fluid_duct_neo")) {
+            getBuilder(path)
+                    .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
+                    .texture("layer0", modLoc("item/duct"))
+                    .texture("layer1", modLoc("item/duct_overlay"));
             return;
         }
         basicItem(item);

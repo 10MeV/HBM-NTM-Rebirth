@@ -61,6 +61,12 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
     }
 
     @Override
+    public void afterDirectCorePlaced(Level level, BlockPos corePos, BlockState state,
+            @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, corePos, state, placer, stack);
+    }
+
+    @Override
     public void completeDirectMultiblockPlacement(Level level, BlockPos corePos, BlockState state,
             @Nullable LivingEntity placer, ItemStack stack) {
         if (!level.isClientSide) {
@@ -90,6 +96,7 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
 
     private void fillLayout(Level level, BlockPos corePos, BlockState state) {
         LegacyMultiblockLayout layout = getLayout(state);
-        MultiblockHelper.fillOffsetsWithProxyModes(level, corePos, layout.offsets(), layout::proxyMode);
+        MultiblockHelper.fillOffsetsWithProxyModes(level, corePos, layout.offsets(), layout::proxyMode,
+                layout::isLegacyExtraOffset);
     }
 }

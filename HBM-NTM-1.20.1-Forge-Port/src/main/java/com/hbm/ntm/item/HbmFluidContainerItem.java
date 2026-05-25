@@ -152,7 +152,7 @@ public class HbmFluidContainerItem extends Item implements IFillableItem {
         if (type == HbmFluids.NONE) {
             return super.getName(stack);
         }
-        return Component.literal(pretty(kind.name()) + " " + pretty(type.getName()));
+        return Component.literal(pretty(kind.name()) + " ").append(type.getDisplayName());
     }
 
     private static String pretty(String raw) {

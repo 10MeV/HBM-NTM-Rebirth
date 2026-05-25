@@ -737,3 +737,137 @@
 
 - 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
 - 结果：通过；编译器仅提示部分输入文件使用/覆盖已过时 API。
+
+## 2026-05-25 第十六批推进：debug 文本与 network 调试粒子
+
+- 1.7.10 对照：
+  - `ClientProxy` aux 类型：
+    - `debug`：读取 `text/color/scale`，生成 `ParticleText` 并按 `scale` 放大。
+    - `debugline`：读取 `mX/mY/mZ/color`，生成 `ParticleDebugLine`。
+    - `debugdrone`：仅当玩家手持无人机相关物品/方块时生成 `ParticleDebugLine`。
+    - `network`：读取 `mX/mY/mZ/mode/color`，`mode=power` 生成 power 图标，`mode=fluid` 生成 fluid 图标并使用 RGB 着色。
+  - `ParticleText`：
+    - 寿命 100 tick，`motionY=0.01`，`noClip=true`。
+    - 面向玩家相机，按 `particleScale * 0.01` 缩放，用 MC 字体阴影绘制文本，fullbright。
+  - `ParticleDebug`：
+    - 旧贴图：
+      - `textures/particle/debug_power.png`
+      - `textures/particle/debug_fluid.png`
+    - 寿命 10 tick，`noClip=true`，scale 0.05，fullbright。
+    - 构造时记录 `motionX/Y/Z`，继承 `EntityFX` 的每 tick 位移。
+- 本批现代迁移：
+  - 复制旧资源：
+    - `assets/hbm/textures/particle/debug_power.png`
+    - `assets/hbm/textures/particle/debug_fluid.png`
+  - 新增粒子类型与图集：
+    - `network_power` -> `hbm:particle/debug_power`
+    - `network_fluid` -> `hbm:particle/debug_fluid`
+  - 新增 `DebugTextParticle`：
+    - 使用现代 `Font#drawInBatch` 在粒子自定义渲染中绘制文本。
+    - 保留旧 `text/color/scale`、100 tick 寿命、上浮和 fullbright 文本合同。
+  - 新增 `NetworkDebugParticle`：
+    - 使用 legacy power/fluid 图标，保留 10 tick 寿命、0.05 scale、motion 位移、fluid RGB 着色和 fullbright。
+  - `debugline/debugdrone`：
+    - 继续走已有 `DebugLineParticle`，保留线段坐标与颜色合同。
+  - `ParticleUtil` 新增公共入口：
+    - `TYPE_DEBUG_TEXT/TYPE_NETWORK`
+    - `spawnDebugText(...)`、`spawnPowerNetworkDebug(...)`、`spawnFluidNetworkDebug(...)`
+  - `HbmParticleEffects` 新增 `debug/network` 分发。
+- 边界：
+  - 旧 `debugdrone` 的手持物品门槛依赖尚未完整迁移的无人机物品/方块集合；本批不猜测现代对应项，仍保留当前 debugdrone 线粒子入口，后续迁无人机库时应补回门槛。
+  - 旧 `ParticleText` 使用 `drawStringWithShadow`；现代端当前使用 `drawInBatch` 普通文本和 fullbright，阴影可在后续视觉精修中增加，但字段、寿命、上浮、朝向和缩放合同已接入。
+  - `marker` 需要 `RenderOverhead/Marker` HUD 队列系统；本批未迁，后续应作为 HUD/overhead 标记库处理。
+
+## 2026-05-25 第十六批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+
+## 2026-05-25 第十七批推进：fireworks 字母烟花、plasmablast、haze 与客户端 jolt
+
+- 1.7.10 对照：
+  - `ClientProxy` aux 类型：
+    - `fireworks`：读取 `color/char`，生成 `ParticleLetter`，并生成 50 个 `EntityFireworkSparkFX`，速度高斯 `0.4`。
+    - `haze`：生成 `ParticleHaze`。
+    - `plasmablast`：读取 `r/g/b/pitch/yaw/scale`，生成 `ParticlePlasmaBlast` 并设置 scale。
+    - `justTilt`：读取 `time`，设置客户端玩家 `hurtTime=maxHurtTime=time`，`attackedAtYaw=0`。
+    - `properJolt`：读取 `time/maxTime`，设置客户端玩家 `hurtTime=time`、`maxHurtTime=maxTime`，`attackedAtYaw=0`。
+  - `ParticleLetter`：
+    - 寿命 30 tick，面向玩家相机。
+    - 缩放曲线 `1 - exp(-(age+partial)*4/maxAge)`，alpha 线性衰减但最低 10/255。
+    - 使用 MC 字体绘制单字符，fullbright。
+  - `ParticlePlasmaBlast`：
+    - 旧贴图 `textures/particle/shockwave.png`。
+    - 寿命 20 tick，加色混合、fullbright、深度不写入、禁用背面剔除。
+    - 以 `yaw/pitch` 旋转水平四边形；alpha 线性衰减，scale 曲线 `(1-exp(-(age+partial)*0.125))*particleScale`。
+  - `ParticleHaze`：
+    - 旧贴图 `textures/particle/haze.png`。
+    - 默认寿命 `600+rand(100)`，颜色黑色，scale 10。
+    - 每 tick 阻尼速度并在周围地表生成 lava 粒子。
+    - 渲染时固定随机种子 50，绘制 25 张大型雾片；alpha 为 `sin(age*pi/400)*0.025`。
+- 本批现代迁移：
+  - 复用旧资源：
+    - `assets/hbm/textures/particle/shockwave.png`
+    - `assets/hbm/textures/particle/haze.png`
+  - 新增粒子类型与图集：
+    - `plasma_blast` -> `hbm:particle/shockwave`
+    - `haze` -> `hbm:particle/haze`
+  - 新增 `FireworkLetterParticle`：
+    - 以现代字体渲染保留旧单字符、30 tick 寿命、指数缩放曲线、alpha 下限和 fullbright 合同。
+    - `HbmParticleEffects#spawnFireworks` 同时生成 50 个原版 firework 粒子，保留旧爆散数量和速度尺度。
+  - 新增 `PlasmaBlastParticle`：
+    - 使用旧 shockwave 贴图，保留 `r/g/b/pitch/yaw/scale` 字段、20 tick 寿命、加色混合、fullbright、透明衰减和指数 scale 曲线。
+  - 新增 `HazeParticle`：
+    - 使用旧 haze 贴图，保留 600+rand(100) 寿命、黑色大雾片、固定随机分布、lava 地表粒子和 alpha 曲线。
+  - `ParticleUtil` 新增公共入口：
+    - `TYPE_FIREWORKS/TYPE_HAZE/TYPE_PLASMA_BLAST/TYPE_JUST_TILT/TYPE_PROPER_JOLT`
+    - `spawnFireworks(...)`、`spawnHaze(...)`、`spawnPlasmaBlast(...)`、`spawnJustTilt(...)`、`spawnProperJolt(...)`
+  - `HbmParticleEffects` 新增以上 aux 分发。
+- 边界：
+  - 旧 `ParticleLetter` 使用固定管线和非阴影字体绘制；现代端用 `Font#drawInBatch` 承载，保持单字符、颜色、alpha、缩放和朝向合同。
+  - 旧 `EntityFireworkSparkFX#setColour(color)` 的精确颜色未直接暴露在现代 vanilla `FIREWORK` 粒子入口中；本批保留数量、位置和速度爆散，颜色由字母粒子体现。
+  - 现代 `Player#hurtDir`/旧 `attackedAtYaw` 对应字段受保护；本批保留 `hurtTime/hurtDuration` 客户端受击动画主体，无法直接强制 yaw 为 0。
+
+## 2026-05-25 第十七批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过；编译器仅提示部分输入文件使用/覆盖已过时 API。
+
+## 2026-05-25 第十八批推进：jetpack 系列推进粒子与 radiation aura
+
+- 1.7.10 对照：
+  - `ClientProxy` aux 类型：
+    - `jetpack`：读取 `player/mode`，按玩家背部双喷口生成 flame；最高粒子质量时额外生成 smoke 和地面方块尘反冲。
+    - `bnuuy`：读取 `player`，在背部两个偏移点生成小 smoke。
+    - `jetpack_bj`：读取 `player`，在双喷口生成紫色 red dust，并在最高粒子质量时生成地面方块尘反冲。
+    - `jetpack_dns`：读取 `player`，在双喷口生成青色 red dust，并在最高粒子质量时生成地面方块尘反冲。
+    - `radiation`：读取 `count`，围绕客户端玩家生成 `EntityAuraFX`，颜色 `(0,0.75,1)`，速度高斯随机。
+  - 旧 jetpack 位置合同：
+    - 以玩家 `renderYawOffset`/头身角换算背部向量和侧向偏移。
+    - `jetpack` 背后偏移 0.25、侧向 0.125、高度 `eyeHeight-1`。
+    - `bnuuy` 背后偏移 0.6、侧向 0.275、高度 `eyeHeight-1+0.4`，潜行时额外 +0.25。
+    - `jetpack_bj` 背后偏移 0.3125、侧向 0.125、高度 `eyeHeight-0.9375`。
+    - `jetpack_dns` 使用当前位置、侧向 0.125、高度 `posY-yOffset-0.5`。
+  - 旧地面反冲：
+    - 从喷口位置沿推力方向 raycast 10 格。
+    - 若命中方块上表面，按距离生成最多约 10 个 `EntityBlockDustFX`，速度绕 Y 随机旋转。
+- 本批现代迁移：
+  - `ParticleUtil` 新增公共入口：
+    - `TYPE_JETPACK/TYPE_BNUUY/TYPE_JETPACK_BJ/TYPE_JETPACK_DNS/TYPE_RADIATION`
+    - `spawnJetpack(...)`、`spawnBnuuy(...)`、`spawnJetpackBj(...)`、`spawnJetpackDns(...)`、`spawnRadiationAura(...)`
+  - `HbmParticleEffects` 新增以上 aux 分发：
+    - `jetpack`：读取实体 id 和 mode，生成双 `FLAME`、双 `SMOKE` 与方块尘反冲。
+    - `bnuuy`：生成双小烟轨迹。
+    - `jetpack_bj`：生成紫色 `DustParticleOptions` 双喷口，并保留地面反冲。
+    - `jetpack_dns`：生成青色 `DustParticleOptions` 双喷口，并保留地面反冲。
+    - `radiation`：围绕本地玩家生成 `SCHRAB_FOG` 粒子，速度随机，承载旧青色 aura 效果。
+- 边界：
+  - 现代端没有直接复用旧 `EntitySmokeFX` 的私有 `smokeParticleScale`；`bnuuy` 保留双喷口位置和烟雾运动，烟粒尺寸由现代 vanilla smoke 控制。
+  - 旧代码根据 `particleSetting` 跳过或降级细节；现代端未直接读取 vanilla 粒子设置，保留完整效果输出。后续可接入 Options 粒子等级做降级。
+  - 现代玩家朝向使用 `Entity#getYRot()` 近似旧 `renderYawOffset`；背部/侧向偏移、双喷口、推力和地面反冲合同已保留。
+  - `radiation` 旧用 `EntityAuraFX`；现代端复用已有 `SCHRAB_FOG` 青色粒子承载，位置、数量和随机速度合同已保留。
+
+## 2026-05-25 第十八批验证
+
+- 已运行：`.\gradlew.bat clean compileJava processResources --no-daemon`
+- 结果：通过；曾遇到 Gradle 增量编译输出缓存导致的 `bad class file/NoSuchFileException build/classes/...`，执行 `clean` 后通过。

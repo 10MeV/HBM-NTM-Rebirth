@@ -30,6 +30,18 @@ public final class ParticleUtil {
     public static final String TYPE_DEAD_LEAF = "deadleaf";
     public static final String TYPE_FLUID_FILL = "fluidfill";
     public static final String TYPE_FOUNDRY = "foundry";
+    public static final String TYPE_DEBUG_TEXT = "debug";
+    public static final String TYPE_NETWORK = "network";
+    public static final String TYPE_FIREWORKS = "fireworks";
+    public static final String TYPE_HAZE = "haze";
+    public static final String TYPE_PLASMA_BLAST = "plasmablast";
+    public static final String TYPE_JUST_TILT = "justTilt";
+    public static final String TYPE_PROPER_JOLT = "properJolt";
+    public static final String TYPE_JETPACK = "jetpack";
+    public static final String TYPE_BNUUY = "bnuuy";
+    public static final String TYPE_JETPACK_BJ = "jetpack_bj";
+    public static final String TYPE_JETPACK_DNS = "jetpack_dns";
+    public static final String TYPE_RADIATION = "radiation";
     public static final int GIBLET_MEAT = 0;
     public static final int GIBLET_SLIME = 1;
     public static final int GIBLET_METAL = 2;
@@ -61,6 +73,118 @@ public final class ParticleUtil {
         data.putDouble("mZ", lineZ);
         data.putInt("color", color);
         spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnDebugText(Level level, double x, double y, double z, String text, int color, float scale) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_DEBUG_TEXT);
+        data.putString("text", text == null ? "" : text);
+        data.putInt("color", color);
+        data.putFloat("scale", scale);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnPowerNetworkDebug(Level level, double x, double y, double z, double motionX, double motionY, double motionZ) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_NETWORK);
+        data.putString("mode", "power");
+        data.putDouble("mX", motionX);
+        data.putDouble("mY", motionY);
+        data.putDouble("mZ", motionZ);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnFluidNetworkDebug(Level level, double x, double y, double z, double motionX, double motionY, double motionZ, int color) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_NETWORK);
+        data.putString("mode", "fluid");
+        data.putDouble("mX", motionX);
+        data.putDouble("mY", motionY);
+        data.putDouble("mZ", motionZ);
+        data.putInt("color", color);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnFireworks(Level level, double x, double y, double z, int color, char character) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_FIREWORKS);
+        data.putInt("color", color);
+        data.putInt("char", character);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnHaze(Level level, double x, double y, double z) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_HAZE);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnPlasmaBlast(Level level, double x, double y, double z, float red, float green, float blue,
+            float pitch, float yaw, float scale) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_PLASMA_BLAST);
+        data.putFloat("r", red);
+        data.putFloat("g", green);
+        data.putFloat("b", blue);
+        data.putFloat("pitch", pitch);
+        data.putFloat("yaw", yaw);
+        data.putFloat("scale", scale);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnJustTilt(Level level, int time) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_JUST_TILT);
+        data.putInt("time", time);
+        spawnAux(level, 0.0D, 0.0D, 0.0D, data, 0.0D);
+    }
+
+    public static void spawnProperJolt(Level level, int time, int maxTime) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_PROPER_JOLT);
+        data.putInt("time", time);
+        data.putInt("maxTime", maxTime);
+        spawnAux(level, 0.0D, 0.0D, 0.0D, data, 0.0D);
+    }
+
+    public static void spawnJetpack(Level level, Entity player, int mode) {
+        if (player == null) {
+            return;
+        }
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_JETPACK);
+        data.putInt("player", player.getId());
+        data.putInt("mode", mode);
+        spawnAux(level, player.getX(), player.getY(), player.getZ(), data, 150.0D);
+    }
+
+    public static void spawnBnuuy(Level level, Entity player) {
+        spawnPlayerBackpackEffect(level, player, TYPE_BNUUY);
+    }
+
+    public static void spawnJetpackBj(Level level, Entity player) {
+        spawnPlayerBackpackEffect(level, player, TYPE_JETPACK_BJ);
+    }
+
+    public static void spawnJetpackDns(Level level, Entity player) {
+        spawnPlayerBackpackEffect(level, player, TYPE_JETPACK_DNS);
+    }
+
+    public static void spawnRadiationAura(Level level, int count) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_RADIATION);
+        data.putInt("count", count);
+        spawnAux(level, 0.0D, 0.0D, 0.0D, data, 0.0D);
+    }
+
+    private static void spawnPlayerBackpackEffect(Level level, Entity player, String type) {
+        if (player == null) {
+            return;
+        }
+        CompoundTag data = new CompoundTag();
+        data.putString("type", type);
+        data.putInt("player", player.getId());
+        spawnAux(level, player.getX(), player.getY(), player.getZ(), data, 150.0D);
     }
 
     public static void spawnExplosionLarge(Level level, double x, double y, double z, int cloudCount, float cloudScale, float cloudSpeedMult,

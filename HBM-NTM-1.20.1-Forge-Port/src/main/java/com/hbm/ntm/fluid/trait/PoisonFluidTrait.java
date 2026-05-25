@@ -1,5 +1,9 @@
 package com.hbm.ntm.fluid.trait;
 
+import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+
 public class PoisonFluidTrait extends FluidTrait {
     private final boolean withering;
     private final int level;
@@ -15,5 +19,10 @@ public class PoisonFluidTrait extends FluidTrait {
 
     public int getLevel() {
         return level;
+    }
+
+    @Override
+    public void addHiddenInfo(List<Component> info) {
+        info.add(Component.literal("[Toxic Fumes]").withStyle(ChatFormatting.GREEN));
     }
 }

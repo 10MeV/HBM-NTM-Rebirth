@@ -10,6 +10,7 @@ import com.hbm.ntm.block.DeconBlock;
 import com.hbm.ntm.block.DigammaFlameBlock;
 import com.hbm.ntm.block.FalloutLayerBlock;
 import com.hbm.ntm.block.FluidPipeBlock;
+import com.hbm.ntm.block.FluidTankBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyComplexShapeBlock;
 import com.hbm.ntm.block.LegacyDemonLampBlock;
@@ -41,6 +42,7 @@ import com.hbm.ntm.block.RadioactiveWasteEarthBlock;
 import com.hbm.ntm.block.MachineBatterySocketBlock;
 import com.hbm.ntm.block.RedCableBlock;
 import com.hbm.ntm.block.SteamTurbineBlock;
+import com.hbm.ntm.block.SteamTurbineMultiblockBlock;
 import com.hbm.ntm.block.TrinketBlock;
 import com.hbm.ntm.block.TrinketVariant;
 import com.hbm.ntm.block.conveyor.ChuteConveyorBlock;
@@ -49,6 +51,7 @@ import com.hbm.ntm.block.conveyor.DoubleConveyorBlock;
 import com.hbm.ntm.block.conveyor.ExpressConveyorBlock;
 import com.hbm.ntm.block.conveyor.LiftConveyorBlock;
 import com.hbm.ntm.block.conveyor.TripleConveyorBlock;
+import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.MultiblockBlockItem;
 import com.hbm.ntm.item.NuclearDeviceBlockItem;
@@ -98,6 +101,8 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_BOILER_OFF = boilerMachine("machine_boiler_off");
     public static final RegistryObject<Block> MACHINE_SHREDDER = machine("machine_shredder");
     public static final RegistryObject<Block> MACHINE_TURBINE = steamTurbineMachine("machine_turbine");
+    public static final RegistryObject<Block> MACHINE_INDUSTRIAL_TURBINE = steamTurbineMultiblockMachine(
+            "machine_industrial_turbine", industrialTurbineDefinition(), SteamTurbineMultiblockBlock.Kind.INDUSTRIAL);
     public static final RegistryObject<Block> DECON = decon("decon");
     public static final RegistryObject<Block> RED_CABLE = redCable("red_cable");
     public static final RegistryObject<Block> FLUID_DUCT_NEO = fluidPipe("fluid_duct_neo");
@@ -149,7 +154,7 @@ public final class ModBlocks {
             compressorDefinition());
     public static final RegistryObject<Block> MACHINE_BIGASSTANK = visibleMultiblockMachine("machine_bigasstank",
             bigAssTankDefinition());
-    public static final RegistryObject<Block> MACHINE_FLUIDTANK = visibleMultiblockMachine("machine_fluidtank",
+    public static final RegistryObject<Block> MACHINE_FLUIDTANK = fluidTankMachine("machine_fluidtank",
             fluidTankDefinition());
     public static final RegistryObject<Block> MACHINE_PUMPJACK = visibleMultiblockMachine("machine_pumpjack",
             pumpjackDefinition());
@@ -260,6 +265,7 @@ public final class ModBlocks {
             MACHINE_BOILER_OFF,
             MACHINE_SHREDDER,
             MACHINE_TURBINE,
+            MACHINE_INDUSTRIAL_TURBINE,
             DECON,
             RED_CABLE,
             FLUID_DUCT_NEO,
@@ -650,12 +656,15 @@ public final class ModBlocks {
     }
 
     private static RegistryObject<Block> fluidPipe(String name) {
-        return registerBlockWithItem(name, () -> new FluidPipeBlock(BlockBehaviour.Properties.of()
-                .mapColor(MapColor.METAL)
-                .strength(5.0F, 10.0F)
-                .sound(SoundType.METAL)
-                .requiresCorrectToolForDrops()
-                .noOcclusion()));
+        return registerBlockWithItem(
+                name,
+                () -> new FluidPipeBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 10.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion()),
+                block -> new FluidPipeBlockItem(block.get(), new Item.Properties()));
     }
 
     private static RegistryObject<Block> pneumaticTube(String name) {
@@ -755,6 +764,31 @@ public final class ModBlocks {
                 block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
     }
 
+    private static RegistryObject<Block> steamTurbineMultiblockMachine(String name, LegacyMachineDefinition definition,
+            SteamTurbineMultiblockBlock.Kind kind) {
+        return registerBlockWithItem(
+                name,
+                () -> new SteamTurbineMultiblockBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), definition, kind),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> fluidTankMachine(String name, LegacyMachineDefinition definition) {
+        return registerBlockWithItem(
+                name,
+                () -> new FluidTankBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), definition),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
     private static RegistryObject<Block> chemicalPlantMachine(String name, LegacyMachineDefinition definition) {
         return registerBlockWithItem(
                 name,
@@ -822,6 +856,20 @@ public final class ModBlocks {
                 .legacyItemScale(3.0F)
                 .yRotation(facing -> 270.0F - facing.toYRot())
                 .renderBoundingBox(pos -> new AABB(pos.offset(-1, 0, -1), pos.offset(2, 4, 2)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition industrialTurbineDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("industrial_turbine"), machineTexture("industrial_turbine"))
+                .legacyXrDimensions(2, 0, 3, 3, 1, 1)
+                .legacyOffset(3)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 3, 3, 1, 1 }, facing)
+                        .withExtraProxyOffsets(industrialTurbineProxyOffsets(facing), proxyPowerFluid()))
+                .renderParts("Turbine", "Gauge", "Flywheel")
+                .legacyItemScale(3.0D, 0.75D)
+                .yRotation(facing -> 270.0F - facing.toYRot())
+                .collisionShape(state -> stateLayoutShape(state))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-5, 0, -5), pos.offset(6, 4, 6)))
                 .build();
     }
 
@@ -1377,6 +1425,22 @@ public final class ModBlocks {
                 new BlockPos(facing.getStepX() - rot.getStepX() * 4, 0, facing.getStepZ() - rot.getStepZ() * 4),
                 new BlockPos(rot.getStepX() * 4, 1, rot.getStepZ() * 4),
                 new BlockPos(-rot.getStepX() * 5, 1, -rot.getStepZ() * 5));
+    }
+
+    private static List<BlockPos> industrialTurbineProxyOffsets(Direction facing) {
+        Direction rot = facing.getClockWise();
+        return List.of(
+                new BlockPos(facing.getStepX() * 3 + rot.getStepX() * 2, 0,
+                        facing.getStepZ() * 3 + rot.getStepZ() * 2),
+                new BlockPos(facing.getStepX() * 3 - rot.getStepX() * 2, 0,
+                        facing.getStepZ() * 3 - rot.getStepZ() * 2),
+                new BlockPos(-facing.getStepX() + rot.getStepX() * 2, 0,
+                        -facing.getStepZ() + rot.getStepZ() * 2),
+                new BlockPos(-facing.getStepX() - rot.getStepX() * 2, 0,
+                        -facing.getStepZ() - rot.getStepZ() * 2),
+                new BlockPos(facing.getStepX() * 3, 3, facing.getStepZ() * 3),
+                new BlockPos(-facing.getStepX(), 3, -facing.getStepZ()),
+                new BlockPos(-facing.getStepX() * 4, 1, -facing.getStepZ() * 4));
     }
 
     private static LegacyProxyMode proxyInventory() {

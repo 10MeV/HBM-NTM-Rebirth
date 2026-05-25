@@ -75,9 +75,9 @@ public class AssemblyMachineScreen extends AbstractContainerScreen<AssemblyMachi
         } else if (isHovering(152, 18, 16, 61, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);
         } else if (isHovering(8, 115, 52, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getInputTankInfo()), mouseX, mouseY);
+            graphics.renderTooltip(font, menu.getInputTankInfo(), mouseX, mouseY);
         } else if (isHovering(80, 115, 52, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getOutputTankInfo()), mouseX, mouseY);
+            graphics.renderTooltip(font, menu.getOutputTankInfo(), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

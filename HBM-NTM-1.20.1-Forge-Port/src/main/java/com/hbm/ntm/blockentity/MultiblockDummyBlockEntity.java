@@ -34,10 +34,12 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
     private static final String TAG_PROXY_HEAT = "ProxyHeat";
     private static final String TAG_PROXY_MOLTEN_METAL = "ProxyMoltenMetal";
     private static final String TAG_PROXY_ALL = "ProxyAll";
+    private static final String TAG_LEGACY_EXTRA = "LegacyExtra";
 
     @Nullable
     private BlockPos corePos;
     private LegacyProxyMode proxyMode = LegacyProxyMode.none();
+    private boolean legacyExtra;
     private boolean dropCoreOnRemoval;
 
     public MultiblockDummyBlockEntity(BlockPos pos, BlockState state) {
@@ -80,6 +82,18 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
 
     public LegacyProxyMode getProxyMode() {
         return proxyMode;
+    }
+
+    public boolean isLegacyExtra() {
+        return legacyExtra;
+    }
+
+    public void setLegacyExtra(boolean legacyExtra) {
+        this.legacyExtra = legacyExtra;
+        setChanged();
+        if (level != null) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
     }
 
     public void setProxyMode(LegacyProxyMode proxyMode) {
@@ -141,6 +155,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
         tag.putBoolean(TAG_PROXY_HEAT, proxyMode.heat());
         tag.putBoolean(TAG_PROXY_MOLTEN_METAL, proxyMode.moltenMetal());
         tag.putBoolean(TAG_PROXY_ALL, proxyMode.allCapabilities());
+        tag.putBoolean(TAG_LEGACY_EXTRA, legacyExtra);
         if (corePos != null) {
             tag.put(TAG_CORE_POS, NbtUtils.writeBlockPos(corePos));
             tag.putInt(TAG_LEGACY_TARGET_X, corePos.getX());
@@ -153,6 +168,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
     public void load(CompoundTag tag) {
         super.load(tag);
         proxyMode = readProxyMode(tag);
+        legacyExtra = tag.getBoolean(TAG_LEGACY_EXTRA);
         if (tag.contains(TAG_CORE_POS)) {
             corePos = NbtUtils.readBlockPos(tag.getCompound(TAG_CORE_POS));
         } else if (tag.contains(TAG_LEGACY_TARGET_X) && tag.contains(TAG_LEGACY_TARGET_Y) && tag.contains(TAG_LEGACY_TARGET_Z)) {

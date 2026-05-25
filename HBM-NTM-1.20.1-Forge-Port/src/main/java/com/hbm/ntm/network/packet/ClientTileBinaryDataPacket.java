@@ -1,6 +1,7 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.client.ClientTileBinaryData;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -9,7 +10,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
-public record ClientTileBinaryDataPacket(BlockPos pos, ResourceLocation channel, byte[] payload) {
+public record ClientTileBinaryDataPacket(BlockPos pos, ResourceLocation channel, byte[] payload) implements HbmPreparablePacket {
     public static final int MAX_PAYLOAD_BYTES = 1_048_576;
 
     public ClientTileBinaryDataPacket {
@@ -38,5 +39,10 @@ public record ClientTileBinaryDataPacket(BlockPos pos, ResourceLocation channel,
 
     private static void handleClient(ClientTileBinaryDataPacket packet) {
         ClientTileBinaryData.dispatch(packet.pos, packet.channel, packet.payload);
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new ClientTileBinaryDataPacket(pos, channel, payload);
     }
 }

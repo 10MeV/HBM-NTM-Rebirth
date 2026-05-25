@@ -19,7 +19,7 @@ public final class CustomNukeExplosion {
         dirty = Math.min(dirty, 100.0F);
 
         if (euph > 0.0F) {
-            NuclearExplosionUtil.spawnFleija(level, x, y, z, 150);
+            NuclearExplosionUtil.spawnFleijaRainbow(level, x, y, z, 150, 50);
             return;
         }
 

@@ -261,10 +261,14 @@ public final class ModCommands {
                         .executes(context -> getNetworkProtocolSummary(context.getSource()))
                         .then(Commands.literal("summary")
                                 .executes(context -> getNetworkProtocolSummary(context.getSource())))
+                        .then(Commands.literal("progress")
+                                .executes(context -> getNetworkProtocolProgress(context.getSource())))
                         .then(Commands.literal("packets")
                                 .executes(context -> listNetworkProtocolPackets(context.getSource())))
                         .then(Commands.literal("mappings")
-                                .executes(context -> listNetworkProtocolMappings(context.getSource()))))
+                                .executes(context -> listNetworkProtocolMappings(context.getSource())))
+                        .then(Commands.literal("legacy")
+                                .executes(context -> listLegacyNetworkProtocolPackets(context.getSource()))))
                 .then(Commands.literal("packetthreading")
                         .then(Commands.literal("stats")
                                 .executes(context -> getPacketThreadingStats(context.getSource())))
@@ -620,7 +624,9 @@ public final class ModCommands {
         }
         HbmFluidNodespace.NetworkDebugSnapshot snapshot = HbmFluidNodespace.getNetworkDebugSnapshot(source.getLevel(), pos, type);
         if (!snapshot.nodePresent()) {
-            source.sendFailure(Component.literal("No HBM fluid node for " + type.getName() + " at " + pos.toShortString()));
+            source.sendFailure(Component.literal("No HBM fluid node for ")
+                    .append(type.getDisplayName())
+                    .append(" at " + pos.toShortString()));
             return 0;
         }
         if (!snapshot.networkPresent() || snapshot.network() == null) {
@@ -715,7 +721,7 @@ public final class ModCommands {
         }
         pipe.setFluidType(type);
         source.sendSuccess(() -> Component.literal("Fluid pipe at " + pos.toShortString()
-                + " set to " + type.getName()), true);
+                + " set to ").append(type.getDisplayName()), true);
         return 1;
     }
 
@@ -974,6 +980,9 @@ public final class ModCommands {
                 + " packets=" + ModMessages.registeredPacketCount()
                 + " s2c=" + clientbound
                 + " c2s=" + serverbound
+                + " legacyRegistered=" + ModMessages.legacyPacketRegistrationCount()
+                + " legacyMapped=" + ModMessages.mappedLegacyPacketCount()
+                + " legacyUnmapped=" + ModMessages.unmappedLegacyPacketRegistrations().size()
                 + " legacyMappings=" + ModMessages.legacyPacketMappingCount()), false);
         if (!registrations.isEmpty()) {
             ModMessages.PacketRegistration first = registrations.get(0);
@@ -983,6 +992,14 @@ public final class ModCommands {
                     + " -> #" + last.id() + " " + last.typeName()), false);
         }
         return registrations.size();
+    }
+
+    private static int getNetworkProtocolProgress(CommandSourceStack source) {
+        source.sendSuccess(() -> Component.literal("HBM network packet library progress: "
+                + ModMessages.progressSummary()), false);
+        source.sendSuccess(() -> Component.literal("Coverage means old PacketDispatcher packets have modern carrier paths; "
+                + "foundation is conservative and excludes unfinished receiver/business logic."), false);
+        return ModMessages.libraryFoundationProgressPercent();
     }
 
     private static int listNetworkProtocolPackets(CommandSourceStack source) {
@@ -1004,18 +1021,50 @@ public final class ModCommands {
         return registrations.size();
     }
 
+    private static int listLegacyNetworkProtocolPackets(CommandSourceStack source) {
+        List<ModMessages.LegacyPacketRegistration> registrations = ModMessages.legacyPacketRegistrations();
+        if (registrations.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("HBM legacy protocol has no recorded packets."), false);
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("HBM legacy 1.7.10 packets:"), false);
+        for (ModMessages.LegacyPacketRegistration registration : registrations) {
+            long mappingCount = ModMessages.legacyPacketMappings().stream()
+                    .filter(mapping -> registration.legacyName().equals(mapping.legacyName()))
+                    .count();
+            source.sendSuccess(() -> Component.literal("#" + registration.legacyId()
+                    + " " + registration.direction()
+                    + " " + registration.legacyName()
+                    + (mappingCount > 0 ? " mapped=" + mappingCount : " unmapped")), false);
+        }
+        return registrations.size();
+    }
+
     private static int listNetworkProtocolMappings(CommandSourceStack source) {
         List<ModMessages.LegacyPacketMapping> mappings = ModMessages.legacyPacketMappings();
         if (mappings.isEmpty()) {
             source.sendSuccess(() -> Component.literal("HBM network protocol has no legacy packet mappings."), false);
             return 0;
         }
-        source.sendSuccess(() -> Component.literal("HBM legacy packet mappings:"), false);
+        source.sendSuccess(() -> Component.literal("HBM legacy packet mappings: registered="
+                + ModMessages.legacyPacketRegistrationCount()
+                + " mapped=" + ModMessages.mappedLegacyPacketCount()
+                + " unmapped=" + ModMessages.unmappedLegacyPacketRegistrations().size()
+                + " mappingRows=" + mappings.size()), false);
         for (ModMessages.LegacyPacketMapping mapping : mappings) {
             source.sendSuccess(() -> Component.literal(mapping.direction()
                     + " " + mapping.legacyName()
                     + " -> " + mapping.modernName()
                     + " (" + mapping.notes() + ")"), false);
+        }
+        List<ModMessages.LegacyPacketRegistration> unmapped = ModMessages.unmappedLegacyPacketRegistrations();
+        if (!unmapped.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("Unmapped legacy packets:"), false);
+            for (ModMessages.LegacyPacketRegistration registration : unmapped) {
+                source.sendSuccess(() -> Component.literal("#" + registration.legacyId()
+                        + " " + registration.direction()
+                        + " " + registration.legacyName()), false);
+            }
         }
         return mappings.size();
     }
@@ -1026,9 +1075,11 @@ public final class ModCommands {
                 + " enabled=" + snapshot.enabled()
                 + " fallback=" + snapshot.fallbackToMainThread()
                 + " totalQueued=" + snapshot.totalQueued()
+                + " totalPrepared=" + snapshot.totalPrepared()
                 + " totalSent=" + snapshot.totalSent()
                 + " totalFailed=" + snapshot.totalFailed()
-                + " totalDiscarded=" + snapshot.totalDiscarded()), false);
+                + " totalDiscarded=" + snapshot.totalDiscarded()
+                + " prepareFailed=" + snapshot.totalPrepareFailed()), false);
         source.sendSuccess(() -> Component.literal("Last flush: queued=" + snapshot.lastFlushQueued()
                 + " completed=" + snapshot.lastFlushCompleted()
                 + " discarded=" + snapshot.lastFlushDiscarded()
@@ -1044,6 +1095,7 @@ public final class ModCommands {
                 + ServerTileBinaryControlTransfers.pendingTransfers()), false);
         source.sendSuccess(() -> Component.literal("Client resync cooldowns: tile="
                 + TileSyncPacket.pendingClientResyncRequests()
+                + " tileBinary=" + ClientTileBinaryData.pendingClientResyncRequests()
                 + " entity=" + EntitySyncPacket.pendingClientResyncRequests()
                 + " cooldownTicks=" + TileSyncPacket.clientResyncRequestCooldownTicks()), false);
         source.sendSuccess(() -> Component.literal("Client network caches: binaryChannels="

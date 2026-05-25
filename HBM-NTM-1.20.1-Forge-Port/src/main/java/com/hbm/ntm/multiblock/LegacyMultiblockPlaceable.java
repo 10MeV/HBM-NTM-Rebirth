@@ -20,6 +20,10 @@ public interface LegacyMultiblockPlaceable {
         return canPlaceDirectMultiblock(level, corePos, temporaryPos);
     }
 
+    default void afterDirectCorePlaced(Level level, BlockPos corePos, BlockState state,
+            @Nullable LivingEntity placer, ItemStack stack) {
+    }
+
     void completeDirectMultiblockPlacement(Level level, BlockPos corePos, BlockState state,
             @Nullable LivingEntity placer, ItemStack stack);
 }

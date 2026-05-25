@@ -87,6 +87,7 @@ public final class ClientForgeEvents {
         ClientInformMessages.clearAll();
         ClientMuzzleFlashEffects.clearAll();
         TileSyncPacket.clearClientResyncRequests();
+        ClientTileBinaryData.clearClientResyncRequests();
         EntitySyncPacket.clearClientResyncRequests();
         LegacyHbmAnimations.clearAll();
         VANISHED_ENTITIES.clear();

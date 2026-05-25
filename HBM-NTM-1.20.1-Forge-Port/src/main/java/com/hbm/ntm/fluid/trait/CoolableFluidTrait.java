@@ -2,7 +2,10 @@ package com.hbm.ntm.fluid.trait;
 
 import com.hbm.ntm.fluid.FluidType;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 
 public class CoolableFluidTrait extends FluidTrait {
     private final FluidType coolsTo;
@@ -43,8 +46,30 @@ public class CoolableFluidTrait extends FluidTrait {
         return heatEnergy;
     }
 
+    @Override
+    public void addHiddenInfo(List<Component> info) {
+        info.add(Component.literal("Thermal capacity: " + heatEnergy + " TU per " + amountRequired + "mB")
+                .withStyle(ChatFormatting.RED));
+        for (CoolingType type : CoolingType.values()) {
+            double efficiency = getEfficiency(type);
+            if (efficiency > 0.0D) {
+                info.add(FluidTooltipUtil.efficiency(type.displayName(), efficiency));
+            }
+        }
+    }
+
     public enum CoolingType {
-        TURBINE,
-        HEATEXCHANGER
+        TURBINE("Turbine Steam"),
+        HEATEXCHANGER("Coolable");
+
+        private final String displayName;
+
+        CoolingType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String displayName() {
+            return displayName;
+        }
     }
 }

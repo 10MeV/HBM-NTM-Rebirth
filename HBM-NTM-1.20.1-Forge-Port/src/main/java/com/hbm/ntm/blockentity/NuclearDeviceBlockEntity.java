@@ -37,23 +37,68 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
     public NuclearDeviceBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.NUCLEAR_DEVICE.get(), pos, state);
         this.kind = state.getBlock() instanceof NuclearDeviceBlock device ? device.kind() : NuclearDeviceBlock.Kind.GADGET;
-        this.items = new ItemStackHandler(kind.slots()) {
+        this.items = createItemHandler(kind, this::setChanged);
+        this.itemHandler = LazyOptional.of(() -> items);
+    }
+
+    public static ItemStackHandler createItemHandler(NuclearDeviceBlock.Kind kind) {
+        return createItemHandler(kind, null);
+    }
+
+    private static ItemStackHandler createItemHandler(NuclearDeviceBlock.Kind kind, @Nullable Runnable changeListener) {
+        return new ItemStackHandler(kind.slots()) {
             @Override
             protected void onContentsChanged(int slot) {
-                setChanged();
+                if (changeListener != null) {
+                    changeListener.run();
+                }
+            }
+
+            @Override
+            public int getSlotLimit(int slot) {
+                return slotLimit(kind);
+            }
+
+            @Override
+            public void setStackInSlot(int slot, @NotNull ItemStack stack) {
+                super.setStackInSlot(slot, clampStack(slot, stack));
             }
 
             @Override
             public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-                return isValidComponent(slot, stack);
+                return isValidComponent(kind, slot, stack);
             }
 
             @Override
             public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
                 return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
             }
+
+            @Override
+            public void deserializeNBT(CompoundTag nbt) {
+                super.deserializeNBT(nbt);
+                for (int slot = 0; slot < getSlots(); slot++) {
+                    ItemStack stack = getStackInSlot(slot);
+                    ItemStack clamped = clampStack(slot, stack);
+                    if (clamped != stack) {
+                        setStackInSlot(slot, clamped);
+                    }
+                }
+            }
+
+            private ItemStack clampStack(int slot, ItemStack stack) {
+                if (stack.isEmpty()) {
+                    return stack;
+                }
+                int limit = Math.min(stack.getMaxStackSize(), getSlotLimit(slot));
+                if (stack.getCount() <= limit) {
+                    return stack;
+                }
+                ItemStack copy = stack.copy();
+                copy.setCount(limit);
+                return copy;
+            }
         };
-        this.itemHandler = LazyOptional.of(() -> items);
     }
 
     public ItemStackHandler getItems() {
@@ -80,38 +125,46 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
     }
 
     public boolean isReady() {
+        return isReady(kind, items);
+    }
+
+    public static boolean isReady(NuclearDeviceBlock.Kind kind, ItemStackHandler items) {
         return switch (kind) {
-            case GADGET -> hasAll("early_explosive_lenses", 1, 2, 3, 4)
-                    && has(0, "gadget_wireing")
-                    && has(5, "gadget_core");
-            case BOY -> has(0, "boy_shielding")
-                    && has(1, "boy_target")
-                    && has(2, "boy_bullet")
-                    && has(3, "boy_propellant")
-                    && has(4, "boy_igniter");
-            case MAN -> hasAll("early_explosive_lenses", 1, 2, 3, 4)
-                    && has(0, "man_igniter")
-                    && has(5, "man_core");
-            case TSAR, MIKE -> hasManLensesAndCore();
-            case PROTOTYPE -> hasPrototypeLoad();
-            case FLEIJA -> hasAll("fleija_igniter", 0, 1)
-                    && hasAll("fleija_propellant", 2, 3, 4)
-                    && hasAll("fleija_core", 5, 6, 7, 8, 9, 10);
-            case SOLINIUM -> hasAll("solinium_igniter", 0, 3, 5, 8)
-                    && hasAll("solinium_propellant", 1, 2, 6, 7)
-                    && has(4, "solinium_core");
-            case N2 -> hasAll("n2_charge", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+            case GADGET -> hasAll(items, "early_explosive_lenses", 1, 2, 3, 4)
+                    && has(items, 0, "gadget_wireing")
+                    && has(items, 5, "gadget_core");
+            case BOY -> has(items, 0, "boy_shielding")
+                    && has(items, 1, "boy_target")
+                    && has(items, 2, "boy_bullet")
+                    && has(items, 3, "boy_propellant")
+                    && has(items, 4, "boy_igniter");
+            case MAN -> hasAll(items, "early_explosive_lenses", 1, 2, 3, 4)
+                    && has(items, 0, "man_igniter")
+                    && has(items, 5, "man_core");
+            case TSAR, MIKE -> hasManLensesAndCore(items);
+            case PROTOTYPE -> hasPrototypeLoad(items);
+            case FLEIJA -> hasAll(items, "fleija_igniter", 0, 1)
+                    && hasAll(items, "fleija_propellant", 2, 3, 4)
+                    && hasAll(items, "fleija_core", 5, 6, 7, 8, 9, 10);
+            case SOLINIUM -> hasAll(items, "solinium_igniter", 0, 3, 5, 8)
+                    && hasAll(items, "solinium_propellant", 1, 2, 6, 7)
+                    && has(items, 4, "solinium_core");
+            case N2 -> hasAll(items, "n2_charge", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
         };
     }
 
     public boolean isFilled() {
+        return isFilled(kind, items);
+    }
+
+    public static boolean isFilled(NuclearDeviceBlock.Kind kind, ItemStackHandler items) {
         return switch (kind) {
-            case TSAR -> hasManLensesAndCore() && has(5, "tsar_core");
-            case MIKE -> hasManLensesAndCore()
-                    && has(5, "mike_core")
-                    && has(6, "mike_deut")
-                    && has(7, "mike_cooling_unit");
-            default -> isReady();
+            case TSAR -> hasManLensesAndCore(items) && has(items, 5, "tsar_core");
+            case MIKE -> hasManLensesAndCore(items)
+                    && has(items, 5, "mike_core")
+                    && has(items, 6, "mike_deut")
+                    && has(items, 7, "mike_cooling_unit");
+            default -> isReady(kind, items);
         };
     }
 
@@ -123,7 +176,11 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
         };
     }
 
-    private boolean isValidComponent(int slot, ItemStack stack) {
+    public static int slotLimit(NuclearDeviceBlock.Kind kind) {
+        return 1;
+    }
+
+    private static boolean isValidComponent(NuclearDeviceBlock.Kind kind, int slot, ItemStack stack) {
         return switch (kind) {
             case GADGET -> switch (slot) {
                 case 0 -> is(stack, "gadget_wireing");
@@ -176,18 +233,18 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
         };
     }
 
-    private boolean hasManLensesAndCore() {
-        return hasAll("explosive_lenses", 0, 1, 2, 3) && has(4, "man_core");
+    private static boolean hasManLensesAndCore(ItemStackHandler items) {
+        return hasAll(items, "explosive_lenses", 0, 1, 2, 3) && has(items, 4, "man_core");
     }
 
-    private boolean hasPrototypeLoad() {
-        return hasAll("cell_sas3", 0, 1, 12, 13)
-                && hasPrototypeRod("URANIUM", 2, 3, 10, 11)
-                && hasPrototypeRod("LEAD", 4, 5, 8, 9)
-                && hasPrototypeRod("NP237", 6, 7);
+    private static boolean hasPrototypeLoad(ItemStackHandler items) {
+        return hasAll(items, "cell_sas3", 0, 1, 12, 13)
+                && hasPrototypeRod(items, "URANIUM", 2, 3, 10, 11)
+                && hasPrototypeRod(items, "LEAD", 4, 5, 8, 9)
+                && hasPrototypeRod(items, "NP237", 6, 7);
     }
 
-    private boolean isPrototypeComponent(int slot, ItemStack stack) {
+    private static boolean isPrototypeComponent(int slot, ItemStack stack) {
         return switch (slot) {
             case 0, 1, 12, 13 -> is(stack, "cell_sas3");
             case 2, 3, 10, 11 -> isRod(stack, "URANIUM");
@@ -197,11 +254,11 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
         };
     }
 
-    private boolean hasPrototypeRod(String rodType, int... slots) {
+    private static boolean hasPrototypeRod(ItemStackHandler items, String rodType, int... slots) {
         return Arrays.stream(slots).allMatch(slot -> isRod(items.getStackInSlot(slot), rodType));
     }
 
-    private boolean isRod(ItemStack stack, String rodType) {
+    private static boolean isRod(ItemStack stack, String rodType) {
         if (stack.isEmpty() || !is(stack, "rod_quad")) {
             return false;
         }
@@ -209,11 +266,11 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
         return tag != null && rodType.equalsIgnoreCase(tag.getString("BreedingRodType"));
     }
 
-    private boolean hasAll(String name, int... slots) {
-        return Arrays.stream(slots).allMatch(slot -> has(slot, name));
+    private static boolean hasAll(ItemStackHandler items, String name, int... slots) {
+        return Arrays.stream(slots).allMatch(slot -> has(items, slot, name));
     }
 
-    private boolean has(int slot, String name) {
+    private static boolean has(ItemStackHandler items, int slot, String name) {
         return slot >= 0 && slot < items.getSlots() && is(items.getStackInSlot(slot), name);
     }
 

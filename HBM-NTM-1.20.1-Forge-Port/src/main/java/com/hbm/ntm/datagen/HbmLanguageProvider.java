@@ -107,6 +107,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.inf_water", "Infinite Water");
         add("item.hbm.inf_water_mk2", "Infinite Water Mk2");
         add("item.hbm.chlorine_pinwheel", "Chlorine Pinwheel");
+        add("item.hbm.fluid_identifier_multi", "Multi Fluid Identifier");
+        add("item.hbm.fluid_identifier_multi.info", "Fluid:");
+        add("item.hbm.fluid_identifier_multi.info2", "Secondary:");
         add("item.hbm.battery_potato", "Potato Battery");
         add("item.hbm.battery_creative", "Infinite Battery");
         add("item.hbm.battery_redstone", "Redstone Battery");
@@ -172,6 +175,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_boiler_off", "Old Boiler");
         add("block.hbm.machine_shredder", "Shredder");
         add("block.hbm.machine_turbine", "Steam Turbine");
+        add("block.hbm.machine_industrial_turbine", "Industrial Steam Turbine");
         add("block.hbm.decon", "Decontaminator");
         add("block.hbm.red_cable", "Red Copper Cable");
         add("block.hbm.fluid_duct_neo", "Fluid Duct");
@@ -235,6 +239,15 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.hbm.battery.priority.normal", "Normal");
         add("container.hbm.battery.priority.high", "High");
         add("container.hbm.battery.priority.recommended", "Recommended: Low");
+        HbmFluidLangEntries.addEnglish(this::add);
+        add("container.fluidtank", "Fluid Tank");
+        add("container.fluidtank.mode", "Mode");
+        add("container.fluidtank.mode.input", "Input");
+        add("container.fluidtank.mode.buffer", "Buffer");
+        add("container.fluidtank.mode.output", "Output");
+        add("container.fluidtank.mode.none", "Disabled");
+        add("container.fluidtank.damaged", "Damaged");
+        add("container.fluidtank.burning", "Burning");
         add("block.hbm.gas_meltdown", "Meltdown Gas");
         add("block.hbm.gas_monoxide", "Carbon Monoxide");
         add("block.hbm.gas_asbestos", "Asbestos Dust");
@@ -281,6 +294,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.nuke_fstbmb", "Balefire Bomb");
         add("block.hbm.bomb_multi", "Multi Purpose Bomb");
         add("subtitles.hbm.weapon.fstbmb", "Balefire bomb signal");
+        add("subtitles.hbm.weapon.nuclear_explosion", "Nuclear explosion");
         add("block.hbm.yellow_barrel", "Radioactive Barrel");
         add("block.hbm.vitrified_barrel", "Vitrified Nuclear Waste Drum");
         ModItems.EXTRA_PARTS_TAB_ITEMS.forEach(item -> addItem(item, title(item.getId().getPath())));

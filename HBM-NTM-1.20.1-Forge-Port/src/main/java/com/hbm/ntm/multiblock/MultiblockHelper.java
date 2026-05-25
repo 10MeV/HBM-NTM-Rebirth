@@ -6,9 +6,11 @@ import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
@@ -121,6 +123,12 @@ public final class MultiblockHelper {
         return fillOffsetsWithProxyModes(level, corePos, extents.offsets(), dummyState, proxyModes);
     }
 
+    public static boolean fillUpWithProxyModes(Level level, BlockPos corePos, MultiblockExtents extents,
+            BlockState dummyState, Function<BlockPos, LegacyProxyMode> proxyModes,
+            Predicate<BlockPos> legacyExtraOffsets) {
+        return fillOffsetsWithProxyModes(level, corePos, extents.offsets(), dummyState, proxyModes, legacyExtraOffsets);
+    }
+
     public static boolean fillOffsets(Level level, BlockPos corePos, Iterable<BlockPos> offsets) {
         return fillOffsets(level, corePos, offsets, ModBlocks.DUMMY_BLOCK.get().defaultBlockState());
     }
@@ -145,7 +153,19 @@ public final class MultiblockHelper {
     }
 
     public static boolean fillOffsetsWithProxyModes(Level level, BlockPos corePos, Iterable<BlockPos> offsets,
+            Function<BlockPos, LegacyProxyMode> proxyModes, Predicate<BlockPos> legacyExtraOffsets) {
+        return fillOffsetsWithProxyModes(level, corePos, offsets, ModBlocks.DUMMY_BLOCK.get().defaultBlockState(),
+                proxyModes, legacyExtraOffsets);
+    }
+
+    public static boolean fillOffsetsWithProxyModes(Level level, BlockPos corePos, Iterable<BlockPos> offsets,
             BlockState dummyState, Function<BlockPos, LegacyProxyMode> proxyModes) {
+        return fillOffsetsWithProxyModes(level, corePos, offsets, dummyState, proxyModes, offset -> false);
+    }
+
+    public static boolean fillOffsetsWithProxyModes(Level level, BlockPos corePos, Iterable<BlockPos> offsets,
+            BlockState dummyState, Function<BlockPos, LegacyProxyMode> proxyModes,
+            Predicate<BlockPos> legacyExtraOffsets) {
         if (level.isClientSide) {
             return false;
         }
@@ -158,6 +178,7 @@ public final class MultiblockHelper {
             if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
                 dummy.setCorePos(corePos);
                 dummy.setProxyMode(proxyModes.apply(offset));
+                dummy.setLegacyExtra(legacyExtraOffsets.test(offset));
             }
         }
         return true;
@@ -182,6 +203,68 @@ public final class MultiblockHelper {
                 }
             }
         });
+    }
+
+    public static boolean makeLegacyExtra(Level level, BlockPos pos, LegacyProxyMode proxyMode) {
+        if (level.isClientSide || !(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy)) {
+            return false;
+        }
+        dummy.setLegacyExtra(true);
+        dummy.setProxyMode(proxyMode);
+        return true;
+    }
+
+    public static boolean removeLegacyExtra(Level level, BlockPos pos) {
+        return removeLegacyExtra(level, pos, LegacyProxyMode.none());
+    }
+
+    public static boolean removeLegacyExtra(Level level, BlockPos pos, LegacyProxyMode restoredProxyMode) {
+        if (level.isClientSide || !(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy)) {
+            return false;
+        }
+        if (!dummy.isLegacyExtra()) {
+            return false;
+        }
+        dummy.setLegacyExtra(false);
+        dummy.setProxyMode(restoredProxyMode);
+        return true;
+    }
+
+    public static boolean isLegacyExtra(Level level, BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy && dummy.isLegacyExtra();
+    }
+
+    @Nullable
+    public static CoreLookup findCore(BlockGetter level, BlockPos pos) {
+        if (!(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) || dummy.getCorePos() == null) {
+            return null;
+        }
+        return findCoreAt(level, dummy.getCorePos());
+    }
+
+    @Nullable
+    public static CoreLookup findCoreAt(BlockGetter level, @Nullable BlockPos corePos) {
+        if (corePos == null) {
+            return null;
+        }
+        if (level instanceof Level worldLevel && !worldLevel.hasChunkAt(corePos)) {
+            return null;
+        }
+        BlockState coreState = level.getBlockState(corePos);
+        return coreState.getBlock() instanceof MultiblockCoreBlock ? new CoreLookup(corePos.immutable(), coreState) : null;
+    }
+
+    @Nullable
+    public static BlockEntity resolveCoreBlockEntity(BlockEntity blockEntity) {
+        if (blockEntity == null || blockEntity.getLevel() == null) {
+            return blockEntity;
+        }
+        CoreLookup core = findCore(blockEntity.getLevel(), blockEntity.getBlockPos());
+        if (core == null) {
+            return blockEntity;
+        }
+        BlockEntity coreEntity = blockEntity.getLevel().getBlockEntity(core.pos());
+        return coreEntity == null ? blockEntity : coreEntity;
     }
 
     private static boolean isReplaceableOrTemporary(Level level, BlockPos pos, @Nullable BlockPos temporaryPos) {
@@ -214,6 +297,9 @@ public final class MultiblockHelper {
     }
 
     private record ClearingKey(Level level, BlockPos corePos) {
+    }
+
+    public record CoreLookup(BlockPos pos, BlockState state) {
     }
 
     private MultiblockHelper() {

@@ -4,6 +4,8 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.item.FluidIdentifierItem;
+import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.TrinketBlockItem;
@@ -97,6 +99,8 @@ public final class ModCreativeTabs {
         }
         if (item instanceof TrinketBlockItem trinket) {
             TrinketBlockItem.addCreativeStacks(output, trinket);
+        } else if (item instanceof FluidPipeBlockItem pipe) {
+            pipe.addCreativeStacks(output);
         } else if (item instanceof LegacyStateBlockItem stateItem) {
             stateItem.addCreativeStacks(output);
         } else {
@@ -107,6 +111,8 @@ public final class ModCreativeTabs {
     private static void acceptItem(CreativeModeTab.Output output, RegistryObject<? extends Item> item) {
         if (item.get() instanceof HbmBatteryItem battery) {
             battery.addCreativeStacks(output, item.get().getDefaultInstance());
+        } else if (item.get() instanceof FluidIdentifierItem identifier) {
+            identifier.addCreativeStacks(output);
         } else if (item.get() instanceof HbmFluidContainerItem container) {
             output.accept(item.get().getDefaultInstance());
         } else {

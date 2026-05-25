@@ -1168,6 +1168,33 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+### 2026-05-25 追加更正：核弹单方块契约回退
+
+触发来源：
+
+- 实机继续反馈：新世界仍无法打开核弹 GUI；上一轮把选择/交互形状扩成 OBJ bounds 后，只看到选择框/碰撞箱变成核弹整体，实际模型与 GUI 问题没有解决。
+- 用户明确指出 1.7.10 核弹没有多方块 dummy，也不是模型尺寸碰撞箱，旧端是单个 `BlockContainer` + TESR 渲染模型。
+
+1.7.10 对照：
+
+- `NukeMan#onBlockActivated(...)`：客户端直接 `return true`；服务端在玩家非潜行且当前位置 `TileEntityNukeMan` 存在时调用 `FMLNetworkHandler.openGui(player, MainRegistry.instance, 0, world, x, y, z)`。
+- `TileEntityNukeMan` 以及其它普通核弹 TileEntity 实现 `IGUIProvider`，由 `provideContainer(...)` 和 `provideGUI(...)` 返回对应 container/gui。
+- 核弹方块类本身只是不透明/非普通方块和 `getRenderType() == -1`；没有 `IMultiblock`/dummy/proxy 填充路径，也没有按 OBJ 外形扩展碰撞箱。
+- 世界模型位置仍以旧 `RenderNuke*` 的 `x + 0.5D, y, z + 0.5D` 加 metadata 旋转为准；Little Boy 额外 `-2.0D` 平移是旧模型自身契约。
+
+现代修正：
+
+- 撤回 `NuclearDeviceBlock` 对 `MultiblockCoreBlock`、`MultiblockHelper`、dummy proxy 填充/清理、OBJ bounds 选择形状、OBJ bounds 交互形状和中心化 bounds helper 的依赖。
+- `NuclearDeviceBlock` 回到普通 `EntityBlock`：继承 `HorizontalMachineBlock` 的单方块 shape，`RenderShape.INVISIBLE` 由 BER 渲染模型，GUI 打开只走当前 core 方块的 `NuclearDeviceBlockEntity`/`MenuProvider`。
+- `NuclearDeviceBlock#use(...)` 对齐旧 `onBlockActivated(...)`：潜行放行；客户端返回成功；服务端从当前位置取得或补建 `NuclearDeviceBlockEntity` 后调用 `NetworkHooks.openScreen(serverPlayer, menuProvider, pos)`。
+- 若右键已经命中核弹 core 但仍无法取得/补建方块实体，服务端会输出一次 `Could not open nuclear device menu...` 警告，便于区分“没有命中 core”和“方块实体缺失”。
+- `NuclearDeviceRenderer` 撤回中心化额外位移，只保留旧 TESR 原点、旧方向 yaw 和 Little Boy `-2.0D` 平移。
+- `NuclearDeviceItemRenderer` 再修库存 3D 图标：按旧 `ItemRenderBase` 的“库存变换后调用 renderCommon”矩阵顺序修正 Fat Man/Fleija/Solinium/Prototype 的 bounds 计算；GUI 拟合按旧 16px 槽位换算，不再把所有核弹都强制拟合到同一最大占比。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ## 2026-05-25 核弹 OBJ / 物品 renderer 接入修正
 
 触发来源：
@@ -1214,6 +1241,33 @@
 - 旧 Gadget 在 fancy graphics 下额外渲染 `Wires`；现代当前核弹 renderer 先渲染完整模型，后续若需要可按 group 拆成 `Body` / `Wires` 并接客户端图形设置。
 - 旧 Little Boy 只有世界 TESR，没有专用物品 renderer；现代为了避免 baked OBJ item parent 的贴图/中心点问题，将它纳入统一核弹 item renderer。
 - 本批通过构建验证，仍需实机截图确认创造栏九个核弹的最终比例和原型贴图是否恢复。
+
+### 2026-05-25 追加修正：核弹 UI / 世界模型 / 物品图标漂移
+
+实机反馈：
+
+- 创造栏核弹物品图标和 tooltip 出现明显漂移。
+- 多种核弹放置后模型相对核心方块偏离，导致视觉模型与可交互核心不一致。
+- 核弹 GUI 叠层贴图全体错位。
+
+根因复核：
+
+- `NuclearDeviceItemRenderer` 初版在计算 bounds 时把 1.7.10 `renderInventory()` 的平移纳入了中心点，但实际渲染时没有应用这段平移，造成 GUI item display 中模型被反向抵消到槽位外。
+- 世界 BER 初版直接按旧 TESR 原点绘制。旧 OBJ 有不少模型几何中心本来不在 `(0.5, *, 0.5)`，旧版只负责“模型看起来对”，现代玩家右键需要核心方块与模型视觉更一致，因此应在现代 BER 中把 X/Z bounds 中心压回核心块中心。
+- `NuclearDeviceScreen` 初版只迁了少量 readiness overlay，且 Tsar 旧 GUI 实际从 `ivyMikeSchematic.png` 采组件叠层；Mike/Fleija/Solinium/N2 也有各自的完整旧叠层逻辑。
+
+现代修正：
+
+- `NuclearDeviceItemRenderer` 在 `applyBaseDisplay(...)` 后恢复执行 `applyLegacyInventory(...)`，使旧 `renderInventory()` 的平移/缩放语义不只参与 bounds，也参与最终渲染。
+- `NuclearDeviceRenderer` 改为按 `LegacyWavefrontModel.boundsAll()` 自动做 X/Z 中心校正，让模型围绕核心方块显示，避免“看见模型但点不到核心”的交互错位。
+- `NuclearDeviceScreen`：
+  - 所有 blit 改用显式 `256x256` 纹理尺寸重载，固定旧 `drawTexturedModalRect` 的采样语义。
+  - Tsar overlay 改回旧 `GUINukeTsar` 的 `ivyMikeSchematic.png` 采样源。
+  - Mike、Fleija、Solinium、N2 叠层按 1.7.10 GUI 类逐项补齐。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
 ## 2026-05-25 ResourceManager 效果/实体/工具 OBJ 批量接入
 
@@ -2254,3 +2308,109 @@ noSmooth 对照报告：
 验证：
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-25 核弹 BER 坐标与选择形状修正
+
+触发来源：
+
+- 实机截图显示 N2、Fat Man 等核弹放置后，模型相对一格核心方块明显外伸；由于现代方块仍只有一格选择/交互范围，玩家对着可见 OBJ 主体右键时可能没有命中核心方块，GUI 表现为打不开。
+- 上一轮曾尝试按 OBJ bounds 自动居中世界模型，但这不符合 1.7.10 TESR 的事实源，且会破坏部分核弹模型本身的旧版偏置语义。
+
+1.7.10 对照：
+
+- `RenderNukeGadget` / `RenderNukeMan` / `RenderNukeMike` / `RenderNukeTsar` / `RenderNukePrototype` / `RenderNukeFleija`：世界渲染入口均为 `GL11.glTranslated(x + 0.5D, y, z + 0.5D)` 后按 metadata 旋转。
+- `RenderNukeBoy`：同样以 `x + 0.5D, y, z + 0.5D` 为原点，但每个方向分支旋转后额外 `GL11.glTranslated(-2.0D, 0.0D, 0.0D)`。
+- `RenderNukeSolinium` / `RenderNukeN2`：先 `GL11.glRotatef(90, Y)`，再按 metadata 追加方向旋转。
+- 旧版方块仍是单个 `BlockContainer`，但 1.20.1 的玩家交互更容易暴露“可见大模型”和“一格核心 hitbox”不一致的问题。
+
+现代修正：
+
+- `NuclearDeviceRenderer` 移除自动居中逻辑，改为调用 `NuclearDeviceBlock.legacyRenderYaw(...)`，并只对 `BOY` 追加旧版 `-2.0D` 模型平移。
+- `NuclearDeviceBlock` 新增核弹 OBJ 旧资源 bounds 常量，并按旧 TESR 变换计算 `getShape(...)` 与 `getInteractionShape(...)`，让选择框/右键命中范围覆盖实际可见模型。
+- `getCollisionShape(...)` 保持 `Shapes.block()`，避免 N2/Mike 这类高大模型把碰撞也扩成多格实体墙；本轮只扩现代交互/轮廓，不改旧一格方块碰撞。
+- 胖子核弹 GUI 坐标已复查：`GUINukeMan` 和 `ContainerNukeMan` 与 `GUINukeGadget` 同一套 slot/overlay 坐标，现代 `NuclearDeviceMenu.Layout.MAN` 与 `renderImplosionStatus(...)` 保持一致；本轮不改 GUI 贴图坐标。若后续仍看到“胖子偏移”，应优先继续查 `NuclearDeviceItemRenderer` 的物品栏 3D 图标，而不是配置 GUI 背景。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 追加：核弹模型中心回压核心方块
+
+- 继续实机反馈指出上一轮“只有碰撞箱变成核弹整体样子，模型偏移一点没变”。确认原因：上一轮保留了 1.7.10 单格 TESR 外伸坐标，只扩展了现代选择/交互形状；这不会改变视觉模型位置。
+- 现代高版本修正口径调整：
+  - 保留 1.7.10 renderer 的原始旋转和 Little Boy 额外 `-2` 平移作为模型姿态事实源。
+  - 在这些旧变换之后计算 OBJ 水平包围盒中心，再额外平移到核心方块中心，解决现代端“可见核弹主体偏离核心方块”的交互观感问题。
+  - `NuclearDeviceBlock#transformedLegacyBounds(...)` 和 `NuclearDeviceRenderer` 共用同一套中心化平移，因此选择框和可见模型应同步移动，不再出现只动碰撞箱不动模型。
+- 仍不改 `NuclearDeviceScreen` 的 Fat Man GUI 背景/slot 坐标：1.7.10 `GUINukeMan` 坐标已经复核一致；“UI 中胖子核弹偏移”若指创造栏/JEI/物品栏里的 3D 图标，需要继续在 `NuclearDeviceItemRenderer` 独立校正。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 追加：核弹物品 3D 图标旧数据修正
+
+触发来源：
+
+- 实机反馈 Fat Man 物品栏/创造栏 3D 图标偏移，其他核弹图标尺寸也不合适。
+
+1.7.10 对照：
+
+- 所有旧 `ItemRenderBase` 库存路径先执行共同变换：
+  - `glTranslated(8, 10, 0)`
+  - `glRotated(-30, X)`
+  - `glRotated(45, Y)`
+  - `glScaled(-1, -1, -1)`
+- 各核弹 renderer 的库存/通用数据：
+  - `RenderNukeGadget`：库存 `translate(0,-3,0)`、`scale(5)`；通用 `rotateY(-90)`。
+  - `ItemRenderLibrary` 的 `nuke_boy`：库存 `scale(5)`；通用 `translate(-1,0,0)`。
+  - `RenderNukeMan`：库存 `translate(0,-2,0)`、`scale(5)`；通用 `rotateY(180)`、`translate(-0.75,0,0)`。
+  - `RenderNukeMike` / `RenderNukeN2`：库存 `translate(0,-5,0)`、`scale(2.25)`。
+  - `RenderNukeTsar`：库存 `scale(2.25)`；通用 `translate(1.5,0,0)`。
+  - `RenderNukePrototype`：库存 `translate(0,0.125,0)`、`scale(3)`；通用 `rotateY(90)`、`translate(0,0.125,0)`。
+  - `RenderNukeFleija`：库存 `scale(6.8)`；通用 `translate(0.125,0,0)`、`rotateY(90)`。
+  - `RenderNukeSolinium`：库存 `translate(0,-0.125,0)`、`scale(5)`；通用 `rotateY(90)`、`translate(0,-0.125,0)`。
+
+现代修正：
+
+- `NuclearDeviceItemRenderer` 的 GUI bounds 计算现在按“库存变换 + 通用变换”计算，不再把旧库存 scale 当成拟合参考后又不实际应用。
+- `NuclearDeviceItemRenderer` 实际应用各核弹旧库存 `translate/scale`，并补回 Little Boy 旧通用 `translate(-1,0,0)`、库存 `scale(5)`。
+- Fat Man 的现代 bounds 与实际渲染都保留旧通用 `rotateY(180)` 后 `translate(-0.75,0,0)`，用于修正图标偏移。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 最终口径：覆盖前两条实验性修正
+
+- 本文前面的“核弹 BER 坐标与选择形状修正”和“核弹模型中心回压核心方块”是实机排查中的实验性方案，已被“核弹单方块契约回退”覆盖。
+- 后续继续修核弹时，以当前代码为准：
+  - 核弹不接 `MultiblockCoreBlock`，不放 dummy/proxy。
+  - 核弹不按 OBJ bounds 扩选择箱、交互箱或碰撞箱。
+  - 世界模型不自动中心化，沿用 1.7.10 TESR 原点、yaw 和 Little Boy 额外平移。
+  - GUI 打开只从被命中的一格 core 方块进入 `NuclearDeviceBlockEntity`/`NetworkHooks.openScreen(...)`。
+
+### 2026-05-25 追加：核弹 OBJ 坐标回源与 metadata 映射修正
+
+实机反馈：
+
+- 核弹回退到单方块后，选择框/核心块已是一格，但 Mike、Little Boy、Fat Man 等世界模型仍相对核心块半格或错向偏移。
+- UI 仍反馈无法打开；`latest.log` 中没有 `Could not open nuclear device menu...` 警告，也没有菜单构造异常，因此需要区分“右键没有进入核弹方块”与“菜单包已发送但客户端 screen 未打开”。
+
+复核发现：
+
+- 现代 `models/block/nuke/*.obj` 不是 1.7.10 原始坐标：除 Little Boy 外，多数核弹顶点整体相对旧资源平移了 `(0.5, 0, 0.5)`；Little Boy 也被改成另一套中心化坐标。
+- 这种现代坐标适配只适合普通 baked OBJ block model；当前核弹已经改走旧 TESR 风格的 `BlockEntityRenderer`，继续使用半格中心化 OBJ 会与旧 `x + 0.5, y, z + 0.5` 原点叠加，造成模型偏移。
+- 现代 `HorizontalMachineBlock#getStateForPlacement(...)` 保存的是玩家朝向的反向 `FACING`，而 1.7.10 核弹 metadata 是按玩家 yaw 直接写入 `5/3/4/2`；此前直接把现代 `FACING` 套入旧 renderer metadata 表，导致旋转错位。
+
+现代修正：
+
+- 九个核弹 OBJ 和 `gadget_body.obj` 的 `v` 顶点坐标恢复为 1.7.10 原资源坐标；保留现代端 `.mtl`、`mtllib` 和 `usemtl default`，保证 Forge OBJ loader 仍能通过 `#default` 贴图链路烘焙。
+- `NuclearDeviceBlock.legacyRenderYaw(...)` 改为按现代 `FACING -> 旧 metadata -> 旧 RenderNuke* yaw` 的映射：
+  - 现代 `NORTH/EAST/SOUTH/WEST` 分别等价旧 metadata `5/3/4/2`。
+  - Mike/Prototype/Fleija 对应 `90/0/270/180`；Boy/Tsar 对应 `0/270/180/90`；Man 对应 `180/90/0/270`；Gadget 对应 `270/180/90/0`；Solinium/N2 保留旧额外 `90` 度后的结果。
+- `NuclearDeviceBlock#use(...)` 在服务端成功进入 `NetworkHooks.openScreen(...)` 前输出 `Opening nuclear device menu...`，便于后续实机 log 精确判断 UI 打不开的断点。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 编译末尾的 deprecation 注记来自 `MultiblockDummyBlockEntity`，不是本轮核弹渲染/菜单修复造成的失败。

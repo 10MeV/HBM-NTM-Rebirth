@@ -15,9 +15,12 @@ import com.hbm.ntm.client.particle.FoamParticle;
 import com.hbm.ntm.client.particle.GasFlameParticle;
 import com.hbm.ntm.client.particle.GibletParticle;
 import com.hbm.ntm.client.particle.HadronParticle;
+import com.hbm.ntm.client.particle.HazeParticle;
 import com.hbm.ntm.client.particle.HbmSmokeParticle;
 import com.hbm.ntm.client.particle.LegacySplashParticle;
 import com.hbm.ntm.client.particle.MukeWaveParticle;
+import com.hbm.ntm.client.particle.NetworkDebugParticle;
+import com.hbm.ntm.client.particle.PlasmaBlastParticle;
 import com.hbm.ntm.client.particle.RadiationFogParticle;
 import com.hbm.ntm.client.particle.RbmkAnimatedParticle;
 import com.hbm.ntm.client.particle.SchrabFogParticle;
@@ -27,6 +30,10 @@ import com.hbm.ntm.client.particle.RocketFlameParticle;
 import com.hbm.ntm.client.renderer.AssemblyMachineRenderer;
 import com.hbm.ntm.client.renderer.BasicMachineRenderer;
 import com.hbm.ntm.client.renderer.ChemicalPlantRenderer;
+import com.hbm.ntm.client.renderer.CloudFleijaRenderer;
+import com.hbm.ntm.client.renderer.CloudFleijaRainbowRenderer;
+import com.hbm.ntm.client.renderer.CloudSoliniumRenderer;
+import com.hbm.ntm.client.renderer.FluidTankRenderer;
 import com.hbm.ntm.client.renderer.LegacyDemonLampBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.LegacyLanternBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.LegacyLightBlockEntityRenderer;
@@ -36,19 +43,24 @@ import com.hbm.ntm.client.renderer.MachineBatterySocketRenderer;
 import com.hbm.ntm.client.renderer.MovingPackageRenderer;
 import com.hbm.ntm.client.renderer.MovingItemRenderer;
 import com.hbm.ntm.client.renderer.NuclearDeviceRenderer;
+import com.hbm.ntm.client.renderer.NukeTorexRenderer;
 import com.hbm.ntm.client.renderer.RubbleRenderer;
 import com.hbm.ntm.client.renderer.ShrapnelRenderer;
 import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
 import com.hbm.ntm.client.screen.BasicMachineScreen;
 import com.hbm.ntm.client.screen.AssemblyMachineScreen;
 import com.hbm.ntm.client.screen.ChemicalPlantScreen;
+import com.hbm.ntm.client.screen.FluidTankScreen;
 import com.hbm.ntm.client.screen.LiquefactorScreen;
 import com.hbm.ntm.client.screen.MachineBatteryScreen;
 import com.hbm.ntm.client.screen.MachineBatterySocketScreen;
 import com.hbm.ntm.client.screen.NuclearDeviceScreen;
 import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.item.FluidIdentifierItem;
+import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
@@ -76,6 +88,7 @@ public final class ClientModEvents {
             MenuScreens.register(ModMenuTypes.ASSEMBLY_MACHINE.get(), AssemblyMachineScreen::new);
             MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT.get(), ChemicalPlantScreen::new);
             MenuScreens.register(ModMenuTypes.LIQUEFACTOR.get(), LiquefactorScreen::new);
+            MenuScreens.register(ModMenuTypes.FLUID_TANK.get(), FluidTankScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY.get(), MachineBatteryScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY_SOCKET.get(), MachineBatterySocketScreen::new);
             MenuScreens.register(ModMenuTypes.NUCLEAR_DEVICE.get(), NuclearDeviceScreen::new);
@@ -89,6 +102,7 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.ASSEMBLY_MACHINE.get(), AssemblyMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.CHEMICAL_PLANT.get(), ChemicalPlantRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LIQUEFACTOR.get(), LiquefactorRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.FLUID_TANK.get(), FluidTankRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_VISIBLE_MACHINE.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.TRINKET.get(), TrinketBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_LIGHT.get(), LegacyLightBlockEntityRenderer::new);
@@ -99,7 +113,11 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntityTypes.MOVING_PACKAGE.get(), MovingPackageRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK5.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK3.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.NUKE_TOREX.get(), NukeTorexRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.FALLOUT_RAIN.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.CLOUD_FLEIJA.get(), CloudFleijaRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.CLOUD_SOLINIUM.get(), CloudSoliniumRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.CLOUD_FLEIJA_RAINBOW.get(), CloudFleijaRainbowRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.BALEFIRE_EXPLOSION.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.FALLING_NUKE.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SHRAPNEL.get(), ShrapnelRenderer::new);
@@ -128,6 +146,16 @@ public final class ClientModEvents {
                 .map(RegistryObject::get)
                 .filter(HbmFluidContainerItem.class::isInstance)
                 .forEach(item -> event.register((stack, tintIndex) -> ((HbmFluidContainerItem) item).getTintColor(stack), item));
+        ModItems.CONTROL_FLUID_ITEMS.stream()
+                .map(RegistryObject::get)
+                .filter(FluidIdentifierItem.class::isInstance)
+                .forEach(item -> event.register((stack, tintIndex) -> ((FluidIdentifierItem) item).getTintColor(stack, tintIndex), item));
+        event.register((stack, tintIndex) -> {
+            if (stack.getItem() instanceof FluidPipeBlockItem pipe) {
+                return pipe.getTintColor(stack, tintIndex);
+            }
+            return 0xFFFFFF;
+        }, ModBlocks.FLUID_DUCT_NEO.get().asItem());
     }
 
     @SubscribeEvent
@@ -172,6 +200,10 @@ public final class ClientModEvents {
         event.registerSpriteSet(ModParticleTypes.COOLING_TOWER.get(), CoolingTowerParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.SPLASH.get(), LegacySplashParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.FLUID_FILL.get(), FluidFillParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.NETWORK_POWER.get(), NetworkDebugParticle.PowerProvider::new);
+        event.registerSpriteSet(ModParticleTypes.NETWORK_FLUID.get(), NetworkDebugParticle.FluidProvider::new);
+        event.registerSpriteSet(ModParticleTypes.PLASMA_BLAST.get(), PlasmaBlastParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.HAZE.get(), HazeParticle.Provider::new);
     }
 
     private ClientModEvents() {

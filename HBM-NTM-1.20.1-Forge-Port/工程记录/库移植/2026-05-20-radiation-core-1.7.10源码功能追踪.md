@@ -1455,6 +1455,33 @@ Verification:
 
 - 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
+## 2026-05-25 Nuclear Fallout Coupling Audit
+
+Legacy source re-checked:
+
+- `com.hbm.entity.logic.EntityNukeExplosionMK5`
+- `com.hbm.entity.logic.EntityNukeExplosionMK3`
+- `com.hbm.entity.effect.EntityFalloutRain`
+- `com.hbm.explosion.ExplosionNukeSmall`
+- `com.hbm.explosion.NukeEnvironmentalEffect`
+
+Findings:
+
+- The default large-nuke fallout path in 1.7.10 is entity-driven:
+  - MK5 spawns `EntityFalloutRain` after the batched ray explosion completes.
+  - MK3 waste explosions spawn `EntityFalloutRain` after the primary destruction stage completes.
+- `EntityFalloutRain` does not directly call `ChunkRadiationManager.proxy.incrementRad(...)`; it mutates blocks and crater biomes. The modern port's `CraterRadiationData` is therefore the correct bridge for persistent crater-zone ambient radiation in 1.20.1.
+- Small/mini nukes are the legacy branch that directly writes chunk radiation, through `ExplosionNukeSmall`'s 5x5 Manhattan footprint. The modern implementation already carries this formula.
+- `NukeEnvironmentalEffect.applyStandardAOE(...)` is present in both versions but is deprecated in the 1.7.10 source and is not part of the MK5/MK3 standard fallout path.
+
+Corrected in coupled explosion pass:
+
+- The explosion trace now records the above coupling and the restored `nuke_prototype` + `igniter` direct detonation entry.
+
+Verification:
+
+- 2026-05-25 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
 ## 2026-05-25 Fallout Rain Collapse And Crater Ambient Radiation Pass
 
 Legacy source re-checked:

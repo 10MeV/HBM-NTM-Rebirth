@@ -9,6 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.network.HbmClientTileBinaryReceiver;
+import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.network.packet.ClientTileBinarySyncRequestPacket;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
@@ -18,7 +20,9 @@ import java.util.UUID;
 
 public final class ClientTileBinaryData {
     private static final long TRANSFER_TIMEOUT_TICKS = 20L * 30L;
+    private static final long REQUEST_COOLDOWN_TICKS = 20L;
     private static final Map<UUID, ChunkAssembly> CHUNKS = new HashMap<>();
+    private static final Map<RequestKey, Long> LAST_SYNC_REQUESTS = new HashMap<>();
 
     public static boolean putChunk(UUID transferId, BlockPos pos, ResourceLocation channel, int chunkIndex, int chunkCount, byte[] chunk, long gameTime) {
         if (chunkCount <= 0 || chunkIndex < 0 || chunkIndex >= chunkCount) {
@@ -46,6 +50,7 @@ public final class ClientTileBinaryData {
         BlockEntity blockEntity = level.getBlockEntity(pos);
         if (!(blockEntity instanceof HbmClientTileBinaryReceiver receiver)) {
             HbmNtm.LOGGER.debug("Tile binary data at {} had no HbmClientTileBinaryReceiver receiver.", pos);
+            requestResync(level, pos, channel);
             return;
         }
         FriendlyByteBuf payloadBuffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(payload));
@@ -70,13 +75,27 @@ public final class ClientTileBinaryData {
         return count;
     }
 
+    public static int pendingClientResyncRequests() {
+        return LAST_SYNC_REQUESTS.size();
+    }
+
+    public static long clientResyncRequestCooldownTicks() {
+        return REQUEST_COOLDOWN_TICKS;
+    }
+
     public static void clearAll() {
         CHUNKS.clear();
+        clearClientResyncRequests();
+    }
+
+    public static void clearClientResyncRequests() {
+        LAST_SYNC_REQUESTS.clear();
     }
 
     public static int pruneExpired(long gameTime) {
         int before = CHUNKS.size();
         CHUNKS.values().removeIf(assembly -> gameTime - assembly.lastTouchedGameTime > TRANSFER_TIMEOUT_TICKS);
+        LAST_SYNC_REQUESTS.entrySet().removeIf(entry -> gameTime - entry.getValue() > TRANSFER_TIMEOUT_TICKS);
         return before - CHUNKS.size();
     }
 
@@ -85,6 +104,20 @@ public final class ClientTileBinaryData {
     }
 
     private ClientTileBinaryData() {
+    }
+
+    private static void requestResync(ClientLevel level, BlockPos pos, ResourceLocation channel) {
+        long gameTime = level.getGameTime();
+        RequestKey key = new RequestKey(pos.immutable(), channel);
+        Long lastRequest = LAST_SYNC_REQUESTS.get(key);
+        if (lastRequest != null && gameTime - lastRequest < REQUEST_COOLDOWN_TICKS) {
+            return;
+        }
+        LAST_SYNC_REQUESTS.put(key, gameTime);
+        ModMessages.sendToServer(new ClientTileBinarySyncRequestPacket(pos, channel));
+    }
+
+    private record RequestKey(BlockPos pos, ResourceLocation channel) {
     }
 
     private static final class ChunkAssembly {

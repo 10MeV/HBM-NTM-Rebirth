@@ -292,6 +292,7 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel EFFECT_SPHERE_IUV = ObjEffectModels.SPHERE_IUV;
     public static final LegacyWavefrontModel EFFECT_SPHERE_UV = ObjEffectModels.SPHERE_UV;
     public static final LegacyWavefrontModel EFFECT_SPHERE_NEW = ObjEffectModels.SPHERE_NEW;
+    public static final LegacyWavefrontModel EFFECT_SPHERE = ObjEffectModels.SPHERE;
     public static final LegacyWavefrontModel UTILITY_GEIGER_COUNTER = ObjUtilityModels.GEIGER_COUNTER;
     public static final LegacyWavefrontModel UTILITY_FORCEFIELD_TOP = ObjUtilityModels.FORCEFIELD_TOP;
     public static final LegacyWavefrontModel UTILITY_SAT_FOEQ_BURNING = ObjUtilityModels.SAT_FOEQ_BURNING;

@@ -1,8 +1,11 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
 import com.hbm.ntm.explosion.NuclearExplosionUtil;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -59,19 +62,53 @@ public class NuclearDeviceBlock extends HorizontalMachineBlock implements Entity
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        MenuProvider menuProvider = getMenuProvider(state, level, pos);
-        if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
-                && menuProvider != null) {
-            NetworkHooks.openScreen(serverPlayer, menuProvider, pos);
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
         }
-        return player.isShiftKeyDown() ? InteractionResult.PASS : InteractionResult.sidedSuccess(level.isClientSide);
+        if (kind == Kind.PROTOTYPE && player.getItemInHand(hand).is(ModItems.legacyItem("igniter").get())) {
+            if (!level.isClientSide()) {
+                detonateArmed(level, pos);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+            MenuProvider menuProvider = getOrCreateMenuProvider(state, level, pos);
+            if (menuProvider != null) {
+                HbmNtm.LOGGER.info("Opening nuclear device menu at {} for {} using {}.",
+                        pos, serverPlayer.getGameProfile().getName(), menuProvider.getClass().getSimpleName());
+                NetworkHooks.openScreen(serverPlayer, menuProvider, buffer -> {
+                    buffer.writeBlockPos(pos);
+                    buffer.writeVarInt(kind.ordinal());
+                });
+            } else {
+                HbmNtm.LOGGER.warn("Could not open nuclear device menu at {} because no block entity was available for {}.",
+                        pos, state);
+            }
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Nullable
     @Override
     public MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
+        return getOrCreateMenuProvider(state, level, pos);
+    }
+
+    @Nullable
+    private MenuProvider getOrCreateMenuProvider(BlockState state, Level level, BlockPos pos) {
         BlockEntity blockEntity = level.getBlockEntity(pos);
-        return blockEntity instanceof NuclearDeviceBlockEntity device ? device : null;
+        if (blockEntity instanceof NuclearDeviceBlockEntity device) {
+            return device;
+        }
+        if (!level.isClientSide && state.getBlock() == this) {
+            BlockEntity created = newBlockEntity(pos, state);
+            if (created instanceof NuclearDeviceBlockEntity device) {
+                level.setBlockEntity(device);
+                level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+                return device;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -109,6 +146,46 @@ public class NuclearDeviceBlock extends HorizontalMachineBlock implements Entity
                 1.0F, 0.9F + level.random.nextFloat() * 0.1F);
         level.gameEvent(null, GameEvent.EXPLODE, pos);
         return detonationKind.detonate(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+    }
+
+    public static float legacyRenderYaw(Kind kind, Direction facing) {
+        return switch (kind) {
+            case GADGET -> switch (facing) {
+                case NORTH -> 270.0F;
+                case EAST -> 180.0F;
+                case SOUTH -> 90.0F;
+                case WEST -> 0.0F;
+                default -> 90.0F;
+            };
+            case BOY, TSAR -> switch (facing) {
+                case NORTH -> 0.0F;
+                case EAST -> 270.0F;
+                case SOUTH -> 180.0F;
+                case WEST -> 90.0F;
+                default -> 180.0F;
+            };
+            case MAN -> switch (facing) {
+                case NORTH -> 180.0F;
+                case EAST -> 90.0F;
+                case SOUTH -> 0.0F;
+                case WEST -> 270.0F;
+                default -> 0.0F;
+            };
+            case MIKE, PROTOTYPE, FLEIJA -> switch (facing) {
+                case NORTH -> 90.0F;
+                case EAST -> 0.0F;
+                case SOUTH -> 270.0F;
+                case WEST -> 180.0F;
+                default -> 270.0F;
+            };
+            case SOLINIUM, N2 -> switch (facing) {
+                case NORTH -> 90.0F;
+                case EAST -> 0.0F;
+                case SOUTH -> 270.0F;
+                case WEST -> 180.0F;
+                default -> 270.0F;
+            };
+        };
     }
 
     public enum Kind {

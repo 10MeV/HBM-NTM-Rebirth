@@ -1,7 +1,11 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.entity.effect.CloudFleijaEntity;
+import com.hbm.ntm.entity.effect.CloudFleijaRainbowEntity;
+import com.hbm.ntm.entity.effect.CloudSoliniumEntity;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
+import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
@@ -63,6 +67,46 @@ public final class ModEntityTypes {
                     .updateInterval(20)
                     .noSummon()
                     .build("entity_fallout_rain"));
+
+    public static final RegistryObject<EntityType<CloudFleijaEntity>> CLOUD_FLEIJA =
+            ENTITY_TYPES.register("entity_cloud_fleija", () -> EntityType.Builder
+                    .<CloudFleijaEntity>of(CloudFleijaEntity::new, MobCategory.MISC)
+                    .sized(20.0F, 40.0F)
+                    .clientTrackingRange(500)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_cloud_fleija"));
+
+    public static final RegistryObject<EntityType<CloudSoliniumEntity>> CLOUD_SOLINIUM =
+            ENTITY_TYPES.register("entity_cloud_solinium", () -> EntityType.Builder
+                    .<CloudSoliniumEntity>of(CloudSoliniumEntity::new, MobCategory.MISC)
+                    .sized(20.0F, 40.0F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_cloud_solinium"));
+
+    public static final RegistryObject<EntityType<CloudFleijaRainbowEntity>> CLOUD_FLEIJA_RAINBOW =
+            ENTITY_TYPES.register("entity_cloud_rainbow", () -> EntityType.Builder
+                    .<CloudFleijaRainbowEntity>of(CloudFleijaRainbowEntity::new, MobCategory.MISC)
+                    .sized(20.0F, 40.0F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_cloud_rainbow"));
+
+    public static final RegistryObject<EntityType<NukeTorexEntity>> NUKE_TOREX =
+            ENTITY_TYPES.register("entity_effect_torex", () -> EntityType.Builder
+                    .<NukeTorexEntity>of(NukeTorexEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 50.0F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_effect_torex"));
 
     public static final RegistryObject<EntityType<BalefireExplosionEntity>> BALEFIRE_EXPLOSION =
             ENTITY_TYPES.register("entity_balefire", () -> EntityType.Builder

@@ -5,6 +5,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -85,11 +86,11 @@ public class AssemblyMachineMenu extends AbstractContainerMenu {
         return outputCapacity <= 0 ? 0 : outputFill * maxWidth / outputCapacity;
     }
 
-    public String getInputTankInfo() {
+    public Component getInputTankInfo() {
         return tankInfo(blockEntity.getInputTank(), inputFill, inputCapacity);
     }
 
-    public String getOutputTankInfo() {
+    public Component getOutputTankInfo() {
         return tankInfo(blockEntity.getOutputTank(), outputFill, outputCapacity);
     }
 
@@ -231,8 +232,8 @@ public class AssemblyMachineMenu extends AbstractContainerMenu {
         });
     }
 
-    private static String tankInfo(HbmFluidTank tank, int fill, int capacity) {
-        return tank.getTankType().getName() + ": " + fill + " / " + capacity + " mB";
+    private static Component tankInfo(HbmFluidTank tank, int fill, int capacity) {
+        return tank.getTankType().getDisplayName().copy().append(": " + fill + " / " + capacity + " mB");
     }
 
     private static AssemblyMachineBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

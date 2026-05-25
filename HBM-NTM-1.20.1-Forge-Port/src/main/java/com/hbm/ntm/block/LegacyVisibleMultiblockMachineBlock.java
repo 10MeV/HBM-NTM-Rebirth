@@ -10,7 +10,6 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +74,7 @@ public class LegacyVisibleMultiblockMachineBlock extends LegacyXrMultiblockBlock
 
     @Override
     public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos, CollisionContext context) {
-        return definition.hasCollisionShapeFactory() ? definition.collisionShape(state) : Shapes.block();
+        return definition.collisionShape(state);
     }
 
     @Override

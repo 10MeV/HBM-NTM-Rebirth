@@ -12,6 +12,7 @@ import com.hbm.ntm.network.packet.ClientMissileMultipartPacket;
 import com.hbm.ntm.network.packet.ClientPanelDataPacket;
 import com.hbm.ntm.network.packet.ClientTileBinaryDataPacket;
 import com.hbm.ntm.network.packet.ClientTileBinaryDataChunkPacket;
+import com.hbm.ntm.network.packet.ClientTileBinarySyncRequestPacket;
 import com.hbm.ntm.network.packet.ClientTileEventPacket;
 import com.hbm.ntm.network.packet.CompressedExplosionEffectPacket;
 import com.hbm.ntm.network.packet.CoordinateActionPacket;
@@ -65,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,9 +76,38 @@ import java.util.function.Supplier;
 
 public final class ModMessages {
     private static final String PROTOCOL_VERSION = "1";
+    private static final int LIBRARY_FOUNDATION_PROGRESS_PERCENT = 96;
     private static int packetId;
     private static final AtomicBoolean REGISTERED = new AtomicBoolean();
     private static final List<PacketRegistration> PACKET_REGISTRATIONS = new ArrayList<>();
+    private static final List<LegacyPacketRegistration> LEGACY_REGISTERED_PACKETS = List.of(
+            new LegacyPacketRegistration(0, "TESirenPacket", "S2C"),
+            new LegacyPacketRegistration(1, "ItemDesignatorPacket", "C2S"),
+            new LegacyPacketRegistration(2, "SatLaserPacket", "C2S"),
+            new LegacyPacketRegistration(3, "AuxButtonPacket", "C2S"),
+            new LegacyPacketRegistration(4, "TEVaultPacket", "S2C"),
+            new LegacyPacketRegistration(5, "SatPanelPacket", "S2C"),
+            new LegacyPacketRegistration(6, "ParticleBurstPacket", "S2C"),
+            new LegacyPacketRegistration(7, "ExtPropPacket", "S2C"),
+            new LegacyPacketRegistration(8, "TEFFPacket", "S2C"),
+            new LegacyPacketRegistration(9, "ItemBobmazonPacket", "C2S"),
+            new LegacyPacketRegistration(10, "TEMissileMultipartPacket", "S2C"),
+            new LegacyPacketRegistration(11, "AuxParticlePacketNT", "S2C"),
+            new LegacyPacketRegistration(12, "SatCoordPacket", "C2S"),
+            new LegacyPacketRegistration(13, "HbmAnimationPacket", "S2C"),
+            new LegacyPacketRegistration(14, "PlayerInformPacket", "S2C"),
+            new LegacyPacketRegistration(15, "KeybindPacket", "C2S"),
+            new LegacyPacketRegistration(16, "NBTControlPacket", "C2S"),
+            new LegacyPacketRegistration(17, "AnvilCraftPacket", "C2S"),
+            new LegacyPacketRegistration(18, "ExplosionKnockbackPacket", "S2C"),
+            new LegacyPacketRegistration(19, "ExplosionVanillaNewTechnologyCompressedAffectedBlockPositionDataForClientEffectsAndParticleHandlingPacket", "S2C"),
+            new LegacyPacketRegistration(20, "NBTItemControlPacket", "C2S"),
+            new LegacyPacketRegistration(21, "PermaSyncPacket", "S2C"),
+            new LegacyPacketRegistration(22, "BiomeSyncPacket", "S2C"),
+            new LegacyPacketRegistration(23, "BufPacket", "S2C"),
+            new LegacyPacketRegistration(24, "SerializableRecipePacket", "S2C"),
+            new LegacyPacketRegistration(25, "HeldItemNBTPacket", "S2C"),
+            new LegacyPacketRegistration(26, "MuzzleFlashPacket", "S2C"));
     private static final List<LegacyPacketMapping> LEGACY_PACKET_MAPPINGS = List.of(
             new LegacyPacketMapping("ExtPropPacket", "PlayerRadiationSyncPacket", "S2C",
                     "radiation/status fields split out of legacy extended properties"),
@@ -159,6 +190,22 @@ public final class ModMessages {
         return PROTOCOL_VERSION;
     }
 
+    public static int libraryFoundationProgressPercent() {
+        return LIBRARY_FOUNDATION_PROGRESS_PERCENT;
+    }
+
+    public static int legacyPacketCoveragePercent() {
+        int total = legacyPacketRegistrationCount();
+        return total == 0 ? 100 : (int) Math.round(mappedLegacyPacketCount() * 100.0D / total);
+    }
+
+    public static String progressSummary() {
+        return "legacyPacketCoverage=" + legacyPacketCoveragePercent()
+                + "% (" + mappedLegacyPacketCount() + "/" + legacyPacketRegistrationCount() + ")"
+                + " foundation=" + LIBRARY_FOUNDATION_PROGRESS_PERCENT + "%"
+                + " note=remaining work is mostly receiver/business integration";
+    }
+
     public static int registeredPacketCount() {
         return PACKET_REGISTRATIONS.size();
     }
@@ -173,6 +220,32 @@ public final class ModMessages {
 
     public static int legacyPacketMappingCount() {
         return LEGACY_PACKET_MAPPINGS.size();
+    }
+
+    public static List<LegacyPacketRegistration> legacyPacketRegistrations() {
+        return LEGACY_REGISTERED_PACKETS;
+    }
+
+    public static int legacyPacketRegistrationCount() {
+        return LEGACY_REGISTERED_PACKETS.size();
+    }
+
+    public static long mappedLegacyPacketCount() {
+        Set<String> mappedNames = LEGACY_PACKET_MAPPINGS.stream()
+                .map(LegacyPacketMapping::legacyName)
+                .collect(java.util.stream.Collectors.toSet());
+        return LEGACY_REGISTERED_PACKETS.stream()
+                .filter(registration -> mappedNames.contains(registration.legacyName))
+                .count();
+    }
+
+    public static List<LegacyPacketRegistration> unmappedLegacyPacketRegistrations() {
+        Set<String> mappedNames = LEGACY_PACKET_MAPPINGS.stream()
+                .map(LegacyPacketMapping::legacyName)
+                .collect(java.util.stream.Collectors.toSet());
+        return LEGACY_REGISTERED_PACKETS.stream()
+                .filter(registration -> !mappedNames.contains(registration.legacyName))
+                .toList();
     }
 
     public static void register() {
@@ -340,6 +413,10 @@ public final class ModMessages {
                 ServerTileActionPacket::decode,
                 ServerTileActionPacket::encode,
                 ServerTileActionPacket::handle);
+        registerClientToServer(ClientTileBinarySyncRequestPacket.class,
+                ClientTileBinarySyncRequestPacket::decode,
+                ClientTileBinarySyncRequestPacket::encode,
+                ClientTileBinarySyncRequestPacket::handle);
     }
 
     public static void sendToServer(Object message) {
@@ -648,6 +725,145 @@ public final class ModMessages {
         sendToTrackingChunk(new ClientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
     }
 
+    public static void syncTileBinaryToTracking(HbmTileBinarySyncProvider provider, BlockEntity blockEntity) {
+        syncTileBinaryToTracking(provider, blockEntity, provider.getClientTileBinarySyncChannel());
+    }
+
+    public static void syncTileBinaryToTracking(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                ResourceLocation channel) {
+        sendClientTileBinaryData(blockEntity, channel, provider::writeClientTileBinaryData);
+    }
+
+    public static boolean syncTileBinaryToTrackingIfChanged(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                            HbmTileBinarySyncState syncState) {
+        return syncTileBinaryToTrackingIfChanged(provider, blockEntity, provider.getClientTileBinarySyncChannel(), syncState);
+    }
+
+    public static boolean syncTileBinaryToTrackingIfChanged(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                            ResourceLocation channel, HbmTileBinarySyncState syncState) {
+        byte[] payload = writeTileBinaryPayload(provider);
+        Level level = blockEntity.getLevel();
+        if (!shouldSendTileBinaryPayload(syncState, payload, level)) {
+            return false;
+        }
+        sendClientTileBinaryData(level, blockEntity.getBlockPos(), channel, payload);
+        return true;
+    }
+
+    public static void syncTileBinaryToPlayer(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                              ServerPlayer player) {
+        syncTileBinaryToPlayer(provider, blockEntity, player, provider.getClientTileBinarySyncChannel());
+    }
+
+    public static void syncTileBinaryToPlayer(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                              ServerPlayer player, ResourceLocation channel) {
+        sendClientTileBinaryData(player, blockEntity.getBlockPos(), channel, provider::writeClientTileBinaryData);
+    }
+
+    public static boolean syncTileBinaryToPlayerIfChanged(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                          ServerPlayer player, HbmTileBinarySyncState syncState) {
+        return syncTileBinaryToPlayerIfChanged(provider, blockEntity, player,
+                provider.getClientTileBinarySyncChannel(), syncState);
+    }
+
+    public static boolean syncTileBinaryToPlayerIfChanged(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                          ServerPlayer player, ResourceLocation channel,
+                                                          HbmTileBinarySyncState syncState) {
+        byte[] payload = writeTileBinaryPayload(provider);
+        Level level = blockEntity.getLevel();
+        if (!shouldSendTileBinaryPayload(syncState, payload, level)) {
+            return false;
+        }
+        sendClientTileBinaryData(player, blockEntity.getBlockPos(), channel, payload);
+        return true;
+    }
+
+    public static void syncTileBinaryAround(HbmTileBinarySyncProvider provider, BlockEntity blockEntity, double range) {
+        syncTileBinaryAround(provider, blockEntity, provider.getClientTileBinarySyncChannel(), range);
+    }
+
+    public static void syncTileBinaryAround(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                            ResourceLocation channel, double range) {
+        byte[] payload = writeTileBinaryPayload(provider);
+        Level level = blockEntity.getLevel();
+        if (level instanceof ServerLevel serverLevel) {
+            BlockPos pos = blockEntity.getBlockPos();
+            sendClientTileBinaryDataAround(serverLevel, pos, channel, payload, range, false);
+        }
+    }
+
+    public static boolean syncTileBinaryAroundIfChanged(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                        double range, HbmTileBinarySyncState syncState) {
+        return syncTileBinaryAroundIfChanged(provider, blockEntity, provider.getClientTileBinarySyncChannel(),
+                range, syncState);
+    }
+
+    public static boolean syncTileBinaryAroundIfChanged(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                        ResourceLocation channel, double range,
+                                                        HbmTileBinarySyncState syncState) {
+        byte[] payload = writeTileBinaryPayload(provider);
+        Level level = blockEntity.getLevel();
+        if (!shouldSendTileBinaryPayload(syncState, payload, level)) {
+            return false;
+        }
+        if (level instanceof ServerLevel serverLevel) {
+            sendClientTileBinaryDataAround(serverLevel, blockEntity.getBlockPos(), channel, payload, range, false);
+            return true;
+        }
+        return false;
+    }
+
+    public static void syncTileBinaryAroundThreaded(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                    double range) {
+        syncTileBinaryAroundThreaded(provider, blockEntity, provider.getClientTileBinarySyncChannel(), range);
+    }
+
+    public static void syncTileBinaryAroundThreaded(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                    ResourceLocation channel, double range) {
+        byte[] payload = writeTileBinaryPayload(provider);
+        Level level = blockEntity.getLevel();
+        if (level instanceof ServerLevel serverLevel) {
+            BlockPos pos = blockEntity.getBlockPos();
+            sendClientTileBinaryDataAround(serverLevel, pos, channel, payload, range, true);
+        }
+    }
+
+    public static boolean syncTileBinaryAroundThreadedIfChanged(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                                double range, HbmTileBinarySyncState syncState) {
+        return syncTileBinaryAroundThreadedIfChanged(provider, blockEntity, provider.getClientTileBinarySyncChannel(),
+                range, syncState);
+    }
+
+    public static boolean syncTileBinaryAroundThreadedIfChanged(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                                ResourceLocation channel, double range,
+                                                                HbmTileBinarySyncState syncState) {
+        byte[] payload = writeTileBinaryPayload(provider);
+        Level level = blockEntity.getLevel();
+        if (!shouldSendTileBinaryPayload(syncState, payload, level)) {
+            return false;
+        }
+        if (level instanceof ServerLevel serverLevel) {
+            sendClientTileBinaryDataAround(serverLevel, blockEntity.getBlockPos(), channel, payload, range, true);
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean networkPackNT(HbmTileBinarySyncProvider provider, BlockEntity blockEntity, int range,
+                                        HbmTileBinarySyncState syncState) {
+        return networkPackNT(provider, blockEntity, (double) range, syncState);
+    }
+
+    public static boolean networkPackNT(HbmTileBinarySyncProvider provider, BlockEntity blockEntity, double range,
+                                        HbmTileBinarySyncState syncState) {
+        return syncTileBinaryAroundThreadedIfChanged(provider, blockEntity, range, syncState);
+    }
+
+    public static boolean networkPackNT(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                        ResourceLocation channel, double range, HbmTileBinarySyncState syncState) {
+        return syncTileBinaryAroundThreadedIfChanged(provider, blockEntity, channel, range, syncState);
+    }
+
     public static void syncMissileMultipart(BlockEntity blockEntity, MissileMultipartSnapshot multipart) {
         sendToTrackingChunk(new ClientMissileMultipartPacket(blockEntity.getBlockPos(), multipart), blockEntity);
     }
@@ -839,6 +1055,60 @@ public final class ModMessages {
         sendToAllAround(new CompressedExplosionEffectPacket(center, size, affectedBlocks), level, center.x, center.y, center.z, range);
     }
 
+    private static void sendClientTileBinaryDataAround(ServerLevel level, BlockPos pos, ResourceLocation channel,
+                                                       byte[] payload, double range, boolean threaded) {
+        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
+            sendTileBinaryMessageAround(new ClientTileBinaryDataPacket(pos, channel, safePayload), level, pos, range, threaded);
+            return;
+        }
+        UUID transferId = UUID.randomUUID();
+        int chunkSize = ClientTileBinaryDataChunkPacket.MAX_CHUNK_BYTES;
+        int chunkCount = (safePayload.length + chunkSize - 1) / chunkSize;
+        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+            int start = chunkIndex * chunkSize;
+            int end = Math.min(start + chunkSize, safePayload.length);
+            sendTileBinaryMessageAround(new ClientTileBinaryDataChunkPacket(
+                    transferId,
+                    pos,
+                    channel,
+                    chunkIndex,
+                    chunkCount,
+                    Arrays.copyOfRange(safePayload, start, end)), level, pos, range, threaded);
+        }
+    }
+
+    private static void sendTileBinaryMessageAround(Object message, ServerLevel level, BlockPos pos,
+                                                    double range, boolean threaded) {
+        double x = pos.getX() + 0.5D;
+        double y = pos.getY() + 0.5D;
+        double z = pos.getZ() + 0.5D;
+        if (threaded) {
+            ThreadedPacketDispatcher.sendToAllAround(message, level, x, y, z, range);
+        } else {
+            sendToAllAround(message, level, x, y, z, range);
+        }
+    }
+
+    private static byte[] writeTileBinaryPayload(HbmTileBinarySyncProvider provider) {
+        FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
+        try {
+            provider.writeClientTileBinaryData(buffer);
+            byte[] payload = new byte[buffer.readableBytes()];
+            buffer.getBytes(buffer.readerIndex(), payload);
+            return payload;
+        } finally {
+            buffer.release();
+        }
+    }
+
+    private static boolean shouldSendTileBinaryPayload(HbmTileBinarySyncState syncState, byte[] payload, Level level) {
+        if (level == null || level.isClientSide) {
+            return false;
+        }
+        return syncState == null || syncState.shouldSend(payload, level.getGameTime());
+    }
+
     private static <MSG> void registerServerToClient(
             Class<MSG> type,
             Function<FriendlyByteBuf, MSG> decoder,
@@ -872,6 +1142,9 @@ public final class ModMessages {
     }
 
     public record LegacyPacketMapping(String legacyName, String modernName, String direction, String notes) {
+    }
+
+    public record LegacyPacketRegistration(int legacyId, String legacyName, String direction) {
     }
 
     private ModMessages() {

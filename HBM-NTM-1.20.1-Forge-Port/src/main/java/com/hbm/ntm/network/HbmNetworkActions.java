@@ -14,6 +14,7 @@ public final class HbmNetworkActions {
     public static final ResourceLocation VAULT_DOOR = hbm("vault_door");
     public static final ResourceLocation SIREN = hbm("siren");
     public static final ResourceLocation FORCE_FIELD = hbm("force_field");
+    public static final ResourceLocation BUF_PACKET = hbm("buf_packet");
 
     private static ResourceLocation hbm(String path) {
         return new ResourceLocation(HbmNtm.MOD_ID, path);

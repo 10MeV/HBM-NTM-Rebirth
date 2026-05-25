@@ -18,9 +18,11 @@ import com.hbm.ntm.fluid.trait.PwrModeratorFluidTrait;
 import com.hbm.ntm.fluid.trait.ToxinFluidTrait;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.item.HazardClass;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
@@ -231,6 +233,22 @@ public final class HbmFluids {
 
     public static Collection<FluidType> all() {
         return Collections.unmodifiableCollection(BY_ID.values());
+    }
+
+    public static List<FluidType> niceOrder() {
+        List<FluidType> result = new ArrayList<>();
+        for (String name : NICE_ORDER_NAMES) {
+            FluidType type = BY_NAME.get(normalize(name));
+            if (type != null && !result.contains(type)) {
+                result.add(type);
+            }
+        }
+        for (FluidType type : BY_ID.values()) {
+            if (!result.contains(type)) {
+                result.add(type);
+            }
+        }
+        return Collections.unmodifiableList(result);
     }
 
     private static void registerLegacyBehaviorTraits() {
@@ -625,6 +643,35 @@ public final class HbmFluids {
     private static ResourceLocation mc(String path) {
         return new ResourceLocation("minecraft", path);
     }
+
+    private static final List<String> NICE_ORDER_NAMES = List.of(
+            "NONE", "AIR", "WATER", "HEAVYWATER", "HEAVYWATER_HOT", "LAVA",
+            "STEAM", "HOTSTEAM", "SUPERHOTSTEAM", "ULTRAHOTSTEAM", "SPENTSTEAM",
+            "CARBONDIOXIDE", "COOLANT", "COOLANT_HOT", "PERFLUOROMETHYL", "PERFLUOROMETHYL_COLD",
+            "PERFLUOROMETHYL_HOT", "CRYOGEL", "MUG", "MUG_HOT", "BLOOD", "BLOOD_HOT",
+            "SODIUM", "SODIUM_HOT", "LEAD", "LEAD_HOT", "THORIUM_SALT", "THORIUM_SALT_HOT",
+            "THORIUM_SALT_DEPLETED", "HYDROGEN", "DEUTERIUM", "TRITIUM", "HELIUM3", "HELIUM4",
+            "OXYGEN", "XENON", "CHLORINE", "MERCURY", "OIL", "OIL_DS", "CRACKOIL",
+            "CRACKOIL_DS", "COALOIL", "OIL_COKER", "HOTOIL", "HOTOIL_DS", "HOTCRACKOIL",
+            "HOTCRACKOIL_DS", "HEAVYOIL", "HEAVYOIL_VACUUM", "NAPHTHA", "NAPHTHA_DS",
+            "NAPHTHA_CRACK", "NAPHTHA_COKER", "REFORMATE", "LIGHTOIL", "LIGHTOIL_DS",
+            "LIGHTOIL_CRACK", "LIGHTOIL_VACUUM", "BITUMEN", "SMEAR", "HEATINGOIL",
+            "HEATINGOIL_VACUUM", "RECLAIMED", "LUBRICANT", "GAS", "GAS_COKER", "PETROLEUM",
+            "SOURGAS", "LPG", "SYNGAS", "OXYHYDROGEN", "AROMATICS", "UNSATURATEDS", "XYLENE",
+            "REFORMGAS", "DIESEL", "DIESEL_REFORM", "DIESEL_CRACK", "DIESEL_CRACK_REFORM",
+            "KEROSENE", "KEROSENE_REFORM", "PETROIL", "PETROIL_LEADED", "GASOLINE",
+            "GASOLINE_LEADED", "COALGAS", "COALGAS_LEADED", "COALCREOSOTE", "WOODOIL",
+            "BIOGAS", "BIOFUEL", "ETHANOL", "FISHOIL", "SUNFLOWEROIL", "NITAN", "DHC",
+            "BALEFIRE", "SALIENT", "SEEDSLURRY", "COLLOID", "VITRIOL", "SLOP", "IONGEL",
+            "PEROXIDE", "SULFURIC_ACID", "NITRIC_ACID", "SOLVENT", "RADIOSOLVENT", "SCHRABIDIC",
+            "UF6", "PUF6", "SAS3", "PAIN", "DEATH", "WATZ", "REDMUD", "FULLERENE", "EGG",
+            "CHOLESTEROL", "CHLOROCALCITE_SOLUTION", "CHLOROCALCITE_MIX", "CHLOROCALCITE_CLEANED",
+            "POTASSIUM_CHLORIDE", "CALCIUM_CHLORIDE", "CALCIUM_SOLUTION", "SODIUM_ALUMINATE",
+            "BAUXITE_SOLUTION", "ALUMINA", "CONCRETE", "FRACKSOL", "LYE", "PHOSGENE",
+            "MUSTARDGAS", "ESTRADIOL", "NITROGLYCERIN", "AMAT", "ASCHRAB", "WASTEFLUID",
+            "WASTEGAS", "XPJUICE", "ENDERJUICE", "STELLAR_FLUX", "PLASMA_DT", "PLASMA_HD",
+            "PLASMA_HT", "PLASMA_DH3", "PLASMA_XM", "PLASMA_BF", "SMOKE", "SMOKE_LEADED",
+            "SMOKE_POISON", "PHEROMONE", "PHEROMONE_M");
 
     private static String normalize(String name) {
         return name.toUpperCase(Locale.US);

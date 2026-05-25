@@ -1,4 +1,4 @@
 {
   "type": "minecraft:block",
-  "random_sequence": "hbm:blocks/waste_leaves"
+  "pools": []
 }

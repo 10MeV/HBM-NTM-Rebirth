@@ -833,6 +833,178 @@
   - 该表是人工维护的工程迁移索引，不是运行时兼容层；后续新增/替换包时需要同步更新。
   - 旧包业务行为仍以各 receiver/menu/item/block entity 迁移为准，mapping 只说明网络承载路径。
 
+## 2026-05-25 旧 PacketDispatcher 覆盖率诊断推进记录
+
+- 旧版事实来源：
+  - `com.hbm.packet.PacketDispatcher.registerPackets()` 按 discriminator 0-26 注册 27 个旧包。
+  - 该列表是 1.7.10 网络包迁移覆盖率的基准，不包括后续现代新增的 typed/chunk/helper 包。
+- 本批新增 `ModMessages.LegacyPacketRegistration` 只读表：
+  - 字段：`legacyId`、`legacyName`、`direction`。
+  - 按旧 `PacketDispatcher` discriminator 顺序记录：
+    - `TESirenPacket`
+    - `ItemDesignatorPacket`
+    - `SatLaserPacket`
+    - `AuxButtonPacket`
+    - `TEVaultPacket`
+    - `SatPanelPacket`
+    - `ParticleBurstPacket`
+    - `ExtPropPacket`
+    - `TEFFPacket`
+    - `ItemBobmazonPacket`
+    - `TEMissileMultipartPacket`
+    - `AuxParticlePacketNT`
+    - `SatCoordPacket`
+    - `HbmAnimationPacket`
+    - `PlayerInformPacket`
+    - `KeybindPacket`
+    - `NBTControlPacket`
+    - `AnvilCraftPacket`
+    - `ExplosionKnockbackPacket`
+    - `ExplosionVanillaNewTechnologyCompressedAffectedBlockPositionDataForClientEffectsAndParticleHandlingPacket`
+    - `NBTItemControlPacket`
+    - `PermaSyncPacket`
+    - `BiomeSyncPacket`
+    - `BufPacket`
+    - `SerializableRecipePacket`
+    - `HeldItemNBTPacket`
+    - `MuzzleFlashPacket`
+- `ModMessages` 新增覆盖率 API：
+  - `legacyPacketRegistrations()`
+  - `legacyPacketRegistrationCount()`
+  - `mappedLegacyPacketCount()`
+  - `unmappedLegacyPacketRegistrations()`
+- 网络诊断命令增强：
+  - `/hbm network protocol summary` 追加 `legacyRegistered=<count>`、`legacyMapped=<count>`、`legacyUnmapped=<count>`。
+  - 新增 `/hbm network protocol legacy`，按旧 discriminator 顺序列出旧包，并标记 `mapped=<count>` 或 `unmapped`。
+  - `/hbm network protocol mappings` 顶部追加覆盖率摘要；如果存在未映射旧包，会在尾部列出。
+- 当前覆盖状态：
+  - 27 个旧 `PacketDispatcher` 注册包均已有至少一条现代承载映射。
+  - 一对多映射仍会让 mapping row 数大于旧注册包数，这是预期行为，例如 `ExtPropPacket`、`AuxButtonPacket`、`BufPacket`。
+- 当前限制：
+  - 覆盖率表示“网络承载路径已存在”，不等于对应机器/物品/GUI 业务逻辑已完整迁移。
+  - 若后续发现旧分支/条件需要拆出新的现代包或 action，应同步更新 mapping 与 registration 诊断。
+
+## 2026-05-25 网络包库进度口径与 progress 命令推进记录
+
+- 进度拆分口径：
+  - 旧包承载覆盖率：`mappedLegacyPacketCount / legacyPacketRegistrationCount`。
+  - 网络库基础功能可用度：人工维护的保守百分比，用于表达协议、helper、缓存、诊断、线程/分片基础设施整体成熟度。
+- 当前数值：
+  - 旧 `PacketDispatcher` 注册包承载覆盖率：27/27 = 100%。
+  - 网络包库基础功能可用度：96%。
+- 为什么不是 100%：
+  - 网络承载路径已覆盖旧注册包，但不少旧包的业务接收端仍依赖后续机器/物品/GUI 迁移，例如卫星 saved data、anvil recipe 执行、siren loop sound、blast door renderer、force field BlockEntity 字段应用。
+  - 后续具体功能迁移时仍可能发现旧包分支需要新增 typed action 或额外 helper。
+- `ModMessages` 新增：
+  - `libraryFoundationProgressPercent()`
+  - `legacyPacketCoveragePercent()`
+  - `progressSummary()`
+- 网络诊断命令增强：
+  - 新增 `/hbm network protocol progress`。
+- 输出示例：`legacyPacketCoverage=100% (27/27) foundation=96% note=remaining work is mostly receiver/business integration`。
+
+## 2026-05-25 旧 BufPacket provider 接口与 networkPackNT helper 推进记录
+
+- 旧版事实来源：
+  - `IBufPacketReceiver` 只有两个方法：`serialize(ByteBuf)` 与 `deserialize(ByteBuf)`。
+  - `BufPacket` 包体为 `x/y/z + receiver.serialize(buf)`。
+  - 客户端按坐标找 TileEntity，若实现 `IBufPacketReceiver` 则调用 `deserialize(buf)`；异常只记录 warn。
+  - `TileEntityLoadedBase#networkPackNT(range)` 是大量旧机器/管线/炮塔复用的入口：构造 `BufPacket`，对比预编译 buffer 避免大多数重复包，并每 20 tick 允许一次重复同步，最后通过 `PacketThreading.createAllAroundThreadedPacket(...)` 按范围发送。
+- 现代网络库已有：
+  - `ClientTileBinaryDataPacket` / `ClientTileBinaryDataChunkPacket`：按 `BlockPos + channel + payload` 派发给客户端 `HbmClientTileBinaryReceiver`。
+  - `sendClientTileBinaryData(...)` helper：支持指定玩家或 chunk tracking，自动按 1 MiB 阈值分片。
+- 本批新增现代 provider：
+  - `HbmTileBinarySyncProvider`：
+    - `getClientTileBinarySyncChannel()` 默认返回 `hbm:buf_packet`。
+    - `writeClientTileBinaryData(FriendlyByteBuf data)` 由服务端 BlockEntity 写客户端二进制同步数据。
+  - `HbmLegacyBufPacketReceiver`：
+    - 同时继承 `HbmTileBinarySyncProvider` 与 `HbmClientTileBinaryReceiver`。
+    - 提供旧名风格 `serializeLegacyBufPacket(...)` / `deserializeLegacyBufPacket(...)`。
+    - 默认只消费 `hbm:buf_packet` channel，便于旧 `IBufPacketReceiver` 迁移时一对一改名。
+- 本批新增 helper：
+  - `syncTileBinaryToTracking(provider, blockEntity)`：发送给追踪该 chunk 的玩家。
+  - `syncTileBinaryToPlayer(provider, blockEntity, player)`：发送给指定玩家。
+  - `syncTileBinaryAround(provider, blockEntity, range)`：按旧 `networkPackNT(range)` 的空间范围发送。
+  - `syncTileBinaryAroundThreaded(provider, blockEntity, range)`：范围发送并走 `ThreadedPacketDispatcher`。
+  - 上述方法均支持显式 `ResourceLocation channel` overload。
+  - 范围发送现在也复用 `ClientTileBinaryDataPacket` / `ClientTileBinaryDataChunkPacket` 的单包/分片路径，避免大型 payload 超过包体上限。
+- 当前限制：
+  - 本批不把旧 `TileEntityLoadedBase#lastPackedBuf` 去重缓存做成全局状态；这个状态和具体 BlockEntity 生命周期绑定，后续现代机器基类迁移时再按旧语义复刻。
+  - `HbmLegacyBufPacketReceiver` 不自动保存 NBT，也不解释旧机器字段；它只提供 ByteBuf 同步路径。
+  - writer 仍应在服务端主线程读取方块实体状态后写 buffer；线程化 helper 只线程化发送操作。
+
+## 2026-05-25 旧 networkPackNT 去重/兜底同步推进记录
+
+- 旧版事实来源：
+  - `TileEntityLoadedBase#networkPackNT(range)` 先构造 `BufPacket` 并取 `packet.getCompiledBuffer()`。
+  - 若本次 buffer 与 `lastPackedBuf` 相同，并且世界时间不是 20 tick 的倍数，则跳过发送。
+  - 这样既减少高频重复包，又每秒兜底重发一次，避免客户端卸载/重载 chunk 后只看到默认 TileEntity 状态。
+- 本批新增 `HbmTileBinarySyncState`：
+  - 保存上一次 payload 快照。
+  - 默认 `LEGACY_FORCED_RESEND_INTERVAL_TICKS = 20`。
+  - `shouldSend(payload, gameTime)` 复刻旧“内容变化或每 20 tick 兜底发送”的判断。
+  - 暴露 `lastPayloadBytes()`、`totalSent()`、`skippedDuplicates()`，便于后续具体机器或诊断查看同步行为。
+- `ModMessages` 新增 `IfChanged` helper：
+  - `syncTileBinaryToTrackingIfChanged(...)`
+  - `syncTileBinaryToPlayerIfChanged(...)`
+  - `syncTileBinaryAroundIfChanged(...)`
+  - `syncTileBinaryAroundThreadedIfChanged(...)`
+  - 这些 helper 会先由 provider 写出 payload，再交给 `HbmTileBinarySyncState` 判断是否发送。
+- `ModMessages` 新增旧名入口：
+  - `networkPackNT(provider, blockEntity, range, syncState)`
+  - `networkPackNT(provider, blockEntity, channel, range, syncState)`
+  - 默认走线程化范围发送，对齐旧 `PacketThreading.createAllAroundThreadedPacket(...)`。
+- 当前限制：
+  - `HbmTileBinarySyncState` 必须由具体 BlockEntity 持有；网络库不把状态存进全局 map，避免方块卸载后残留。
+  - `syncState == null` 时 helper 会总是发送，便于临时/一次性同步。
+  - 单玩家 `IfChanged` 会使用同一个状态对象；如果需要“每个玩家单独补发”语义，具体机器应为单玩家同步使用独立 state 或直接调用非去重 helper。
+
+## 2026-05-25 Tile binary 客户端缺接收端重发请求推进记录
+
+- 背景：
+  - 现代 `TileSyncPacket` / `EntitySyncPacket` 已有“客户端接收端暂缺时限频请求服务端重发”的恢复路径。
+  - 旧 `BufPacket` 覆盖大量 TileEntity 的二进制同步；客户端刚加载 chunk、BlockEntity 尚未构建完成时，首次包可能找不到 `HbmClientTileBinaryReceiver`。
+- 本批新增 C2S `ClientTileBinarySyncRequestPacket`：
+  - 包体为 `BlockPos + ResourceLocation channel`。
+  - 服务端要求存在 sender、玩家距离目标 32 格内、目标 chunk 已加载。
+  - 目标 BlockEntity 必须实现 `HbmTileBinarySyncProvider`。
+  - 通过 `canSendClientTileBinaryDataTo(player, channel)` 后，服务端调用 `ModMessages.syncTileBinaryToPlayer(...)` 重发该 channel 的 tile binary 数据。
+- `HbmTileBinarySyncProvider` 新增：
+  - `canSendClientTileBinaryDataTo(ServerPlayer, ResourceLocation)`，默认只允许自身 `getClientTileBinarySyncChannel()`。
+  - 后续多 channel 机器可按 channel 显式放行，避免客户端随意请求未公开的二进制视图。
+- `ClientTileBinaryData` 增强：
+  - 当 chunk 已加载但目标 BlockEntity 不实现 `HbmClientTileBinaryReceiver` 时，按 `BlockPos + channel` 20 tick 限频发送重发请求。
+  - `clearClientResyncRequests()`、`pendingClientResyncRequests()`、`clientResyncRequestCooldownTicks()` 供 lifecycle 与诊断使用。
+  - `clearAll()` 会同时清理未完成分片与重发请求缓存。
+- 客户端 lifecycle 与诊断：
+  - `ClientForgeEvents.clearNetworkState()` 显式清理 tile binary resync 请求。
+  - `/hbm network packetthreading stats` 的 `Client resync cooldowns` 追加 `tileBinary=...`。
+- 当前限制：
+  - 请求只重发当前 channel 的 provider payload，不保存旧分片 transfer id，也不尝试重传某个丢失 chunk。
+  - 若客户端 chunk 尚未加载，仍不发送请求；等待后续服务端周期同步或具体机器再次发送。
+  - 对每个玩家独立的权限/频道策略由具体 `HbmTileBinarySyncProvider` 实现。
+
+## 2026-05-25 线程包预备快照推进记录
+
+- 旧版事实来源：
+  - `NetworkHandler.PrecompilingNetworkCodec` 在编码 `ThreadedPacket` 时直接写入 `getCompiledBuffer()`。
+  - `PacketThreading.preparePacket(...)` 会在入队前调用 `PrecompiledPacket#getCompiledBuffer()`，把可变 packet 数据固化到 ByteBuf，避免异步发送时读取到后续 tick 被改动的对象。
+  - `AuxParticlePacketNT` 继承 `ThreadedPacket`，NBT 粒子包是旧高频线程发送的典型使用者。
+- 本批新增现代等价契约：
+  - `HbmPreparablePacket`：提供 `prepareForThreadedSend()`，作为现代轻量版 `ThreadedPacket#compile()`。
+  - `ThreadedPacketDispatcher` 在所有线程化发送入口入队前调用该方法；非实现类沿用原消息对象。
+  - prepare 返回 `null` 或抛异常时，该发送会被丢弃并记录 `totalPrepareFailed` / `lastFailureMessage`，避免坏包进入线程队列。
+- 已接入的高频/大 payload 包：
+  - `AuxParticlePacket`：构造和 prepare 都复制 `CompoundTag`，对齐旧 `AuxParticlePacketNT` 的预编译语义。
+  - `ClientTileBinaryDataPacket` / `ClientTileBinaryDataChunkPacket`：prepare 重新构造包并复制 payload，配合 `networkPackNT(...)` 的线程化范围发送。
+  - `CompressedExplosionEffectPacket`：prepare 重新构造不可变 affected block 列表，方便后续爆炸效果选择线程化发送时不读共享列表。
+- 诊断增强：
+  - `ThreadedPacketDispatcher.Snapshot` 新增 `totalPrepared`、`totalPrepareFailed`。
+  - `/hbm network packetthreading stats` 输出 prepared 和 prepareFailed 计数。
+- 当前限制：
+  - 现代实现不复刻旧 Netty `ByteBuf`/discriminator 级预编码，只保证高频线程发送前做安全快照；真正编码仍交给 Forge `SimpleChannel`。
+  - 只有实现 `HbmPreparablePacket` 的包会获得自定义快照；后续新增高频包时应显式实现该接口。
+
 ## 验证清单
 
 - 客户端/服务端协议版本一致。
@@ -861,3 +1033,9 @@
 - 2026-05-25 旧 C2S 特化操作包 helper 收束批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
 - 2026-05-25 旧 S2C 特化包 helper 与客户端缓存诊断批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
 - 2026-05-25 旧包到现代协议映射诊断批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-25 旧 PacketDispatcher 覆盖率诊断批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-25 网络包库进度口径与 progress 命令批次：首次增量编译遇到并行工作区旧 `LegacyHazardSourceBlock$Effect.class` 中间产物缺失；重跑 `.\gradlew.bat clean compileJava processResources --no-daemon` 通过。
+- 2026-05-25 旧 BufPacket provider 接口与 networkPackNT helper 批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度调整为 93%。
+- 2026-05-25 旧 networkPackNT 去重/兜底同步批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度调整为 94%。
+- 2026-05-25 Tile binary 客户端缺接收端重发请求批次：首次编译遇到并行工作区 `ClientModEvents` 缺 `ModBlocks` import；最小补齐后，`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度调整为 95%。
+- 2026-05-25 线程包预备快照批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度调整为 96%。

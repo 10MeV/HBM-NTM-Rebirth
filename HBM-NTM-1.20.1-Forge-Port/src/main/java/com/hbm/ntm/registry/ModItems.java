@@ -9,6 +9,7 @@ import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.DigammaDiagnosticItem;
 import com.hbm.ntm.item.EffectPillItem;
+import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.GeigerCounterItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
@@ -150,6 +151,8 @@ public final class ModItems {
             () -> new HbmInfiniteFluidItem(new Item.Properties(), HbmFluids.WATER, 500, 1, "Infinite Water Mk2"));
     public static final RegistryObject<Item> CHLORINE_PINWHEEL = registerLegacy("chlorine_pinwheel",
             () -> new HbmInfiniteFluidItem(new Item.Properties(), HbmFluids.CHLORINE, 1, 2, "Chlorine Pinwheel"));
+    public static final RegistryObject<Item> FLUID_IDENTIFIER_MULTI = registerLegacy("fluid_identifier_multi",
+            () -> new FluidIdentifierItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> BATTERY_POTATO = registerLegacy("battery_potato",
             () -> new HbmBatteryItem(new Item.Properties(), 1_000L, 0L, 100L));
     public static final RegistryObject<Item> BATTERY_CREATIVE = registerLegacy("battery_creative",
@@ -442,6 +445,7 @@ public final class ModItems {
             "boy_shielding",
             "boy_target",
             "boy_bullet",
+            "igniter",
             "man_igniter",
             "man_core",
             "mike_core",
@@ -574,7 +578,8 @@ public final class ModItems {
             GLYPHID_GLAND,
             INF_WATER,
             INF_WATER_MK2,
-            CHLORINE_PINWHEEL
+            CHLORINE_PINWHEEL,
+            FLUID_IDENTIFIER_MULTI
     ).toList();
 
     public static void register(IEventBus modBus) {

@@ -34,6 +34,8 @@ public final class ThreadedPacketDispatcher {
     private static final AtomicLong TOTAL_SENT = new AtomicLong();
     private static final AtomicLong TOTAL_FAILED = new AtomicLong();
     private static final AtomicLong TOTAL_DISCARDED = new AtomicLong();
+    private static final AtomicLong TOTAL_PREPARED = new AtomicLong();
+    private static final AtomicLong TOTAL_PREPARE_FAILED = new AtomicLong();
     private static int lastFlushQueued;
     private static int lastFlushCompleted;
     private static int lastFlushDiscarded;
@@ -44,43 +46,95 @@ public final class ThreadedPacketDispatcher {
     private static volatile String lastFailureMessage = "";
 
     public static synchronized void sendToAllAround(Object message, ServerLevel level, double x, double y, double z, double range) {
-        enqueue(() -> ModMessages.sendToAllAround(message, level, x, y, z, range));
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToAllAround(prepared, level, x, y, z, range));
+        }
     }
 
     public static synchronized void sendToAllAround(Object message, Entity entity, double range) {
-        enqueue(() -> ModMessages.sendToAllAround(message, entity, range));
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToAllAround(prepared, entity, range));
+        }
     }
 
     public static synchronized void sendToAllAround(Object message, PacketDistributor.TargetPoint point) {
-        enqueue(() -> ModMessages.sendToAllAround(message, point));
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToAllAround(prepared, point));
+        }
     }
 
     public static synchronized void sendToPlayer(Object message, ServerPlayer player) {
-        enqueue(() -> ModMessages.sendToPlayer(message, player));
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToPlayer(prepared, player));
+        }
     }
 
     public static synchronized void sendToEntityTrackers(Object message, Entity entity) {
-        enqueue(() -> ModMessages.sendToEntityTrackers(message, entity));
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToEntityTrackers(prepared, entity));
+        }
     }
 
     public static synchronized void sendToEntityAndSelf(Object message, Entity entity) {
-        enqueue(() -> ModMessages.sendToEntityAndSelf(message, entity));
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToEntityAndSelf(prepared, entity));
+        }
     }
 
     public static synchronized void sendToDimension(Object message, ServerLevel level) {
-        enqueue(() -> ModMessages.sendToDimension(message, level));
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToDimension(prepared, level));
+        }
     }
 
     public static synchronized void sendToAll(Object message) {
-        enqueue(() -> ModMessages.sendToAll(message));
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToAll(prepared));
+        }
     }
 
     public static synchronized void sendToTrackingChunk(Object message, BlockEntity blockEntity) {
-        enqueue(() -> ModMessages.sendToTrackingChunk(message, blockEntity));
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToTrackingChunk(prepared, blockEntity));
+        }
     }
 
     public static synchronized void sendToTrackingChunk(Object message, Level level, BlockPos pos) {
-        enqueue(() -> ModMessages.sendToTrackingChunk(message, level, pos));
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToTrackingChunk(prepared, level, pos));
+        }
+    }
+
+    private static Object prepareMessage(Object message) {
+        try {
+            Object prepared = message instanceof HbmPreparablePacket preparable
+                    ? preparable.prepareForThreadedSend()
+                    : message;
+            if (prepared == null) {
+                TOTAL_PREPARE_FAILED.incrementAndGet();
+                TOTAL_DISCARDED.incrementAndGet();
+                lastFailureMessage = "Threaded packet prepare returned null.";
+                return null;
+            }
+            TOTAL_PREPARED.incrementAndGet();
+            return prepared;
+        } catch (Exception exception) {
+            TOTAL_PREPARE_FAILED.incrementAndGet();
+            TOTAL_DISCARDED.incrementAndGet();
+            lastFailureMessage = exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage();
+            HbmNtm.LOGGER.warn("Threaded packet preparation failed.", exception);
+            return null;
+        }
     }
 
     private static void enqueue(Runnable sendOperation) {
@@ -170,6 +224,8 @@ public final class ThreadedPacketDispatcher {
                 TOTAL_SENT.get(),
                 TOTAL_FAILED.get(),
                 TOTAL_DISCARDED.get(),
+                TOTAL_PREPARED.get(),
+                TOTAL_PREPARE_FAILED.get(),
                 PENDING.size(),
                 EXECUTOR.getPoolSize(),
                 EXECUTOR.getCorePoolSize(),
@@ -209,6 +265,8 @@ public final class ThreadedPacketDispatcher {
         TOTAL_SENT.set(0L);
         TOTAL_FAILED.set(0L);
         TOTAL_DISCARDED.set(0L);
+        TOTAL_PREPARED.set(0L);
+        TOTAL_PREPARE_FAILED.set(0L);
         lastFlushQueued = 0;
         lastFlushCompleted = 0;
         lastFlushDiscarded = 0;
@@ -282,6 +340,8 @@ public final class ThreadedPacketDispatcher {
             long totalSent,
             long totalFailed,
             long totalDiscarded,
+            long totalPrepared,
+            long totalPrepareFailed,
             int pending,
             int threadPoolSize,
             int corePoolSize,

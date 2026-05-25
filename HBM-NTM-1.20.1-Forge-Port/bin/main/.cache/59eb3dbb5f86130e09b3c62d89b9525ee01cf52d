@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-25T14:07:11.6953177	Loot Tables
+// 1.20.1	2026-05-25T19:09:10.5187742	Loot Tables
 1d566948370849820de3c0d2a03a1da2b54f3f8d data/hbm/loot_tables/blocks/ancient_scrap.json
 e33e09e9b7de4edfe47464adbc55ba1b3074df85 data/hbm/loot_tables/blocks/ash_digamma.json
 4dea21baadd671e0fc70004833537e05da50d388 data/hbm/loot_tables/blocks/asphalt.json
@@ -192,6 +192,7 @@ b52e6463df74157e8611ba336741bf7c448e6d65 data/hbm/loot_tables/blocks/machine_flu
 dc121c4806dbba47b3feb0c9d17570c21ea3af51 data/hbm/loot_tables/blocks/machine_fraction_tower.json
 e11e2907ef78cf5aca7bf84b77a3d5efc1aed20b data/hbm/loot_tables/blocks/machine_gasflare.json
 c1a16c0d1b5b1fb21dfc5f9e03856aed6884f3d0 data/hbm/loot_tables/blocks/machine_hydrotreater.json
+2b854843c255ecbb36229aa0663687062063edc0 data/hbm/loot_tables/blocks/machine_industrial_turbine.json
 db634539b536ea7ea73f2494ce5ddf74bb4d3435 data/hbm/loot_tables/blocks/machine_liquefactor.json
 ffb9cf191ce9ddc0efd7d22622ff639f8ba47aef data/hbm/loot_tables/blocks/machine_mixer.json
 918ea0cb2089c1b11cffad3f582f0e9bfdd8bec7 data/hbm/loot_tables/blocks/machine_ore_slopper.json

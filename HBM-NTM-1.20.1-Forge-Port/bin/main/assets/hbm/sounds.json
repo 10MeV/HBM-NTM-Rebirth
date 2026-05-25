@@ -80,6 +80,15 @@
       }
     ]
   },
+  "weapon.nuclear_explosion": {
+    "subtitle": "subtitles.hbm.weapon.nuclear_explosion",
+    "sounds": [
+      {
+        "name": "hbm:weapon/nuclear_explosion",
+        "stream": true
+      }
+    ]
+  },
   "weapon.fstbmb_start": {
     "subtitle": "subtitles.hbm.weapon.fstbmb",
     "sounds": [

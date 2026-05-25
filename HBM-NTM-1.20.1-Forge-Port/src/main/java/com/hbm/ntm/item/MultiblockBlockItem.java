@@ -60,6 +60,7 @@ public class MultiblockBlockItem extends BlockItem {
         BlockState placedState = level.getBlockState(corePos);
         if (placedState.is(state.getBlock())) {
             updateCustomBlockEntityTag(level, player, corePos, stack);
+            multiblock.afterDirectCorePlaced(level, corePos, placedState, player, stack);
             multiblock.completeDirectMultiblockPlacement(level, corePos, placedState, player, stack);
             if (player instanceof ServerPlayer serverPlayer) {
                 CriteriaTriggers.PLACED_BLOCK.trigger(serverPlayer, corePos, stack);

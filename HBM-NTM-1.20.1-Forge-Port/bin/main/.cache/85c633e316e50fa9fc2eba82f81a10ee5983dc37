@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-25T14:07:11.6933216	Block States: hbm
+// 1.20.1	2026-05-25T19:09:10.5164558	Block States: hbm
 f4eb25b664a0458dbb40546da729386871750a3d assets/hbm/blockstates/ash_digamma.json
 8c6c51f054fa20e59275bf5c7c77e28e7790b34c assets/hbm/blockstates/balefire.json
 cba35d35e4f0682b55e9cc361bbbf6247efa3976 assets/hbm/blockstates/bomb_multi.json
@@ -44,6 +44,7 @@ bfbe6c4410827d4114d5b06974e2e0857ae0d5e3 assets/hbm/blockstates/machine_compress
 3fdf508fa10a4eeb86bb2b11c3bf47c9168b1c37 assets/hbm/blockstates/machine_fraction_tower.json
 2f7eb5b409eb8e68737486f420541430a2393e9c assets/hbm/blockstates/machine_gasflare.json
 b055af619a42c968b1f9ba07686715c9e21041f1 assets/hbm/blockstates/machine_hydrotreater.json
+18f673b973e9a5f6abfe36a9dc5bfe1dd8816d9e assets/hbm/blockstates/machine_industrial_turbine.json
 a77a26bd4a1fe65051f342cae3471d036c1762a7 assets/hbm/blockstates/machine_liquefactor.json
 3d339568727e722b89074c049bdfd6d7aaa1f386 assets/hbm/blockstates/machine_mixer.json
 e3e70a584e33b19ff4f4657504d2be786c44cb0c assets/hbm/blockstates/machine_ore_slopper.json
@@ -155,7 +156,7 @@ b6588953ecb44934097103cf22ab2c2c5671d722 assets/hbm/models/block/yellow_barrel.j
 a5d0b4827dd411afe0ac563ac7786b75ba99c072 assets/hbm/models/item/conveyor_triple.json
 72835a0dcbe326f9bb712e41c91b29afcfc9546a assets/hbm/models/item/decon.json
 679ffe49f434ca1baf3ac09a082847f646d2bb1a assets/hbm/models/item/dummy_block.json
-74c9e730aefe8f450be748b84aeec7fed25b873b assets/hbm/models/item/fluid_duct_neo.json
+83654c7e6dcdc79558f79f40e78de0eed57fe97b assets/hbm/models/item/fluid_duct_neo.json
 878d363c2a53c18854fd2c7c64bc6d8704b25402 assets/hbm/models/item/gas_asbestos.json
 ab282ee4d5a592f3404ab3a89928c2fc6758387b assets/hbm/models/item/gas_coal.json
 8b81021017976dca45e079bb6670429ec3c3f7a2 assets/hbm/models/item/gas_meltdown.json
@@ -187,6 +188,7 @@ e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_fluidtan
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_fraction_tower.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_gasflare.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_hydrotreater.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_industrial_turbine.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_liquefactor.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_mixer.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_ore_slopper.json
@@ -210,16 +212,16 @@ e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_tower_sm
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_turbinegas.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_turbofan.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_vacuum_distill.json
-ce82fbb4dd501060ad283f6910ed74179acd38d5 assets/hbm/models/item/nuke_boy.json
-db167dd84a4bbbb7b827ed6581b50508112fb721 assets/hbm/models/item/nuke_fleija.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_boy.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_fleija.json
 d7dd4ad7631b0ae52558d4d27d78b6937a9fbeea assets/hbm/models/item/nuke_fstbmb.json
-9578187cebad1b13926dbe9608adb950d9ef5867 assets/hbm/models/item/nuke_gadget.json
-b4f98c8647ec18abea3f1db40206a7a37bc7a919 assets/hbm/models/item/nuke_man.json
-6cda2399184d9c05b0275e7246240217a4e3a80c assets/hbm/models/item/nuke_mike.json
-722292f071d929bef5227f37f956673c4462e5b3 assets/hbm/models/item/nuke_n2.json
-ca7ceee691d7909258df476d850cfb44cc78111a assets/hbm/models/item/nuke_prototype.json
-98fd5bcf58a227e55fa96db32b835a5aee4fa072 assets/hbm/models/item/nuke_solinium.json
-46127122aa5b6ff0bb839cff26c8991cca972ca1 assets/hbm/models/item/nuke_tsar.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_gadget.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_man.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_mike.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_n2.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_prototype.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_solinium.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_tsar.json
 ae9624f7a2ef885b490bee743178fe017eea9e28 assets/hbm/models/item/pribris_digamma.json
 bec54b13a31802839ddd2e0f2341dfdafd3eaab8 assets/hbm/models/item/rad_absorber.json
 f24c21c36f148ed2c14025557611f8573f80e1ec assets/hbm/models/item/rad_lava_block.json

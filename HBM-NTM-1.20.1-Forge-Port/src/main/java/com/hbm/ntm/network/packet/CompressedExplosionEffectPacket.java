@@ -1,6 +1,7 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.client.ClientExplosionEffects;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
@@ -10,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public record CompressedExplosionEffectPacket(Vec3 center, float size, List<BlockPos> affectedBlocks) {
+public record CompressedExplosionEffectPacket(Vec3 center, float size, List<BlockPos> affectedBlocks) implements HbmPreparablePacket {
     private static final int MAX_BLOCKS = 32_768;
 
     public CompressedExplosionEffectPacket {
@@ -61,5 +62,10 @@ public record CompressedExplosionEffectPacket(Vec3 center, float size, List<Bloc
 
     private static boolean canEncodeRelative(int value) {
         return value >= Byte.MIN_VALUE && value <= Byte.MAX_VALUE;
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new CompressedExplosionEffectPacket(center, size, affectedBlocks);
     }
 }

@@ -1,6 +1,7 @@
 package com.hbm.ntm.explosion.vnt;
 
 import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
+import com.hbm.ntm.explosion.NuclearExplosionUtil;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorBulkie;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorGlyphidDig;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorStandard;
@@ -152,6 +153,7 @@ public final class WeaponExplosionUtil {
             return;
         }
         level.addFreshEntity(BalefireExplosionEntity.create(level, x, y, z, range));
+        NuclearExplosionUtil.spawnBalefireCloud(level, range, x, y, z);
     }
 
     private WeaponExplosionUtil() {

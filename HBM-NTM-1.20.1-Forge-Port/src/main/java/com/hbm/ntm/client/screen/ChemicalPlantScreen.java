@@ -99,11 +99,11 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
     private void renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
         for (int i = 0; i < 3; i++) {
             if (isHovering(8 + i * 18, 18, 16, 68, mouseX, mouseY)) {
-                graphics.renderTooltip(font, Component.literal(menu.getInputTankInfo(i)), mouseX, mouseY);
+                graphics.renderTooltip(font, menu.getInputTankInfo(i), mouseX, mouseY);
                 return;
             }
             if (isHovering(80 + i * 18, 18, 16, 68, mouseX, mouseY)) {
-                graphics.renderTooltip(font, Component.literal(menu.getOutputTankInfo(i)), mouseX, mouseY);
+                graphics.renderTooltip(font, menu.getOutputTankInfo(i), mouseX, mouseY);
                 return;
             }
         }

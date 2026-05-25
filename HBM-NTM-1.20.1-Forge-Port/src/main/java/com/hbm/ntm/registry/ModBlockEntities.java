@@ -7,6 +7,8 @@ import com.hbm.ntm.blockentity.BoilerBlockEntity;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
+import com.hbm.ntm.blockentity.FluidTankBlockEntity;
+import com.hbm.ntm.blockentity.IndustrialSteamTurbineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyDemonLampBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLanternBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
@@ -41,6 +43,11 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<SteamTurbineBlockEntity>> STEAM_TURBINE =
             BLOCK_ENTITIES.register("steam_turbine", () ->
                     BlockEntityType.Builder.of(SteamTurbineBlockEntity::new, ModBlocks.MACHINE_TURBINE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<IndustrialSteamTurbineBlockEntity>> INDUSTRIAL_STEAM_TURBINE =
+            BLOCK_ENTITIES.register("industrial_steam_turbine", () ->
+                    BlockEntityType.Builder.of(IndustrialSteamTurbineBlockEntity::new,
+                            ModBlocks.MACHINE_INDUSTRIAL_TURBINE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<DeconBlockEntity>> DECON =
             BLOCK_ENTITIES.register("decon", () ->
@@ -82,6 +89,10 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("liquefactor", () ->
                     BlockEntityType.Builder.of(LiquefactorBlockEntity::new, ModBlocks.MACHINE_LIQUEFACTOR.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<FluidTankBlockEntity>> FLUID_TANK =
+            BLOCK_ENTITIES.register("fluid_tank", () ->
+                    BlockEntityType.Builder.of(FluidTankBlockEntity::new, ModBlocks.MACHINE_FLUIDTANK.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<LegacyVisibleMachineBlockEntity>> LEGACY_VISIBLE_MACHINE =
             BLOCK_ENTITIES.register("legacy_visible_machine", () ->
                     BlockEntityType.Builder.of(
@@ -98,7 +109,6 @@ public final class ModBlockEntities {
                             ModBlocks.MACHINE_SOLIDIFIER.get(),
                             ModBlocks.MACHINE_COMPRESSOR.get(),
                             ModBlocks.MACHINE_BIGASSTANK.get(),
-                            ModBlocks.MACHINE_FLUIDTANK.get(),
                             ModBlocks.MACHINE_PUMPJACK.get(),
                             ModBlocks.MACHINE_CENTRIFUGE.get(),
                             ModBlocks.MACHINE_ORE_SLOPPER.get(),

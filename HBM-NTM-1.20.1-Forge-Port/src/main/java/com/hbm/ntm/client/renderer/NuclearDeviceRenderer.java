@@ -27,7 +27,8 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(blockYaw(blockEntity.kind(), facing)));
+        poseStack.mulPose(Axis.YP.rotationDegrees(NuclearDeviceBlock.legacyRenderYaw(blockEntity.kind(), facing)));
+        applyLegacyBlockTranslation(blockEntity.kind(), poseStack);
         renderKind(blockEntity.kind(), poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
@@ -65,44 +66,10 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
         };
     }
 
-    public static float blockYaw(NuclearDeviceBlock.Kind kind, Direction facing) {
-        return switch (kind) {
-            case GADGET -> switch (facing) {
-                case NORTH -> 0.0F;
-                case WEST -> 90.0F;
-                case SOUTH -> 180.0F;
-                case EAST -> 270.0F;
-                default -> 180.0F;
-            };
-            case BOY, TSAR -> switch (facing) {
-                case NORTH -> 90.0F;
-                case WEST -> 180.0F;
-                case SOUTH -> 270.0F;
-                case EAST -> 0.0F;
-                default -> 270.0F;
-            };
-            case MAN -> switch (facing) {
-                case SOUTH -> 90.0F;
-                case EAST -> 180.0F;
-                case NORTH -> 270.0F;
-                case WEST -> 0.0F;
-                default -> 90.0F;
-            };
-            case MIKE, PROTOTYPE, FLEIJA -> switch (facing) {
-                case SOUTH -> 90.0F;
-                case NORTH -> 180.0F;
-                case WEST -> 270.0F;
-                case EAST -> 0.0F;
-                default -> 90.0F;
-            };
-            case SOLINIUM, N2 -> 90.0F + switch (facing) {
-                case NORTH -> 90.0F;
-                case WEST -> 180.0F;
-                case SOUTH -> 270.0F;
-                case EAST -> 0.0F;
-                default -> 270.0F;
-            };
-        };
+    private static void applyLegacyBlockTranslation(NuclearDeviceBlock.Kind kind, PoseStack poseStack) {
+        if (kind == NuclearDeviceBlock.Kind.BOY) {
+            poseStack.translate(-2.0D, 0.0D, 0.0D);
+        }
     }
 
     @Override
