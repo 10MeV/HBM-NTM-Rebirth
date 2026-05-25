@@ -3,6 +3,7 @@ package com.hbm.ntm.entity.effect;
 import com.hbm.ntm.block.FalloutLayerBlock;
 import com.hbm.ntm.config.BombConfig;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoadingEntity;
+import com.hbm.ntm.radiation.LegacyRadiationWorldUtil;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.core.BlockPos;
@@ -136,7 +137,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity {
 
     private void stomp(int x, int z, double percent) {
         int depth = 0;
-        int yStart = Math.min(level().getMaxBuildHeight() - 1, legacyHeightValue(x, z));
+        int yStart = Math.min(level().getMaxBuildHeight() - 1, LegacyRadiationWorldUtil.legacyHeightValue(level(), x, z));
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
         for (int y = yStart; y >= level().getMinBuildHeight(); y--) {
@@ -298,18 +299,6 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity {
 
     private boolean canReplaceWithFallout(BlockState state, BlockPos pos) {
         return state.isAir() || (state.canBeReplaced() && state.getFluidState().isEmpty() && !state.is(Blocks.FIRE));
-    }
-
-    private int legacyHeightValue(int x, int z) {
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(x, level().getMaxBuildHeight() - 1, z);
-        for (int y = level().getMaxBuildHeight() - 1; y >= level().getMinBuildHeight(); y--) {
-            cursor.setY(y);
-            BlockState state = level().getBlockState(cursor);
-            if (!state.isAir() && state.getLightBlock(level(), cursor) > 0) {
-                return y + 1;
-            }
-        }
-        return level().getMinBuildHeight();
     }
 
     private double chunkCenterDistance(long packedChunk) {

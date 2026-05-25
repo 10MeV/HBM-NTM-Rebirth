@@ -15,6 +15,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
@@ -232,9 +233,17 @@ public final class ModCommands {
                                 .executes(context -> getPneumaticNetwork(
                                         context.getSource(),
                                         BlockPosArgument.getLoadedBlockPos(context, "pos")))))
+                .then(Commands.literal("protocol")
+                        .executes(context -> getNetworkProtocolSummary(context.getSource()))
+                        .then(Commands.literal("summary")
+                                .executes(context -> getNetworkProtocolSummary(context.getSource())))
+                        .then(Commands.literal("packets")
+                                .executes(context -> listNetworkProtocolPackets(context.getSource()))))
                 .then(Commands.literal("packetthreading")
                         .then(Commands.literal("stats")
                                 .executes(context -> getPacketThreadingStats(context.getSource())))
+                        .then(Commands.literal("threads")
+                                .executes(context -> listPacketThreadingThreads(context.getSource())))
                         .then(Commands.literal("toggle")
                                 .executes(context -> togglePacketThreading(context.getSource())))
                         .then(Commands.literal("enable")
@@ -889,6 +898,40 @@ public final class ModCommands {
         return removed;
     }
 
+    private static int getNetworkProtocolSummary(CommandSourceStack source) {
+        List<ModMessages.PacketRegistration> registrations = ModMessages.packetRegistrations();
+        long clientbound = registrations.stream().filter(registration -> "S2C".equals(registration.direction())).count();
+        long serverbound = registrations.stream().filter(registration -> "C2S".equals(registration.direction())).count();
+        source.sendSuccess(() -> Component.literal("HBM network protocol: channel=hbm:main version="
+                + ModMessages.protocolVersion()
+                + " packets=" + ModMessages.registeredPacketCount()
+                + " s2c=" + clientbound
+                + " c2s=" + serverbound), false);
+        if (!registrations.isEmpty()) {
+            ModMessages.PacketRegistration first = registrations.get(0);
+            ModMessages.PacketRegistration last = registrations.get(registrations.size() - 1);
+            source.sendSuccess(() -> Component.literal("Packet id range: #"
+                    + first.id() + " " + first.typeName()
+                    + " -> #" + last.id() + " " + last.typeName()), false);
+        }
+        return registrations.size();
+    }
+
+    private static int listNetworkProtocolPackets(CommandSourceStack source) {
+        List<ModMessages.PacketRegistration> registrations = ModMessages.packetRegistrations();
+        if (registrations.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("HBM network protocol has no registered packets yet."), false);
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("HBM network packets:"), false);
+        for (ModMessages.PacketRegistration registration : registrations) {
+            source.sendSuccess(() -> Component.literal("#" + registration.id()
+                    + " " + registration.direction()
+                    + " " + registration.typeName()), false);
+        }
+        return registrations.size();
+    }
+
     private static int getPacketThreadingStats(CommandSourceStack source) {
         ThreadedPacketDispatcher.Snapshot snapshot = ThreadedPacketDispatcher.snapshot();
         source.sendSuccess(() -> Component.literal("Packet threading: pending=" + snapshot.pending()
@@ -903,12 +946,35 @@ public final class ModCommands {
                 + " discarded=" + snapshot.lastFlushDiscarded()
                 + " wait=" + snapshot.lastFlushWaitMillis()
                 + "ms clears=" + snapshot.consecutiveClears()), false);
+        source.sendSuccess(() -> Component.literal("Thread pool: total=" + snapshot.threadPoolSize()
+                + " core=" + snapshot.corePoolSize()
+                + " max=" + snapshot.maximumPoolSize()
+                + " active=" + snapshot.activeThreadCount()
+                + " queued=" + snapshot.executorQueueSize()
+                + " completed=" + snapshot.completedTaskCount()), false);
         source.sendSuccess(() -> Component.literal("Tile binary control uploads: pending="
                 + ServerTileBinaryControlTransfers.pendingTransfers()), false);
         if (!snapshot.lastFailureMessage().isBlank()) {
             source.sendSuccess(() -> Component.literal("Last packet threading issue: " + snapshot.lastFailureMessage()), false);
         }
         return snapshot.pending();
+    }
+
+    private static int listPacketThreadingThreads(CommandSourceStack source) {
+        List<ThreadedPacketDispatcher.ThreadSnapshot> threads = ThreadedPacketDispatcher.threadSnapshots();
+        if (threads.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("No HBM packet threads have been created yet."), false);
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("HBM packet threads:"), false);
+        for (ThreadedPacketDispatcher.ThreadSnapshot thread : threads) {
+            String lockOwner = thread.lockOwner().isBlank() ? "none" : thread.lockOwner();
+            source.sendSuccess(() -> Component.literal(thread.name()
+                    + " id=" + thread.id()
+                    + " state=" + thread.state()
+                    + " lockOwner=" + lockOwner), false);
+        }
+        return threads.size();
     }
 
     private static int togglePacketThreading(CommandSourceStack source) {

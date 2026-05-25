@@ -16,15 +16,18 @@ public class SchrabFogParticle extends TextureSheetParticle {
     private SchrabFogParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites) {
         super(level, x, y, z, 0.0D, 0.0D, 0.0D);
         this.sprites = sprites;
-        this.quadSize = 0.1F + this.random.nextFloat() * 0.1F;
-        this.lifetime = 16 + this.random.nextInt(10);
-        this.friction = 0.96F;
+        this.setSize(0.02F, 0.02F);
+        this.quadSize *= this.random.nextFloat() * 0.6F + 0.5F;
+        this.xd *= 0.019999999552965164D;
+        this.yd *= 0.019999999552965164D;
+        this.zd *= 0.019999999552965164D;
+        this.lifetime = (int) (20.0D / (Math.random() * 0.8D + 0.2D));
+        this.friction = 0.99F;
         this.gravity = 0.0F;
         this.hasPhysics = false;
-        float tint = 0.85F + this.random.nextFloat() * 0.15F;
         this.rCol = 0.0F;
-        this.gCol = tint;
-        this.bCol = tint;
+        this.gCol = 1.0F;
+        this.bCol = 1.0F;
         this.alpha = 1.0F;
         this.setSpriteFromAge(sprites);
     }
@@ -33,8 +36,6 @@ public class SchrabFogParticle extends TextureSheetParticle {
     public void tick() {
         super.tick();
         if (!this.removed) {
-            float progress = (float) this.age / (float) this.lifetime;
-            this.alpha = 1.0F - progress;
             this.setSpriteFromAge(sprites);
         }
     }
@@ -54,11 +55,7 @@ public class SchrabFogParticle extends TextureSheetParticle {
         @Override
         public SchrabFogParticle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z,
                 double xSpeed, double ySpeed, double zSpeed) {
-            SchrabFogParticle particle = new SchrabFogParticle(level, x, y, z, sprites);
-            particle.xd += xSpeed * 0.1D;
-            particle.yd += ySpeed * 0.1D;
-            particle.zd += zSpeed * 0.1D;
-            return particle;
+            return new SchrabFogParticle(level, x, y, z, sprites);
         }
     }
 }

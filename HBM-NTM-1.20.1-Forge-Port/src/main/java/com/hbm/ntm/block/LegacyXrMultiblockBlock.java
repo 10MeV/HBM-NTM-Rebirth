@@ -29,6 +29,14 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
 
     protected abstract int getLegacyOffset();
 
+    protected int getLegacyHeightOffset() {
+        return 0;
+    }
+
+    protected Direction modifyPlacementFacing(Direction facing) {
+        return facing;
+    }
+
     protected Predicate<BlockPos> proxyOffsets(BlockState state) {
         return offset -> false;
     }
@@ -42,7 +50,7 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
     }
 
     protected Direction getFacingForPlacement(BlockPlaceContext context) {
-        return context.getHorizontalDirection().getOpposite();
+        return modifyPlacementFacing(context.getHorizontalDirection().getOpposite());
     }
 
     @Override
@@ -63,7 +71,8 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
 
     @Override
     public BlockPos getDirectPlacementCore(BlockPlaceContext context, BlockState state) {
-        return MultiblockHelper.legacyCoreFromPlacement(context.getClickedPos(), state.getValue(FACING), getLegacyOffset());
+        return MultiblockHelper.legacyCoreFromPlacement(context.getClickedPos().above(getLegacyHeightOffset()),
+                state.getValue(FACING), getLegacyOffset());
     }
 
     @Override
@@ -88,6 +97,9 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (!level.isClientSide) {
             BlockPos corePos = MultiblockHelper.legacyCoreFromPlacement(pos, state.getValue(FACING), getLegacyOffset());
+            if (getLegacyHeightOffset() != 0) {
+                corePos = corePos.above(getLegacyHeightOffset());
+            }
             if (!corePos.equals(pos)) {
                 RELOCATING.set(true);
                 level.removeBlock(pos, false);

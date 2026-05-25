@@ -225,7 +225,8 @@
   - `type="radFog"` 走的是 `ParticleRadiationFog`，同样不应与 `schrabfog` 混用。
 - 现代修正：
   - `SchrabFogParticle` 已从多 quad 大雾改为 `EntityAuraFX` 等价的小型青蓝 aura 粒子。
-  - 2026-05-24 三次修正：`schrab_fog.json` 不再引用雾状 `haze` 或 HBM 的多点 `particle_base` 贴图，改用 Minecraft 自带单像素 `minecraft:generic_0`；粒子通过 `Particle` 构造函数获得旧端 aura 类似的初始微小随机速度，生命周期内轻微漂移并淡出。
+  - 2026-05-24 三次修正：`schrab_fog.json` 不再引用雾状 `haze` 或 HBM 的多点 `particle_base` 贴图，改用 Minecraft 自带单像素 `minecraft:generic_0`。
+  - 2026-05-24 四次修正：按 1.7.10 `EntityAuraFX` 精确对齐核心参数：`setSize(0.02, 0.02)`，scale 乘 `rand * 0.6 + 0.5`，super 随机速度再乘 `0.02`，寿命 `20 / (rand * 0.8 + 0.2)`，tick 摩擦 `0.99`；去掉之前额外加入的线性 alpha 淡出和速度叠加。
   - `LegacyHazardSourceBlock` 对 `SCHRAB` 的外露面坐标生成恢复为旧 `BlockHazard#randomDisplayTick` 的方向面偏移逻辑，实际表现应为方块放置后自带的小颗粒，不是辐射雾。
 - 边界：
   - 本次只修 `SCHRAB` 显示形态，不改辐射数值和伤害。
@@ -391,7 +392,94 @@
   - 本批只接入 ParticleCreators 的客户端联动爆炸声；其他爆炸逻辑中仍直接使用 vanilla `GENERIC_EXPLODE` 的地方，后续可按爆炸框架切片逐步替换为 HBM 声音事件。
   - 旧事件名 `weapon.explosionSmallNear` 等未直接保留为 registry id；现代端采用现有工程风格的 snake_case 事件名，并在本库分发处统一映射。
 
+## 2026-05-24 声音 ResourceLocation 小写规则修正
+
+- 运行客户端时发现 `ModSounds` 注册旧名 `weapon.reload.tubeFwoomp` 会在 Forge 1.20.1 构造 `ResourceLocation` 时崩溃：现代资源路径只允许 `[a-z0-9/._-]`。
+- 气动管道发射声保留 1.7.10 旧资源语义，但现代 ID 和资源路径统一改为：
+  - sound event: `hbm:weapon.reload.tube_fwoomp`
+  - sound file: `assets/hbm/sounds/weapon/reload/tube_fwoomp.ogg`
+- 后续从 1.7.10 复制声音资源时，驼峰旧名必须在现代端落位为小写/下划线，并同步更新 `ModSounds` 与 `sounds.json`。
+
 ## 2026-05-24 第八批验证
 
 - 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
 - 结果：通过。
+
+## 2026-05-24 第九批推进：大爆炸冲击波粒子
+
+- 1.7.10 对照：
+  - `ParticleMukeWave`：
+    - 旧纹理：`assets/hbm/textures/particle/shockwave.png`。
+    - `getFXLayer()=3`，直接绑定纹理并用加色混合 `SRC_ALPHA, ONE` 渲染。
+    - 构造默认寿命 25 tick；`ExplosionCreator` 调 `setup(waveScale, (int)(25F * waveScale / 45))`。
+    - 渲染为水平单 quad，Y 偏移 `-0.25`。
+    - 透明度 `1 - (age + partial) / maxAge`。
+    - 半径/scale 曲线为 `(1 - exp((age + partial) * -0.125)) * waveScale`。
+  - `ExplosionCreator`：
+    - `explosionLarge` 在云柱和 debris 前先生成 `ParticleMukeWave`，位置为 `(x, y + 2, z)`。
+- 本批现代迁移：
+  - 从 1.7.10 复制资源：
+    - `assets/hbm/textures/particle/shockwave.png`
+  - 新增粒子类型与图集：
+    - `ModParticleTypes.MUKE_WAVE`
+    - `assets/hbm/particles/muke_wave.json` -> `hbm:particle/shockwave`
+  - 新增 `MukeWaveParticle`：
+    - 保留旧水平单 quad、fullbright、加色混合、无深度写入。
+    - 保留旧 `waveScale/maxAge` 参数、透明衰减和指数扩张公式。
+    - provider 缓存 `SpriteSet`，供 `explosionLarge` NBT 分发按旧 `waveScale` 直接实例化。
+  - `HbmParticleEffects#spawnExplosionLarge` 更新：
+    - 将原先 `POOF`/`CLOUD` 环形近似替换为 `MukeWaveParticle.create(level, x, y + 2, z, waveScale, 25 * waveScale / 45)`。
+    - 保留已有烟柱、方块碎屑和延迟爆炸声。
+- 边界：
+  - `ParticleMukeWave` 的旧 GL fog 开关细节未逐项复刻；现代实现通过独立 `ParticleRenderType` 设置加色混合、关闭深度写入和 fullbright，以保留主要视觉合同。
+  - `ParticleDebris` / `WorldInAJar` 碎块实体仍未深迁，大爆炸 debris 仍是现代 block particle 桥接。
+
+## 2026-05-24 第九批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过；编译器仅提示 `MukeWaveParticle` 使用了 Minecraft/Forge 侧已弃用渲染 API。
+
+## 2026-05-24 第十批推进：3D 弹壳粒子与落地声音
+
+- 1.7.10 对照：
+  - `SpentCasing`：
+    - 定义弹壳类型 `STRAIGHT/BOTTLENECK/SHOTGUN`，对应 OBJ 分组 `Straight`、`Bottleneck`、`Shotgun + ShotgunCase`。
+    - NBT/注册名通过 `casingMap` 查配置；字段包括缩放、颜色、弹跳声音、弹跳旋转系数、最大寿命。
+    - 弹跳声音事件为 `hbm:weapon.casing.shell/small/medium/large`，按弹壳体积和类型选择。
+  - `CasingCreator`：
+    - 旧 NBT `type=casingNT`，字段 `mX/mY/mZ/yaw/pitch/mPitch/mYaw/name/smoking/smokeLife/smokeLift/nodeLife`。
+    - 客户端用 `SpentCasing.casingMap.get(name)` 构造 `ParticleSpentCasing`，并把 `yaw/pitch` 写入初始旋转。
+  - `ParticleSpentCasing`：
+    - 使用 `models/effect/casings.obj` 和 `textures/particle/casings.png`。
+    - 物理为重力 `0.04`、速度阻尼 `0.98`、落地 X/Z 阻尼 `0.7`、碰撞反弹 X/Z `-0.25`、Y `-0.5`。
+    - 落地/碰撞时按初始 Y 速度调整 pitch/yaw 旋转动量，并在垂直碰撞速度足够时播放 plink 声。
+    - smoking 时生成无贴图白色半透明烟带节点，节点按 `smokeLift * 0.05` 上升并按 `nodeLife` 衰减。
+- 本批现代迁移：
+  - 复制旧资源：
+    - `assets/hbm/models/effect/casings.obj`
+    - `assets/hbm/textures/particle/casings.png`
+    - `assets/hbm/textures/particle/casings_base.png`
+    - `assets/hbm/sounds/weapon/casing/{shell,small,medium,large}1..3.ogg`
+  - 新增 `SpentCasingDefinition`：
+    - 保留旧类型、分组、颜色、缩放、bounce sound、bounce motion、maxAge 合同。
+    - 先登记常见 Sedna 口径和火炮弹壳注册名；未知 name 回落到 `default` 黄铜直筒弹壳，避免旧 NBT 丢粒子。
+  - 新增 `SpentCasingParticle`：
+    - 使用现有 `LegacyWavefrontModel` 渲染旧 `casings.obj` 分组。
+    - 保留旧重力、摩擦、碰撞反弹、落地 pitch 归整、旋转动量与弹跳声音逻辑。
+    - 自绘无贴图半透明烟带，接入旧 `smoking/smokeLife/smokeLift/nodeLife` 字段。
+  - `HbmParticleEffects#spawnCasing` 从火花/vanilla smoke 桥接替换为真正 3D 弹壳粒子。
+  - `ParticleUtil#spawnCasing` 新增完整旧 NBT 字段重载，旧简化重载仍保留并写入默认值。
+  - `ModSounds` 与 `sounds.json` 新增：
+    - `weapon.casing.shell`
+    - `weapon.casing.small`
+    - `weapon.casing.medium`
+    - `weapon.casing.large`
+- 边界：
+  - `SpentCasingDefinition` 目前不是从完整 Sedna 枪械工厂自动初始化，而是按本批已核对的常见注册名手工登记；后续迁移更多枪械/弹药工厂时，应继续补齐所有 `new SpentCasing(...).register(name)`。
+  - 现代粒子渲染路径使用 `LegacyWavefrontModel` + `MultiBufferSource`，主要 OBJ/颜色/缩放合同已对齐；旧 GL `RESCALE_NORMAL` 与标准物品光照开关没有逐项复刻。
+  - smoke ribbon 已按旧节点合同自绘，但没有复用旧 `TextureManager`/Tessellator 精确状态；视觉上应为同类白色渐隐烟迹。
+
+## 2026-05-24 第十批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过；编译器仅提示部分文件使用/覆盖已过时 API。

@@ -1,7 +1,6 @@
 package com.hbm.ntm.particle;
 
 import com.hbm.ntm.network.ModMessages;
-import com.hbm.ntm.network.packet.AuxParticlePacket;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -94,14 +93,26 @@ public final class ParticleUtil {
 
     public static void spawnCasing(Level level, double x, double y, double z, double motionX, double motionY, double motionZ,
             boolean smoking, int smokeLife, double smokeLift) {
+        spawnCasing(level, x, y, z, motionX, motionY, motionZ, 0.0F, 0.0F, 5.0F, 10.0F, "default", smoking, smokeLife, smokeLift, 30);
+    }
+
+    public static void spawnCasing(Level level, double x, double y, double z, double motionX, double motionY, double motionZ,
+            float yaw, float pitch, float momentumPitch, float momentumYaw, String name, boolean smoking, int smokeLife,
+            double smokeLift, int nodeLife) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_CASING);
         data.putDouble("mX", motionX);
         data.putDouble("mY", motionY);
         data.putDouble("mZ", motionZ);
+        data.putFloat("yaw", yaw);
+        data.putFloat("pitch", pitch);
+        data.putFloat("mPitch", momentumPitch);
+        data.putFloat("mYaw", momentumYaw);
+        data.putString("name", name);
         data.putBoolean("smoking", smoking);
         data.putInt("smokeLife", smokeLife);
         data.putDouble("smokeLift", smokeLift);
+        data.putInt("nodeLife", nodeLife);
         spawnAux(level, x, y, z, data, 50.0D);
     }
 
@@ -126,7 +137,22 @@ public final class ParticleUtil {
         if (level.isClientSide()) {
             ClientParticleBridge.handleAux(payload);
         } else if (level instanceof ServerLevel serverLevel) {
-            ModMessages.sendToTracking(new AuxParticlePacket(payload), serverLevel, x, y, z, range);
+            ModMessages.sendAuxParticle(serverLevel, x, y, z, payload, range);
+        }
+    }
+
+    public static void spawnAuxThreaded(Level level, double x, double y, double z, CompoundTag data, double range) {
+        if (level == null) {
+            return;
+        }
+        CompoundTag payload = data.copy();
+        payload.putDouble("posX", x);
+        payload.putDouble("posY", y);
+        payload.putDouble("posZ", z);
+        if (level.isClientSide()) {
+            ClientParticleBridge.handleAux(payload);
+        } else if (level instanceof ServerLevel serverLevel) {
+            ModMessages.sendAuxParticleThreaded(serverLevel, x, y, z, payload, range);
         }
     }
 

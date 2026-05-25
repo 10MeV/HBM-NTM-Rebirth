@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.phys.AABB;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -367,6 +368,29 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         return !failed && groups.containsKey(normalize(name));
     }
 
+    public synchronized AABB boundsAll() {
+        ensureLoaded();
+        if (failed) {
+            return new AABB(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+        }
+        return boundsOf(groupOrder);
+    }
+
+    public synchronized AABB boundsOnly(String... groupNames) {
+        ensureLoaded();
+        if (failed) {
+            return new AABB(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+        }
+        Set<String> included = normalizedSet(groupNames);
+        List<Group> selected = new ArrayList<>();
+        for (Group group : groupOrder) {
+            if (included.contains(normalize(group.name()))) {
+                selected.add(group);
+            }
+        }
+        return selected.isEmpty() ? boundsAll() : boundsOf(selected);
+    }
+
     public static void reloadAll(ResourceManager resourceManager) {
         List<LegacyWavefrontModel> models;
         synchronized (ALL_MODELS) {
@@ -641,6 +665,32 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         }
         missingPartWarnings.add(key);
         HbmNtm.LOGGER.warn("Legacy OBJ model {} has no group '{}'. Known groups: {}", modelLocation, partName, getPartNames());
+    }
+
+    private static AABB boundsOf(List<Group> groups) {
+        double minX = Double.POSITIVE_INFINITY;
+        double minY = Double.POSITIVE_INFINITY;
+        double minZ = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
+        double maxY = Double.NEGATIVE_INFINITY;
+        double maxZ = Double.NEGATIVE_INFINITY;
+        boolean found = false;
+
+        for (Group group : groups) {
+            for (Face face : group.faces()) {
+                for (Vector3f vertex : face.vertices()) {
+                    minX = Math.min(minX, vertex.x());
+                    minY = Math.min(minY, vertex.y());
+                    minZ = Math.min(minZ, vertex.z());
+                    maxX = Math.max(maxX, vertex.x());
+                    maxY = Math.max(maxY, vertex.y());
+                    maxZ = Math.max(maxZ, vertex.z());
+                    found = true;
+                }
+            }
+        }
+
+        return found ? new AABB(minX, minY, minZ, maxX, maxY, maxZ) : new AABB(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
     }
 
     private static int clampColor(float value) {

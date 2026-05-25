@@ -1,24 +1,3 @@
 {
-  "parent": "hbm:block/machines/battery_socket_socket",
-  "display": {
-    "gui": {
-      "rotation": [30, 45, 0],
-      "translation": [0, -1.5, 0],
-      "scale": [0.28, 0.28, 0.28]
-    },
-    "ground": {
-      "translation": [0, 2, 0],
-      "scale": [0.18, 0.18, 0.18]
-    },
-    "thirdperson_righthand": {
-      "rotation": [75, 45, 0],
-      "translation": [0, -2, 2],
-      "scale": [0.3, 0.3, 0.3]
-    },
-    "firstperson_righthand": {
-      "rotation": [0, 315, 0],
-      "translation": [-2, 1, 2],
-      "scale": [0.14, 0.14, 0.14]
-    }
-  }
+  "parent": "minecraft:builtin/entity"
 }

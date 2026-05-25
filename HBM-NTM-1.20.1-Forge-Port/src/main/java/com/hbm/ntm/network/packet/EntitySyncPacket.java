@@ -2,6 +2,7 @@ package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.network.HbmEntitySyncable;
+import com.hbm.ntm.network.ModMessages;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.nbt.CompoundTag;
@@ -11,9 +12,14 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
 public record EntitySyncPacket(int entityId, CompoundTag data) {
+    private static final long REQUEST_COOLDOWN_TICKS = 20L;
+    private static final Map<Integer, Long> LAST_SYNC_REQUESTS = new HashMap<>();
+
     public EntitySyncPacket {
         data = data == null ? new CompoundTag() : data.copy();
     }
@@ -45,6 +51,17 @@ public record EntitySyncPacket(int entityId, CompoundTag data) {
             syncable.handleClientSyncTag(packet.data);
         } else {
             HbmNtm.LOGGER.debug("Entity sync packet for id {} had no HbmEntitySyncable receiver.", packet.entityId);
+            requestResync(level, packet.entityId);
         }
+    }
+
+    private static void requestResync(ClientLevel level, int entityId) {
+        long gameTime = level.getGameTime();
+        Long lastRequest = LAST_SYNC_REQUESTS.get(entityId);
+        if (lastRequest != null && gameTime - lastRequest < REQUEST_COOLDOWN_TICKS) {
+            return;
+        }
+        LAST_SYNC_REQUESTS.put(entityId, gameTime);
+        ModMessages.sendToServer(new EntitySyncRequestPacket(entityId));
     }
 }

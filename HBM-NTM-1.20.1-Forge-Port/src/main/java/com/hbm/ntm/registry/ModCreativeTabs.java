@@ -10,6 +10,9 @@ import com.hbm.ntm.item.TrinketBlockItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
@@ -79,7 +82,7 @@ public final class ModCreativeTabs {
                     .title(Component.translatable("itemGroup.hbm.nukes"))
                     .icon(() -> ModBlocks.NUKE_GADGET.get().asItem().getDefaultInstance())
                     .displayItems((parameters, output) -> {
-                        ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> output.accept(block.get()));
+                        ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));
                         ModItems.NUKE_TAB_ITEMS.forEach(item -> output.accept(item.get()));
                     })
                     .build());
@@ -88,24 +91,36 @@ public final class ModCreativeTabs {
         CREATIVE_TABS.register(modBus);
     }
 
-    private static void acceptBlockItem(CreativeModeTab.Output output, net.minecraft.world.item.Item item) {
+    private static void acceptBlockItem(CreativeModeTab.Output output, Item item) {
+        if (item == Items.AIR) {
+            return;
+        }
         if (item instanceof TrinketBlockItem trinket) {
             TrinketBlockItem.addCreativeStacks(output, trinket);
         } else if (item instanceof LegacyStateBlockItem stateItem) {
             stateItem.addCreativeStacks(output);
         } else {
-            output.accept(item);
+            acceptSingleStack(output, item);
         }
     }
 
-    private static void acceptItem(CreativeModeTab.Output output, RegistryObject<? extends net.minecraft.world.item.Item> item) {
+    private static void acceptItem(CreativeModeTab.Output output, RegistryObject<? extends Item> item) {
         if (item.get() instanceof HbmBatteryItem battery) {
             battery.addCreativeStacks(output, item.get().getDefaultInstance());
         } else if (item.get() instanceof HbmFluidContainerItem container) {
             output.accept(item.get().getDefaultInstance());
         } else {
-            output.accept(item.get());
+            acceptSingleStack(output, item.get());
         }
+    }
+
+    private static void acceptSingleStack(CreativeModeTab.Output output, Item item) {
+        ItemStack stack = item.getDefaultInstance();
+        if (stack.isEmpty()) {
+            return;
+        }
+        stack.setCount(1);
+        output.accept(stack);
     }
 
     private ModCreativeTabs() {

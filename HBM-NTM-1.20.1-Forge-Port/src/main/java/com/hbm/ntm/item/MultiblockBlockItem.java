@@ -1,5 +1,7 @@
 package com.hbm.ntm.item;
 
+import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
+import com.hbm.ntm.client.renderer.LegacyVisibleMachineItemRenderer;
 import com.hbm.ntm.multiblock.LegacyMultiblockPlaceable;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
@@ -15,10 +17,18 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+
+import java.util.function.Consumer;
 
 public class MultiblockBlockItem extends BlockItem {
     public MultiblockBlockItem(Block block, Properties properties) {
         super(block, properties);
+    }
+
+    @Override
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> LegacyVisibleMachineItemRenderer.INSTANCE);
     }
 
     @Override

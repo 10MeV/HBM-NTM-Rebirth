@@ -2,8 +2,12 @@ package com.hbm.ntm.explosion.vnt.standard;
 
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.explosion.vnt.interfaces.BlockMutator;
+import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.RegistryObject;
 
 public class BlockMutatorBalefire implements BlockMutator {
     private final boolean always;
@@ -21,7 +25,12 @@ public class BlockMutatorBalefire implements BlockMutator {
         if (explosion.level().getBlockState(pos).isAir()
                 && explosion.level().getBlockState(pos.below()).isSolidRender(explosion.level(), pos.below())
                 && (always || explosion.level().random.nextInt(3) == 0)) {
-            explosion.level().setBlockAndUpdate(pos, Blocks.SOUL_FIRE.defaultBlockState());
+            explosion.level().setBlockAndUpdate(pos, balefireState());
         }
+    }
+
+    private static BlockState balefireState() {
+        RegistryObject<? extends Block> balefire = ModBlocks.legacyBlock("balefire");
+        return balefire != null ? balefire.get().defaultBlockState() : Blocks.SOUL_FIRE.defaultBlockState();
     }
 }

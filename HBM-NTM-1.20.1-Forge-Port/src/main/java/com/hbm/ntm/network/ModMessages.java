@@ -6,7 +6,9 @@ import com.hbm.ntm.network.packet.ClientBinaryDataPacket;
 import com.hbm.ntm.network.packet.ClientBinaryDataChunkPacket;
 import com.hbm.ntm.network.packet.ClientBinaryDataReadyPacket;
 import com.hbm.ntm.network.packet.ClientBiomeSyncPacket;
+import com.hbm.ntm.network.packet.ClientEntityEventPacket;
 import com.hbm.ntm.network.packet.ClientInformPacket;
+import com.hbm.ntm.network.packet.ClientMissileMultipartPacket;
 import com.hbm.ntm.network.packet.ClientPanelDataPacket;
 import com.hbm.ntm.network.packet.ClientTileBinaryDataPacket;
 import com.hbm.ntm.network.packet.ClientTileBinaryDataChunkPacket;
@@ -14,11 +16,14 @@ import com.hbm.ntm.network.packet.ClientTileEventPacket;
 import com.hbm.ntm.network.packet.CompressedExplosionEffectPacket;
 import com.hbm.ntm.network.packet.CoordinateActionPacket;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
+import com.hbm.ntm.network.packet.EntitySyncRequestPacket;
 import com.hbm.ntm.network.packet.ExplosionKnockbackPacket;
 import com.hbm.ntm.network.packet.HeldItemNbtPacket;
+import com.hbm.ntm.network.packet.ItemActionPacket;
 import com.hbm.ntm.network.packet.ItemControlPacket;
 import com.hbm.ntm.network.packet.ItemAnimationPacket;
 import com.hbm.ntm.network.packet.KeybindPacket;
+import com.hbm.ntm.network.packet.LegacyItemAnimationPacket;
 import com.hbm.ntm.network.packet.LegacyButtonPacket;
 import com.hbm.ntm.network.packet.MachineBatteryButtonPacket;
 import com.hbm.ntm.network.packet.MenuActionPacket;
@@ -29,9 +34,11 @@ import com.hbm.ntm.network.packet.PlayerPropertiesPacket;
 import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.network.packet.ServerTileBinaryControlPacket;
 import com.hbm.ntm.network.packet.ServerTileBinaryControlChunkPacket;
+import com.hbm.ntm.network.packet.ServerEntityActionPacket;
 import com.hbm.ntm.network.packet.TileControlPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.network.packet.TileSyncRequestPacket;
+import com.hbm.ntm.network.packet.TypedMenuActionPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -53,6 +60,7 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.List;
 import java.util.Arrays;
@@ -67,6 +75,7 @@ public final class ModMessages {
     private static final String PROTOCOL_VERSION = "1";
     private static int packetId;
     private static final AtomicBoolean REGISTERED = new AtomicBoolean();
+    private static final List<PacketRegistration> PACKET_REGISTRATIONS = new ArrayList<>();
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(new ResourceLocation(HbmNtm.MOD_ID, "main"))
@@ -74,6 +83,18 @@ public final class ModMessages {
             .clientAcceptedVersions(PROTOCOL_VERSION::equals)
             .serverAcceptedVersions(PROTOCOL_VERSION::equals)
             .simpleChannel();
+
+    public static String protocolVersion() {
+        return PROTOCOL_VERSION;
+    }
+
+    public static int registeredPacketCount() {
+        return PACKET_REGISTRATIONS.size();
+    }
+
+    public static List<PacketRegistration> packetRegistrations() {
+        return List.copyOf(PACKET_REGISTRATIONS);
+    }
 
     public static void register() {
         if (!REGISTERED.compareAndSet(false, true)) {
@@ -208,6 +229,34 @@ public final class ModMessages {
                 ServerTileBinaryControlChunkPacket::decode,
                 ServerTileBinaryControlChunkPacket::encode,
                 ServerTileBinaryControlChunkPacket::handle);
+        registerServerToClient(ClientEntityEventPacket.class,
+                ClientEntityEventPacket::decode,
+                ClientEntityEventPacket::encode,
+                ClientEntityEventPacket::handle);
+        registerClientToServer(ServerEntityActionPacket.class,
+                ServerEntityActionPacket::decode,
+                ServerEntityActionPacket::encode,
+                ServerEntityActionPacket::handle);
+        registerClientToServer(ItemActionPacket.class,
+                ItemActionPacket::decode,
+                ItemActionPacket::encode,
+                ItemActionPacket::handle);
+        registerClientToServer(TypedMenuActionPacket.class,
+                TypedMenuActionPacket::decode,
+                TypedMenuActionPacket::encode,
+                TypedMenuActionPacket::handle);
+        registerServerToClient(LegacyItemAnimationPacket.class,
+                LegacyItemAnimationPacket::decode,
+                LegacyItemAnimationPacket::encode,
+                LegacyItemAnimationPacket::handle);
+        registerClientToServer(EntitySyncRequestPacket.class,
+                EntitySyncRequestPacket::decode,
+                EntitySyncRequestPacket::encode,
+                EntitySyncRequestPacket::handle);
+        registerServerToClient(ClientMissileMultipartPacket.class,
+                ClientMissileMultipartPacket::decode,
+                ClientMissileMultipartPacket::encode,
+                ClientMissileMultipartPacket::handle);
     }
 
     public static void sendToServer(Object message) {
@@ -279,13 +328,54 @@ public final class ModMessages {
         }
     }
 
+    public static void sendClientEntityEvent(Entity entity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
+        sendToEntityTrackers(new ClientEntityEventPacket(entity.getId(), eventType, data), entity);
+    }
+
+    public static void sendClientEntityEventAndSelf(Entity entity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
+        sendToEntityAndSelf(new ClientEntityEventPacket(entity.getId(), eventType, data), entity);
+    }
+
+    public static void sendClientEntityEvent(ServerPlayer player, Entity entity, ResourceLocation eventType,
+                                             net.minecraft.nbt.CompoundTag data) {
+        sendToPlayer(new ClientEntityEventPacket(entity.getId(), eventType, data), player);
+    }
+
+    public static void sendEntityAction(Entity entity, ResourceLocation actionType, net.minecraft.nbt.CompoundTag data) {
+        sendToServer(new ServerEntityActionPacket(entity.getId(), actionType, data));
+    }
+
     public static void informPlayer(ServerPlayer player, Component message, int id, int millis) {
         sendToPlayer(new ClientInformPacket(message, id, millis), player);
+    }
+
+    public static void sendAuxParticle(ServerLevel level, double x, double y, double z, net.minecraft.nbt.CompoundTag data,
+                                       double range) {
+        sendToAllAround(new AuxParticlePacket(auxParticlePayload(data, x, y, z)), level, x, y, z, range);
+    }
+
+    public static void sendAuxParticleThreaded(ServerLevel level, double x, double y, double z,
+                                               net.minecraft.nbt.CompoundTag data, double range) {
+        ThreadedPacketDispatcher.sendToAllAround(new AuxParticlePacket(auxParticlePayload(data, x, y, z)),
+                level, x, y, z, range);
+    }
+
+    public static void sendAuxParticle(ServerPlayer player, double x, double y, double z,
+                                       net.minecraft.nbt.CompoundTag data) {
+        sendToPlayer(new AuxParticlePacket(auxParticlePayload(data, x, y, z)), player);
+    }
+
+    public static AuxParticlePacket auxParticlePacket(double x, double y, double z, net.minecraft.nbt.CompoundTag data) {
+        return new AuxParticlePacket(auxParticlePayload(data, x, y, z));
     }
 
     public static void sendItemAnimation(ServerPlayer player, int slot, int rail, String itemKey,
                                          ResourceLocation animationFile, String animationName, boolean holdLastFrame) {
         sendToPlayer(new ItemAnimationPacket(slot, rail, itemKey, animationFile, animationName, holdLastFrame), player);
+    }
+
+    public static void sendLegacyItemAnimation(ServerPlayer player, int animationType, int receiverIndex, int itemIndex) {
+        sendToPlayer(new LegacyItemAnimationPacket((short) animationType, receiverIndex, itemIndex), player);
     }
 
     public static void sendMuzzleFlash(Entity entity) {
@@ -294,6 +384,34 @@ public final class ModMessages {
 
     public static void sendItemControl(InteractionHand hand, net.minecraft.nbt.CompoundTag tag) {
         sendToServer(new ItemControlPacket(hand, tag));
+    }
+
+    public static void sendItemAction(InteractionHand hand, ResourceLocation actionType, net.minecraft.nbt.CompoundTag data) {
+        sendToServer(new ItemActionPacket(hand, actionType, data));
+    }
+
+    public static void sendDesignatorAction(InteractionHand hand, int operator, int value, int reference) {
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putInt("operator", operator);
+        data.putInt("value", value);
+        data.putInt("reference", reference);
+        sendItemAction(hand, new ResourceLocation(HbmNtm.MOD_ID, "designator"), data);
+    }
+
+    public static void sendBobmazonOffer(InteractionHand hand, int offerIndex) {
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putInt("offer", offerIndex);
+        sendItemAction(hand, new ResourceLocation(HbmNtm.MOD_ID, "bobmazon_offer"), data);
+    }
+
+    public static void sendSatelliteCoordinateAction(InteractionHand hand, BlockPos pos, int frequency) {
+        sendCoordinateAction(hand, pos, 0, 0, frequency, new net.minecraft.nbt.CompoundTag());
+    }
+
+    public static void sendSatelliteLaserAction(InteractionHand hand, int x, int z, int frequency) {
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putBoolean("laser", true);
+        sendCoordinateAction(hand, new BlockPos(x, 0, z), 1, 0, frequency, data);
     }
 
     public static void syncHeldItemNbt(ServerPlayer player, InteractionHand hand, ItemStack stack) {
@@ -401,6 +519,57 @@ public final class ModMessages {
         sendToTrackingChunk(new ClientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
     }
 
+    public static void syncMissileMultipart(BlockEntity blockEntity, MissileMultipartSnapshot multipart) {
+        sendToTrackingChunk(new ClientMissileMultipartPacket(blockEntity.getBlockPos(), multipart), blockEntity);
+    }
+
+    public static void syncMissileMultipart(BlockEntity blockEntity, ItemStack warhead, ItemStack fuselage,
+                                            ItemStack fins, ItemStack thruster) {
+        syncMissileMultipart(blockEntity, MissileMultipartSnapshot.of(warhead, fuselage, fins, thruster));
+    }
+
+    public static void syncMissileMultipart(Level level, BlockPos pos, MissileMultipartSnapshot multipart) {
+        sendToTrackingChunk(new ClientMissileMultipartPacket(pos, multipart), level, pos);
+    }
+
+    public static void syncMissileMultipart(ServerPlayer player, BlockPos pos, MissileMultipartSnapshot multipart) {
+        sendToPlayer(new ClientMissileMultipartPacket(pos, multipart), player);
+    }
+
+    public static void sendClientTileEvent(ServerPlayer player, BlockPos pos, ResourceLocation eventType,
+                                           net.minecraft.nbt.CompoundTag data) {
+        sendToPlayer(new ClientTileEventPacket(pos, eventType, data), player);
+    }
+
+    public static void sendVaultDoorEvent(BlockEntity blockEntity, boolean opening, int state, boolean resetClientTime, int type) {
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putBoolean("opening", opening);
+        data.putInt("state", state);
+        data.putBoolean("resetClientTime", resetClientTime);
+        data.putInt("type", type);
+        sendClientTileEvent(blockEntity, new ResourceLocation(HbmNtm.MOD_ID, "vault_door"), data);
+    }
+
+    public static void sendSirenEvent(BlockEntity blockEntity, int trackId, boolean active) {
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putInt("trackId", trackId);
+        data.putBoolean("active", active);
+        sendClientTileEvent(blockEntity, new ResourceLocation(HbmNtm.MOD_ID, "siren"), data);
+    }
+
+    public static void syncForceFieldState(BlockEntity blockEntity, float radius, int health, int maxHealth,
+                                           int power, boolean active, int color, int cooldown) {
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putFloat("radius", radius);
+        data.putInt("health", health);
+        data.putInt("maxHealth", maxHealth);
+        data.putInt("power", power);
+        data.putBoolean("active", active);
+        data.putInt("color", color);
+        data.putInt("cooldown", cooldown);
+        sendToTrackingChunk(new TileSyncPacket(blockEntity.getBlockPos(), data), blockEntity);
+    }
+
     public static void sendClientTileBinaryData(BlockEntity blockEntity, ResourceLocation channel,
                                                 java.util.function.Consumer<FriendlyByteBuf> writer) {
         FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
@@ -487,8 +656,25 @@ public final class ModMessages {
         sendToPlayer(new PlayerPropertiesPacket(dataType, data), player);
     }
 
+    public static void syncPlayerPropertiesBatch(ServerPlayer player,
+                                                 Map<ResourceLocation, net.minecraft.nbt.CompoundTag> properties) {
+        Map<ResourceLocation, net.minecraft.nbt.CompoundTag> safeProperties = properties == null ? Map.of() : properties;
+        safeProperties.forEach((dataType, data) -> syncPlayerProperties(player, dataType, data));
+    }
+
     public static void sendMenuAction(int action, int value, net.minecraft.nbt.CompoundTag data) {
         sendToServer(new MenuActionPacket(action, value, data));
+    }
+
+    public static void sendTypedMenuAction(ResourceLocation actionType, int value, net.minecraft.nbt.CompoundTag data) {
+        sendToServer(new TypedMenuActionPacket(actionType, value, data));
+    }
+
+    public static void sendAnvilCraftAction(int recipeIndex, int mode) {
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putInt("recipeIndex", recipeIndex);
+        data.putInt("mode", mode);
+        sendTypedMenuAction(new ResourceLocation(HbmNtm.MOD_ID, "anvil_craft"), recipeIndex, data);
     }
 
     public static void syncClientBiome(ServerPlayer player, int blockX, int blockZ, short biome) {
@@ -508,7 +694,9 @@ public final class ModMessages {
             Function<FriendlyByteBuf, MSG> decoder,
             BiConsumer<MSG, FriendlyByteBuf> encoder,
             BiConsumer<MSG, Supplier<NetworkEvent.Context>> handler) {
-        CHANNEL.registerMessage(packetId++, type, encoder, decoder, handler, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        int id = packetId++;
+        CHANNEL.registerMessage(id, type, encoder, decoder, handler, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        PACKET_REGISTRATIONS.add(new PacketRegistration(id, "S2C", type.getSimpleName()));
     }
 
     private static <MSG> void registerClientToServer(
@@ -516,7 +704,21 @@ public final class ModMessages {
             Function<FriendlyByteBuf, MSG> decoder,
             BiConsumer<MSG, FriendlyByteBuf> encoder,
             BiConsumer<MSG, Supplier<NetworkEvent.Context>> handler) {
-        CHANNEL.registerMessage(packetId++, type, encoder, decoder, handler, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        int id = packetId++;
+        CHANNEL.registerMessage(id, type, encoder, decoder, handler, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        PACKET_REGISTRATIONS.add(new PacketRegistration(id, "C2S", type.getSimpleName()));
+    }
+
+    private static net.minecraft.nbt.CompoundTag auxParticlePayload(net.minecraft.nbt.CompoundTag data,
+                                                                    double x, double y, double z) {
+        net.minecraft.nbt.CompoundTag payload = data == null ? new net.minecraft.nbt.CompoundTag() : data.copy();
+        payload.putDouble("posX", x);
+        payload.putDouble("posY", y);
+        payload.putDouble("posZ", z);
+        return payload;
+    }
+
+    public record PacketRegistration(int id, String direction, String typeName) {
     }
 
     private ModMessages() {

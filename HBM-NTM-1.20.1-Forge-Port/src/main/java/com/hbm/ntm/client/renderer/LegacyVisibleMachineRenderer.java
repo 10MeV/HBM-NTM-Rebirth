@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -39,18 +40,21 @@ public class LegacyVisibleMachineRenderer implements BlockEntityRenderer<LegacyV
         }
 
         LegacyMachineDefinition definition = block.definition();
+        int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
                 key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()));
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+        Vec3 translation = definition.modelTranslation(state);
+        poseStack.translate(translation.x, translation.y, translation.z);
 
         if (definition.renderAll()) {
-            model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         } else {
             for (String part : definition.renderParts()) {
-                model.renderPart(part, definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+                model.renderPart(part, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
             }
         }
 

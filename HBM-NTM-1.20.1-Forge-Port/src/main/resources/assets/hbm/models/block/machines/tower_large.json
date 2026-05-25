@@ -1,0 +1,7 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/tower_large.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": { "particle": "hbm:block/machines/tower_large", "default": "hbm:block/machines/tower_large" }
+}

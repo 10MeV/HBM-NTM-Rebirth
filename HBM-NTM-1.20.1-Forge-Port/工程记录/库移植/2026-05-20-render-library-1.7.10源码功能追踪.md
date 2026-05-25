@@ -282,6 +282,11 @@
     - `LiquefactorRenderer`
     - `BasicMachineRenderer`
     - `MachineBatterySocketRenderer`
+- 2026-05-24 追加：
+  - 用户反馈 32 区块能见度下，256 格外的大型机器仍会出现“区块看得见、模型缺席”的观感断层。
+  - `LegacyBlockEntityRenderDistances.MACHINE` 改为 `32 * 16 = 512`，对齐 Minecraft 最大 32 区块可视距离。
+  - 这超过 1.7.10 的 `65536.0D` 原始距离，但保留在同一个渲染库常量内，后续若需要配置化或分机器降级，可集中调整。
+  - 性能风险：更远处的机器 BER 会进入候选渲染，密集机器群、高空俯视、动画 OBJ 与透明分件会增加 CPU 提交和 GPU 绘制压力；区块未加载、AABB/视锥裁剪仍会限制实际渲染数量。
 - 后续规则：
   - 后续移植旧 TileEntity renderer 时，凡 1.7.10 覆盖 `getMaxRenderDistanceSquared()`，现代 BER 必须同步覆盖 `getViewDistance()`；不能只补 `shouldRenderOffScreen()`。
 - 规则：旧版“实体灯芯/灯罩内发光模型分件”使用 `solid(...)`；旧版“外扩透明光晕/光束”使用 `lightning(...)`。
@@ -999,6 +1004,7 @@
 - 旧 `HorsePronter` 用 VBO；现代当前仍走 `LegacyWavefrontModel` 逐帧顶点输出。
 - `lineBeam(...)` 以窄 quad 模拟旧 GL line primitive；宽度固定为 `0.01`，后续若实机和旧线宽差异明显再按调用点加参数。
 - 旧 `GL11.glDisable(GL_CULL_FACE)` 对 horse 模型的状态暂未单独建 textured no-cull RenderType；若 sunburst horse 局部背面消失，再补 `LegacyWavefrontModel` 的 textured no-cull 开关。
+- 2026-05-24 运行时修正：`textures/block/horse` 曾误落位为单个 `sunburst.png` 文件，导致 renderer 查找 `textures/block/horse/sunburst.png` 失败；已整理为目录并补齐旧 `horse_demo.png`、`sunburst.png`、`dyx.png`、`numbernine.png`。
 
 验证：
 
@@ -1132,7 +1138,7 @@
 仍未完全等价：
 
 - 本轮未接任何机器 renderer；旧 `RenderFluidTank`、`RenderChemicalPlant`、`RenderAssemblyFactory` 等动画、流体颜色、动态贴图切换仍待对应机器迁移时处理。
-- `fluidtank.obj` 保留旧 `mtllib/usemtl` 行，但现代 `LegacyWavefrontModel` 直渲染路径当前按调用纹理统一绘制，不解析 MTL 材质。
+- `fluidtank.obj` 初迁时保留旧 `mtllib/usemtl` 行；2026-05-24 二次筛查已移除无效 `mtllib`，现代 `LegacyWavefrontModel` 直渲染路径仍按调用纹理统一绘制，不解析 MTL 材质。
 
 ## 2026-05-22 Radiation Fog Legacy Multi-Quad
 
@@ -1161,6 +1167,153 @@
 验证：
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-24 多方块库存图标默认比例回调
+
+- 实机反馈：一批已经挂上 OBJ 的机器图标又偏小，未达到 1.7.10 库存渲染中“接近一个槽位但保留边距”的观感。
+- 复核 1.7.10 多数机器 `renderInventory()`：旧端并不按多方块结构盒保守缩放，而是在 `ItemRenderBase` 基础姿态后继续以 2.5-5 倍级别放大具体 OBJ。
+- 现代端仍使用 OBJ bounds 自动居中，但将 `LegacyMachineDefinition.itemFitSize` 默认值从 `0.58` 回调到 `0.72`；`machine_assembly_machine` 与 `machine_battery_socket` 的专用 item renderer 也改用同一默认目标。
+- GUI 最大缩放上限继续保留 `0.32`，避免小型 OBJ 或单 part 机器重新溢出槽位；后续个别机器仍通过 `.itemFitSize(...)` 按 1.7.10 单独校正。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 多方块库存缩放改为旧 renderInventory 派生
+
+- 实机反馈：统一回调到 `0.72` 后，部分机器又偏大；继续使用公共目标尺寸不符合 1.7.10 的逐机器库存 renderer。
+- 复核旧链路：
+  - `ItemRenderBase#renderItem(INVENTORY)` 固定执行 `glTranslated(8,10,0)`、`glRotated(-30,X)`、`glRotated(45,Y)`、`glScaled(-1,-1,-1)`。
+  - 每台机器再在 `renderInventory()` 写自己的 `glScaled(...)`。
+  - 如果 `renderCommon()` / `renderCommonWithStack()` 还有静态 `glScaled(...)`，它也参与库存最终比例。
+- 现代端新增 `LegacyMachineDefinition.legacyItemScale`，记录旧端 `renderInventoryScale * renderCommonScale`。
+- `LegacyVisibleMachineItemRenderer` 现在对配置了 `legacyItemScale` 的机器使用：
+  - `OBJ bounds maxSize * legacyItemScale / 16`
+  - 其中 `16` 对应 1.7.10 库存槽像素基准。
+  - 保留现代槽位上限 `0.86`，防止旧端少数会出格的 item renderer 在现代创造栏中继续穿格。
+- 当前可见多方块批次已逐台补入旧缩放值，例如：
+  - `machine_silex = 3.25`
+  - `machine_chemical_factory = 3 * 0.75`
+  - `machine_tower_small = 3 * 0.25`
+  - `machine_tower_large = 3.8 * 0.25`
+  - `machine_catalytic_cracker = 1.8 * 0.5`
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-24 可见多方块机器物品 renderer 桥
+
+触发来源：
+
+- 实机发现新接入的大型 OBJ 多方块机器放置后能由 BER 渲染，但创造栏/物品栏中大量显示为紫黑缺失模型或比例失控。
+- 核查 1.7.10 后确认旧端不是依赖普通 block item model，而是：
+  - `ClientProxy.registerItemRenderer()` 先注册 `ItemRenderLibrary`；
+  - 再自动扫描实现 `IItemRendererProvider` 的 TESR，把对应方块物品接到同一个旧 `IItemRenderer`；
+  - 锻压机、泵机、小/大冷却塔等机器在 `ItemRenderLibrary` 或各自 TESR 中单独写 `renderInventory()` 缩放/平移。
+
+现代补齐：
+
+- 新增 `LegacyVisibleMachineItemRenderer`：
+  - 复用 `LegacyWavefrontModel`，按 `LegacyMachineDefinition` 的 OBJ、贴图、part 列表直绘。
+  - GUI/地面/手持场景统一根据 `definition.renderBoundingBox(...)` 自动计算中心与缩放，让尺寸差异很大的多方块机器能进入 16x16 slot。
+  - 渲染时复用和 `LegacyVisibleMachineRenderer` 一致的 `yRotation(...)` 与 `modelTranslation(...)`，避免物品视图和世界视图出现朝向/原点分歧。
+- `MultiblockBlockItem.initializeClient(...)` 对 `LegacyVisibleMultiblockMachineBlock` 接入 `LegacyItemRendererBridge`。
+- DataGen 为所有当前 `LegacyVisibleMultiblockMachineBlock` 大机器生成 `minecraft:builtin/entity` item model，避免 Forge baked OBJ block parent 继续接管库存显示。
+- 修正一次现代 Forge 接线时序问题：
+  - `Item` 构造函数内部会调用 `initializeClient(...)`。
+  - 此时 `BlockItem` 子类的 `block` 字段还未完成赋值，因此不能在 `MultiblockBlockItem.initializeClient(...)` 里调用 `getBlock()` 判断是否为 `LegacyVisibleMultiblockMachineBlock`。
+  - 现代端改为对所有 `MultiblockBlockItem` 挂同一个 renderer；renderer 在真正 `renderByItem(...)` 时再从 `ItemStack` 取 `BlockItem#getBlock()` 并过滤非可见机器。这样对齐旧 1.7.10 “物品 renderer 先注册，渲染时再看具体 item”的模式。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- `.\gradlew.bat runData --no-daemon --rerun-tasks` 通过，已确认 `machine_tower_small`、`machine_pumpjack`、`machine_chemical_factory` 等生成 item model parent 为 `minecraft:builtin/entity`。
+- 二次修正后 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-24 ResourceManager 机器 OBJ 补齐批次
+
+触发来源：
+
+- 用户要求回到渲染库移植并一次推进更多内容。
+- 本轮继续按 1.7.10 `ResourceManager` 字段核查，而不是凭现代资源目录自行扩展。
+
+1.7.10 事实来源：
+
+- `com.hbm.main.ResourceManager`
+  - `stirling = AdvancedModelLoader.loadModel("models/machines/stirling.obj")`
+  - `sawmill = AdvancedModelLoader.loadModel("models/machines/sawmill.obj")`
+  - `strand_caster = new HFRWavefrontObject("models/machines/strand_caster.obj")`
+  - `furnace_steel = AdvancedModelLoader.loadModel("models/machines/furnace_steel.obj")`
+  - `conveyor_press = AdvancedModelLoader.loadModel("models/machines/conveyor_press.obj")`
+  - `microwave = AdvancedModelLoader.loadModel("models/machines/microwave.obj")`
+  - `piston_inserter = AdvancedModelLoader.loadModel("models/machines/piston_inserter.obj")`
+  - `igen = new HFRWavefrontObject("models/machines/igen.obj")`
+- 旧 renderer 已确认的分组调用：
+  - `RenderStirling`：`Base`、`Cog`、`CogSmall`、`Piston`
+  - `RenderSawmill`：`Main`、`Blade`、`GearLeft`、`GearRight`
+  - `RenderStrandCaster`：`caster`、`plate`
+  - `RenderConveyorPress`：`Press`、`Piston`、`Belt`
+  - `RenderMicrowave`：`mainbody_Cube.001`、`window_Cube.002`、`plate_Cylinder`
+  - `RenderPistonInserter`：`Frame`、`Piston`
+  - `RenderIGenerator`：`Body`、`Rotor`
+
+本轮现代补齐：
+
+- 从 1.7.10 资源复制到现代资源树：
+  - `models/block/machines/stirling.obj`
+  - `models/block/machines/sawmill.obj`
+  - `models/block/machines/strand_caster.obj`
+  - `models/block/machines/furnace_steel.obj`
+  - `models/block/machines/conveyor_press.obj`
+  - `models/block/machines/microwave.obj`
+  - `models/block/machines/piston_inserter.obj`
+  - `models/block/machines/igen.obj`
+  - 对应 `textures/block/machines/*.png`，包括旧 renderer 直接引用的 `stirling_steel`、`stirling_creative`、`conveyor_press_belt` 等。
+- `ObjMachineModels` 增加与旧 `ResourceManager` 对应的 `LegacyWavefrontModel` 常量：
+  - `STIRLING`、`SAWMILL`、`STRAND_CASTER`、`FURNACE_STEEL`、`CONVEYOR_PRESS`、`MICROWAVE`、`PISTON_INSERTER`、`IGEN`
+- `ObjMachineModels` 增加旧 renderer 需要的贴图入口：
+  - `STIRLING_TEXTURE`、`STIRLING_STEEL_TEXTURE`、`STIRLING_CREATIVE_TEXTURE`
+  - `SAWMILL_TEXTURE`、`STRAND_CASTER_TEXTURE`、`FURNACE_STEEL_TEXTURE`
+  - `CONVEYOR_PRESS_TEXTURE`、`CONVEYOR_PRESS_BELT_TEXTURE`
+  - `MICROWAVE_TEXTURE`、`PISTON_INSERTER_TEXTURE`、`IGEN_TEXTURE`
+- `ObjModelLibrary` 暴露同名 `MACHINE_*` 入口，供后续 BER / item renderer 按旧分组名接入。
+
+仍未完全等价：
+
+- 本轮只补资源载体和渲染库入口，未迁具体机器 BER 动画状态。
+- `stirling`、`sawmill`、`conveyor_press`、`microwave`、`piston_inserter`、`igen` 的 part 动画与多贴图切换仍需按旧 renderer 单独迁移。
+
+## 2026-05-24 旧 OBJ 机器亮度修正
+
+触发来源：
+
+- 用户反馈大型机器模型整体过暗；之前只要求降低锻压机压头亮度，不应把所有机器整体降暗。
+
+1.7.10 事实核查：
+
+- 旧 `S_Face.addFaceForRender(...)` 只向 `Tessellator` 写入 normal 和顶点/UV，不做颜色降亮。
+- 旧 `RenderRefinery`、`RenderVacuumDistill`、`RenderPumpjack` 等机器 renderer 的常规模型段使用 `GL11.glEnable(GL11.GL_LIGHTING)` 并直接 `ResourceManager.xxx.renderAll/renderPart()`。
+- 旧版显式发光/叠加段才会单独 `GL11.glDisable(GL11.GL_LIGHTING)` 或设置特殊颜色；普通机器主体没有统一的 `0.82` 或 `0.45` 降亮规则。
+
+现代修正：
+
+- 保留 `ObjMachineModels.PRESS_HEAD.withLightMultiplier(0.82F)`，该降亮只用于锻压机压头。
+- 新增 `LegacyRenderLighting`，为旧 OBJ BlockEntity 渲染集中解析 lightmap：
+  - 普通单方块/小型 BE：取 BE 坐标与上方坐标中的较亮 lightmap。
+  - `LegacyMachineDefinition` 多方块机器：取 BE 坐标、上方坐标、模型渲染包围盒顶部中心与顶部四角中的较亮 lightmap。
+- 接入：
+  - `LegacyVisibleMachineRenderer`
+  - `ChemicalPlantRenderer`
+  - `LiquefactorRenderer`
+  - `AssemblyMachineRenderer`
+  - `BasicMachineRenderer`
+  - `MachineBatterySocketRenderer`
+
+迁移说明：
+
+- 这不是给机器做 fullbright；仍然使用 Minecraft lightmap，只是避免现代 BE core 被多方块结构或模型底部遮住时，把整台旧 OBJ 机器错误压暗。
+- 后续迁更多 TESR/BER 时，普通旧 OBJ 主体应使用该 lightmap 解析规则；旧版明确关光照的发光层再单独迁 `FULL_BRIGHT` 或专用 emissive 路径。
 
 ## 2026-05-23 ObjUtil Sprite Retexture Bridge
 
@@ -1853,6 +2006,71 @@ noSmooth 对照报告：
   - `ObjRbmkModels.ELEMENT` 标记为 mixed-mode，对齐 1.7.10 `rbmk_element` 的构造参数。
 - 后续注意：
   - 真正需要旧 VBO 生命周期的 renderer 仍要按 1.7.10 调用点继续核查，不能把 `asVBO()` 当成完整 VBO 移植完成。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-24 多方块物品 OBJ 边界与专用 item renderer 修正
+
+触发来源：
+
+- 大型多方块机器在世界中已有 BER 渲染，但创造物品栏中仍有未挂上模型的机器；已确认包括 `machine_solidifier`、`machine_battery_socket`、`machine_assembly_machine`。
+- 部分已显示的机器比例偏大，且因 core 不一定处于模型中心，使用结构盒或 core 坐标居中会导致库存图标偏移。
+
+1.7.10 对齐依据：
+
+- `ItemRenderBase` 的库存路径通过 `glTranslated(8,10,0)`、`glRotated(-30,X)`、`glRotated(45,Y)` 后调用具体 renderer 的 `renderInventory()` / `renderCommon()`，不是普通方块 JSON。
+- `ItemRenderLibrary` 中 `machine_solidifier` 的库存渲染只画 `ResourceManager.solidifier.renderPart("Main")`，`Fluid` 和 `Glass` 属于世界/状态显示。
+- `RenderBatterySocket#getRenderer()` 的库存渲染只画 `battery_socket.renderPart("Socket")`。
+- `RenderAssemblyMachine#getRenderer()` 的库存渲染使用 `glRotated(90,Y)`、`glScaled(0.75)` 后 `ResourceManager.assembly_machine.renderAll()`。
+
+本轮现代侧改动：
+
+- `LegacyWavefrontModel` 新增 `boundsAll()` / `boundsOnly(...)`，按实际 OBJ group 顶点计算 AABB，供物品显示按模型真实几何居中缩放。
+- `LegacyVisibleMachineItemRenderer` 不再用多方块结构/剔除 AABB 估算库存图标大小，改为按渲染 group 的实际 OBJ bounds 套用同一旋转/平移后再居中。
+- `LegacyMachineDefinition` 新增 `itemRenderParts(...)`，允许库存显示与世界显示分离；`machine_solidifier` 已按旧代码改为库存仅渲染 `Main`。
+- `machine_battery_socket` 与 `machine_assembly_machine` 复用同一个 `MultiblockBlockItem` 物品 renderer 入口，分别按旧 `Socket` 与 `assembly_machine.renderAll()` 路径渲染。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- `.\gradlew.bat runData --no-daemon --rerun-tasks` 通过。
+
+## 2026-05-24 多方块物品二次筛查与 OBJ/MTL 兼容修补
+
+触发来源：
+
+- 创造栏大部分多方块机器已能显示，但仍有单个缺失模型，且部分机器图标偏大。
+- 客户端日志显示 Forge OBJ loader 读取 `catalytic_cracker`、`fluidtank`、`radiolysis` block model 时失败；其中 `CatalyticCrackerV2.mtl` 还含 1.20 `ResourceLocation` 不允许的大写字符。
+
+本轮现代侧改动：
+
+- 清理会破坏 Forge OBJ loader 的旧 `mtllib` 行：
+  - 已直接导致烘焙失败：`catalytic_cracker.obj`、`fluidtank.obj`、`radiolysis.obj`。
+  - 同类潜伏资源：`electrolyser.obj`、`machine_deuterium_tower.obj`、`orbus.obj`、`piston_inserter.obj`。
+- `LegacyMachineDefinition` 新增 `itemPartTextures`，允许库存渲染中不同 OBJ part 使用不同贴图；`machine_turbofan` 的 `Afterburner` 已按 1.7.10 `RenderTurbofan#getRenderer()` 改用 `turbofan_back`。
+- `LegacyMachineDefinition` 新增 `itemFitSize`，把物品栏 OBJ 占位大小从 renderer 硬编码移到机器定义层；默认占位从上一轮偏大的自动 fit 收紧，后续可按 1.7.10 `renderInventory()` 对单台机器独立校正。
+
+验证：
+
+- 已扫描 `assets/hbm/models/block/machines/*.obj`，当前没有剩余非法或缺失的 `mtllib` 引用。
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-24 liquefactor 库存渲染复核
+
+- 实机反馈 `machine_liquefactor` 库存图标仍存在贴图/叠层异常。
+- 复核 1.7.10 `ItemRenderLibrary`：`machine_liquefactor` 的 item renderer 只执行 `ResourceManager.liquefactor.renderPart("Main")`，不渲染 `Fluid` / `Glass`。
+- 现代 `liquefactorDefinition` 已补 `itemRenderParts("Main")`，与 `machine_solidifier` 的旧库存路径一致。
+- `LegacyVisibleMachineItemRenderer` 的小/中型库存模型最大 GUI scale 从 `0.28` 恢复为 `0.32`，避免上一轮全局收紧后部分机器过小；大型机器仍受 `itemFitSize / maxSize` 限制。
+
+### 2026-05-24 liquefactor 物品模型入口修正
+
+- 再次实机反馈：`machine_liquefactor` 在创造栏/物品栏仍看不见专用多方块机器图标，只显示 ID 与 tooltip。
+- 复核结论：问题不在 fluid MK2 库主动塞入额外渲染层；fluid 库迁入的是该机器的处理逻辑、GUI 与 tank 行为。库存/界面中的 OBJ 图标属于 1.7.10 `ItemRenderLibrary` -> 现代 `MultiblockBlockItem` + `LegacyVisibleMachineItemRenderer` 的渲染库/多方块物品渲染链。
+- 现代 datagen 已对 `MACHINE_LIQUEFACTOR` 调用 `visibleMachineWithItemRenderer(...)`，应生成 `minecraft:builtin/entity` 物品模型，以触发 `MultiblockBlockItem.initializeClient(...)` 挂上的 BEWLR。
+- 实际资源 `assets/hbm/models/item/machine_liquefactor.json` 仍停留在旧 `hbm:block/machines/liquefactor` 父模型，导致 Forge 走普通 block item baked model，绕开专用 OBJ 物品 renderer。
+- 已将该 item model 改为 `minecraft:builtin/entity`；渲染内容仍由 `liquefactorDefinition.itemRenderParts("Main")` 保证只画旧版库存路径中的 `Main` group。
 
 验证：
 

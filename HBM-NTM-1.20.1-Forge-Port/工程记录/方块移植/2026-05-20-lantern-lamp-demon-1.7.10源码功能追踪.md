@@ -88,3 +88,10 @@
 - `LegacyLightBlockEntity` 已补齐 floodlight 旧状态字段 `rotation`、`power`、`delay`、`isOn` 的 NBT 与客户端同步契约。
 - `LegacyLightBlockEntityRenderer` 已按旧 `RenderFloodlight` 复刻 `Lamps` part 的视觉分支：`isOn` 时 fullbright，未开启时 `0x404040` 灰色。
 - 暂缓：floodlight 的能量接收、每 tick 消耗 100 HE、15 条 `floodlight_beam` 投射与清理逻辑尚未迁移，应在能量网络/光束方块逻辑批次继续。
+
+## 2026-05-24 lamp_demon 远距渲染与破坏粒子修正
+
+- 复核 1.7.10 `TileEntityDemonLamp`：渲染包围盒无限，`getMaxRenderDistanceSquared()` 为 `65536.0D`，折算为 256 格/16 区块；现代端统一按项目当前 32 区块可视距离规则接入 `LegacyBlockEntityRenderDistances.MACHINE = 32 * 16`。
+- `LegacyDemonLampBlockEntityRenderer` 已补 `shouldRenderOffScreen(...) = true` 与 `getViewDistance() = LegacyBlockEntityRenderDistances.MACHINE`，避免远距离只剩光照/方块而缺失 BER 的灯体和 aura。
+- 旧 `ModBlocks.lamp_demon` 注册贴图名为 `hbm:lamp_demon`；现代 `lamp_demon` 因世界渲染走 BER，blockstate 之前全指向无 `particle` 纹理的 `hbm:block/empty`，破坏粒子会落到 missing texture 紫黑块。
+- 已新增 `hbm:block/lamp_demon_particle`：空几何，仅声明 `particle = hbm:block/lamp_demon`；`lamp_demon` 六向 blockstate 改指该模型，保持 BER 不变，同时让破坏/挖掘粒子回到旧方块贴图契约。

@@ -1,5 +1,6 @@
 package com.hbm.ntm.explosion.vnt;
 
+import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorBulkie;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorGlyphidDig;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorStandard;
@@ -112,6 +113,13 @@ public final class WeaponExplosionUtil {
                 .setEntityProcessor(new EntityProcessorStandard().withRangeMod(2.0F).withDamageMod(new CustomDamageHandlerAmat(radiation)))
                 .setPlayerProcessor(new PlayerProcessorStandard())
                 .setEffects(new ExplosionEffectAmat());
+    }
+
+    public static void spawnBalefire(Level level, double x, double y, double z, int range) {
+        if (level == null || level.isClientSide() || range <= 0) {
+            return;
+        }
+        level.addFreshEntity(BalefireExplosionEntity.create(level, x, y, z, range));
     }
 
     private WeaponExplosionUtil() {

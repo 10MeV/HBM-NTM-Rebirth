@@ -68,27 +68,45 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "battery_front_alt",
                 "battery_side_alt",
                 "battery_side_alt");
-        existingModelWithItem(ModBlocks.MACHINE_BATTERY_SOCKET, "machines/battery_socket_socket");
+        existingModelWithCustomItem(ModBlocks.MACHINE_BATTERY_SOCKET, "machines/battery_socket_socket");
         existingModelBlockOnly(ModBlocks.MACHINE_ASSEMBLY_MACHINE, "machine_assembly_machine");
-        existingModelWithItem(ModBlocks.MACHINE_CHEMICAL_PLANT, "machines/chemical_plant");
-        existingModelWithItem(ModBlocks.MACHINE_LIQUEFACTOR, "machines/liquefactor");
-        existingModelWithItem(ModBlocks.MACHINE_CHEMICAL_FACTORY, "machines/chemical_factory");
-        existingModelWithItem(ModBlocks.MACHINE_REFINERY, "machines/refinery");
-        existingModelWithItem(ModBlocks.MACHINE_CATALYTIC_CRACKER, "machines/catalytic_cracker");
-        existingModelWithItem(ModBlocks.MACHINE_CATALYTIC_REFORMER, "machines/catalytic_reformer");
-        existingModelWithItem(ModBlocks.MACHINE_VACUUM_DISTILL, "machines/vacuum_distill");
-        existingModelWithItem(ModBlocks.MACHINE_FRACTION_TOWER, "machines/fraction_tower");
-        existingModelWithItem(ModBlocks.MACHINE_HYDROTREATER, "machines/hydrotreater");
-        existingModelWithItem(ModBlocks.MACHINE_COKER, "machines/coker");
-        existingModelWithItem(ModBlocks.MACHINE_PYROOVEN, "machines/pyrooven");
-        existingModelWithItem(ModBlocks.MACHINE_SOLIDIFIER, "machines/solidifier");
-        existingModelWithItem(ModBlocks.MACHINE_COMPRESSOR, "machines/compressor");
-        existingModelWithItem(ModBlocks.MACHINE_BIGASSTANK, "machines/bigasstank");
-        existingModelWithItem(ModBlocks.MACHINE_FLUIDTANK, "machines/fluidtank");
-        existingModelWithItem(ModBlocks.MACHINE_PUMPJACK, "machines/pumpjack");
-        existingModelWithItem(ModBlocks.MACHINE_CENTRIFUGE, "machines/centrifuge");
-        existingModelWithItem(ModBlocks.MACHINE_ORE_SLOPPER, "machines/ore_slopper");
-        existingModelWithItem(ModBlocks.MACHINE_GASFLARE, "machines/flare_stack");
+        customBlockItem(ModBlocks.MACHINE_ASSEMBLY_MACHINE);
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CHEMICAL_PLANT, "machines/chemical_plant");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_LIQUEFACTOR, "machines/liquefactor");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CHEMICAL_FACTORY, "machines/chemical_factory");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_REFINERY, "machines/refinery");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CATALYTIC_CRACKER, "machines/catalytic_cracker");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CATALYTIC_REFORMER, "machines/catalytic_reformer");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_VACUUM_DISTILL, "machines/vacuum_distill");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_FRACTION_TOWER, "machines/fraction_tower");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_HYDROTREATER, "machines/hydrotreater");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_COKER, "machines/coker");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_PYROOVEN, "machines/pyrooven");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_SOLIDIFIER, "machines/solidifier");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_COMPRESSOR, "machines/compressor");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_BIGASSTANK, "machines/bigasstank");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_FLUIDTANK, "machines/fluidtank");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_PUMPJACK, "machines/pumpjack");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CENTRIFUGE, "machines/centrifuge");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_ORE_SLOPPER, "machines/ore_slopper");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_GASFLARE, "machines/flare_stack");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_ASSEMBLY_FACTORY, "machines/assembly_factory");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_PUREX, "machines/purex");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_SILEX, "machines/silex");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_EXPOSURE_CHAMBER, "machines/exposure_chamber");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CYCLOTRON, "machines/cyclotron");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_ARC_WELDER, "machines/arc_welder");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_SOLDERING_STATION, "machines/soldering_station");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_MIXER, "machines/mixer");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADIOLYSIS, "machines/radiolysis");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADGEN, "machines/radgen");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_ROTARY_FURNACE, "machines/rotary_furnace");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_STEAM_ENGINE, "machines/steam_engine");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_SOLAR_BOILER, "machines/solar_boiler");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_TOWER_SMALL, "machines/tower_small");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_TOWER_LARGE, "machines/tower_large");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBOFAN, "machines/turbofan");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBINEGAS, "machines/turbinegas");
         translucentCubeWithItem(ModBlocks.GLASS_BORON, "glass_boron");
         simpleCubeWithItem(ModBlocks.GAS_RADON, "gas_radon");
         simpleCubeWithItem(ModBlocks.GAS_RADON_DENSE, "gas_radon_dense");
@@ -107,6 +125,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.SELLAFIELD_SLAKED, "sellafield_slaked");
         simpleCubeWithItem(ModBlocks.ASH_DIGAMMA, "ash_digamma");
         crossBlockOnly(ModBlocks.FIRE_DIGAMMA, "fire_digamma");
+        crossBlockOnly(ModBlocks.BALEFIRE, "balefire");
         simpleCubeWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk_debris_digamma");
         simpleCubeWithItem(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still");
         simpleCubeWithItem(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still");
@@ -129,6 +148,23 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
         horizontalBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
+    }
+
+    private void existingModelWithCustomItem(RegistryObject<Block> block, String modelName) {
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
+        horizontalBlock(block.get(), model);
+        customBlockItem(block);
+    }
+
+    private void visibleMachineWithItemRenderer(RegistryObject<Block> block, String modelName) {
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
+        horizontalBlock(block.get(), model);
+        customBlockItem(block);
+    }
+
+    private void customBlockItem(RegistryObject<Block> block) {
+        itemModels().getBuilder(block.getId().getPath())
+                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
     }
 
     private void existingModelBlockOnly(RegistryObject<Block> block, String modelName) {

@@ -9,6 +9,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.network.PacketDistributor;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -169,6 +171,12 @@ public final class ThreadedPacketDispatcher {
                 TOTAL_FAILED.get(),
                 TOTAL_DISCARDED.get(),
                 PENDING.size(),
+                EXECUTOR.getPoolSize(),
+                EXECUTOR.getCorePoolSize(),
+                EXECUTOR.getMaximumPoolSize(),
+                EXECUTOR.getActiveCount(),
+                EXECUTOR.getQueue().size(),
+                EXECUTOR.getCompletedTaskCount(),
                 lastFlushQueued,
                 lastFlushCompleted,
                 lastFlushDiscarded,
@@ -177,6 +185,20 @@ public final class ThreadedPacketDispatcher {
                 fallbackToMainThread,
                 enabled,
                 lastFailureMessage);
+    }
+
+    public static List<ThreadSnapshot> threadSnapshots() {
+        List<ThreadSnapshot> snapshots = new ArrayList<>();
+        for (ThreadInfo thread : ManagementFactory.getThreadMXBean().dumpAllThreads(false, false)) {
+            if (thread.getThreadName().startsWith(THREAD_PREFIX)) {
+                snapshots.add(new ThreadSnapshot(
+                        thread.getThreadName(),
+                        thread.getThreadId(),
+                        thread.getThreadState().name(),
+                        thread.getLockOwnerName() == null ? "" : thread.getLockOwnerName()));
+            }
+        }
+        return List.copyOf(snapshots);
     }
 
     public static synchronized void resetState() {
@@ -261,6 +283,12 @@ public final class ThreadedPacketDispatcher {
             long totalFailed,
             long totalDiscarded,
             int pending,
+            int threadPoolSize,
+            int corePoolSize,
+            int maximumPoolSize,
+            int activeThreadCount,
+            int executorQueueSize,
+            long completedTaskCount,
             int lastFlushQueued,
             int lastFlushCompleted,
             int lastFlushDiscarded,
@@ -269,5 +297,8 @@ public final class ThreadedPacketDispatcher {
             boolean fallbackToMainThread,
             boolean enabled,
             String lastFailureMessage) {
+    }
+
+    public record ThreadSnapshot(String name, long id, String state, String lockOwner) {
     }
 }

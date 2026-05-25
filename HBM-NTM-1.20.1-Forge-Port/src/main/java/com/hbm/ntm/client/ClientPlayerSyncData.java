@@ -19,6 +19,10 @@ public final class ClientPlayerSyncData {
         return tag == null ? Optional.empty() : Optional.of(tag.copy());
     }
 
+    public static void clearAll() {
+        DATA.clear();
+    }
+
     private ClientPlayerSyncData() {
     }
 }

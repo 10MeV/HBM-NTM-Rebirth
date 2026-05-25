@@ -3,7 +3,6 @@ package com.hbm.ntm.client;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
 import com.hbm.ntm.radiation.HazardTooltipUtil;
-import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
@@ -14,12 +13,9 @@ import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Mod.EventBusSubscriber(modid = HbmNtm.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ClientForgeEvents {
-    private static int geigerTickTimer;
+    private static boolean hadLevel;
 
     @SubscribeEvent
     public static void onTooltip(ItemTooltipEvent event) {
@@ -50,36 +46,14 @@ public final class ClientForgeEvents {
         pruneNetworkTransfers();
 
         Minecraft minecraft = Minecraft.getInstance();
-        Player player = minecraft.player;
-        if (player == null || !RadiationHud.hasGeigerCounter(player)) {
+        if (minecraft.level == null) {
+            if (hadLevel) {
+                clearNetworkState();
+                hadLevel = false;
+            }
             return;
         }
-
-        geigerTickTimer++;
-        if (geigerTickTimer < 5) {
-            return;
-        }
-        geigerTickTimer = 0;
-
-        float rate = ClientRadiationData.getEnvironment();
-        List<Integer> candidates = new ArrayList<>();
-        if (rate < 1.0F) candidates.add(0);
-        if (rate < 5.0F) candidates.add(0);
-        if (rate < 10.0F) candidates.add(1);
-        if (rate > 5.0F && rate < 15.0F) candidates.add(2);
-        if (rate > 10.0F && rate < 20.0F) candidates.add(3);
-        if (rate > 15.0F && rate < 25.0F) candidates.add(4);
-        if (rate > 20.0F && rate < 30.0F) candidates.add(5);
-        if (rate > 25.0F) candidates.add(6);
-
-        int sound = candidates.isEmpty() ? 0 : candidates.get(player.getRandom().nextInt(candidates.size()));
-        if (sound == 0 && player.getRandom().nextInt(50) != 0) {
-            return;
-        }
-        if (sound <= 0) {
-            sound = 1;
-        }
-        player.playSound(ModSounds.geiger(sound), 1.0F, 1.0F);
+        hadLevel = true;
     }
 
     private static void pruneNetworkTransfers() {
@@ -89,6 +63,18 @@ public final class ClientForgeEvents {
         }
         ClientBinaryData.pruneExpired(minecraft.level.getGameTime());
         ClientTileBinaryData.pruneExpired(minecraft.level.getGameTime());
+    }
+
+    private static void clearNetworkState() {
+        ClientBinaryData.clearAll();
+        ClientTileBinaryData.clearAll();
+        ClientBiomeSyncData.clearAll();
+        ClientPermaSyncData.clearAll();
+        ClientPlayerSyncData.clearAll();
+        ClientPanelData.clearAll();
+        ClientInformMessages.clearAll();
+        ClientMuzzleFlashEffects.clearAll();
+        LegacyHbmAnimations.clearAll();
     }
 
     private ClientForgeEvents() {

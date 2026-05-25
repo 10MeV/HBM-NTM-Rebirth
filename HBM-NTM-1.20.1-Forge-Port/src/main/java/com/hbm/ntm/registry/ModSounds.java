@@ -24,13 +24,19 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> PLAYER_VOMIT = register("player.vomit");
     public static final RegistryObject<SoundEvent> ENTITY_UFO_BLAST = register("entity.ufo_blast");
     public static final RegistryObject<SoundEvent> WEAPON_MUKE_EXPLOSION = register("weapon.muke_explosion");
+    public static final RegistryObject<SoundEvent> WEAPON_FSTBMB_START = register("weapon.fstbmb_start");
+    public static final RegistryObject<SoundEvent> WEAPON_FSTBMB_PING = register("weapon.fstbmb_ping");
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_LARGE_NEAR = register("weapon.explosion_large_near");
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_LARGE_FAR = register("weapon.explosion_large_far");
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_SMALL_NEAR = register("weapon.explosion_small_near");
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_SMALL_FAR = register("weapon.explosion_small_far");
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_TINY = register("weapon.explosion_tiny");
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_MEDIUM = register("weapon.explosion_medium");
-    public static final RegistryObject<SoundEvent> WEAPON_RELOAD_TUBE_FWOOMP = register("weapon.reload.tubeFwoomp");
+    public static final RegistryObject<SoundEvent> WEAPON_RELOAD_TUBE_FWOOMP = register("weapon.reload.tube_fwoomp");
+    public static final RegistryObject<SoundEvent> WEAPON_CASING_SHELL = register("weapon.casing.shell");
+    public static final RegistryObject<SoundEvent> WEAPON_CASING_SMALL = register("weapon.casing.small");
+    public static final RegistryObject<SoundEvent> WEAPON_CASING_MEDIUM = register("weapon.casing.medium");
+    public static final RegistryObject<SoundEvent> WEAPON_CASING_LARGE = register("weapon.casing.large");
 
     public static void register(IEventBus modBus) {
         SOUNDS.register(modBus);

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "hbm:block/machines/soldering_station",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "hbm:block/machines/soldering_station"
+    },
+    "facing=south": {
+      "model": "hbm:block/machines/soldering_station",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "hbm:block/machines/soldering_station",
+      "y": 270
+    }
+  }
+}

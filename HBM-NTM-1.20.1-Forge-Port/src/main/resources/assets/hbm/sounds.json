@@ -80,6 +80,24 @@
       }
     ]
   },
+  "weapon.fstbmb_start": {
+    "subtitle": "subtitles.hbm.weapon.fstbmb",
+    "sounds": [
+      {
+        "name": "hbm:weapon/fstbmb_start",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.fstbmb_ping": {
+    "subtitle": "subtitles.hbm.weapon.fstbmb",
+    "sounds": [
+      {
+        "name": "hbm:weapon/fstbmb_ping",
+        "stream": false
+      }
+    ]
+  },
   "weapon.explosion_large_near": {
     "subtitle": "subtitles.hbm.weapon.explosion",
     "sounds": [
@@ -129,13 +147,45 @@
       }
     ]
   },
-  "weapon.reload.tubeFwoomp": {
-    "subtitle": "subtitles.hbm.weapon.reload.tubeFwoomp",
+  "weapon.reload.tube_fwoomp": {
+    "subtitle": "subtitles.hbm.weapon.reload.tube_fwoomp",
     "sounds": [
       {
-        "name": "hbm:weapon/reload/tubeFwoomp",
+        "name": "hbm:weapon/reload/tube_fwoomp",
         "stream": false
       }
+    ]
+  },
+  "weapon.casing.shell": {
+    "subtitle": "subtitles.hbm.weapon.casing",
+    "sounds": [
+      "hbm:weapon/casing/shell1",
+      "hbm:weapon/casing/shell2",
+      "hbm:weapon/casing/shell3"
+    ]
+  },
+  "weapon.casing.small": {
+    "subtitle": "subtitles.hbm.weapon.casing",
+    "sounds": [
+      "hbm:weapon/casing/small1",
+      "hbm:weapon/casing/small2",
+      "hbm:weapon/casing/small3"
+    ]
+  },
+  "weapon.casing.medium": {
+    "subtitle": "subtitles.hbm.weapon.casing",
+    "sounds": [
+      "hbm:weapon/casing/medium1",
+      "hbm:weapon/casing/medium2",
+      "hbm:weapon/casing/medium3"
+    ]
+  },
+  "weapon.casing.large": {
+    "subtitle": "subtitles.hbm.weapon.casing",
+    "sounds": [
+      "hbm:weapon/casing/large1",
+      "hbm:weapon/casing/large2",
+      "hbm:weapon/casing/large3"
     ]
   }
 }

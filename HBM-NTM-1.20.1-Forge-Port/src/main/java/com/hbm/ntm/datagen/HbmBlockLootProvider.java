@@ -38,6 +38,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.LEAVES_LAYER.get(), noDrop());
         add(ModBlocks.WASTE_LOG.get(), wasteLogDrop());
         add(ModBlocks.FIRE_DIGAMMA.get(), noDrop());
+        add(ModBlocks.BALEFIRE.get(), noDrop());
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
         add(ModBlocks.GAS_RADON.get(), noDrop());
         add(ModBlocks.GAS_RADON_DENSE.get(), noDrop());

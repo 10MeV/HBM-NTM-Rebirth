@@ -1,0 +1,7 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/steam_engine.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": { "particle": "hbm:block/machines/steam_engine", "default": "hbm:block/machines/steam_engine" }
+}

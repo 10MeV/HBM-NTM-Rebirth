@@ -237,6 +237,14 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel DFC_EMITTER = legacyModel("core_emitter");
     public static final LegacyWavefrontModel DFC_RECEIVER = legacyModel("core_receiver");
     public static final LegacyWavefrontModel DFC_INJECTOR = legacyModel("core_injector");
+    public static final LegacyWavefrontModel STIRLING = legacyModel("stirling");
+    public static final LegacyWavefrontModel SAWMILL = legacyModel("sawmill");
+    public static final LegacyWavefrontModel STRAND_CASTER = legacyModel("strand_caster");
+    public static final LegacyWavefrontModel FURNACE_STEEL = legacyModel("furnace_steel");
+    public static final LegacyWavefrontModel CONVEYOR_PRESS = legacyModel("conveyor_press");
+    public static final LegacyWavefrontModel MICROWAVE = legacyModel("microwave");
+    public static final LegacyWavefrontModel PISTON_INSERTER = legacyModel("piston_inserter");
+    public static final LegacyWavefrontModel IGEN = legacyModel("igen");
 
     public static final ResourceLocation FLUIDTANK_INNER_TEXTURE = machineTexture("fluidtank_inner");
     public static final ResourceLocation TURBOFAN_BACK_TEXTURE = machineTexture("turbofan_back");
@@ -248,6 +256,17 @@ public final class ObjMachineModels {
     public static final ResourceLocation CHEMICAL_PLANT_FLUID_TEXTURE = machineTexture("chemical_plant_fluid");
     public static final ResourceLocation MINING_LASER_PIVOT_TEXTURE = machineTexture("mining_laser_pivot");
     public static final ResourceLocation MINING_LASER_LASER_TEXTURE = machineTexture("mining_laser_laser");
+    public static final ResourceLocation STIRLING_TEXTURE = machineTexture("stirling");
+    public static final ResourceLocation STIRLING_STEEL_TEXTURE = machineTexture("stirling_steel");
+    public static final ResourceLocation STIRLING_CREATIVE_TEXTURE = machineTexture("stirling_creative");
+    public static final ResourceLocation SAWMILL_TEXTURE = machineTexture("sawmill");
+    public static final ResourceLocation STRAND_CASTER_TEXTURE = machineTexture("strand_caster");
+    public static final ResourceLocation FURNACE_STEEL_TEXTURE = machineTexture("furnace_steel");
+    public static final ResourceLocation CONVEYOR_PRESS_TEXTURE = machineTexture("conveyor_press");
+    public static final ResourceLocation CONVEYOR_PRESS_BELT_TEXTURE = machineTexture("conveyor_press_belt");
+    public static final ResourceLocation MICROWAVE_TEXTURE = machineTexture("microwave");
+    public static final ResourceLocation PISTON_INSERTER_TEXTURE = machineTexture("piston_inserter");
+    public static final ResourceLocation IGEN_TEXTURE = machineTexture("igen");
 
     public static ObjModelPart part(String name) {
         return part(name, RenderType.cutout());

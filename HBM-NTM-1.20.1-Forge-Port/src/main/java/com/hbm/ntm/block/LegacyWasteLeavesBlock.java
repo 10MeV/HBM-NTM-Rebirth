@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.item.FallingBlockEntity;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -38,6 +39,11 @@ public class LegacyWasteLeavesBlock extends LeavesBlock {
     @Override
     public boolean propagatesSkylightDown(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos) {
         return !state.getValue(WATERLOGGED);
+    }
+
+    @Override
+    public int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
+        return 0;
     }
 
     @Override

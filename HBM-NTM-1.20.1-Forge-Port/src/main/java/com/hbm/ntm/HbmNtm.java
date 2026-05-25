@@ -1,6 +1,7 @@
 package com.hbm.ntm;
 
 import com.hbm.ntm.config.HbmCommonConfig;
+import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.datagen.HbmDataGenerators;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoading;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -52,6 +53,7 @@ public class HbmNtm {
         modBus.addListener(HbmDataGenerators::gatherData);
 
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, HbmCommonConfig.SPEC, "hbm-common.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, HbmClientConfig.SPEC, "hbm-client.toml");
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

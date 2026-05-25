@@ -26,6 +26,12 @@ public final class ClientBinaryData {
         CHUNKS.values().removeIf(assembly -> assembly.channel.equals(channel));
     }
 
+    public static void clearAll() {
+        DATA.clear();
+        READY_VERSIONS.clear();
+        CHUNKS.clear();
+    }
+
     public static Optional<byte[]> get(ResourceLocation channel, String name) {
         byte[] payload = DATA.getOrDefault(channel, Map.of()).get(name);
         return payload == null ? Optional.empty() : Optional.of(Arrays.copyOf(payload, payload.length));

@@ -49,6 +49,8 @@ public final class ModParticleTypes {
             PARTICLE_TYPES.register("black_powder_smoke", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> ASHES =
             PARTICLE_TYPES.register("ashes", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> MUKE_WAVE =
+            PARTICLE_TYPES.register("muke_wave", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> DEAD_LEAF =
             PARTICLE_TYPES.register("dead_leaf", () -> new SimpleParticleType(false));
 

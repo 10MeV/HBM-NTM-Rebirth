@@ -52,6 +52,14 @@ public final class LegacyHbmAnimations {
         HOTBAR[slot][rail] = null;
     }
 
+    public static void clearAll() {
+        for (int slot = 0; slot < HOTBAR.length; slot++) {
+            for (int rail = 0; rail < HOTBAR[slot].length; rail++) {
+                HOTBAR[slot][rail] = null;
+            }
+        }
+    }
+
     public static Animation getRelevantAnim() {
         return getRelevantAnim(0);
     }

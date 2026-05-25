@@ -38,6 +38,16 @@ public class LegacyVisibleMultiblockMachineBlock extends LegacyXrMultiblockBlock
     }
 
     @Override
+    protected int getLegacyHeightOffset() {
+        return definition.legacyHeightOffset();
+    }
+
+    @Override
+    protected net.minecraft.core.Direction modifyPlacementFacing(net.minecraft.core.Direction facing) {
+        return definition.placementFacing(facing);
+    }
+
+    @Override
     protected LegacyMultiblockLayout getLayout(BlockState state) {
         return definition.layout(state);
     }

@@ -1,0 +1,10 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/cyclotron.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/machines/cyclotron",
+    "default": "hbm:block/machines/cyclotron"
+  }
+}

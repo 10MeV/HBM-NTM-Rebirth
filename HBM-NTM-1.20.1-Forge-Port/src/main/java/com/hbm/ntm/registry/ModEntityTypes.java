@@ -2,10 +2,12 @@ package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
+import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
+import com.hbm.ntm.entity.projectile.FallingNukeEntity;
 import com.hbm.ntm.entity.projectile.RubbleEntity;
 import com.hbm.ntm.entity.projectile.ShrapnelEntity;
 import net.minecraft.world.entity.EntityType;
@@ -61,6 +63,24 @@ public final class ModEntityTypes {
                     .updateInterval(20)
                     .noSummon()
                     .build("entity_fallout_rain"));
+
+    public static final RegistryObject<EntityType<BalefireExplosionEntity>> BALEFIRE_EXPLOSION =
+            ENTITY_TYPES.register("entity_balefire", () -> EntityType.Builder
+                    .<BalefireExplosionEntity>of(BalefireExplosionEntity::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F)
+                    .clientTrackingRange(256)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_balefire"));
+
+    public static final RegistryObject<EntityType<FallingNukeEntity>> FALLING_NUKE =
+            ENTITY_TYPES.register("entity_falling_nuke", () -> EntityType.Builder
+                    .<FallingNukeEntity>of(FallingNukeEntity::new, MobCategory.MISC)
+                    .sized(0.98F, 0.98F)
+                    .clientTrackingRange(256)
+                    .updateInterval(1)
+                    .build("entity_falling_nuke"));
 
     public static final RegistryObject<EntityType<ShrapnelEntity>> SHRAPNEL =
             ENTITY_TYPES.register("entity_shrapnel", () -> EntityType.Builder

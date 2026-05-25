@@ -1,3 +1,3 @@
 {
-  "parent": "hbm:block/machines/ore_slopper"
+  "parent": "minecraft:builtin/entity"
 }

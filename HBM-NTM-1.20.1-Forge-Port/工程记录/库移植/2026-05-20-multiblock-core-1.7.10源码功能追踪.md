@@ -155,6 +155,29 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+### 2026-05-24 多方块 item fit 默认值回调
+
+- 多方块库的库存图标已经改由 OBJ bounds 计算中心与缩放，但上一轮公共默认 `itemFitSize = 0.58` 对大多数 1.7.10 机器偏保守。
+- 按旧 `ItemRenderBase` + 各机器 `renderInventory()` 的放大习惯，公共默认目标回调到 `0.72`，让模型占据略小于一个格子的视觉空间。
+- 仍保留机器定义层 `.itemFitSize(...)` 作为单台校正入口，避免以后为少数极宽/极高机器再改公共 renderer。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-25 多方块 item 缩放改为逐机器旧值
+
+- 统一 `itemFitSize` 仍会让部分机器偏大/偏小；1.7.10 的事实来源是每台机器自己的 `renderInventory()`，不是全局 fit。
+- `LegacyMachineDefinition` 新增 `.legacyItemScale(...)`：
+  - 单参数记录旧端库存最终缩放。
+  - 双参数记录 `renderInventory()` 缩放与 `renderCommon()` 静态缩放，构建时相乘。
+- 当前已为可见多方块库中已接入的机器补齐旧缩放值；现代 item renderer 使用 OBJ bounds 与旧缩放值换算库存占位，而结构/碰撞/剔除仍走原多方块布局。
+- 默认 `itemFitSize` 回到 `0.58`，仅作为未来未核完旧 renderer 的保守兜底；已核对机器优先使用 `.legacyItemScale(...)`。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ## 2026-05-22 Pumpjack XR 额外结构修正
 
 触发来源：
@@ -427,6 +450,98 @@
 
 - 本轮代码改动完成后会执行 `compileJava processResources runData`。
 
+## 2026-05-24 装配/核处理/粒子机器可见多方块批次
+
+触发来源：
+
+- 用户要求继续推进多方块库移植，并允许一次推进更多。
+- 本轮选择现代端 OBJ/贴图已齐全、旧版多方块足迹明确的五台机器：
+  - `machine_assembly_factory`
+  - `machine_purex`
+  - `machine_silex`
+  - `machine_exposure_chamber`
+  - `machine_cyclotron`
+
+1.7.10 事实来源：
+
+- 方块：
+  - `MachineAssemblyFactory`
+  - `MachinePUREX`
+  - `MachineSILEX`
+  - `MachineExposureChamber`
+  - `MachineCyclotron`
+- 渲染：
+  - `RenderAssemblyFactory`
+  - `RenderPUREX`
+  - `RenderSILEX`
+  - `RenderExposureChamber`
+  - `RenderCyclotron`
+- 方块实体：
+  - `TileEntityMachineAssemblyFactory`
+  - `TileEntityMachinePUREX`
+  - `TileEntitySILEX`
+  - `TileEntityMachineExposureChamber`
+  - `TileEntityMachineCyclotron`
+- 旧资源：
+  - `assembly_factory.obj/png`
+  - `purex.obj/png`
+  - `silex.obj/png`
+  - `exposure_chamber.obj/png`
+  - `cyclotron.obj/png`
+
+旧结构契约：
+
+- `machine_assembly_factory`
+  - `getDimensions() = {2,0,2,2,2,2}`，`getOffset() = 2`。
+  - 旧 `fillSpace`：主 XR 后，把 core 平面 5x5 外环标记为 extra/proxy；再沿 facing 方向在 `y+2` 的左右边各标记一排 extra/proxy。
+  - 旧 proxy：`TileEntityProxyDyn().inventory().power().fluid()`。
+  - 旧 renderer：先 Y 轴 90 度，再按 metadata 表旋转；现代等价表为 `NORTH=90,WEST=180,SOUTH=270,EAST=0`。
+- `machine_purex`
+  - `getDimensions() = {4,0,2,2,2,2}`，`getOffset() = 2`。
+  - 旧 `fillSpace`：主 XR 后，将 core 平面 5x5 外环标记为 extra/proxy。
+  - 旧 proxy：`TileEntityProxyCombo().inventory().power().fluid()`。
+  - 旧 renderer 与装配工厂同样是 90 度基础旋转加 metadata 表。
+- `machine_silex`
+  - `getDimensions() = {2,0,1,1,1,1}`，`getOffset() = 1`。
+  - 旧 `fillSpace`：主 XR 后，在 core 朝向一格的 `y+1` 左右两侧标记两个 extra/proxy。
+  - 旧 proxy：`TileEntityProxyCombo(true,false,true)`。
+  - 旧 renderer 方向表：`NORTH=90,EAST=0,SOUTH=270,WEST=180`。
+- `machine_exposure_chamber`
+  - `getDimensions() = {4,0,2,2,2,2}`，`getOffset() = 2`。
+  - 旧 `checkRequirement/fillSpace`：主 XR 外，还从 core 原点和 `rot=dir.getRotation(UP).getOpposite()` 的 7 格侧向原点填多段额外 XR 空间。
+  - 旧 `makeExtra`：侧向远端的 5 个点标记为 proxy。
+  - 旧 proxy：`TileEntityProxyCombo().inventory().power()`。
+  - 旧 renderer 方向表同 SILEX。
+- `machine_cyclotron`
+  - `getDimensions() = {2,0,2,2,2,2}`，`getOffset() = 2`。
+  - 旧 `fillSpace`：主 XR 后，将 core 平面边缘 12 个点标记为 extra/proxy。
+  - 旧 renderer 不按 block metadata 旋转，直接在 `x+0.5,y,z+0.5` 渲染 `Body/B1/B2/B3/B4`；插头动态贴图和彩蛋文字属于后续真实逻辑/渲染切片。
+
+本轮现代迁移：
+
+- 五台机器接入 `LegacyVisibleMultiblockMachineBlock` / `LegacyMachineDefinition`。
+- 继续复用 `LegacyMultiblockLayout` 表达主 XR、额外 XR、check/fill 一体足迹与 proxy offset。
+- `LEGACY_VISIBLE_MACHINE` BlockEntityType 加入五台机器。
+- 补齐 Forge OBJ block model JSON、DataGen blockstate/item model、loot/tag 和双语名称。
+- 只迁静态可见 OBJ 关键分件：
+  - 装配工厂：`Base/Frame/Slider*/Arm*/Head*/Striker*/Blade*`。
+  - PUREX：`Base/Frame/Fan/Pump`。
+  - SILEX：全模型。
+  - 辐照舱：`Chamber/Magnets/Core`。
+  - 回旋加速器：`Body/B1/B2/B3/B4`。
+
+暂缓内容：
+
+- GUI、库存、能量/流体 side 规则、recipe tick、声音/粒子、动画插值与 overlay 留给各机器逻辑切片。
+- 回旋加速器四个 plug 的动态贴图、满 plug 后的环绕文字特效暂缓到真实 `TileEntityMachineCyclotron` 迁移。
+- 装配工厂四臂动画、PUREX 风扇/泵动画、辐照舱磁体/核心动画暂使用静态位置，后续由真实 BlockEntity 状态驱动。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- `.\gradlew.bat runData --no-daemon --rerun-tasks` 通过。
+- `runData` 已生成五台机器的 blockstate、item model、loot table、pickaxe/needs_iron_tool tag 和 en_us/zh_cn lang。
+
 ## 2026-05-24 热解炉/固化机/压缩机/大型流体罐批次
 
 触发来源：
@@ -487,3 +602,112 @@
 暂缓内容：
 
 - GUI、库存、能量/流体 side 规则、recipe tick、声音/粒子、动画插值、流体显示与 persistent tooltip 均暂缓到机器逻辑切片。
+## 2026-05-24 底层钩子补齐与动力/加工可见多方块批次
+
+触发来源：
+- 用户要求继续推进多方块库移植，并特别建议检查底层还可以移植什么。
+- 本轮先核对 1.7.10 `BlockDummyable` 的通用钩子，再批量迁入一批 OBJ/贴图齐全、结构边界明确的机器。
+
+底层补足：
+- `LegacyMachineDefinition` 新增 `legacyHeightOffset`，对应 1.7.10 `BlockDummyable#getHeightOffset()`；`LegacyXrMultiblockBlock#getDirectPlacementCore` 与 `setPlacedBy` 现在会把点击层先按高度偏移再计算 core。
+- `LegacyMachineDefinition` 新增 `placementFacing` 钩子，对应 1.7.10 `getDirModified(ForgeDirection)` 的定义层入口。当前批次暂未启用复杂方向修正，但 PA/RBMK 等后续机器可以直接复用。
+- `LegacyMachineDefinition` 新增 `modelTranslation`，`LegacyVisibleMachineRenderer` 在旋转后应用模型局部平移；用于对齐 1.7.10 renderer 中 `glTranslated(-0.5,...)`、`glTranslated(2,...)` 这类模型原点补偿。
+
+新增可见多方块机器：
+- `machine_arc_welder`
+- `machine_soldering_station`
+- `machine_mixer`
+- `machine_radiolysis`
+- `machine_radgen`
+- `machine_rotary_furnace`
+- `machine_steam_engine`
+- `machine_solar_boiler`
+- `machine_tower_small`
+- `machine_tower_large`
+- `machine_turbofan`
+- `machine_turbinegas`
+
+1.7.10 对齐来源：
+- 方块类：`MachineArcWelder`、`MachineSolderingStation`、`MachineMixer`、`MachineRadiolysis`、`MachineRadGen`、`MachineRotaryFurnace`、`MachineSteamEngine`、`MachineSolarBoiler`、`MachineTowerSmall`、`MachineTowerLarge`、`MachineTurbofan`、`MachineTurbineGas`。
+- renderer：`RenderArcWelder`、`RenderSolderingStation`、`RenderMixer`、`RenderRadiolysis`、`RenderRadGen`、`RenderRotaryFurnace`、`RenderSteamEngine`、`RenderSolarBoiler`、`RenderSmallTower`、`RenderLargeTower`、`RenderTurbofan`、`RenderTurbineGas`。
+- 结构依据：以旧版 `getDimensions()`、`getOffset()`、`fillSpace(...)`、`makeExtra(...)` 为准；额外代理格按 core-relative offset 映射到 `LegacyMultiblockLayout`。
+
+本轮现代侧改动：
+- 上述 12 台机器接入 `LegacyVisibleMultiblockMachineBlock` 和统一 `LEGACY_VISIBLE_MACHINE` BlockEntityType。
+- 补齐 Forge OBJ block model JSON、DataGen blockstate/item model/loot/tag/lang 入口。
+- 静态渲染先保留主要模型部件：例如搅拌机 `Main/Mixer`、回转炉 `Furnace/Piston`、蒸汽机 `Base/Flywheel/Shaft/Transmission/Piston`、涡扇 `Body/Blades/Afterburner`。
+- 真实 GUI、能量/流体/物品 side 规则、工作动画插值、流体可视层、特殊光效与 overlay 暂留给机器逻辑切片。
+
+注意事项：
+- `TileEntityProxyCombo` 的 inventory/power/fluid 分类型代理仍未完全移植；当前 dummy proxy 仍是“全能力转发”的粗粒度桥接。后续若机器开始接入真实 capability，应把 proxy 类型拆到 `MultiblockDummyBlockEntity`。
+- `ForgeDirection#getRotation(UP/DOWN)` 的左右手方向已经按当前项目既有约定迁入：UP 多数使用 `getClockWise()`，DOWN 使用 `getCounterClockWise()`；如果实机观察某台机器侧面 proxy 反向，优先核对该机器旧 renderer/overlay 的 hitCheck。
+
+验证：
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- `.\gradlew.bat runData --no-daemon --rerun-tasks` 通过，DataGenerator 写入新增机器资源。
+
+## 2026-05-24 可见多方块机器物品显示补齐
+
+触发来源：
+
+- 大型多方块机器的世界渲染已能工作，但物品栏中仍走 block item model，遇到大型 Forge OBJ 时表现为紫黑缺失纹理、比例不对或不居中。
+- 1.7.10 中这类机器主要通过 `ItemRenderLibrary` 与 TESR `IItemRendererProvider` 把同一套 OBJ renderer 用于库存显示，而不是让普通方块模型承担物品显示。
+
+本轮现代侧改动：
+
+- `MultiblockBlockItem` 识别 `LegacyVisibleMultiblockMachineBlock` 后接入共享物品 renderer。
+- `HbmBlockStateProvider` 新增 `visibleMachineWithItemRenderer(...)`，当前所有可见多方块机器的 item model 改生成为 `minecraft:builtin/entity`，由 renderer 控制库存姿态。
+- 物品 renderer 以 `LegacyMachineDefinition.renderBoundingBox(...)` 自动适配大机器尺寸，保持多方块库中的渲染 AABB 同时服务视锥剔除和物品居中缩放。
+- 二次修正：`MultiblockBlockItem.initializeClient(...)` 不再读取 `getBlock()` 做类型判断，因为 Forge 在 `Item` 构造期间就调用该钩子，此时 `BlockItem` 字段尚未初始化；类型过滤移动到实际 `renderByItem(...)` 阶段。
+
+暂缓内容：
+
+- 后续如果某台机器在 1.7.10 的 item renderer 使用了和世界 renderer 不同的 group 或额外 GL 变换，应继续扩展 `LegacyMachineDefinition` 的 item 渲染参数，而不是回退到普通 block item JSON。
+
+## 2026-05-24 物品栏模型挂接与 core 偏心修正
+
+问题定位：
+
+- `machine_battery_socket` 和 `machine_assembly_machine` 的 item model 仍指向普通 block model，即使 `MultiblockBlockItem` 已提供 BEWLR，Forge 也不会进入专用 OBJ 物品 renderer。
+- 旧版多方块 item renderer 依据具体 OBJ 和具体 group 绘制，core 位置不等于模型视觉中心；现代端用结构 AABB 估算比例会让偏心机器在物品栏里偏移或过大。
+
+本轮现代侧改动：
+
+- `HbmBlockStateProvider` 新增 `existingModelWithCustomItem(...)` / `customBlockItem(...)`，让需要 BER 世界模型但 item 走 BEWLR 的机器稳定生成 `minecraft:builtin/entity`。
+- `machine_battery_socket` 与 `machine_assembly_machine` 的手写 item JSON 改为 `minecraft:builtin/entity`，并由 datagen 同步生成一致资源。
+- 可见多方块 item renderer 现在按实际 OBJ bounds 计算缩放与中心，结构盒继续只负责世界碰撞/选择/剔除，不再混作库存图标边界。
+- `machine_solidifier` 的库存 group 按 1.7.10 改为 `Main`，避免把旧世界态的 `Fluid/Glass` 一起塞进创造物品栏图标。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- `.\gradlew.bat runData --no-daemon --rerun-tasks` 通过；`machine_solidifier`、`machine_battery_socket`、`machine_assembly_machine` 的生成 item model 均为 `minecraft:builtin/entity`。
+
+## 2026-05-24 物品栏缺模型与比例二次修补
+
+问题定位：
+
+- 物品栏仍存在缺失模型时，问题不在多方块放置/BlockItem 挂接，而是部分旧 OBJ 保留 `mtllib` 引用；1.7.10 自家 OBJ 路径靠代码绑定贴图，现代 Forge OBJ loader 会尝试读取 `.mtl`，遇到缺失文件或大写路径会直接让 block model 烘焙失败。
+- 部分机器库存图标偏大，是公共 `LegacyVisibleMachineItemRenderer` 的自动 fit 仍过宽；旧版每台机器的 `renderInventory()` 有独立缩放，现代端需要把这个调节点留在机器定义层。
+
+本轮现代侧改动：
+
+- 清理已知会破坏 Forge OBJ loader 的机器 OBJ `mtllib` 行，修复 `catalytic_cracker`、`fluidtank`、`radiolysis` 等 block model 烘焙失败来源。
+- `LegacyMachineDefinition` 增加 `itemFitSize`，多方块机器的库存占位大小可按旧 `renderInventory()` 逐台微调。
+- `LegacyMachineDefinition` 增加 `itemPartTextures`，支持旧 renderer 中按 part 切换贴图的库存显示；当前用于涡扇 `Afterburner -> turbofan_back`。
+- 公共 item renderer 默认 fit 收紧，降低大机器在创造栏里压线/溢出相邻槽位的概率。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-24 liquefactor 指向项修正
+
+- `machine_liquefactor` 继续显示异常时，按 1.7.10 `ItemRenderLibrary` 复核后确认其库存图标只应渲染 OBJ group `Main`。
+- 现代端此前沿用世界渲染 group `Main/Fluid/Glass`，会把旧世界态透明/流体层也带入创造栏图标。
+- `liquefactorDefinition` 已补 `itemRenderParts("Main")`。
+- 公共 GUI 最大缩放上限恢复到 `0.32`，用于改善部分小/中型机器库存图标偏小；后续仍可用 `itemFitSize` 按单台旧 `renderInventory()` 继续精调。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。

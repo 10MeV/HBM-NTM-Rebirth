@@ -1,6 +1,5 @@
 # Blender 4.0.2
 # www.blender.org
-mtllib orbus.mtl
 o Sphere.002
 v 0.000000 3.169696 -1.616789
 v 0.000000 1.830304 -1.616789

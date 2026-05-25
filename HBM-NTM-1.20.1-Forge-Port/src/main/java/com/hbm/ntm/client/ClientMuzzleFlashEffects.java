@@ -33,6 +33,10 @@ public final class ClientMuzzleFlashEffects {
         }
     }
 
+    public static void clearAll() {
+        FLASHES.clear();
+    }
+
     private ClientMuzzleFlashEffects() {
     }
 }

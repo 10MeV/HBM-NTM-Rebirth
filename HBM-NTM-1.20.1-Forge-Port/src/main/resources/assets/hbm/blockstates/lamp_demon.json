@@ -1,10 +1,10 @@
-﻿{
+{
   "variants": {
-    "face=down": { "model": "hbm:block/empty" },
-    "face=up": { "model": "hbm:block/empty" },
-    "face=north": { "model": "hbm:block/empty" },
-    "face=south": { "model": "hbm:block/empty" },
-    "face=west": { "model": "hbm:block/empty" },
-    "face=east": { "model": "hbm:block/empty" }
+    "face=down": { "model": "hbm:block/lamp_demon_particle" },
+    "face=up": { "model": "hbm:block/lamp_demon_particle" },
+    "face=north": { "model": "hbm:block/lamp_demon_particle" },
+    "face=south": { "model": "hbm:block/lamp_demon_particle" },
+    "face=west": { "model": "hbm:block/lamp_demon_particle" },
+    "face=east": { "model": "hbm:block/lamp_demon_particle" }
   }
 }

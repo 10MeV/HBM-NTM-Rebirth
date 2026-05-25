@@ -21,6 +21,10 @@ public final class ClientPermaSyncData {
         return data.getFloat(key);
     }
 
+    public static void clearAll() {
+        data = new CompoundTag();
+    }
+
     private ClientPermaSyncData() {
     }
 }

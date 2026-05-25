@@ -24,9 +24,9 @@ import java.util.Random;
 
 public class MachineBatterySocketRenderer implements BlockEntityRenderer<MachineBatterySocketBlockEntity> {
     private static final ResourceLocation MODEL_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/battery.obj");
-    private static final ResourceLocation SOCKET_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/battery_socket.png");
+    static final ResourceLocation SOCKET_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/battery_socket.png");
     private static final ResourceLocation SELF_CHARGING_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/battery_sc.png");
-    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, SOCKET_TEXTURE);
+    static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, SOCKET_TEXTURE);
     private static final LegacyHorseRenderer CREATIVE_HORSE = new LegacyHorseRenderer();
     private static final int CREATIVE_BEAM_OUTER = 0x404040;
     private static final int CREATIVE_BEAM_INNER = 0x002040;
@@ -47,23 +47,24 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
     @Override
     public void render(MachineBatterySocketBlockEntity socket, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(socket, packedLight);
         poseStack.pushPose();
         applyLegacySocketTransform(socket.getBlockState(), poseStack);
 
-        MODEL.renderPart("Socket", SOCKET_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+        MODEL.renderPart("Socket", SOCKET_TEXTURE, poseStack, buffer, modelLight, packedOverlay);
         if (socket.hasFrame()) {
-            MODEL.renderPart("Supports", SOCKET_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            MODEL.renderPart("Supports", SOCKET_TEXTURE, poseStack, buffer, modelLight, packedOverlay);
         }
 
         ItemStack stack = socket.getBatteryStack();
         if (stack.getItem() instanceof HbmBatteryPackItem pack) {
             ResourceLocation texture = new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/" + pack.getLegacyTextureName() + ".png");
             String part = pack.isCapacitor() ? "Capacitor" : "Battery";
-            MODEL.renderPart(part, texture, poseStack, buffer, packedLight, packedOverlay);
+            MODEL.renderPart(part, texture, poseStack, buffer, modelLight, packedOverlay);
         } else if (stack.getItem() instanceof HbmSelfChargingBatteryItem battery && battery.isLoaded()) {
-            MODEL.renderPart("Battery", SELF_CHARGING_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            MODEL.renderPart("Battery", SELF_CHARGING_TEXTURE, poseStack, buffer, modelLight, packedOverlay);
         } else if (stack.is(ModItems.BATTERY_CREATIVE.get())) {
-            renderCreativeBatteryEffect(socket, partialTick, poseStack, buffer, packedLight, packedOverlay);
+            renderCreativeBatteryEffect(socket, partialTick, poseStack, buffer, modelLight, packedOverlay);
         }
 
         poseStack.popPose();

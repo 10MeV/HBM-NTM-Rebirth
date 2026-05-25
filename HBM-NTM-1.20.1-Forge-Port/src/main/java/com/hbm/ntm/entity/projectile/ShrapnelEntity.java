@@ -140,7 +140,11 @@ public class ShrapnelEntity extends LegacyThrowableEntity {
         setMode(MODE_RAD_VOLCANO);
     }
 
-    private byte mode() {
+    public boolean isLargeRenderMode() {
+        return mode() >= MODE_VOLCANO;
+    }
+
+    public byte mode() {
         return entityData.get(MODE);
     }
 

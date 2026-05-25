@@ -199,7 +199,7 @@
 
 ### 有意降级/延期
 
-- `BlockMutatorBalefire` 暂用 vanilla `SOUL_FIRE` 承接，因为 clean port 尚未迁移旧 `ModBlocks.balefire` 方块。
+- `BlockMutatorBalefire` 已在 2026-05-24 后续批次接回旧 `balefire` 方块；本段保留为 Cross/CrossSmooth 迁移批次时的历史限制。
 - `EntityProcessorCrossSmooth.setupPiercing(...)` 只保存 DT/DR 参数，不实际应用。旧穿甲依赖 `EntityDamageUtil.attackEntityFromNT` 与 `DamageResistanceHandler.DamageClass`，需等伤害抗性核心深化。
 - `EntityProcessorCross.shouldDealKnockback(...)` 暂不排除旧 `EntityBulletBaseMK4` / `EntityGrenadeUniversal`，因为这些实体尚未迁入 clean port；后续迁入后再以接口或类型标记排除。
 - `ExplosionEffectWeapon` 使用现代粒子桥的烟/火最小表现，不复制旧 `ExplosionSmallCreator` 的完整自定义粒子。
@@ -338,16 +338,16 @@
   - 保留旧字段名、NBT 保存/读取、螺旋推进。
   - 使用 `Heightmap.Types.WORLD_SURFACE` 获取柱表面。
   - `block_schrabidium_cluster` / `block_euphemium_cluster` / `sellafield_slaked` 使用 clean port 已注册 legacy block。
-  - 旧 `balefire` 方块未迁时回退为 vanilla `SOUL_FIRE`。
+  - 优先使用 `ModBlocks.legacyBlock("balefire")`；旧 ID 不存在时回退为 vanilla `SOUL_FIRE`。
 - 扩展 `ExplosionNukeGeneric`：
   - 新增 `solinium(Level, int, int, int)` 与 `solinium(Level, BlockPos)`。
   - 使用现代标签/方块类型近似旧材质清理：leaves/logs/planks、cactus/vine/melon/pumpkin/sponge、`BushBlock`、可替换方块。
 
 ### 有意降级/延期
 
-- `ExplosionBalefire` 只迁核心处理器，不生成旧 `EntityBalefire` 逻辑实体；后续迁实体时可直接持有并 tick 这个处理器。
+- 本段为核心处理器迁移时的历史限制；`EntityBalefire` 调度实体已在 2026-05-24 后续批次补入。
 - `ExplosionSolinium` 只迁核心处理器，不生成旧 `EntityNukeExplosionMK3`；后续 MK3 实体可复用本类的 NBT 字段。
-- 旧 `balefire` 方块未迁，现代处理器用 `SOUL_FIRE` 兜底；等方块注册后 `ModBlocks.legacyBlock("balefire")` 会自动优先使用原方块。
+- `ExplosionBalefire` 仍保留 `SOUL_FIRE` 兜底，但现代路径会优先通过 `ModBlocks.legacyBlock("balefire")` 使用旧 ID 方块。
 
 ## 2026-05-22 ExplosionNukeGeneric 公共工具扩展
 
@@ -841,9 +841,221 @@
 
 ### 有意延期
 
-- 旧 `RenderShrapnel` / `RenderRubble` 的可见飞行模型尚未迁入；当前客户端注册 `NoopRenderer`，依赖 shrapnel trail 和 rubble 落地 burst 表现。后续 render library 继续迁移后补 OBJ/方块飞行渲染。
 - 旧 `hbm:block.debris` 声音资源尚未在 clean port 确认注册；现代暂用 `SoundEvents.STONE_BREAK` 表示 rubble 命中碎裂。
 - `mud_block` 仍等待流体/机器链路迁移；Watz shrapnel 已保留旧 ID 查找入口。
+
+## 2026-05-24 Projectile renderer / Balefire block
+
+### 1.7.10 细化追踪
+
+- `RenderShrapnel`：
+  - 使用 `ModelShrapnel` 的 4x4x4 box。
+  - 绑定 `textures/entity/shrapnel.png`。
+  - 每 tick 按 `(ticksExisted % 360) * 10 + partialTick` 绕 `(1,1,1)` 旋转。
+  - 当 `EntityShrapnel.dataWatcher[16] >= 2` 时缩放到 3 倍，用于火山/放射火山熔岩弹块。
+- `RenderRubble`：
+  - 使用旧 `ModelRubble` 的多 box 碎块模型。
+  - 从 `dataWatcher[16]`/`[17]` 获取 block id/meta，绑定该方块侧面纹理。
+  - 每 tick 按 `(ticksExisted + partialTick) * 10` 绕 `(1,1,1)` 旋转。
+- `Balefire`：
+  - 旧 `BlockFire` 子类，注册 ID `balefire`，贴图 `textures/blocks/balefire.png`，亮度 1。
+  - fire tick 开启时按旧 fire spread 逻辑扩散，meta/AGE 上限 15。
+  - 可在有可燃邻居或下方实心顶面的情况下存活。
+  - 实体碰撞时 `setFire(10)`，living 额外获得强辐射效果。
+  - `BlockMutatorBalefire` 在爆炸后若位置为空、下方实体顶面且 `1/3` 命中则放置 `ModBlocks.balefire`。
+
+### 现代实现
+
+- 新增 `ShrapnelRenderer`：
+  - 使用现代 `ModelPart` 构造 4x4x4 box，绑定旧 `textures/entity/shrapnel.png`。
+  - 按旧 tick 旋转速度旋转；火山/放射火山模式按 3 倍缩放。
+  - `ClientModEvents` 改为给 `entity_shrapnel` 注册该 renderer。
+- 新增 `RubbleRenderer`：
+  - 使用现代 `BlockRenderDispatcher.renderSingleBlock` 渲染 `RubbleEntity` 同步的 `BlockState`，保留旧“瓦砾显示原方块纹理”的视觉契约。
+  - 按旧 tick 旋转速度旋转；`ClientModEvents` 改为给 `entity_rubble` 注册该 renderer。
+- 新增 `BalefireBlock` 与旧 ID 资源：
+  - 注册 `hbm:balefire`，加入 legacy block map，保留无碰撞、全亮、随机 tick、无掉落。
+  - 复制旧 `balefire.png` / `.mcmeta`，新增 cross blockstate/model、静态 lang 与 datagen lang。
+  - 现代实现按 30-39 tick 继续调度，保留旧版 `tickRate + rand(10)` 节奏。
+  - 碰撞时点燃实体，并对 living 设置至少 100 tick 的 `RadiationData.balefire`，同时施加 CREATIVE radiation contamination。
+- 更新 `BlockMutatorBalefire`：
+  - 现在优先 `ModBlocks.legacyBlock("balefire")`，只有旧 ID 未注册时才回退 `SOUL_FIRE`。
+  - `ExplosionNT.ExAttrib.BALEFIRE`、`ExplosionNukeRayBalefire`、`ExplosionBalefire` 现可通过旧 ID 自动落到真实 `balefire` 方块。
+
+### 有意延期
+
+- `BalefireBlock` 当前只迁爆炸落点和基础 `BlockFire` 扩散/实体接触契约；旧版更细的渲染颜色随 meta 变暗尚未迁入。
+- balefire 流体/物品/配方仍属于武器/流体/物品后续批次。
+
+## 2026-05-24 EntityBalefire 调度实体
+
+### 1.7.10 细化追踪
+
+- `com.hbm.entity.logic.EntityBalefire` 继承 `EntityExplosionChunkloading`，是 `ExplosionBalefire` 的分 tick 调度壳。
+- NBT 字段：`age`、`destructionRange`、`speed`、`did`，并用 `exp_*` 前缀保存 `ExplosionBalefire` 的内部扫描状态。
+- 首次 tick 时用实体当前位置整数坐标创建 `ExplosionBalefire((int)posX, (int)posY, (int)posZ, world, destructionRange)`。
+- 每 tick 服务器端强制加载当前位置所在 chunk，`speed += 1` 后执行 `speed` 次 `exp.update()`。
+- 处理器完成后清除 chunk loader 并结束实体；未完成时调用 `ExplosionNukeGeneric.dealDamage(world, posX, posY, posZ, destructionRange * 2)`。
+- 旧调用点包括 `TileEntityNukeBalefire.explode()`、`NukeCustom` antimatter 路径、`EntityMissileCustom` 的 `BALEFIRE` 弹头。
+
+### 现代实现
+
+- 新增 `BalefireExplosionEntity`：
+  - 注册为 `hbm:entity_balefire`，尺寸 `0.1F`，`updateInterval=1`，`clientTrackingRange=256`，`fireImmune`，`noSummon`。
+  - 继承现代 `ExplosionChunkLoadingEntity`，复用 forced chunk 保存/释放逻辑。
+  - 保留旧 `age/destructionRange/speed/did/exp_*` NBT 合同，重载后继续从 `ExplosionBalefire` 保存的螺旋扫描位置推进。
+  - 每 tick 先 force center chunk，再按旧逻辑加载工作 chunk，处理完成时通过 `discard()` 触发 chunk loader 清理。
+  - 未完成时继续调用现代 `ExplosionNukeGeneric.dealDamage`，伤害范围保持 `destructionRange * 2`。
+- `ClientModEvents` 给 `hbm:entity_balefire` 注册 `NoopRenderer`，保持旧实体“只负责逻辑，不直接显示模型”的表现。
+
+### 有意延期
+
+- `TileEntityNukeBalefire`、`NukeCustom`、`EntityMissileCustom` 等具体武器/方块调用点尚未迁入；本批先补足爆炸库可复用的实体调度层。
+- 旧 balefire 爆炸的 Torex/大型特效调用仍等待对应客户端特效系统继续迁移。
+
+## 2026-05-24 Balefire Bomb 触发骨架 / 公共 spawn 入口
+
+### 1.7.10 细化追踪
+
+- `ModBlocks.nuke_fstbmb` 注册为 `NukeBalefire`，硬度 5、爆抗 200、非普通方块渲染，旧创造栏为 nukeTab。
+- `NukeBalefire`：
+  - 继承 `BlockMachineBase`，`rotatable=true`。
+  - 邻居更新时若方块被红石供能，调用 `explode(world, x, y, z)`。
+  - `explode` 只在服务端执行，要求 `TileEntityNukeBalefire.isLoaded()` 为真，否则返回缺组件错误。
+- `TileEntityNukeBalefire`：
+  - 2 槽库存：槽 0 要求 `egg_balefire`，槽 1 要求 `battery_spark` 或 `battery_trixite`。
+  - 默认 `timer=18000` tick；启动后每秒播放 `hbm:weapon.fstbmbPing`，倒计时归零后爆炸。
+  - GUI 按钮 `meta=0` 且 loaded 时播放 `hbm:weapon.fstbmbStart` 并开始计时；`meta=1` 设置秒数。
+  - 爆炸时清库存、移除方块，生成 `EntityBalefire`，位置为方块中心，`destructionRange=250`，并调用 `EntityNukeTorex.statFacBale(..., 250)`。
+- 声音资源：
+  - `assets/hbm/sounds/weapon/fstbmbStart.ogg`
+  - `assets/hbm/sounds/weapon/fstbmbPing.ogg`
+
+### 现代实现
+
+- `WeaponExplosionUtil` 新增 `spawnBalefire(Level, double, double, double, int)`：
+  - 服务端且 range > 0 时生成 `BalefireExplosionEntity.create(...)`。
+  - 作为 `TileEntityNukeBalefire`、自定义核弹、导弹/弹药等后续旧调用点的统一入口。
+- 新增 `BalefireBombBlock` 并将 `hbm:nuke_fstbmb` 从模型占位改为该方块：
+  - 保留水平朝向、非遮挡、金属材质、硬度 5、爆抗 200。
+  - 红石邻居信号、放置时已被供能、被火点燃时，会播放 `weapon.fstbmb_start`、移除方块，并通过 `WeaponExplosionUtil.spawnBalefire(..., 250)` 生成 balefire 爆炸实体。
+  - 被其它爆炸摧毁时通过 `wasExploded` 生成同等 balefire 爆炸实体，用于恢复爆炸连锁语义。
+- 注册并复制旧声音：
+  - `hbm:weapon.fstbmb_start` -> `sounds/weapon/fstbmb_start.ogg`
+  - `hbm:weapon.fstbmb_ping` -> `sounds/weapon/fstbmb_ping.ogg`
+  - 静态 lang 与 datagen lang 补充 `subtitles.hbm.weapon.fstbmb`。
+
+### 有意延期
+
+- 完整 `TileEntityNukeBalefire`、2 槽库存、GUI、计时器、loaded 检查和 `egg_balefire` / `battery_spark` / `battery_trixite` 依赖尚未迁入；当前 `nuke_fstbmb` 是爆炸库侧可运行触发骨架。
+- Torex balefire 大型客户端效果仍等待对应实体/粒子特效系统迁移。
+- 旧 `BombReturnCode` / `IBomb` 接口尚未迁入；现代方块通过直接触发公共 spawn 入口承接爆炸库行为。
+
+## 2026-05-24 Custom Nuke 爆炸编排 / FallingNuke
+
+### 1.7.10 细化追踪
+
+- `NukeCustom.explodeCustom(...)` 是自定义核弹的纯爆炸编排函数，参数为 `tnt/nuke/hydro/amat/dirty/schrab/euph` 七个材料强度。
+- 旧上限：
+  - `maxTnt=150`
+  - `maxNuke=200`
+  - `maxHydro=350`
+  - `maxAmat=350`
+  - `maxSchrab=250`
+- `dirty` 先限制到 100。
+- 爆炸优先级：
+  - `euph > 0`：生成 `EntityNukeExplosionMK3`，`destructionRange=150`，`waste=false`，并生成彩虹 Fleija 云。
+  - `schrab > 0`：`schrab += amat/2 + hydro/4 + nuke/8 + tnt/16`，上限 250，生成 Fleija MK3 与普通 Fleija 云。
+  - `amat > 0`：`amat += hydro/2 + nuke/4 + tnt/8`，上限 350，生成 `EntityBalefire`，并生成 balefire Torex。
+  - `hydro > 0`：`hydro += nuke/2 + tnt/4`，上限 350，`dirty *= 0.25`，生成 MK5 并追加 fallout。
+  - `nuke > 0`：`nuke += tnt/2`，上限 200，生成 MK5 并追加 fallout。
+  - `tnt >= 75`：上限 150，生成无辐射 MK5。
+  - `0 < tnt < 75`：调用 `ExplosionLarge.explode(..., cloud=true, rubble=true, shrapnel=true)`。
+- `TileEntityNukeCustom` 中的 GUI 预览公式：
+  - `getNukeAdj = min(nuke + tnt / 2, maxNuke)`
+  - `getHydroAdj = min(hydro + nuke / 2 + tnt / 4, maxHydro)`
+  - `getAmatAdj = min(amat + hydro / 2 + nuke / 4 + tnt / 8, maxAmat)`
+  - `getSchrabAdj = min(schrab + amat / 2 + hydro / 4 + nuke / 8 + tnt / 16, maxSchrab)`
+- `EntityFallingNuke`：
+  - 保存同样七个 float NBT：`tnt/nuke/hydro/amat/dirty/schrab/euph`。
+  - 每 tick 手动移动，`motionX/Z *= 0.99`，`motionY -= 0.05`，最低 `-1`。
+  - pitch 初始 90，每 tick 若 `rotationPitch > -75` 则减 2。
+  - 进入非空气方块后，服务端调用 `NukeCustom.explodeCustom(...)` 并结束实体。
+
+### 现代实现
+
+- 新增 `CustomNukeExplosion`：
+  - 暴露 `MAX_TNT/MAX_NUKE/MAX_HYDRO/MAX_AMAT/MAX_SCHRAB` 常量。
+  - 暴露 `adjustedNuclear/adjustedHydrogen/adjustedAntimatter/adjustedSchrab`，供后续 GUI/tooltip 与爆炸预览复用旧公式。
+  - `explode(...)` 按旧优先级接入现代 `NukeExplosionMk3Entity`、`NukeExplosionMk5Entity`、`WeaponExplosionUtil.spawnBalefire` 与 `ExplosionLarge`。
+  - 保留旧坐标偏移差异：部分分支额外 `+0.5`，nuclear 分支保留旧 Y+5 的 MK5 生成位置。
+- 新增 `FallingNukeEntity`：
+  - 注册为 `hbm:entity_falling_nuke`，尺寸 `0.98F`，`clientTrackingRange=256`，`updateInterval=1`。
+  - 保存旧七个材料 float NBT，并额外保存旧 metadata 朝向 byte，供后续 renderer 或方块接线使用。
+  - 迁入旧手动下落阻力、重力上限和 pitch 旋转；落入非空气方块后调用 `CustomNukeExplosion.explode(...)`。
+  - 客户端暂注册 `NoopRenderer`，避免在模型/渲染批次前引入占位模型。
+
+### 有意延期
+
+- `nuke_custom` 方块、`TileEntityNukeCustom` 库存/菜单/GUI、`custom_fall` 组件与物品配方尚未迁入；本批先迁爆炸库公共编排和坠落实体。
+- Fleija / balefire / standard Torex 大型云实体尚未完整迁入；现代实现先恢复地形/伤害/后处理实体路径。
+- `EntityFallingNuke` 可见模型与旋转渲染等待 `nuke_custom` 资源/renderer 批次补齐。
+
+## 2026-05-24 Custom Missile 弹头爆炸工具
+
+### 1.7.10 细化追踪
+
+- `EntityMissileCustom.onMissileImpact(...)` 通过 warhead item 的 `ItemCustomMissilePart.WarheadType` 与 `strength` 决定爆炸行为。
+- 旧 `WarheadType` 枚举：
+  - `HE`
+  - `INC`
+  - `BUSTER`
+  - `CLUSTER`
+  - `NUCLEAR`
+  - `TX`
+  - `N2`
+  - `BALEFIRE`
+  - `SCHRAB`
+  - `TAINT`
+  - `CLOUD`
+  - `TURBINE`
+  - `CUSTOM0` - `CUSTOM9`
+- `impactCustom` 若存在则先执行自定义 impact 并返回；这是外部兼容覆盖点。
+- 已追踪的旧默认 impact：
+  - `HE`：`ExplosionLarge.explode(..., cloud=true, rubble=false, shrapnel=true)`，随后 `ExplosionLarge.jolt(strength, strength*50, 0.25)`。
+  - `INC`：`ExplosionLarge.explodeFire(...)`，随后 `jolt(strength*1.5, strength*50, 0.25)`。
+  - `BUSTER`：`ExplosionLarge.buster(..., motionVec, strength, strength*4)`。
+  - `NUCLEAR` / `TX`：生成 `EntityNukeExplosionMK5.statFac(..., strength)` 并生成 standard Torex。
+  - `BALEFIRE`：生成 `EntityBalefire`，`destructionRange=strength`，并生成 balefire Torex。
+  - `N2`：生成 `EntityNukeExplosionMK5.statFacNoRad(..., strength)` 并生成 standard Torex。
+  - `TAINT`：在 `strength` 范围内随机尝试 `strength*10` 次，将普通实心非空气方块替换为 `ModBlocks.taint` 的 meta 4-6。
+  - `CLOUD`：播放 potion aux SFX 2002，并在上一 tick 位置生成 `ExplosionChaos.spawnPoisonCloud(..., 750, 2.5, 2)`。
+  - `TURBINE`：先做强度 10 的 `ExplosionLarge.explode`，再生成 `strength` 个 turbine bullet blade。
+- `CLUSTER` 在追踪片段中为空分支。
+
+### 现代实现
+
+- 新增 `CustomMissileExplosion`：
+  - 独立定义现代 `WarheadType` 枚举，保持旧名称，供未来 `EntityMissileCustom` / missile part item 迁入时无损映射。
+  - `explode(Level, x, y, z, Vec3 motion, float strength, WarheadType type, Entity source)` 返回 boolean，表示默认 impact 是否已被现代爆炸库处理。
+  - 已接通：
+    - `HE` -> `ExplosionLarge.explode` + `jolt`
+    - `INC` -> `ExplosionLarge.explodeFire` + `jolt`
+    - `BUSTER` -> `ExplosionLarge.buster`
+    - `NUCLEAR` / `TX` -> `NukeExplosionMk5Entity.create`
+    - `BALEFIRE` -> `WeaponExplosionUtil.spawnBalefire`
+    - `N2` -> `NukeExplosionMk5Entity.createNoFallout`
+    - `CLOUD` -> `levelEvent(2002)` + `ExplosionChaos.spawnPoisonCloud`
+  - 保留 `double motionX/Y/Z` 重载，方便旧实体迁移时少做临时 `Vec3` 包装。
+
+### 有意延期
+
+- `EntityMissileCustom`、`MissileStruct`、发射台/紧凑发射台、missile part item/metadata、propulsion 和 radar detectability 尚未迁入；本批只迁默认弹头 impact 工具。
+- `CLUSTER` 旧分支为空，现代保持未处理。
+- `SCHRAB` 未在当前读取片段中出现默认实现，等待更完整导弹/弹药批次追踪。
+- `TAINT` 依赖 `ModBlocks.taint` 及旧 meta 语义，clean port 未注册该方块时不做原版替代。
+- `TURBINE` 依赖旧 `EntityBulletBaseNT` 与 `BulletConfigSyncingUtil.TURBINE`，等待 Sedna/弹药实体迁移。
+- Torex 大型爆炸视觉仍等待特效实体迁移；现代工具只恢复地形/伤害/后效应调度。
 
 ## 验证清单
 
@@ -862,3 +1074,8 @@
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `EntityExplosionChunkloading` 现代 forced chunk 基类并接入 MK3/MK5/FalloutRain 后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `ExplosionNT` 的 `DIGAMMA` / `DIGAMMA_CIRCUIT` / `LAVA_V` / `LAVA_R` 方块落点后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `EntityShrapnel` / `EntityRubble`、注册 damage type 并接回 `ExplosionLarge` 实体生成入口后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在补齐 `EntityShrapnel` / `EntityRubble` 飞行 renderer，并迁入 `hbm:balefire` 方块与 `BlockMutatorBalefire` 旧 ID 落点后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在迁入 `EntityBalefire` 现代调度实体、实体注册与客户端空渲染后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在新增 `WeaponExplosionUtil.spawnBalefire`、`BalefireBombBlock`、`nuke_fstbmb` 红石/火焰触发骨架和旧 FSTBMB 声音资源后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在新增 `CustomNukeExplosion`、`FallingNukeEntity`、实体注册与客户端空渲染后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon` 在新增 `CustomMissileExplosion` 默认弹头 impact 工具后通过。

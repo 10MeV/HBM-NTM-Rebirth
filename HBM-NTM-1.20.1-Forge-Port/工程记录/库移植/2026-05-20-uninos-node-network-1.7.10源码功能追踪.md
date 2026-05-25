@@ -196,14 +196,14 @@
   - 使用 `HbmFluidTank(HbmFluids.AIR, 4000).withPressure(1)` 保存压缩空气。
   - 作为 `HbmStandardFluidReceiver` 接入现代流体网络，只在 compressor 模式下订阅 AIR receiver，接收速度按旧 `(max-fill)/25` clamp 到 `1..100`。
   - 每 10 tick 在 endpoint 模式下向 `PneumaticNetwork` 注册相邻 receiver。
-  - 每 5 tick 在 compressor 模式、红石条件允许、空气 >= 50 时调用 `PneumaticNetwork#send`；成功后消耗 50 mB AIR 并播放旧 `weapon.reload.tubeFwoomp`。
+  - 每 5 tick 在 compressor 模式、红石条件允许、空气 >= 50 时调用 `PneumaticNetwork#send`；成功后消耗 50 mB AIR 并播放旧 `weapon.reload.tubeFwoomp`（现代注册为 `weapon.reload.tube_fwoomp`）。
   - 使用 `PneumaticNodespace` 创建/销毁管道拓扑节点，连接目前以相邻 `PneumaticTubeBlockEntity` 为准。
 - 新增资源：
   - `assets/hbm/blockstates/pneumatic_tube.json`
   - `assets/hbm/models/block/pneumatic_tube.json`
   - `assets/hbm/models/item/pneumatic_tube.json`
   - `data/hbm/loot_tables/blocks/pneumatic_tube.json`
-  - 复制旧音频 `assets/hbm/sounds/weapon/reload/tubeFwoomp.ogg` 并注册 `weapon.reload.tubeFwoomp`。
+  - 复制旧音频 `assets/hbm/sounds/weapon/reload/tubeFwoomp.ogg`，现代落位为 `assets/hbm/sounds/weapon/reload/tube_fwoomp.ogg` 并注册 `weapon.reload.tube_fwoomp`。
 - 本轮刻意保留的后续项：
   - 旧 `GUIPneumoTube` / `ContainerPneumoTube` 未迁移，过滤槽和控制项暂不能通过正式 GUI 编辑。
   - 旧 `ModulePatternMatcher` 的过滤模式、红石/白名单/压力/send/receive 控制包尚需接菜单与网络控制。

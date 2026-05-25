@@ -378,6 +378,247 @@
   - TTL 只做内存清理，不向对端发送重传/失败通知。
   - 客户端分片缓存的 pending 计数尚未接入可见命令；后续可加客户端调试 HUD 或专用诊断命令。
 
+## 2026-05-24 协议稳定性与线程池诊断补强记录
+
+- 校准 `ClientBinaryDataPacket` 的 wire layout：
+  - 保持旧现代包体 `channel + clearChannel + name + payload` 不变。
+  - `ready` 只通过 append-only 新增的 `ClientBinaryDataReadyPacket` 发送。
+  - 这样不会改变已注册 discriminator 对应包体格式，避免客户端/服务端在同协议版本内因字段错位解码。
+- `/hbm network packetthreading stats` 继续补齐旧 `ntmpackets info` 的线程池可见性：
+  - thread pool total/core/max/active
+  - executor queued
+  - completed task count
+- 当前限制：
+  - 未复刻旧 `forceLock`/`forceUnlock`；现代实现不暴露锁对象，避免人为制造主线程冻结。
+  - 线程池仍固定为单线程，后续若确实需要多线程包编码，再按实际高频包压测结果调整。
+
+## 2026-05-24 实体事件与实体动作推进记录
+
+- 旧版相关事实：
+  - `ExtPropPacket`、`HbmAnimationPacket`、`MuzzleFlashPacket`、实体同步/效果类包都以 entity id 或玩家为目标定位对象。
+  - 其中状态型数据已经由现代 `EntitySyncPacket` 承接，枪口焰类固定效果已经由 `MuzzleFlashPacket` 承接。
+  - 仍缺少一个不绑定具体实体类的 typed entity event/action 通道，用于后续武器、载具、导弹、特殊实体 GUI 等迁移。
+- 新增通用客户端接收接口：`HbmClientEntityEventReceiver`：
+  - `handleClientEntityEvent(ResourceLocation eventType, CompoundTag data)`。
+  - 由实体自己解释 `eventType` 和 NBT payload，网络库不写死动画、声音或粒子语义。
+- 新增 S2C `ClientEntityEventPacket`：
+  - 包体为 `entityId + eventType + CompoundTag data`。
+  - 客户端按 entity id 找当前 `ClientLevel` 实体。
+  - 只有目标实体实现 `HbmClientEntityEventReceiver` 时才派发；否则只记录 debug，避免旧式特效包丢失接收端时刷 warn。
+- `ModMessages` 新增发送辅助：
+  - `sendClientEntityEvent(Entity, ResourceLocation, CompoundTag)`：发给追踪者。
+  - `sendClientEntityEventAndSelf(Entity, ResourceLocation, CompoundTag)`：发给追踪者和自身。
+  - `sendClientEntityEvent(ServerPlayer, Entity, ResourceLocation, CompoundTag)`：发给指定玩家。
+- 新增通用服务端接收接口：`HbmEntityActionReceiver`：
+  - `canReceiveEntityAction(ServerPlayer, ResourceLocation, CompoundTag)` 作为实体级权限/状态校验 hook。
+  - `handleEntityAction(ServerPlayer, ResourceLocation, CompoundTag)` 在服务端主线程执行。
+- 新增 C2S `ServerEntityActionPacket`：
+  - 包体为 `entityId + actionType + CompoundTag data`。
+  - 必须有 sender，并在 sender 所在 `ServerLevel` 按 id 查找实体。
+  - 默认只允许 64 格内实体动作；超距或不存在时记录 warn 并阻断。
+  - 只有目标实体实现 `HbmEntityActionReceiver` 且权限 hook 通过时才派发。
+- `ModMessages` 新增 `sendEntityAction(Entity, ResourceLocation, CompoundTag)`，供客户端侧实体 UI/交互发送 typed action。
+- 当前限制：
+  - 该层只承载小型 NBT 事件/动作，不提供大二进制 payload；大数据仍应使用已有 binary/tile 机制或后续专用协议。
+  - 未迁移具体实体动画、武器、导弹或载具行为；后续实体库应实现上述接口并声明自己的 `ResourceLocation` action/event。
+  - 处理时实体必须已经存在于客户端/服务端世界；出生包、跨维定位和延迟重放不在本批范围内。
+
+## 2026-05-24 typed 物品/菜单动作与旧 Tile 特化包映射推进记录
+
+- 旧版 C2S 小型交互包继续归拢到库层 typed action：
+  - `AnvilCraftPacket`：`recipeIndex + mode`，服务端要求玩家打开 `ContainerAnvil`，再按 recipe/mode 执行批量锻造。
+  - `ItemDesignatorPacket`：`operator + value + reference`，服务端修改手持 manual designator 的 `xCoord/zCoord`。
+  - `ItemBobmazonPacket`：`offer`，服务端按手持 bobmazon 物品和报价索引扣 caps 并生成投送实体。
+  - `SatCoordPacket`：`x/y/z/freq`，服务端校验手持卫星接口频率后调用卫星坐标动作。
+  - `SatLaserPacket`：`x/z/freq`，服务端校验手持卫星接口频率后调用卫星点击动作。
+- 新增 C2S `ItemActionPacket`：
+  - 包体为 `hand + actionType + CompoundTag data`。
+  - 服务端只派发给手持物品实现的 `HbmItemActionReceiver`。
+  - 与旧 `ItemControlPacket` 并存：旧包保持 `hand + NBT` wire layout；新包为后续多动作物品提供 namespaced `ResourceLocation` action。
+- 新增 `HbmItemActionReceiver`：
+  - `canReceiveItemAction(ServerPlayer, InteractionHand, ItemStack, ResourceLocation, CompoundTag)`。
+  - `handleItemAction(ServerPlayer, InteractionHand, ItemStack, ResourceLocation, CompoundTag)`。
+- 新增 C2S `TypedMenuActionPacket`：
+  - 包体为 `actionType + value + CompoundTag data`。
+  - 服务端只派发给当前打开 menu 实现的 `HbmTypedMenuActionReceiver`。
+  - 与旧 `MenuActionPacket` 并存：旧包保留整数 action/value；新包用于 anvil 这类需要稳定命名动作的 GUI。
+- `ModMessages` 新增 helper：
+  - `sendItemAction(...)`
+  - `sendDesignatorAction(...)` 对应旧 `ItemDesignatorPacket` 字段。
+  - `sendBobmazonOffer(...)` 对应旧 `ItemBobmazonPacket` offer 索引。
+  - `sendSatelliteCoordinateAction(...)` 与 `sendSatelliteLaserAction(...)` 对应旧卫星坐标/激光请求。
+  - `sendTypedMenuAction(...)` 与 `sendAnvilCraftAction(...)` 对应旧 `AnvilCraftPacket`。
+- 旧版 S2C Tile 特化包映射到现有通道：
+  - `TEVaultPacket`：`x/y/z + isOpening + state + sysTime + type`，现代用 `ClientTileEventPacket` 的 `hbm:vault_door` 事件承载。
+  - `TESirenPacket`：`x/y/z + id + active`，现代用 `ClientTileEventPacket` 的 `hbm:siren` 事件承载。
+  - `TEFFPacket`：`x/y/z + radius + health + maxHealth + power + isOn + color + cooldown`，现代用 `TileSyncPacket` 的 NBT 状态快照承载。
+- `ModMessages` 新增 helper：
+  - `sendClientTileEvent(ServerPlayer, BlockPos, ResourceLocation, CompoundTag)` 单玩家 tile event。
+  - `sendVaultDoorEvent(...)`
+  - `sendSirenEvent(...)`
+  - `syncForceFieldState(...)`
+- 当前限制：
+  - 本批只提供网络库级通道与字段映射；Anvil、Bobmazon、Designator、Satellite、BlastDoor、Siren、ForceField 的具体业务逻辑仍由后续对应库/机器/物品迁移实现。
+  - `TypedMenuActionPacket` 和 `ItemActionPacket` 不执行具体 recipe/offer/frequency 校验；这些校验必须保留在 receiver 中。
+  - `syncForceFieldState(...)` 要求目标 BlockEntity 实现 `HbmTileSyncable` 才会在客户端消费 NBT。
+
+## 2026-05-24 legacy 物品动画兼容与 panel 数据监听推进记录
+
+- 旧版 `HbmAnimationPacket` 行为：
+  - 包体为 `short type + int receiverIndex + int itemIndex`。
+  - 客户端只读取当前玩家手持物品。
+  - 若是 Sedna 枪械，按 `GunAnimation.values()[type]`、receiver index 与 gun index 播放旧 BusAnimation，并处理 cycle/recoil/reload 特例。
+  - 若是 `IAnimatedItem`，按物品自己的 enum class 解释 `type`，再写入 `HbmAnimations.hotbar[slot][itemIndex]`。
+- 现代已有 `ItemAnimationPacket`：
+  - 适合已经知道动画 JSON `ResourceLocation` 与动画名的迁移内容。
+  - 但它不能直接承载旧 `HbmAnimationPacket` 的三整数 enum/index 语义。
+- 新增 S2C `LegacyItemAnimationPacket`：
+  - 包体保留旧三字段：`animationType + receiverIndex + itemIndex`。
+  - 客户端按当前主手物品派发给 `HbmLegacyItemAnimationReceiver`。
+  - 未找到接收端时只记录 debug，避免尚未迁移枪械/工具期间刷日志。
+- 新增 `HbmLegacyItemAnimationReceiver`：
+  - `handleLegacyItemAnimation(ItemStack, selectedSlot, animationType, receiverIndex, itemIndex)`。
+  - 后续 Sedna 枪械或旧 `IAnimatedItem` 迁移时，在物品中把 legacy enum/index 映射到现代 `LegacyHbmAnimations` 或 `ItemAnimationPacket` 的资源动画。
+- 新增 `ClientLegacyItemAnimationHandler`：
+  - 客户端安全获取本地玩家和主手物品。
+  - 只做派发，不硬编码 `GunAnimation`、recoil 或 trenchmaster reload 加速等枪械库逻辑。
+- `ModMessages` 新增 `sendLegacyItemAnimation(ServerPlayer, animationType, receiverIndex, itemIndex)`。
+- `ClientPanelData` 增加轻量监听能力：
+  - `addListener(...)`、`removeListener(...)`、`clearListeners()`。
+  - `ClientPanelDataPacket` 仍保持原 wire layout 和缓存行为不变。
+  - 更新 panel data 后同步通知监听器，后续卫星 GUI 可复刻旧 `SatPanelPacket` 的“收到 NBT 即刷新当前面板”体验，而不需要每 tick 轮询缓存。
+  - 客户端离开世界时通过 `ClientForgeEvents` 清理监听器，避免 GUI/临时对象残留到下一次进世界。
+- 当前限制：
+  - 本批不迁移 Sedna 枪械 `GunAnimation`、receiver recoil、reload sequential 等具体行为；这些仍属于枪械库。
+  - `LegacyItemAnimationPacket` 只发给单个玩家，不承担第三人称 muzzle flash；第三人称闪光仍由 `MuzzleFlashPacket`/实体事件通道承载。
+  - `ClientPanelData` listener 为进程内轻量列表，不做弱引用；GUI 关闭时仍应主动 remove，离开世界清理作为保险。
+
+## 2026-05-24 AuxParticlePacketNT helper 与客户端网络缓存生命周期推进记录
+
+- 旧版 `AuxParticlePacketNT` 行为：
+  - 继承 `ThreadedPacket`，大量武器、导弹、RBMK、能量/流体接口和实体特效通过 `PacketThreading.createAllAroundThreadedPacket(...)` 发送。
+  - 构造器接收 `NBTTagCompound + x/y/z`，并写入 `posX/posY/posZ`。
+  - 客户端若 world 存在则调用 `MainRegistry.proxy.effectNT(nbt)`。
+- 现代已有 `AuxParticlePacket`：
+  - 包体为 `CompoundTag`。
+  - 客户端通过 `ClientParticleBridge.handleAux(...)` 派发到 `HbmParticleEffects.handleAux(...)`。
+  - 已覆盖 gasfire/debugline/vanilla/smoke/contrail/explosion/casing/skeleton 等多个旧 `effectNT` 类型。
+- 本批在 `ModMessages` 新增旧构造器等价 helper：
+  - `sendAuxParticle(ServerLevel, x, y, z, data, range)`：自动写入 `posX/posY/posZ` 并发送到范围内玩家。
+  - `sendAuxParticleThreaded(ServerLevel, x, y, z, data, range)`：走 `ThreadedPacketDispatcher`，对应旧 `PacketThreading.createAllAroundThreadedPacket(...)` 的高频特效用法。
+  - `sendAuxParticle(ServerPlayer, x, y, z, data)`：发给指定玩家，对应旧少量 `createSendToThreadedPacket(...)` 用法。
+  - `auxParticlePacket(x, y, z, data)`：生成已写入坐标的包体，供少数需要自定义发送目标的调用点复用。
+- `ParticleUtil.spawnAux(...)` 改为通过 `ModMessages.sendAuxParticle(...)` 发送，避免粒子库和网络库出现两条并行发送路径。
+- `ParticleUtil` 新增 `spawnAuxThreaded(...)`，供后续高频武器/导弹/机器特效迁移直接选择线程化发送。
+- 客户端网络缓存补充 world lifecycle 清理：
+  - `ClientBinaryData.clearAll()`：清理通用二进制数据、ready version 与未完成分片。
+  - `ClientTileBinaryData.clearAll()`：清理 tile 二进制未完成分片。
+  - `ClientBiomeSyncData.clearAll()`：清理客户端 biome 缓存。
+  - `ClientPermaSyncData.clearAll()`：重置持久同步 tag。
+  - `ClientPlayerSyncData.clearAll()`：清理玩家 typed sync 缓存。
+  - `ClientPanelData.clearAll()`：清理 panel data 与 listener。
+  - `ClientForgeEvents` 在客户端离开世界时统一调用上述清理，避免换存档或重连后残留旧网络状态。
+- 当前限制：
+  - `AuxParticlePacket` 仍是单包 NBT；超大特效数据应改用 binary/chunk 通道或专用压缩包。
+  - `sendAuxParticleThreaded(...)` 只线程化发送操作，不改变 NBT 构造线程安全要求；调用方仍应在主线程完成 payload 数据读取。
+  - 客户端缓存清理发生在 tick 检测到 `minecraft.level == null` 后；不是登录握手级事件。
+
+## 2026-05-24 实体同步重发与客户端临时状态清理推进记录
+
+- 旧版 `ExtPropPacket` 行为：
+  - 继承 `PrecompiledPacket`。
+  - 服务端写入 `HbmLivingProps.serialize(buf)` 与 `HbmPlayerProps.serialize(buf)`。
+  - 客户端只应用到本地玩家的 living/player 扩展属性。
+  - 这是玩家自身扩展属性的全量同步，不是任意实体的局部状态重发协议。
+- 现代已有对应拆分：
+  - 玩家辐射/污染长效属性：`PlayerRadiationSyncPacket`。
+  - typed 玩家扩展属性：`PlayerPropertiesPacket` + `ClientPlayerSyncData`。
+  - 任意实体 NBT 状态：`EntitySyncPacket` + `HbmEntitySyncable`。
+- 本批补齐实体同步可靠恢复：
+  - 新增 C2S `EntitySyncRequestPacket`。
+  - 包体为 `entityId`。
+  - 服务端要求存在 sender，按 sender 所在 `ServerLevel` 找实体。
+  - 默认只允许 64 格内实体重发。
+  - 目标实体必须实现 `HbmEntitySyncable`，且 `canSendClientSyncTo(player)` 通过。
+  - 通过后调用 `ModMessages.syncEntityToPlayer(...)` 对单个玩家重发。
+- `EntitySyncPacket` 客户端处理增强：
+  - 若收到的 entity id 当前没有 `HbmEntitySyncable` 接收端，记录 debug 后限频请求重发。
+  - 每个 entity id 20 tick 内最多请求一次，避免实体尚未完成客户端构建时形成请求风暴。
+- `ModMessages.register()` 继续保持 append-only：
+  - `EntitySyncRequestPacket` 追加在当前注册表尾部。
+- `ModMessages` 新增 `syncPlayerPropertiesBatch(...)`：
+  - 以 `Map<ResourceLocation, CompoundTag>` 批量发送 typed 玩家属性。
+  - 用于后续把旧 `ExtPropPacket` 中 living/player props 拆成多个稳定 dataType，同步时仍能一次调度。
+- 客户端离开世界时继续补清理临时网络视觉状态：
+  - `ClientInformMessages.clearAll()` 清理 HUD 提示。
+  - `ClientMuzzleFlashEffects.clearAll()` 清理实体枪口焰时间戳。
+  - `LegacyHbmAnimations.clearAll()` 清理 hotbar 动画缓存。
+  - 上一批已清理 binary/tile binary/biome/perma/player/panel 数据；现在离开世界时网络驱动的可见临时状态也一起归零。
+- 当前限制：
+  - `EntitySyncRequestPacket` 只能重发服务端当前同维可见实体；跨维实体、未追踪实体和已移除实体不会创建或等待。
+  - 旧 `ExtPropPacket` 的具体字段仍需玩家扩展属性/辐射库继续拆分为 typed dataType；本批只补 batch 发送入口和文档路径。
+  - 客户端动画/提示清理发生在离开世界 tick，不处理同一世界内玩家切换维度时的视觉残留。
+
+## 2026-05-24 协议注册表快照与网络诊断命令推进记录
+
+- 旧版 `PacketDispatcher.registerPackets()` 使用连续整数 discriminator，旧版 `CommandPacketInfo` 提供 `/ntmpackets info/resetState/toggleThreadingStatus` 调试入口：
+  - `info` 会显示 packet threading 是否 active/errored、线程池总/core/idle/max 数、每条 `PacketThreading.threadPrefix` 线程的 id/state/lock owner、总包数、剩余队列比例和上 tick 等待时间。
+  - 现代 `ThreadedPacketDispatcher` 已迁移 pending/queued/sent/failed/discarded、fallback、last flush、线程池统计和 reset/toggle/enable/disable。
+- 本批补齐现代协议可观测性：
+  - `ModMessages` 在 `registerServerToClient(...)` / `registerClientToServer(...)` 中自动记录 `PacketRegistration(id, direction, typeName)`。
+  - 新增 `protocolVersion()`、`registeredPacketCount()`、`packetRegistrations()`，供命令、日志和后续测试读取当前通道协议快照。
+  - 注册列表仍保持 append-only；快照从真实注册 helper 生成，避免维护第二份手写包表。
+- 新增 `/hbm network protocol` 诊断命令：
+  - `/hbm network protocol` 与 `/hbm network protocol summary` 输出 `channel=hbm:main`、协议版本、总包数、S2C/C2S 数量与首尾包 id。
+  - `/hbm network protocol packets` 按当前注册顺序列出 `#id direction packetType`，方便多人调试时确认客户端/服务端包顺序一致。
+- `ThreadedPacketDispatcher` 新增 `threadSnapshots()`：
+  - 通过 `ManagementFactory.getThreadMXBean().dumpAllThreads(false, false)` 筛选 `NTM-Packet-Thread-` 前缀线程。
+  - 暴露线程名、id、state、lock owner，对应旧 `CommandPacketInfo info` 的逐线程检查能力。
+- `/hbm network packetthreading threads` 新增逐线程列表：
+  - 当线程尚未创建时返回空提示。
+  - 创建后输出每条 packet thread 的 `id/state/lockOwner`。
+- 当前限制：
+  - 协议快照只反映当前 JVM 内 `ModMessages.register()` 已执行后的注册状态；它不替代 Forge 握手校验。
+  - 命令列表适合管理员/开发调试，`packets` 会输出完整包表，不作为玩家 UI。
+  - 未迁移旧版 `forceLock/forceUnlock` 危险调试入口；现代 dispatcher 保留 reset/toggle/fallback 这类安全操作。
+
+## 2026-05-24 导弹 multipart 快照与旧 BufPacket 映射推进记录
+
+- 旧版 `TEMissileMultipartPacket` 行为：
+  - S2C 包体为 `x/y/z + MissileStruct`。
+  - `MissileStruct.writeToByteBuffer(...)` 顺序写入四个旧整数 item id：`warhead/fuselage/fins/thruster`。
+  - 客户端按坐标查找 TileEntity，若是 `TileEntityCompactLauncher`、`TileEntityLaunchTable` 或 `TileEntityMachineMissileAssembly`，把 `load` 字段设为收到的 `MissileStruct`。
+- 现代库层新增 `MissileMultipartSnapshot`：
+  - 以四个可空 `ResourceLocation` 保存 `warhead/fuselage/fins/thruster`。
+  - 支持从四个 `ItemStack` 构造，自动读取 `ForgeRegistries.ITEMS` id。
+  - 使用 boolean + resource id 的稳定 wire layout，避免继续依赖 1.7.10 的运行时整数 item id。
+- 新增 S2C `ClientMissileMultipartPacket`：
+  - 包体为 `BlockPos + MissileMultipartSnapshot`。
+  - 客户端查找当前位置 BlockEntity。
+  - 只有目标实现 `HbmClientMissileMultipartReceiver` 时才派发。
+- 新增 `HbmClientMissileMultipartReceiver`：
+  - `handleClientMissileMultipart(MissileMultipartSnapshot multipart)`。
+  - 后续 compact launcher、launch table、missile assembly 迁移时由各自 BlockEntity 接收并更新本地渲染/预览状态。
+- `ModMessages.register()` 继续 append-only：
+  - `ClientMissileMultipartPacket` 追加在当前注册表尾部。
+- `ModMessages` 新增 helper：
+  - `syncMissileMultipart(BlockEntity, MissileMultipartSnapshot)`：发给追踪该方块实体所在 chunk 的玩家。
+  - `syncMissileMultipart(BlockEntity, ItemStack warhead, ItemStack fuselage, ItemStack fins, ItemStack thruster)`：供机器直接按槽位发送。
+  - `syncMissileMultipart(Level, BlockPos, MissileMultipartSnapshot)`：供非 BlockEntity 持有者按坐标发送。
+  - `syncMissileMultipart(ServerPlayer, BlockPos, MissileMultipartSnapshot)`：供单玩家补发/打开 GUI 同步。
+- 旧版 `BufPacket` 映射确认：
+  - 旧包为 S2C `x/y/z + IBufPacketReceiver.serialize(ByteBuf)`，客户端坐标查找 TileEntity 后调用 `IBufPacketReceiver.deserialize(ByteBuf)`。
+  - 现代已有 `ClientTileBinaryDataPacket` / `ClientTileBinaryDataChunkPacket` + `HbmClientTileBinaryReceiver`，同样按 `BlockPos` 找客户端 BlockEntity，再派发 `FriendlyByteBuf`。
+  - 现代路径额外提供 `ResourceLocation channel`、1 MiB 单包阈值、大 payload 分片、30 秒未完成分片清理和异常日志，因此旧 `BufPacket` 不再需要独立专用包。
+- 旧版 `SerializableRecipePacket` 映射确认：
+  - 旧包用于把服务端磁盘 JSON recipe 文件逐个发给客户端，最后发送 `reinit=true` 触发 `SerializableRecipe.initialize()`。
+  - 现代 Forge 1.20.1 已由 datapack recipe manager/Forge recipe sync 承载 recipe 同步；当前 `GenericMachineRecipe`、`LiquefactionRecipe`、`PressRecipe` 都已走 `RecipeSerializer#fromNetwork/toNetwork`。
+  - 因此本批不新增旧 `SerializableRecipePacket` 等价包；如后续需要同步 HBM 专用非 recipe-manager 数据，应复用 `ClientBinaryDataPacket` 或新增明确 dataType 的 typed 包。
+- 当前限制：
+  - `MissileMultipartSnapshot` 只保存四个部件 item id，不验证部件类型是否真为 warhead/fuselage/fins/thruster；类型校验应保留在导弹部件物品或机器槽位逻辑中。
+  - 本批不迁移导弹部件物品、发射台、组装机或客户端渲染，只提供网络承载与接收接口。
+  - 旧 `MissileStruct` 中 null/0 item id 在现代等价为空 `ResourceLocation`。
+
 ## 验证清单
 
 - 客户端/服务端协议版本一致。
@@ -392,3 +633,10 @@
 - 2026-05-22 物品控制、持久同步与爆炸击退批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
 - 2026-05-22 坐标动作、客户端数据与 tile 事件批次：第一次 Gradle 依赖解析遇到 MCPRepo SSL handshake 失败；重跑 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 - 2026-05-22 菜单动作、biome 缓存与压缩爆炸效果批次：第一次 Gradle 增量编译遇到 `build/classes` 中间产物缺失；重跑 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-24 实体事件与实体动作批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-24 typed 物品/菜单动作与旧 Tile 特化包映射批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-24 legacy 物品动画兼容与 panel 数据监听批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-24 AuxParticlePacketNT helper 与客户端网络缓存生命周期批次：首次编译被当前工作区 casing 粒子半成品阻塞；修正 `SpentCasingDefinition` builder/getter 冲突后，`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-24 实体同步重发与客户端临时状态清理批次：首次编译遇到并行工作区新增 `BalefireBombBlock` 未进入增量编译视图；重跑 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-24 协议注册表快照与网络诊断命令批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-24 导弹 multipart 快照与旧 BufPacket 映射批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过。

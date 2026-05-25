@@ -43,11 +43,12 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
         double press = Math.max(0.0D, Math.min(1.0D, blockEntity.getInterpolatedPress(partialTick) / (double) BasicMachineBlockEntity.MAX_PRESS));
         BlockState state = blockEntity.getBlockState();
         float facingRotation = blockstateModelYRotation(state);
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
         poseStack.pushPose();
         LegacyObjTransforms.rotateAroundBlockCenterY(poseStack, facingRotation);
         PRESS_HEAD_ANIMATION.apply(blockEntity, partialTick, poseStack);
-        ObjMachineModels.PRESS.renderPart("Head", new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay));
+        ObjMachineModels.PRESS.renderPart("Head", new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay));
         poseStack.popPose();
 
         ItemStack stack = blockEntity.getRenderStack();

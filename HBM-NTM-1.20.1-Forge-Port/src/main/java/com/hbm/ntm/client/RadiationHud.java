@@ -1,6 +1,7 @@
 package com.hbm.ntm.client;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -33,6 +34,7 @@ public final class RadiationHud {
 
     public static void render(GuiGraphics graphics, int screenWidth, int screenHeight) {
         float radiation = ClientRadiationData.getRadiation();
+        float rate = Math.max(0.0F, lastRadiation - previousRadiation);
         long now = System.currentTimeMillis();
         if (now >= lastSurveyMs + 1000L) {
             lastSurveyMs = now;
@@ -40,12 +42,12 @@ public final class RadiationHud {
             lastRadiation = radiation;
         }
 
-        float rate = Math.max(ClientRadiationData.getEnvironment(), lastRadiation - previousRadiation);
+        int barLength = 74;
         int width = 94;
         int height = 18;
-        int x = screenWidth - width - 16;
-        int y = screenHeight - height - 24;
-        int bar = Math.min(74, Math.round(radiation / 1000.0F * 74.0F));
+        int x = 16 + HbmClientConfig.GEIGER_OFFSET_HORIZONTAL.get();
+        int y = screenHeight - 20 - HbmClientConfig.GEIGER_OFFSET_VERTICAL.get();
+        int bar = (int) Math.min(radiation / 1000.0F * barLength, barLength);
 
         graphics.blit(OVERLAY_MISC, x, y, 0, 0, width, height);
         if (bar > 0) {
@@ -54,14 +56,14 @@ public final class RadiationHud {
 
         if (rate > 0.0F) {
             if (rate >= 25.0F) {
-                graphics.blit(OVERLAY_MISC, x + 76, y - 18, 36, 36, 18, 18);
+                graphics.blit(OVERLAY_MISC, x + barLength + 2, y - 18, 36, 36, 18, 18);
             } else if (rate >= 10.0F) {
-                graphics.blit(OVERLAY_MISC, x + 76, y - 18, 18, 36, 18, 18);
+                graphics.blit(OVERLAY_MISC, x + barLength + 2, y - 18, 18, 36, 18, 18);
             } else if (rate >= 2.5F) {
-                graphics.blit(OVERLAY_MISC, x + 76, y - 18, 0, 36, 18, 18);
+                graphics.blit(OVERLAY_MISC, x + barLength + 2, y - 18, 0, 36, 18, 18);
             }
             String label = rate > 1000.0F ? ">1000 RAD/s" : rate >= 1.0F ? Math.round(rate) + " RAD/s" : "<1 RAD/s";
-            graphics.drawString(Minecraft.getInstance().font, label, x, y - 10, 0xFFFF4444, false);
+            graphics.drawString(Minecraft.getInstance().font, label, x, y - 8, 0xFFFF0000, false);
         }
     }
 

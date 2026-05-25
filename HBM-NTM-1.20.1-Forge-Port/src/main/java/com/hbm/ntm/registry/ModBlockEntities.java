@@ -96,7 +96,24 @@ public final class ModBlockEntities {
                             ModBlocks.MACHINE_PUMPJACK.get(),
                             ModBlocks.MACHINE_CENTRIFUGE.get(),
                             ModBlocks.MACHINE_ORE_SLOPPER.get(),
-                            ModBlocks.MACHINE_GASFLARE.get()).build(null));
+                            ModBlocks.MACHINE_GASFLARE.get(),
+                            ModBlocks.MACHINE_ASSEMBLY_FACTORY.get(),
+                            ModBlocks.MACHINE_PUREX.get(),
+                            ModBlocks.MACHINE_SILEX.get(),
+                            ModBlocks.MACHINE_EXPOSURE_CHAMBER.get(),
+                            ModBlocks.MACHINE_CYCLOTRON.get(),
+                            ModBlocks.MACHINE_ARC_WELDER.get(),
+                            ModBlocks.MACHINE_SOLDERING_STATION.get(),
+                            ModBlocks.MACHINE_MIXER.get(),
+                            ModBlocks.MACHINE_RADIOLYSIS.get(),
+                            ModBlocks.MACHINE_RADGEN.get(),
+                            ModBlocks.MACHINE_ROTARY_FURNACE.get(),
+                            ModBlocks.MACHINE_STEAM_ENGINE.get(),
+                            ModBlocks.MACHINE_SOLAR_BOILER.get(),
+                            ModBlocks.MACHINE_TOWER_SMALL.get(),
+                            ModBlocks.MACHINE_TOWER_LARGE.get(),
+                            ModBlocks.MACHINE_TURBOFAN.get(),
+                            ModBlocks.MACHINE_TURBINEGAS.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<TrinketBlockEntity>> TRINKET =
             BLOCK_ENTITIES.register("trinket", () ->

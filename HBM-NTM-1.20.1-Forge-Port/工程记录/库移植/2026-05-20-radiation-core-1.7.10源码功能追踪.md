@@ -181,7 +181,7 @@
 本批已调整时序：
 
 - 玩家背包/护甲/副手物品辐射从每秒一次总量污染改为每 tick 按 `/20` 累计，保持 RAD/s 语义，同时让 `radEnv` 反映当秒累积剂量。
-- living tick 中先处理 chunk 辐射、辐射效果和 digamma，再在每秒边界刷新 `radEnv -> radBuf`，随后同步玩家客户端数据。
+- 2026-05-24 复核后修正：living tick 的每秒边界应先刷新 `radEnv -> radBuf` 并同步玩家客户端数据，再处理本 tick 的 chunk 辐射、辐射效果和 digamma；这对齐 1.7.10 `EntityEffectHandler#onUpdate` 的顺序。
 
 仍未完成：
 
@@ -1450,6 +1450,162 @@ Still incomplete:
 
 - Yellow chunk-radiation fog now has the correct library-side threshold/chance rules from previous passes, but client visual verification still needs an in-game run after this semantic cleanup.
 - PRISM/NT/3D chunk handlers remain deferred; current behavior remains aligned to the default Simple handler.
+
+Verification:
+
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-24 Entity Radiation Buffer And Geiger HUD Timing Fix
+
+Legacy source re-checked:
+
+- `com.hbm.handler.EntityEffectHandler#onUpdate`
+- `com.hbm.extprop.HbmLivingProps`
+- `com.hbm.util.ContaminationUtil#contaminate`
+- `com.hbm.render.util.RenderScreenOverlay#renderRadCounter`
+- `com.hbm.main.ModEventHandlerClient`
+- `com.hbm.items.tool.ItemGeigerCounter`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple`
+- `src/main/java/com/hbm/ntm/radiation/RadiationSavedData.java`
+
+Findings:
+
+- 1.7.10 `ContaminationUtil#contaminate` adds raw radiation exposure to `radEnv` before protection checks, then applies armor/resistance only to stored player `radiation`.
+- 1.7.10 refreshes `radBuf` from `radEnv` at the start of the entity update's 20-tick boundary, clears `radEnv`, then sends player ext-prop sync before this tick's new environmental radiation is applied.
+- 1.7.10 Geiger HUD receives stored player `radiation` as `in`; the displayed `RAD/s` number is `lastResult - prevResult`, therefore it is based on actual stored-dose delta after resistance/armor mitigation, not on raw `radBuf`.
+- The held/inventory Geiger click cadence still uses raw `radBuf`; the right-click Geiger environmental line also reports raw `radBuf`, matching old behavior.
+- The default Geiger radiation bar position is left-bottom: `posX = 16 + offset`, `posY = scaledHeight - 20 - offset`; current port had drifted to bottom-right.
+- Chunk radiation was re-checked against the default 1.7.10 Simple handler:
+  - it remains whole-column/2D by chunk and should not gain Y-axis falloff in this path;
+  - the modern diffusion weights and previous-buffer merge shape match the already-recorded Simple handler parity pass;
+  - the mismatch found in this audit was entity environment-buffer/HUD timing, not the Simple chunk-radiation storage algorithm.
+
+Corrected in this pass:
+
+- Moved modern `RadiationData.flushEnvironmentBuffer` and player radiation sync ahead of the tick's chunk/effect contamination work.
+- Changed `RadiationHud` displayed intake rate from `max(ClientRadiationData.environment, stored-dose delta)` to the stored-dose delta only, matching old post-mitigation HUD semantics.
+- Restored legacy HUD default placement and draw details:
+  - `x = 16`
+  - `y = screenHeight - 20`
+  - 74-pixel truncated bar scaling against `1000 RAD`
+  - warning icon at `x + 74 + 2`
+  - label at `y - 8`
+  - legacy red text color.
+
+Still incomplete:
+
+- The old client-configurable Geiger offsets and the item-owned Geiger click source were still pending after this timing fix; both are handled in the following Geiger client-config pass.
+
+Verification:
+
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
+
+## 2026-05-24 Geiger Client Config And Item Sound Parity Pass
+
+Legacy source re-checked:
+
+- `com.hbm.config.ClientConfig`
+- `com.hbm.items.tool.ItemGeigerCounter#onUpdate`
+- `com.hbm.extprop.HbmLivingProps#getRadBuf`
+- `com.hbm.render.util.RenderScreenOverlay#renderRadCounter`
+
+Findings:
+
+- 1.7.10 exposes `GEIGER_OFFSET_HORIZONTAL` and `GEIGER_OFFSET_VERTICAL` in `hbmClient.json`, both defaulting to `0`.
+- `RenderScreenOverlay#renderRadCounter` applies those as:
+  - `posX = 16 + GEIGER_OFFSET_HORIZONTAL`
+  - `posY = scaledHeight - 20 - GEIGER_OFFSET_VERTICAL`
+- 1.7.10 Geiger click sounds are owned by the item update itself:
+  - server side only;
+  - every 5 world ticks;
+  - uses raw `HbmLivingProps.getRadBuf(living)`;
+  - chooses from the same threshold candidate list and plays `hbm:item.geiger<N>` at the entity.
+
+Corrected in this pass:
+
+- Added `HbmClientConfig` and registered `hbm-client.toml` as a Forge client config.
+- Added `geigerOffsetHorizontal` and `geigerOffsetVertical`, preserving old defaults and movement directions.
+- `RadiationHud` now applies these offsets on top of the legacy left-bottom default.
+- Moved Geiger click behavior into `GeigerCounterItem#inventoryTick` on the server side and removed the client tick approximation from `ClientForgeEvents`.
+- The click cadence still uses raw `radBuf`, while the HUD intake label still uses stored-radiation delta after mitigation.
+
+Still incomplete:
+
+- The old `/ntmclient` in-game config editor is not migrated; the modern config is edited through Forge's generated `hbm-client.toml`.
+- In-game audio verification is still useful because modern server-to-client sound dispatch differs from old `playSoundAtEntity`, even though the owner/timing/source semantics now match.
+
+Verification:
+
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
+
+## 2026-05-24 Modern Wood/Fence Radiation Penetration Override
+
+Modern design requirement:
+
+- The 1.20.1 port intentionally diverges from the 1.7.10 Simple handler for wood and fence-like cover.
+- Player-facing rule: all wood / wooden construction / fence-like blocks should be transparent to chunk-radiation vegetation destruction, because solid wooden structures fully shielding grass from high radiation feels wrong in the modern port.
+
+Legacy contrast:
+
+- 1.7.10 `ChunkRadiationHandlerSimple#handleWorldDestruction` still only sampled the top `getHeightValue - rand(2)` surface and therefore did not penetrate full wooden roofs.
+- 1.7.10 `EntityFalloutRain#stomp` did penetrate via its full-column scan and `FalloutConfigJSON`, where logs/planks are converted and other `Material.wood` is destroyed without increasing the depth counter.
+- This pass extends only the modern Simple height-selection helper, not the underlying 2D chunk-radiation storage model.
+
+Corrected in this pass:
+
+- `LegacyRadiationWorldUtil#isLegacyHeightBlocking` now treats wood/fence-like blocks as transparent for the modern height scan:
+  - `BlockTags.LOGS`, `LOGS_THAT_BURN`, `PLANKS`;
+  - wooden doors, trapdoors, stairs, slabs, fences, buttons, pressure plates;
+  - all fences and fence gates;
+  - signs and hanging signs;
+  - `waste_log` and `waste_planks`;
+  - a conservative path-token fallback for modded ids containing `wood`, `log`, `logs`, `plank`, `planks`, `fence`, or `fences`.
+- Non-wood full solid blocks still terminate the Simple surface scan.
+- Normal leaves still terminate the Simple surface scan until converted, preserving top-canopy behavior.
+
+Verification:
+
+- 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-05-24 Legacy Height Blocking Re-Audit Fix
+
+Legacy source re-checked:
+
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple#handleWorldDestruction`
+- `com.hbm.entity.effect.EntityFalloutRain#stomp`
+- `com.hbm.blocks.generic.WasteLeaves`
+- `com.hbm.blocks.generic.BlockLayering`
+- `com.hbm.blocks.generic.BlockBarrier`
+- `com.hbm.blocks.ModBlocks`
+
+Findings:
+
+- The previous modern `legacyHeightValue` helper used `BlockState#getLightBlock > 0` as a broad proxy for 1.7.10 `World#getHeightValue`.
+- That was still too conservative for several migrated legacy cases:
+  - `waste_leaves` in 1.7.10 is a custom non-opaque block, not vanilla `BlockLeaves`, and should not keep acting as the top height blocker after a leaf has already been killed.
+  - `leaves_layer` explicitly has old `setLightOpacity(0)` and is replaceable, so it should not terminate the height scan.
+  - `BlockBarrier`/wood barrier and other non-full visual blocks are not old opaque cubes; treating modern partial light blocking as a hard roof makes grass under railings or thin eaves survive too long.
+- This explains the live symptom where the first canopy layer becomes `waste_leaves`, but the next leaf layer or grass beneath thin blockers remains slower than expected: the scan kept stopping on already-dead or partial-cover blocks.
+
+Corrected in this pass:
+
+- Added `com.hbm.ntm.radiation.LegacyRadiationWorldUtil`.
+- Centralized the old-style height scan for both Simple chunk-radiation effects and fallout rain.
+- The height scan now ignores:
+  - air;
+  - snow;
+  - fallout layer;
+  - `leaves_layer`;
+  - `waste_leaves`.
+- Vanilla/normal leaves remain height blockers so the Simple handler still behaves as a top-canopy sampler before the leaf is first converted.
+- Other blocks terminate the scan only when they are full solid renders, preventing modern fences/railings/thin non-full blocks from shielding the grass column like an opaque roof.
+- `LegacyWasteLeavesBlock#getLightBlock` now returns `0`, matching the old custom waste-leaf block's non-opaque/light-passing role more closely.
+
+Boundary:
+
+- This still does not turn the default Simple handler into a full vertical-column mutation system.
+- Opaque full blocks remain true cover for Simple world destruction.
+- Covered vegetation under real full roofs is still primarily the fallout/impact/pollution-style path, not the default Simple chunk-radiation surface pass.
 
 Verification:
 

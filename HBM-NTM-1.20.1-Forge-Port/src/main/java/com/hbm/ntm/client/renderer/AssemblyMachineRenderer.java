@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMachineBlockEntity> {
-    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(
+    static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(
             new ResourceLocation("hbm", "models/block/machines/assembly_machine.obj"),
             new ResourceLocation("hbm", "textures/block/machines/assembly_machine.png"));
 
@@ -34,21 +34,22 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
     public void render(AssemblyMachineBlockEntity assembler, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = assembler.getBlockState();
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(assembler, packedLight);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F + blockstateModelYRotation(state)));
 
-        MODEL.renderPart("Base", poseStack, buffer, packedLight, packedOverlay);
+        MODEL.renderPart("Base", poseStack, buffer, modelLight, packedOverlay);
         if (assembler.shouldRenderFrame()) {
-            MODEL.renderPart("Frame", poseStack, buffer, packedLight, packedOverlay);
+            MODEL.renderPart("Frame", poseStack, buffer, modelLight, packedOverlay);
         }
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees((float) assembler.getRing(partialTick)));
-        MODEL.renderPart("Ring", poseStack, buffer, packedLight, packedOverlay);
-        renderArm(poseStack, buffer, packedLight, packedOverlay, assembler.getArm(0).getPositions(partialTick), false);
-        renderArm(poseStack, buffer, packedLight, packedOverlay, assembler.getArm(1).getPositions(partialTick), true);
+        MODEL.renderPart("Ring", poseStack, buffer, modelLight, packedOverlay);
+        renderArm(poseStack, buffer, modelLight, packedOverlay, assembler.getArm(0).getPositions(partialTick), false);
+        renderArm(poseStack, buffer, modelLight, packedOverlay, assembler.getArm(1).getPositions(partialTick), true);
         poseStack.popPose();
 
         poseStack.popPose();

@@ -62,6 +62,10 @@ public final class ClientTileBinaryData {
         return CHUNKS.size();
     }
 
+    public static void clearAll() {
+        CHUNKS.clear();
+    }
+
     public static int pruneExpired(long gameTime) {
         int before = CHUNKS.size();
         CHUNKS.values().removeIf(assembly -> gameTime - assembly.lastTouchedGameTime > TRANSFER_TIMEOUT_TICKS);

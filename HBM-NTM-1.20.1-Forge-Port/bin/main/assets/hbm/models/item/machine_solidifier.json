@@ -1,3 +1,3 @@
 {
-  "parent": "hbm:block/machines/solidifier"
+  "parent": "minecraft:builtin/entity"
 }

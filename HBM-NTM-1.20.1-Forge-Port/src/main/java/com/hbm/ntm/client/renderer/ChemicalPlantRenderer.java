@@ -40,6 +40,7 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         }
 
         LegacyMachineDefinition definition = block.definition();
+        int modelLight = LegacyRenderLighting.resolveMachineLight(chemicalPlant, state, definition, packedLight);
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
                 key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()));
         float anim = Mth.lerp(partialTick, chemicalPlant.getPrevAnim(), chemicalPlant.getAnim());
@@ -48,21 +49,21 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
 
-        model.renderPart("Base", definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        model.renderPart("Base", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         if (chemicalPlant.shouldRenderFrame()) {
-            model.renderPart("Frame", definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            model.renderPart("Frame", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         }
 
         poseStack.pushPose();
         poseStack.translate(Math.sin(anim * 0.125F) * 0.375D, 0.0D, 0.0D);
-        model.renderPart("Slider", definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        model.renderPart("Slider", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees((anim * 15.0F) % 360.0F));
         poseStack.translate(-0.5D, 0.0D, -0.5D);
-        model.renderPart("Spinner", definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        model.renderPart("Spinner", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
         poseStack.popPose();

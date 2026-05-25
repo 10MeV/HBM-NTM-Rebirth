@@ -41,6 +41,10 @@ public final class ClientInformMessages {
         }
     }
 
+    public static void clearAll() {
+        NOTICES.clear();
+    }
+
     private record Notice(Component message, long expiresAtMillis) {
     }
 

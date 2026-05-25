@@ -18,6 +18,16 @@ public class LegacyDemonLampBlockEntityRenderer implements BlockEntityRenderer<L
     }
 
     @Override
+    public boolean shouldRenderOffScreen(LegacyDemonLampBlockEntity blockEntity) {
+        return true;
+    }
+
+    @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.MACHINE;
+    }
+
+    @Override
     public void render(LegacyDemonLampBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = blockEntity.getBlockState();

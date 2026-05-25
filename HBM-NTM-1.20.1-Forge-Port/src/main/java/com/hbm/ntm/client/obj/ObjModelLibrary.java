@@ -118,6 +118,14 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MACHINE_DFC_EMITTER = ObjMachineModels.DFC_EMITTER;
     public static final LegacyWavefrontModel MACHINE_DFC_RECEIVER = ObjMachineModels.DFC_RECEIVER;
     public static final LegacyWavefrontModel MACHINE_DFC_INJECTOR = ObjMachineModels.DFC_INJECTOR;
+    public static final LegacyWavefrontModel MACHINE_STIRLING = ObjMachineModels.STIRLING;
+    public static final LegacyWavefrontModel MACHINE_SAWMILL = ObjMachineModels.SAWMILL;
+    public static final LegacyWavefrontModel MACHINE_STRAND_CASTER = ObjMachineModels.STRAND_CASTER;
+    public static final LegacyWavefrontModel MACHINE_FURNACE_STEEL = ObjMachineModels.FURNACE_STEEL;
+    public static final LegacyWavefrontModel MACHINE_CONVEYOR_PRESS = ObjMachineModels.CONVEYOR_PRESS;
+    public static final LegacyWavefrontModel MACHINE_MICROWAVE = ObjMachineModels.MICROWAVE;
+    public static final LegacyWavefrontModel MACHINE_PISTON_INSERTER = ObjMachineModels.PISTON_INSERTER;
+    public static final LegacyWavefrontModel MACHINE_IGEN = ObjMachineModels.IGEN;
 
     public static final ObjModelPart NETWORK_CONNECTOR = ObjNetworkModels.CONNECTOR;
     public static final ObjModelPart NETWORK_CONNECTOR_SUPER = ObjNetworkModels.CONNECTOR_SUPER;

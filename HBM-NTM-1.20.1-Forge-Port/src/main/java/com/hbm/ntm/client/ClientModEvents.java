@@ -12,6 +12,7 @@ import com.hbm.ntm.client.particle.FlamethrowerParticle;
 import com.hbm.ntm.client.particle.FoamParticle;
 import com.hbm.ntm.client.particle.GasFlameParticle;
 import com.hbm.ntm.client.particle.HbmSmokeParticle;
+import com.hbm.ntm.client.particle.MukeWaveParticle;
 import com.hbm.ntm.client.particle.RadiationFogParticle;
 import com.hbm.ntm.client.particle.SchrabFogParticle;
 import com.hbm.ntm.client.particle.SmokePlumeParticle;
@@ -28,6 +29,8 @@ import com.hbm.ntm.client.renderer.LiquefactorRenderer;
 import com.hbm.ntm.client.renderer.MachineBatterySocketRenderer;
 import com.hbm.ntm.client.renderer.MovingPackageRenderer;
 import com.hbm.ntm.client.renderer.MovingItemRenderer;
+import com.hbm.ntm.client.renderer.RubbleRenderer;
+import com.hbm.ntm.client.renderer.ShrapnelRenderer;
 import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
 import com.hbm.ntm.client.screen.BasicMachineScreen;
 import com.hbm.ntm.client.screen.AssemblyMachineScreen;
@@ -87,8 +90,10 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK5.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK3.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.FALLOUT_RAIN.get(), NoopRenderer::new);
-        event.registerEntityRenderer(ModEntityTypes.SHRAPNEL.get(), NoopRenderer::new);
-        event.registerEntityRenderer(ModEntityTypes.RUBBLE.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.BALEFIRE_EXPLOSION.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.FALLING_NUKE.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.SHRAPNEL.get(), ShrapnelRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.RUBBLE.get(), RubbleRenderer::new);
     }
 
     @SubscribeEvent
@@ -143,6 +148,7 @@ public final class ClientModEvents {
         event.registerSpriteSet(ModParticleTypes.EXPLOSION_SMALL.get(), ExplosionSmallParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.BLACK_POWDER_SMOKE.get(), BlackPowderSmokeParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.ASHES.get(), AshesParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.MUKE_WAVE.get(), MukeWaveParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.TOWN_AURA.get(), TownAuraParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.SCHRAB_FOG.get(), SchrabFogParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.DEAD_LEAF.get(), DeadLeafParticle.Provider::new);

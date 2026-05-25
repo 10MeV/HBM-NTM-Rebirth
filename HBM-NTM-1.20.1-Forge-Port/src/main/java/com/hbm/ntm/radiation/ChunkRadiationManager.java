@@ -159,23 +159,11 @@ public final class ChunkRadiationManager {
     private static void spawnRadiationFog(ServerLevel level, ChunkPos chunkPos) {
         int x = chunkPos.getMinBlockX() + level.random.nextInt(16);
         int z = chunkPos.getMinBlockZ() + level.random.nextInt(16);
-        level.sendParticles(ModParticleTypes.RADIATION_FOG.get(), x, legacyHeightValue(level, x, z) + level.random.nextInt(5), z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        level.sendParticles(ModParticleTypes.RADIATION_FOG.get(), x, LegacyRadiationWorldUtil.legacyHeightValue(level, x, z) + level.random.nextInt(5), z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
     }
 
     private static BlockPos legacyWorldEffectSurface(ServerLevel level, int x, int z) {
-        return new BlockPos(x, legacyHeightValue(level, x, z) - level.random.nextInt(2), z);
-    }
-
-    private static int legacyHeightValue(ServerLevel level, int x, int z) {
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(x, level.getMaxBuildHeight() - 1, z);
-        for (int y = level.getMaxBuildHeight() - 1; y >= level.getMinBuildHeight(); y--) {
-            cursor.setY(y);
-            BlockState state = level.getBlockState(cursor);
-            if (!state.isAir() && state.getLightBlock(level, cursor) > 0) {
-                return y + 1;
-            }
-        }
-        return level.getMinBuildHeight();
+        return new BlockPos(x, LegacyRadiationWorldUtil.legacyHeightValue(level, x, z) - level.random.nextInt(2), z);
     }
 
     public static void unloadChunk(Level level, ChunkPos chunkPos) {

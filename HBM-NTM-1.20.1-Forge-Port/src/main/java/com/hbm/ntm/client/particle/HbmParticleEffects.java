@@ -315,8 +315,10 @@ public final class HbmParticleEffects {
 
         HbmDelayedSounds.playExplosionLarge(x, y, z, soundRange);
         level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 0.0D, 0.0D, 0.0D);
-        spawnRing(level, ParticleTypes.POOF, x, y + 0.25D, z, Math.max(16, (int) (waveScale * 0.8F)), waveScale * 0.05D);
-        spawnRadial(level, ParticleTypes.CLOUD, x, y + 0.15D, z, Math.max(12, (int) (waveScale * 0.5F)), waveScale * 0.02D);
+        Particle wave = MukeWaveParticle.create(level, x, y + 2.0D, z, waveScale, Math.max(1, (int) (25.0F * waveScale / 45.0F)));
+        if (wave != null) {
+            Minecraft.getInstance().particleEngine.add(wave);
+        }
 
         for (int i = 0; i < cloudCount; i++) {
             double motionX = random.nextGaussian() * 0.5D * cloudSpeedMult;
@@ -427,17 +429,17 @@ public final class HbmParticleEffects {
         double motionX = data.getDouble("mX");
         double motionY = data.getDouble("mY");
         double motionZ = data.getDouble("mZ");
-        level.addParticle(ModParticleTypes.BLACK_POWDER_SPARK.get(), x, y, z, motionX * 0.15D, motionY * 0.15D, motionZ * 0.15D);
-        if (data.getBoolean("smoking")) {
-            int smokeCount = Mth.clamp(getInt(data, "smokeLife", 12) / 4, 1, 12);
-            double lift = data.contains("smokeLift") ? data.getDouble("smokeLift") : 0.03D;
-            for (int i = 0; i < smokeCount; i++) {
-                level.addParticle(ParticleTypes.SMOKE, x, y, z,
-                        motionX * 0.03D + level.random.nextGaussian() * 0.01D,
-                        lift,
-                        motionZ * 0.03D + level.random.nextGaussian() * 0.01D);
-            }
-        }
+        Particle particle = new SpentCasingParticle(level, x, y, z, motionX, motionY, motionZ,
+                getFloat(data, "yaw", 0.0F),
+                getFloat(data, "pitch", 0.0F),
+                getFloat(data, "mPitch", 5.0F),
+                getFloat(data, "mYaw", 10.0F),
+                data.contains("name") ? data.getString("name") : "default",
+                data.getBoolean("smoking"),
+                getInt(data, "smokeLife", 0),
+                data.contains("smokeLift") ? data.getDouble("smokeLift") : 0.5D,
+                getInt(data, "nodeLife", 30));
+        Minecraft.getInstance().particleEngine.add(particle);
     }
 
     private static void spawnSkeleton(ClientLevel level, CompoundTag data, double x, double y, double z) {

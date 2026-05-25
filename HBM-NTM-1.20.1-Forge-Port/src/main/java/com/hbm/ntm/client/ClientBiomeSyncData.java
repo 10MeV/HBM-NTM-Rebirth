@@ -27,6 +27,10 @@ public final class ClientBiomeSyncData {
         return biomes == null ? Optional.empty() : Optional.of(Arrays.copyOf(biomes, biomes.length));
     }
 
+    public static void clearAll() {
+        CHUNK_BIOMES.clear();
+    }
+
     private ClientBiomeSyncData() {
     }
 }

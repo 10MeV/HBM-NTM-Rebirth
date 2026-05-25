@@ -1,6 +1,5 @@
 # Blender 4.0.2
 # www.blender.org
-mtllib CatalyticCrackerV2.mtl
 o Cube
 v 3.500000 0.000000 -3.500000
 v 3.500000 1.000000 -3.500000

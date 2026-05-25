@@ -1,6 +1,5 @@
 # Blender v2.79 (sub 0) OBJ File: 'lyser2.blend'
 # www.blender.org
-mtllib lyser2.mtl
 o Cube_Cube.001
 v 0.500000 1.000000 -5.500000
 v -0.500000 1.000000 -5.500000

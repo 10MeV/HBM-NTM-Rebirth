@@ -137,17 +137,17 @@ public final class CommonForgeEvents {
             return;
         }
 
-        handleChunkRadiation(entity);
-        handleLegacyRadiationEffects(entity);
-        handleDigammaEffects(entity);
-        handleLegacyLongTermEffects(entity);
-
         if (entity.tickCount % 20 == 0) {
             RadiationData.flushEnvironmentBuffer(entity);
             if (entity instanceof ServerPlayer serverPlayer) {
                 syncRadiation(serverPlayer);
             }
         }
+
+        handleChunkRadiation(entity);
+        handleLegacyRadiationEffects(entity);
+        handleDigammaEffects(entity);
+        handleLegacyLongTermEffects(entity);
     }
 
     private static Block legacyBlockOrNull(String legacyName) {
