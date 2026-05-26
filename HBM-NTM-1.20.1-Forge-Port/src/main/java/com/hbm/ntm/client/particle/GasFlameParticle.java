@@ -13,6 +13,7 @@ import java.awt.Color;
 
 @OnlyIn(Dist.CLIENT)
 public class GasFlameParticle extends TextureSheetParticle {
+    private static SpriteSet sharedSprites;
     private final SpriteSet sprites;
     private final float colorMod;
 
@@ -27,6 +28,10 @@ public class GasFlameParticle extends TextureSheetParticle {
         this.friction = 1.0F;
         updateColor();
         this.setSpriteFromAge(sprites);
+    }
+
+    public static SpriteSet sharedSprites() {
+        return sharedSprites;
     }
 
     @Override
@@ -67,6 +72,7 @@ public class GasFlameParticle extends TextureSheetParticle {
 
         public Provider(SpriteSet sprites) {
             this.sprites = sprites;
+            sharedSprites = sprites;
         }
 
         @Override

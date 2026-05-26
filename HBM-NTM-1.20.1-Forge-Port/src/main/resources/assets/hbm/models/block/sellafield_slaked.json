@@ -1,12 +1,6 @@
 {
-  "parent": "minecraft:block/cube",
+  "parent": "minecraft:block/cube_all",
   "textures": {
-    "particle": "hbm:block/sellafield_slaked",
-    "down": "hbm:block/sellafield_slaked",
-    "up": "hbm:block/sellafield_slaked_1",
-    "north": "hbm:block/sellafield_slaked_2",
-    "south": "hbm:block/sellafield_slaked_3",
-    "east": "hbm:block/sellafield_slaked_1",
-    "west": "hbm:block/sellafield_slaked_2"
+    "all": "hbm:block/sellafield_slaked"
   }
 }

@@ -1,6 +1,8 @@
 package com.hbm.ntm.explosion;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -44,6 +46,76 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
         this.gspNum = 1;
         this.gspX = Math.PI;
         this.gspY = 0.0D;
+    }
+
+    public void saveToNbt(CompoundTag tag, String name) {
+        tag.putInt(name + "gspNum", gspNum);
+        tag.putDouble(name + "gspX", gspX);
+        tag.putDouble(name + "gspY", gspY);
+        tag.putBoolean(name + "complete", isAusf3Complete);
+
+        ListTag chunkList = new ListTag();
+        for (Map.Entry<ChunkPos, List<FloatTriplet>> entry : perChunk.entrySet()) {
+            CompoundTag chunkTag = new CompoundTag();
+            chunkTag.putInt("x", entry.getKey().x);
+            chunkTag.putInt("z", entry.getKey().z);
+            List<FloatTriplet> tips = entry.getValue();
+            int[] tipBits = new int[tips.size() * 3];
+            for (int i = 0; i < tips.size(); i++) {
+                FloatTriplet tip = tips.get(i);
+                int offset = i * 3;
+                tipBits[offset] = Float.floatToIntBits(tip.xCoord);
+                tipBits[offset + 1] = Float.floatToIntBits(tip.yCoord);
+                tipBits[offset + 2] = Float.floatToIntBits(tip.zCoord);
+            }
+            chunkTag.putIntArray("tips", tipBits);
+            chunkList.add(chunkTag);
+        }
+        tag.put(name + "chunks", chunkList);
+
+        long[] order = new long[orderedChunks.size()];
+        for (int i = 0; i < orderedChunks.size(); i++) {
+            order[i] = orderedChunks.get(i).toLong();
+        }
+        tag.putLongArray(name + "order", order);
+    }
+
+    public void readFromNbt(CompoundTag tag, String name) {
+        if (tag.contains(name + "gspNum")) {
+            gspNum = Math.max(1, tag.getInt(name + "gspNum"));
+            gspX = tag.getDouble(name + "gspX");
+            gspY = tag.getDouble(name + "gspY");
+        }
+        isAusf3Complete = tag.getBoolean(name + "complete");
+        perChunk.clear();
+        orderedChunks.clear();
+
+        ListTag chunkList = tag.getList(name + "chunks", 10);
+        for (int i = 0; i < chunkList.size(); i++) {
+            CompoundTag chunkTag = chunkList.getCompound(i);
+            ChunkPos chunkPos = new ChunkPos(chunkTag.getInt("x"), chunkTag.getInt("z"));
+            int[] tipBits = chunkTag.getIntArray("tips");
+            List<FloatTriplet> tips = new ArrayList<>(tipBits.length / 3);
+            for (int j = 0; j + 2 < tipBits.length; j += 3) {
+                tips.add(new FloatTriplet(Float.intBitsToFloat(tipBits[j]),
+                        Float.intBitsToFloat(tipBits[j + 1]),
+                        Float.intBitsToFloat(tipBits[j + 2])));
+            }
+            if (!tips.isEmpty()) {
+                perChunk.put(chunkPos, tips);
+            }
+        }
+
+        for (long packed : tag.getLongArray(name + "order")) {
+            ChunkPos chunkPos = new ChunkPos(packed);
+            if (perChunk.containsKey(chunkPos)) {
+                orderedChunks.add(chunkPos);
+            }
+        }
+        if (isAusf3Complete && orderedChunks.isEmpty() && !perChunk.isEmpty()) {
+            orderedChunks.addAll(perChunk.keySet());
+            orderedChunks.sort(comparator);
+        }
     }
 
     public void collectTip(int count) {

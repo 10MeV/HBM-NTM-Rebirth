@@ -899,3 +899,46 @@
 
 - 已运行：`.\gradlew.bat clean compileJava processResources --no-daemon`
 - 结果：通过；编译器仅提示部分输入文件使用/覆盖已过时 API。
+
+## 2026-05-25 第二十批推进：muke cloud 帧图、UFO 云、野火云与 gasfire scale
+
+- 1.7.10 对照：
+  - `ClientProxy` aux 类型：
+    - `ufo`：读取 `motion`，生成 `ParticleMukeCloud`，水平速度为 `randGaussian * motion`，`motionY=0`。
+    - `bf`：生成 `ParticleMukeCloudBF`，速度为 0。
+    - `gasfire`：读取 `mX/mY/mZ/scale`，生成 `ParticleGasFlame`，`scale <= 0` 时回退 6.5。
+  - 旧触发点：
+    - `EntityUFO` 在 beam 打击地面时发送两次 `type=ufo` aux，范围 150。
+    - `EntityBuilding`、`EntityBoxcar`、`EntityTorpedo`、`EntityDuchessGambit`、`EntityQuackos` 等在生成或特殊效果时发送 `type=bf`。
+    - 旧 `ParticleUtil.spawnGasFlame(...)` 不写 `scale`，机器直接发 `gasfire` aux 时可写 `scale`。
+  - 旧资源：
+    - `textures/particle/explosion.png`
+    - `textures/particle/explosion_bf.png`
+  - `ParticleMukeCloud` 合同：
+    - 使用 5x5 帧图，按 `age * 25 / maxAge` 选帧。
+    - `motionY > 0`、`motionY == 0`、`motionY < 0` 分别使用不同寿命与摩擦。
+    - `particleScale=3`，fullbright，前 2 tick noClip，onGround 后水平速度额外衰减。
+- 本批现代迁移：
+  - 复制旧资源：
+    - `assets/hbm/textures/particle/explosion.png`
+    - `assets/hbm/textures/particle/explosion_bf.png`
+  - 新增 `MukeCloudParticle`：
+    - 直接绑定旧 5x5 帧图贴图，不拆分到粒子图集。
+    - 保留 3.0 quad scale、寿命/摩擦分支、fullbright、前 2 tick 无碰撞和地面速度衰减。
+    - 普通与野火分别使用独立 RenderType，避免同批粒子换贴图。
+  - `HbmParticleEffects`：
+    - `muke/tinytot` 的 mushroom cloud 从 `EX_SMOKE/WITCH` 近似切换为 `MukeCloudParticle`。
+    - 新增 `ufo` 和 `bf` aux 分发。
+    - `gasfire` 改为读取 `scale` 并直接构造 `GasFlameParticle`；若 sprite 尚未就绪，则退回注册粒子默认路径。
+  - `ParticleUtil` 新增公共入口：
+    - `TYPE_UFO/TYPE_BALEFIRE_CLOUD`
+    - `spawnUfoCloud(...)`、`spawnBalefireCloud(...)`
+    - `spawnGasFlame(..., scale)` 重载。
+- 边界：
+  - `ParticleMukeFlash` 的 flare billboard 尚未补入，本批只补 muke cloud 帧图本体和 `ufo/bf` 两个孤立 aux。
+  - `frozen`、`vanish`、`marker` 仍属于客户端状态/HUD 标记库，不在本批粒子效果内迁。
+
+## 2026-05-25 第二十批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。

@@ -1,8 +1,8 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.multiblock.MultiblockCoreBlock;
 import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import com.hbm.ntm.multiblock.LegacyProxyMode;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -56,7 +56,8 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
         if (!level.hasChunkAt(blockEntity.corePos)) {
             return;
         }
-        if (!(level.getBlockState(blockEntity.corePos).getBlock() instanceof MultiblockCoreBlock)) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCoreAt(level, blockEntity.corePos);
+        if (!MultiblockHelper.ownsDummy(level, core, pos)) {
             level.removeBlock(pos, false);
         }
     }
@@ -107,14 +108,11 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
     }
 
     public InteractionResult forwardUse(ServerPlayer player, InteractionHand hand, BlockHitResult hit) {
-        if (level == null || corePos == null || corePos.equals(worldPosition) || !level.hasChunkAt(corePos)) {
+        MultiblockHelper.CoreLookup core = validCore();
+        if (level == null || core == null) {
             return InteractionResult.PASS;
         }
-        BlockState coreState = level.getBlockState(corePos);
-        if (!(coreState.getBlock() instanceof MultiblockCoreBlock)) {
-            return InteractionResult.PASS;
-        }
-        return coreState.use(level, player, hand, hit.withPosition(corePos));
+        return core.state().use(level, player, hand, hit.withPosition(core.pos()));
     }
 
     public void setDropCoreOnRemoval(boolean dropCoreOnRemoval) {
@@ -127,18 +125,17 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
 
     public void destroyCore(boolean drop) {
         dropCoreOnRemoval = false;
-        if (level != null && corePos != null && !corePos.equals(worldPosition)
-                && level.hasChunkAt(corePos)
-                && level.getBlockState(corePos).getBlock() instanceof MultiblockCoreBlock) {
-            level.destroyBlock(corePos, drop);
+        MultiblockHelper.CoreLookup core = validCore();
+        if (level != null && core != null && !core.pos().equals(worldPosition)) {
+            level.destroyBlock(core.pos(), drop);
         }
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        if (proxyMode.allows(capability) && level != null && corePos != null && !corePos.equals(worldPosition)
-                && level.hasChunkAt(corePos)) {
-            BlockEntity coreEntity = level.getBlockEntity(corePos);
+        MultiblockHelper.CoreLookup core = validCore();
+        if (proxyMode.allows(capability) && level != null && core != null && !core.pos().equals(worldPosition)) {
+            BlockEntity coreEntity = level.getBlockEntity(core.pos());
             if (coreEntity != null && !coreEntity.isRemoved()) {
                 ICapabilityProvider target = coreEntity;
                 if (coreEntity instanceof LegacyProxyDelegateProvider delegateProvider) {
@@ -151,6 +148,15 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
             }
         }
         return super.getCapability(capability, side);
+    }
+
+    @Nullable
+    private MultiblockHelper.CoreLookup validCore() {
+        if (level == null || corePos == null || corePos.equals(worldPosition) || !level.hasChunkAt(corePos)) {
+            return null;
+        }
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCoreAt(level, corePos);
+        return MultiblockHelper.ownsDummy(level, core, worldPosition) ? core : null;
     }
 
     @Override

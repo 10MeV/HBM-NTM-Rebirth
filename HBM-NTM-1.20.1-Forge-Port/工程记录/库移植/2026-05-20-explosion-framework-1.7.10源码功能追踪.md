@@ -1660,6 +1660,44 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks` 通过。
 
+### 2026-05-26 追加：Torex 黑幕、追踪重入与 MK5 进度保存修正
+
+复核来源：
+
+- `com.hbm.entity.effect.EntityNukeTorex`
+- `com.hbm.render.entity.effect.RenderTorex`
+- `com.hbm.explosion.ExplosionNukeRayBatched`
+- `com.hbm.entity.logic.EntityNukeExplosionMK5`
+
+旧版行为要点：
+
+- `RenderTorex#flashWrapper` 对 `textures/particle/flare.png` 使用 `GL_SRC_ALPHA, GL_ONE` 加法混合；黑底 flare 贴图不应按普通 alpha 混合画成方形黑幕。
+- `RenderTorex#cloudletWrapper` 对云团使用普通 alpha 混合、关闭 depth mask；flare 和 cloudlet 的混合状态不是同一种。
+- 声波到达客户端玩家后，旧 `RenderTorex` 只触发一次：`hurtTime = 15`、`maxHurtTime = 15`、`attackedAtYaw = 0F`，作为手持物/物品栏的受击摇晃视觉。
+- 旧 `EntityNukeTorex` 自身不写 NBT，并通过 `TrackerUtil.setTrackingRange(world, torex, 1000)` 尽量保持客户端持续追踪；现代测试环境中离开追踪范围后重入会重新从 0 tick 播放，需要额外同步视觉 age。
+- `EntityNukeExplosionMK5` 旧路径由 `ExplosionNukeRayBatched` 分批缓存/破坏；现代端如果只保存 tick/strength 而不保存 batched ray 状态，卸载后会重新初始化进度。
+
+现代修正：
+
+- `NukeTorexRenderer` 拆出普通云团与 flare 的 RenderType：
+  - cloudlet 保持普通 alpha、无 depth write；
+  - flare 改为 `SRC_ALPHA/ONE` 加法混合、无 depth write，避免黑底贴图被当成半透明幕布。
+- `NukeTorexEntity` 新增同步 age：
+  - 服务端把当前 `tickCount` 写入 entity data；
+  - 新客户端追踪到实体时按同步 age 重建 cloudlet 状态，不再从初始核闪重新播放；
+  - catch-up 期间标记旧声音/摇晃已播放，避免重入区域后再次触发声波与 jolt。
+- `NukeTorexEntity` 现在保存 `ticksExisted`、`scale`、`type`，并允许保存实体；这是现代追踪/卸载需求的补强，旧版本身依赖大追踪半径而不是实体 NBT。
+- `NukeExplosionMk5Entity` 现在保存并恢复 `ExplosionNukeRayBatched` 的分批状态，包括 GSP 游标、每 chunk 的射线强度缓存和有序 chunk 列表，避免世界卸载后从头炸第二遍。
+
+仍缺/注意：
+
+- 现代端仍没有直接写旧 `attackedAtYaw` 的等价公开路径；当前保留 `hurtTime/hurtDuration` jolt，字段边界沿用 sound/particle 记录中的限制。
+- Torex catch-up 会按同步 age 重放云团生成逻辑来恢复视觉状态；这是为了保持旧 cloudlet 形态，极晚追踪时可能带来一次客户端补算成本。
+
+验证：
+
+- 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
 ## 验证清单
 
 - 普通爆炸不会在客户端修改世界。

@@ -7,6 +7,7 @@ import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
+import com.hbm.ntm.blockentity.HbmFluidBlockEntity;
 import com.hbm.ntm.client.ClientBinaryData;
 import com.hbm.ntm.client.ClientBiomeSyncData;
 import com.hbm.ntm.client.ClientInformMessages;
@@ -22,6 +23,7 @@ import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.event.CommonForgeEvents;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidForgeMappings;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.network.ModMessages;
@@ -52,13 +54,17 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -232,6 +238,11 @@ public final class ModCommands {
         return Commands.literal("fluid")
                 .then(Commands.literal("nodespace")
                         .executes(context -> getFluidNodespace(context.getSource())))
+                .then(Commands.literal("info")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .executes(context -> getFluidInfo(
+                                        context.getSource(),
+                                        BlockPosArgument.getLoadedBlockPos(context, "pos")))))
                 .then(Commands.literal("node")
                         .then(fluidNetworkArgument()))
                 .then(Commands.literal("network")
@@ -655,6 +666,50 @@ public final class ModCommands {
         return network.links();
     }
 
+    private static int getFluidInfo(CommandSourceStack source, BlockPos pos) {
+        BlockEntity blockEntity = CompatEnergyControl.findTileEntity(source.getLevel(), pos);
+        if (blockEntity == null) {
+            source.sendFailure(Component.literal("No block entity at " + pos.toShortString()));
+            return 0;
+        }
+
+        int hbmTanks = 0;
+        if (blockEntity instanceof HbmFluidBlockEntity fluidBlockEntity) {
+            List<HbmFluidTank> tanks = fluidBlockEntity.getAllTanks();
+            hbmTanks = tanks.size();
+            source.sendSuccess(() -> Component.literal("HBM fluid tanks at " + pos.toShortString()
+                    + ": " + tanks.size()), false);
+            for (int i = 0; i < tanks.size(); i++) {
+                int tankIndex = i;
+                HbmFluidTank tank = tanks.get(i);
+                source.sendSuccess(() -> formatHbmTank(tankIndex, tank), false);
+            }
+        }
+
+        List<String> capabilitySides = getFluidCapabilitySides(blockEntity);
+        FluidHandlerLookup handlerLookup = getFluidHandler(blockEntity);
+        if (handlerLookup.handler() == null) {
+            if (hbmTanks == 0) {
+                source.sendFailure(Component.literal("No HBM fluid tanks or Forge fluid handler at " + pos.toShortString()));
+                return 0;
+            }
+            source.sendSuccess(() -> Component.literal("Forge fluid capability: none"), false);
+            return hbmTanks;
+        }
+
+        IFluidHandler handler = handlerLookup.handler();
+        source.sendSuccess(() -> Component.literal("Forge fluid capability: sample=" + handlerLookup.source()
+                + " sides=" + capabilitySides
+                + " tanks=" + handler.getTanks()), false);
+        for (int i = 0; i < handler.getTanks(); i++) {
+            int tankIndex = i;
+            FluidStack stack = handler.getFluidInTank(i);
+            int capacity = handler.getTankCapacity(i);
+            source.sendSuccess(() -> formatForgeTank(tankIndex, stack, capacity), false);
+        }
+        return hbmTanks + handler.getTanks();
+    }
+
     private static int getUninosNodespace(CommandSourceStack source) {
         HbmUninosDiagnostics.Totals totals = HbmUninosDiagnostics.totals(source.getLevel());
         source.sendSuccess(() -> Component.literal("UNINOS nodespace: positions=" + totals.nodePositions()
@@ -789,6 +844,57 @@ public final class ModCommands {
                 + ", capacity=" + tank.getMaxFill()
                 + ", pressure=" + tank.getPressure()
                 + "}";
+    }
+
+    private static Component formatHbmTank(int index, HbmFluidTank tank) {
+        FluidType type = tank.getTankType();
+        return Component.literal("  [" + index + "] fluid=")
+                .append(type.getDisplayName())
+                .append(Component.literal(" (" + type.getName() + ") fill="
+                        + tank.getFill() + "/" + tank.getMaxFill() + " mB"
+                        + " pressure=" + tank.getPressure()
+                        + " forge=" + formatForgeMapping(type)));
+    }
+
+    private static String formatForgeMapping(FluidType type) {
+        if (type == HbmFluids.NONE) {
+            return "empty";
+        }
+        return HbmFluidForgeMappings.canExport(type) ? "exportable" : "hbm-only";
+    }
+
+    private static Component formatForgeTank(int index, FluidStack stack, int capacity) {
+        Component name = stack.isEmpty() ? Component.literal("empty") : stack.getDisplayName();
+        return Component.literal("  [" + index + "] fluid=")
+                .append(name)
+                .append(Component.literal(" amount=" + stack.getAmount() + "/" + capacity + " mB"));
+    }
+
+    private static FluidHandlerLookup getFluidHandler(BlockEntity blockEntity) {
+        IFluidHandler nullSide = blockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER).resolve().orElse(null);
+        if (nullSide != null) {
+            return new FluidHandlerLookup("null", nullSide);
+        }
+        for (Direction direction : Direction.values()) {
+            IFluidHandler sided = blockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER, direction).resolve().orElse(null);
+            if (sided != null) {
+                return new FluidHandlerLookup(direction.getName(), sided);
+            }
+        }
+        return new FluidHandlerLookup("none", null);
+    }
+
+    private static List<String> getFluidCapabilitySides(BlockEntity blockEntity) {
+        List<String> sides = new ArrayList<>();
+        if (blockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER).isPresent()) {
+            sides.add("null");
+        }
+        for (Direction direction : Direction.values()) {
+            if (blockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER, direction).isPresent()) {
+                sides.add(direction.getName());
+            }
+        }
+        return sides;
     }
 
     private static int toggleEnergyDebugParticles(CommandSourceStack source) {
@@ -1182,6 +1288,9 @@ public final class ModCommands {
 
     private static float round(float value) {
         return Math.round(value * 10.0F) / 10.0F;
+    }
+
+    private record FluidHandlerLookup(String source, IFluidHandler handler) {
     }
 
     private ModCommands() {

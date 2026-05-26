@@ -435,50 +435,59 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     }
 
     private void sellafieldSlakedWithItem(RegistryObject<Block> block, String modelName) {
-        ModelFile model = sellafieldSlakedModel(modelName);
+        ModelFile[] models = sellafieldSlakedModels(modelName);
         for (int level = 0; level <= 15; level++) {
-            getVariantBuilder(block.get())
-                    .partialState().with(LegacySellafieldSlakedBlock.LEVEL, level).modelForState()
-                    .modelFile(model).addModel();
+            var state = getVariantBuilder(block.get())
+                    .partialState().with(LegacySellafieldSlakedBlock.LEVEL, level).modelForState();
+            for (ModelFile model : models) {
+                state.modelFile(model).addModel();
+            }
         }
-        simpleBlockItem(block.get(), model);
+        simpleBlockItem(block.get(), models[0]);
     }
 
     private void sellafieldOreWithItem(RegistryObject<Block> block, LegacySellafieldOreBlock.Kind kind) {
         String name = block.getId().getPath();
-        ModelFile model = models().withExistingParent(name, new ResourceLocation("block/block"))
-                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked"))
-                .texture("base", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked"))
-                .texture("base1", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_1"))
-                .texture("base2", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_2"))
-                .texture("base3", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_3"))
-                .texture("overlay", new ResourceLocation(HbmNtm.MOD_ID, "block/ore_overlay_" + kind.overlayTexture()))
-                .element()
-                    .from(0.0F, 0.0F, 0.0F)
-                    .to(16.0F, 16.0F, 16.0F)
-                    .allFaces((direction, face) -> face.texture("#base"))
-                    .end()
-                .element()
-                    .from(0.0F, 0.0F, 0.0F)
-                    .to(16.0F, 16.0F, 16.0F)
-                    .allFaces((direction, face) -> face.texture("#overlay").cullface(direction))
-                    .end();
+        ModelFile[] models = sellafieldOreModels(name, kind);
         for (int level = 0; level <= 15; level++) {
-            getVariantBuilder(block.get())
-                    .partialState().with(LegacySellafieldSlakedBlock.LEVEL, level).modelForState()
-                    .modelFile(model).addModel();
+            var state = getVariantBuilder(block.get())
+                    .partialState().with(LegacySellafieldSlakedBlock.LEVEL, level).modelForState();
+            for (ModelFile model : models) {
+                state.modelFile(model).addModel();
+            }
         }
-        simpleBlockItem(block.get(), model);
+        simpleBlockItem(block.get(), models[0]);
     }
 
-    private ModelFile sellafieldSlakedModel(String modelName) {
-        return models().withExistingParent(modelName, new ResourceLocation("block/cube"))
-                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked"))
-                .texture("down", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked"))
-                .texture("up", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_1"))
-                .texture("north", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_2"))
-                .texture("south", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_3"))
-                .texture("east", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_1"))
-                .texture("west", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked_2"));
+    private ModelFile[] sellafieldSlakedModels(String modelName) {
+        ModelFile[] result = new ModelFile[4];
+        for (int i = 0; i < result.length; i++) {
+            String suffix = i == 0 ? "" : "_" + i;
+            result[i] = models().cubeAll(modelName + suffix, new ResourceLocation(HbmNtm.MOD_ID,
+                    "block/sellafield_slaked" + suffix));
+        }
+        return result;
+    }
+
+    private ModelFile[] sellafieldOreModels(String name, LegacySellafieldOreBlock.Kind kind) {
+        ModelFile[] result = new ModelFile[4];
+        for (int i = 0; i < result.length; i++) {
+            String suffix = i == 0 ? "" : "_" + i;
+            result[i] = models().withExistingParent(name + suffix, new ResourceLocation("block/block"))
+                    .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked" + suffix))
+                    .texture("base", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked" + suffix))
+                    .texture("overlay", new ResourceLocation(HbmNtm.MOD_ID, "block/ore_overlay_" + kind.overlayTexture()))
+                    .element()
+                        .from(0.0F, 0.0F, 0.0F)
+                        .to(16.0F, 16.0F, 16.0F)
+                        .allFaces((direction, face) -> face.texture("#base"))
+                        .end()
+                    .element()
+                        .from(0.0F, 0.0F, 0.0F)
+                        .to(16.0F, 16.0F, 16.0F)
+                        .allFaces((direction, face) -> face.texture("#overlay").cullface(direction))
+                        .end();
+        }
+        return result;
     }
 }

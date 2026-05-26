@@ -1,0 +1,8 @@
+{
+  "parent": "hbm:block/ore_sellafield_diamond",
+  "textures": {
+    "particle": "hbm:block/sellafield_slaked_3",
+    "base": "hbm:block/sellafield_slaked_3",
+    "overlay": "hbm:block/ore_overlay_diamond"
+  }
+}

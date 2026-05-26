@@ -24,8 +24,9 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
     private boolean fallout = true;
     private int falloutAdd;
     private long explosionStart;
+    private boolean initialized;
     private boolean expiredFromSave;
-    private ExplosionRay explosion;
+    private ExplosionNukeRayBatched explosion;
 
     public NukeExplosionMk5Entity(EntityType<? extends NukeExplosionMk5Entity> type, Level level) {
         super(type, level);
@@ -92,6 +93,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
             explosionStart = System.currentTimeMillis();
             explosion = new ExplosionNukeRayBatched(level(), blockPosition().getX(), blockPosition().getY(), blockPosition().getZ(),
                     strength, speed, length);
+            initialized = true;
         }
 
         if (!explosion.isComplete()) {
@@ -169,8 +171,14 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         length = tag.getInt("length");
         fallout = !tag.contains("fallout") || tag.getBoolean("fallout");
         falloutAdd = tag.getInt("falloutAdd");
+        initialized = tag.getBoolean("initialized");
         readChunkLoader(tag);
         expiredFromSave = shouldExpireFromSave(tag);
+        if (initialized && !expiredFromSave && strength > 0) {
+            explosion = new ExplosionNukeRayBatched(level(), blockPosition().getX(), blockPosition().getY(), blockPosition().getZ(),
+                    strength, speed, length);
+            explosion.readFromNbt(tag, "expl_");
+        }
     }
 
     @Override
@@ -181,6 +189,10 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         tag.putInt("length", length);
         tag.putBoolean("fallout", fallout);
         tag.putInt("falloutAdd", falloutAdd);
+        tag.putBoolean("initialized", initialized || explosion != null);
         saveChunkLoader(tag);
+        if (explosion != null) {
+            explosion.saveToNbt(tag, "expl_");
+        }
     }
 }

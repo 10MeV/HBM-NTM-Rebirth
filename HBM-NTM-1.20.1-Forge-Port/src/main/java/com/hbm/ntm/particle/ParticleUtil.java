@@ -39,6 +39,8 @@ public final class ParticleUtil {
     public static final String TYPE_PROPER_JOLT = "properJolt";
     public static final String TYPE_MUKE = "muke";
     public static final String TYPE_TINY_TOT = "tinytot";
+    public static final String TYPE_UFO = "ufo";
+    public static final String TYPE_BALEFIRE_CLOUD = "bf";
     public static final String TYPE_JETPACK = "jetpack";
     public static final String TYPE_BNUUY = "bnuuy";
     public static final String TYPE_JETPACK_BJ = "jetpack_bj";
@@ -49,11 +51,18 @@ public final class ParticleUtil {
     public static final int GIBLET_METAL = 2;
 
     public static void spawnGasFlame(Level level, double x, double y, double z, double motionX, double motionY, double motionZ) {
+        spawnGasFlame(level, x, y, z, motionX, motionY, motionZ, 6.5F);
+    }
+
+    public static void spawnGasFlame(Level level, double x, double y, double z, double motionX, double motionY, double motionZ, float scale) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_GAS_FLAME);
         data.putDouble("mX", motionX);
         data.putDouble("mY", motionY);
         data.putDouble("mZ", motionZ);
+        if (scale > 0.0F) {
+            data.putFloat("scale", scale);
+        }
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
@@ -167,6 +176,19 @@ public final class ParticleUtil {
             data.putBoolean("balefire", true);
         }
         spawnAux(level, x, y, z, data, 250.0D);
+    }
+
+    public static void spawnUfoCloud(Level level, double x, double y, double z, double motion) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_UFO);
+        data.putDouble("motion", motion);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnBalefireCloud(Level level, double x, double y, double z) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_BALEFIRE_CLOUD);
+        spawnAux(level, x, y, z, data, 150.0D);
     }
 
     public static void spawnJetpack(Level level, Entity player, int mode) {

@@ -1003,3 +1003,51 @@
 验证：
 
 - 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
+## 2026-05-25 dummy 归属校验收紧
+
+触发来源：
+
+- 继续推进多方块库时复核旧 `BlockDummyable#findCoreRec(...)` / `destroyIfOrphan(...)`：旧 dummy 不是只保存一个 core 坐标，而是通过自身 metadata 指向相邻同方块并最终回到 core；链路断裂、方向不匹配或旁边不是同一方块时会视为孤儿。
+- 现代端 dummy 直接保存 `CorePos`，此前只要 core 仍是 `MultiblockCoreBlock`，shape/右键/capability/破坏回溯就会继续生效；如果旧结构残留、朝向变化或错误填充留下了不属于当前 layout 的 dummy，现代端会比旧版更宽。
+
+本轮现代侧补齐：
+
+- `MultiblockCoreBlock` 新增 `ownsMultiblockDummy(state, level, corePos, dummyPos)`，作为 core 判断某个 dummy 是否属于自己结构的库级入口。
+- `LegacyXrMultiblockBlock` 与 `LegacyOffsetMultiblockBlock` 默认用自身 `LegacyMultiblockLayout.offsets()` 校验 `dummyPos - corePos`。
+- `MultiblockHelper.findCore(...)` 从 dummy 解析 core 时增加归属校验；不属于该 layout 的 dummy 不再被当作有效 core 成员。
+- `MultiblockDummyBlockEntity.serverTick(...)` 在 core 区块已加载时也用同一归属校验，失败则移除 dummy。
+
+对 1.7.10 的对齐说明：
+
+- 这不是复刻旧 metadata 指向链，而是补回“dummy 必须能被当前 core 的结构定义承认”的功能合同。
+- core 区块未加载时仍保持前几轮的保守等待策略，避免跨区块加载顺序导致合法 dummy 被误删。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
+## 2026-05-25 dummy 转发路径归属校验收口
+
+触发来源：
+
+- 上一轮已让 `MultiblockHelper.findCore(...)` 与 dummy tick 使用 `ownsMultiblockDummy(...)`，但 `MultiblockDummyBlockEntity` 内部仍有三条直接读取 `CorePos` 的路径：右键转发、破坏 core、capability proxy。
+- 旧 `BlockDummyable` 的这些行为都依赖 `findCore(...)`；如果 metadata 链不成立，就不会把 dummy 当成有效 core 成员。
+
+本轮现代侧补齐：
+
+- `MultiblockDummyBlockEntity` 新增私有 `validCore()`，统一执行：
+  - corePos 存在且不是自身；
+  - core 区块已加载；
+  - 目标仍是 `MultiblockCoreBlock`；
+  - `MultiblockCoreBlock#ownsMultiblockDummy(...)` 承认当前 dummy 坐标。
+- `forwardUse(...)`、`destroyCore(...)`、`getCapability(...)` 全部改用 `validCore()`。
+
+对 1.7.10 的对齐说明：
+
+- 这样 dummy 的右键、破坏联动和 proxy 能力转发与 shape/硬度/拾取一样，全部收束到同一套“有效 core 成员”判断。
+- 不属于当前 layout 的残留 dummy 即使还保存旧 `CorePos`，也不会继续打开 GUI、转发 capability 或破坏 core。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。

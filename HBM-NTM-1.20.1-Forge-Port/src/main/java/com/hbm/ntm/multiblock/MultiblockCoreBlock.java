@@ -11,6 +11,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * Marker for blocks that own dummy blocks placed by {@link MultiblockHelper}.
  */
 public interface MultiblockCoreBlock {
+    default boolean ownsMultiblockDummy(BlockState state, BlockGetter level, BlockPos corePos, BlockPos dummyPos) {
+        return true;
+    }
+
     default VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos, CollisionContext context) {
         return Shapes.block();
     }

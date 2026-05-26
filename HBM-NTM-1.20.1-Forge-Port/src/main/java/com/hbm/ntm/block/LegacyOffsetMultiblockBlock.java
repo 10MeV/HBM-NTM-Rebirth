@@ -9,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,11 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
 
     protected BlockPos getCoreFromPlacement(BlockPlaceContext context, BlockState state) {
         return context.getClickedPos();
+    }
+
+    @Override
+    public boolean ownsMultiblockDummy(BlockState state, BlockGetter level, BlockPos corePos, BlockPos dummyPos) {
+        return getLayout(state).containsOffset(dummyPos.subtract(corePos));
     }
 
     @Override

@@ -1,19 +1,19 @@
 package com.hbm.ntm.fluid;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
 import java.util.function.Consumer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 
 public class HbmForgeFluidType extends net.minecraftforge.fluids.FluidType {
-    private static final ResourceLocation STILL_TEXTURE = new ResourceLocation("minecraft", "block/water_still");
-    private static final ResourceLocation FLOWING_TEXTURE = new ResourceLocation("minecraft", "block/water_flow");
-
     private final FluidType hbmType;
+    private final ResourceLocation sprite;
 
     public HbmForgeFluidType(FluidType hbmType) {
         super(propertiesFor(hbmType));
         this.hbmType = hbmType;
+        this.sprite = new ResourceLocation(HbmNtm.MOD_ID, "block/fluid/" + hbmType.toPath());
     }
 
     public FluidType hbmType() {
@@ -25,17 +25,17 @@ public class HbmForgeFluidType extends net.minecraftforge.fluids.FluidType {
         consumer.accept(new IClientFluidTypeExtensions() {
             @Override
             public ResourceLocation getStillTexture() {
-                return STILL_TEXTURE;
+                return sprite;
             }
 
             @Override
             public ResourceLocation getFlowingTexture() {
-                return FLOWING_TEXTURE;
+                return sprite;
             }
 
             @Override
             public int getTintColor() {
-                return 0xFF000000 | (hbmType.getGuiTint() & 0xFFFFFF);
+                return 0xFFFFFFFF;
             }
         });
     }

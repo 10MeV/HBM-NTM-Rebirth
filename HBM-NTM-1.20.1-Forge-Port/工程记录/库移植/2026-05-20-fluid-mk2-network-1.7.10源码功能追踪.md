@@ -1192,6 +1192,43 @@ Verification:
 
 - `.\gradlew.bat compileJava processResources --no-daemon` passed before and after aligning Forge fluid description ids to `hbmfluid.*`.
 
+## 2026-05-25 Modern Library Pass 33
+
+This pass expands the fluid-library verification and external Forge-fluid presentation surface after the broad Forge registration pass:
+
+- Add `/hbm fluid info <pos>`:
+  - Resolves multiblock cores through the same `CompatEnergyControl.findTileEntity(...)` path used by `/hbm energy info <pos>`.
+  - Reports every internal `HbmFluidBlockEntity` tank with localized name, legacy internal id, fill, capacity, pressure, and whether that fluid is exportable to Forge or HBM-only.
+  - Reports the visible Forge `IFluidHandler` sample side, all capability sides, Forge tank count, displayed fluid, amount, and capacity.
+  - Keeps this as a read-only diagnostic command; it does not mutate tanks or network state.
+- Copy 154 legacy `assets/hbm/textures/gui/fluids/*.png` icons into the modern block texture namespace at `assets/hbm/textures/block/fluid/*.png`.
+- Update `HbmForgeFluidType` so generated Forge fluids use the copied legacy per-fluid sprite for still and flowing textures instead of the temporary vanilla water sprite.
+- Keep Forge-fluid tint white because the old built-in GUI fluid icons are already colored; this avoids double-tinting external fluid previews.
+- Keep this as an external handler/UI presentation bridge only. The fluids are still no-world-block/no-bucket entries from Pass 32.
+
+Still deferred:
+
+- Real fluid world blocks, buckets, flowing models, and old block-level fluid interactions remain deferred until a dedicated world-fluid slice.
+- The copied GUI icons are suitable for external fluid slot/UI display, but old true world fluid textures such as `sulfuric_acid_still/flowing`, `schrabidic_acid_still/flowing`, and custom water/oil/toxin bases still need a separate mapping pass before visible world fluids are enabled.
+- `NO_ID` fluids remain HBM-internal and do not receive Forge fluid entries.
+- Debug commands still do not provide mutating tank fill/drain operations; machine-level behavior should continue to be verified through normal slots/capabilities first.
+
+Progress estimate after Pass 33:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 89%.
+- Fluid network/provider/receiver algorithm: about 76%.
+- In-world pipe graph: about 49%.
+- Fluid item/container loading: about 81%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 64%.
+- Overall fluid library migration: about 89%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed after adding `/hbm fluid info <pos>`.
+- `.\gradlew.bat compileJava processResources --no-daemon` passed after copying legacy fluid sprites and wiring `HbmForgeFluidType`.
+
 ## 2026-05-23 Modern Library Pass 16
 
 This pass closes the concrete `FluidLoaderInfinite` gap left after the container item registration pass:

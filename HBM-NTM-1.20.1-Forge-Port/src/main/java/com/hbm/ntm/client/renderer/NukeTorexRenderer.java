@@ -4,16 +4,22 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity.Cloudlet;
 import com.hbm.ntm.entity.effect.NukeTorexEntity.TorexType;
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -31,6 +37,10 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
             new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/particle_base.png");
     private static final ResourceLocation FLARE_TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/flare.png");
+    private static final RenderType CLOUDLET_RENDER_TYPE = translucentNoDepth("hbm_torex_cloudlet", CLOUDLET_TEXTURE,
+            false);
+    private static final RenderType FLARE_RENDER_TYPE = translucentNoDepth("hbm_torex_flare", FLARE_TEXTURE,
+            true);
     private static final Comparator<Cloudlet> FAR_TO_NEAR =
             (first, second) -> Double.compare(second.renderSortDistanceSq, first.renderSortDistanceSq);
 
@@ -65,7 +75,7 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
     private void renderCloudlets(NukeTorexEntity entity, Vec3 cameraPos, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer) {
         sortCloudlets(entity, cameraPos);
-        VertexConsumer consumer = buffer.getBuffer(RenderType.entityTranslucent(CLOUDLET_TEXTURE));
+        VertexConsumer consumer = buffer.getBuffer(CLOUDLET_RENDER_TYPE);
         Matrix4f pose = poseStack.last().pose();
         Matrix3f normal = poseStack.last().normal();
         double originX = Mth.lerp(partialTick, entity.xOld, entity.getX());
@@ -118,7 +128,7 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         double age = Math.min(entity.tickCount + partialTick, 100.0D);
         float alpha = (float) ((100.0D - age) / 100.0D);
         Random random = new Random(entity.getId());
-        VertexConsumer consumer = buffer.getBuffer(RenderType.entityTranslucent(FLARE_TEXTURE));
+        VertexConsumer consumer = buffer.getBuffer(FLARE_RENDER_TYPE);
         Matrix4f pose = poseStack.last().pose();
         Matrix3f normal = poseStack.last().normal();
 
@@ -172,6 +182,35 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         player.hurtTime = 15;
         player.hurtDuration = 15;
         entity.didShake = true;
+    }
+
+    private static RenderType translucentNoDepth(String name, ResourceLocation texture, boolean additive) {
+        RenderStateShard.TransparencyStateShard transparency = new RenderStateShard.TransparencyStateShard(
+                name + "_transparency",
+                () -> {
+                    RenderSystem.enableBlend();
+                    if (additive) {
+                        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
+                    } else {
+                        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA,
+                                GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                    }
+                },
+                () -> {
+                    RenderSystem.disableBlend();
+                    RenderSystem.defaultBlendFunc();
+                });
+
+        return RenderType.create(name, DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256,
+                false, true, RenderType.CompositeState.builder()
+                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityTranslucentShader))
+                        .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                        .setTransparencyState(transparency)
+                        .setCullState(new RenderStateShard.CullStateShard(false))
+                        .setLightmapState(new RenderStateShard.LightmapStateShard(true))
+                        .setOverlayState(new RenderStateShard.OverlayStateShard(true))
+                        .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, false))
+                        .createCompositeState(false));
     }
 
     private static void putVertex(VertexConsumer consumer, Matrix4f pose, Matrix3f normal, float x, float y, float z,

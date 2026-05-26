@@ -31,6 +31,8 @@ public class NukeTorexEntity extends Entity {
             SynchedEntityData.defineId(NukeTorexEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> TYPE =
             SynchedEntityData.defineId(NukeTorexEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> AGE =
+            SynchedEntityData.defineId(NukeTorexEntity.class, EntityDataSerializers.INT);
 
     public double coreHeight = 3.0D;
     public double convectionHeight = 3.0D;
@@ -42,6 +44,7 @@ public class NukeTorexEntity extends Entity {
     public int lastRenderSortTick = Integer.MIN_VALUE;
     public boolean didPlaySound;
     public boolean didShake;
+    private int clientSyncedAge = -1;
 
     public NukeTorexEntity(EntityType<? extends NukeTorexEntity> type, Level level) {
         super(type, level);
@@ -81,102 +84,16 @@ public class NukeTorexEntity extends Entity {
     @Override
     public void tick() {
         super.tick();
+        if (!level().isClientSide()) {
+            entityData.set(AGE, tickCount);
+        } else {
+            syncClientAge();
+        }
 
-        double simulationScale = 1.5D;
-        double cloudScale = 1.5D;
         int maxAge = getMaxAge();
 
         if (level().isClientSide()) {
-            double x = getX();
-            double y = getY();
-            double z = getZ();
-
-            if (tickCount == 1) {
-                setScale((float) simulationScale);
-            }
-
-            if (lastSpawnY == -1.0D) {
-                lastSpawnY = y - 3.0D;
-            }
-
-            if (tickCount < 100) {
-                level().setSkyFlashTime(2);
-            }
-
-            int spawnTarget = Math.max(level().getHeight(Heightmap.Types.WORLD_SURFACE, Mth.floor(x), Mth.floor(z)) - 3, 1);
-            double moveSpeed = 0.5D;
-            if (Math.abs(spawnTarget - lastSpawnY) < moveSpeed) {
-                lastSpawnY = spawnTarget;
-            } else {
-                lastSpawnY += moveSpeed * Math.signum(spawnTarget - lastSpawnY);
-            }
-
-            double range = (torusWidth - rollerSize) * 0.25D;
-            double simSpeed = getSimulationSpeed();
-            int toSpawn = (int) Math.ceil(10.0D * simSpeed * simSpeed);
-            int lifetime = Math.min((tickCount * tickCount) + 200, maxAge - tickCount + 200);
-
-            for (int i = 0; i < toSpawn; i++) {
-                double cloudX = x + random.nextGaussian() * range;
-                double cloudZ = z + random.nextGaussian() * range;
-                Cloudlet cloud = new Cloudlet(cloudX, lastSpawnY, cloudZ,
-                        (float) (random.nextDouble() * Math.PI * 2.0D), 0, lifetime);
-                cloud.setScale(1.0F + tickCount * 0.005F * (float) cloudScale, 5.0F * (float) cloudScale);
-                cloudlets.add(cloud);
-            }
-
-            if (tickCount < 150) {
-                int cloudCount = tickCount * 5;
-                int shockLife = Math.max(300 - tickCount * 20, 50);
-                for (int i = 0; i < cloudCount; i++) {
-                    Vec3 vec = rotateY(new Vec3((tickCount * 1.5D + random.nextDouble()) * 1.5D, 0.0D, 0.0D),
-                            (float) (Math.PI * 2.0D * random.nextDouble()));
-                    float rot = (float) Math.atan2(vec.z, vec.x);
-                    cloudlets.add(new Cloudlet(vec.x + x,
-                            level().getHeight(Heightmap.Types.WORLD_SURFACE, (int) (vec.x + x) + 1, (int) (vec.z + z)),
-                            vec.z + z, rot, 0, shockLife, TorexType.SHOCK)
-                            .setScale(7.0F, 2.0F)
-                            .setMotion(tickCount > 15 ? 0.75D : 0.0D));
-                }
-
-                if (!didPlaySound) {
-                    tryPlayClientSound(x, y, z);
-                }
-            }
-
-            if (tickCount < 130.0D * simulationScale) {
-                lifetime = (int) (lifetime * simulationScale);
-                for (int i = 0; i < 2; i++) {
-                    Cloudlet cloud = new Cloudlet(x, y + coreHeight, z,
-                            (float) (random.nextDouble() * Math.PI * 2.0D), 0, lifetime, TorexType.RING);
-                    cloud.setScale(1.0F + tickCount * 0.0025F * (float) (cloudScale * cloudScale),
-                            3.0F * (float) (cloudScale * cloudScale));
-                    cloudlets.add(cloud);
-                }
-            }
-
-            if (tickCount > 130.0D * simulationScale && tickCount < 600.0D * simulationScale) {
-                spawnCondensationBand(false, simulationScale, cloudScale, lifetime);
-            }
-            if (tickCount > 200.0D * simulationScale && tickCount < 600.0D * simulationScale) {
-                spawnCondensationBand(true, simulationScale, cloudScale, lifetime);
-            }
-
-            for (int i = cloudlets.size() - 1; i >= 0; i--) {
-                Cloudlet cloud = cloudlets.get(i);
-                cloud.update();
-                if (cloud.isDead) {
-                    cloudlets.remove(i);
-                }
-            }
-
-            coreHeight += 0.15D / simulationScale;
-            torusWidth += 0.05D / simulationScale;
-            rollerSize = torusWidth * 0.35D;
-            convectionHeight = coreHeight + rollerSize;
-
-            int maxHeat = (int) (50.0D * cloudScale);
-            heat = maxHeat - Math.pow((maxHeat * tickCount) / (double) maxAge, 1.0D);
+            clientVisualTick(true);
         }
 
         if (!level().isClientSide() && tickCount > maxAge) {
@@ -240,6 +157,134 @@ public class NukeTorexEntity extends Entity {
         return entityData.get(TYPE);
     }
 
+    private void syncClientAge() {
+        int syncedAge = entityData.get(AGE);
+        if (syncedAge <= 0 || syncedAge == clientSyncedAge || syncedAge <= tickCount + 1) {
+            clientSyncedAge = syncedAge;
+            return;
+        }
+
+        int currentTick = tickCount;
+        xo = getX();
+        yo = getY();
+        zo = getZ();
+        coreHeight = 3.0D;
+        convectionHeight = 3.0D;
+        torusWidth = 3.0D;
+        rollerSize = 1.0D;
+        heat = 1.0D;
+        lastSpawnY = -1.0D;
+        cloudlets.clear();
+        lastRenderSortTick = Integer.MIN_VALUE;
+        didPlaySound = true;
+        didShake = true;
+        tickCount = 0;
+        long savedSeed = random.nextLong();
+        random.setSeed(getId() * 31L + 0x4E544DL);
+        for (int i = 1; i < syncedAge; i++) {
+            tickCount = i;
+            clientVisualTick(false);
+        }
+        random.setSeed(savedSeed);
+        tickCount = syncedAge;
+        clientSyncedAge = syncedAge;
+    }
+
+    private void clientVisualTick(boolean spawnSound) {
+        double simulationScale = 1.5D;
+        double cloudScale = 1.5D;
+        int maxAge = getMaxAge();
+        double x = getX();
+        double y = getY();
+        double z = getZ();
+
+        if (tickCount == 1) {
+            setScale((float) simulationScale);
+        }
+
+        if (lastSpawnY == -1.0D) {
+            lastSpawnY = y - 3.0D;
+        }
+
+        if (tickCount < 100) {
+            level().setSkyFlashTime(2);
+        }
+
+        int spawnTarget = Math.max(level().getHeight(Heightmap.Types.WORLD_SURFACE, Mth.floor(x), Mth.floor(z)) - 3, 1);
+        double moveSpeed = 0.5D;
+        if (Math.abs(spawnTarget - lastSpawnY) < moveSpeed) {
+            lastSpawnY = spawnTarget;
+        } else {
+            lastSpawnY += moveSpeed * Math.signum(spawnTarget - lastSpawnY);
+        }
+
+        double range = (torusWidth - rollerSize) * 0.25D;
+        double simSpeed = getSimulationSpeed();
+        int toSpawn = (int) Math.ceil(10.0D * simSpeed * simSpeed);
+        int lifetime = Math.min((tickCount * tickCount) + 200, maxAge - tickCount + 200);
+
+        for (int i = 0; i < toSpawn; i++) {
+            double cloudX = x + random.nextGaussian() * range;
+            double cloudZ = z + random.nextGaussian() * range;
+            Cloudlet cloud = new Cloudlet(cloudX, lastSpawnY, cloudZ,
+                    (float) (random.nextDouble() * Math.PI * 2.0D), 0, lifetime);
+            cloud.setScale(1.0F + tickCount * 0.005F * (float) cloudScale, 5.0F * (float) cloudScale);
+            cloudlets.add(cloud);
+        }
+
+        if (tickCount < 150) {
+            int cloudCount = tickCount * 5;
+            int shockLife = Math.max(300 - tickCount * 20, 50);
+            for (int i = 0; i < cloudCount; i++) {
+                float rot = (float) (Math.PI * 2.0D * random.nextDouble());
+                Vec3 vec = rotateY(new Vec3((tickCount * 1.5D + random.nextDouble()) * 1.5D, 0.0D, 0.0D), rot);
+                cloudlets.add(new Cloudlet(vec.x + x,
+                        level().getHeight(Heightmap.Types.WORLD_SURFACE, (int) (vec.x + x) + 1, (int) (vec.z + z)),
+                        vec.z + z, rot, 0, shockLife, TorexType.SHOCK)
+                        .setScale(7.0F, 2.0F)
+                        .setMotion(tickCount > 15 ? 0.75D : 0.0D));
+            }
+
+            if (spawnSound && !didPlaySound) {
+                tryPlayClientSound(x, y, z);
+            }
+        }
+
+        if (tickCount < 130.0D * simulationScale) {
+            lifetime = (int) (lifetime * simulationScale);
+            for (int i = 0; i < 2; i++) {
+                Cloudlet cloud = new Cloudlet(x, y + coreHeight, z,
+                        (float) (random.nextDouble() * Math.PI * 2.0D), 0, lifetime, TorexType.RING);
+                cloud.setScale(1.0F + tickCount * 0.0025F * (float) (cloudScale * cloudScale),
+                        3.0F * (float) (cloudScale * cloudScale));
+                cloudlets.add(cloud);
+            }
+        }
+
+        if (tickCount > 130.0D * simulationScale && tickCount < 600.0D * simulationScale) {
+            spawnCondensationBand(false, simulationScale, cloudScale, lifetime);
+        }
+        if (tickCount > 200.0D * simulationScale && tickCount < 600.0D * simulationScale) {
+            spawnCondensationBand(true, simulationScale, cloudScale, lifetime);
+        }
+
+        for (int i = cloudlets.size() - 1; i >= 0; i--) {
+            Cloudlet cloud = cloudlets.get(i);
+            cloud.update();
+            if (cloud.isDead) {
+                cloudlets.remove(i);
+            }
+        }
+
+        coreHeight += 0.15D / simulationScale;
+        torusWidth += 0.05D / simulationScale;
+        rollerSize = torusWidth * 0.35D;
+        convectionHeight = coreHeight + rollerSize;
+
+        int maxHeat = (int) (50.0D * cloudScale);
+        heat = maxHeat - Math.pow((maxHeat * tickCount) / (double) maxAge, 1.0D);
+    }
+
     public double getGreying() {
         int lifetime = getMaxAge();
         int greying = lifetime * 3 / 4;
@@ -287,20 +332,31 @@ public class NukeTorexEntity extends Entity {
     protected void defineSynchedData() {
         entityData.define(SCALE, 1.0F);
         entityData.define(TYPE, 0);
+        entityData.define(AGE, 0);
     }
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        discard();
+        tickCount = tag.getInt("ticksExisted");
+        if (tag.contains("scale")) {
+            entityData.set(SCALE, tag.getFloat("scale"));
+        }
+        if (tag.contains("type")) {
+            entityData.set(TYPE, tag.getInt("type"));
+        }
+        entityData.set(AGE, tickCount);
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.putInt("ticksExisted", tickCount);
+        tag.putFloat("scale", getCloudScale());
+        tag.putInt("type", getCloudType());
     }
 
     @Override
     public boolean shouldBeSaved() {
-        return false;
+        return true;
     }
 
     private static Vec3 rotateY(Vec3 vec, float angle) {

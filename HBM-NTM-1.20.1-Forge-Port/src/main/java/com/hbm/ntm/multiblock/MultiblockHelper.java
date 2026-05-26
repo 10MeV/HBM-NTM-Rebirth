@@ -260,7 +260,8 @@ public final class MultiblockHelper {
         if (!(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) || dummy.getCorePos() == null) {
             return null;
         }
-        return findCoreAt(level, dummy.getCorePos());
+        CoreLookup core = findCoreAt(level, dummy.getCorePos());
+        return ownsDummy(level, core, pos) ? core : null;
     }
 
     @Nullable
@@ -273,6 +274,13 @@ public final class MultiblockHelper {
         }
         BlockState coreState = level.getBlockState(corePos);
         return coreState.getBlock() instanceof MultiblockCoreBlock ? new CoreLookup(corePos.immutable(), coreState) : null;
+    }
+
+    public static boolean ownsDummy(BlockGetter level, @Nullable CoreLookup core, BlockPos dummyPos) {
+        if (core == null || !(core.state().getBlock() instanceof MultiblockCoreBlock coreBlock)) {
+            return false;
+        }
+        return coreBlock.ownsMultiblockDummy(core.state(), level, core.pos(), dummyPos);
     }
 
     @Nullable

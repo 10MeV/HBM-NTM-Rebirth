@@ -10,6 +10,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -51,6 +52,11 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
 
     protected Direction getFacingForPlacement(BlockPlaceContext context) {
         return modifyPlacementFacing(context.getHorizontalDirection().getOpposite());
+    }
+
+    @Override
+    public boolean ownsMultiblockDummy(BlockState state, BlockGetter level, BlockPos corePos, BlockPos dummyPos) {
+        return getLayout(state).containsOffset(dummyPos.subtract(corePos));
     }
 
     @Override

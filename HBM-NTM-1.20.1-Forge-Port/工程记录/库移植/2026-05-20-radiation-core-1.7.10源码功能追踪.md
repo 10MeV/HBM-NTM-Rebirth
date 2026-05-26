@@ -1997,7 +1997,7 @@ Corrected in this pass:
 - Registered a visible `FalloutRainRenderer` using the old fallout rain texture.
 - Added hazards for the new radioactive fallout products and Sellafield ore variants.
 - Added smelting recipes for `waste_trinitite(_red)` -> `glass_trinitite`.
-- Adjusted crater biome water fog color to match the old crater water color (`0xE0FFAE`) so nuclear crater water no longer appears with the vanilla-ish fog color.
+- Adjusted crater biome water fog color in this pass, later corrected on 2026-05-26 after re-checking `BiomeGenCraterBase#getWaterColorMultiplier`: the effective old crater water color is `0x505020`, not the constructor's unused-looking `0xE0FFAE` field value.
 
 Still incomplete:
 
@@ -2010,6 +2010,47 @@ Verification:
 
 - 2026-05-25 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
 - 2026-05-25 attempted `.\gradlew.bat runData --no-daemon`, but it is currently blocked by an unrelated duplicate `custom_tnt` registration in `ModItems`; resource JSON for this pass was therefore added manually and validated through `processResources`.
+
+## 2026-05-26 Crater Color and Sellafield Model Parity Fix
+
+Legacy source re-checked:
+
+- `com.hbm.world.biome.BiomeGenCraterBase`
+- `com.hbm.blocks.generic.BlockSellafield`
+- `com.hbm.blocks.generic.BlockSellafieldSlaked`
+- `com.hbm.blocks.generic.BlockSellafieldOre`
+
+Findings:
+
+- `BiomeGenCraterBase` constructor sets `waterColorMultiplier = 0xE0FFAE`, but the effective old water color is the overridden `getWaterColorMultiplier()` return value `0x505020`.
+- Old crater sky/fog colors are distinct per crater zone:
+  - crater: `0x525A52`;
+  - inner crater: `0x424A42`;
+  - outer crater: `0x6B9189`.
+- `sellafield_slaked` and `sellafield_bedrock` do not use one cube with six different face textures. The old `getIcon(world, x, y, z, side)` chooses one of four slaked textures from a coordinate hash and uses that same icon for every side.
+- `BlockSellafieldOre` renders the same position-randomized slaked base with an ore overlay; the ore overlay differs by ore type, while the four slaked bases remain valid variants.
+- Active `sellafield` is still the six metadata-level block family with `sellafield_0..5`, separate from the slaked/bedrock/ore texture variation.
+
+Corrected in this pass:
+
+- Updated crater biome JSON water and water fog colors to `0x505020`, and set crater fog colors to the old sky/fog colors for crater, inner crater, and outer crater.
+- Updated generated-provider logic for slaked, bedrock, and Sellafield ores so future datagen emits four full-cube variants instead of a six-face mixed cube.
+- Updated checked-in resource JSON manually:
+  - `sellafield_slaked` / `_1` / `_2` / `_3` are full-cube models using one texture on all sides;
+  - `sellafield_bedrock` / `_1` / `_2` / `_3` reuse the same four slaked textures, matching the old bedrock visual source;
+  - each `ore_sellafield_*` block now has four model variants with the matching ore overlay and slaked base.
+- Updated blockstates for `sellafield_slaked`, `sellafield_bedrock`, and all five `ore_sellafield_*` blocks so every level references the four variants instead of a single mixed-face model.
+
+Still incomplete:
+
+- Old `BlockSellafieldSlaked#colorMultiplier` darkens the block by metadata level. The current JSON/model pass restores the old texture variant family but still lacks the exact level tint path.
+- The JSON blockstate random model selection preserves deterministic position variation through the vanilla model system, but it is not the exact old coordinate hash expression.
+
+Verification:
+
+- 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- Parsed the copied `bin/main` Sellafield model/blockstate JSON through PowerShell `ConvertFrom-Json`: passed.
+- Checked `bin/main` crater biome JSON values: crater/inner/outer water and water fog are `5263392` (`0x505020`), and fog colors are `5397074` / `4344386` / `7049609`.
 
 ## 2026-05-23 Radiation Diffusion Timing Fix
 

@@ -47,7 +47,7 @@ public final class HbmParticleEffects {
         double z = data.getDouble("posZ");
         String type = data.getString("type");
         if (ParticleUtil.TYPE_GAS_FLAME.equals(type)) {
-            level.addParticle(ModParticleTypes.GAS_FLAME.get(), x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"));
+            spawnGasFlame(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_DEBUG_DRONE.equals(type) || ParticleUtil.TYPE_DEBUG_LINE.equals(type)) {
             spawnDebugLine(level, x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"), data.getInt("color"));
         } else if (ParticleUtil.TYPE_DEBUG_TEXT.equals(type)) {
@@ -147,6 +147,10 @@ public final class HbmParticleEffects {
             spawnRadiationAura(level, data);
         } else if (ParticleUtil.TYPE_MUKE.equals(type) || ParticleUtil.TYPE_TINY_TOT.equals(type)) {
             spawnMuke(level, data, x, y, z, ParticleUtil.TYPE_TINY_TOT.equals(type));
+        } else if (ParticleUtil.TYPE_UFO.equals(type)) {
+            spawnUfoCloud(level, data, x, y, z);
+        } else if (ParticleUtil.TYPE_BALEFIRE_CLOUD.equals(type)) {
+            Minecraft.getInstance().particleEngine.add(new MukeCloudParticle(level, x, y, z, 0.0D, 0.0D, 0.0D, true));
         } else if ("chaosCloud".equals(type)) {
             spawnChaosCloud(level, data, x, y, z);
         }
@@ -161,6 +165,16 @@ public final class HbmParticleEffects {
 
     private static void spawnDebugLine(ClientLevel level, double x, double y, double z, double lineX, double lineY, double lineZ, int color) {
         Minecraft.getInstance().particleEngine.add(new DebugLineParticle(level, x, y, z, lineX, lineY, lineZ, color));
+    }
+
+    private static void spawnGasFlame(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        if (GasFlameParticle.sharedSprites() == null) {
+            level.addParticle(ModParticleTypes.GAS_FLAME.get(), x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"));
+            return;
+        }
+        Minecraft.getInstance().particleEngine.add(new GasFlameParticle(level, x, y, z,
+                data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"),
+                GasFlameParticle.sharedSprites(), data.contains("scale") ? data.getFloat("scale") : 6.5F));
     }
 
     private static void spawnDebugText(ClientLevel level, CompoundTag data, double x, double y, double z) {
@@ -589,7 +603,6 @@ public final class HbmParticleEffects {
         double mushRangeLimit = tiny ? 0.75D : 1.5D;
         double mushVerticalSpread = tiny ? 0.5D : 0.75D;
         boolean balefire = data.getBoolean("balefire");
-        ParticleOptions cloudParticle = balefire ? ParticleTypes.WITCH : ModParticleTypes.EX_SMOKE.get();
 
         Particle wave = MukeWaveParticle.create(level, x, y, z, 45.0F, 25);
         if (wave != null) {
@@ -599,17 +612,18 @@ public final class HbmParticleEffects {
         RandomSource random = level.random;
         for (int i = 0; i < stemCount; i++) {
             double lift = stemCount == 1 ? 0.0D : stemHeight * i / (stemCount - 1.0D);
-            spawnMukeCloud(level, cloudParticle, x, y, z,
+            spawnMukeCloud(level, x, y, z,
                     random.nextGaussian() * 0.05D,
                     lift + random.nextGaussian() * 0.02D,
-                    random.nextGaussian() * 0.05D);
+                    random.nextGaussian() * 0.05D,
+                    balefire);
         }
         for (int i = 0; i < groundCount; i++) {
-            spawnMukeCloud(level, balefire && i % 3 == 0 ? ParticleTypes.SOUL_FIRE_FLAME : cloudParticle,
-                    x, groundY, z,
+            spawnMukeCloud(level, x, groundY, z,
                     random.nextGaussian() * 0.5D,
                     random.nextInt(5) == 0 ? 0.02D : 0.0D,
-                    random.nextGaussian() * 0.5D);
+                    random.nextGaussian() * 0.5D,
+                    balefire);
         }
         for (int i = 0; i < mushCount; i++) {
             double motionX = random.nextGaussian() * (tiny ? 0.2D : 0.5D);
@@ -619,14 +633,20 @@ public final class HbmParticleEffects {
                 motionZ *= 0.5D;
             }
             double motionY = mushHeight + (random.nextDouble() * 2.0D - 1.0D) * (mushVerticalSpread - (motionX * motionX + motionZ * motionZ)) * 0.5D;
-            spawnMukeCloud(level, cloudParticle, x, y, z, motionX, motionY + random.nextGaussian() * 0.02D, motionZ);
+            spawnMukeCloud(level, x, y, z, motionX, motionY + random.nextGaussian() * 0.02D, motionZ, balefire);
         }
         applyClientJolt(15, 15);
     }
 
-    private static void spawnMukeCloud(ClientLevel level, ParticleOptions particle, double x, double y, double z,
-            double motionX, double motionY, double motionZ) {
-        level.addParticle(particle, x, y, z, motionX, motionY, motionZ);
+    private static void spawnMukeCloud(ClientLevel level, double x, double y, double z,
+            double motionX, double motionY, double motionZ, boolean balefire) {
+        Minecraft.getInstance().particleEngine.add(new MukeCloudParticle(level, x, y, z, motionX, motionY, motionZ, balefire));
+    }
+
+    private static void spawnUfoCloud(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        double motion = data.getDouble("motion");
+        RandomSource random = level.random;
+        spawnMukeCloud(level, x, y, z, random.nextGaussian() * motion, 0.0D, random.nextGaussian() * motion, false);
     }
 
     private static void spawnChaosCloud(ClientLevel level, CompoundTag data, double x, double y, double z) {

@@ -126,6 +126,10 @@ public final class LegacyMultiblockLayout {
         return offsets;
     }
 
+    public boolean containsOffset(BlockPos offset) {
+        return offsets.contains(offset);
+    }
+
     public List<BlockPos> checkOffsets() {
         Set<BlockPos> merged = copyOffsets(offsets);
         merged.addAll(checkOnlyOffsets);
