@@ -22,13 +22,14 @@ public final class ObjBlockModels {
     public static final LegacyWavefrontModel TOASTER = model("toaster", "toaster_iron").noSmooth();
     public static final LegacyWavefrontModel DECO_COMPUTER = model("puter", "crt_clean").noSmooth();
     public static final LegacyWavefrontModel HEV_BATTERY = model("battery", "battery_top").noSmooth();
-    public static final LegacyWavefrontModel SKELETON_HOLDER = model("skeleton_holder", "skeleton").noSmooth();
+    public static final LegacyWavefrontModel SKELETON_HOLDER = model("skeleton_holder", "skeleton").noSmooth().asVBO();
     public static final LegacyWavefrontModel ANVIL = model("anvil", "anvil_iron").noSmooth();
     public static final LegacyWavefrontModel CRYSTAL_POWER = model("crystals_power", "crystal_pulsar").noSmooth();
     public static final LegacyWavefrontModel CRYSTAL_ENERGY = model("crystals_energy", "crystal_pulsar").noSmooth();
     public static final LegacyWavefrontModel CRYSTAL_ROBUST = model("crystals_robust", "crystal_hardened").noSmooth();
     public static final LegacyWavefrontModel CRYSTAL_TRIXITE = model("crystals_trixite", "crystal_virus").noSmooth();
     public static final LegacyWavefrontModel CABLE_NEO = model("cable_neo", "cable_neo").noSmooth();
+    public static final LegacyWavefrontModel PIPE_NEO = model("pipe_neo", "pipe_neo");
     public static final LegacyWavefrontModel DIFURNACE_EXTENSION = model("difurnace_extension", "difurnace_extension").noSmooth();
     public static final LegacyWavefrontModel SPLITTER = model("splitter", "crane_splitter_inner").noSmooth();
     public static final LegacyWavefrontModel CRANE_BUFFER = model("crane_buffer", "crane_box").noSmooth();
@@ -47,6 +48,9 @@ public final class ObjBlockModels {
     public static final LegacyWavefrontModel FUNNEL = model("funnel", "steel_beam").noSmooth();
     public static final LegacyWavefrontModel CHARGE_DYNAMITE = model("charge_dynamite", "charge_dynamite").noSmooth();
     public static final LegacyWavefrontModel CHARGE_C4 = model("charge_c4", "charge_c4").noSmooth();
+
+    public static final ResourceLocation PIPE_NEO_TEXTURE = texture("pipe_neo");
+    public static final ResourceLocation PIPE_NEO_OVERLAY_TEXTURE = texture("pipe_neo_overlay");
 
     public static LegacyWavefrontModel model(String name, String textureName) {
         return new LegacyWavefrontModel(

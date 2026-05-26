@@ -163,6 +163,22 @@ public final class ObjWeaponModels {
     public static final ResourceLocation N_I_4_N_I_TEXTURE = texture("n_i_4_n_i");
     public static final ResourceLocation N_I_4_N_I_GREYSCALE_TEXTURE = texture("n_i_4_n_i_greyscale");
     public static final ResourceLocation LANCE_TEXTURE = texture("lance");
+    public static final ResourceLocation GRENADE_FRAG_TEXTURE = grenadeTexture("frag");
+    public static final ResourceLocation GRENADE_FRAG_BODY_TEXTURE = grenadeTexture("frag_body");
+    public static final ResourceLocation GRENADE_FRAG_LABEL_TEXTURE = grenadeTexture("frag_label");
+    public static final ResourceLocation GRENADE_FRAG_FUZE_TEXTURE = grenadeTexture("frag_fuze");
+    public static final ResourceLocation GRENADE_STICK_TEXTURE = grenadeTexture("stick");
+    public static final ResourceLocation GRENADE_STICK_BODY_TEXTURE = grenadeTexture("stick_body");
+    public static final ResourceLocation GRENADE_STICK_LABEL_TEXTURE = grenadeTexture("stick_label");
+    public static final ResourceLocation GRENADE_STICK_FUZE_TEXTURE = grenadeTexture("stick_fuze");
+    public static final ResourceLocation GRENADE_TECH_TEXTURE = grenadeTexture("tech");
+    public static final ResourceLocation GRENADE_TECH_BODY_TEXTURE = grenadeTexture("tech_body");
+    public static final ResourceLocation GRENADE_TECH_LIGHTS_TEXTURE = grenadeTexture("tech_lights");
+    public static final ResourceLocation GRENADE_TECH_FUZE_TEXTURE = grenadeTexture("tech_fuze");
+    public static final ResourceLocation GRENADE_NUKA_TEXTURE = grenadeTexture("nuka");
+    public static final ResourceLocation GRENADE_NUKA_BODY_TEXTURE = grenadeTexture("nuka_body");
+    public static final ResourceLocation GRENADE_NUKA_LABEL_TEXTURE = grenadeTexture("nuka_label");
+    public static final ResourceLocation GRENADE_NUKA_FUZE_TEXTURE = grenadeTexture("nuka_fuze");
 
     public static LegacyWavefrontModel model(String name) {
         return new LegacyWavefrontModel(
@@ -172,6 +188,10 @@ public final class ObjWeaponModels {
 
     public static ResourceLocation texture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/weapons/" + name + ".png");
+    }
+
+    public static ResourceLocation grenadeTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/grenades/" + name + ".png");
     }
 
     private ObjWeaponModels() {

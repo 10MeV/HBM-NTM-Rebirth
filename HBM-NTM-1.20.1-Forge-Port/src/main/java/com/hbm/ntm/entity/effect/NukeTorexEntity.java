@@ -1,9 +1,14 @@
 package com.hbm.ntm.entity.effect;
 
+import com.hbm.ntm.client.NukeHudEffects;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -17,6 +22,8 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.entity.IEntityAdditionalSpawnData;
+import net.minecraftforge.network.NetworkHooks;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -26,7 +33,7 @@ import java.util.List;
  * Toroidial Convection Simulation Explosion Effect
  * Tor                             Ex
  */
-public class NukeTorexEntity extends Entity {
+public class NukeTorexEntity extends Entity implements IEntityAdditionalSpawnData {
     private static final EntityDataAccessor<Float> SCALE =
             SynchedEntityData.defineId(NukeTorexEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> TYPE =
@@ -157,6 +164,10 @@ public class NukeTorexEntity extends Entity {
         return entityData.get(TYPE);
     }
 
+    public int getSyncedAge() {
+        return entityData.get(AGE);
+    }
+
     private void syncClientAge() {
         int syncedAge = entityData.get(AGE);
         if (syncedAge <= 0 || syncedAge == clientSyncedAge || syncedAge <= tickCount + 1) {
@@ -164,30 +175,36 @@ public class NukeTorexEntity extends Entity {
             return;
         }
 
-        int currentTick = tickCount;
         xo = getX();
         yo = getY();
         zo = getZ();
-        coreHeight = 3.0D;
-        convectionHeight = 3.0D;
-        torusWidth = 3.0D;
-        rollerSize = 1.0D;
-        heat = 1.0D;
-        lastSpawnY = -1.0D;
-        cloudlets.clear();
-        lastRenderSortTick = Integer.MIN_VALUE;
-        didPlaySound = true;
-        didShake = true;
-        tickCount = 0;
-        long savedSeed = random.nextLong();
-        random.setSeed(getId() * 31L + 0x4E544DL);
-        for (int i = 1; i < syncedAge; i++) {
-            tickCount = i;
-            clientVisualTick(false);
+        boolean shockwavePassedPlayer = hasShockwaveReachedClientPlayer(syncedAge);
+        didPlaySound = shockwavePassedPlayer;
+        didShake = shockwavePassedPlayer;
+        if (cloudlets.isEmpty() || syncedAge > tickCount + 20) {
+            cloudlets.clear();
+            resetClientSimulationState(syncedAge);
         }
-        random.setSeed(savedSeed);
         tickCount = syncedAge;
         clientSyncedAge = syncedAge;
+    }
+
+    private void resetClientSimulationState(int visualAge) {
+        int age = Math.max(0, visualAge);
+        double simulationScale = 1.5D;
+        double cloudScale = 1.5D;
+        coreHeight = 3.0D / 1.5D * simulationScale;
+        convectionHeight = 3.0D / 1.5D * simulationScale;
+        torusWidth = 3.0D / 1.5D * simulationScale;
+        rollerSize = 1.0D / 1.5D * simulationScale;
+        coreHeight += 0.15D / simulationScale * age;
+        torusWidth += 0.05D / simulationScale * age;
+        rollerSize = torusWidth * 0.35D;
+        convectionHeight = coreHeight + rollerSize;
+        int maxHeat = (int) (50.0D * cloudScale);
+        heat = maxHeat - Math.pow((maxHeat * age) / (double) Math.max(1, getMaxAge()), 1.0D);
+        lastSpawnY = Math.max(level().getHeight(Heightmap.Types.WORLD_SURFACE, Mth.floor(getX()), Mth.floor(getZ())) - 3, 1);
+        lastRenderSortTick = Integer.MIN_VALUE;
     }
 
     private void clientVisualTick(boolean spawnSound) {
@@ -207,7 +224,13 @@ public class NukeTorexEntity extends Entity {
         }
 
         if (tickCount < 100) {
-            level().setSkyFlashTime(2);
+            int flashTime = level() instanceof ClientLevel clientLevel
+                    ? Math.max(clientLevel.getSkyFlashTime(), 4)
+                    : 4;
+            level().setSkyFlashTime(flashTime);
+            if (tickCount < 10) {
+                NukeHudEffects.triggerFlash();
+            }
         }
 
         int spawnTarget = Math.max(level().getHeight(Heightmap.Types.WORLD_SURFACE, Mth.floor(x), Mth.floor(z)) - 3, 1);
@@ -320,7 +343,32 @@ public class NukeTorexEntity extends Entity {
             level().playLocalSound(x, y, z, ModSounds.WEAPON_NUCLEAR_EXPLOSION.get(), SoundSource.BLOCKS,
                     10_000.0F, 1.0F, false);
             didPlaySound = true;
+            applyClientShockwaveShake(player);
         }
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private boolean hasShockwaveReachedClientPlayer(int age) {
+        Player player = Minecraft.getInstance().player;
+        if (player == null) {
+            return false;
+        }
+        double soundRange = (age * 1.5D + 1.0D) * 1.5D;
+        return player.distanceToSqr(getX(), getY(), getZ()) < soundRange * soundRange;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public void applyClientShockwaveShake(Player player) {
+        if (didShake || player == null) {
+            return;
+        }
+        if (!NukeHudEffects.triggerShake()) {
+            return;
+        }
+        player.animateHurt(0.0F);
+        player.hurtTime = 15;
+        player.hurtDuration = 15;
+        didShake = true;
     }
 
     @Override
@@ -337,26 +385,44 @@ public class NukeTorexEntity extends Entity {
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        tickCount = tag.getInt("ticksExisted");
-        if (tag.contains("scale")) {
-            entityData.set(SCALE, tag.getFloat("scale"));
-        }
-        if (tag.contains("type")) {
-            entityData.set(TYPE, tag.getInt("type"));
-        }
-        entityData.set(AGE, tickCount);
+        discard();
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
-        tag.putInt("ticksExisted", tickCount);
-        tag.putFloat("scale", getCloudScale());
-        tag.putInt("type", getCloudType());
     }
 
     @Override
     public boolean shouldBeSaved() {
-        return true;
+        return false;
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    @Override
+    public void writeSpawnData(FriendlyByteBuf buffer) {
+        buffer.writeFloat(getCloudScale());
+        buffer.writeVarInt(getCloudType());
+        buffer.writeVarInt(tickCount);
+    }
+
+    @Override
+    public void readSpawnData(FriendlyByteBuf buffer) {
+        entityData.set(SCALE, buffer.readFloat());
+        entityData.set(TYPE, buffer.readVarInt());
+        int age = Math.max(0, buffer.readVarInt());
+        entityData.set(AGE, age);
+        tickCount = age;
+        clientSyncedAge = age;
+        if (age > 0) {
+            boolean shockwavePassedPlayer = hasShockwaveReachedClientPlayer(age);
+            didPlaySound = shockwavePassedPlayer;
+            didShake = shockwavePassedPlayer;
+            resetClientSimulationState(age);
+        }
     }
 
     private static Vec3 rotateY(Vec3 vec, float angle) {

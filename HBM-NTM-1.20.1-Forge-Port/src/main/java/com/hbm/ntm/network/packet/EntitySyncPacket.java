@@ -2,6 +2,7 @@ package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.network.HbmEntitySyncable;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import com.hbm.ntm.network.ModMessages;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -16,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public record EntitySyncPacket(int entityId, CompoundTag data) {
+public record EntitySyncPacket(int entityId, CompoundTag data) implements HbmPreparablePacket {
     private static final long REQUEST_COOLDOWN_TICKS = 20L;
     private static final Map<Integer, Long> LAST_SYNC_REQUESTS = new HashMap<>();
 
@@ -75,5 +76,10 @@ public record EntitySyncPacket(int entityId, CompoundTag data) {
 
     public static long clientResyncRequestCooldownTicks() {
         return REQUEST_COOLDOWN_TICKS;
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new EntitySyncPacket(entityId, data);
     }
 }

@@ -891,7 +891,7 @@
   - 网络库基础功能可用度：人工维护的保守百分比，用于表达协议、helper、缓存、诊断、线程/分片基础设施整体成熟度。
 - 当前数值：
   - 旧 `PacketDispatcher` 注册包承载覆盖率：27/27 = 100%。
-  - 网络包库基础功能可用度：96%。
+  - 网络包库基础功能可用度：99%。
 - 为什么不是 100%：
   - 网络承载路径已覆盖旧注册包，但不少旧包的业务接收端仍依赖后续机器/物品/GUI 迁移，例如卫星 saved data、anvil recipe 执行、siren loop sound、blast door renderer、force field BlockEntity 字段应用。
   - 后续具体功能迁移时仍可能发现旧包分支需要新增 typed action 或额外 helper。
@@ -901,7 +901,7 @@
   - `progressSummary()`
 - 网络诊断命令增强：
   - 新增 `/hbm network protocol progress`。
-- 输出示例：`legacyPacketCoverage=100% (27/27) foundation=96% note=remaining work is mostly receiver/business integration`。
+- 输出示例：`legacyPacketCoverage=100% (27/27) foundation=99% note=remaining work is mostly receiver/business integration`。
 
 ## 2026-05-25 旧 BufPacket provider 接口与 networkPackNT helper 推进记录
 
@@ -1005,6 +1005,159 @@
   - 现代实现不复刻旧 Netty `ByteBuf`/discriminator 级预编码，只保证高频线程发送前做安全快照；真正编码仍交给 Forge `SimpleChannel`。
   - 只有实现 `HbmPreparablePacket` 的包会获得自定义快照；后续新增高频包时应显式实现该接口。
 
+## 2026-05-26 线程化单玩家发送与 S2C 同步快照扩展记录
+
+- 旧版事实来源：
+  - `PacketThreading.createSendToThreadedPacket(...)` 用于对单个 `EntityPlayerMP` 线程化发送，旧调用点包括 PWR/ICF 控制器、装备/实体效果等。
+  - `ExtPropPacket` 继承 `PrecompiledPacket`，发送前把 `HbmLivingProps` / `HbmPlayerProps` 写入 buffer；现代已拆为 `PlayerRadiationSyncPacket` 与 `PlayerPropertiesPacket`。
+  - `BufPacket` 同样继承 `PrecompiledPacket`，现代对应 `ClientTileBinaryDataPacket` / `ClientTileBinaryDataChunkPacket` 已有快照，本批补齐同类 S2C 同步包。
+- 本批扩展 `HbmPreparablePacket` 接入面：
+  - 大二进制与客户端缓存：`ClientBinaryDataPacket`、`ClientBinaryDataChunkPacket`、`ClientBiomeSyncPacket`。
+  - NBT/属性同步：`PlayerRadiationSyncPacket`、`PlayerPropertiesPacket`、`PermaSyncPacket`、`TileSyncPacket`、`EntitySyncPacket`、`HeldItemNbtPacket`。
+  - 客户端事件缓存：`ClientTileEventPacket`、`ClientEntityEventPacket`、`ClientPanelDataPacket`。
+  - 这些包在 `prepareForThreadedSend()` 中重新构造自身，复用 record 构造器的 NBT/数组/列表 defensive copy。
+- 本批新增/扩展线程化 helper：
+  - `sendAuxParticleThreaded(ServerPlayer, ...)` 对应旧 `createSendToThreadedPacket(new AuxParticlePacketNT(...), player)`。
+  - `syncTileToTrackingThreaded(...)`、`syncTileToPlayerThreaded(...)`。
+  - `syncEntityToTrackingThreaded(...)`、`syncEntityToPlayerThreaded(...)`。
+  - `sendClientEntityEventThreaded(...)`、`sendClientEntityEventAndSelfThreaded(...)`。
+  - `syncPermaDataThreaded(...)`、`syncClientBinaryDataThreaded(...)`、`clearClientBinaryDataThreaded(...)`。
+  - `sendClientTileEventThreaded(...)`、`syncClientPanelDataThreaded(...)`、`syncPlayerPropertiesThreaded(...)`。
+  - `sendCompressedExplosionEffectThreaded(...)`，供后续爆炸库按旧高频路径选择线程化发送。
+- 当前限制：
+  - 线程化 helper 只用于服务端 S2C；C2S handler 仍必须由 packet handler 自身 enqueue 到服务端主线程。
+  - `PlayerRadiationSyncPacket` / `PlayerPropertiesPacket` 仍只是旧 `ExtPropPacket` 的网络承载拆分，实际玩家属性业务字段由辐射/玩家属性库继续迁移。
+  - helper 不自动选择 threaded 或 direct；具体系统迁移时应按旧调用点是否使用 `PacketThreading` 决定。
+
+## 2026-05-26 Packet threading 旧命令别名与安全清队推进记录
+
+- 旧版事实来源：
+  - `CommandPacketInfo` 注册 `/ntmpackets [info/resetState/toggleThreadingStatus/forceLock/forceUnlock]`。
+  - `info` 输出 packet threading active/errored/inactive、线程池 total/core/idle/maximum、每条 `PacketThreading.threadPrefix` 线程的 id/state/lock owner、总包数、剩余队列比例和上 tick 等待时间。
+  - `resetState` 清除 `PacketThreading.hasTriggered` 与 `clearCnt`，`toggleThreadingStatus` 反转 `GeneralConfig.enablePacketThreading` 并重建线程池。
+  - 旧 `PacketThreading.clearThreadPoolTasks()` 会清空队列并累计 clear 次数，超过阈值后进入主线程兜底。
+- 本批新增现代等价控制面：
+  - `/hbm network packetthreading info` 作为 `stats` 的旧名别名。
+  - `/hbm network packetthreading resetState` 作为 `reset` 的旧名别名。
+  - `/hbm network packetthreading toggleThreadingStatus` 作为 `toggle` 的旧名别名。
+  - `/hbm network packetthreading config` 输出线程名前缀、单次等待预算、最大 pending 数、fallback clear 阈值、enabled 与 fallback 状态。
+  - `/hbm network packetthreading clear` 安全清空 pending future 与 executor queue，记录 discarded 数与 `manualClears`，不直接触发 fallback。
+- `ThreadedPacketDispatcher` 新增：
+  - `clearPending(...)`：供管理员/诊断命令主动丢弃积压线程发送任务。
+  - `threadPrefix()`、`waitTimeoutMillis()`、`maxPendingOperations()`、`fallbackClearThreshold()`：供命令读取当前现代常量。
+  - `Snapshot.manualClears()`：区分手动清队和超时/溢出触发的自动 clear。
+- 当前限制：
+  - 不迁移旧 `forceLock` / `forceUnlock` 危险调试入口；现代 dispatcher 不暴露锁对象。
+  - `clear` 不能停止已进入 Forge 发送过程的正在运行任务，只能取消 pending/queued 操作。
+  - 线程池配置仍是代码常量，尚未恢复为旧 `GeneralConfig` 式运行时配置项。
+
+## 2026-05-26 Packet threading 配置化与旧顶层命令推进记录
+
+- 旧版事实来源：
+  - `GeneralConfig` 提供 `0.01_enablePacketThreading`、`0.02_packetThreadingCoreCount`、`0.03_packetThreadingMaxCount`、`0.04_packetThreadingErrorBypass`。
+  - 旧 `PacketThreading.waitUntilThreadFinished()` 对每个 future 等待 50ms；超时且未开启 error bypass 时清空队列并累计 clear 次数。
+  - `packetThreadingErrorBypass=true` 时旧 `isTriggered()` 不生效，已触发的 fallback 可被配置旁路。
+  - 旧 `CommandPacketInfo` 顶层命令名为 `/ntmpackets`，日志文本里也提示 `/ntmpacket resetState`。
+- 本批新增现代配置：
+  - `hbm-common.toml` 新增 `network.packetThreading.enablePacketThreading`，默认 `true`，对应旧 `0.01_enablePacketThreading`。
+  - `network.packetThreading.packetThreadingErrorBypass`，默认 `false`，对应旧 `0.04_packetThreadingErrorBypass`。
+  - `network.packetThreading.packetThreadingWaitTimeoutMs`，默认 `50`。
+  - `network.packetThreading.packetThreadingMaxPending`，默认 `4096`。
+  - `network.packetThreading.packetThreadingFallbackClearThreshold`，默认 `5`。
+- `ThreadedPacketDispatcher` 行为更新：
+  - `isEnabled()` 同时检查命令开关与配置开关；配置关闭时线程化 helper 自动改为同步发送。
+  - fallback 状态受 `packetThreadingErrorBypass` 旁路；旁路开启时不再把已触发 fallback 作为有效 fallback。
+  - `flush()` 记录 `lastObservedWaitMillis`；超时仍会清队以保护主线程，但 error bypass 开启时不会切入主线程 fallback。
+  - `stats` / `config` 输出追加 `configuredEnabled`、`errorBypass`、`observedWait`。
+- 旧命令兼容：
+  - 新增顶层 `/ntmpackets` 与 `/ntmpacket`，均要求 2 级权限。
+  - 支持旧子命令 `info`、`resetState`、`toggleThreadingStatus`，并提供现代 `config`、`clear`。
+- 当前限制：
+  - 现代线程池仍固定为单 worker；旧 core/max 配置只记录为旧事实，暂不恢复多线程发送，避免改变 Forge `SimpleChannel` 发送顺序。
+  - 顶层旧命令只暴露安全子集，仍不迁移 `forceLock` / `forceUnlock`。
+
+## 2026-05-26 旧 PacketDispatcher.wrapper 兼容门面推进记录
+
+- 旧版事实来源：
+  - `PacketDispatcher.wrapper` 是 `new NetworkHandler(RefStrings.MODID)`，旧代码大量直接调用 `wrapper.sendToServer(...)`、`sendTo(...)`、`sendToAllAround(...)`、`sendToDimension(...)`、`sendToAll(...)`。
+  - 旧 `NetworkHandler` 还提供自定义 `PrecompilingNetworkCodec`，对 `ThreadedPacket` 直接写入 `getCompiledBuffer()`；现代等价由 `HbmPreparablePacket` 与 `ThreadedPacketDispatcher` 承担。
+  - 旧 `NetworkHandler.flush()` flush client/server channel；现代 Forge `SimpleChannel` 不暴露同类手动 flush，服务端 tick 末尾只 flush `ThreadedPacketDispatcher`。
+- 本批新增 `LegacyNetworkDispatcher`：
+  - `LegacyNetworkDispatcher.WRAPPER` 与 `ModMessages.wrapper()`，作为旧 `PacketDispatcher.wrapper` 调用点的现代迁移门面。
+  - direct helper：`sendToServer`、`sendTo`、`sendToAll`、`sendToDimension`、`sendToAllAround`、`sendToTrackingEntity`、`sendToTrackingEntityAndSelf`、`sendToTrackingChunk` 等。
+  - threaded helper：对单玩家、全体、维度、范围、实体追踪、chunk tracking 等目标走 `ThreadedPacketDispatcher`。
+  - 该门面只做发送路由，不参与 `SimpleChannel` 注册、不改变 packet id、不替代 typed helper。
+- 诊断增强：
+  - `ModMessages.legacyWrapperSummary()` 输出 direct/threaded helper 数和兼容说明。
+  - `/hbm network protocol progress` 追加 wrapper 摘要。
+  - 新增 `/hbm network protocol wrapper`，用于后续迁移旧机器/实体代码时确认旧 wrapper 门面已存在。
+- 当前限制：
+  - 不提供旧 `ByteBuf` 直接发送 overload；现代网络包必须是已注册 `SimpleChannel` 消息。
+  - 不恢复旧 `NetworkHandler.flush()`，线程队列 flush 仍由 `ThreadedPacketDispatcher.flush()` 管理。
+  - 新代码仍应优先调用明确的 `ModMessages` helper；wrapper 主要用于迁移旧调用点时降低机械改写量。
+
+## 2026-05-26 协议映射查询与自检命令推进记录
+
+- 背景：
+  - 旧 `PacketDispatcher.registerPackets()` 的 27 个 discriminator 已有现代承载映射，但后续迁移机器/GUI 时经常需要从旧包名反查现代 helper/packet。
+  - 现代 `SimpleChannel` 注册顺序必须和客户端/服务端一致；mapping 表若指向未注册现代包，需要尽早被诊断命令发现。
+- `ModMessages` 新增只读查询 API：
+  - `packetRegistration(typeName)`：按现代包 simple name 查当前注册 id/direction。
+  - `legacyPacketRegistration(legacyName)`：按旧包名查 1.7.10 discriminator/direction。
+  - `legacyPacketMappings(legacyName)`：旧包名到现代承载路径。
+  - `modernPacketMappings(modernName)`：现代包被哪些旧包映射引用。
+  - `protocolAudit()`：检查 mapping 指向未注册现代包、mapping 引用未知旧包、未映射旧包，并列出无旧 mapping 的现代扩展包。
+- 新增诊断命令：
+  - `/hbm network protocol audit`：输出 audit 摘要，并列出阻塞性问题。
+  - `/hbm network protocol legacy <packet>`：按旧包名查询 discriminator 与现代映射。
+  - `/hbm network protocol modern <packet>`：按现代包名查询注册 id 与反向旧映射。
+- 当前限制：
+  - audit 中 `modernWithoutLegacyMappings` 不是错误；现代新增的 chunk、request、typed action 包本来就可能没有一对一旧包。
+  - 查询键使用 Java simple class name，不做大小写模糊匹配，避免旧包/现代包名相近时误导迁移。
+
+## 2026-05-26 协议 audit 启动自检与重复检测推进记录
+
+- 背景：
+  - 旧 `PacketDispatcher.registerPackets()` 的 discriminator 顺序是网络兼容基准；现代 append-only 注册与 mapping 表需要持续保持一致。
+  - 仅靠手动 `/hbm network protocol audit` 容易在后续大批机器/GUI 迁移时漏查。
+- `ModMessages.ProtocolAudit` 扩展：
+  - 检查 mapping 指向未注册现代包。
+  - 检查 mapping 引用未知旧包。
+  - 检查旧包未映射。
+  - 检查 mapping direction 与旧注册 direction 不一致。
+  - 检查重复旧 discriminator、重复旧包名、重复现代注册包名。
+  - 保留 `modernWithoutLegacyMappings` 作为信息项，不计入问题。
+- 启动自检：
+  - `HbmNtm.commonSetup` 在 `ModMessages.register()` 后调用 `ModMessages.logProtocolAudit()`。
+  - audit 通过时写 info 摘要；存在阻塞性问题时写 warn 并列出具体 mapping/旧包。
+- 命令增强：
+  - `/hbm network protocol audit` 改为复用 `ModMessages.protocolAuditSummary()`。
+  - 输出新增 direction mismatch 与 duplicate 列表。
+- 当前限制：
+  - 启动自检只检查当前 JVM 已注册的 `SimpleChannel` 包；它不替代 Forge 客户端/服务端握手。
+  - audit 不判断“业务接收端是否完整迁移”，只检查网络库表面的一致性。
+
+## 2026-05-26 注册表守门与旧 wrapper 安全发送推进记录
+
+- 背景：
+  - 旧 `PacketDispatcher.wrapper` 调用点迁移时，最容易出现“旧调用点已改到 wrapper，但消息类尚未注册到现代 `SimpleChannel`”的错误。
+  - Forge 现代发送路径在真正编码/派发时才会暴露未注册消息问题；对大批机器/GUI 迁移不够友好。
+- 本批新增注册表守门：
+  - `ModMessages` 在 `registerServerToClient(...)` / `registerClientToServer(...)` 时同步维护 `Class<?> -> PacketRegistration` 索引。
+  - 所有基础发送入口 `sendToServer`、`sendToPlayer`、`sendToAll`、`sendToDimension`、`sendToAllAround`、实体追踪发送都会先调用注册校验。
+  - 未注册或 null 消息会被阻止发送，记录 warn，并累计 `blockedUnregisteredSends` 与 `lastBlockedSend`。
+- 线程化路径联动：
+  - `ThreadedPacketDispatcher.prepareMessage(...)` 在 prepare 前检查原消息类型，在 prepare 后检查快照消息类型。
+  - 若 prepare 返回另一个未注册消息类型，该线程发送会被丢弃并记入 `totalDiscarded`，避免进入异步队列后才失败。
+- 诊断增强：
+  - `ModMessages.sendSafetySummary()` 输出注册类型数量、阻止发送次数和最后一次阻止目标。
+  - `/hbm network protocol summary` 追加 `blockedSends`。
+  - `/hbm network protocol progress` 与 `/hbm network protocol wrapper` 输出 send safety 摘要，方便迁移旧 wrapper 调用点时检查。
+- 当前限制：
+  - 守门只检查消息类是否在当前 JVM 的 `ModMessages.register()` 中注册，不判断消息方向是否符合调用端实际 side。
+  - 守门不会自动注册旧消息类；旧消息仍必须迁移为现代 packet 或通过已有兼容 packet 承载。
+  - 该机制是迁移期诊断与保护，不替代后续每个机器/GUI/实体接收端的业务逻辑移植。
+
 ## 验证清单
 
 - 客户端/服务端协议版本一致。
@@ -1039,3 +1192,10 @@
 - 2026-05-25 旧 networkPackNT 去重/兜底同步批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度调整为 94%。
 - 2026-05-25 Tile binary 客户端缺接收端重发请求批次：首次编译遇到并行工作区 `ClientModEvents` 缺 `ModBlocks` import；最小补齐后，`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度调整为 95%。
 - 2026-05-25 线程包预备快照批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度调整为 96%。
+- 2026-05-26 线程化单玩家发送与 S2C 同步快照扩展批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度调整为 97%。
+- 2026-05-26 Packet threading 旧命令别名与安全清队批次：首次增量编译遇到 `build/classes` 旧中间产物缺失；重跑 `.\gradlew.bat clean compileJava processResources --no-daemon` 通过；网络库基础功能可用度调整为 98%。
+- 2026-05-26 Packet threading 配置化与旧顶层命令批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度调整为 99%。
+- 2026-05-26 旧 PacketDispatcher.wrapper 兼容门面批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度保持 99%。
+- 2026-05-26 协议映射查询与自检命令批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度保持 99%。
+- 2026-05-26 协议 audit 启动自检与重复检测批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度保持 99%。
+- 2026-05-26 注册表守门与旧 wrapper 安全发送批次：首次编译遇到 `PacketDistributor.TargetPoint` 无 `x()/y()/z()` accessor；改为稳定 `near` 诊断目标后，`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度保持 99%。

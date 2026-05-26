@@ -2,6 +2,7 @@ package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.ClientBinaryData;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -17,7 +18,7 @@ public record ClientBinaryDataChunkPacket(
         String name,
         int chunkIndex,
         int chunkCount,
-        byte[] payload) {
+        byte[] payload) implements HbmPreparablePacket {
     public static final int MAX_CHUNK_BYTES = 262_144;
     private static final int MAX_CHUNKS = 512;
 
@@ -62,5 +63,10 @@ public record ClientBinaryDataChunkPacket(
 
     private static long clientGameTime() {
         return Minecraft.getInstance().level == null ? 0L : Minecraft.getInstance().level.getGameTime();
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new ClientBinaryDataChunkPacket(transferId, channel, name, chunkIndex, chunkCount, payload);
     }
 }

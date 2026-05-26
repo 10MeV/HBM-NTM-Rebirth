@@ -1,6 +1,7 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.network.ModMessages;
 import net.minecraft.client.Minecraft;
@@ -17,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public record TileSyncPacket(BlockPos pos, CompoundTag data) {
+public record TileSyncPacket(BlockPos pos, CompoundTag data) implements HbmPreparablePacket {
     private static final long REQUEST_COOLDOWN_TICKS = 20L;
     private static final Map<BlockPos, Long> LAST_SYNC_REQUESTS = new HashMap<>();
 
@@ -76,5 +77,10 @@ public record TileSyncPacket(BlockPos pos, CompoundTag data) {
 
     public static long clientResyncRequestCooldownTicks() {
         return REQUEST_COOLDOWN_TICKS;
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new TileSyncPacket(pos, data);
     }
 }

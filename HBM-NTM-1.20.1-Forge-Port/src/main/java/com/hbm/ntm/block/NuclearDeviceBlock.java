@@ -26,7 +26,7 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class NuclearDeviceBlock extends HorizontalMachineBlock implements EntityBlock {
+public class NuclearDeviceBlock extends HorizontalMachineBlock implements EntityBlock, RemoteDetonatableBlock {
     private final Kind kind;
 
     public NuclearDeviceBlock(Properties properties, Kind kind) {
@@ -146,6 +146,20 @@ public class NuclearDeviceBlock extends HorizontalMachineBlock implements Entity
                 1.0F, 0.9F + level.random.nextFloat() * 0.1F);
         level.gameEvent(null, GameEvent.EXPLODE, pos);
         return detonationKind.detonate(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+    }
+
+    @Override
+    public BombReturnCode detonateFromRemote(Level level, BlockPos pos) {
+        if (level == null || level.isClientSide()) {
+            return BombReturnCode.UNDEFINED;
+        }
+        if (level.getBlockState(pos).getBlock() != this) {
+            return BombReturnCode.ERROR_NO_BOMB;
+        }
+        if (!(level.getBlockEntity(pos) instanceof NuclearDeviceBlockEntity device) || !device.isReady()) {
+            return BombReturnCode.ERROR_MISSING_COMPONENT;
+        }
+        return detonateArmed(level, pos) ? BombReturnCode.DETONATED : BombReturnCode.ERROR_INCOMPATIBLE;
     }
 
     public static float legacyRenderYaw(Kind kind, Direction facing) {

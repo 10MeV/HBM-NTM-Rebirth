@@ -5,11 +5,16 @@ import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidForgeMappings;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidUtil;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
@@ -45,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver, HbmTileSyncable {
+public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver, HbmStandardFluidTransceiver, HbmTileSyncable {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_DID_PROCESS = "DidProcess";
     private static final String TAG_RING = "Ring";
@@ -72,6 +77,8 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     public static final int SLOT_OUTPUT = 16;
     public static final int[] INPUT_SLOTS = new int[] { 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     public static final int[] OUTPUT_SLOTS = new int[] { SLOT_OUTPUT };
+    private static final List<EnergyPort> ENERGY_PORTS = LegacyMultiblockPorts.xrFloorRingEnergyPorts(2);
+    private static final List<FluidPort> FLUID_PORTS = LegacyMultiblockPorts.xrFloorRingFluidPorts(2);
 
     private final ItemStackHandler items = new ItemStackHandler(17) {
         @Override
@@ -116,7 +123,8 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     public static void serverTick(Level level, BlockPos pos, BlockState state, AssemblyMachineBlockEntity blockEntity) {
         long oldPower = blockEntity.energy.getPower();
         HbmEnergyUtil.chargeStorageFromItem(blockEntity.items.getStackInSlot(SLOT_BATTERY), blockEntity, blockEntity.getReceiverSpeed());
-        HbmEnergyUtil.subscribeReceiverToAllNeighborNetworks(level, pos, blockEntity);
+        blockEntity.subscribeEnergyReceiverToPorts();
+        blockEntity.refreshFluidPortSubscriptions();
         boolean changed = blockEntity.tickRecipe(level);
         changed = changed || oldPower != blockEntity.energy.getPower();
         if (changed) {
@@ -157,6 +165,21 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     public HbmFluidTank getOutputTank() {
         return outputTank;
+    }
+
+    @Override
+    public List<HbmFluidTank> getAllTanks() {
+        return List.of(inputTank, outputTank);
+    }
+
+    @Override
+    public List<HbmFluidTank> getReceivingTanks() {
+        return List.of(inputTank);
+    }
+
+    @Override
+    public List<HbmFluidTank> getSendingTanks() {
+        return List.of(outputTank);
     }
 
     public double getProgress() {
@@ -485,6 +508,24 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         targetMax = Math.max(targetMax, energy.getPower());
         energy.setMaxPower(targetMax);
         energy.setTransferRates(targetMax, 0L);
+    }
+
+    private int subscribeEnergyReceiverToPorts() {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, ENERGY_PORTS, this);
+    }
+
+    private void refreshFluidPortSubscriptions() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        if (inputTank.getTankType() != HbmFluids.NONE) {
+            HbmFluidUtil.subscribeReceiverToPorts(level, worldPosition, FLUID_PORTS, inputTank.getTankType(), this);
+        }
+        if (outputTank.getTankType() != HbmFluids.NONE && outputTank.getFill() > 0) {
+            HbmFluidUtil.tryProvideToPorts(level, worldPosition, FLUID_PORTS, outputTank.getTankType(), outputTank.getPressure(), this);
+        }
     }
 
     private class AssemblyFluidHandler implements IFluidHandler {

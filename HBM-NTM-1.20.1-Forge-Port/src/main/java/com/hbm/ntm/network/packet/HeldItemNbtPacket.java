@@ -1,5 +1,6 @@
 package com.hbm.ntm.network.packet;
 
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -11,7 +12,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.function.Supplier;
 
-public record HeldItemNbtPacket(InteractionHand hand, ResourceLocation itemId, int damageValue, CompoundTag tag) {
+public record HeldItemNbtPacket(InteractionHand hand, ResourceLocation itemId, int damageValue, CompoundTag tag) implements HbmPreparablePacket {
     public HeldItemNbtPacket {
         hand = hand == null ? InteractionHand.MAIN_HAND : hand;
         tag = tag == null ? new CompoundTag() : tag.copy();
@@ -52,5 +53,10 @@ public record HeldItemNbtPacket(InteractionHand hand, ResourceLocation itemId, i
             return;
         }
         held.setTag(packet.tag.copy());
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new HeldItemNbtPacket(hand, itemId, damageValue, tag);
     }
 }

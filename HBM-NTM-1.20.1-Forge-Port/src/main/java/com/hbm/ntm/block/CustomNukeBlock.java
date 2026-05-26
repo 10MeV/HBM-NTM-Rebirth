@@ -24,7 +24,7 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class CustomNukeBlock extends HorizontalMachineBlock implements EntityBlock {
+public class CustomNukeBlock extends HorizontalMachineBlock implements EntityBlock, RemoteDetonatableBlock {
     public CustomNukeBlock(Properties properties) {
         super(properties, false);
     }
@@ -114,5 +114,20 @@ public class CustomNukeBlock extends HorizontalMachineBlock implements EntityBlo
         level.gameEvent(null, GameEvent.EXPLODE, pos);
         stats.explode(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
         return true;
+    }
+
+    @Override
+    public BombReturnCode detonateFromRemote(Level level, BlockPos pos) {
+        if (level == null || level.isClientSide()) {
+            return BombReturnCode.UNDEFINED;
+        }
+        if (level.getBlockState(pos).getBlock() != this) {
+            return BombReturnCode.ERROR_NO_BOMB;
+        }
+        if (!(level.getBlockEntity(pos) instanceof CustomNukeBlockEntity blockEntity)
+                || blockEntity.getStats().isEmpty()) {
+            return BombReturnCode.ERROR_MISSING_COMPONENT;
+        }
+        return detonate(level, pos) ? BombReturnCode.DETONATED : BombReturnCode.ERROR_INCOMPATIBLE;
     }
 }

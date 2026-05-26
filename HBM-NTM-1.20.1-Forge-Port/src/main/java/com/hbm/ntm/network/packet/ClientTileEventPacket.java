@@ -1,6 +1,7 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.network.HbmClientTileEventReceiver;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -11,7 +12,7 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public record ClientTileEventPacket(BlockPos pos, ResourceLocation eventType, CompoundTag data) {
+public record ClientTileEventPacket(BlockPos pos, ResourceLocation eventType, CompoundTag data) implements HbmPreparablePacket {
     public ClientTileEventPacket {
         pos = pos == null ? BlockPos.ZERO : pos;
         data = data == null ? new CompoundTag() : data.copy();
@@ -43,5 +44,10 @@ public record ClientTileEventPacket(BlockPos pos, ResourceLocation eventType, Co
             }
         });
         context.setPacketHandled(true);
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new ClientTileEventPacket(pos, eventType, data);
     }
 }

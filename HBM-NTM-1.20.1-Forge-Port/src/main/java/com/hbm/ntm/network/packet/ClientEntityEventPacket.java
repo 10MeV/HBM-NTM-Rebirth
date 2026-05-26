@@ -2,6 +2,7 @@ package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.network.HbmClientEntityEventReceiver;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.nbt.CompoundTag;
@@ -14,7 +15,7 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public record ClientEntityEventPacket(int entityId, ResourceLocation eventType, CompoundTag data) {
+public record ClientEntityEventPacket(int entityId, ResourceLocation eventType, CompoundTag data) implements HbmPreparablePacket {
     public ClientEntityEventPacket {
         data = data == null ? new CompoundTag() : data.copy();
     }
@@ -50,5 +51,10 @@ public record ClientEntityEventPacket(int entityId, ResourceLocation eventType, 
             HbmNtm.LOGGER.debug("Client entity event {} for id {} had no HbmClientEntityEventReceiver receiver.",
                     packet.eventType, packet.entityId);
         }
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new ClientEntityEventPacket(entityId, eventType, data);
     }
 }

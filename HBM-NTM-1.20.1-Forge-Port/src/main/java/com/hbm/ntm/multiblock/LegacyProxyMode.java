@@ -44,6 +44,10 @@ public final class LegacyProxyMode {
         return ALL;
     }
 
+    public static LegacyProxyMode fullCombo() {
+        return combo(true, true, true);
+    }
+
     public static LegacyProxyMode combo(boolean inventory, boolean power, boolean fluid) {
         return passive().withInventory(inventory).withPower(power).withFluid(fluid);
     }

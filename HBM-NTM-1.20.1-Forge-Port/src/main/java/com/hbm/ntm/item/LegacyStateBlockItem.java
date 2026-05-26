@@ -42,7 +42,7 @@ public class LegacyStateBlockItem extends BlockItem {
         }
     }
 
-    private int getVariant(ItemStack stack) {
+    public int getVariant(ItemStack stack) {
         CompoundTag tag = stack.getTag();
         int variant = tag == null ? 0 : tag.getInt(TAG_VARIANT);
         return Math.max(0, Math.min(variants - 1, variant));

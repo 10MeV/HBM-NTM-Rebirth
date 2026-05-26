@@ -1168,6 +1168,66 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+## 2026-05-26 ResourceManager 门面修饰符与门模型追加对齐
+
+1.7.10 对照：
+
+- `ResourceManager.silo_hatch` 与 `ResourceManager.silo_hatch_large` 分别来自 `models/doors/silo_hatch.obj`、`models/doors/silo_hatch_large.obj`，均为 `HFRWavefrontObject(...).asVBO()`；贴图为 `textures/models/doors/silo_hatch.png` 与 `silo_hatch_large.png`。
+- `DoorDecl.SILO_HATCH` / `SILO_HATCH_LARGE`、`ItemRenderLibraryDoors` 均按 named part `Frame`、`Hatch` 渲染，现代端已有 baked part 入口，但旧式渲染库 facade 还需要保留整 OBJ 入口。
+- `ResourceManager.skeleton_holder` 是 `HFRWavefrontObject(...).noSmooth().asVBO()`；现代端此前只有 `.noSmooth()`。
+- `ResourceManager.ufo`、`mini_ufo`、`siege_ufo` 是 `new HFRWavefrontObject(...)`，没有 `.asVBO()`；现代端此前误加 `.asVBO()`。
+- `ResourceManager.zirnox`、`zirnox_destroyed` 是 `HFRWavefrontObject(...).asVBO()`；现代端此前未标记 `.asVBO()`。
+- `transition_seal` 是 Collada `AnimatedModel` / `Animation`，不属于 OBJ 静态模型库，本轮只记录缺口，不用 OBJ facade 生造替代。
+
+现代侧改动：
+
+- `ObjDoorModels` 增加 `SILO_HATCH_LEGACY`、`SILO_HATCH_LARGE_LEGACY` 与旧贴图句柄，保留已有 baked `ObjModelPart`/`ObjPartModel` 入口；`ObjModelLibrary` 增加对应 `DOOR_*_LEGACY` facade。
+- `ObjBlockModels.SKELETON_HOLDER` 调整为 `.noSmooth().asVBO()`。
+- `ObjEntityModels.UFO`、`MINI_UFO`、`SIEGE_UFO` 去掉误加的 `.asVBO()`，按旧端普通 `HFRWavefrontObject` 语义暴露。
+- `ObjReactorModels.ZIRNOX`、`ZIRNOX_DESTROYED` 补 `.asVBO()`。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-26 ResourceManager 通用块、炮塔与 PheoDoors 接入
+
+1.7.10 对照：
+
+- `ResourceManager.pipe_neo` 来自 `models/blocks/pipe_neo.obj`，构造为 `new HFRWavefrontObject(...)`，没有 `.noSmooth()` / `.asVBO()`；旧 `RenderTestPipe`、`RenderFrackingTower` 会直接渲染 `pX/nX/pZ/nZ` 等 part，贴图来自方块 icon `pipe_neo` 与 overlay。
+- `ResourceManager.turret_chekhov`、`turret_jeremy`、`turret_tauon`、`turret_richard`、`turret_howard`、`turret_maxwell`、`turret_fritz`、`turret_arty`、`turret_himars`、`turret_sentry` 与 `turret_howard_damaged` 均为 `HFRWavefrontObject(...).asVBO()`。
+- `ResourceManager` lines 429-455 声明炮塔贴图：base/carriage/connector、Chekhov/Jeremy/Tauon/Richard/Howard/Maxwell/Fritz/Arty/HIMARS/Sentry，以及 rusted Howard 变体；旧资源还存在 `base_zach`、`carriage_zach`、`zach` 贴图，供炮塔皮肤继续使用。
+- `ResourceManager` lines 323-363 声明 PheoDoors：`pheo_fire_door`、`pheo_airlock_door`、`pheo_blast_door`、`pheo_containment_door`、`pheo_seal_door`、`pheo_secure_door`、`pheo_sliding_door`、`pheo_vehicle_door`、`pheo_water_door`、`pheo_vault_door`，全部为 `HFRWavefrontObject(...).asVBO()`。
+- PheoDoors 的贴图选择由 `DoorDecl`、`Render*Door` 与 `ItemRenderLibraryDoors` 控制；例如 Vault Door 不存在单独 `vault_door.png` 默认贴图，而是对 `Door` 和 `Label` 分别绑定 `vault/vault_door_*` 与 `vault/label_*`。
+
+现代侧改动：
+
+- 复制 `pipe_neo.obj` 与 `pipe_neo.png` / `pipe_neo_overlay.png` 到 `legacy_blocks` 目录；`ObjBlockModels.PIPE_NEO` 保留旧端无 noSmooth/无 asVBO 语义，并在 `ObjModelLibrary` 暴露 `BLOCK_PIPE_NEO`。
+- `ObjTurretModels` 将所有旧炮塔模型入口补 `.asVBO()`，并公开 Jeremy/Tauon/Richard/Maxwell/Fritz/Arty/HIMARS/Sentry、Zach 相关贴图常量；复制缺失的 `base_zach`、`carriage_zach`、`zach`。
+- 新增 `ObjPheoDoorModels`，复制 10 个 PheoDoors OBJ 与 31 张贴图，按旧字段建立 legacy OBJ 门面和贴图句柄；`ObjModelLibrary` 增加 `PHEO_*_DOOR` facade。
+- 继续记录缺口：旧 `sat_base/sat_radar/sat_resonator/sat_scanner/sat_mapper/sat_laser/sat_foeq` 在 `ResourceManager` 中有声明，但旧资源目录未找到对应 png；真实调用集中在 `sat_foeq_burning` / `sat_foeq_fire` 与 `satDock`，现代端保持不生造缺失贴图。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-05-26 追加：手雷 OBJ 部位贴图句柄
+
+1.7.10 对照：
+
+- `ResourceManager.grenades` 使用 `models/weapons/grenades.obj`，该模型已随武器 OBJ 批次接入。
+- `ItemRenderGrenade` 按 part 绑定 `grenade_frag_*`、`grenade_stick_*`、`grenade_tech_*`、`grenade_nuka_*` 共 16 张贴图后调用 `ResourceManager.grenades.renderPart(...)`。
+
+现代侧改动：
+
+- 从旧 `textures/models/grenades/` 复制 16 张贴图到 `assets/hbm/textures/block/grenades/`。
+- `ObjWeaponModels` 新增 `GRENADE_*_TEXTURE` 常量与 `grenadeTexture(...)` helper，供后续手雷 item renderer 直接按旧部位贴图绑定。
+- 同段 `ResourceManager` 中的 `ff_gun_bright/dark/normal` 只声明了 `textures/models/weapons/ff/...`，旧资源目录未找到对应 png，且当前旧源码未找到调用点；本轮不补现代常量。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ### 2026-05-25 追加更正：核弹单方块契约回退
 
 触发来源：
@@ -2414,3 +2474,22 @@ noSmooth 对照报告：
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 - 编译末尾的 deprecation 注记来自 `MultiblockDummyBlockEntity`，不是本轮核弹渲染/菜单修复造成的失败。
+
+## 2026-05-26 ResourceManager 护甲 OBJ 批量接入
+
+1.7.10 对照：
+
+- `ResourceManager` lines 950-971 声明护甲/穿戴 OBJ：`armor_bj`、`armor_hev`、`armor_ajr`、`armor_t51`、`armor_hat`、`armor_no9`、`armor_goggles`、`armor_fau`、`armor_dnt`、`armor_steamsuit`、`armor_dieselsuit`、`armor_remnant`、`armor_ncr`、`armor_bismuth`、`armor_mod_tesla`、`armor_wings`、`armor_axepack`、`armor_tail`、`player_manly_af`、`armor_envsuit`、`armor_taurun`、`armor_trenchmaster`。
+- 除 `player_manly_af` 额外 `.noSmooth()` 外，上述旧模型均通过 `.asVBO()` 暴露；现代 `ObjArmorModels` 按同名契约补齐 `asVBO()` / `noSmooth().asVBO()` 门面。
+- `ResourceManager` lines 1107-1194 声明护甲部位贴图：BJ、Envsuit、HEV、AJR/AJRO、T51、FAU、DNT、Steamsuit、Dieselsuit/Bnuuy、RPA、NCRPA、Taurun、Trenchmaster、Mod Tesla、Bismuth、Murk wings、Pheo axepack、Peep tail、hat/no9/goggles，以及 `textures/entity/player_fem.png`。
+
+现代侧改动：
+
+- 从 1.7.10 资源复制 22 个护甲/穿戴 OBJ 到 `assets/hbm/models/block/armor/`，复制 71 张对应贴图到 `assets/hbm/textures/block/armor/`。
+- 旧 `BJ.obj` 与 `AJR.obj` 在现代资源树中改名为小写 `bj.obj` / `ajr.obj`，用于满足 1.20 `ResourceLocation` 路径小写要求；OBJ 内容仍来自 1.7.10 原资源。
+- `ObjArmorModels` 补齐上述模型常量和部位贴图 `ResourceLocation` 常量；`ObjModelLibrary` 补齐对应 `ARMOR_*` facade 字段。
+- 本轮只迁入渲染库资源入口和贴图句柄，不迁护甲 `ModelRendererObj` 动画、按部位绑定贴图、发光/全亮部件和穿戴逻辑；这些应在后续护甲模型 renderer 移植时继续按 `com.hbm.render.model.*` 与 `com.hbm.items.armor.*` 对齐。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。

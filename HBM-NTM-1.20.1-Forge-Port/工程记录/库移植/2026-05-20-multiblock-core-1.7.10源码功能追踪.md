@@ -210,6 +210,171 @@
 
 - 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
 
+## 2026-05-26 makeExtra 偏移勘误：工业涡轮/液化机/SILEX
+
+触发来源：
+
+- 继续推进多方块库移植时，按 1.7.10 `fillSpace(...)` / `makeExtra(...)` 逐台复核现代端 `LegacyMachineDefinition` 中已迁入的 proxy/extra offset。
+- 本轮重点排查“看起来有模型，但 dummy/proxy 位置不对”的机器；这些错误会直接影响外围 proxy 方块、端口连接和整机占位。
+
+1.7.10 事实来源：
+
+- `BlockDummyable#onBlockPlacedBy(...)` 先计算 `o = -getOffset()`，最终 core 放在 `placed + dir * o`，但随后调用各机器 `fillSpace(world, placedX, placedY, placedZ, dir, o)`；每台机器是否在 `fillSpace` 内把局部坐标移动到 core，需要按源码逐台判断。
+- `MachineIndustrialTurbine#fillSpace(...)` 在 `x += dir.offsetX * o; z += dir.offsetZ * o;` 后，以 core 为原点调用：
+  - `dir * 3 +/- rot * 1` 与 `-dir * 1 +/- rot * 1`；
+  - `dir * 3, y + 2` 与 `-dir * 1, y + 2`；
+  - `-dir * 3, y + 1`。
+- `MachineLiquefactor#fillSpace(...)` 在移动到 core 后只把 `y + 1` 的四个水平相邻点和 `y + 3` 顶点升级为 extra proxy；没有地面额外 proxy，也没有 forward=2 的 proxy。
+- `MachineSILEX#fillSpace(...)` 没有先整体平移局部坐标，但 `makeExtra` 使用 `x + dir * o +/- side, y + 1`；换算到 core-relative 后是 `forward = 0, side = +/-1, y = 1`。
+- 同批复核确认：`MachineSolidifier` 与液化机同样是 `y + 1` 四邻点加 `y + 3` 顶点，现代端原定义已匹配；`MachineRotaryFurnace`、`MachineSteamEngine`、`MachineRadGen`、`MachinePumpjack`、`MachineCoker`、`MachineOreSlopper` 的 offset 公式本轮未发现偏差。
+
+本轮现代侧修正：
+
+- `LegacyMultiblockOffsets` 新增 `cardinal(int radius, int y)`，用于表达 legacy 中“同一半径但位于指定 Y 层”的四邻点，减少后续手写坐标猜测。
+- `industrialTurbineProxyOffsets(...)` 修正为 1.7.10 的 `side = +/-1`、顶层 `y = 2`、背部 `forward = -3, y = 1`；移除此前的 `side = +/-2`、`y = 3`、`forward = -4` 误差。
+- `liquefactorProxyOffsets(...)` 改为 `cardinal(1, 1) + (0,3,0)`，移除此前多出来的地面与 forward proxy。
+- `silexProxyOffsets(...)` 改为 core-relative 的 `forward = 0, side = +/-1, y = 1`，移除此前错误的 forward 分量。
+
+对 1.7.10 的对齐说明：
+
+- 本轮只修正能够由 1.7.10 源码直接证明的偏移差异；像大型钢罐 `MachineBigAssTank` 的两个端口虽然源码里写法较绕，但换算成集合后与现代 `+/-6 forward` 相同，因此未改。
+- 后续继续迁机器时，凡是旧 `fillSpace(...)` 内有 `x += dir * o`、`x -= dir * n` 或直接在 `makeExtra` 里混用 `o` 的，都必须先换算到 core-relative，再写入现代 layout。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过；仍有既有 `ClientModEvents.java` 中 `Biome.BIOME_INFO_NOISE` 过时警告。
+
+## 2026-05-26 offset helper 与 ForgeDirection 手性勘误
+
+触发来源：
+
+- 继续推进多方块库移植时，复查多台旧 `BlockDummyable` 机器的 `fillSpace(...)`，发现现代端仍有一批手写 offset 逻辑散落在 `ModBlocks`，不利于继续做 1.7.10 对齐审计。
+- 重点复查 `MachineRadGen`、`MachineRotaryFurnace`、`MachineSteamEngine`、`MachinePyroOven`、`MachineAssemblyFactory`、`MachineOreSlopper`、`MachineTurbofan`、`MachineTurbineGas`、`MachineIndustrialTurbine` 等旧源码。
+
+1.7.10 事实来源：
+
+- 已用 Forge 1.7.10 的 `ForgeDirection#getRotation(...)` 验证：`getRotation(UP)` 等价现代 `Direction#getClockWise()`；`getRotation(DOWN)` 等价现代 `Direction#getCounterClockWise()`。
+- 旧 `BlockDummyable#onBlockPlacedBy(...)` 会按 `o = -getOffset()` 计算 core 位置，随后 `fillSpace(world, x, y, z, dir, o)` 中多数机器会先把局部原点移回 core，再按 `dir` 和旋转方向放置 `makeExtra(...)`。
+- `MachinePyroOven#fillSpace(...)` 使用的是 `dir.getRotation(ForgeDirection.DOWN)`；现代端此前按 clockwise 表达，属于和 1.7.10 不一致的猜测内容。
+
+本轮现代侧修正：
+
+- `LegacyMultiblockOffsets` 新增并集中表达：
+  - `legacyUpSide(facing)` / `legacyDownSide(facing)`；
+  - 带显式侧向轴的 `relative(...)`；
+  - `lineAlongFacing(...)`、`lineAlongSide(...)`；
+  - `combine(...)`；
+  - 原先散落的 `xrBox(...)`、`floorCorners(...)`、`cardinal(...)`、`squarePerimeter(...)`、`squareSidesWithoutCorners(...)`、`isSquarePerimeter(...)`。
+- `ModBlocks` 中角点、十字、方形外围和 XR box 结构统一改走 `LegacyMultiblockOffsets`，减少后续继续迁入机器时重复手写旋转/范围逻辑。
+- `rad_gen`、`rotary_furnace`、`steam_engine`、`tower_large`、`turbofan`、`turbine_gas`、`industrial_turbine`、`ore_slopper`、`assembly_factory`、`liquefactor`、`compressor`、`big_ass_tank`、`catalytic_cracker`、`catalytic_reformer` 等 proxy/structure offset 表达改为库 helper；这些主要是等价重写。
+- `pyro_oven` 的 proxy 侧向轴从现代 `clockwise` 修正为 `legacyDownSide(facing)`，对齐旧 `dir.getRotation(DOWN)`。
+
+对 1.7.10 的对齐说明：
+
+- 本轮不是新增机器行为，而是把旧源码中反复出现的“前向 + UP/DOWN 旋转侧向 + 高度”的坐标合同提升到库层，后续勘误时能直接看出某台机器使用的是旧 UP 还是旧 DOWN。
+- 已确认存在猜测内容并修正的是 `MachinePyroOven` 的侧向手性；其余本轮改动保持现有 core-relative footprint 行为，只把表达方式换成可审计 helper。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
+## 2026-05-26 layout proxy mode 叠加语义收紧
+
+触发来源：
+
+- 继续推进多方块库移植时复查 `LegacyMultiblockLayout` 的链式组合 API，发现 `withProxyPredicate(...)` / `withProxyOffsets(...)` 会替换整张 proxy mode 函数。
+- 当前已迁机器大多只声明一次 proxy，或先加普通 extra 再声明 proxy，暂时不容易踩中；但旧 1.7.10 `fillSpace(...)` 经常由主 XR、额外 XR 盒、多段 `makeExtra(...)` 叠加组成，后续继续批量迁机器时容易因为第二次 proxy 声明覆盖第一次而漏写 proxy/legacy extra。
+
+1.7.10 对齐依据：
+
+- 旧 `makeExtra(...)` 是对当前位置已有 dummy 的升级或额外放置，不会因为后续再调用一段 `makeExtra(...)` 就取消前面已经放置的 extra/proxy 身份。
+- 因此现代 `LegacyMultiblockLayout` 的 proxy mode 组合应接近“追加/升级”，而不是“整表替换”。
+
+本轮现代侧修正：
+
+- `LegacyMultiblockLayout#withProxyModes(...)` 改为与已有 proxy mode 合并：已有 offset 已是 proxy 时保留原 mode；否则采用新声明的 mode。
+- `withExtraOffsets(..., Function<BlockPos, LegacyProxyMode>)` 复用同一合并规则，避免多段 extra 或后续 proxy 声明互相覆盖。
+
+效果：
+
+- 后续迁入带多段 `makeExtra(...)` 的机器时，可以安全链式组合多个 proxy/extra offset 来源。
+- 当前机器的已验证 footprint 和 proxy mode 不变；这是库层行为收紧。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
+## 2026-05-26 legacy DirPos 远程端口辅助与组装机网络接入
+
+触发来源：
+
+- 继续推进多方块库移植时复查已迁移的化工厂与组装机，发现两者在 1.7.10 中共享同一套 `DirPos` 远程连接点，但现代端只有化工厂手写了这套 12 点端口，组装机仍只订阅相邻能量网络，且没有接入 HBM 流体网络。
+
+1.7.10 事实来源：
+
+- `MachineAssemblyMachine` 与 `MachineChemicalPlant`：
+  - `getDimensions() = {2, 0, 1, 1, 1, 1}`，`getOffset() = 1`。
+  - `fillSpace(...)` 先走 `BlockDummyable`/XR 填充，再把坐标后移一格，在核心所在 Y 层补一个 3x3 外围环。
+  - `createNewTileEntity(...)` 对 extra dummy 返回 `new TileEntityProxyCombo().inventory().power().fluid()`。
+- `TileEntityMachineAssemblyMachine#getConPos()` 与 `TileEntityMachineChemicalPlant#getConPos()` 完全一致，返回核心周围半径 2 的 12 个地面远程连接点：
+  - `x + 2, z -1..1` 方向 `POS_X`；
+  - `x - 2, z -1..1` 方向 `NEG_X`；
+  - `z + 2, x -1..1` 方向 `POS_Z`；
+  - `z - 2, x -1..1` 方向 `NEG_Z`。
+- 两个旧 TileEntity 的服务端 tick 都对这组 `DirPos` 执行：
+  - `trySubscribe(worldObj, pos)` 订阅能量；
+  - 输入 tank 类型不是 `Fluids.NONE` 时订阅对应流体；
+  - 输出 tank 有内容时向端口 `tryProvide(...)`。
+
+本轮现代侧补齐：
+
+- 新增 `LegacyMultiblockPorts`，提供 `xrFloorRingEnergyPorts(radius)` 与 `xrFloorRingFluidPorts(radius)`，用于生成旧 XR 多方块常见的地面外圈远程端口；`radius = 2` 时顺序与上述 1.7.10 `getConPos()` 一致。
+- `ChemicalPlantBlockEntity` 从手写 12 个端口改为使用 `LegacyMultiblockPorts.xrFloorRing*Ports(2)`，行为不变但端口规则收束到库层。
+- `AssemblyMachineBlockEntity` 改为实现 `HbmStandardFluidTransceiver`，暴露输入/输出 tank 列表，并在服务端 tick 中：
+  - 使用同一组 12 个 legacy 远程端口订阅能量；
+  - 当输入 tank 类型有效时订阅 HBM 流体网络；
+  - 当输出 tank 有内容时向 HBM 流体网络提供流体。
+
+对 1.7.10 的对齐说明：
+
+- 这次不改变组装机的 Forge fluid handler 行为，只补回旧 HBM 网络路径。
+- 组装机没有像化工厂那样的流体容器槽位装卸逻辑；本轮仅迁回 1.7.10 中确定存在的远程端口网络订阅/提供合同。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
+## 2026-05-26 legacy 多方块 offset 生成规则库化
+
+触发来源：
+
+- 继续推进多方块库移植时发现 `ModBlocks` 内仍保留多组和机器无关的旧 XR 坐标展开/平面 proxy 点集生成逻辑，例如额外 XR 盒、地面四角、十字、方形外环、带 facing 的 forward/side 相对坐标。
+- 这些规则本质属于 `BlockDummyable` / `MultiblockHandlerXR` 迁移层；继续散落在机器注册类里会让后续机器对齐时更容易出现坐标语义分叉。
+
+1.7.10 事实来源：
+
+- `MultiblockHandlerXR.fillSpace(...)` 以 `{U,D,N,S,W,E}` 维度、facing 旋转和原点坐标展开一个旧 XR 方盒。
+- 大量旧 `fillSpace(...)` 在主 XR 之外叠加额外 `MultiblockHandlerXR.fillSpace(...)` 或 `makeExtra(...)`；现代端需要反复生成“额外 XR 盒 offsets”和常见平面 proxy 点集。
+
+本轮现代侧补齐：
+
+- 新增 `LegacyMultiblockOffsets`：
+  - `xrBox(...)`：按旧 XR 维度、facing 和原点展开 offsets，保留“跳过 box 原点”与“只跳过全局 core”的两种语义。
+  - `relative(...)`：用 facing + clockwise rot 生成旧机器常用的 forward/side 平面偏移。
+  - `floorCorners(radius)`、`cardinal(radius)`、`squarePerimeter(radius)`、`squareSidesWithoutCorners(radius)`、`isSquarePerimeter(...)`：集中表达旧 `makeExtra` 常见平面点集。
+- `ModBlocks` 中以下机器的重复坐标逻辑改为调用库 helper，实际足迹和 proxy mode 不变：
+  - 化工厂/化工厂大型、炼油厂、真空蒸馏塔、分馏塔、加氢处理器、焦化装置、流体罐、火炬、PUREX、回旋加速器、放射分解机、小冷却塔。
+  - 催化裂化装置、催化重整装置、压缩机、大型流体罐、曝光室、泵井的额外 XR 盒 offset 生成。
+
+对 1.7.10 的对齐说明：
+
+- `xrBox(..., includeBoxOrigin = true)` 对应旧额外 XR 盒原点不是 core 时“保留额外盒原点，只跳过全局 core”的场景；这是焦化装置等结构此前已经勘误过的语义。
+- 本轮是库化与消重，不引入新机器行为；后续再接入新旧多方块时应优先使用 `LegacyMultiblockOffsets`，避免在注册类里复制 `MultiblockHandlerXR` 展开逻辑。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
 ## 2026-05-25 可见多方块默认 shape 勘误
 
 触发来源：
@@ -836,7 +1001,7 @@
 - dummy NBT 继续保存旧 `Proxy` 布尔值，并新增 `ProxyInventory`、`ProxyPower`、`ProxyConductor`、`ProxyFluid`、`ProxyHeat`、`ProxyMoltenMetal`、`ProxyAll`。
   - 旧存档只有 `Proxy=true` 且没有细分字段时，仍按 `ProxyAll` 读取，保证兼容。
 - `LegacyMultiblockLayout` 从 `Predicate<BlockPos>` 升级为 offset -> `LegacyProxyMode`：
-  - 旧 `withProxyPredicate(...)` / `withProxyOffsets(...)` 仍保留，默认映射为 `LegacyProxyMode.all()`，避免破坏已有调用。
+  - 旧 `withProxyPredicate(...)` / `withProxyOffsets(...)` 仍保留，默认映射为 `LegacyProxyMode.fullCombo()`，即旧 `TileEntityProxyCombo(true,true,true)` 的 inventory/power/fluid 组合；真正的任意 Forge capability 透传只保留给显式 `LegacyProxyMode.all()` 与旧存档兼容读取。
   - 新增带 `LegacyProxyMode` 的 overload，供机器按 1.7.10 proxy 类型精确声明。
 - `MultiblockHelper` 新增 `fillOffsetsWithProxyModes(...)` / `fillUpWithProxyModes(...)`，核心填充路径现在把 proxy mode 写入 dummy。
 - `LegacyXrMultiblockBlock` 与 `LegacyOffsetMultiblockBlock` 已改用 typed proxy 填充路径。
@@ -970,6 +1135,40 @@
 
 - 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
 
+## 2026-05-26 proxy 默认模式与 HBM 网络连接桥接修正
+
+触发来源：
+
+- 继续推进多方块库移植时复核上一轮 proxy typed 迁移，发现现代端虽然已经保存 `LegacyProxyMode`，但若机器或旧 helper 只使用布尔 proxy 入口，仍会默认落到 `LegacyProxyMode.all()`，这比 1.7.10 `TileEntityProxyCombo` 更宽。
+- 现代 HBM 能量/流体网络的连接判断还依赖 `HbmEnergyConnector` / `HbmFluidConnector`，不只看 Forge capability；dummy 只转发 capability 会导致相邻电缆/管道无法把 proxy dummy 识别为旧端口连接器。
+
+1.7.10 事实来源：
+
+- `TileEntityProxyCombo` 实现 `IEnergyReceiverMK2`、`IEnergyConductorMK2`、`IFluidReceiverMK2`、`ISidedInventory` 等接口，但每条接口都先检查独立开关：
+  - `power()` 控制能量接收与 `IEnergyConnectorMK2#canConnect(...)`。
+  - `conductor()` 只在 core/delegate 是 `IEnergyConductorMK2` 时参与 `canConnect(...)`。
+  - `fluid()` 控制流体 tank/demand/transfer 与 `IFluidConnectorMK2#canConnect(...)`。
+  - `inventory()` 控制 sided inventory 访问。
+- `new TileEntityProxyCombo(true, true, true)` 只等价 inventory + power + fluid，并不是任意能力全透传。
+
+本轮现代侧修正：
+
+- `LegacyProxyMode` 新增 `fullCombo()`，表达旧构造器 `TileEntityProxyCombo(true,true,true)`。
+- `LegacyMultiblockLayout`、`MultiblockHelper` 和 `MultiblockDummyBlockEntity#setProxy(true)` 的布尔 proxy 默认值从 `all()` 收窄为 `fullCombo()`；显式 `all()` 仅用于旧 NBT 没有细分字段时的兼容读取，或后续确有来源证明需要全 capability 透传的特殊路径。
+- `MultiblockDummyBlockEntity` 现在实现：
+  - `HbmEnergyConnector#canConnectEnergy(...)`：只有 `power` / `conductor` / `allCapabilities` proxy 才响应，并优先转发到 core/delegate 的 `HbmEnergyConnector`。
+  - `HbmFluidConnector#canConnectFluid(...)`：只有 `fluid` / `moltenMetal` / `allCapabilities` proxy 才响应，并优先转发到 core/delegate 的 `HbmFluidConnector`。
+- 两条连接桥接都复用已有 `validCore()` 与 `LegacyProxyDelegateProvider`，保持归属校验和旧 `TileEntityProxyDyn` delegate 语义一致。
+
+效果：
+
+- 后续多方块机器接入真实能量/流体网络时，外部电缆和管道可以从 dummy 端口按旧 proxy 开关识别连接，不需要在每台机器旁边单独加特判。
+- 布尔 proxy helper 不再意外开放 heat、moltenMetal 或未知 Forge capability，减少后续机器逻辑接入时的错误访问面。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
 ## 2026-05-25 1.7.10 对齐审计：方向与离心机 proxy 勘误
 
 审计触发：
@@ -1047,6 +1246,38 @@
 
 - 这样 dummy 的右键、破坏联动和 proxy 能力转发与 shape/硬度/拾取一样，全部收束到同一套“有效 core 成员”判断。
 - 不属于当前 layout 的残留 dummy 即使还保存旧 `CorePos`，也不会继续打开 GUI、转发 capability 或破坏 core。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
+## 2026-05-26 多方块碰撞高度重大修复
+
+问题现象：
+
+- 组装机中间可直接走过去，等价于旧 XR dummy 的完整方块碰撞没有生效。
+- 多数可见大机器只剩底下一层碰撞，占位高度没有按旧 `getDimensions()` 的 `U/D` 层数扩展。
+
+1.7.10 事实来源：
+
+- `BlockDummyable#fillSpace(...)` 调用 `MultiblockHandlerXR.fillSpace(...)`。
+- `MultiblockHandlerXR.fillSpace(...)` 先 `rotate(dim, dir)`，再按 `b = y - D .. y + U` 逐层放置 dummy；因此 `{U,D,N,S,W,E}` 中 `U` 明确代表向上填充层数。
+- `MachineAssemblyMachine#getDimensions() = {2,0,1,1,1,1}`，且没有自定义 `bounding`；旧版实际是 3x3x3 范围内每个 core/dummy 方块都提供默认完整方块碰撞。
+
+现代端问题定位：
+
+- `LegacyMultiblockLayout#shape(double height)` 只统计 X/Z 足迹，并固定从 `0..height` 生成 shape；`height=1.0` 时所有走 `stateLayoutShape(...)` 或默认 `LegacyMachineDefinition.collisionShape(...)` 的机器都会变成一层高。
+- `AssemblyMachineBlock` 额外手写了 `-1.5..2.5`、高度 `0..2` 的大盒，既不是旧 3x3 足迹，也少了 `U=2` 对应的第三层。
+
+本轮现代侧修复：
+
+- `LegacyMultiblockLayout#shape(double height)` 改为同时统计 offset 的 Y 范围，生成 `minY .. max(offsetY + height)` 的整机占位 shape。
+- `AssemblyMachineBlock#getMultiblockShape(...)` / `getMultiblockCollisionShape(...)` 改回使用 `getLayout(state).shape(1.0D)`，由 1.7.10 XR dimensions 直接决定碰撞范围。
+
+对 1.7.10 的对齐说明：
+
+- 没有 `bounding` 详细盒的旧 `BlockDummyable` 机器，默认碰撞应来自实际填充的 core/dummy 方块集合；现代端用 layout 的三维边界近似这组完整方块碰撞。
+- 已有详细 `bounding` 的机器仍使用各自迁入的 `legacyRotatedShape(...)`，不受本轮默认 shape 修正影响。
 
 验证：
 

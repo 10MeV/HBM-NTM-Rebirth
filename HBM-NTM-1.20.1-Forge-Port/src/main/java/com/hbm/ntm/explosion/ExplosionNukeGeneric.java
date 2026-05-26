@@ -80,7 +80,7 @@ public final class ExplosionNukeGeneric {
         }
 
         BlockState state = level.getBlockState(pos);
-        if (state.isAir()) {
+        if (isLegacyEmpty(state)) {
             return 0;
         }
 
@@ -136,7 +136,7 @@ public final class ExplosionNukeGeneric {
         }
 
         BlockState state = level.getBlockState(pos);
-        if (state.isAir()) {
+        if (isLegacyEmpty(state)) {
             return 0;
         }
 
@@ -161,6 +161,10 @@ public final class ExplosionNukeGeneric {
     @SuppressWarnings("deprecation")
     private static float explosionResistance(BlockState state) {
         return state.getBlock().getExplosionResistance();
+    }
+
+    private static boolean isLegacyEmpty(BlockState state) {
+        return state.isAir() && state.getFluidState().isEmpty();
     }
 
     public static void waste(Level level, int x, int y, int z, int radius) {

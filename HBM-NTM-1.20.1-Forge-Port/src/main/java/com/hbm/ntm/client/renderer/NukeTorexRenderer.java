@@ -39,8 +39,7 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
             new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/flare.png");
     private static final RenderType CLOUDLET_RENDER_TYPE = translucentNoDepth("hbm_torex_cloudlet", CLOUDLET_TEXTURE,
             false);
-    private static final RenderType FLARE_RENDER_TYPE = translucentNoDepth("hbm_torex_flare", FLARE_TEXTURE,
-            true);
+    private static final RenderType FLARE_RENDER_TYPE = translucentNoDepth("hbm_torex_flare", FLARE_TEXTURE, true);
     private static final Comparator<Cloudlet> FAR_TO_NEAR =
             (first, second) -> Double.compare(second.renderSortDistanceSq, first.renderSortDistanceSq);
 
@@ -63,7 +62,8 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         if (!entity.cloudlets.isEmpty()) {
             renderCloudlets(entity, camera.getPosition(), partialTick, poseStack, buffer);
         }
-        if (entity.tickCount < 101) {
+        int visualAge = Math.max(entity.tickCount, entity.getSyncedAge());
+        if (visualAge < 101) {
             renderFlare(entity, partialTick, poseStack, buffer);
         }
         applyPlayerShake(entity);
@@ -179,9 +179,7 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
             return;
         }
 
-        player.hurtTime = 15;
-        player.hurtDuration = 15;
-        entity.didShake = true;
+        entity.applyClientShockwaveShake(player);
     }
 
     private static RenderType translucentNoDepth(String name, ResourceLocation texture, boolean additive) {

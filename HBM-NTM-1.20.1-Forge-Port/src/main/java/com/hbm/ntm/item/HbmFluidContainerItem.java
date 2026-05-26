@@ -2,6 +2,7 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.api.fluid.IFillableItem;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerItemCapabilityProvider;
 import com.hbm.ntm.fluid.HbmFluidContainerRules;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -141,6 +142,17 @@ public class HbmFluidContainerItem extends Item implements IFillableItem {
 
     public HbmFluidContainerRules.ContainerKind getContainerKind() {
         return kind;
+    }
+
+    @Override
+    public boolean hasCraftingRemainingItem(ItemStack stack) {
+        return getFill(stack) > 0 && !HbmFluidContainerRegistry.getEmptyContainer(stack).isEmpty();
+    }
+
+    @Override
+    public ItemStack getCraftingRemainingItem(ItemStack stack) {
+        ItemStack empty = HbmFluidContainerRegistry.getEmptyContainer(stack);
+        return empty.isEmpty() ? ItemStack.EMPTY : empty;
     }
 
     @Override

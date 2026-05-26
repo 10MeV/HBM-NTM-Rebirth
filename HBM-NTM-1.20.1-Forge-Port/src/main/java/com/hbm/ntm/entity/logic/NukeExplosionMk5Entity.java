@@ -91,7 +91,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
 
         if (explosion == null) {
             explosionStart = System.currentTimeMillis();
-            explosion = new ExplosionNukeRayBatched(level(), blockPosition().getX(), blockPosition().getY(), blockPosition().getZ(),
+            explosion = new ExplosionNukeRayBatched(level(), (int) getX(), (int) getY(), (int) getZ(),
                     strength, speed, length);
             initialized = true;
         }
@@ -175,7 +175,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         readChunkLoader(tag);
         expiredFromSave = shouldExpireFromSave(tag);
         if (initialized && !expiredFromSave && strength > 0) {
-            explosion = new ExplosionNukeRayBatched(level(), blockPosition().getX(), blockPosition().getY(), blockPosition().getZ(),
+            explosion = new ExplosionNukeRayBatched(level(), (int) getX(), (int) getY(), (int) getZ(),
                     strength, speed, length);
             explosion.readFromNbt(tag, "expl_");
         }

@@ -1,6 +1,7 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.client.ClientBinaryData;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkEvent;
@@ -8,7 +9,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
-public record ClientBinaryDataPacket(ResourceLocation channel, String name, byte[] payload, boolean clearChannel) {
+public record ClientBinaryDataPacket(ResourceLocation channel, String name, byte[] payload, boolean clearChannel) implements HbmPreparablePacket {
     public static final int MAX_PAYLOAD_BYTES = 1_048_576;
 
     public ClientBinaryDataPacket {
@@ -43,5 +44,10 @@ public record ClientBinaryDataPacket(ResourceLocation channel, String name, byte
             }
         });
         context.setPacketHandled(true);
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new ClientBinaryDataPacket(channel, name, payload, clearChannel);
     }
 }

@@ -12,6 +12,12 @@ import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.FallingBlockEntity;
@@ -20,21 +26,28 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.entity.IEntityAdditionalSpawnData;
+import net.minecraftforge.network.NetworkHooks;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class FalloutRainEntity extends ExplosionChunkLoadingEntity {
+public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IEntityAdditionalSpawnData {
+    private static final EntityDataAccessor<Integer> SCALE =
+            SynchedEntityData.defineId(FalloutRainEntity.class, EntityDataSerializers.INT);
+
     private final List<Long> chunksToProcess = new ArrayList<>();
     private final List<Long> outerChunksToProcess = new ArrayList<>();
     private boolean firstTick = true;
-    private int tickDelay;
+    private int tickDelay = BombConfig.FALLOUT_DELAY.get();
     private int scale = 1;
 
     public FalloutRainEntity(EntityType<? extends FalloutRainEntity> type, Level level) {
         super(type, level);
         noPhysics = true;
+        noCulling = true;
+        fireImmune();
     }
 
     public FalloutRainEntity(Level level, int scale) {
@@ -247,21 +260,28 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity {
 
     public void setScale(int scale) {
         this.scale = Math.max(1, scale);
+        entityData.set(SCALE, this.scale);
     }
 
     public int getScale() {
-        return Math.max(1, scale);
+        return Math.max(1, level().isClientSide() ? entityData.get(SCALE) : scale);
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return true;
     }
 
     @Override
     protected void defineSynchedData() {
+        entityData.define(SCALE, 1);
     }
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         setScale(tag.getInt("scale"));
-        tickDelay = tag.getInt("tickDelay");
-        firstTick = tag.getBoolean("firstTick");
+        tickDelay = tag.contains("tickDelay") ? tag.getInt("tickDelay") : BombConfig.FALLOUT_DELAY.get();
+        firstTick = !tag.contains("firstTick") || tag.getBoolean("firstTick");
         readChunkList(tag.getLongArray("chunks"), chunksToProcess);
         readChunkList(tag.getLongArray("outerChunks"), outerChunksToProcess);
         readChunkLoader(tag);
@@ -282,5 +302,20 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity {
         for (long packedChunk : packedChunks) {
             target.add(packedChunk);
         }
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    @Override
+    public void writeSpawnData(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(getScale());
+    }
+
+    @Override
+    public void readSpawnData(FriendlyByteBuf buffer) {
+        setScale(buffer.readVarInt());
     }
 }

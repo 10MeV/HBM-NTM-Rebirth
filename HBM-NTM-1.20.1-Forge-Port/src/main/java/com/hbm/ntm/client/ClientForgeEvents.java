@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
@@ -25,6 +26,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = HbmNtm.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ClientForgeEvents {
     private static boolean hadLevel;
+    private static boolean pushedNukeHudShake;
     private static final Map<Integer, Long> VANISHED_ENTITIES = new HashMap<>();
 
     @SubscribeEvent
@@ -33,16 +35,45 @@ public final class ClientForgeEvents {
     }
 
     @SubscribeEvent
+    public static void onOverlayPre(RenderGuiOverlayEvent.Pre event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        Player player = minecraft.player;
+        if (player == null || minecraft.options.hideGui) {
+            pushedNukeHudShake = false;
+            return;
+        }
+
+        if (event.getOverlay().id().equals(VanillaGuiOverlay.CROSSHAIR.id()) && NukeHudEffects.hasFlash()) {
+            NukeHudEffects.renderFlash(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(),
+                    event.getWindow().getGuiScaledHeight());
+        }
+
+        if (event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id()) && NukeHudEffects.hasShake()) {
+            event.getGuiGraphics().pose().pushPose();
+            pushedNukeHudShake = true;
+            NukeHudEffects.translateShake(event.getGuiGraphics());
+        }
+    }
+
+    @SubscribeEvent
     public static void onOverlay(RenderGuiOverlayEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
-        if (player == null || minecraft.options.hideGui || !event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
+        if (!event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
+            return;
+        }
+        if (player == null || minecraft.options.hideGui) {
             return;
         }
         if (RadiationHud.hasGeigerCounter(player)) {
             RadiationHud.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
         }
         ClientInformMessages.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
+    }
+
+    @SubscribeEvent
+    public static void onGuiPost(RenderGuiEvent.Post event) {
+        popNukeHudShake(event);
     }
 
     @SubscribeEvent
@@ -86,11 +117,20 @@ public final class ClientForgeEvents {
         ClientPanelData.clearAll();
         ClientInformMessages.clearAll();
         ClientMuzzleFlashEffects.clearAll();
+        NukeHudEffects.clearAll();
         TileSyncPacket.clearClientResyncRequests();
         ClientTileBinaryData.clearClientResyncRequests();
         EntitySyncPacket.clearClientResyncRequests();
         LegacyHbmAnimations.clearAll();
         VANISHED_ENTITIES.clear();
+    }
+
+    private static void popNukeHudShake(RenderGuiEvent event) {
+        if (!pushedNukeHudShake) {
+            return;
+        }
+        event.getGuiGraphics().pose().popPose();
+        pushedNukeHudShake = false;
     }
 
     public static void vanishEntity(int entityId) {

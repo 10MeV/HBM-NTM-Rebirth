@@ -149,7 +149,7 @@ public final class MultiblockHelper {
     public static boolean fillOffsets(Level level, BlockPos corePos, Iterable<BlockPos> offsets, BlockState dummyState,
             Predicate<BlockPos> proxyOffsets) {
         return fillOffsetsWithProxyModes(level, corePos, offsets, dummyState,
-                offset -> proxyOffsets.test(offset) ? LegacyProxyMode.all() : LegacyProxyMode.none());
+                offset -> proxyOffsets.test(offset) ? LegacyProxyMode.fullCombo() : LegacyProxyMode.none());
     }
 
     public static boolean fillOffsetsWithProxyModes(Level level, BlockPos corePos, Iterable<BlockPos> offsets,

@@ -1,5 +1,9 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.energy.HbmEnergyConnector;
+import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidConnector;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.multiblock.MultiblockHelper;
@@ -18,12 +22,13 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-public class MultiblockDummyBlockEntity extends BlockEntity {
+public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmFluidConnector {
     private static final String TAG_CORE_POS = "CorePos";
     private static final String TAG_LEGACY_TARGET_X = "tx";
     private static final String TAG_LEGACY_TARGET_Y = "ty";
@@ -80,7 +85,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
     }
 
     public void setProxy(boolean proxy) {
-        setProxyMode(proxy ? LegacyProxyMode.all() : LegacyProxyMode.none());
+        setProxyMode(proxy ? LegacyProxyMode.fullCombo() : LegacyProxyMode.none());
     }
 
     public LegacyProxyMode getProxyMode() {
@@ -105,6 +110,46 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public boolean canConnectEnergy(@Nullable Direction side) {
+        if (side == null || !proxyMode.isProxy() || (!proxyMode.power() && !proxyMode.conductor()
+                && !proxyMode.allCapabilities())) {
+            return false;
+        }
+        MultiblockHelper.CoreLookup core = validCore();
+        if (core == null || level == null) {
+            return false;
+        }
+        BlockEntity coreEntity = level.getBlockEntity(core.pos());
+        ICapabilityProvider target = legacyProxyTarget(coreEntity);
+        if (target instanceof HbmEnergyConnector connector) {
+            return connector.canConnectEnergy(side);
+        }
+        return proxyMode.allows(ForgeCapabilities.ENERGY)
+                && target != null
+                && target.getCapability(ForgeCapabilities.ENERGY, side).isPresent();
+    }
+
+    @Override
+    public boolean canConnectFluid(FluidType type, Direction side) {
+        if (side == null || type == null || type == HbmFluids.NONE || !proxyMode.isProxy()
+                || (!proxyMode.fluid() && !proxyMode.moltenMetal() && !proxyMode.allCapabilities())) {
+            return false;
+        }
+        MultiblockHelper.CoreLookup core = validCore();
+        if (core == null || level == null) {
+            return false;
+        }
+        BlockEntity coreEntity = level.getBlockEntity(core.pos());
+        ICapabilityProvider target = legacyProxyTarget(coreEntity);
+        if (target instanceof HbmFluidConnector connector) {
+            return connector.canConnectFluid(type, side);
+        }
+        return proxyMode.allows(ForgeCapabilities.FLUID_HANDLER)
+                && target != null
+                && target.getCapability(ForgeCapabilities.FLUID_HANDLER, side).isPresent();
     }
 
     public InteractionResult forwardUse(ServerPlayer player, InteractionHand hand, BlockHitResult hit) {
@@ -135,19 +180,26 @@ public class MultiblockDummyBlockEntity extends BlockEntity {
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         MultiblockHelper.CoreLookup core = validCore();
         if (proxyMode.allows(capability) && level != null && core != null && !core.pos().equals(worldPosition)) {
-            BlockEntity coreEntity = level.getBlockEntity(core.pos());
-            if (coreEntity != null && !coreEntity.isRemoved()) {
-                ICapabilityProvider target = coreEntity;
-                if (coreEntity instanceof LegacyProxyDelegateProvider delegateProvider) {
-                    ICapabilityProvider delegate = delegateProvider.getLegacyProxyDelegate(worldPosition);
-                    if (delegate != null) {
-                        target = delegate;
-                    }
-                }
+            ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
+            if (target != null) {
                 return target.getCapability(capability, side);
             }
         }
         return super.getCapability(capability, side);
+    }
+
+    @Nullable
+    private ICapabilityProvider legacyProxyTarget(@Nullable BlockEntity coreEntity) {
+        if (coreEntity == null || coreEntity.isRemoved()) {
+            return null;
+        }
+        if (coreEntity instanceof LegacyProxyDelegateProvider delegateProvider) {
+            ICapabilityProvider delegate = delegateProvider.getLegacyProxyDelegate(worldPosition);
+            if (delegate != null) {
+                return delegate;
+            }
+        }
+        return coreEntity;
     }
 
     @Nullable

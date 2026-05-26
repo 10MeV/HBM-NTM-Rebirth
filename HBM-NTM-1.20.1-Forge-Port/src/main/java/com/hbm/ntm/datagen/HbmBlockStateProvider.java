@@ -463,8 +463,14 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         ModelFile[] result = new ModelFile[4];
         for (int i = 0; i < result.length; i++) {
             String suffix = i == 0 ? "" : "_" + i;
-            result[i] = models().cubeAll(modelName + suffix, new ResourceLocation(HbmNtm.MOD_ID,
-                    "block/sellafield_slaked" + suffix));
+            result[i] = models().withExistingParent(modelName + suffix, new ResourceLocation("block/block"))
+                    .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked" + suffix))
+                    .texture("all", new ResourceLocation(HbmNtm.MOD_ID, "block/sellafield_slaked" + suffix))
+                    .element()
+                        .from(0.0F, 0.0F, 0.0F)
+                        .to(16.0F, 16.0F, 16.0F)
+                        .allFaces((direction, face) -> face.texture("#all").cullface(direction).tintindex(0))
+                        .end();
         }
         return result;
     }
@@ -480,7 +486,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                     .element()
                         .from(0.0F, 0.0F, 0.0F)
                         .to(16.0F, 16.0F, 16.0F)
-                        .allFaces((direction, face) -> face.texture("#base"))
+                        .allFaces((direction, face) -> face.texture("#base").tintindex(0))
                         .end()
                     .element()
                         .from(0.0F, 0.0F, 0.0F)

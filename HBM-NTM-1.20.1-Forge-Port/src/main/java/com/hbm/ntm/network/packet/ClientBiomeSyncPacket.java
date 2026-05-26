@@ -1,13 +1,14 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.client.ClientBiomeSyncData;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.Arrays;
 import java.util.function.Supplier;
 
-public record ClientBiomeSyncPacket(int chunkX, int chunkZ, int blockX, int blockZ, short biome, short[] biomeArray) {
+public record ClientBiomeSyncPacket(int chunkX, int chunkZ, int blockX, int blockZ, short biome, short[] biomeArray) implements HbmPreparablePacket {
     public ClientBiomeSyncPacket {
         biomeArray = biomeArray == null ? null : Arrays.copyOf(biomeArray, biomeArray.length);
     }
@@ -59,5 +60,10 @@ public record ClientBiomeSyncPacket(int chunkX, int chunkZ, int blockX, int bloc
             }
         });
         context.setPacketHandled(true);
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new ClientBiomeSyncPacket(chunkX, chunkZ, blockX, blockZ, biome, biomeArray);
     }
 }

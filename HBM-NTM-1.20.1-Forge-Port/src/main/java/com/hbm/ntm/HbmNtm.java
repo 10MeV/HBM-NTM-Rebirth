@@ -68,6 +68,7 @@ public class HbmNtm {
             HbmFluids.bootstrap();
             ExplosionChunkLoading.registerValidationCallback();
             ModMessages.register();
+            ModMessages.logProtocolAudit();
             HbmBatteryTransfer.setCreativeBatteryPredicate(stack -> stack.is(ModItems.BATTERY_CREATIVE.get()));
         });
         if (HbmCommonConfig.LOG_STARTUP.get()) {

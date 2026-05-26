@@ -1229,6 +1229,148 @@ Verification:
 - `.\gradlew.bat compileJava --no-daemon` passed after adding `/hbm fluid info <pos>`.
 - `.\gradlew.bat compileJava processResources --no-daemon` passed after copying legacy fluid sprites and wiring `HbmForgeFluidType`.
 
+## 2026-05-26 Modern Library Pass 34
+
+This pass closes another major old `FluidContainerRegistry` / `FluidLoaderStandard` compatibility gap for the migrated HBM container family:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/FluidContainerRegistry.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoaderStandard.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoaderFillableItem.java`
+  - `com/hbm/items/machine/ItemCanister.java`
+  - `com/hbm/items/machine/ItemGasTank.java`
+  - `com/hbm/items/machine/ItemFluidTank.java`
+- Add modern `HbmFluidContainerRegistry` for the migrated HBM container families:
+  - Registers empty/full pairs for canister, gas tank, fluid tank, lead tank, fluid barrel, fluid pack, disperser canister, and glyphid gland.
+  - Recreates the old core query shape: `getContainers`, `getContainer`, `getFluidContent`, `getFluidType`, `getFullContainer`, and `getEmptyContainer`.
+  - Keeps the scope to already migrated HBM NBT-backed containers; vanilla buckets, cells, ore blocks, IV bags, and other unported old registry entries are still deferred.
+- Wire `HbmFluidContainerItem` crafting remainders through the new registry:
+  - Filled migrated HBM containers now return the matching empty container after crafting.
+  - Empty / no-fluid stacks do not claim a crafting remainder through the custom override.
+- Align Forge item-fluid drain behavior:
+  - Draining a finite migrated HBM container through `IFluidHandlerItem` now returns the matching empty container when the stored fluid reaches zero.
+- Align machine slot transfer behavior with old `FluidLoaderStandard`:
+  - When separate input/output slots are used, empty migrated containers are converted into filled containers only if the tank has enough fluid for a full legacy container amount.
+  - Filled migrated containers are converted into empty containers only if the receiving tank can accept the full legacy container amount.
+  - Custom hover names are copied from input container to output container, matching the old standard-loader behavior.
+  - Same-slot single-container transfers still keep the existing NBT-backed gradual fill/drain path for modern direct editing/capability use.
+- Minimal unrelated compile unblock:
+  - `ClientModEvents#biomeKey(...)` now only calls `getBiome` when the tint getter is a `LevelReader`, because `BlockAndTintGetter` itself does not expose `getBiome` in 1.20.1.
+
+Still deferred:
+
+- Old `FluidContainerRegistry` entries for vanilla buckets, potion bottles, mud/schrabidic/sulfuric buckets, red/pink/LOX barrels, ore fluid blocks, cells, particles, IV bags, mug cans, and compat containers remain outside this pass until those item/block families are migrated.
+- Exact recipe JSON coverage for every old fluid-container recipe is still incomplete; this pass fixes the reusable container behavior once those recipes are present.
+- Armor mod fillable-item traversal from old `FluidLoaderFillableItem` remains deferred until the armor mod/attachment system is migrated.
+- Infinite fluid items remain on their dedicated `HbmInfiniteFluidItem` / `FluidLoaderInfinite` path and are not exposed as normal finite crafting remainders.
+
+Progress estimate after Pass 34:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 90%.
+- Fluid network/provider/receiver algorithm: about 76%.
+- In-world pipe graph: about 49%.
+- Fluid item/container loading: about 85%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 66%.
+- Overall fluid library migration: about 90%.
+
+Verification:
+
+- First `.\gradlew.bat compileJava --no-daemon` attempt hit an SSL/MCP dependency resolution issue and produced a broken classpath.
+- Re-run with the project proxy JVM options reached real compilation, then exposed the unrelated `ClientModEvents` biome lookup error noted above.
+- `.\gradlew.bat compileJava --no-daemon` passed after the minimal client compile fix.
+- `.\gradlew.bat compileJava processResources --no-daemon` passed with proxy JVM options.
+
+## 2026-05-26 Modern Library Pass 35
+
+This pass expands the modern `HbmFluidContainerRegistry` to cover the clear vanilla entries from the old `FluidContainerRegistry` without introducing any not-yet-migrated HBM item families:
+
+- Legacy source re-read:
+  - `com/hbm/inventory/FluidContainerRegistry.java`
+- Added direct standard-container entries matching the 1.7.10 table:
+  - `water_bucket` -> `bucket`, `WATER`, 1000.
+  - water `potion` -> `glass_bottle`, `WATER`, 250.
+  - `lava_bucket` -> `bucket`, `LAVA`, 1000.
+- Kept unregistered HBM-specific legacy entries deferred:
+  - Mud/schrabidic/sulfuric buckets, red/pink/LOX barrels, filled cells, mercury bottle/ingot, Zirnox tritium rod, particles, IV bags, XP bottle, mug can, and compat containers still need their item/block families present before they can be registered safely.
+  - Large turbine remains intentionally excluded because it was removed from the port target.
+- Updated the registry helpers so static direct-container templates are copied before use:
+  - Machine output can preserve custom hover names without mutating the template stack.
+  - Water-potion matching checks the potion identity instead of treating every potion item as a water bottle.
+- Updated `HbmFluidItemTransfer#getItemFluid(...)` to report registered standard containers as fluid stacks:
+  - UI/probe/automation callers now see water buckets as 1000 mB water, water bottles as 250 mB water, and lava buckets as 1000 mB lava through the HBM fluid library.
+  - The existing machine transfer path can now fill and drain these vanilla containers through the same old-style full-container swap path used for migrated HBM containers.
+
+Still deferred:
+
+- HBM custom bucket items and world-fluid blocks remain tied to the future world-fluid/content slice.
+- Old special containers that depend on missing item families remain documented but unregistered in this pass.
+- Recipe JSON coverage is still separate from the reusable library behavior; recipes can now target the standard-container behavior once their item families exist.
+- Armor mod fillable-item traversal from old `FluidLoaderFillableItem` remains deferred until the armor mod/attachment system is migrated.
+
+Progress estimate after Pass 35:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 90%.
+- Fluid network/provider/receiver algorithm: about 76%.
+- In-world pipe graph: about 49%.
+- Fluid item/container loading: about 87%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 67%.
+- Overall fluid library migration: about 91%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options after adding the vanilla standard-container entries.
+
+## 2026-05-26 Modern Library Pass 36
+
+This pass pushes the reusable `FluidContainerRegistry` compatibility layer further without adding any removed machines or forcing missing content families into the port:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/FluidContainerRegistry.java`
+  - `com/hbm/inventory/FluidContainer.java`
+  - `com/hbm/inventory/fluid/tank/FluidLoaderStandard.java`
+  - `com/hbm/inventory/fluid/FluidType.java`
+- Expanded direct standard-container coverage:
+  - Vanilla `experience_bottle` now maps to `glass_bottle`, `XPJUICE`, 100 mB.
+  - The already-registered modern `cell_sas3` now maps to `cell_empty`, `SAS3`, 1000 mB.
+  - Existing `ore_oil` and `ore_gneiss_gas` block items are recognized as consumable fluid sources, matching the old entries with no empty container:
+    - `ore_oil` -> `OIL`, 250 mB.
+    - `ore_gneiss_gas` -> `PETROLEUM`, 250 mB in the current non-528 default.
+- Added guarded legacy-name mappings for the rest of the old direct container table:
+  - Deuterium/tritium/UF6/PUF6/antimatter/anti-schrabidium cells, Zirnox tritium rod, particle containers, IV bags, mug can, HBM custom buckets, mercury bottle/ingot, and red/pink/LOX barrel block containers are now described in code but only activate when their referenced item/block IDs exist in the modern registries.
+  - This keeps the fluid library ready for later item/block-family migration while avoiding synthetic placeholder items.
+- Recreated more of the old query shape:
+  - Added `HbmFluidContainerRegistry#getAllContainers()` as the modern counterpart to old `allContainers`.
+  - Existing `getContainers(type)` remains the type-filtered counterpart to old `containerMap`.
+- Aligned old no-empty-container transfer behavior:
+  - `FluidLoaderStandard#emptyItem(...)` allowed entries such as `ingot_mercury` and fluid ores to be consumed without producing an output container.
+  - `HbmFluidItemTransfer` now allows registered standard containers with `ItemStack.EMPTY` as their empty container to drain into tanks and leave no output stack.
+
+Still deferred:
+
+- Modern item/block registration, textures, recipes, and creative-tab placement for the guarded legacy container families are not part of this pass.
+- The old `OreDictionary.registerOre(con.type.getDict(con.content), con.fullContainer)` bridge is documented but not yet regenerated as modern item tags. Legacy names follow `ntmcontainer<amount><fluidname>` unless fluid-container compat is enabled, in which case the prefix is `container`.
+- 528-mode-specific `ore_gneiss_gas` amount remains deferred until the modern config profile exposes that compatibility setting.
+- Armor mod fillable-item traversal from old `FluidLoaderFillableItem` remains deferred until the armor mod/attachment system is migrated.
+
+Progress estimate after Pass 36:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 90%.
+- Fluid network/provider/receiver algorithm: about 76%.
+- In-world pipe graph: about 49%.
+- Fluid item/container loading: about 89%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 69%.
+- Overall fluid library migration: about 92%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options after adding the guarded legacy direct-container mappings and no-empty-container transfer behavior.
+
 ## 2026-05-23 Modern Library Pass 16
 
 This pass closes the concrete `FluidLoaderInfinite` gap left after the container item registration pass:

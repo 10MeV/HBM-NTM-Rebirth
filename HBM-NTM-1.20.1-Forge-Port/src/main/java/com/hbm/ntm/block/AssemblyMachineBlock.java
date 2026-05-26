@@ -24,7 +24,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
 import net.minecraftforge.network.NetworkHooks;
@@ -41,7 +40,6 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
     private static final int[] LEGACY_XR_DIMENSIONS = new int[] { 2, 0, 1, 1, 1, 1 };
     public static final MultiblockExtents EXTENTS = MultiblockExtents.ofLegacyXr(LEGACY_XR_DIMENSIONS, Direction.SOUTH);
     private static final int LEGACY_OFFSET = 1;
-    public static final VoxelShape SHAPE = Shapes.box(-1.5D, 0.0D, -1.5D, 2.5D, 2.0D, 2.5D);
 
     public AssemblyMachineBlock(Properties properties) {
         super(properties);
@@ -122,13 +120,13 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
     @Override
     public VoxelShape getMultiblockShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos corePos,
             CollisionContext context) {
-        return SHAPE;
+        return getLayout(state).shape(1.0D);
     }
 
     @Override
     public VoxelShape getMultiblockCollisionShape(BlockState state, net.minecraft.world.level.BlockGetter level,
             BlockPos corePos, CollisionContext context) {
-        return SHAPE;
+        return getMultiblockShape(state, level, corePos, context);
     }
 
     @Override

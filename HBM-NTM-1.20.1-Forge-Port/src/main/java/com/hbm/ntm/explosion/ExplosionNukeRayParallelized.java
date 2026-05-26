@@ -14,7 +14,7 @@ public class ExplosionNukeRayParallelized implements ExplosionRay {
     private final ExplosionNukeRayBatched delegate;
 
     public ExplosionNukeRayParallelized(Level level, double x, double y, double z, int strength, int speed, int radius) {
-        this.delegate = new ExplosionNukeRayBatched(level, (int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z),
+        this.delegate = new ExplosionNukeRayBatched(level, (int) x, (int) y, (int) z,
                 strength, speed, radius);
     }
 

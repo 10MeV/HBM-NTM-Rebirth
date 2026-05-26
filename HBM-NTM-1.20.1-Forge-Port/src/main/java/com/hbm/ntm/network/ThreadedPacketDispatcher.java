@@ -1,6 +1,7 @@
 package com.hbm.ntm.network;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.config.NetworkConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class ThreadedPacketDispatcher {
     private static final String THREAD_PREFIX = "NTM-Packet-Thread-";
-    private static final long WAIT_TIMEOUT_MILLIS = 50L;
+    private static final int WAIT_TIMEOUT_MILLIS = 50;
     private static final int MAX_PENDING_OPERATIONS = 4096;
     private static final int MAX_CONSECUTIVE_CLEARS_BEFORE_FALLBACK = 5;
     private static final AtomicInteger THREAD_IDS = new AtomicInteger();
@@ -36,10 +37,12 @@ public final class ThreadedPacketDispatcher {
     private static final AtomicLong TOTAL_DISCARDED = new AtomicLong();
     private static final AtomicLong TOTAL_PREPARED = new AtomicLong();
     private static final AtomicLong TOTAL_PREPARE_FAILED = new AtomicLong();
+    private static final AtomicLong MANUAL_CLEARS = new AtomicLong();
     private static int lastFlushQueued;
     private static int lastFlushCompleted;
     private static int lastFlushDiscarded;
     private static long lastFlushWaitMillis;
+    private static long lastObservedWaitMillis;
     private static int consecutiveClears;
     private static boolean fallbackToMainThread;
     private static boolean enabled = true;
@@ -116,6 +119,11 @@ public final class ThreadedPacketDispatcher {
     }
 
     private static Object prepareMessage(Object message) {
+        if (!ModMessages.validateMessageForSend(message, "threaded-queue")) {
+            TOTAL_DISCARDED.incrementAndGet();
+            lastFailureMessage = "Unregistered threaded packet message.";
+            return null;
+        }
         try {
             Object prepared = message instanceof HbmPreparablePacket preparable
                     ? preparable.prepareForThreadedSend()
@@ -124,6 +132,11 @@ public final class ThreadedPacketDispatcher {
                 TOTAL_PREPARE_FAILED.incrementAndGet();
                 TOTAL_DISCARDED.incrementAndGet();
                 lastFailureMessage = "Threaded packet prepare returned null.";
+                return null;
+            }
+            if (!ModMessages.validateMessageForSend(prepared, "threaded-queue-prepared")) {
+                TOTAL_DISCARDED.incrementAndGet();
+                lastFailureMessage = "Unregistered prepared threaded packet message.";
                 return null;
             }
             TOTAL_PREPARED.incrementAndGet();
@@ -139,12 +152,12 @@ public final class ThreadedPacketDispatcher {
 
     private static void enqueue(Runnable sendOperation) {
         TOTAL_QUEUED.incrementAndGet();
-        if (!enabled || fallbackToMainThread) {
+        if (!isEnabled() || isFallbackToMainThread()) {
             runSendOperation(sendOperation);
             return;
         }
-        if (PENDING.size() >= MAX_PENDING_OPERATIONS) {
-            discardPending("Threaded packet queue exceeded " + MAX_PENDING_OPERATIONS + " pending operations.");
+        if (PENDING.size() >= maxPendingOperations()) {
+            discardPending("Threaded packet queue exceeded " + maxPendingOperations() + " pending operations.");
             runSendOperation(sendOperation);
             return;
         }
@@ -163,16 +176,18 @@ public final class ThreadedPacketDispatcher {
         List<CompletableFuture<Void>> tasks = List.copyOf(PENDING);
         PENDING.clear();
         long startNanos = System.nanoTime();
+        lastObservedWaitMillis = 0L;
         int completed = 0;
         int discarded = 0;
         for (int index = 0; index < tasks.size(); index++) {
             CompletableFuture<Void> task = tasks.get(index);
             try {
-                task.get(WAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+                lastObservedWaitMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+                task.get(waitTimeoutMillis(), TimeUnit.MILLISECONDS);
                 completed++;
             } catch (TimeoutException exception) {
                 discarded = cancelRemaining(tasks, index);
-                registerClear("Threaded packet operation exceeded " + WAIT_TIMEOUT_MILLIS + " ms wait budget.", discarded, exception);
+                registerClear("Threaded packet operation exceeded " + waitTimeoutMillis() + " ms wait budget.", discarded, exception);
                 break;
             } catch (Exception exception) {
                 completed++;
@@ -194,28 +209,70 @@ public final class ThreadedPacketDispatcher {
         lastFlushCompleted = completed;
         lastFlushDiscarded = discarded;
         lastFlushWaitMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+        lastObservedWaitMillis = lastFlushWaitMillis;
     }
 
     public static synchronized boolean isFallbackToMainThread() {
-        return fallbackToMainThread;
+        return fallbackToMainThread && !isErrorBypassEnabled();
     }
 
     public static synchronized boolean isEnabled() {
-        return enabled;
+        return enabled && isConfiguredEnabled();
     }
 
     public static synchronized boolean setEnabled(boolean enabled) {
         ThreadedPacketDispatcher.enabled = enabled;
         if (!enabled) {
-            PENDING.forEach(task -> task.cancel(false));
-            PENDING.clear();
-            EXECUTOR.getQueue().clear();
+            int discarded = clearPendingOperations();
+            if (discarded > 0) {
+                TOTAL_DISCARDED.addAndGet(discarded);
+                lastFlushDiscarded = discarded;
+                lastFailureMessage = "Packet threading disabled with pending operations.";
+            }
         }
         return ThreadedPacketDispatcher.enabled;
     }
 
     public static synchronized boolean toggleEnabled() {
         return setEnabled(!enabled);
+    }
+
+    public static long waitTimeoutMillis() {
+        return configuredInt(NetworkConfig.PACKET_THREADING_WAIT_TIMEOUT_MS, WAIT_TIMEOUT_MILLIS);
+    }
+
+    public static int maxPendingOperations() {
+        return configuredInt(NetworkConfig.PACKET_THREADING_MAX_PENDING, MAX_PENDING_OPERATIONS);
+    }
+
+    public static int fallbackClearThreshold() {
+        return configuredInt(NetworkConfig.PACKET_THREADING_FALLBACK_CLEAR_THRESHOLD, MAX_CONSECUTIVE_CLEARS_BEFORE_FALLBACK);
+    }
+
+    public static String threadPrefix() {
+        return THREAD_PREFIX;
+    }
+
+    public static boolean isConfiguredEnabled() {
+        return NetworkConfig.ENABLE_PACKET_THREADING == null || NetworkConfig.ENABLE_PACKET_THREADING.get();
+    }
+
+    public static boolean isErrorBypassEnabled() {
+        return NetworkConfig.PACKET_THREADING_ERROR_BYPASS != null && NetworkConfig.PACKET_THREADING_ERROR_BYPASS.get();
+    }
+
+    public static synchronized int clearPending(String reason) {
+        int discarded = clearPendingOperations();
+        MANUAL_CLEARS.incrementAndGet();
+        TOTAL_DISCARDED.addAndGet(discarded);
+        lastFlushDiscarded = discarded;
+        if (discarded > 0) {
+            lastFailureMessage = reason == null || reason.isBlank()
+                    ? "Manual packet threading queue clear."
+                    : reason;
+            HbmNtm.LOGGER.warn("Manually cleared {} threaded packet operations. Reason: {}", discarded, lastFailureMessage);
+        }
+        return discarded;
     }
 
     public static synchronized Snapshot snapshot() {
@@ -226,6 +283,7 @@ public final class ThreadedPacketDispatcher {
                 TOTAL_DISCARDED.get(),
                 TOTAL_PREPARED.get(),
                 TOTAL_PREPARE_FAILED.get(),
+                MANUAL_CLEARS.get(),
                 PENDING.size(),
                 EXECUTOR.getPoolSize(),
                 EXECUTOR.getCorePoolSize(),
@@ -237,9 +295,12 @@ public final class ThreadedPacketDispatcher {
                 lastFlushCompleted,
                 lastFlushDiscarded,
                 lastFlushWaitMillis,
+                lastObservedWaitMillis,
                 consecutiveClears,
-                fallbackToMainThread,
-                enabled,
+                isFallbackToMainThread(),
+                isErrorBypassEnabled(),
+                isConfiguredEnabled(),
+                isEnabled(),
                 lastFailureMessage);
     }
 
@@ -267,10 +328,12 @@ public final class ThreadedPacketDispatcher {
         TOTAL_DISCARDED.set(0L);
         TOTAL_PREPARED.set(0L);
         TOTAL_PREPARE_FAILED.set(0L);
+        MANUAL_CLEARS.set(0L);
         lastFlushQueued = 0;
         lastFlushCompleted = 0;
         lastFlushDiscarded = 0;
         lastFlushWaitMillis = 0L;
+        lastObservedWaitMillis = 0L;
         consecutiveClears = 0;
         fallbackToMainThread = false;
         enabled = true;
@@ -301,11 +364,20 @@ public final class ThreadedPacketDispatcher {
         return discarded;
     }
 
-    private static void discardPending(String reason) {
-        int discarded = PENDING.size();
-        PENDING.forEach(task -> task.cancel(false));
+    private static int clearPendingOperations() {
+        int queuedExecutorTasks = EXECUTOR.getQueue().size();
+        for (CompletableFuture<Void> task : PENDING) {
+            if (!task.isDone()) {
+                task.cancel(false);
+            }
+        }
         PENDING.clear();
         EXECUTOR.getQueue().clear();
+        return queuedExecutorTasks;
+    }
+
+    private static void discardPending(String reason) {
+        int discarded = clearPendingOperations();
         TOTAL_DISCARDED.addAndGet(discarded);
         lastFlushDiscarded = discarded;
         registerClear(reason, discarded, null);
@@ -314,13 +386,17 @@ public final class ThreadedPacketDispatcher {
     private static void registerClear(String reason, int discarded, Exception exception) {
         consecutiveClears++;
         lastFailureMessage = reason;
-        if (consecutiveClears > MAX_CONSECUTIVE_CLEARS_BEFORE_FALLBACK && !fallbackToMainThread) {
+        if (!isErrorBypassEnabled() && consecutiveClears > fallbackClearThreshold() && !fallbackToMainThread) {
             fallbackToMainThread = true;
             HbmNtm.LOGGER.error("Threaded packet dispatcher switched to main-thread fallback after {} clears. Last reason: {}",
                     consecutiveClears, reason, exception);
             return;
         }
         HbmNtm.LOGGER.warn("Discarded {} threaded packet operations. Reason: {}", discarded, reason, exception);
+    }
+
+    private static int configuredInt(net.minecraftforge.common.ForgeConfigSpec.IntValue value, int fallback) {
+        return value == null ? fallback : value.get();
     }
 
     private ThreadedPacketDispatcher() {
@@ -342,6 +418,7 @@ public final class ThreadedPacketDispatcher {
             long totalDiscarded,
             long totalPrepared,
             long totalPrepareFailed,
+            long manualClears,
             int pending,
             int threadPoolSize,
             int corePoolSize,
@@ -353,8 +430,11 @@ public final class ThreadedPacketDispatcher {
             int lastFlushCompleted,
             int lastFlushDiscarded,
             long lastFlushWaitMillis,
+            long lastObservedWaitMillis,
             int consecutiveClears,
             boolean fallbackToMainThread,
+            boolean errorBypass,
+            boolean configuredEnabled,
             boolean enabled,
             String lastFailureMessage) {
     }

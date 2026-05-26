@@ -55,7 +55,7 @@ public final class LegacyMultiblockLayout {
     }
 
     public LegacyMultiblockLayout withProxyPredicate(Predicate<BlockPos> proxyOffsets) {
-        return withProxyPredicate(proxyOffsets, LegacyProxyMode.all());
+        return withProxyPredicate(proxyOffsets, LegacyProxyMode.fullCombo());
     }
 
     public LegacyMultiblockLayout withProxyPredicate(Predicate<BlockPos> proxyOffsets, LegacyProxyMode mode) {
@@ -63,11 +63,13 @@ public final class LegacyMultiblockLayout {
     }
 
     public LegacyMultiblockLayout withProxyModes(Function<BlockPos, LegacyProxyMode> proxyModes) {
-        return new LegacyMultiblockLayout(offsets, checkOnlyOffsets, legacyExtraOffsets, proxyModes);
+        Function<BlockPos, LegacyProxyMode> previousProxyModes = this.proxyModes;
+        return new LegacyMultiblockLayout(offsets, checkOnlyOffsets, legacyExtraOffsets,
+                mergeProxyModes(previousProxyModes, proxyModes));
     }
 
     public LegacyMultiblockLayout withProxyOffsets(Iterable<BlockPos> proxyOffsets) {
-        return withProxyOffsets(proxyOffsets, LegacyProxyMode.all());
+        return withProxyOffsets(proxyOffsets, LegacyProxyMode.fullCombo());
     }
 
     public LegacyMultiblockLayout withProxyOffsets(Iterable<BlockPos> proxyOffsets, LegacyProxyMode mode) {
@@ -80,7 +82,7 @@ public final class LegacyMultiblockLayout {
     }
 
     public LegacyMultiblockLayout withExtraProxyOffsets(Iterable<BlockPos> extraOffsets) {
-        return withExtraProxyOffsets(extraOffsets, LegacyProxyMode.all());
+        return withExtraProxyOffsets(extraOffsets, LegacyProxyMode.fullCombo());
     }
 
     public LegacyMultiblockLayout withExtraProxyOffsets(Iterable<BlockPos> extraOffsets, LegacyProxyMode mode) {
@@ -92,7 +94,7 @@ public final class LegacyMultiblockLayout {
 
     public LegacyMultiblockLayout withExtraOffsets(Iterable<BlockPos> extraOffsets, Predicate<BlockPos> extraProxyOffsets) {
         return withExtraOffsets(extraOffsets,
-                (Function<BlockPos, LegacyProxyMode>) offset -> extraProxyOffsets.test(offset) ? LegacyProxyMode.all() : LegacyProxyMode.none());
+                (Function<BlockPos, LegacyProxyMode>) offset -> extraProxyOffsets.test(offset) ? LegacyProxyMode.fullCombo() : LegacyProxyMode.none());
     }
 
     public LegacyMultiblockLayout withExtraOffsets(Iterable<BlockPos> extraOffsets,
@@ -100,10 +102,8 @@ public final class LegacyMultiblockLayout {
         Set<BlockPos> merged = copyOffsets(offsets);
         merged.addAll(copyOffsets(extraOffsets));
         Function<BlockPos, LegacyProxyMode> previousProxyModes = proxyModes;
-        return new LegacyMultiblockLayout(merged, checkOnlyOffsets, legacyExtraOffsets, offset -> {
-            LegacyProxyMode previous = previousProxyModes.apply(offset);
-            return previous.isProxy() ? previous : extraProxyModes.apply(offset);
-        });
+        return new LegacyMultiblockLayout(merged, checkOnlyOffsets, legacyExtraOffsets,
+                mergeProxyModes(previousProxyModes, extraProxyModes));
     }
 
     public LegacyMultiblockLayout withLegacyExtraOffsets(Iterable<BlockPos> extraOffsets) {
@@ -175,16 +175,20 @@ public final class LegacyMultiblockLayout {
 
     public VoxelShape shape(double height) {
         int minX = 0;
+        int minY = 0;
         int minZ = 0;
         int maxX = 1;
+        double maxY = height;
         int maxZ = 1;
         for (BlockPos offset : offsets) {
             minX = Math.min(minX, offset.getX());
+            minY = Math.min(minY, offset.getY());
             minZ = Math.min(minZ, offset.getZ());
             maxX = Math.max(maxX, offset.getX() + 1);
+            maxY = Math.max(maxY, offset.getY() + height);
             maxZ = Math.max(maxZ, offset.getZ() + 1);
         }
-        return Shapes.box(minX, 0.0D, minZ, maxX, height, maxZ);
+        return Shapes.box(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     public static BlockPos behind(Direction facing) {
@@ -205,5 +209,19 @@ public final class LegacyMultiblockLayout {
             copied.add(offset.immutable());
         }
         return copied;
+    }
+
+    private static Function<BlockPos, LegacyProxyMode> mergeProxyModes(
+            Function<BlockPos, LegacyProxyMode> previousModes,
+            Function<BlockPos, LegacyProxyMode> addedModes) {
+        return offset -> {
+            LegacyProxyMode previous = proxyModeOrNone(previousModes, offset);
+            return previous.isProxy() ? previous : proxyModeOrNone(addedModes, offset);
+        };
+    }
+
+    private static LegacyProxyMode proxyModeOrNone(Function<BlockPos, LegacyProxyMode> proxyModes, BlockPos offset) {
+        LegacyProxyMode mode = proxyModes.apply(offset);
+        return mode == null ? LegacyProxyMode.none() : mode;
     }
 }

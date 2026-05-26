@@ -2030,6 +2030,7 @@ Findings:
 - `sellafield_slaked` and `sellafield_bedrock` do not use one cube with six different face textures. The old `getIcon(world, x, y, z, side)` chooses one of four slaked textures from a coordinate hash and uses that same icon for every side.
 - `BlockSellafieldOre` renders the same position-randomized slaked base with an ore overlay; the ore overlay differs by ore type, while the four slaked bases remain valid variants.
 - Active `sellafield` is still the six metadata-level block family with `sellafield_0..5`, separate from the slaked/bedrock/ore texture variation.
+- `BlockSellafieldSlaked#colorMultiplier` applies the old metadata brightness as `Color.HSBtoRGB(0F, 0F, 1F - meta / 15F)`. The visible center-to-edge crater rings come from fallout writing `sellafield_slaked` levels `9..0` by distance band and this tint darkening higher levels.
 
 Corrected in this pass:
 
@@ -2040,16 +2041,18 @@ Corrected in this pass:
   - `sellafield_bedrock` / `_1` / `_2` / `_3` reuse the same four slaked textures, matching the old bedrock visual source;
   - each `ore_sellafield_*` block now has four model variants with the matching ore overlay and slaked base.
 - Updated blockstates for `sellafield_slaked`, `sellafield_bedrock`, and all five `ore_sellafield_*` blocks so every level references the four variants instead of a single mixed-face model.
+- Added tint index 0 to slaked/bedrock base models and to the Sellafield ore base layer; ore overlays remain untinted like the old overlay pass.
+- Registered block and item color handlers for slaked, bedrock, and Sellafield ore variants using the old `1F - level / 15F` grayscale formula.
 
 Still incomplete:
 
-- Old `BlockSellafieldSlaked#colorMultiplier` darkens the block by metadata level. The current JSON/model pass restores the old texture variant family but still lacks the exact level tint path.
 - The JSON blockstate random model selection preserves deterministic position variation through the vanilla model system, but it is not the exact old coordinate hash expression.
 
 Verification:
 
 - 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 - Parsed the copied `bin/main` Sellafield model/blockstate JSON through PowerShell `ConvertFrom-Json`: passed.
+- Checked source and copied `bin/main` Sellafield models: slaked/bedrock variants parent `hbm:block/template_sellafield_slaked`, and both the template cube plus Sellafield ore base layer carry `tintindex: 0`.
 - Checked `bin/main` crater biome JSON values: crater/inner/outer water and water fog are `5263392` (`0x505020`), and fog colors are `5397074` / `4344386` / `7049609`.
 
 ## 2026-05-23 Radiation Diffusion Timing Fix

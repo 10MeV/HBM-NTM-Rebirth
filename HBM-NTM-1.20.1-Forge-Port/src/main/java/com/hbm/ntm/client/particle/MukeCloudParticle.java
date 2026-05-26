@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleRenderType;
@@ -102,6 +103,11 @@ public class MukeCloudParticle extends Particle {
             this.lifetime = 122 + random.nextInt(31);
             this.age = 80;
         }
+    }
+
+    public static void add(ClientLevel level, double x, double y, double z,
+            double motionX, double motionY, double motionZ, boolean balefire) {
+        Minecraft.getInstance().particleEngine.add(new MukeCloudParticle(level, x, y, z, motionX, motionY, motionZ, balefire));
     }
 
     @Override

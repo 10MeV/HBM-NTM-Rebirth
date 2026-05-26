@@ -1,13 +1,14 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.client.ClientPermaSyncData;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public record PermaSyncPacket(CompoundTag data) {
+public record PermaSyncPacket(CompoundTag data) implements HbmPreparablePacket {
     public PermaSyncPacket {
         data = data == null ? new CompoundTag() : data.copy();
     }
@@ -25,5 +26,10 @@ public record PermaSyncPacket(CompoundTag data) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> ClientPermaSyncData.update(packet.data));
         context.setPacketHandled(true);
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new PermaSyncPacket(data);
     }
 }

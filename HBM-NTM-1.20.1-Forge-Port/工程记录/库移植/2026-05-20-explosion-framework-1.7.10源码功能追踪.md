@@ -676,6 +676,7 @@
   - explosion 配置默认值：`mk5=50` ms、`blastSpeed=1024`、`falloutRange=100`、`fDelay=4`、`limitExplosionLifespan=0`、`chunkloading=true`、`explosionAlgorithm=2`。
 - `ExplosionNukeSmall.PARAMS_HIGH`：
   - 旧版 `miniNuke=false`，`blastRadius=BombConfig.fatmanRadius`，`shrapnelCount=0`。
+  - `explode(...)` 只有 `miniNuke && !safe` 时才执行 `ExplosionNT` 小核弹方块破坏；`PARAMS_HIGH` 这种 `miniNuke=false` 的大型核弹不能先跑一轮 `ExplosionNT`，否则会在 MK5 射线坑前额外挖出偏圆的标准爆炸坑。
   - `explode(...)` 中 `miniNuke=false` 时调用 `WorldUtil.loadAndSpawnEntityInWorld(EntityNukeExplosionMK5.statFac(...))`，真正进入 MK5 射线核爆。
 
 ### 现代实现
@@ -689,6 +690,7 @@
   - fallback fallout footprint 范围从 `BombConfig.FALLOUT_RANGE_PERCENT` 读取。
 - 更新 `ExplosionNukeSmall`：
   - `PARAMS_HIGH` 的默认半径使用 `BombConfig.FATMAN_RADIUS_DEFAULT`。
+  - `ExplosionNT` 预破坏条件改回旧版 `miniNuke && !safe`，大型核弹只进入 MK5 射线调度，避免叠加标准球形/VNT 爆炸导致弹坑过圆。
   - `miniNuke=false` 时除了已迁的烟云表现外，现在会通过 `NuclearExplosionUtil.spawnNuclear(...)` 进入 MK5 调度实体，恢复旧版大核弹路径。
   - 新增 `configuredHighParams()` / `explodeConfiguredHigh(...)`，供后续 Fatman、Tier0 missile 等调用点按运行期 `BombConfig.FATMAN_RADIUS` 生成参数，避免静态 `PARAMS_HIGH` 缓存旧半径。
 
@@ -1697,6 +1699,200 @@
 验证：
 
 - 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+### 2026-05-26 追加：Torex 重载白块、云团遮挡与 fallout rain 可见性回归修正
+
+实机回归问题：
+
+- 重进游戏/重载核爆中心后，蘑菇云中心可能出现巨大的白色 flare 方片，并触发明显卡顿。
+- 蘑菇云透明云团后方的 vanilla 云层/水域会穿透显示。
+- `hbm:crater_outer` 外圈草色仍可能显示为普通绿色。
+- fallout rain 实体生成后客户端看不到雨，地表 `fallout` 薄层也可能不可见。
+
+复核来源：
+
+- `com.hbm.entity.effect.EntityNukeTorex`
+- `com.hbm.render.entity.effect.RenderTorex`
+- `com.hbm.entity.effect.EntityFalloutRain`
+- `com.hbm.render.entity.effect.RenderFallout`
+- `com.hbm.world.biome.BiomeGenCraterBase`
+- `com.hbm.blocks.generic.BlockFallout`
+
+修正：
+
+- `NukeTorexEntity` 回到 1.7.10 生命周期：大型 Torex 是临时视觉实体，不保存到 NBT，读取到旧保存数据时直接丢弃；不再在世界重载后恢复半截实体，也不再补算历史 cloudlets。
+- `NukeTorexRenderer` 的云团增加 cutout-only 深度预写 pass，随后仍按旧版 alpha pass 上色；这样后续云层/水域不再轻易透过蘑菇云主体，同时透明边缘仍按粒子贴图裁剪。
+- `FalloutRainEntity` 初始 `tickDelay` 改回旧 `BombConfig.fDelay` 语义，并显式允许远距离渲染；避免服务端首 tick 处理完并移除实体，客户端还没来得及画雨。
+- `fallout` 薄层模型补回旧 `BlockFallout` 的 0.125 方块高度几何，对应 2/16 高度，避免只继承 `thin_block` 而没有实际可见面。
+- crater outer 草/叶颜色只对 `hbm:crater_outer` 生效；客户端颜色 handler 现在在 `BlockAndTintGetter` 不能提供 biome key 时，回退到当前客户端世界按坐标读取 biome。
+
+边界：
+
+- `flare.png` 本身是全不透明 alpha，旧版依赖加法混合让黑底不可见；本次白方块主要按“实体重载恢复核闪”处理，保持 flare 的旧加法混合路径不变。
+- 云团深度预写是现代渲染顺序补强，旧版 OpenGL pass 本身没有写深度；该补强只为避免 1.20 透明/天气/水 pass 顺序导致的穿透观感。
+
+### 2026-05-26 追加：MK5 流体清理网格与算法缺口复核
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionNukeRayBatched`
+- `com.hbm.entity.logic.EntityNukeExplosionMK5`
+- `com.hbm.explosion.ExplosionNukeGeneric`
+- `com.hbm.entity.logic.EntityFalloutRain`
+
+旧版行为要点：
+
+- 默认 MK5 路径使用 `ExplosionNukeRayBatched`；`EntityNukeExplosionMK5` 源码里的 parallelized 分支被注释，现代继续以 batched 路径为事实来源。
+- 旧射线采样遇到液体时不消耗爆炸强度：`!block.getMaterial().isLiquid()` 才扣抗性；但液体仍是非 air 方块，会被加入待删除坐标，后续 `processChunk` 用 `setBlock(..., Blocks.air, 0, 2/3)` 清掉。
+- 旧 `processChunk` 按 chunk 缓存射线命中坐标，再分批删除；因此水/熔岩这类方块不会留下现代流体状态独立存在的大片竖直面。
+- `EntityNukeExplosionMK5` 每 tick 保持中心 chunk 加载，前 10 tick 在有 fallout 且强度足够时调用直射辐射，射线完成后生成 `EntityFalloutRain`。
+
+现代修正：
+
+- `ExplosionNukeRayBatched` 现在把 `BlockState.isAir()` 但 `FluidState` 非空的位置视为旧版非 air 命中，而不是跳过。
+- 二次复核发现 `collectTip` 收集阶段仍只用 `!state.isAir()` 判断是否缓存 lastPos/chunk；这会让只呈现为 `FluidState` 的位置在破坏阶段前就丢失。收集阶段现已改成和 `processChunk` 同一个 `isLegacyEmpty` 判定。
+- 命中流体时额外清理 3x3x3 邻域内仍带 `FluidState` 的位置，并对流体清除使用 neighbor update flags，避免现代水/熔岩保留下未同步的网格状面片。
+- tip 坐标也统一走同一个清理入口，保留旧版末端用更强更新 flags 的语义。
+- `ExplosionNukeGeneric#destruction` / `vaporDest` 的早退条件也改成 `isLegacyEmpty`，避免 MK3/Advanced 柱状清除提前跳过带 `FluidState` 的位置；`waste` / `solinium` 未扩展清流体，因为旧版对应分支没有“液体即清除”的契约。
+
+仍缺/注意：
+
+- 旧 MK5 每 tick 触发 `MainRegistry.achManhattan`，现代还没有对应 advancement 接线。
+- 旧版 extended logging 会在 MK5 初始化和完成时写日志；现代当前没有迁入等价配置项。
+- `ExplosionNukeGeneric#isExplosionExempt` 旧列表包含 ocelot、B92 beam、bullet、grenade、creative player 等具体实体；现代只迁了当前已存在实体能表达的安全子集，未注册的旧 projectile 类型仍等待对应武器实体迁入。
+- 旧 `WorldUtil.loadAndSpawnEntityInWorld` 的更宽泛强加载/生成语义没有完整移植；现代 MK5 自身的 forced chunk 进度保存已覆盖当前核爆处理需求。
+
+验证：
+
+- 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+### 2026-05-26 追加：Torex 云团深度预写回退与 crater/fallout rain 二次修正
+
+回归结论：
+
+- `RenderTorex#cloudletWrapper` 在 1.7.10 中只做普通 alpha blending，并且 `glDepthMask(false)`；现代端尝试增加 cloudlet depth prepass 会把原版云层表现成硬白色块，视觉偏离旧版，已回退。
+- `BiomeGenCraterBase` 三个 crater biome 都覆写草色：`crater_outer` 为 `0x776F59/0x6F6752`，`crater` 为 `0x606060/0x505050`，`crater_inner` 为 `0x404040/0x303030`，叶色统一 `0x6A7039`。
+- 草方块物品栏渲染没有世界/坐标时不能返回白色，应回退原版 `GrassColor.getDefaultColor()` / `FoliageColor.getDefaultColor()`。
+- `RenderFallout` 旧版按相机周围生成雨柱，并通过 tessellator translation 转成相机空间；现代 `EntityRenderer` 已处于实体局部矩阵中，顶点必须相对 fallout entity 原点输出，否则雨柱会被画到错误位置。
+
+现代修正：
+
+- `NukeTorexRenderer` 移除 cloudlet depth prepass，恢复单 pass 普通透明云团；flare 仍保留旧版 `SRC_ALPHA/ONE` 加法混合。
+- `ClientModEvents` 对 vanilla grass/foliage 的 crater tint 补齐三圈旧颜色，并修正无世界/坐标时的默认绿色 fallback，避免创造栏草方块变灰白。
+- `NukeTorexEntity` 在前 100 tick 将客户端 sky flash 维持至少 4 tick，避免每 tick 写 2 导致现代端视觉频闪，同时仍保留 1.7.10 的持续亮天窗口。
+- `FalloutRainRenderer` 改为按实体原点输出玩家周围雨柱顶点；`FalloutRainEntity` 读取旧/缺失 NBT 时保留 `firstTick=true` 默认，避免跳过旧版首 tick chunk 收集。
+
+验证：
+
+- 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed；仍有 `Biome.BIOME_INFO_NOISE` 弃用警告，因其用于复刻旧 `plantNoise` 坐标色块，暂不替换。
+
+### 2026-05-26 追加：核爆处理器中心坐标截断复核
+
+复核来源：
+
+- `com.hbm.entity.logic.EntityNukeExplosionMK5`
+- `com.hbm.entity.logic.EntityNukeExplosionMK3`
+- `com.hbm.explosion.ExplosionNukeRayParallelized`
+
+旧版行为要点：
+
+- MK5 初始化 `ExplosionNukeRayBatched` 时使用 `(int) posX/Y/Z`，Java 对负小数坐标向 0 截断，而不是 floor。
+- MK3 初始化 `ExplosionNukeAdvanced` / `ExplosionFleija` / `ExplosionSolinium` 时同样使用 `(int) this.posX/Y/Z`。
+- 这只影响带小数的负坐标爆心；正坐标和整数坐标没有差异。
+
+现代修正：
+
+- `NukeExplosionMk5Entity` 创建和恢复 `ExplosionNukeRayBatched` 时改用 `(int) getX/Y/Z()`。
+- `NukeExplosionMk3Entity#initProcessors` 改用 `(int) getX/Y/Z()`。
+- `ExplosionNukeRayParallelized` 兼容入口也从 `Math.floor(...)` 改回旧式 `(int)` 截断。
+
+边界：
+
+- 本项不是“弹坑太圆”的主因；它修的是负坐标爆心中心偏移一格的对齐问题。
+
+### 2026-05-26 追加：Torex 冲击波抵达玩家 UI 抖动修正
+
+复核来源：
+
+- `com.hbm.entity.effect.EntityNukeTorex`
+- `com.hbm.render.entity.effect.RenderTorex`
+- Minecraft 1.20.1 `GameRenderer#bobHurt`
+- Minecraft 1.20.1 `Player#getHurtDir` / `Player#animateHurt`
+
+旧版行为要点：
+
+- `EntityNukeTorex` 客户端在冲击波前沿抵达本地玩家时播放 `hbm:weapon.nuclearExplosion`，并设置 `didPlaySound = true`。
+- `RenderTorex` 同帧检测 `didPlaySound && !didShake`，且全局 `shakeTimestamp` 超过 1 秒后：
+  - `player.hurtTime = 15`
+  - `player.maxHurtTime = 15`
+  - `player.attackedAtYaw = 0F`
+- 该效果依赖 Minecraft 受击相机/手持物 bob，不是服务端伤害，也不会扣血。
+
+现代修正：
+
+- 1.20.1 中旧 `attackedAtYaw` 对应 `Player#hurtDir`，`GameRenderer#bobHurt` 实际读取 `hurtTime / hurtDuration / getHurtDir()`。
+- `NukeTorexEntity#applyClientShockwaveShake` 现在调用 `player.animateHurt(0.0F)` 对齐旧 `attackedAtYaw = 0F`，随后把 `hurtTime/hurtDuration` 补成旧版 15 tick。
+- 摇晃触发从仅依赖 entity renderer 的后置路径，补到 `tryPlayClientSound` 的声波抵达点，确保冲击波抵达时本地玩家立即进入受击 bob 状态。
+- 修正客户端 age catch-up：新追踪实体时不再无条件设置 `didPlaySound/didShake = true`；只有同步 age 对应的声波半径已经越过当前本地玩家时，才跳过旧声音/摇晃，避免远处玩家刚开始追踪云团后在冲击波真正抵达前被标记为已摇晃。
+
+验证：
+
+- 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
+
+### 2026-05-26 追加：Torex 核闪遮罩与 HUD 矩阵抖动补齐
+
+复核来源：
+
+- `com.hbm.entity.effect.EntityNukeTorex`
+- `com.hbm.render.entity.effect.RenderTorex`
+- `com.hbm.main.ModEventHandlerClient`
+- `com.hbm.main.ModEventHandlerRenderer`
+- `com.hbm.config.ClientConfig`
+
+旧版行为要点：
+
+- `RenderTorex` 在 `ticksExisted < 10` 且上次核闪超过 1 秒时刷新 `ModEventHandlerClient.flashTimestamp`。
+- `ModEventHandlerClient` 在 `RenderGameOverlayEvent.Pre` 的 `CROSSHAIRS` 阶段绘制全屏白色 quad，持续 5000 ms，混合方式为 `SRC_ALPHA / ONE`，受 `ClientConfig.NUKE_HUD_FLASH` 控制。
+- `RenderTorex` 在 `didPlaySound && !didShake` 且上次摇晃超过 1 秒时刷新 `shakeTimestamp`，同时触发旧版 15 tick 受击 bob。
+- `ModEventHandlerRenderer` 在 `RenderGameOverlayEvent.Pre` 的 `HOTBAR` 阶段按旧公式平移 HUD：`mult = remaining / 1500 * 2`，水平 `clamp(sin(now * 0.02), -0.7, 0.7) * 15`，垂直 `clamp(sin(now * 0.01 + 2), -0.7, 0.7) * 3`，受 `ClientConfig.NUKE_HUD_SHAKE` 控制。
+
+现代修正：
+
+- 新增 `NukeHudEffects` 作为客户端全局核爆 HUD 效果状态，保留旧 5000 ms 核闪、1500 ms HUD 抖动与 1 秒防重复触发窗口。
+- `NukeTorexEntity` 在客户端爆心前 10 tick 触发核闪；冲击波抵达本地玩家并播放 `weapon.nuclear_explosion` 时触发 HUD 抖动和 15 tick hurt bob。
+- `ClientForgeEvents` 在 `RenderGuiOverlayEvent.Pre` 的 `CROSSHAIR` overlay 绘制白色加法遮罩；在 `HOTBAR` overlay 前 push pose 并套用旧正弦平移，Post 阶段渲染本模组 HUD 后 pop pose，避免矩阵状态泄漏。
+- `HbmClientConfig` 补回旧 `NUKE_HUD_FLASH` / `NUKE_HUD_SHAKE` 客户端开关，默认均为 `true`。
+
+验证：
+
+- 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
+
+### 2026-05-26 追加：Torex HUD/相机摇晃二次对齐复核
+
+复核来源：
+
+- `com.hbm.render.entity.effect.RenderTorex`
+- `com.hbm.main.ModEventHandlerClient`
+- `com.hbm.main.ModEventHandlerRenderer`
+- Minecraft 1.20.1 `GameRenderer#bobHurt`
+- Forge 1.20.1 `ForgeGui` / `VanillaGuiOverlay`
+
+旧版对齐点：
+
+- `shakeTimestamp` 是全局核爆摇晃节流，不只是 HUD 平移计时器；旧 `RenderTorex` 只有在 `now - shakeTimestamp > 1000` 时才同时设置 `didShake`、刷新 HUD 抖动时间戳并写入玩家 `hurtTime/maxHurtTime/attackedAtYaw`。
+- 参考移植版曾把 Torex bob 改成按距离计算 `hurtDuration = 100 - distance`，这不是 1.7.10 行为；现代端保持旧版固定 15 tick 和 yaw 0。
+- Forge 1.20.1 的 vanilla overlay 顺序从 `HOTBAR` 后继续复用同一个 `GuiGraphics`，旧版 `GL11.glTranslated` 没有 pop；现代端需要在 GUI 帧结束前 pop，才能既保持本帧 HOTBAR 之后 HUD 一起偏移，又不污染下一帧。
+- 旧核闪 overlay 关闭 depth write 后绘制白色加法 quad，绘制后恢复 depth mask。
+
+现代修正：
+
+- `NukeHudEffects#triggerShake` 改为返回是否成功刷新全局 `shakeTimestamp`；`NukeTorexEntity#applyClientShockwaveShake` 只有成功拿到旧版 1 秒节流许可后才写玩家 hurt bob 并设置 `didShake`。
+- HUD pose 从 `HOTBAR` Pre 开始 push/translate，改为在 `RenderGuiEvent.Post` 统一 pop；这样 HOTBAR 之后的血量、护甲、经验、物品名和本模组 HUD 与旧版一样处于同一轮平移中，同时避免矩阵跨帧泄漏。
+- `NukeHudEffects#renderFlash` 补回旧版核闪的 depth mask false/true 状态恢复。
+
+验证：
+
+- 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
 
 ## 验证清单
 

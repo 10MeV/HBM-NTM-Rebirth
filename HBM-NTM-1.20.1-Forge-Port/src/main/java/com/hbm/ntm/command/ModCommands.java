@@ -27,6 +27,7 @@ import com.hbm.ntm.fluid.HbmFluidForgeMappings;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.network.LegacyNetworkDispatcher;
 import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
@@ -71,6 +72,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.ToIntFunction;
 
@@ -154,6 +156,25 @@ public final class ModCommands {
                 .then(machineCommand())
                 .then(fluidCommand())
                 .then(networkCommand()));
+
+        dispatcher.register(legacyPacketThreadingCommand("ntmpackets"));
+        dispatcher.register(legacyPacketThreadingCommand("ntmpacket"));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> legacyPacketThreadingCommand(String name) {
+        return Commands.literal(name)
+                .requires(source -> source.hasPermission(2))
+                .executes(context -> getPacketThreadingStats(context.getSource()))
+                .then(Commands.literal("info")
+                        .executes(context -> getPacketThreadingStats(context.getSource())))
+                .then(Commands.literal("resetState")
+                        .executes(context -> resetPacketThreading(context.getSource())))
+                .then(Commands.literal("toggleThreadingStatus")
+                        .executes(context -> togglePacketThreading(context.getSource())))
+                .then(Commands.literal("config")
+                        .executes(context -> getPacketThreadingConfig(context.getSource())))
+                .then(Commands.literal("clear")
+                        .executes(context -> clearPacketThreading(context.getSource())));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> statusCommand() {
@@ -276,22 +297,53 @@ public final class ModCommands {
                                 .executes(context -> getNetworkProtocolProgress(context.getSource())))
                         .then(Commands.literal("packets")
                                 .executes(context -> listNetworkProtocolPackets(context.getSource())))
+                        .then(Commands.literal("audit")
+                                .executes(context -> auditNetworkProtocol(context.getSource())))
                         .then(Commands.literal("mappings")
                                 .executes(context -> listNetworkProtocolMappings(context.getSource())))
                         .then(Commands.literal("legacy")
-                                .executes(context -> listLegacyNetworkProtocolPackets(context.getSource()))))
+                                .executes(context -> listLegacyNetworkProtocolPackets(context.getSource()))
+                                .then(Commands.argument("packet", StringArgumentType.word())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                ModMessages.legacyPacketRegistrations().stream()
+                                                        .map(ModMessages.LegacyPacketRegistration::legacyName),
+                                                builder))
+                                        .executes(context -> queryLegacyNetworkPacket(
+                                                context.getSource(),
+                                                StringArgumentType.getString(context, "packet")))))
+                        .then(Commands.literal("modern")
+                                .then(Commands.argument("packet", StringArgumentType.word())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                ModMessages.packetRegistrations().stream()
+                                                        .map(ModMessages.PacketRegistration::typeName),
+                                                builder))
+                                        .executes(context -> queryModernNetworkPacket(
+                                                context.getSource(),
+                                                StringArgumentType.getString(context, "packet")))))
+                        .then(Commands.literal("wrapper")
+                                .executes(context -> getNetworkLegacyWrapper(context.getSource()))))
                 .then(Commands.literal("packetthreading")
                         .then(Commands.literal("stats")
                                 .executes(context -> getPacketThreadingStats(context.getSource())))
+                        .then(Commands.literal("info")
+                                .executes(context -> getPacketThreadingStats(context.getSource())))
+                        .then(Commands.literal("config")
+                                .executes(context -> getPacketThreadingConfig(context.getSource())))
                         .then(Commands.literal("threads")
                                 .executes(context -> listPacketThreadingThreads(context.getSource())))
                         .then(Commands.literal("toggle")
+                                .executes(context -> togglePacketThreading(context.getSource())))
+                        .then(Commands.literal("toggleThreadingStatus")
                                 .executes(context -> togglePacketThreading(context.getSource())))
                         .then(Commands.literal("enable")
                                 .executes(context -> setPacketThreading(context.getSource(), true)))
                         .then(Commands.literal("disable")
                                 .executes(context -> setPacketThreading(context.getSource(), false)))
+                        .then(Commands.literal("clear")
+                                .executes(context -> clearPacketThreading(context.getSource())))
                         .then(Commands.literal("reset")
+                                .executes(context -> resetPacketThreading(context.getSource())))
+                        .then(Commands.literal("resetState")
                                 .executes(context -> resetPacketThreading(context.getSource()))));
     }
 
@@ -1089,7 +1141,8 @@ public final class ModCommands {
                 + " legacyRegistered=" + ModMessages.legacyPacketRegistrationCount()
                 + " legacyMapped=" + ModMessages.mappedLegacyPacketCount()
                 + " legacyUnmapped=" + ModMessages.unmappedLegacyPacketRegistrations().size()
-                + " legacyMappings=" + ModMessages.legacyPacketMappingCount()), false);
+                + " legacyMappings=" + ModMessages.legacyPacketMappingCount()
+                + " blockedSends=" + ModMessages.blockedUnregisteredSendCount()), false);
         if (!registrations.isEmpty()) {
             ModMessages.PacketRegistration first = registrations.get(0);
             ModMessages.PacketRegistration last = registrations.get(registrations.size() - 1);
@@ -1103,6 +1156,10 @@ public final class ModCommands {
     private static int getNetworkProtocolProgress(CommandSourceStack source) {
         source.sendSuccess(() -> Component.literal("HBM network packet library progress: "
                 + ModMessages.progressSummary()), false);
+        source.sendSuccess(() -> Component.literal("Legacy wrapper: "
+                + ModMessages.legacyWrapperSummary()), false);
+        source.sendSuccess(() -> Component.literal("Send safety: "
+                + ModMessages.sendSafetySummary()), false);
         source.sendSuccess(() -> Component.literal("Coverage means old PacketDispatcher packets have modern carrier paths; "
                 + "foundation is conservative and excludes unfinished receiver/business logic."), false);
         return ModMessages.libraryFoundationProgressPercent();
@@ -1125,6 +1182,91 @@ public final class ModCommands {
                     + (legacyMappings > 0 ? " legacyMappings=" + legacyMappings : "")), false);
         }
         return registrations.size();
+    }
+
+    private static int auditNetworkProtocol(CommandSourceStack source) {
+        ModMessages.ProtocolAudit audit = ModMessages.protocolAudit();
+        source.sendSuccess(() -> Component.literal("HBM network protocol audit: "
+                + ModMessages.protocolAuditSummary()), false);
+        for (ModMessages.LegacyPacketMapping mapping : audit.mappingsToUnregisteredModernPackets()) {
+            source.sendSuccess(() -> Component.literal("Mapping points to unregistered modern packet: "
+                    + mapping.legacyName() + " -> " + mapping.modernName()), false);
+        }
+        for (ModMessages.LegacyPacketMapping mapping : audit.mappingsFromUnknownLegacyPackets()) {
+            source.sendSuccess(() -> Component.literal("Mapping references unknown legacy packet: "
+                    + mapping.legacyName() + " -> " + mapping.modernName()), false);
+        }
+        for (ModMessages.LegacyPacketMapping mapping : audit.mappingsWithDirectionMismatch()) {
+            source.sendSuccess(() -> Component.literal("Mapping direction mismatch: "
+                    + mapping.legacyName() + " -> " + mapping.modernName()
+                    + " mappingDirection=" + mapping.direction()), false);
+        }
+        for (ModMessages.LegacyPacketRegistration registration : audit.unmappedLegacyPackets()) {
+            source.sendSuccess(() -> Component.literal("Unmapped legacy packet: #"
+                    + registration.legacyId() + " " + registration.direction() + " " + registration.legacyName()), false);
+        }
+        if (!audit.duplicateLegacyIds().isEmpty()) {
+            source.sendSuccess(() -> Component.literal("Duplicate legacy ids: " + audit.duplicateLegacyIds()), false);
+        }
+        if (!audit.duplicateLegacyNames().isEmpty()) {
+            source.sendSuccess(() -> Component.literal("Duplicate legacy names: " + audit.duplicateLegacyNames()), false);
+        }
+        if (!audit.duplicateModernRegistrations().isEmpty()) {
+            source.sendSuccess(() -> Component.literal("Duplicate modern registrations: " + audit.duplicateModernRegistrations()), false);
+        }
+        return audit.hasProblems() ? 0 : 1;
+    }
+
+    private static int queryLegacyNetworkPacket(CommandSourceStack source, String legacyName) {
+        Optional<ModMessages.LegacyPacketRegistration> registration = ModMessages.legacyPacketRegistration(legacyName);
+        List<ModMessages.LegacyPacketMapping> mappings = ModMessages.legacyPacketMappings(legacyName);
+        if (registration.isEmpty()) {
+            source.sendFailure(Component.literal("Unknown legacy packet: " + legacyName));
+            return 0;
+        }
+        ModMessages.LegacyPacketRegistration legacy = registration.get();
+        source.sendSuccess(() -> Component.literal("Legacy packet #" + legacy.legacyId()
+                + " " + legacy.direction()
+                + " " + legacy.legacyName()
+                + " mappings=" + mappings.size()), false);
+        for (ModMessages.LegacyPacketMapping mapping : mappings) {
+            String registered = ModMessages.packetRegistration(mapping.modernName()).isPresent() ? "registered" : "missing";
+            source.sendSuccess(() -> Component.literal("-> " + mapping.modernName()
+                    + " " + mapping.direction()
+                    + " " + registered
+                    + " (" + mapping.notes() + ")"), false);
+        }
+        return mappings.size();
+    }
+
+    private static int queryModernNetworkPacket(CommandSourceStack source, String modernName) {
+        Optional<ModMessages.PacketRegistration> registration = ModMessages.packetRegistration(modernName);
+        List<ModMessages.LegacyPacketMapping> mappings = ModMessages.modernPacketMappings(modernName);
+        if (registration.isEmpty()) {
+            source.sendFailure(Component.literal("Unknown modern packet registration: " + modernName));
+            return 0;
+        }
+        ModMessages.PacketRegistration modern = registration.get();
+        source.sendSuccess(() -> Component.literal("Modern packet #" + modern.id()
+                + " " + modern.direction()
+                + " " + modern.typeName()
+                + " legacyMappings=" + mappings.size()), false);
+        for (ModMessages.LegacyPacketMapping mapping : mappings) {
+            source.sendSuccess(() -> Component.literal("<- " + mapping.legacyName()
+                    + " " + mapping.direction()
+                    + " (" + mapping.notes() + ")"), false);
+        }
+        return mappings.size();
+    }
+
+    private static int getNetworkLegacyWrapper(CommandSourceStack source) {
+        source.sendSuccess(() -> Component.literal("HBM legacy network wrapper: "
+                + ModMessages.legacyWrapperSummary()), false);
+        source.sendSuccess(() -> Component.literal("Send safety: "
+                + ModMessages.sendSafetySummary()), false);
+        source.sendSuccess(() -> Component.literal("Use ModMessages.wrapper() when migrating old PacketDispatcher.wrapper call sites; "
+                + "use explicit ModMessages helpers for new code."), false);
+        return LegacyNetworkDispatcher.directSendHelperCount() + LegacyNetworkDispatcher.threadedSendHelperCount();
     }
 
     private static int listLegacyNetworkProtocolPackets(CommandSourceStack source) {
@@ -1179,17 +1321,21 @@ public final class ModCommands {
         ThreadedPacketDispatcher.Snapshot snapshot = ThreadedPacketDispatcher.snapshot();
         source.sendSuccess(() -> Component.literal("Packet threading: pending=" + snapshot.pending()
                 + " enabled=" + snapshot.enabled()
+                + " configuredEnabled=" + snapshot.configuredEnabled()
                 + " fallback=" + snapshot.fallbackToMainThread()
+                + " errorBypass=" + snapshot.errorBypass()
                 + " totalQueued=" + snapshot.totalQueued()
                 + " totalPrepared=" + snapshot.totalPrepared()
                 + " totalSent=" + snapshot.totalSent()
                 + " totalFailed=" + snapshot.totalFailed()
                 + " totalDiscarded=" + snapshot.totalDiscarded()
-                + " prepareFailed=" + snapshot.totalPrepareFailed()), false);
+                + " prepareFailed=" + snapshot.totalPrepareFailed()
+                + " manualClears=" + snapshot.manualClears()), false);
         source.sendSuccess(() -> Component.literal("Last flush: queued=" + snapshot.lastFlushQueued()
                 + " completed=" + snapshot.lastFlushCompleted()
                 + " discarded=" + snapshot.lastFlushDiscarded()
                 + " wait=" + snapshot.lastFlushWaitMillis()
+                + "ms observedWait=" + snapshot.lastObservedWaitMillis()
                 + "ms clears=" + snapshot.consecutiveClears()), false);
         source.sendSuccess(() -> Component.literal("Thread pool: total=" + snapshot.threadPoolSize()
                 + " core=" + snapshot.corePoolSize()
@@ -1226,6 +1372,20 @@ public final class ModCommands {
         return snapshot.pending();
     }
 
+    private static int getPacketThreadingConfig(CommandSourceStack source) {
+        ThreadedPacketDispatcher.Snapshot snapshot = ThreadedPacketDispatcher.snapshot();
+        source.sendSuccess(() -> Component.literal("Packet threading config: prefix="
+                + ThreadedPacketDispatcher.threadPrefix()
+                + " waitTimeoutMs=" + ThreadedPacketDispatcher.waitTimeoutMillis()
+                + " maxPending=" + ThreadedPacketDispatcher.maxPendingOperations()
+                + " fallbackClearThreshold=" + ThreadedPacketDispatcher.fallbackClearThreshold()
+                + " enabled=" + snapshot.enabled()
+                + " configuredEnabled=" + snapshot.configuredEnabled()
+                + " fallback=" + snapshot.fallbackToMainThread()
+                + " errorBypass=" + snapshot.errorBypass()), false);
+        return ThreadedPacketDispatcher.maxPendingOperations();
+    }
+
     private static int listPacketThreadingThreads(CommandSourceStack source) {
         List<ThreadedPacketDispatcher.ThreadSnapshot> threads = ThreadedPacketDispatcher.threadSnapshots();
         if (threads.isEmpty()) {
@@ -1253,6 +1413,12 @@ public final class ModCommands {
         ThreadedPacketDispatcher.setEnabled(enabled);
         source.sendSuccess(() -> Component.literal("Packet threading enabled: " + enabled), true);
         return enabled ? 1 : 0;
+    }
+
+    private static int clearPacketThreading(CommandSourceStack source) {
+        int discarded = ThreadedPacketDispatcher.clearPending("Manual packet threading queue clear from command.");
+        source.sendSuccess(() -> Component.literal("Cleared packet threading queue: discarded=" + discarded), true);
+        return discarded;
     }
 
     private static int resetPacketThreading(CommandSourceStack source) {

@@ -942,3 +942,37 @@
 
 - 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
 - 结果：通过。
+
+## 2026-05-26 第二十一批推进：ParticleMukeFlash 闪光与延迟吐云
+
+- 1.7.10 对照：
+  - `com.hbm.particle.ParticleMukeFlash`
+    - 绑定 `textures/particle/flare.png`，`getFXLayer() == 3`，20 tick 寿命。
+    - 渲染阶段使用加色混合、fullbright、24 个固定随机偏移的 billboard flare。
+    - `scale=(age+interp)*3+1`，`alpha=(1-age/maxAge)*0.5`，颜色 `(1.0, 0.9, 0.75)`。
+    - `particleAge == 15` 时吐出 mushroom cloud：
+      - stem：`d=0..1.8 step 0.1`，水平高斯 `0.05`，垂直 `d + gaussian*0.02`；
+      - ground：100 个，`y+0.5`，水平高斯 `0.5`，20% 概率 `motionY=0.02`；
+      - mush：75 个，水平高斯 `0.5`，超出半径阈值后减半，垂直公式 `1.8 + (rand*3-1.5)*(0.75-distSq)*0.5 + gaussian*0.02`。
+      - `balefire=true` 时改用 `ParticleMukeCloudBF`。
+  - `ClientProxy` 的 `muke` 分支只生成 `ParticleMukeWave` + `ParticleMukeFlash`，并触发 15 tick 客户端 hurt jolt；云团由 flash 在第 15 tick 延迟生成。
+  - `tinytot` 分支不生成 flash，仍即时生成较小 stem/ground/mush 云团。
+- 本批现代迁移：
+  - 新增 `MukeFlashParticle`：
+    - 直接绑定已有旧资源 `assets/hbm/textures/particle/flare.png`。
+    - 复刻 20 tick 寿命、24 个固定偏移 billboard、加色混合、fullbright、颜色/alpha/scale 公式。
+    - 第 15 tick 调用 `MukeCloudParticle` 生成普通或 balefire 云团，保留旧版 stem/ground/mush 数量和运动公式。
+  - `MukeCloudParticle` 新增 `add(...)` 工具入口，供 `HbmParticleEffects`、`MukeFlashParticle`、`ufo/bf` 分支共用。
+  - `HbmParticleEffects#muke`：
+    - 非 `tiny` 分支从“立即生成云团”改回旧版“wave + flash，flash 延迟吐云”。
+    - 移除上一批临时的 vanilla `EXPLOSION_EMITTER`，避免和旧版 flare 视觉叠加出不属于 1.7.10 的爆心粒子。
+  - `HbmParticleEffects#tinytot`：
+    - 保持旧版即时小 mushroom cloud，并固定使用普通 `MukeCloudParticle`。
+- 边界：
+  - 旧版 `ParticleMukeFlash` 在渲染时临时关闭 fog；现代粒子管线未在本批单独接 fog 状态开关，保留加色、fullbright、无剔除和不写深度这几个核心视觉合同。
+  - `Player#attackedAtYaw` 对应字段仍受 1.20 访问限制，本批继续只设置 `hurtTime/hurtDuration`。
+
+## 2026-05-26 第二十一批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。

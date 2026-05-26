@@ -11,8 +11,8 @@ public final class ObjReactorModels {
     public static final LegacyWavefrontModel WATZ = model("watz");
     public static final LegacyWavefrontModel WATZ_PUMP = model("watz_pump");
     public static final LegacyWavefrontModel LPW2 = model("lpw2");
-    public static final LegacyWavefrontModel ZIRNOX = model("zirnox");
-    public static final LegacyWavefrontModel ZIRNOX_DESTROYED = model("zirnox_destroyed");
+    public static final LegacyWavefrontModel ZIRNOX = model("zirnox").asVBO();
+    public static final LegacyWavefrontModel ZIRNOX_DESTROYED = model("zirnox_destroyed").asVBO();
 
     public static final ResourceLocation LPW2_TERM_TEXTURE = texture("lpw2_term");
     public static final ResourceLocation LPW2_TERM_ERROR_TEXTURE = texture("lpw2_term_error");

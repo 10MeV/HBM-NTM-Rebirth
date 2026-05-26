@@ -150,7 +150,7 @@ public final class HbmParticleEffects {
         } else if (ParticleUtil.TYPE_UFO.equals(type)) {
             spawnUfoCloud(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_BALEFIRE_CLOUD.equals(type)) {
-            Minecraft.getInstance().particleEngine.add(new MukeCloudParticle(level, x, y, z, 0.0D, 0.0D, 0.0D, true));
+            MukeCloudParticle.add(level, x, y, z, 0.0D, 0.0D, 0.0D, true);
         } else if ("chaosCloud".equals(type)) {
             spawnChaosCloud(level, data, x, y, z);
         }
@@ -594,53 +594,49 @@ public final class HbmParticleEffects {
     }
 
     private static void spawnMuke(ClientLevel level, CompoundTag data, double x, double y, double z, boolean tiny) {
-        int stemCount = tiny ? 17 : 19;
-        int groundCount = tiny ? 50 : 100;
-        int mushCount = tiny ? 15 : 75;
-        double stemHeight = tiny ? 1.6D : 1.8D;
-        double groundY = y + 0.5D;
-        double mushHeight = tiny ? 1.6D : 1.8D;
-        double mushRangeLimit = tiny ? 0.75D : 1.5D;
-        double mushVerticalSpread = tiny ? 0.5D : 0.75D;
         boolean balefire = data.getBoolean("balefire");
 
         Particle wave = MukeWaveParticle.create(level, x, y, z, 45.0F, 25);
         if (wave != null) {
             Minecraft.getInstance().particleEngine.add(wave);
         }
-        level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 0.0D, 0.0D, 0.0D);
+        if (!tiny) {
+            Minecraft.getInstance().particleEngine.add(new MukeFlashParticle(level, x, y, z, balefire));
+            applyClientJolt(15, 15);
+            return;
+        }
+
         RandomSource random = level.random;
-        for (int i = 0; i < stemCount; i++) {
-            double lift = stemCount == 1 ? 0.0D : stemHeight * i / (stemCount - 1.0D);
+        for (double d = 0.0D; d <= 1.6D + 1.0E-9D; d += 0.1D) {
             spawnMukeCloud(level, x, y, z,
                     random.nextGaussian() * 0.05D,
-                    lift + random.nextGaussian() * 0.02D,
+                    d + random.nextGaussian() * 0.02D,
                     random.nextGaussian() * 0.05D,
-                    balefire);
+                    false);
         }
-        for (int i = 0; i < groundCount; i++) {
-            spawnMukeCloud(level, x, groundY, z,
+        for (int i = 0; i < 50; i++) {
+            spawnMukeCloud(level, x, y + 0.5D, z,
                     random.nextGaussian() * 0.5D,
                     random.nextInt(5) == 0 ? 0.02D : 0.0D,
                     random.nextGaussian() * 0.5D,
-                    balefire);
+                    false);
         }
-        for (int i = 0; i < mushCount; i++) {
-            double motionX = random.nextGaussian() * (tiny ? 0.2D : 0.5D);
-            double motionZ = random.nextGaussian() * (tiny ? 0.2D : 0.5D);
-            if (motionX * motionX + motionZ * motionZ > mushRangeLimit) {
+        for (int i = 0; i < 15; i++) {
+            double motionX = random.nextGaussian() * 0.2D;
+            double motionZ = random.nextGaussian() * 0.2D;
+            if (motionX * motionX + motionZ * motionZ > 0.75D) {
                 motionX *= 0.5D;
                 motionZ *= 0.5D;
             }
-            double motionY = mushHeight + (random.nextDouble() * 2.0D - 1.0D) * (mushVerticalSpread - (motionX * motionX + motionZ * motionZ)) * 0.5D;
-            spawnMukeCloud(level, x, y, z, motionX, motionY + random.nextGaussian() * 0.02D, motionZ, balefire);
+            double motionY = 1.6D + (random.nextDouble() * 2.0D - 1.0D) * (0.75D - (motionX * motionX + motionZ * motionZ)) * 0.5D;
+            spawnMukeCloud(level, x, y, z, motionX, motionY + random.nextGaussian() * 0.02D, motionZ, false);
         }
         applyClientJolt(15, 15);
     }
 
     private static void spawnMukeCloud(ClientLevel level, double x, double y, double z,
             double motionX, double motionY, double motionZ, boolean balefire) {
-        Minecraft.getInstance().particleEngine.add(new MukeCloudParticle(level, x, y, z, motionX, motionY, motionZ, balefire));
+        MukeCloudParticle.add(level, x, y, z, motionX, motionY, motionZ, balefire);
     }
 
     private static void spawnUfoCloud(ClientLevel level, CompoundTag data, double x, double y, double z) {

@@ -138,9 +138,9 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
     }
 
     private void initProcessors() {
-        int x = blockPosition().getX();
-        int y = blockPosition().getY();
-        int z = blockPosition().getZ();
+        int x = (int) getX();
+        int y = (int) getY();
+        int z = (int) getZ();
         if (waste) {
             exp = new ExplosionNukeAdvanced(x, y, z, level(), destructionRange, coefficient, ExplosionNukeAdvanced.TYPE_DESTRUCTION);
             wst = new ExplosionNukeAdvanced(x, y, z, level(), (int) (destructionRange * 1.8D), coefficient, ExplosionNukeAdvanced.TYPE_WASTE);

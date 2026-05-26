@@ -20,6 +20,7 @@ public final class HbmCommonConfig {
                 .define("enableLegacyIdNotes", true);
         builder.pop();
 
+        NetworkConfig.define(builder);
         RadiationConfig.define(builder);
         BombConfig.define(builder);
 

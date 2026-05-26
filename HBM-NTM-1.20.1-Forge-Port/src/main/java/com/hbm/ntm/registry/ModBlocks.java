@@ -59,10 +59,10 @@ import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.MultiblockBlockItem;
 import com.hbm.ntm.item.NuclearDeviceBlockItem;
 import com.hbm.ntm.item.TrinketBlockItem;
+import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
 import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.multiblock.DummyBlock;
-import com.hbm.ntm.multiblock.MultiblockExtents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -844,10 +844,7 @@ public final class ModBlocks {
                 .legacyXrDimensions(2, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
-                        .withProxyPredicate(offset -> offset.getY() == 0
-                                && Math.abs(offset.getX()) <= 1
-                                && Math.abs(offset.getZ()) <= 1
-                                && (offset.getX() != 0 || offset.getZ() != 0),
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.squarePerimeter(1),
                                 proxyInventoryPowerFluid()))
                 .renderParts("Base", "Frame", "Slider", "Spinner")
                 .legacyItemScale(4.5D, 0.75D)
@@ -900,11 +897,7 @@ public final class ModBlocks {
     }
 
     private static boolean isChemicalFactoryProxyOffset(BlockPos offset, Direction facing, Direction rot) {
-        boolean floorRing = offset.getY() == 0
-                && (Math.abs(offset.getX()) == 2 || Math.abs(offset.getZ()) == 2)
-                && Math.abs(offset.getX()) <= 2
-                && Math.abs(offset.getZ()) <= 2;
-        if (floorRing) {
+        if (LegacyMultiblockOffsets.isSquarePerimeter(offset, 2, 0)) {
             return true;
         }
         if (offset.getY() != 2) {
@@ -920,7 +913,7 @@ public final class ModBlocks {
                 .legacyXrDimensions(8, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 8, 0, 1, 1, 1, 1 }, facing)
-                        .withExtraProxyOffsets(cornerProxyOffsets(facing), proxyInventoryPowerFluid()))
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyInventoryPowerFluid()))
                 .legacyItemScale(3.0D, 0.5D)
                 .yRotation(facing -> 180.0F)
                 .build();
@@ -955,7 +948,7 @@ public final class ModBlocks {
                 .legacyXrDimensions(8, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 8, 0, 1, 1, 1, 1 }, facing)
-                        .withProxyOffsets(cornerProxyOffsets(facing), proxyPowerFluid()))
+                        .withProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyPowerFluid()))
                 .legacyItemScale(3.0D, 0.5D)
                 .yRotation(facing -> 0.0F)
                 .build();
@@ -966,7 +959,7 @@ public final class ModBlocks {
                 .legacyXrDimensions(2, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
-                        .withProxyOffsets(crossProxyOffsets(), proxyFluid()))
+                        .withProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyFluid()))
                 .legacyItemScale(3.25F)
                 .yRotation(facing -> 0.0F)
                 .build();
@@ -977,7 +970,7 @@ public final class ModBlocks {
                 .legacyXrDimensions(6, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 6, 0, 1, 1, 1, 1 }, facing)
-                        .withProxyOffsets(cornerProxyOffsets(facing), proxyPowerFluid()))
+                        .withProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyPowerFluid()))
                 .legacyItemScale(4.0D, 0.5D)
                 .yRotation(facing -> 0.0F)
                 .build();
@@ -989,7 +982,7 @@ public final class ModBlocks {
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 22, 0, 1, 1, 1, 1 }, facing)
                         .withExtraOffsets(cokerStructureOffsets())
-                        .withProxyOffsets(cornerProxyOffsets(facing), proxyInventoryFluid()))
+                        .withProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyInventoryFluid()))
                 .legacyItemScale(2.75D, 0.25D)
                 .yRotation(facing -> 0.0F)
                 .build();
@@ -1057,7 +1050,7 @@ public final class ModBlocks {
                 .legacyXrDimensions(2, 0, 1, 1, 2, 2)
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 2, 2 }, facing)
-                        .withExtraProxyOffsets(cornerProxyOffsets(facing), proxyFluid()))
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyFluid()))
                 .legacyItemScale(3.5D, 0.75D)
                 .yRotation(facing -> (360.0F - facing.toYRot()) % 360.0F)
                 .build();
@@ -1125,7 +1118,7 @@ public final class ModBlocks {
                 .legacyXrDimensions(11, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 11, 0, 1, 1, 1, 1 }, facing)
-                        .withProxyOffsets(crossProxyOffsets(), proxyPowerFluid()))
+                        .withProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyPowerFluid()))
                 .legacyItemScale(2.25D, 0.5D)
                 .yRotation(facing -> 180.0F)
                 .collisionShape(state -> legacyRotatedShape(state,
@@ -1161,7 +1154,7 @@ public final class ModBlocks {
                 .legacyXrDimensions(4, 0, 2, 2, 2, 2)
                 .legacyOffset(2)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 4, 0, 2, 2, 2, 2 }, facing)
-                        .withProxyOffsets(purexProxyOffsets(), proxyInventoryPowerFluid()))
+                        .withProxyOffsets(LegacyMultiblockOffsets.squarePerimeter(2), proxyInventoryPowerFluid()))
                 .renderParts("Base", "Frame", "Fan", "Pump")
                 .legacyItemScale(2.5D, 0.75D)
                 .yRotation(ModBlocks::assemblyFactoryRotation)
@@ -1206,7 +1199,7 @@ public final class ModBlocks {
                 .legacyXrDimensions(2, 0, 2, 2, 2, 2)
                 .legacyOffset(2)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 2, 2, 2, 2 }, facing)
-                        .withProxyOffsets(cyclotronProxyOffsets(), proxyInventoryPowerFluid()))
+                        .withProxyOffsets(LegacyMultiblockOffsets.squareSidesWithoutCorners(2), proxyInventoryPowerFluid()))
                 .renderParts("Body", "B1", "B2", "B3", "B4")
                 .legacyItemScale(2.25F)
                 .yRotation(facing -> 0.0F)
@@ -1260,7 +1253,7 @@ public final class ModBlocks {
                 .legacyXrDimensions(2, 0, 1, 1, 1, 1)
                 .legacyOffset(0)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
-                        .withExtraProxyOffsets(crossProxyOffsets(), proxyInventoryPowerFluid()))
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyInventoryPowerFluid()))
                 .legacyItemScale(3.0F)
                 .yRotation(ModBlocks::radiolysisRotation)
                 .collisionShape(state -> stateLayoutShape(state))
@@ -1330,7 +1323,7 @@ public final class ModBlocks {
                 .legacyXrDimensions(18, 0, 2, 2, 2, 2)
                 .legacyOffset(2)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 18, 0, 2, 2, 2, 2 }, facing)
-                        .withExtraProxyOffsets(radiusCardinalOffsets(2), proxyFluid()))
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(2), proxyFluid()))
                 .legacyItemScale(3.0D, 0.25D)
                 .yRotation(facing -> 0.0F)
                 .collisionShape(state -> stateLayoutShape(state))
@@ -1380,92 +1373,73 @@ public final class ModBlocks {
     }
 
     private static List<BlockPos> radGenProxyOffsets(Direction facing) {
-        Direction rot = facing.getClockWise();
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                new BlockPos(-facing.getStepX() * 3, 0, -facing.getStepZ() * 3),
-                new BlockPos(rot.getStepX(), 0, rot.getStepZ()),
-                new BlockPos(-rot.getStepX(), 0, -rot.getStepZ()));
+                LegacyMultiblockOffsets.relative(facing, rot, -3, 0, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, -1, 0));
     }
 
     private static List<BlockPos> rotaryFurnaceProxyOffsets(Direction facing) {
-        Direction rot = facing.getCounterClockWise();
-        return Stream.concat(
-                Stream.iterate(-2, i -> i <= 2, i -> i + 1)
-                        .map(i -> new BlockPos(-facing.getStepX() + rot.getStepX() * i, 0,
-                                -facing.getStepZ() + rot.getStepZ() * i)),
-                Stream.of(
-                        new BlockPos(facing.getStepX() + rot.getStepX() * 2, 0,
-                                facing.getStepZ() + rot.getStepZ() * 2),
-                        new BlockPos(rot.getStepX(), 4, rot.getStepZ()),
-                        new BlockPos(facing.getStepX() + rot.getStepX(), 0,
-                                facing.getStepZ() + rot.getStepZ())))
-                .toList();
+        Direction rot = LegacyMultiblockOffsets.legacyDownSide(facing);
+        return LegacyMultiblockOffsets.combine(
+                LegacyMultiblockOffsets.lineAlongSide(facing, rot, -1, -2, 2, 0),
+                List.of(
+                        LegacyMultiblockOffsets.relative(facing, rot, 1, 2, 0),
+                        LegacyMultiblockOffsets.relative(facing, rot, 0, 1, 4),
+                        LegacyMultiblockOffsets.relative(facing, rot, 1, 1, 0)));
     }
 
     private static List<BlockPos> steamEngineProxyOffsets(Direction facing) {
-        Direction rot = facing.getClockWise();
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                new BlockPos(rot.getStepX(), 1, rot.getStepZ()),
-                new BlockPos(rot.getStepX() + facing.getStepX(), 1, rot.getStepZ() + facing.getStepZ()),
-                new BlockPos(rot.getStepX() - facing.getStepX(), 1, rot.getStepZ() - facing.getStepZ()));
-    }
-
-    private static List<BlockPos> radiusCardinalOffsets(int radius) {
-        return List.of(
-                new BlockPos(radius, 0, 0),
-                new BlockPos(-radius, 0, 0),
-                new BlockPos(0, 0, radius),
-                new BlockPos(0, 0, -radius));
+                LegacyMultiblockOffsets.relative(facing, rot, 0, 1, 1),
+                LegacyMultiblockOffsets.relative(facing, rot, 1, 1, 1),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 1, 1));
     }
 
     private static List<BlockPos> towerLargeProxyOffsets() {
         return Stream.of(Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST)
                 .flatMap(direction -> {
-                    Direction rot = direction.getClockWise();
+                    Direction rot = LegacyMultiblockOffsets.legacyUpSide(direction);
                     return Stream.of(
-                            new BlockPos(direction.getStepX() * 4, 0, direction.getStepZ() * 4),
-                            new BlockPos(direction.getStepX() * 4 + rot.getStepX() * 3, 0,
-                                    direction.getStepZ() * 4 + rot.getStepZ() * 3),
-                            new BlockPos(direction.getStepX() * 4 - rot.getStepX() * 3, 0,
-                                    direction.getStepZ() * 4 - rot.getStepZ() * 3));
+                            LegacyMultiblockOffsets.relative(direction, rot, 4, 0, 0),
+                            LegacyMultiblockOffsets.relative(direction, rot, 4, 3, 0),
+                            LegacyMultiblockOffsets.relative(direction, rot, 4, -3, 0));
                 })
                 .toList();
     }
 
     private static List<BlockPos> turbofanProxyOffsets(Direction facing) {
-        Direction rot = facing.getClockWise();
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                new BlockPos(facing.getStepX(), 0, facing.getStepZ()),
-                new BlockPos(facing.getStepX() - rot.getStepX(), 0, facing.getStepZ() - rot.getStepZ()),
-                new BlockPos(-facing.getStepX(), 0, -facing.getStepZ()),
-                new BlockPos(-facing.getStepX() - rot.getStepX(), 0, -facing.getStepZ() - rot.getStepZ()));
+                LegacyMultiblockOffsets.relative(facing, rot, 1, 0, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 1, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 0, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, -1, 0));
     }
 
     private static List<BlockPos> turbineGasProxyOffsets(Direction facing) {
-        Direction rot = facing.getClockWise();
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                new BlockPos(-facing.getStepX() + rot.getStepX(), 0, -facing.getStepZ() + rot.getStepZ()),
-                new BlockPos(facing.getStepX() + rot.getStepX(), 0, facing.getStepZ() + rot.getStepZ()),
-                new BlockPos(-facing.getStepX() - rot.getStepX() * 4, 0, -facing.getStepZ() - rot.getStepZ() * 4),
-                new BlockPos(facing.getStepX() - rot.getStepX() * 4, 0, facing.getStepZ() - rot.getStepZ() * 4),
-                new BlockPos(rot.getStepX() * 4, 1, rot.getStepZ() * 4),
-                new BlockPos(-rot.getStepX() * 5, 1, -rot.getStepZ() * 5));
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 1, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, -4, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 1, -4, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, 4, 1),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, -5, 1));
     }
 
     private static List<BlockPos> industrialTurbineProxyOffsets(Direction facing) {
-        Direction rot = facing.getClockWise();
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                new BlockPos(facing.getStepX() * 3 + rot.getStepX() * 2, 0,
-                        facing.getStepZ() * 3 + rot.getStepZ() * 2),
-                new BlockPos(facing.getStepX() * 3 - rot.getStepX() * 2, 0,
-                        facing.getStepZ() * 3 - rot.getStepZ() * 2),
-                new BlockPos(-facing.getStepX() + rot.getStepX() * 2, 0,
-                        -facing.getStepZ() + rot.getStepZ() * 2),
-                new BlockPos(-facing.getStepX() - rot.getStepX() * 2, 0,
-                        -facing.getStepZ() - rot.getStepZ() * 2),
-                new BlockPos(facing.getStepX() * 3, 3, facing.getStepZ() * 3),
-                new BlockPos(-facing.getStepX(), 3, -facing.getStepZ()),
-                new BlockPos(-facing.getStepX() * 4, 1, -facing.getStepZ() * 4));
+                LegacyMultiblockOffsets.relative(facing, rot, 3, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 3, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 3, 0, 2),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 0, 2),
+                LegacyMultiblockOffsets.relative(facing, rot, -3, 0, 1));
     }
 
     private static LegacyProxyMode proxyInventory() {
@@ -1493,61 +1467,41 @@ public final class ModBlocks {
     }
 
     private static List<BlockPos> oreSlopperProxyOffsets(Direction facing) {
-        Direction rot = facing.getClockWise();
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                new BlockPos(facing.getStepX() * 3, 0, facing.getStepZ() * 3),
-                new BlockPos(-facing.getStepX() * 3, 0, -facing.getStepZ() * 3),
-                new BlockPos(rot.getStepX(), 0, rot.getStepZ()),
-                new BlockPos(-rot.getStepX(), 0, -rot.getStepZ()),
-                new BlockPos(facing.getStepX() * 2 + rot.getStepX(), 0, facing.getStepZ() * 2 + rot.getStepZ()),
-                new BlockPos(facing.getStepX() * 2 - rot.getStepX(), 0, facing.getStepZ() * 2 - rot.getStepZ()),
-                new BlockPos(-facing.getStepX() * 2 + rot.getStepX(), 0, -facing.getStepZ() * 2 + rot.getStepZ()),
-                new BlockPos(-facing.getStepX() * 2 - rot.getStepX(), 0, -facing.getStepZ() * 2 - rot.getStepZ()));
+                LegacyMultiblockOffsets.relative(facing, rot, 3, 0, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -3, 0, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 2, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 2, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -2, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -2, -1, 0));
     }
 
     private static List<BlockPos> assemblyFactoryProxyOffsets(Direction facing) {
-        Direction rot = facing.getClockWise();
-        return Stream.concat(
-                Stream.iterate(-2, i -> i <= 2, i -> i + 1)
-                        .flatMap(i -> Stream.iterate(-2, j -> j <= 2, j -> j + 1)
-                                .filter(j -> Math.abs(i) == 2 || Math.abs(j) == 2)
-                                .map(j -> new BlockPos(i, 0, j))),
-                Stream.iterate(-2, i -> i <= 2, i -> i + 1)
-                        .flatMap(i -> Stream.of(
-                                new BlockPos(facing.getStepX() * i + rot.getStepX() * 2, 2,
-                                        facing.getStepZ() * i + rot.getStepZ() * 2),
-                                new BlockPos(facing.getStepX() * i - rot.getStepX() * 2, 2,
-                                        facing.getStepZ() * i - rot.getStepZ() * 2))))
-                .toList();
-    }
-
-    private static List<BlockPos> purexProxyOffsets() {
-        return Stream.iterate(-2, i -> i <= 2, i -> i + 1)
-                .flatMap(i -> Stream.iterate(-2, j -> j <= 2, j -> j + 1)
-                        .filter(j -> Math.abs(i) == 2 || Math.abs(j) == 2)
-                        .map(j -> new BlockPos(i, 0, j)))
-                .toList();
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return LegacyMultiblockOffsets.combine(
+                LegacyMultiblockOffsets.squarePerimeter(2),
+                LegacyMultiblockOffsets.lineAlongFacing(facing, rot, -2, 2, 2, 2),
+                LegacyMultiblockOffsets.lineAlongFacing(facing, rot, -2, 2, -2, 2));
     }
 
     private static List<BlockPos> silexProxyOffsets(Direction facing) {
-        if (facing == Direction.NORTH || facing == Direction.SOUTH) {
-            return List.of(
-                    new BlockPos(facing.getStepX() + 1, 1, facing.getStepZ()),
-                    new BlockPos(facing.getStepX() - 1, 1, facing.getStepZ()));
-        }
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                new BlockPos(facing.getStepX(), 1, facing.getStepZ() + 1),
-                new BlockPos(facing.getStepX(), 1, facing.getStepZ() - 1));
+                LegacyMultiblockOffsets.relative(facing, rot, 0, 1, 1),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, -1, 1));
     }
 
     private static List<BlockPos> exposureChamberStructureOffsets(Direction facing, Direction rot) {
         BlockPos lateralOrigin = new BlockPos(rot.getStepX() * 7, 0, rot.getStepZ() * 7);
         return Stream.of(
-                offsetsForLegacyXrBox(new int[] { 3, 0, 0, 0, -3, 8 }, facing, BlockPos.ZERO, true),
-                offsetsForLegacyXrBox(new int[] { 0, 0, 1, -1, -3, 6 }, facing, new BlockPos(0, 2, 0), true),
-                offsetsForLegacyXrBox(new int[] { 0, 0, -1, 1, -3, 6 }, facing, new BlockPos(0, 2, 0), true),
-                offsetsForLegacyXrBox(new int[] { 3, 0, 1, -1, 0, 1 }, facing, lateralOrigin, true),
-                offsetsForLegacyXrBox(new int[] { 3, 0, -1, 1, 0, 1 }, facing, lateralOrigin, true))
+                LegacyMultiblockOffsets.xrBox(new int[] { 3, 0, 0, 0, -3, 8 }, facing, BlockPos.ZERO, true),
+                LegacyMultiblockOffsets.xrBox(new int[] { 0, 0, 1, -1, -3, 6 }, facing, new BlockPos(0, 2, 0), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { 0, 0, -1, 1, -3, 6 }, facing, new BlockPos(0, 2, 0), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { 3, 0, 1, -1, 0, 1 }, facing, lateralOrigin, true),
+                LegacyMultiblockOffsets.xrBox(new int[] { 3, 0, -1, 1, 0, 1 }, facing, lateralOrigin, true))
                 .flatMap(List::stream)
                 .toList();
     }
@@ -1561,60 +1515,27 @@ public final class ModBlocks {
                 new BlockPos(rot.getStepX() * 8, 0, rot.getStepZ() * 8));
     }
 
-    private static List<BlockPos> cyclotronProxyOffsets() {
-        return Stream.concat(
-                Stream.iterate(-1, z -> z <= 1, z -> z + 1)
-                        .flatMap(z -> Stream.of(
-                                new BlockPos(2, 0, z),
-                                new BlockPos(-2, 0, z))),
-                Stream.iterate(-1, x -> x <= 1, x -> x + 1)
-                        .flatMap(x -> Stream.of(
-                                new BlockPos(x, 0, 2),
-                                new BlockPos(x, 0, -2))))
-                .toList();
-    }
-
-    private static List<BlockPos> crossProxyOffsets() {
-        return List.of(
-                new BlockPos(1, 0, 0),
-                new BlockPos(-1, 0, 0),
-                new BlockPos(0, 0, 1),
-                new BlockPos(0, 0, -1));
-    }
-
     private static List<BlockPos> liquefactorProxyOffsets(Direction facing) {
-        Direction rot = facing.getClockWise();
-        return List.of(
-                new BlockPos(facing.getStepX() * 2, 0, facing.getStepZ() * 2),
-                new BlockPos(rot.getStepX(), 0, rot.getStepZ()),
-                new BlockPos(-rot.getStepX(), 0, -rot.getStepZ()),
-                new BlockPos(facing.getStepX(), 1, facing.getStepZ()),
-                new BlockPos(-facing.getStepX(), 1, -facing.getStepZ()),
-                new BlockPos(rot.getStepX(), 1, rot.getStepZ()),
-                new BlockPos(-rot.getStepX(), 1, -rot.getStepZ()),
-                new BlockPos(0, 3, 0));
+        return LegacyMultiblockOffsets.combine(
+                LegacyMultiblockOffsets.cardinal(1, 1),
+                List.of(new BlockPos(0, 3, 0)));
     }
 
     private static List<BlockPos> catalyticCrackerStructureOffsets(Direction facing) {
         return Stream.of(
-                offsetsForLegacyXrBox(new int[] { 8, -1, 3, -1, 2, 0 }, facing, BlockPos.ZERO),
-                offsetsForLegacyXrBox(new int[] { 13, 0, 0, 3, 2, 1 }, facing, BlockPos.ZERO),
-                offsetsForLegacyXrBox(new int[] { 14, -13, -1, 2, 1, 0 }, facing, BlockPos.ZERO),
-                offsetsForLegacyXrBox(new int[] { 3, -1, 2, 3, -1, 3 }, facing, BlockPos.ZERO))
+                LegacyMultiblockOffsets.xrBox(new int[] { 8, -1, 3, -1, 2, 0 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 13, 0, 0, 3, 2, 1 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 14, -13, -1, 2, 1, 0 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 3, -1, 2, 3, -1, 3 }, facing, BlockPos.ZERO))
                 .flatMap(List::stream)
                 .toList();
     }
 
     private static List<BlockPos> pyroOvenProxyOffsets(Direction facing) {
-        Direction rot = facing.getClockWise();
-        return Stream.concat(
-                Stream.iterate(-2, i -> i <= 2, i -> i + 1)
-                        .map(i -> new BlockPos(
-                                facing.getStepX() * i + rot.getStepX() * 2,
-                                0,
-                                facing.getStepZ() * i + rot.getStepZ() * 2)),
-                Stream.of(new BlockPos(-rot.getStepX(), 2, -rot.getStepZ())))
-                .toList();
+        Direction rot = LegacyMultiblockOffsets.legacyDownSide(facing);
+        return LegacyMultiblockOffsets.combine(
+                LegacyMultiblockOffsets.lineAlongFacing(facing, rot, -2, 2, 2, 0),
+                List.of(LegacyMultiblockOffsets.relative(facing, rot, 0, -1, 2)));
     }
 
     private static List<BlockPos> solidifierProxyOffsets() {
@@ -1628,66 +1549,65 @@ public final class ModBlocks {
 
     private static List<BlockPos> compressorStructureOffsets(Direction facing) {
         return Stream.of(
-                offsetsForLegacyXrBox(new int[] { 3, -3, 1, 1, 1, 1 }, facing, BlockPos.ZERO),
-                offsetsForLegacyXrBox(new int[] { 8, -4, 0, 0, 1, 1 }, facing, BlockPos.ZERO))
+                LegacyMultiblockOffsets.xrBox(new int[] { 3, -3, 1, 1, 1, 1 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 8, -4, 0, 0, 1, 1 }, facing, BlockPos.ZERO))
                 .flatMap(List::stream)
                 .toList();
     }
 
     private static List<BlockPos> compressorProxyOffsets(Direction facing) {
-        Direction rot = facing.getClockWise();
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                new BlockPos(-facing.getStepX(), 0, -facing.getStepZ()),
-                new BlockPos(rot.getStepX(), 0, rot.getStepZ()),
-                new BlockPos(-rot.getStepX(), 0, -rot.getStepZ()));
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 0, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, -1, 0));
     }
 
     private static List<BlockPos> bigAssTankStructureOffsets(Direction facing) {
         return Stream.of(
-                offsetsForLegacyXrBox(new int[] { 4, 0, 5, -4, 2, 2 }, facing, BlockPos.ZERO),
-                offsetsForLegacyXrBox(new int[] { 4, 0, -4, 5, 2, 2 }, facing, BlockPos.ZERO),
-                offsetsForLegacyXrBox(new int[] { 4, 0, 2, 2, 5, -4 }, facing, BlockPos.ZERO),
-                offsetsForLegacyXrBox(new int[] { 4, 0, 2, 2, -4, 5 }, facing, BlockPos.ZERO),
-                offsetsForLegacyXrBox(new int[] { 3, 0, 6, -5, 0, 0 }, facing, BlockPos.ZERO),
-                offsetsForLegacyXrBox(new int[] { 3, 0, -5, 6, 0, 0 }, facing, BlockPos.ZERO))
+                LegacyMultiblockOffsets.xrBox(new int[] { 4, 0, 5, -4, 2, 2 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 4, 0, -4, 5, 2, 2 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 4, 0, 2, 2, 5, -4 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 4, 0, 2, 2, -4, 5 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 3, 0, 6, -5, 0, 0 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 3, 0, -5, 6, 0, 0 }, facing, BlockPos.ZERO))
                 .flatMap(List::stream)
                 .toList();
     }
 
     private static List<BlockPos> bigAssTankProxyOffsets(Direction facing) {
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                new BlockPos(facing.getStepX() * 6, 0, facing.getStepZ() * 6),
-                new BlockPos(-facing.getStepX() * 6, 0, -facing.getStepZ() * 6));
+                LegacyMultiblockOffsets.relative(facing, rot, 6, 0, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -6, 0, 0));
     }
 
     private static List<BlockPos> catalyticCrackerProxyOffsets(Direction facing) {
         return List.of(
-                relativeOffset(facing, 3, 1),
-                relativeOffset(facing, 3, -2),
-                relativeOffset(facing, -3, 1),
-                relativeOffset(facing, -3, -2),
-                relativeOffset(facing, 2, 2),
-                relativeOffset(facing, 2, -3),
-                relativeOffset(facing, -2, 2),
-                relativeOffset(facing, -2, -3));
+                LegacyMultiblockOffsets.relative(facing, 3, 1),
+                LegacyMultiblockOffsets.relative(facing, 3, -2),
+                LegacyMultiblockOffsets.relative(facing, -3, 1),
+                LegacyMultiblockOffsets.relative(facing, -3, -2),
+                LegacyMultiblockOffsets.relative(facing, 2, 2),
+                LegacyMultiblockOffsets.relative(facing, 2, -3),
+                LegacyMultiblockOffsets.relative(facing, -2, 2),
+                LegacyMultiblockOffsets.relative(facing, -2, -3));
     }
 
     private static List<BlockPos> catalyticReformerStructureOffsets(Direction facing) {
         return Stream.of(
-                offsetsForLegacyXrBox(new int[] { 3, -3, 1, 0, -1, 2 }, facing, BlockPos.ZERO),
-                offsetsForLegacyXrBox(new int[] { 6, -3, 1, 1, 2, 0 }, facing, BlockPos.ZERO))
+                LegacyMultiblockOffsets.xrBox(new int[] { 3, -3, 1, 0, -1, 2 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 6, -3, 1, 1, 2, 0 }, facing, BlockPos.ZERO))
                 .flatMap(List::stream)
                 .toList();
     }
 
     private static List<BlockPos> catalyticReformerProxyOffsets(Direction facing) {
-        return List.of(
-                new BlockPos(1, 0, 1),
-                new BlockPos(1, 0, -1),
-                new BlockPos(-1, 0, 1),
-                new BlockPos(-1, 0, -1),
-                relativeOffset(facing, 0, 2),
-                relativeOffset(facing, 0, -2));
+        return LegacyMultiblockOffsets.combine(
+                LegacyMultiblockOffsets.floorCorners(1),
+                List.of(
+                        LegacyMultiblockOffsets.relative(facing, 0, 2),
+                        LegacyMultiblockOffsets.relative(facing, 0, -2)));
     }
 
     private static float catalyticRotation(Direction facing) {
@@ -1744,21 +1664,13 @@ public final class ModBlocks {
         };
     }
 
-    private static BlockPos relativeOffset(Direction facing, int forward, int side) {
-        Direction rot = facing.getClockWise();
-        return new BlockPos(
-                facing.getStepX() * forward + rot.getStepX() * side,
-                0,
-                facing.getStepZ() * forward + rot.getStepZ() * side);
-    }
-
     private static List<BlockPos> cokerStructureOffsets() {
         return Stream.of(
-                offsetsForLegacyXrBox(new int[] { 5, 0, 2, 2, 2, 2 }, Direction.NORTH, new BlockPos(0, 1, 0), true),
-                offsetsForLegacyXrBox(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(2, 1, 2), true),
-                offsetsForLegacyXrBox(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(2, 1, -2), true),
-                offsetsForLegacyXrBox(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(-2, 1, 2), true),
-                offsetsForLegacyXrBox(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(-2, 1, -2), true))
+                LegacyMultiblockOffsets.xrBox(new int[] { 5, 0, 2, 2, 2, 2 }, Direction.NORTH, new BlockPos(0, 1, 0), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(2, 1, 2), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(2, 1, -2), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(-2, 1, 2), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(-2, 1, -2), true))
                 .flatMap(List::stream)
                 .toList();
     }
@@ -1831,14 +1743,14 @@ public final class ModBlocks {
 
     private static List<BlockPos> pumpjackFilledOffsets(Direction facing, BlockPos offsetCore) {
         return Stream.concat(
-                offsetsForLegacyXrBox(new int[] { 0, 0, -1, 1, 1, 1 }, facing, offsetCore).stream(),
-                offsetsForLegacyXrBox(new int[] { 0, 0, 1, -1, 2, 2 }, facing, offsetCore).stream()).toList();
+                LegacyMultiblockOffsets.xrBox(new int[] { 0, 0, -1, 1, 1, 1 }, facing, offsetCore).stream(),
+                LegacyMultiblockOffsets.xrBox(new int[] { 0, 0, 1, -1, 2, 2 }, facing, offsetCore).stream()).toList();
     }
 
     private static List<BlockPos> pumpjackCheckOnlyOffsets(Direction facing, BlockPos offsetCore) {
         return Stream.concat(
-                offsetsForLegacyXrBox(new int[] { 0, 0, -1, 1, -2, 4 }, facing, BlockPos.ZERO).stream(),
-                offsetsForLegacyXrBox(new int[] { 0, 0, 1, -1, -1, 5 }, facing, BlockPos.ZERO).stream()).toList();
+                LegacyMultiblockOffsets.xrBox(new int[] { 0, 0, -1, 1, -2, 4 }, facing, BlockPos.ZERO).stream(),
+                LegacyMultiblockOffsets.xrBox(new int[] { 0, 0, 1, -1, -1, 5 }, facing, BlockPos.ZERO).stream()).toList();
     }
 
     private static List<BlockPos> pumpjackCornerProxyOffsets(BlockPos offsetCore) {
@@ -1847,30 +1759,6 @@ public final class ModBlocks {
                 offsetCore.offset(1, 0, -1),
                 offsetCore.offset(-1, 0, 1),
                 offsetCore.offset(-1, 0, -1));
-    }
-
-    private static List<BlockPos> offsetsForLegacyXrBox(int[] dimensions, Direction facing, BlockPos originOffset) {
-        return offsetsForLegacyXrBox(dimensions, facing, originOffset, false);
-    }
-
-    private static List<BlockPos> offsetsForLegacyXrBox(int[] dimensions, Direction facing, BlockPos originOffset,
-            boolean skipCoreOnly) {
-        int[] rotated = MultiblockExtents.rotateLegacyXr(dimensions, facing);
-        return Stream.iterate(originOffset.getX() - rotated[4], x -> x <= originOffset.getX() + rotated[5], x -> x + 1)
-                .flatMap(x -> Stream.iterate(originOffset.getY() - rotated[1], y -> y <= originOffset.getY() + rotated[0], y -> y + 1)
-                        .flatMap(y -> Stream.iterate(originOffset.getZ() - rotated[2], z -> z <= originOffset.getZ() + rotated[3], z -> z + 1)
-                                .map(z -> new BlockPos(x, y, z))))
-                .filter(offset -> skipCoreOnly || !offset.equals(originOffset))
-                .filter(offset -> !offset.equals(BlockPos.ZERO))
-                .toList();
-    }
-
-    private static List<BlockPos> cornerProxyOffsets(Direction facing) {
-        return List.of(
-                new BlockPos(1, 0, 1),
-                new BlockPos(1, 0, -1),
-                new BlockPos(-1, 0, 1),
-                new BlockPos(-1, 0, -1));
     }
 
     private static ResourceLocation machineModel(String name) {

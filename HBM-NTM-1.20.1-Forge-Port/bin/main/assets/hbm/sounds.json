@@ -50,6 +50,12 @@
       "hbm:tool/tech_boop"
     ]
   },
+  "tool.tech_bleep": {
+    "subtitle": "subtitles.hbm.tool.tech_bleep",
+    "sounds": [
+      "hbm:tool/tech_bleep"
+    ]
+  },
   "tool.radaway": {
     "subtitle": "subtitles.hbm.tool.radaway",
     "sounds": [

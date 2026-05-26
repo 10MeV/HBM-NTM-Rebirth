@@ -1,6 +1,7 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.client.ClientPlayerSyncData;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -8,7 +9,7 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public record PlayerPropertiesPacket(ResourceLocation dataType, CompoundTag data) {
+public record PlayerPropertiesPacket(ResourceLocation dataType, CompoundTag data) implements HbmPreparablePacket {
     public PlayerPropertiesPacket {
         data = data == null ? new CompoundTag() : data.copy();
     }
@@ -28,5 +29,10 @@ public record PlayerPropertiesPacket(ResourceLocation dataType, CompoundTag data
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> ClientPlayerSyncData.update(packet.dataType, packet.data));
         context.setPacketHandled(true);
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new PlayerPropertiesPacket(dataType, data);
     }
 }

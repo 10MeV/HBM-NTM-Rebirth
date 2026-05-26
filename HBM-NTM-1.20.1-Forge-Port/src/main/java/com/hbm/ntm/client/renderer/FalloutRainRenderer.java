@@ -68,6 +68,9 @@ public class FalloutRainRenderer extends EntityRenderer<FalloutRainEntity> {
         double camX = camera.getPosition().x;
         double camY = camera.getPosition().y;
         double camZ = camera.getPosition().z;
+        double originX = Mth.lerp(partialTick, entity.xOld, entity.getX());
+        double originY = Mth.lerp(partialTick, entity.yOld, entity.getY());
+        double originZ = Mth.lerp(partialTick, entity.zOld, entity.getZ());
 
         VertexConsumer consumer = buffer.getBuffer(RenderType.entityTranslucent(TEXTURE));
         Matrix4f pose = poseStack.last().pose();
@@ -97,14 +100,14 @@ public class FalloutRainRenderer extends EntityRenderer<FalloutRainEntity> {
                     continue;
                 }
 
-                putVertex(consumer, pose, normal, (float) (x - rainX + 0.5D - camX), (float) (minY - camY),
-                        (float) (z - rainZ + 0.5D - camZ), fallVariation, minY / 4.0F + fallLoop + swayVariation, alpha);
-                putVertex(consumer, pose, normal, (float) (x + rainX + 0.5D - camX), (float) (minY - camY),
-                        (float) (z + rainZ + 0.5D - camZ), 1.0F + fallVariation, minY / 4.0F + fallLoop + swayVariation, alpha);
-                putVertex(consumer, pose, normal, (float) (x + rainX + 0.5D - camX), (float) (maxY - camY),
-                        (float) (z + rainZ + 0.5D - camZ), 1.0F + fallVariation, maxY / 4.0F + fallLoop + swayVariation, alpha);
-                putVertex(consumer, pose, normal, (float) (x - rainX + 0.5D - camX), (float) (maxY - camY),
-                        (float) (z - rainZ + 0.5D - camZ), fallVariation, maxY / 4.0F + fallLoop + swayVariation, alpha);
+                putVertex(consumer, pose, normal, (float) (x - rainX + 0.5D - originX), (float) (minY - originY),
+                        (float) (z - rainZ + 0.5D - originZ), fallVariation, minY / 4.0F + fallLoop + swayVariation, alpha);
+                putVertex(consumer, pose, normal, (float) (x + rainX + 0.5D - originX), (float) (minY - originY),
+                        (float) (z + rainZ + 0.5D - originZ), 1.0F + fallVariation, minY / 4.0F + fallLoop + swayVariation, alpha);
+                putVertex(consumer, pose, normal, (float) (x + rainX + 0.5D - originX), (float) (maxY - originY),
+                        (float) (z + rainZ + 0.5D - originZ), 1.0F + fallVariation, maxY / 4.0F + fallLoop + swayVariation, alpha);
+                putVertex(consumer, pose, normal, (float) (x - rainX + 0.5D - originX), (float) (maxY - originY),
+                        (float) (z - rainZ + 0.5D - originZ), fallVariation, maxY / 4.0F + fallLoop + swayVariation, alpha);
             }
         }
     }

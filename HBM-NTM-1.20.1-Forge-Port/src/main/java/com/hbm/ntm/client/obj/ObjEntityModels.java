@@ -7,9 +7,9 @@ public final class ObjEntityModels {
     public static final LegacyWavefrontModel TESLACRAB = model("teslacrab");
     public static final LegacyWavefrontModel MASKMAN = model("maskman");
     public static final LegacyWavefrontModel BLOCKSPIDER = model("blockspider");
-    public static final LegacyWavefrontModel UFO = model("ufo").asVBO();
-    public static final LegacyWavefrontModel MINI_UFO = model("mini_ufo").asVBO();
-    public static final LegacyWavefrontModel SIEGE_UFO = model("siege_ufo").asVBO();
+    public static final LegacyWavefrontModel UFO = model("ufo");
+    public static final LegacyWavefrontModel MINI_UFO = model("mini_ufo");
+    public static final LegacyWavefrontModel SIEGE_UFO = model("siege_ufo");
     public static final LegacyWavefrontModel GLYPHID = model("glyphid");
     public static final LegacyWavefrontModel QUADCOPTER = model("quadcopter");
 

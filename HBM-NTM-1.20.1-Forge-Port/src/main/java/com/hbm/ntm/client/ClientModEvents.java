@@ -59,10 +59,14 @@ import com.hbm.ntm.client.screen.MachineBatteryScreen;
 import com.hbm.ntm.client.screen.MachineBatterySocketScreen;
 import com.hbm.ntm.client.screen.NuclearDeviceScreen;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
+import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
+import com.hbm.ntm.item.LegacyStateBlockItem;
+import com.hbm.ntm.radiation.CraterRadiationData;
+import com.hbm.ntm.radiation.CraterBiomeUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEntityTypes;
@@ -70,7 +74,17 @@ import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.entity.NoopRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.FoliageColor;
+import net.minecraft.world.level.GrassColor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.ModelEvent;
@@ -166,6 +180,15 @@ public final class ClientModEvents {
             }
             return 0xFFFFFF;
         }, ModBlocks.FLUID_DUCT_NEO.get().asItem());
+        event.register((stack, tintIndex) -> {
+            if (tintIndex == 0 && stack.getItem() instanceof LegacyStateBlockItem item) {
+                return sellafieldLevelTint(item.getVariant(stack));
+            }
+            return 0xFFFFFF;
+        }, ModBlocks.SELLAFIELD_SLAKED.get().asItem(), ModBlocks.SELLAFIELD_BEDROCK.get().asItem(),
+                ModBlocks.ORE_SELLAFIELD_DIAMOND.get().asItem(), ModBlocks.ORE_SELLAFIELD_EMERALD.get().asItem(),
+                ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED.get().asItem(), ModBlocks.ORE_SELLAFIELD_SCHRABIDIUM.get().asItem(),
+                ModBlocks.ORE_SELLAFIELD_RADGEM.get().asItem());
     }
 
     @SubscribeEvent
@@ -177,6 +200,88 @@ public final class ClientModEvents {
             }
             return 0xFFFFFF;
         }, ModBlocks.FLUID_DUCT_NEO.get());
+        event.register((state, level, pos, tintIndex) -> {
+            int crater = craterGrassColor(level, pos);
+            return crater >= 0 ? crater : fallbackGrassColor(level, pos);
+        }, Blocks.GRASS_BLOCK, Blocks.GRASS, Blocks.TALL_GRASS, Blocks.FERN, Blocks.LARGE_FERN, Blocks.VINE,
+                Blocks.SUGAR_CANE);
+        event.register((state, level, pos, tintIndex) -> {
+            int crater = craterFoliageColor(level, pos);
+            return crater >= 0 ? crater : fallbackFoliageColor(level, pos);
+        }, Blocks.OAK_LEAVES, Blocks.SPRUCE_LEAVES, Blocks.BIRCH_LEAVES, Blocks.JUNGLE_LEAVES, Blocks.ACACIA_LEAVES,
+                Blocks.DARK_OAK_LEAVES, Blocks.MANGROVE_LEAVES);
+        event.register((state, level, pos, tintIndex) ->
+                tintIndex == 0 && state.hasProperty(LegacySellafieldSlakedBlock.LEVEL)
+                        ? sellafieldLevelTint(state.getValue(LegacySellafieldSlakedBlock.LEVEL))
+                        : 0xFFFFFF,
+                ModBlocks.SELLAFIELD_SLAKED.get(), ModBlocks.SELLAFIELD_BEDROCK.get(),
+                ModBlocks.ORE_SELLAFIELD_DIAMOND.get(), ModBlocks.ORE_SELLAFIELD_EMERALD.get(),
+                ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED.get(), ModBlocks.ORE_SELLAFIELD_SCHRABIDIUM.get(),
+                ModBlocks.ORE_SELLAFIELD_RADGEM.get());
+    }
+
+    private static int sellafieldLevelTint(int level) {
+        int clamped = Math.max(0, Math.min(15, level));
+        int shade = Math.max(0, Math.min(255, Math.round((1.0F - clamped / 15.0F) * 255.0F)));
+        return shade << 16 | shade << 8 | shade;
+    }
+
+    private static int craterGrassColor(BlockAndTintGetter level, BlockPos pos) {
+        CraterRadiationData.CraterZone zone = craterZone(level, pos);
+        double noise = legacyPlantNoise(pos);
+        return switch (zone) {
+            case OUTER -> noise < -0.1D ? 0x776F59 : 0x6F6752;
+            case CRATER -> noise < -0.1D ? 0x606060 : 0x505050;
+            case INNER -> noise < -0.1D ? 0x404040 : 0x303030;
+            case NONE -> -1;
+        };
+    }
+
+    private static int craterFoliageColor(BlockAndTintGetter level, BlockPos pos) {
+        return craterZone(level, pos) != CraterRadiationData.CraterZone.NONE ? 0x6A7039 : -1;
+    }
+
+    private static int fallbackGrassColor(BlockAndTintGetter level, BlockPos pos) {
+        return level != null && pos != null ? BiomeColors.getAverageGrassColor(level, pos) : GrassColor.getDefaultColor();
+    }
+
+    private static int fallbackFoliageColor(BlockAndTintGetter level, BlockPos pos) {
+        return level != null && pos != null ? BiomeColors.getAverageFoliageColor(level, pos) : FoliageColor.getDefaultColor();
+    }
+
+    private static CraterRadiationData.CraterZone craterZone(BlockAndTintGetter level, BlockPos pos) {
+        ResourceKey<Biome> key = biomeKey(level, pos);
+        if (CraterBiomeUtil.CRATER_OUTER.equals(key)) {
+            return CraterRadiationData.CraterZone.OUTER;
+        }
+        if (CraterBiomeUtil.CRATER.equals(key)) {
+            return CraterRadiationData.CraterZone.CRATER;
+        }
+        if (CraterBiomeUtil.CRATER_INNER.equals(key)) {
+            return CraterRadiationData.CraterZone.INNER;
+        }
+        return CraterRadiationData.CraterZone.NONE;
+    }
+
+    private static ResourceKey<Biome> biomeKey(BlockAndTintGetter level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return null;
+        }
+        if (level instanceof LevelReader levelReader) {
+            return levelReader.getBiome(pos).unwrapKey().orElse(null);
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level != null) {
+            return minecraft.level.getBiome(pos).unwrapKey().orElse(null);
+        }
+        return null;
+    }
+
+    private static double legacyPlantNoise(BlockPos pos) {
+        if (pos == null) {
+            return 0.0D;
+        }
+        return Biome.BIOME_INFO_NOISE.getValue(pos.getX() * 0.225D, pos.getZ() * 0.225D, false);
     }
 
     @SubscribeEvent

@@ -1,8 +1,13 @@
 package com.hbm.ntm.client.obj;
 
+import com.hbm.ntm.HbmNtm;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 
 public final class ObjDoorModels {
+    public static final LegacyWavefrontModel SILO_HATCH_LEGACY = legacyModel("silo_hatch").asVBO();
+    public static final LegacyWavefrontModel SILO_HATCH_LARGE_LEGACY = legacyModel("silo_hatch_large").asVBO();
+
     public static final ObjModelPart SILO_HATCH = part("silo_hatch");
     public static final ObjModelPart SILO_HATCH_HATCH = part("silo_hatch_hatch");
     public static final ObjModelPart SILO_HATCH_FRAME = part("silo_hatch_frame");
@@ -23,8 +28,21 @@ public final class ObjDoorModels {
             .part("Frame", SILO_HATCH_LARGE_FRAME)
             .legacyOrder("Hatch", "Frame");
 
+    public static final ResourceLocation SILO_HATCH_TEXTURE = texture("silo_hatch");
+    public static final ResourceLocation SILO_HATCH_LARGE_TEXTURE = texture("silo_hatch_large");
+
     public static ObjModelPart part(String name) {
         return ObjModelLibrary.blockPart("doors/" + name, RenderType.cutout());
+    }
+
+    public static LegacyWavefrontModel legacyModel(String name) {
+        return new LegacyWavefrontModel(
+                new ResourceLocation(HbmNtm.MOD_ID, "models/block/doors/" + name + ".obj"),
+                texture(name));
+    }
+
+    public static ResourceLocation texture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/doors/" + name + ".png");
     }
 
     private ObjDoorModels() {

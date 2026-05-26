@@ -66,20 +66,26 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class ModMessages {
     private static final String PROTOCOL_VERSION = "1";
-    private static final int LIBRARY_FOUNDATION_PROGRESS_PERCENT = 96;
+    private static final int LIBRARY_FOUNDATION_PROGRESS_PERCENT = 99;
     private static int packetId;
     private static final AtomicBoolean REGISTERED = new AtomicBoolean();
     private static final List<PacketRegistration> PACKET_REGISTRATIONS = new ArrayList<>();
+    private static final Map<Class<?>, PacketRegistration> PACKET_REGISTRATIONS_BY_TYPE = new HashMap<>();
+    private static final AtomicLong BLOCKED_UNREGISTERED_SENDS = new AtomicLong();
+    private static volatile String lastBlockedSend = "";
     private static final List<LegacyPacketRegistration> LEGACY_REGISTERED_PACKETS = List.of(
             new LegacyPacketRegistration(0, "TESirenPacket", "S2C"),
             new LegacyPacketRegistration(1, "ItemDesignatorPacket", "C2S"),
@@ -186,6 +192,17 @@ public final class ModMessages {
             .serverAcceptedVersions(PROTOCOL_VERSION::equals)
             .simpleChannel();
 
+    public static LegacyNetworkDispatcher wrapper() {
+        return LegacyNetworkDispatcher.WRAPPER;
+    }
+
+    public static String legacyWrapperSummary() {
+        return "legacyWrapper=PacketDispatcher.wrapper facade"
+                + " directHelpers=" + LegacyNetworkDispatcher.directSendHelperCount()
+                + " threadedHelpers=" + LegacyNetworkDispatcher.threadedSendHelperCount()
+                + " note=" + LegacyNetworkDispatcher.compatibilityNote();
+    }
+
     public static String protocolVersion() {
         return PROTOCOL_VERSION;
     }
@@ -214,8 +231,52 @@ public final class ModMessages {
         return List.copyOf(PACKET_REGISTRATIONS);
     }
 
+    public static Optional<PacketRegistration> packetRegistration(String typeName) {
+        return PACKET_REGISTRATIONS.stream()
+                .filter(registration -> registration.typeName().equals(typeName))
+                .findFirst();
+    }
+
+    public static Optional<PacketRegistration> packetRegistration(Class<?> type) {
+        return Optional.ofNullable(PACKET_REGISTRATIONS_BY_TYPE.get(type));
+    }
+
+    public static boolean isRegisteredMessage(Object message) {
+        return message != null && isRegisteredMessageType(message.getClass());
+    }
+
+    public static boolean isRegisteredMessageType(Class<?> type) {
+        return PACKET_REGISTRATIONS_BY_TYPE.containsKey(type);
+    }
+
+    public static long blockedUnregisteredSendCount() {
+        return BLOCKED_UNREGISTERED_SENDS.get();
+    }
+
+    public static String lastBlockedSend() {
+        return lastBlockedSend;
+    }
+
+    public static String sendSafetySummary() {
+        return "registeredTypes=" + PACKET_REGISTRATIONS_BY_TYPE.size()
+                + " blockedUnregisteredSends=" + BLOCKED_UNREGISTERED_SENDS.get()
+                + (lastBlockedSend.isBlank() ? "" : " lastBlocked=\"" + lastBlockedSend + "\"");
+    }
+
     public static List<LegacyPacketMapping> legacyPacketMappings() {
         return LEGACY_PACKET_MAPPINGS;
+    }
+
+    public static List<LegacyPacketMapping> legacyPacketMappings(String legacyName) {
+        return LEGACY_PACKET_MAPPINGS.stream()
+                .filter(mapping -> mapping.legacyName().equals(legacyName))
+                .toList();
+    }
+
+    public static List<LegacyPacketMapping> modernPacketMappings(String modernName) {
+        return LEGACY_PACKET_MAPPINGS.stream()
+                .filter(mapping -> mapping.modernName().equals(modernName))
+                .toList();
     }
 
     public static int legacyPacketMappingCount() {
@@ -224,6 +285,12 @@ public final class ModMessages {
 
     public static List<LegacyPacketRegistration> legacyPacketRegistrations() {
         return LEGACY_REGISTERED_PACKETS;
+    }
+
+    public static Optional<LegacyPacketRegistration> legacyPacketRegistration(String legacyName) {
+        return LEGACY_REGISTERED_PACKETS.stream()
+                .filter(registration -> registration.legacyName().equals(legacyName))
+                .findFirst();
     }
 
     public static int legacyPacketRegistrationCount() {
@@ -245,6 +312,94 @@ public final class ModMessages {
                 .collect(java.util.stream.Collectors.toSet());
         return LEGACY_REGISTERED_PACKETS.stream()
                 .filter(registration -> !mappedNames.contains(registration.legacyName))
+                .toList();
+    }
+
+    public static ProtocolAudit protocolAudit() {
+        Set<String> registeredModernPackets = PACKET_REGISTRATIONS.stream()
+                .map(PacketRegistration::typeName)
+                .collect(java.util.stream.Collectors.toSet());
+        Set<String> legacyRegisteredPackets = LEGACY_REGISTERED_PACKETS.stream()
+                .map(LegacyPacketRegistration::legacyName)
+                .collect(java.util.stream.Collectors.toSet());
+        Set<String> mappedLegacyPackets = LEGACY_PACKET_MAPPINGS.stream()
+                .map(LegacyPacketMapping::legacyName)
+                .collect(java.util.stream.Collectors.toSet());
+        List<LegacyPacketMapping> mappingsToUnregisteredModernPackets = LEGACY_PACKET_MAPPINGS.stream()
+                .filter(mapping -> !registeredModernPackets.contains(mapping.modernName()))
+                .toList();
+        List<LegacyPacketMapping> mappingsFromUnknownLegacyPackets = LEGACY_PACKET_MAPPINGS.stream()
+                .filter(mapping -> !legacyRegisteredPackets.contains(mapping.legacyName()))
+                .toList();
+        List<PacketRegistration> modernPacketsWithoutLegacyMappings = PACKET_REGISTRATIONS.stream()
+                .filter(registration -> modernPacketMappings(registration.typeName()).isEmpty())
+                .toList();
+        List<LegacyPacketRegistration> unmappedLegacyPackets = LEGACY_REGISTERED_PACKETS.stream()
+                .filter(registration -> !mappedLegacyPackets.contains(registration.legacyName()))
+                .toList();
+        List<LegacyPacketMapping> mappingsWithDirectionMismatch = LEGACY_PACKET_MAPPINGS.stream()
+                .filter(mapping -> legacyPacketRegistration(mapping.legacyName())
+                        .map(registration -> !registration.direction().equals(mapping.direction()))
+                        .orElse(false))
+                .toList();
+        List<String> duplicateLegacyIds = duplicateValues(LEGACY_REGISTERED_PACKETS.stream()
+                .map(registration -> Integer.toString(registration.legacyId()))
+                .toList());
+        List<String> duplicateLegacyNames = duplicateValues(LEGACY_REGISTERED_PACKETS.stream()
+                .map(LegacyPacketRegistration::legacyName)
+                .toList());
+        List<String> duplicateModernRegistrations = duplicateValues(PACKET_REGISTRATIONS.stream()
+                .map(PacketRegistration::typeName)
+                .toList());
+        return new ProtocolAudit(
+                mappingsToUnregisteredModernPackets,
+                mappingsFromUnknownLegacyPackets,
+                modernPacketsWithoutLegacyMappings,
+                unmappedLegacyPackets,
+                mappingsWithDirectionMismatch,
+                duplicateLegacyIds,
+                duplicateLegacyNames,
+                duplicateModernRegistrations);
+    }
+
+    public static String protocolAuditSummary() {
+        ProtocolAudit audit = protocolAudit();
+        return "problems=" + audit.hasProblems()
+                + " missingModern=" + audit.mappingsToUnregisteredModernPackets().size()
+                + " unknownLegacy=" + audit.mappingsFromUnknownLegacyPackets().size()
+                + " directionMismatch=" + audit.mappingsWithDirectionMismatch().size()
+                + " unmappedLegacy=" + audit.unmappedLegacyPackets().size()
+                + " duplicateLegacyIds=" + audit.duplicateLegacyIds().size()
+                + " duplicateLegacyNames=" + audit.duplicateLegacyNames().size()
+                + " duplicateModernRegistrations=" + audit.duplicateModernRegistrations().size()
+                + " modernWithoutLegacyMappings=" + audit.modernPacketsWithoutLegacyMappings().size();
+    }
+
+    public static void logProtocolAudit() {
+        ProtocolAudit audit = protocolAudit();
+        if (audit.hasProblems()) {
+            HbmNtm.LOGGER.warn("HBM network protocol audit found issues: {}", protocolAuditSummary());
+            audit.mappingsToUnregisteredModernPackets().forEach(mapping -> HbmNtm.LOGGER.warn(
+                    "Network mapping points to unregistered modern packet: {} -> {}",
+                    mapping.legacyName(), mapping.modernName()));
+            audit.mappingsFromUnknownLegacyPackets().forEach(mapping -> HbmNtm.LOGGER.warn(
+                    "Network mapping references unknown legacy packet: {} -> {}",
+                    mapping.legacyName(), mapping.modernName()));
+            audit.mappingsWithDirectionMismatch().forEach(mapping -> HbmNtm.LOGGER.warn(
+                    "Network mapping direction mismatch: {} -> {} mappingDirection={}",
+                    mapping.legacyName(), mapping.modernName(), mapping.direction()));
+            audit.unmappedLegacyPackets().forEach(registration -> HbmNtm.LOGGER.warn(
+                    "Unmapped legacy network packet: #{} {} {}",
+                    registration.legacyId(), registration.direction(), registration.legacyName()));
+            return;
+        }
+        HbmNtm.LOGGER.info("HBM network protocol audit passed: {}", protocolAuditSummary());
+    }
+
+    private static List<String> duplicateValues(List<String> values) {
+        return values.stream()
+                .filter(value -> Collections.frequency(values, value) > 1)
+                .distinct()
                 .toList();
     }
 
@@ -420,22 +575,37 @@ public final class ModMessages {
     }
 
     public static void sendToServer(Object message) {
+        if (!validateMessageForSend(message, "server")) {
+            return;
+        }
         CHANNEL.sendToServer(message);
     }
 
     public static void sendToPlayer(Object message, ServerPlayer player) {
+        if (!validateMessageForSend(message, player == null ? "player:null" : "player:" + player.getGameProfile().getName())) {
+            return;
+        }
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
     }
 
     public static void sendToEntityTrackers(Object message, Entity entity) {
+        if (!validateMessageForSend(message, entity == null ? "entityTrackers:null" : "entityTrackers:" + entity.getId())) {
+            return;
+        }
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), message);
     }
 
     public static void sendToEntityAndSelf(Object message, Entity entity) {
+        if (!validateMessageForSend(message, entity == null ? "entityAndSelf:null" : "entityAndSelf:" + entity.getId())) {
+            return;
+        }
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), message);
     }
 
     public static void sendToDimension(Object message, ServerLevel level) {
+        if (!validateMessageForSend(message, level == null ? "dimension:null" : "dimension:" + level.dimension().location())) {
+            return;
+        }
         CHANNEL.send(PacketDistributor.DIMENSION.with(level::dimension), message);
     }
 
@@ -452,10 +622,16 @@ public final class ModMessages {
     }
 
     public static void sendToAllAround(Object message, PacketDistributor.TargetPoint point) {
+        if (!validateMessageForSend(message, "near")) {
+            return;
+        }
         CHANNEL.send(PacketDistributor.NEAR.with(() -> point), message);
     }
 
     public static void sendToAll(Object message) {
+        if (!validateMessageForSend(message, "all")) {
+            return;
+        }
         CHANNEL.send(PacketDistributor.ALL.noArg(), message);
     }
 
@@ -474,12 +650,24 @@ public final class ModMessages {
         sendToTrackingChunk(new TileSyncPacket(blockEntity.getBlockPos(), syncable.getClientSyncTag()), blockEntity);
     }
 
+    public static void syncTileToTrackingThreaded(HbmTileSyncable syncable, BlockEntity blockEntity) {
+        ThreadedPacketDispatcher.sendToTrackingChunk(new TileSyncPacket(blockEntity.getBlockPos(), syncable.getClientSyncTag()), blockEntity);
+    }
+
     public static void syncTileToPlayer(HbmTileSyncable syncable, BlockEntity blockEntity, ServerPlayer player) {
         sendToPlayer(new TileSyncPacket(blockEntity.getBlockPos(), syncable.getClientSyncTag()), player);
     }
 
+    public static void syncTileToPlayerThreaded(HbmTileSyncable syncable, BlockEntity blockEntity, ServerPlayer player) {
+        ThreadedPacketDispatcher.sendToPlayer(new TileSyncPacket(blockEntity.getBlockPos(), syncable.getClientSyncTag()), player);
+    }
+
     public static void syncEntityToTracking(HbmEntitySyncable syncable, Entity entity) {
         sendToEntityTrackers(new EntitySyncPacket(entity.getId(), syncable.getClientSyncTag()), entity);
+    }
+
+    public static void syncEntityToTrackingThreaded(HbmEntitySyncable syncable, Entity entity) {
+        ThreadedPacketDispatcher.sendToEntityTrackers(new EntitySyncPacket(entity.getId(), syncable.getClientSyncTag()), entity);
     }
 
     public static void syncEntityToPlayer(HbmEntitySyncable syncable, Entity entity, ServerPlayer player) {
@@ -488,17 +676,37 @@ public final class ModMessages {
         }
     }
 
+    public static void syncEntityToPlayerThreaded(HbmEntitySyncable syncable, Entity entity, ServerPlayer player) {
+        if (syncable.canSendClientSyncTo(player)) {
+            ThreadedPacketDispatcher.sendToPlayer(new EntitySyncPacket(entity.getId(), syncable.getClientSyncTag()), player);
+        }
+    }
+
     public static void sendClientEntityEvent(Entity entity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
         sendToEntityTrackers(new ClientEntityEventPacket(entity.getId(), eventType, data), entity);
+    }
+
+    public static void sendClientEntityEventThreaded(Entity entity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
+        ThreadedPacketDispatcher.sendToEntityTrackers(new ClientEntityEventPacket(entity.getId(), eventType, data), entity);
     }
 
     public static void sendClientEntityEventAndSelf(Entity entity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
         sendToEntityAndSelf(new ClientEntityEventPacket(entity.getId(), eventType, data), entity);
     }
 
+    public static void sendClientEntityEventAndSelfThreaded(Entity entity, ResourceLocation eventType,
+                                                            net.minecraft.nbt.CompoundTag data) {
+        ThreadedPacketDispatcher.sendToEntityAndSelf(new ClientEntityEventPacket(entity.getId(), eventType, data), entity);
+    }
+
     public static void sendClientEntityEvent(ServerPlayer player, Entity entity, ResourceLocation eventType,
                                              net.minecraft.nbt.CompoundTag data) {
         sendToPlayer(new ClientEntityEventPacket(entity.getId(), eventType, data), player);
+    }
+
+    public static void sendClientEntityEventThreaded(ServerPlayer player, Entity entity, ResourceLocation eventType,
+                                                     net.minecraft.nbt.CompoundTag data) {
+        ThreadedPacketDispatcher.sendToPlayer(new ClientEntityEventPacket(entity.getId(), eventType, data), player);
     }
 
     public static void sendEntityAction(Entity entity, ResourceLocation actionType, net.minecraft.nbt.CompoundTag data) {
@@ -523,6 +731,11 @@ public final class ModMessages {
     public static void sendAuxParticle(ServerPlayer player, double x, double y, double z,
                                        net.minecraft.nbt.CompoundTag data) {
         sendToPlayer(new AuxParticlePacket(auxParticlePayload(data, x, y, z)), player);
+    }
+
+    public static void sendAuxParticleThreaded(ServerPlayer player, double x, double y, double z,
+                                               net.minecraft.nbt.CompoundTag data) {
+        ThreadedPacketDispatcher.sendToPlayer(new AuxParticlePacket(auxParticlePayload(data, x, y, z)), player);
     }
 
     public static AuxParticlePacket auxParticlePacket(double x, double y, double z, net.minecraft.nbt.CompoundTag data) {
@@ -670,6 +883,10 @@ public final class ModMessages {
         sendToPlayer(new PermaSyncPacket(data), player);
     }
 
+    public static void syncPermaDataThreaded(ServerPlayer player, net.minecraft.nbt.CompoundTag data) {
+        ThreadedPacketDispatcher.sendToPlayer(new PermaSyncPacket(data), player);
+    }
+
     public static void sendExplosionKnockback(ServerPlayer player, Vec3 motion) {
         sendToPlayer(new ExplosionKnockbackPacket(motion), player);
     }
@@ -701,6 +918,29 @@ public final class ModMessages {
         }
     }
 
+    public static void syncClientBinaryDataThreaded(ServerPlayer player, ResourceLocation channel, String name,
+                                                    byte[] payload) {
+        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        if (safePayload.length <= ClientBinaryDataPacket.MAX_PAYLOAD_BYTES) {
+            ThreadedPacketDispatcher.sendToPlayer(new ClientBinaryDataPacket(channel, name, safePayload, false), player);
+            return;
+        }
+        UUID transferId = UUID.randomUUID();
+        int chunkSize = ClientBinaryDataChunkPacket.MAX_CHUNK_BYTES;
+        int chunkCount = (safePayload.length + chunkSize - 1) / chunkSize;
+        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+            int start = chunkIndex * chunkSize;
+            int end = Math.min(start + chunkSize, safePayload.length);
+            ThreadedPacketDispatcher.sendToPlayer(new ClientBinaryDataChunkPacket(
+                    transferId,
+                    channel,
+                    name,
+                    chunkIndex,
+                    chunkCount,
+                    Arrays.copyOfRange(safePayload, start, end)), player);
+        }
+    }
+
     public static void syncClientBinaryDataBatch(ServerPlayer player, ResourceLocation channel, Map<String, byte[]> payloads,
                                                  boolean clearFirst, boolean markReady) {
         if (clearFirst) {
@@ -717,12 +957,21 @@ public final class ModMessages {
         sendToPlayer(new ClientBinaryDataPacket(channel, "", new byte[0], true), player);
     }
 
+    public static void clearClientBinaryDataThreaded(ServerPlayer player, ResourceLocation channel) {
+        ThreadedPacketDispatcher.sendToPlayer(new ClientBinaryDataPacket(channel, "", new byte[0], true), player);
+    }
+
     public static void markClientBinaryDataReady(ServerPlayer player, ResourceLocation channel) {
         sendToPlayer(new ClientBinaryDataReadyPacket(channel), player);
     }
 
     public static void sendClientTileEvent(BlockEntity blockEntity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
         sendToTrackingChunk(new ClientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
+    }
+
+    public static void sendClientTileEventThreaded(BlockEntity blockEntity, ResourceLocation eventType,
+                                                   net.minecraft.nbt.CompoundTag data) {
+        ThreadedPacketDispatcher.sendToTrackingChunk(new ClientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
     }
 
     public static void syncTileBinaryToTracking(HbmTileBinarySyncProvider provider, BlockEntity blockEntity) {
@@ -1002,12 +1251,22 @@ public final class ModMessages {
         sendToPlayer(new ClientPanelDataPacket(panelType, legacyType, data), player);
     }
 
+    public static void syncClientPanelDataThreaded(ServerPlayer player, ResourceLocation panelType, int legacyType,
+                                                   net.minecraft.nbt.CompoundTag data) {
+        ThreadedPacketDispatcher.sendToPlayer(new ClientPanelDataPacket(panelType, legacyType, data), player);
+    }
+
     public static void syncSatellitePanelData(ServerPlayer player, int legacyType, net.minecraft.nbt.CompoundTag data) {
         syncClientPanelData(player, HbmNetworkActions.SATELLITE_PANEL, legacyType, data);
     }
 
     public static void syncPlayerProperties(ServerPlayer player, ResourceLocation dataType, net.minecraft.nbt.CompoundTag data) {
         sendToPlayer(new PlayerPropertiesPacket(dataType, data), player);
+    }
+
+    public static void syncPlayerPropertiesThreaded(ServerPlayer player, ResourceLocation dataType,
+                                                    net.minecraft.nbt.CompoundTag data) {
+        ThreadedPacketDispatcher.sendToPlayer(new PlayerPropertiesPacket(dataType, data), player);
     }
 
     public static void syncPlayerPropertiesBatch(ServerPlayer player,
@@ -1053,6 +1312,12 @@ public final class ModMessages {
 
     public static void sendCompressedExplosionEffect(ServerLevel level, Vec3 center, float size, List<BlockPos> affectedBlocks, double range) {
         sendToAllAround(new CompressedExplosionEffectPacket(center, size, affectedBlocks), level, center.x, center.y, center.z, range);
+    }
+
+    public static void sendCompressedExplosionEffectThreaded(ServerLevel level, Vec3 center, float size,
+                                                             List<BlockPos> affectedBlocks, double range) {
+        ThreadedPacketDispatcher.sendToAllAround(new CompressedExplosionEffectPacket(center, size, affectedBlocks),
+                level, center.x, center.y, center.z, range);
     }
 
     private static void sendClientTileBinaryDataAround(ServerLevel level, BlockPos pos, ResourceLocation channel,
@@ -1116,7 +1381,9 @@ public final class ModMessages {
             BiConsumer<MSG, Supplier<NetworkEvent.Context>> handler) {
         int id = packetId++;
         CHANNEL.registerMessage(id, type, encoder, decoder, handler, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        PACKET_REGISTRATIONS.add(new PacketRegistration(id, "S2C", type.getSimpleName()));
+        PacketRegistration registration = new PacketRegistration(id, "S2C", type.getSimpleName());
+        PACKET_REGISTRATIONS.add(registration);
+        PACKET_REGISTRATIONS_BY_TYPE.put(type, registration);
     }
 
     private static <MSG> void registerClientToServer(
@@ -1126,7 +1393,35 @@ public final class ModMessages {
             BiConsumer<MSG, Supplier<NetworkEvent.Context>> handler) {
         int id = packetId++;
         CHANNEL.registerMessage(id, type, encoder, decoder, handler, Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        PACKET_REGISTRATIONS.add(new PacketRegistration(id, "C2S", type.getSimpleName()));
+        PacketRegistration registration = new PacketRegistration(id, "C2S", type.getSimpleName());
+        PACKET_REGISTRATIONS.add(registration);
+        PACKET_REGISTRATIONS_BY_TYPE.put(type, registration);
+    }
+
+    private static boolean canSendMessage(Object message, String target) {
+        if (message == null) {
+            recordBlockedSend("null message to " + target);
+            return false;
+        }
+        if (!isRegisteredMessage(message)) {
+            recordBlockedSend(message.getClass().getName() + " to " + target);
+            return false;
+        }
+        return true;
+    }
+
+    private static void recordBlockedSend(String message) {
+        BLOCKED_UNREGISTERED_SENDS.incrementAndGet();
+        lastBlockedSend = message;
+    }
+
+    public static boolean validateMessageForSend(Object message, String target) {
+        if (canSendMessage(message, target)) {
+            return true;
+        }
+        String type = message == null ? "null" : message.getClass().getName();
+        HbmNtm.LOGGER.warn("Blocked unregistered HBM network message {} to {}.", type, target);
+        return false;
     }
 
     private static net.minecraft.nbt.CompoundTag auxParticlePayload(net.minecraft.nbt.CompoundTag data,
@@ -1145,6 +1440,26 @@ public final class ModMessages {
     }
 
     public record LegacyPacketRegistration(int legacyId, String legacyName, String direction) {
+    }
+
+    public record ProtocolAudit(
+            List<LegacyPacketMapping> mappingsToUnregisteredModernPackets,
+            List<LegacyPacketMapping> mappingsFromUnknownLegacyPackets,
+            List<PacketRegistration> modernPacketsWithoutLegacyMappings,
+            List<LegacyPacketRegistration> unmappedLegacyPackets,
+            List<LegacyPacketMapping> mappingsWithDirectionMismatch,
+            List<String> duplicateLegacyIds,
+            List<String> duplicateLegacyNames,
+            List<String> duplicateModernRegistrations) {
+        public boolean hasProblems() {
+            return !mappingsToUnregisteredModernPackets.isEmpty()
+                    || !mappingsFromUnknownLegacyPackets.isEmpty()
+                    || !unmappedLegacyPackets.isEmpty()
+                    || !mappingsWithDirectionMismatch.isEmpty()
+                    || !duplicateLegacyIds.isEmpty()
+                    || !duplicateLegacyNames.isEmpty()
+                    || !duplicateModernRegistrations.isEmpty();
+        }
     }
 
     private ModMessages() {

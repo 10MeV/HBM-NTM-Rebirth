@@ -7,6 +7,7 @@ import com.hbm.ntm.energy.HbmCreativeBatteryItem;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.item.DetonatorItem;
 import com.hbm.ntm.item.DigammaDiagnosticItem;
 import com.hbm.ntm.item.EffectPillItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
@@ -153,6 +154,8 @@ public final class ModItems {
             () -> new HbmInfiniteFluidItem(new Item.Properties(), HbmFluids.CHLORINE, 1, 2, "Chlorine Pinwheel"));
     public static final RegistryObject<Item> FLUID_IDENTIFIER_MULTI = registerLegacy("fluid_identifier_multi",
             () -> new FluidIdentifierItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> DETONATOR = registerLegacy("detonator",
+            () -> new DetonatorItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CUSTOM_TNT = simpleItem("custom_tnt");
     public static final RegistryObject<Item> CUSTOM_NUKE = simpleItem("custom_nuke");
     public static final RegistryObject<Item> CUSTOM_HYDRO = simpleItem("custom_hydro");
@@ -467,6 +470,7 @@ public final class ModItems {
             "solinium_core",
             "n2_charge"
     ).stream()), Stream.of(
+            DETONATOR,
             CUSTOM_TNT,
             CUSTOM_NUKE,
             CUSTOM_HYDRO,

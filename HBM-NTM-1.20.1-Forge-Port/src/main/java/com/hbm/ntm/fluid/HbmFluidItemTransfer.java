@@ -30,8 +30,14 @@ public final class HbmFluidItemTransfer {
         if (input.getItem() instanceof HbmInfiniteFluidItem infinite) {
             return drainInfiniteItemToTank(infinite, tank, simulate);
         }
+        if (usesDiscreteContainerSlots(input, inputSlot, outputSlot)) {
+            return transferContainerItem(items, inputSlot, outputSlot, tank, maxAmount, TransferDirection.ITEM_TO_TANK, simulate);
+        }
         if (input.getItem() instanceof IFillableItem) {
-            TransferResult result = drainItemToTank(input, tank, maxAmount, simulate);
+            if (input.getCount() != 1) {
+                return false;
+            }
+            TransferResult result = drainItemToTank(input, tank, maxAmount, simulate, false);
             if (result.moved() && !simulate) {
                 items.setStackInSlot(inputSlot, result.stack());
             }
@@ -55,8 +61,14 @@ public final class HbmFluidItemTransfer {
         if (input.getItem() instanceof HbmInfiniteFluidItem infinite) {
             return fillTankToInfiniteItem(infinite, tank, simulate);
         }
+        if (usesDiscreteContainerSlots(input, inputSlot, outputSlot)) {
+            return transferContainerItem(items, inputSlot, outputSlot, tank, maxAmount, TransferDirection.TANK_TO_ITEM, simulate);
+        }
         if (input.getItem() instanceof IFillableItem) {
-            TransferResult result = fillItemFromTank(input, tank, maxAmount, simulate);
+            if (input.getCount() != 1) {
+                return false;
+            }
+            TransferResult result = fillItemFromTank(input, tank, maxAmount, simulate, false);
             if (result.moved() && !simulate) {
                 items.setStackInSlot(inputSlot, result.stack());
             }
@@ -66,11 +78,22 @@ public final class HbmFluidItemTransfer {
     }
 
     public static TransferResult fillItemFromTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {
+        return fillItemFromTank(stack, tank, maxAmount, simulate, true);
+    }
+
+    private static TransferResult fillItemFromTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate,
+            boolean useStandardContainers) {
         if (stack.isEmpty() || tank == null || tank.isEmpty() || maxAmount <= 0) {
             return TransferResult.empty(stack);
         }
         int amount = Math.min(maxAmount, tank.getFill());
         ItemStack working = stack.copy();
+        if (useStandardContainers) {
+            TransferResult standardResult = fillStandardContainerFromTank(working, tank, amount, simulate);
+            if (standardResult.moved()) {
+                return standardResult;
+            }
+        }
         int filled = fillHbmItem(working, tank.getTankType(), amount, simulate);
         if (filled <= 0) {
             TransferResult forgeResult = fillForgeItem(working, tank.getTankType(), amount, simulate);
@@ -87,10 +110,24 @@ public final class HbmFluidItemTransfer {
     }
 
     public static TransferResult drainItemToTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {
+        return drainItemToTank(stack, tank, maxAmount, simulate, true);
+    }
+
+    private static TransferResult drainItemToTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate,
+            boolean useStandardContainers) {
         if (stack.isEmpty() || tank == null || maxAmount <= 0) {
             return TransferResult.empty(stack);
         }
         ItemStack working = stack.copy();
+        if (useStandardContainers) {
+            TransferResult standardResult = drainStandardContainerToTank(working, tank, maxAmount, simulate);
+            if (standardResult.moved()) {
+                return standardResult;
+            }
+            if (isFiniteHbmContainer(working) && HbmFluidContainerRegistry.getFluidType(working) != HbmFluids.NONE) {
+                return TransferResult.empty(stack);
+            }
+        }
         HbmFluidStack available = getHbmItemFluid(working);
         int drained = 0;
         if (!available.isEmpty() && tank.canAccept(available.type(), available.pressure())) {
@@ -122,6 +159,11 @@ public final class HbmFluidItemTransfer {
         HbmFluidStack hbmFluid = getHbmItemFluid(stack);
         if (!hbmFluid.isEmpty()) {
             return hbmFluid;
+        }
+        FluidType registeredType = HbmFluidContainerRegistry.getFluidType(stack);
+        int registeredAmount = HbmFluidContainerRegistry.getFluidContent(stack, registeredType);
+        if (registeredType != HbmFluids.NONE && registeredAmount > 0) {
+            return new HbmFluidStack(registeredType, registeredAmount, getContainerPressure(stack));
         }
         return stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM)
                 .map(HbmFluidItemTransfer::getForgeItemFluid)
@@ -258,6 +300,59 @@ public final class HbmFluidItemTransfer {
         return stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM)
                 .map(IFluidHandlerItem::getContainer)
                 .orElse(stack);
+    }
+
+    private static TransferResult fillStandardContainerFromTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {
+        if (tank.getPressure() != 0) {
+            return TransferResult.empty(stack);
+        }
+        HbmFluidContainerRegistry.ContainerEntry entry = HbmFluidContainerRegistry.getContainer(tank.getTankType(), stack);
+        if (entry == null || entry.content() <= 0 || maxAmount < entry.content() || tank.getFill() < entry.content()) {
+            return TransferResult.empty(stack);
+        }
+        ItemStack full = copyHoverName(stack, entry.copyFullContainer());
+        if (!simulate) {
+            tank.drain(entry.content(), false);
+        }
+        return new TransferResult(full, entry.content());
+    }
+
+    private static TransferResult drainStandardContainerToTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {
+        FluidType type = HbmFluidContainerRegistry.getFluidType(stack);
+        int content = HbmFluidContainerRegistry.getFluidContent(stack, type);
+        ItemStack empty = HbmFluidContainerRegistry.getEmptyContainer(stack);
+        int pressure = getContainerPressure(stack);
+        if (type == HbmFluids.NONE
+                || content <= 0
+                || maxAmount < content
+                || tank.getSpace() < content
+                || !tank.canAccept(type, pressure)) {
+            return TransferResult.empty(stack);
+        }
+        if (!simulate) {
+            tank.fill(type, content, pressure, false);
+        }
+        return new TransferResult(copyHoverName(stack, empty), content);
+    }
+
+    private static int getContainerPressure(ItemStack stack) {
+        return stack.getItem() instanceof com.hbm.ntm.item.HbmFluidContainerItem container ? container.getPressure(stack) : 0;
+    }
+
+    private static ItemStack copyHoverName(ItemStack source, ItemStack target) {
+        if (source.hasCustomHoverName() && !target.isEmpty()) {
+            target.setHoverName(source.getHoverName());
+        }
+        return target;
+    }
+
+    private static boolean usesDiscreteContainerSlots(ItemStack stack, int inputSlot, int outputSlot) {
+        return inputSlot != outputSlot && isFiniteHbmContainer(stack);
+    }
+
+    private static boolean isFiniteHbmContainer(ItemStack stack) {
+        return stack.getItem() instanceof com.hbm.ntm.item.HbmFluidContainerItem
+                && !(stack.getItem() instanceof HbmInfiniteFluidItem);
     }
 
     private static boolean transferContainerItem(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank,

@@ -16,6 +16,7 @@ import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.menu.ChemicalPlantMenu;
+import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
@@ -86,32 +87,8 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     public static final int ITEM_COUNT = 22;
     public static final int[] INPUT_SLOTS = new int[] { 4, 5, 6 };
     public static final int[] OUTPUT_SLOTS = new int[] { 7, 8, 9 };
-    private static final List<EnergyPort> ENERGY_PORTS = List.of(
-            EnergyPort.of(2, 0, -1, Direction.EAST),
-            EnergyPort.of(2, 0, 0, Direction.EAST),
-            EnergyPort.of(2, 0, 1, Direction.EAST),
-            EnergyPort.of(-2, 0, -1, Direction.WEST),
-            EnergyPort.of(-2, 0, 0, Direction.WEST),
-            EnergyPort.of(-2, 0, 1, Direction.WEST),
-            EnergyPort.of(-1, 0, 2, Direction.SOUTH),
-            EnergyPort.of(0, 0, 2, Direction.SOUTH),
-            EnergyPort.of(1, 0, 2, Direction.SOUTH),
-            EnergyPort.of(-1, 0, -2, Direction.NORTH),
-            EnergyPort.of(0, 0, -2, Direction.NORTH),
-            EnergyPort.of(1, 0, -2, Direction.NORTH));
-    private static final List<FluidPort> FLUID_PORTS = List.of(
-            FluidPort.of(2, 0, -1, Direction.EAST),
-            FluidPort.of(2, 0, 0, Direction.EAST),
-            FluidPort.of(2, 0, 1, Direction.EAST),
-            FluidPort.of(-2, 0, -1, Direction.WEST),
-            FluidPort.of(-2, 0, 0, Direction.WEST),
-            FluidPort.of(-2, 0, 1, Direction.WEST),
-            FluidPort.of(-1, 0, 2, Direction.SOUTH),
-            FluidPort.of(0, 0, 2, Direction.SOUTH),
-            FluidPort.of(1, 0, 2, Direction.SOUTH),
-            FluidPort.of(-1, 0, -2, Direction.NORTH),
-            FluidPort.of(0, 0, -2, Direction.NORTH),
-            FluidPort.of(1, 0, -2, Direction.NORTH));
+    private static final List<EnergyPort> ENERGY_PORTS = LegacyMultiblockPorts.xrFloorRingEnergyPorts(2);
+    private static final List<FluidPort> FLUID_PORTS = LegacyMultiblockPorts.xrFloorRingFluidPorts(2);
 
     private final ItemStackHandler items = new ItemStackHandler(ITEM_COUNT) {
         @Override

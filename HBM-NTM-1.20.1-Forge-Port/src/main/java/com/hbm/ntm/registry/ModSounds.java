@@ -20,6 +20,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_5 = register("tool.geiger5");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_6 = register("tool.geiger6");
     public static final RegistryObject<SoundEvent> TOOL_TECH_BOOP = register("tool.tech_boop");
+    public static final RegistryObject<SoundEvent> TOOL_TECH_BLEEP = register("tool.tech_bleep");
     public static final RegistryObject<SoundEvent> TOOL_RADAWAY = register("tool.radaway");
     public static final RegistryObject<SoundEvent> PLAYER_VOMIT = register("player.vomit");
     public static final RegistryObject<SoundEvent> ENTITY_UFO_BLAST = register("entity.ufo_blast");

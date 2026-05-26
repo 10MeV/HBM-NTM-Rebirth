@@ -154,7 +154,7 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
                         remaining -= Math.pow(masqueradeResistance(state), 7.5D - factor);
                     }
 
-                    if (remaining > 0.0F && !state.isAir()) {
+                    if (remaining > 0.0F && !isLegacyEmpty(state)) {
                         lastPos = new FloatTriplet(x0, y0, z0);
                         chunkCoords.add(new ChunkPos(blockX >> 4, blockZ >> 4));
                     }
@@ -241,11 +241,15 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
                 }
 
                 BlockPos blockPos = new BlockPos(x0, y0, z0);
-                if (!level.getBlockState(blockPos).isAir()) {
+                BlockState state = level.getBlockState(blockPos);
+                if (!isLegacyEmpty(state)) {
                     if (x0 == tipX && y0 == tipY && z0 == tipZ) {
                         toRemoveTips.add(blockPos);
                     }
                     toRemove.add(blockPos);
+                    if (!state.getFluidState().isEmpty()) {
+                        addFluidCleanup(blockPos, toRemove);
+                    }
                 }
             }
         }
@@ -254,7 +258,7 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
             if (toRemoveTips.contains(blockPos)) {
                 handleTip(blockPos.getX(), blockPos.getY(), blockPos.getZ());
             } else {
-                level.setBlock(blockPos, Blocks.AIR.defaultBlockState(), 2);
+                clearLegacyExplosionBlock(blockPos, 2);
             }
         }
 
@@ -263,7 +267,34 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
     }
 
     protected void handleTip(int x, int y, int z) {
-        level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 3);
+        clearLegacyExplosionBlock(new BlockPos(x, y, z), 3);
+    }
+
+    private void clearLegacyExplosionBlock(BlockPos blockPos, int flags) {
+        BlockState state = level.getBlockState(blockPos);
+        int updateFlags = state.getFluidState().isEmpty() ? flags : 3;
+        level.setBlock(blockPos, Blocks.AIR.defaultBlockState(), updateFlags);
+    }
+
+    private void addFluidCleanup(BlockPos center, Set<BlockPos> toRemove) {
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    BlockPos fluidPos = center.offset(x, y, z);
+                    if (level.isOutsideBuildHeight(fluidPos) || !level.hasChunk(fluidPos.getX() >> 4, fluidPos.getZ() >> 4)) {
+                        continue;
+                    }
+                    BlockState state = level.getBlockState(fluidPos);
+                    if (!state.getFluidState().isEmpty()) {
+                        toRemove.add(fluidPos);
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean isLegacyEmpty(BlockState state) {
+        return state.isAir() && state.getFluidState().isEmpty();
     }
 
     @Override

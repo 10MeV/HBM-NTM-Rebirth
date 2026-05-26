@@ -35,7 +35,7 @@ public final class ExplosionNukeSmall {
         if (params.shrapnelCount > 0) {
             ExplosionLarge.spawnShrapnels(level, x, y, z, params.shrapnelCount);
         }
-        if (!params.safe) {
+        if (params.miniNuke && !params.safe) {
             new ExplosionNT(level, x, y, z, params.blastRadius)
                     .addAttrib(params.explosionAttribs)
                     .overrideResolution(params.resolution)

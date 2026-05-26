@@ -93,7 +93,7 @@ public class HbmFluidContainerItemHandler implements IFluidHandlerItem {
             return FluidStack.EMPTY;
         }
         if (action.execute()) {
-            container = target;
+            container = item.getFill(target) <= 0 ? HbmFluidContainerRegistry.getEmptyContainer(target) : target;
         }
         return HbmFluidForgeMappings.toForge(type, drained);
     }
