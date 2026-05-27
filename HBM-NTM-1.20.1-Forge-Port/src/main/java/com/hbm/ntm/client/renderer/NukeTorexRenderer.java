@@ -37,8 +37,8 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
             new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/particle_base.png");
     private static final ResourceLocation FLARE_TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/flare.png");
-    private static final RenderType CLOUDLET_RENDER_TYPE = translucentNoDepth("hbm_torex_cloudlet", CLOUDLET_TEXTURE,
-            false);
+    private static final RenderType CLOUDLET_RENDER_TYPE = translucentDepthWrite("hbm_torex_cloudlet",
+            CLOUDLET_TEXTURE);
     private static final RenderType FLARE_RENDER_TYPE = translucentNoDepth("hbm_torex_flare", FLARE_TEXTURE, true);
     private static final Comparator<Cloudlet> FAR_TO_NEAR =
             (first, second) -> Double.compare(second.renderSortDistanceSq, first.renderSortDistanceSq);
@@ -59,9 +59,6 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         cameraUp.set(0.0F, 1.0F, 0.0F).rotate(rotation);
 
         poseStack.pushPose();
-        if (!entity.cloudlets.isEmpty()) {
-            renderCloudlets(entity, camera.getPosition(), partialTick, poseStack, buffer);
-        }
         int visualAge = Math.max(entity.tickCount, entity.getSyncedAge());
         if (visualAge < 101) {
             renderFlare(entity, partialTick, poseStack, buffer);
@@ -72,16 +69,38 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
     }
 
+    public void renderCloudletsAfterParticles(NukeTorexEntity entity, Camera camera, float partialTick,
+            PoseStack poseStack, MultiBufferSource.BufferSource buffer) {
+        if (entity.cloudlets.isEmpty()) {
+            return;
+        }
+
+        Quaternionf rotation = camera.rotation();
+        cameraRight.set(1.0F, 0.0F, 0.0F).rotate(rotation);
+        cameraUp.set(0.0F, 1.0F, 0.0F).rotate(rotation);
+
+        Vec3 cameraPos = camera.getPosition();
+        double originX = Mth.lerp(partialTick, entity.xOld, entity.getX());
+        double originY = Mth.lerp(partialTick, entity.yOld, entity.getY());
+        double originZ = Mth.lerp(partialTick, entity.zOld, entity.getZ());
+
+        poseStack.pushPose();
+        poseStack.translate(originX - cameraPos.x, originY - cameraPos.y, originZ - cameraPos.z);
+        renderCloudlets(entity, cameraPos, partialTick, poseStack, buffer);
+        poseStack.popPose();
+        buffer.endBatch(CLOUDLET_RENDER_TYPE);
+    }
+
     private void renderCloudlets(NukeTorexEntity entity, Vec3 cameraPos, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer) {
         sortCloudlets(entity, cameraPos);
-        VertexConsumer consumer = buffer.getBuffer(CLOUDLET_RENDER_TYPE);
         Matrix4f pose = poseStack.last().pose();
         Matrix3f normal = poseStack.last().normal();
         double originX = Mth.lerp(partialTick, entity.xOld, entity.getX());
         double originY = Mth.lerp(partialTick, entity.yOld, entity.getY());
         double originZ = Mth.lerp(partialTick, entity.zOld, entity.getZ());
 
+        VertexConsumer consumer = buffer.getBuffer(CLOUDLET_RENDER_TYPE);
         for (Cloudlet cloudlet : entity.cloudlets) {
             renderBillboard(consumer, pose, normal, cloudlet, partialTick, originX, originY, originZ);
         }
@@ -208,6 +227,34 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
                         .setLightmapState(new RenderStateShard.LightmapStateShard(true))
                         .setOverlayState(new RenderStateShard.OverlayStateShard(true))
                         .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, false))
+                        .createCompositeState(false));
+    }
+
+    private static RenderType translucentDepthWrite(String name, ResourceLocation texture) {
+        RenderStateShard.TransparencyStateShard transparency = new RenderStateShard.TransparencyStateShard(
+                name + "_transparency",
+                () -> {
+                    RenderSystem.depthMask(true);
+                    RenderSystem.enableBlend();
+                    RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
+                            GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                            GlStateManager.SourceFactor.ONE,
+                            GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                },
+                () -> {
+                    RenderSystem.disableBlend();
+                    RenderSystem.defaultBlendFunc();
+                });
+
+        return RenderType.create(name, DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256,
+                false, true, RenderType.CompositeState.builder()
+                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityTranslucentShader))
+                        .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                        .setTransparencyState(transparency)
+                        .setCullState(new RenderStateShard.CullStateShard(false))
+                        .setLightmapState(new RenderStateShard.LightmapStateShard(true))
+                        .setOverlayState(new RenderStateShard.OverlayStateShard(true))
+                        .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
                         .createCompositeState(false));
     }
 

@@ -1894,6 +1894,113 @@
 
 - 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
 
+### 2026-05-27 追加：核闪遮罩不随 HUD 冲击波抖动修正
+
+复核来源：
+
+- `com.hbm.main.ModEventHandlerClient`
+- `com.hbm.main.ModEventHandlerRenderer`
+- Forge 1.20.1 `VanillaGuiOverlay`
+
+问题与旧版对齐：
+
+- 1.7.10 中核闪遮罩在 `RenderGameOverlayEvent.Pre` 的 `CROSSHAIRS` 分支直接绘制全屏白色 quad，HUD 抖动在 `HOTBAR` 分支做 `GL11.glTranslated`；两者是独立效果。
+- 现代 Forge 1.20.1 的 `HOTBAR` overlay 顺序早于 `CROSSHAIR`，上一轮为了让 HOTBAR 后续 HUD 同步抖动，把 pose 保留到整帧 `RenderGuiEvent.Post` 才 pop，导致后续 `CROSSHAIR` 上绘制的核闪白屏也被平移，出现白屏跟着冲击波晃动。
+
+现代修正：
+
+- `ClientForgeEvents#renderNukeFlash` 在绘制核闪前检测当前 HUD shake pose；若已 push，则临时 pop 回未平移坐标系，绘制全屏核闪后再恢复 HUD shake pose。
+- 这样白屏遮罩始终按屏幕坐标满幅绘制，不随冲击波 HUD 矩阵抖动；后续 HUD/准星仍可继续处于本轮 HUD shake pose 中，直到 GUI Post 统一恢复。
+
+验证：
+
+- 2026-05-27 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
+
+### 2026-05-27 追加：Torex 重追踪暖启动、FalloutRain 队列与 crater 冷块自融化
+
+复核来源：
+
+- `com.hbm.entity.effect.EntityNukeTorex`
+- `com.hbm.entity.effect.EntityFalloutRain`
+- `com.hbm.render.entity.effect.RenderFallout`
+- `com.hbm.explosion.ExplosionThermo#scorchDest/#scorchDestLight`
+- `com.hbm.world.biome.BiomeGenCraterBase`
+
+问题与旧版对齐：
+
+- 旧 `EntityNukeTorex` 不保存 cloudlet 列表，而是依赖 1000 格追踪范围让客户端持续 tick；现代端重追踪/重载时只拿到 age，没有活跃 cloudlet 历史，所以后续标准云又从地面生成，表现成蘑菇云从根部重新长出。
+- 现代端为了满足“退出重进后仍保留核爆云”的额外要求，需要保存 Torex 的 age/scale/type；这和旧 `writeToNBTOptional=false` 不同，但客户端重建必须继续使用 1.7.10 的 cloudlet 生成和运动公式。
+- 旧 `EntityFalloutRain` 的生命周期不按固定年龄结束，而是保存并处理 `chunksToProcess` / `outerChunksToProcess` 两个队列；队列未空时 renderer 持续画玩家附近的落尘雨。
+- 旧 fallout chunk 收集不是矩形排序，而是按爆心半径做环形角度采样，内圈队列与外圈队列分别 reverse 后从中心向外处理。
+- 旧 `RenderFallout` 雨幕本身使用固定 `intensity = 1F`，没有独立的随时间 alpha 曲线；核爆后的“圈层/密度”主要来自服务端队列从中心向外处理，以及 `stomp` 中 `0.1 - (dist / 100 - 0.7)^2` 的 fallout layer 放置概率。
+- 旧 `ExplosionThermo` 的 scorch 逻辑会清掉雪/冰并把 packed ice 变成水；用户要求将该热环境契约扩展到 crater biome 自融化，避免核爆群系保留雪冰。
+
+现代修正：
+
+- `NukeTorexEntity` 服务端保存 `ticksExisted`、`scale`、`type`，并在云存活期间按爆炸 chunkloader 基类维持爆心 chunk loading，解决离开区块后服务端 age 冻结、回到早期阶段的问题。
+- 客户端 spawn/re-track 时按 1.7.10 完整 cloudlet 生成和运动公式从 tick 1 重放到同步 age，跳过闪光/声音副作用；暖启动 cap 提高到 60000，避免截断仍存活的主干/蘑菇冠 cloudlets。初次客户端生成和暖启动都使用同一实体种子，减少重建形态突变。
+- `ExplosionChunkLoadingEntity#readChunkLoader` 不再把存档里的 chunk id 当成当前已 force 的内存状态；世界重载后下一 tick 会重新 force center/work chunk，避免爆炸/降尘实体保存后失去 chunk loading。
+- `FalloutRainEntity#gatherChunks` 改回旧版环形 `LinkedHashSet` 队列，保留内圈/外圈处理顺序；spawn 前先构建队列并同步总数/剩余内外队列，客户端 renderer 可以立即拿到旧队列进度。
+- `FalloutRainEntity` 每 tick 维持爆心 chunk loading，队列未空时持续存在；每 tick 开头记录 `start`，`tickDelay == 0` 时先重置为 `falloutDelay`，再在 `start + mk5` / 现代 `MK5_BUDGET_MS` 预算内循环处理 chunk，最后同一 tick 末尾执行 `tickDelay--`，对齐旧版默认 4 tick 的推进节奏。renderer 的时间/圈层可见差异来源于服务端内圈/外圈队列进度与旧 fallout layer 放置概率公式，而不是旧 `RenderFallout` 自身的独立强度曲线。
+- `CraterRadiationData` 暴露按保存标记并回退 biome key 的 zone 查询；`CommonForgeEvents` 在服务器 tick 中对玩家附近 crater zone 随机采样，雪/雪块/细雪消失，ice 消失，packed/blue/frosted ice 变水。
+- 三个 crater biome JSON 移除 `minecraft:freeze_top_layer`，避免热核爆群系继续参与顶层结冰特性。
+
+验证：
+
+- 2026-05-27 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+### 2026-05-27 追加：Fallout/Torex 粒子透明渲染态对齐
+
+复核来源：
+
+- `com.hbm.render.entity.effect.RenderFallout`
+- `com.hbm.render.entity.effect.RenderTorex`
+- `assets/hbm/textures/entity/fallout.png`
+- `assets/hbm/textures/particle/particle_base.png`
+
+问题与旧版对齐：
+
+- 旧 `fallout.png` 和 `particle_base.png` 贴图 alpha 都是 0/255 二值，不是半透明材质。
+- 旧 `RenderFallout` 走固定功能管线，启用 blend 与 alpha func，但没有关闭 depth mask；`fallout.png` 本身只有 0/255 alpha，雨幕透明度来自每列顶点 alpha，而不是贴图半透明。
+- 旧 `RenderTorex#cloudletWrapper` 使用 `SRC_ALPHA/ONE_MINUS_SRC_ALPHA`、`AlphaFunc > 0`、禁用 alpha test、`DepthMask(false)`；它不写深度，所以水/流体这类后续透明层仍能透过核爆云出现。但云团贴图本身是二值 alpha，旧画面不会把背景 vanilla 云层作为同等透明对象保留下来。
+- 现代初版的 Torex 云团完全走透明 RenderType，背景云层和流体都会通过同一透明混合显现，和 1.7.10 观感不一致。
+- 1.20.1 `LevelRenderer` 的顺序和 1.7.10 固定管线不同：实体阶段早于 `RenderType.translucent()` 水/透明方块，vanilla 云层还在 particles 之后绘制。若 Torex 在普通实体阶段先画，后续水面/云层会再次叠到蘑菇云上，表现成“透过粒子看到的水和云更亮”。
+- 曾尝试独立 depth prepass，但预写会先把最近 cloudlet 深度写入，随后的颜色 pass 只能画最前一层，反而削弱多层云团叠加厚度；也会带来硬遮罩观感。
+
+现代修正：
+
+- `FalloutRainRenderer` 恢复旧 `RenderFallout` 的连续雨幕公式：使用 `RenderType.entityTranslucent(fallout.png)`、每个玩家周围格子都绘制一张雨幕 quad，顶点 alpha 使用 `((1 - distanceMod^2) * 0.3 + 0.5)`；不再用 deterministic column coverage 整列跳过，避免表现成一根根烟柱。
+- renderer 不再使用 `FalloutRainEntity#getFalloutProgress()` 或爆心半径函数做时间/圈层渐隐；旧版 renderer 的 `intensity` 固定为 `1F`，降尘随时间结束由服务端 `chunksToProcess` / `outerChunksToProcess` 队列消耗和实体移除决定。
+- `NukeTorexRenderer` 的 cloudlet pass 从普通实体阶段移到 Forge `RenderLevelStageEvent.Stage.AFTER_PARTICLES`：水/透明方块和普通粒子已经画完后，再按旧版 far-to-near 排序把蘑菇云 alpha 混合到现有画面上。
+- cloudlet RenderType 保留 `SRC_ALPHA/ONE_MINUS_SRC_ALPHA` 透明混合和二值贴图 discard，但显式 `depthMask(true)` 并开启 color+depth write。这样云团自身仍是半透明烟，但最终深度能阻挡之后绘制的 vanilla 云层/天气；水面则作为已绘制背景被蘑菇云真正半遮挡，而不是在蘑菇云后面再额外高亮叠一遍。
+- Flare 仍保留旧加法透明、无 depth write 路径。
+
+验证：
+
+- 2026-05-27 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+### 2026-05-27 追加：Torex 初期中心黄色 cloudlet 淡出对齐
+
+复核来源：
+
+- `com.hbm.render.entity.effect.RenderTorex#tessellateCloudlet`
+- `com.hbm.entity.effect.EntityNukeTorex#getAlpha`
+- `com.hbm.entity.effect.EntityNukeTorex.Cloudlet#getAlpha`
+
+问题与旧版对齐：
+
+- 1.7.10 的 `Cloudlet#getAlpha()` 使用 `(1F - age / cloudletLife) * EntityNukeTorex#getAlpha()`，冷凝 cloudlet 额外乘 `0.25`。
+- 1.7.10 的 `RenderTorex#tessellateCloudlet` 将 `cloud.getAlpha()` 直接传给 `setColorRGBA_F`，没有额外放大或重新映射淡出曲线。
+- 现代端 `NukeTorexRenderer#renderBillboard` 曾将 alpha 做 `alpha * 2.5F` 后 clamp，导致初期中心黄白 cloudlet 在较长时间内被顶到满不透明，原始 alpha 低于约 0.4 后才开始明显淡出，观感上更像突然收束消失。
+
+现代修正：
+
+- `NukeTorexRenderer#renderBillboard` 改为直接使用 `cloudlet.getAlpha()` 输出顶点 alpha，保留旧版 cloudlet 生命周期、实体整体 fade-out、冷凝 `0.25` alpha 和颜色/亮度公式。
+
+验证：
+
+- 2026-05-27 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
+
 ## 验证清单
 
 - 普通爆炸不会在客户端修改世界。

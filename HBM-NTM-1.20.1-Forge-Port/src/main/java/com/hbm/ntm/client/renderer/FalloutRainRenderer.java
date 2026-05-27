@@ -88,26 +88,27 @@ public class FalloutRainRenderer extends EntityRenderer<FalloutRainEntity> {
                     continue;
                 }
 
-                random.setSeed((long) x * x * 3121L + (long) x * 45_238_971L ^ (long) z * z * 418_711L + (long) z * 13_761L);
+                random.setSeed(x * x * 3121 + x * 45_238_971 ^ z * z * 418_711 + z * 13_761);
                 float fallLoop = ((timer & 511) + partialTick) / 512.0F;
                 float fallVariation = 0.4F + random.nextFloat() * 0.2F;
                 float swayVariation = random.nextFloat();
                 double distX = x + 0.5D - camX;
                 double distZ = z + 0.5D - camZ;
                 float distanceMod = Mth.sqrt((float) (distX * distX + distZ * distZ)) / range;
-                float alpha = ((1.0F - distanceMod * distanceMod) * 0.3F + 0.5F);
-                if (alpha <= 0.0F) {
-                    continue;
-                }
+                float alpha = (1.0F - distanceMod * distanceMod) * 0.3F + 0.5F;
 
                 putVertex(consumer, pose, normal, (float) (x - rainX + 0.5D - originX), (float) (minY - originY),
-                        (float) (z - rainZ + 0.5D - originZ), fallVariation, minY / 4.0F + fallLoop + swayVariation, alpha);
+                        (float) (z - rainZ + 0.5D - originZ), fallVariation,
+                        minY / 4.0F + fallLoop + swayVariation, alpha);
                 putVertex(consumer, pose, normal, (float) (x + rainX + 0.5D - originX), (float) (minY - originY),
-                        (float) (z + rainZ + 0.5D - originZ), 1.0F + fallVariation, minY / 4.0F + fallLoop + swayVariation, alpha);
+                        (float) (z + rainZ + 0.5D - originZ), 1.0F + fallVariation,
+                        minY / 4.0F + fallLoop + swayVariation, alpha);
                 putVertex(consumer, pose, normal, (float) (x + rainX + 0.5D - originX), (float) (maxY - originY),
-                        (float) (z + rainZ + 0.5D - originZ), 1.0F + fallVariation, maxY / 4.0F + fallLoop + swayVariation, alpha);
+                        (float) (z + rainZ + 0.5D - originZ), 1.0F + fallVariation,
+                        maxY / 4.0F + fallLoop + swayVariation, alpha);
                 putVertex(consumer, pose, normal, (float) (x - rainX + 0.5D - originX), (float) (maxY - originY),
-                        (float) (z - rainZ + 0.5D - originZ), fallVariation, maxY / 4.0F + fallLoop + swayVariation, alpha);
+                        (float) (z - rainZ + 0.5D - originZ), fallVariation,
+                        maxY / 4.0F + fallLoop + swayVariation, alpha);
             }
         }
     }
@@ -115,7 +116,7 @@ public class FalloutRainRenderer extends EntityRenderer<FalloutRainEntity> {
     private static void putVertex(VertexConsumer consumer, Matrix4f pose, Matrix3f normal, float x, float y,
             float z, float u, float v, float alpha) {
         consumer.vertex(pose, x, y, z)
-                .color(1.0F, 1.0F, 1.0F, Mth.clamp(alpha, 0.0F, 1.0F))
+                .color(1.0F, 1.0F, 1.0F, alpha)
                 .uv(u, v)
                 .overlayCoords(OverlayTexture.NO_OVERLAY)
                 .uv2(LightTexture.FULL_BRIGHT)

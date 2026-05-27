@@ -1,6 +1,7 @@
 package com.hbm.ntm.entity.effect;
 
 import com.hbm.ntm.client.NukeHudEffects;
+import com.hbm.ntm.entity.logic.ExplosionChunkLoadingEntity;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.client.Minecraft;
@@ -33,7 +34,9 @@ import java.util.List;
  * Toroidial Convection Simulation Explosion Effect
  * Tor                             Ex
  */
-public class NukeTorexEntity extends Entity implements IEntityAdditionalSpawnData {
+public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEntityAdditionalSpawnData {
+    private static final int MAX_WARM_START_CLOUDLETS = 60_000;
+
     private static final EntityDataAccessor<Float> SCALE =
             SynchedEntityData.defineId(NukeTorexEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> TYPE =
@@ -92,6 +95,7 @@ public class NukeTorexEntity extends Entity implements IEntityAdditionalSpawnDat
     public void tick() {
         super.tick();
         if (!level().isClientSide()) {
+            forceCenterChunk();
             entityData.set(AGE, tickCount);
         } else {
             syncClientAge();
@@ -108,9 +112,10 @@ public class NukeTorexEntity extends Entity implements IEntityAdditionalSpawnDat
         }
     }
 
-    private void spawnCondensationBand(boolean upper, double simulationScale, double cloudScale, int lifetime) {
-        for (int i = 0; i < 20; i++) {
-            for (int j = 0; j < 4; j++) {
+    private void spawnCondensationBand(boolean upper, double simulationScale, double cloudScale, int lifetime,
+            int radialSamples, int verticalSamples) {
+        for (int i = 0; i < radialSamples; i++) {
+            for (int j = 0; j < verticalSamples; j++) {
                 float angle = (float) (Math.PI * 2.0D * random.nextDouble());
                 double radial = upper
                         ? torusWidth + rollerSize * (3.0D + random.nextDouble() * 0.5D)
@@ -182,8 +187,7 @@ public class NukeTorexEntity extends Entity implements IEntityAdditionalSpawnDat
         didPlaySound = shockwavePassedPlayer;
         didShake = shockwavePassedPlayer;
         if (cloudlets.isEmpty() || syncedAge > tickCount + 20) {
-            cloudlets.clear();
-            resetClientSimulationState(syncedAge);
+            warmStartClientSimulation(syncedAge);
         }
         tickCount = syncedAge;
         clientSyncedAge = syncedAge;
@@ -208,6 +212,30 @@ public class NukeTorexEntity extends Entity implements IEntityAdditionalSpawnDat
     }
 
     private void clientVisualTick(boolean spawnSound) {
+        clientVisualTick(spawnSound, false);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private void warmStartClientSimulation(int visualAge) {
+        int age = Mth.clamp(visualAge, 0, Math.max(0, getMaxAge()));
+        cloudlets.clear();
+        resetClientSimulationState(0);
+        random.setSeed(clientWarmStartSeed());
+
+        for (int simulatedTick = 1; simulatedTick <= age; simulatedTick++) {
+            tickCount = simulatedTick;
+            clientVisualTick(false, true);
+            if (cloudlets.size() > MAX_WARM_START_CLOUDLETS) {
+                cloudlets.subList(0, cloudlets.size() - MAX_WARM_START_CLOUDLETS).clear();
+            }
+        }
+
+        tickCount = age;
+        clientSyncedAge = age;
+        lastRenderSortTick = Integer.MIN_VALUE;
+    }
+
+    private void clientVisualTick(boolean spawnSound, boolean warmStart) {
         double simulationScale = 1.5D;
         double cloudScale = 1.5D;
         int maxAge = getMaxAge();
@@ -223,7 +251,7 @@ public class NukeTorexEntity extends Entity implements IEntityAdditionalSpawnDat
             lastSpawnY = y - 3.0D;
         }
 
-        if (tickCount < 100) {
+        if (!warmStart && tickCount < 100) {
             int flashTime = level() instanceof ClientLevel clientLevel
                     ? Math.max(clientLevel.getSkyFlashTime(), 4)
                     : 4;
@@ -285,10 +313,10 @@ public class NukeTorexEntity extends Entity implements IEntityAdditionalSpawnDat
         }
 
         if (tickCount > 130.0D * simulationScale && tickCount < 600.0D * simulationScale) {
-            spawnCondensationBand(false, simulationScale, cloudScale, lifetime);
+            spawnCondensationBand(false, simulationScale, cloudScale, lifetime, 20, 4);
         }
         if (tickCount > 200.0D * simulationScale && tickCount < 600.0D * simulationScale) {
-            spawnCondensationBand(true, simulationScale, cloudScale, lifetime);
+            spawnCondensationBand(true, simulationScale, cloudScale, lifetime, 20, 4);
         }
 
         for (int i = cloudlets.size() - 1; i >= 0; i--) {
@@ -385,16 +413,22 @@ public class NukeTorexEntity extends Entity implements IEntityAdditionalSpawnDat
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        discard();
+        setScale(tag.contains("scale") ? tag.getFloat("scale") : 1.0F);
+        setType(tag.getInt("type"));
+        tickCount = Math.max(0, tag.getInt("ticksExisted"));
+        entityData.set(AGE, tickCount);
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.putFloat("scale", getCloudScale());
+        tag.putInt("type", getCloudType());
+        tag.putInt("ticksExisted", tickCount);
     }
 
     @Override
     public boolean shouldBeSaved() {
-        return false;
+        return true;
     }
 
     @Override
@@ -417,12 +451,21 @@ public class NukeTorexEntity extends Entity implements IEntityAdditionalSpawnDat
         entityData.set(AGE, age);
         tickCount = age;
         clientSyncedAge = age;
+        random.setSeed(clientWarmStartSeed());
         if (age > 0) {
             boolean shockwavePassedPlayer = hasShockwaveReachedClientPlayer(age);
             didPlaySound = shockwavePassedPlayer;
             didShake = shockwavePassedPlayer;
-            resetClientSimulationState(age);
+            warmStartClientSimulation(age);
         }
+    }
+
+    private long clientWarmStartSeed() {
+        return getUUID().getMostSignificantBits()
+                ^ getUUID().getLeastSignificantBits()
+                ^ (((long) getCloudType()) << 32)
+                ^ (((long) Mth.floor(getX())) << 32)
+                ^ (Mth.floor(getZ()) & 0xFFFFFFFFL);
     }
 
     private static Vec3 rotateY(Vec3 vec, float angle) {

@@ -30,11 +30,19 @@ import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IEntityAdditionalSpawnData {
     private static final EntityDataAccessor<Integer> SCALE =
+            SynchedEntityData.defineId(FalloutRainEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> TOTAL_CHUNKS =
+            SynchedEntityData.defineId(FalloutRainEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> INNER_CHUNKS =
+            SynchedEntityData.defineId(FalloutRainEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> OUTER_CHUNKS =
             SynchedEntityData.defineId(FalloutRainEntity.class, EntityDataSerializers.INT);
 
     private final List<Long> chunksToProcess = new ArrayList<>();
@@ -58,6 +66,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     public static FalloutRainEntity create(Level level, double x, double y, double z, int scale) {
         FalloutRainEntity entity = new FalloutRainEntity(level, scale);
         entity.setPos(x, y, z);
+        entity.prepareInitialQueues();
         return entity;
     }
 
@@ -68,27 +77,39 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
             return;
         }
 
+        long start = System.currentTimeMillis();
+        forceCenterChunk();
+
         if (firstTick) {
-            forceCenterChunk();
             if (chunksToProcess.isEmpty() && outerChunksToProcess.isEmpty()) {
                 gatherChunks();
             }
+            syncQueueProgress();
             firstTick = false;
         }
 
-        if (tickDelay > 0) {
-            tickDelay--;
-            return;
+        if (tickDelay == 0) {
+            tickDelay = BombConfig.FALLOUT_DELAY.get();
+            long deadline = start + Math.max(1, BombConfig.MK5_BUDGET_MS.get());
+            do {
+                if (!processNextChunk()) {
+                    syncQueueProgress();
+                    discard();
+                    return;
+                }
+            } while (System.currentTimeMillis() < deadline);
+            syncQueueProgress();
         }
 
-        tickDelay = BombConfig.FALLOUT_DELAY.get();
-        long deadline = System.currentTimeMillis() + BombConfig.MK5_BUDGET_MS.get();
-        while (System.currentTimeMillis() < deadline) {
-            if (!processNextChunk()) {
-                discard();
-                return;
-            }
+        tickDelay--;
+    }
+
+    private void prepareInitialQueues() {
+        if (level().isClientSide() || !chunksToProcess.isEmpty() || !outerChunksToProcess.isEmpty()) {
+            return;
         }
+        gatherChunks();
+        syncQueueProgress();
     }
 
     private boolean processNextChunk() {
@@ -104,34 +125,28 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     }
 
     private void gatherChunks() {
-        int radius = getScale();
-        int minChunkX = ((int) Math.floor(getX() - radius)) >> 4;
-        int maxChunkX = ((int) Math.floor(getX() + radius)) >> 4;
-        int minChunkZ = ((int) Math.floor(getZ() - radius)) >> 4;
-        int maxChunkZ = ((int) Math.floor(getZ() + radius)) >> 4;
+        Set<Long> chunks = new LinkedHashSet<>();
+        Set<Long> outerChunks = new LinkedHashSet<>();
+        int outerRange = getScale();
+        int adjustedMaxAngle = Math.max(1, 20 * outerRange / 32);
 
-        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                double nearestX = clamp(getX(), chunkX << 4, (chunkX << 4) + 15);
-                double nearestZ = clamp(getZ(), chunkZ << 4, (chunkZ << 4) + 15);
-                double distance = Math.hypot(nearestX - getX(), nearestZ - getZ());
-                if (distance > radius) {
-                    continue;
-                }
-
-                long packed = ChunkPos.asLong(chunkX, chunkZ);
-                double centerDistance = Math.hypot(((chunkX << 4) + 8) - getX(), ((chunkZ << 4) + 8) - getZ());
-                if (centerDistance <= Math.max(0, radius - 12)) {
-                    chunksToProcess.add(packed);
-                } else {
-                    outerChunksToProcess.add(packed);
+        for (int angle = 0; angle <= adjustedMaxAngle; angle++) {
+            outerChunks.add(chunkAtPolar(outerRange, angle, adjustedMaxAngle));
+        }
+        for (int distance = 0; distance <= outerRange; distance += 8) {
+            for (int angle = 0; angle <= adjustedMaxAngle; angle++) {
+                long chunkCoord = chunkAtPolar(distance, angle, adjustedMaxAngle);
+                if (!outerChunks.contains(chunkCoord)) {
+                    chunks.add(chunkCoord);
                 }
             }
         }
 
-        Comparator<Long> byDistanceDescending = Comparator.comparingDouble(this::chunkCenterDistance).reversed();
-        chunksToProcess.sort(byDistanceDescending);
-        outerChunksToProcess.sort(byDistanceDescending);
+        chunksToProcess.addAll(chunks);
+        outerChunksToProcess.addAll(outerChunks);
+        Collections.reverse(chunksToProcess);
+        Collections.reverse(outerChunksToProcess);
+        entityData.set(TOTAL_CHUNKS, chunksToProcess.size() + outerChunksToProcess.size());
     }
 
     private void processChunk(long packedChunk, boolean checkDistance) {
@@ -249,13 +264,20 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
         return state.isAir() || (state.canBeReplaced() && state.getFluidState().isEmpty() && !state.is(Blocks.FIRE));
     }
 
-    private double chunkCenterDistance(long packedChunk) {
-        ChunkPos chunkPos = new ChunkPos(packedChunk);
-        return Math.hypot(((chunkPos.x << 4) + 8) - getX(), ((chunkPos.z << 4) + 8) - getZ());
+    private long chunkAtPolar(int distance, int angle, int adjustedMaxAngle) {
+        double radians = angle * Math.PI / 180.0D / (adjustedMaxAngle / 360.0D);
+        double x = Math.cos(radians) * distance;
+        double z = -Math.sin(radians) * distance;
+        return ChunkPos.asLong(((int) (getX() + x)) >> 4, ((int) (getZ() + z)) >> 4);
     }
 
-    private static double clamp(double value, double min, double max) {
-        return Math.max(min, Math.min(max, value));
+    private void syncQueueProgress() {
+        int remaining = chunksToProcess.size() + outerChunksToProcess.size();
+        if (entityData.get(TOTAL_CHUNKS) < remaining) {
+            entityData.set(TOTAL_CHUNKS, remaining);
+        }
+        entityData.set(INNER_CHUNKS, chunksToProcess.size());
+        entityData.set(OUTER_CHUNKS, outerChunksToProcess.size());
     }
 
     public void setScale(int scale) {
@@ -275,6 +297,9 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     @Override
     protected void defineSynchedData() {
         entityData.define(SCALE, 1);
+        entityData.define(TOTAL_CHUNKS, 0);
+        entityData.define(INNER_CHUNKS, 0);
+        entityData.define(OUTER_CHUNKS, 0);
     }
 
     @Override
@@ -285,6 +310,9 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
         readChunkList(tag.getLongArray("chunks"), chunksToProcess);
         readChunkList(tag.getLongArray("outerChunks"), outerChunksToProcess);
         readChunkLoader(tag);
+        int savedTotal = tag.contains("totalChunks") ? tag.getInt("totalChunks") : chunksToProcess.size() + outerChunksToProcess.size();
+        entityData.set(TOTAL_CHUNKS, Math.max(savedTotal, chunksToProcess.size() + outerChunksToProcess.size()));
+        syncQueueProgress();
     }
 
     @Override
@@ -294,6 +322,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
         tag.putBoolean("firstTick", firstTick);
         tag.putLongArray("chunks", chunksToProcess);
         tag.putLongArray("outerChunks", outerChunksToProcess);
+        tag.putInt("totalChunks", entityData.get(TOTAL_CHUNKS));
         saveChunkLoader(tag);
     }
 
@@ -312,10 +341,37 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     @Override
     public void writeSpawnData(FriendlyByteBuf buffer) {
         buffer.writeVarInt(getScale());
+        buffer.writeVarInt(entityData.get(TOTAL_CHUNKS));
+        buffer.writeVarInt(entityData.get(INNER_CHUNKS));
+        buffer.writeVarInt(entityData.get(OUTER_CHUNKS));
     }
 
     @Override
     public void readSpawnData(FriendlyByteBuf buffer) {
         setScale(buffer.readVarInt());
+        entityData.set(TOTAL_CHUNKS, buffer.readVarInt());
+        entityData.set(INNER_CHUNKS, buffer.readVarInt());
+        entityData.set(OUTER_CHUNKS, buffer.readVarInt());
+    }
+
+    public int getTotalChunks() {
+        return Math.max(0, entityData.get(TOTAL_CHUNKS));
+    }
+
+    public int getInnerChunksRemaining() {
+        return Math.max(0, entityData.get(INNER_CHUNKS));
+    }
+
+    public int getOuterChunksRemaining() {
+        return Math.max(0, entityData.get(OUTER_CHUNKS));
+    }
+
+    public float getFalloutProgress() {
+        int total = getTotalChunks();
+        if (total <= 0) {
+            return 0.0F;
+        }
+        int remaining = getInnerChunksRemaining() + getOuterChunksRemaining();
+        return 1.0F - Math.min(remaining, total) / (float) total;
     }
 }

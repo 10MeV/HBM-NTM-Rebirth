@@ -137,6 +137,11 @@ public class CraterRadiationData extends SavedData {
         return new ResyncResult(total, loaded, changed, changedChunks.size());
     }
 
+    public static CraterZone getZone(ServerLevel level, BlockPos pos) {
+        CraterZone zone = get(level).getZone(pos);
+        return zone == CraterZone.NONE ? zoneFromBiome(level.getBiome(pos)) : zone;
+    }
+
     public CraterZone getZone(BlockPos pos) {
         return zones.getOrDefault(cellKey(pos.getX(), pos.getZ()), CraterZone.NONE);
     }

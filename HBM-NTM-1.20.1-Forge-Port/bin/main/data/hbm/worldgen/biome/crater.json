@@ -81,9 +81,7 @@
       "minecraft:patch_pumpkin",
       "minecraft:patch_cactus_decorated"
     ],
-    [
-      "minecraft:freeze_top_layer"
-    ]
+    []
   ],
   "has_precipitation": false,
   "spawn_costs": {},

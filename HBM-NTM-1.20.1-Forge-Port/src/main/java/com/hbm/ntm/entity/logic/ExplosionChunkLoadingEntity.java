@@ -62,8 +62,9 @@ public abstract class ExplosionChunkLoadingEntity extends Entity {
     }
 
     protected void readChunkLoader(CompoundTag tag) {
-        centerChunk = tag.contains("loaderCenterChunk") ? tag.getLong("loaderCenterChunk") : Long.MIN_VALUE;
-        workChunk = tag.contains("loaderWorkChunk") ? tag.getLong("loaderWorkChunk") : Long.MIN_VALUE;
+        // Saved chunk ids are stale after a world load; force them again on the next tick.
+        centerChunk = Long.MIN_VALUE;
+        workChunk = Long.MIN_VALUE;
     }
 
     protected boolean shouldExpireFromSave(CompoundTag tag) {

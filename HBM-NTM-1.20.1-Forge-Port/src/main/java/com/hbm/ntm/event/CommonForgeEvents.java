@@ -34,6 +34,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.sounds.SoundSource;
@@ -53,8 +54,10 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -78,6 +81,9 @@ import java.util.Set;
 public final class CommonForgeEvents {
     private static final String HAZARD_ENTITY_TICK_KEY = "hbmHazardTick";
     private static final String CONTAGION_ITEM_TAG = "ntmContagion";
+    private static final int CRATER_MELT_INTERVAL_TICKS = 4;
+    private static final int CRATER_MELT_RADIUS = 64;
+    private static final int CRATER_MELT_SAMPLES_PER_PLAYER = 32;
     private static final Map<ResourceKey<Level>, Set<Integer>> TRACKED_ITEM_ENTITIES = new HashMap<>();
 
     @SubscribeEvent
@@ -96,6 +102,7 @@ public final class CommonForgeEvents {
             HbmEnergyNodespace.tick(level);
             HbmFluidNodespace.tick(level);
             HbmUninosNodespaces.tick(level);
+            meltCraterColdBlocks(level);
         }
         ServerTileBinaryControlTransfers.pruneExpired(event.getServer().overworld().getGameTime());
         ThreadedPacketDispatcher.flush();
@@ -155,6 +162,54 @@ public final class CommonForgeEvents {
     private static Block legacyBlockOrNull(String legacyName) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(legacyName);
         return block == null ? null : block.get();
+    }
+
+    private static void meltCraterColdBlocks(ServerLevel level) {
+        if (level.players().isEmpty() || level.getGameTime() % CRATER_MELT_INTERVAL_TICKS != 0) {
+            return;
+        }
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (ServerPlayer player : level.players()) {
+            if (player.isSpectator()) {
+                continue;
+            }
+
+            BlockPos center = player.blockPosition();
+            for (int i = 0; i < CRATER_MELT_SAMPLES_PER_PLAYER; i++) {
+                int x = center.getX() + level.random.nextInt(CRATER_MELT_RADIUS * 2 + 1) - CRATER_MELT_RADIUS;
+                int z = center.getZ() + level.random.nextInt(CRATER_MELT_RADIUS * 2 + 1) - CRATER_MELT_RADIUS;
+                int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+                cursor.set(x, Mth.clamp(surfaceY, level.getMinBuildHeight(), level.getMaxBuildHeight() - 1), z);
+                if (CraterRadiationData.getZone(level, cursor) == CraterRadiationData.CraterZone.NONE) {
+                    continue;
+                }
+
+                int top = Math.min(level.getMaxBuildHeight() - 1, surfaceY + 2);
+                int bottom = Math.max(level.getMinBuildHeight(), surfaceY - 6);
+                for (int y = top; y >= bottom; y--) {
+                    cursor.set(x, y, z);
+                    meltColdBlock(level, cursor);
+                }
+            }
+        }
+    }
+
+    private static boolean meltColdBlock(ServerLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (state.is(Blocks.SNOW) || state.is(Blocks.SNOW_BLOCK) || state.is(Blocks.POWDER_SNOW)) {
+            level.removeBlock(pos, false);
+            return true;
+        }
+        if (state.is(Blocks.ICE)) {
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            return true;
+        }
+        if (state.is(Blocks.PACKED_ICE) || state.is(Blocks.BLUE_ICE) || state.is(Blocks.FROSTED_ICE)) {
+            level.setBlock(pos, Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
+            return true;
+        }
+        return false;
     }
 
     @SubscribeEvent
