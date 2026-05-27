@@ -631,6 +631,7 @@ public final class LegacyFalloutConversions {
                 || state.is(ModBlocks.SELLAFIELD_BEDROCK.get())
                 || state.is(Blocks.STONE)
                 || state.is(Blocks.DEEPSLATE)
+                || state.is(Blocks.TUFF)
                 || state.is(Blocks.GRANITE)
                 || state.is(Blocks.DIORITE)
                 || state.is(Blocks.ANDESITE);

@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Set;
 
 public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IEntityAdditionalSpawnData {
+    private static final int LEGACY_MIN_CHUNK_WORK_MS = 10;
+
     private static final EntityDataAccessor<Integer> SCALE =
             SynchedEntityData.defineId(FalloutRainEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> TOTAL_CHUNKS =
@@ -66,7 +68,6 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     public static FalloutRainEntity create(Level level, double x, double y, double z, int scale) {
         FalloutRainEntity entity = new FalloutRainEntity(level, scale);
         entity.setPos(x, y, z);
-        entity.prepareInitialQueues();
         return entity;
     }
 
@@ -90,26 +91,23 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
 
         if (tickDelay == 0) {
             tickDelay = BombConfig.FALLOUT_DELAY.get();
-            long deadline = start + Math.max(1, BombConfig.MK5_BUDGET_MS.get());
-            do {
+            long deadline = start + BombConfig.MK5_BUDGET_MS.get();
+            int chunkBudget = legacyChunkBudget();
+            while (chunkBudget-- > 0 && System.currentTimeMillis() < deadline) {
                 if (!processNextChunk()) {
                     syncQueueProgress();
                     discard();
                     return;
                 }
-            } while (System.currentTimeMillis() < deadline);
+            }
             syncQueueProgress();
         }
 
         tickDelay--;
     }
 
-    private void prepareInitialQueues() {
-        if (level().isClientSide() || !chunksToProcess.isEmpty() || !outerChunksToProcess.isEmpty()) {
-            return;
-        }
-        gatherChunks();
-        syncQueueProgress();
+    private static int legacyChunkBudget() {
+        return Math.max(1, BombConfig.MK5_BUDGET_MS.get() / LEGACY_MIN_CHUNK_WORK_MS);
     }
 
     private boolean processNextChunk() {
@@ -172,10 +170,11 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
 
     private void stomp(int x, int z, double percent) {
         int depth = 0;
-        int yStart = level().getMaxBuildHeight() - 1;
+        int yStart = Math.min(255, level().getMaxBuildHeight() - 1);
+        int yEnd = level().getMinBuildHeight();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
-        for (int y = yStart; y >= level().getMinBuildHeight(); y--) {
+        for (int y = yStart; y >= yEnd; y--) {
             if (depth >= 3) {
                 return;
             }

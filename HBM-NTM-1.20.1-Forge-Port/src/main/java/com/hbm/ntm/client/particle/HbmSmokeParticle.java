@@ -11,6 +11,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class HbmSmokeParticle extends TextureSheetParticle {
+    private static SpriteSet exSmokeSprites;
     protected final SpriteSet sprites;
     protected final float baseScale;
 
@@ -26,6 +27,10 @@ public class HbmSmokeParticle extends TextureSheetParticle {
         this.rCol = this.gCol = this.bCol = 0.35F + random.nextFloat() * 0.25F;
         this.alpha = 0.95F;
         this.setSpriteFromAge(sprites);
+    }
+
+    public static SpriteSet exSmokeSprites() {
+        return exSmokeSprites;
     }
 
     @Override
@@ -49,6 +54,7 @@ public class HbmSmokeParticle extends TextureSheetParticle {
 
         public ExSmokeProvider(SpriteSet sprites) {
             this.sprites = sprites;
+            exSmokeSprites = sprites;
         }
 
         @Override

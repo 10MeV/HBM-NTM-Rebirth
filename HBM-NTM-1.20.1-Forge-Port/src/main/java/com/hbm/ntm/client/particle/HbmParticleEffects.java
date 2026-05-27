@@ -5,8 +5,10 @@ import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.client.sound.HbmDelayedSounds;
 import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.ParticleStatus;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
+import net.minecraft.client.particle.TerrainParticle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -458,9 +460,11 @@ public final class HbmParticleEffects {
         BlockState state = blockStateFromLegacyId(data.getInt("block"));
         int count = Math.max(1, data.getInt("count"));
         for (int i = 0; i < count; i++) {
-            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, state),
-                    entity.getRandomX(0.5D), entity.getY() + entity.getBbHeight() * level.random.nextDouble(), entity.getRandomZ(0.5D),
-                    level.random.nextGaussian() * 0.02D, 0.04D, level.random.nextGaussian() * 0.02D);
+            double x = entity.getBoundingBox().minX - 0.2D + (entity.getBoundingBox().getXsize() + 0.4D) * level.random.nextDouble();
+            double y = entity.getBoundingBox().minY + (entity.getBoundingBox().getYsize() + 0.2D) * level.random.nextDouble();
+            double z = entity.getBoundingBox().minZ - 0.2D + (entity.getBoundingBox().getZsize() + 0.4D) * level.random.nextDouble();
+            Particle particle = new TerrainParticle(level, x, y, z, 0.0D, 0.0D, 0.0D, state);
+            addWithLifetime(particle, 150 + level.random.nextInt(50));
         }
     }
 
@@ -469,20 +473,59 @@ public final class HbmParticleEffects {
         if (entity == null) {
             return;
         }
-        int count = Math.max(1, data.getInt("count"));
+        int count = Math.max(1, data.getInt("count")) / (particleSettingDivisor());
         String mode = data.getString("mode");
-        ParticleOptions particle = switch (mode) {
-            case "blood" -> new BlockParticleOption(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.defaultBlockState());
-            case "smoke" -> ParticleTypes.LARGE_SMOKE;
-            default -> ParticleTypes.ITEM_SLIME;
-        };
-        for (int i = 0; i < count; i++) {
-            level.addParticle(particle,
-                    entity.getX(), entity.getEyeY() - 0.15D, entity.getZ(),
-                    (level.random.nextDouble() - 0.5D) * 0.2D,
-                    level.random.nextDouble() * 0.05D,
-                    (level.random.nextDouble() - 0.5D) * 0.2D);
+        if (count <= 0) {
+            return;
         }
+
+        Vec3 look = entity.getLookAngle();
+        double x = entity.getX();
+        double y = entity.getY() - entity.getMyRidingOffset() + entity.getEyeHeight() + (entity == Minecraft.getInstance().player ? 1.0D : 0.0D);
+        double z = entity.getZ();
+        for (int i = 0; i < count; i++) {
+            double randomX = level.random.nextGaussian();
+            double randomY = level.random.nextGaussian();
+            double randomZ = level.random.nextGaussian();
+
+            if (ParticleUtil.VOMIT_SMOKE.equals(mode)) {
+                if (HbmSmokeParticle.exSmokeSprites() != null) {
+                    Particle particle = new HbmSmokeParticle(level, x, y, z,
+                            (look.x + randomX * 0.1D) * 0.05D,
+                            (look.y + randomY * 0.1D) * 0.05D,
+                            (look.z + randomZ * 0.1D) * 0.05D,
+                            HbmSmokeParticle.exSmokeSprites(), 0.2F, 10 + level.random.nextInt(10));
+                    Minecraft.getInstance().particleEngine.add(particle);
+                }
+            } else {
+                BlockState state = ParticleUtil.VOMIT_BLOOD.equals(mode)
+                        ? Blocks.REDSTONE_BLOCK.defaultBlockState()
+                        : (level.random.nextBoolean() ? Blocks.LIME_TERRACOTTA : Blocks.GREEN_TERRACOTTA).defaultBlockState();
+                Particle particle = new TerrainParticle(level, x, y, z,
+                        (look.x + randomX * 0.2D) * 0.2D,
+                        (look.y + randomY * 0.2D) * 0.2D,
+                        (look.z + randomZ * 0.2D) * 0.2D,
+                        state);
+                addWithLifetime(particle, 150 + level.random.nextInt(50));
+            }
+        }
+    }
+
+    private static int particleSettingDivisor() {
+        ParticleStatus status = Minecraft.getInstance().options.particles().get();
+        return switch (status) {
+            case DECREASED -> 2;
+            case MINIMAL -> 3;
+            default -> 1;
+        };
+    }
+
+    private static void addWithLifetime(Particle particle, int lifetime) {
+        if (particle == null) {
+            return;
+        }
+        particle.setLifetime(lifetime);
+        Minecraft.getInstance().particleEngine.add(particle);
     }
 
     private static void spawnWeaponExplosion(ClientLevel level, CompoundTag data, double x, double y, double z) {

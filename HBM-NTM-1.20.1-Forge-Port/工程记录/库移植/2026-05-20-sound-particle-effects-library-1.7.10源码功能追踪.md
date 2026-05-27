@@ -240,6 +240,38 @@
     - 寿命 `30 + rand.nextInt(13)`，`noClip=true`，fullbright。
     - 每 tick 保留上一帧 Y 速度，再 `motionX/Z *= 0.75`、`motionY += 0.005`。
     - 颜色按年龄从黄/橙向暗色过渡，并乘 `0.8F..1.0F` 随机色偏。
+
+## 2026-05-27 呕吐/出汗旧协议粒子对齐
+
+1.7.10 对照：
+
+- `ClientProxy#effectNT` 的 `type="vomit"`：
+  - 从实体 `posX`, `posY - getYOffset() + getEyeHeight() + (player ? 1 : 0)`, `posZ` 发射。
+  - 速度沿 `entity.getLookVec()`，附加高斯扰动。
+  - `mode="normal"` 使用 stained hardened clay metadata `5` 或 `13` 的 `EntityBlockDustFX`，速度倍率 `0.2`。
+  - `mode="blood"` 使用 redstone block 的 `EntityBlockDustFX`，速度倍率 `0.2`。
+  - `mode="smoke"` 使用 `EntitySmokeFX`，速度倍率 `0.05`，scale `0.2F`。
+  - normal/blood 寿命强制为 `150 + rand(50)` tick；smoke 寿命强制为 `10 + rand(10)` tick。
+  - count 会除以客户端粒子设置 `particleSetting + 1`。
+- `type="sweat"`：
+  - 在实体包围盒外扩 `0.2` 的随机位置生成指定方块的 `EntityBlockDustFX`。
+  - 寿命强制为 `150 + rand(50)` tick。
+
+本批现代迁移：
+
+- `HbmParticleEffects#spawnEntityVomit` 改为从实体头部/眼部沿 `getLookAngle()` 前向喷出，而不是在实体中心随机扩散。
+- normal/blood 改回 block dust 形态，并恢复 `150..199` tick 留存；normal 使用现代 `lime_terracotta` / `green_terracotta` 近似旧 stained hardened clay metadata `5/13`。
+- smoke 改为使用项目 `HbmSmokeParticle`，恢复前向速度与 `10..19` tick 短寿命。
+- `spawnEntitySweat` 改为旧包围盒随机点和 `150..199` tick 留存。
+- `ParticleUtil` 增加 `spawnVomit` / `spawnSweat` helper，作为 common 侧旧 NBT 协议入口。
+
+边界：
+
+- 现代 normal 呕吐的色块为注册方块近似；旧 `Blocks.stained_hardened_clay` metadata 贴图没有作为独立现代块保留。
+
+验证：
+
+- 2026-05-27 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
   - `ParticleSmokePlume`：
     - 使用 `textures/particle/contrail.png`，寿命 `80..99`。
     - 每个粒子渲染 6 个随机偏移 quad，颜色为灰阶随机值，fullbright，透明度随年龄线性下降。

@@ -35,6 +35,10 @@ public final class LegacyRadiationWorldUtil {
             return true;
         }
 
+        if (state.is(Blocks.FARMLAND)) {
+            return true;
+        }
+
         if (isModernRadiationTransparentWoodOrFence(state)) {
             return false;
         }

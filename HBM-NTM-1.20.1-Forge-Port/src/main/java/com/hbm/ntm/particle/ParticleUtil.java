@@ -4,6 +4,7 @@ import com.hbm.ntm.network.ModMessages;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.Level;
 
 public final class ParticleUtil {
@@ -46,6 +47,11 @@ public final class ParticleUtil {
     public static final String TYPE_JETPACK_BJ = "jetpack_bj";
     public static final String TYPE_JETPACK_DNS = "jetpack_dns";
     public static final String TYPE_RADIATION = "radiation";
+    public static final String TYPE_SWEAT = "sweat";
+    public static final String TYPE_VOMIT = "vomit";
+    public static final String VOMIT_NORMAL = "normal";
+    public static final String VOMIT_BLOOD = "blood";
+    public static final String VOMIT_SMOKE = "smoke";
     public static final int GIBLET_MEAT = 0;
     public static final int GIBLET_SLIME = 1;
     public static final int GIBLET_METAL = 2;
@@ -219,6 +225,35 @@ public final class ParticleUtil {
         data.putString("type", TYPE_RADIATION);
         data.putInt("count", count);
         spawnAux(level, 0.0D, 0.0D, 0.0D, data, 0.0D);
+    }
+
+    public static void spawnSweat(Entity entity, Block block, int count) {
+        spawnSweat(entity, block, 0, count);
+    }
+
+    public static void spawnSweat(Entity entity, Block block, int meta, int count) {
+        if (entity == null || block == null) {
+            return;
+        }
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_SWEAT);
+        data.putInt("count", Math.max(0, count));
+        data.putInt("block", Block.getId(block.defaultBlockState()));
+        data.putInt("meta", meta);
+        data.putInt("entity", entity.getId());
+        spawnAuxThreaded(entity.level(), entity.getX(), entity.getY(), entity.getZ(), data, 25.0D);
+    }
+
+    public static void spawnVomit(Entity entity, String mode, int count) {
+        if (entity == null) {
+            return;
+        }
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_VOMIT);
+        data.putString("mode", mode == null || mode.isEmpty() ? VOMIT_NORMAL : mode);
+        data.putInt("count", Math.max(0, count));
+        data.putInt("entity", entity.getId());
+        spawnAuxThreaded(entity.level(), entity.getX(), entity.getY(), entity.getZ(), data, 25.0D);
     }
 
     private static void spawnPlayerBackpackEffect(Level level, Entity player, String type) {

@@ -1751,8 +1751,9 @@
 
 - `ExplosionNukeRayBatched` 现在把 `BlockState.isAir()` 但 `FluidState` 非空的位置视为旧版非 air 命中，而不是跳过。
 - 二次复核发现 `collectTip` 收集阶段仍只用 `!state.isAir()` 判断是否缓存 lastPos/chunk；这会让只呈现为 `FluidState` 的位置在破坏阶段前就丢失。收集阶段现已改成和 `processChunk` 同一个 `isLegacyEmpty` 判定。
-- 命中流体时额外清理 3x3x3 邻域内仍带 `FluidState` 的位置，并对流体清除使用 neighbor update flags，避免现代水/熔岩保留下未同步的网格状面片。
-- tip 坐标也统一走同一个清理入口，保留旧版末端用更强更新 flags 的语义。
+- 命中流体时额外清理 3x3x3 邻域内仍带 `FluidState` 的位置，避免现代水/熔岩只清到射线中心而留下网格状面片。
+- 2026-05-27 二次复核后，普通清除恢复旧版 `setBlock(..., flags=2)` 语义，tip 坐标保留 `flags=3`；避免在 MK5 分批破坏期间对每个流体普通命中强制 neighbor update，导致邻近水源立即重铺成新的流动片。
+- 2026-05-27 再复核切区块残留水片后，发现现代 `addFluidCleanup` 曾用 `hasChunk` 跳过未加载邻区块；旧版液体本身是 block，不存在跨 chunk 的独立 `FluidState` 漏读。现代端改为处理当前 MK5 work chunk 前接入现有 `NukeExplosionMk5Entity#loadChunk`，并在 3x3x3 流体邻域清理时同步读取相邻 chunk 后再判断 `FluidState`，避免 chunk 边界留下整片流体墙。
 - `ExplosionNukeGeneric#destruction` / `vaporDest` 的早退条件也改成 `isLegacyEmpty`，避免 MK3/Advanced 柱状清除提前跳过带 `FluidState` 的位置；`waste` / `solinium` 未扩展清流体，因为旧版对应分支没有“液体即清除”的契约。
 
 仍缺/注意：
@@ -1761,6 +1762,7 @@
 - 旧版 extended logging 会在 MK5 初始化和完成时写日志；现代当前没有迁入等价配置项。
 - `ExplosionNukeGeneric#isExplosionExempt` 旧列表包含 ocelot、B92 beam、bullet、grenade、creative player 等具体实体；现代只迁了当前已存在实体能表达的安全子集，未注册的旧 projectile 类型仍等待对应武器实体迁入。
 - 旧 `WorldUtil.loadAndSpawnEntityInWorld` 的更宽泛强加载/生成语义没有完整移植；现代 MK5 自身的 forced chunk 进度保存已覆盖当前核爆处理需求。
+- 本次未恢复或新增地下核爆空腔判断；流体修正只围绕旧 MK5 射线命中/清除与现代 chunk 读取差异。
 
 验证：
 
@@ -1784,7 +1786,25 @@
 
 验证：
 
-- 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed；仍有 `Biome.BIOME_INFO_NOISE` 弃用警告，因其用于复刻旧 `plantNoise` 坐标色块，暂不替换。
+- 2026-05-26 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed；当时仍有 `Biome.BIOME_INFO_NOISE` 弃用警告，后续已用同 seed/同 octave 的本地 `PerlinSimplexNoise` 实例替换。
+
+### 2026-05-27 追加：Crater plantNoise 废弃 API 替换
+
+复核来源：
+
+- `net.minecraft.world.level.biome.Biome`
+- `net.minecraft.world.level.levelgen.synth.PerlinSimplexNoise`
+- `com.hbm.world.biome.BiomeGenCraterBase`
+
+问题与旧版对齐：
+
+- `ClientModEvents#legacyPlantNoise` 之前直接调用 `Biome.BIOME_INFO_NOISE`，能复刻外圈 crater 草色噪声，但 Forge 1.20.1 编译会提示该字段 deprecated for removal。
+- 1.20.1 `Biome.BIOME_INFO_NOISE` 的实际初始化为 `new PerlinSimplexNoise(new WorldgenRandom(new LegacyRandomSource(2345L)), ImmutableList.of(0))`。
+
+现代修正：
+
+- `ClientModEvents` 新增本地 `CRATER_PLANT_NOISE`，使用相同 `WorldgenRandom + LegacyRandomSource(2345L) + octave 0` 构造。
+- `legacyPlantNoise` 改为读取本地噪声实例，保留 `x * 0.225D / z * 0.225D / useNoiseOffsets=false` 采样公式，输出与旧调用保持一致，同时移除废弃 API 访问。
 
 ### 2026-05-26 追加：核爆处理器中心坐标截断复核
 
@@ -1940,10 +1960,50 @@
 - `NukeTorexEntity` 服务端保存 `ticksExisted`、`scale`、`type`，并在云存活期间按爆炸 chunkloader 基类维持爆心 chunk loading，解决离开区块后服务端 age 冻结、回到早期阶段的问题。
 - 客户端 spawn/re-track 时按 1.7.10 完整 cloudlet 生成和运动公式从 tick 1 重放到同步 age，跳过闪光/声音副作用；暖启动 cap 提高到 60000，避免截断仍存活的主干/蘑菇冠 cloudlets。初次客户端生成和暖启动都使用同一实体种子，减少重建形态突变。
 - `ExplosionChunkLoadingEntity#readChunkLoader` 不再把存档里的 chunk id 当成当前已 force 的内存状态；世界重载后下一 tick 会重新 force center/work chunk，避免爆炸/降尘实体保存后失去 chunk loading。
-- `FalloutRainEntity#gatherChunks` 改回旧版环形 `LinkedHashSet` 队列，保留内圈/外圈处理顺序；spawn 前先构建队列并同步总数/剩余内外队列，客户端 renderer 可以立即拿到旧队列进度。
+- `FalloutRainEntity#gatherChunks` 改回旧版环形 `LinkedHashSet` 队列，保留内圈/外圈处理顺序；队列由旧版一致的首个服务端 tick 收集，并同步总数/剩余内外队列供调试观察。
 - `FalloutRainEntity` 每 tick 维持爆心 chunk loading，队列未空时持续存在；每 tick 开头记录 `start`，`tickDelay == 0` 时先重置为 `falloutDelay`，再在 `start + mk5` / 现代 `MK5_BUDGET_MS` 预算内循环处理 chunk，最后同一 tick 末尾执行 `tickDelay--`，对齐旧版默认 4 tick 的推进节奏。renderer 的时间/圈层可见差异来源于服务端内圈/外圈队列进度与旧 fallout layer 放置概率公式，而不是旧 `RenderFallout` 自身的独立强度曲线。
 - `CraterRadiationData` 暴露按保存标记并回退 biome key 的 zone 查询；`CommonForgeEvents` 在服务器 tick 中对玩家附近 crater zone 随机采样，雪/雪块/细雪消失，ice 消失，packed/blue/frosted ice 变水。
 - 三个 crater biome JSON 移除 `minecraft:freeze_top_layer`，避免热核爆群系继续参与顶层结冰特性。
+
+### 2026-05-27 追加：FalloutRain 存续密度曲线二次对齐
+
+复核来源：
+
+- `com.hbm.entity.effect.EntityFalloutRain#onUpdate`
+- `com.hbm.entity.effect.EntityFalloutRain#stomp`
+- `com.hbm.render.entity.effect.RenderFallout`
+
+问题与旧版对齐：
+
+- 旧 `RenderFallout` 的 `intensity` 固定为 `1F`，客户端雨幕没有随时间降低密度的函数；降尘雨体感变化来自服务端 fallout entity 的 chunk 队列处理时长。
+- 旧 `stomp` 固定扫描 `y=255` 到 `0`。现代端之前按 1.20 世界高度扫描到 `level().getMinBuildHeight()`，在 1.20 默认世界会多扫负 Y 和 256 以上高度，改变每个 chunk 的处理成本，从而改变 `mk5` 毫秒预算下每轮能处理的 chunk 数。
+- 旧 `while(System.currentTimeMillis() < start + BombConfig.mk5)` 先检查时间再处理 chunk。现代端之前用 `do/while`，即使预算已耗尽也至少处理一个 chunk，低预算或高负载时会改变实体存续曲线。
+- 旧实体在首个服务端 tick 里通过 `firstTick` 收集队列；现代端之前在 `create(...)` 里提前收集队列，虽然 renderer 不再消费进度，但生命周期结构应回到旧版 tick 内初始化。
+
+现代修正：
+
+- `FalloutRainEntity#create(...)` 不再提前 `gatherChunks`，恢复旧版首个服务端 tick 收集队列。
+- `FalloutRainEntity` 的处理循环改回旧版 `while(now < start + mk5)` 形态，不再强制每轮至少处理一个 chunk。
+- `FalloutRainEntity#stomp` 的高度扫描上限限制为 `min(255, maxBuildHeight - 1)`，避免扫描 1.20 的 256 以上高度；下限映射到现代 `level().getMinBuildHeight()`。旧版 `Y=0` 是当时世界底部，不应在 1.20 中作为绝对下限，否则负 Y 深板岩坑底不会参与 `sellafield_slaked` 等 fallout 转换。
+
+### 2026-05-27 追加：FalloutRain 瞬时消失修正
+
+复核来源：
+
+- `com.hbm.entity.effect.EntityFalloutRain#onUpdate`
+- `com.hbm.entity.effect.EntityFalloutRain#gatherChunks`
+
+问题与旧版对齐：
+
+- 旧 `EntityFalloutRain` 没有独立年龄上限，实体存在时间由 `chunksToProcess` / `outerChunksToProcess` 是否处理完决定。
+- 现代端配置仍是旧默认值：`falloutRange=100`、`falloutDelay=4`、`mk5BlastTime=50`，不是半径或 delay 被配置为 0。
+- 现代端的 block state / biome marker / conversion 实现比 1.7.10 的 `stomp`、`WorldUtil.setBiome`、falling block 与同步路径轻得多；若只按 `while(now < start + mk5)` 时间预算，默认 50ms 内可能把小中型 fallout 队列一次吃完，服务端随即 `discard()`，客户端表现为降尘雨核爆后瞬间消失。
+- 1.7.10 的语义是“在 `falloutDelay` 间隔内处理一批 chunk，但受 `mk5` 时间预算限制”，不是“现代硬件能在 50ms 内处理多少就处理多少直到队列空”。
+
+现代修正：
+
+- `FalloutRainEntity` 保留旧 `mk5` 时间预算作为上限，同时增加旧版等效 chunk 工作量上限：默认 `mk5BlastTime=50` 时每个处理周期最多推进 5 个 chunk。
+- 队列仍按旧版 `if inner else if outer` 顺序处理，内圈处理完前不会提前消耗外圈；实体仍在队列清空后移除，没有客户端假延长。
 
 验证：
 
@@ -1964,15 +2024,18 @@
 - 旧 `RenderFallout` 走固定功能管线，启用 blend 与 alpha func，但没有关闭 depth mask；`fallout.png` 本身只有 0/255 alpha，雨幕透明度来自每列顶点 alpha，而不是贴图半透明。
 - 旧 `RenderTorex#cloudletWrapper` 使用 `SRC_ALPHA/ONE_MINUS_SRC_ALPHA`、`AlphaFunc > 0`、禁用 alpha test、`DepthMask(false)`；它不写深度，所以水/流体这类后续透明层仍能透过核爆云出现。但云团贴图本身是二值 alpha，旧画面不会把背景 vanilla 云层作为同等透明对象保留下来。
 - 现代初版的 Torex 云团完全走透明 RenderType，背景云层和流体都会通过同一透明混合显现，和 1.7.10 观感不一致。
-- 1.20.1 `LevelRenderer` 的顺序和 1.7.10 固定管线不同：实体阶段早于 `RenderType.translucent()` 水/透明方块，vanilla 云层还在 particles 之后绘制。若 Torex 在普通实体阶段先画，后续水面/云层会再次叠到蘑菇云上，表现成“透过粒子看到的水和云更亮”。
+- 1.20.1 `LevelRenderer` 的顺序和 1.7.10 固定管线不同：实体阶段早于 `RenderType.translucent()` 水/透明方块，vanilla 云层和天气还在后续阶段绘制。若 Torex 在普通实体阶段先画，后续水面/云层会再次叠到蘑菇云上，表现成“透过粒子看到的水和云更亮”。
 - 曾尝试独立 depth prepass，但预写会先把最近 cloudlet 深度写入，随后的颜色 pass 只能画最前一层，反而削弱多层云团叠加厚度；也会带来硬遮罩观感。
 
 现代修正：
 
 - `FalloutRainRenderer` 恢复旧 `RenderFallout` 的连续雨幕公式：使用 `RenderType.entityTranslucent(fallout.png)`、每个玩家周围格子都绘制一张雨幕 quad，顶点 alpha 使用 `((1 - distanceMod^2) * 0.3 + 0.5)`；不再用 deterministic column coverage 整列跳过，避免表现成一根根烟柱。
 - renderer 不再使用 `FalloutRainEntity#getFalloutProgress()` 或爆心半径函数做时间/圈层渐隐；旧版 renderer 的 `intensity` 固定为 `1F`，降尘随时间结束由服务端 `chunksToProcess` / `outerChunksToProcess` 队列消耗和实体移除决定。
-- `NukeTorexRenderer` 的 cloudlet pass 从普通实体阶段移到 Forge `RenderLevelStageEvent.Stage.AFTER_PARTICLES`：水/透明方块和普通粒子已经画完后，再按旧版 far-to-near 排序把蘑菇云 alpha 混合到现有画面上。
-- cloudlet RenderType 保留 `SRC_ALPHA/ONE_MINUS_SRC_ALPHA` 透明混合和二值贴图 discard，但显式 `depthMask(true)` 并开启 color+depth write。这样云团自身仍是半透明烟，但最终深度能阻挡之后绘制的 vanilla 云层/天气；水面则作为已绘制背景被蘑菇云真正半遮挡，而不是在蘑菇云后面再额外高亮叠一遍。
+- `NukeTorexRenderer` 的 cloudlet pass 从普通实体阶段移到 Forge `RenderLevelStageEvent.Stage.AFTER_LEVEL`：水/透明方块、普通粒子、天气和 vanilla 云层都先画进 color buffer，再按旧版 far-to-near 排序把蘑菇云 alpha 混合到现有画面上。
+- 不能使用 `AFTER_WEATHER`：1.20.1 的该阶段仍处于 vanilla 云/天气渲染的 model-view 矩阵上下文中，Torex 又按 `origin - camera` 做相机相对平移，会导致 cloudlet 被云层矩阵二次影响，表现为整团粒子挂到天空并随视角移动。
+- `AFTER_LEVEL` 不能直接复用 `event.getPoseStack()`：Forge 47.2.32 在 `GameRenderer#renderLevel` 中给该阶段传入的是投影/FOV 栈 `posestack`，不是 `LevelRenderer#renderLevel` 内部带相机 pitch/yaw 的世界视图栈。把 `origin - camera` 套在这个栈上会让 cloudlet 漂到摄像机后方。
+- `ClientForgeEvents` 因此为 after-level Torex pass 创建一条干净的世界视图 `PoseStack`，按 `camera.getXRot()` 与 `camera.getYRot() + 180` 重建 vanilla 实体渲染使用的相机旋转，再交给 `NukeTorexRenderer` 做相机相对坐标渲染。
+- cloudlet RenderType 保留 `SRC_ALPHA/ONE_MINUS_SRC_ALPHA` 透明混合和二值贴图 discard，并保留 color+depth write。这样水面和 vanilla 云层都作为已绘制背景被蘑菇云半透明压住；depth write 只用于避免再后续的世界 pass 穿过云团，而不是用来把云层硬挡掉。
 - Flare 仍保留旧加法透明、无 depth write 路径。
 
 验证：

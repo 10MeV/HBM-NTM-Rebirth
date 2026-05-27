@@ -7,6 +7,8 @@ import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.radiation.HazardTooltipUtil;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -87,7 +89,7 @@ public final class ClientForgeEvents {
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
             return;
         }
 
@@ -110,13 +112,21 @@ public final class ClientForgeEvents {
                 cloud -> -event.getCamera().getPosition().distanceToSqr(cloud.getX(), cloud.getY(), cloud.getZ())));
 
         MultiBufferSource.BufferSource buffer = minecraft.renderBuffers().bufferSource();
+        PoseStack worldViewPoseStack = createWorldViewPoseStack(event.getCamera());
         for (NukeTorexEntity cloud : clouds) {
             EntityRenderer<? super NukeTorexEntity> renderer = minecraft.getEntityRenderDispatcher().getRenderer(cloud);
             if (renderer instanceof NukeTorexRenderer torexRenderer) {
-                torexRenderer.renderCloudletsAfterParticles(cloud, event.getCamera(), event.getPartialTick(),
-                        event.getPoseStack(), buffer);
+                torexRenderer.renderCloudletsAfterLevel(cloud, event.getCamera(), event.getPartialTick(),
+                        worldViewPoseStack, buffer);
             }
         }
+    }
+
+    private static PoseStack createWorldViewPoseStack(net.minecraft.client.Camera camera) {
+        PoseStack poseStack = new PoseStack();
+        poseStack.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
+        poseStack.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
+        return poseStack;
     }
 
     @SubscribeEvent

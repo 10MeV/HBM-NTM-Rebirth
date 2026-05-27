@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 public class ExplosionNukeRayBatched implements ExplosionRay {
     public final Map<ChunkPos, List<FloatTriplet>> perChunk = new HashMap<>();
@@ -32,9 +33,16 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
     private int gspNum;
     private double gspX;
     private double gspY;
+    private final BiConsumer<Integer, Integer> chunkLoader;
     public boolean isAusf3Complete;
 
     public ExplosionNukeRayBatched(Level level, int x, int y, int z, int strength, int speed, int length) {
+        this(level, x, y, z, strength, speed, length, (chunkX, chunkZ) -> {
+        });
+    }
+
+    public ExplosionNukeRayBatched(Level level, int x, int y, int z, int strength, int speed, int length,
+            BiConsumer<Integer, Integer> chunkLoader) {
         this.level = level;
         this.posX = x;
         this.posY = y;
@@ -46,6 +54,7 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
         this.gspNum = 1;
         this.gspX = Math.PI;
         this.gspY = 0.0D;
+        this.chunkLoader = chunkLoader;
     }
 
     public void saveToNbt(CompoundTag tag, String name) {
@@ -204,6 +213,9 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
         Set<BlockPos> toRemoveTips = new HashSet<>();
         int chunkX = coord.x;
         int chunkZ = coord.z;
+        Set<Long> loadedFluidChunks = new HashSet<>();
+        loadWorkChunk(chunkX, chunkZ);
+        loadedFluidChunks.add(coord.toLong());
 
         int enter = Math.min(Math.abs(posX - (chunkX << 4)), Math.abs(posZ - (chunkZ << 4))) - 16;
         enter = Math.max(enter, 0);
@@ -248,7 +260,7 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
                     }
                     toRemove.add(blockPos);
                     if (!state.getFluidState().isEmpty()) {
-                        addFluidCleanup(blockPos, toRemove);
+                        addFluidCleanup(blockPos, toRemove, loadedFluidChunks);
                     }
                 }
             }
@@ -271,25 +283,35 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
     }
 
     private void clearLegacyExplosionBlock(BlockPos blockPos, int flags) {
-        BlockState state = level.getBlockState(blockPos);
-        int updateFlags = state.getFluidState().isEmpty() ? flags : 3;
-        level.setBlock(blockPos, Blocks.AIR.defaultBlockState(), updateFlags);
+        level.setBlock(blockPos, Blocks.AIR.defaultBlockState(), flags);
     }
 
-    private void addFluidCleanup(BlockPos center, Set<BlockPos> toRemove) {
+    private void addFluidCleanup(BlockPos center, Set<BlockPos> toRemove, Set<Long> loadedFluidChunks) {
         for (int x = -1; x <= 1; x++) {
             for (int y = -1; y <= 1; y++) {
                 for (int z = -1; z <= 1; z++) {
                     BlockPos fluidPos = center.offset(x, y, z);
-                    if (level.isOutsideBuildHeight(fluidPos) || !level.hasChunk(fluidPos.getX() >> 4, fluidPos.getZ() >> 4)) {
+                    if (level.isOutsideBuildHeight(fluidPos)) {
                         continue;
                     }
+                    loadFluidCleanupChunk(fluidPos.getX() >> 4, fluidPos.getZ() >> 4, loadedFluidChunks);
                     BlockState state = level.getBlockState(fluidPos);
                     if (!state.getFluidState().isEmpty()) {
                         toRemove.add(fluidPos);
                     }
                 }
             }
+        }
+    }
+
+    private void loadWorkChunk(int chunkX, int chunkZ) {
+        chunkLoader.accept(chunkX, chunkZ);
+        level.getChunk(chunkX, chunkZ);
+    }
+
+    private void loadFluidCleanupChunk(int chunkX, int chunkZ, Set<Long> loadedFluidChunks) {
+        if (loadedFluidChunks.add(ChunkPos.asLong(chunkX, chunkZ))) {
+            level.getChunk(chunkX, chunkZ);
         }
     }
 

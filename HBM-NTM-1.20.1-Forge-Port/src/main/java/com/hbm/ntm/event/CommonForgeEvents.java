@@ -28,9 +28,6 @@ import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.uninos.HbmUninosNodespaces;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.ItemParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -42,6 +39,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.MushroomCow;
@@ -52,7 +50,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.block.Block;
@@ -513,21 +510,19 @@ public final class CommonForgeEvents {
         long time = level.getGameTime();
         int seed = entity.getId();
         if (radiation > 600.0F && (time + Math.floorMod(seed * 31, 600)) % 600 < 20) {
-            spawnVomit(level, entity, true);
+            spawnVomit(entity, ParticleUtil.VOMIT_BLOOD, 25);
             if ((time + Math.floorMod(seed * 31, 600)) % 600 == 1) {
                 playVomit(level, entity);
             }
         } else if (radiation > 200.0F && (time + Math.floorMod(seed * 17, 1200)) % 1200 < 20) {
-            spawnVomit(level, entity, false);
+            spawnVomit(entity, ParticleUtil.VOMIT_NORMAL, 15);
             if ((time + Math.floorMod(seed * 17, 1200)) % 1200 == 1) {
                 playVomit(level, entity);
             }
         }
 
         if (radiation > 900.0F && entity.getRandom().nextInt(10) == 0) {
-            level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.defaultBlockState()),
-                    entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ(),
-                    1, 0.25D, 0.35D, 0.25D, 0.02D);
+            ParticleUtil.spawnSweat(entity, Blocks.REDSTONE_BLOCK, 1);
         }
     }
 
@@ -545,12 +540,8 @@ public final class CommonForgeEvents {
         }
 
         int chance = Math.max(10 - (int) digamma, 1);
-        if (entity.level() instanceof ServerLevel serverLevel
-                && (chance == 1 || entity.getRandom().nextInt(chance) == 0)) {
-            serverLevel.sendParticles(
-                    new BlockParticleOption(ParticleTypes.BLOCK, Blocks.SOUL_SAND.defaultBlockState()),
-                    entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ(),
-                    1, 0.25D, 0.35D, 0.25D, 0.02D);
+        if (chance == 1 || entity.getRandom().nextInt(chance) == 0) {
+            ParticleUtil.spawnSweat(entity, Blocks.SOUL_SAND, 1);
         }
     }
 
@@ -633,7 +624,7 @@ public final class CommonForgeEvents {
             entity.hurt(ModDamageSources.mku(entity.level()), 2.0F);
         }
         if (contagion < 30 * minute && (contagion + entity.getId()) % 200 < 20 && entity.level() instanceof ServerLevel level) {
-            spawnVomit(level, entity, true);
+            spawnVomit(entity, ParticleUtil.VOMIT_BLOOD, 25);
             if ((contagion + entity.getId()) % 200 == 19) {
                 playVomit(level, entity);
             }
@@ -708,12 +699,10 @@ public final class CommonForgeEvents {
         int frequency = Math.max((int) (1000 - 950 * total), 20);
         if (entity.level().getGameTime() % frequency == Math.floorMod(entity.getId(), frequency) && entity.level() instanceof ServerLevel level) {
             if (coughsBlood) {
-                spawnVomit(level, entity, true);
+                spawnVomit(entity, ParticleUtil.VOMIT_BLOOD, 5);
             }
             if (coughsCoal) {
-                level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.COAL_BLOCK.defaultBlockState()),
-                        entity.getX(), entity.getY() + entity.getBbHeight() * 0.45D, entity.getZ(),
-                        coughsALotOfCoal ? 50 : 10, 0.2D, 0.2D, 0.2D, 0.04D);
+                spawnVomit(entity, ParticleUtil.VOMIT_SMOKE, coughsALotOfCoal ? 50 : 10);
             }
         }
     }
@@ -730,9 +719,7 @@ public final class CommonForgeEvents {
         }
         RadiationData.setOil(entity, oil - 1);
         if (entity.tickCount % 5 == 0 && entity.level() instanceof ServerLevel level) {
-            level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.COAL_BLOCK.defaultBlockState()),
-                    entity.getX(), entity.getY() + entity.getBbHeight() * 0.45D, entity.getZ(),
-                    1, 0.2D, 0.2D, 0.2D, 0.02D);
+            ParticleUtil.spawnSweat(entity, Blocks.COAL_BLOCK, 1);
         }
     }
 
@@ -769,22 +756,18 @@ public final class CommonForgeEvents {
             entity.hurt(entity.damageSources().onFire(), effect.damage);
         }
         if (entity.level() instanceof ServerLevel level) {
-            level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, effect.particle.defaultBlockState()),
-                    entity.getX(), entity.getY() + entity.getRandom().nextDouble() * entity.getBbHeight(), entity.getZ(),
-                    1, 0.25D, 0.35D, 0.25D, 0.02D);
+            ParticleUtil.spawnSweat(entity, effect.particle, 1);
         }
     }
 
-    private static void spawnVomit(ServerLevel level, LivingEntity entity, boolean blood) {
-        if (blood) {
-            level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.defaultBlockState()),
-                    entity.getX(), entity.getY() + entity.getBbHeight() * 0.45D, entity.getZ(),
-                    25, 0.2D, 0.2D, 0.2D, 0.04D);
-        } else {
-            level.sendParticles(new ItemParticleOption(ParticleTypes.ITEM, new ItemStack(Items.SLIME_BALL)),
-                    entity.getX(), entity.getY() + entity.getBbHeight() * 0.45D, entity.getZ(),
-                    15, 0.2D, 0.2D, 0.2D, 0.04D);
+    private static void spawnVomit(LivingEntity entity, String mode, int count) {
+        if (canVomit(entity)) {
+            ParticleUtil.spawnVomit(entity, mode, count);
         }
+    }
+
+    private static boolean canVomit(LivingEntity entity) {
+        return entity.getType().getCategory() != MobCategory.WATER_CREATURE;
     }
 
     private static void playVomit(ServerLevel level, LivingEntity entity) {

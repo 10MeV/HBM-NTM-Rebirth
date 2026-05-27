@@ -69,7 +69,7 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
     }
 
-    public void renderCloudletsAfterParticles(NukeTorexEntity entity, Camera camera, float partialTick,
+    public void renderCloudletsAfterLevel(NukeTorexEntity entity, Camera camera, float partialTick,
             PoseStack poseStack, MultiBufferSource.BufferSource buffer) {
         if (entity.cloudlets.isEmpty()) {
             return;

@@ -1706,6 +1706,49 @@ Verification:
 
 - 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
+## 2026-05-27 Farmland Radiation World Effect Extension
+
+User-requested behavior:
+
+- In the same high-environment-radiation surface mutation path where grass block becomes `waste_earth`, dry and wet farmland should become vanilla dirt.
+
+Implementation:
+
+- `ChunkRadiationManager#handleWorldEffects` now maps `Blocks.FARMLAND` to `Blocks.DIRT`.
+- `LegacyRadiationWorldUtil#isLegacyHeightBlocking` treats farmland as a surface-blocking candidate for this Simple-handler sampler, so farmland can be reached by the same `legacyHeightValue - rand(2)` path as grass.
+
+Source note:
+
+- 1.7.10 `ChunkRadiationHandlerSimple#handleWorldDestruction` only handled grass, tallgrass, and leaves. This farmland downgrade is an explicit port extension requested on 2026-05-27, not a legacy parity claim.
+
+## 2026-05-27 Radiation Vomit Particle Routing Alignment
+
+Legacy source re-checked:
+
+- `com.hbm.handler.EntityEffectHandler#handleRadiationFX`
+- `com.hbm.main.ClientProxy#effectNT`
+
+Findings:
+
+- Stored radiation `> 600` emits `type="vomit"`, `mode="blood"`, `count=25` for a 20 tick window every 600 ticks using an entity-id seeded offset.
+- Stored radiation `> 200` emits `type="vomit"`, `mode="normal"`, `count=15` for a 20 tick window every 1200 ticks using an entity-id seeded offset.
+- Stored radiation `> 900` emits `type="sweat"`, `block=redstone_block`, `count=1` on roughly a 1-in-10 tick cadence.
+- Vomiting is skipped for water creatures through old `canVomit`.
+
+Corrected in this pass:
+
+- Radiation, contagion, lung disease, oil, digamma, and temperature visual hooks now route through the sound/particle bridge (`ParticleUtil`) instead of server-side vanilla `sendParticles` bursts.
+- Restored the old water-creature vomit skip in the radiation event layer.
+
+Library ownership:
+
+- Radiation core owns when sickness visual events fire and which old NBT mode/count they request.
+- Sound/particle effects library owns `type="vomit"` / `type="sweat"` emission geometry, particle type, and lifetime.
+
+Verification:
+
+- 2026-05-27 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
 ## 2026-05-24 Legacy Height Blocking Re-Audit Fix
 
 Legacy source re-checked:
@@ -1893,6 +1936,7 @@ Corrected in this pass:
   - mycelium -> `waste_mycelium`;
   - simple rock/sand/ground Sellafield surfaces -> `sellafield_slaked` with `restrictDepth`;
   - clay -> terracotta.
+- 2026-05-27 re-check: the old table targets `Material.rock` for inner Sellafield slaked conversion. Modern `LegacyFalloutConversions#isLegacyRockMaterial` now includes vanilla `Blocks.TUFF`, so 1.20 tuff is covered by fallout slaked replacement like other stone-family blocks.
 - The conversion library resolves legacy-name blocks through `ModBlocks.legacyBlock` and skips absent targets instead of introducing placeholders.
 
 Still incomplete:

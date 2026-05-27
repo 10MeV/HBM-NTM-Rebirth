@@ -126,6 +126,8 @@ public final class ChunkRadiationManager {
                         BlockState state = level.getBlockState(surface);
                         if (state.is(Blocks.GRASS_BLOCK)) {
                             level.setBlock(surface, ModBlocks.WASTE_EARTH.get().defaultBlockState(), 2);
+                        } else if (state.is(Blocks.FARMLAND)) {
+                            level.setBlock(surface, Blocks.DIRT.defaultBlockState(), 2);
                         } else if (state.is(Blocks.GRASS) || state.is(Blocks.TALL_GRASS) || state.is(Blocks.FERN) || state.is(Blocks.LARGE_FERN)) {
                             level.setBlock(surface, Blocks.AIR.defaultBlockState(), 2);
                         } else if (state.is(BlockTags.LEAVES) && !state.is(ModBlocks.WASTE_LEAVES.get())) {
