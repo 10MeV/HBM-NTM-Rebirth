@@ -1,0 +1,190 @@
+# 现代渲染 Shader 源码效果说明与 1.20.1 应用指南
+
+## 范围
+
+- 记录 `E:\游戏\我的世界\源码包\render` 下现代化渲染资源的效果、主要配置入口和迁移到 clean Forge 1.20.1 port 的应用方式。
+- 本文只整理资源和接入指南，不迁移代码、不复制 shader 文件。
+- 这些资源不是 HBM 1.7.10 原版 `com.hbm.render` 的直接旧代码，而是一套额外现代 shader 资源；后续接入 HBM 时应作为新客户端渲染库处理，不能当成服务端逻辑或旧版功能契约。
+
+## 源文件结构
+
+- `render/core/*.json|*.vsh|*.fsh`
+  - 材质/RenderType/实体或方块局部渲染 shader。
+  - 多数 JSON 内的 `vertex` / `fragment` 仍写为 `arcanevortex:<name>`，迁入 HBM 时必须改为 `hbm:<name>`。
+- `render/program/*.json|*.vsh|*.fsh`
+  - 全屏后处理 program shader。
+  - `invert_colors` 是屏幕反色/扫描/噪声类后处理。
+  - `transparency` 是多层 framebuffer 合成与折射玻璃球实验。
+- `render/post/*.json`
+  - PostChain 管线定义。
+  - 当前只有 `invert_colors` 和 `warp`，都把 `minecraft:main` 渲染到 `swap`，再 `minecraft:blit` 回主目标。
+
+## Clean Port 当前状态
+
+- `src/main/resources/assets/hbm` 下当前没有 `shaders` 目录。
+- `src/main/java` 中未发现 `RegisterShadersEvent`、`ShaderInstance`、`PostChain` 的现代 shader 注册层。
+- 现有客户端渲染主要使用 `RenderType`、OBJ renderer、粒子自定义 `ParticleRenderType` 和少量自建透明/加法 RenderType。
+- 因此迁移这些 shader 前，应先新增一个客户端专用库，例如 `ModernEffectShaders` / `HbmPostEffects`：
+  - 负责 `RegisterShadersEvent` 注册 core/program shader。
+  - 负责保存 `ShaderInstance` 引用。
+  - 负责每帧设置 `time`、`screenSize`、camera/matrix、强度和类型 uniform。
+  - 负责 PostChain 生命周期、窗口 resize 后重建、开关配置和资源重载。
+
+## 通用资源契约
+
+- 常见自动 uniform：
+  - `ModelViewMat`、`ProjMat`：Minecraft shader 默认矩阵。
+  - `ColorModulator`、`FogStart`、`FogEnd`、`FogColor`、`FogShape`：方块/实体材质类 shader 需要对齐 vanilla fog 和颜色调制。
+  - `time` / `GameTime` / `Time`：动画时间；建议统一传客户端 tick + partialTick，按 shader 需求缩放。
+  - `screenSize` / `ScreenSize` / `OutSize`：窗口或目标 framebuffer 尺寸，resize 后必须更新。
+  - `yaw`、`pitch`、`CameraYaw`、`CameraPitch`：相机角度，天空/星空/体积效果使用。
+  - `cameraPos`、`entityPos`、`projectilePos`、`lightPos`：世界空间定位。
+- 常见采样器：
+  - `Sampler0`：基础贴图或遮罩贴图。
+  - `DepthSampler` / `MainDepthSampler` / `DiffuseDepthSampler`：深度纹理；需要可读取的深度拷贝或目标。
+  - `MainColorSampler` / `ColorSampler` / `ScreenTexture` / `MainTarget0`：主画面颜色；用于折射、扭曲、屏幕空间混合。
+  - `Texture0/1/2`、`ColorTexture0`、`WarpTexture0`、`BloomTexture0`、`StarTexture0`：轨迹/刀光类效果的噪声、色带、扭曲和 bloom mask。
+- 常见渲染状态：
+  - 多数 core shader 使用 `blend add srcalpha 1-srcalpha`。
+  - `flowing_gradient`、`spotlight` 使用加法光照风格 `one + one`。
+  - `program/transparency` 使用覆盖式合成 `one + zero`。
+- 运行时可配置优先级：
+  - JSON uniform 默认值适合资源载入，但真正效果应由 Java 每帧写入。
+  - GLSL 内 `const` / `#define` 是编译期参数；如要给配置文件或方块实体动态控制，需要改为 uniform。
+
+## Core Shader 逐项说明
+
+| Shader | 效果 | 可配置点 | 1.20.1 应用建议 |
+| --- | --- | --- | --- |
+| `black_hole` | 高级黑洞。读取主画面颜色和深度，重建世界位置，做引力透镜、吸积盘、核心吞噬和遮挡处理。 | `entityPos`、`scale`、`accretionDiskDensity`、`tiltAngle`、`intensity`、`time`；迭代数和核心半径在 GLSL const 中。 | 用于反物质、奇点、末期核爆视觉。需要 scene color/depth 采样和实体位置 uniform，优先做独立实体/方块实体 renderer 的屏幕空间球体通道。 |
+| `black_hole_pro` | 简化但仍较重的黑洞体积吸积盘。深度遮挡更直接，常量包含吸积盘内外半径、噪声、颜色 ramp、128 次迭代。 | `entityPos`、`scale`、`time`；吸积盘宽度、颜色和迭代数目前是 const。 | 比 `black_hole` 更适合作首批移植试验。需要 `DepthSampler`、`TextureSampler`、`RenderTargetSampler`。 |
+| `black_square` | 基于深度重建世界表面的黑色/发光方块网格，按法线投影，带随机脉冲和噪声。 | `time/iTime`、`screenSize`、camera/matrix；方块密度、尺寸、边框、移动速度为 const。 | 可做维度侵蚀、黑色裂解地表覆盖。依赖主深度，适合后处理或区域屏幕空间效果。 |
+| `black_world` | 以 `projectilePos` 为中心的世界空间闪光/暗化/色散爆发。天空和场景几何分别处理。 | `projectilePos`、`lightIntensity`、`effectAlpha`、`time`、camera/matrix。 | 适合弹丸、冲击波、特殊爆炸预闪。应由客户端效果管理器按实体位置驱动。 |
+| `chaos` | 全屏/材质混沌背景。`useType` 切换云雾、洞穴/混沌、银河。 | `useType`、`time`、`screenSize`、`yaw`、`pitch`。 | 可作为 GUI/特殊物品材质或维度天空背景。若用于方块表面，需要遮罩纹理或 quad。 |
+| `cosmic` | 多模式宇宙材质：原始星云、流光溢彩、梦幻泡泡/萤火虫、混沌反射、黑金碎片、幻境森林等。 | `useType` 0-6、`externalScale`、`opacity`、`cosmicuvs[10]`、`time`、相机角。大量风格参数是 const。 | 最适合特殊物品、能量核心、维度门、块实体内部材质。需要自定义 RenderType，顶点格式含 `Position/Color/UV0/UV2/Normal`。 |
+| `cosmic_neo` | `cosmic` 的扩展/重调色版本，`useCosmicType` 提供更多底色和星云类型，`cosmicColor0` 可传主色。 | `useCosmicType`、`cosmicColor0`、`externalScale`、`opacity`、`cosmicuvs`、`screenSize`。 | 推荐作为正式宇宙材质主版本，因为颜色可由 Java 或方块实体控制。 |
+| `fantasy_block` | 方块表面梦幻/魔法色彩，混合基础贴图、时间和雾。 | `time`、`screenSize`、`yaw/pitch`、fog/color；核心风格在 GLSL 内。 | 可给幻想类矿石/特殊装饰块。按 block RenderType 接入即可，不需要主画面采样。 |
+| `floating_shapes` | 纹理遮罩上叠加漂浮几何/形状动画，受 `Opacity` 和 `GameTime` 控制。 | `Opacity`、`GameTime`、`ColorModulator`。 | 适合 GUI 图层、方块面板、能量护盾局部材质。实现成本低，可作为首批验证 shader。 |
+| `flowing_gradient` | 沿遮罩流动的多色渐变。支持最多 16 个 int 颜色和渐变跨度。 | `FlowSpeed`、`colorCount`、`color1`-`color16`、`alpha`、`gradientSpan`、`time`。 | 很适合 HBM 能量管线、激光、充能槽、危险警示流光。建议把 int 颜色统一封装成工具方法写 uniform。 |
+| `glow_edge` | 遮罩边缘/实体边缘发光，多模式：银河、折射、流动渐变、粉彩彩虹、原纹理、纯色。 | `uType` 1-5、`uColor`、`color1/2/3`、`screenSize`、`time`，采样 `ScreenTexture/TargetTexture`。 | 可做高亮选择框、护盾外壳、传送门边缘。折射模式需要屏幕纹理；纯色/彩虹模式可先迁。 |
+| `iap` | 高对比星空背景，含大星、星河、超新星、虫洞、脉冲星、彗星等高级效果。 | `StarScale`、`MoveSpeed`、`EnableSphericalMapping`、`EnableAdvancedEffects`、`StarCount`、`StarMask`、`StarMSpeed`、`StarMScale`、`MaxStarCount`。 | 适合天空盒、空间维度、宇宙方块内部。比 `starfield` 更像调优版，但性能仍要注意星数上限。 |
+| `mandelbrot` | 分形/曼德布罗特风格材质，随时间和相机角变化。 | `time`、`screenSize`、`yaw/pitch`、fog/color；分形细节多为内部常量。 | 可做奇异材料、异次元矿石或 GUI 背景。低接入风险。 |
+| `mandelbulb_shader` | 世界空间 Mandelbulb 球体 raymarch，读取深度并遮挡。中心和半径当前写死。 | `time`、camera/matrix、深度；`SPHERE_CENTER`、`SPHERE_RADIUS`、迭代数为 const。 | 若用于实体必须先把球心/半径改成 uniform，避免写死 `vec3(14,-50,0)`。 |
+| `melee_trail` | 近战/刀光轨迹材质。支持滚动纹理、扭曲、双纹理叠乘、宇宙填充、色带映射、背景折射混合。 | `useType` 1-5、`speed`、`brightness`、`cosmicScale`、`starUV`、各纹理采样器。 | 适合能量剑、激光刃、粒子轨迹。需要一套轨迹 mesh 或粒子 ribbon，以及多张噪声/色带贴图。 |
+| `nebula_cube` | 体积星云立方/球状区域，读取主画面和深度，做体积 raymarch 与遮挡。 | `entityPos`、`scale`、`time`、camera/matrix；步数和完整度是 define/const。 | 可做大型能量核心、空间裂隙。成本较高，应限制屏幕面积和数量。 |
+| `partial_darkness` | 以实体位置为中心的局部黑暗/星云暗化，含深度重建、天空处理和色散。 | `entityPos`、`lightIntensity`、`effectAlpha`、`time`、camera/matrix。 | 可做黑洞、负物质、诅咒区域的屏幕空间后效。需要深度和颜色目标。 |
+| `ragnarok_block` | 基于噪声的红/黑末日块材质，强混合效果色。 | `time`、`screenSize`、fog/color；噪声 octave 是 define。 | 可用于高危装饰块或末日污染方块。接入简单。 |
+| `rainbow_slime_block` | raymarch 彩虹黏液/软体球风格材质。 | `time`、`screenSize`、fog/color；步数、距离、表面阈值为 define。 | 可用于特殊液态/软体块。注意透明排序和性能。 |
+| `rendertype_glass_sphere` | 简单玻璃球 Fresnel、反射色、边缘光。 | `GameTime`，其余颜色/alpha 在 GLSL 内。 | 适合作为雪景球、容器玻璃、能量球的首批简单玻璃 shader。 |
+| `shader` | 基础屏幕空间球体光照 shader，写死球心/半径，带噪声细节。 | `time`、camera/matrix、深度；球心/半径/光照颜色是 const。 | 可作为学习模板，不建议直接用于正式内容，需参数化中心/半径。 |
+| `sky_block` | 天空/云雾块材质，带体积噪声和可选纹理。 | `uColor`、`time`、`screenSize`、`yaw/pitch`；步数和噪声 octave 是 define。 | 可用于天空盒方块、维度门内部、特殊玻璃。 |
+| `spotlight` | 体积聚光灯。根据深度重建位置，计算锥角、范围、方向和颜色衰减。 | `lightPos`、`lightDir`、`lightRange`、`innerConeAngle`、`outerConeAngle`、`lightColor`、`lightIntensity`。 | 适合炮塔探照灯、机器照明、警戒光束。需要全屏或体积 pass，并管理深度采样。 |
+| `starfield` | 可配置星空背景，支持球面贴图、高级星河/超新星/虫洞/彗星、大星层。 | 与 `iap` 基本相同，额外有 `Opacity`、`ColorModulator`。 | 适合天空、GUI、空间维度。若只要星空，先用这个；若要更强对比，选 `iap`。 |
+| `star_sky` | 体积星云天空，分形迭代和体积步进较固定。 | `time`、`iZoom`、`screenSize`、`cameraPos`、`yaw/pitch`；迭代/亮度/饱和度为 define。 | 适合维度天空或传送门背景。接入中等，主要需要相机角同步。 |
+| `sun` | Mandelbulb 太阳/能量球，和 `mandelbulb_shader` 类似但偏发光天体。 | `time`、camera/matrix、深度；球心/半径/迭代为 const。 | 可做远景太阳或能量实体。正式使用前参数化球心和半径。 |
+| `text` | 文本/图标遮罩内填充特效。`useType` 切换云、纹理混合、纯色、银河。 | `useType` 1-3 和默认银河、`solidColor`、`time`、`screenSize`、`yaw/pitch`、`Texture0/1`。 | 适合 GUI 字体、徽章、说明书标题、特殊物品名称贴花。 |
+| `trail` | 简化轨迹 shader：用遮罩亮度作为 alpha，流动渐变并与主画面混合。 | `time`、`screenSize`、`Texture0`、`ColorTexture0`、`MainTarget0`。 | 比 `melee_trail` 更容易接入，可先给弹道/能量线测试。 |
+| `volumetric_shader` | 黄金比例/体积光风格全屏图案，ACES tone map。 | `time`、`screenSize`、`yaw/pitch`；颜色矩阵在 GLSL const。 | 适合维度背景或纯视觉测试。无深度依赖，迁移成本低。 |
+| `warp` | 玻璃/折射球局部材质，采样屏幕与目标纹理，带 Fresnel 反射。 | `uColor`、`uType`、`time`、`screenSize`；折射步数为 const。 | 可做护盾球、传送门表面。需要提供 `ScreenTexture` 和 `TargetTexture`。 |
+| `warp_world` | 世界屏幕扭曲，多模式：玻璃球、冲击波、镜面、高级镜面。 | `useType` 0-3、`intensity`、`uColor`、`time`、`screenSize`。 | 适合爆炸冲击波、空间扭曲、镜面护盾。强依赖主画面采样，应作为中后期迁移。 |
+| `water_block` | 动态水面/能量液体材质，基础贴图透明处生成程序水纹。 | `time`、`screenSize`、`yaw/pitch`、fog/color；水纹细节 scale 是 const。 | 适合特殊流体方块或机器液窗。接入简单，但需确认与 Forge fluid render 的关系。 |
+
+## Program 与 PostChain 说明
+
+| Shader | 效果 | 可配置点 | 1.20.1 应用建议 |
+| --- | --- | --- | --- |
+| `program/invert_colors` | 全屏反色/强度蒙版。`UseType` 0 全屏，1 中心圆扩散，2 自上而下扫描线，3 分形噪声，4 Voronoi 细胞，5 裂缝，6 马赛克，7 径向扭曲，8 额外分支。 | `InvertStrength`、`UseType`、`ScreenSize`。 | 可用于 EMP、闪光、眩晕、辐射异常、传送效果。配合 `post/invert_colors.json` 作为首个 PostChain 试验最合适。 |
+| `program/transparency` | 多层透明/粒子/天气/云 framebuffer 合成，并附带屏幕空间折射玻璃球实验。按深度排序若干层后合成。 | `Time`、`OutSize`、`ProjMat`；`NUM_LAYERS`、`STYLE`、球体中心/半径等多为 shader 内部常量或从像素编码读取。 | 高风险。需要 Minecraft Fabulous/半透明目标兼容知识，且当前 clean port 没有对应 framebuffer 管线。建议暂不作为首批迁移。 |
+| `post/invert_colors` | PostChain：`minecraft:main -> swap -> minecraft:main`，pass 名为 `arcanevortex:invert_colors`。 | pass program 和 uniform 需由 Java 获取后设置。 | 迁入时改成 `hbm:invert_colors`，路径放 `assets/hbm/shaders/post/invert_colors.json`。 |
+| `post/warp` | PostChain：同样主目标到 swap 再 blit，pass 名为 `arcanevortex:warp`。 | 当前 `program` 目录没有 `warp.json`，只有 core `warp`；需要补齐 program 资源或改为 core/RenderType 用法。 | 迁移前先确认缺失 program 是否在其他源码包中，否则该 post 链不能直接工作。 |
+
+## 建议的 1.20.1 接入路线
+
+1. 先建资源目录：
+   - `src/main/resources/assets/hbm/shaders/core`
+   - `src/main/resources/assets/hbm/shaders/program`
+   - `src/main/resources/assets/hbm/shaders/post`
+2. 复制目标 shader 三件套或 program 文件，并把 JSON 内 `arcanevortex:<name>` 改为 `hbm:<name>`。
+3. 新增客户端 shader 注册类：
+   - 在 mod event bus 监听 `RegisterShadersEvent`。
+   - 对 core shader 使用 `new ShaderInstance(resourceProvider, HBM.rl("<name>"), vertexFormat)` 注册。
+   - 保存 `ShaderInstance`，供自定义 `RenderType.ShaderStateShard` 或 renderer 取用。
+4. 新增 runtime uniform 写入层：
+   - 每次渲染前写 `time`、`screenSize`、相机角、相机位置。
+   - 对实体/方块实体效果写 `entityPos`、`scale`、`intensity`、`useType`。
+   - 对颜色类效果统一提供 `setVec3/setVec4/setPackedColorInt` 工具。
+5. 对需要主画面采样的 shader，先不要直接硬接：
+   - `black_hole`、`black_square`、`black_world`、`partial_darkness`、`nebula_cube`、`spotlight`、`warp`、`warp_world` 都需要可读 scene color/depth。
+   - 需要设计独立 framebuffer copy 或 PostChain pass，否则采样器为空会黑屏、白屏或只显示遮罩。
+6. 对不依赖深度/主画面的 shader，可作为首批低风险验证：
+   - `flowing_gradient`
+   - `floating_shapes`
+   - `rendertype_glass_sphere`
+   - `text`
+   - `fantasy_block`
+   - `ragnarok_block`
+   - `starfield` / `iap`
+   - `cosmic_neo`
+7. 对 PostChain：
+   - 加载 `PostChain` 时机应在 client resource reload 后。
+   - 窗口尺寸变化后调用 resize 或重建。
+   - 所有后处理应有客户端配置开关和性能档位。
+   - `program/invert_colors` 可作为首个后处理验证目标。
+
+## HBM 内容应用映射
+
+- 反物质、奇点、黑洞类：
+  - 首选 `black_hole_pro`，成熟后换 `black_hole`。
+  - 辅助使用 `partial_darkness` 做区域暗化。
+- 核爆、冲击波、弹丸闪光：
+  - `black_world` 用于爆发中心色散和强光。
+  - `warp_world useType=1` 用于球形冲击波扭曲。
+  - `program/invert_colors UseType=1/2/5` 用于闪屏、扫描和裂缝式冲击。
+- 能量管线、激光、机器充能：
+  - `flowing_gradient` 适合多色流动材质。
+  - `trail` 适合弹道能量线。
+  - `melee_trail` 适合武器刀光和复杂轨迹。
+- 传送门、维度、宇宙装置：
+  - `cosmic_neo`、`cosmic`、`starfield`、`iap`、`star_sky`。
+  - 如果只做方块内部材质，优先 `cosmic_neo`。
+- 护盾、玻璃、力场：
+  - `rendertype_glass_sphere` 是低风险起点。
+  - `warp` / `warp_world` 提供更强折射，但需要主画面纹理。
+  - `glow_edge` 可做护盾边缘和命中高亮。
+- 异常污染、裂解、末日材质：
+  - `black_square`、`ragnarok_block`、`mandelbrot`、`volumetric_shader`。
+- 探照灯/警示光：
+  - `spotlight` 可做体积锥光，但必须等深度采样框架稳定后接入。
+
+## 迁移注意事项
+
+- 不要一次性迁入全部 shader。先用一个低风险 core shader 和一个 post shader 打通资源、注册、uniform、reload、resize。
+- 所有客户端类必须放在 client-only 包或通过 `Dist.CLIENT` 事件加载，避免 dedicated server 加载 Minecraft client 类。
+- `screenSize`、`ScreenSize`、`OutSize` 命名不统一，Java 写 uniform 时必须按 shader 实际名称逐个处理。
+- `modelViewMatrix` 和 `ModelViewMat` 同时出现；部分 shader 用小驼峰版本做深度重建，不能只依赖 vanilla 自动 uniform。
+- 写死世界坐标的 shader 包括 `shader`、`sun`、`mandelbulb_shader` 等，正式使用前必须把中心/半径改成 uniform。
+- `cosmic` 默认 `externalScale` JSON 值为 `0.0`，shader 内会计算 `1.0 / externalScale`；实际渲染前必须写入非零值。
+- `post/warp.json` 引用 `arcanevortex:warp`，但 `program` 目录没有对应 `warp` program 文件。它不能直接作为 PostChain 使用，除非补齐 program 资源或改管线。
+- `program/transparency` 读取 Fabulous 风格多目标：translucent、item entity、particles、clouds、weather 及其 depth。clean port 未建立这些目标绑定前不应迁移。
+
+## 推荐首批验证清单
+
+- 资源验证：
+  - 迁入 `flowing_gradient` 到 `assets/hbm/shaders/core`。
+  - 新增一个临时客户端 RenderType，在简单 quad 或测试 BlockEntity 上渲染。
+  - 每帧设置 `time`、`FlowSpeed`、`colorCount`、`color1`-`color3`、`alpha`、`gradientSpan`。
+- 后处理验证：
+  - 迁入 `program/invert_colors` 和 `post/invert_colors`。
+  - 改 namespace 为 `hbm`。
+  - 添加配置开关和按键/调试命令触发 `InvertStrength` 0 -> 1。
+  - 测试 `UseType` 0、1、2、5、7。
+- 稳定性检查：
+  - 进入世界、切换全屏、调整窗口大小、F3+T 重载资源。
+  - dedicated server 启动不加载任何 client shader 类。
+  - shader 编译失败时记录日志并禁用效果，不影响游戏启动。
+
+## 后续工程记录建议
+
+- 新增库移植文档：`工程记录/库移植/<date>-modern-effect-render-library-源码功能追踪.md`
+  - 专门记录 Java 侧 shader 注册、PostChain 管理、RenderType 工厂、uniform 写入工具。
+- 每个真实内容接入时，在对应机器/物品/实体迁移文档中引用本文，并记录实际使用的 shader、uniform 配置和性能限制。
