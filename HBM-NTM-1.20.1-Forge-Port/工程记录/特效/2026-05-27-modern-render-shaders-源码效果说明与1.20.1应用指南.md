@@ -188,3 +188,94 @@
 - 新增库移植文档：`工程记录/库移植/<date>-modern-effect-render-library-源码功能追踪.md`
   - 专门记录 Java 侧 shader 注册、PostChain 管理、RenderType 工厂、uniform 写入工具。
 - 每个真实内容接入时，在对应机器/物品/实体迁移文档中引用本文，并记录实际使用的 shader、uniform 配置和性能限制。
+
+## 2026-05-27 核爆 warp_world 冲击波试移植
+
+- 范围：
+  - 只接入 `core/warp_world` 的 `useType=1` 冲击波模式。
+  - 不迁移 `glassBall`、`mirror`、`advancedMirror` 的内容使用点。
+- 资源：
+  - 新增 `assets/hbm/shaders/core/warp_world.{json,vsh,fsh}`。
+  - 原始 JSON 的 attributes 缺少 `Normal`，但 vsh 读取 `in vec3 Normal`；1.20.1 侧改为 `Position, UV0, Color, Normal`，注册格式使用 `DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL`。
+- Java 入口：
+  - `ClientModEvents#registerShaders(...)` 注册 `hbm:warp_world`。
+  - `HbmRenderEffects` 作为客户端渲染库入口，负责 shader 注册后的持有、screen copy、tick、render、离开世界清理。
+  - 通用 API：`HbmRenderEffects.spawnWarpWorldShockwave(x, y, z, WarpWorldShockwaveSpec.of(waveScale, lifetime)...)`。
+  - 通用同步 API：`HbmRenderEffects.spawnWarpWorldShockwave(x, y, z, spec, initialAge)`；用于爆炸实体/网络包已经有当前年龄时，让 warp 半径直接对齐当前冲击波进度。
+  - 核爆便捷 API：`HbmRenderEffects.spawnNuclearWarpShockwave(x, y, z, waveScale, lifetime)`。
+  - Torex 核爆 API：`HbmRenderEffects.spawnTorexWarpShockwave(x, y, z, initialAge)`，用于真实核装置/起爆器生成的 `NukeTorexEntity`。
+  - `HbmParticleEffects#spawnMuke(...)` 在 `MukeWaveParticle.create(...)` 成功并加入粒子引擎时，同步调用核爆便捷 API。
+  - `NukeTorexEntity#clientVisualTick(...)` 在非 warm-start 的首次真实客户端视觉 tick 调用 Torex API，并传入当前 `tickCount` 作为 `initialAge`；起爆器日志中的 `[DET] Tried to detonate...` 路线走这里，而不是 `ParticleUtil.TYPE_MUKE` 粒子路线。
+  - `ClientForgeEvents#onRenderLevelStage(AFTER_WEATHER)` 调用 `HbmRenderEffects.render(...)`；`AFTER_WEATHER` 是 Forge 1.20.1 `LevelRenderer` 源码中明确 dispatch 的世界后段阶段。
+  - `ClientForgeEvents#onClientTick(END)` 推进特效年龄；离开世界时通过 `clearNetworkState()` 清理。
+- 半径与时序约束：
+  - warp 冲击波和 `MukeWaveParticle` 同时释放。
+  - 半径公式与 `MukeWaveParticle` 保持一致：
+    - `waveRadius = (1 - exp(-(age + partialTick) * 0.125)) * waveScale`
+    - `warpRadius = waveRadius + 1.0`
+  - 因此它会随着核爆冲击粒子一起放大，并始终位于冲击波粒子外缘一格。
+  - Torex 核爆的 SHOCK cloudlet 前沿不是上述指数公式，而是：
+    - `shockRadius ~= (tickCount * 1.5 + random) * 1.5`
+    - warp 线性半径使用 `warpRadius = age * 2.25 + 1.0`，对应 SHOCK cloudlet 外缘再外推一格。
+    - SHOCK cloudlet 生成到 `tickCount < 150`；warp 默认持续 `150 + 80 = 230` tick，150 tick 前保持满强度，之后淡出。
+  - 核爆 HUD 白闪持续 5 秒，约 100 tick；核爆便捷 API 会先覆盖这段不可见窗口，再额外保留至少 80 tick 的闪光后可见窗口。
+  - 默认 45 格 `waveScale` 的 warp 冲击波约持续 180 tick；更大 `waveScale` 会按半径推进到约 99.9% 的时间自动延长。
+  - 强度至少在白闪结束前保持满值，并与半径约 97% 的推进点取较大值后才开始淡出，避免原先 25 tick 线性淡出时看不清。
+  - y 位置沿用 `MukeWaveParticle` 的渲染偏移：中心渲染时减 `0.25` 格，使球面赤道贴合原平面冲击波视觉高度。
+- 渲染路径：
+  - 每帧先把主 RenderTarget 颜色 blit 到客户端 `TextureTarget sceneCopy`。
+  - `ScreenTexture`、`TargetTexture`、`Sampler0` 均绑定到 `sceneCopy`；当前 `useType=1` 实际只依赖 `ScreenTexture`。
+  - 用球面 quad mesh 作为 shader 承载体；shader 通过法线和视角计算边缘扭曲。
+- 客户端配置：
+  - `hbm-client.toml` / `effects.nukeWarpShockwave`：总开关，默认 `true`。
+  - `effects.nukeWarpShockwaveIntensity`：扭曲强度倍率，默认 `1.75`，范围 `0.0-8.0`。
+  - `effects.nukeWarpShockwaveMeshSegments`：球面水平分段数，默认 `48`，范围 `12-96`；垂直环数按分段数约三分之一计算。
+  - `effects.debugNukeWarpShockwaveWireframe`：调试开关，默认 `false`；开启后渲染淡蓝色线框，用于确认 API 触发和球面 pass 是否实际画出。
+- 可见性增强：
+  - `warp_world.fsh` 的 `useType=1` 分支将最大扭曲从原始 `0.08 * intensity` 提高到更明显的冲击波级别，并提高边缘高光。
+  - 增加轻微时间脉动，让冲击波经过复杂背景时更容易被看见。
+- 2026-05-27 形态修正：
+  - 用户实测确认 warp 已触发，但视觉像完整镜面/玻璃球。
+  - `HbmRenderEffects#render(...)` 重新启用 depth test 和 cull；冲击波球面切入方块、地形或其他已写入深度的几何体时，对应部分不再渲染。
+  - `warp_world.fsh` 的 `shockwave(...)` 改为薄壳边带：只保留视线切线附近的折射/淡边，其余球面片段 `discard`，避免完整玻璃球观感。
+  - shader 使用顶点 alpha 参与 `effectiveIntensity`，因此 Java 生命周期里的 `alpha(progressAge)` 会真实控制强度和透明度衰减。
+  - Torex 核爆 warp 从 `100 tick` 后开始淡出，避开 5 秒白闪后逐渐衰减到 `230 tick` 结束。
+- 2026-05-27 衰减优化：
+  - 用户实测希望衰减更明显。
+  - Java 生命周期 alpha 从线性淡出改为立方曲线：`alpha = (1 - fadeProgress)^3`，白闪结束后强度会更快下降。
+  - shader 内 `effectiveIntensity` 改为 `intensity * vertexAlpha * vertexAlpha`，让折射强度和可见边带随顶点 alpha 二次衰减。
+  - Torex 核爆 warp 仍从 `100 tick` 后开始淡出，但白闪后窗口扩展到 `120 tick`；整体变成“快速变弱、弱余波保留更久”，而不是最后突然消失。
+- 2026-05-27 通用 API 补足：
+  - `spawnWarpWorldShockwave(x, y, z, spec, initialAge)` 已公开，不同爆炸可以主动传入冲击波参数并指定当前年龄。
+  - `WarpWorldShockwaveSpec` 当前支持两类半径模型：
+    - `WarpWorldShockwaveSpec.of(waveScale, lifetime, fadeStartTick)`：指数扩张，半径为 `(1 - exp(-age * 0.125)) * waveScale + outerEdgeOffset`，适合 `MukeWaveParticle` 这类逐渐逼近最大半径的粒子波。
+    - `WarpWorldShockwaveSpec.linear(radiusPerTick, lifetime, fadeStartTick)`：线性扩张，半径为 `age * radiusPerTick + outerEdgeOffset`，适合 Torex SHOCK cloudlet、导弹冲击环、EMP 环形外推等恒速前沿。
+  - 可配置链式参数：
+    - `withIntensity(intensity)`：折射/边带强度；仍会乘客户端总配置 `effects.nukeWarpShockwaveIntensity` 的便捷 API 预设值。
+    - `withOuterEdgeOffset(offset)`：让 warp 位于实际粒子前沿外侧，核爆默认 `+1.0` 格。
+    - `withYOffset(yOffset)`：调整球心高度，用于贴合地面粒子或空爆中心。
+    - `withMeshSegments(segments)`：球面精度，建议普通爆炸 `24-36`，核爆 `48`，极大爆炸再提高。
+    - `withFadeStartTick(fadeStartTick)`：衰减开始 tick；之后按立方曲线淡出。
+  - `initialAge` 语义：
+    - 新爆炸刚生成时传 `0`。
+    - 客户端收到已有爆炸实体或同步包时传实体当前年龄，例如 `tickCount`，避免 warp 从爆心重新开始扩散。
+    - 如果 `initialAge >= spec.lifetime()`，库会直接忽略，避免生成已经结束的效果。
+  - 示例：
+    - 小型线性爆炸：`spawnWarpWorldShockwave(x, y, z, WarpWorldShockwaveSpec.linear(1.2F, 70, 20).withIntensity(0.8F).withMeshSegments(24), 0)`。
+    - 导弹/高速冲击环：`linear(2.0F, 100, 45).withIntensity(1.2F).withOuterEdgeOffset(1.0F)`。
+    - 指数式粒子波：`of(45.0F, 180, 100).withYOffset(-0.25F).withIntensity(1.75F)`。
+- 2026-05-27 不可见问题修正：
+  - `RenderTarget#bindRead()` 在 1.20.1 中只是绑定颜色纹理，不是绑定 `GL_READ_FRAMEBUFFER`；原先 screen copy 很可能没有真实复制主画面。
+  - `HbmRenderEffects#copyMainTarget(...)` 改为显式绑定 `GL_READ_FRAMEBUFFER = mainTarget.frameBufferId` 与 `GL_DRAW_FRAMEBUFFER = sceneCopy.frameBufferId` 后再 blit。
+  - 阶段性排查时曾将 warp 冲击波渲染 pass 改为 `disableDepthTest + depthMask(false)`，用于确认 shader pass 是否实际画出；实机确认后已在形态修正中恢复 depth test。
+  - shader 输出增加低强度可见边缘 alpha/highlight，便于实机确认 shader pass 是否成功跑起来。
+  - 新增调试线框：若线框可见但扭曲不可见，则问题集中在 shader/screen texture；若线框也不可见，则问题集中在核爆触发或 render stage。
+  - 2026-05-27 二次定位：不再依赖 `AFTER_LEVEL`，因为该 stage 在当前 Forge 1.20.1 源码中仅定义为“after everything”自定义阶段，并未在检索到的 `LevelRenderer#renderLevel` 主路径中稳定 dispatch；warp pass 改挂 `AFTER_WEATHER`。
+  - 线框调试开启时，客户端日志每秒输出一次 `HBM render effects: ...`，并在 spawn 时记录活动数量、位置、`waveScale` 与生命周期。
+  - 2026-05-27 三次定位：实机日志显示起爆器成功触发核装置，但没有 muke 粒子路线的证据。核装置由 `NuclearExplosionUtil -> NukeTorexEntity.createStandard(...)` 生成，因此 warp 必须挂到 `NukeTorexEntity` 的客户端视觉生命周期。此前只挂在 `HbmParticleEffects#spawnMuke(...)`，会导致真实核装置爆炸时 warp 根本不生成。
+- 验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 待实机检查：
+  - 在实际核爆瞬间确认 screen-copy pass 没有闪黑/闪白。
+  - 检查 Fabulous / 普通渲染管线下 `AFTER_WEATHER` 阶段的主画面采样是否一致。
+  - 若视觉上球面背面过重，可后续改为相机侧半球或按视线裁剪背面。

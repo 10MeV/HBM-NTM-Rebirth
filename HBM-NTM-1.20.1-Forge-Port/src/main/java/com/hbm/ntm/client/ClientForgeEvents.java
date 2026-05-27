@@ -2,6 +2,7 @@ package com.hbm.ntm.client;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
+import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.renderer.NukeTorexRenderer;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
@@ -89,12 +90,17 @@ public final class ClientForgeEvents {
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || minecraft.player == null) {
             return;
         }
 
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null || minecraft.player == null) {
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER) {
+            HbmRenderEffects.render(event);
+            return;
+        }
+
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
             return;
         }
 
@@ -137,6 +143,7 @@ public final class ClientForgeEvents {
         LegacyHbmAnimations.tick();
         HbmClientKeybinds.tick();
         ClientMuzzleFlashEffects.tick();
+        HbmRenderEffects.tick();
         pruneNetworkTransfers();
         pruneVanishedEntities();
 
@@ -170,6 +177,7 @@ public final class ClientForgeEvents {
         ClientPanelData.clearAll();
         ClientInformMessages.clearAll();
         ClientMuzzleFlashEffects.clearAll();
+        HbmRenderEffects.clearAll();
         NukeHudEffects.clearAll();
         TileSyncPacket.clearClientResyncRequests();
         ClientTileBinaryData.clearClientResyncRequests();

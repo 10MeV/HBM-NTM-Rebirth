@@ -1,6 +1,7 @@
 package com.hbm.ntm.entity.effect;
 
 import com.hbm.ntm.client.NukeHudEffects;
+import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoadingEntity;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModSounds;
@@ -54,6 +55,7 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
     public int lastRenderSortTick = Integer.MIN_VALUE;
     public boolean didPlaySound;
     public boolean didShake;
+    private boolean didSpawnWarpShockwave;
     private int clientSyncedAge = -1;
 
     public NukeTorexEntity(EntityType<? extends NukeTorexEntity> type, Level level) {
@@ -259,6 +261,11 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
             if (tickCount < 10) {
                 NukeHudEffects.triggerFlash();
             }
+        }
+
+        if (!warmStart && !didSpawnWarpShockwave) {
+            HbmRenderEffects.spawnTorexWarpShockwave(x, y, z, tickCount);
+            didSpawnWarpShockwave = true;
         }
 
         int spawnTarget = Math.max(level().getHeight(Heightmap.Types.WORLD_SURFACE, Mth.floor(x), Mth.floor(z)) - 3, 1);

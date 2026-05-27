@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.client.ClientForgeEvents;
+import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.client.sound.HbmDelayedSounds;
 import com.hbm.ntm.registry.ModParticleTypes;
@@ -642,6 +643,7 @@ public final class HbmParticleEffects {
         Particle wave = MukeWaveParticle.create(level, x, y, z, 45.0F, 25);
         if (wave != null) {
             Minecraft.getInstance().particleEngine.add(wave);
+            HbmRenderEffects.spawnNuclearWarpShockwave(x, y, z, 45.0F, 25);
         }
         if (!tiny) {
             Minecraft.getInstance().particleEngine.add(new MukeFlashParticle(level, x, y, z, balefire));
@@ -712,6 +714,7 @@ public final class HbmParticleEffects {
         Particle wave = MukeWaveParticle.create(level, x, y + 2.0D, z, waveScale, Math.max(1, (int) (25.0F * waveScale / 45.0F)));
         if (wave != null) {
             Minecraft.getInstance().particleEngine.add(wave);
+            HbmRenderEffects.spawnNuclearWarpShockwave(x, y + 2.0D, z, waveScale, Math.max(1, (int) (25.0F * waveScale / 45.0F)));
         }
 
         for (int i = 0; i < cloudCount; i++) {

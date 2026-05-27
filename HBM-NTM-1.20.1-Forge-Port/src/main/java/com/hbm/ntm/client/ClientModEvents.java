@@ -26,6 +26,7 @@ import com.hbm.ntm.client.particle.RbmkAnimatedParticle;
 import com.hbm.ntm.client.particle.SchrabFogParticle;
 import com.hbm.ntm.client.particle.SmokePlumeParticle;
 import com.hbm.ntm.client.particle.TownAuraParticle;
+import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.particle.RocketFlameParticle;
 import com.hbm.ntm.client.renderer.AssemblyMachineRenderer;
 import com.hbm.ntm.client.renderer.BasicMachineRenderer;
@@ -95,12 +96,14 @@ import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
+import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.registries.RegistryObject;
 
 import java.util.List;
+import java.io.IOException;
 
 @Mod.EventBusSubscriber(modid = HbmNtm.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class ClientModEvents {
@@ -295,6 +298,11 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         HbmClientKeybinds.register(event);
+    }
+
+    @SubscribeEvent
+    public static void registerShaders(RegisterShadersEvent event) throws IOException {
+        HbmRenderEffects.registerShaders(event);
     }
 
     @SubscribeEvent
