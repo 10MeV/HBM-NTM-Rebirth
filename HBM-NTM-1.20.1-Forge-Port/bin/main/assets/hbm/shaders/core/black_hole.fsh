@@ -618,6 +618,13 @@ void main()
 
     bool inRenderSphere = (sphereT.y >= 0.0);
 
+    if (hasSceneGeometry && entityViewDist > 0.0 && sceneViewDist < entityViewDist - 0.1)
+    {
+        fragColor = vec4(sceneColor, 1.0);
+        gl_FragDepth = sceneRawDepth;
+        return;
+    }
+
     vec3 lensLocalRo = (rayOrigin - entityPos) / scale;
     vec3 lensLocalRd = rayDir;
     bool raySwallowed = false;
@@ -651,7 +658,7 @@ void main()
 
         if (hasSceneGeometry && sceneViewDist < sphereEnterViewDist - 0.1)
         {
-            fragColor = vec4(lensedSceneColor, 1.0);
+            fragColor = vec4(sceneColor, 1.0);
             gl_FragDepth = sceneRawDepth;
             return;
         }
@@ -686,7 +693,7 @@ void main()
 
             if (hitOccluded)
             {
-                fragColor = vec4(lensedSceneColor, 1.0);
+                fragColor = vec4(sceneColor, 1.0);
                 gl_FragDepth = sceneRawDepth;
                 return;
             }

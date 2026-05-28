@@ -301,9 +301,9 @@
 - shader 使用源文件式全屏透镜：
   - 屏幕射线由 `inverse(projectionMatrix * modelViewMatrix)` 的 near/far 点反投影得到，`rayOrigin` 使用 near plane 点。
   - `raySphereIntersect(...)` 只决定是否进入球内体积渲染事件视界、吸积盘和 haze。
-  - 球外仍输出 `traceLensedRay(...)` 得到的 `lensedSceneColor`，不能 `discard`，也不能在球边界处把原图和扭曲图混成两层。
+  - 球外仍输出 `traceLensedRay(...)` 得到的 `lensedSceneColor`，不能按外层球边界 `discard`，也不能在球边界处把原图和扭曲图混成两层。
   - 不使用外层球壳、圆形边界、`impactDistance` 边界裁剪或边缘重影式混合。
-- 事件视界黑球是不透光的；吸积盘和 haze 与 `lensedSceneColor` 混合。前景深度已经遮住球内体积时，shader 仍保留透镜采样背景，但不把体积本体强行盖到前景方块上。
+- 事件视界黑球是不透光的；吸积盘和 haze 与 `lensedSceneColor` 混合。若主深度显示实心方块已经挡在黑洞中心或球内体积命中点之前，该像素直接返回原始 `sceneColor`，事件视界、吸积盘和引力透镜都不应透过方块显示。
 
 ### 半径与缩放契约
 
@@ -376,7 +376,7 @@ HbmBlackHoleEffects.updateTrackedBlackHole(vortex.getId(), pos.x, pos.y, pos.z,
 
 - 调用方只传世界坐标、半径基准、生命周期和颜色/精度参数，不直接操作 shader uniform。
 - `projectionMatrix`、`modelViewMatrix`、`cameraPos` 必须由 `HbmBlackHoleEffects` 当前帧统一写入；不要传单位矩阵，也不要跨渲染阶段缓存旧矩阵。
-- 半透明水体、云、粒子和核爆云在最终主画面里会被 `MainColorSampler` 采样并参与透镜；黑洞体积本体仍按 depth 判断是否被前景遮挡。
+- 半透明水体、云、粒子和核爆云在最终主画面里会被 `MainColorSampler` 采样并参与透镜；实心方块在黑洞前方时会按 depth 直接遮住事件视界、吸积盘和透镜。
 - 如果后续某种黑洞需要更大视觉范围，优先调整传入 `radius` 或库内 `LEGACY_EFFECT_RADIUS_MULTIPLIER` 的统一映射，不要单独改 shader 内某个部件半径。
 - 如果吸积盘出现规则网格，优先降低 `ditherStrength`、提高 `renderQuality` 或调低 `diskTextureStrength`；不要回到边界 `discard` 或球壳混合方案。
 
@@ -386,5 +386,6 @@ HbmBlackHoleEffects.updateTrackedBlackHole(vortex.getId(), pos.x, pos.y, pos.z,
 - 走路、疾跑、跳落着地时，黑洞图形与实体采样点稳定在世界位置，不随屏幕漂移。
 - 引力透镜没有圆形球壳边界，也没有旧边界位置的重影。
 - 事件视界为不透光黑球；吸积盘、光子环和空间扭曲随 `VortexEntity#getSize()` 一起缩小。
+- 实心方块遮挡黑洞时，方块前景像素应保持原画面，不能透出事件视界或引力透镜。
 - 水体、云层和核爆云在黑洞背后会被透镜采样，不应比事件视界更亮地盖住黑洞本体。
 - `.\gradlew.bat compileJava processResources --no-daemon` 作为资源和 Java 接线回归检查；实机重点看普通/Fabulous 管线下的主画面 copy 与 depth 遮挡。
