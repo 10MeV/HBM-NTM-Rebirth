@@ -26,6 +26,7 @@ import com.hbm.ntm.client.particle.RbmkAnimatedParticle;
 import com.hbm.ntm.client.particle.SchrabFogParticle;
 import com.hbm.ntm.client.particle.SmokePlumeParticle;
 import com.hbm.ntm.client.particle.TownAuraParticle;
+import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.particle.RocketFlameParticle;
 import com.hbm.ntm.client.renderer.AssemblyMachineRenderer;
@@ -145,6 +146,8 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK5.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK3.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_TOREX.get(), NukeTorexRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.BLACK_HOLE.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.VORTEX.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.FALLOUT_RAIN.get(), FalloutRainRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLOUD_FLEIJA.get(), CloudFleijaRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLOUD_SOLINIUM.get(), CloudSoliniumRenderer::new);
@@ -303,6 +306,7 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         HbmRenderEffects.registerShaders(event);
+        HbmBlackHoleEffects.registerShaders(event);
     }
 
     @SubscribeEvent

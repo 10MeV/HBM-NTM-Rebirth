@@ -21,14 +21,11 @@
 
 ## Clean Port 当前状态
 
-- `src/main/resources/assets/hbm` 下当前没有 `shaders` 目录。
-- `src/main/java` 中未发现 `RegisterShadersEvent`、`ShaderInstance`、`PostChain` 的现代 shader 注册层。
-- 现有客户端渲染主要使用 `RenderType`、OBJ renderer、粒子自定义 `ParticleRenderType` 和少量自建透明/加法 RenderType。
-- 因此迁移这些 shader 前，应先新增一个客户端专用库，例如 `ModernEffectShaders` / `HbmPostEffects`：
-  - 负责 `RegisterShadersEvent` 注册 core/program shader。
-  - 负责保存 `ShaderInstance` 引用。
-  - 负责每帧设置 `time`、`screenSize`、camera/matrix、强度和类型 uniform。
-  - 负责 PostChain 生命周期、窗口 resize 后重建、开关配置和资源重载。
+- `src/main/resources/assets/hbm/shaders/core` 已接入 `warp_world` 与 `black_hole`。
+- `ClientModEvents#registerShaders(...)` 负责注册 `HbmRenderEffects` 与 `HbmBlackHoleEffects` 的 core shader。
+- `HbmRenderEffects` 当前承载 `warp_world` 核爆冲击波；`HbmBlackHoleEffects` 当前承载 `black_hole` 全屏引力透镜/吸积盘后处理。
+- Program/PostChain 通用管线仍未作为公共库打通；`program/invert_colors`、`program/transparency` 和 `post/*` 仍按后续功能单独评估。
+- 其他尚未接入的现代 shader 仍应先补资源注册、uniform 写入、framebuffer copy、reload/resize 和 dedicated server 隔离，再挂到具体内容。
 
 ## 通用资源契约
 
@@ -56,8 +53,8 @@
 
 | Shader | 效果 | 可配置点 | 1.20.1 应用建议 |
 | --- | --- | --- | --- |
-| `black_hole` | 高级黑洞。读取主画面颜色和深度，重建世界位置，做引力透镜、吸积盘、核心吞噬和遮挡处理。 | `entityPos`、`scale`、`accretionDiskDensity`、`tiltAngle`、`intensity`、`time`；迭代数和核心半径在 GLSL const 中。 | 用于反物质、奇点、末期核爆视觉。需要 scene color/depth 采样和实体位置 uniform，优先做独立实体/方块实体 renderer 的屏幕空间球体通道。 |
-| `black_hole_pro` | 简化但仍较重的黑洞体积吸积盘。深度遮挡更直接，常量包含吸积盘内外半径、噪声、颜色 ramp、128 次迭代。 | `entityPos`、`scale`、`time`；吸积盘宽度、颜色和迭代数目前是 const。 | 比 `black_hole` 更适合作首批移植试验。需要 `DepthSampler`、`TextureSampler`、`RenderTargetSampler`。 |
+| `black_hole` | 当前正式黑洞库。读取主画面颜色和深度，源式全屏引力透镜，球内渲染不透光事件视界、吸积盘、haze 和光子环。 | `entityPos`、`scale`、`accretionDiskDensity`、`tiltAngle`、`intensity`、`renderQuality`、`ditherStrength`、`diskNoiseStrength`、`diskTextureStrength`、吸积盘颜色/ramp。 | 已由 `HbmBlackHoleEffects` 接入。用于普通奇点、黑洞实体和后续反物质/奇点类效果；调用方使用 `BlackHoleSpec`，不要直接写 shader uniform。 |
+| `black_hole_pro` | 简化但仍较重的黑洞体积吸积盘。深度遮挡更直接，常量包含吸积盘内外半径、噪声、颜色 ramp、128 次迭代。 | `entityPos`、`scale`、`time`；吸积盘宽度、颜色和迭代数目前是 const。 | 当前路线按用户要求舍弃 `black_hole_pro`，保留为源码对照，不作为正式库目标。 |
 | `black_square` | 基于深度重建世界表面的黑色/发光方块网格，按法线投影，带随机脉冲和噪声。 | `time/iTime`、`screenSize`、camera/matrix；方块密度、尺寸、边框、移动速度为 const。 | 可做维度侵蚀、黑色裂解地表覆盖。依赖主深度，适合后处理或区域屏幕空间效果。 |
 | `black_world` | 以 `projectilePos` 为中心的世界空间闪光/暗化/色散爆发。天空和场景几何分别处理。 | `projectilePos`、`lightIntensity`、`effectAlpha`、`time`、camera/matrix。 | 适合弹丸、冲击波、特殊爆炸预闪。应由客户端效果管理器按实体位置驱动。 |
 | `chaos` | 全屏/材质混沌背景。`useType` 切换云雾、洞穴/混沌、银河。 | `useType`、`time`、`screenSize`、`yaw`、`pitch`。 | 可作为 GUI/特殊物品材质或维度天空背景。若用于方块表面，需要遮罩纹理或 quad。 |
@@ -113,9 +110,10 @@
    - 每次渲染前写 `time`、`screenSize`、相机角、相机位置。
    - 对实体/方块实体效果写 `entityPos`、`scale`、`intensity`、`useType`。
    - 对颜色类效果统一提供 `setVec3/setVec4/setPackedColorInt` 工具。
-5. 对需要主画面采样的 shader，先不要直接硬接：
-   - `black_hole`、`black_square`、`black_world`、`partial_darkness`、`nebula_cube`、`spotlight`、`warp`、`warp_world` 都需要可读 scene color/depth。
-   - 需要设计独立 framebuffer copy 或 PostChain pass，否则采样器为空会黑屏、白屏或只显示遮罩。
+5. 对需要主画面采样的 shader，优先接入现有库或补齐专用 framebuffer copy：
+   - `black_hole` 已由 `HbmBlackHoleEffects` 封装，调用方只传 `BlackHoleSpec`。
+   - `warp_world useType=1` 已由 `HbmRenderEffects` 封装为冲击波 API。
+   - `black_square`、`black_world`、`partial_darkness`、`nebula_cube`、`spotlight`、`warp` 仍需单独设计 scene color/depth copy 或 PostChain pass，否则采样器为空会黑屏、白屏或只显示遮罩。
 6. 对不依赖深度/主画面的 shader，可作为首批低风险验证：
    - `flowing_gradient`
    - `floating_shapes`
@@ -134,8 +132,10 @@
 ## HBM 内容应用映射
 
 - 反物质、奇点、黑洞类：
-  - 首选 `black_hole_pro`，成熟后换 `black_hole`。
-  - 辅助使用 `partial_darkness` 做区域暗化。
+  - 当前正式路线使用 `black_hole` + `HbmBlackHoleEffects.BlackHoleSpec`。
+  - `black_hole_pro` 舍弃为源码对照，不作为正式库目标。
+  - 普通 `singularity` 已通过 `VortexEntity` 外挂 shader 黑洞渲染；服务端吸引、吞噬、破坏方块等机制不由 shader 库负责。
+  - `partial_darkness` 可在后续作为额外区域暗化叠加，但不替代 `black_hole` 本体。
 - 核爆、冲击波、弹丸闪光：
   - `black_world` 用于爆发中心色散和强光。
   - `warp_world useType=1` 用于球形冲击波扭曲。
@@ -275,7 +275,116 @@
   - 2026-05-27 三次定位：实机日志显示起爆器成功触发核装置，但没有 muke 粒子路线的证据。核装置由 `NuclearExplosionUtil -> NukeTorexEntity.createStandard(...)` 生成，因此 warp 必须挂到 `NukeTorexEntity` 的客户端视觉生命周期。此前只挂在 `HbmParticleEffects#spawnMuke(...)`，会导致真实核装置爆炸时 warp 根本不生成。
 - 验证：
   - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
-- 待实机检查：
-  - 在实际核爆瞬间确认 screen-copy pass 没有闪黑/闪白。
-  - 检查 Fabulous / 普通渲染管线下 `AFTER_WEATHER` 阶段的主画面采样是否一致。
-  - 若视觉上球面背面过重，可后续改为相机侧半球或按视线裁剪背面。
+
+## black_hole 现有 API 与 1.20.1 应用指南
+
+### 资源与定位
+
+- 正式黑洞路线只使用 `black_hole`，`black_hole_pro` 保留为源码对照，不再作为迁移目标。
+- 当前资源：
+  - `src/main/resources/assets/hbm/shaders/core/black_hole.json`
+  - `src/main/resources/assets/hbm/shaders/core/black_hole.vsh`
+  - `src/main/resources/assets/hbm/shaders/core/black_hole.fsh`
+- 当前 Java 入口：`com.hbm.ntm.client.render.HbmBlackHoleEffects`。
+- 当前内容接入点：`ClientForgeEvents#updateBlackHoleShaders(float partialTick)` 扫描 `VortexEntity` 与 `BlackHoleEntity`，实体 renderer 使用 `NoopRenderer`，视觉完全交给 shader 库。
+- 普通奇点的机制仍由 `VortexEntity` / `BlackHoleEntity` 保持：吸引、吞噬、破坏方块、转 rubble、伤害、缩小和消失都不写进渲染库。
+
+### 正确渲染方式
+
+- `HbmBlackHoleEffects` 在 `RenderLevelStageEvent.Stage.AFTER_LEVEL` 执行全屏 pass，基于最终世界主画面做引力透镜和黑洞体积合成。
+- 每绘制一个黑洞前都会把当前主 `RenderTarget` 的 color + depth 复制到 `sceneCopy`：
+  - `MainColorSampler` 绑定 `sceneCopy` color。
+  - `MainDepthSampler` 绑定 `sceneCopy` depth。
+  - `TextureSampler` 绑定程序噪声纹理。
+  - `ColorSampler` 绑定程序色带纹理。
+- 多个黑洞必须逐个复制当前主画面再绘制。这样后一个黑洞采样到前一个黑洞已经合成后的画面，不会互相擦除。
+- shader 使用源文件式全屏透镜：
+  - 屏幕射线由 `inverse(projectionMatrix * modelViewMatrix)` 的 near/far 点反投影得到，`rayOrigin` 使用 near plane 点。
+  - `raySphereIntersect(...)` 只决定是否进入球内体积渲染事件视界、吸积盘和 haze。
+  - 球外仍输出 `traceLensedRay(...)` 得到的 `lensedSceneColor`，不能 `discard`，也不能在球边界处把原图和扭曲图混成两层。
+  - 不使用外层球壳、圆形边界、`impactDistance` 边界裁剪或边缘重影式混合。
+- 事件视界黑球是不透光的；吸积盘和 haze 与 `lensedSceneColor` 混合。前景深度已经遮住球内体积时，shader 仍保留透镜采样背景，但不把体积本体强行盖到前景方块上。
+
+### 半径与缩放契约
+
+- `BlackHoleSpec.of(radius, lifetime)` 的 `radius` 是 HBM 旧版黑洞 `size` 语义，也就是调用方眼里的事件视界/黑洞大小基准。
+- Java 内部统一派生 shader `scale = radius * 6.0F`。这个 `scale` 绑定整个黑洞坐标系：空间扭曲 `WarpSpace(...)`、事件视界、光子环、吸积盘、haze 和外层透镜范围都会一起放大或缩小。
+- `withEventHorizonRadius(radius)` 会用同一规则重建整个 `scale`，不是只单独放大黑球。
+- 不要为修视觉再拆出“黑球倍率”“透镜倍率”“吸积盘倍率”三套互不相关的大小。普通奇点直接传 `vortex.getSize()`，它缩小时黑洞整体随之缩小。
+- `withAccretionDiskScale(radiusScale, thicknessScale)` 只用于特殊黑洞的艺术变体；普通奇点默认保持源 shader 比例。
+
+### API 入口
+
+- 一次性效果：
+  - `HbmBlackHoleEffects.spawnBlackHole(x, y, z, spec)`。
+  - `HbmBlackHoleEffects.spawnBlackHole(x, y, z, spec, initialAge)`，用于客户端收到已有特效时同步当前年龄。
+- 实体追踪效果：
+  - `HbmBlackHoleEffects.updateTrackedBlackHole(key, x, y, z, spec, age)`。
+  - `key` 必须稳定，通常使用实体 id。
+  - 追踪黑洞有短 TTL，调用方需要在渲染阶段或客户端 tick 持续刷新；实体消失后可调用 `removeTrackedBlackHole(key)`，未刷新也会自动清理。
+- 世界切换、断线或客户端网络状态清理时调用 `HbmBlackHoleEffects.clearAll()`。
+
+### BlackHoleSpec 可配置项
+
+- 生命周期：
+  - `withFade(fadeInTicks, fadeOutStartTick)` 控制淡入和淡出开始 tick；淡出为二次曲线。
+- 强度与姿态：
+  - `withIntensity(value)` 控制整体可见强度，最终会按生命周期 alpha clamp 到 `0.0-8.0`。
+  - `withTiltAngle(radians)` 控制吸积盘倾角。
+- 吸积盘：
+  - `withAccretionDiskDensity(value)` 控制盘密度，范围 `0.0-1.0`。
+  - `withAccretionDiskScale(radiusScale, thicknessScale)` 控制盘半径/厚度相对倍率，范围 `0.25-3.0`。
+  - `withDiskDetail(noiseStrength, textureStrength)` 控制噪声颗粒和色带纹理贡献，范围 `0.0-1.0`。
+  - `withDiskColor(r, g, b)` 设置吸积盘主色。
+  - `withDiskRamp(innerR, innerG, innerB, outerR, outerG, outerB)` 设置内外色带。
+- 渲染精度：
+  - `withRenderPrecision(RenderPrecision.NATIVE)`：源 shader 基准，`renderQuality=1.0`、`ditherStrength=2.0`。
+  - `withRenderPrecision(RenderPrecision.LOW)`：`0.5 / 2.4`，适合远景或大量小黑洞。
+  - `withRenderPrecision(RenderPrecision.MEDIUM)`：`0.75 / 2.2`。
+  - `withRenderPrecision(RenderPrecision.HIGH)`：`1.15 / 1.35`。
+  - `withRenderPrecision(RenderPrecision.ULTRA)`：`1.45 / 0.8`。
+  - `withRenderQuality(renderQuality, ditherStrength)` 可直接覆盖精度，当前 clamp 为 `renderQuality=0.35-1.6`、`ditherStrength=0.0-3.0`。
+- 兼容字段：
+  - `withLensBoundarySoftness(value)` 当前只保留 API 兼容；源式全屏透镜不再用它制造球壳边界，也不建议把它当作主要调参入口。
+
+### 普通奇点接入示例
+
+普通 `singularity` 落地后生成 `VortexEntity(level, 1.5F)`。客户端每帧按实体当前 size 生成一份 tracked black hole spec，天蓝色吸积盘由颜色 API 传入：
+
+```java
+float size = Math.max(0.05F, vortex.getSize());
+int lifetime = Math.max(1, (int) Math.ceil(size / Math.max(0.0001F, vortex.shrinkRate())) + 2);
+float intensity = Mth.clamp(size / 1.5F, 0.05F, 1.0F) * 1.35F;
+Vec3 pos = vortex.getPosition(partialTick);
+
+HbmBlackHoleEffects.updateTrackedBlackHole(vortex.getId(), pos.x, pos.y, pos.z,
+        HbmBlackHoleEffects.BlackHoleSpec.of(size, lifetime)
+                .withFade(0.0F, Math.max(1, lifetime - 20))
+                .withAccretionDiskDensity(0.01F)
+                .withTiltAngle((float) Math.toRadians(vortex.getId() % 90 - 45))
+                .withIntensity(intensity)
+                .withRenderQuality(1.6F, 0.45F)
+                .withDiskDetail(1.0F, 0.35F)
+                .withDiskColor(0.45F, 0.85F, 1.0F)
+                .withDiskRamp(0.85F, 1.35F, 1.6F, 0.05F, 0.45F, 1.0F),
+        0);
+```
+
+普通 `BlackHoleEntity` 兜底视觉可复用同一 API，只需换成橙金色盘面、稍低精度和固定 lifetime。不要给实体再写一个可见 renderer，否则会和全屏 shader 叠出双黑洞。
+
+### 接入注意事项
+
+- 调用方只传世界坐标、半径基准、生命周期和颜色/精度参数，不直接操作 shader uniform。
+- `projectionMatrix`、`modelViewMatrix`、`cameraPos` 必须由 `HbmBlackHoleEffects` 当前帧统一写入；不要传单位矩阵，也不要跨渲染阶段缓存旧矩阵。
+- 半透明水体、云、粒子和核爆云在最终主画面里会被 `MainColorSampler` 采样并参与透镜；黑洞体积本体仍按 depth 判断是否被前景遮挡。
+- 如果后续某种黑洞需要更大视觉范围，优先调整传入 `radius` 或库内 `LEGACY_EFFECT_RADIUS_MULTIPLIER` 的统一映射，不要单独改 shader 内某个部件半径。
+- 如果吸积盘出现规则网格，优先降低 `ditherStrength`、提高 `renderQuality` 或调低 `diskTextureStrength`；不要回到边界 `discard` 或球壳混合方案。
+
+### 验证清单
+
+- 同一世界同时存在两个普通奇点时，两个黑洞都能显示且互不擦除。
+- 走路、疾跑、跳落着地时，黑洞图形与实体采样点稳定在世界位置，不随屏幕漂移。
+- 引力透镜没有圆形球壳边界，也没有旧边界位置的重影。
+- 事件视界为不透光黑球；吸积盘、光子环和空间扭曲随 `VortexEntity#getSize()` 一起缩小。
+- 水体、云层和核爆云在黑洞背后会被透镜采样，不应比事件视界更亮地盖住黑洞本体。
+- `.\gradlew.bat compileJava processResources --no-daemon` 作为资源和 Java 接线回归检查；实机重点看普通/Fabulous 管线下的主画面 copy 与 depth 遮挡。

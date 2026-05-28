@@ -5,7 +5,9 @@ import com.hbm.ntm.entity.effect.CloudFleijaEntity;
 import com.hbm.ntm.entity.effect.CloudFleijaRainbowEntity;
 import com.hbm.ntm.entity.effect.CloudSoliniumEntity;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
+import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
+import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
@@ -108,6 +110,26 @@ public final class ModEntityTypes {
                     .fireImmune()
                     .noSummon()
                     .build("entity_effect_torex"));
+
+    public static final RegistryObject<EntityType<BlackHoleEntity>> BLACK_HOLE =
+            ENTITY_TYPES.register("entity_black_hole", () -> EntityType.Builder
+                    .<BlackHoleEntity>of(BlackHoleEntity::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_black_hole"));
+
+    public static final RegistryObject<EntityType<VortexEntity>> VORTEX =
+            ENTITY_TYPES.register("entity_vortex", () -> EntityType.Builder
+                    .<VortexEntity>of(VortexEntity::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_vortex"));
 
     public static final RegistryObject<EntityType<BalefireExplosionEntity>> BALEFIRE_EXPLOSION =
             ENTITY_TYPES.register("entity_balefire", () -> EntityType.Builder

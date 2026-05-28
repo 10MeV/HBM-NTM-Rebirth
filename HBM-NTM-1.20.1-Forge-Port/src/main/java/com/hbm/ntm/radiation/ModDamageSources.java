@@ -37,6 +37,8 @@ public final class ModDamageSources {
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "shrapnel"));
     public static final ResourceKey<DamageType> RUBBLE = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "rubble"));
+    public static final ResourceKey<DamageType> BLACKHOLE = ResourceKey.create(
+            Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "blackhole"));
 
     public static DamageSource radiation(Level level) {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(RADIATION));
@@ -84,6 +86,10 @@ public final class ModDamageSources {
 
     public static DamageSource rubble(Level level) {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(RUBBLE));
+    }
+
+    public static DamageSource blackhole(Level level, @Nullable Entity source) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(BLACKHOLE), source);
     }
 
     public static DamageSource explosion(Level level, @Nullable Entity source) {

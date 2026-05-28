@@ -3,7 +3,9 @@ package com.hbm.ntm.event;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.command.ModCommands;
 import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.config.WeaponConfig;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
+import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.network.ModMessages;
@@ -25,6 +27,7 @@ import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.uninos.HbmUninosNodespaces;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -294,6 +297,15 @@ public final class CommonForgeEvents {
         if (explosive > 0.0F && itemEntity.isOnFire() && itemEntity.level() instanceof ServerLevel level) {
             itemEntity.discard();
             WeaponExplosionUtil.explodeStandard(level, itemEntity.getX(), itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(), explosive, itemEntity, true, true);
+            return;
+        }
+
+        if (stack.is(ModItems.SINGULARITY.get()) && itemEntity.onGround()
+                && WeaponConfig.DROP_SINGULARITY.get() && itemEntity.level() instanceof ServerLevel level) {
+            itemEntity.discard();
+            VortexEntity vortex = new VortexEntity(level, 1.5F);
+            vortex.moveTo(itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 0.0F, 0.0F);
+            level.addFreshEntity(vortex);
         }
     }
 

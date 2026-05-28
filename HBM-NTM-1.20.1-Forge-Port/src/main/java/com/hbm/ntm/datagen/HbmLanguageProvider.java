@@ -172,6 +172,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("subtitles.hbm.tool.radaway", "RadAway injector hisses");
         add("subtitles.hbm.entity.ufo_blast", "Energy discharge");
         add("item.hbm.detonator", "Detonator");
+        add("item.hbm.singularity", "Singularity");
+        add("item.hbm.singularity.desc.1", "You may be asking:");
+        add("item.hbm.singularity.desc.2", "\"How is this possible?\"");
+        add("item.hbm.singularity.desc.3", "\"I have no idea!\"");
+        add("item.hbm.trait.drop", "[Drops when dropped]");
         add("tooltip.hbm.detonator.set", "Shift right-click to set position,");
         add("tooltip.hbm.detonator.trigger", "right-click to detonate!");
         add("tooltip.hbm.detonator.no_position", "No position set!");
@@ -272,6 +277,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("death.attack.electric", "%1$s was electrocuted");
         add("death.attack.shrapnel", "%1$s was shredded by shrapnel");
         add("death.attack.rubble", "%1$s was crushed by flying rubble");
+        add("death.attack.blackhole", "%1$s was consumed by a black hole");
         add("block.hbm.rad_absorber", "Radiation Absorber");
         add("block.hbm.rad_absorber.1", "Radiation Absorber Red");
         add("block.hbm.rad_absorber.2", "Radiation Absorber Green");
@@ -336,7 +342,25 @@ public class HbmLanguageProvider extends LanguageProvider {
                 addItem(item, title(item.getId().getPath()));
             }
         });
-        ModItems.NUKE_TAB_ITEMS.forEach(item -> addItem(item, title(item.getId().getPath())));
+        ModItems.NUKE_TAB_ITEMS.forEach(item -> {
+            if (!hasExplicitNukeName(item.getId().getPath())) {
+                addItem(item, title(item.getId().getPath()));
+            }
+        });
+    }
+
+    private static boolean hasExplicitNukeName(String id) {
+        return switch (id) {
+            case "detonator",
+                 "custom_tnt",
+                 "custom_nuke",
+                 "custom_hydro",
+                 "custom_amat",
+                 "custom_dirty",
+                 "custom_schrab",
+                 "custom_fall" -> true;
+            default -> false;
+        };
     }
 
     private static boolean hasExplicitControlName(String id) {
@@ -364,7 +388,8 @@ public class HbmLanguageProvider extends LanguageProvider {
                  "battery_sc.po210",
                  "battery_sc.au198",
                  "battery_sc.pb209",
-                 "battery_sc.am241" -> true;
+                 "battery_sc.am241",
+                 "singularity" -> true;
             default -> false;
         };
     }

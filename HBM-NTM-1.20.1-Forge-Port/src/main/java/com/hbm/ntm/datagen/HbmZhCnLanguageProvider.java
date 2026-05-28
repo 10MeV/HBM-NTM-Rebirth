@@ -170,6 +170,11 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("subtitles.hbm.tool.radaway", "\u6d88\u8f90\u5b81\u6ce8\u5c04");
         add("subtitles.hbm.entity.ufo_blast", "\u80fd\u91cf\u653e\u7535");
         add("item.hbm.detonator", "\u8d77\u7206\u5668");
+        add("item.hbm.singularity", "\u5947\u70b9");
+        add("item.hbm.singularity.desc.1", "\u4f60\u53ef\u80fd\u4f1a\u95ee\uff1a");
+        add("item.hbm.singularity.desc.2", "\u201c\u8fd9\u600e\u4e48\u53ef\u80fd\uff1f\u201d");
+        add("item.hbm.singularity.desc.3", "\u201c\u6211\u4e5f\u4e0d\u77e5\u9053\uff01\u201d");
+        add("item.hbm.trait.drop", "[\u6389\u843d\u89e6\u53d1]");
         add("tooltip.hbm.detonator.set", "\u6f5c\u884c\u53f3\u952e\u8bbe\u7f6e\u4f4d\u7f6e\uff0c");
         add("tooltip.hbm.detonator.trigger", "\u53f3\u952e\u8d77\u7206\uff01");
         add("tooltip.hbm.detonator.no_position", "\u672a\u8bbe\u7f6e\u4f4d\u7f6e\uff01");
@@ -269,6 +274,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("death.attack.electric", "%1$s\u88ab\u7535\u51fb\u81f4\u6b7b");
         add("death.attack.shrapnel", "%1$s\u88ab\u5f39\u7247\u6495\u788e");
         add("death.attack.rubble", "%1$s\u88ab\u98de\u6563\u74e6\u783e\u7838\u6b7b");
+        add("death.attack.blackhole", "%1$s\u88ab\u9ed1\u6d1e\u541e\u566c");
         add("block.hbm.rad_absorber", "\u8f90\u5c04\u5438\u6536\u5668");
         add("block.hbm.rad_absorber.1", "\u7ea2\u8272\u8f90\u5c04\u5438\u6536\u5668");
         add("block.hbm.rad_absorber.2", "\u7eff\u8272\u8f90\u5c04\u5438\u6536\u5668");
@@ -333,7 +339,25 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
                 addItem(item, fallbackTitle(item.getId().getPath()));
             }
         });
-        ModItems.NUKE_TAB_ITEMS.forEach(item -> addItem(item, fallbackTitle(item.getId().getPath())));
+        ModItems.NUKE_TAB_ITEMS.forEach(item -> {
+            if (!hasExplicitNukeName(item.getId().getPath())) {
+                addItem(item, fallbackTitle(item.getId().getPath()));
+            }
+        });
+    }
+
+    private static boolean hasExplicitNukeName(String id) {
+        return switch (id) {
+            case "detonator",
+                 "custom_tnt",
+                 "custom_nuke",
+                 "custom_hydro",
+                 "custom_amat",
+                 "custom_dirty",
+                 "custom_schrab",
+                 "custom_fall" -> true;
+            default -> false;
+        };
     }
 
     private static boolean hasExplicitControlName(String id) {
@@ -361,7 +385,8 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
                  "battery_sc.po210",
                  "battery_sc.au198",
                  "battery_sc.pb209",
-                 "battery_sc.am241" -> true;
+                 "battery_sc.am241",
+                 "singularity" -> true;
             default -> false;
         };
     }

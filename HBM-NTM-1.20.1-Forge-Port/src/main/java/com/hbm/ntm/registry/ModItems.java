@@ -16,6 +16,7 @@ import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.item.RadawayItem;
+import com.hbm.ntm.item.SingularityItem;
 import com.hbm.ntm.item.ToolboxItem;
 import com.hbm.ntm.fluid.HbmFluidContainerRules;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -156,6 +157,8 @@ public final class ModItems {
             () -> new FluidIdentifierItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> DETONATOR = registerLegacy("detonator",
             () -> new DetonatorItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SINGULARITY = registerLegacy("singularity",
+            () -> new SingularityItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CUSTOM_TNT = simpleItem("custom_tnt");
     public static final RegistryObject<Item> CUSTOM_NUKE = simpleItem("custom_nuke");
     public static final RegistryObject<Item> CUSTOM_HYDRO = simpleItem("custom_hydro");
@@ -511,7 +514,9 @@ public final class ModItems {
             "pellet_rtg_polonium",
             "pellet_rtg_americium",
             "pellet_rtg_gold"
-    ).stream()), CONTROL_BATTERY_ITEMS.stream()).toList();
+    ).stream()), Stream.concat(Stream.of(
+            SINGULARITY
+    ), CONTROL_BATTERY_ITEMS.stream())).toList();
 
     public static final List<RegistryObject<Item>> PARTS_TAB_ITEMS = Stream.concat(Stream.of(
             URANIUM_INGOT,

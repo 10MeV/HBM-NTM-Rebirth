@@ -2,8 +2,11 @@ package com.hbm.ntm.client;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
+import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmRenderEffects;
+import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.client.renderer.NukeTorexRenderer;
+import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
@@ -14,9 +17,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
@@ -95,6 +100,11 @@ public final class ClientForgeEvents {
             return;
         }
 
+        if (HbmBlackHoleEffects.isRenderStage(event.getStage())) {
+            updateBlackHoleShaders(event.getPartialTick());
+            HbmBlackHoleEffects.render(event);
+        }
+
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER) {
             HbmRenderEffects.render(event);
             return;
@@ -144,6 +154,7 @@ public final class ClientForgeEvents {
         HbmClientKeybinds.tick();
         ClientMuzzleFlashEffects.tick();
         HbmRenderEffects.tick();
+        HbmBlackHoleEffects.tick();
         pruneNetworkTransfers();
         pruneVanishedEntities();
 
@@ -167,6 +178,48 @@ public final class ClientForgeEvents {
         ClientTileBinaryData.pruneExpired(minecraft.level.getGameTime());
     }
 
+    private static void updateBlackHoleShaders(float partialTick) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null) {
+            return;
+        }
+        for (Entity entity : minecraft.level.entitiesForRendering()) {
+            if (entity instanceof VortexEntity vortex) {
+                float size = Math.max(0.05F, vortex.getSize());
+                int lifetime = Math.max(1, (int) Math.ceil(size / Math.max(0.0001F, vortex.shrinkRate())) + 2);
+                float intensity = Mth.clamp(size / 1.5F, 0.05F, 1.0F) * 1.35F;
+                Vec3 pos = vortex.getPosition(partialTick);
+                HbmBlackHoleEffects.updateTrackedBlackHole(vortex.getId(), pos.x, pos.y, pos.z,
+                        HbmBlackHoleEffects.BlackHoleSpec.of(size, lifetime)
+                                .withFade(0.0F, Math.max(1, lifetime - 20))
+                                .withAccretionDiskDensity(0.01F)
+                                .withTiltAngle((float) Math.toRadians(vortex.getId() % 90 - 45))
+                                .withIntensity(intensity)
+                                .withRenderQuality(1.6F, 0.45F)
+                                .withLensBoundarySoftness(0.6F)
+                                .withDiskDetail(1.0F, 0.35F)
+                                .withDiskColor(0.45F, 0.85F, 1.0F)
+                                .withDiskRamp(0.85F, 1.35F, 1.6F, 0.05F, 0.45F, 1.0F),
+                        0);
+            } else if (entity instanceof BlackHoleEntity blackHole) {
+                float size = Math.max(0.05F, blackHole.getSize());
+                Vec3 pos = blackHole.getPosition(partialTick);
+                HbmBlackHoleEffects.updateTrackedBlackHole(blackHole.getId(), pos.x, pos.y, pos.z,
+                        HbmBlackHoleEffects.BlackHoleSpec.of(size, 20 * 60)
+                                .withFade(0.0F, 20 * 60 - 20)
+                                .withAccretionDiskDensity(0.01F)
+                                .withTiltAngle((float) Math.toRadians(blackHole.getId() % 90 - 45))
+                                .withIntensity(1.2F)
+                                .withRenderQuality(1.35F, 0.7F)
+                                .withLensBoundarySoftness(0.6F)
+                                .withDiskDetail(1.0F, 0.35F)
+                                .withDiskColor(1.0F, 0.73F, 0.0F)
+                                .withDiskRamp(1.7F, 0.5F, 0.1F, 0.5F, 0.6F, 1.0F),
+                        0);
+            }
+        }
+    }
+
     private static void clearNetworkState() {
         ClientBinaryData.clearAll();
         ClientTileBinaryData.clearAll();
@@ -178,6 +231,7 @@ public final class ClientForgeEvents {
         ClientInformMessages.clearAll();
         ClientMuzzleFlashEffects.clearAll();
         HbmRenderEffects.clearAll();
+        HbmBlackHoleEffects.clearAll();
         NukeHudEffects.clearAll();
         TileSyncPacket.clearClientResyncRequests();
         ClientTileBinaryData.clearClientResyncRequests();
