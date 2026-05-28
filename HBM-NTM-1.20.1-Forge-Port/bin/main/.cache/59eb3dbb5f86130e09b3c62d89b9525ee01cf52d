@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-25T19:09:10.5187742	Loot Tables
+// 1.20.1	2026-05-28T21:20:26.1363686	Loot Tables
 1d566948370849820de3c0d2a03a1da2b54f3f8d data/hbm/loot_tables/blocks/ancient_scrap.json
 e33e09e9b7de4edfe47464adbc55ba1b3074df85 data/hbm/loot_tables/blocks/ash_digamma.json
 4dea21baadd671e0fc70004833537e05da50d388 data/hbm/loot_tables/blocks/asphalt.json
@@ -160,6 +160,7 @@ c7cdd2ec614664af5c6198f3da2143b967f30da1 data/hbm/loot_tables/blocks/gas_meltdow
 7d0071bbcca8eb117d0b7b382b7f87ccb0ca6782 data/hbm/loot_tables/blocks/gas_radon_dense.json
 eb8d706c9ed135063e6662d5e8283f4f564a1a07 data/hbm/loot_tables/blocks/gas_radon_tomb.json
 d8682797fe8cf425e456c2aff158b4c150531c24 data/hbm/loot_tables/blocks/glass_boron.json
+1ab3638097be3dffb65557618dd37782ea48973d data/hbm/loot_tables/blocks/glass_trinitite.json
 a7dbed77574e2335ecbe2749558f5bae06e10fd6 data/hbm/loot_tables/blocks/gneiss_brick.json
 45c7b551652c0b0d5ce4b569df7a93e72fd5bdc6 data/hbm/loot_tables/blocks/gneiss_chiseled.json
 ef9dbd9a2f3e089589d0d7b2cfa9bdd5dcd4cd82 data/hbm/loot_tables/blocks/gneiss_tile.json
@@ -217,6 +218,7 @@ a2e634b2007ad429c11f2c367ad6c8e6332e3430 data/hbm/loot_tables/blocks/machine_sol
 71ee92317aba47281c47a0c5870c5b15f6a21ff3 data/hbm/loot_tables/blocks/machine_turbofan.json
 34bcceaf28cc40b53edbe7d4692620bbadd7f9c2 data/hbm/loot_tables/blocks/machine_vacuum_distill.json
 50cbf69932bcba3ee3cd9e1a1df6ead5004afbc6 data/hbm/loot_tables/blocks/nuke_boy.json
+9501e2042793803b3c218827b32eb3b831c0a331 data/hbm/loot_tables/blocks/nuke_custom.json
 aed8d3c6d875659ed885b0d1c923158700af635f data/hbm/loot_tables/blocks/nuke_fleija.json
 c7360974526d7af24bb71af74d0c11472f2d9b51 data/hbm/loot_tables/blocks/nuke_fstbmb.json
 ef03afaf18aa7d467e44cbbdd12aa85737131c51 data/hbm/loot_tables/blocks/nuke_gadget.json
@@ -269,6 +271,11 @@ ebcdf9254dcc99e4f356067d8c72b9a72a86a249 data/hbm/loot_tables/blocks/ore_oil_emp
 f0c3e6d9f5416915663ddc607615416f26fec217 data/hbm/loot_tables/blocks/ore_oil_sand.json
 a8bddc6313068ed394a5a49119af5f6219ee697e data/hbm/loot_tables/blocks/ore_rare.json
 5fc14a2f7ebf5915e2dd895a2ffe69c086bca70c data/hbm/loot_tables/blocks/ore_schrabidium.json
+4084b99d075e4a647a2d0047c6e9f078bea9a792 data/hbm/loot_tables/blocks/ore_sellafield_diamond.json
+94041efeeda7981c2bad72a3b90a8986b3e9eaf7 data/hbm/loot_tables/blocks/ore_sellafield_emerald.json
+222946675a47933ab82863fe2fc127405914e440 data/hbm/loot_tables/blocks/ore_sellafield_radgem.json
+3166a592a5a229384021b9f18086dd1737763640 data/hbm/loot_tables/blocks/ore_sellafield_schrabidium.json
+c1c77589b7b168e50a2ef6ab8118ae9c79c5db7c data/hbm/loot_tables/blocks/ore_sellafield_uranium_scorched.json
 c36e18a04d3d6a6989084f132c6810dd8a8840e2 data/hbm/loot_tables/blocks/ore_sulfur.json
 b5d2c8bba1f8401d72288477d0ca66d2b8b8c888 data/hbm/loot_tables/blocks/ore_thorium.json
 eb1c0d13ee71986148ee7dfec497f16b0d599eb1 data/hbm/loot_tables/blocks/ore_tikite.json
@@ -292,6 +299,7 @@ b20ff585731d96ae339baffe53311cce04f67f5c data/hbm/loot_tables/blocks/reinforced_
 b3a4f8cf39a1ccf6bf53b67437b2a89fd1098b01 data/hbm/loot_tables/blocks/reinforced_stone.json
 ceca15f6767cd36834ef879c354229e029062558 data/hbm/loot_tables/blocks/sandbags.json
 6487cedccbb33980acdf83d343b5603ff38bdcd7 data/hbm/loot_tables/blocks/sellafield.json
+ac14821effe479a477c77c8f51a3ee3aa8e6ade8 data/hbm/loot_tables/blocks/sellafield_bedrock.json
 9273bf8a9fcee592ab999b663a5e02e5279d145f data/hbm/loot_tables/blocks/sellafield_slaked.json
 f57c2b13443e406bcd1f55f053fa9d00a8b583ed data/hbm/loot_tables/blocks/snowglobe.json
 64e12869e2ab3031b101b1e3f09f8ced5bffde1f data/hbm/loot_tables/blocks/spotlight_fluoro.json
@@ -311,6 +319,8 @@ bcc639d5f2e282c2288fccf6ac3e21ece0572cca data/hbm/loot_tables/blocks/tile_lab_cr
 7a43468f796ccf005cae2dd78e8793f371572786 data/hbm/loot_tables/blocks/waste_log.json
 650f4a585fde6967d7d13f85cab12f136b4d53bc data/hbm/loot_tables/blocks/waste_mycelium.json
 cd887155609a13a3f096fffa376b6170d41c2af1 data/hbm/loot_tables/blocks/waste_planks.json
+2752d251d78038ca0bc2463c631843b1497cdef7 data/hbm/loot_tables/blocks/waste_trinitite.json
+f30cb488b0240b344f5447a4d29fcbeff191f6e0 data/hbm/loot_tables/blocks/waste_trinitite_red.json
 d66e9b7ba5b988fc9c2328a094bd9639b8831c31 data/hbm/loot_tables/blocks/wood_barrier.json
 a8dcbec80bf3fee0d0a89a020202fe7c93f9ae98 data/hbm/loot_tables/blocks/wood_structure.json
 5fdcd7a29f16486d1e866806df9fd42e30e7cd7e data/hbm/loot_tables/blocks/yellow_barrel.json

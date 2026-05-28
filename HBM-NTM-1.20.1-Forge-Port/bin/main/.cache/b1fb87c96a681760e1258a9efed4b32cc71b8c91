@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-24T00:20:13.1085458	Tags for minecraft:item mod id hbm
+// 1.20.1	2026-05-28T21:20:26.133172	Tags for minecraft:item mod id hbm
 5ebd831e76f4e98d5ece9c7f49b2304f3647712a data/forge/tags/items/cast_plates.json
 dfbe085cc34d5b36c5a877a4b81a8a6cb6a74739 data/forge/tags/items/cast_plates/any_bismoid_bronze.json
 266d1de68cdf6befd32054c00a6259bab36ce6e8 data/forge/tags/items/cast_plates/arsenic_bronze.json
@@ -6,6 +6,12 @@ e7ea7e64f63c4bf70045be9290efa29cf112048b data/forge/tags/items/cast_plates/bismu
 63005c8c15fdaa54d47841f0e46f39204590ef3e data/forge/tags/items/cast_plates/combine_steel.json
 bee679ee31bf56e477e0dde67eccb92aa7646d3c data/forge/tags/items/circuits.json
 bee679ee31bf56e477e0dde67eccb92aa7646d3c data/forge/tags/items/circuits/chip_quantum.json
+efe9e0caf089100a228c46379f3aa70d7f602ddc data/forge/tags/items/container1000lava.json
+b3fbc58f388dca79804060ae1bc7931a7b542901 data/forge/tags/items/container1000sas3.json
+c62b9be8a52938b166add3c15cf8fe7b6021f08a data/forge/tags/items/container1000water.json
+2ff26d9fa71b48421a303350432127a111650d52 data/forge/tags/items/container100xpjuice.json
+c2c3046986129b0636c5f7cf4734bae77195c72f data/forge/tags/items/container250oil.json
+ced45fd5d7a388fcff4dfe874912b1bb172b86ea data/forge/tags/items/container250petroleum.json
 c85d20b12043a3f0b58e51d1d013e98b6c90845e data/forge/tags/items/dense_wires.json
 d0a0ec253b955cc6471b7453b507e0d0118e261b data/forge/tags/items/dense_wires/bscco.json
 c03ce7497f78e331662dcf7d944eef934a73b159 data/forge/tags/items/dense_wires/gold.json
@@ -21,7 +27,7 @@ dfb0d13b432c34d4369e2c66216b1d1740b00e2b data/forge/tags/items/dusts/lignite.jso
 4b8f1cdf16be251b21c5a9f084c6c082d64f41c8 data/forge/tags/items/dusts/spark_mix.json
 50e13739c5004ff1f5177fb29ecff7b5d3d45cd3 data/forge/tags/items/gems/coal.json
 b96f0a955b5755b293af014e9f8fd6129db7b1b3 data/forge/tags/items/gems/lignite.json
-d3c49e0e3846313b093806656e55bb1d938dcd85 data/forge/tags/items/glass.json
+e1ffeed8b117079cbd9f7c78a8196900e758c6af data/forge/tags/items/glass.json
 5dec7ff8a931b6fbf5dc8cfb7b3de51cf6d16392 data/forge/tags/items/ingots.json
 d29a12145b6e9d8f5241dc0017d6a8ee42bfe111 data/forge/tags/items/ingots/any_hardplastic.json
 3691ab56375c7f1d6565e2873b49b627bec21dcf data/forge/tags/items/ingots/any_plastic.json
@@ -38,6 +44,12 @@ eaaf2af95e461a867cee7d09bcdf4d126928e297 data/forge/tags/items/ingots/lead.json
 221bf86821f4de8fe006df9696fef29e13a45705 data/forge/tags/items/ingots/pvc.json
 5d6a2fe1a6bafce2b05f929b611a6cb2a669bed7 data/forge/tags/items/ingots/tantalium.json
 5d6a2fe1a6bafce2b05f929b611a6cb2a669bed7 data/forge/tags/items/ingots/tantalum.json
+efe9e0caf089100a228c46379f3aa70d7f602ddc data/forge/tags/items/ntmcontainer1000lava.json
+b3fbc58f388dca79804060ae1bc7931a7b542901 data/forge/tags/items/ntmcontainer1000sas3.json
+c62b9be8a52938b166add3c15cf8fe7b6021f08a data/forge/tags/items/ntmcontainer1000water.json
+2ff26d9fa71b48421a303350432127a111650d52 data/forge/tags/items/ntmcontainer100xpjuice.json
+c2c3046986129b0636c5f7cf4734bae77195c72f data/forge/tags/items/ntmcontainer250oil.json
+ced45fd5d7a388fcff4dfe874912b1bb172b86ea data/forge/tags/items/ntmcontainer250petroleum.json
 bf487fae09edc59b2c5a95df69b7078635f0565d data/forge/tags/items/ores.json
 1a2125a06b77a02dff21857be1ec4db0e364041f data/forge/tags/items/ores/asbestos.json
 83c1b936b21ab3022e9daa51bf6ea878e141d137 data/forge/tags/items/ores/coal.json

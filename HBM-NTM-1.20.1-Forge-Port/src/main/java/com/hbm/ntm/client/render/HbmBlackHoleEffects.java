@@ -44,6 +44,7 @@ public final class HbmBlackHoleEffects {
     // Legacy RenderBlackHole scales the whole model by size; the vortex swirl fades out at 6 * size.
     private static final float LEGACY_EFFECT_RADIUS_MULTIPLIER = 6.0F;
     private static final int GL_REPEAT = 10497;
+    private static final int GL_LINEAR = 9729;
     private static final RenderLevelStageEvent.Stage RENDER_STAGE = RenderLevelStageEvent.Stage.AFTER_LEVEL;
     private static final List<BlackHole> ACTIVE = new ArrayList<>();
     private static final Map<Integer, TrackedBlackHole> TRACKED = new ConcurrentHashMap<>();
@@ -196,6 +197,8 @@ public final class HbmBlackHoleEffects {
     private static void beginBlackHolePass(RenderTarget mainTarget, RenderLevelStageEvent event, Camera camera,
             Vec3 cameraPos, float time) {
         copyMainTarget(mainTarget);
+        configureTiledBilinear(noiseTexture);
+        configureTiledBilinear(colorRampTexture);
         RenderSystem.setShader(() -> blackHoleShader);
         blackHoleShader.setSampler("MainColorSampler", sceneCopy);
         blackHoleShader.setSampler("MainDepthSampler", Integer.valueOf(sceneCopy.getDepthTextureId()));
@@ -243,9 +246,8 @@ public final class HbmBlackHoleEffects {
                 }
             }
             noiseTexture = new DynamicTexture(noise);
-            noiseTexture.setFilter(true, false);
             noiseTexture.upload();
-            configureRepeat(noiseTexture);
+            configureTiledBilinear(noiseTexture);
         }
         if (colorRampTexture == null) {
             colorRampTexture = createColorRampTexture(1.0F, 1.0F, 1.0F,
@@ -268,14 +270,15 @@ public final class HbmBlackHoleEffects {
             }
         }
         DynamicTexture texture = new DynamicTexture(image);
-        texture.setFilter(true, false);
         texture.upload();
-        configureRepeat(texture);
+        configureTiledBilinear(texture);
         return texture;
     }
 
-    private static void configureRepeat(DynamicTexture texture) {
+    private static void configureTiledBilinear(DynamicTexture texture) {
         texture.bind();
+        RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_WRAP_S, GL_REPEAT);
         RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_WRAP_T, GL_REPEAT);
     }

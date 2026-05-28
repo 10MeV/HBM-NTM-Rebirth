@@ -54,7 +54,7 @@ public final class GenericMachineRecipeRuntime {
                 .filter(recipe -> recipe != currentRecipe)
                 .filter(recipe -> group.equals(recipe.getAutoSwitchGroup()))
                 .filter(recipe -> !recipe.getItemInputs().isEmpty())
-                .filter(recipe -> recipe.getItemInputs().get(0).ingredient().test(firstInput))
+                .filter(recipe -> recipe.getItemInputs().get(0).test(firstInput))
                 .findFirst()
                 .orElse(null);
     }
@@ -112,7 +112,7 @@ public final class GenericMachineRecipeRuntime {
         for (int i = 0; i < itemInputs.size(); i++) {
             ItemStack stack = items.getStackInSlot(inputSlots[i]);
             GenericMachineRecipe.ItemInput input = itemInputs.get(i);
-            if (stack.getCount() < input.count() || !input.ingredient().test(stack)) {
+            if (!input.test(stack)) {
                 return false;
             }
         }

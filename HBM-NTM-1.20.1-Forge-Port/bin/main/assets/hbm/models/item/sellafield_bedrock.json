@@ -1,1 +1,3 @@
-{ "parent": "hbm:block/sellafield_bedrock" }
+{
+  "parent": "hbm:block/sellafield_bedrock"
+}

@@ -1,8 +1,86 @@
 {
-  "parent": "hbm:block/ore_sellafield_diamond",
+  "parent": "minecraft:block/block",
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#base",
+          "tintindex": 0
+        },
+        "east": {
+          "texture": "#base",
+          "tintindex": 0
+        },
+        "north": {
+          "texture": "#base",
+          "tintindex": 0
+        },
+        "south": {
+          "texture": "#base",
+          "tintindex": 0
+        },
+        "up": {
+          "texture": "#base",
+          "tintindex": 0
+        },
+        "west": {
+          "texture": "#base",
+          "tintindex": 0
+        }
+      },
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "cullface": "down",
+          "texture": "#overlay"
+        },
+        "east": {
+          "cullface": "east",
+          "texture": "#overlay"
+        },
+        "north": {
+          "cullface": "north",
+          "texture": "#overlay"
+        },
+        "south": {
+          "cullface": "south",
+          "texture": "#overlay"
+        },
+        "up": {
+          "cullface": "up",
+          "texture": "#overlay"
+        },
+        "west": {
+          "cullface": "west",
+          "texture": "#overlay"
+        }
+      },
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ]
+    }
+  ],
   "textures": {
-    "particle": "hbm:block/sellafield_slaked_2",
     "base": "hbm:block/sellafield_slaked_2",
-    "overlay": "hbm:block/ore_overlay_emerald"
+    "overlay": "hbm:block/ore_overlay_emerald",
+    "particle": "hbm:block/sellafield_slaked_2"
   }
 }

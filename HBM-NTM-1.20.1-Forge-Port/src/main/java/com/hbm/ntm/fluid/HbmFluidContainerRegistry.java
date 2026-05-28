@@ -261,6 +261,22 @@ public final class HbmFluidContainerRegistry {
         public ItemStack copyFullContainer() {
             return fullContainer.copy();
         }
+
+        public boolean supportsItemTag() {
+            return kind == null && !fullContainer.isEmpty() && !fullContainer.hasTag();
+        }
+
+        public String legacyOreDictionaryName() {
+            return legacyOreDictionaryName("ntmcontainer");
+        }
+
+        public String legacyCompatOreDictionaryName() {
+            return legacyOreDictionaryName("container");
+        }
+
+        private String legacyOreDictionaryName(String prefix) {
+            return prefix + content + type.getName().replace("_", "").toLowerCase(java.util.Locale.US);
+        }
     }
 
     private HbmFluidContainerRegistry() {

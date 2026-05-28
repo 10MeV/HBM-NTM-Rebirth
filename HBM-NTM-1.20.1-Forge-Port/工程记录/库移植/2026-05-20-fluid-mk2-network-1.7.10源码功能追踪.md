@@ -363,6 +363,149 @@ Verification:
 
 - `.\gradlew.bat compileJava processResources --no-daemon` passed.
 
+## 2026-05-28 Modern Library Pass 37
+
+This pass closes the old `FluidContainerRegistry.registerContainer(...)` OreDictionary compatibility bridge for the direct, fixed-item fluid containers that can be represented safely as modern item tags:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/FluidContainerRegistry.java`
+  - `com/hbm/inventory/fluid/FluidType.java`
+- Preserve the old dictionary naming formula:
+  - default: `ntmcontainer<amount><fluidname-without-underscores-lowercase>`
+  - compat prefix: `container<amount><fluidname-without-underscores-lowercase>`
+- Extend `HbmFluidContainerRegistry.ContainerEntry` with tag-support and legacy-name helpers:
+  - Only direct fixed-item containers with no stack NBT are emitted as item tags.
+  - NBT-backed generic HBM containers are intentionally excluded because item tags cannot express a concrete stored HBM fluid.
+  - The water potion entry is also excluded because the old full container is an NBT potion stack.
+- Wire `HbmItemTagsProvider` to generate both old prefix variants for every currently active supported container:
+  - `minecraft:water_bucket`: `ntmcontainer1000water`, `container1000water`
+  - `minecraft:lava_bucket`: `ntmcontainer1000lava`, `container1000lava`
+  - `minecraft:experience_bottle`: `ntmcontainer100xpjuice`, `container100xpjuice`
+  - `hbm:cell_sas3`: `ntmcontainer1000sas3`, `container1000sas3`
+  - `hbm:ore_oil`: `ntmcontainer250oil`, `container250oil`
+  - `hbm:ore_gneiss_gas`: `ntmcontainer250petroleum`, `container250petroleum`
+- Fixed a datagen blocker discovered while validating the tag provider:
+  - `HbmBlockStateProvider#sellafieldSlakedWithItem(...)` and `sellafieldOreWithItem(...)` now assign all random variant models for a level in one `setModels(...)` call instead of repeatedly calling `addModel()` on the same partial state.
+  - This is a narrow generated-resource fix, not a new fluid behavior feature, but it unblocks full `runData` validation for the fluid tag bridge.
+
+Still deferred:
+
+- Modern recipes that need exact legacy full generic-container matching still need a later NBT-aware ingredient or machine-input bridge; Forge item tags deliberately cannot cover filled `canister_full`, `gas_full`, `fluid_tank_full`, and similar NBT fluid stacks.
+- 528-mode-specific `ore_gneiss_gas` amount remains deferred until the modern config profile exposes that compatibility setting.
+- Armor mod fillable-item traversal from old `FluidLoaderFillableItem` remains deferred until the armor mod/attachment system is migrated.
+
+Progress estimate after Pass 37:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 90%.
+- Fluid network/provider/receiver algorithm: about 76%.
+- In-world pipe graph: about 49%.
+- Fluid item/container loading: about 91%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 69%.
+- Overall fluid library migration: about 93%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options.
+- `.\gradlew.bat runData --no-daemon` passed after the Sellafield generated blockstate fix and generated the 12 legacy fluid-container Forge item tags under ignored `src/generated/resources`.
+
+## 2026-05-28 Modern Library Pass 38
+
+This pass closes the first NBT-sensitive generic-machine item input bridge for fluid containers, so generated package/unpackage recipes no longer treat every full fluid pack as the same input stack:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/FluidContainerRegistry.java`
+  - `com/hbm/inventory/fluid/FluidType.java`
+  - representative legacy `Fluids.X.getDict(...)` recipe call sites in crafting and machine recipe registration
+- Extend `GenericMachineRecipe.ItemInput` with an optional exact `ItemStack`:
+  - Keeps the normal `Ingredient` for recipe display/listing compatibility.
+  - Adds `ItemInput#test(...)`, which checks count, vanilla/tag ingredient, and optional exact item+NBT equality.
+  - Serializes/deserializes the exact stack over the recipe network payload.
+- Update generic machine runtime matching:
+  - `hasItemInputs(...)` now routes through `ItemInput#test(...)`.
+  - auto-switch recipe matching also honors the exact-stack bridge.
+- Update generic machine JSON handling:
+  - `input_items[]` may now include `exact_stack` with item/count/NBT data.
+  - `output_items[]` now uses the same local item-stack parser, preserving generated NBT outputs instead of relying on vanilla `ShapedRecipe` parsing.
+- Update `HbmRecipeProvider.GenericMachineRecipeBuilder`:
+  - NBT-bearing `inputItem(ItemStack)` entries emit `exact_stack`.
+  - Shared item-stack JSON writing is used for both exact inputs and outputs.
+  - Generated assembly-machine full fluid pack unpackage recipes now require the exact stored fluid, amount, and pressure NBT.
+- Validation sample:
+  - `assembly_machine/unpackage_water.json` now requires `hbm:fluid_pack_full` with `{hbm_fluid:"WATER",hbm_fluid_amount:32000,hbm_fluid_pressure:0}`.
+  - Current data generation emits 135 exact-stack assembly unpackage recipes.
+
+Still deferred:
+
+- Ordinary crafting recipes using old `Fluids.X.getDict(...)` still need a dedicated NBT-aware ingredient/remainder bridge; this pass only covers the generic machine recipe system.
+- Crafting-container remainder behavior from old `FluidContainerRegistry` is still not fully mirrored for generic recipes.
+- Armor mod fillable-item traversal from old `FluidLoaderFillableItem` remains deferred until the armor mod/attachment system is migrated.
+- 528-mode-specific `ore_gneiss_gas` amount remains deferred until the modern config profile exposes that compatibility setting.
+
+Progress estimate after Pass 38:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 90%.
+- Fluid network/provider/receiver algorithm: about 76%.
+- In-world pipe graph: about 49%.
+- Fluid item/container loading: about 92%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 71%.
+- Overall fluid library migration: about 94%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options.
+- `.\gradlew.bat runData --no-daemon` passed and generated exact-stack NBT inputs for the fluid pack unpackage recipes.
+
+## 2026-05-28 Modern Library Pass 39
+
+This pass starts the ordinary-crafting bridge for old `FluidType#getDict(...)` fluid-container ingredients and fixes one concrete NBT-sensitive crafting recipe that had been over-broad:
+
+- Legacy sources re-read:
+  - `com/hbm/inventory/FluidContainerRegistry.java`
+  - `com/hbm/inventory/fluid/FluidType.java`
+  - `com/hbm/main/CraftingManager.java`
+  - `com/hbm/inventory/recipes/BlastFurnaceRecipes.java`
+- Add `HbmFluidContainerIngredient`:
+  - Registers Forge custom ingredient type `hbm:fluid_container` during mod construction so recipe loading can deserialize it.
+  - JSON contract: `{ "type": "hbm:fluid_container", "fluid": "hbm:<fluid>", "amount": <mB> }`.
+  - Runtime matching uses `HbmFluidContainerRegistry.getFluidContent(stack, fluid) == amount`, intentionally preserving the old OreDictionary quantity exactness from names like `ntmcontainer1000water`.
+  - Display stacks are supplied from `HbmFluidContainerRegistry.getContainers(fluid)` filtered to the exact content amount, so both direct containers and NBT-backed HBM containers can be represented.
+  - Network serialization writes the legacy fluid name and mB amount.
+- Port first ordinary-crafting `getDict(...)` use:
+  - Old `CraftingManager` `inf_water` recipe used `Fluids.WATER.getDict(1_000)` plus aluminium plates and a diamond.
+  - Modern `control/inf_water.json` now uses `hbm:fluid_container` for 1000 mB water, preserving the old generic-container input instead of a single item/tag.
+- Fix the existing `canister_napalm` recipe:
+  - Old `BlastFurnaceRecipes` required `canister_full` with `Fluids.GASOLINE` metadata.
+  - Modern generated recipe now uses Forge strict NBT for `hbm:canister_full` with `{hbm_fluid:"GASOLINE",hbm_fluid_amount:1000,hbm_fluid_pressure:0}`.
+  - This is deliberately not the generic `hbm:fluid_container` ingredient because the legacy recipe was a specific gasoline canister stack, not any 1000 mB gasoline container.
+
+Still deferred:
+
+- Broad migration of all old ordinary crafting `Fluids.X.getDict(...)` call sites remains open; the new ingredient is the reusable bridge for those recipes.
+- Crafting remainder behavior for multi-container shaped/shapeless recipes still relies on vanilla/Forge crafting remainder mechanics; custom remainder handlers may still be needed for recipes that produce filled containers or consume multiple fluid containers.
+- `inf_water_mk2` is still deferred because its old recipe depends on steel pipe/shell item families that are not fully migrated as stable modern ingredients yet.
+- Machine-specific `OreDictStack(Fluids.X.getDict(...))` uses in assembly, anvil, and ammo press recipes still need machine-recipe integration through this same semantic bridge or direct fluid tank inputs.
+- 528-mode-specific `ore_gneiss_gas` amount remains deferred until the modern config profile exposes that compatibility setting.
+
+Progress estimate after Pass 39:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 90%.
+- Fluid network/provider/receiver algorithm: about 76%.
+- In-world pipe graph: about 49%.
+- Fluid item/container loading: about 93%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 71%.
+- Overall fluid library migration: about 94.5%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options.
+- `.\gradlew.bat runData --no-daemon` passed and generated `hbm:fluid_container` in `control/inf_water.json` plus strict-NBT gasoline canister input in `blast_furnace/canister_napalm.json`.
+
 ## 2026-05-24 Modern Library Pass 17
 
 This pass expands the fluid library into the first substantial legacy fluid-processing machine: `machine_liquefactor`.

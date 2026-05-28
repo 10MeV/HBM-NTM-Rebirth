@@ -5,6 +5,10 @@
   "input_items": [
     {
       "count": 1,
+      "exact_stack": {
+        "item": "hbm:fluid_pack_full",
+        "nbt": "{hbm_fluid:\"SLOP\",hbm_fluid_amount:32000,hbm_fluid_pressure:0}"
+      },
       "ingredient": {
         "item": "hbm:fluid_pack_full"
       }

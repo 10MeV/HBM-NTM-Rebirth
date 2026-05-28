@@ -3,7 +3,10 @@
   "category": "redstone",
   "ingredients": [
     {
-      "item": "hbm:canister_full"
+      "type": "forge:nbt",
+      "count": 1,
+      "item": "hbm:canister_full",
+      "nbt": "{hbm_fluid:\"GASOLINE\",hbm_fluid_amount:1000,hbm_fluid_pressure:0}"
     },
     {
       "item": "minecraft:slime_ball"

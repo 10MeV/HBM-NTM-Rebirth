@@ -21,6 +21,7 @@ import com.hbm.ntm.radiation.HazmatRegistry;
 import com.hbm.ntm.radiation.ItemRadiationRegistry;
 import com.hbm.ntm.radiation.LegacyFalloutConversions;
 import com.hbm.ntm.recipe.ModRecipes;
+import com.hbm.ntm.recipe.HbmFluidContainerIngredient;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -50,6 +51,7 @@ public class HbmNtm {
         ModEntityTypes.register(modBus);
         ModParticleTypes.PARTICLE_TYPES.register(modBus);
         ModCreativeTabs.register(modBus);
+        HbmFluidContainerIngredient.register();
 
         modBus.addListener(this::commonSetup);
         modBus.addListener(HbmDataGenerators::gatherData);

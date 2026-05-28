@@ -1,1 +1,21 @@
-{ "type": "minecraft:block", "pools": [ { "rolls": 1, "conditions": [ { "condition": "minecraft:survives_explosion" } ], "entries": [ { "type": "minecraft:item", "name": "hbm:ore_sellafield_uranium_scorched" } ] } ] }
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm:ore_sellafield_uranium_scorched"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "hbm:blocks/ore_sellafield_uranium_scorched"
+}

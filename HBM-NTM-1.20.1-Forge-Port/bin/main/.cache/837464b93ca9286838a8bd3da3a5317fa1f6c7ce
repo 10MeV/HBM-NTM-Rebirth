@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-25T21:07:49.8191561	Item Models: hbm
+// 1.20.1	2026-05-28T21:20:26.1291827	Item Models: hbm
 e0dd9cc86e850dae1c5e94ee6463e6ef9b707966 assets/hbm/models/item/battery_creative.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lead.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/battery_lithium.json
@@ -100,6 +100,14 @@ f847a8e9ce15b4a6a7cff9d4d523f2b63692497d assets/hbm/models/item/containment_box.
 a79c6209ed27a2dd87862d8d4c8cde0ac24a0715 assets/hbm/models/item/crystal_thorium.json
 1c0116c04f8984249c6f68b2a27129720f7b91bf assets/hbm/models/item/crystal_trixite.json
 717138e2327b0dfad433d85e77dddd88fd5cb7c1 assets/hbm/models/item/crystal_uranium.json
+7a5a6da350b4e9f917ee2a82679209395f4e56ae assets/hbm/models/item/custom_amat.json
+716065af39cb9d900983cf8032d2347415fc033b assets/hbm/models/item/custom_dirty.json
+23ac03763ab4f4f3dd5940b732ee7daae67ee08a assets/hbm/models/item/custom_fall.json
+c4e88ae554567ea3778b56fb33e5f3b926bc2497 assets/hbm/models/item/custom_hydro.json
+28152e98a467c2ac18e0c153d3a348ed9d00342b assets/hbm/models/item/custom_nuke.json
+04cd81e1ee5e09076722c2e0085a490847a42e57 assets/hbm/models/item/custom_schrab.json
+5b73a244bae2b3b88e8aa53e52eda3d5eb2c6fda assets/hbm/models/item/custom_tnt.json
+23728891df6cfc22ffe1833844154e473cb6c13d assets/hbm/models/item/detonator.json
 df6b0c1af6edbc0000a3c8f18f2af66d4ee1b8cd assets/hbm/models/item/digamma_diagnostic.json
 430374e77be25475dba8347ad32f827f56b23797 assets/hbm/models/item/disperser_canister.json
 4fd8e2da8f166f814afafe6d7def2ed5ee59510c assets/hbm/models/item/disperser_canister_empty.json
@@ -334,6 +342,7 @@ f5fda87eb91a590ec4bc0b6e28c3f1c13e5890c2 assets/hbm/models/item/radaway_strong.j
 64a78e3f52fe519098c764acbcdfa98785b3d9df assets/hbm/models/item/safety_fuse.json
 95417b1451a40dbe216ba965c3faaef7a3e826fe assets/hbm/models/item/sat_base.json
 993ca49cc096dcf75142e24cad9890ee8ebe0764 assets/hbm/models/item/scrap_nuclear.json
+6bbb68f44fa7eea40fd4c235b459963287944575 assets/hbm/models/item/singularity.json
 f4ffc995bd1e61cf5d8248e193167ca2a252b8c3 assets/hbm/models/item/solid_fuel.json
 b3ead878b5f93a5eea0eb876d009083a1eafd50d assets/hbm/models/item/solid_fuel_bf.json
 daf73f097b2c120584c1609177ba47a4b85b2209 assets/hbm/models/item/solid_fuel_presto.json

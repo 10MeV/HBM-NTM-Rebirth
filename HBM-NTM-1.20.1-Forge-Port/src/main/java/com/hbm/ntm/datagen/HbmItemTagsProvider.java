@@ -1,6 +1,7 @@
 package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.HolderLookup;
@@ -75,6 +76,19 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("gems/coal", net.minecraft.world.item.Items.COAL, net.minecraft.world.item.Items.CHARCOAL);
         addLegacyForgeTag("gems/lignite", "lignite", "coal_infernal");
         copy(HbmBlockTagsProvider.forgeBlockTag("storage_blocks/lead"), forgeItemTag("storage_blocks/lead"));
+
+        addLegacyFluidContainerTags();
+    }
+
+    private void addLegacyFluidContainerTags() {
+        for (HbmFluidContainerRegistry.ContainerEntry entry : HbmFluidContainerRegistry.getAllContainers()) {
+            if (!entry.supportsItemTag()) {
+                continue;
+            }
+            Item item = entry.fullContainer().getItem();
+            tag(forgeItemTag(entry.legacyOreDictionaryName())).add(item);
+            tag(forgeItemTag(entry.legacyCompatOreDictionaryName())).add(item);
+        }
     }
 
     private void addLegacyForgeTag(String path, String... itemNames) {

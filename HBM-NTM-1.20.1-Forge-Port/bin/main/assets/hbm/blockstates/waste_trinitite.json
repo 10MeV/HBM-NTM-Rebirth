@@ -1,1 +1,7 @@
-{ "variants": { "": { "model": "hbm:block/waste_trinitite" } } }
+{
+  "variants": {
+    "": {
+      "model": "hbm:block/waste_trinitite"
+    }
+  }
+}

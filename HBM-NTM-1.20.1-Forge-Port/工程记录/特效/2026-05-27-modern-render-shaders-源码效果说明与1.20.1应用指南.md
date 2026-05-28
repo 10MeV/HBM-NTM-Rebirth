@@ -378,7 +378,8 @@ HbmBlackHoleEffects.updateTrackedBlackHole(vortex.getId(), pos.x, pos.y, pos.z,
 - `projectionMatrix`、`modelViewMatrix`、`cameraPos` 必须由 `HbmBlackHoleEffects` 当前帧统一写入；不要传单位矩阵，也不要跨渲染阶段缓存旧矩阵。
 - 半透明水体、云、粒子和核爆云在最终主画面里会被 `MainColorSampler` 采样并参与透镜；实心方块在黑洞前方时会按 depth 直接遮住事件视界、吸积盘和透镜。
 - 如果后续某种黑洞需要更大视觉范围，优先调整传入 `radius` 或库内 `LEGACY_EFFECT_RADIUS_MULTIPLIER` 的统一映射，不要单独改 shader 内某个部件半径。
-- 如果吸积盘出现规则网格，优先降低 `ditherStrength`、提高 `renderQuality` 或调低 `diskTextureStrength`；不要回到边界 `discard` 或球壳混合方案。
+- 如果吸积盘出现由中心放射的规则扇环块，优先检查 `TextureSampler` / `ColorSampler` 的采样状态是否为平铺 `REPEAT` + 双线性 `LINEAR`；不要先改 `GasDisc` 极坐标公式，也不要回到边界 `discard` 或球壳混合方案。
+- 如果吸积盘只是颗粒太重或规则网格感偏强，再降低 `ditherStrength`、提高 `renderQuality` 或调低 `diskTextureStrength`。
 
 ### 验证清单
 

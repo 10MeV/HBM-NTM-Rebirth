@@ -6,6 +6,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.recipe.HbmFluidContainerIngredient;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -27,6 +28,7 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.common.crafting.StrictNBTIngredient;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
@@ -236,10 +238,20 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("control/disperser_canister_empty"));
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, ModItems.CANISTER_NAPALM.get())
-                .requires(ModItems.CANISTER_FULL.get())
+                .requires(StrictNBTIngredient.of(fluidContainerStack(ModItems.CANISTER_FULL.get(), 1, HbmFluids.GASOLINE, 1_000, 0)))
                 .requires(Items.SLIME_BALL)
                 .unlockedBy("has_canister_full", has(ModItems.CANISTER_FULL.get()))
                 .save(consumer, id("blast_furnace/canister_napalm"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.INF_WATER.get())
+                .pattern("AAA")
+                .pattern("WDW")
+                .pattern("AAA")
+                .define('A', ModItems.ALUMINIUM_PLATE.get())
+                .define('W', HbmFluidContainerIngredient.of(HbmFluids.WATER, 1_000))
+                .define('D', Items.DIAMOND)
+                .unlockedBy("has_aluminium_plate", has(ModItems.ALUMINIUM_PLATE.get()))
+                .save(consumer, id("control/inf_water"));
 
         GenericMachineRecipeBuilder.assembly("ass.emptypackage", 40, 100)
                 .inputItem(ModItems.TITANIUM_PLATE.get(), 4)
@@ -400,7 +412,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         }
 
         private GenericMachineRecipeBuilder inputItem(ItemStack stack) {
-            return inputIngredient(Ingredient.of(stack), stack.getCount());
+            return inputIngredient(Ingredient.of(stack), stack.getCount(), stack);
         }
 
         private GenericMachineRecipeBuilder inputTag(TagKey<Item> tag, int count) {
@@ -408,9 +420,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
         }
 
         private GenericMachineRecipeBuilder inputIngredient(Ingredient ingredient, int count) {
+            return inputIngredient(ingredient, count, ItemStack.EMPTY);
+        }
+
+        private GenericMachineRecipeBuilder inputIngredient(Ingredient ingredient, int count, ItemStack exactStack) {
             JsonObject entry = new JsonObject();
             entry.add("ingredient", ingredient.toJson());
             entry.addProperty("count", count);
+            if (!exactStack.isEmpty() && exactStack.hasTag() && !exactStack.getTag().isEmpty()) {
+                entry.add("exact_stack", itemStackJson(exactStack));
+            }
             inputItems.add(entry);
             return this;
         }
@@ -425,15 +444,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         }
 
         private GenericMachineRecipeBuilder outputItem(ItemStack stack) {
-            JsonObject object = new JsonObject();
-            object.addProperty("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-            if (stack.getCount() > 1) {
-                object.addProperty("count", stack.getCount());
-            }
-            if (stack.hasTag() && !stack.getTag().isEmpty()) {
-                object.addProperty("nbt", stack.getTag().toString());
-            }
-            outputItems.add(object);
+            outputItems.add(itemStackJson(stack));
             return this;
         }
 
@@ -487,6 +498,18 @@ public final class HbmRecipeProvider extends RecipeProvider {
             JsonObject object = new JsonObject();
             object.addProperty("fluid", new ResourceLocation(HbmNtm.MOD_ID, fluid.toPath()).toString());
             object.addProperty("amount", amount);
+            return object;
+        }
+
+        private static JsonObject itemStackJson(ItemStack stack) {
+            JsonObject object = new JsonObject();
+            object.addProperty("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+            if (stack.getCount() > 1) {
+                object.addProperty("count", stack.getCount());
+            }
+            if (stack.hasTag() && !stack.getTag().isEmpty()) {
+                object.addProperty("nbt", stack.getTag().toString());
+            }
             return object;
         }
     }

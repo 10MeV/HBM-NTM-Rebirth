@@ -2493,3 +2493,29 @@ noSmooth 对照报告：
 验证：
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-28 ResourceManager asVBO facade 批量对齐
+
+1.7.10 对照：
+
+- `ResourceManager` 中大量机器静态模型直接使用 `new HFRWavefrontObject(...).asVBO()`，而现代 `ObjMachineModels` 已有同名 `LegacyWavefrontModel` facade，但其中一批仍只是普通模型入口。
+- 本轮只处理旧端明确 `.asVBO()` 的 OBJ 入口；旧端 `AdvancedModelLoader.loadModel(...)`、普通 `new HFRWavefrontObject(...)`、`.noSmooth()` 无 `.asVBO()` 的入口保持不动。
+- 覆盖的机器段包括：
+  - 炼油/流体/化工/矿业/离心机/大型发电类：`refinery`、`fluidtank`、`vacuum_distill`、`catalytic_cracker`、`liquefactor`、`solidifier`、`compressor`、`coker`、`turbofan`、`steam_engine`、`industrial_turbine`、`cyclotron`、`machine_deuterium_tower` 等。
+  - 加热/锅炉/油井/烟囱/柴油/FENSU 旧式 facade：`oilburner`、`heatex`、`boiler`、`industrial_boiler`、`hephaestus`、`derrick`、`pumpjack`、`fracking_tower`、`flare_stack`、`chimney_*`、`dieselgen`、`battery/fensu*`。
+- `ResourceManager.pa_source/beamline/rfc/quadrupole/dipole/detector` 全部为 `HFRWavefrontObject(...).asVBO()`。
+- `ResourceManager` 的网络模型中 `substation`、`pipe_anchor`、`fluid_diode` 为 `.asVBO()`；`connector/pylon` 旧式 noSmooth VBO facade 已在前序批次存在。
+- RBMK 需要保留双入口：`rbmk_element_rods` / `rbmk_rods` 有普通 `.noSmooth()` 字段，也有对应 `*_vbo = ...noSmooth().asVBO()` 字段；控制台/吊车/按钮/仪表/终端等均为 VBO。
+- 融合反应堆 `torus/klystron/breeder/collector/boiler/mhdt/coupler/plasma_forge` 在旧端均为 `.asVBO()`；现代已有 baked part 入口，本轮补旧式整 OBJ facade。
+
+现代侧改动：
+
+- `ObjMachineModels` 为上述旧端 VBO 机器 facade 补 `.asVBO()`，并新增加热器、锅炉、油井、烟囱、柴油机、FENSU 等 `*_LEGACY` 入口；`ObjModelLibrary` 暴露对应 `MACHINE_*_LEGACY`。
+- `ObjParticleAcceleratorModels` 六个模型全部补 `.asVBO()`。
+- `ObjNetworkModels` 增加 `SUBSTATION_LEGACY`、`PIPE_ANCHOR_LEGACY`、`FLUID_DIODE_LEGACY`，并在 `ObjModelLibrary` 暴露。
+- `ObjRbmkModels` 增加 `ELEMENT_RODS_VBO`、`RODS_VBO`，并将吊车/控制台/按钮/仪表等旧 VBO 字段补 `.asVBO()`；`ObjModelLibrary` 暴露 RBMK 双入口。
+- `ObjFusionModels` 增加 `*_LEGACY` 整 OBJ VBO facade 和旧贴图句柄，保留现有 baked part/分 part 渲染入口。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。

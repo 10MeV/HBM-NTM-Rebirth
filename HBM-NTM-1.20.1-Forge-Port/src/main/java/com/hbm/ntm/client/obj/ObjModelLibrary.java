@@ -84,8 +84,25 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MACHINE_MIXER = ObjMachineModels.MIXER;
     public static final LegacyWavefrontModel MACHINE_FIREBOX_LEGACY = ObjMachineModels.FIREBOX_LEGACY;
     public static final LegacyWavefrontModel MACHINE_HEATING_OVEN_LEGACY = ObjMachineModels.HEATING_OVEN_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_OILBURNER_LEGACY = ObjMachineModels.OILBURNER_LEGACY;
     public static final LegacyWavefrontModel MACHINE_ELECTRIC_HEATER_LEGACY = ObjMachineModels.ELECTRIC_HEATER_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_HEATEX_LEGACY = ObjMachineModels.HEATEX_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_BOILER_LEGACY = ObjMachineModels.BOILER_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_BOILER_BURST_LEGACY = ObjMachineModels.BOILER_BURST_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_INDUSTRIAL_BOILER_LEGACY = ObjMachineModels.INDUSTRIAL_BOILER_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_HEPHAESTUS_LEGACY = ObjMachineModels.HEPHAESTUS_LEGACY;
     public static final LegacyWavefrontModel MACHINE_RTG_LEGACY = ObjMachineModels.RTG_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_DERRICK_LEGACY = ObjMachineModels.DERRICK_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_PUMPJACK_LEGACY = ObjMachineModels.PUMPJACK_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_FRACKING_TOWER_LEGACY = ObjMachineModels.FRACKING_TOWER_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_OILFLARE_LEGACY = ObjMachineModels.OILFLARE_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_CHIMNEY_BRICK_LEGACY = ObjMachineModels.CHIMNEY_BRICK_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_CHIMNEY_INDUSTRIAL_LEGACY = ObjMachineModels.CHIMNEY_INDUSTRIAL_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_INTAKE_LEGACY = ObjMachineModels.INTAKE_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_DIESELGEN_LEGACY = ObjMachineModels.DIESELGEN_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_BATTERY_SOCKET_LEGACY = ObjMachineModels.BATTERY_SOCKET_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_BATTERY_REDD_LEGACY = ObjMachineModels.BATTERY_REDD_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_FENSU_LEGACY = ObjMachineModels.FENSU_LEGACY;
     public static final LegacyWavefrontModel MACHINE_RADAR_BODY_LEGACY = ObjMachineModels.RADAR_BODY_LEGACY;
     public static final LegacyWavefrontModel MACHINE_RADAR_LEGACY = ObjMachineModels.RADAR_LEGACY;
     public static final LegacyWavefrontModel MACHINE_RADAR_LARGE_LEGACY = ObjMachineModels.RADAR_LARGE_LEGACY;
@@ -139,6 +156,9 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel NETWORK_CONNECTOR_SUPER_LEGACY = ObjNetworkModels.CONNECTOR_SUPER_LEGACY;
     public static final LegacyWavefrontModel NETWORK_PYLON_LARGE_LEGACY = ObjNetworkModels.PYLON_LARGE_LEGACY;
     public static final LegacyWavefrontModel NETWORK_PYLON_MEDIUM_LEGACY = ObjNetworkModels.PYLON_MEDIUM_LEGACY;
+    public static final LegacyWavefrontModel NETWORK_SUBSTATION_LEGACY = ObjNetworkModels.SUBSTATION_LEGACY;
+    public static final LegacyWavefrontModel NETWORK_PIPE_ANCHOR_LEGACY = ObjNetworkModels.PIPE_ANCHOR_LEGACY;
+    public static final LegacyWavefrontModel NETWORK_FLUID_DIODE_LEGACY = ObjNetworkModels.FLUID_DIODE_LEGACY;
     public static final ObjModelPart DOOR_SILO_HATCH = ObjDoorModels.SILO_HATCH;
     public static final ObjModelPart DOOR_SILO_HATCH_LARGE = ObjDoorModels.SILO_HATCH_LARGE;
     public static final LegacyWavefrontModel DOOR_SILO_HATCH_LEGACY = ObjDoorModels.SILO_HATCH_LEGACY;
@@ -192,6 +212,14 @@ public final class ObjModelLibrary {
     public static final ObjPartModel FUSION_MHDT = ObjFusionModels.MHDT_PARTS;
     public static final ObjModelPart FUSION_COUPLER = ObjFusionModels.COUPLER;
     public static final ObjPartModel FUSION_PLASMA_FORGE = ObjFusionModels.PLASMA_FORGE_PARTS;
+    public static final LegacyWavefrontModel FUSION_TORUS_LEGACY = ObjFusionModels.TORUS_LEGACY;
+    public static final LegacyWavefrontModel FUSION_KLYSTRON_LEGACY = ObjFusionModels.KLYSTRON_LEGACY;
+    public static final LegacyWavefrontModel FUSION_BREEDER_LEGACY = ObjFusionModels.BREEDER_LEGACY;
+    public static final LegacyWavefrontModel FUSION_COLLECTOR_LEGACY = ObjFusionModels.COLLECTOR_LEGACY;
+    public static final LegacyWavefrontModel FUSION_BOILER_LEGACY = ObjFusionModels.BOILER_LEGACY;
+    public static final LegacyWavefrontModel FUSION_MHDT_LEGACY = ObjFusionModels.MHDT_LEGACY;
+    public static final LegacyWavefrontModel FUSION_COUPLER_LEGACY = ObjFusionModels.COUPLER_LEGACY;
+    public static final LegacyWavefrontModel FUSION_PLASMA_FORGE_LEGACY = ObjFusionModels.PLASMA_FORGE_LEGACY;
 
     public static final ObjModelPart CAGE_LAMP = ObjLightModels.CAGE_LAMP;
     public static final ObjModelPart FLUORESCENT_LAMP_SINGLE = ObjLightModels.FLUORESCENT_LAMP_SINGLE;
@@ -424,7 +452,9 @@ public final class ObjModelLibrary {
 
     public static final LegacyWavefrontModel RBMK_ELEMENT = ObjRbmkModels.ELEMENT;
     public static final LegacyWavefrontModel RBMK_ELEMENT_RODS = ObjRbmkModels.ELEMENT_RODS;
+    public static final LegacyWavefrontModel RBMK_ELEMENT_RODS_VBO = ObjRbmkModels.ELEMENT_RODS_VBO;
     public static final LegacyWavefrontModel RBMK_RODS = ObjRbmkModels.RODS;
+    public static final LegacyWavefrontModel RBMK_RODS_VBO = ObjRbmkModels.RODS_VBO;
     public static final LegacyWavefrontModel RBMK_CRANE_CONSOLE = ObjRbmkModels.CRANE_CONSOLE;
     public static final LegacyWavefrontModel RBMK_CRANE = ObjRbmkModels.CRANE;
     public static final LegacyWavefrontModel RBMK_AUTOLOADER = ObjRbmkModels.AUTOLOADER;

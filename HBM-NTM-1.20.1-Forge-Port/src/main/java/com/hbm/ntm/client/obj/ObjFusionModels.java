@@ -1,8 +1,19 @@
 package com.hbm.ntm.client.obj;
 
+import com.hbm.ntm.HbmNtm;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 
 public final class ObjFusionModels {
+    public static final LegacyWavefrontModel TORUS_LEGACY = legacyModel("torus").asVBO();
+    public static final LegacyWavefrontModel KLYSTRON_LEGACY = legacyModel("klystron").asVBO();
+    public static final LegacyWavefrontModel BREEDER_LEGACY = legacyModel("breeder").asVBO();
+    public static final LegacyWavefrontModel COLLECTOR_LEGACY = legacyModel("collector").asVBO();
+    public static final LegacyWavefrontModel BOILER_LEGACY = legacyModel("boiler").asVBO();
+    public static final LegacyWavefrontModel MHDT_LEGACY = legacyModel("mhdt").asVBO();
+    public static final LegacyWavefrontModel COUPLER_LEGACY = legacyModel("coupler").asVBO();
+    public static final LegacyWavefrontModel PLASMA_FORGE_LEGACY = legacyModel("plasma_forge").asVBO();
+
     public static final ObjModelPart TORUS = part("fusion_torus");
     public static final ObjModelPart TORUS_BODY = part("fusion_torus_torus");
     public static final ObjModelPart TORUS_MAGNET = part("fusion_torus_magnet");
@@ -102,6 +113,16 @@ public final class ObjFusionModels {
 
     public static ObjModelPart translucentPart(String name) {
         return ObjModelLibrary.blockPart("fusion/" + name, RenderType.translucent());
+    }
+
+    public static LegacyWavefrontModel legacyModel(String name) {
+        return new LegacyWavefrontModel(
+                new ResourceLocation(HbmNtm.MOD_ID, "models/block/fusion/fusion_" + name + ".obj"),
+                texture(name));
+    }
+
+    public static ResourceLocation texture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/fusion/" + name + ".png");
     }
 
     private ObjFusionModels() {

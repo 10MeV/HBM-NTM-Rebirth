@@ -437,11 +437,9 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     private void sellafieldSlakedWithItem(RegistryObject<Block> block, String modelName) {
         ModelFile[] models = sellafieldSlakedModels(modelName);
         for (int level = 0; level <= 15; level++) {
-            var state = getVariantBuilder(block.get())
-                    .partialState().with(LegacySellafieldSlakedBlock.LEVEL, level).modelForState();
-            for (ModelFile model : models) {
-                state.modelFile(model).addModel();
-            }
+            getVariantBuilder(block.get())
+                    .partialState().with(LegacySellafieldSlakedBlock.LEVEL, level)
+                    .setModels(configuredModels(models));
         }
         simpleBlockItem(block.get(), models[0]);
     }
@@ -450,13 +448,19 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         String name = block.getId().getPath();
         ModelFile[] models = sellafieldOreModels(name, kind);
         for (int level = 0; level <= 15; level++) {
-            var state = getVariantBuilder(block.get())
-                    .partialState().with(LegacySellafieldSlakedBlock.LEVEL, level).modelForState();
-            for (ModelFile model : models) {
-                state.modelFile(model).addModel();
-            }
+            getVariantBuilder(block.get())
+                    .partialState().with(LegacySellafieldSlakedBlock.LEVEL, level)
+                    .setModels(configuredModels(models));
         }
         simpleBlockItem(block.get(), models[0]);
+    }
+
+    private ConfiguredModel[] configuredModels(ModelFile[] models) {
+        ConfiguredModel[] result = new ConfiguredModel[models.length];
+        for (int i = 0; i < models.length; i++) {
+            result[i] = new ConfiguredModel(models[i]);
+        }
+        return result;
     }
 
     private ModelFile[] sellafieldSlakedModels(String modelName) {

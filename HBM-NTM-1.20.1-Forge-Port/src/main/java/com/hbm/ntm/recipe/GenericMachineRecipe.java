@@ -2,22 +2,27 @@ package com.hbm.ntm.recipe;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.Container;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,9 +159,26 @@ public class GenericMachineRecipe implements Recipe<Container> {
         return stacks.stream().map(ItemStack::copy).toList();
     }
 
-    public record ItemInput(Ingredient ingredient, int count) {
+    public record ItemInput(Ingredient ingredient, int count, ItemStack exactStack) {
         public ItemInput {
             count = Math.max(1, count);
+            exactStack = exactStack == null ? ItemStack.EMPTY : exactStack.copy();
+        }
+
+        public boolean test(ItemStack stack) {
+            if (stack.getCount() < count || !ingredient.test(stack)) {
+                return false;
+            }
+            return exactStack.isEmpty() || ItemStack.isSameItemSameTags(exactStack, stack);
+        }
+
+        public boolean hasExactStack() {
+            return !exactStack.isEmpty();
+        }
+
+        @Override
+        public ItemStack exactStack() {
+            return exactStack.copy();
         }
     }
 
@@ -206,7 +228,12 @@ public class GenericMachineRecipe implements Recipe<Container> {
             String internalName = buffer.readUtf();
             int duration = buffer.readVarInt();
             long power = buffer.readVarLong();
-            List<ItemInput> itemInputs = buffer.readList(input -> new ItemInput(Ingredient.fromNetwork(input), input.readVarInt()));
+            List<ItemInput> itemInputs = buffer.readList(input -> {
+                Ingredient ingredient = Ingredient.fromNetwork(input);
+                int count = input.readVarInt();
+                ItemStack exactStack = input.readBoolean() ? input.readItem() : ItemStack.EMPTY;
+                return new ItemInput(ingredient, count, exactStack);
+            });
             List<HbmFluidStack> fluidInputs = buffer.readList(Serializer::readFluidStack);
             List<ItemStack> itemOutputs = buffer.readList(FriendlyByteBuf::readItem);
             List<HbmFluidStack> fluidOutputs = buffer.readList(Serializer::readFluidStack);
@@ -223,6 +250,10 @@ public class GenericMachineRecipe implements Recipe<Container> {
             buffer.writeCollection(recipe.itemInputs, (output, input) -> {
                 input.ingredient().toNetwork(output);
                 output.writeVarInt(input.count());
+                output.writeBoolean(input.hasExactStack());
+                if (input.hasExactStack()) {
+                    output.writeItem(input.exactStack());
+                }
             });
             buffer.writeCollection(recipe.fluidInputs, Serializer::writeFluidStack);
             buffer.writeCollection(recipe.itemOutputs, FriendlyByteBuf::writeItem);
@@ -240,15 +271,39 @@ public class GenericMachineRecipe implements Recipe<Container> {
                         JsonObject object = GsonHelper.convertToJsonObject(element, "item input");
                         Ingredient ingredient = Ingredient.fromJson(GsonHelper.getAsJsonObject(object, "ingredient"));
                         int count = GsonHelper.getAsInt(object, "count", 1);
-                        return new ItemInput(ingredient, count);
+                        ItemStack exactStack = object.has("exact_stack")
+                                ? readItemStack(GsonHelper.getAsJsonObject(object, "exact_stack"), "exact stack")
+                                : ItemStack.EMPTY;
+                        return new ItemInput(ingredient, count, exactStack);
                     })
                     .toList();
         }
 
         private static List<ItemStack> readItemOutputs(JsonArray array) {
             return array.asList().stream()
-                    .map(element -> ShapedRecipe.itemStackFromJson(GsonHelper.convertToJsonObject(element, "item output")))
+                    .map(element -> readItemStack(GsonHelper.convertToJsonObject(element, "item output"), "item output"))
                     .toList();
+        }
+
+        private static ItemStack readItemStack(JsonObject object, String name) {
+            String itemName = GsonHelper.getAsString(object, "item");
+            ResourceLocation itemId = new ResourceLocation(itemName);
+            Item item = BuiltInRegistries.ITEM.getOptional(itemId)
+                    .orElseThrow(() -> new JsonSyntaxException("Unknown item '" + itemName + "' in " + name));
+            int count = GsonHelper.getAsInt(object, "count", 1);
+            if (count < 1) {
+                throw new JsonSyntaxException("Invalid item count " + count + " in " + name);
+            }
+            ItemStack stack = new ItemStack(item, count);
+            if (object.has("nbt")) {
+                try {
+                    CompoundTag tag = TagParser.parseTag(GsonHelper.getAsString(object, "nbt"));
+                    stack.setTag(tag);
+                } catch (CommandSyntaxException exception) {
+                    throw new JsonSyntaxException("Invalid item NBT in " + name + ": " + exception.getMessage(), exception);
+                }
+            }
+            return stack;
         }
 
         private static List<HbmFluidStack> readFluidStacks(JsonArray array) {

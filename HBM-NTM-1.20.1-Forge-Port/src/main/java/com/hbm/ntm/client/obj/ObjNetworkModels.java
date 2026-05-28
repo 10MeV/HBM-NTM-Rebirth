@@ -17,6 +17,9 @@ public final class ObjNetworkModels {
     public static final LegacyWavefrontModel CONNECTOR_SUPER_LEGACY = legacyModel("connector_super").noSmooth().asVBO();
     public static final LegacyWavefrontModel PYLON_LARGE_LEGACY = legacyModel("pylon_large").noSmooth().asVBO();
     public static final LegacyWavefrontModel PYLON_MEDIUM_LEGACY = legacyModel("pylon_medium").noSmooth().asVBO();
+    public static final LegacyWavefrontModel SUBSTATION_LEGACY = legacyModel("substation").asVBO();
+    public static final LegacyWavefrontModel PIPE_ANCHOR_LEGACY = legacyModel("pipe_anchor").asVBO();
+    public static final LegacyWavefrontModel FLUID_DIODE_LEGACY = legacyModel("fluid_diode").asVBO();
 
     public static ObjModelPart part(String name) {
         return ObjModelLibrary.blockPart("network/" + name, RenderType.cutout());
