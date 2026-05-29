@@ -390,11 +390,10 @@ HbmBlackHoleEffects.updateTrackedBlackHole(vortex.getId(), pos.x, pos.y, pos.z,
   - `HbmBlackHoleEffects` 将一次性黑洞和实体追踪黑洞合并为 render job，并按距离相机从远到近排序。
   - 每个 job 仍先复制当前主 `RenderTarget` 到 `sceneCopy`，再绘制全屏 pass；因此近处黑洞会采样并遮挡远处黑洞合成后的颜色/深度。
 - Shader 侧修正：
-  - `black_hole.fsh` 新增 `worldPosToScreenUVChecked(...)` / `worldDirToScreenUVChecked(...)`。
-  - 透镜方向投影到相机背后或屏幕外时，不再强行 clamp 到边缘像素，而是保留当前像素的 scene color，避免大黑洞贴脸时出现分块错位缝隙。
-  - 删除“场景深度小于黑洞中心深度就整像素返回原画面”的粗遮挡。大型黑洞中心半入地时，这条判断会把地表前后的区域按中心深度硬切成两片；遮挡应只在射线进入黑洞影响球和体积命中点处判断。
-  - 新增 `sceneDepthIsInFrontOfInfluence(...)`：若当前像素或透镜重采样目标像素的主深度位于黑洞影响区入口之前，则保留原画面，不让玩家面前的方块/生物被当作黑洞背后的背景纹理采样。
-  - 屏幕边缘的透镜重采样不再用“UV 在屏幕内/外”的硬开关。`screenOutOfBoundsBlend(...)` 只在 UV 真正越出屏幕时短距离渐隐回原画面；屏幕内采样始终使用 100% 透镜结果，避免正常画面和扭曲画面在遮挡边界叠成重影。
+  - 曾尝试 `worldPosToScreenUVChecked(...)` / `worldDirToScreenUVChecked(...)`、`sceneDepthIsInFrontOfInfluence(...)` 和 `BackgroundColorSampler` / `black_hole_background` 背景补洞 pass，以修正前景被采样到黑洞后的问题；实机显示这些分支会产生空壳轮廓或大范围旋涡式画面崩坏，已全部废弃并从资源/Java 注册中移除。
+  - 当前 `black_hole.fsh` 已重新对齐 `E:\游戏\我的世界\源码包\render\core\black_hole.fsh` 的源文件式透镜流程：单一 `MainColorSampler`、源式 `worldDirToScreenUV(...)`、源式遮挡时输出 `lensedSceneColor`。现代端仅保留 `BlackHoleSpec` 需要的颜色、盘缩放、精度、dither、噪声强度等 uniform 参数。
+  - 黑洞 pass 仍保持在 `AFTER_LEVEL`，不挪到更早阶段；因此核爆云、粒子和已合成的远处黑洞仍会先进入主画面，再作为当前黑洞的透镜背景参与采样。
+  - 2026-05-29 shader 编译修正：`reconstructWorldPos(...)` 会调用 `worldPosToViewDistance(...)`，GLSL 中被调用函数必须先定义或先声明；`black_hole.fsh` 已补前置声明，避免 NVIDIA 编译器报 `undefined variable "worldPosToViewDistance"` 并在资源重载阶段崩溃。
 - 渲染阶段修正：
   - `ClientForgeEvents#onRenderLevelStage(...)` 在 `AFTER_LEVEL` 先渲染 `NukeTorexRenderer` 的核爆云 cloudlets，再执行 `HbmBlackHoleEffects.render(...)`。
   - 因为黑洞每个 pass 都会先复制当前主画面，这样核爆云的所有手绘 cloudlet 已经在 `MainColorSampler` 中，可被黑洞透镜采样；此前黑洞先渲染、核爆云后渲染，导致核爆云永远不会被黑洞采样。

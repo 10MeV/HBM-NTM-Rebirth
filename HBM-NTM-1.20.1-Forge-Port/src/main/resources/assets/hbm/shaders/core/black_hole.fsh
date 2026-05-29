@@ -30,15 +30,15 @@ uniform vec3 accretionDiskOuterColor;
 in vec2 texCoord;
 out vec4 fragColor;
 
+float worldPosToViewDistance(vec3 worldPos);
+
 const float pi = 3.14159265;
 const float CORE_RADIUS = 0.3;
 const float CORE_EDGE_SOFTNESS = 0.01;
 const vec3 CORE_COLOR = vec3(0.0);
 
-const int SOURCE_MAX_ITERATIONS = 200;
-const int SOURCE_MIN_ITERATIONS = 60;
-const int MAX_ITERATIONS = 320;
-const int MIN_ITERATIONS = 30;
+const int MAX_ITERATIONS = 200;
+const int MIN_ITERATIONS = 60;
 
 mat3 rotateX(float angle)
 {
@@ -147,12 +147,6 @@ float worldPosToDistance(vec3 worldPos)
     return distance(cameraPos, worldPos);
 }
 
-float worldPosToViewDistance(vec3 worldPos)
-{
-    vec4 viewPos = modelViewMatrix * vec4(worldPos - cameraPos, 1.0);
-    return -viewPos.z;
-}
-
 bool reconstructWorldPos(vec2 uv, out vec3 worldPos, out float linearDistance)
 {
     float rawDepth = texture(MainDepthSampler, uv).r;
@@ -169,44 +163,19 @@ bool reconstructWorldPos(vec2 uv, out vec3 worldPos, out float linearDistance)
     return true;
 }
 
-vec2 worldPosToScreenUV(vec3 worldPos)
+vec2 worldDirToScreenUV(vec3 origin, vec3 worldDir)
 {
-    vec4 viewPos = modelViewMatrix * vec4(worldPos - cameraPos, 1.0);
+    vec3 farPoint = origin + worldDir * 1000.0;
+    vec4 viewPos = modelViewMatrix * vec4(farPoint - cameraPos, 1.0);
     vec4 clipPos = projectionMatrix * viewPos;
     vec2 ndc = clipPos.xy / clipPos.w;
     return ndc * 0.5 + 0.5;
 }
 
-bool worldPosToScreenUVChecked(vec3 worldPos, out vec2 uv)
+float worldPosToViewDistance(vec3 worldPos)
 {
     vec4 viewPos = modelViewMatrix * vec4(worldPos - cameraPos, 1.0);
-    vec4 clipPos = projectionMatrix * viewPos;
-    if (clipPos.w <= 0.0001)
-    {
-        uv = texCoord;
-        return false;
-    }
-
-    vec2 ndc = clipPos.xy / clipPos.w;
-    uv = ndc * 0.5 + 0.5;
-    return all(greaterThanEqual(uv, vec2(0.0))) && all(lessThanEqual(uv, vec2(1.0)));
-}
-
-float screenOutOfBoundsBlend(vec2 uv)
-{
-    vec2 outside = max(vec2(0.0) - uv, uv - vec2(1.0));
-    float outsideDistance = max(outside.x, outside.y);
-    return 1.0 - smoothstep(0.02, 0.18, outsideDistance);
-}
-
-vec2 worldDirToScreenUV(vec3 origin, vec3 worldDir)
-{
-    return worldPosToScreenUV(origin + worldDir * 1000.0);
-}
-
-bool worldDirToScreenUVChecked(vec3 origin, vec3 worldDir, out vec2 uv)
-{
-    return worldPosToScreenUVChecked(origin + worldDir * 1000.0, uv);
+    return -viewPos.z;
 }
 
 vec2 raySphereIntersect(vec3 ro, vec3 rd, vec3 center, float radius)
@@ -225,40 +194,6 @@ vec2 raySphereIntersect(vec3 ro, vec3 rd, vec3 center, float radius)
     if (t1 < 0.0) t1 = 0.0;
 
     return vec2(t1, t2);
-}
-
-float influenceStartViewDistance(vec3 ro, vec3 rd, vec2 sphereT)
-{
-    float t;
-    if (sphereT.y >= 0.0)
-    {
-        t = max(sphereT.x, 0.0);
-    }
-    else
-    {
-        t = dot(entityPos - ro, rd);
-        if (t <= 0.0)
-        {
-            return -1.0;
-        }
-    }
-
-    vec3 influenceWorld = ro + rd * t;
-    vec4 influenceView = modelViewMatrix * vec4(influenceWorld - cameraPos, 1.0);
-    return -influenceView.z;
-}
-
-bool sceneDepthIsInFrontOfInfluence(vec2 uv, vec3 ro, vec3 rd, vec2 sphereT, float margin)
-{
-    vec3 sampleWorldPos;
-    float sampleViewDist;
-    if (!reconstructWorldPos(uv, sampleWorldPos, sampleViewDist))
-    {
-        return false;
-    }
-
-    float influenceViewDist = influenceStartViewDistance(ro, rd, sphereT);
-    return influenceViewDist > 0.0 && sampleViewDist < influenceViewDist - margin;
 }
 
 vec3 computeHaze(vec3 pos, float alpha, float invIterations)
@@ -426,7 +361,7 @@ void GasDisc(inout vec3 color, inout float alpha, vec3 pos, float lodBias)
     vec3 colorTex = mix(colorTexA, colorTexB, seamBlend);
     dustColor *= mix(vec3(1.0), colorTex, diskTextureStrength) * accretionDiskColor;
 
-    float invIter = 2000.0 / float(SOURCE_MAX_ITERATIONS);
+    float invIter = 2000.0 / float(MAX_ITERATIONS);
     coverage = saturateF(coverage * invIter);
     dustColor = max(vec3(0.0), dustColor);
     coverage *= pcurve(radialGradient, 5.0, 0.9);
@@ -484,9 +419,8 @@ vec3 traceLensedRay(vec3 localRo, vec3 localRd, float distToEntity, out bool swa
     const float far = 15.0;
 
     float distFactor = saturateF((distToEntity - scale * 0.5) / (scale * 8.0));
-    int iterations = int(mix(float(SOURCE_MAX_ITERATIONS) * 0.5,
-                             float(SOURCE_MIN_ITERATIONS) * 0.5, distFactor) * renderQuality);
-    iterations = clamp(iterations, MIN_ITERATIONS, MAX_ITERATIONS);
+    int iterations = int(mix(float(MAX_ITERATIONS) * 0.5, float(MIN_ITERATIONS) * 0.5, distFactor) * renderQuality);
+    iterations = max(iterations, 30);
 
     float invIterations = 1.0 / float(iterations);
     float stepLen = far * invIterations;
@@ -549,8 +483,7 @@ RenderResult renderBlackhole3D(vec3 localRo, vec3 localRd, vec2 screenUV, float 
     float nearestHitLocalDist = -1.0;
 
     float distFactor = saturateF((distToEntity - scale * 0.5) / (scale * 8.0));
-    int iterations = int(mix(float(SOURCE_MAX_ITERATIONS), float(SOURCE_MIN_ITERATIONS), distFactor) * renderQuality);
-    iterations = clamp(iterations, MIN_ITERATIONS, MAX_ITERATIONS);
+    int iterations = int(mix(float(MAX_ITERATIONS), float(MIN_ITERATIONS), distFactor) * renderQuality);
 
     float lodBias = distFactor;
 
@@ -650,12 +583,6 @@ RenderResult renderBlackhole3D(vec3 localRo, vec3 localRd, vec2 screenUV, float 
 
 void main()
 {
-    // Source-style lens has no visible shell; keep the old softness API linked without affecting valid values.
-    if (lensBoundarySoftness < 0.0)
-    {
-        discard;
-    }
-
     float sceneRawDepth = texture(MainDepthSampler, texCoord).r;
     vec3 sceneColor = texture(MainColorSampler, texCoord).rgb;
 
@@ -670,7 +597,7 @@ void main()
     vec3 rayOrigin = rayNear;
     vec3 rayDir = normalize(rayFar - rayNear);
 
-    float distToEntity = distance(cameraPos, entityPos);
+    float distToEntity = distance(rayOrigin, entityPos);
 
     vec2 sphereT = raySphereIntersect(rayOrigin, rayDir, entityPos, scale);
 
@@ -679,40 +606,17 @@ void main()
 
     bool inRenderSphere = (sphereT.y >= 0.0);
 
-    if (hasSceneGeometry && sceneDepthIsInFrontOfInfluence(texCoord, rayOrigin, rayDir, sphereT, 0.1))
-    {
-        fragColor = vec4(sceneColor, 1.0);
-        gl_FragDepth = sceneRawDepth;
-        return;
-    }
-
     vec3 lensLocalRo = (rayOrigin - entityPos) / scale;
     vec3 lensLocalRd = rayDir;
     bool raySwallowed = false;
     vec3 lensedDir = traceLensedRay(lensLocalRo, lensLocalRd, distToEntity, raySwallowed);
 
-    vec3 lensedSceneColor = sceneColor;
+    vec3 lensedSceneColor = vec3(0.0);
     if (!raySwallowed && length(lensedDir) > 0.001)
     {
-        vec2 lensedUV;
-        if (worldDirToScreenUVChecked(rayOrigin, lensedDir, lensedUV) || screenOutOfBoundsBlend(lensedUV) > 0.001)
-        {
-            float lensedBlend = screenOutOfBoundsBlend(lensedUV);
-            lensedUV = clamp(lensedUV, vec2(0.001), vec2(0.999));
-            vec3 lensedRayNear = clipToWorld(lensedUV, 0.0);
-            vec3 lensedRayFar = clipToWorld(lensedUV, 1.0);
-            vec3 lensedRayDir = normalize(lensedRayFar - lensedRayNear);
-            vec2 lensedSphereT = raySphereIntersect(lensedRayNear, lensedRayDir, entityPos, scale);
-            if (!sceneDepthIsInFrontOfInfluence(lensedUV, lensedRayNear, lensedRayDir, lensedSphereT, 0.1))
-            {
-                vec3 sampledColor = texture(MainColorSampler, lensedUV).rgb;
-                lensedSceneColor = lensedBlend >= 0.999 ? sampledColor : mix(sceneColor, sampledColor, lensedBlend);
-            }
-        }
-    }
-    else
-    {
-        lensedSceneColor = vec3(0.0);
+        vec2 lensedUV = worldDirToScreenUV(rayOrigin, lensedDir);
+        lensedUV = clamp(lensedUV, vec2(0.001), vec2(0.999));
+        lensedSceneColor = texture(MainColorSampler, lensedUV).rgb;
     }
 
     if (inRenderSphere)
@@ -731,7 +635,7 @@ void main()
 
         if (hasSceneGeometry && sceneViewDist < sphereEnterViewDist - 0.1)
         {
-            fragColor = vec4(sceneColor, 1.0);
+            fragColor = vec4(lensedSceneColor, 1.0);
             gl_FragDepth = sceneRawDepth;
             return;
         }
@@ -747,14 +651,6 @@ void main()
 
         if (result.alpha > 0.001)
         {
-            float resultAlpha = result.alpha;
-            if (resultAlpha <= 0.001)
-            {
-                fragColor = vec4(lensedSceneColor, 1.0);
-                gl_FragDepth = hasSceneGeometry ? sceneRawDepth : 0.9999;
-                return;
-            }
-
             bool hitOccluded = false;
             if (hasSceneGeometry && result.nearestHitViewDist > 0.0)
             {
@@ -766,14 +662,14 @@ void main()
 
             if (hitOccluded)
             {
-                fragColor = vec4(sceneColor, 1.0);
+                fragColor = vec4(lensedSceneColor, 1.0);
                 gl_FragDepth = sceneRawDepth;
                 return;
             }
 
             vec3 bgColor = lensedSceneColor;
 
-            vec3 finalColor = mix(bgColor, result.color, resultAlpha);
+            vec3 finalColor = mix(bgColor, result.color, result.alpha);
 
             if (result.nearestHitViewDist > 0.0)
             {
