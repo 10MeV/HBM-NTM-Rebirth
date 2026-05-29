@@ -108,6 +108,10 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
         }
     }
 
+    public boolean isSubscribed(HbmFluidReceiver receiver) {
+        return receiverEntries.containsKey(receiver);
+    }
+
     public void removeReceiver(HbmFluidReceiver receiver) {
         receiverEntries.remove(receiver);
     }
@@ -116,6 +120,10 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
         if (provider != null) {
             providerEntries.put(provider, System.currentTimeMillis());
         }
+    }
+
+    public boolean isProvider(HbmFluidProvider provider) {
+        return providerEntries.containsKey(provider);
     }
 
     public void removeProvider(HbmFluidProvider provider) {

@@ -9,8 +9,8 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidForgeMappings;
+import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidTank;
-import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
@@ -180,6 +180,23 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return List.of(outputTank);
+    }
+
+    @Override
+    public long transferFluid(FluidType type, int pressure, long amount) {
+        long leftover = HbmStandardFluidTransceiver.super.transferFluid(type, pressure, amount);
+        if (leftover != amount) {
+            onFluidContentsChanged();
+        }
+        return leftover;
+    }
+
+    @Override
+    public void useUpFluid(FluidType type, int pressure, long amount) {
+        HbmStandardFluidTransceiver.super.useUpFluid(type, pressure, amount);
+        if (amount > 0L) {
+            onFluidContentsChanged();
+        }
     }
 
     public double getProgress() {
@@ -517,15 +534,8 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private void refreshFluidPortSubscriptions() {
-        if (level == null || level.isClientSide) {
-            return;
-        }
-        if (inputTank.getTankType() != HbmFluids.NONE) {
-            HbmFluidUtil.subscribeReceiverToPorts(level, worldPosition, FLUID_PORTS, inputTank.getTankType(), this);
-        }
-        if (outputTank.getTankType() != HbmFluids.NONE && outputTank.getFill() > 0) {
-            HbmFluidUtil.tryProvideToPorts(level, worldPosition, FLUID_PORTS, outputTank.getTankType(), outputTank.getPressure(), this);
-        }
+        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, FLUID_PORTS,
+                List.of(inputTank), List.of(outputTank), this);
     }
 
     private class AssemblyFluidHandler implements IFluidHandler {

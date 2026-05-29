@@ -2,6 +2,8 @@ package com.hbm.ntm.explosion;
 
 import net.minecraft.world.level.Level;
 
+import java.util.function.BiConsumer;
+
 /**
  * Compatibility entry for the legacy threaded MK5 ray explosion.
  *
@@ -10,31 +12,13 @@ import net.minecraft.world.level.Level;
  * path is the already ported batched main-thread worker, so this class preserves
  * the old API while delegating to that budgeted implementation.</p>
  */
-public class ExplosionNukeRayParallelized implements ExplosionRay {
-    private final ExplosionNukeRayBatched delegate;
-
+public class ExplosionNukeRayParallelized extends ExplosionNukeRayBatched {
     public ExplosionNukeRayParallelized(Level level, double x, double y, double z, int strength, int speed, int radius) {
-        this.delegate = new ExplosionNukeRayBatched(level, (int) x, (int) y, (int) z,
-                strength, speed, radius);
+        super(level, (int) x, (int) y, (int) z, strength, speed, radius);
     }
 
-    @Override
-    public void cacheChunksTick(int processTimeMs) {
-        delegate.cacheChunksTick(processTimeMs);
-    }
-
-    @Override
-    public void destructionTick(int processTimeMs) {
-        delegate.destructionTick(processTimeMs);
-    }
-
-    @Override
-    public void cancel() {
-        delegate.cancel();
-    }
-
-    @Override
-    public boolean isComplete() {
-        return delegate.isComplete();
+    public ExplosionNukeRayParallelized(Level level, double x, double y, double z, int strength, int speed, int radius,
+            BiConsumer<Integer, Integer> chunkLoader) {
+        super(level, (int) x, (int) y, (int) z, strength, speed, radius, chunkLoader);
     }
 }

@@ -3,6 +3,8 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
+import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -50,6 +52,16 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
 
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.BOTH;
+    }
+
+    protected Iterable<EnergyPort> getEnergyPorts() {
+        return List.of();
+    }
+
+    protected int tryProvideEnergyToPorts() {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmEnergyUtil.tryProvideToPorts(level, worldPosition, getEnergyPorts(), energy);
     }
 
     @Override

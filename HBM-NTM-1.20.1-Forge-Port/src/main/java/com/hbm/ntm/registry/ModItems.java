@@ -8,6 +8,8 @@ import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.DetonatorItem;
+import com.hbm.ntm.item.AntimatterClusterItem;
+import com.hbm.ntm.item.DigammaParticleItem;
 import com.hbm.ntm.item.DigammaDiagnosticItem;
 import com.hbm.ntm.item.EffectPillItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
@@ -159,6 +161,18 @@ public final class ModItems {
             () -> new DetonatorItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> SINGULARITY = registerLegacy("singularity",
             () -> new SingularityItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SINGULARITY_COUNTER_RESONANT = registerLegacy("singularity_counter_resonant",
+            () -> new SingularityItem(new Item.Properties().stacksTo(1), "singularity_counter_resonant", 3));
+    public static final RegistryObject<Item> SINGULARITY_SUPER_HEATED = registerLegacy("singularity_super_heated",
+            () -> new SingularityItem(new Item.Properties().stacksTo(1), "singularity_super_heated", 3));
+    public static final RegistryObject<Item> SINGULARITY_SPARK = registerLegacy("singularity_spark",
+            () -> new SingularityItem(new Item.Properties().stacksTo(1), "singularity_spark", 3));
+    public static final RegistryObject<Item> BLACK_HOLE = registerLegacy("black_hole",
+            () -> new SingularityItem(new Item.Properties().stacksTo(1), "black_hole", 3));
+    public static final RegistryObject<Item> PARTICLE_DIGAMMA = registerLegacy("particle_digamma",
+            () -> new DigammaParticleItem(new Item.Properties(), 60));
+    public static final RegistryObject<Item> PELLET_ANTIMATTER = registerLegacy("pellet_antimatter",
+            () -> new AntimatterClusterItem(new Item.Properties()));
     public static final RegistryObject<Item> CUSTOM_TNT = simpleItem("custom_tnt");
     public static final RegistryObject<Item> CUSTOM_NUKE = simpleItem("custom_nuke");
     public static final RegistryObject<Item> CUSTOM_HYDRO = simpleItem("custom_hydro");
@@ -488,6 +502,16 @@ public final class ModItems {
             BATTERY_CREATIVE
     ), Stream.concat(BATTERY_PACK_ITEMS.stream(), BATTERY_SC_ITEMS.stream())).toList();
 
+    private static final List<RegistryObject<Item>> SINGULARITY_FAMILY_ITEMS = List.of(
+            SINGULARITY,
+            SINGULARITY_COUNTER_RESONANT,
+            SINGULARITY_SUPER_HEATED,
+            SINGULARITY_SPARK,
+            BLACK_HOLE,
+            PARTICLE_DIGAMMA,
+            PELLET_ANTIMATTER
+    );
+
     public static final List<RegistryObject<Item>> CONTROL_TAB_ITEMS = Stream.concat(Stream.concat(simpleParts(
             "pile_rod_uranium",
             "pile_rod_pu239",
@@ -514,9 +538,7 @@ public final class ModItems {
             "pellet_rtg_polonium",
             "pellet_rtg_americium",
             "pellet_rtg_gold"
-    ).stream()), Stream.concat(Stream.of(
-            SINGULARITY
-    ), CONTROL_BATTERY_ITEMS.stream())).toList();
+    ).stream()), Stream.concat(SINGULARITY_FAMILY_ITEMS.stream(), CONTROL_BATTERY_ITEMS.stream())).toList();
 
     public static final List<RegistryObject<Item>> PARTS_TAB_ITEMS = Stream.concat(Stream.of(
             URANIUM_INGOT,

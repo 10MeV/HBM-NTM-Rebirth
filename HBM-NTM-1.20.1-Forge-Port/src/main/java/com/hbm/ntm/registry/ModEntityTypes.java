@@ -7,6 +7,8 @@ import com.hbm.ntm.entity.effect.CloudSoliniumEntity;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
+import com.hbm.ntm.entity.effect.QuasarEntity;
+import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
@@ -130,6 +132,26 @@ public final class ModEntityTypes {
                     .fireImmune()
                     .noSummon()
                     .build("entity_vortex"));
+
+    public static final RegistryObject<EntityType<RagingVortexEntity>> RAGING_VORTEX =
+            ENTITY_TYPES.register("entity_raging_vortex", () -> EntityType.Builder
+                    .<RagingVortexEntity>of(RagingVortexEntity::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_raging_vortex"));
+
+    public static final RegistryObject<EntityType<QuasarEntity>> QUASAR =
+            ENTITY_TYPES.register("entity_digamma_quasar", () -> EntityType.Builder
+                    .<QuasarEntity>of(QuasarEntity::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_digamma_quasar"));
 
     public static final RegistryObject<EntityType<BalefireExplosionEntity>> BALEFIRE_EXPLOSION =
             ENTITY_TYPES.register("entity_balefire", () -> EntityType.Builder

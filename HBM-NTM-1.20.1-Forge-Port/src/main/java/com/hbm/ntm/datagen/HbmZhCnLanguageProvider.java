@@ -171,9 +171,32 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("subtitles.hbm.entity.ufo_blast", "\u80fd\u91cf\u653e\u7535");
         add("item.hbm.detonator", "\u8d77\u7206\u5668");
         add("item.hbm.singularity", "\u5947\u70b9");
+        add("item.hbm.singularity_counter_resonant", "\u53ef\u63a7\u53cd\u8c10\u632f\u5947\u70b9");
+        add("item.hbm.singularity_super_heated", "\u8d85\u70ed\u5171\u632f\u5947\u70b9");
+        add("item.hbm.singularity_spark", "Spark\u5947\u70b9");
+        add("item.hbm.black_hole", "\u5fae\u578b\u9ed1\u6d1e");
+        add("item.hbm.particle_digamma", "\u00a7c\u8fea\u4f3d\u9a6c\u7c92\u5b50\u00a7r");
+        add("item.hbm.pellet_antimatter", "\u53cd\u7269\u8d28\u56e2");
         add("item.hbm.singularity.desc.1", "\u4f60\u53ef\u80fd\u4f1a\u95ee\uff1a");
         add("item.hbm.singularity.desc.2", "\u201c\u8fd9\u600e\u4e48\u53ef\u80fd\uff1f\u201d");
         add("item.hbm.singularity.desc.3", "\u201c\u6211\u4e5f\u4e0d\u77e5\u9053\uff01\u201d");
+        add("item.hbm.singularity_counter_resonant.desc.1", "\u5728\u975e\u6b27\u7a7a\u95f4\u4e2d");
+        add("item.hbm.singularity_counter_resonant.desc.2", "\u62b5\u6d88\u7269\u4f53\u5171\u632f\uff0c");
+        add("item.hbm.singularity_counter_resonant.desc.3", "\u4ea7\u751f\u53ef\u53d8\u5f15\u529b\u4e95\u3002");
+        add("item.hbm.singularity_super_heated.desc.1", "\u901a\u8fc7\u6bcf\u4e2a\u666e\u6717\u514b\u65f6\u95f4\u7684\u5171\u632f");
+        add("item.hbm.singularity_super_heated.desc.2", "\u6301\u7eed\u52a0\u70ed\u7269\u8d28\u3002");
+        add("item.hbm.singularity_super_heated.desc.3", "\u4e0d\u53ef\u98df\u7528\u3002");
+        add("item.hbm.singularity_spark.desc.1", "\u4e00\u4e2a\u6781\u4e0d\u7a33\u5b9a\u7684\u5947\u70b9\uff0c");
+        add("item.hbm.singularity_spark.desc.2", "\u4f1a\u8109\u51b2\u5e76\u6495\u88c2\u7a7a\u95f4\u3002");
+        add("item.hbm.singularity_spark.desc.3", "\u8bf7\u5728\u8db3\u591f\u8fdc\u5904\u64cd\u4f5c\u3002");
+        add("item.hbm.black_hole.desc.1", "\u4e2d\u5fc3\u5305\u542b\u4e00\u4e2a\u5e38\u89c4\u5947\u70b9\uff0c");
+        add("item.hbm.black_hole.desc.2", "\u8db3\u4ee5\u7ef4\u6301\u7a33\u5b9a\u3002");
+        add("item.hbm.black_hole.desc.3", "\u8fd9\u8fd8\u4e0d\u662f\u4e16\u754c\u672b\u65e5\u3002");
+        add("item.hbm.particle_digamma.desc.half_particle", "\u7c92\u5b50\u534a\u8870\u671f\uff1a1.67*10^21 \u5e74");
+        add("item.hbm.particle_digamma.desc.half_player", "\u73a9\u5bb6\u534a\u8870\u671f\uff1a%s");
+        add("item.hbm.particle_digamma.desc.digamma", "%s mDRX/s");
+        add("item.hbm.pellet_antimatter.desc.1", "\u975e\u5e38\u91cd\u7684\u53cd\u7269\u8d28\u56e2\u3002");
+        add("item.hbm.pellet_antimatter.desc.2", "\u80fd\u6e05\u9664\u9ed1\u6d1e\u3002");
         add("item.hbm.trait.drop", "[\u6389\u843d\u89e6\u53d1]");
         add("tooltip.hbm.detonator.set", "\u6f5c\u884c\u53f3\u952e\u8bbe\u7f6e\u4f4d\u7f6e\uff0c");
         add("tooltip.hbm.detonator.trigger", "\u53f3\u952e\u8d77\u7206\uff01");
@@ -257,6 +280,8 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("container.hbm.battery.priority.recommended", "\u63a8\u8350\uff1a\u4f4e");
         HbmFluidLangEntries.addChinese(this::add);
         add("container.fluidtank", "\u6d41\u4f53\u50a8\u7f50");
+        add("container.bigAssTank", "\u5927\u578b\u5de5\u4e1a\u50a8\u7f50");
+        add("container.gasFlare", "\u6c14\u4f53\u706b\u70ac");
         add("container.fluidtank.mode", "\u6a21\u5f0f");
         add("container.fluidtank.mode.input", "\u8f93\u5165");
         add("container.fluidtank.mode.buffer", "\u7f13\u51b2");
@@ -386,7 +411,13 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
                  "battery_sc.au198",
                  "battery_sc.pb209",
                  "battery_sc.am241",
-                 "singularity" -> true;
+                 "singularity",
+                 "singularity_counter_resonant",
+                 "singularity_super_heated",
+                 "singularity_spark",
+                 "black_hole",
+                 "particle_digamma",
+                 "pellet_antimatter" -> true;
             default -> false;
         };
     }

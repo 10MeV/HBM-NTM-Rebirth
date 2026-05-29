@@ -1,8 +1,11 @@
-// 1.20.1	2026-05-28T22:21:12.786768	Recipes
+// 1.20.1	2026-05-28T23:25:52.1546338	Recipes
+d135653dd060a98f4f56d5a0abddb67544ea0115 data/hbm/advancements/recipes/misc/control/slime_ball_from_sulfuric_acid.json
 70e474f663cb3f76502304517cc27beef9f3b1ed data/hbm/advancements/recipes/redstone/blast_furnace/canister_napalm.json
 e236008900a95e49fc3b9817fb21847ace27f909 data/hbm/advancements/recipes/redstone/control/canister_empty.json
 455bf66162f631fb8f6f6e32171d86b4d018fe72 data/hbm/advancements/recipes/redstone/control/disperser_canister_empty.json
+85d0c93d752e8c700fb543a90b98016975f1f735 data/hbm/advancements/recipes/redstone/control/fluid_barrel_empty.json
 5d8c7805e0f8dc36610f178a338ff966ef60b9de data/hbm/advancements/recipes/redstone/control/fluid_pack_empty.json
+2f8ceecb000305cd2868a033c54cc7386ae52d11 data/hbm/advancements/recipes/redstone/control/fluid_tank_empty.json
 9304ddca199ca97df8778b3cc20fb864d503748b data/hbm/advancements/recipes/redstone/control/fluid_tank_lead_empty.json
 7ef6d860c871e3896e3300c57ad24dafe073434c data/hbm/advancements/recipes/redstone/control/gas_empty.json
 5066bc6c3a2d1af95a09829291ff29df311b6086 data/hbm/advancements/recipes/redstone/control/inf_water.json
@@ -304,10 +307,13 @@ e6e6e4d865824cc4331fe0cc53a729da93cdc832 data/hbm/recipes/chemical_plant/battery
 025cffc9b166fae2a4bb6375097718d14ccc677b data/hbm/recipes/chemical_plant/batterysodium.json
 7aea5b0ea48cfc06e334a6ff333e48d2b3d53e61 data/hbm/recipes/control/canister_empty.json
 f546e611d3650fa5e5e6ba5290e645942a2a7455 data/hbm/recipes/control/disperser_canister_empty.json
+86d371490949b3addfa2c6731af88f77ba642e8f data/hbm/recipes/control/fluid_barrel_empty.json
 815e82623cbccff652f9ae889c9cba592e020042 data/hbm/recipes/control/fluid_pack_empty.json
+c49e50808b14cfa4c0b83b6c43f546dcc9768411 data/hbm/recipes/control/fluid_tank_empty.json
 50a60c420fa7d090337843aa3bb3790102cd6acf data/hbm/recipes/control/fluid_tank_lead_empty.json
 a0f563c8236374f1973ee4d05057ed9b80409c35 data/hbm/recipes/control/gas_empty.json
 1459abf4bad047db84b9b281c30605cccd40873d data/hbm/recipes/control/inf_water.json
+94538e43490135db780c7ee70471bf508f21fd32 data/hbm/recipes/control/slime_ball_from_sulfuric_acid.json
 2f26aa56f9a319e143965344373f6a968cdb02f3 data/hbm/recipes/energy/battery_redstone.json
 0f13fc73cf38c7153824121b746c4ebedb22771b data/hbm/recipes/energy/battery_sc_am241.json
 e83e08d9dc95fcc72910d26dbe59ead9531cd9e4 data/hbm/recipes/energy/battery_sc_au198.json

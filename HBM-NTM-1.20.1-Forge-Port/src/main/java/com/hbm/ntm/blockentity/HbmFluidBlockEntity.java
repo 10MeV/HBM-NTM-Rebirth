@@ -79,6 +79,20 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
                 : HbmFluidUtil.tryProvideToPorts(level, worldPosition, getFluidPorts(), type, pressure, provider);
     }
 
+    protected int unsubscribeFluidProviderFromPorts(com.hbm.ntm.fluid.FluidType type,
+            com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmFluidUtil.unsubscribeProviderFromPorts(level, worldPosition, getFluidPorts(), type, provider);
+    }
+
+    protected int unsubscribeFluidReceiverFromPorts(com.hbm.ntm.fluid.FluidType type,
+            com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmFluidUtil.unsubscribeReceiverFromPorts(level, worldPosition, getFluidPorts(), type, receiver);
+    }
+
     @Override
     public HbmFluidNode getFluidNode() {
         return fluidNodes.values().stream().findFirst().orElse(null);

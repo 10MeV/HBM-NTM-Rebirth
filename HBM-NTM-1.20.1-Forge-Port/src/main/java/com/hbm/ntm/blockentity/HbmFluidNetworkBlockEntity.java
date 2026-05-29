@@ -1,6 +1,6 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.energy.HbmEnergyReceiver;
+import com.hbm.ntm.energy.HbmNetworkNode;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnectionUtil;
 import com.hbm.ntm.fluid.HbmFluidConnector;
@@ -16,6 +16,7 @@ import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
+import java.util.LinkedHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -63,8 +64,23 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
                 .toList();
     }
 
-    protected HbmFluidNode createFluidNode(FluidType type) {
-        return new HbmFluidNode(worldPosition, type, getFluidConnections(type));
+    protected HbmFluidNode createRemotePortFluidNode(FluidType type) {
+        Set<BlockPos> positions = new LinkedHashSet<>();
+        positions.add(worldPosition.immutable());
+        Set<HbmNetworkNode.NodeConnection> connections = new LinkedHashSet<>();
+        for (FluidPort port : getFluidPorts()) {
+            if (port == null) {
+                continue;
+            }
+            BlockPos connectorPos = port.connectorPos(worldPosition);
+            positions.add(connectorPos.relative(port.direction().getOpposite()));
+            connections.add(new HbmNetworkNode.NodeConnection(connectorPos, port.direction()));
+        }
+        return HbmFluidNode.withConnectionPoints(positions, type, connections);
+    }
+
+    protected boolean shouldUseRemotePortFluidNode(FluidType type) {
+        return false;
     }
 
     protected void refreshFluidNodeState() {
@@ -149,13 +165,19 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         }
     }
 
+    protected HbmFluidNode createFluidNode(FluidType type) {
+        return shouldUseRemotePortFluidNode(type)
+                ? createRemotePortFluidNode(type)
+                : new HbmFluidNode(worldPosition, type, getFluidConnections(type));
+    }
+
     @Override
     public void removeFluidNode() {
         if (level == null || level.isClientSide) {
             super.removeFluidNode();
             return;
         }
-        for (FluidType type : getFluidNodeTypes()) {
+        for (FluidType type : getTrackedFluidNodeTypes()) {
             HbmFluidNodespace.destroyNode(level, worldPosition, type);
         }
         super.removeFluidNode();

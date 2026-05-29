@@ -30,6 +30,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -54,7 +55,8 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     public static final int MODE_OUTPUT = 2;
     public static final int MODE_NONE = 3;
 
-    private static final int TANK_CAPACITY = 256_000;
+    protected static final int DEFAULT_TANK_CAPACITY = 256_000;
+    private static final long DEFAULT_TRANSFER_SPEED_FLOOR = 500L;
     private static final List<FluidPort> FLUID_PORTS = List.of(
             FluidPort.of(2, 0, -1, Direction.EAST),
             FluidPort.of(2, 0, 1, Direction.EAST),
@@ -81,11 +83,15 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     private int lastComparatorPower;
 
     public FluidTankBlockEntity(BlockPos pos, BlockState state) {
-        this(pos, state, new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY));
+        this(pos, state, new HbmFluidTank(HbmFluids.NONE, DEFAULT_TANK_CAPACITY));
     }
 
-    private FluidTankBlockEntity(BlockPos pos, BlockState state, HbmFluidTank tank) {
-        super(ModBlockEntities.FLUID_TANK.get(), pos, state, List.of(tank));
+    protected FluidTankBlockEntity(BlockPos pos, BlockState state, HbmFluidTank tank) {
+        this(pos, state, ModBlockEntities.FLUID_TANK.get(), tank);
+    }
+
+    protected FluidTankBlockEntity(BlockPos pos, BlockState state, BlockEntityType<?> type, HbmFluidTank tank) {
+        super(type, pos, state, List.of(tank));
         this.tank = tank;
     }
 
@@ -280,7 +286,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public long getReceiverSpeed(FluidType type, int pressure) {
-        return Math.max(500L, tank.getSpace() / 100L);
+        return Math.max(getTransferSpeedFloor(), tank.getSpace() / 100L);
     }
 
     @Override
@@ -293,12 +299,17 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public long getProviderSpeed(FluidType type, int pressure) {
-        return Math.max(500L, tank.getFill() / 100L);
+        return Math.max(getTransferSpeedFloor(), tank.getFill() / 100L);
     }
 
     @Override
     protected boolean shouldCreateFluidNode() {
         return !exploded && mode == MODE_BUFFER && !tank.isEmpty();
+    }
+
+    @Override
+    protected boolean shouldUseRemotePortFluidNode(FluidType type) {
+        return !exploded && mode == MODE_BUFFER && type == tank.getTankType();
     }
 
     @Override
@@ -316,6 +327,10 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         return FLUID_PORTS;
     }
 
+    protected long getTransferSpeedFloor() {
+        return DEFAULT_TRANSFER_SPEED_FLOOR;
+    }
+
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
         if (exploded) {
@@ -331,7 +346,8 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public boolean canConnectFluid(FluidType type, Direction side) {
-        return !exploded && side != null && type != null && type == tank.getTankType();
+        return !exploded && side != null && type != null && type == tank.getTankType()
+                && (mode == MODE_INPUT || mode == MODE_BUFFER || mode == MODE_OUTPUT);
     }
 
     @Override

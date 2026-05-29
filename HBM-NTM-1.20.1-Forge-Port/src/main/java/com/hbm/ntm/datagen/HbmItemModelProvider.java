@@ -94,6 +94,22 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "pellets_charged");
             return;
         }
+        if (path.equals("singularity_counter_resonant")) {
+            generatedItem(path, "singularity_alt");
+            return;
+        }
+        if (path.equals("singularity_super_heated")) {
+            generatedItem(path, "singularity_5");
+            return;
+        }
+        if (path.equals("singularity_spark")) {
+            generatedItem(path, "singularity_spark_alt");
+            return;
+        }
+        if (path.equals("black_hole")) {
+            generatedItem(path, "singularity_4");
+            return;
+        }
         if (path.equals("circuit_chip_quantum")) {
             generatedItem(path, "circuit.chip_quantum");
             return;

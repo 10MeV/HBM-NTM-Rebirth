@@ -76,6 +76,7 @@ public final class HazardRegistry {
         register(ModBlocks.NUKE_FLEIJA.get().asItem(), HazardType.BLINDING, 50.0F);
         register(ModBlocks.NUKE_FSTBMB.get().asItem(), HazardType.DIGAMMA, 0.01F);
         registerBlockByName("lamp_demon", HazardType.RADIATION, 100_000.0F);
+        register(ModItems.PARTICLE_DIGAMMA.get(), HazardType.DIGAMMA, 1000.0F / 60.0F);
     }
 
     private static void registerTransformers() {

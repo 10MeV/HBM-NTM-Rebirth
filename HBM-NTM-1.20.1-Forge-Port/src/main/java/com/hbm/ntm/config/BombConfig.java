@@ -40,6 +40,7 @@ public final class BombConfig {
     public static ForgeConfigSpec.IntValue LIMIT_EXPLOSION_LIFESPAN;
     public static ForgeConfigSpec.BooleanValue CHUNK_LOADING;
     public static ForgeConfigSpec.IntValue EXPLOSION_ALGORITHM;
+    public static ForgeConfigSpec.IntValue LBSM_SCHRAB_ORE_RATE;
 
     static void define(ForgeConfigSpec.Builder builder) {
         builder.push("nukes");
@@ -81,6 +82,12 @@ public final class BombConfig {
         EXPLOSION_ALGORITHM = builder
                 .comment("Legacy 6.06_explosionAlgorithm: 0 legacy, 1 threaded DDA, 2 threaded DDA with damage accumulation. Modern port safely delegates threaded mode to the batched worker.")
                 .defineInRange("explosionAlgorithm", 2, 0, 2);
+        builder.pop();
+
+        builder.push("lessBullshitMode");
+        LBSM_SCHRAB_ORE_RATE = builder
+                .comment("Legacy LBSM_schrabOreRate: average uranium ore blocks needed to create one schrabidium ore through nuclear waste mutation while Less Bullshit Mode is enabled.")
+                .defineInRange("schrabOreRate", 20, 1, Integer.MAX_VALUE);
         builder.pop();
     }
 

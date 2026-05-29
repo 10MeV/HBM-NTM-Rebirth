@@ -1,5 +1,7 @@
 package com.hbm.ntm.explosion;
 
+import com.hbm.ntm.config.BombConfig;
+import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
@@ -307,12 +309,21 @@ public final class ExplosionNukeGeneric {
         } else if (state.is(Blocks.BROWN_MUSHROOM_BLOCK) || state.is(Blocks.RED_MUSHROOM_BLOCK)) {
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
         } else if (allowSchrabidium && isLegacy(state, "ore_uranium")) {
-            setLegacy(level, pos, level.random.nextInt(10) == 1 ? "ore_schrabidium" : "ore_uranium_scorched");
+            setLegacy(level, pos, level.random.nextInt(schrabOreChance()) == 1 ? "ore_schrabidium" : "ore_uranium_scorched");
         } else if (allowSchrabidium && isLegacy(state, "ore_nether_uranium")) {
-            setLegacy(level, pos, level.random.nextInt(10) == 1 ? "ore_nether_schrabidium" : "ore_nether_uranium_scorched");
+            setLegacy(level, pos, level.random.nextInt(schrabOreChance()) == 1 ? "ore_nether_schrabidium" : "ore_nether_uranium_scorched");
         } else if (allowSchrabidium && isLegacy(state, "ore_gneiss_uranium")) {
-            setLegacy(level, pos, level.random.nextInt(10) == 1 ? "ore_gneiss_schrabidium" : "ore_gneiss_uranium_scorched");
+            setLegacy(level, pos, level.random.nextInt(schrabOreChance()) == 1 ? "ore_gneiss_schrabidium" : "ore_gneiss_uranium_scorched");
         }
+    }
+
+    private static int schrabOreChance() {
+        if (RadiationConfig.ENABLE_LESS_BULLSHIT_MODE != null
+                && RadiationConfig.ENABLE_LESS_BULLSHIT_MODE.get()
+                && BombConfig.LBSM_SCHRAB_ORE_RATE != null) {
+            return Math.max(1, BombConfig.LBSM_SCHRAB_ORE_RATE.get());
+        }
+        return 100;
     }
 
     private static boolean isObstructed(Level level, Vec3 origin, Vec3 target) {

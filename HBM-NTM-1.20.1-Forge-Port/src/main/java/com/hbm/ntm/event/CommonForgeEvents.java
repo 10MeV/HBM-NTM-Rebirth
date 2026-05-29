@@ -5,6 +5,9 @@ import com.hbm.ntm.command.ModCommands;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.config.WeaponConfig;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
+import com.hbm.ntm.entity.effect.BlackHoleEntity;
+import com.hbm.ntm.entity.effect.QuasarEntity;
+import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
@@ -300,13 +303,44 @@ public final class CommonForgeEvents {
             return;
         }
 
-        if (stack.is(ModItems.SINGULARITY.get()) && itemEntity.onGround()
-                && WeaponConfig.DROP_SINGULARITY.get() && itemEntity.level() instanceof ServerLevel level) {
-            itemEntity.discard();
-            VortexEntity vortex = new VortexEntity(level, 1.5F);
-            vortex.moveTo(itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 0.0F, 0.0F);
-            level.addFreshEntity(vortex);
+        if (itemEntity.onGround() && WeaponConfig.DROP_SINGULARITY.get() && itemEntity.level() instanceof ServerLevel level) {
+            if (stack.is(ModItems.SINGULARITY.get())) {
+                spawnDroppedVortex(itemEntity, level, 1.5F);
+            } else if (stack.is(ModItems.SINGULARITY_COUNTER_RESONANT.get())
+                    || stack.is(ModItems.SINGULARITY_SUPER_HEATED.get())) {
+                spawnDroppedVortex(itemEntity, level, 2.5F);
+            } else if (stack.is(ModItems.SINGULARITY_SPARK.get())) {
+                itemEntity.discard();
+                RagingVortexEntity vortex = new RagingVortexEntity(level, 3.5F);
+                vortex.moveTo(itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 0.0F, 0.0F);
+                level.addFreshEntity(vortex);
+            } else if (stack.is(ModItems.BLACK_HOLE.get())) {
+                itemEntity.discard();
+                BlackHoleEntity blackHole = new BlackHoleEntity(level, 1.5F);
+                blackHole.moveTo(itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 0.0F, 0.0F);
+                level.addFreshEntity(blackHole);
+            } else if (stack.is(ModItems.PARTICLE_DIGAMMA.get())) {
+                itemEntity.discard();
+                QuasarEntity quasar = new QuasarEntity(level, 5.0F);
+                quasar.moveTo(itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 0.0F, 0.0F);
+                level.addFreshEntity(quasar);
+            }
         }
+
+        if (stack.is(ModItems.PELLET_ANTIMATTER.get()) && itemEntity.onGround()
+                && WeaponConfig.DROP_ANTIMATTER_CELLS.get() && itemEntity.level() instanceof ServerLevel level) {
+            itemEntity.discard();
+            WeaponExplosionUtil.antimatter(level, itemEntity.getX(),
+                    itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(),
+                    20.0F, itemEntity, 50.0F).explode();
+        }
+    }
+
+    private static void spawnDroppedVortex(ItemEntity itemEntity, ServerLevel level, float size) {
+        itemEntity.discard();
+        VortexEntity vortex = new VortexEntity(level, size);
+        vortex.moveTo(itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 0.0F, 0.0F);
+        level.addFreshEntity(vortex);
     }
 
     private static void applyInventoryHazard(Player player, ItemStack stack, HazardType type) {

@@ -9,8 +9,8 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidStack;
-import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -208,6 +208,23 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     @Override
     public List<HbmFluidTank> getSendingTanks() {
         return outputTankList;
+    }
+
+    @Override
+    public long transferFluid(FluidType type, int pressure, long amount) {
+        long leftover = HbmStandardFluidTransceiver.super.transferFluid(type, pressure, amount);
+        if (leftover != amount) {
+            onFluidContentsChanged();
+        }
+        return leftover;
+    }
+
+    @Override
+    public void useUpFluid(FluidType type, int pressure, long amount) {
+        HbmStandardFluidTransceiver.super.useUpFluid(type, pressure, amount);
+        if (amount > 0L) {
+            onFluidContentsChanged();
+        }
     }
 
     public double getProgress() {
@@ -527,19 +544,8 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private void refreshFluidPortSubscriptions() {
-        if (level == null || level.isClientSide) {
-            return;
-        }
-        for (HbmFluidTank tank : inputTanks) {
-            if (tank.getTankType() != HbmFluids.NONE) {
-                HbmFluidUtil.subscribeReceiverToPorts(level, worldPosition, FLUID_PORTS, tank.getTankType(), this);
-            }
-        }
-        for (HbmFluidTank tank : outputTanks) {
-            if (tank.getTankType() != HbmFluids.NONE && tank.getFill() > 0) {
-                HbmFluidUtil.tryProvideToPorts(level, worldPosition, FLUID_PORTS, tank.getTankType(), tank.getPressure(), this);
-            }
-        }
+        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, FLUID_PORTS,
+                inputTankList, outputTankList, this);
     }
 
     private static boolean isOutputOnlySlot(int slot) {

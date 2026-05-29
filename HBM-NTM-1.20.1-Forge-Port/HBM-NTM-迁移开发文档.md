@@ -28,7 +28,7 @@
 - 1.20.1 参考移植版: `E:\游戏\我的世界\源码包\HBM-NTM-high-edition-test`
 - 1.20.1 参考索引: `E:\游戏\我的世界\开发\HBM-NTM-1.20.1-Forge-Port\1.20.1-参考移植版源码资源索引.md`
 - 当前移植工程: `E:\游戏\我的世界\开发\HBM-NTM-1.20.1-Forge-Port`
-- 源码查找 Python 脚本位于 skill 目录 `C:\Users\Mr.Wu\.codex\skills\hbm-ntm-common\scripts`；不要在当前 port 工程目录里查找、创建或复制这些脚本。
+- 源码查找 Python 脚本的唯一规范位置是 skill 目录 `C:\Users\Mr.Wu\.codex\skills\hbm-ntm-common\scripts`；只能从这里调用 `resolve_sources.py`、`locate_hbm_symbol.py`、`build_source_index.py`。不要在当前 port 工程目录里查找、创建、复制或重写这些脚本；如果 skill 路径缺失，先报告 skill 安装/路径问题。
 
 ## 当前工程结构
 

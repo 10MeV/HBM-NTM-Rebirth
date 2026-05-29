@@ -3,6 +3,9 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.energy.HbmEnergyConnector;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnector;
+import com.hbm.ntm.fluid.HbmFluidForgeMappings;
+import com.hbm.ntm.fluid.HbmFluidReceiver;
+import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import com.hbm.ntm.multiblock.LegacyProxyMode;
@@ -25,10 +28,14 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmFluidConnector {
+import java.util.List;
+
+public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmFluidConnector, HbmFluidReceiver {
     private static final String TAG_CORE_POS = "CorePos";
     private static final String TAG_LEGACY_TARGET_X = "tx";
     private static final String TAG_LEGACY_TARGET_Y = "ty";
@@ -150,6 +157,103 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         return proxyMode.allows(ForgeCapabilities.FLUID_HANDLER)
                 && target != null
                 && target.getCapability(ForgeCapabilities.FLUID_HANDLER, side).isPresent();
+    }
+
+    @Override
+    public List<HbmFluidTank> getAllTanks() {
+        MultiblockHelper.CoreLookup core = validCore();
+        if (level == null || core == null) {
+            return List.of();
+        }
+        BlockEntity coreEntity = level.getBlockEntity(core.pos());
+        ICapabilityProvider target = legacyProxyTarget(coreEntity);
+        if (target instanceof HbmFluidReceiver receiver) {
+            return receiver.getAllTanks();
+        }
+        if (target instanceof HbmFluidBlockEntity fluidBlockEntity) {
+            return fluidBlockEntity.getAllTanks();
+        }
+        return List.of();
+    }
+
+    @Override
+    public long transferFluid(FluidType type, int pressure, long amount) {
+        if (!canProxyFluid() || type == null || type == HbmFluids.NONE || amount <= 0L) {
+            return amount;
+        }
+        MultiblockHelper.CoreLookup core = validCore();
+        if (level == null || core == null) {
+            return amount;
+        }
+        ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
+        if (target instanceof HbmFluidReceiver receiver && target != this) {
+            return receiver.transferFluid(type, pressure, amount);
+        }
+        if (pressure != 0 || !HbmFluidForgeMappings.canExport(type) || target == null) {
+            return amount;
+        }
+        int forgeAmount = (int) Math.min(Integer.MAX_VALUE, amount);
+        FluidStack stack = HbmFluidForgeMappings.toForge(type, forgeAmount);
+        if (stack.isEmpty()) {
+            return amount;
+        }
+        int accepted = target.getCapability(ForgeCapabilities.FLUID_HANDLER, null)
+                .map(handler -> handler.fill(stack, IFluidHandler.FluidAction.EXECUTE))
+                .orElse(0);
+        return amount - accepted;
+    }
+
+    @Override
+    public long getDemand(FluidType type, int pressure) {
+        if (!canProxyFluid() || type == null || type == HbmFluids.NONE) {
+            return 0L;
+        }
+        MultiblockHelper.CoreLookup core = validCore();
+        if (level == null || core == null) {
+            return 0L;
+        }
+        ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
+        if (target instanceof HbmFluidReceiver receiver && target != this) {
+            return receiver.getDemand(type, pressure);
+        }
+        if (pressure != 0 || !HbmFluidForgeMappings.canExport(type) || target == null) {
+            return 0L;
+        }
+        FluidStack sample = HbmFluidForgeMappings.toForge(type, Integer.MAX_VALUE);
+        if (sample.isEmpty()) {
+            return 0L;
+        }
+        return target.getCapability(ForgeCapabilities.FLUID_HANDLER, null)
+                .map(handler -> (long) handler.fill(sample, IFluidHandler.FluidAction.SIMULATE))
+                .orElse(0L);
+    }
+
+    @Override
+    public long getReceiverSpeed(FluidType type, int pressure) {
+        MultiblockHelper.CoreLookup core = validCore();
+        if (level != null && core != null) {
+            ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
+            if (target instanceof HbmFluidReceiver receiver && target != this) {
+                return receiver.getReceiverSpeed(type, pressure);
+            }
+        }
+        return HbmFluidReceiver.super.getReceiverSpeed(type, pressure);
+    }
+
+    @Override
+    public int[] getReceivingPressureRange(FluidType type) {
+        MultiblockHelper.CoreLookup core = validCore();
+        if (level != null && core != null) {
+            ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
+            if (target instanceof HbmFluidReceiver receiver && target != this) {
+                return receiver.getReceivingPressureRange(type);
+            }
+        }
+        return HbmFluidReceiver.super.getReceivingPressureRange(type);
+    }
+
+    private boolean canProxyFluid() {
+        return proxyMode.isProxy() && (proxyMode.fluid() || proxyMode.moltenMetal() || proxyMode.allCapabilities());
     }
 
     public InteractionResult forwardUse(ServerPlayer player, InteractionHand hand, BlockHitResult hit) {

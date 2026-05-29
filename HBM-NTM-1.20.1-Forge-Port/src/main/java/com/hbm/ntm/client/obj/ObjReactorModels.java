@@ -7,10 +7,10 @@ public final class ObjReactorModels {
     public static final LegacyWavefrontModel SMALL_BASE = model("reactor_small_base");
     public static final LegacyWavefrontModel SMALL_RODS = model("reactor_small_rods");
     public static final LegacyWavefrontModel BREEDER = model("breeder");
-    public static final LegacyWavefrontModel ICF = model("icf");
-    public static final LegacyWavefrontModel WATZ = model("watz");
-    public static final LegacyWavefrontModel WATZ_PUMP = model("watz_pump");
-    public static final LegacyWavefrontModel LPW2 = model("lpw2");
+    public static final LegacyWavefrontModel ICF = model("icf").asVBO();
+    public static final LegacyWavefrontModel WATZ = model("watz").asVBO();
+    public static final LegacyWavefrontModel WATZ_PUMP = model("watz_pump").asVBO();
+    public static final LegacyWavefrontModel LPW2 = model("lpw2").asVBO();
     public static final LegacyWavefrontModel ZIRNOX = model("zirnox").asVBO();
     public static final LegacyWavefrontModel ZIRNOX_DESTROYED = model("zirnox_destroyed").asVBO();
 

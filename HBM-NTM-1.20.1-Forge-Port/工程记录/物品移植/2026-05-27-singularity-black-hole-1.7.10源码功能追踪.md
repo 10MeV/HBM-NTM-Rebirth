@@ -2,9 +2,9 @@
 
 ## 范围
 
-- 本批只迁移普通 `singularity`（中文：奇点）。
-- 包含普通奇点掉落到地面时生成黑洞的旧版逻辑，以及对应 `EntityVortex` / `EntityBlackHole` 玩法机制。
-- 不迁移 `singularity_counter_resonant`、`singularity_super_heated`、`black_hole`、`singularity_spark`、黑洞导弹/手榴弹等变体。
+- 初始批次迁移普通 `singularity`（中文：奇点）；后续批次补入 `singularity_counter_resonant`、`singularity_super_heated`、`black_hole`、`singularity_spark`、`particle_digamma` 与 `pellet_antimatter`。
+- 包含奇点类物品掉落到地面时生成对应黑洞实体的旧版逻辑，以及对应 `EntityVortex` / `EntityBlackHole` / `EntityRagingVortex` / `EntityQuasar` 玩法机制。
+- 黑洞导弹/手榴弹等发射物变体不在本文档当前迁移范围。
 - 旧版 OBJ/贴图式 `RenderBlackHole` 不迁入；现代端改用 `HbmBlackHoleEffects` 的 `black_hole` shader API。
 
 ## 1.7.10 源文件
@@ -86,11 +86,73 @@
   - 黑洞透镜恢复源 shader 结构：球外也输出 `traceLensedRay(...)` 的透镜采样，外层球只决定是否额外渲染事件视界/吸积盘，不再作为可见球壳边界或透镜硬裁剪。
   - 空间扭曲、事件视界、吸积盘和 haze 全部沿同一个 shader `scale` 缩放；`BlackHoleSpec.of(size, lifetime)` 不能拆成“单独黑球半径”和“单独盘半径”两套尺寸。
 
+## 2026-05-28 其他奇点与反物质团补充迁移
+
+### 1.7.10 追加追踪
+
+- `ItemDrop#onEntityItemUpdate(...)`：
+  - `cell_antimatter` 落地且 `WeaponConfig.dropCell` 为真时生成 `ExplosionVNT(..., 3F).makeAmat()`。
+  - `pellet_antimatter` 落地且 `WeaponConfig.dropCell` 为真时生成 `ExplosionVNT(..., 20F).makeAmat()`。
+  - `singularity_counter_resonant` 落地且 `WeaponConfig.dropSing` 为真时生成 `EntityVortex(world, 2.5F)`。
+  - `singularity_super_heated` 落地且 `WeaponConfig.dropSing` 为真时生成 `EntityVortex(world, 2.5F)`。
+  - `black_hole` 落地且 `WeaponConfig.dropSing` 为真时生成稳定 `EntityBlackHole(world, 1.5F)`。
+  - `singularity_spark` 落地且 `WeaponConfig.dropSing` 为真时生成 `EntityRagingVortex(world, 3.5F)`。
+- `ItemDigamma`：
+  - 构造参数 `60`，背包内每 tick 对玩家施加 `1F / 60F` digamma data。
+  - 落地且 `WeaponConfig.dropSing` 为真时生成 `EntityQuasar(world, 5F)`。
+- `EntityQuasar`：
+  - 继承 `EntityBlackHole`，不缩小，不覆写黑洞吸引/吞噬/破坏行为。
+- `EntityRagingVortex`：
+  - 继承 `EntityBlackHole`。
+  - 每 tick 递增 `timer`；当 `timer <= 20` 时减 20，使初始 tick 进入负计时脉冲。
+  - `pulse = sin(timer) * PI / 20D * 0.35F`，每 tick 用 `size -= pulse` 形成旧版脉冲式尺寸变化。
+  - `rand.nextInt(100) == 0` 时额外 `size -= 0.1F`，并在当前位置创建 10F 不破坏方块的普通爆炸。
+  - `size <= 0` 时消失；其余黑洞吸引、吞噬、破坏行为沿用 `EntityBlackHole`。
+- `EntityBlackHole`：
+  - 吞到 `pellet_antimatter` 或 `flame_pony` 时黑洞消失，并产生 5F 普通方块爆炸。
+- `HazardRegistry`：
+  - 旧版没有给这些奇点和反物质团登记普通辐射 hazard；迪伽马粒子的危险核心来自 `ItemDigamma` 背包 tick，现代端额外向危险品库登记 DIGAMMA 便于 tooltip 暴露。
+- 资源：
+  - `textures/items/singularity_alt.png`
+  - `textures/items/singularity_5.png`
+  - `textures/items/singularity_4.png`
+  - `textures/items/singularity_spark_alt.png`
+  - `textures/items/particle_digamma.png`
+  - `textures/items/pellet_antimatter.png`
+
+### 现代实现
+
+- 新增/注册物品：
+  - `singularity_counter_resonant`：`SingularityItem` 变体，落地生成 `VortexEntity(level, 2.5F)`。
+  - `singularity_super_heated`：`SingularityItem` 变体，落地生成 `VortexEntity(level, 2.5F)`。
+  - `black_hole`：`SingularityItem` 变体，落地生成稳定 `BlackHoleEntity(level, 1.5F)`。
+  - `singularity_spark`：`SingularityItem` 变体，落地生成 `RagingVortexEntity(level, 3.5F)`。
+  - `particle_digamma`：`DigammaParticleItem(60)`，背包内施加 digamma data，落地生成 `QuasarEntity(level, 5F)`。
+  - `pellet_antimatter`：`AntimatterClusterItem`，落地走 `WeaponExplosionUtil.antimatter(..., 20F, 50F)`。
+- 新增 `QuasarEntity`，继承现代 `BlackHoleEntity`，注册名 `entity_digamma_quasar`，renderer 使用 `NoopRenderer`。
+- 新增 `RagingVortexEntity`，继承现代 `BlackHoleEntity`，注册名 `entity_raging_vortex`，renderer 使用 `NoopRenderer`；脉冲缩小和随机 10F 非破坏爆炸按旧版 `EntityRagingVortex` 迁入。
+- 反物质团接入：
+  - 掉落物危险轮询入口 `CommonForgeEvents#applyDroppedItemHazards(...)` 复用 `WeaponConfig.DROP_ANTIMATTER_CELLS`（旧 `10.00_dropCell`）触发。
+  - 黑洞吞到 `pellet_antimatter` 时仍由 `BlackHoleEntity#annihilatesBlackHole(...)` 关闭黑洞并触发 5F 爆炸，保持旧版黑洞关闭特性。
+- 黑洞库接入：
+  - 可控反谐振奇点、超热共振奇点和普通奇点都走 `VortexEntity`，因此使用普通奇点同一套天蓝色 shader 黑洞颜色。
+  - `black_hole` 对应稳定 `BlackHoleEntity`，shader 颜色为偏白的黄白色吸积盘：
+    - `withDiskColor(1.0F, 0.99F, 0.9F)`
+    - `withDiskRamp(2.0F, 1.95F, 1.68F, 1.0F, 0.88F, 0.46F)`
+  - `singularity_spark` 对应 `RagingVortexEntity`，shader 使用淡紫色吸积盘，行为尺寸参考旧版 `EntityRagingVortex(world, 3.5F)`。
+  - `particle_digamma` 对应 `QuasarEntity`，shader 颜色为血红色吸积盘。
+- 危险品库接入：
+  - `particle_digamma` 登记 `HazardType.DIGAMMA = 1000F / 60F`，用于危险 tooltip；实际背包污染仍由 `DigammaParticleItem#inventoryTick(...)` 按旧版 `1F / 60F` 执行。
+- 资源/数据：
+  - 已复制旧版贴图到 `assets/hbm/textures/item`。
+  - 已固化 item model JSON，datagen 也补了特殊贴图映射。
+  - 英文/中文语言 provider 已补名称与 tooltip。
+
 ## 暂未迁移
 
-- 普通奇点旧版配方尚未迁入；本批仅迁物品、掉落触发、实体机制和视觉。
-- `singularity_counter_resonant`、`singularity_super_heated`、`black_hole`、`singularity_spark` 及其不同尺寸/颜色/行为另列后续批次。
-- `flame_pony` 等特殊反制物品若现代项目尚未注册，`BlackHoleEntity` 会自动跳过对应判断；`pellet_antimatter` 迁入后可自动生效。
+- 普通奇点和本批其他奇点/反物质团旧版配方尚未迁入；本批仅迁物品、掉落触发、实体机制、危险 tooltip 与视觉。
+- `cell_antimatter` 尚未作为本批物品迁入；反物质团 `pellet_antimatter` 已接入旧版 20F 反物质爆炸。
+- `flame_pony` 特殊反制物品若现代项目尚未注册，`BlackHoleEntity` 会自动跳过对应判断。
 
 ## 验证
 

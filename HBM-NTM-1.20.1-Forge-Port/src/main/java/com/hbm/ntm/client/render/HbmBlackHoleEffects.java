@@ -134,49 +134,18 @@ public final class HbmBlackHoleEffects {
         RenderSystem.depthMask(false);
         RenderSystem.disableCull();
 
-        for (BlackHole blackHole : ACTIVE) {
-            float age = blackHole.age + partialTick;
-            float alpha = blackHole.alpha(age);
-            if (alpha <= 0.0F) {
-                continue;
-            }
-
+        List<RenderJob> jobs = collectRenderJobs(cameraPos, partialTick);
+        jobs.sort((left, right) -> Float.compare(right.distanceToCamera, left.distanceToCamera));
+        for (RenderJob job : jobs) {
             beginBlackHolePass(mainTarget, event, camera, cameraPos, time);
-            BlackHoleSpec spec = blackHole.spec;
-            setUniform("entityPos", (float) blackHole.x, (float) blackHole.y, (float) blackHole.z);
+            BlackHoleSpec spec = job.spec;
+            setUniform("entityPos", (float) job.x, (float) job.y, (float) job.z);
             setUniform("scale", spec.scale);
             setUniform("accretionDiskRadiusScale", spec.accretionDiskRadiusScale);
             setUniform("accretionDiskThicknessScale", spec.accretionDiskThicknessScale);
             setUniform("accretionDiskDensity", spec.accretionDiskDensity);
             setUniform("tiltAngle", spec.tiltAngle);
-            setUniform("intensity", Mth.clamp(spec.intensity * alpha, 0.0F, 8.0F));
-            setUniform("renderQuality", spec.renderQuality);
-            setUniform("ditherStrength", spec.ditherStrength);
-            setUniform("lensBoundarySoftness", spec.lensBoundarySoftness);
-            setUniform("diskNoiseStrength", spec.diskNoiseStrength);
-            setUniform("diskTextureStrength", spec.diskTextureStrength);
-            setUniform("accretionDiskColor", spec.diskColor);
-            setUniform("accretionDiskInnerColor", spec.diskInnerColor);
-            setUniform("accretionDiskOuterColor", spec.diskOuterColor);
-            drawFullscreenQuad();
-        }
-
-        for (TrackedBlackHole blackHole : TRACKED.values()) {
-            float age = blackHole.age + partialTick;
-            float alpha = blackHole.alpha(age);
-            if (alpha <= 0.0F) {
-                continue;
-            }
-
-            beginBlackHolePass(mainTarget, event, camera, cameraPos, time);
-            BlackHoleSpec spec = blackHole.spec;
-            setUniform("entityPos", (float) blackHole.x, (float) blackHole.y, (float) blackHole.z);
-            setUniform("scale", spec.scale);
-            setUniform("accretionDiskRadiusScale", spec.accretionDiskRadiusScale);
-            setUniform("accretionDiskThicknessScale", spec.accretionDiskThicknessScale);
-            setUniform("accretionDiskDensity", spec.accretionDiskDensity);
-            setUniform("tiltAngle", spec.tiltAngle);
-            setUniform("intensity", Mth.clamp(spec.intensity * alpha, 0.0F, 8.0F));
+            setUniform("intensity", Mth.clamp(spec.intensity * job.alpha, 0.0F, 8.0F));
             setUniform("renderQuality", spec.renderQuality);
             setUniform("ditherStrength", spec.ditherStrength);
             setUniform("lensBoundarySoftness", spec.lensBoundarySoftness);
@@ -192,6 +161,25 @@ public final class HbmBlackHoleEffects {
         RenderSystem.enableDepthTest();
         RenderSystem.depthMask(true);
         mainTarget.bindWrite(false);
+    }
+
+    private static List<RenderJob> collectRenderJobs(Vec3 cameraPos, float partialTick) {
+        List<RenderJob> jobs = new ArrayList<>(ACTIVE.size() + TRACKED.size());
+        for (BlackHole blackHole : ACTIVE) {
+            float age = blackHole.age + partialTick;
+            float alpha = blackHole.alpha(age);
+            if (alpha > 0.0F) {
+                jobs.add(RenderJob.of(blackHole.x, blackHole.y, blackHole.z, blackHole.spec, alpha, cameraPos));
+            }
+        }
+        for (TrackedBlackHole blackHole : TRACKED.values()) {
+            float age = blackHole.age + partialTick;
+            float alpha = blackHole.alpha(age);
+            if (alpha > 0.0F) {
+                jobs.add(RenderJob.of(blackHole.x, blackHole.y, blackHole.z, blackHole.spec, alpha, cameraPos));
+            }
+        }
+        return jobs;
     }
 
     private static void beginBlackHolePass(RenderTarget mainTarget, RenderLevelStageEvent event, Camera camera,
@@ -569,6 +557,31 @@ public final class HbmBlackHoleEffects {
             float fadeOut = 1.0F - Mth.clamp((progressAge - spec.fadeOutStartTick)
                     / Math.max(1.0F, spec.lifetime - spec.fadeOutStartTick), 0.0F, 1.0F);
             return fadeIn * fadeOut * fadeOut;
+        }
+    }
+
+    private static final class RenderJob {
+        private final double x;
+        private final double y;
+        private final double z;
+        private final BlackHoleSpec spec;
+        private final float alpha;
+        private final float distanceToCamera;
+
+        private RenderJob(double x, double y, double z, BlackHoleSpec spec, float alpha, float distanceToCamera) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.spec = spec;
+            this.alpha = alpha;
+            this.distanceToCamera = distanceToCamera;
+        }
+
+        private static RenderJob of(double x, double y, double z, BlackHoleSpec spec, float alpha, Vec3 cameraPos) {
+            double dx = x - cameraPos.x;
+            double dy = y - cameraPos.y;
+            double dz = z - cameraPos.z;
+            return new RenderJob(x, y, z, spec, alpha, (float) Math.sqrt(dx * dx + dy * dy + dz * dz));
         }
     }
 

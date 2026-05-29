@@ -134,7 +134,19 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.CHEMICAL_PLANT.get(), ChemicalPlantRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LIQUEFACTOR.get(), LiquefactorRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FLUID_TANK.get(), FluidTankRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.BIG_ASS_TANK.get(), FluidTankRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_VISIBLE_MACHINE.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.GAS_FLARE.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.CATALYTIC_CRACKER.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.CATALYTIC_REFORMER.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.VACUUM_DISTILL.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.FRACTION_TOWER.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.HYDROTREATER.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.COKER.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.STEAM_ENGINE.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.SOLAR_BOILER.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.SMALL_COOLING_TOWER.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.LARGE_COOLING_TOWER.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.TRINKET.get(), TrinketBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_LIGHT.get(), LegacyLightBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_DEMON_LAMP.get(), LegacyDemonLampBlockEntityRenderer::new);
@@ -148,6 +160,8 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntityTypes.NUKE_TOREX.get(), NukeTorexRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.BLACK_HOLE.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.VORTEX.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.RAGING_VORTEX.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.QUASAR.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.FALLOUT_RAIN.get(), FalloutRainRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLOUD_FLEIJA.get(), CloudFleijaRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLOUD_SOLINIUM.get(), CloudSoliniumRenderer::new);

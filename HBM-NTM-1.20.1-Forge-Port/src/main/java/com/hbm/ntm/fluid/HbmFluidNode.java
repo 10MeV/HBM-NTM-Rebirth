@@ -24,6 +24,17 @@ public class HbmFluidNode extends HbmNetworkNode {
         this.type = type == null ? HbmFluids.NONE : type;
     }
 
+    private HbmFluidNode(Set<BlockPos> positions, FluidType type, Set<NodeConnection> connectionPoints,
+            boolean directConnectionPoints) {
+        super(positions, connectionPoints, directConnectionPoints);
+        this.type = type == null ? HbmFluids.NONE : type;
+    }
+
+    public static HbmFluidNode withConnectionPoints(Set<BlockPos> positions, FluidType type,
+            Set<NodeConnection> connectionPoints) {
+        return new HbmFluidNode(positions, type, connectionPoints, true);
+    }
+
     public FluidType getFluidType() {
         return type;
     }

@@ -1168,6 +1168,26 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+## 2026-05-28 ResourceManager 效果、发射架与反应堆 facade 修正
+
+1.7.10 对照：
+
+- `ResourceManager.sphere_ruv`、`sphere_iuv`、`sphere_uv` 使用 `AdvancedModelLoader.loadModel(...)`，不是 VBO；`sphere_new` 才是 `HFRWavefrontObject(...).asVBO()`。
+- `RenderDeathBlast` 直接加载 `models/Sphere.obj`，同样是 `AdvancedModelLoader.loadModel(...)`，不属于 `ResourceManager` VBO 字段。
+- `ResourceManager.soyuz_launcher_*` 六个发射架部件均为 `HFRWavefrontObject(...).noSmooth().asVBO()`；现代端此前只保留 `.noSmooth()`。
+- `ResourceManager.icf`、`lpw2`、`watz`、`watz_pump` 均为 `.asVBO()`；`reactor_small_base/rods` 是 `AdvancedModelLoader`，`breeder` 是普通 `HFRWavefrontObject`，需要保持非 VBO 语义。
+- 车辆 `cart/cart_destroyer/cart_powder/tram/tram_trailer` 均为 `AdvancedModelLoader`，本轮确认现代 `ObjVehicleModels` 不补 `.asVBO()`。
+
+现代侧改动：
+
+- `ObjEffectModels` 去掉 `SPHERE_RUV`、`SPHERE_IUV`、`SPHERE_UV`、`SPHERE` 的误加 `.asVBO()`；保留 `SPHERE_NEW.asVBO()`。
+- `ObjLaunchModels` 的 `SOYUZ_LAUNCHER_*_LEGACY` 全部改为 `.noSmooth().asVBO()`。
+- `ObjReactorModels.ICF`、`LPW2`、`WATZ`、`WATZ_PUMP` 补 `.asVBO()`；`SMALL_BASE`、`SMALL_RODS`、`BREEDER` 保持旧端非 VBO 语义。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
 ## 2026-05-26 ResourceManager 门面修饰符与门模型追加对齐
 
 1.7.10 对照：

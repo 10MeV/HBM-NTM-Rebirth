@@ -209,6 +209,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_copper_plate", has(ModItems.COPPER_PLATE.get()))
                 .save(consumer, id("control/gas_empty"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.FLUID_TANK_EMPTY.get(), 8)
+                .pattern("AIA")
+                .pattern("AGA")
+                .pattern("AIA")
+                .define('A', ModItems.ALUMINIUM_PLATE.get())
+                .define('I', ModItems.IRON_PLATE.get())
+                .define('G', forgeTag("glass"))
+                .unlockedBy("has_aluminium_plate", has(ModItems.ALUMINIUM_PLATE.get()))
+                .save(consumer, id("control/fluid_tank_empty"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.FLUID_TANK_LEAD_EMPTY.get(), 4)
                 .pattern("LUL")
                 .pattern("LTL")
@@ -218,6 +228,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('T', ModItems.FLUID_TANK_EMPTY.get())
                 .unlockedBy("has_lead_plate", has(ModItems.LEAD_PLATE.get()))
                 .save(consumer, id("control/fluid_tank_lead_empty"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.FLUID_BARREL_EMPTY.get(), 2)
+                .pattern("SAS")
+                .pattern("SGS")
+                .pattern("SAS")
+                .define('S', ModItems.STEEL_PLATE.get())
+                .define('A', ModItems.ALUMINIUM_PLATE.get())
+                .define('G', forgeTag("glass"))
+                .unlockedBy("has_steel_plate", has(ModItems.STEEL_PLATE.get()))
+                .save(consumer, id("control/fluid_barrel_empty"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.FLUID_PACK_EMPTY.get())
                 .pattern("TI ")
@@ -252,6 +272,12 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('D', Items.DIAMOND)
                 .unlockedBy("has_aluminium_plate", has(ModItems.ALUMINIUM_PLATE.get()))
                 .save(consumer, id("control/inf_water"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, Items.SLIME_BALL, 16)
+                .requires(Items.BONE_MEAL, 4)
+                .requires(HbmFluidContainerIngredient.of(HbmFluids.SULFURIC_ACID, 1_000))
+                .unlockedBy("has_sulfuric_acid_container", has(ModItems.CANISTER_FULL.get()))
+                .save(consumer, id("control/slime_ball_from_sulfuric_acid"));
 
         GenericMachineRecipeBuilder.assembly("ass.emptypackage", 40, 100)
                 .inputItem(ModItems.TITANIUM_PLATE.get(), 4)

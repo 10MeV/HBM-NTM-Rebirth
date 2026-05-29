@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-28T21:20:26.133172	Tags for minecraft:item mod id hbm
+// 1.20.1	2026-05-28T23:27:13.0732661	Tags for minecraft:item mod id hbm
 5ebd831e76f4e98d5ece9c7f49b2304f3647712a data/forge/tags/items/cast_plates.json
 dfbe085cc34d5b36c5a877a4b81a8a6cb6a74739 data/forge/tags/items/cast_plates/any_bismoid_bronze.json
 266d1de68cdf6befd32054c00a6259bab36ce6e8 data/forge/tags/items/cast_plates/arsenic_bronze.json
@@ -27,7 +27,7 @@ dfb0d13b432c34d4369e2c66216b1d1740b00e2b data/forge/tags/items/dusts/lignite.jso
 4b8f1cdf16be251b21c5a9f084c6c082d64f41c8 data/forge/tags/items/dusts/spark_mix.json
 50e13739c5004ff1f5177fb29ecff7b5d3d45cd3 data/forge/tags/items/gems/coal.json
 b96f0a955b5755b293af014e9f8fd6129db7b1b3 data/forge/tags/items/gems/lignite.json
-e1ffeed8b117079cbd9f7c78a8196900e758c6af data/forge/tags/items/glass.json
+d67f576c6c48b5bb17775f718b118e7bc8cfde67 data/forge/tags/items/glass.json
 5dec7ff8a931b6fbf5dc8cfb7b3de51cf6d16392 data/forge/tags/items/ingots.json
 d29a12145b6e9d8f5241dc0017d6a8ee42bfe111 data/forge/tags/items/ingots/any_hardplastic.json
 3691ab56375c7f1d6565e2873b49b627bec21dcf data/forge/tags/items/ingots/any_plastic.json

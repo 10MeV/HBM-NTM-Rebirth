@@ -2064,6 +2064,53 @@
 
 - 2026-05-27 ran `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`: passed.
 
+### 2026-05-28 追加：MK5 explosionAlgorithm 配置接线工况修正
+
+复核来源：
+
+- `com.hbm.config.BombConfig`
+- `com.hbm.explosion.ExplosionNukeRayParallelized`
+- `com.hbm.explosion.ExplosionNukeRayBatched`
+- `com.hbm.entity.logic.EntityNukeExplosionMK5`
+
+问题与旧版对齐：
+
+- 1.7.10 保留 `explosionAlgorithm` 配置，`1` / `2` 指向 threaded DDA 入口，`0` 指向旧批处理射线入口。
+- 现代端已经迁入 `BombConfig.EXPLOSION_ALGORITHM`，注释说明 threaded 模式安全委托到 batched worker，但 `NukeExplosionMk5Entity` 仍固定创建 `ExplosionNukeRayBatched`，配置值没有进入调度路径。
+- 现代 `ExplosionNukeRayParallelized` 是安全兼容入口，不复刻 1.7.10 worker-thread 直接读写 chunk 的危险实现；但它必须保留 MK5 forced chunk loader 注入，否则后续按配置选择该入口会丢失已迁入的 chunk loading 语义。
+
+现代修正：
+
+- `ExplosionNukeRayParallelized` 改为继承 `ExplosionNukeRayBatched`，保留旧构造签名，并新增带 `BiConsumer<Integer, Integer>` chunk-loader 的构造。
+- `NukeExplosionMk5Entity` 新增 `createExplosionWorker(...)`，`explosionAlgorithm == 1 || 2` 时创建 `ExplosionNukeRayParallelized`，`0` 时创建 `ExplosionNukeRayBatched`。
+- 两条路径仍共享 batched 的 NBT 保存/读取、`cacheChunksTick` / `destructionTick` 预算推进和强制加载回调；这次只接通旧配置契约，不恢复旧线程直接改 chunk 的高风险实现。
+
+验证：
+
+- 2026-05-28 attempted `.\gradlew.bat compileJava processResources --no-daemon`: online dependency resolution failed to resolve `org.parchmentmc.librarian.forgegradle:1.+` from configured repositories.
+- 2026-05-28 attempted `.\gradlew.bat compileJava processResources --no-daemon --offline`: reached `compileJava`, then failed on pre-existing `QuasarEntity` reference to missing `ModEntityTypes.QUASAR`; no MK5/explosion compile error surfaced before that blocker.
+
+### 2026-05-28 追加：waste schrabidium 变异概率配置接回
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionNukeGeneric#wasteDest`
+- `com.hbm.config.VersatileConfig#getSchrabOreChance`
+- `com.hbm.config.GeneralConfig#enableLBSM`
+- `com.hbm.config.GeneralConfig#schrabRate`
+
+问题与旧版对齐：
+
+- 1.7.10 的核爆 waste 后处理把 `ore_uranium` / `ore_nether_uranium` / `ore_gneiss_uranium` 转为对应 schrabidium 矿时，概率来自 `VersatileConfig.getSchrabOreChance()`。
+- 旧 `getSchrabOreChance()` 在普通模式返回 `100`；开启 Less Bullshit Mode 时返回 `GeneralConfig.schrabRate`，旧配置项 `LBSM_schrabOreRate` 默认 `20`。
+- 现代端此前固定使用 `nextInt(10) == 1`，使普通核爆 waste 生成 schrabidium 的概率变为 1/10，明显高于旧默认 1/100。
+
+现代修正：
+
+- `BombConfig` 新增 `lessBullshitMode.schrabOreRate`，默认 `20`，对应旧 `LBSM_schrabOreRate`。
+- `ExplosionNukeGeneric` 新增 `schrabOreChance()` helper：普通模式返回 `100`；`RadiationConfig.ENABLE_LESS_BULLSHIT_MODE` 开启且配置已初始化时返回 `BombConfig.LBSM_SCHRAB_ORE_RATE`。
+- 三类 uranium waste 转换都改用该概率；`wasteNoSchrab` 仍保持不生成 schrabidium 的旧语义。
+
 ## 验证清单
 
 - 普通爆炸不会在客户端修改世界。
@@ -2093,3 +2140,5 @@
 - `.\gradlew.bat compileJava processResources --no-daemon` 在补回 VNT 标准 affected-block 客户端烟尘效果桥后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在对齐 VNT Tiny 旧声音/vanillaExt 粒子并新增 smooth tiny 公共入口后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon` 在将 `ExplosionEffectWeapon` 改回 `explosionSmall` aux 粒子路径后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在接通 MK5 `explosionAlgorithm` 配置后进入 Java 编译，但被既有 `QuasarEntity` / `ModEntityTypes.QUASAR` 缺口阻断，待 Quasar 注册修复后复跑。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在注册 `entity_digamma_quasar`、修复 `SingularityItem` tooltip mutable component、接回 waste schrabidium 概率配置后通过。

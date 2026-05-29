@@ -173,9 +173,32 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("subtitles.hbm.entity.ufo_blast", "Energy discharge");
         add("item.hbm.detonator", "Detonator");
         add("item.hbm.singularity", "Singularity");
+        add("item.hbm.singularity_counter_resonant", "Contained Counter-Resonant Singularity");
+        add("item.hbm.singularity_super_heated", "Superheated Resonating Singularity");
+        add("item.hbm.singularity_spark", "Spark Singularity");
+        add("item.hbm.black_hole", "Miniature Black Hole");
+        add("item.hbm.particle_digamma", "The Digamma Particle");
+        add("item.hbm.pellet_antimatter", "Antimatter Cluster");
         add("item.hbm.singularity.desc.1", "You may be asking:");
         add("item.hbm.singularity.desc.2", "\"How is this possible?\"");
         add("item.hbm.singularity.desc.3", "\"I have no idea!\"");
+        add("item.hbm.singularity_counter_resonant.desc.1", "Nullifies resonance of objects in");
+        add("item.hbm.singularity_counter_resonant.desc.2", "non-euclidean space, creating a");
+        add("item.hbm.singularity_counter_resonant.desc.3", "variable gravity well.");
+        add("item.hbm.singularity_super_heated.desc.1", "Continuously heats up matter by");
+        add("item.hbm.singularity_super_heated.desc.2", "resonating every Planck second.");
+        add("item.hbm.singularity_super_heated.desc.3", "Not edible.");
+        add("item.hbm.singularity_spark.desc.1", "A violently unstable singularity");
+        add("item.hbm.singularity_spark.desc.2", "that pulses and tears space open.");
+        add("item.hbm.singularity_spark.desc.3", "Handle from very far away.");
+        add("item.hbm.black_hole.desc.1", "Contains a regular singularity");
+        add("item.hbm.black_hole.desc.2", "large enough to stay stable.");
+        add("item.hbm.black_hole.desc.3", "It's not the end of the world.");
+        add("item.hbm.particle_digamma.desc.half_particle", "Particle half-life: 1.67*10^21 years");
+        add("item.hbm.particle_digamma.desc.half_player", "Player half-life: %s");
+        add("item.hbm.particle_digamma.desc.digamma", "%s mDRX/s");
+        add("item.hbm.pellet_antimatter.desc.1", "Very heavy antimatter cluster.");
+        add("item.hbm.pellet_antimatter.desc.2", "Gets rid of black holes.");
         add("item.hbm.trait.drop", "[Drops when dropped]");
         add("tooltip.hbm.detonator.set", "Shift right-click to set position,");
         add("tooltip.hbm.detonator.trigger", "right-click to detonate!");
@@ -260,6 +283,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.hbm.battery.priority.recommended", "Recommended: Low");
         HbmFluidLangEntries.addEnglish(this::add);
         add("container.fluidtank", "Fluid Tank");
+        add("container.bigAssTank", "Big Industrial Tank");
+        add("container.gasFlare", "Gas Flare");
         add("container.fluidtank.mode", "Mode");
         add("container.fluidtank.mode.input", "Input");
         add("container.fluidtank.mode.buffer", "Buffer");
@@ -389,7 +414,13 @@ public class HbmLanguageProvider extends LanguageProvider {
                  "battery_sc.au198",
                  "battery_sc.pb209",
                  "battery_sc.am241",
-                 "singularity" -> true;
+                 "singularity",
+                 "singularity_counter_resonant",
+                 "singularity_super_heated",
+                 "singularity_spark",
+                 "black_hole",
+                 "particle_digamma",
+                 "pellet_antimatter" -> true;
             default -> false;
         };
     }

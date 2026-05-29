@@ -4,6 +4,7 @@ import com.hbm.ntm.config.BombConfig;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.explosion.ExplosionNukeRayBatched;
+import com.hbm.ntm.explosion.ExplosionNukeRayParallelized;
 import com.hbm.ntm.explosion.ExplosionRay;
 import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
@@ -16,6 +17,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
     private int strength;
@@ -91,8 +93,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
 
         if (explosion == null) {
             explosionStart = System.currentTimeMillis();
-            explosion = new ExplosionNukeRayBatched(level(), (int) getX(), (int) getY(), (int) getZ(),
-                    strength, speed, length, this::loadChunk);
+            explosion = createExplosionWorker();
             initialized = true;
         }
 
@@ -175,8 +176,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         readChunkLoader(tag);
         expiredFromSave = shouldExpireFromSave(tag);
         if (initialized && !expiredFromSave && strength > 0) {
-            explosion = new ExplosionNukeRayBatched(level(), (int) getX(), (int) getY(), (int) getZ(),
-                    strength, speed, length, this::loadChunk);
+            explosion = createExplosionWorker();
             explosion.readFromNbt(tag, "expl_");
         }
     }
@@ -194,5 +194,18 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         if (explosion != null) {
             explosion.saveToNbt(tag, "expl_");
         }
+    }
+
+    private ExplosionNukeRayBatched createExplosionWorker() {
+        return createExplosionWorker(level(), getX(), getY(), getZ(), strength, speed, length, this::loadChunk);
+    }
+
+    private static ExplosionNukeRayBatched createExplosionWorker(Level level, double x, double y, double z, int strength,
+            int speed, int length, BiConsumer<Integer, Integer> chunkLoader) {
+        int algorithm = BombConfig.EXPLOSION_ALGORITHM.get();
+        if (algorithm == 1 || algorithm == 2) {
+            return new ExplosionNukeRayParallelized(level, x, y, z, strength, speed, length, chunkLoader);
+        }
+        return new ExplosionNukeRayBatched(level, (int) x, (int) y, (int) z, strength, speed, length, chunkLoader);
     }
 }

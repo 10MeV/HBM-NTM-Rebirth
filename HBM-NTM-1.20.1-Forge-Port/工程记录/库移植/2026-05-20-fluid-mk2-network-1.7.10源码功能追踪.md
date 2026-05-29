@@ -506,6 +506,260 @@ Verification:
 - `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options.
 - `.\gradlew.bat runData --no-daemon` passed and generated `hbm:fluid_container` in `control/inf_water.json` plus strict-NBT gasoline canister input in `blast_furnace/canister_napalm.json`.
 
+## 2026-05-28 Modern Library Pass 40
+
+This pass expands the ordinary-crafting bridge from Pass 39 into a small batch of directly mappable old fluid-container recipes:
+
+- Legacy sources re-read:
+  - `com/hbm/main/CraftingManager.java`
+  - `com/hbm/inventory/OreDictManager.java`
+  - `com/hbm/inventory/fluid/FluidType.java`
+  - `com/hbm/inventory/FluidContainerRegistry.java`
+- Port old empty-container crafting recipes that do not require missing metadata families:
+  - `control/fluid_tank_empty`: old `fluid_tank_empty` recipe, 8 output, aluminium plates + iron plates + `KEY_ANYGLASS`.
+  - `control/fluid_barrel_empty`: old `fluid_barrel_empty` recipe, 2 output, steel plates + aluminium plates + `KEY_ANYGLASS`.
+- Expand the modern `forge:glass` tag used by those recipes:
+  - Adds vanilla normal/stained glass plus existing HBM boron/trinitite glass.
+  - Does not add 1.20 tinted glass, because the old `blockGlass` semantic predates it and should stay closer to 1.7.10 glass blocks.
+- Port another ordinary-crafting `FluidType#getDict(...)` use:
+  - Old `CraftingManager` slime recipe used four bone-meal dye stacks plus `Fluids.SULFURIC_ACID.getDict(1000)` to produce 16 slime balls.
+  - Modern `control/slime_ball_from_sulfuric_acid.json` now uses four `minecraft:bone_meal` plus `{ "type": "hbm:fluid_container", "fluid": "hbm:sulfuric_acid", "amount": 1000 }`.
+
+Still deferred:
+
+- `solid_fuel` and the two-lubricant-canister recipe remain blocked on the legacy `ntmchemistryset` tool family and, for the canister output, a dedicated NBT-result crafting serializer or equivalent safe output path.
+- Tritium lamp recipes remain deferred because their old red-phosphorus / aluminium-dust ingredient chain is not fully migrated in the modern item registry.
+- `inf_water_mk2` remains deferred because the old `STEEL.shell()` ingredient is not yet available as a stable modern item/tag.
+- Express conveyor wand crafting is a good later `FluidType#getDict(...)` candidate, but it needs NBT-sensitive conveyor-wand output handling instead of a plain vanilla result stack.
+
+Progress estimate after Pass 40:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 90%.
+- Fluid network/provider/receiver algorithm: about 76%.
+- In-world pipe graph: about 49%.
+- Fluid item/container loading: about 93.5%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 71%.
+- Overall fluid library migration: about 94.8%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options.
+- `.\gradlew.bat runData --no-daemon` passed and generated `control/fluid_tank_empty.json`, `control/fluid_barrel_empty.json`, and `control/slime_ball_from_sulfuric_acid.json`.
+- Generated `forge:glass` block/item tags were inspected and confirmed to contain vanilla normal/stained glass plus HBM glass, without tinted glass.
+
+## 2026-05-28 Modern Library Pass 41
+
+This pass starts the larger machine-connection push for fluid MK2 remote ports. The first active target is the already-registered `machine_bigasstank`; it has had its model and multiblock shell in the modern port, but was still using the generic visible-machine block entity instead of the legacy fluid tank runtime.
+
+- Legacy sources re-read:
+  - `api/hbm/fluidmk2/IFluidConnectorMK2.java`
+  - `api/hbm/fluidmk2/IFluidStandardReceiverMK2.java`
+  - `api/hbm/fluidmk2/IFluidStandardSenderMK2.java`
+  - `api/hbm/fluidmk2/FluidNode.java`
+  - `com/hbm/uninos/GenNode.java`
+  - `com/hbm/uninos/UniNodespace.java`
+  - `com/hbm/blocks/machine/MachineBigAssTank.java`
+  - `com/hbm/tileentity/machine/storage/TileEntityBarrel.java`
+  - `com/hbm/tileentity/machine/storage/TileEntityMachineFluidTank.java`
+  - `com/hbm/tileentity/machine/storage/TileEntityMachineBigAssTank.java`
+- Migration target:
+  - Reuse the modern `machine_fluidtank` runtime path for tank mode, GUI slots, identifier-slot behavior, item/tank loading, comparator output, Forge fluid capability, and HBM receiver/provider contracts.
+  - Specialize `machine_bigasstank` with the old `16_000_000` mB capacity, `max(50_000, space/fill / 100)` transfer speeds, and two facing-aligned remote fluid connection points.
+  - Keep the old storage-tank buffer-mode behavior tied to remote-port multi-position fluid nodes: the core and internal port positions are indexed in nodespace while the connection points remain the old external `DirPos` coordinates.
+- Scope guard:
+  - `machine_large_turbine` remains intentionally excluded because the user confirmed the large turbine was removed and should not be added.
+- Implemented in the modern port:
+  - `FluidTankBlockEntity` now exposes protected constructor/capacity hooks so the old storage-tank runtime can be specialized without duplicating tank mode, slots, Forge capability, or HBM receiver/provider logic.
+  - `BigAssTankBlockEntity` / `BigAssTankBlock` switch `machine_bigasstank` from the generic visible shell to a real fluid tank runtime.
+  - Capacity is `16_000_000` mB and transfer speed floor is `50_000`, matching old `TileEntityMachineBigAssTank`.
+  - The two legacy facing-aligned ports are placed at `+/- facing * 7` and use the old outward `DirPos` direction.
+  - `machine_bigasstank` was removed from `LEGACY_VISIBLE_MACHINE`, registered as `BIG_ASS_TANK`, and rendered through the existing fluid-tank renderer with the big-tank OBJ.
+- Verification:
+  - `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options.
+
+Progress estimate after Pass 41:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 91%.
+- Fluid network/provider/receiver algorithm: about 78%.
+- In-world pipe graph: about 50%.
+- Fluid item/container loading: about 93.5%.
+- Behavior traits and cross-system effects: about 72%.
+- Machine integration through the library: about 74%.
+- Overall fluid library migration: about 95%.
+
+## 2026-05-28 Modern Library Pass 42
+
+This pass continues the larger remote-port machine integration push and focuses on already-migrated or safe standalone runtime paths instead of inventing missing refinery-chain behavior.
+
+- Legacy sources re-read:
+  - `api/hbm/fluid/IFluidStandardReceiver.java`
+  - `api/hbm/fluidmk2/IFluidStandardReceiverMK2.java`
+  - `api/hbm/fluidmk2/IFluidStandardTransceiverMK2.java`
+  - `com/hbm/tileentity/machine/TileEntityMachineChemicalPlant.java`
+  - `com/hbm/tileentity/machine/TileEntityMachinePrecAss.java`
+  - `com/hbm/tileentity/machine/oil/TileEntityMachineGasFlare.java`
+- Fix migrated remote-port machine sync:
+  - `ChemicalPlantBlockEntity` and `AssemblyMachineBlockEntity` now override `transferFluid(...)` and `useUpFluid(...)` so HBM remote-network fill/drain marks the machine dirty and sends block updates.
+  - This preserves the old packeted machine behavior where fluid tank changes caused machine state sync, instead of silently mutating server-side tanks.
+- Add gas flare as a real fluid-library participant:
+  - `machine_gasflare` now uses `GasFlareBlock` / `GasFlareBlockEntity` instead of `LegacyVisibleMachineBlockEntity`.
+  - Ports the old default gas tank shape: `GAS`, `64_000` mB, four horizontal remote fluid ports at `(+/-2,0,0)` and `(0,0,+/-2)`.
+  - The flare subscribes as a LOW-priority HBM fluid receiver through the remote ports and also exposes Forge fluid input capability.
+  - Keeps the old six-slot persistence layout as a scaffold: energy output, fluid input/return, fluid identifier, and two deferred upgrade slots.
+  - Shift-right-click with a fluid identifier can set the accepted tank type until the full old GUI/control screen is migrated.
+  - Old valve/burn booleans are saved and legacy-button hooks are present; default state remains off, matching 1.7.10.
+  - When enabled by later UI/control, venting uses `FluidReleaseType.SPILL` for gases and burning uses `FluidReleaseType.BURN`, with HE generation based on `FlammableFluidTrait#getHeatEnergyPerBucket()` and the old gas/liquid penalty split.
+  - Generated HE can charge the output slot or provide to the same four remote energy ports through the existing energy helper.
+  - The existing visible-machine OBJ renderer was made generic so `GasFlareBlockEntity` can reuse the same `flare_stack` model path without duplicating renderer logic.
+- Scope guard:
+  - Full gas flare GUI/menu, valve/burn buttons on screen, upgrade item effects, particles/sounds/entity fire damage, and Energy Control extra info remain deferred. The runtime state and remote-port plumbing are ready first.
+  - Large turbine remains excluded.
+
+Progress estimate after Pass 42:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 91%.
+- Fluid network/provider/receiver algorithm: about 79%.
+- In-world pipe graph: about 51%.
+- Fluid item/container loading: about 94%.
+- Behavior traits and cross-system effects: about 73%.
+- Machine integration through the library: about 77%.
+- Overall fluid library migration: about 95.5%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options after adding gas flare runtime and sync fixes.
+
+## 2026-05-28 Modern Library Pass 43
+
+This pass continues the machine/remote-port push with standalone steam and condenser machines whose 1.7.10 behavior is local enough to migrate without inventing refinery-chain recipe logic.
+
+- Legacy sources re-read:
+  - `com/hbm/tileentity/machine/TileEntitySteamEngine.java`
+  - `com/hbm/blocks/machine/MachineSteamEngine.java`
+  - `com/hbm/tileentity/machine/TileEntitySolarBoiler.java`
+  - `com/hbm/blocks/machine/MachineSolarBoiler.java`
+  - `com/hbm/tileentity/machine/TileEntityCondenser.java`
+  - `com/hbm/tileentity/machine/TileEntityTowerSmall.java`
+  - `com/hbm/tileentity/machine/TileEntityTowerLarge.java`
+  - `com/hbm/blocks/machine/MachineTowerSmall.java`
+  - `com/hbm/blocks/machine/MachineTowerLarge.java`
+- Add shared `HbmFluidPortMachine`:
+  - centralizes the common remote-port pattern for non-`HbmFluidBlockEntity` machines that have input tank subscriptions and output tank direct pushes.
+  - `AssemblyMachineBlockEntity` and `ChemicalPlantBlockEntity` now use the helper instead of each hand-rolling the same subscription/provision loops.
+- Add `machine_steam_engine` runtime:
+  - `SteamEngineBlock` / `SteamEngineBlockEntity` replace the generic visible-machine shell.
+  - Preserves old tank sizes: `STEAM` input `2_000` mB and `SPENTSTEAM` output `20` mB.
+  - Uses the migrated turbine/coolable-fluid math at 85% efficiency.
+  - Preserves the old immediate `powerBuffer` shape by resetting generated energy every server tick, then pushing through the three old remote power ports.
+  - Ports the three old side remote fluid/power ports from `getConPos()` using the same legacy side-axis convention as `steamEngineProxyOffsets(...)`.
+  - Keeps rotor/acceleration/last-output state for later renderer/screen overlays.
+- Add `machine_solar_boiler` runtime:
+  - `SolarBoilerBlock` / `SolarBoilerBlockEntity` replace the generic visible-machine shell.
+  - Preserves old tank sizes: `WATER` input `100` mB and `STEAM` output `10_000` mB.
+  - Ports the old two vertical remote fluid ports at `y + 3` and `y - 1`.
+  - Keeps `heat` and `display` state for later mirror/particle integration; heat can already be added by future solar mirror code.
+- Add cooling tower runtimes:
+  - `CoolingTowerBlock`, `CoolingTowerBlockEntity`, `SmallCoolingTowerBlockEntity`, and `LargeCoolingTowerBlockEntity`.
+  - `machine_tower_small` now converts `SPENTSTEAM` to `WATER` with old `1_000` mB input/output tanks and four cardinal remote ports at radius 3.
+  - `machine_tower_large` now converts `SPENTSTEAM` to `WATER` with old `10_000` mB input/output tanks and the twelve old side remote ports at radius 5 with +/-3 side offsets.
+  - Both towers preserve `waterTimer` and throughput state for later old cooling-tower particle/overlay work.
+  - Both expose Forge fluid capability through the shared HBM tank bridge and keep HBM remote receiver/provider behavior.
+- Registration/rendering:
+  - `ModBlocks` now uses dedicated block classes for steam engine, solar boiler, and both tower sizes.
+  - `ModBlockEntities` registers dedicated BE types and removes those four blocks from `LEGACY_VISIBLE_MACHINE`.
+  - Client renderer registration reuses the generic OBJ visible-machine renderer for all four new BE types.
+- Scope guard:
+  - Large turbine remains excluded.
+  - Steam engine sound, exact old client rotor interpolation, solar mirror heat accumulation, cooling-tower particles, look overlay text, and Energy Control integration remain deferred.
+  - Gas turbine and turbofan are still deferred because their old behavior includes control UI, fuel selection, pollution, startup/shutdown state, and entity/particle side effects; they should get a dedicated safe pass rather than a partial port.
+  - Refinery-chain machines remain deferred until their recipe/runtime support is grounded in the old source and modern recipe system.
+
+Progress estimate after Pass 43:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 91.5%.
+- Fluid network/provider/receiver algorithm: about 79%.
+- In-world pipe graph: about 52%.
+- Fluid item/container loading: about 94%.
+- Behavior traits and cross-system effects: about 73%.
+- Machine integration through the library: about 81%.
+- Overall fluid library migration: about 96%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options after adding the shared helper and four standalone machine runtimes.
+
+## 2026-05-28 Modern Library Pass 44
+
+This pass starts the refinery/oil-chain machine connection work by replacing a larger batch of visible shells with real tank and remote-port participants.
+
+- Legacy sources re-read:
+  - `com/hbm/tileentity/machine/oil/TileEntityMachineCatalyticCracker.java`
+  - `com/hbm/tileentity/machine/oil/TileEntityMachineCatalyticReformer.java`
+  - `com/hbm/tileentity/machine/oil/TileEntityMachineVacuumDistill.java`
+  - `com/hbm/tileentity/machine/oil/TileEntityMachineFractionTower.java`
+  - `com/hbm/tileentity/machine/oil/TileEntityMachineHydrotreater.java`
+  - `com/hbm/tileentity/machine/oil/TileEntityMachineCoker.java`
+  - `com/hbm/inventory/recipes/CrackingRecipes.java`
+  - `com/hbm/inventory/recipes/FractionRecipes.java`
+- Corrected `machine_steam_engine` remote fluid/energy ports:
+  - The previous modern BE used `rot * 2`; old `MachineSteamEngine.fillSpace` places the three proxy ports at `rot`, `rot + dir`, and `rot - dir` on `y + 1`.
+  - The BE now matches `steamEngineProxyOffsets(...)` and the old dummy placement.
+- Add shared `LegacyRemoteFluidMachineBlockEntity`:
+  - Extends the HBM tank + Forge capability bridge through `HbmEnergyAndFluidBlockEntity`.
+  - Implements `HbmStandardFluidTransceiver` and refreshes old-style remote fluid receiver/provider ports with `HbmFluidPortMachine`.
+  - Can also subscribe remote energy receiver ports for machines whose full energy runtime is still deferred.
+  - Keeps `shouldCreateFluidNode=false`, because these machines are not pipe nodes; they are old remote-port machines.
+- Add `RemoteFluidMachineBlock` and dedicated BE registrations/renderers for:
+  - `machine_catalytic_cracker`
+  - `machine_catalytic_reformer`
+  - `machine_vacuum_distill`
+  - `machine_fraction_tower`
+  - `machine_hydrotreater`
+  - `machine_coker`
+- Port exact tank surfaces and remote ports:
+  - Catalytic cracker: `BITUMEN` 4,000 + `STEAM` 8,000 inputs; `OIL` 4,000, `PETROLEUM` 4,000, `SPENTSTEAM` 800 outputs; eight facing-relative old `getConPos()` ports.
+  - Catalytic reformer: `NAPHTHA` 64,000 input; `REFORMATE`, `PETROLEUM`, `HYDROGEN` 24,000 outputs; six old power/fluid ports.
+  - Vacuum distill: pressure-2 `OIL` 64,000 input; `HEAVYOIL_VACUUM`, `REFORMATE`, `LIGHTOIL_VACUUM`, `SOURGAS` 24,000 outputs; eight surrounding old ports.
+  - Fraction tower: `HEAVYOIL` 4,000 input; `BITUMEN` and `SMEAR` 4,000 outputs; four cardinal old ports at radius 2.
+  - Hydrotreater: `OIL` 64,000 and pressure-1 `HYDROGEN` 64,000 inputs; `OIL_DS` and `SOURGAS` 24,000 outputs; eight surrounding old ports.
+  - Coker: `HEAVYOIL` 16,000 input and `OIL_COKER` 8,000 output; eight surrounding old ports.
+- Port safe pure-fluid runtimes:
+  - `LegacyOilFluidRecipes` records the default old `CrackingRecipes` and `FractionRecipes` tables.
+  - Catalytic cracker now runs the old `100 mB input + 200 mB steam -> left/right + 2 mB spent steam`, up to two operations every five ticks.
+  - Fraction tower now runs the old `100 mB input -> two fractions` operation every ten ticks.
+  - Fraction tower also preserves the old stacked-tower transfer at `y + 3`: input moves upward, fractions move downward.
+- Registration/layout fixes:
+  - These six machines are removed from `LEGACY_VISIBLE_MACHINE`.
+  - Their OBJ rendering still uses `LegacyVisibleMachineRenderer`.
+  - Vacuum distill, hydrotreater, and coker proxy dummy layouts now expose the old eight surrounding remote ports instead of only the previous corner placeholders.
+  - Catalytic reformer proxy layout now matches its six old `getConPos()` positions.
+- Scope guard:
+  - Large turbine remains excluded.
+  - Reformer, vacuum distill, hydrotreater, and coker full processing remains deferred because the old behavior requires energy draw, item slots, catalyst checks, heat source coupling, pollution, GUI/menu, sound/particles, and item byproducts.
+  - The pass intentionally does not invent those systems; it only makes the machines real tank/remote-port network participants and leaves their output tanks ready for the next grounded recipe/runtime pass.
+
+Progress estimate after Pass 44:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 92%.
+- Fluid network/provider/receiver algorithm: about 80%.
+- In-world pipe graph: about 53%.
+- Fluid item/container loading: about 94%.
+- Behavior traits and cross-system effects: about 73%.
+- Machine integration through the library: about 85%.
+- Overall fluid library migration: about 96.5%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options.
+- `.\gradlew.bat compileJava processResources --no-daemon` passed with proxy JVM options.
+
+
 ## 2026-05-24 Modern Library Pass 17
 
 This pass expands the fluid library into the first substantial legacy fluid-processing machine: `machine_liquefactor`.

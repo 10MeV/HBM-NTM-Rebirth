@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_sulfuric_acid_container": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "hbm:canister_full"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "hbm:control/slime_ball_from_sulfuric_acid"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_sulfuric_acid_container",
+      "has_the_recipe"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "hbm:control/slime_ball_from_sulfuric_acid"
+    ]
+  },
+  "sends_telemetry_event": false
+}

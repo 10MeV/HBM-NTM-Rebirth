@@ -177,9 +177,36 @@ vec2 worldPosToScreenUV(vec3 worldPos)
     return ndc * 0.5 + 0.5;
 }
 
+bool worldPosToScreenUVChecked(vec3 worldPos, out vec2 uv)
+{
+    vec4 viewPos = modelViewMatrix * vec4(worldPos - cameraPos, 1.0);
+    vec4 clipPos = projectionMatrix * viewPos;
+    if (clipPos.w <= 0.0001)
+    {
+        uv = texCoord;
+        return false;
+    }
+
+    vec2 ndc = clipPos.xy / clipPos.w;
+    uv = ndc * 0.5 + 0.5;
+    return all(greaterThanEqual(uv, vec2(0.0))) && all(lessThanEqual(uv, vec2(1.0)));
+}
+
+float screenOutOfBoundsBlend(vec2 uv)
+{
+    vec2 outside = max(vec2(0.0) - uv, uv - vec2(1.0));
+    float outsideDistance = max(outside.x, outside.y);
+    return 1.0 - smoothstep(0.02, 0.18, outsideDistance);
+}
+
 vec2 worldDirToScreenUV(vec3 origin, vec3 worldDir)
 {
     return worldPosToScreenUV(origin + worldDir * 1000.0);
+}
+
+bool worldDirToScreenUVChecked(vec3 origin, vec3 worldDir, out vec2 uv)
+{
+    return worldPosToScreenUVChecked(origin + worldDir * 1000.0, uv);
 }
 
 vec2 raySphereIntersect(vec3 ro, vec3 rd, vec3 center, float radius)
@@ -198,6 +225,40 @@ vec2 raySphereIntersect(vec3 ro, vec3 rd, vec3 center, float radius)
     if (t1 < 0.0) t1 = 0.0;
 
     return vec2(t1, t2);
+}
+
+float influenceStartViewDistance(vec3 ro, vec3 rd, vec2 sphereT)
+{
+    float t;
+    if (sphereT.y >= 0.0)
+    {
+        t = max(sphereT.x, 0.0);
+    }
+    else
+    {
+        t = dot(entityPos - ro, rd);
+        if (t <= 0.0)
+        {
+            return -1.0;
+        }
+    }
+
+    vec3 influenceWorld = ro + rd * t;
+    vec4 influenceView = modelViewMatrix * vec4(influenceWorld - cameraPos, 1.0);
+    return -influenceView.z;
+}
+
+bool sceneDepthIsInFrontOfInfluence(vec2 uv, vec3 ro, vec3 rd, vec2 sphereT, float margin)
+{
+    vec3 sampleWorldPos;
+    float sampleViewDist;
+    if (!reconstructWorldPos(uv, sampleWorldPos, sampleViewDist))
+    {
+        return false;
+    }
+
+    float influenceViewDist = influenceStartViewDistance(ro, rd, sphereT);
+    return influenceViewDist > 0.0 && sampleViewDist < influenceViewDist - margin;
 }
 
 vec3 computeHaze(vec3 pos, float alpha, float invIterations)
@@ -618,7 +679,7 @@ void main()
 
     bool inRenderSphere = (sphereT.y >= 0.0);
 
-    if (hasSceneGeometry && entityViewDist > 0.0 && sceneViewDist < entityViewDist - 0.1)
+    if (hasSceneGeometry && sceneDepthIsInFrontOfInfluence(texCoord, rayOrigin, rayDir, sphereT, 0.1))
     {
         fragColor = vec4(sceneColor, 1.0);
         gl_FragDepth = sceneRawDepth;
@@ -633,9 +694,21 @@ void main()
     vec3 lensedSceneColor = sceneColor;
     if (!raySwallowed && length(lensedDir) > 0.001)
     {
-        vec2 lensedUV = worldDirToScreenUV(rayOrigin, lensedDir);
-        lensedUV = clamp(lensedUV, vec2(0.001), vec2(0.999));
-        lensedSceneColor = texture(MainColorSampler, lensedUV).rgb;
+        vec2 lensedUV;
+        if (worldDirToScreenUVChecked(rayOrigin, lensedDir, lensedUV) || screenOutOfBoundsBlend(lensedUV) > 0.001)
+        {
+            float lensedBlend = screenOutOfBoundsBlend(lensedUV);
+            lensedUV = clamp(lensedUV, vec2(0.001), vec2(0.999));
+            vec3 lensedRayNear = clipToWorld(lensedUV, 0.0);
+            vec3 lensedRayFar = clipToWorld(lensedUV, 1.0);
+            vec3 lensedRayDir = normalize(lensedRayFar - lensedRayNear);
+            vec2 lensedSphereT = raySphereIntersect(lensedRayNear, lensedRayDir, entityPos, scale);
+            if (!sceneDepthIsInFrontOfInfluence(lensedUV, lensedRayNear, lensedRayDir, lensedSphereT, 0.1))
+            {
+                vec3 sampledColor = texture(MainColorSampler, lensedUV).rgb;
+                lensedSceneColor = lensedBlend >= 0.999 ? sampledColor : mix(sceneColor, sampledColor, lensedBlend);
+            }
+        }
     }
     else
     {

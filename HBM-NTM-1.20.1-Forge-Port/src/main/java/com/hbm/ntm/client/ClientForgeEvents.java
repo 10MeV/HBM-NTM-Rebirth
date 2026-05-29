@@ -6,6 +6,8 @@ import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.client.renderer.NukeTorexRenderer;
+import com.hbm.ntm.entity.effect.QuasarEntity;
+import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
@@ -100,16 +102,22 @@ public final class ClientForgeEvents {
             return;
         }
 
-        if (HbmBlackHoleEffects.isRenderStage(event.getStage())) {
-            updateBlackHoleShaders(event.getPartialTick());
-            HbmBlackHoleEffects.render(event);
-        }
-
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER) {
             HbmRenderEffects.render(event);
             return;
         }
 
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+            renderNukeTorexCloudlets(minecraft, event);
+        }
+
+        if (HbmBlackHoleEffects.isRenderStage(event.getStage())) {
+            updateBlackHoleShaders(event.getPartialTick());
+            HbmBlackHoleEffects.render(event);
+        }
+    }
+
+    private static void renderNukeTorexCloudlets(Minecraft minecraft, RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
             return;
         }
@@ -201,6 +209,36 @@ public final class ClientForgeEvents {
                                 .withDiskColor(0.45F, 0.85F, 1.0F)
                                 .withDiskRamp(0.85F, 1.35F, 1.6F, 0.05F, 0.45F, 1.0F),
                         0);
+            } else if (entity instanceof RagingVortexEntity ragingVortex) {
+                float size = Math.max(0.05F, ragingVortex.getSize());
+                Vec3 pos = ragingVortex.getPosition(partialTick);
+                HbmBlackHoleEffects.updateTrackedBlackHole(ragingVortex.getId(), pos.x, pos.y, pos.z,
+                        HbmBlackHoleEffects.BlackHoleSpec.of(size, 20 * 60)
+                                .withFade(0.0F, 20 * 60 - 20)
+                                .withAccretionDiskDensity(0.01F)
+                                .withTiltAngle((float) Math.toRadians(ragingVortex.getId() % 90 - 45))
+                                .withIntensity(1.45F)
+                                .withRenderQuality(1.45F, 0.55F)
+                                .withLensBoundarySoftness(0.6F)
+                                .withDiskDetail(1.0F, 0.35F)
+                                .withDiskColor(0.82F, 0.68F, 1.0F)
+                                .withDiskRamp(1.55F, 1.25F, 2.0F, 0.45F, 0.18F, 0.95F),
+                        0);
+            } else if (entity instanceof QuasarEntity quasar) {
+                float size = Math.max(0.05F, quasar.getSize());
+                Vec3 pos = quasar.getPosition(partialTick);
+                HbmBlackHoleEffects.updateTrackedBlackHole(quasar.getId(), pos.x, pos.y, pos.z,
+                        HbmBlackHoleEffects.BlackHoleSpec.of(size, 20 * 60)
+                                .withFade(0.0F, 20 * 60 - 20)
+                                .withAccretionDiskDensity(0.01F)
+                                .withTiltAngle((float) Math.toRadians(quasar.getId() % 90 - 45))
+                                .withIntensity(1.35F)
+                                .withRenderQuality(1.35F, 0.7F)
+                                .withLensBoundarySoftness(0.6F)
+                                .withDiskDetail(1.0F, 0.35F)
+                                .withDiskColor(1.0F, 0.08F, 0.05F)
+                                .withDiskRamp(1.8F, 0.1F, 0.05F, 0.45F, 0.0F, 0.0F),
+                        0);
             } else if (entity instanceof BlackHoleEntity blackHole) {
                 float size = Math.max(0.05F, blackHole.getSize());
                 Vec3 pos = blackHole.getPosition(partialTick);
@@ -213,8 +251,8 @@ public final class ClientForgeEvents {
                                 .withRenderQuality(1.35F, 0.7F)
                                 .withLensBoundarySoftness(0.6F)
                                 .withDiskDetail(1.0F, 0.35F)
-                                .withDiskColor(1.0F, 0.73F, 0.0F)
-                                .withDiskRamp(1.7F, 0.5F, 0.1F, 0.5F, 0.6F, 1.0F),
+                                .withDiskColor(1.0F, 0.99F, 0.9F)
+                                .withDiskRamp(2.0F, 1.95F, 1.68F, 1.0F, 0.88F, 0.46F),
                         0);
             }
         }
