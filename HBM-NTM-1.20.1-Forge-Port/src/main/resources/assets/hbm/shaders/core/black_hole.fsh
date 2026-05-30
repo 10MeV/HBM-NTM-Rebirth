@@ -172,6 +172,20 @@ vec2 worldDirToScreenUV(vec3 origin, vec3 worldDir)
     return ndc * 0.5 + 0.5;
 }
 
+bool uvInsideScreen(vec2 uv)
+{
+    return uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0;
+}
+
+vec3 sampleLensedScene(vec2 uv, vec3 fallbackColor)
+{
+    if (!uvInsideScreen(uv)) return fallbackColor;
+
+    vec2 texel = 0.5 / screenSize;
+    vec2 clampedUv = clamp(uv, texel, vec2(1.0) - texel);
+    return texture(MainColorSampler, clampedUv).rgb;
+}
+
 float worldPosToViewDistance(vec3 worldPos)
 {
     vec4 viewPos = modelViewMatrix * vec4(worldPos - cameraPos, 1.0);
@@ -606,6 +620,13 @@ void main()
 
     bool inRenderSphere = (sphereT.y >= 0.0);
 
+    if (hasSceneGeometry && sceneViewDist < entityViewDist - 0.1)
+    {
+        fragColor = vec4(sceneColor, 1.0);
+        gl_FragDepth = sceneRawDepth;
+        return;
+    }
+
     vec3 lensLocalRo = (rayOrigin - entityPos) / scale;
     vec3 lensLocalRd = rayDir;
     bool raySwallowed = false;
@@ -615,8 +636,11 @@ void main()
     if (!raySwallowed && length(lensedDir) > 0.001)
     {
         vec2 lensedUV = worldDirToScreenUV(rayOrigin, lensedDir);
-        lensedUV = clamp(lensedUV, vec2(0.001), vec2(0.999));
-        lensedSceneColor = texture(MainColorSampler, lensedUV).rgb;
+        lensedSceneColor = sampleLensedScene(lensedUV, sceneColor);
+    }
+    else
+    {
+        lensedSceneColor = sceneColor;
     }
 
     if (inRenderSphere)
@@ -635,7 +659,7 @@ void main()
 
         if (hasSceneGeometry && sceneViewDist < sphereEnterViewDist - 0.1)
         {
-            fragColor = vec4(lensedSceneColor, 1.0);
+            fragColor = vec4(sceneColor, 1.0);
             gl_FragDepth = sceneRawDepth;
             return;
         }
@@ -662,7 +686,7 @@ void main()
 
             if (hitOccluded)
             {
-                fragColor = vec4(lensedSceneColor, 1.0);
+                fragColor = vec4(sceneColor, 1.0);
                 gl_FragDepth = sceneRawDepth;
                 return;
             }

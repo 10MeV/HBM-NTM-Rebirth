@@ -45,6 +45,7 @@ public final class HbmBlackHoleEffects {
     private static final float LEGACY_EFFECT_RADIUS_MULTIPLIER = 6.0F;
     private static final int GL_REPEAT = 10497;
     private static final int GL_LINEAR = 9729;
+    private static final int GL_NEAREST = 9728;
     private static final RenderLevelStageEvent.Stage RENDER_STAGE = RenderLevelStageEvent.Stage.AFTER_LEVEL;
     private static final List<BlackHole> ACTIVE = new ArrayList<>();
     private static final Map<Integer, TrackedBlackHole> TRACKED = new ConcurrentHashMap<>();
@@ -185,6 +186,7 @@ public final class HbmBlackHoleEffects {
     private static void beginBlackHolePass(RenderTarget mainTarget, RenderLevelStageEvent event, Camera camera,
             Vec3 cameraPos, float time) {
         copyMainTarget(mainTarget);
+        configureSceneCopySampling();
         configureTiledBilinear(noiseTexture);
         configureTiledBilinear(colorRampTexture);
         RenderSystem.setShader(() -> blackHoleShader);
@@ -269,6 +271,22 @@ public final class HbmBlackHoleEffects {
         RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_WRAP_S, GL_REPEAT);
         RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_WRAP_T, GL_REPEAT);
+    }
+
+    private static void configureSceneCopySampling() {
+        configureClampedTexture(sceneCopy.getColorTextureId(), GL_LINEAR);
+        configureClampedTexture(sceneCopy.getDepthTextureId(), GL_NEAREST);
+    }
+
+    private static void configureClampedTexture(int textureId, int filter) {
+        if (textureId <= 0) {
+            return;
+        }
+        GlStateManager._bindTexture(textureId);
+        RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_MIN_FILTER, filter);
+        RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_MAG_FILTER, filter);
+        RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_WRAP_S, GlConst.GL_CLAMP_TO_EDGE);
+        RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_WRAP_T, GlConst.GL_CLAMP_TO_EDGE);
     }
 
     private static Matrix4f createWorldViewMatrix(Camera camera) {
