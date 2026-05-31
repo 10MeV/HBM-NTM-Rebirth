@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -63,7 +64,7 @@ public class LegacyDemonLampBlockEntity extends BlockEntity {
             float exposure = RADIATION / resistance / (float) (length * length);
             RadiationUtil.contaminate(entity, exposure, true);
             if (length < 2.0D) {
-                entity.hurt(damageSources.inFire(), 100.0F);
+                EntityDamageUtil.attackEntityFromNt(entity, damageSources.inFire(), 100.0F);
             }
         }
     }

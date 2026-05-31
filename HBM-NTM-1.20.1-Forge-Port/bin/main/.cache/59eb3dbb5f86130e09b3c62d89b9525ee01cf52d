@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-28T21:20:26.1363686	Loot Tables
+// 1.20.1	2026-05-30T20:55:41.5870176	Loot Tables
 1d566948370849820de3c0d2a03a1da2b54f3f8d data/hbm/loot_tables/blocks/ancient_scrap.json
 e33e09e9b7de4edfe47464adbc55ba1b3074df85 data/hbm/loot_tables/blocks/ash_digamma.json
 4dea21baadd671e0fc70004833537e05da50d388 data/hbm/loot_tables/blocks/asphalt.json
@@ -127,6 +127,8 @@ d82897bdd6215f298dbd649444f09008df834b0f data/hbm/loot_tables/blocks/conveyor_do
 96daaf146a5152cf20e6d2c2c1d72b947ce40a40 data/hbm/loot_tables/blocks/conveyor_express.json
 a2069f310320b13d375034eb47e6944a0fccae91 data/hbm/loot_tables/blocks/conveyor_lift.json
 6552db4b57fbca5b68d1789e898a00cba37e8f63 data/hbm/loot_tables/blocks/conveyor_triple.json
+4a0a71e48f9f9060e8add079a3e4bb57d42623d0 data/hbm/loot_tables/blocks/crystal_hardened.json
+f20849afc4a532308531092bed5a129f62c968a0 data/hbm/loot_tables/blocks/crystal_virus.json
 bcb25065377f376b333828e4e2caac220b4ee895 data/hbm/loot_tables/blocks/decon.json
 7fb52e95a2aa0b713372efd554c093bb1c15737b data/hbm/loot_tables/blocks/deco_aluminium.json
 7654fcc8718fe74ba60745dd43460575e01bc421 data/hbm/loot_tables/blocks/deco_asbestos.json
@@ -152,6 +154,10 @@ f6e4a3d04e3a6c188df68f833237334dec986698 data/hbm/loot_tables/blocks/ducrete.jso
 5bccf5f981b39d0bf7457f33eae9bdea4c44d170 data/hbm/loot_tables/blocks/fire_digamma.json
 c7769f0edc1b5b064fac5d0562c7552398cd8c56 data/hbm/loot_tables/blocks/floodlight.json
 acea5bcb24e57e81fb9bedd5520bfb3ec42c7d2c data/hbm/loot_tables/blocks/fluid_duct_neo.json
+de56993a24fa8c6f6eb1e3e81b7704c3d961cb82 data/hbm/loot_tables/blocks/frozen_dirt.json
+45ae55cbc76dbfa4b0daa5df49b7a48c75b0aac4 data/hbm/loot_tables/blocks/frozen_grass.json
+ff5cb0b51baf10f1b634077bbaf9611b0a7bfe9e data/hbm/loot_tables/blocks/frozen_log.json
+3ac5c85059e588996e3012285f782a9e8caf6187 data/hbm/loot_tables/blocks/frozen_planks.json
 1666d3861a8489bb166a39a52f52280791175e99 data/hbm/loot_tables/blocks/gas_asbestos.json
 902ac5121163f3f35710c192af1d0b6a7ca8e822 data/hbm/loot_tables/blocks/gas_coal.json
 c7cdd2ec614664af5c6198f3da2143b967f30da1 data/hbm/loot_tables/blocks/gas_meltdown.json
@@ -161,6 +167,7 @@ c7cdd2ec614664af5c6198f3da2143b967f30da1 data/hbm/loot_tables/blocks/gas_meltdow
 eb8d706c9ed135063e6662d5e8283f4f564a1a07 data/hbm/loot_tables/blocks/gas_radon_tomb.json
 d8682797fe8cf425e456c2aff158b4c150531c24 data/hbm/loot_tables/blocks/glass_boron.json
 1ab3638097be3dffb65557618dd37782ea48973d data/hbm/loot_tables/blocks/glass_trinitite.json
+73f6335b35b25b363b2ebf85f60cc2c47092ac3f data/hbm/loot_tables/blocks/glyphid_spawner.json
 a7dbed77574e2335ecbe2749558f5bae06e10fd6 data/hbm/loot_tables/blocks/gneiss_brick.json
 45c7b551652c0b0d5ce4b569df7a93e72fd5bdc6 data/hbm/loot_tables/blocks/gneiss_chiseled.json
 ef9dbd9a2f3e089589d0d7b2cfa9bdd5dcd4cd82 data/hbm/loot_tables/blocks/gneiss_tile.json
@@ -217,6 +224,7 @@ a2e634b2007ad429c11f2c367ad6c8e6332e3430 data/hbm/loot_tables/blocks/machine_sol
 8b788d51d08c82ee8c3b8b008556d45cb5694b13 data/hbm/loot_tables/blocks/machine_turbinegas.json
 71ee92317aba47281c47a0c5870c5b15f6a21ff3 data/hbm/loot_tables/blocks/machine_turbofan.json
 34bcceaf28cc40b53edbe7d4692620bbadd7f9c2 data/hbm/loot_tables/blocks/machine_vacuum_distill.json
+93423f7727fce3ba8f8beb7d92d555d4b1f8e8c2 data/hbm/loot_tables/blocks/mud_block.json
 50cbf69932bcba3ee3cd9e1a1df6ead5004afbc6 data/hbm/loot_tables/blocks/nuke_boy.json
 9501e2042793803b3c218827b32eb3b831c0a331 data/hbm/loot_tables/blocks/nuke_custom.json
 aed8d3c6d875659ed885b0d1c923158700af635f data/hbm/loot_tables/blocks/nuke_fleija.json
@@ -277,6 +285,7 @@ a8bddc6313068ed394a5a49119af5f6219ee697e data/hbm/loot_tables/blocks/ore_rare.js
 3166a592a5a229384021b9f18086dd1737763640 data/hbm/loot_tables/blocks/ore_sellafield_schrabidium.json
 c1c77589b7b168e50a2ef6ab8118ae9c79c5db7c data/hbm/loot_tables/blocks/ore_sellafield_uranium_scorched.json
 c36e18a04d3d6a6989084f132c6810dd8a8840e2 data/hbm/loot_tables/blocks/ore_sulfur.json
+4e698a2f7092bbd9a909b405b0977afb3511a100 data/hbm/loot_tables/blocks/ore_tektite_osmiridium.json
 b5d2c8bba1f8401d72288477d0ca66d2b8b8c888 data/hbm/loot_tables/blocks/ore_thorium.json
 eb1c0d13ee71986148ee7dfec497f16b0d599eb1 data/hbm/loot_tables/blocks/ore_tikite.json
 1c52b8e9aeff55f0a555392bfb8918dfe2ae57c6 data/hbm/loot_tables/blocks/ore_titanium.json
@@ -309,6 +318,7 @@ f8219b7773b92f473e993bd3aa56fe25fea78a71 data/hbm/loot_tables/blocks/spotlight_h
 63df56c7287380e8e74eeec675bdf205b0d2b71f data/hbm/loot_tables/blocks/stone_depth_nether.json
 faa5693e39de33cd3052f533bfbcc4140ee3b162 data/hbm/loot_tables/blocks/stone_gneiss.json
 2c401f13f3d456f4f9c7e7abda93c4a96b893a1b data/hbm/loot_tables/blocks/stone_porous.json
+36b6c5e4cda90d67695a9ca4564bb8599c5b7cd8 data/hbm/loot_tables/blocks/tektite.json
 b73cdbe3c5b1bb5ab5869e9e5eade8995c338cf0 data/hbm/loot_tables/blocks/tile_lab.json
 e58d71f775c66596b14c4f05b75585c69d045855 data/hbm/loot_tables/blocks/tile_lab_broken.json
 bcc639d5f2e282c2288fccf6ac3e21ece0572cca data/hbm/loot_tables/blocks/tile_lab_cracked.json

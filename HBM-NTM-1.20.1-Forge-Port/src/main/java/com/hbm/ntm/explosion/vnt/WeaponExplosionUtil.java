@@ -1,5 +1,6 @@
 package com.hbm.ntm.explosion.vnt;
 
+import com.hbm.ntm.damage.DamageClass;
 import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
 import com.hbm.ntm.explosion.NuclearExplosionUtil;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorBulkie;
@@ -14,6 +15,7 @@ import com.hbm.ntm.explosion.vnt.standard.EntityProcessorCross;
 import com.hbm.ntm.explosion.vnt.standard.EntityProcessorCrossSmooth;
 import com.hbm.ntm.explosion.vnt.standard.EntityProcessorStandard;
 import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectAmat;
+import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectEnergy;
 import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectStandard;
 import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectTiny;
 import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectWeapon;
@@ -65,8 +67,16 @@ public final class WeaponExplosionUtil {
 
     public static ExplosionVnt tinySmooth(Level level, double x, double y, double z, float size, @Nullable Entity source,
             float fixedDamage, double nodeDistance, float pierceDamageThreshold, float pierceDamageResistance, double knockback) {
+        return tinySmooth(level, x, y, z, size, source, fixedDamage, nodeDistance, pierceDamageThreshold,
+                pierceDamageResistance, knockback, DamageClass.EXPLOSIVE);
+    }
+
+    public static ExplosionVnt tinySmooth(Level level, double x, double y, double z, float size, @Nullable Entity source,
+            float fixedDamage, double nodeDistance, float pierceDamageThreshold, float pierceDamageResistance, double knockback,
+            DamageClass damageClass) {
         EntityProcessorCrossSmooth processor = new EntityProcessorCrossSmooth(nodeDistance, fixedDamage)
-                .setupPiercing(pierceDamageThreshold, pierceDamageResistance);
+                .setupPiercing(pierceDamageThreshold, pierceDamageResistance)
+                .setDamageClass(damageClass);
         processor.setKnockback(knockback);
         return new ExplosionVnt(level, x, y, z, size, source, false, Explosion.BlockInteraction.KEEP)
                 .setEntityProcessor(processor)
@@ -111,10 +121,18 @@ public final class WeaponExplosionUtil {
 
     public static ExplosionVnt smooth(Level level, double x, double y, double z, float size, @Nullable Entity source,
             float fixedDamage, double nodeDistance, boolean blockDamage, float pierceDamageThreshold, float pierceDamageResistance) {
+        return smooth(level, x, y, z, size, source, fixedDamage, nodeDistance, blockDamage,
+                pierceDamageThreshold, pierceDamageResistance, DamageClass.EXPLOSIVE);
+    }
+
+    public static ExplosionVnt smooth(Level level, double x, double y, double z, float size, @Nullable Entity source,
+            float fixedDamage, double nodeDistance, boolean blockDamage, float pierceDamageThreshold, float pierceDamageResistance,
+            DamageClass damageClass) {
         ExplosionVnt explosion = new ExplosionVnt(level, x, y, z, size, source, false,
                 blockDamage ? Explosion.BlockInteraction.DESTROY_WITH_DECAY : Explosion.BlockInteraction.KEEP);
         explosion.setEntityProcessor(new EntityProcessorCrossSmooth(nodeDistance, fixedDamage)
-                .setupPiercing(pierceDamageThreshold, pierceDamageResistance));
+                .setupPiercing(pierceDamageThreshold, pierceDamageResistance)
+                .setDamageClass(damageClass));
         explosion.setPlayerProcessor(new PlayerProcessorStandard());
         explosion.setEffects(new ExplosionEffectWeapon(10, 2.5F, 1.0F));
         if (blockDamage) {
@@ -122,6 +140,19 @@ public final class WeaponExplosionUtil {
             explosion.setBlockProcessor(new BlockProcessorStandard());
         }
         return explosion;
+    }
+
+    public static ExplosionVnt standardEnergy(Level level, double x, double y, double z, float size, @Nullable Entity source,
+            float fixedDamage, DamageClass damageClass, float red, float green, float blue, float scale) {
+        return new ExplosionVnt(level, x, y, z, size, source, false, Explosion.BlockInteraction.KEEP)
+                .setEntityProcessor(new EntityProcessorCrossSmooth(1.0D, fixedDamage).setDamageClass(damageClass))
+                .setPlayerProcessor(new PlayerProcessorStandard())
+                .setEffects(new ExplosionEffectEnergy(red, green, blue, scale));
+    }
+
+    public static void explodeStandardEnergy(Level level, double x, double y, double z, float size, @Nullable Entity source,
+            float fixedDamage, DamageClass damageClass, float red, float green, float blue, float scale) {
+        standardEnergy(level, x, y, z, size, source, fixedDamage, damageClass, red, green, blue, scale).explode();
     }
 
     public static ExplosionVnt cross(Level level, double x, double y, double z, float size, @Nullable Entity source,

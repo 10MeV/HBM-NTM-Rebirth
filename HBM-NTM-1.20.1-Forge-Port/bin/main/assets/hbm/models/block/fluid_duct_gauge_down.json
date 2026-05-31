@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "hbm:block/pipe_gauge",
+    "up": "hbm:block/fluid_duct_paintable_overlay",
+    "north": "hbm:block/fluid_duct_paintable_overlay",
+    "south": "hbm:block/fluid_duct_paintable_overlay",
+    "east": "hbm:block/fluid_duct_paintable_overlay",
+    "west": "hbm:block/fluid_duct_paintable_overlay",
+    "particle": "hbm:block/deco_steel"
+  }
+}

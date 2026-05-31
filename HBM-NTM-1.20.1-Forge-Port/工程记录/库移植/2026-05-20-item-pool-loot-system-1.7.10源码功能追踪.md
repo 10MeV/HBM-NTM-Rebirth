@@ -71,3 +71,12 @@
 - 结构和卫星调用的是统一 pool registry。
 - datapack reload 后 pool registry 抽取结果与结构/卫星/空投调用一致。
 - legacy id/meta 映射缺失时应显式跳过或报错，不得静默抽到错误物品。
+
+## 2026-05-30 追加：战利品池复用 legacy meta 映射的规则
+
+- `LegacyMetaItemMappings` 已在 recipe 库建立，当前首批覆盖 `hbm:battery_pack` 与 `hbm:battery_sc` 两个旧 meta 物品族。
+- 后续迁 `ItemPoolsLegacy`、`ItemPoolsComponent`、结构箱子或空投池时，遇到旧 `ItemStack(item, count, meta)` 应优先通过该映射表解析现代物品。
+- 如果旧池条目引用尚未登记的 legacy id/meta：
+  - 数据生成阶段应报错或在 trace 中显式记录跳过原因。
+  - 运行时抽取入口不得把缺失条目变成 air、空栈或错误物品。
+- 这条规则与 recipe/hazard 共用同一事实来源，避免 battery/circuit 等拆分物品在战利品池中出现另一套映射。

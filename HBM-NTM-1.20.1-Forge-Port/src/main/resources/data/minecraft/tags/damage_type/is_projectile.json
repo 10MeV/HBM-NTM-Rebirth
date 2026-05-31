@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "hbm:suicide",
+    "hbm:rubble",
+    "hbm:shrapnel",
+    "hbm:revolver_bullet",
+    "hbm:chopper_bullet",
+    "hbm:tau",
+    "hbm:combine_ball",
+    "hbm:subatomic"
+  ]
+}

@@ -110,8 +110,8 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "singularity_4");
             return;
         }
-        if (path.equals("circuit_chip_quantum")) {
-            generatedItem(path, "circuit.chip_quantum");
+        if (path.startsWith("circuit_")) {
+            generatedItem(path, circuitTexture(path));
             return;
         }
         if (path.equals("early_explosive_lenses")) {
@@ -126,11 +126,23 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "trigger");
             return;
         }
-        if (path.equals("fluid_duct_neo")) {
+        if (path.equals("fluid_duct_neo") || path.equals("fluid_valve") || path.equals("fluid_switch")
+                || path.equals("fluid_counter_valve") || path.equals("fluid_duct_box")
+                || path.equals("fluid_duct_gauge") || path.equals("fluid_duct_paintable")) {
             getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
                     .texture("layer0", modLoc("item/duct"))
                     .texture("layer1", modLoc("item/duct_overlay"));
+            return;
+        }
+        if (path.equals("fluid_duct_paintable_block_exhaust")) {
+            getBuilder(path)
+                    .parent(new ModelFile.UncheckedModelFile(modLoc("block/fluid_duct_paintable_block_exhaust_overlay")));
+            return;
+        }
+        if (path.equals("pipe_anchor")) {
+            getBuilder(path)
+                    .parent(new ModelFile.UncheckedModelFile(modLoc("block/network/pipe_anchor")));
             return;
         }
         basicItem(item);
@@ -172,5 +184,9 @@ public class HbmItemModelProvider extends ItemModelProvider {
         getBuilder(itemPath)
                 .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
                 .texture("layer0", modLoc("item/" + texturePath));
+    }
+
+    private static String circuitTexture(String itemPath) {
+        return "circuit." + itemPath.substring("circuit_".length());
     }
 }

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": { "item": "hbm:plate_polymer" },
+    "S": { "item": "minecraft:iron_ingot" }
+  },
+  "pattern": [
+    "SAS",
+    "A A",
+    "SAS"
+  ],
+  "result": {
+    "count": 8,
+    "item": "hbm:fluid_duct_paintable_block_exhaust"
+  },
+  "show_notification": true
+}

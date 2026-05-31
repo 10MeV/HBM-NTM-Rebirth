@@ -2,6 +2,7 @@ package com.hbm.ntm.fluid;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.item.HazardClass;
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fluid.trait.PheromoneFluidTrait;
 import com.hbm.ntm.fluid.trait.PoisonFluidTrait;
@@ -61,7 +62,7 @@ public final class HbmFluidContactEffects {
             float damage = (0.2F + (temperature - 100) * 0.02F) * intensity;
             report.addDirectDamage("temperature_hot", damage);
             if (apply) {
-                entity.hurt(entity.damageSources().onFire(), damage);
+                EntityDamageUtil.attackEntityFromIgnoreIFrame(entity, entity.damageSources().onFire(), damage);
                 if (temperature >= 500) {
                     entity.setSecondsOnFire(10);
                 }
@@ -72,7 +73,7 @@ public final class HbmFluidContactEffects {
             report.addEffect(MobEffects.MOVEMENT_SLOWDOWN, scaleDuration(100, intensity), 2);
             report.addEffect(MobEffects.DIG_SLOWDOWN, scaleDuration(100, intensity), 4);
             if (apply) {
-                living.hurt(living.damageSources().freeze(), damage);
+                EntityDamageUtil.attackEntityFromIgnoreIFrame(living, living.damageSources().freeze(), damage);
                 living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, scaleDuration(100, intensity), 2));
                 living.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, scaleDuration(100, intensity), 4));
             }
@@ -141,7 +142,7 @@ public final class HbmFluidContactEffects {
                     float amount = damage.getAmount() * intensity;
                     report.addDirectDamage(damage.getDamageType().toString(), amount);
                     if (apply) {
-                        living.hurt(resolveDamage(living.level(), damage.getDamageType()), amount);
+                        EntityDamageUtil.attackEntityFromIgnoreIFrame(living, resolveDamage(living.level(), damage.getDamageType()), amount);
                     }
                 }
             } else if (entry instanceof ToxinFluidTrait.EffectApplication effects) {

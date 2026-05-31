@@ -146,6 +146,7 @@
   - 玩家背包内 `HYDROACTIVE` / `EXPLOSIVE` hazard 触发。
   - `oil` 着火触发的实体爆炸。
 - 新增 `data/minecraft/tags/damage_type/is_explosion.json`，让 `hbm:explosion` 被 blast protection 等 vanilla 爆炸标签识别。
+- 2026-05-30 修复：掉落物 `HYDROACTIVE` / `EXPLOSIVE` hazard 在 `LevelTickEvent` 中触发爆炸或生成新掉落物时，会经 `EntityJoinLevelEvent` 修改 `TRACKED_ITEM_ENTITIES`；现代端改为对追踪 id 做 tick 快照遍历，并在 tick 末集中移除失效 id，避免同一 `HashSet` 迭代期间被实体事件重入修改。
 
 ### 仍未迁移
 
@@ -429,6 +430,7 @@
   - 在 `bombStartStrength` 半径球内调用 `emp`。
   - `emp` 对旧 `IEnergyHandlerMK2` 直接 `setPower(0)`，20% 概率替换成 `block_electrical_scrap`。
   - 对 RF `IEnergyProvider` 六面抽空能量，约 40% 概率替换成 `block_electrical_scrap`。
+  - 两个接口分支在旧源码中彼此独立：同一个 TE 同时实现 MK2 与 RF 时，先执行 MK2 清零/20% 报废；若未报废，继续执行 RF 六面抽取/40% 报废。
 - `vapor` / `vaporDest`：
   - `vapor` 在 `bombStartStrength * 2` 的球内调用 `vaporDest`。
   - `vaporDest` 清除极低抗性、web、red cable、液体，以及中低抗性且非完整立方体的方块，但保留 chest/farmland。
@@ -450,9 +452,9 @@
   - `waste(Level, int, int, int, int)` / `wasteNoSchrab(Level, int, int, int, int)`
   - `wasteDest` / `wasteDestNoSchrab` 的坐标与 `BlockPos` 重载。
 - EMP 现代适配：
-  - 对 `HbmEnergyHandler` 直接清零。
-  - 对 Forge `ForgeCapabilities.ENERGY` 各面和 null side 抽空可抽取能量。
-  - 按旧概率替换成已注册 `block_electrical_scrap`。
+  - 对 `HbmEnergyHandler` 直接清零，并立即按旧 MK2 分支的 `random.nextInt(5) < 1` 判定报废。
+  - 若 MK2 分支未报废，再对 Forge `ForgeCapabilities.ENERGY` 各面和 null side 抽空可抽取能量，并按旧 RF 分支的 `random.nextInt(5) <= 1` 判定报废。
+  - 这保留旧版“双接口机器会经历两段独立 EMP 处理”的概率结构，不再把 MK2/RF 合并成一次概率。
 - vapor 现代适配：
   - 使用 `Block#getExplosionResistance()`、`FluidState`、`BlockState#liquid()`、`isCollisionShapeFullBlock`。
   - 保留 red cable、web、液体、chest/farmland、可燃点火语义。
@@ -504,15 +506,17 @@
 
 - `ExplosionFleija`：
   - 保存字段：`posX/posY/posZ`、`lastposX/lastposZ`、`radius/radius2`、`n/nlimit`、`shell/leg/element`、`explosionCoefficient/explosionCoefficient2`。
+  - 读取 NBT 时 `n = nbt.getInteger(...)` 原样恢复；若读到 `0`，下一 tick 会命中 `shell2 == 0` 的旧保护并结束，不强行改成 `1`。
   - 构造参数：中心坐标、`World`、半径、上下纵向系数。
   - `update()` 与 `ExplosionSolinium`/`ExplosionNukeAdvanced` 相同，按方形螺旋逐列推进。
-  - `breakColumn` 在椭球范围内自上而下清空方块，遇到 `DecoBlockAlt` 装饰方块时跳过保护。
+  - `breakColumn` 在椭球范围内自上而下清空方块，但只处理 `posY + y > 0` 的旧硬编码高度；遇到 `DecoBlockAlt` 装饰方块时跳过保护。
 
 ### 现代实现
 
 - 新增 `ExplosionFleija`：
   - 保留旧字段名、NBT 保存/读取、构造参数形状和螺旋推进公式。
   - 使用 `Level` 和 `BlockPos.MutableBlockPos` 实现服务端逐列清除。
+  - 读档时不 clamp `n`，柱状清除也按旧版 `worldY > 0` 判断，而不是按现代世界 `minBuildHeight` 清理深板岩层以下空间。
   - 旧 `DecoBlockAlt` 保护以现代 registry key 近似：`hbm` 命名空间且 legacy path 以 `deco_` 开头的方块不清除。
 
 ### 有意降级/延期
@@ -2111,6 +2115,450 @@
 - `ExplosionNukeGeneric` 新增 `schrabOreChance()` helper：普通模式返回 `100`；`RadiationConfig.ENABLE_LESS_BULLSHIT_MODE` 开启且配置已初始化时返回 `BombConfig.LBSM_SCHRAB_ORE_RATE`。
 - 三类 uranium waste 转换都改用该概率；`wasteNoSchrab` 仍保持不生成 schrabidium 的旧语义。
 
+### 2026-05-30 追加：扩展日志、MK3 雷声与 Balefire 存档寿命
+
+复核来源：
+
+- `com.hbm.config.GeneralConfig#enableExtendedLogging`
+- `com.hbm.entity.logic.EntityNukeExplosionMK5`
+- `com.hbm.entity.logic.EntityNukeExplosionMK3`
+- `com.hbm.entity.logic.EntityBalefire`
+- `com.hbm.items.tool.ItemDetonator`
+
+旧版合同：
+
+- `GeneralConfig` 的 `1.18_enableExtendedLogging` 默认 `false`，说明覆盖 detonator、nuclear explosions、missile launches、grenades 等高影响操作。
+- MK5 `statFac(...)` 在服务端初始化时输出 `[NUKE] Initialized explosion ... with strength ...`；射线完成且 `explosionStart != 0` 时输出耗时。
+- MK3 首次初始化处理器时输出 `[NUKE] Initialized mk3 explosion ... with strength ...`。
+- Balefire 首次初始化 `ExplosionBalefire` 时输出 `[NUKE] Initialized BF explosion ... with strength ...`。
+- MK3 破坏阶段未完成时每 tick 播放一次旧 `ambient.weather.thunder`，同时做实体伤害或 Solinium 辐射。
+- 旧 MK3 保存 `milliTime`，读取时受 `BombConfig.limitExplosionLifespan` 限制；旧 Balefire 自身没有该字段，但现代爆炸 forced-chunk 基类已经统一支持 `shouldExpireFromSave(...)`。
+
+现代修正：
+
+- `HbmCommonConfig` 新增 `general.enableExtendedLogging`，默认 `false`，对应旧 `1.18_enableExtendedLogging`。
+- `NukeExplosionMk5Entity` 接回初始化日志与完成耗时日志；`radius == 0` 时仍按旧版先记录传入强度，再回退默认 Nuka 半径。
+- `NukeExplosionMk3Entity` 接回初始化日志，并在破坏阶段未完成时播放 `SoundEvents.LIGHTNING_BOLT_THUNDER`，保持旧版持续雷声反馈。
+- `BalefireExplosionEntity` 接回首次初始化日志；从 NBT 恢复 `ExplosionBalefire` 扫描状态时不重复输出“新爆炸”日志。
+- `BalefireExplosionEntity` 写入 `milliTime`，读取时调用现代 `ExplosionChunkLoadingEntity#shouldExpireFromSave(...)`；过期实体下个服务端 tick 丢弃并释放 forced chunk。
+- `DetonatorItem` 的 `[DET] Tried to detonate block ... by ...` 现在受同一个扩展日志开关控制，和旧 `ItemDetonator` 合同一致。
+
+### 2026-05-30 追加：Thermo/Tom 爆炸后处理旧方块落点补齐
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionThermo`
+- `com.hbm.explosion.ExplosionTom`
+- `com.hbm.blocks.ModBlocks`
+- `com.hbm.blocks.generic.WasteEarth`
+- `com.hbm.blocks.generic.WasteLog`
+- `com.hbm.blocks.generic.BlockOre`
+- `assets/hbm/textures/blocks/frozen_*`
+- `assets/hbm/textures/blocks/tektite.png`
+- `assets/hbm/textures/blocks/ore_tektite_osmiridium.png`
+- `assets/hbm/textures/items/powder_tektite.png`
+
+旧版合同：
+
+- `ExplosionThermo#freezeDest` 将草、泥土、原木、木板和 waste 木材转换为 `frozen_grass`、`frozen_dirt`、`frozen_log`、`frozen_planks`。
+- `ExplosionThermo#scorchDest/#scorchDestLight` 遇到 frozen 方块时再转回 dirt、waste_log 或 waste_planks。
+- `frozen_grass` / `frozen_dirt` 继承旧地表/矿石类的踩踏缓慢效果；`frozen_grass` 掉雪球，`frozen_dirt` 掉雪球。
+- `frozen_log` 使用独立顶面/侧面纹理，掉落 2-4 个雪球；`frozen_planks` 掉雪球。
+- `ExplosionTom#breakColumn` 在 crater floor 以下生成 `tektite`，并以 `1/200` 概率生成 `ore_tektite_osmiridium`。
+- 旧 `ore_tektite_osmiridium` 粉碎配方产物是 `powder_tektite`；现代本批先补物品和矿石掉落，完整机器配方由配方库迁移继续承接。
+
+现代修正：
+
+- `ModBlocks` 新增旧 ID：`frozen_grass`、`frozen_dirt`、`frozen_log`、`frozen_planks`、`tektite`、`ore_tektite_osmiridium`，加入 block tab 列表并进入 `legacyBlock(...)` 表。
+- 新增 `LegacyFrozenEarthBlock`，用于 frozen grass/dirt 的旧踩踏缓慢效果。
+- 新增 `LegacyTektiteOreBlock`，保留 `powder_tektite` 掉落语义入口。
+- `ModItems` 新增 `powder_tektite`，复制旧贴图。
+- 复制旧版 frozen / tektite / powder_tektite 贴图到现代资源树，补 blockstate、block model、item model、loot table、mineable tag 和英文/中文语言项。
+- `ExplosionThermo` 和 `ExplosionTom` 不需要改算法：原本已通过 `legacyStateOr(...)` / `legacyState(...)` 查旧 ID，本批注册后会自动从 vanilla fallback 升级到真实旧方块。
+
+### 2026-05-30 追加：ExplosionLarge 碎片速度与 burst 旧公式回调
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionLarge`
+- `com.hbm.entity.projectile.EntityShrapnel`
+
+问题与旧版对齐：
+
+- 旧 `ExplosionLarge.explode(...)` / `explodeFire(...)` 在 `shrapnel=true` 时调用 `spawnShrapnels(..., shrapnelFunction((int) strength))`，没有再把碎片速度按 `strength * 0.1` 缩放；现代端此前额外乘了一次速度，导致大爆炸碎片动能偏离旧公式。
+- 旧 `spawnTracers(...)` 的垂直速度公式只把第二个上抛随机项乘 `0.25F`，水平速度整体乘 `0.25F`，并强制 trail；现代端此前把完整垂直速度也压到四分之一。
+- 旧 `spawnBurst(...)` 先生成一个水平向量，再按 `360 / count` 旋转成一圈 gas flame；现代端此前改成随机三维散射，和旧爆炸火焰 burst 形态不一致。
+- 旧 `EntityShrapnel#writeToNBTOptional` 返回 `false`，并且 `readEntityFromNBT` 直接 `setDead()`；碎片不是可持久化实体。
+
+现代修正：
+
+- `ExplosionLarge.spawnLegacyExtras(...)` 的碎片分支改回默认 `spawnShrapnels(...)`，恢复旧 `ExplosionLarge.explode(...)` / `explodeFire(...)` 公共入口的碎片速度公式。
+- `spawnTracers(...)` 改为独立 tracer 生成路径：默认 motion 回到 `1.0F`，水平速度按旧公式乘 `0.25`，垂直速度只缩放旧源码中的附加随机项，并始终启用 trail。
+- `spawnBurst(...)` 改回水平环形 gas flame burst，保留旧 `count` 等分旋转语义。
+- `ShrapnelEntity#shouldBeSaved()` 返回 `false`，对齐旧版碎片不写存档的生命周期合同。
+
+### 2026-05-30 追加：核爆环境后效应蘑菇 stem 映射修正
+
+复核来源：
+
+- `com.hbm.explosion.NukeEnvironmentalEffect#applyStandardEffect`
+- `com.hbm.explosion.ExplosionNukeGeneric#wasteDest`
+
+问题与旧版对齐：
+
+- 1.7.10 蘑菇方块只有 `brown_mushroom_block` / `red_mushroom_block` 且 metadata 为 `10` 的 stem 形态会转成 `waste_log` 或 `waste_planks`；其它蘑菇帽方块在 `wasteDest` 中被清除。
+- 现代 1.20.1 已拆出 `Blocks.MUSHROOM_STEM`，不应把所有 `BROWN_MUSHROOM_BLOCK` / `RED_MUSHROOM_BLOCK` 都视为旧 meta 10。
+- `waste_log` 现已注册，`ExplosionNukeGeneric#wasteDest` 的 mushroom stem 不再需要回退为空气。
+
+现代修正：
+
+- `NukeEnvironmentalEffect#applyStandardEffect` 的蘑菇后效应收紧到 `Blocks.MUSHROOM_STEM -> waste_planks`，红/棕蘑菇帽不再误转废土木板。
+- `ExplosionNukeGeneric#wasteDest` 的 `Blocks.MUSHROOM_STEM` 分支改为落到真实 `ModBlocks.WASTE_LOG`，恢复旧 meta 10 stem 转废土原木语义。
+
+### 2026-05-30 追加：ExplosionNukeGeneric 已迁旧方块落点与抗爆属性收口
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionNukeGeneric#destruction/#wasteDest/#emp`
+- `com.hbm.explosion.ExplosionThermo#scorchDest/#scorchDestLight`
+- `com.hbm.blocks.ModBlocks`
+
+旧版合同：
+
+- `destruction` 中 `brick_light` 随机降级为 `waste_planks` 或 `block_scrap`，普通高抗爆方块可随机降级为 `block_scrap`，黑曜石直接降级为 `gravel_obsidian`。
+- EMP 放电击毁机器时落到 `block_electrical_scrap`。
+- `wasteDest` 的原木、木板、蘑菇 stem 分别落到 `waste_log`、`waste_planks`、`waste_log`；沙子概率转 `waste_trinitite` / `waste_trinitite_red`。
+- Thermo scorch 将原木/冻结原木转 `waste_log`，木板/冻结木板转 `waste_planks`，light scorch 的黑曜石转 `gravel_obsidian`。
+- 旧注册里 `block_scrap` / `block_electrical_scrap` / `gravel_obsidian` 均为 falling 方块；爆炸相关建材的抗爆值包括 `gravel_obsidian=240`、`brick_concrete=160`、`brick_light=20`、`brick_obsidian=120`、`brick_compound=400`、`cmb_brick=5000` 等。
+
+现代修正：
+
+- `ExplosionNukeGeneric` 移除这些已注册旧 ID 的 vanilla fallback：scrap 不再回退铁块，obsidian gravel 不再回退哭泣黑曜石，waste wood 不再回退深色橡木或废土树叶。
+- `ExplosionThermo` 的 scorch wood 与 light obsidian 分支改为落真实 `waste_log` / `waste_planks` / `gravel_obsidian`。
+- `ModBlocks` 为 `block_scrap`、`block_electrical_scrap`、`gravel_obsidian` 改用 `FallingBlock`，并为这批爆炸常用旧资源块补回 1.7.10 明确记录的 hardness/resistance。
+- 保留 `brick_concrete`、`brick_light`、`brick_obsidian` 旧抗爆数值本身；它们低于 `ExplosionNukeGeneric#destruction` 的 `>=200` 保护阈值时，现代端不人为抬高阈值触发范围。
+
+### 2026-05-30 追加：Thermo/Tom/Balefire 爆炸后处理细节收口
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionThermo#scorchDestLight`
+- `com.hbm.explosion.ExplosionTom#breakColumn`
+- `com.hbm.explosion.ExplosionBalefire`
+- `com.hbm.explosion.ExplosionNukeRayBalefire`
+- `com.hbm.explosion.vanillant.standard.BlockMutatorBalefire`
+
+旧版合同：
+
+- `ExplosionThermo#scorchDestLight` 不包含“所有可燃方块点火”的兜底分支；它只处理草/泥土/frozen/waste earth/木材/黑曜石/树叶/水冰/沙/黏土等明确分支。
+- light scorch 遇到 clay 时设置 `Blocks.stained_hardened_clay`，metadata 为 `world.rand.nextInt(16)`。
+- Tom 爆炸 crater floor 以下直接生成 `ModBlocks.tektite`，并以 `1/200` 概率生成 `ModBlocks.ore_tektite_osmiridium`；这两个旧 ID 已在现代端补齐。
+- Balefire 相关爆炸和 VNT mutator 放置旧 `ModBlocks.balefire`；该旧 ID 现已注册，早期 `SOUL_FIRE` 只是未注册阶段的占位。
+
+现代修正：
+
+- `ExplosionThermo#scorchDestLight` 移除现代早期额外的可燃方块点火兜底，避免 light scorch 比旧版更激进地点燃任意可燃物。
+- clay -> terracotta 分支改为随机 16 色陶瓦，对应旧 `stained_hardened_clay` metadata 0-15。
+- `ExplosionTom` 的 `tektite` / `ore_tektite_osmiridium` 直接使用 `ModBlocks.TEKTITE` / `ModBlocks.ORE_TEKTITE_OSMIRIDIUM`，移除 blackstone / deepslate diamond ore fallback。
+- `ExplosionBalefire`、`ExplosionNukeRayBalefire`、`BlockMutatorBalefire` 直接放置 `ModBlocks.BALEFIRE`，移除 `SOUL_FIRE` fallback；未迁的 schrabidium/euphemium cluster 仍保留条件式 `legacyBlock(...)` 查询，不引入未注册强依赖。
+
+### 2026-05-30 追加：已迁旧方块落点从占位容错改为真实注册依赖
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionThermo#freezeDest/#scorchDestLight`
+- `com.hbm.explosion.NukeEnvironmentalEffect#applyStandardEffect`
+- `com.hbm.explosion.ExplosionNukeGeneric#wasteDest/#destruction/#emp`
+- `com.hbm.explosion.ExplosionBalefire#breakColumn`
+- `com.hbm.explosion.vanillant.standard.BlockMutatorErode`
+- 现代 `ModBlocks` 中已注册的 frozen/waste/trinitite/ore/scrap/cluster/concrete 旧 ID。
+
+旧版合同：
+
+- Thermo freeze 对草/泥土/原木/木板和 waste wood 直接落到 `frozen_grass`、`frozen_dirt`、`frozen_log`、`frozen_planks`，不是雪块或 packed ice 占位。
+- NukeEnvironmentalEffect 的沙子、mycelium、木材、mossy cobble、uranium/nether uranium/nether plutonium、mushroom stem、end stone、clay 后效应直接使用旧 HBM 方块落点，其中 `waste_trinitite(_red)`、`ore_oil`、`ore_schrabidium`、`ore_nether_schrabidium`、`ore_tikite` 已在现代端注册。
+- ExplosionNukeGeneric 的 `block_scrap`、`block_electrical_scrap`、`gravel_obsidian`、`waste_trinitite(_red)`、`ore_*_schrabidium`、`ore_*_uranium_scorched` 已是现代端真实旧 ID，不应因查询失败静默跳过或退回 vanilla 方块。
+- Balefire 中 `block_schrabidium_cluster -> block_euphemium_cluster` 目标已注册；VNT erode 中 `concrete`、`concrete_smooth`、`brick_concrete`、`brick_concrete_broken` 也已注册。
+
+现代修正：
+
+- `ExplosionThermo#freezeDest` 改为直接落 `ModBlocks.FROZEN_GRASS/FROZEN_DIRT/FROZEN_LOG/FROZEN_PLANKS`；`scorchDestLight` 的黑曜石落点要求 `gravel_obsidian` 已注册。
+- `NukeEnvironmentalEffect` 对已迁旧方块使用真实 `ModBlocks` 或强制 `requireLegacyState(...)`，注册缺口会在开发期暴露，不再把核爆后效应静默丢掉。
+- `ExplosionNukeGeneric#setLegacy` 改为强制要求已迁旧方块存在，覆盖 scrap、电气 scrap、obsidian gravel、trinitite 与 schrabidium/scorched uranium 落点。
+- `ExplosionBalefire#setLegacy` 与 `BlockMutatorErode` 的 cluster/concrete 映射改为强制旧 ID 存在。
+- `ExplosionChaos#crystal_virus/crystal_hardened` 与 `BlockAllocatorGlyphidDig#glyphid_spawner` 在上一轮因旧 ID 未迁入暂保留条件式查询；本轮见下节已补最小注册并收口。
+
+### 2026-05-30 追加：Chaos/Glyphid 爆炸依赖旧方块补注册
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionChaos#hardenVirus`
+- `com.hbm.explosion.vanillant.standard.BlockAllocatorGlyphidDig`
+- `com.hbm.blocks.ModBlocks`
+- `com.hbm.blocks.bomb.CrystalVirus`
+- `com.hbm.blocks.generic.BlockGlyphidSpawner`
+- 旧资源 `textures/blocks/crystal_virus.png`、`crystal_hardened.png`、`glyphid_eggs_alt.png`
+- 旧语言 `tile.crystal_virus.name`、`tile.crystal_hardened.name`、`tile.glyphid_spawner.name`
+
+旧版合同：
+
+- `ExplosionChaos#hardenVirus` 在半径球内将 `ModBlocks.crystal_virus` 直接替换为 `ModBlocks.crystal_hardened`。
+- `BlockAllocatorGlyphidDig` 在射线分配时遇到 `ModBlocks.glyphid_spawner` 必须停止挖掘，该方块是 glyphid dig 爆炸的免疫边界。
+- `crystal_virus` 本体还有随机 tick 扩散与邻接硬化逻辑；`glyphid_spawner` 本体有 metadata 变体、TileEntity 和 Glyphid 生物生成逻辑。这些属于后续晶体/生物/方块实体切片，不在本轮爆炸库最小依赖内实现。
+
+现代修正：
+
+- `ModBlocks.EXTRA_BLOCK_TAB_BLOCKS` 补入 `crystal_virus`、`crystal_hardened`、`glyphid_spawner`，让爆炸路径可以通过 `legacyBlock(...)` 找到真实旧 ID。
+- 复制旧 `glyphid_eggs_alt.png`，并补齐 `crystal_virus`、`crystal_hardened`、`glyphid_spawner` 的 blockstate、block model、item model、loot table、英文/中文语言项。
+- `ExplosionChaos#hardenVirus` 改为强制要求 `crystal_virus` / `crystal_hardened` 已注册，不再静默 return。
+- `BlockAllocatorGlyphidDig` 改为强制要求 `glyphid_spawner` 已注册，恢复旧版“遇蜂巢繁殖方块停止挖掘”的爆炸分配合同。
+- 当前 `glyphid_spawner` 暂按普通资源块落地，用于爆炸分配免疫；完整 metadata 变体、掉落 glyphid egg、BlockEntity 和生物生成另列后续迁移。
+
+### 2026-05-30 追加：Shrapnel Watz 命中毒泥旧方块补注册
+
+复核来源：
+
+- `com.hbm.entity.projectile.EntityShrapnel`
+- `com.hbm.blocks.ModBlocks#mud_block/#mud_fluid`
+- `com.hbm.blocks.fluid.MudBlock`
+- 旧资源 `textures/blocks/mud_still.png`、`mud_flowing.png`
+- 旧语言 `tile.mud_block.name`
+
+旧版合同：
+
+- `EntityShrapnel#setWatz(true)` 后命中方块超过 5 tick，会在命中方块上方可替换位置放置 `ModBlocks.mud_block`。
+- `mud_block` 是旧 Watz 毒泥流体方块：不可作为普通 block tab 方块拿取，实体进入时被 `setInWeb()` 减速，非防化服玩家或实体受到 `ModDamageSource.mudPoisoning` 8 点伤害。
+- 毒泥邻接其它液体时会清除对方；周期 tick 会腐蚀石头、圆石、砂岩、陶瓦和低抗爆/植物/木材/玻璃/冰雪等材料。
+- 完整旧 Forge `Fluid` / bucket / Watz 机器溢流属于流体库和 Watz 机器迁移范围；爆炸库本批只补 `EntityShrapnel` 放置依赖所需的世界方块与核心接触/腐蚀行为。
+
+现代修正：
+
+- 新增 `LegacyMudBlock`，保留毒泥碰撞减速、hazmat 免疫、`hbm:mud_poisoning` 伤害、邻接液体清除和基础腐蚀反应。
+- `ModBlocks` 新增真实旧 ID `mud_block`，进入 `legacyBlock(...)` 映射，但不注册 BlockItem，避免把旧流体方块当普通方块掉落/拿取。
+- 复制旧 `mud_still.png`、`mud_flowing.png`，补运行时 blockstate、block model、空 loot table 和英文/中文语言项。
+- `ShrapnelEntity#placeWatzImpact` 改为直接使用 `ModBlocks.MUD_BLOCK`，不再因为旧 ID 缺失静默跳过 Watz 毒泥落点。
+
+### 2026-05-30 追加：EntityRubble 旧 debris 命中声音补回
+
+复核来源：
+
+- `com.hbm.entity.projectile.EntityRubble#onImpact`
+- 旧 `assets/hbm/sounds.json`
+- 旧资源 `sounds/block/debris1.ogg`、`debris2.ogg`、`debris3.ogg`
+
+旧版合同：
+
+- `EntityRubble` 命中超过 2 tick 后播放 `hbm:block.debris`，音量 `1.5F`，音高 `1.0F`，再向客户端发送 block particle burst。
+- 旧声音事件随机选 `block/debris1`、`block/debris2`、`block/debris3`。
+
+现代修正：
+
+- `ModSounds` 新增 `BLOCK_DEBRIS`，运行时 `sounds.json` 注册 `block.debris` 并复制三份旧 `.ogg` 资源。
+- `RubbleEntity#onImpact` 从原版 `STONE_BREAK` 改回 `ModSounds.BLOCK_DEBRIS`，音量恢复为旧 `1.5F`。
+
+### 2026-05-30 追加：ExplosionLarge 整数公式与 Amat SFX 旧音效收口
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionLarge`
+- `com.hbm.explosion.vanillant.standard.ExplosionEffectAmat`
+
+旧版合同：
+
+- `ExplosionLarge` 的若干速度公式写在 Java `int count` 表达式里：
+  - rubble 水平缩放 `1 + (count / 50)` 是整数除法；`count < 50` 时不额外放大。
+  - rubble 垂直缩放 `1 + ((count + rand.nextInt(count * 5)) / 25)` 也是整数除法。
+  - shrapnel/tracer 的 `1 + (count / (15 + rand.nextInt(21)))` 与 `1 + (count / 50)` 均按整数除法生效。
+  - `cloudFunction` 旧源码为 `Math.pow(Math.E, -i/15)`，`i/15` 也是整数除法；云量随强度按 15 为阶梯变化。
+- `ExplosionEffectAmat`：
+  - `size < 15` 播放 `random.explode`，音量 `4.0F`，音高 `(1.4F + 随机差 * 0.2F) * 0.7F`。
+  - `size >= 15` 播放 `hbm:weapon.mukeExplosion`，音量 `15.0F`，音高 `1.0F`。
+
+现代修正：
+
+- `ExplosionLarge` 的 cloud/rubble/shrapnel/tracer 缩放恢复旧 Java 整数除法语义，避免小 count 爆炸被现代 double 除法额外增强。
+- `ExplosionEffectAmat` 小型反物质爆炸恢复旧随机音高；大型反物质爆炸改用已迁 `ModSounds.WEAPON_MUKE_EXPLOSION`，不再使用原版爆炸声降音高近似。
+
+### 2026-05-30 追加：VNT 标准处理器掉落/伤害/Amat 门面收口
+
+复核来源：
+
+- `com.hbm.explosion.vanillant.ExplosionVNT#makeAmat`
+- `com.hbm.explosion.vanillant.standard.BlockProcessorStandard`
+- `com.hbm.explosion.vanillant.standard.DropChanceMutatorStandard`
+- `com.hbm.explosion.vanillant.standard.EntityProcessorStandard`
+- `com.hbm.explosion.vanillant.standard.CustomDamageHandlerAmat`
+- `com.hbm.explosion.vanillant.standard.ExplosionEffectAmat`
+
+旧版合同：
+
+- `BlockProcessorStandard` 默认掉落概率为 `1.0F / explosion.size`，`IDropChanceMutator` 返回改写后的 float 概率；`NODROP` 为 `0F`，`ALLDROP` 为 `1F`。
+- `setFortune(int)` 会把 fortune 等级传给 `dropBlockAsItemWithChance(..., chance, fortune)`，供 miner/Semtex 类爆炸物增加矿物掉落。
+- 旧 VNT 掉落概率只由上述 `chance` 控制，不再叠加第二层爆炸半径衰减。
+- `EntityProcessorStandard#calculateDamage` 使用 `8.0D * size` 系数，与 cross 处理器一致。
+- `ExplosionVNT#makeAmat()` 组合为：
+  - `BlockAllocatorStandard(size < 15 ? 16 : 32)`
+  - `BlockProcessorStandard#setNoDrop()`
+  - `EntityProcessorStandard#withRangeMod(2F)#withDamageMod(new CustomDamageHandlerAmat(50F))`
+  - `PlayerProcessorStandard`
+  - `ExplosionEffectAmat`
+
+现代修正：
+
+- `DropChanceMutator` 改回返回 float 概率的旧合同，`DropChanceMutatorStandard` 只覆盖概率值。
+- `BlockProcessorStandard` 默认按 `1.0F / size` 手动抽掉落；`setNoDrop()` / `setAllDrop()` 分别映射到 `0F` / `1F`，并移除 `EXPLOSION_RADIUS` loot 参数，避免现代 loot 表对 `ALLDROP`/默认概率再做二次爆炸衰减。
+- `setFortune(int)` 现在通过只用于 loot context 的 fortune 工具栈传入等级，恢复旧 `fortune` 参数对掉落表的影响。
+- `EntityProcessorStandard` 伤害公式从现代 vanilla 近似的 `7.0D` 恢复为旧 VNT 的 `8.0D`。
+- `ExplosionVnt#makeAmat()` 补回旧组合门面，供后续 antimatter fluid tank、special drop 等迁移按旧调用链直接接入。
+
+### 2026-05-30 追加：ExplosionNT Digamma/Lava 属性落点顺序收口
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionNT#doExplosionB`
+- `com.hbm.explosion.ExplosionNT.ExAttrib`
+- 现代 `BlockProcessorStandard`
+- 现代 `BlockMutatorDigamma`
+- 现代 `BlockMutatorPlaceBlock`
+- 现代 `BlockMutatorFire` / `BlockMutatorBalefire` / `BlockMutatorLava`
+
+旧版合同：
+
+- `ExplosionNT` 先对被炸方块执行 `block.onBlockExploded(...)`，随后如果旧方块 `isNormalCube()`，在同一坐标落特殊方块：
+  - `DIGAMMA`：落 `ash_digamma`，并以 `1/5` 概率在上方空气放 `fire_digamma`。
+  - `DIGAMMA_CIRCUIT`：坐标网格命中时落 `pribris_digamma`，否则落 `ash_digamma` 并同样尝试 `fire_digamma`。
+  - `LAVA_V`：落 `volcanic_lava_block`。
+  - `LAVA_R`：落 `rad_lava_block`。
+- `FIRE` / `BALEFIRE` / `LAVA` 的表面后处理通常 `1/3` 概率；但旧源码条件是 `if(!ALLMOD && !DIGAMMA) random 1/3`，因此带 `DIGAMMA` 时这些表面效果也按全量落点执行。
+
+现代修正：
+
+- `BlockMutatorDigamma` 从 post 阶段改到 pre 阶段，使用爆炸前 `BlockState` 判断是否 full block，再在 `onBlockExploded` 后的位置落 `ash_digamma` / `pribris_digamma` / `fire_digamma`；避免 post 阶段读取已变空气而静默不落块。
+- `BlockMutatorPlaceBlock` 同样改到 pre 阶段，恢复 `LAVA_V` / `LAVA_R` 在旧 normal cube 炸点落 `volcanic_lava_block` / `rad_lava_block` 的语义。
+- `ExplosionNT#createBlockProcessor` 新增 `placeAllSurfaceEffects = ALLMOD || DIGAMMA`，让 `FIRE` / `BALEFIRE` / `LAVA` 在 `DIGAMMA` 组合下恢复旧版全量表面落点概率。
+
+### 2026-05-30 追加：VNT 玩家击退包与 CrossSmooth 能量伤害入口收口
+
+复核来源：
+
+- `com.hbm.explosion.vanillant.standard.PlayerProcessorStandard`
+- `com.hbm.explosion.vanillant.standard.EntityProcessorStandard`
+- `com.hbm.explosion.vanillant.standard.EntityProcessorCross`
+- `com.hbm.explosion.vanillant.standard.EntityProcessorCrossSmooth`
+- `com.hbm.packet.toclient.ExplosionKnockbackPacket`
+- `com.hbm.items.weapon.grenade.ItemGrenadeFilling#explodeStandardEnergy`
+- `com.hbm.items.weapon.sedna.BulletConfig#getDamage`
+
+旧版合同：
+
+- VNT 实体处理器会先把实体本体速度加上经 `EnchantmentProtection` 削弱后的击退；但写入 affected-player map 的是未削弱的 `delta * knockback`，再由 `PlayerProcessorStandard` 向 `EntityPlayerMP` 发送 `ExplosionKnockbackPacket`，客户端把该向量直接叠加到本地玩家速度。
+- affected-player map 只按 `EntityPlayer` 类型记录，不额外排除创造飞行或旁观者。
+- `EntityProcessorCrossSmooth` 默认使用 `DamageClass.EXPLOSIVE`，但旧 API 可 `setDamageClass(...)` 切到 `ELECTRIC`、`PLASMA`、`LASER` 等 Sedna 能量伤害类型；`setupPiercing(...)` 的 DT/DR 参数参与旧 `EntityDamageUtil.attackEntityFromNT`。
+- `ItemGrenadeFilling#explodeStandardEnergy` 是只伤实体、不破方块的 VNT smooth 爆炸：`EntityProcessorCrossSmooth(1, damage).setDamageClass(damageClass)`，`PlayerProcessorStandard`，随后播放 `hbm:entity.ufoBlast`、原版 fireworks bang，并发送三层 `plasmablast` 粒子，颜色/scale 由调用方传入。
+
+现代修正：
+
+- `PlayerProcessorStandard` 改回遍历 affected-player map，对 `ServerPlayer` 调用已迁入的 `ModMessages.sendExplosionKnockback(...)`。
+- `EntityProcessorStandard` / `EntityProcessorCross` 的实体实际速度仍使用削弱后的击退，并设置 `hurtMarked`；但 affected-player map 改回旧版未削弱击退向量，恢复客户端补偿包合同。
+- 玩家 map 记录条件改回只判断 `Player` 类型，去掉早期现代 vanilla 爆炸风格的 spectator / creative flying 过滤。
+- `EntityProcessorCrossSmooth` 补回 `setDamageClass(DamageClass)`，默认 `EXPLOSIVE`，并将现代 `DamageClass` 映射到已注册的 `hbm:explosion`、`hbm:electric`、`hbm:plasma`、`hbm:laser`、`hbm:microwave`、`hbm:subatomic`、`hbm:revolver_bullet` 或原版火焰 damage source。
+- 新增 `ExplosionEffectEnergy` 与 `WeaponExplosionUtil.standardEnergy(...)` / `explodeStandardEnergy(...)`，按旧 `explodeStandardEnergy` 组合能量 smooth 爆炸、UFO/firework 声音和三层 `plasmablast` 粒子；后续能量手雷、电池座放电、Sedna 能量命中可直接接入，不再重复拼装。
+
+### 2026-05-30 追加：VNT 掉落概率连续输入、debris 状态比较与 Fatman 参数收口
+
+复核来源：
+
+- `com.hbm.explosion.vanillant.standard.BlockProcessorStandard`
+- `com.hbm.explosion.vanillant.standard.BlockMutatorDebris`
+- `com.hbm.explosion.ExplosionNukeSmall`
+
+旧版合同：
+
+- `BlockProcessorStandard#process` 中 `dropChance` 是循环外变量；每个非空气方块如果存在 `IDropChanceMutator`，会以当前 `dropChance` 为输入并把返回值写回同一变量，后续方块继续使用被改写后的概率。标准 `DropChanceMutatorStandard` 只是固定覆盖，但自定义 mutator 可依赖这个连续输入语义。
+- `BlockMutatorDebris` 的邻居排除条件比较 `Block + metadata`：只有邻居是同一个 debris block 且 metadata 也相同才视为已是目标 debris；同方块不同 metadata 仍允许在当前位置放置目标 debris。
+- `ExplosionNukeSmall.PARAMS_HIGH` 旧版只设置 `miniNuke=false`、`blastRadius=BombConfig.fatmanRadius`、`shrapnelCount=0`。它会播放 muke 粒子和 `weapon.mukeExplosion`，再调度 `EntityNukeExplosionMK5`；不额外设置 `killRadius` 或 `radiationLevel`。
+
+现代修正：
+
+- `BlockProcessorStandard` 将 `dropChance` 改回循环内可被 mutator 连续改写的旧语义，而不是每个方块都从默认 `1 / size` 重新开始。
+- `BlockMutatorDebris` 的邻居判断从“只比较 block”改为完整 `BlockState` 比较，对应旧 metadata 差异；这会保留 `block_slag` 等旧 meta debris 的变体行为。
+- `ExplosionNukeSmall.PARAMS_HIGH` 移除早期现代端额外加入的 `killRadius(75)` 与 `radiationLevel(5)`，恢复旧 Fatman 小门面参数；大核爆后效应仍由 MK5 实体承担。
+
+### 2026-05-30 追加：ExplosionLarge 碎片旧怪癖与核爆即死伤害源收口
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionLarge#spawnBurst`
+- `com.hbm.explosion.ExplosionLarge#spawnMissileDebris`
+- `com.hbm.explosion.ExplosionNukeGeneric#dealDamage`
+- `com.hbm.lib.ModDamageSource#nuclearBlast`
+
+旧版合同：
+
+- `ExplosionLarge#spawnBurst` 使用 `Vec3(strength,0,0)`，先 `rotateAroundY(rand.nextInt(360))`，之后每次 `rotateAroundY(360 / count)`；这里的角度值是旧 `Vec3#rotateAroundY(float)` 接收的弧度参数，但源码传入的是 0-359 与整数 `360/count`，因此不是标准等分圆周的弧度实现。
+- `spawnMissileDebris(... motion ..., debris, rareDrop)` 对普通 debris 列表：每个条目随机 `0..stackSize` 次，每次生成 `debris.get(i).copy()`，旧版不会把 copy 的 stackSize 改成 1，所以会按整栈复制生成。
+- 同一方法的 rare drop：`1/10` 概率生成 `rareDrop.copy()`，速度为 `motion + gaussian * deviation * 0.1`，不乘 `0.85`，也不会像普通 debris 那样按速度投射偏移初始位置。
+- `ExplosionNukeGeneric#dealDamage` 使用 `ModDamageSource.nuclearBlast`，不是普通 explosion damage source；该伤害带旧核爆死亡/抗性语义，并用 DT 穿透 `100F`。
+- 旧版对活体先调用 `EntityDamageUtil.attackEntityFromNT(...)` 并把返回值作为 `doKnockback`；伤害被取消或特殊抗性阻止时不会施加后续 0.2 核爆击退。非活体走普通 `attackEntityFrom`，默认仍击退。
+
+现代修正：
+
+- `ExplosionLarge#spawnBurst` 的现代实现恢复旧整数角度步进和弧度/度数混用语义，不再使用标准 `2π / count` 等分。
+- `spawnMissileDebris` 的普通 debris 不再强制 `copy.setCount(1)`，恢复旧版整栈复制行为。
+- `spawnMissileDebris` 的 rare drop 移除 `0.85` 速度缩放和按速度偏移初始位置，恢复旧版直接在爆心生成并使用未缩放扰动速度。
+- `ExplosionNukeGeneric#dealDamage` 从 `hbm:explosion` 改回 `hbm:nuclear_blast` damage source；活体击退恢复受 `EntityDamageUtil.attackEntityFromNt(...)` 返回值控制，非活体仍按旧普通伤害路径处理。
+- 旧未迁实体豁免如 `EntityBulletBaseNT`、`EntityBulletBaseMK4`、`EntityGrenadeUniversal` 暂不硬编码不存在类型，待对应实体迁入后再补接口/类型标记。
+
+### 2026-05-30 追加：ExplosionLarge buster/jolt 与 Fleija 存档/高度边界收口
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionLarge#buster`
+- `com.hbm.explosion.ExplosionLarge#jolt`
+- `com.hbm.explosion.ExplosionFleija#readFromNbt`
+- `com.hbm.explosion.ExplosionFleija#breakColumn`
+
+旧版合同：
+
+- `ExplosionLarge#buster(World,... float depth)` 会先 normalize 传入向量，再以 `for(int i = 0; i < depth; i += 2)` 每 2 格创建一次普通会点火爆炸。
+- `ExplosionLarge#jolt` 沿随机方向逐格扫描时使用 Java `(int)` 强转坐标；对负坐标这是向零截断，不是 `BlockPos.containing` / floor 语义。
+- `ExplosionFleija#readFromNbt` 对 `n` 原样读回；旧 `update()` 自带 `shell2 == 0` 保护，因此 `n=0` 会直接结束而不是被改成 `1` 后继续推进。
+- `ExplosionFleija#breakColumn` 清除高度硬编码为 `posY + y > 0`，不随维度最低建造高度变化；这意味着旧版不会清理 Y=0 或以下区域。
+
+现代修正：
+
+- `ExplosionLarge#buster` 的兼容入口改为 2 格步长，恢复旧隧穿/连爆密度。
+- `ExplosionLarge#jolt` 坐标采样改用 `(int)(origin + direction * i)`，恢复旧负坐标向零截断落点。
+- `ExplosionFleija#readFromNbt` 不再对 `n` 做 `Math.max(..., 1)`，保留旧存档状态机边界。
+- `ExplosionFleija#breakColumn` 从 `level.getMinBuildHeight()` 改回旧 `worldY > 0` 判断，避免 1.20.1 Overworld 额外清除 Y=-64..0 的空间。
+- `ExplosionNukeGeneric#emp` 恢复 MK2/Forge 能量两段独立放电与报废概率；`ExplosionNukeGeneric#dealDamage` 恢复活体“伤害成功才击退”的旧门槛。
+- `DecoBlockAlt` 保护仍保持当前 `hbm:deco_` 前缀近似映射；现代 clean port 尚未迁入 `statue_elb_f` / `DecoBlockAlt` 类型层级，后续装饰方块系统迁入时应改为精确标记或类型保护。
+
+### 2026-05-31 追加：NuclearExplosionUtil 门面复核记录
+
+复核来源：
+
+- `com.hbm.config.BombConfig`
+- `com.hbm.entity.missile.EntityMissileTier4`
+- `com.hbm.blocks.bomb.NukeCustom#explodeCustom`
+- `com.hbm.entity.projectile.EntityFallingNuke`
+- 现代 `NuclearExplosionUtil`
+- 现代 `CustomNukeExplosion`
+
+旧版合同：
+
+- 核弹半径默认值仍是：`gadget=150`、`boy=120`、`man=175`、`mike=250`、`tsar=500`、`prototype=150`、`fleija=50`、`solinium=150`、`n2=200`、`missile=100`、`mirv=100`、`fatman=35`、`nuka=25`、`aSchrab=20`。
+- `EntityMissileMirv` 与 `EntityMissileDoomsday` 实际使用 `BombConfig.missileRadius * 2`，不是 `BombConfig.mirvRadius`；`mirvRadius` 在旧源码中有配置项但此处未接入。
+- `EntityMissileDoomsdayRusted` 使用 `BombConfig.missileRadius` 并追加 `moreFallout(100)`。
+- `NukeCustom#explode` 在方块起爆时传入方块中心 `(x + 0.5, y + 0.5, z + 0.5)`；坠落实体命中时传入实体 `posX/posY/posZ`。
+- `NukeCustom#explodeCustom` 内部若走 schrab/amat/hydro 等分支还会按旧源码再加 `0.5` 或 `5.0` 的分支偏移，这是旧行为本身，不应在门面层统一“修正”。
+
+现代状态：
+
+- `NuclearExplosionUtil` 的基础核弹方块、Fleija/Solinium/N2、Fatman/Nuka 与 missile/doomsday/rusted 入口半径和旧源码一致。
+- `spawnMissileMirv(...)` 保持 `missileRadius() * 2`，未改用 `mirvRadius()`；后者保留为配置访问器，等待后续发现真实旧调用点再接入。
+- `CustomNukeExplosion` 保持旧方块中心/坠落实体坐标输入语义，并保留各分支内部偏移；本次复核只记录，不做代码修改。
+
 ## 验证清单
 
 - 普通爆炸不会在客户端修改世界。
@@ -2142,3 +2590,19 @@
 - `.\gradlew.bat compileJava processResources --no-daemon` 在将 `ExplosionEffectWeapon` 改回 `explosionSmall` aux 粒子路径后通过。
 - `.\gradlew.bat compileJava processResources --no-daemon --offline` 在接通 MK5 `explosionAlgorithm` 配置后进入 Java 编译，但被既有 `QuasarEntity` / `ModEntityTypes.QUASAR` 缺口阻断，待 Quasar 注册修复后复跑。
 - `.\gradlew.bat compileJava processResources --no-daemon --offline` 在注册 `entity_digamma_quasar`、修复 `SingularityItem` tooltip mutable component、接回 waste schrabidium 概率配置后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在接回扩展日志、MK3 持续雷声、Balefire 存档寿命，并补回 `GenericMachineRecipe` 的 `Ingredient` import 编译口子后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在补齐 Thermo frozen 方块、Tom tektite 方块/粉末与对应资源数据后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在回调 ExplosionLarge 碎片速度、tracer 公式、burst 形态和 shrapnel 非持久化合同后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在修正 `NukeEnvironmentalEffect` / `ExplosionNukeGeneric` 蘑菇 stem 映射后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在收口 `ExplosionNukeGeneric` / `ExplosionThermo` 已注册旧方块落点、补回爆炸相关旧资源块 falling/抗爆属性后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在收口 Thermo light scorch、Tom tektite 与 Balefire 真实旧方块落点，并最小修复并行配方改动的 `GenericMachineRecipe` 输出栈编译口子后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在将 Thermo freeze、NukeEnvironmentalEffect、ExplosionNukeGeneric、Balefire cluster 与 VNT erode 已迁旧方块落点改为真实注册依赖后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在补齐 `crystal_virus`、`crystal_hardened`、`glyphid_spawner` 最小资源注册并收紧 Chaos/Glyphid 爆炸依赖后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在补齐 `mud_block` 最小世界方块合同并收紧 Shrapnel Watz 命中落点后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在补回 `EntityRubble` 旧 `block.debris` 命中声音后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在收口 `ExplosionLarge` 整数速度/云量公式与 `ExplosionEffectAmat` 旧音效后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在收口 `ExplosionNT` Digamma/Lava 属性落点顺序与 Digamma 组合表面效果概率后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在接回 VNT 玩家击退包、CrossSmooth damage class 与能量 smooth 爆炸公共入口后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在收口 VNT 掉落概率连续输入、debris 状态比较与 `ExplosionNukeSmall.PARAMS_HIGH` 旧参数后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在收口 `ExplosionLarge#spawnBurst/spawnMissileDebris` 旧怪癖与 `ExplosionNukeGeneric#dealDamage` 核爆伤害源后通过。
+- `.\gradlew.bat compileJava processResources --no-daemon --offline` 在收口 Fleija NBT/高度边界、`ExplosionNukeGeneric` EMP 双接口概率与活体击退门槛，并复核 `NuclearExplosionUtil` 门面后通过。

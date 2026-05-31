@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "hbm:block/network/fluid_diode", "y": 180 },
+    "facing=east": { "model": "hbm:block/network/fluid_diode", "y": 270 },
+    "facing=south": { "model": "hbm:block/network/fluid_diode" },
+    "facing=west": { "model": "hbm:block/network/fluid_diode", "y": 90 }
+  }
+}

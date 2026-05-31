@@ -114,17 +114,18 @@ public class ExplosionNT {
 
         CompositeBlockMutator mutators = new CompositeBlockMutator();
         boolean allMod = attributes.contains(ExAttrib.ALLMOD);
+        boolean placeAllSurfaceEffects = allMod || attributes.contains(ExAttrib.DIGAMMA);
         if (attributes.contains(ExAttrib.ERRODE)) {
             mutators.add(new BlockMutatorErode(allMod));
         }
         if (attributes.contains(ExAttrib.FIRE)) {
-            mutators.add(new BlockMutatorFire(allMod));
+            mutators.add(new BlockMutatorFire(placeAllSurfaceEffects));
         }
         if (attributes.contains(ExAttrib.BALEFIRE)) {
-            mutators.add(new BlockMutatorBalefire(allMod));
+            mutators.add(new BlockMutatorBalefire(placeAllSurfaceEffects));
         }
         if (attributes.contains(ExAttrib.LAVA)) {
-            mutators.add(new BlockMutatorLava(allMod));
+            mutators.add(new BlockMutatorLava(placeAllSurfaceEffects));
         }
         if (attributes.contains(ExAttrib.DIGAMMA_CIRCUIT)) {
             mutators.add(new BlockMutatorDigamma(true));

@@ -14,8 +14,8 @@ public class BlockMutatorDigamma implements BlockMutator {
     }
 
     @Override
-    public void mutatePost(ExplosionVnt explosion, BlockPos pos) {
-        if (!explosion.level().getBlockState(pos).isCollisionShapeFullBlock(explosion.level(), pos)) {
+    public void mutatePre(ExplosionVnt explosion, BlockState state, BlockPos pos) {
+        if (!state.isCollisionShapeFullBlock(explosion.level(), pos)) {
             return;
         }
 

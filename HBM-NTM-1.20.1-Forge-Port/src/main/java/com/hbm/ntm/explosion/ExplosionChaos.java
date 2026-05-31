@@ -1,5 +1,6 @@
 package com.hbm.ntm.explosion;
 
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.ArmorUtil;
@@ -25,6 +26,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraftforge.registries.RegistryObject;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 public final class ExplosionChaos {
@@ -36,13 +38,12 @@ public final class ExplosionChaos {
         }
         RegistryObject<? extends Block> virus = ModBlocks.legacyBlock("crystal_virus");
         RegistryObject<? extends Block> hardened = ModBlocks.legacyBlock("crystal_hardened");
-        if (virus == null || hardened == null) {
-            return;
-        }
+        Block virusBlock = Objects.requireNonNull(virus, "Missing legacy block hbm:crystal_virus").get();
+        Block hardenedBlock = Objects.requireNonNull(hardened, "Missing legacy block hbm:crystal_hardened").get();
 
         applyHalfSphere(level, x, y, z, bombStartStrength, pos -> {
-            if (level.getBlockState(pos).is(virus.get())) {
-                level.setBlock(pos, hardened.get().defaultBlockState(), 3);
+            if (level.getBlockState(pos).is(virusBlock)) {
+                level.setBlock(pos, hardenedBlock.defaultBlockState(), 3);
             }
         });
     }
@@ -116,7 +117,7 @@ public final class ExplosionChaos {
         }
         for (LivingEntity entity : livingInRange(level, x, y, z, range)) {
             hurtArmor(entity, 25);
-            entity.hurt(ModDamageSources.pc(level), 5.0F);
+            EntityDamageUtil.attackEntityFromNt(entity, ModDamageSources.pc(level), 5.0F);
         }
     }
 
@@ -133,7 +134,7 @@ public final class ExplosionChaos {
                 entity.removeEffect(ModEffects.TAINT.get());
                 entity.addEffect(new MobEffectInstance(ModEffects.MUTATION.get(), 60 * 60 * 20, 0, false, true));
             }
-            entity.hurt(ModDamageSources.cloud(level), 5.0F);
+            EntityDamageUtil.attackEntityFromNt(entity, ModDamageSources.cloud(level), 5.0F);
         }
     }
 

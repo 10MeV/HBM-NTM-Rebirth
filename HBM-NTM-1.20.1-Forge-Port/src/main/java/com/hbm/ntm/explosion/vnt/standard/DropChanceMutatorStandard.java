@@ -13,7 +13,7 @@ public class DropChanceMutatorStandard implements DropChanceMutator {
     }
 
     @Override
-    public boolean shouldDrop(ExplosionVnt explosion, BlockState state, BlockPos pos) {
-        return explosion.level().random.nextFloat() < chance;
+    public float mutateDropChance(ExplosionVnt explosion, BlockState state, BlockPos pos, float chance) {
+        return this.chance;
     }
 }

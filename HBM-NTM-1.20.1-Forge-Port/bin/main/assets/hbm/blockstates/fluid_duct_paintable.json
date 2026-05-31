@@ -1,0 +1,12 @@
+{
+  "multipart": [
+    {
+      "when": { "overlay": "true" },
+      "apply": { "model": "hbm:block/fluid_duct_paintable_overlay" }
+    },
+    {
+      "when": { "overlay": "false" },
+      "apply": { "model": "hbm:block/fluid_duct_paintable" }
+    }
+  ]
+}

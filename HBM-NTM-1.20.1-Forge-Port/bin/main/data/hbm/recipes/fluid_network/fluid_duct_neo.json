@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": { "item": "hbm:plate_aluminium" },
+    "S": { "item": "hbm:plate_steel" }
+  },
+  "pattern": [
+    "SAS",
+    "   ",
+    "SAS"
+  ],
+  "result": {
+    "count": 8,
+    "item": "hbm:fluid_duct_neo"
+  },
+  "show_notification": true
+}

@@ -82,6 +82,13 @@ public abstract class HbmEnergyNodeBlock extends BaseEntityBlock implements HbmE
         return side != null;
     }
 
+    public void updateEnergyConnectionGraph(Level level, BlockPos pos) {
+        updateConnectionState(level, pos);
+        updateNeighborConnectionStates(level, pos);
+        refreshNode(level, pos);
+        refreshNeighborNodes(level, pos);
+    }
+
     protected BlockState getConnectionState(BlockState state, BlockGetter level, BlockPos pos) {
         BlockState result = state;
         for (Direction direction : Direction.values()) {

@@ -11,6 +11,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.Objects;
+
 public final class NukeEnvironmentalEffect {
     public static void applyStandardAOE(Level level, int x, int y, int z, int radius, int jaggedness) {
         if (level == null || level.isClientSide() || radius <= 0) {
@@ -55,33 +57,33 @@ public final class NukeEnvironmentalEffect {
         int chance = 100;
 
         if (input.is(Blocks.SAND) || input.is(Blocks.RED_SAND)) {
-            replacement = legacyState(input.is(Blocks.RED_SAND) ? "waste_trinitite_red" : "waste_trinitite");
+            replacement = requireLegacyState(input.is(Blocks.RED_SAND) ? "waste_trinitite_red" : "waste_trinitite");
             chance = 20;
         } else if (input.is(Blocks.MYCELIUM)) {
             replacement = ModBlocks.WASTE_MYCELIUM.get().defaultBlockState();
         } else if (input.is(BlockTags.LOGS)) {
-            replacement = legacyState("waste_log");
+            replacement = ModBlocks.WASTE_LOG.get().defaultBlockState();
         } else if (input.is(BlockTags.PLANKS)) {
-            replacement = legacyState("waste_planks");
+            replacement = ModBlocks.WASTE_PLANKS.get().defaultBlockState();
         } else if (input.is(Blocks.MOSSY_COBBLESTONE)) {
-            replacement = legacyState("ore_oil");
+            replacement = requireLegacyState("ore_oil");
             chance = 50;
         } else if (input.is(Blocks.COAL_ORE) || input.is(Blocks.DEEPSLATE_COAL_ORE)) {
             replacement = Blocks.DIAMOND_ORE.defaultBlockState();
             chance = 10;
         } else if (isLegacy(input, "ore_uranium") || isLegacy(input, "ore_gneiss_uranium")) {
-            replacement = legacyState("ore_schrabidium");
+            replacement = requireLegacyState("ore_schrabidium");
             chance = 10;
         } else if (isLegacy(input, "ore_nether_uranium")) {
-            replacement = legacyState("ore_nether_schrabidium");
+            replacement = requireLegacyState("ore_nether_schrabidium");
             chance = 10;
         } else if (isLegacy(input, "ore_nether_plutonium")) {
-            replacement = legacyState("ore_nether_schrabidium");
+            replacement = requireLegacyState("ore_nether_schrabidium");
             chance = 25;
-        } else if (input.is(Blocks.BROWN_MUSHROOM_BLOCK) || input.is(Blocks.RED_MUSHROOM_BLOCK)) {
-            replacement = legacyState("waste_planks");
+        } else if (input.is(Blocks.MUSHROOM_STEM)) {
+            replacement = ModBlocks.WASTE_PLANKS.get().defaultBlockState();
         } else if (input.is(Blocks.END_STONE)) {
-            replacement = legacyState("ore_tikite");
+            replacement = requireLegacyState("ore_tikite");
             chance = 1;
         } else if (input.is(Blocks.CLAY)) {
             replacement = Blocks.TERRACOTTA.defaultBlockState();
@@ -99,9 +101,9 @@ public final class NukeEnvironmentalEffect {
         return block != null && state.is(block.get());
     }
 
-    private static BlockState legacyState(String name) {
+    private static BlockState requireLegacyState(String name) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        return block == null ? null : block.get().defaultBlockState();
+        return Objects.requireNonNull(block, "Missing legacy block hbm:" + name).get().defaultBlockState();
     }
 
     private NukeEnvironmentalEffect() {

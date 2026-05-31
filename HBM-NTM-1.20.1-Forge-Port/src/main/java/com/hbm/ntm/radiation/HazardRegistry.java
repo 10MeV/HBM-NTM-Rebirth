@@ -2,6 +2,7 @@ package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.registries.Registries;
@@ -510,6 +511,16 @@ public final class HazardRegistry {
         mergeData(STACK_HAZARDS.computeIfAbsent(HazardStackKey.of(stack), key -> new HazardData()), data);
     }
 
+    public static void registerLegacyMeta(ResourceLocation legacyId, int legacyMeta, HazardType type, float level) {
+        LegacyMetaItemMappings.stack(legacyId, legacyMeta, 1)
+                .ifPresent(stack -> registerStack(stack, type, level));
+    }
+
+    public static void registerLegacyMeta(ResourceLocation legacyId, int legacyMeta, HazardData data) {
+        LegacyMetaItemMappings.stack(legacyId, legacyMeta, 1)
+                .ifPresent(stack -> registerStack(stack, data));
+    }
+
     public static void registerFuelRadiation(Item item, float base, float target, boolean blinding) {
         HazardData data = new HazardData()
                 .addEntry(new HazardEntry(HazardType.RADIATION, base).withModifier(new FuelRadiationModifier(target)));
@@ -603,6 +614,11 @@ public final class HazardRegistry {
         if (!stack.isEmpty()) {
             STACK_BLACKLIST.add(HazardStackKey.of(stack));
         }
+    }
+
+    public static void blacklistLegacyMeta(ResourceLocation legacyId, int legacyMeta) {
+        LegacyMetaItemMappings.stack(legacyId, legacyMeta, 1)
+                .ifPresent(HazardRegistry::blacklist);
     }
 
     private static void mergeData(HazardData target, HazardData data) {

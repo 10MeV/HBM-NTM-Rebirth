@@ -8,6 +8,32 @@
       }
     ]
   },
+  "block.pipe_placed": {
+    "subtitle": "subtitles.hbm.block.pipe_placed",
+    "sounds": [
+      {
+        "name": "hbm:block/pipe_placed",
+        "stream": false
+      }
+    ]
+  },
+  "block.debris": {
+    "subtitle": "subtitles.hbm.block.debris",
+    "sounds": [
+      "hbm:block/debris1",
+      "hbm:block/debris2",
+      "hbm:block/debris3"
+    ]
+  },
+  "block.reactor_start": {
+    "subtitle": "subtitles.hbm.block.reactor_start",
+    "sounds": [
+      {
+        "name": "hbm:block/reactorStart",
+        "stream": false
+      }
+    ]
+  },
   "tool.geiger1": {
     "subtitle": "subtitles.hbm.tool.geiger",
     "sounds": [

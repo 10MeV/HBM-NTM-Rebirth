@@ -1,5 +1,6 @@
 package com.hbm.ntm.effect;
 
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -13,7 +14,7 @@ public class TaintMobEffect extends MobEffect {
     @Override
     public void applyEffectTick(LivingEntity entity, int amplifier) {
         if (!entity.level().isClientSide() && entity.getRandom().nextInt(40) == 0) {
-            entity.hurt(ModDamageSources.taint(entity.level()), amplifier + 1.0F);
+            EntityDamageUtil.attackEntityFromNt(entity, ModDamageSources.taint(entity.level()), amplifier + 1.0F);
         }
     }
 

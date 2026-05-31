@@ -65,6 +65,7 @@ public abstract class HbmFluidNodeBlock extends BaseEntityBlock implements HbmFl
         super.neighborChanged(state, level, pos, block, neighborPos, movedByPiston);
         updateConnectionState(level, pos);
         refreshNode(level, pos);
+        refreshNeighborNodes(level, pos);
     }
 
     @Override

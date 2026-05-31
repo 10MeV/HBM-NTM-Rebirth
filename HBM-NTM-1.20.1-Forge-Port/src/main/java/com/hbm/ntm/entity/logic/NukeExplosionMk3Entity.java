@@ -1,6 +1,8 @@
 package com.hbm.ntm.entity.logic;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.config.BombConfig;
+import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
 import com.hbm.ntm.explosion.ExplosionFleija;
 import com.hbm.ntm.explosion.ExplosionHurtUtil;
@@ -9,6 +11,8 @@ import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.explosion.ExplosionSolinium;
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 
@@ -95,6 +99,10 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
         forceCenterChunk();
 
         if (!initialized) {
+            if (extendedLoggingEnabled()) {
+                HbmNtm.LOGGER.info("[NUKE] Initialized mk3 explosion at {} / {} / {} with strength {}!",
+                        getX(), getY(), getZ(), destructionRange);
+            }
             initProcessors();
             initialized = true;
         }
@@ -124,6 +132,8 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
         }
 
         if (!destructionComplete) {
+            level().playSound(null, getX(), getY(), getZ(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER,
+                    10000.0F, 0.8F + random.nextFloat() * 0.2F);
             if (waste || extType != EXT_SOLINIUM) {
                 ExplosionNukeGeneric.dealDamage(level(), getX(), getY(), getZ(), destructionRange * 2.0D);
             } else {
@@ -225,5 +235,9 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
         if (solinium != null) {
             solinium.saveToNbt(tag, "sol_");
         }
+    }
+
+    private static boolean extendedLoggingEnabled() {
+        return HbmCommonConfig.ENABLE_EXTENDED_LOGGING != null && HbmCommonConfig.ENABLE_EXTENDED_LOGGING.get();
     }
 }

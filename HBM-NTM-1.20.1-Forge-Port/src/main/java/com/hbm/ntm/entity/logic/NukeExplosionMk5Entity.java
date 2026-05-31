@@ -1,6 +1,8 @@
 package com.hbm.ntm.entity.logic;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.config.BombConfig;
+import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.explosion.ExplosionNukeRayBatched;
@@ -43,6 +45,10 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
     }
 
     public static NukeExplosionMk5Entity create(Level level, int radius, double x, double y, double z) {
+        if (extendedLoggingEnabled() && !level.isClientSide()) {
+            HbmNtm.LOGGER.info("[NUKE] Initialized explosion at {} / {} / {} with strength {}!", x, y, z, radius);
+        }
+
         if (radius == 0) {
             radius = BombConfig.NUKA_RADIUS.get();
         }
@@ -106,6 +112,9 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
 
         if (fallout) {
             level().addFreshEntity(FalloutRainEntity.create(level(), getX(), getY(), getZ(), falloutScale()));
+        }
+        if (extendedLoggingEnabled() && explosionStart != 0L) {
+            HbmNtm.LOGGER.info("[NUKE] Explosion complete. Time elapsed: {}ms", System.currentTimeMillis() - explosionStart);
         }
         discard();
     }
@@ -207,5 +216,9 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
             return new ExplosionNukeRayParallelized(level, x, y, z, strength, speed, length, chunkLoader);
         }
         return new ExplosionNukeRayBatched(level, (int) x, (int) y, (int) z, strength, speed, length, chunkLoader);
+    }
+
+    private static boolean extendedLoggingEnabled() {
+        return HbmCommonConfig.ENABLE_EXTENDED_LOGGING != null && HbmCommonConfig.ENABLE_EXTENDED_LOGGING.get();
     }
 }

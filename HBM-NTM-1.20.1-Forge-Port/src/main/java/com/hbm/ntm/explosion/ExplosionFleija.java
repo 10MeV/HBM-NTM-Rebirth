@@ -63,7 +63,7 @@ public class ExplosionFleija {
         lastposZ = tag.getInt(name + "lastposZ");
         radius = tag.getInt(name + "radius");
         radius2 = tag.getInt(name + "radius2");
-        n = Math.max(tag.getInt(name + "n"), 1);
+        n = tag.getInt(name + "n");
         nlimit = tag.getInt(name + "nlimit");
         shell = tag.getInt(name + "shell");
         leg = tag.getInt(name + "leg");
@@ -104,7 +104,7 @@ public class ExplosionFleija {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int y = maxY; y > minY; y--) {
             int worldY = posY + y;
-            if (worldY <= level.getMinBuildHeight()) {
+            if (worldY <= 0) {
                 continue;
             }
 

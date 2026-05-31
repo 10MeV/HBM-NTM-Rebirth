@@ -18,6 +18,11 @@ import com.hbm.ntm.client.ClientPlayerSyncData;
 import com.hbm.ntm.client.ClientRadiationData;
 import com.hbm.ntm.client.ClientTileBinaryData;
 import com.hbm.ntm.compat.CompatEnergyControl;
+import com.hbm.ntm.damage.DamageResistanceConfig;
+import com.hbm.ntm.damage.DamageResistance;
+import com.hbm.ntm.damage.DamageResistanceHandler;
+import com.hbm.ntm.damage.DamageResistanceStats;
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergyDebug;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.event.CommonForgeEvents;
@@ -34,9 +39,13 @@ import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
+import com.hbm.ntm.recipe.HbmIngredient;
+import com.hbm.ntm.recipe.LegacyMetaItemMappings;
+import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.CraterRadiationData;
 import com.hbm.ntm.radiation.LegacyFalloutConversions;
+import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationConstants;
 import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationSavedData;
@@ -44,6 +53,7 @@ import com.hbm.ntm.uninos.HbmNodespace;
 import com.hbm.ntm.uninos.HbmUninosDiagnostics;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNodespace;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -56,25 +66,38 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class ModCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -153,6 +176,8 @@ public final class ModCommands {
                         .then(statusCommand())
                         .then(contaminationCommand()))
                 .then(energyCommand())
+                .then(damageCommand())
+                .then(recipeCommand())
                 .then(machineCommand())
                 .then(fluidCommand())
                 .then(networkCommand()));
@@ -253,6 +278,59 @@ public final class ModCommands {
                                 .then(Commands.argument("enabled", StringArgumentType.word())
                                         .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{"false", "true"}, builder))
                                         .executes(context -> setEnergyDebugParticles(context.getSource(), parseBoolean(StringArgumentType.getString(context, "enabled")))))));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> damageCommand() {
+        return Commands.literal("damage")
+                .then(Commands.literal("resistance")
+                        .then(Commands.literal("status")
+                                .executes(context -> getDamageResistanceStatus(context.getSource())))
+                        .then(Commands.literal("reload")
+                                .executes(context -> reloadDamageResistanceConfig(context.getSource())))
+                        .then(Commands.literal("damageTypes")
+                                .executes(context -> auditDamageResistanceDamageTypes(context.getSource()))
+                                .then(Commands.literal("list")
+                                        .executes(context -> listDamageResistanceDamageTypes(context.getSource())))
+                                .then(Commands.literal("resolve")
+                                        .then(Commands.argument("damage_type", StringArgumentType.word())
+                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(damageTypeSuggestions(), builder))
+                                                .executes(context -> resolveDamageResistanceDamageType(
+                                                        context.getSource(),
+                                                        StringArgumentType.getString(context, "damage_type"))))))
+                        .then(Commands.literal("armor")
+                                .then(Commands.argument("targets", EntityArgument.players())
+                                        .executes(context -> inspectDamageResistanceArmor(
+                                                context.getSource(),
+                                                EntityArgument.getPlayers(context, "targets")))))
+                        .then(Commands.literal("matches")
+                                .then(Commands.argument("targets", EntityArgument.players())
+                                        .then(Commands.argument("damage_type", StringArgumentType.word())
+                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(damageTypeSuggestions(), builder))
+                                                .executes(context -> inspectDamageResistanceMatches(
+                                                        context.getSource(),
+                                                        EntityArgument.getPlayers(context, "targets"),
+                                                        StringArgumentType.getString(context, "damage_type"))))))
+                        .then(Commands.literal("probe")
+                                .then(Commands.argument("targets", EntityArgument.players())
+                                        .then(Commands.argument("damage_type", StringArgumentType.word())
+                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(damageTypeSuggestions(), builder))
+                                                .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.0D))
+                                                        .executes(context -> probeDamageResistance(
+                                                                context.getSource(),
+                                                                EntityArgument.getPlayers(context, "targets"),
+                                                                StringArgumentType.getString(context, "damage_type"),
+                                                                (float) DoubleArgumentType.getDouble(context, "amount"),
+                                                                0.0F,
+                                                                0.0F))
+                                                        .then(Commands.argument("pierce_dt", DoubleArgumentType.doubleArg(0.0D))
+                                                                .then(Commands.argument("pierce_dr", DoubleArgumentType.doubleArg(0.0D))
+                                                                        .executes(context -> probeDamageResistance(
+                                                                                context.getSource(),
+                                                                                EntityArgument.getPlayers(context, "targets"),
+                                                                                StringArgumentType.getString(context, "damage_type"),
+                                                                                (float) DoubleArgumentType.getDouble(context, "amount"),
+                                                                                (float) DoubleArgumentType.getDouble(context, "pierce_dt"),
+                                                                                (float) DoubleArgumentType.getDouble(context, "pierce_dr"))))))))));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> fluidCommand() {
@@ -371,9 +449,41 @@ public final class ModCommands {
                                                         StringArgumentType.getString(context, "recipe"))))))
                         .then(Commands.literal("clear")
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                                        .executes(context -> clearAssemblyRecipe(
+                                .executes(context -> clearAssemblyRecipe(
                                                 context.getSource(),
                                                 BlockPosArgument.getLoadedBlockPos(context, "pos"))))));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> recipeCommand() {
+        return Commands.literal("recipe")
+                .then(Commands.literal("audit")
+                        .executes(context -> auditRecipes(context.getSource(), null))
+                        .then(Commands.argument("machine", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(recipeMachineNames(), builder))
+                                .executes(context -> auditRecipesByName(
+                                        context.getSource(),
+                                        StringArgumentType.getString(context, "machine")))))
+                .then(Commands.literal("unresolved")
+                        .executes(context -> listUnresolvedRecipeInputs(context.getSource(), null))
+                        .then(Commands.argument("machine", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(recipeMachineNames(), builder))
+                                .executes(context -> listUnresolvedRecipeInputsByName(
+                                        context.getSource(),
+                                        StringArgumentType.getString(context, "machine")))))
+                .then(Commands.literal("legacyMeta")
+                        .executes(context -> listLegacyMetaMappings(context.getSource(), null))
+                        .then(Commands.argument("legacyId", StringArgumentType.string())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                        LegacyMetaItemMappings.legacyIds().stream().map(ResourceLocation::toString),
+                                        builder))
+                                .executes(context -> listLegacyMetaMappings(
+                                        context.getSource(),
+                                        new ResourceLocation(StringArgumentType.getString(context, "legacyId"))))))
+                .then(Commands.literal("legacyOre")
+                        .then(Commands.argument("oreName", StringArgumentType.word())
+                                .executes(context -> queryLegacyOreMapping(
+                                        context.getSource(),
+                                        StringArgumentType.getString(context, "oreName")))));
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> fluidNetworkArgument() {
@@ -514,6 +624,261 @@ public final class ModCommands {
             source.sendFailure(Component.literal("Fallout warning: " + warning));
         }
         return report.entryCount();
+    }
+
+    private static int getDamageResistanceStatus(CommandSourceStack source) {
+        DamageResistanceConfig.LoadReport report = DamageResistanceConfig.loadReport();
+        DamageResistanceHandler.RegistrySnapshot snapshot = DamageResistanceHandler.registrySnapshot();
+        source.sendSuccess(() -> Component.literal("Damage resistance: " + report.summary()), false);
+        source.sendSuccess(() -> Component.literal("Damage resistance registry: itemStats=" + snapshot.itemStats()
+                + " armorSets=" + snapshot.setStats()
+                + " entityStats=" + snapshot.entityStats()
+                + " (class=" + snapshot.entityClassStats()
+                + ", simpleName=" + snapshot.entitySimpleNameStats() + ")"), false);
+        source.sendSuccess(() -> Component.literal("Damage resistance runtime: allowSpecialCancel="
+                + EntityDamageUtil.allowSpecialCancel()
+                + " currentPierceDT=" + round(DamageResistanceHandler.currentPierceDt())
+                + " currentPierceDR=" + round(DamageResistanceHandler.currentPierceDr() * 100.0F) + "%"), false);
+        for (String warning : report.warnings()) {
+            source.sendSuccess(() -> Component.literal("Damage resistance warning: missing migrated " + warning), false);
+        }
+        return report.itemStats() + report.setStats() + report.entityStats();
+    }
+
+    private static int reloadDamageResistanceConfig(CommandSourceStack source) {
+        DamageResistanceConfig.LoadReport report = DamageResistanceConfig.initialize(FMLPaths.CONFIGDIR.get());
+        source.sendSuccess(() -> Component.literal("Reloaded " + report.summary()), true);
+        for (String warning : report.warnings()) {
+            source.sendFailure(Component.literal("Damage resistance warning: missing migrated " + warning));
+        }
+        return report.itemStats() + report.setStats() + report.entityStats();
+    }
+
+    private static int auditDamageResistanceDamageTypes(CommandSourceStack source) {
+        int problems = 0;
+        var registry = source.getLevel().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE);
+        for (ModDamageSources.LegacyDamageType legacy : ModDamageSources.legacyDamageTypes()) {
+            if (!registry.containsKey(legacy.location())) {
+                problems++;
+                source.sendFailure(Component.literal("Missing HBM damage type: " + legacy.location()));
+                continue;
+            }
+            DamageSource damageSource = new DamageSource(registry.getHolderOrThrow(legacy.key()));
+            problems += checkDamageTypeTag(source, legacy, "projectile", legacy.projectile(), damageSource.is(DamageTypeTags.IS_PROJECTILE));
+            problems += checkDamageTypeTag(source, legacy, "explosion", legacy.explosion(), damageSource.is(DamageTypeTags.IS_EXPLOSION));
+            problems += checkDamageTypeTag(source, legacy, "fire", legacy.fire(), damageSource.is(DamageTypeTags.IS_FIRE));
+            problems += checkDamageTypeTag(source, legacy, "bypassesArmor", legacy.bypassesArmor(), damageSource.is(DamageTypeTags.BYPASSES_ARMOR));
+            problems += checkDamageTypeTag(source, legacy, "absolute", legacy.absolute(), damageSource.is(DamageTypeTags.BYPASSES_RESISTANCE));
+            problems += checkDamageTypeTag(source, legacy, "creativeAllowed", legacy.creativeAllowed(), damageSource.is(DamageTypeTags.BYPASSES_INVULNERABILITY));
+        }
+        int totalProblems = problems;
+        source.sendSuccess(() -> Component.literal("HBM damage type audit: entries="
+                + ModDamageSources.legacyDamageTypes().size()
+                + " problems=" + totalProblems), totalProblems > 0);
+        return totalProblems == 0 ? 1 : totalProblems;
+    }
+
+    private static int checkDamageTypeTag(CommandSourceStack source, ModDamageSources.LegacyDamageType legacy,
+            String name, boolean expected, boolean actual) {
+        if (expected == actual) {
+            return 0;
+        }
+        source.sendFailure(Component.literal("Damage type tag mismatch: " + legacy.location()
+                + " " + name + " expected=" + expected + " actual=" + actual));
+        return 1;
+    }
+
+    private static int listDamageResistanceDamageTypes(CommandSourceStack source) {
+        var registry = source.getLevel().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE);
+        for (ModDamageSources.LegacyDamageType legacy : ModDamageSources.legacyDamageTypes()) {
+            boolean present = registry.containsKey(legacy.location());
+            List<String> aliases = ModDamageSources.legacyAliases(legacy.key());
+            source.sendSuccess(() -> Component.literal(legacy.location()
+                    + " present=" + present
+                    + " projectile=" + legacy.projectile()
+                    + " explosion=" + legacy.explosion()
+                    + " fire=" + legacy.fire()
+                    + " bypassesArmor=" + legacy.bypassesArmor()
+                    + " absolute=" + legacy.absolute()
+                    + " creativeAllowed=" + legacy.creativeAllowed()
+                    + (aliases.isEmpty() ? "" : " aliases=" + String.join(",", aliases))), false);
+        }
+        return ModDamageSources.legacyDamageTypes().size();
+    }
+
+    private static int resolveDamageResistanceDamageType(CommandSourceStack source, String damageType) {
+        Optional<ResourceKey<DamageType>> resolved = ModDamageSources.legacyKey(damageType);
+        if (resolved.isEmpty()) {
+            source.sendFailure(Component.literal("Unknown damage type alias: " + damageType));
+            return 0;
+        }
+
+        ResourceKey<DamageType> key = resolved.get();
+        boolean present = source.getLevel().registryAccess()
+                .registryOrThrow(Registries.DAMAGE_TYPE)
+                .containsKey(key.location());
+        source.sendSuccess(() -> Component.literal("Damage type alias '" + damageType + "' -> "
+                + key.location()
+                + " present=" + present
+                + " aliases=" + String.join(",", ModDamageSources.legacyAliases(key))), false);
+        return present ? 1 : 0;
+    }
+
+    private static int inspectDamageResistanceArmor(CommandSourceStack source, Collection<ServerPlayer> players) {
+        for (ServerPlayer player : players) {
+            DamageResistanceHandler.ArmorBreakdown breakdown = DamageResistanceHandler.armorBreakdown(player);
+            source.sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " damage resistance armor:"), false);
+            for (DamageResistanceHandler.ArmorSlotBreakdown slot : breakdown.slots()) {
+                String item = slot.stack().isEmpty() ? "empty" : itemId(slot.stack());
+                source.sendSuccess(() -> Component.literal("  " + slot.slot().getName()
+                        + "=" + item
+                        + " itemStats=" + summarizeStats(slot.itemStats())), false);
+            }
+            source.sendSuccess(() -> Component.literal("  matchedSet=" + summarizeStats(breakdown.setStats())), false);
+            source.sendSuccess(() -> Component.literal("  innate[" + breakdown.innateKey() + "]="
+                    + summarizeStats(breakdown.innateStats())), false);
+        }
+        return players.size();
+    }
+
+    private static int inspectDamageResistanceMatches(CommandSourceStack source, Collection<ServerPlayer> players, String damageType) {
+        ResourceLocation location = parseDamageTypeLocation(damageType);
+        ResourceKey<DamageType> key = ResourceKey.create(Registries.DAMAGE_TYPE, location);
+        if (!source.getLevel().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).containsKey(location)) {
+            source.sendFailure(Component.literal("Unknown damage type '" + damageType + "'."));
+            return 0;
+        }
+
+        DamageSource damageSource = new DamageSource(source.getLevel().registryAccess()
+                .registryOrThrow(Registries.DAMAGE_TYPE)
+                .getHolderOrThrow(key), source.getEntity());
+        for (ServerPlayer player : players) {
+            List<DamageResistanceHandler.ResistanceContribution> contributions =
+                    DamageResistanceHandler.resistanceContributions(player, damageSource, 1.0F, 0.0F, 0.0F);
+            source.sendSuccess(() -> Component.literal(player.getGameProfile().getName()
+                    + " damage resistance matches: type=" + location
+                    + " exact=" + DamageResistanceHandler.exactTypeKey(damageSource)
+                    + " category=" + DamageResistanceHandler.typeToCategory(damageSource)), false);
+            if (contributions.isEmpty()) {
+                source.sendSuccess(() -> Component.literal("  none"), false);
+            } else {
+                for (DamageResistanceHandler.ResistanceContribution contribution : contributions) {
+                    source.sendSuccess(() -> Component.literal("  " + contribution.source()
+                            + "[" + contribution.id() + "] "
+                            + contribution.matchKind() + ":" + contribution.matchKey()
+                            + " DT=" + round(contribution.threshold())
+                            + " DR=" + round(contribution.resistance() * 100.0F) + "%"), false);
+                }
+            }
+        }
+        return players.size();
+    }
+
+    private static int probeDamageResistance(CommandSourceStack source, Collection<ServerPlayer> players, String damageType,
+                                             float amount, float pierceDt, float pierceDr) {
+        ResourceLocation location = parseDamageTypeLocation(damageType);
+        ResourceKey<DamageType> key = ResourceKey.create(Registries.DAMAGE_TYPE, location);
+        if (!source.getLevel().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).containsKey(location)) {
+            source.sendFailure(Component.literal("Unknown damage type '" + damageType + "'."));
+            return 0;
+        }
+
+        DamageSource damageSource = new DamageSource(source.getLevel().registryAccess()
+                .registryOrThrow(Registries.DAMAGE_TYPE)
+                .getHolderOrThrow(key), source.getEntity());
+        for (ServerPlayer player : players) {
+            DamageResistanceHandler.ResistanceBreakdown breakdown = DamageResistanceHandler.breakdown(player, damageSource, amount, pierceDt, pierceDr);
+            source.sendSuccess(() -> Component.literal(player.getGameProfile().getName()
+                    + " damage resistance probe: type=" + location
+                    + " exact=" + breakdown.exactType()
+                    + " category=" + breakdown.category()
+                    + " amount=" + round(amount)
+                    + " DT=" + round(breakdown.rawDt())
+                    + " DR=" + round(breakdown.rawDr() * 100.0F) + "%"
+                    + " pierceDT=" + round(pierceDt)
+                    + " pierceDR=" + round(pierceDr * 100.0F) + "%"
+                    + " effectiveDT=" + round(breakdown.effectiveDt())
+                    + " effectiveDR=" + round(breakdown.effectiveDr() * 100.0F) + "%"
+                    + " result=" + round(breakdown.finalDamage())), false);
+            List<DamageResistanceHandler.ResistanceContribution> contributions =
+                    DamageResistanceHandler.resistanceContributions(player, damageSource, amount, pierceDt, pierceDr);
+            if (contributions.isEmpty()) {
+                source.sendSuccess(() -> Component.literal("  contributions: none"), false);
+            } else {
+                for (DamageResistanceHandler.ResistanceContribution contribution : contributions) {
+                    source.sendSuccess(() -> Component.literal("  " + contribution.source()
+                            + "[" + contribution.id() + "] "
+                            + contribution.matchKind() + ":" + contribution.matchKey()
+                            + " DT=" + round(contribution.threshold())
+                            + " DR=" + round(contribution.resistance() * 100.0F) + "%"), false);
+                }
+            }
+        }
+        return players.size();
+    }
+
+    private static String itemId(ItemStack stack) {
+        ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        return id == null ? stack.getHoverName().getString() : id.toString();
+    }
+
+    private static String summarizeStats(@Nullable DamageResistanceStats stats) {
+        if (stats == null) {
+            return "none";
+        }
+        List<String> parts = new ArrayList<>();
+        for (var entry : stats.categoryResistances().entrySet()) {
+            parts.add(entry.getKey() + "=" + summarizeResistance(entry.getValue()));
+        }
+        for (var entry : stats.exactResistances().entrySet()) {
+            parts.add(entry.getKey() + "=" + summarizeResistance(entry.getValue()));
+        }
+        DamageResistance other = stats.otherResistance();
+        if (other != null) {
+            parts.add("other=" + summarizeResistance(other));
+        }
+        return parts.isEmpty() ? "empty" : String.join(", ", parts);
+    }
+
+    private static String summarizeResistance(DamageResistance resistance) {
+        return round(resistance.threshold()) + "/" + round(resistance.resistance() * 100.0F) + "%";
+    }
+
+    private static ResourceLocation parseDamageTypeLocation(String damageType) {
+        return ModDamageSources.legacyKey(damageType)
+                .map(ResourceKey::location)
+                .orElseGet(() -> damageType.contains(":")
+                        ? new ResourceLocation(damageType)
+                        : new ResourceLocation(damageType));
+    }
+
+    private static String[] damageTypeSuggestions() {
+        List<String> suggestions = new ArrayList<>(List.of(
+                "minecraft:generic",
+                "minecraft:player_attack",
+                "minecraft:on_fire",
+                "minecraft:fall",
+                "hbm:explosion",
+                "hbm:nuclear_blast",
+                "hbm:laser",
+                "hbm:plasma",
+                "hbm:microwave",
+                "hbm:electric",
+                "nuclearBlast",
+                "mudPoisoning",
+                "tauBlast",
+                "revolverBullet",
+                "chopperBullet",
+                "cmb",
+                "subAtomic3",
+                "electrified",
+                "acidPlayer"));
+        for (ModDamageSources.LegacyDamageType legacy : ModDamageSources.legacyDamageTypes()) {
+            suggestions.add(legacy.location().toString());
+            suggestions.add(legacy.location().getPath());
+            suggestions.addAll(ModDamageSources.legacyAliases(legacy.key()));
+        }
+        return suggestions.stream().distinct().toArray(String[]::new);
     }
 
     private static int spawnRadiationFog(CommandSourceStack source, BlockPos pos) {
@@ -838,6 +1203,159 @@ public final class ModCommands {
         return recipes.size();
     }
 
+    private static int auditRecipesByName(CommandSourceStack source, String machineName) {
+        GenericMachineRecipe.Machine machine = parseRecipeMachine(machineName);
+        if (machine == null) {
+            source.sendFailure(Component.literal("Unknown HBM recipe machine '" + machineName
+                    + "'. Valid: " + String.join(", ", recipeMachineNames())));
+            return 0;
+        }
+        return auditRecipes(source, machine);
+    }
+
+    private static int auditRecipes(CommandSourceStack source, @Nullable GenericMachineRecipe.Machine requestedMachine) {
+        int problems = 0;
+        int machines = 0;
+        for (GenericMachineRecipe.Machine machine : GenericMachineRecipe.Machine.values()) {
+            if (requestedMachine != null && machine != requestedMachine) {
+                continue;
+            }
+            machines++;
+            GenericMachineRecipeRuntime.Index index = GenericMachineRecipeRuntime.index(source.getLevel(), machine);
+            GenericMachineRecipeRuntime.Audit audit = index.audit();
+            int machineProblems = audit.problemCount();
+            problems += machineProblems;
+            source.sendSuccess(() -> Component.literal("Recipe audit " + recipeMachineName(machine)
+                    + ": recipes=" + index.recipes().size()
+                    + ", internalNames=" + index.byInternalName().size()
+                    + ", pools=" + index.byPool().size()
+                    + ", problems=" + machineProblems), false);
+            sendRecipeAuditDetails(source, audit);
+        }
+        int totalProblems = problems;
+        int totalMachines = machines;
+        source.sendSuccess(() -> Component.literal("Recipe audit complete: machines=" + totalMachines
+                + ", problems=" + totalProblems), totalProblems > 0);
+        return totalProblems == 0 ? 1 : totalProblems;
+    }
+
+    private static void sendRecipeAuditDetails(CommandSourceStack source, GenericMachineRecipeRuntime.Audit audit) {
+        if (!audit.duplicateInternalNames().isEmpty()) {
+            source.sendSuccess(() -> Component.literal(" - duplicate internal names: "
+                    + String.join(", ", audit.duplicateInternalNames().keySet())), false);
+        }
+        if (!audit.emptyInputs().isEmpty()) {
+            source.sendSuccess(() -> Component.literal(" - empty inputs: " + recipeIds(audit.emptyInputs())), false);
+        }
+        if (!audit.emptyOutputs().isEmpty()) {
+            source.sendSuccess(() -> Component.literal(" - empty outputs: " + recipeIds(audit.emptyOutputs())), false);
+        }
+        if (!audit.invalidDurations().isEmpty()) {
+            source.sendSuccess(() -> Component.literal(" - invalid durations: " + recipeIds(audit.invalidDurations())), false);
+        }
+        if (!audit.invalidWeightedOutputs().isEmpty()) {
+            source.sendSuccess(() -> Component.literal(" - invalid weighted outputs: "
+                    + recipeIds(audit.invalidWeightedOutputs())), false);
+        }
+        if (!audit.overLimit().isEmpty()) {
+            source.sendSuccess(() -> Component.literal(" - over machine limits: " + recipeIds(audit.overLimit())), false);
+        }
+        if (!audit.oversizedItemInputs().isEmpty()) {
+            source.sendSuccess(() -> Component.literal(" - oversized item inputs: "
+                    + recipeIds(audit.oversizedItemInputs())), false);
+        }
+        if (!audit.unresolvedItemInputs().isEmpty()) {
+            source.sendSuccess(() -> Component.literal(" - unresolved item inputs: "
+                    + unresolvedRecipeInputs(audit.unresolvedItemInputs())), false);
+        }
+    }
+
+    private static int listUnresolvedRecipeInputsByName(CommandSourceStack source, String machineName) {
+        GenericMachineRecipe.Machine machine = parseRecipeMachine(machineName);
+        if (machine == null) {
+            source.sendFailure(Component.literal("Unknown HBM recipe machine '" + machineName
+                    + "'. Valid: " + String.join(", ", recipeMachineNames())));
+            return 0;
+        }
+        return listUnresolvedRecipeInputs(source, machine);
+    }
+
+    private static int listUnresolvedRecipeInputs(CommandSourceStack source,
+            @Nullable GenericMachineRecipe.Machine requestedMachine) {
+        int groups = 0;
+        int entries = 0;
+        for (GenericMachineRecipe.Machine machine : GenericMachineRecipe.Machine.values()) {
+            if (requestedMachine != null && machine != requestedMachine) {
+                continue;
+            }
+            GenericMachineRecipeRuntime.Audit audit = GenericMachineRecipeRuntime.audit(source.getLevel(), machine);
+            int machineGroups = audit.unresolvedItemInputGroups().size();
+            int machineEntries = audit.unresolvedItemInputDetails().size();
+            groups += machineGroups;
+            entries += machineEntries;
+            source.sendSuccess(() -> Component.literal("Recipe unresolved inputs " + recipeMachineName(machine)
+                    + ": groups=" + machineGroups
+                    + ", entries=" + machineEntries
+                    + ", recipes=" + audit.unresolvedItemInputs().size()), false);
+            for (GenericMachineRecipeRuntime.UnresolvedInputGroup group : audit.unresolvedItemInputGroups().values()) {
+                source.sendSuccess(() -> Component.literal(" - " + group.diagnosticName()
+                        + " entries=" + group.entries().size()
+                        + " recipes=" + group.recipeCount()
+                        + " at " + unresolvedInputRefs(group.entries())), false);
+            }
+        }
+        int totalGroups = groups;
+        int totalEntries = entries;
+        source.sendSuccess(() -> Component.literal("Recipe unresolved input summary: groups=" + totalGroups
+                + ", entries=" + totalEntries), totalEntries > 0);
+        return totalEntries == 0 ? 1 : totalEntries;
+    }
+
+    private static int listLegacyMetaMappings(CommandSourceStack source, @Nullable ResourceLocation requestedLegacyId) {
+        if (requestedLegacyId != null && LegacyMetaItemMappings.variantCount(requestedLegacyId) == 0) {
+            source.sendFailure(Component.literal("Unknown legacy meta mapping family: " + requestedLegacyId));
+            return 0;
+        }
+        int families = 0;
+        int variants = 0;
+        for (ResourceLocation legacyId : LegacyMetaItemMappings.legacyIds()) {
+            if (requestedLegacyId != null && !requestedLegacyId.equals(legacyId)) {
+                continue;
+            }
+            families++;
+            List<RegistryObject<Item>> mappedItems = LegacyMetaItemMappings.variants(legacyId);
+            variants += mappedItems.size();
+            source.sendSuccess(() -> Component.literal("Legacy meta " + legacyId + " variants=" + mappedItems.size()), false);
+            for (int meta = 0; meta < mappedItems.size(); meta++) {
+                int currentMeta = meta;
+                RegistryObject<Item> item = mappedItems.get(meta);
+                source.sendSuccess(() -> Component.literal(" - " + currentMeta + " -> " + item.getId()), false);
+            }
+        }
+        int totalFamilies = families;
+        int totalVariants = variants;
+        source.sendSuccess(() -> Component.literal("Legacy meta mappings: families=" + totalFamilies
+                + ", variants=" + totalVariants), false);
+        return totalVariants;
+    }
+
+    private static int queryLegacyOreMapping(CommandSourceStack source, String oreName) {
+        LegacyOreDictionaryMappings.Mapping mapping = LegacyOreDictionaryMappings.resolve(oreName);
+        int tagEntries = source.getLevel().registryAccess().registryOrThrow(Registries.ITEM)
+                .getTag(LegacyOreDictionaryMappings.itemTag(oreName))
+                .map(named -> (int) named.stream()
+                        .filter(holder -> holder.value() != Items.AIR)
+                        .count())
+                .orElse(0);
+        source.sendSuccess(() -> Component.literal("Legacy ore " + oreName
+                + " -> #" + mapping.tagId()
+                + " kind=" + mapping.kind()
+                + (mapping.matchedRule().isBlank() ? "" : " rule=" + mapping.matchedRule())
+                + (mapping.materialOrPath().isBlank() ? "" : " path=" + mapping.materialOrPath())
+                + " entries=" + tagEntries), false);
+        return tagEntries;
+    }
+
     private static int getAssemblyInfo(CommandSourceStack source, BlockPos pos) {
         AssemblyMachineBlockEntity assembler = getAssemblyMachine(source, pos);
         if (assembler == null) {
@@ -888,6 +1406,48 @@ public final class ModCommands {
         }
         source.sendFailure(Component.literal("No HBM assembly machine at " + pos.toShortString()));
         return null;
+    }
+
+    private static List<String> recipeMachineNames() {
+        return Stream.of(GenericMachineRecipe.Machine.values())
+                .map(ModCommands::recipeMachineName)
+                .toList();
+    }
+
+    @Nullable
+    private static GenericMachineRecipe.Machine parseRecipeMachine(String name) {
+        String normalized = name.toUpperCase(Locale.ROOT).replace('-', '_');
+        for (GenericMachineRecipe.Machine machine : GenericMachineRecipe.Machine.values()) {
+            if (machine.name().equals(normalized) || recipeMachineName(machine).equals(name)) {
+                return machine;
+            }
+        }
+        return null;
+    }
+
+    private static String recipeMachineName(GenericMachineRecipe.Machine machine) {
+        return machine.name().toLowerCase(Locale.ROOT);
+    }
+
+    private static String recipeIds(List<GenericMachineRecipe> recipes) {
+        return recipes.stream()
+                .map(recipe -> recipe.getId().toString())
+                .collect(Collectors.joining(", "));
+    }
+
+    private static String unresolvedRecipeInputs(List<GenericMachineRecipe> recipes) {
+        return recipes.stream()
+                .map(recipe -> recipe.getId() + " [" + recipe.getItemInputs().stream()
+                        .filter(HbmIngredient::unresolvedDisplayInput)
+                        .map(HbmIngredient::diagnosticName)
+                        .collect(Collectors.joining("; ")) + "]")
+                .collect(Collectors.joining(", "));
+    }
+
+    private static String unresolvedInputRefs(List<GenericMachineRecipeRuntime.UnresolvedItemInput> entries) {
+        return entries.stream()
+                .map(entry -> entry.recipe().getId() + "#" + entry.inputIndex())
+                .collect(Collectors.joining(", "));
     }
 
     private static String formatTank(HbmFluidTank tank) {

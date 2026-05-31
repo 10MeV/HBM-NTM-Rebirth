@@ -2,6 +2,7 @@ package com.hbm.ntm.explosion;
 
 import com.hbm.ntm.config.BombConfig;
 import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
@@ -27,6 +28,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.registries.RegistryObject;
+
+import java.util.Objects;
 
 public final class ExplosionNukeGeneric {
     public static void empBlast(Level level, int x, int y, int z, int bombStartStrength) {
@@ -61,11 +64,18 @@ public final class ExplosionNukeGeneric {
 
             double linearDistance = Math.sqrt(distance);
             float damage = (float) (maxDamage * (radius - linearDistance) / radius);
-            entity.hurt(ModDamageSources.explosion(level, null), damage);
+            boolean doKnockback = true;
+            if (entity instanceof LivingEntity && entity.isAlive()) {
+                doKnockback = EntityDamageUtil.attackEntityFromNt(entity,
+                        ModDamageSources.source(level, ModDamageSources.NUCLEAR_BLAST), damage, true, true,
+                        0.0D, 100.0F, 0.0F);
+            } else {
+                entity.hurt(ModDamageSources.source(level, ModDamageSources.NUCLEAR_BLAST), damage);
+            }
             entity.setSecondsOnFire(5);
 
             Vec3 knockback = target.subtract(origin);
-            if (knockback.lengthSqr() > 1.0E-7D) {
+            if (doKnockback && knockback.lengthSqr() > 1.0E-7D) {
                 entity.setDeltaMovement(entity.getDeltaMovement().add(knockback.normalize().scale(0.2D)));
                 entity.hurtMarked = true;
             }
@@ -97,10 +107,10 @@ public final class ExplosionNukeGeneric {
             } else if (isLegacy(state, "brick_light")) {
                 int random = level.random.nextInt(3);
                 if (random == 0) {
-                    setLegacy(level, pos, "waste_planks", Blocks.DARK_OAK_PLANKS.defaultBlockState());
+                    level.setBlock(pos, ModBlocks.WASTE_PLANKS.get().defaultBlockState(), 3);
                     return 0;
                 } else if (random == 1) {
-                    setLegacy(level, pos, "block_scrap", Blocks.IRON_BLOCK.defaultBlockState());
+                    setLegacy(level, pos, "block_scrap");
                     return 0;
                 }
             } else if (isLegacy(state, "brick_obsidian")) {
@@ -108,10 +118,10 @@ public final class ExplosionNukeGeneric {
                     level.setBlock(pos, Blocks.OBSIDIAN.defaultBlockState(), 3);
                 }
             } else if (state.is(Blocks.OBSIDIAN)) {
-                setLegacy(level, pos, "gravel_obsidian", Blocks.CRYING_OBSIDIAN.defaultBlockState());
+                setLegacy(level, pos, "gravel_obsidian");
                 return 0;
             } else if (level.random.nextInt(protection + 3) == 0) {
-                setLegacy(level, pos, "block_scrap", Blocks.IRON_BLOCK.defaultBlockState());
+                setLegacy(level, pos, "block_scrap");
             }
             return protection;
         }
@@ -215,30 +225,33 @@ public final class ExplosionNukeGeneric {
             return;
         }
 
-        boolean discharged = false;
-        boolean forgeEnergy = false;
-        if (blockEntity instanceof HbmEnergyHandler energyHandler && energyHandler.getPower() > 0L) {
+        boolean handled = false;
+        if (blockEntity instanceof HbmEnergyHandler energyHandler) {
             energyHandler.setPower(0L);
-            discharged = true;
+            handled = true;
+            if (level.random.nextInt(5) < 1) {
+                setLegacy(level, pos, "block_electrical_scrap");
+                return;
+            }
         }
+
+        boolean forgeEnergy = false;
         for (Direction direction : Direction.values()) {
             IEnergyStorage energy = blockEntity.getCapability(ForgeCapabilities.ENERGY, direction).orElse(null);
-            if (energy != null && energy.canExtract() && energy.getEnergyStored() > 0) {
+            if (energy != null && energy.canExtract()) {
                 energy.extractEnergy(energy.getEnergyStored(), false);
-                discharged = true;
                 forgeEnergy = true;
             }
         }
         IEnergyStorage energy = blockEntity.getCapability(ForgeCapabilities.ENERGY, null).orElse(null);
-        if (energy != null && energy.canExtract() && energy.getEnergyStored() > 0) {
+        if (energy != null && energy.canExtract()) {
             energy.extractEnergy(energy.getEnergyStored(), false);
-            discharged = true;
             forgeEnergy = true;
         }
 
-        if (discharged && level.random.nextInt(5) < (forgeEnergy ? 2 : 1)) {
-            setLegacy(level, pos, "block_electrical_scrap", Blocks.IRON_BLOCK.defaultBlockState());
-        } else if (discharged) {
+        if (forgeEnergy && level.random.nextInt(5) <= 1) {
+            setLegacy(level, pos, "block_electrical_scrap");
+        } else if (handled || forgeEnergy) {
             blockEntity.setChanged();
         }
     }
@@ -285,8 +298,7 @@ public final class ExplosionNukeGeneric {
             level.setBlock(pos, ModBlocks.WASTE_MYCELIUM.get().defaultBlockState(), 3);
         } else if (state.is(Blocks.SAND) || state.is(Blocks.RED_SAND)) {
             if (level.random.nextInt(20) == 1) {
-                setLegacy(level, pos, state.is(Blocks.RED_SAND) ? "waste_trinitite_red" : "waste_trinitite",
-                        legacyState("block_trinitite", Blocks.GLASS.defaultBlockState()));
+                setLegacy(level, pos, state.is(Blocks.RED_SAND) ? "waste_trinitite_red" : "waste_trinitite");
             }
         } else if (state.is(Blocks.CLAY)) {
             level.setBlock(pos, Blocks.TERRACOTTA.defaultBlockState(), 3);
@@ -301,11 +313,11 @@ public final class ExplosionNukeGeneric {
                 level.setBlock(pos, Blocks.EMERALD_ORE.defaultBlockState(), 3);
             }
         } else if (state.is(BlockTags.LOGS)) {
-            setLegacy(level, pos, "waste_log", ModBlocks.WASTE_LEAVES.get().defaultBlockState());
+            level.setBlock(pos, ModBlocks.WASTE_LOG.get().defaultBlockState(), 3);
         } else if (state.is(BlockTags.PLANKS)) {
-            setLegacy(level, pos, "waste_planks", Blocks.DARK_OAK_PLANKS.defaultBlockState());
+            level.setBlock(pos, ModBlocks.WASTE_PLANKS.get().defaultBlockState(), 3);
         } else if (state.is(Blocks.MUSHROOM_STEM)) {
-            setLegacy(level, pos, "waste_log", Blocks.AIR.defaultBlockState());
+            level.setBlock(pos, ModBlocks.WASTE_LOG.get().defaultBlockState(), 3);
         } else if (state.is(Blocks.BROWN_MUSHROOM_BLOCK) || state.is(Blocks.RED_MUSHROOM_BLOCK)) {
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
         } else if (allowSchrabidium && isLegacy(state, "ore_uranium")) {
@@ -390,18 +402,7 @@ public final class ExplosionNukeGeneric {
 
     private static void setLegacy(Level level, BlockPos pos, String name) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        if (block != null) {
-            level.setBlock(pos, block.get().defaultBlockState(), 3);
-        }
-    }
-
-    private static void setLegacy(Level level, BlockPos pos, String name, BlockState fallback) {
-        level.setBlock(pos, legacyState(name, fallback), 3);
-    }
-
-    private static BlockState legacyState(String name, BlockState fallback) {
-        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        return block == null ? fallback : block.get().defaultBlockState();
+        level.setBlock(pos, Objects.requireNonNull(block, "Missing legacy block hbm:" + name).get().defaultBlockState(), 3);
     }
 
     @FunctionalInterface

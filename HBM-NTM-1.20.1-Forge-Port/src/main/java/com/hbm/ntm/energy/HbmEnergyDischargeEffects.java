@@ -1,5 +1,6 @@
 package com.hbm.ntm.energy;
 
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
@@ -66,7 +67,7 @@ public final class HbmEnergyDischargeEffects {
             }
             impact = hit.getLocation();
         } else {
-            target.hurt(ModDamageSources.electric(level), SELF_CHARGING_BEAM_DAMAGE);
+            EntityDamageUtil.attackEntityFromNt(target, ModDamageSources.electric(level), SELF_CHARGING_BEAM_DAMAGE);
         }
 
         spawnElectricArc(level, origin, impact);
@@ -84,7 +85,7 @@ public final class HbmEnergyDischargeEffects {
             if (damage <= 0.0F) {
                 continue;
             }
-            entity.hurt(ModDamageSources.electric(level), damage);
+            EntityDamageUtil.attackEntityFromNt(entity, ModDamageSources.electric(level), damage);
             Vec3 push = entity.position().subtract(position);
             if (push.lengthSqr() > 0.0001D) {
                 entity.push(push.x * 0.08D, 0.04D, push.z * 0.08D);

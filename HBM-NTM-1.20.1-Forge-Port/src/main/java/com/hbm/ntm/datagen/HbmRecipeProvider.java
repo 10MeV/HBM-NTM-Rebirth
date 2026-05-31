@@ -1,12 +1,15 @@
 package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.HbmNtm;
-import com.hbm.ntm.energy.HbmLegacyBatteryMaps;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.recipe.HbmIngredient;
+import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.recipe.HbmFluidContainerIngredient;
+import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -33,6 +36,8 @@ import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class HbmRecipeProvider extends RecipeProvider {
     public HbmRecipeProvider(PackOutput output) {
@@ -102,6 +107,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         chemicalBatteryRecipes(consumer);
         assemblyCapacitorRecipes(consumer);
         fluidContainerRecipes(consumer);
+        fluidNetworkRecipes(consumer);
         liquefactionRecipes(consumer);
     }
 
@@ -118,7 +124,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(ModItems.STEEL_PLATE.get(), 4)
                 .inputItem(ModItems.LEAD_INGOT.get(), 4)
                 .inputFluid(HbmFluids.SULFURIC_ACID, 8_000)
-                .outputItem(legacyBatteryPack(1))
+                .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 1)
                 .save(consumer, id("chemical_plant/batterylead"));
 
         GenericMachineRecipeBuilder.chemical("chem.batterylithium", 100, 1_000)
@@ -126,21 +132,21 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputTag(forgeTag("dusts/cobalt"), 8)
                 .inputTag(forgeTag("ingots/any_plastic"), 4)
                 .inputFluid(HbmFluids.OXYGEN, 2_000)
-                .outputItem(legacyBatteryPack(2))
+                .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2)
                 .save(consumer, id("chemical_plant/batterylithium"));
 
         GenericMachineRecipeBuilder.chemical("chem.batterysodium", 100, 10_000)
                 .inputTag(forgeTag("dusts/sodium"), 24)
                 .inputTag(forgeTag("dusts/iron"), 24)
                 .inputTag(forgeTag("ingots/any_hardplastic"), 12)
-                .outputItem(legacyBatteryPack(3))
+                .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 3)
                 .save(consumer, id("chemical_plant/batterysodium"));
 
         GenericMachineRecipeBuilder.chemical("chem.batteryschrabidium", 100, 25_000)
                 .inputTag(forgeTag("dusts/schrabidium"), 24)
                 .inputTag(forgeTag("cast_plates/any_bismoid_bronze"), 8)
                 .inputFluid(HbmFluids.HELIUM4, 8_000)
-                .outputItem(legacyBatteryPack(4))
+                .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 4)
                 .save(consumer, id("chemical_plant/batteryschrabidium"));
 
         GenericMachineRecipeBuilder.chemical("chem.batteryquantum", 100, 100_000)
@@ -148,7 +154,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("pellet_charged"), 32)
                 .inputItem(item("ingot_cft"), 16)
                 .inputFluid(HbmFluids.PERFLUOROMETHYL_COLD, 8_000)
-                .outputItem(legacyBatteryPack(5))
+                .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 5)
                 .outputFluid(HbmFluids.PERFLUOROMETHYL, 8_000)
                 .save(consumer, id("chemical_plant/batteryquantum"));
     }
@@ -157,26 +163,26 @@ public final class HbmRecipeProvider extends RecipeProvider {
         GenericMachineRecipeBuilder.assembly("ass.capacitorgold", 100, 100)
                 .inputItem(ModItems.STEEL_PLATE.get(), 8)
                 .inputTag(forgeTag("dense_wires/gold"), 16)
-                .outputItem(legacyBatteryPack(7))
+                .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 7)
                 .save(consumer, id("assembly_machine/capacitorgold"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitorniobium", 100, 1_000)
                 .inputTag(forgeTag("ingots/any_plastic"), 12)
                 .inputTag(forgeTag("dense_wires/niobium"), 24)
-                .outputItem(legacyBatteryPack(8))
+                .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 8)
                 .save(consumer, id("assembly_machine/capacitorniobium"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitortantalum", 100, 10_000)
                 .inputTag(forgeTag("ingots/any_hardplastic"), 16)
                 .inputTag(forgeTag("ingots/tantalum"), 24)
-                .outputItem(legacyBatteryPack(9))
+                .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 9)
                 .save(consumer, id("assembly_machine/capacitortantalum"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitorbismuth", 100, 25_000)
                 .inputTag(forgeTag("ingots/any_hardplastic"), 24)
                 .inputTag(forgeTag("ingots/bismuth"), 24)
                 .inputTag(forgeTag("circuits/chip_quantum"), 1)
-                .outputItem(legacyBatteryPack(10))
+                .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 10)
                 .save(consumer, id("assembly_machine/capacitorbismuth"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitorspark", 100, 100_000)
@@ -185,7 +191,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("pellet_charged"), 32)
                 .inputTag(forgeTag("circuits/chip_quantum"), 16)
                 .inputFluid(HbmFluids.PERFLUOROMETHYL_COLD, 8_000)
-                .outputItem(legacyBatteryPack(11))
+                .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 11)
                 .outputFluid(HbmFluids.PERFLUOROMETHYL, 8_000)
                 .save(consumer, id("assembly_machine/capacitorspark"));
     }
@@ -302,6 +308,87 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 });
     }
 
+    private static void fluidNetworkRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.FLUID_DUCT_NEO.get(), 8)
+                .pattern("SAS")
+                .pattern("   ")
+                .pattern("SAS")
+                .define('S', ModItems.STEEL_PLATE.get())
+                .define('A', ModItems.ALUMINIUM_PLATE.get())
+                .unlockedBy("has_steel_plate", has(ModItems.STEEL_PLATE.get()))
+                .save(consumer, id("fluid_network/fluid_duct_neo"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.FLUID_DUCT_PAINTABLE.get(), 8)
+                .pattern("SAS")
+                .pattern("A A")
+                .pattern("SAS")
+                .define('S', ModItems.STEEL_INGOT.get())
+                .define('A', ModItems.ALUMINIUM_PLATE.get())
+                .unlockedBy("has_steel_ingot", has(ModItems.STEEL_INGOT.get()))
+                .save(consumer, id("fluid_network/fluid_duct_paintable"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.FLUID_DUCT_PAINTABLE_BLOCK_EXHAUST.get(), 8)
+                .pattern("SAS")
+                .pattern("A A")
+                .pattern("SAS")
+                .define('S', Items.IRON_INGOT)
+                .define('A', item("plate_polymer"))
+                .unlockedBy("has_plate_polymer", has(item("plate_polymer")))
+                .save(consumer, id("fluid_network/fluid_duct_paintable_block_exhaust"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, ModBlocks.FLUID_DUCT_GAUGE.get())
+                .requires(ModBlocks.FLUID_DUCT_PAINTABLE.get())
+                .requires(ModItems.STEEL_INGOT.get())
+                .requires(forgeTag("circuits/basic"))
+                .unlockedBy("has_paintable_fluid_duct", has(ModBlocks.FLUID_DUCT_PAINTABLE.get()))
+                .save(consumer, id("fluid_network/fluid_duct_gauge"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.FLUID_VALVE.get())
+                .pattern("S")
+                .pattern("W")
+                .define('S', Blocks.LEVER)
+                .define('W', ModBlocks.FLUID_DUCT_PAINTABLE.get())
+                .unlockedBy("has_paintable_fluid_duct", has(ModBlocks.FLUID_DUCT_PAINTABLE.get()))
+                .save(consumer, id("fluid_network/fluid_valve"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.FLUID_SWITCH.get())
+                .pattern("S")
+                .pattern("W")
+                .define('S', Items.REDSTONE)
+                .define('W', ModBlocks.FLUID_DUCT_PAINTABLE.get())
+                .unlockedBy("has_paintable_fluid_duct", has(ModBlocks.FLUID_DUCT_PAINTABLE.get()))
+                .save(consumer, id("fluid_network/fluid_switch"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.FLUID_COUNTER_VALVE.get())
+                .pattern("S")
+                .pattern("W")
+                .define('S', forgeTag("circuits/chip"))
+                .define('W', ModBlocks.FLUID_SWITCH.get())
+                .unlockedBy("has_fluid_switch", has(ModBlocks.FLUID_SWITCH.get()))
+                .save(consumer, id("fluid_network/fluid_counter_valve"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.FLUID_PUMP.get())
+                .pattern(" S ")
+                .pattern("PGP")
+                .pattern("IMI")
+                .define('S', ModItems.STEEL_PLATE.get())
+                .define('P', item("pipes_steel"))
+                .define('G', item("ingot_graphite"))
+                .define('I', ModItems.STEEL_INGOT.get())
+                .define('M', ModItems.MOTOR.get())
+                .unlockedBy("has_motor", has(ModItems.MOTOR.get()))
+                .save(consumer, id("fluid_network/fluid_pump"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.PIPE_ANCHOR.get(), 2)
+                .pattern("P")
+                .pattern("P")
+                .pattern("S")
+                .define('P', item("pipes_steel"))
+                .define('S', ModItems.STEEL_INGOT.get())
+                .unlockedBy("has_steel_pipe", has(item("pipes_steel")))
+                .save(consumer, id("fluid_network/pipe_anchor"));
+    }
+
     private static void liquefactionRecipes(Consumer<FinishedRecipe> consumer) {
         LiquefactionRecipeBuilder.liquefaction(ModItems.BIOMASS.get(), HbmFluids.BIOGAS, 125)
                 .save(consumer, id("liquefaction/biomass"));
@@ -386,15 +473,11 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static ItemLike legacyBatteryPack(int legacyMeta) {
-        return HbmLegacyBatteryMaps.batteryPackByLegacyMeta(legacyMeta)
-                .orElseThrow(() -> new IllegalStateException("Missing legacy battery_pack meta: " + legacyMeta))
-                .get();
+        return LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BATTERY_PACK, legacyMeta).get();
     }
 
     private static ItemLike legacySelfChargingBattery(int legacyMeta) {
-        return HbmLegacyBatteryMaps.selfChargingByLegacyMeta(legacyMeta)
-                .orElseThrow(() -> new IllegalStateException("Missing legacy battery_sc meta: " + legacyMeta))
-                .get();
+        return LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BATTERY_SC, legacyMeta).get();
     }
 
     private static ResourceLocation id(String path) {
@@ -407,18 +490,26 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
     private static final class GenericMachineRecipeBuilder {
         private final ResourceLocation serializerId;
+        private final GenericMachineRecipe.Machine machine;
         private final String internalName;
         private final int duration;
         private final long power;
+        private final List<HbmIngredient> itemInputEntries = new ArrayList<>();
         private final JsonArray inputItems = new JsonArray();
         private final JsonArray inputFluids = new JsonArray();
         private final JsonArray outputItems = new JsonArray();
         private final JsonArray outputFluids = new JsonArray();
         private final JsonArray pools = new JsonArray();
+        private ItemStack icon = ItemStack.EMPTY;
+        private boolean customLocalization;
         @Nullable
         private String autoSwitchGroup;
+        @Nullable
+        private String nameWrapper;
 
-        private GenericMachineRecipeBuilder(ResourceLocation serializerId, String internalName, int duration, long power) {
+        private GenericMachineRecipeBuilder(GenericMachineRecipe.Machine machine, ResourceLocation serializerId,
+                String internalName, int duration, long power) {
+            this.machine = machine;
             this.serializerId = serializerId;
             this.internalName = internalName;
             this.duration = duration;
@@ -426,37 +517,46 @@ public final class HbmRecipeProvider extends RecipeProvider {
         }
 
         private static GenericMachineRecipeBuilder chemical(String internalName, int duration, long power) {
-            return new GenericMachineRecipeBuilder(id("chemical_plant"), internalName, duration, power);
+            return new GenericMachineRecipeBuilder(GenericMachineRecipe.Machine.CHEMICAL_PLANT,
+                    id("chemical_plant"), internalName, duration, power);
         }
 
         private static GenericMachineRecipeBuilder assembly(String internalName, int duration, long power) {
-            return new GenericMachineRecipeBuilder(id("assembly_machine"), internalName, duration, power);
+            return new GenericMachineRecipeBuilder(GenericMachineRecipe.Machine.ASSEMBLY_MACHINE,
+                    id("assembly_machine"), internalName, duration, power);
         }
 
         private GenericMachineRecipeBuilder inputItem(ItemLike item, int count) {
-            return inputIngredient(Ingredient.of(item), count);
+            return inputIngredient(HbmIngredient.of(item, count));
         }
 
         private GenericMachineRecipeBuilder inputItem(ItemStack stack) {
-            return inputIngredient(Ingredient.of(stack), stack.getCount(), stack);
+            return inputIngredient(HbmIngredient.exact(stack));
+        }
+
+        private GenericMachineRecipeBuilder inputPartialNbt(ItemStack stack) {
+            return inputIngredient(HbmIngredient.partialNbt(stack));
         }
 
         private GenericMachineRecipeBuilder inputTag(TagKey<Item> tag, int count) {
-            return inputIngredient(Ingredient.of(tag), count);
+            return inputIngredient(HbmIngredient.of(tag, count));
         }
 
-        private GenericMachineRecipeBuilder inputIngredient(Ingredient ingredient, int count) {
-            return inputIngredient(ingredient, count, ItemStack.EMPTY);
+        private GenericMachineRecipeBuilder inputLegacyOre(String legacyOreName, int count) {
+            return inputIngredient(HbmIngredient.legacyOre(legacyOreName, count));
         }
 
-        private GenericMachineRecipeBuilder inputIngredient(Ingredient ingredient, int count, ItemStack exactStack) {
-            JsonObject entry = new JsonObject();
-            entry.add("ingredient", ingredient.toJson());
-            entry.addProperty("count", count);
-            if (!exactStack.isEmpty() && exactStack.hasTag() && !exactStack.getTag().isEmpty()) {
-                entry.add("exact_stack", itemStackJson(exactStack));
-            }
-            inputItems.add(entry);
+        private GenericMachineRecipeBuilder inputLegacyMeta(ResourceLocation legacyId, int legacyMeta, int count) {
+            return inputIngredient(HbmIngredient.legacyMeta(legacyId, legacyMeta, count));
+        }
+
+        private GenericMachineRecipeBuilder inputLegacyWildcard(ResourceLocation legacyId, int count) {
+            return inputIngredient(HbmIngredient.legacyWildcard(legacyId, count));
+        }
+
+        private GenericMachineRecipeBuilder inputIngredient(HbmIngredient ingredient) {
+            itemInputEntries.add(ingredient);
+            inputItems.add(ingredient.toJson());
             return this;
         }
 
@@ -474,12 +574,73 @@ public final class HbmRecipeProvider extends RecipeProvider {
             return this;
         }
 
+        private GenericMachineRecipeBuilder outputChance(ItemLike item, float chance) {
+            return outputChance(new ItemStack(item), chance);
+        }
+
+        private GenericMachineRecipeBuilder outputChance(ItemStack stack, float chance) {
+            JsonObject object = itemStackJson(stack);
+            object.addProperty("chance", chance);
+            outputItems.add(object);
+            return this;
+        }
+
+        private GenericMachineRecipeBuilder outputOneOf(WeightedOutput... outputs) {
+            JsonObject object = new JsonObject();
+            object.addProperty("type", "one_of");
+            JsonArray entries = new JsonArray();
+            for (WeightedOutput output : outputs) {
+                entries.add(output.toJson());
+            }
+            object.add("entries", entries);
+            outputItems.add(object);
+            return this;
+        }
+
+        private GenericMachineRecipeBuilder outputLegacyMeta(ResourceLocation legacyId, int legacyMeta) {
+            return outputItem(LegacyMetaItemMappings.requireItem(legacyId, legacyMeta).get());
+        }
+
+        private GenericMachineRecipeBuilder outputLegacyMetaChance(ResourceLocation legacyId, int legacyMeta, float chance) {
+            return outputChance(new ItemStack(LegacyMetaItemMappings.requireItem(legacyId, legacyMeta).get()), chance);
+        }
+
         private GenericMachineRecipeBuilder outputFluid(FluidType fluid, int amount) {
             outputFluids.add(fluidStack(fluid, amount));
             return this;
         }
 
+        private GenericMachineRecipeBuilder pool(String pool) {
+            pools.add(pool);
+            return this;
+        }
+
+        private GenericMachineRecipeBuilder autoSwitchGroup(String group) {
+            this.autoSwitchGroup = group;
+            return this;
+        }
+
+        private GenericMachineRecipeBuilder icon(ItemLike item) {
+            return icon(new ItemStack(item));
+        }
+
+        private GenericMachineRecipeBuilder icon(ItemStack stack) {
+            this.icon = stack.copy();
+            return this;
+        }
+
+        private GenericMachineRecipeBuilder customLocalization() {
+            this.customLocalization = true;
+            return this;
+        }
+
+        private GenericMachineRecipeBuilder nameWrapper(String wrapper) {
+            this.nameWrapper = wrapper;
+            return this;
+        }
+
         private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId) {
+            validate(recipeId);
             consumer.accept(new FinishedRecipe() {
                 @Override
                 public void serializeRecipeData(JsonObject json) {
@@ -491,8 +652,17 @@ public final class HbmRecipeProvider extends RecipeProvider {
                     json.add("output_items", outputItems);
                     json.add("output_fluids", outputFluids);
                     json.add("pools", pools);
+                    if (!icon.isEmpty()) {
+                        json.add("icon", itemStackJson(icon));
+                    }
+                    if (customLocalization) {
+                        json.addProperty("custom_localization", true);
+                    }
                     if (autoSwitchGroup != null) {
                         json.addProperty("auto_switch_group", autoSwitchGroup);
+                    }
+                    if (nameWrapper != null) {
+                        json.addProperty("name_wrapper", nameWrapper);
                     }
                 }
 
@@ -520,6 +690,30 @@ public final class HbmRecipeProvider extends RecipeProvider {
             });
         }
 
+        private void validate(ResourceLocation recipeId) {
+            if (duration <= 0) {
+                throw new IllegalStateException("Invalid HBM machine recipe duration for " + recipeId + ": " + duration);
+            }
+            if (inputItems.isEmpty() && inputFluids.isEmpty()) {
+                throw new IllegalStateException("HBM machine recipe has no inputs: " + recipeId);
+            }
+            if (outputItems.isEmpty() && outputFluids.isEmpty()) {
+                throw new IllegalStateException("HBM machine recipe has no outputs: " + recipeId);
+            }
+            try {
+                machine.validateRecipeLimits(recipeId, inputItems.size(), inputFluids.size(), outputItems.size(), outputFluids.size());
+            } catch (com.google.gson.JsonSyntaxException exception) {
+                throw new IllegalStateException(exception.getMessage(), exception);
+            }
+            for (HbmIngredient input : itemInputEntries) {
+                if (input.exceedsStackLimit()) {
+                    int limit = input.stackLimit().orElse(64);
+                    throw new IllegalStateException("HBM machine recipe " + recipeId
+                            + " input count exceeds stack limit: " + input.count() + " > " + limit);
+                }
+            }
+        }
+
         private static JsonObject fluidStack(FluidType fluid, int amount) {
             JsonObject object = new JsonObject();
             object.addProperty("fluid", new ResourceLocation(HbmNtm.MOD_ID, fluid.toPath()).toString());
@@ -537,6 +731,31 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 object.addProperty("nbt", stack.getTag().toString());
             }
             return object;
+        }
+
+        private record WeightedOutput(ItemStack stack, float chance, int weight) {
+            private static WeightedOutput of(ItemLike item, int weight) {
+                return new WeightedOutput(new ItemStack(item), 1.0F, weight);
+            }
+
+            private static WeightedOutput of(ItemStack stack, int weight) {
+                return new WeightedOutput(stack, 1.0F, weight);
+            }
+
+            private static WeightedOutput chance(ItemLike item, float chance, int weight) {
+                return new WeightedOutput(new ItemStack(item), chance, weight);
+            }
+
+            private JsonObject toJson() {
+                JsonObject object = itemStackJson(stack);
+                if (chance < 1.0F) {
+                    object.addProperty("chance", chance);
+                }
+                if (weight > 0) {
+                    object.addProperty("weight", weight);
+                }
+                return object;
+            }
         }
     }
 

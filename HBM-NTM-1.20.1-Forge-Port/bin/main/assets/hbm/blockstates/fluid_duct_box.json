@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "hbm:block/fluid_duct_box" }
+  }
+}

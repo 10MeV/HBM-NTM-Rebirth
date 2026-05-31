@@ -3,7 +3,9 @@ package com.hbm.ntm.client;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
+import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.client.render.HbmRenderEffects;
+import com.hbm.ntm.damage.DamageResistanceTooltipUtil;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.client.renderer.NukeTorexRenderer;
 import com.hbm.ntm.entity.effect.QuasarEntity;
@@ -52,6 +54,7 @@ public final class ClientForgeEvents {
     @SubscribeEvent
     public static void onTooltip(ItemTooltipEvent event) {
         HazardTooltipUtil.addHazardInformation(event.getItemStack(), event.getToolTip());
+        DamageResistanceTooltipUtil.addResistanceInformation(event.getItemStack(), event.getToolTip());
     }
 
     @SubscribeEvent
@@ -104,6 +107,7 @@ public final class ClientForgeEvents {
 
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER) {
             HbmRenderEffects.render(event);
+            HbmOverheadMarkers.render(event);
             return;
         }
 
@@ -162,6 +166,7 @@ public final class ClientForgeEvents {
         HbmClientKeybinds.tick();
         ClientMuzzleFlashEffects.tick();
         HbmRenderEffects.tick();
+        HbmOverheadMarkers.tick();
         HbmBlackHoleEffects.tick();
         pruneNetworkTransfers();
         pruneVanishedEntities();
@@ -269,6 +274,7 @@ public final class ClientForgeEvents {
         ClientInformMessages.clearAll();
         ClientMuzzleFlashEffects.clearAll();
         HbmRenderEffects.clearAll();
+        HbmOverheadMarkers.clearAll();
         HbmBlackHoleEffects.clearAll();
         NukeHudEffects.clearAll();
         TileSyncPacket.clearClientResyncRequests();

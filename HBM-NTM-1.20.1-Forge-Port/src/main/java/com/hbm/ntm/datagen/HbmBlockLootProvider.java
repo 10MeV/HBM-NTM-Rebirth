@@ -38,8 +38,13 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.WASTE_LEAVES.get(), noDrop());
         add(ModBlocks.LEAVES_LAYER.get(), noDrop());
         add(ModBlocks.WASTE_LOG.get(), wasteLogDrop());
+        add(ModBlocks.FROZEN_GRASS.get(), block -> singleItemDrop(Items.SNOWBALL));
+        add(ModBlocks.FROZEN_DIRT.get(), block -> singleItemDrop(Items.SNOWBALL));
+        add(ModBlocks.FROZEN_LOG.get(), block -> snowballStackDrop(2.0F, 4.0F));
+        add(ModBlocks.FROZEN_PLANKS.get(), block -> singleItemDrop(Items.SNOWBALL));
         add(ModBlocks.FIRE_DIGAMMA.get(), noDrop());
         add(ModBlocks.BALEFIRE.get(), noDrop());
+        add(ModBlocks.MUD_BLOCK.get(), noDrop());
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
         add(ModBlocks.GAS_RADON.get(), noDrop());
         add(ModBlocks.GAS_RADON_DENSE.get(), noDrop());
@@ -55,6 +60,8 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.FALLOUT.get(), block -> createSingleItemTable(ModItems.legacyItem("fallout").get()));
         add(ModBlocks.WASTE_TRINITITE.get(), block -> singleItemDrop(ModItems.legacyItem("trinitite").get()));
         add(ModBlocks.WASTE_TRINITITE_RED.get(), block -> singleItemDrop(ModItems.legacyItem("trinitite").get()));
+        add(ModBlocks.TEKTITE.get(), block -> createSingleItemTable(ModBlocks.TEKTITE.get()));
+        add(ModBlocks.ORE_TEKTITE_OSMIRIDIUM.get(), block -> singleItemDrop(ModItems.legacyItem("powder_tektite").get()));
         add(ModBlocks.ORE_SELLAFIELD_DIAMOND.get(), block -> singleItemDrop(Items.DIAMOND));
         add(ModBlocks.ORE_SELLAFIELD_EMERALD.get(), block -> singleItemDrop(Items.EMERALD));
         add(ModBlocks.ORE_SELLAFIELD_RADGEM.get(), block -> singleItemDrop(ModItems.legacyItem("gem_rad").get()));
@@ -86,6 +93,15 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 .withPool(LootPool.lootPool()
                         .setRolls(ConstantValue.exactly(1.0F))
                         .add(LootItem.lootTableItem(item))
+                        .when(ExplosionCondition.survivesExplosion()));
+    }
+
+    private LootTable.Builder snowballStackDrop(float min, float max) {
+        return LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(ConstantValue.exactly(1.0F))
+                        .add(LootItem.lootTableItem(Items.SNOWBALL)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(min, max))))
                         .when(ExplosionCondition.survivesExplosion()));
     }
 

@@ -8,7 +8,9 @@ import com.hbm.ntm.explosion.vnt.interfaces.PlayerProcessor;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorStandard;
 import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorWater;
 import com.hbm.ntm.explosion.vnt.standard.BlockProcessorStandard;
+import com.hbm.ntm.explosion.vnt.standard.CustomDamageHandlerAmat;
 import com.hbm.ntm.explosion.vnt.standard.EntityProcessorStandard;
+import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectAmat;
 import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectStandard;
 import com.hbm.ntm.explosion.vnt.standard.PlayerProcessorStandard;
 import com.hbm.ntm.radiation.ModDamageSources;
@@ -141,6 +143,16 @@ public class ExplosionVnt {
 
     public ExplosionVnt makeUnderwater(int resolution) {
         return makeStandard().setBlockAllocator(new BlockAllocatorWater(resolution));
+    }
+
+    public ExplosionVnt makeAmat() {
+        return setBlockAllocator(new BlockAllocatorStandard(size < 15.0F ? 16 : 32))
+                .setBlockProcessor(new BlockProcessorStandard().setNoDrop())
+                .setEntityProcessor(new EntityProcessorStandard()
+                        .withRangeMod(2.0F)
+                        .withDamageMod(new CustomDamageHandlerAmat(50.0F)))
+                .setPlayerProcessor(new PlayerProcessorStandard())
+                .setEffects(new ExplosionEffectAmat());
     }
 
     public Level level() {

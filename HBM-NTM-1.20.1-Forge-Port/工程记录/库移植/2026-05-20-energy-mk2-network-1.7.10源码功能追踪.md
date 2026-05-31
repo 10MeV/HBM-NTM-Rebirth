@@ -1550,3 +1550,42 @@
 - 当前移植估算：
   - 远端端口 API 下沉后，能量库约 `98.5%`。
   - 剩余重点：流体库远端端口配套、实机生命周期矩阵、外部 EnergyControl/OC/ROR 真桥接、upgrade/blueprint 机器依赖库尾项。
+
+## 2026-05-30 修正：`red_cable` 模型与放置/破坏刷新入口复查
+
+- 触发问题：
+  - 实机截图中 `red_cable` 显示为粗黑长段，说明现代临时 cube/multipart 模型没有对齐 1.7.10 的电线渲染路径。
+- 1.7.10 对照：
+  - `com.hbm.blocks.ModBlocks#red_cable`：`new BlockCable(Material.iron)`，贴图名 `hbm:cable_neo`。
+  - `com.hbm.blocks.network.BlockCable`：非完整方块，碰撞/选区按 `Library.canConnect` 六向拓展，中心 bounds 为 `5.5px` 到 `10.5px`。
+  - `com.hbm.render.block.RenderCable`：
+    - 绑定 `ResourceManager.cable_neo`，按 OBJ group 渲染。
+    - 普通节点渲染 `Core`，并按连接渲染 `posX/negX/posY/negY/posZ/negZ`。
+    - 纯直线时分别渲染 `CX`、`CY`、`CZ`，避免 cube 元素直接铺 `cable_neo.png` 造成错误外观。
+  - `com.hbm.tileentity.network.TileEntityCableBaseNT`：
+    - 服务端 `updateEntity` 中若节点不存在/过期则通过 `Nodespace.createNode` 创建。
+    - `invalidate` 时调用 `Nodespace.destroyNode`。
+    - `canConnect` 接受除 `UNKNOWN` 外所有方向。
+- 本批现代修正：
+  - `RedCableBlock` 改为 `RenderShape.INVISIBLE`，碰撞/选区仍保留旧版 `5.5px-10.5px` 与六向展开。
+  - 新增 `RedCableRenderer`，通过现代 `LegacyWavefrontModel` 直渲染 1.7.10 `cable_neo.obj` 的旧 group：
+    - `Core`
+    - `posX/negX/posY/negY/posZ/negZ`
+    - `CX/CY/CZ`
+  - 新增 `RedCableBlockItem` 与 `RedCableItemRenderer`，物品栏复用旧 `RenderCable#renderInventoryBlock` 的“核心 + X/Z 四臂”语义，不再使用临时 cube item model。
+  - `red_cable` blockstate 改为无条件空模型，仅提供粒子贴图和 blockstate 容器；实际世界渲染由 BER 读取六向 boolean state 决定。
+  - `HbmEnergyNodeBlock` 新增 `updateEnergyConnectionGraph(Level, BlockPos)` 公共入口，对齐流体节点库的刷新入口，供后续开关线、二极管、检测器、可染色线在状态变化或工具交互后统一刷新：
+    - 更新自身连接 state。
+    - 更新邻居连接 state。
+    - 刷新自身 nodespace 节点。
+    - 刷新邻居 nodespace 节点。
+- 现代等价边界：
+  - 1.7.10 用 ISBRH 即时渲染；现代用 BlockEntityRenderer 读取同步到客户端的六向 `BlockState`，视觉 contract 与旧 OBJ group 对齐。
+  - 连接状态仍由服务端刷新并同步；若后续发现客户端首次看到导线时 state 未及时刷新，应在放置/加载后补一次显式邻居通知，而不是回退到 cube multipart。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 后续实机检查：
+  - 单根 `red_cable` 应只渲染旧 `Core`，不再出现粗黑整块。
+  - 两根直线相连应走 `CX/CY/CZ` 直线 group；转角/T 字/十字应走 `Core + arms`。
+  - 放置/破坏相邻电线后，双方 `north/east/south/west/up/down` 状态和 `/hbm energy network <red_cable_pos>` 的 `nodeConnections` 应同步变化。
+  - 后续迁移 `cable_switch`、`cable_detector`、`cable_diode` 时，应走 `HbmEnergyNodeBlock#updateEnergyConnectionGraph`，不要各自复制刷新流程。

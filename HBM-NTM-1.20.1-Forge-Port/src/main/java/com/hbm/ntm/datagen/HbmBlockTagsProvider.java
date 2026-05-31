@@ -38,7 +38,9 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 ModBlocks.ORE_SELLAFIELD_SCHRABIDIUM.get(), ModBlocks.ORE_SELLAFIELD_RADGEM.get(),
                 ModBlocks.GLASS_TRINITITE.get());
         tag(BlockTags.MINEABLE_WITH_SHOVEL).add(ModBlocks.ASH_DIGAMMA.get(), ModBlocks.WASTE_TRINITITE.get(),
-                ModBlocks.WASTE_TRINITITE_RED.get());
+                ModBlocks.WASTE_TRINITITE_RED.get(), ModBlocks.FROZEN_GRASS.get(), ModBlocks.FROZEN_DIRT.get(),
+                ModBlocks.TEKTITE.get(), ModBlocks.ORE_TEKTITE_OSMIRIDIUM.get());
+        tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.FROZEN_LOG.get(), ModBlocks.FROZEN_PLANKS.get());
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));

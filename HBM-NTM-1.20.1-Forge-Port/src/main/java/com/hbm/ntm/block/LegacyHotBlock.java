@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.radiation.RadiationUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -22,7 +23,7 @@ public class LegacyHotBlock extends Block {
 
     @Override
     public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
-        entity.hurt(level.damageSources().hotFloor(), 4.0F);
+        EntityDamageUtil.attackEntityFromNt(entity, level.damageSources().hotFloor(), 4.0F);
         if (radiation > 0.0F && entity instanceof LivingEntity living) {
             RadiationUtil.contaminate(living, radiation, true);
         }

@@ -2,6 +2,7 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.RemoteDetonatableBlock;
+import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -86,8 +87,10 @@ public class DetonatorItem extends Item {
             level.playSound(null, player.blockPosition(), ModSounds.TOOL_TECH_BLEEP.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
             if (!level.isClientSide()) {
                 RemoteDetonatableBlock.BombReturnCode code = detonatable.detonateFromRemote(level, pos);
-                HbmNtm.LOGGER.info("[DET] Tried to detonate block at {} / {} / {} by {}.",
-                        pos.getX(), pos.getY(), pos.getZ(), player.getGameProfile().getName());
+                if (extendedLoggingEnabled()) {
+                    HbmNtm.LOGGER.info("[DET] Tried to detonate block at {} / {} / {} by {}.",
+                            pos.getX(), pos.getY(), pos.getZ(), player.getGameProfile().getName());
+                }
                 player.displayClientMessage(prefixed(Component.translatable(code.translationKey())
                         .withStyle(code.wasSuccessful() ? ChatFormatting.YELLOW : ChatFormatting.RED)), false);
             }
@@ -120,5 +123,9 @@ public class DetonatorItem extends Item {
                 .append(Component.translatable("item.hbm.detonator").withStyle(ChatFormatting.DARK_AQUA))
                 .append(Component.literal("] ").withStyle(ChatFormatting.DARK_AQUA))
                 .append(message);
+    }
+
+    private static boolean extendedLoggingEnabled() {
+        return HbmCommonConfig.ENABLE_EXTENDED_LOGGING != null && HbmCommonConfig.ENABLE_EXTENDED_LOGGING.get();
     }
 }

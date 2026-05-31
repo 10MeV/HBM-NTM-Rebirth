@@ -13,6 +13,9 @@ public final class ModSounds {
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, HbmNtm.MOD_ID);
 
     public static final RegistryObject<SoundEvent> BLOCK_PRESS_OPERATE = register("block.press_operate");
+    public static final RegistryObject<SoundEvent> BLOCK_PIPE_PLACED = register("block.pipe_placed");
+    public static final RegistryObject<SoundEvent> BLOCK_DEBRIS = register("block.debris");
+    public static final RegistryObject<SoundEvent> BLOCK_REACTOR_START = register("block.reactor_start");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_1 = register("tool.geiger1");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_2 = register("tool.geiger2");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_3 = register("tool.geiger3");

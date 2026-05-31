@@ -2,6 +2,7 @@ package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
+import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.HolderLookup;
@@ -44,6 +45,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("dusts/spark_mix", "powder_spark_mix");
         addLegacyForgeTag("dusts", "powder_iron", "powder_lead", "powder_lithium", "powder_cobalt", "powder_sodium", "powder_schrabidium", "powder_spark_mix");
         addLegacyForgeTag("ingots/lead", "ingot_lead");
+        addLegacyForgeTag("ingots/steel", "ingot_steel");
         addLegacyForgeTag("ingots/bismuth", "ingot_bismuth");
         addLegacyForgeTag("ingots/niobium", "ingot_niobium");
         addLegacyForgeTag("ingots/tantalum", "ingot_tantalium");
@@ -58,8 +60,11 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("ingots/plastic", "ingot_polymer", "ingot_bakelite");
         addLegacyForgeTag("ingots/any_hardplastic", "ingot_pc", "ingot_pvc");
         addLegacyForgeTag("ingots/hard_plastic", "ingot_pc", "ingot_pvc");
-        addLegacyForgeTag("ingots", "ingot_lead", "ingot_bismuth", "ingot_niobium", "ingot_tantalium", "ingot_cft",
+        addLegacyForgeTag("ingots", "ingot_lead", "ingot_steel", "ingot_bismuth", "ingot_niobium", "ingot_tantalium", "ingot_cft",
                 "ingot_polymer", "ingot_bakelite", "ingot_pc", "ingot_pvc");
+        addLegacyForgeTag("plates/steel", "plate_steel");
+        addLegacyForgeTag("plates/aluminium", "plate_aluminium");
+        addLegacyForgeTag("pipes/steel", "pipes_steel");
         addLegacyForgeTag("wires/gold", "wire_gold");
         addLegacyForgeTag("wires", "wire_gold");
         addLegacyForgeTag("dense_wires/gold", "wire_dense_gold");
@@ -71,8 +76,29 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("cast_plates/any_bismoid_bronze", "plate_cast_bismuth_bronze", "plate_cast_arsenic_bronze");
         addLegacyForgeTag("cast_plates/combine_steel", "plate_cast_combine_steel");
         addLegacyForgeTag("cast_plates", "plate_cast_bismuth_bronze", "plate_cast_arsenic_bronze", "plate_cast_combine_steel");
+        addLegacyForgeTag("circuits/vacuum_tube", "circuit_vacuum_tube");
+        addLegacyForgeTag("circuits/capacitor", "circuit_capacitor");
+        addLegacyForgeTag("circuits/capacitor_tantalium", "circuit_capacitor_tantalium");
+        addLegacyForgeTag("circuits/pcb", "circuit_pcb");
+        addLegacyForgeTag("circuits/silicon", "circuit_silicon");
+        addLegacyForgeTag("circuits/chip", "circuit_chip");
+        addLegacyForgeTag("circuits/chip_bismoid", "circuit_chip_bismoid");
+        addLegacyForgeTag("circuits/analog", "circuit_analog");
+        addLegacyForgeTag("circuits/basic", "circuit_basic");
+        addLegacyForgeTag("circuits/advanced", "circuit_advanced");
+        addLegacyForgeTag("circuits/capacitor_board", "circuit_capacitor_board");
+        addLegacyForgeTag("circuits/bismoid", "circuit_bismoid");
+        addLegacyForgeTag("circuits/controller_chassis", "circuit_controller_chassis");
+        addLegacyForgeTag("circuits/controller", "circuit_controller");
+        addLegacyForgeTag("circuits/controller_advanced", "circuit_controller_advanced");
+        addLegacyForgeTag("circuits/quantum", "circuit_quantum");
         addLegacyForgeTag("circuits/chip_quantum", "circuit_chip_quantum");
-        addLegacyForgeTag("circuits", "circuit_chip_quantum");
+        addLegacyForgeTag("circuits/controller_quantum", "circuit_controller_quantum");
+        addLegacyForgeTag("circuits/atomic_clock", "circuit_atomic_clock");
+        addLegacyForgeTag("circuits/numitron", "circuit_numitron");
+        tag(forgeItemTag("circuits")).add(ModItems.CIRCUIT_ITEMS.stream()
+                .map(RegistryObject::get)
+                .toArray(Item[]::new));
         addLegacyForgeTag("gems/coal", net.minecraft.world.item.Items.COAL, net.minecraft.world.item.Items.CHARCOAL);
         addLegacyForgeTag("gems/lignite", "lignite", "coal_infernal");
         copy(HbmBlockTagsProvider.forgeBlockTag("storage_blocks/lead"), forgeItemTag("storage_blocks/lead"));
@@ -105,7 +131,11 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         tag(forgeItemTag(path)).add(items);
     }
 
-    static TagKey<Item> forgeItemTag(String path) {
+    public static TagKey<Item> forgeItemTag(String path) {
         return ItemTags.create(new ResourceLocation("forge", path));
+    }
+
+    public static TagKey<Item> legacyOreItemTag(String legacyOreName) {
+        return LegacyOreDictionaryMappings.itemTag(legacyOreName);
     }
 }

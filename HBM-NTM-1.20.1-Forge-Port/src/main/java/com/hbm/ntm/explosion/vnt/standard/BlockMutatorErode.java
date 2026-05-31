@@ -11,6 +11,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class BlockMutatorErode implements BlockMutator {
     private final Map<Block, Block> replacements = new LinkedHashMap<>();
@@ -39,15 +40,13 @@ public class BlockMutatorErode implements BlockMutator {
     private void addReplacement(String from, String to) {
         RegistryObject<? extends Block> fromBlock = ModBlocks.legacyBlock(from);
         RegistryObject<? extends Block> toBlock = ModBlocks.legacyBlock(to);
-        if (fromBlock != null && toBlock != null) {
-            replacements.put(fromBlock.get(), toBlock.get());
-        }
+        replacements.put(
+                Objects.requireNonNull(fromBlock, "Missing legacy block hbm:" + from).get(),
+                Objects.requireNonNull(toBlock, "Missing legacy block hbm:" + to).get());
     }
 
     private void addReplacement(String from, Block to) {
         RegistryObject<? extends Block> fromBlock = ModBlocks.legacyBlock(from);
-        if (fromBlock != null) {
-            replacements.put(fromBlock.get(), to);
-        }
+        replacements.put(Objects.requireNonNull(fromBlock, "Missing legacy block hbm:" + from).get(), to);
     }
 }

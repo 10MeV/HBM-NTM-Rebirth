@@ -235,7 +235,30 @@ public final class ModItems {
             BATTERY_SC_AM241
     );
 
-    public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = simpleParts(
+    public static final List<RegistryObject<Item>> CIRCUIT_ITEMS = simpleParts(
+            "circuit_vacuum_tube",
+            "circuit_capacitor",
+            "circuit_capacitor_tantalium",
+            "circuit_pcb",
+            "circuit_silicon",
+            "circuit_chip",
+            "circuit_chip_bismoid",
+            "circuit_analog",
+            "circuit_basic",
+            "circuit_advanced",
+            "circuit_capacitor_board",
+            "circuit_bismoid",
+            "circuit_controller_chassis",
+            "circuit_controller",
+            "circuit_controller_advanced",
+            "circuit_quantum",
+            "circuit_chip_quantum",
+            "circuit_controller_quantum",
+            "circuit_atomic_clock",
+            "circuit_numitron"
+    );
+
+    public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = Stream.concat(CIRCUIT_ITEMS.stream(), simpleParts(
             "ingot_pu_mix",
             "ingot_am241",
             "ingot_am242",
@@ -304,7 +327,6 @@ public final class ModItems {
             "wire_dense_niobium",
             "wire_dense_bscco",
             "pellet_charged",
-            "circuit_chip_quantum",
             "pipes_steel",
             "drill_titanium",
             "plate_dalekanium",
@@ -409,6 +431,7 @@ public final class ModItems {
             "waste_plate_pu238be",
             "scrap_nuclear",
             "trinitite",
+            "powder_tektite",
             "gem_rad",
             "crystal_uranium",
             "crystal_thorium",
@@ -459,7 +482,7 @@ public final class ModItems {
             "nugget_au198",
             "nugget_pb209",
             "nugget_ra226"
-    );
+    ).stream()).toList();
 
     public static final List<RegistryObject<Item>> NUKE_TAB_ITEMS = Stream.concat(Stream.concat(simpleParts(
             "early_explosive_lenses",

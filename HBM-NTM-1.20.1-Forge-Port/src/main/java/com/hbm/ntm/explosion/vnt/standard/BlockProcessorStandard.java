@@ -10,8 +10,10 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseFireBlock;
@@ -50,6 +52,7 @@ public class BlockProcessorStandard implements BlockProcessor {
         boolean causedByPlayer = explosion.indirectSourceEntity() instanceof Player;
         ObjectArrayList<BlockPos> orderedPositions = new ObjectArrayList<>(affectedBlocks);
         Util.shuffle(orderedPositions, level.random);
+        float dropChance = 1.0F / explosion.size();
 
         for (BlockPos pos : orderedPositions) {
             BlockState state = level.getBlockState(pos);
@@ -58,22 +61,27 @@ public class BlockProcessorStandard implements BlockProcessor {
                 continue;
             }
 
-            if (state.canDropFromExplosion(level, pos, explosion.compat()) && (chance == null || chance.shouldDrop(explosion, state, pos))) {
+            if (chance != null) {
+                dropChance = chance.mutateDropChance(explosion, state, pos, dropChance);
+            }
+            if (state.canDropFromExplosion(level, pos, explosion.compat()) && level.random.nextFloat() < dropChance) {
                 BlockEntity blockEntity = state.hasBlockEntity() ? level.getBlockEntity(pos) : null;
+                ItemStack tool = ItemStack.EMPTY;
+                if (fortune != null) {
+                    int dropFortune = fortune.mutateFortune(explosion, state, pos);
+                    if (dropFortune > 0) {
+                        tool = new ItemStack(Items.DIAMOND_PICKAXE);
+                        tool.enchant(Enchantments.BLOCK_FORTUNE, dropFortune);
+                    }
+                }
                 LootParams.Builder lootParams = new LootParams.Builder(level)
                         .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
-                        .withParameter(LootContextParams.TOOL, ItemStack.EMPTY)
+                        .withParameter(LootContextParams.TOOL, tool)
                         .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity)
                         .withOptionalParameter(LootContextParams.THIS_ENTITY, explosion.exploder());
-                if (explosion.blockInteraction() == net.minecraft.world.level.Explosion.BlockInteraction.DESTROY_WITH_DECAY) {
-                    lootParams.withParameter(LootContextParams.EXPLOSION_RADIUS, explosion.size());
-                }
 
                 state.spawnAfterBreak(level, pos, ItemStack.EMPTY, causedByPlayer);
                 state.getDrops(lootParams).forEach(stack -> addBlockDrops(drops, stack, pos.immutable()));
-                if (fortune != null) {
-                    fortune.mutateFortune(explosion, state, pos);
-                }
             }
 
             state.onBlockExploded(level, pos, explosion.compat());
@@ -96,12 +104,12 @@ public class BlockProcessorStandard implements BlockProcessor {
     }
 
     public BlockProcessorStandard setNoDrop() {
-        this.chance = (explosion, state, pos) -> false;
+        this.chance = new DropChanceMutatorStandard(0.0F);
         return this;
     }
 
     public BlockProcessorStandard setAllDrop() {
-        this.chance = (explosion, state, pos) -> true;
+        this.chance = new DropChanceMutatorStandard(1.0F);
         return this;
     }
 

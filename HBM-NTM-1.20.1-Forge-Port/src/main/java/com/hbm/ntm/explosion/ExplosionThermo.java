@@ -2,7 +2,6 @@ package com.hbm.ntm.explosion;
 
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -12,7 +11,6 @@ import net.minecraft.world.entity.animal.Ocelot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,8 +18,28 @@ import net.minecraft.world.phys.AABB;
 import net.minecraftforge.registries.RegistryObject;
 
 import java.util.Locale;
+import java.util.Objects;
 
 public final class ExplosionThermo {
+    private static final BlockState[] STAINED_TERRACOTTA = {
+            Blocks.WHITE_TERRACOTTA.defaultBlockState(),
+            Blocks.ORANGE_TERRACOTTA.defaultBlockState(),
+            Blocks.MAGENTA_TERRACOTTA.defaultBlockState(),
+            Blocks.LIGHT_BLUE_TERRACOTTA.defaultBlockState(),
+            Blocks.YELLOW_TERRACOTTA.defaultBlockState(),
+            Blocks.LIME_TERRACOTTA.defaultBlockState(),
+            Blocks.PINK_TERRACOTTA.defaultBlockState(),
+            Blocks.GRAY_TERRACOTTA.defaultBlockState(),
+            Blocks.LIGHT_GRAY_TERRACOTTA.defaultBlockState(),
+            Blocks.CYAN_TERRACOTTA.defaultBlockState(),
+            Blocks.PURPLE_TERRACOTTA.defaultBlockState(),
+            Blocks.BLUE_TERRACOTTA.defaultBlockState(),
+            Blocks.BROWN_TERRACOTTA.defaultBlockState(),
+            Blocks.GREEN_TERRACOTTA.defaultBlockState(),
+            Blocks.RED_TERRACOTTA.defaultBlockState(),
+            Blocks.BLACK_TERRACOTTA.defaultBlockState()
+    };
+
     public static void freeze(Level level, int x, int y, int z, int bombStartStrength) {
         applyJaggedSphere(level, x, y, z, bombStartStrength * 2, ExplosionThermo::freezeDest);
     }
@@ -76,13 +94,13 @@ public final class ExplosionThermo {
         if (isLegacy(state, "volcanic_lava_block")) {
             replacement = Blocks.COBBLESTONE.defaultBlockState();
         } else if (state.is(Blocks.GRASS_BLOCK)) {
-            replacement = legacyStateOr("frozen_grass", Blocks.SNOW_BLOCK.defaultBlockState());
+            replacement = ModBlocks.FROZEN_GRASS.get().defaultBlockState();
         } else if (state.is(Blocks.DIRT)) {
-            replacement = legacyStateOr("frozen_dirt", Blocks.SNOW_BLOCK.defaultBlockState());
+            replacement = ModBlocks.FROZEN_DIRT.get().defaultBlockState();
         } else if (state.is(BlockTags.LOGS) || isLegacy(state, "waste_log")) {
-            replacement = legacyStateOr("frozen_log", Blocks.PACKED_ICE.defaultBlockState());
+            replacement = ModBlocks.FROZEN_LOG.get().defaultBlockState();
         } else if (state.is(BlockTags.PLANKS) || isLegacy(state, "waste_planks")) {
-            replacement = legacyStateOr("frozen_planks", Blocks.PACKED_ICE.defaultBlockState());
+            replacement = ModBlocks.FROZEN_PLANKS.get().defaultBlockState();
         } else if (state.is(Blocks.STONE) || state.is(Blocks.COBBLESTONE) || state.is(Blocks.STONE_BRICKS)) {
             replacement = Blocks.PACKED_ICE.defaultBlockState();
         } else if (state.is(BlockTags.LEAVES)) {
@@ -129,11 +147,11 @@ public final class ExplosionThermo {
             if (isLegacy(state, "waste_earth")) {
                 replacement = Blocks.NETHERRACK.defaultBlockState();
             } else if (state.is(Blocks.OBSIDIAN)) {
-                replacement = legacyStateOr("gravel_obsidian", Blocks.CRYING_OBSIDIAN.defaultBlockState());
+                replacement = requireLegacyState("gravel_obsidian");
             } else if (state.is(Blocks.SAND) || state.is(Blocks.RED_SAND)) {
                 replacement = Blocks.GLASS.defaultBlockState();
             } else if (state.is(Blocks.CLAY)) {
-                replacement = Blocks.TERRACOTTA.defaultBlockState();
+                replacement = randomStainedTerracotta(level);
             }
         }
         if (replacement != null) {
@@ -208,10 +226,10 @@ public final class ExplosionThermo {
             return Blocks.LAVA.defaultBlockState();
         }
         if (state.is(BlockTags.LOGS) || isLegacy(state, "frozen_log")) {
-            return legacyStateOr("waste_log", BaseFireBlock.getState(level, pos));
+            return ModBlocks.WASTE_LOG.get().defaultBlockState();
         }
         if (state.is(BlockTags.PLANKS) || isLegacy(state, "frozen_planks")) {
-            return legacyStateOr("waste_planks", BaseFireBlock.getState(level, pos));
+            return ModBlocks.WASTE_PLANKS.get().defaultBlockState();
         }
         if (intense && (state.is(Blocks.STONE) || state.is(Blocks.COBBLESTONE) || state.is(Blocks.STONE_BRICKS) || state.is(Blocks.OBSIDIAN))) {
             return Blocks.LAVA.defaultBlockState();
@@ -222,10 +240,11 @@ public final class ExplosionThermo {
         if (state.is(Blocks.PACKED_ICE)) {
             return Blocks.WATER.defaultBlockState();
         }
-        if (!intense && state.isFlammable(level, pos, Direction.UP)) {
-            return BaseFireBlock.getState(level, pos);
-        }
         return null;
+    }
+
+    private static BlockState randomStainedTerracotta(Level level) {
+        return STAINED_TERRACOTTA[level.random.nextInt(STAINED_TERRACOTTA.length)];
     }
 
     private static void applyJaggedSphere(Level level, int x, int y, int z, int radius, BlockOperation operation) {
@@ -269,9 +288,9 @@ public final class ExplosionThermo {
         return block != null && state.is(block.get());
     }
 
-    private static BlockState legacyStateOr(String name, BlockState fallback) {
+    private static BlockState requireLegacyState(String name) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        return block == null ? fallback : block.get().defaultBlockState();
+        return Objects.requireNonNull(block, "Missing legacy block hbm:" + name).get().defaultBlockState();
     }
 
     @FunctionalInterface

@@ -13,8 +13,8 @@ public class BlockMutatorPlaceBlock implements BlockMutator {
     }
 
     @Override
-    public void mutatePost(ExplosionVnt explosion, BlockPos pos) {
-        if (explosion.level().getBlockState(pos).isCollisionShapeFullBlock(explosion.level(), pos)) {
+    public void mutatePre(ExplosionVnt explosion, BlockState state, BlockPos pos) {
+        if (state.isCollisionShapeFullBlock(explosion.level(), pos)) {
             explosion.level().setBlock(pos, replacement, 3);
         }
     }

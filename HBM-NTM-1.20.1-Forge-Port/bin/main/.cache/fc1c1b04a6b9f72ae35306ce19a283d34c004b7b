@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-28T23:27:13.0754113	Tags for minecraft:block mod id hbm
+// 1.20.1	2026-05-30T19:32:24.6107078	Tags for minecraft:block mod id hbm
 d67f576c6c48b5bb17775f718b118e7bc8cfde67 data/forge/tags/blocks/glass.json
 bf487fae09edc59b2c5a95df69b7078635f0565d data/forge/tags/blocks/ores.json
 1a2125a06b77a02dff21857be1ec4db0e364041f data/forge/tags/blocks/ores/asbestos.json
@@ -8,6 +8,7 @@ bf487fae09edc59b2c5a95df69b7078635f0565d data/forge/tags/blocks/ores.json
 6b858923ad38dc8e630900fccb01efb406a1eb1b data/forge/tags/blocks/ores/thorium.json
 df800f523fde783ca77fd119aebc2afdbc19a204 data/forge/tags/blocks/ores/uranium.json
 14f8ef9b78289a66443a29058da7a506307e1088 data/forge/tags/blocks/storage_blocks/lead.json
+ee9ac2875d7891480041665c8d90954860fc7ac3 data/minecraft/tags/blocks/mineable/axe.json
 53237dcda765bd7c0ec547714cd7716babd63354 data/minecraft/tags/blocks/mineable/pickaxe.json
-1361c5898bb31ae30e42aa73aa10265b205e6d13 data/minecraft/tags/blocks/mineable/shovel.json
+2699c353a34279b0126900e4cc0ef24eaa280cd2 data/minecraft/tags/blocks/mineable/shovel.json
 53237dcda765bd7c0ec547714cd7716babd63354 data/minecraft/tags/blocks/needs_iron_tool.json

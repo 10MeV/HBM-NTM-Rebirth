@@ -1,11 +1,30 @@
-// 1.20.1	2026-05-28T23:27:13.0732661	Tags for minecraft:item mod id hbm
+// 1.20.1	2026-05-30T19:59:15.4735672	Tags for minecraft:item mod id hbm
 5ebd831e76f4e98d5ece9c7f49b2304f3647712a data/forge/tags/items/cast_plates.json
 dfbe085cc34d5b36c5a877a4b81a8a6cb6a74739 data/forge/tags/items/cast_plates/any_bismoid_bronze.json
 266d1de68cdf6befd32054c00a6259bab36ce6e8 data/forge/tags/items/cast_plates/arsenic_bronze.json
 e7ea7e64f63c4bf70045be9290efa29cf112048b data/forge/tags/items/cast_plates/bismuth_bronze.json
 63005c8c15fdaa54d47841f0e46f39204590ef3e data/forge/tags/items/cast_plates/combine_steel.json
-bee679ee31bf56e477e0dde67eccb92aa7646d3c data/forge/tags/items/circuits.json
+42b3bf6cf81bf2160e57945e5a3291c1336039a3 data/forge/tags/items/circuits.json
+aea8048b552b076dcc0a565831d2e28f9239c330 data/forge/tags/items/circuits/advanced.json
+daa4ab09269cecf2e432ce9eb622fa69f57a9440 data/forge/tags/items/circuits/analog.json
+89ba7883d29d52bb380e300b80da8220a8edb2a4 data/forge/tags/items/circuits/atomic_clock.json
+492465c4cee2dc0453e7ca136832fe7122cbd5ed data/forge/tags/items/circuits/basic.json
+74e14706260a66deb89e6511a13fdfff81c8346a data/forge/tags/items/circuits/bismoid.json
+fdce863f51e733f87cd7664844ed32cd33db6eef data/forge/tags/items/circuits/capacitor.json
+db7a01fcfb3d9ea6cf89f6ab14bf890d09321f57 data/forge/tags/items/circuits/capacitor_board.json
+d0a0a2eae899ed985811aa85596b6f4331dc73f8 data/forge/tags/items/circuits/capacitor_tantalium.json
+32eef711f61f6f9d496eb870a9183e588736baab data/forge/tags/items/circuits/chip.json
+8b0e92a0db91aed8919fa7a588f05aab62decd1d data/forge/tags/items/circuits/chip_bismoid.json
 bee679ee31bf56e477e0dde67eccb92aa7646d3c data/forge/tags/items/circuits/chip_quantum.json
+7880032a3e7b6782d4664b7a8a178fff0fa37a3f data/forge/tags/items/circuits/controller.json
+4107fe5fbafa5d2355d3c83efe9255e55b479d39 data/forge/tags/items/circuits/controller_advanced.json
+9a17711d5bfca495f57075a10c81aedc6dd798ac data/forge/tags/items/circuits/controller_chassis.json
+cc1bd7e77aaf60c36691daf849b3993465192329 data/forge/tags/items/circuits/controller_quantum.json
+a19c3ef26c9150546eb217d646bf8af945754001 data/forge/tags/items/circuits/numitron.json
+3c2e1015faede1dec5d14ad7cc40845c1cd94c8d data/forge/tags/items/circuits/pcb.json
+bab2d32ba0640a439f95e6c37bdccacbf992cee6 data/forge/tags/items/circuits/quantum.json
+afeee285275ce252c4cd3643d288627e2281e9a0 data/forge/tags/items/circuits/silicon.json
+aa80815548b59428cccf23deead1fe0d988163c1 data/forge/tags/items/circuits/vacuum_tube.json
 efe9e0caf089100a228c46379f3aa70d7f602ddc data/forge/tags/items/container1000lava.json
 b3fbc58f388dca79804060ae1bc7931a7b542901 data/forge/tags/items/container1000sas3.json
 c62b9be8a52938b166add3c15cf8fe7b6021f08a data/forge/tags/items/container1000water.json

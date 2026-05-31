@@ -1,5 +1,6 @@
 package com.hbm.ntm.explosion.vnt.standard;
 
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.explosion.vnt.interfaces.CustomDamageHandler;
 import com.hbm.ntm.explosion.vnt.interfaces.EntityProcessor;
@@ -61,16 +62,17 @@ public class EntityProcessorStandard implements EntityProcessor {
             deltaZ /= distance;
             double density = Explosion.getSeenPercent(position, entity);
             double knockback = (1.0D - distanceScaled) * density;
-            entity.hurt(explosion.damageSource(), calculateDamage(distanceScaled, density, knockback, diameter));
+            EntityDamageUtil.attackEntityFromNt(entity, explosion.damageSource(), calculateDamage(distanceScaled, density, knockback, diameter));
 
             double dampenedKnockback = entity instanceof LivingEntity livingEntity
                     ? ProtectionEnchantment.getExplosionKnockbackAfterDampener(livingEntity, knockback)
                     : knockback;
             Vec3 push = new Vec3(deltaX * dampenedKnockback, deltaY * dampenedKnockback, deltaZ * dampenedKnockback);
             entity.setDeltaMovement(entity.getDeltaMovement().add(push));
+            entity.hurtMarked = true;
 
-            if (entity instanceof Player player && !player.isSpectator() && (!player.isCreative() || !player.getAbilities().flying)) {
-                affectedPlayers.put(player, push);
+            if (entity instanceof Player player) {
+                affectedPlayers.put(player, new Vec3(deltaX * knockback, deltaY * knockback, deltaZ * knockback));
             }
 
             if (damage != null) {
@@ -82,7 +84,7 @@ public class EntityProcessorStandard implements EntityProcessor {
     }
 
     public float calculateDamage(double distanceScaled, double density, double knockback, float diameter) {
-        return (float) ((int) ((knockback * knockback + knockback) / 2.0D * 7.0D * diameter + 1.0D));
+        return (float) ((int) ((knockback * knockback + knockback) / 2.0D * 8.0D * diameter + 1.0D));
     }
 
     public EntityProcessorStandard withRangeMod(float mod) {

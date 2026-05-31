@@ -599,3 +599,26 @@
 
 - 2026-05-21 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 - 2026-05-21 运行 `.\gradlew.bat runData --no-daemon` 通过。
+
+## 2026-05-30 追加：stack hazard 接入通用 legacy meta 映射
+
+本批没有新增具体 hazard 条目，而是补迁移入口，避免旧 `ComparableStack(item, meta)` 危险属性继续在 hazard 库内写局部 switch。
+
+已完成：
+
+- `HazardRegistry` 新增：
+  - `registerLegacyMeta(ResourceLocation legacyId, int legacyMeta, HazardType type, float level)`
+  - `registerLegacyMeta(ResourceLocation legacyId, int legacyMeta, HazardData data)`
+  - `blacklistLegacyMeta(ResourceLocation legacyId, int legacyMeta)`
+- 上述入口统一通过 `LegacyMetaItemMappings` 解析旧单 item + metadata 到现代独立物品，再落到现有 stack hazard/blacklist 层。
+- 当前可用映射由 recipe 库维护，首批包含 `battery_pack` 与 `battery_sc`。后续迁 RTG/RBMK/circuit/assembly component 等旧 meta 族时，应先扩展该表，再注册 hazard。
+
+仍未完成：
+
+- 旧版 `HazardRegistry.registerItems()` 中大量 `ComparableStack` 特例尚未批量迁入。
+- `LegacyMetaItemMappings` 仍是静态 Java 表；未来若迁移存档/配置化物品池，可以再补数据驱动导出或诊断命令。
+
+验证：
+
+- 2026-05-30 运行 `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- 2026-05-30 运行 `.\gradlew.bat runData --no-daemon` 通过。

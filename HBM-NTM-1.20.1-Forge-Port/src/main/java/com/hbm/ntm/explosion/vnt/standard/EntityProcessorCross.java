@@ -1,5 +1,6 @@
 package com.hbm.ntm.explosion.vnt.standard;
 
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.explosion.vnt.interfaces.CustomDamageHandler;
 import com.hbm.ntm.explosion.vnt.interfaces.EntityProcessor;
@@ -83,10 +84,11 @@ public class EntityProcessorCross implements EntityProcessor {
             Vec3 push = direction.scale(dampenedKnockback * knockbackMultiplier);
             if (shouldDealKnockback(entity)) {
                 entity.setDeltaMovement(entity.getDeltaMovement().add(push));
+                entity.hurtMarked = true;
             }
 
-            if (entity instanceof Player player && !player.isSpectator() && (!player.isCreative() || !player.getAbilities().flying)) {
-                affectedPlayers.put(player, push);
+            if (entity instanceof Player player) {
+                affectedPlayers.put(player, direction.scale(knockback * knockbackMultiplier));
             }
         }
 
@@ -105,7 +107,7 @@ public class EntityProcessorCross implements EntityProcessor {
     }
 
     protected void attackEntity(Entity entity, ExplosionVnt explosion, float amount) {
-        entity.hurt(explosion.damageSource(), amount);
+        EntityDamageUtil.attackEntityFromNt(entity, explosion.damageSource(), amount);
     }
 
     public float calculateDamage(double distanceScaled, double density, double knockback, float diameter) {

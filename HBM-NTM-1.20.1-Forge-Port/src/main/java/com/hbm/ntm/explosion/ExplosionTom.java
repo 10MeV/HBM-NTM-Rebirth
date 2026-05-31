@@ -5,10 +5,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.RegistryObject;
 
 public class ExplosionTom {
     public int posX;
@@ -173,15 +171,10 @@ public class ExplosionTom {
     }
 
     private static BlockState tektiteState() {
-        return legacyState("tektite", Blocks.BLACKSTONE.defaultBlockState());
+        return ModBlocks.TEKTITE.get().defaultBlockState();
     }
 
     private static BlockState tektiteOreState() {
-        return legacyState("ore_tektite_osmiridium", Blocks.DEEPSLATE_DIAMOND_ORE.defaultBlockState());
-    }
-
-    private static BlockState legacyState(String name, BlockState fallback) {
-        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        return block == null ? fallback : block.get().defaultBlockState();
+        return ModBlocks.ORE_TEKTITE_OSMIRIDIUM.get().defaultBlockState();
     }
 }

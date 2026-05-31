@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationData;
@@ -51,7 +52,7 @@ public class LegacyToxicGasBlock extends LegacyGasBlock {
                 if (ArmorUtil.hasMonoxideGasProtection(living)) {
                     ArmorUtil.damageGasMaskFilter(living, 1);
                 } else {
-                    living.hurt(ModDamageSources.monoxide(level), 1.0F);
+                    EntityDamageUtil.attackEntityFromNt(living, ModDamageSources.monoxide(level), 1.0F);
                 }
             }
             case CHLORINE -> {

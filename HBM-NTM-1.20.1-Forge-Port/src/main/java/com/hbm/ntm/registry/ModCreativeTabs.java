@@ -100,7 +100,11 @@ public final class ModCreativeTabs {
         }
         if (item instanceof TrinketBlockItem trinket) {
             TrinketBlockItem.addCreativeStacks(output, trinket);
-        } else if (item instanceof FluidPipeBlockItem pipe) {
+        } else if (item instanceof FluidPipeBlockItem pipe
+                && (item == ModBlocks.FLUID_DUCT_NEO.get().asItem()
+                || item == ModBlocks.FLUID_VALVE.get().asItem()
+                || item == ModBlocks.FLUID_SWITCH.get().asItem()
+                || item == ModBlocks.FLUID_COUNTER_VALVE.get().asItem())) {
             pipe.addCreativeStacks(output);
         } else if (item instanceof LegacyStateBlockItem stateItem) {
             stateItem.addCreativeStacks(output);

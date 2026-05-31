@@ -6,5 +6,5 @@ import net.minecraft.world.level.block.state.BlockState;
 
 @FunctionalInterface
 public interface DropChanceMutator {
-    boolean shouldDrop(ExplosionVnt explosion, BlockState state, BlockPos pos);
+    float mutateDropChance(ExplosionVnt explosion, BlockState state, BlockPos pos, float chance);
 }

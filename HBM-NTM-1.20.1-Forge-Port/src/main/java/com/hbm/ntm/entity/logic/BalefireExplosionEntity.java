@@ -1,5 +1,7 @@
 package com.hbm.ntm.entity.logic;
 
+import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.explosion.ExplosionBalefire;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.registry.ModEntityTypes;
@@ -12,6 +14,7 @@ public class BalefireExplosionEntity extends ExplosionChunkLoadingEntity {
     private int destructionRange;
     private int speed = 1;
     private boolean initialized;
+    private boolean expiredFromSave;
     private ExplosionBalefire explosion;
 
     public BalefireExplosionEntity(EntityType<? extends BalefireExplosionEntity> type, Level level) {
@@ -37,6 +40,11 @@ public class BalefireExplosionEntity extends ExplosionChunkLoadingEntity {
             return;
         }
 
+        if (expiredFromSave) {
+            discard();
+            return;
+        }
+
         if (destructionRange <= 0) {
             discard();
             return;
@@ -46,7 +54,7 @@ public class BalefireExplosionEntity extends ExplosionChunkLoadingEntity {
         loadChunk((int) Math.floor(getX() / 16.0D), (int) Math.floor(getZ() / 16.0D));
 
         if (!initialized) {
-            initializeExplosion();
+            initializeExplosion(true);
         }
 
         speed++;
@@ -64,7 +72,11 @@ public class BalefireExplosionEntity extends ExplosionChunkLoadingEntity {
         age++;
     }
 
-    private void initializeExplosion() {
+    private void initializeExplosion(boolean logInitialization) {
+        if (logInitialization && extendedLoggingEnabled()) {
+            HbmNtm.LOGGER.info("[NUKE] Initialized BF explosion at {} / {} / {} with strength {}!",
+                    getX(), getY(), getZ(), destructionRange);
+        }
         explosion = new ExplosionBalefire((int) getX(), (int) getY(), (int) getZ(), level(), destructionRange);
         initialized = true;
     }
@@ -80,9 +92,10 @@ public class BalefireExplosionEntity extends ExplosionChunkLoadingEntity {
         speed = Math.max(1, tag.getInt("speed"));
         initialized = tag.getBoolean("did");
         readChunkLoader(tag);
+        expiredFromSave = shouldExpireFromSave(tag);
 
-        if (initialized && destructionRange > 0) {
-            initializeExplosion();
+        if (initialized && !expiredFromSave && destructionRange > 0) {
+            initializeExplosion(false);
             explosion.readFromNbt(tag, "exp_");
         }
     }
@@ -93,9 +106,14 @@ public class BalefireExplosionEntity extends ExplosionChunkLoadingEntity {
         tag.putInt("destructionRange", destructionRange);
         tag.putInt("speed", speed);
         tag.putBoolean("did", initialized);
+        tag.putLong("milliTime", System.currentTimeMillis());
         saveChunkLoader(tag);
         if (explosion != null) {
             explosion.saveToNbt(tag, "exp_");
         }
+    }
+
+    private static boolean extendedLoggingEnabled() {
+        return HbmCommonConfig.ENABLE_EXTENDED_LOGGING != null && HbmCommonConfig.ENABLE_EXTENDED_LOGGING.get();
     }
 }

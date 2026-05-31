@@ -1,6 +1,7 @@
 package com.hbm.ntm.entity.effect;
 
 import com.hbm.ntm.entity.projectile.RubbleEntity;
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModItems;
@@ -146,7 +147,7 @@ public class BlackHoleEntity extends Entity {
                 continue;
             }
             if (distance < size * 1.5D) {
-                entity.hurt(ModDamageSources.blackhole(level(), this), 1000.0F);
+                EntityDamageUtil.attackEntityFromNt(entity, ModDamageSources.blackhole(level(), this), 1000.0F);
                 if (!(entity instanceof LivingEntity)) {
                     entity.discard();
                 }

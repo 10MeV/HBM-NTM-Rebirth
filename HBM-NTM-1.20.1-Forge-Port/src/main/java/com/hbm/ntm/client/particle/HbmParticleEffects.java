@@ -2,6 +2,8 @@ package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.client.ClientForgeEvents;
 import com.hbm.ntm.client.render.HbmRenderEffects;
+import com.hbm.ntm.client.render.HbmOverheadMarkers;
+import com.hbm.ntm.particle.LegacyCasingEjectors;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.client.sound.HbmDelayedSounds;
 import com.hbm.ntm.registry.ModParticleTypes;
@@ -10,6 +12,7 @@ import net.minecraft.client.ParticleStatus;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.TerrainParticle;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -63,11 +66,11 @@ public final class HbmParticleEffects {
             level.addParticle(ParticleTypes.CLOUD, x, y, z, 0.0D, 0.1D, 0.0D);
         } else if ("vanilla".equals(type)) {
             spawnNamedVanilla(level, data.getString("mode"), x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"));
-        } else if ("vanillaburst".equals(type)) {
+        } else if (ParticleUtil.TYPE_VANILLA_BURST.equals(type)) {
             spawnVanillaBurst(level, data, x, y, z);
-        } else if ("vanillaExt".equals(type)) {
+        } else if (ParticleUtil.TYPE_VANILLA_EXT.equals(type)) {
             spawnVanillaExt(level, data, x, y, z);
-        } else if ("smoke".equals(type)) {
+        } else if (ParticleUtil.TYPE_SMOKE.equals(type)) {
             spawnSmoke(level, data, x, y, z);
         } else if ("launchSmoke".equals(type)) {
             level.addParticle(ModParticleTypes.SMOKE_PLUME.get(), x, y, z, data.getDouble("moX"), data.getDouble("moY"), data.getDouble("moZ"));
@@ -88,7 +91,7 @@ public final class HbmParticleEffects {
             spawnBlackPowder(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_ASHES.equals(type)) {
             spawnAshes(level, data, x, y, z);
-        } else if (ParticleUtil.TYPE_CASING.equals(type)) {
+        } else if (ParticleUtil.TYPE_CASING.equals(type) || ParticleUtil.TYPE_LEGACY_CASING.equals(type)) {
             spawnCasing(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_SKELETON.equals(type)) {
             spawnSkeleton(level, data, x, y, z);
@@ -148,6 +151,12 @@ public final class HbmParticleEffects {
             spawnColoredJetpack(level, data, ParticleUtil.TYPE_JETPACK_DNS.equals(type));
         } else if (ParticleUtil.TYPE_RADIATION.equals(type)) {
             spawnRadiationAura(level, data);
+        } else if (ParticleUtil.TYPE_VANISH.equals(type)) {
+            ClientForgeEvents.vanishEntity(data.getInt("ent"));
+        } else if (ParticleUtil.TYPE_MARKER.equals(type)) {
+            HbmOverheadMarkers.queue(x, y, z, data.getInt("color"), data.getInt("expires"), data.getDouble("dist"), data.getString("label"));
+        } else if (ParticleUtil.TYPE_FROZEN.equals(type)) {
+            applyClientFrozen();
         } else if (ParticleUtil.TYPE_MUKE.equals(type) || ParticleUtil.TYPE_TINY_TOT.equals(type)) {
             spawnMuke(level, data, x, y, z, ParticleUtil.TYPE_TINY_TOT.equals(type));
         } else if (ParticleUtil.TYPE_UFO.equals(type)) {
@@ -239,6 +248,21 @@ public final class HbmParticleEffects {
             Minecraft.getInstance().player.hurtTime = time;
             Minecraft.getInstance().player.hurtDuration = Math.max(time, maxTime);
         }
+    }
+
+    private static void applyClientFrozen() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) {
+            return;
+        }
+        Vec3 motion = player.getDeltaMovement();
+        player.setDeltaMovement(0.0D, Math.min(motion.y, 0.0D), 0.0D);
+        if (player.input != null) {
+            player.input.forwardImpulse = 0.0F;
+            player.input.leftImpulse = 0.0F;
+        }
+        player.zza = 0.0F;
+        player.xxa = 0.0F;
     }
 
     private static void spawnJetpack(ClientLevel level, CompoundTag data) {
@@ -355,7 +379,13 @@ public final class HbmParticleEffects {
             double motionX = random.nextGaussian() * motion;
             double motionY = random.nextGaussian() * motion;
             double motionZ = random.nextGaussian() * motion;
-            spawnNamedVanilla(level, mode, x, y, z, motionX, motionY, motionZ);
+            if ("blockdust".equals(mode)) {
+                Particle particle = new TerrainParticle(level, x, y, z, motionX, motionY + 0.2D, motionZ,
+                        blockStateFromParticleData(data));
+                addWithLifetime(particle, 50 + random.nextInt(50));
+            } else {
+                spawnNamedVanilla(level, mode, x, y, z, motionX, motionY, motionZ);
+            }
         }
     }
 
@@ -365,23 +395,50 @@ public final class HbmParticleEffects {
         double motionY = data.getDouble("mY");
         double motionZ = data.getDouble("mZ");
         if ("volcano".equals(mode)) {
-            for (int i = 0; i < 5; i++) {
-                level.addParticle(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, x, y, z,
-                        level.random.nextGaussian() * 0.2D, 2.5D + level.random.nextDouble(), level.random.nextGaussian() * 0.2D);
-            }
+            addExSmoke(level, x, y, z,
+                    level.random.nextGaussian() * 0.2D,
+                    2.5D + level.random.nextDouble(),
+                    level.random.nextGaussian() * 0.2D,
+                    100.0F,
+                    200 + level.random.nextInt(50),
+                    0.35F,
+                    0.35F,
+                    0.35F);
             return;
         }
         if ("largeexplode".equals(mode)) {
             int count = Math.max(1, data.getByte("count"));
-            level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 0.0D, 0.0D, 0.0D);
-            burstSimple(level, ParticleTypes.POOF, x, y, z, count, Math.max(0.15D, data.getFloat("size")));
+            Particle primary = Minecraft.getInstance().particleEngine.createParticle(ParticleTypes.EXPLOSION,
+                    x, y, z, 0.0D, 0.0D, 0.0D);
+            if (primary != null) {
+                float color = 1.0F - level.random.nextFloat() * 0.2F;
+                primary.setColor(color, 0.9F * color, 0.5F * color);
+                primary.scale(Math.max(0.1F, data.getFloat("size")));
+            }
+            for (int i = 0; i < count; i++) {
+                Particle secondary = Minecraft.getInstance().particleEngine.createParticle(ParticleTypes.POOF,
+                        x, y, z, 0.0D, 0.0D, 0.0D);
+                if (secondary != null) {
+                    float color = 1.0F - level.random.nextFloat() * 0.5F;
+                    secondary.setColor(0.5F * color, 0.5F * color, 0.5F * color);
+                    secondary.scale(i + 1.0F);
+                }
+            }
             return;
         }
         if ("townaura".equals(mode)) {
             level.addParticle(ModParticleTypes.TOWN_AURA.get(), x, y, z, motionX, motionY, motionZ);
             return;
         }
-        spawnNamedVanilla(level, mode, x, y, z, motionX, motionY, motionZ);
+        Particle particle = createVanillaExtParticle(level, data, x, y, z, motionX, motionY, motionZ);
+        if (particle != null) {
+            if (data.getInt("overrideAge") > 0) {
+                particle.setLifetime(data.getInt("overrideAge"));
+            }
+            Minecraft.getInstance().particleEngine.add(particle);
+        } else {
+            spawnNamedVanilla(level, mode, x, y, z, motionX, motionY, motionZ);
+        }
     }
 
     private static void spawnSmoke(ClientLevel level, CompoundTag data, double x, double y, double z) {
@@ -389,8 +446,8 @@ public final class HbmParticleEffects {
         int count = Math.max(1, data.getInt("count"));
         RandomSource random = level.random;
         if ("cloud".equals(mode) || "radial".equals(mode)) {
-            double ySpread = "cloud".equals(mode) ? 1.0D + count / 100.0D : 1.0D + count / 50.0D;
-            double xzSpread = "cloud".equals(mode) ? 1.0D + count / 150.0D : 1.0D + count / 50.0D;
+            double ySpread = "cloud".equals(mode) ? 1.0D + count / 100 : 1.0D + count / 50;
+            double xzSpread = "cloud".equals(mode) ? 1.0D + count / 150 : 1.0D + count / 50;
             for (int i = 0; i < count; i++) {
                 double motionY = random.nextGaussian() * ySpread;
                 if ("cloud".equals(mode) && random.nextBoolean()) {
@@ -400,13 +457,15 @@ public final class HbmParticleEffects {
                         random.nextGaussian() * xzSpread, motionY, random.nextGaussian() * xzSpread);
             }
         } else if ("radialDigamma".equals(mode)) {
-            spawnRadial(level, ParticleTypes.WITCH, x, y, z, count, 2.0D);
-        } else if ("shock".equals(mode) || "shockRand".equals(mode)) {
+            spawnRadialDigamma(level, x, y, z, count);
+        } else if ("shock".equals(mode)) {
             spawnRadial(level, ModParticleTypes.EX_SMOKE.get(), x, y, z, count, Math.max(0.1D, data.getDouble("strength")));
+        } else if ("shockRand".equals(mode)) {
+            spawnRadialRandom(level, ModParticleTypes.EX_SMOKE.get(), x, y, z, count, Math.max(0.1D, data.getDouble("strength")));
         } else if ("wave".equals(mode)) {
-            spawnRing(level, ModParticleTypes.EX_SMOKE.get(), x, y, z, count, Math.max(0.1D, data.getDouble("range")));
+            spawnRing(level, ModParticleTypes.EX_SMOKE.get(), x, y, z, count, Math.max(0.1D, data.getDouble("range")), 50);
         } else if ("foamSplash".equals(mode)) {
-            spawnRing(level, ModParticleTypes.FOAM.get(), x, y, z, count, Math.max(0.1D, data.getDouble("range")));
+            spawnRing(level, ModParticleTypes.FOAM.get(), x, y, z, count, Math.max(0.1D, data.getDouble("range")), 50);
         }
     }
 
@@ -458,7 +517,7 @@ public final class HbmParticleEffects {
         if (entity == null) {
             return;
         }
-        BlockState state = blockStateFromLegacyId(data.getInt("block"));
+        BlockState state = blockStateFromParticleData(data);
         int count = Math.max(1, data.getInt("count"));
         for (int i = 0; i < count; i++) {
             double x = entity.getBoundingBox().minX - 0.2D + (entity.getBoundingBox().getXsize() + 0.4D) * level.random.nextDouble();
@@ -863,6 +922,10 @@ public final class HbmParticleEffects {
     }
 
     private static void spawnCasing(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        if (ParticleUtil.TYPE_LEGACY_CASING.equals(data.getString("type"))) {
+            spawnLegacyCasing(level, data, x, y, z);
+            return;
+        }
         double motionX = data.getDouble("mX");
         double motionY = data.getDouble("mY");
         double motionZ = data.getDouble("mZ");
@@ -877,6 +940,31 @@ public final class HbmParticleEffects {
                 data.contains("smokeLift") ? data.getDouble("smokeLift") : 0.5D,
                 getInt(data, "nodeLife", 30));
         Minecraft.getInstance().particleEngine.add(particle);
+    }
+
+    private static void spawnLegacyCasing(ClientLevel level, CompoundTag data, double x, double y, double z) {
+        LegacyCasingEjectors.LegacyCasingEjector ejector = LegacyCasingEjectors.byId(data.getInt("ej"));
+        if (ejector == null) {
+            return;
+        }
+        String name = data.contains("name") ? data.getString("name") : "default";
+        float pitch = getFloat(data, "pitch", 0.0F);
+        float yaw = getFloat(data, "yaw", 0.0F);
+        boolean crouched = data.getBoolean("crouched");
+        int amount = Math.max(1, ejector.amount());
+        for (int i = 0; i < amount; i++) {
+            Vec3 motion = ejector.motion(pitch, yaw, level.random);
+            Vec3 offset = ejector.positionOffset(pitch, yaw, crouched);
+            Particle particle = new SpentCasingParticle(level,
+                    x + offset.x(), y + offset.y(), z + offset.z(),
+                    motion.x(), motion.y(), motion.z(),
+                    (float) Math.toDegrees(yaw),
+                    (float) Math.toDegrees(pitch),
+                    (float) (level.random.nextGaussian() * 5.0D),
+                    (float) (level.random.nextGaussian() * 10.0D),
+                    name, false, 0, 0.0D, 0);
+            Minecraft.getInstance().particleEngine.add(particle);
+        }
     }
 
     private static void spawnSkeleton(ClientLevel level, CompoundTag data, double x, double y, double z) {
@@ -1038,6 +1126,30 @@ public final class HbmParticleEffects {
         level.addParticle(particle, x, y, z, motionX, motionY, motionZ);
     }
 
+    private static Particle createVanillaExtParticle(ClientLevel level, CompoundTag data, double x, double y, double z,
+            double motionX, double motionY, double motionZ) {
+        String mode = data.getString("mode");
+        if ("cloud".equals(mode) && data.contains("r")) {
+            float rng = level.random.nextFloat() * 0.1F;
+            return createExSmoke(level, x, y, z, 0.0D, 0.0D, 0.0D, 7.5F, 100 + level.random.nextInt(40),
+                    data.getFloat("r") + rng, data.getFloat("g") + rng, data.getFloat("b") + rng);
+        }
+        if ("blockdust".equals(mode)) {
+            Particle particle = new TerrainParticle(level, x, y, z, motionX, motionY + 0.2D, motionZ,
+                    blockStateFromParticleData(data));
+            particle.setLifetime(10 + level.random.nextInt(20));
+            return particle;
+        }
+        if ("colordust".equals(mode)) {
+            Particle particle = new TerrainParticle(level, x, y, z, motionX, motionY + 0.2D, motionZ,
+                    Blocks.WHITE_WOOL.defaultBlockState());
+            particle.setColor(data.getFloat("r"), data.getFloat("g"), data.getFloat("b"));
+            particle.setLifetime(10 + level.random.nextInt(20));
+            return particle;
+        }
+        return null;
+    }
+
     private static ParticleOptions solidContrailDust(String type) {
         return switch (type) {
             case "exSolid" -> new DustParticleOptions(new Vector3f(0.3F, 0.2F, 0.05F), 1.0F);
@@ -1055,6 +1167,28 @@ public final class HbmParticleEffects {
         }
     }
 
+    private static Particle addExSmoke(ClientLevel level, double x, double y, double z, double motionX, double motionY, double motionZ,
+            float scale, int lifetime, float red, float green, float blue) {
+        Particle particle = createExSmoke(level, x, y, z, motionX, motionY, motionZ, scale, lifetime, red, green, blue);
+        if (particle != null) {
+            Minecraft.getInstance().particleEngine.add(particle);
+            return particle;
+        }
+        level.addParticle(ModParticleTypes.EX_SMOKE.get(), x, y, z, motionX, motionY, motionZ);
+        return null;
+    }
+
+    private static Particle createExSmoke(ClientLevel level, double x, double y, double z, double motionX, double motionY, double motionZ,
+            float scale, int lifetime, float red, float green, float blue) {
+        if (HbmSmokeParticle.exSmokeSprites() == null) {
+            return null;
+        }
+        HbmSmokeParticle particle = new HbmSmokeParticle(level, x, y, z, motionX, motionY, motionZ,
+                HbmSmokeParticle.exSmokeSprites(), scale, lifetime);
+        particle.setColor(red, green, blue);
+        return particle;
+    }
+
     private static void spawnRadial(ClientLevel level, ParticleOptions particle, double x, double y, double z, int count, double strength) {
         double angle = level.random.nextDouble() * Math.PI * 2.0D;
         for (int i = 0; i < count; i++) {
@@ -1063,16 +1197,221 @@ public final class HbmParticleEffects {
         }
     }
 
-    private static void spawnRing(ClientLevel level, ParticleOptions particle, double x, double y, double z, int count, double range) {
+    private static void spawnRadialRandom(ClientLevel level, ParticleOptions particle, double x, double y, double z, int count, double strength) {
+        double angle = level.random.nextDouble() * Math.PI * 2.0D;
         for (int i = 0; i < count; i++) {
-            double theta = level.random.nextDouble() * Math.PI * 2.0D;
-            level.addParticle(particle, x + Math.cos(theta) * range, y, z + Math.sin(theta) * range, 0.0D, 0.0D, 0.0D);
+            double theta = angle + Math.PI * 2.0D * i / count;
+            double multiplier = level.random.nextDouble();
+            level.addParticle(particle, x, y, z,
+                    Math.cos(theta) * strength * multiplier,
+                    0.0D,
+                    Math.sin(theta) * strength * multiplier);
         }
     }
 
-    private static BlockState blockStateFromLegacyId(int legacyId) {
-        BlockState state = Block.stateById(legacyId);
-        return state == null ? Blocks.STONE.defaultBlockState() : state;
+    private static void spawnRadialDigamma(ClientLevel level, double x, double y, double z, int count) {
+        double angle = level.random.nextDouble() * Math.PI * 2.0D;
+        for (int i = 0; i < count; i++) {
+            double theta = angle + Math.PI * 2.0D * i / count;
+            level.addParticle(ModParticleTypes.DIGAMMA_SMOKE.get(), x, y, z, Math.cos(theta) * 2.0D, 0.0D, Math.sin(theta) * 2.0D);
+        }
+    }
+
+    private static void spawnRing(ClientLevel level, ParticleOptions particle, double x, double y, double z, int count, double range, int lifetime) {
+        for (int i = 0; i < count; i++) {
+            double theta = level.random.nextDouble() * Math.PI * 2.0D;
+            if (particle instanceof net.minecraft.core.particles.SimpleParticleType simpleParticle && simpleParticle == ModParticleTypes.EX_SMOKE.get()
+                    && HbmSmokeParticle.exSmokeSprites() != null) {
+                addExSmoke(level, x + Math.cos(theta) * range, y, z + Math.sin(theta) * range,
+                        0.0D, 0.0D, 0.0D, 1.0F, lifetime, 0.35F, 0.35F, 0.35F);
+            } else {
+                Particle created = Minecraft.getInstance().particleEngine.createParticle(particle,
+                        x + Math.cos(theta) * range, y, z + Math.sin(theta) * range, 0.0D, 0.0D, 0.0D);
+                if (created != null) {
+                    created.setLifetime(lifetime);
+                }
+            }
+        }
+    }
+
+    private static BlockState blockStateFromParticleData(CompoundTag data) {
+        if (data.contains("state")) {
+            return modernBlockState(data.getInt("state"));
+        }
+        if (data.contains("block")) {
+            return legacyBlockState(data.getInt("block"), data.getInt("meta"));
+        }
+        return Blocks.STONE.defaultBlockState();
+    }
+
+    private static BlockState modernBlockState(int stateId) {
+        BlockState state = Block.stateById(stateId);
+        return state == null || state.isAir() ? Blocks.STONE.defaultBlockState() : state;
+    }
+
+    private static BlockState legacyBlockState(int legacyBlockId, int legacyMeta) {
+        int meta = legacyMeta & 15;
+        return switch (legacyBlockId) {
+            case 1 -> Blocks.STONE.defaultBlockState();
+            case 2 -> Blocks.GRASS_BLOCK.defaultBlockState();
+            case 3 -> switch (meta) {
+                case 1 -> Blocks.COARSE_DIRT.defaultBlockState();
+                case 2 -> Blocks.PODZOL.defaultBlockState();
+                default -> Blocks.DIRT.defaultBlockState();
+            };
+            case 4 -> Blocks.COBBLESTONE.defaultBlockState();
+            case 5 -> legacyPlanks(meta);
+            case 7 -> Blocks.BEDROCK.defaultBlockState();
+            case 8, 9 -> Blocks.WATER.defaultBlockState();
+            case 10, 11 -> Blocks.LAVA.defaultBlockState();
+            case 12 -> (meta == 1 ? Blocks.RED_SAND : Blocks.SAND).defaultBlockState();
+            case 13 -> Blocks.GRAVEL.defaultBlockState();
+            case 14 -> Blocks.GOLD_ORE.defaultBlockState();
+            case 15 -> Blocks.IRON_ORE.defaultBlockState();
+            case 16 -> Blocks.COAL_ORE.defaultBlockState();
+            case 17 -> legacyLog(meta);
+            case 18 -> legacyLeaves(meta);
+            case 20 -> Blocks.GLASS.defaultBlockState();
+            case 21 -> Blocks.LAPIS_ORE.defaultBlockState();
+            case 22 -> Blocks.LAPIS_BLOCK.defaultBlockState();
+            case 24 -> legacySandstone(meta);
+            case 35 -> legacyWool(meta);
+            case 41 -> Blocks.GOLD_BLOCK.defaultBlockState();
+            case 42 -> Blocks.IRON_BLOCK.defaultBlockState();
+            case 45 -> Blocks.BRICKS.defaultBlockState();
+            case 46 -> Blocks.TNT.defaultBlockState();
+            case 47 -> Blocks.BOOKSHELF.defaultBlockState();
+            case 48 -> Blocks.MOSSY_COBBLESTONE.defaultBlockState();
+            case 49 -> Blocks.OBSIDIAN.defaultBlockState();
+            case 56 -> Blocks.DIAMOND_ORE.defaultBlockState();
+            case 57 -> Blocks.DIAMOND_BLOCK.defaultBlockState();
+            case 58 -> Blocks.CRAFTING_TABLE.defaultBlockState();
+            case 60 -> Blocks.FARMLAND.defaultBlockState();
+            case 61, 62 -> Blocks.FURNACE.defaultBlockState();
+            case 73, 74 -> Blocks.REDSTONE_ORE.defaultBlockState();
+            case 79 -> Blocks.ICE.defaultBlockState();
+            case 80 -> Blocks.SNOW_BLOCK.defaultBlockState();
+            case 81 -> Blocks.CACTUS.defaultBlockState();
+            case 82 -> Blocks.CLAY.defaultBlockState();
+            case 86 -> Blocks.PUMPKIN.defaultBlockState();
+            case 87 -> Blocks.NETHERRACK.defaultBlockState();
+            case 88 -> Blocks.SOUL_SAND.defaultBlockState();
+            case 89 -> Blocks.GLOWSTONE.defaultBlockState();
+            case 98 -> legacyStoneBricks(meta);
+            case 103 -> Blocks.MELON.defaultBlockState();
+            case 110 -> Blocks.MYCELIUM.defaultBlockState();
+            case 112 -> Blocks.NETHER_BRICKS.defaultBlockState();
+            case 121 -> Blocks.END_STONE.defaultBlockState();
+            case 133 -> Blocks.EMERALD_BLOCK.defaultBlockState();
+            case 152 -> Blocks.REDSTONE_BLOCK.defaultBlockState();
+            case 155 -> legacyQuartz(meta);
+            case 159 -> legacyTerracotta(meta);
+            case 162 -> legacyLog2(meta);
+            case 172 -> Blocks.TERRACOTTA.defaultBlockState();
+            case 173 -> Blocks.COAL_BLOCK.defaultBlockState();
+            case 174 -> Blocks.PACKED_ICE.defaultBlockState();
+            default -> Blocks.STONE.defaultBlockState();
+        };
+    }
+
+    private static BlockState legacyPlanks(int meta) {
+        return switch (meta & 7) {
+            case 1 -> Blocks.SPRUCE_PLANKS.defaultBlockState();
+            case 2 -> Blocks.BIRCH_PLANKS.defaultBlockState();
+            case 3 -> Blocks.JUNGLE_PLANKS.defaultBlockState();
+            case 4 -> Blocks.ACACIA_PLANKS.defaultBlockState();
+            case 5 -> Blocks.DARK_OAK_PLANKS.defaultBlockState();
+            default -> Blocks.OAK_PLANKS.defaultBlockState();
+        };
+    }
+
+    private static BlockState legacyLog(int meta) {
+        return switch (meta & 3) {
+            case 1 -> Blocks.SPRUCE_LOG.defaultBlockState();
+            case 2 -> Blocks.BIRCH_LOG.defaultBlockState();
+            case 3 -> Blocks.JUNGLE_LOG.defaultBlockState();
+            default -> Blocks.OAK_LOG.defaultBlockState();
+        };
+    }
+
+    private static BlockState legacyLog2(int meta) {
+        return (meta & 3) == 1 ? Blocks.DARK_OAK_LOG.defaultBlockState() : Blocks.ACACIA_LOG.defaultBlockState();
+    }
+
+    private static BlockState legacyLeaves(int meta) {
+        return switch (meta & 3) {
+            case 1 -> Blocks.SPRUCE_LEAVES.defaultBlockState();
+            case 2 -> Blocks.BIRCH_LEAVES.defaultBlockState();
+            case 3 -> Blocks.JUNGLE_LEAVES.defaultBlockState();
+            default -> Blocks.OAK_LEAVES.defaultBlockState();
+        };
+    }
+
+    private static BlockState legacySandstone(int meta) {
+        return switch (meta & 3) {
+            case 1 -> Blocks.CHISELED_SANDSTONE.defaultBlockState();
+            case 2 -> Blocks.CUT_SANDSTONE.defaultBlockState();
+            default -> Blocks.SANDSTONE.defaultBlockState();
+        };
+    }
+
+    private static BlockState legacyStoneBricks(int meta) {
+        return switch (meta & 3) {
+            case 1 -> Blocks.MOSSY_STONE_BRICKS.defaultBlockState();
+            case 2 -> Blocks.CRACKED_STONE_BRICKS.defaultBlockState();
+            case 3 -> Blocks.CHISELED_STONE_BRICKS.defaultBlockState();
+            default -> Blocks.STONE_BRICKS.defaultBlockState();
+        };
+    }
+
+    private static BlockState legacyQuartz(int meta) {
+        return switch (meta & 3) {
+            case 1 -> Blocks.CHISELED_QUARTZ_BLOCK.defaultBlockState();
+            case 2 -> Blocks.QUARTZ_PILLAR.defaultBlockState();
+            default -> Blocks.QUARTZ_BLOCK.defaultBlockState();
+        };
+    }
+
+    private static BlockState legacyWool(int meta) {
+        return switch (meta & 15) {
+            case 1 -> Blocks.ORANGE_WOOL.defaultBlockState();
+            case 2 -> Blocks.MAGENTA_WOOL.defaultBlockState();
+            case 3 -> Blocks.LIGHT_BLUE_WOOL.defaultBlockState();
+            case 4 -> Blocks.YELLOW_WOOL.defaultBlockState();
+            case 5 -> Blocks.LIME_WOOL.defaultBlockState();
+            case 6 -> Blocks.PINK_WOOL.defaultBlockState();
+            case 7 -> Blocks.GRAY_WOOL.defaultBlockState();
+            case 8 -> Blocks.LIGHT_GRAY_WOOL.defaultBlockState();
+            case 9 -> Blocks.CYAN_WOOL.defaultBlockState();
+            case 10 -> Blocks.PURPLE_WOOL.defaultBlockState();
+            case 11 -> Blocks.BLUE_WOOL.defaultBlockState();
+            case 12 -> Blocks.BROWN_WOOL.defaultBlockState();
+            case 13 -> Blocks.GREEN_WOOL.defaultBlockState();
+            case 14 -> Blocks.RED_WOOL.defaultBlockState();
+            case 15 -> Blocks.BLACK_WOOL.defaultBlockState();
+            default -> Blocks.WHITE_WOOL.defaultBlockState();
+        };
+    }
+
+    private static BlockState legacyTerracotta(int meta) {
+        return switch (meta & 15) {
+            case 1 -> Blocks.ORANGE_TERRACOTTA.defaultBlockState();
+            case 2 -> Blocks.MAGENTA_TERRACOTTA.defaultBlockState();
+            case 3 -> Blocks.LIGHT_BLUE_TERRACOTTA.defaultBlockState();
+            case 4 -> Blocks.YELLOW_TERRACOTTA.defaultBlockState();
+            case 5 -> Blocks.LIME_TERRACOTTA.defaultBlockState();
+            case 6 -> Blocks.PINK_TERRACOTTA.defaultBlockState();
+            case 7 -> Blocks.GRAY_TERRACOTTA.defaultBlockState();
+            case 8 -> Blocks.LIGHT_GRAY_TERRACOTTA.defaultBlockState();
+            case 9 -> Blocks.CYAN_TERRACOTTA.defaultBlockState();
+            case 10 -> Blocks.PURPLE_TERRACOTTA.defaultBlockState();
+            case 11 -> Blocks.BLUE_TERRACOTTA.defaultBlockState();
+            case 12 -> Blocks.BROWN_TERRACOTTA.defaultBlockState();
+            case 13 -> Blocks.GREEN_TERRACOTTA.defaultBlockState();
+            case 14 -> Blocks.RED_TERRACOTTA.defaultBlockState();
+            case 15 -> Blocks.BLACK_TERRACOTTA.defaultBlockState();
+            default -> Blocks.WHITE_TERRACOTTA.defaultBlockState();
+        };
     }
 
     private static BlockState nearbyBlockState(ClientLevel level, double x, double y, double z) {

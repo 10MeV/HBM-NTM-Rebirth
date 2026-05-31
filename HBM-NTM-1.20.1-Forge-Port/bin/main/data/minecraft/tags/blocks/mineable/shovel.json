@@ -2,6 +2,10 @@
   "values": [
     "hbm:ash_digamma",
     "hbm:waste_trinitite",
-    "hbm:waste_trinitite_red"
+    "hbm:waste_trinitite_red",
+    "hbm:frozen_grass",
+    "hbm:frozen_dirt",
+    "hbm:tektite",
+    "hbm:ore_tektite_osmiridium"
   ]
 }

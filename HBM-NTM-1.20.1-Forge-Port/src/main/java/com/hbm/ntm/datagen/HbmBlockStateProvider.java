@@ -1,8 +1,11 @@
 package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.HbmNtm;
-import com.hbm.ntm.block.HbmEnergyNodeBlock;
-import com.hbm.ntm.block.HbmFluidNodeBlock;
+import com.hbm.ntm.block.FluidDuctGaugeBlock;
+import com.hbm.ntm.block.FluidDuctPaintableBlock;
+import com.hbm.ntm.block.FluidPipeAnchorBlock;
+import com.hbm.ntm.block.FluidValveBlock;
+import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
@@ -64,6 +67,17 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "decon_side");
         redCableWithItem();
         fluidPipeWithItem();
+        fluidDuctBoxWithItem(ModBlocks.FLUID_DUCT_BOX, "boxduct_silver");
+        fluidDuctGaugeWithItem();
+        fluidDuctBoxWithItem(ModBlocks.FLUID_DUCT_EXHAUST, "boxduct_exhaust");
+        fluidDuctPaintableWithItem(ModBlocks.FLUID_DUCT_PAINTABLE, "fluid_duct_paintable");
+        fluidDuctPaintableWithItem(ModBlocks.FLUID_DUCT_PAINTABLE_BLOCK_EXHAUST,
+                "fluid_duct_paintable_block_exhaust");
+        fluidPipeAnchorWithItem();
+        fluidValveWithItem(ModBlocks.FLUID_VALVE, "fluid_valve_off", "fluid_valve_on");
+        fluidValveWithItem(ModBlocks.FLUID_SWITCH, "fluid_switch_off", "fluid_switch_on");
+        fluidValveWithItem(ModBlocks.FLUID_COUNTER_VALVE, "fluid_counter_valve_off", "fluid_counter_valve_on");
+        fluidPumpWithItem();
         conveyorWithItem(ModBlocks.CONVEYOR, "conveyor");
         conveyorWithItem(ModBlocks.CONVEYOR_EXPRESS, "conveyor_express");
         conveyorWithItem(ModBlocks.CONVEYOR_DOUBLE, "conveyor_double");
@@ -148,6 +162,16 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk_debris_digamma");
         simpleCubeWithItem(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still");
         simpleCubeWithItem(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still");
+        translucentCubeBlockOnly(ModBlocks.MUD_BLOCK, "mud_still");
+        frozenGrassWithItem();
+        simpleCubeWithItem(ModBlocks.FROZEN_DIRT, "frozen_dirt");
+        frozenLogWithItem();
+        simpleCubeWithItem(ModBlocks.FROZEN_PLANKS, "frozen_planks");
+        simpleCubeWithItem(ModBlocks.TEKTITE, "tektite");
+        simpleCubeWithItem(ModBlocks.ORE_TEKTITE_OSMIRIDIUM, "ore_tektite_osmiridium");
+        simpleCubeWithItem("crystal_virus", "legacy_blocks/crystal_virus");
+        simpleCubeWithItem("crystal_hardened", "legacy_blocks/crystal_hardened");
+        simpleCubeWithItem("glyphid_spawner", "glyphid_eggs_alt");
         existingModelWithCustomItem(ModBlocks.NUKE_GADGET, "nuke_gadget");
         existingModelWithCustomItem(ModBlocks.NUKE_BOY, "nuke_boy");
         existingModelWithCustomItem(ModBlocks.NUKE_MAN, "nuke_man");
@@ -221,6 +245,17 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void simpleCubeWithItem(String legacyName, String textureName) {
+        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(legacyName);
+        if (block == null) {
+            throw new IllegalStateException("Missing legacy block hbm:" + legacyName);
+        }
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
+        simpleBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
     private void crossBlockOnly(RegistryObject<Block> block, String textureName) {
         String blockName = block.getId().getPath();
         ModelFile model = models().cross(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
@@ -236,12 +271,42 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void translucentCubeBlockOnly(RegistryObject<Block> block, String textureName) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
+                .renderType("minecraft:translucent");
+        simpleBlock(block.get(), model);
+    }
+
     private void wasteLogWithItem() {
         ResourceLocation side = new ResourceLocation(HbmNtm.MOD_ID, "block/waste_log_side");
         ResourceLocation top = new ResourceLocation(HbmNtm.MOD_ID, "block/waste_log_top");
         axisBlock((net.minecraft.world.level.block.RotatedPillarBlock) ModBlocks.WASTE_LOG.get(), side, top);
         ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/waste_log"));
         simpleBlockItem(ModBlocks.WASTE_LOG.get(), model);
+    }
+
+    private void frozenGrassWithItem() {
+        String blockName = ModBlocks.FROZEN_GRASS.getId().getPath();
+        ModelFile model = models().cube(
+                blockName,
+                new ResourceLocation(HbmNtm.MOD_ID, "block/frozen_dirt"),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/frozen_grass_top"),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/frozen_grass_side"),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/frozen_grass_side"),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/frozen_grass_side"),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/frozen_grass_side"))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/frozen_grass_side"));
+        simpleBlock(ModBlocks.FROZEN_GRASS.get(), model);
+        simpleBlockItem(ModBlocks.FROZEN_GRASS.get(), model);
+    }
+
+    private void frozenLogWithItem() {
+        ResourceLocation side = new ResourceLocation(HbmNtm.MOD_ID, "block/frozen_log");
+        ResourceLocation top = new ResourceLocation(HbmNtm.MOD_ID, "block/frozen_log_top");
+        axisBlock((net.minecraft.world.level.block.RotatedPillarBlock) ModBlocks.FROZEN_LOG.get(), side, top);
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/frozen_log"));
+        simpleBlockItem(ModBlocks.FROZEN_LOG.get(), model);
     }
 
     private void leavesLayerWithItem() {
@@ -296,52 +361,157 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     }
 
     private void redCableWithItem() {
-        ModelFile core = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/red_cable_core"));
-        ModelFile side = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/red_cable_side"));
         getMultipartBuilder(ModBlocks.RED_CABLE.get())
-                .part().modelFile(core).addModel().end()
-                .part().modelFile(side).addModel().condition(HbmEnergyNodeBlock.NORTH, true).end()
-                .part().modelFile(side).rotationY(90).addModel().condition(HbmEnergyNodeBlock.EAST, true).end()
-                .part().modelFile(side).rotationY(180).addModel().condition(HbmEnergyNodeBlock.SOUTH, true).end()
-                .part().modelFile(side).rotationY(270).addModel().condition(HbmEnergyNodeBlock.WEST, true).end()
-                .part().modelFile(side).rotationX(-90).addModel().condition(HbmEnergyNodeBlock.UP, true).end()
-                .part().modelFile(side).rotationX(90).addModel().condition(HbmEnergyNodeBlock.DOWN, true).end();
-        simpleBlockItem(ModBlocks.RED_CABLE.get(), core);
+                .part().modelFile(models().getBuilder("red_cable")
+                        .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/cable_neo")))
+                .addModel().end();
+        itemModels().getBuilder(ModBlocks.RED_CABLE.getId().getPath())
+                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
     }
 
     private void fluidPipeWithItem() {
-        ModelFile core = fluidPipeModel("fluid_duct_neo_core", 5.0F, 5.0F, 5.0F, 11.0F, 11.0F, 11.0F);
-        ModelFile side = fluidPipeModel("fluid_duct_neo_side", 5.0F, 5.0F, 0.0F, 11.0F, 11.0F, 5.0F);
-        getMultipartBuilder(ModBlocks.FLUID_DUCT_NEO.get())
-                .part().modelFile(core).addModel().end()
-                .part().modelFile(side).addModel().condition(HbmFluidNodeBlock.NORTH, true).end()
-                .part().modelFile(side).rotationY(90).addModel().condition(HbmFluidNodeBlock.EAST, true).end()
-                .part().modelFile(side).rotationY(180).addModel().condition(HbmFluidNodeBlock.SOUTH, true).end()
-                .part().modelFile(side).rotationY(270).addModel().condition(HbmFluidNodeBlock.WEST, true).end()
-                .part().modelFile(side).rotationX(-90).addModel().condition(HbmFluidNodeBlock.UP, true).end()
-                .part().modelFile(side).rotationX(90).addModel().condition(HbmFluidNodeBlock.DOWN, true).end();
+        ModelFile marker = models().getBuilder(ModBlocks.FLUID_DUCT_NEO.getId().getPath())
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/pipe_neo"));
+        simpleBlock(ModBlocks.FLUID_DUCT_NEO.get(), marker);
         itemModels().getBuilder(ModBlocks.FLUID_DUCT_NEO.getId().getPath())
                 .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
                 .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))
                 .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
     }
 
-    private ModelFile fluidPipeModel(String name, float x1, float y1, float z1, float x2, float y2, float z2) {
-        return models().withExistingParent(name, new ResourceLocation("block/block"))
-                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/pipe_neo"))
-                .texture("pipe", new ResourceLocation(HbmNtm.MOD_ID, "block/pipe_neo"))
-                .texture("overlay", new ResourceLocation(HbmNtm.MOD_ID, "block/pipe_neo_overlay"))
-                .renderType("minecraft:cutout")
+    private void fluidValveWithItem(RegistryObject<Block> block, String offTexture, String onTexture) {
+        ModelFile off = models().cubeAll(block.getId().getPath() + "_off",
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + offTexture));
+        ModelFile on = models().cubeAll(block.getId().getPath() + "_on",
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + onTexture));
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(state.getValue(FluidValveBlock.OPEN) ? on : off)
+                        .build());
+        itemModels().getBuilder(block.getId().getPath())
+                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
+                .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))
+                .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
+    }
+
+    private void fluidDuctBoxWithItem(RegistryObject<Block> block, String texturePrefix) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + texturePrefix));
+        simpleBlock(block.get(), model);
+        if (block == ModBlocks.FLUID_DUCT_PAINTABLE_BLOCK_EXHAUST) {
+            itemModels().getBuilder(blockName)
+                    .parent(new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID,
+                            "block/fluid_duct_paintable_block_exhaust_overlay")));
+        } else {
+            itemModels().getBuilder(blockName)
+                    .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
+                    .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))
+                    .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
+        }
+    }
+
+    private void fluidDuctGaugeWithItem() {
+        ModelFile[] models = new ModelFile[Direction.values().length];
+        for (Direction direction : Direction.values()) {
+            models[direction.ordinal()] = fluidDuctGaugeModel("fluid_duct_gauge_" + direction.getName(), direction);
+        }
+        getVariantBuilder(ModBlocks.FLUID_DUCT_GAUGE.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(models[state.getValue(FluidDuctGaugeBlock.FACING).ordinal()])
+                        .build());
+        itemModels().getBuilder(ModBlocks.FLUID_DUCT_GAUGE.getId().getPath())
+                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
+                .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))
+                .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
+    }
+
+    private void fluidDuctPaintableWithItem(RegistryObject<Block> block, String baseTexture) {
+        String blockName = block.getId().getPath();
+        ModelFile overlay = fluidDuctPaintableModel(blockName + "_overlay", baseTexture,
+                "fluid_duct_paintable_overlay", true);
+        ModelFile clean = fluidDuctPaintableModel(blockName, baseTexture, "fluid_duct_paintable_color", false);
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(state.hasProperty(FluidDuctPaintableBlock.OVERLAY)
+                                && state.getValue(FluidDuctPaintableBlock.OVERLAY) ? overlay : clean)
+                        .build());
+        itemModels().getBuilder(blockName)
+                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
+                .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, "item/duct"))
+                .texture("layer1", new ResourceLocation(HbmNtm.MOD_ID, "item/duct_overlay"));
+    }
+
+    private ModelFile fluidDuctPaintableModel(String modelName, String baseTexture, String overlayTexture,
+            boolean tintOverlay) {
+        var builder = models().withExistingParent(modelName, new ResourceLocation("block/block"))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + baseTexture))
+                .texture("base", new ResourceLocation(HbmNtm.MOD_ID, "block/" + baseTexture))
+                .texture("overlay", new ResourceLocation(HbmNtm.MOD_ID, "block/" + overlayTexture))
                 .element()
-                    .from(x1, y1, z1)
-                    .to(x2, y2, z2)
-                    .allFaces((direction, face) -> face.texture("#pipe"))
+                    .from(0.0F, 0.0F, 0.0F)
+                    .to(16.0F, 16.0F, 16.0F)
+                    .allFaces((direction, face) -> face.texture("#base").cullface(direction))
                     .end()
                 .element()
-                    .from(x1, y1, z1)
-                    .to(x2, y2, z2)
-                    .allFaces((direction, face) -> face.texture("#overlay").tintindex(1))
+                    .from(0.0F, 0.0F, 0.0F)
+                    .to(16.0F, 16.0F, 16.0F);
+        if (tintOverlay) {
+            builder.allFaces((direction, face) -> face.texture("#overlay").cullface(direction));
+        } else {
+            builder.allFaces((direction, face) -> face.texture("#overlay").cullface(direction).tintindex(1));
+        }
+        return builder.end();
+    }
+
+    private ModelFile fluidDuctGaugeModel(String modelName, Direction gaugeFace) {
+        return models().withExistingParent(modelName, new ResourceLocation("block/block"))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/deco_steel"))
+                .texture("base", new ResourceLocation(HbmNtm.MOD_ID, "block/deco_steel"))
+                .texture("overlay", new ResourceLocation(HbmNtm.MOD_ID, "block/fluid_duct_paintable_overlay"))
+                .texture("gauge", new ResourceLocation(HbmNtm.MOD_ID, "block/pipe_gauge"))
+                .element()
+                    .from(0.0F, 0.0F, 0.0F)
+                    .to(16.0F, 16.0F, 16.0F)
+                    .allFaces((direction, face) -> face.texture("#base").cullface(direction))
+                    .end()
+                .element()
+                    .from(0.0F, 0.0F, 0.0F)
+                    .to(16.0F, 16.0F, 16.0F)
+                    .allFaces((direction, face) -> face.texture(direction == gaugeFace ? "#gauge" : "#overlay").cullface(direction))
                     .end();
+    }
+
+    private void fluidPipeAnchorWithItem() {
+        ModelFile model = models().getExistingFile(new ResourceLocation(HbmNtm.MOD_ID, "block/network/pipe_anchor"));
+        getVariantBuilder(ModBlocks.PIPE_ANCHOR.get())
+                .forAllStates(state -> anchorModel(state.getValue(FluidPipeAnchorBlock.FACING), model));
+        itemModels().getBuilder(ModBlocks.PIPE_ANCHOR.getId().getPath())
+                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/network/pipe_anchor")));
+    }
+
+    private ConfiguredModel[] anchorModel(Direction facing, ModelFile model) {
+        ConfiguredModel.Builder<?> builder = ConfiguredModel.builder().modelFile(model);
+        switch (facing) {
+            case DOWN -> builder.rotationX(180);
+            case NORTH -> builder.rotationX(90).rotationY(180);
+            case SOUTH -> builder.rotationX(90);
+            case WEST -> builder.rotationX(90).rotationY(90);
+            case EAST -> builder.rotationX(90).rotationY(270);
+            case UP -> {
+            }
+        }
+        return builder.build();
+    }
+
+    private void fluidPumpWithItem() {
+        ModelFile model = models().getExistingFile(new ResourceLocation(HbmNtm.MOD_ID, "block/network/fluid_diode"));
+        getVariantBuilder(ModBlocks.FLUID_PUMP.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .rotationY(((int) state.getValue(HorizontalMachineBlock.FACING).toYRot() + 180) % 360)
+                        .build());
+        itemModels().getBuilder(ModBlocks.FLUID_PUMP.getId().getPath())
+                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/network/fluid_diode")));
     }
 
     private void conveyorWithItem(RegistryObject<Block> block, String textureName) {

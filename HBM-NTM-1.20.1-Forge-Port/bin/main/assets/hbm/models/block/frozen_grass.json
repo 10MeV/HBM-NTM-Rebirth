@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "hbm:block/frozen_dirt",
+    "east": "hbm:block/frozen_grass_side",
+    "north": "hbm:block/frozen_grass_side",
+    "particle": "hbm:block/frozen_grass_side",
+    "south": "hbm:block/frozen_grass_side",
+    "up": "hbm:block/frozen_grass_top",
+    "west": "hbm:block/frozen_grass_side"
+  }
+}

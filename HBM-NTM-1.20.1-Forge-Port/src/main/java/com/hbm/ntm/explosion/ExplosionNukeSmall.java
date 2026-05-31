@@ -18,7 +18,7 @@ public final class ExplosionNukeSmall {
     public static final MukeParams PARAMS_LOW = params().blastRadius(15.0F).killRadius(45.0F).radiationLevel(2.0F);
     public static final MukeParams PARAMS_MEDIUM = params().blastRadius(20.0F).killRadius(55.0F).radiationLevel(3.0F);
     public static final MukeParams PARAMS_HIGH = params().largeNuke().blastRadius(BombConfig.FATMAN_RADIUS_DEFAULT)
-            .killRadius(75.0F).shrapnelCount(0).radiationLevel(5.0F);
+            .shrapnelCount(0);
 
     public static void explode(Level level, double x, double y, double z, MukeParams params) {
         if (level == null || params == null || level.isClientSide()) {

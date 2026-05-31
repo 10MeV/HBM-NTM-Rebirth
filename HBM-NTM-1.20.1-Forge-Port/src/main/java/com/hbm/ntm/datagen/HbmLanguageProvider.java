@@ -164,8 +164,28 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("tooltip.hbm.hazard.coal", "Coal dust: %s");
         add("tooltip.hbm.hazard.hydroactive", "Hydroactive: %s");
         add("tooltip.hbm.hazard.explosive", "Explosive: %s");
+        add("tooltip.hbm.damage.set", "Armor set damage resistance");
+        add("tooltip.hbm.damage.item", "Item damage resistance");
+        add("tooltip.hbm.damage.line", "%s: %s/%s%%");
+        add("tooltip.hbm.damage.other", "Other");
+        add("tooltip.hbm.damage.category.EXPL", "Explosion");
+        add("tooltip.hbm.damage.category.FIRE", "Fire");
+        add("tooltip.hbm.damage.category.PHYS", "Physical");
+        add("tooltip.hbm.damage.category.EN", "Energy");
+        add("tooltip.hbm.damage.exact.drown", "Drowning");
+        add("tooltip.hbm.damage.exact.fall", "Fall");
+        add("tooltip.hbm.damage.exact.laser", "Laser");
+        add("tooltip.hbm.damage.exact.onfire", "Afterburn");
+        add("tooltip.hbm.damage.exact.acidplayer", "Acid");
+        add("tooltip.hbm.damage.exact.taublast", "Tau blast");
+        add("tooltip.hbm.damage.exact.revolverbullet", "Bullet");
+        add("tooltip.hbm.damage.exact.chopperbullet", "Chopper bullet");
+        add("tooltip.hbm.damage.exact.cmb", "Combine ball");
+        add("tooltip.hbm.damage.exact.nuclearblast", "Nuclear blast");
+        add("tooltip.hbm.damage.exact.mudpoisoning", "Mud poisoning");
         add("block.hbm.machine_press", "Burner Press");
         add("subtitles.hbm.block.press_operate", "Burner Press operates");
+        add("subtitles.hbm.block.debris", "Debris tumbles");
         add("subtitles.hbm.tool.geiger", "Geiger counter clicks");
         add("subtitles.hbm.tool.tech_boop", "Device beeps");
         add("subtitles.hbm.tool.tech_bleep", "Detonator bleeps");
@@ -221,6 +241,16 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.decon", "Decontaminator");
         add("block.hbm.red_cable", "Red Copper Cable");
         add("block.hbm.fluid_duct_neo", "Fluid Duct");
+        add("block.hbm.fluid_duct_box", "Universal Fluid Duct (Boxduct)");
+        add("block.hbm.fluid_duct_gauge", "Flow Gauge Pipe");
+        add("block.hbm.fluid_duct_exhaust", "Exhaust Pipe");
+        add("block.hbm.fluid_duct_paintable", "Paintable Fluid Duct");
+        add("block.hbm.fluid_duct_paintable_block_exhaust", "Paintable Exhaust Pipe");
+        add("block.hbm.pipe_anchor", "Pipe Anchor");
+        add("block.hbm.fluid_valve", "Fluid Valve");
+        add("block.hbm.fluid_switch", "Fluid Switch");
+        add("block.hbm.fluid_counter_valve", "Fluid Counter Valve");
+        add("block.hbm.fluid_pump", "Fluid Pump");
         add("block.hbm.conveyor", "Conveyor Belt");
         add("block.hbm.conveyor_express", "Express Conveyor Belt");
         add("block.hbm.conveyor_double", "Double-Lane Conveyor Belt");
@@ -313,6 +343,10 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.waste_leaves", "Waste Leaves");
         add("block.hbm.waste_log", "Waste Log");
         add("block.hbm.waste_planks", "Waste Planks");
+        add("block.hbm.frozen_grass", "Frozen Grass");
+        add("block.hbm.frozen_dirt", "Frozen Dirt");
+        add("block.hbm.frozen_log", "Frozen Log");
+        add("block.hbm.frozen_planks", "Frozen Planks");
         add("block.hbm.leaves_layer", "Fallen Leaves");
         add("block.hbm.balefire", "Balefire");
         add("block.hbm.sellafield", "Sellafite");
@@ -336,6 +370,12 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.pribris_digamma", "Blackened RBMK Debris");
         add("block.hbm.volcanic_lava_block", "Volcanic Lava");
         add("block.hbm.rad_lava_block", "Radioactive Volcanic Lava");
+        add("block.hbm.mud_block", "Poisonous Mud");
+        add("block.hbm.tektite", "Tektite");
+        add("block.hbm.ore_tektite_osmiridium", "Osmiridium-Infused Tektite");
+        add("block.hbm.crystal_virus", "Dark Crystal");
+        add("block.hbm.crystal_hardened", "Hardened Dark Crystal");
+        add("block.hbm.glyphid_spawner", "Glyphid Hive Spawner");
         add("block.hbm.nuke_gadget", "The Gadget");
         add("block.hbm.nuke_boy", "Little Boy");
         add("block.hbm.nuke_man", "Fat Man");
@@ -361,7 +401,32 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("subtitles.hbm.weapon.nuclear_explosion", "Nuclear explosion");
         add("block.hbm.yellow_barrel", "Radioactive Barrel");
         add("block.hbm.vitrified_barrel", "Vitrified Nuclear Waste Drum");
-        ModItems.EXTRA_PARTS_TAB_ITEMS.forEach(item -> addItem(item, title(item.getId().getPath())));
+        add("item.hbm.powder_tektite", "Tektite Powder");
+        add("item.hbm.circuit_vacuum_tube", "Vacuum Tube");
+        add("item.hbm.circuit_capacitor", "Capacitor");
+        add("item.hbm.circuit_capacitor_tantalium", "Tantalum Capacitor");
+        add("item.hbm.circuit_pcb", "Printed Circuit Board");
+        add("item.hbm.circuit_silicon", "Printed Silicon Wafer");
+        add("item.hbm.circuit_chip", "Microchip");
+        add("item.hbm.circuit_chip_bismoid", "Versatile Integrated Circuit");
+        add("item.hbm.circuit_analog", "Analog Circuit Board");
+        add("item.hbm.circuit_basic", "Integrated Circuit Board");
+        add("item.hbm.circuit_advanced", "Military Grade Circuit Board");
+        add("item.hbm.circuit_capacitor_board", "Capacitor Board");
+        add("item.hbm.circuit_bismoid", "Versatile Circuit Board");
+        add("item.hbm.circuit_controller_chassis", "Control Unit Casing");
+        add("item.hbm.circuit_controller", "Control Unit");
+        add("item.hbm.circuit_controller_advanced", "Advanced Control Unit");
+        add("item.hbm.circuit_quantum", "Quantum Processing Unit");
+        add("item.hbm.circuit_chip_quantum", "Solid State Quantum Processor");
+        add("item.hbm.circuit_controller_quantum", "Quantum Computer");
+        add("item.hbm.circuit_atomic_clock", "Atomic Clock");
+        add("item.hbm.circuit_numitron", "Incandescent Seven Segment Display");
+        ModItems.EXTRA_PARTS_TAB_ITEMS.forEach(item -> {
+            if (!hasExplicitPartName(item.getId().getPath())) {
+                addItem(item, title(item.getId().getPath()));
+            }
+        });
         ModItems.CONTROL_TAB_ITEMS.forEach(item -> {
             if (!hasExplicitControlName(item.getId().getPath())) {
                 addItem(item, title(item.getId().getPath()));
@@ -421,6 +486,16 @@ public class HbmLanguageProvider extends LanguageProvider {
                  "black_hole",
                  "particle_digamma",
                  "pellet_antimatter" -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean hasExplicitPartName(String id) {
+        if (id.startsWith("circuit_")) {
+            return true;
+        }
+        return switch (id) {
+            case "powder_tektite" -> true;
             default -> false;
         };
     }

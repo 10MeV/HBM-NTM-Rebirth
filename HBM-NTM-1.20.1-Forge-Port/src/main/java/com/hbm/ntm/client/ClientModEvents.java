@@ -8,6 +8,7 @@ import com.hbm.ntm.client.particle.BlackPowderSmokeParticle;
 import com.hbm.ntm.client.particle.BlackPowderSparkParticle;
 import com.hbm.ntm.client.particle.CoolingTowerParticle;
 import com.hbm.ntm.client.particle.DeadLeafParticle;
+import com.hbm.ntm.client.particle.DigammaSmokeParticle;
 import com.hbm.ntm.client.particle.ExplosionSmallParticle;
 import com.hbm.ntm.client.particle.FlamethrowerParticle;
 import com.hbm.ntm.client.particle.FluidFillParticle;
@@ -37,6 +38,8 @@ import com.hbm.ntm.client.renderer.CloudFleijaRainbowRenderer;
 import com.hbm.ntm.client.renderer.CloudSoliniumRenderer;
 import com.hbm.ntm.client.renderer.CustomNukeRenderer;
 import com.hbm.ntm.client.renderer.FalloutRainRenderer;
+import com.hbm.ntm.client.renderer.FluidPipeRenderer;
+import com.hbm.ntm.client.renderer.FluidPipeAnchorRenderer;
 import com.hbm.ntm.client.renderer.FluidTankRenderer;
 import com.hbm.ntm.client.renderer.LegacyDemonLampBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.LegacyLanternBlockEntityRenderer;
@@ -48,6 +51,7 @@ import com.hbm.ntm.client.renderer.MovingPackageRenderer;
 import com.hbm.ntm.client.renderer.MovingItemRenderer;
 import com.hbm.ntm.client.renderer.NuclearDeviceRenderer;
 import com.hbm.ntm.client.renderer.NukeTorexRenderer;
+import com.hbm.ntm.client.renderer.RedCableRenderer;
 import com.hbm.ntm.client.renderer.RubbleRenderer;
 import com.hbm.ntm.client.renderer.ShrapnelRenderer;
 import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
@@ -129,6 +133,9 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlockEntities.BASIC_MACHINE.get(), BasicMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.RED_CABLE.get(), RedCableRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.FLUID_PIPE.get(), FluidPipeRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.FLUID_PIPE_ANCHOR.get(), FluidPipeAnchorRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.MACHINE_BATTERY_SOCKET.get(), MachineBatterySocketRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.ASSEMBLY_MACHINE.get(), AssemblyMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.CHEMICAL_PLANT.get(), ChemicalPlantRenderer::new);
@@ -207,7 +214,14 @@ public final class ClientModEvents {
                 return pipe.getTintColor(stack, tintIndex);
             }
             return 0xFFFFFF;
-        }, ModBlocks.FLUID_DUCT_NEO.get().asItem());
+        }, ModBlocks.FLUID_DUCT_NEO.get().asItem(),
+                ModBlocks.FLUID_DUCT_BOX.get().asItem(),
+                ModBlocks.FLUID_DUCT_GAUGE.get().asItem(),
+                ModBlocks.FLUID_DUCT_PAINTABLE.get().asItem(),
+                ModBlocks.PIPE_ANCHOR.get().asItem(),
+                ModBlocks.FLUID_VALVE.get().asItem(),
+                ModBlocks.FLUID_SWITCH.get().asItem(),
+                ModBlocks.FLUID_COUNTER_VALVE.get().asItem());
         event.register((stack, tintIndex) -> {
             if (tintIndex == 0 && stack.getItem() instanceof LegacyStateBlockItem item) {
                 return sellafieldLevelTint(item.getVariant(stack));
@@ -227,7 +241,14 @@ public final class ClientModEvents {
                 return pipe.getFluidType().getColor();
             }
             return 0xFFFFFF;
-        }, ModBlocks.FLUID_DUCT_NEO.get());
+        }, ModBlocks.FLUID_DUCT_NEO.get(),
+                ModBlocks.FLUID_DUCT_BOX.get(),
+                ModBlocks.FLUID_DUCT_GAUGE.get(),
+                ModBlocks.FLUID_DUCT_PAINTABLE.get(),
+                ModBlocks.PIPE_ANCHOR.get(),
+                ModBlocks.FLUID_VALVE.get(),
+                ModBlocks.FLUID_SWITCH.get(),
+                ModBlocks.FLUID_COUNTER_VALVE.get());
         event.register((state, level, pos, tintIndex) -> {
             int crater = craterGrassColor(level, pos);
             return crater >= 0 ? crater : fallbackGrassColor(level, pos);
@@ -332,6 +353,7 @@ public final class ClientModEvents {
         event.registerSpriteSet(ModParticleTypes.SMOKE_PLUME.get(), SmokePlumeParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.LAUNCH_SMOKE.get(), HbmSmokeParticle.LaunchSmokeProvider::new);
         event.registerSpriteSet(ModParticleTypes.EX_SMOKE.get(), HbmSmokeParticle.ExSmokeProvider::new);
+        event.registerSpriteSet(ModParticleTypes.DIGAMMA_SMOKE.get(), DigammaSmokeParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.FOAM.get(), FoamParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.FLAMETHROWER.get(), FlamethrowerParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.FLAMETHROWER_BALEFIRE.get(),

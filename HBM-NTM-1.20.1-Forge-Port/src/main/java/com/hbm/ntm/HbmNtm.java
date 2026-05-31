@@ -2,6 +2,7 @@ package com.hbm.ntm;
 
 import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.config.HbmClientConfig;
+import com.hbm.ntm.damage.DamageResistanceConfig;
 import com.hbm.ntm.datagen.HbmDataGenerators;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoading;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -64,6 +65,9 @@ public class HbmNtm {
         event.enqueueWork(() -> {
             HazmatRegistry.registerDefaults();
             ItemRadiationRegistry.registerDefaults();
+            DamageResistanceConfig.LoadReport damageReport = DamageResistanceConfig.initialize(FMLPaths.CONFIGDIR.get());
+            LOGGER.info("Loaded {}.", damageReport.summary());
+            damageReport.warnings().forEach(warning -> LOGGER.warn("Damage resistance config: missing migrated {}", warning));
             LegacyFalloutConversions.LoadReport falloutReport = LegacyFalloutConversions.initialize(FMLPaths.CONFIGDIR.get());
             LOGGER.info("Loaded {}.", falloutReport.summary());
             falloutReport.warnings().forEach(warning -> LOGGER.warn("Fallout conversion config: {}", warning));

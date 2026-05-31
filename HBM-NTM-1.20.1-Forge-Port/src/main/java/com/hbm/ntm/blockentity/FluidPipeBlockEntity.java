@@ -23,11 +23,16 @@ import java.util.Set;
 public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnector, HbmFluidNodeHost, HbmFluidNodeBlock.FluidTypedBlockEntity {
     private static final String TAG_TYPE = "type";
 
-    private HbmFluidNode node;
+    protected HbmFluidNode node;
     private FluidType type = HbmFluids.NONE;
 
     public FluidPipeBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.FLUID_PIPE.get(), pos, state);
+        this(ModBlockEntities.FLUID_PIPE.get(), pos, state);
+    }
+
+    protected FluidPipeBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?> blockEntityType,
+            BlockPos pos, BlockState state) {
+        super(blockEntityType, pos, state);
     }
 
     @Override
@@ -73,9 +78,11 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
             removeFluidNode();
             return;
         }
-        if (node == null || node.isExpired()) {
-            node = HbmFluidNodespace.createNode(level, createNode());
+        if (node != null) {
+            HbmFluidNodespace.destroyNode(level, worldPosition, type);
+            node = null;
         }
+        node = HbmFluidNodespace.createNode(level, createNode());
     }
 
     protected HbmFluidNode createNode() {

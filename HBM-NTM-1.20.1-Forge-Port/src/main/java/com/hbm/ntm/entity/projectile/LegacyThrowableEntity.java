@@ -1,6 +1,7 @@
 package com.hbm.ntm.entity.projectile;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ClipContext;
@@ -12,11 +13,13 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.UUID;
 
 public abstract class LegacyThrowableEntity extends Entity {
     protected int ticksInAir;
     protected int ticksInGround;
     protected boolean inGround;
+    private UUID ownerUuid;
 
     protected LegacyThrowableEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -85,7 +88,14 @@ public abstract class LegacyThrowableEntity extends Entity {
     }
 
     protected Entity getOwner() {
-        return null;
+        if (ownerUuid == null || !(level() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        return serverLevel.getEntity(ownerUuid);
+    }
+
+    public void setOwner(Entity owner) {
+        ownerUuid = owner == null ? null : owner.getUUID();
     }
 
     protected boolean impactsEntities() {
@@ -127,6 +137,7 @@ public abstract class LegacyThrowableEntity extends Entity {
         ticksInAir = tag.getInt("ticksInAir");
         ticksInGround = tag.getInt("ticksInGround");
         inGround = tag.getBoolean("inGround");
+        ownerUuid = tag.hasUUID("Owner") ? tag.getUUID("Owner") : null;
     }
 
     @Override
@@ -134,6 +145,9 @@ public abstract class LegacyThrowableEntity extends Entity {
         tag.putInt("ticksInAir", ticksInAir);
         tag.putInt("ticksInGround", ticksInGround);
         tag.putBoolean("inGround", inGround);
+        if (ownerUuid != null) {
+            tag.putUUID("Owner", ownerUuid);
+        }
     }
 
     protected static int hitBlockX(HitResult hit) {

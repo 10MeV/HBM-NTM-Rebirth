@@ -4,6 +4,9 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.command.ModCommands;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.config.WeaponConfig;
+import com.hbm.ntm.api.entity.ResistanceProvider;
+import com.hbm.ntm.damage.DamageResistanceHandler;
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.entity.effect.QuasarEntity;
@@ -62,6 +65,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -92,6 +97,31 @@ public final class CommonForgeEvents {
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         ModCommands.register(event.getDispatcher());
+    }
+
+    @SubscribeEvent
+    public static void onLivingAttack(LivingAttackEvent event) {
+        if (DamageResistanceHandler.isAbsolute(event.getSource())) {
+            return;
+        }
+
+        LivingEntity entity = event.getEntity();
+        float amount = event.getAmount();
+
+        if (EntityDamageUtil.allowSpecialCancel()
+                && DamageResistanceHandler.breakdown(entity, event.getSource(), amount).fullyAbsorbed(amount)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingHurt(LivingHurtEvent event) {
+        LivingEntity entity = event.getEntity();
+        float amount = DamageResistanceHandler.calculateDamage(entity, event.getSource(), event.getAmount());
+        event.setAmount(amount);
+        if (entity instanceof ResistanceProvider provider) {
+            provider.onDamageDealt(event.getSource(), amount);
+        }
     }
 
     @SubscribeEvent
@@ -268,11 +298,12 @@ public final class CommonForgeEvents {
         if (tracked == null || tracked.isEmpty()) {
             return;
         }
-        Iterator<Integer> iterator = tracked.iterator();
-        while (iterator.hasNext()) {
-            Entity trackedEntity = level.getEntity(iterator.next());
+        Set<Integer> tickSnapshot = new HashSet<>(tracked);
+        Set<Integer> staleEntities = new HashSet<>();
+        for (Integer entityId : tickSnapshot) {
+            Entity trackedEntity = level.getEntity(entityId);
             if (!(trackedEntity instanceof ItemEntity itemEntity) || itemEntity.isRemoved()) {
-                iterator.remove();
+                staleEntities.add(entityId);
                 continue;
             }
             long lastTick = itemEntity.getPersistentData().getLong(HAZARD_ENTITY_TICK_KEY);
@@ -281,6 +312,10 @@ public final class CommonForgeEvents {
             }
             itemEntity.getPersistentData().putLong(HAZARD_ENTITY_TICK_KEY, level.getGameTime());
             applyDroppedItemHazards(itemEntity);
+        }
+        tracked.removeAll(staleEntities);
+        if (tracked.isEmpty()) {
+            TRACKED_ITEM_ENTITIES.remove(level.dimension());
         }
     }
 
@@ -452,6 +487,7 @@ public final class CommonForgeEvents {
             HbmEnergyNodespace.unloadLevel(level);
             HbmFluidNodespace.unloadLevel(level);
             HbmUninosNodespaces.unloadLevel(level);
+            TRACKED_ITEM_ENTITIES.remove(level.dimension());
         }
     }
 
@@ -799,7 +835,7 @@ public final class CommonForgeEvents {
             level.playSound(null, entity.blockPosition(), net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH, SoundSource.HOSTILE, 1.0F, 1.5F + entity.getRandom().nextFloat() * 0.5F);
         }
         if ((entity.tickCount + entity.getId()) % damageInterval == 0) {
-            entity.hurt(entity.damageSources().onFire(), effect.damage);
+            EntityDamageUtil.attackEntityFromNt(entity, entity.damageSources().onFire(), effect.damage);
         }
         if (entity.level() instanceof ServerLevel level) {
             ParticleUtil.spawnSweat(entity, effect.particle, 1);

@@ -5,18 +5,24 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.Level;
 
 public final class ParticleUtil {
     public static final String TYPE_GAS_FLAME = "gasfire";
     public static final String TYPE_DEBUG_LINE = "debugline";
     public static final String TYPE_DEBUG_DRONE = "debugdrone";
+    public static final String TYPE_SMOKE = "smoke";
+    public static final String TYPE_VANILLA_EXT = "vanillaExt";
+    public static final String TYPE_VANILLA_BURST = "vanillaburst";
     public static final String TYPE_EXPLOSION_LARGE = "explosionLarge";
     public static final String TYPE_EXPLOSION_SMALL = "explosionSmall";
     public static final String TYPE_VNT_EXPLOSION = "vntExplosion";
     public static final String TYPE_BLACK_POWDER = "blackPowder";
     public static final String TYPE_ASHES = "ashes";
     public static final String TYPE_CASING = "casingNT";
+    public static final String TYPE_LEGACY_CASING = "casing";
     public static final String TYPE_SKELETON = "skeleton";
     public static final String TYPE_GIBLETS = "giblets";
     public static final String TYPE_TAU = "tau";
@@ -49,9 +55,31 @@ public final class ParticleUtil {
     public static final String TYPE_RADIATION = "radiation";
     public static final String TYPE_SWEAT = "sweat";
     public static final String TYPE_VOMIT = "vomit";
+    public static final String TYPE_VANISH = "vanish";
+    public static final String TYPE_MARKER = "marker";
+    public static final String TYPE_FROZEN = "frozen";
     public static final String VOMIT_NORMAL = "normal";
     public static final String VOMIT_BLOOD = "blood";
     public static final String VOMIT_SMOKE = "smoke";
+    public static final String SMOKE_CLOUD = "cloud";
+    public static final String SMOKE_RADIAL = "radial";
+    public static final String SMOKE_RADIAL_DIGAMMA = "radialDigamma";
+    public static final String SMOKE_SHOCK = "shock";
+    public static final String SMOKE_SHOCK_RANDOM = "shockRand";
+    public static final String SMOKE_WAVE = "wave";
+    public static final String SMOKE_FOAM_SPLASH = "foamSplash";
+    public static final String VANILLA_FLAME = "flame";
+    public static final String VANILLA_SMOKE = "smoke";
+    public static final String VANILLA_CLOUD = "cloud";
+    public static final String VANILLA_RED_DUST = "reddust";
+    public static final String VANILLA_BLUE_DUST = "bluedust";
+    public static final String VANILLA_GREEN_DUST = "greendust";
+    public static final String VANILLA_BLOCK_DUST = "blockdust";
+    public static final String VANILLA_COLOR_DUST = "colordust";
+    public static final String VANILLA_FIREWORKS = "fireworks";
+    public static final String VANILLA_LARGE_EXPLODE = "largeexplode";
+    public static final String VANILLA_TOWN_AURA = "townaura";
+    public static final String VANILLA_VOLCANO = "volcano";
     public static final int GIBLET_MEAT = 0;
     public static final int GIBLET_SLIME = 1;
     public static final int GIBLET_METAL = 2;
@@ -227,18 +255,64 @@ public final class ParticleUtil {
         spawnAux(level, 0.0D, 0.0D, 0.0D, data, 0.0D);
     }
 
+    public static void spawnVanish(Level level, Entity entity) {
+        if (entity == null) {
+            return;
+        }
+        spawnVanish(level, entity.getX(), entity.getY(), entity.getZ(), entity.getId());
+    }
+
+    public static void spawnVanish(Level level, double x, double y, double z, int entityId) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_VANISH);
+        data.putInt("ent", entityId);
+        spawnAuxThreaded(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnMarker(Level level, double x, double y, double z, int color, int expiresMillis, double maxDistance, String label) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_MARKER);
+        data.putInt("color", color);
+        data.putInt("expires", Math.max(0, expiresMillis));
+        data.putDouble("dist", maxDistance);
+        if (label != null && !label.isEmpty()) {
+            data.putString("label", label);
+        }
+        spawnAuxThreaded(level, x, y, z, data, Math.max(0.0D, maxDistance));
+    }
+
+    public static void spawnFrozen(Level level, Entity player) {
+        if (player == null) {
+            return;
+        }
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_FROZEN);
+        spawnAux(level, player.getX(), player.getY(), player.getZ(), data, 0.0D);
+    }
+
     public static void spawnSweat(Entity entity, Block block, int count) {
         spawnSweat(entity, block, 0, count);
     }
 
     public static void spawnSweat(Entity entity, Block block, int meta, int count) {
-        if (entity == null || block == null) {
+        if (block == null) {
+            return;
+        }
+        spawnSweat(entity, block.defaultBlockState(), meta, count);
+    }
+
+    public static void spawnSweat(Entity entity, BlockState state, int count) {
+        spawnSweat(entity, state, 0, count);
+    }
+
+    private static void spawnSweat(Entity entity, BlockState state, int meta, int count) {
+        if (entity == null) {
             return;
         }
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_SWEAT);
         data.putInt("count", Math.max(0, count));
-        data.putInt("block", Block.getId(block.defaultBlockState()));
+        data.putInt("state", Block.getId(safeParticleState(state)));
         data.putInt("meta", meta);
         data.putInt("entity", entity.getId());
         spawnAuxThreaded(entity.level(), entity.getX(), entity.getY(), entity.getZ(), data, 25.0D);
@@ -264,6 +338,93 @@ public final class ParticleUtil {
         data.putString("type", type);
         data.putInt("player", player.getId());
         spawnAux(level, player.getX(), player.getY(), player.getZ(), data, 150.0D);
+    }
+
+    public static void spawnSmoke(Level level, double x, double y, double z, String mode, int count) {
+        CompoundTag data = smokeTag(mode, count);
+        spawnAux(level, x, y, z, data, 250.0D);
+    }
+
+    public static void spawnSmokeShock(Level level, double x, double y, double z, int count, double strength, boolean randomStrength) {
+        CompoundTag data = smokeTag(randomStrength ? SMOKE_SHOCK_RANDOM : SMOKE_SHOCK, count);
+        data.putDouble("strength", strength);
+        spawnAux(level, x, y, z, data, 250.0D);
+    }
+
+    public static void spawnSmokeRing(Level level, double x, double y, double z, String mode, int count, double range) {
+        CompoundTag data = smokeTag(mode, count);
+        data.putDouble("range", range);
+        spawnAux(level, x, y, z, data, 250.0D);
+    }
+
+    public static void spawnVanillaBurst(Level level, double x, double y, double z, String mode, int count, double motion) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_VANILLA_BURST);
+        data.putString("mode", mode);
+        data.putInt("count", count);
+        data.putDouble("motion", motion);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaBlockDustBurst(Level level, double x, double y, double z, int count, double motion, Block block) {
+        if (block == null) {
+            return;
+        }
+        spawnVanillaBlockDustBurst(level, x, y, z, count, motion, block.defaultBlockState());
+    }
+
+    public static void spawnVanillaBlockDustBurst(Level level, double x, double y, double z, int count, double motion, BlockState state) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_VANILLA_BURST);
+        data.putString("mode", VANILLA_BLOCK_DUST);
+        data.putInt("count", count);
+        data.putDouble("motion", motion);
+        data.putInt("state", Block.getId(safeParticleState(state)));
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaExt(Level level, double x, double y, double z, String mode, double motionX, double motionY, double motionZ) {
+        CompoundTag data = vanillaExtTag(mode, motionX, motionY, motionZ);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaExtLargeExplode(Level level, double x, double y, double z, float size, int count) {
+        CompoundTag data = vanillaExtTag(VANILLA_LARGE_EXPLODE, 0.0D, 0.0D, 0.0D);
+        data.putFloat("size", size);
+        data.putByte("count", (byte) Math.max(1, Math.min(127, count)));
+        spawnAux(level, x, y, z, data, 100.0D);
+    }
+
+    public static void spawnVanillaExtColoredCloud(Level level, double x, double y, double z, float red, float green, float blue) {
+        CompoundTag data = vanillaExtTag(VANILLA_CLOUD, 0.0D, 0.0D, 0.0D);
+        data.putFloat("r", red);
+        data.putFloat("g", green);
+        data.putFloat("b", blue);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaExtBlockDust(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ, Block block) {
+        if (block == null) {
+            return;
+        }
+        spawnVanillaExtBlockDust(level, x, y, z, motionX, motionY, motionZ, block.defaultBlockState());
+    }
+
+    public static void spawnVanillaExtBlockDust(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ, BlockState state) {
+        CompoundTag data = vanillaExtTag(VANILLA_BLOCK_DUST, motionX, motionY, motionZ);
+        data.putInt("state", Block.getId(safeParticleState(state)));
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaExtColorDust(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ, float red, float green, float blue) {
+        CompoundTag data = vanillaExtTag(VANILLA_COLOR_DUST, motionX, motionY, motionZ);
+        data.putFloat("r", red);
+        data.putFloat("g", green);
+        data.putFloat("b", blue);
+        spawnAux(level, x, y, z, data, 150.0D);
     }
 
     public static void spawnExplosionLarge(Level level, double x, double y, double z, int cloudCount, float cloudScale, float cloudSpeedMult,
@@ -343,6 +504,18 @@ public final class ParticleUtil {
         data.putDouble("smokeLift", smokeLift);
         data.putInt("nodeLife", nodeLife);
         spawnAux(level, x, y, z, data, 50.0D);
+    }
+
+    public static void spawnLegacyCasing(Level level, double x, double y, double z, int ejectorId, String name,
+            float pitchRadians, float yawRadians, boolean crouched) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_LEGACY_CASING);
+        data.putInt("ej", ejectorId);
+        data.putString("name", name);
+        data.putFloat("pitch", pitchRadians);
+        data.putFloat("yaw", yawRadians);
+        data.putBoolean("crouched", crouched);
+        spawnAuxThreaded(level, x, y, z, data, 50.0D);
     }
 
     public static void spawnSkeleton(Level level, double x, double y, double z, int entityId, float brightness, boolean gib, float force) {
@@ -483,6 +656,28 @@ public final class ParticleUtil {
         data.putFloat("base", base);
         data.putFloat("off", offset);
         spawnAux(level, x, y, z, data, 96.0D);
+    }
+
+    private static CompoundTag smokeTag(String mode, int count) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_SMOKE);
+        data.putString("mode", mode);
+        data.putInt("count", count);
+        return data;
+    }
+
+    private static CompoundTag vanillaExtTag(String mode, double motionX, double motionY, double motionZ) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_VANILLA_EXT);
+        data.putString("mode", mode);
+        data.putDouble("mX", motionX);
+        data.putDouble("mY", motionY);
+        data.putDouble("mZ", motionZ);
+        return data;
+    }
+
+    private static BlockState safeParticleState(BlockState state) {
+        return state == null || state.isAir() ? Blocks.STONE.defaultBlockState() : state;
     }
 
     public static void spawnAux(Level level, double x, double y, double z, CompoundTag data, double range) {

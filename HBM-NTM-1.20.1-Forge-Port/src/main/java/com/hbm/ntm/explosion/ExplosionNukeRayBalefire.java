@@ -4,10 +4,8 @@ import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.RegistryObject;
 
 public class ExplosionNukeRayBalefire extends ExplosionNukeRayBatched {
     public ExplosionNukeRayBalefire(Level level, int x, int y, int z, int strength, int speed, int length) {
@@ -26,7 +24,6 @@ public class ExplosionNukeRayBalefire extends ExplosionNukeRayBatched {
     }
 
     private BlockState balefireState() {
-        RegistryObject<? extends Block> balefire = ModBlocks.legacyBlock("balefire");
-        return balefire != null ? balefire.get().defaultBlockState() : Blocks.SOUL_FIRE.defaultBlockState();
+        return ModBlocks.BALEFIRE.get().defaultBlockState();
     }
 }

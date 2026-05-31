@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": { "item": "hbm:plate_aluminium" },
+    "S": { "item": "hbm:ingot_steel" }
+  },
+  "pattern": [
+    "SAS",
+    "A A",
+    "SAS"
+  ],
+  "result": {
+    "count": 8,
+    "item": "hbm:fluid_duct_paintable"
+  },
+  "show_notification": true
+}

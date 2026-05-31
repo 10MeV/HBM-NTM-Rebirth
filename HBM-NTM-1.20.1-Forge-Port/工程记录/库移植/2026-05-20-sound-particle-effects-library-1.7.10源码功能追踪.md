@@ -1008,3 +1008,184 @@
 
 - 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
 - 结果：通过。
+
+## 2026-05-30 第二十二批推进：旧 `type=casing` 抛壳器 aux 兼容
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT` 的 `type=casing` 分支：
+    - 读取 `ej/name/pitch/yaw/crouched`。
+    - `ej` 通过 `CasingEjector.fromId(...)` 找到旧抛壳器配置。
+    - `name` 通过 `SpentCasing.fromName(...)` 找到弹壳材质/模型配置。
+    - 按 `ejector.getAmount()` 调用 `ejector.spawnCasing(...)`。
+  - `CasingEjector` 合同：
+    - 静态 `mappings` 以构造顺序分配 id。
+    - 字段包括 `posOffset`、`initialMotion`、`casingAmount`、`randomYaw`、`randomPitch`。
+    - 客户端生成时：
+      - 初始运动先叠加高斯扰动，再按 pitch/yaw 旋转；
+      - 位置偏移按 pitch/yaw 旋转，潜行时 X 偏移归零；
+      - `ParticleSpentCasing` 初始旋转为 `degrees(pitch/yaw)`；
+      - 旋转动量为 `gaussian*5` / `gaussian*10`；
+      - 该路径不启用 smoke。
+  - 已核对的旧炮塔抛壳器：
+    - `TileEntityTurretChekhov`：`motion=(-0.8,0.8,0)`，`angleRange=(0.1,0.1)`。
+    - `TileEntityTurretFriendly`：`motion=(-0.3,0.6,0)`，`angleRange=(0.02,0.05)`。
+    - `TileEntityTurretHoward`：运行时改为 `motion=(0.4,0,0)`，`angleRange=(0.02,0.03)`。
+    - `TileEntityTurretSentry`：运行时改为 `motion=(0.2,0.2,0)`，`angleRange=(0.01,0.01)`。
+  - 旧 `TileMappings#putTurrets()` 顺序会影响这些静态抛壳器的 id；现代端不依赖类加载顺序，改为显式 id。
+- 本批现代迁移：
+  - 新增 `LegacyCasingEjectors`：
+    - 显式登记 `TURRET_CHEKHOV=0`、`TURRET_FRIENDLY=1`、`TURRET_HOWARD=2`、`TURRET_SENTRY=3`。
+    - 保留旧运动扰动、pitch/yaw 旋转、位置偏移和潜行 X 偏移合同。
+  - `ParticleUtil`：
+    - 新增 `TYPE_LEGACY_CASING = "casing"`。
+    - 新增 `spawnLegacyCasing(...)`，写入旧 `type=casing` NBT 字段并走 threaded aux 范围 50。
+  - `HbmParticleEffects`：
+    - `spawnCasing` 同时识别 `casingNT` 和旧 `casing`。
+    - `casingNT` 保持第十批已迁移的直接 3D 弹壳粒子路径。
+    - `casing` 按 `LegacyCasingEjectors` 展开为一个或多个 `SpentCasingParticle`，后续炮塔迁移可以直接沿用旧包格式。
+- 边界：
+  - 本批只迁移旧 `type=casing` 的弹壳视觉路径，不迁移炮塔实体、开火逻辑或炮塔 GUI。
+  - 旧 `CasingEjector` 的 id 在 1.7.10 中来自静态构造顺序；现代端采用显式常量，后续迁移更多使用 `CasingEjector` 的武器/炮塔时应继续在 `LegacyCasingEjectors` 里追加并记录 id。
+  - `TileEntityTurretArty/Jeremy` 在旧版直接调用 `CasingCreator.composeEffect(...)` 生成 `casingNT`，无需走本批 `type=casing` 分支。
+
+## 2026-05-30 第二十二批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+- 备注：第一次编译曾被工作区并行 damage-resistance 变更的短暂缺口挡住；确认该缺口已补齐后重跑通过。
+
+## 2026-05-30 第二十三批推进：旧 `vanish` / `marker` / `frozen` 客户端状态 aux 兼容
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT` 的 `type=vanish`：
+    - 读取 `ent`，调用 `ClientProxy.vanish(ent)`。
+    - `vanish` 表以实体 id 记录 `System.currentTimeMillis() + 2000`，`RenderLivingEvent.Pre` 中 `isVanished(...)` 为真时取消渲染。
+  - `ClientProxy#effectNT` 的 `type=marker`：
+    - 读取 `color/label/expires/dist`。
+    - 写入 `RenderOverhead.queuedMarkers`，坐标为 `BlockPos(x,y,z)`，过期时间为 `now + expires`，`expires <= 0` 表示不按时间过期。
+    - `RenderOverhead.renderMarkers(...)` 合并 queued 表后渲染 1x1x1 线框；若超过 `dist` 或超过过期时间则移除；当玩家视线对准标记时追加距离文本。
+    - 旧调用点包括 `MachinePWRController`、`MachineICFController` 的多方块错误提示，以及 `ItemModLens` 的矿物/结构标记。
+  - `ClientProxy#effectNT` 的 `type=frozen`：
+    - 对本地玩家清零水平速度，垂直速度只允许非正值。
+    - 清零 `moveForward/moveStrafing`，用于阻止客户端继续输入移动。
+- 本批现代迁移：
+  - `ParticleUtil`：
+    - 新增 `TYPE_VANISH = "vanish"`、`TYPE_MARKER = "marker"`、`TYPE_FROZEN = "frozen"`。
+    - 新增 `spawnVanish(...)`、`spawnMarker(...)`、`spawnFrozen(...)` 公共入口，保留旧 NBT 字段名。
+  - `HbmParticleEffects`：
+    - `vanish` 复用第十一批已有的 `ClientForgeEvents.vanishEntity(...)` 表，保持 2 秒客户端取消 living renderer 合同。
+    - `marker` 分发到新 `HbmOverheadMarkers.queue(...)`。
+    - `frozen` 对 `LocalPlayer` 清零水平 delta movement、前后/左右 input impulse 与 `zza/xxa`。
+  - 新增 `HbmOverheadMarkers`：
+    - 保留 queued/active 双表、过期时间、最大距离移除和 label 距离追加语义。
+    - 在 `RenderLevelStageEvent.Stage.AFTER_WEATHER` 渲染 1 方块线框和朝向相机的文本。
+    - 在客户端 tick 合并/清理，在维度/世界状态清理时清空。
+  - `ClientForgeEvents`：
+    - 接入 `HbmOverheadMarkers.render/tick/clearAll`。
+- 边界：
+  - `marker` 本批只迁移旧 `RenderOverhead.renderMarkers(...)` 的 aux 标记路径，不迁热成像 `renderThermalSight(...)`、实体名称牌重写或 `WorldInAJar` action preview。
+  - 旧端 `marker` 渲染受 `HbmPlayerProps.enableHUD` 总开关影响；现代端该 HUD 属性系统尚未迁入，本批只受 vanilla `hideGui` 影响，并记录为后续 HUD/玩家属性库耦合点。
+  - `frozen` 是客户端瞬时移动钳制，不改变服务端实体状态；后续使用者需要像旧端一样按 tick 持续发送或调用。
+
+## 2026-05-30 第二十三批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+- 备注：第一次编译曾被工作区并行配方迁移的短暂缺口挡住：
+  - `src/main/java/com/hbm/ntm/recipe/GenericMachineRecipe.java:124`：`HbmItemOutput` 找不到 `copy()`。
+  - `src/main/java/com/hbm/ntm/recipe/GenericMachineRecipe.java:134`：同上。
+  - 确认并行缺口已修正后重跑通过。
+- 已运行：`git diff --check -- src/main/java/com/hbm/ntm/particle/ParticleUtil.java src/main/java/com/hbm/ntm/client/particle/HbmParticleEffects.java src/main/java/com/hbm/ntm/client/ClientForgeEvents.java src/main/java/com/hbm/ntm/client/render/HbmOverheadMarkers.java`
+- 结果：无 whitespace error；仅有 Git 对 CRLF 的提示。
+
+## 2026-05-30 补记：现代 sound id snake_case 修正
+
+- 背景：
+  - 配方库 `runData` 验证时，现代端声音注册 `block.pipePlaced` 触发 `ResourceLocationException`。
+  - 1.20.1 `ResourceLocation` path 不允许大写字符；本工程现代资源命名约定为 snake_case。
+- 本批最小修正：
+  - `ModSounds.BLOCK_PIPE_PLACED` 注册名从 `block.pipePlaced` 改为 `block.pipe_placed`。
+  - `sounds.json` 同步改为：
+    - key：`block.pipe_placed`
+    - subtitle：`subtitles.hbm.block.pipe_placed`
+    - sound resource：`hbm:block/pipe_placed`
+  - 资源文件改名为 `src/main/resources/assets/hbm/sounds/block/pipe_placed.ogg`。
+- 边界：
+  - 这是为解除现代资源 ID 非法导致的 datagen 阻塞；不代表本批迁移了完整声音库或旧音效命名表。
+
+## 2026-05-30 第二十四批推进：通用 `smoke` / `vanillaExt` / `vanillaburst` aux 兼容
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT` 的 `type=smoke`：
+    - `cloud` / `radial` 生成 `ParticleExSmoke`，扩散倍率沿用旧 Java 整数除法：`count / 100`、`count / 150`、`count / 50`。
+    - `radialDigamma` 生成 `ParticleDigammaSmoke`，环形速度半径为 `2`，`motionY=0`。
+    - `shock` 为固定强度环形 `ParticleExSmoke`；`shockRand` 每个粒子再乘随机 `0..1`。
+    - `wave` 在半径 `range` 的环上生成静止 `ParticleExSmoke`，`maxAge=50`。
+    - `foamSplash` 在半径 `range` 的环上生成静止 `ParticleFoam`，`maxAge=50`。
+  - `ParticleDigammaSmoke`：
+    - 贴图为旧 `particleBase`，`maxAge=100+rand(40)`，`noClip=true`，`particleScale=5`。
+    - 颜色为红色 `(0.5+rand*0.2, 0, 0)`，每 tick 阻尼 `0.99`，alpha 线性衰减，fullbright。
+  - `type=vanillaburst`：
+    - 支持 `flame/cloud/reddust/bluedust/greendust/blockdust`。
+    - `blockdust` 读取 `block/meta`，速度 Y 额外 `+0.2`，寿命 `50+rand(50)`。
+  - `type=vanillaExt`：
+    - 支持 `flame/smoke/volcano/cloud/reddust/bluedust/greendust/fireworks/largeexplode/townaura/blockdust/colordust`。
+    - `volcano` 是单个超大 smoke：scale `100`，寿命 `200+rand(50)`，`noClip=true`，向上速度 `2.5+rand`，水平高斯 `0.2`。
+    - 带 `r/g/b` 的 `cloud` 会改色、scale `7.5` 并清零速度。
+    - `largeexplode` 是一个暖色主 `EntityLargeExplodeFX` 加 `count` 个灰色次级 `EntityExplodeFX`，次级按序放大。
+    - `townaura` 是淡蓝白 aura，并保留传入速度。
+    - `blockdust` / `colordust` 寿命 `10+rand(20)`，速度 Y 额外 `+0.2`；`colordust` 使用白羊毛 blockdust 再染色。
+    - 最后可应用 `noclip` 与 `overrideAge`。
+- 本批现代迁移：
+  - 新增 `DIGAMMA_SMOKE` 粒子类型、`digamma_smoke.json`、`DigammaSmokeParticle` provider：
+    - 复刻旧 `ParticleDigammaSmoke` 的红色、scale 5、100-139 tick、0.99 阻尼、无物理碰撞与 fullbright。
+    - `smoke/radialDigamma` 改为生成该粒子，不再用临时 `WITCH` 或普通 `EX_SMOKE` 近似。
+  - `HbmParticleEffects#spawnSmoke`：
+    - `cloud/radial` 扩散恢复旧整数除法语义。
+    - `shock` 与 `shockRand` 分离，`shockRand` 保留逐粒子随机强度。
+    - `wave` / `foamSplash` 按旧半径环生成，并把寿命设为 50；修正现代 `ParticleEngine#createParticle(...)` 已自动入队导致的重复添加风险。
+  - `HbmParticleEffects#spawnVanillaBurst`：
+    - `blockdust` 改为 `TerrainParticle`，保留 `block` id、Y 速度 `+0.2` 与 50-99 tick 寿命。
+  - `HbmParticleEffects#spawnVanillaExt`：
+    - `volcano` 改为单个超大 `HbmSmokeParticle`，保留旧 scale、寿命和速度合同。
+    - `cloud+r/g/b`、`blockdust`、`colordust` 增加专门创建逻辑，支持旧寿命/染色/速度语义。
+    - `largeexplode` 改为主 `EXPLOSION` 粒子加若干灰色次级 `POOF`，保留暖色主爆与次级逐级放大意图。
+    - `overrideAge` 对可直接创建的现代粒子生效。
+  - `ParticleUtil`：
+    - 新增 `TYPE_SMOKE`、`TYPE_VANILLA_EXT`、`TYPE_VANILLA_BURST` 与旧 mode 常量。
+    - 新增 `spawnSmoke(...)`、`spawnSmokeShock(...)`、`spawnSmokeRing(...)`、`spawnVanillaBurst(...)`、`spawnVanillaBlockDustBurst(...)`、`spawnVanillaExt(...)`、`spawnVanillaExtLargeExplode(...)`、`spawnVanillaExtColoredCloud(...)`、`spawnVanillaExtBlockDust(...)`、`spawnVanillaExtColorDust(...)`。
+    - `ExplosionLarge` 与 `ExplosionEffectTiny` 现有手写 aux 包改为走这些公共 helper。
+- 边界：
+  - 现代 `BlockState` id 无法完整表达 1.7.10 `block + meta` 的所有状态，本批保留 `block` id 主体，`meta` 暂记录为后续 legacy blockstate 映射表需求。
+  - `noclip` 对 vanilla 粒子没有统一公开入口；本批在自定义 smoke/digamma/地形粒子路径保留无物理或可控寿命，普通 vanilla 分支仍按现代 provider 默认行为。
+  - `largeexplode` 仍受现代 vanilla 粒子 provider 限制，不能逐字段完全复制 1.7.10 `EntityLargeExplodeFX` 的内部贴图帧和私有 scale；本批保留主/次爆颜色、数量与放大关系。
+
+## 2026-05-30 第二十四批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+
+## 2026-05-31 第二十五批推进：`block/meta` 粒子状态兼容层
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT` 的 `vanillaburst/blockdust` 读取 `block` 与 `meta`，用 `Block.getBlockById(...)` + `EntityBlockDustFX(..., b, m)`，寿命 `50+rand(50)`，Y 速度额外 `+0.2`。
+  - `ClientProxy#effectNT` 的 `vanillaExt/blockdust` 读取 `block`，旧接收端固定 meta `0`；部分旧调用点仍会写入 `meta`，例如 `XFactoryTool` 的硼砂弹药。
+  - `ClientProxy#effectNT` 的 `sweat` 读取 `entity/block/meta`，在实体包围盒内生成 `EntityBlockDustFX(..., b, meta)`，寿命 `150+rand(50)`。
+  - 已核对旧调用点：红石块碎屑用于锯床/自动锯/弹丸/Crucible，铁块碎屑用于 Ore Slopper，水/foam/sand_mix 用于 `XFactoryTool`，红石块/灵魂沙/煤块用于实体长期状态，羊毛用于 `EntityPigeon`。
+- 本批现代迁移：
+  - `ParticleUtil` 的现代 helper 不再把 `Block.getId(defaultBlockState)` 写入旧字段 `block`，改写明确的 `state` 字段。
+  - `spawnSweat`、`spawnVanillaBlockDustBurst`、`spawnVanillaExtBlockDust` 新增 `BlockState` 重载，后续迁移具体方块状态时可直接传现代状态。
+  - `HbmParticleEffects` 对 `vanillaburst/blockdust`、`vanillaExt/blockdust`、`sweat` 统一调用 `blockStateFromParticleData(...)`：
+    - 优先读取现代 `state`。
+    - 若无 `state`，按旧包的 `block/meta` 映射 1.7.10 vanilla 方块 id 到现代 `BlockState`。
+  - 已补常用 legacy vanilla id/meta 映射：石头/草方块/泥土变体、木板/原木/树叶、沙/红沙、羊毛 16 色、铁块/红石块/煤块、灵魂沙、水/岩浆、陶瓦 16 色、石砖/砂岩/石英变体等。
+- 边界：
+  - 旧 HBM 自定义方块 id 是运行时注册 id，不能从现代端可靠反查。本批不伪造动态 id 表；已迁现代调用应使用 `state` 字段或 helper 的 `BlockState` 重载。
+  - `XFactoryTool` 旧 `block_foam` / `sand_mix` 原始 `block/meta` 包在现代迁移该武器时需要改走现代 helper；若未来要兼容录制/回放的旧原始包，再建立明确的 HBM legacy block id 表。
+
+## 2026-05-31 第二十五批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+- 已运行：`git diff --check -- src/main/java/com/hbm/ntm/client/particle/HbmParticleEffects.java src/main/java/com/hbm/ntm/particle/ParticleUtil.java 工程记录/库移植/2026-05-20-sound-particle-effects-library-1.7.10源码功能追踪.md`
+- 结果：无 whitespace error；仅有 Git 对 CRLF 的提示。

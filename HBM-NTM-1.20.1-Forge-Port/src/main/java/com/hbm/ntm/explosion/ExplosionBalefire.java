@@ -9,6 +9,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.Objects;
+
 public class ExplosionBalefire {
     public int posX;
     public int posY;
@@ -132,8 +134,7 @@ public class ExplosionBalefire {
     }
 
     private void placeBalefire(BlockPos pos) {
-        RegistryObject<? extends Block> balefire = ModBlocks.legacyBlock("balefire");
-        level.setBlock(pos, balefire == null ? Blocks.SOUL_FIRE.defaultBlockState() : balefire.get().defaultBlockState(), 3);
+        level.setBlock(pos, ModBlocks.BALEFIRE.get().defaultBlockState(), 3);
     }
 
     private boolean isLegacy(BlockPos pos, String name) {
@@ -143,8 +144,6 @@ public class ExplosionBalefire {
 
     private void setLegacy(BlockPos pos, String name) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        if (block != null) {
-            level.setBlock(pos, block.get().defaultBlockState(), 3);
-        }
+        level.setBlock(pos, Objects.requireNonNull(block, "Missing legacy block hbm:" + name).get().defaultBlockState(), 3);
     }
 }

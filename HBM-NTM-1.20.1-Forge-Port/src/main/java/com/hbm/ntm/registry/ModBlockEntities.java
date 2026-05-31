@@ -11,8 +11,17 @@ import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.blockentity.CokerBlockEntity;
 import com.hbm.ntm.blockentity.CustomNukeBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
+import com.hbm.ntm.blockentity.FluidDuctBoxBlockEntity;
+import com.hbm.ntm.blockentity.FluidDuctExhaustBlockEntity;
+import com.hbm.ntm.blockentity.FluidDuctGaugeBlockEntity;
+import com.hbm.ntm.blockentity.FluidDuctPaintableBlockEntity;
+import com.hbm.ntm.blockentity.FluidDuctPaintableExhaustBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
+import com.hbm.ntm.blockentity.FluidPipeAnchorBlockEntity;
+import com.hbm.ntm.blockentity.FluidPumpBlockEntity;
+import com.hbm.ntm.blockentity.FluidCounterValveBlockEntity;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
+import com.hbm.ntm.blockentity.FluidValveBlockEntity;
 import com.hbm.ntm.blockentity.FractionTowerBlockEntity;
 import com.hbm.ntm.blockentity.GasFlareBlockEntity;
 import com.hbm.ntm.blockentity.HydrotreaterBlockEntity;
@@ -73,6 +82,51 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<FluidPipeBlockEntity>> FLUID_PIPE =
             BLOCK_ENTITIES.register("fluid_pipe", () ->
                     BlockEntityType.Builder.of(FluidPipeBlockEntity::new, ModBlocks.FLUID_DUCT_NEO.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FluidValveBlockEntity>> FLUID_VALVE =
+            BLOCK_ENTITIES.register("fluid_valve", () ->
+                    BlockEntityType.Builder.of(FluidValveBlockEntity::new,
+                            ModBlocks.FLUID_VALVE.get(),
+                            ModBlocks.FLUID_SWITCH.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FluidCounterValveBlockEntity>> FLUID_COUNTER_VALVE =
+            BLOCK_ENTITIES.register("fluid_counter_valve", () ->
+                    BlockEntityType.Builder.of(FluidCounterValveBlockEntity::new,
+                            ModBlocks.FLUID_COUNTER_VALVE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FluidPumpBlockEntity>> FLUID_PUMP =
+            BLOCK_ENTITIES.register("fluid_pump", () ->
+                    BlockEntityType.Builder.of(FluidPumpBlockEntity::new, ModBlocks.FLUID_PUMP.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FluidDuctBoxBlockEntity>> FLUID_DUCT_BOX =
+            BLOCK_ENTITIES.register("fluid_duct_box", () ->
+                    BlockEntityType.Builder.of(FluidDuctBoxBlockEntity::new,
+                            ModBlocks.FLUID_DUCT_BOX.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FluidDuctGaugeBlockEntity>> FLUID_DUCT_GAUGE =
+            BLOCK_ENTITIES.register("fluid_duct_gauge", () ->
+                    BlockEntityType.Builder.of(FluidDuctGaugeBlockEntity::new,
+                            ModBlocks.FLUID_DUCT_GAUGE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FluidDuctExhaustBlockEntity>> FLUID_DUCT_EXHAUST =
+            BLOCK_ENTITIES.register("fluid_duct_exhaust", () ->
+                    BlockEntityType.Builder.of(FluidDuctExhaustBlockEntity::new,
+                            ModBlocks.FLUID_DUCT_EXHAUST.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FluidDuctPaintableBlockEntity>> FLUID_DUCT_PAINTABLE =
+            BLOCK_ENTITIES.register("fluid_duct_paintable", () ->
+                    BlockEntityType.Builder.of(FluidDuctPaintableBlockEntity::new,
+                            ModBlocks.FLUID_DUCT_PAINTABLE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FluidDuctPaintableExhaustBlockEntity>> FLUID_DUCT_PAINTABLE_EXHAUST =
+            BLOCK_ENTITIES.register("fluid_duct_paintable_block_exhaust", () ->
+                    BlockEntityType.Builder.of(FluidDuctPaintableExhaustBlockEntity::new,
+                            ModBlocks.FLUID_DUCT_PAINTABLE_BLOCK_EXHAUST.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FluidPipeAnchorBlockEntity>> FLUID_PIPE_ANCHOR =
+            BLOCK_ENTITIES.register("pipe_anchor", () ->
+                    BlockEntityType.Builder.of(FluidPipeAnchorBlockEntity::new,
+                            ModBlocks.PIPE_ANCHOR.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<PneumaticTubeBlockEntity>> PNEUMATIC_TUBE =
             BLOCK_ENTITIES.register("pneumatic_tube", () ->

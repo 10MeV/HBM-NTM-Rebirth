@@ -23,7 +23,7 @@ public class BlockMutatorDebris implements BlockMutator {
         for (Direction direction : Direction.values()) {
             BlockPos neighbor = pos.relative(direction);
             BlockState neighborState = explosion.level().getBlockState(neighbor);
-            if (neighborState.isCollisionShapeFullBlock(explosion.level(), neighbor) && !neighborState.is(replacement.getBlock())) {
+            if (neighborState.isCollisionShapeFullBlock(explosion.level(), neighbor) && !neighborState.equals(replacement)) {
                 explosion.level().setBlock(pos, replacement, 3);
                 return;
             }

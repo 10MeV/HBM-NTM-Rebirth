@@ -363,6 +363,216 @@ Verification:
 
 - `.\gradlew.bat compileJava processResources --no-daemon` passed.
 
+## 2026-05-31 Modern Library Pass 49
+
+This pass fills the workbench recipe/data gap for the registered fluid MK2 network block family, using the 1.7.10 `CraftingManager` block as the source:
+
+- Legacy sources re-read:
+  - `com/hbm/main/CraftingManager.java`
+  - `com/hbm/inventory/recipes/anvil/AnvilRecipes.java`
+  - `com/hbm/items/ModItems.java`
+  - `com/hbm/inventory/OreDictManager.java`
+- Add and/or correct generated recipe provider entries for:
+  - `fluid_duct_neo`
+  - `fluid_duct_paintable`
+  - `fluid_duct_paintable_block_exhaust`
+  - `fluid_duct_gauge`
+  - `fluid_valve`
+  - `fluid_switch`
+  - `fluid_counter_valve`
+  - `fluid_pump`
+  - `pipe_anchor`
+- Correct `fluid_valve` and `fluid_switch` to use `fluid_duct_paintable` as the duct base, matching old `CraftingManager`, instead of `fluid_duct_neo`.
+- Add stable hand-written `src/main/resources/data/hbm/recipes/fluid_network/*.json` recipes so normal resource processing has the fluid network recipes even when `runData` is not executed first.
+- Add minimal Forge item tags for this recipe slice and future legacy-ore recipe use:
+  - `forge:circuits/basic`
+  - `forge:circuits/chip`
+  - `forge:ingots/steel`
+  - `forge:plates/steel`
+  - `forge:plates/aluminium`
+  - `forge:pipes/steel`
+- Extend item tag datagen with the same steel plate/ingot/pipe tags so later `runData` remains consistent.
+
+Legacy correction/deferred notes:
+
+- Old `fluid_pump` uses `STEEL.shell()` in slot `S`. In 1.7.10 this is not a standalone `shell_steel` item; it is `ModItems.shell = new ItemAutogen(MaterialShapes.SHELL)` with material metadata and ore dictionary registration. The clean 1.20.1 port does not yet own the material-shape/autogen item library, so this pass keeps the existing steel-plate pump ingredient as a buildable temporary recipe and records the true dependency here.
+- Old `fluid_duct_box` and `fluid_duct_exhaust` 15-meta construction/recycling matrix lives in `AnvilRecipes` tier-2 construction/recycling, not normal crafting. It remains deferred until the modern anvil/material-shape recipe library is migrated.
+- The old `fluid_duct_neo` had three metadata variants. The current clean port has only the single registered modern block, so only the default workbench recipe is represented here.
+
+Progress estimate after Pass 49:
+
+- Core `FluidType` identity/NBT lookup/table: about 96%.
+- Basic tank/conform/Forge capability bridge: about 95%.
+- Fluid network/provider/receiver algorithm: about 91%.
+- In-world pipe graph: about 92%.
+- Fluid item/container loading: about 94%.
+- Behavior traits and cross-system effects: about 84%.
+- Machine integration through the library: about 78%.
+- Data/recipe/resource coverage for fluid MK2 blocks: about 93%.
+- Overall fluid library migration: about 97.7%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` passed with proxy JVM options.
+
+## 2026-05-30 Modern Library Pass 46
+
+This pass ports the first batch of old fluid network control blocks and routes them through the modern fluid-mk2 graph instead of per-machine shortcuts:
+
+- Legacy sources re-read:
+  - `com/hbm/blocks/network/FluidValve.java`
+  - `com/hbm/blocks/network/FluidSwitch.java`
+  - `com/hbm/blocks/network/FluidCounterValve.java`
+  - `com/hbm/blocks/network/FluidPump.java`
+  - `com/hbm/tileentity/network/TileEntityFluidValve.java`
+  - `com/hbm/tileentity/network/TileEntityFluidCounterValve.java`
+  - `api/hbm/fluidmk2/IFluidReceiverMK2.java`
+  - `api/hbm/fluidmk2/IFluidStandardSenderMK2.java`
+- Add modern `fluid_valve`, `fluid_switch`, `fluid_counter_valve`, and `fluid_pump` registrations.
+- Add `FluidValveBlock` and `FluidValveBlockEntity`:
+  - Reuses the modern pipe type/NBT/drop behavior.
+  - Creates a fluid node only while `open=true`, matching legacy metadata `1`.
+  - Manual valve toggles with the legacy `reactorStart` sound pitches.
+  - Fluid switch follows redstone power and refreshes the network on state changes.
+- Add `FluidCounterValveBlockEntity`:
+  - Saves `counter` as a long.
+  - Counts `HbmFluidNet.getFluidTracker()` while the valve has a valid typed network.
+  - Exposes modern ROR values/functions matching the old `value`, `state`, `reset`, and `setState` surface.
+- Add `FluidPumpBlock` and `FluidPumpBlockEntity`:
+  - One typed buffer tank, default/max control contract `100` and `0..10000`.
+  - Redstone disables output.
+  - Subscribes as receiver on the legacy rotated input side and provides from the opposite side through `HbmFluidPortMachine`.
+  - Keeps legacy priority, pressure, buffer, redstone, and tank NBT fields.
+- Copy old valve/switch/counter textures and `block/reactorStart.ogg`.
+- Add blockstates/models/items/loot/lang entries and old crafting recipes for the migrated batch.
+
+Still deferred:
+
+- The old pump GUI and OpenComputers callbacks are not wired yet; the runtime state and transfer behavior are present, but there is no modern screen for adjusting buffer/pressure/priority in survival UI.
+- Old overlay text for valves/counter/pump is still deferred to the look-overlay/HUD pass.
+- The old `fluid_duct_paintable`, gauge duct, exhaust duct, and pipe anchor are still not part of the modern pipe family.
+- In-game visual validation of pump OBJ orientation and left/right port direction is still needed.
+
+Progress estimate after Pass 46:
+
+- Core `FluidType` identity/NBT lookup/table: about 85%.
+- Basic tank/conform/Forge capability bridge: about 72%.
+- Fluid network/provider/receiver algorithm: about 62%.
+- In-world pipe graph: about 32%.
+- Fluid item/container loading: about 30%.
+- Behavior traits and cross-system effects: about 60%.
+- Machine integration through the library: about 18%.
+- Overall fluid library migration: about 55%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed.
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` passed.
+
+## 2026-05-30 Modern Library Pass 47
+
+This pass expands the migrated in-world pipe graph beyond the standard duct into the next legacy fluid duct family:
+
+- Legacy sources re-read:
+  - `com/hbm/blocks/network/FluidDuctBase.java`
+  - `com/hbm/blocks/network/FluidDuctBox.java`
+  - `com/hbm/blocks/network/FluidDuctGauge.java`
+  - `com/hbm/blocks/network/FluidDuctBoxExhaust.java`
+  - `com/hbm/blocks/network/FluidPipeAnchor.java`
+  - `com/hbm/tileentity/network/TileEntityPipeBaseNT.java`
+  - `com/hbm/tileentity/network/TileEntityPipeExhaust.java`
+  - `com/hbm/tileentity/network/TileEntityPipeAnchor.java`
+  - `com/hbm/tileentity/network/TileEntityPipelineBase.java`
+  - `com/hbm/render/tileentity/RenderPipeAnchor.java`
+  - `com/hbm/items/tool/ItemWrench.java`
+  - legacy textures `boxduct_*`, `pipe_gauge`, `fluid_duct_paintable_overlay`, and `models/network/pipe_anchor.obj`.
+- Add modern block registrations and machine-tab placement for:
+  - `fluid_duct_box`
+  - `fluid_duct_gauge`
+  - `fluid_duct_exhaust`
+  - `pipe_anchor`
+- Route the new blocks through the existing fluid-mk2 library:
+  - `fluid_duct_box` reuses `FluidPipeBlock` typed interaction/drop behavior and stores its HBM `FluidType` in `FluidDuctBoxBlockEntity`.
+  - `fluid_duct_gauge` uses the same typed pipe node and records `deltaTick` / `deltaLastSecond` from `HbmFluidNet.getFluidTracker()`, matching the old gauge surface.
+  - `fluid_duct_exhaust` creates three separate smoke nodes for `SMOKE`, `SMOKE_LEADED`, and `SMOKE_POISON`, matching old `TileEntityPipeExhaust`.
+  - `pipe_anchor` is registered under the legacy id and gets its OBJ renderer, facing placement, single-side connection rule, typed drops, and NBT fluid type.
+- Add modern ROR value exposure for gauge:
+  - `VAL:deltatick`
+  - `VAL:deltasecond`
+- Copy the required legacy textures into `assets/hbm/textures/block`.
+- Add blockstates/models/item models/loot/lang entries for the new pipe family.
+- Keep `fluid_duct_box`, `fluid_duct_gauge`, and `pipe_anchor` as single creative entries instead of expanding all HBM fluid typed variants; old non-standard duct blocks were typed by tools, not by the dedicated `ItemFluidDuct` placement item.
+
+Still deferred:
+
+- Full old `fluid_duct_box` 15-metadata visual/material variants are not fully represented yet. This pass registers the default modern block and uses the legacy box duct texture path, but not the full old anvil construction/recycling matrix.
+- `pipe_anchor` remote anchor-to-anchor links remain deferred until the modern wrench/wiring tool path is migrated. The old behavior is driven by `ItemWrench` two-click NBT state and `TileEntityPipelineBase#addConnection`; the block now has the local single-side node contract and renderer, but not the remote cable segment.
+- Gauge look overlay / HUD text and OpenComputers callbacks remain deferred; the local ROR values and saved/synced counters are present.
+- `fluid_duct_paintable` and `fluid_duct_paintable_block_exhaust` are still separate follow-up slices because they need the paintable-block library/tool interaction path.
+
+Progress estimate after Pass 47:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 92%.
+- Fluid network/provider/receiver algorithm: about 81%.
+- In-world pipe graph: about 68%.
+- Fluid item/container loading: about 94%.
+- Behavior traits and cross-system effects: about 74%.
+- Machine integration through the library: about 85%.
+- Overall fluid library migration: about 97.0%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` passed with proxy JVM options after registering box/gauge/exhaust/anchor blocks, block entities, resources, and renderer.
+
+## 2026-05-30 Modern Library Pass 48
+
+This pass migrates the two legacy paintable pipe-family blocks through the existing fluid-mk2 pipe library instead of leaving them as isolated decorative blocks:
+
+- Legacy sources re-read:
+  - `com/hbm/blocks/network/FluidDuctPaintable.java`
+  - `com/hbm/blocks/network/FluidDuctPaintableBlockExhaust.java`
+  - `com/hbm/blocks/network/BlockCablePaintable.java`
+  - `com/hbm/blocks/network/FluidDuctBase.java`
+  - `com/hbm/tileentity/network/TileEntityPipeBaseNT.java`
+  - `com/hbm/tileentity/network/TileEntityPipeExhaust.java`
+  - `com/hbm/main/CraftingManager.java`
+  - legacy textures `fluid_duct_paintable`, `fluid_duct_paintable_color`, `fluid_duct_paintable_overlay`, and `fluid_duct_paintable_block_exhaust`.
+- Add modern block registrations and machine-tab placement for:
+  - `fluid_duct_paintable`
+  - `fluid_duct_paintable_block_exhaust`
+- Add `PaintableDuctBlockEntity`, `FluidDuctPaintableBlockEntity`, and `FluidDuctPaintableExhaustBlockEntity`:
+  - Standard paintable duct extends the typed pipe BE path, saving the HBM fluid type and the old paint payload fields.
+  - Paint payload keeps old keys `block` and `meta`, and also saves a modern `paint_block` registry name for stable 1.20.1 worlds.
+  - Paintable exhaust creates the same three smoke nodes as old `TileEntityPipeExhaust`: `SMOKE`, `SMOKE_LEADED`, and `SMOKE_POISON`.
+- Add `FluidDuctPaintableBlock` / `FluidDuctPaintableExhaustBlock`:
+  - Right-clicking an allowed normal block records its block/default-state and old metadata nibble when the duct has no paint yet, matching the old `ItemBlock` paint behavior.
+  - Empty-hand screwdriver path clears the stored paint block, using the modern `Toolable` interface that was already recorded in the common interfaces library.
+  - Empty-hand sneak path maps to the old DEFUSER toggle and flips the modern `overlay` blockstate, replacing old metadata 0/1 overlay mode.
+  - Normal fluid identifier interaction, typed placement, connected type replacement, pick-block, and typed drops still come from `FluidPipeBlock`.
+- Add blockstates/models/item models/lang/loot/tags and copy the legacy textures into `assets/hbm/textures/block`.
+
+Still deferred:
+
+- Dynamic disguise rendering is only represented as saved/synced paint data this pass. Old multipass rendering displayed the selected block texture through `TileEntityPipePaintable`; modern equivalent should be routed through a render/model-data helper instead of a one-off fake model path.
+- The old `ICopiable` / template paste path for paint payloads and fluid IDs remains deferred until the tool/copy library is migrated.
+- Exact old recipes from `CraftingManager` are recorded but not generated yet because this pass focused on block/library behavior; recipe migration should map `STEEL.ingot`, `AL.plate`, `IRON.ingot`, and `plate_polymer` through the common recipe/tag importer.
+
+Progress estimate after Pass 48:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 92%.
+- Fluid network/provider/receiver algorithm: about 81%.
+- In-world pipe graph: about 76%.
+- Fluid item/container loading: about 94%.
+- Behavior traits and cross-system effects: about 74%.
+- Machine integration through the library: about 85%.
+- Overall fluid library migration: about 97.5%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` passed with proxy JVM options after adding paintable pipe blocks, block entities, resources, lang, loot, and tags.
+
 ## 2026-05-28 Modern Library Pass 37
 
 This pass closes the old `FluidContainerRegistry.registerContainer(...)` OreDictionary compatibility bridge for the direct, fixed-item fluid containers that can be represented safely as modern item tags:
@@ -758,6 +968,75 @@ Verification:
 
 - `.\gradlew.bat compileJava --no-daemon` passed with proxy JVM options.
 - `.\gradlew.bat compileJava processResources --no-daemon` passed with proxy JVM options.
+
+## 2026-05-30 Modern Library Pass 45
+
+This pass repairs the visible `fluid_duct_neo` pipe model and fills the remaining standard-pipe placement/break behavior that belongs in the fluid MK2 library.
+
+- Legacy sources re-read:
+  - `com/hbm/render/block/RenderTestPipe.java`
+  - `com/hbm/blocks/network/FluidDuctStandard.java`
+  - `com/hbm/blocks/network/FluidDuctBase.java`
+  - `com/hbm/tileentity/network/TileEntityPipeBaseNT.java`
+  - `com/hbm/items/machine/ItemFluidDuct.java`
+  - `com/hbm/lib/Library.java`
+  - `com/hbm/blocks/ModSoundTypes.java`
+  - `assets/hbm/models/blocks/pipe_neo.obj`
+  - `assets/hbm/textures/blocks/pipe_neo.png`
+  - `assets/hbm/textures/blocks/pipe_neo_overlay.png`
+  - `assets/hbm/sounds/block/pipePlaced.ogg`
+- Root-cause note:
+  - The old standard pipe is not a cuboid multipart model. `RenderTestPipe` draws named OBJ groups (`pX`, `nX`, `pY`, `nY`, `pZ`, `nZ`, plus the eight corner filler groups) according to the same-type fluid connection mask.
+  - The modern generated JSON cuboid fallback made each pipe block render as bulky square chunks, which explains the broken connected-row screenshot.
+- Add `FluidPipeRenderer`:
+  - Registered on `ModBlockEntities.FLUID_PIPE`.
+  - Renders `pipe_neo.obj` group-by-group with the legacy base texture and color-tinted overlay texture.
+  - Preserves old display rules: isolated pipes render all six arms; a single connection on an axis renders the full straight pair; junctions render connected arms plus missing-corner filler groups.
+  - Keeps the old Z-group reversal used by `RenderTestPipe` for world rendering (`south -> nZ`, `north -> pZ`).
+- Change `FluidPipeBlock` world render shape to `INVISIBLE` so the dynamic renderer owns the world model instead of the generated cuboids.
+- Change the modern blockstate/model data to a particle-only marker model and add source resource files for blockstate, item model, and block loot so `processResources` and direct resource loading no longer revive the broken cuboid pipe model.
+- Restore old pipe collision/selection behavior:
+  - Isolated pipe uses a full-block selection/collision box, matching `setBlockBoundsBasedOnState`.
+  - Single-ended and two-ended straight pipe cases use full straight axis boxes.
+  - Junctions keep core plus connected arms.
+- Placement/break and type behavior:
+  - Typed pipe placement still writes the item NBT fluid type into `FluidPipeBlockEntity`, matching old `ItemFluidDuct.onItemUse` setting the tile type from item damage.
+  - Pick-block and normal drops now preserve the pipe fluid type in the modern NBT-backed pipe item, including a code-side fallback if a stale resource pack lacks the block loot table.
+  - `HbmFluidNodeBlock.neighborChanged` now refreshes neighbor fluid nodes too, so breaking/adding a neighboring pipe updates the surrounding graph instead of only the changed block.
+  - `FluidPipeBlockEntity.refreshFluidNode()` now recreates the node when refreshed, preserving old `TileEntityPipeBaseNT#setType`/node invalidation semantics when the connection mask changes.
+- Port old pipe placement/break sound:
+  - Register modern `hbm:block.pipe_placed` for the old pipe placement/break sound.
+  - Add `sounds/block/pipe_placed.ogg` copied from legacy `sounds/block/pipePlaced.ogg`.
+  - Wire `fluid_duct_neo` to a `ForgeSoundType` using the old pipe sound for break/place while keeping vanilla metal step/hit/fall.
+
+Current resource contract:
+
+- `assets/hbm/blockstates/fluid_duct_neo.json` points to `hbm:block/fluid_duct_neo`.
+- `assets/hbm/models/block/fluid_duct_neo.json` has only `minecraft:block/block` parent and `particle = hbm:block/legacy_blocks/pipe_neo`; no cuboid elements are emitted.
+- `assets/hbm/models/item/fluid_duct_neo.json` uses the old 2D `item/duct` + tinted `item/duct_overlay`.
+- `data/hbm/loot_tables/blocks/fluid_duct_neo.json` drops `hbm:fluid_duct_neo`; `FluidPipeBlock#getDrops` rewrites the stack to include the current pipe fluid type.
+
+Still deferred:
+
+- Standard pipe item rendering still uses the existing 2D duct icon/overlay path; the old inventory `RenderTestPipe.renderInventoryBlock` 3D pipe model can be migrated later if desired.
+- Box ducts, paintable ducts, gauges, valves, exhaust ducts, and analyzer overlay text remain their own follow-up slices.
+- In-game screenshot verification of the dynamic renderer still needs a client run after unrelated compile blockers in the current worktree are resolved.
+
+Progress estimate after Pass 45:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 92%.
+- Fluid network/provider/receiver algorithm: about 80%.
+- In-world pipe graph: about 61%.
+- Fluid item/container loading: about 94%.
+- Behavior traits and cross-system effects: about 73%.
+- Machine integration through the library: about 85%.
+- Overall fluid library migration: about 96.8%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` passed with proxy JVM options after the renderer, model-resource, loot, and sound retarget changes.
+- `build/resources/main/assets/hbm/blockstates/fluid_duct_neo.json` now contains the particle-only marker model path instead of the old multipart cuboid generated model.
 
 
 ## 2026-05-24 Modern Library Pass 17

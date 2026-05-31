@@ -29,6 +29,8 @@ public final class ModParticleTypes {
             PARTICLE_TYPES.register("launch_smoke", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> EX_SMOKE =
             PARTICLE_TYPES.register("ex_smoke", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> DIGAMMA_SMOKE =
+            PARTICLE_TYPES.register("digamma_smoke", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> FOAM =
             PARTICLE_TYPES.register("foam", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> FLAMETHROWER =

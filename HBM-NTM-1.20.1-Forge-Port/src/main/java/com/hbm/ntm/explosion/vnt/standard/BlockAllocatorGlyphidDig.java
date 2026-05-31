@@ -5,6 +5,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.Objects;
+
 public class BlockAllocatorGlyphidDig extends BlockAllocatorBulkie {
     public BlockAllocatorGlyphidDig(double maximumResistance) {
         this(maximumResistance, 16);
@@ -16,6 +18,6 @@ public class BlockAllocatorGlyphidDig extends BlockAllocatorBulkie {
 
     private static boolean isDigImmune(BlockState state) {
         RegistryObject<? extends Block> glyphidSpawner = ModBlocks.legacyBlock("glyphid_spawner");
-        return glyphidSpawner != null && glyphidSpawner.isPresent() && state.is(glyphidSpawner.get());
+        return state.is(Objects.requireNonNull(glyphidSpawner, "Missing legacy block hbm:glyphid_spawner").get());
     }
 }

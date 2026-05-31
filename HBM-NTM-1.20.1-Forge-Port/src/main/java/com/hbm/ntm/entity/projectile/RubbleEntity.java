@@ -1,16 +1,17 @@
 package com.hbm.ntm.entity.projectile;
 
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.ParticleBurstPacket;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModEntityTypes;
+import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
@@ -35,14 +36,14 @@ public class RubbleEntity extends LegacyThrowableEntity {
     @Override
     protected void onImpact(HitResult hit) {
         if (hit instanceof EntityHitResult entityHit) {
-            entityHit.getEntity().hurt(ModDamageSources.rubble(level()), 15.0F);
+            EntityDamageUtil.attackEntityFromNt(entityHit.getEntity(), ModDamageSources.indirect(level(), ModDamageSources.RUBBLE, this, getOwner()), 15.0F);
         }
         if (tickCount <= 2) {
             return;
         }
         if (level() instanceof ServerLevel serverLevel) {
             BlockPos pos = BlockPos.containing(hit.getLocation());
-            level().playSound(null, getX(), getY(), getZ(), SoundEvents.STONE_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
+            level().playSound(null, getX(), getY(), getZ(), ModSounds.BLOCK_DEBRIS.get(), SoundSource.BLOCKS, 1.5F, 1.0F);
             ModMessages.sendToAllAround(new ParticleBurstPacket(pos, blockState()), serverLevel, getX(), getY(), getZ(), 50.0D);
             discard();
         }

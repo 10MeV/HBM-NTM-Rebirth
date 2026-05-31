@@ -1,5 +1,6 @@
 package com.hbm.ntm.energy;
 
+import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.RegistryObject;
@@ -37,11 +38,11 @@ public final class HbmLegacyBatteryMaps {
     );
 
     public static Optional<RegistryObject<Item>> batteryPackByLegacyMeta(int legacyMeta) {
-        return byMeta(BATTERY_PACK_BY_META, legacyMeta);
+        return LegacyMetaItemMappings.item(LegacyMetaItemMappings.BATTERY_PACK, legacyMeta);
     }
 
     public static Optional<RegistryObject<Item>> selfChargingByLegacyMeta(int legacyMeta) {
-        return byMeta(SELF_CHARGING_BY_META, legacyMeta);
+        return LegacyMetaItemMappings.item(LegacyMetaItemMappings.BATTERY_SC, legacyMeta);
     }
 
     public static List<RegistryObject<Item>> batteryPacksByLegacyMeta() {
@@ -50,13 +51,6 @@ public final class HbmLegacyBatteryMaps {
 
     public static List<RegistryObject<Item>> selfChargingByLegacyMeta() {
         return SELF_CHARGING_BY_META;
-    }
-
-    private static Optional<RegistryObject<Item>> byMeta(List<RegistryObject<Item>> items, int legacyMeta) {
-        if (legacyMeta < 0 || legacyMeta >= items.size()) {
-            return Optional.empty();
-        }
-        return Optional.of(items.get(legacyMeta));
     }
 
     private HbmLegacyBatteryMaps() {

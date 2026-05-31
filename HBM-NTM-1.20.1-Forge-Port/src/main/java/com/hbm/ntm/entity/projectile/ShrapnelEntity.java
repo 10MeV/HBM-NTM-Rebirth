@@ -1,5 +1,6 @@
 package com.hbm.ntm.entity.projectile;
 
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.explosion.ExplosionNT;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
@@ -15,11 +16,9 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.registries.RegistryObject;
 
 public class ShrapnelEntity extends LegacyThrowableEntity {
     private static final EntityDataAccessor<Byte> MODE =
@@ -54,7 +53,7 @@ public class ShrapnelEntity extends LegacyThrowableEntity {
     @Override
     protected void onImpact(HitResult hit) {
         if (hit instanceof EntityHitResult entityHit) {
-            entityHit.getEntity().hurt(ModDamageSources.shrapnel(level()), 15.0F);
+            EntityDamageUtil.attackEntityFromNt(entityHit.getEntity(), ModDamageSources.indirect(level(), ModDamageSources.SHRAPNEL, this, getOwner()), 15.0F);
         }
         if (tickCount <= 5) {
             return;
@@ -104,13 +103,9 @@ public class ShrapnelEntity extends LegacyThrowableEntity {
     }
 
     private void placeWatzImpact(ServerLevel level, HitResult hit) {
-        RegistryObject<? extends Block> mud = ModBlocks.legacyBlock("mud_block");
-        if (mud == null) {
-            return;
-        }
         BlockPos above = new BlockPos(hitBlockX(hit), hitBlockY(hit) + 1, hitBlockZ(hit));
         if (canReplace(level, above)) {
-            level.setBlock(above, mud.get().defaultBlockState(), 3);
+            level.setBlock(above, ModBlocks.MUD_BLOCK.get().defaultBlockState(), 3);
         }
     }
 
@@ -167,5 +162,10 @@ public class ShrapnelEntity extends LegacyThrowableEntity {
     protected void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putByte("mode", mode());
+    }
+
+    @Override
+    public boolean shouldBeSaved() {
+        return false;
     }
 }
