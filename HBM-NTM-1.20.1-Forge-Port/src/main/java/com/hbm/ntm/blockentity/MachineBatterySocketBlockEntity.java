@@ -1,5 +1,8 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
@@ -47,7 +50,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, RORValueProvider, RORInteractive {
+public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, RORValueProvider,
+        RORInteractive, LegacyLookOverlayProvider {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_RED_LOW = "redLow";
     private static final String TAG_RED_HIGH = "redHigh";
@@ -140,6 +144,9 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         if (previousPower != blockEntity.getPower() || previousRedstone != blockEntity.lastRedstone) {
             blockEntity.setChanged();
             level.updateNeighbourForOutputSignal(pos, state.getBlock());
+            if (level.getGameTime() % 15L == 0L) {
+                level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            }
         }
     }
 
@@ -175,6 +182,16 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
 
     public long getMaxPower() {
         return socketEnergy.getMaxPower();
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        ItemStack stack = getBatteryStack();
+        if (stack.isEmpty()) {
+            return null;
+        }
+        return LegacyLookOverlay.withTitle(stack.getHoverName(),
+                LegacyLookOverlayLines.energyStorage(getPower(), getMaxPower()));
     }
 
     public long getDeltaPerSecond() {

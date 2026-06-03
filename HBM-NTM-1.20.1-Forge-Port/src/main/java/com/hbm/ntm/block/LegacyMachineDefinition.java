@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -33,7 +34,9 @@ public record LegacyMachineDefinition(
         float yRotationOffset,
         Function<Direction, Float> yRotationFactory,
         Function<BlockPos, AABB> renderBoundingBoxFactory,
-        Function<BlockState, VoxelShape> collisionShapeFactory) {
+        Function<BlockState, VoxelShape> collisionShapeFactory,
+        Function<BlockState, VoxelShape> highlightShapeFactory,
+        Function<BlockState, BlockState> particleStateFactory) {
 
     public LegacyMultiblockLayout layout(BlockState state) {
         return layoutFactory.apply(state.getValue(HorizontalMachineBlock.FACING));
@@ -78,6 +81,17 @@ public record LegacyMachineDefinition(
         return collisionShapeFactory != null;
     }
 
+    public VoxelShape highlightShape(BlockState state) {
+        if (highlightShapeFactory != null) {
+            return highlightShapeFactory.apply(state);
+        }
+        return collisionShape(state);
+    }
+
+    public BlockState particleState(BlockState state) {
+        return particleStateFactory == null ? MultiblockHelper.steelParticleState() : particleStateFactory.apply(state);
+    }
+
     public static Builder builder(ResourceLocation modelLocation, ResourceLocation textureLocation) {
         return new Builder(modelLocation, textureLocation);
     }
@@ -102,6 +116,8 @@ public record LegacyMachineDefinition(
         private Function<Direction, Float> yRotationFactory;
         private Function<BlockPos, AABB> renderBoundingBoxFactory;
         private Function<BlockState, VoxelShape> collisionShapeFactory;
+        private Function<BlockState, VoxelShape> highlightShapeFactory;
+        private Function<BlockState, BlockState> particleStateFactory;
 
         private Builder(ResourceLocation modelLocation, ResourceLocation textureLocation) {
             this.modelLocation = modelLocation;
@@ -198,6 +214,20 @@ public record LegacyMachineDefinition(
             return this;
         }
 
+        public Builder highlightShape(Function<BlockState, VoxelShape> highlightShapeFactory) {
+            this.highlightShapeFactory = highlightShapeFactory;
+            return this;
+        }
+
+        public Builder particleState(Function<BlockState, BlockState> particleStateFactory) {
+            this.particleStateFactory = particleStateFactory;
+            return this;
+        }
+
+        public Builder particleState(BlockState particleState) {
+            return particleState(state -> particleState);
+        }
+
         public LegacyMachineDefinition build() {
             Function<Direction, LegacyMultiblockLayout> resolvedLayout = layoutFactory != null
                     ? layoutFactory
@@ -208,7 +238,8 @@ public record LegacyMachineDefinition(
                     placementFacingFactory, resolvedLayout, modelLocation, textureLocation, renderAll, renderParts,
                     resolvedItemRenderAll, resolvedItemRenderParts, itemPartTextures, itemFitSize,
                     legacyItemScale, modelTranslationFactory, yRotationOffset,
-                    yRotationFactory, renderBoundingBoxFactory, collisionShapeFactory);
+                    yRotationFactory, renderBoundingBoxFactory, collisionShapeFactory, highlightShapeFactory,
+                    particleStateFactory);
         }
     }
 }

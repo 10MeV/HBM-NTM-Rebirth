@@ -188,6 +188,7 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel TURBOFAN = legacyModel("turbofan").asVBO();
     public static final LegacyWavefrontModel TURBINEGAS = legacyModel("turbinegas").asVBO();
     public static final LegacyWavefrontModel STEAM_ENGINE = legacyModel("steam_engine").asVBO();
+    public static final LegacyWavefrontModel TURBINE_LEGACY = legacyModel("turbine").asVBO();
     public static final LegacyWavefrontModel INDUSTRIAL_TURBINE = legacyModel("industrial_turbine").asVBO();
     public static final LegacyWavefrontModel CHUNGUS = legacyModel("chungus").asVBO();
     public static final LegacyWavefrontModel TOWER_SMALL = legacyModel("tower_small").asVBO();
@@ -220,6 +221,7 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel CHIMNEY_BRICK_LEGACY = legacyModel("chimney_brick").asVBO();
     public static final LegacyWavefrontModel CHIMNEY_INDUSTRIAL_LEGACY = legacyModel("chimney_industrial").asVBO();
     public static final LegacyWavefrontModel INTAKE_LEGACY = legacyModel("intake").asVBO();
+    public static final LegacyWavefrontModel ELEVATOR_LEGACY = legacyModel("elevator").asVBO();
     public static final LegacyWavefrontModel DIESELGEN_LEGACY = legacyModel("dieselgen").asVBO();
     public static final LegacyWavefrontModel BATTERY_SOCKET_LEGACY = legacyModel("battery", "battery_socket").asVBO();
     public static final LegacyWavefrontModel BATTERY_REDD_LEGACY = legacyModel("fensu2").asVBO();
@@ -232,6 +234,7 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel ARC_WELDER = legacyModel("arc_welder").noSmooth().asVBO();
     public static final LegacyWavefrontModel SOLDERING_STATION = legacyModel("soldering_station").noSmooth().asVBO();
     public static final LegacyWavefrontModel ARC_FURNACE = legacyModel("arc_furnace").asVBO();
+    public static final LegacyWavefrontModel TANK = legacyModel("tank");
     public static final LegacyWavefrontModel CENTRIFUGE = legacyModel("centrifuge").asVBO();
     public static final LegacyWavefrontModel GASCENT = legacyModel("gascent").asVBO();
     public static final LegacyWavefrontModel SILEX = legacyModel("silex").asVBO();
@@ -250,7 +253,7 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel ELECTROLYSER = legacyModel("electrolyser").asVBO();
     public static final LegacyWavefrontModel CHARGER = legacyModel("charger");
     public static final LegacyWavefrontModel REFUELER = legacyModel("refueler");
-    public static final LegacyWavefrontModel SOLAR_BOILER = legacyModel("solar_boiler");
+    public static final LegacyWavefrontModel SOLAR_BOILER = legacyModel("solar_boiler").asVBO();
     public static final LegacyWavefrontModel DFC_EMITTER = legacyModel("core_emitter");
     public static final LegacyWavefrontModel DFC_RECEIVER = legacyModel("core_receiver");
     public static final LegacyWavefrontModel DFC_INJECTOR = legacyModel("core_injector");
@@ -284,6 +287,9 @@ public final class ObjMachineModels {
     public static final ResourceLocation CONVEYOR_PRESS_BELT_TEXTURE = machineTexture("conveyor_press_belt");
     public static final ResourceLocation MICROWAVE_TEXTURE = machineTexture("microwave");
     public static final ResourceLocation PISTON_INSERTER_TEXTURE = machineTexture("piston_inserter");
+    public static final ResourceLocation TANK_TEXTURE = machineTexture("tank");
+    public static final ResourceLocation UF6_TANK_TEXTURE = machineTexture("uf6_tank");
+    public static final ResourceLocation PUF6_TANK_TEXTURE = machineTexture("puf6_tank");
     public static final ResourceLocation IGEN_TEXTURE = machineTexture("igen");
     public static final ResourceLocation DELIVERY_DRONE_TEXTURE = machineTexture("drone");
     public static final ResourceLocation DELIVERY_DRONE_EXPRESS_TEXTURE = machineTexture("drone_express");

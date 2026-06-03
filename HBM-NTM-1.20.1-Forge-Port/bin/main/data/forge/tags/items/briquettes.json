@@ -1,0 +1,7 @@
+{
+  "values": [
+    "hbm:briquette_coal",
+    "hbm:briquette_lignite",
+    "hbm:briquette_wood"
+  ]
+}

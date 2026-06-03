@@ -38,14 +38,10 @@ public class AssemblyMachineScreen extends AbstractContainerScreen<AssemblyMachi
         if (progress > 0) {
             graphics.blit(TEXTURE, leftPos + 62, topPos + 126, 176, 61, progress, 16);
         }
-        int input = menu.getInputTankWidth(52);
-        if (input > 0) {
-            graphics.fill(leftPos + 8, topPos + 115, leftPos + 8 + input, topPos + 131, 0xAA3CA6FF);
-        }
-        int output = menu.getOutputTankWidth(52);
-        if (output > 0) {
-            graphics.fill(leftPos + 80, topPos + 115, leftPos + 80 + output, topPos + 131, 0xAA49D37C);
-        }
+        LegacyFluidGuiRenderer.renderHorizontalTank(graphics, leftPos + 8, topPos + 115,
+                52, 16, menu.getInputTankData());
+        LegacyFluidGuiRenderer.renderHorizontalTank(graphics, leftPos + 80, topPos + 115,
+                52, 16, menu.getOutputTankData());
         GenericMachineRecipe recipe = menu.getBlockEntity().getSelectedRecipeDefinition();
         if (menu.getBlockEntity().canProcessSelectedRecipe()) {
             graphics.blit(TEXTURE, leftPos + 51, topPos + 121, 195, 0, 3, 6);
@@ -61,8 +57,7 @@ public class AssemblyMachineScreen extends AbstractContainerScreen<AssemblyMachi
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        String name = title.getString();
-        graphics.drawString(font, name, titleLabelX - font.width(name) / 2, titleLabelY, 0x404040, false);
+        LegacyGuiText.drawCenteredLabel(graphics, font, title.getString(), titleLabelX, titleLabelY, 124, 0x404040);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -74,10 +69,10 @@ public class AssemblyMachineScreen extends AbstractContainerScreen<AssemblyMachi
             graphics.renderTooltip(font, splitTooltip(recipeTooltip()), mouseX, mouseY);
         } else if (isHovering(152, 18, 16, 61, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);
-        } else if (isHovering(8, 115, 52, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, menu.getInputTankInfo(), mouseX, mouseY);
-        } else if (isHovering(80, 115, 52, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, menu.getOutputTankInfo(), mouseX, mouseY);
+        } else if (isHovering(8, 99, 52, 16, mouseX, mouseY)) {
+            graphics.renderTooltip(font, splitTooltip(menu.getInputTankTooltip()), mouseX, mouseY);
+        } else if (isHovering(80, 99, 52, 16, mouseX, mouseY)) {
+            graphics.renderTooltip(font, splitTooltip(menu.getOutputTankTooltip()), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

@@ -1,7 +1,1 @@
-{
-  "variants": {
-    "": {
-      "model": "hbm:block/mud_block"
-    }
-  }
-}
+{ "variants": { "": { "model": "hbm:block/mud_block" } } }

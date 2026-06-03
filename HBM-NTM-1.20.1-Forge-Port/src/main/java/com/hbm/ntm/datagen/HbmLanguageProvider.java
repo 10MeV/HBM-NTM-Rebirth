@@ -241,6 +241,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.decon", "Decontaminator");
         add("block.hbm.red_cable", "Red Copper Cable");
         add("block.hbm.fluid_duct_neo", "Fluid Duct");
+        add("item.hbm.fluid_duct", "Fluid Duct:");
         add("block.hbm.fluid_duct_box", "Universal Fluid Duct (Boxduct)");
         add("block.hbm.fluid_duct_gauge", "Flow Gauge Pipe");
         add("block.hbm.fluid_duct_exhaust", "Exhaust Pipe");
@@ -277,7 +278,10 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_fluidtank", "Fluid Tank");
         add("block.hbm.machine_pumpjack", "Pumpjack");
         add("block.hbm.machine_centrifuge", "Centrifuge");
+        add("block.hbm.machine_gascent", "Gas Centrifuge");
         add("block.hbm.machine_ore_slopper", "Ore Slopper");
+        add("block.hbm.machine_sawmill", "Stirling Sawmill");
+        add("block.hbm.machine_crucible", "Crucible");
         add("block.hbm.machine_gasflare", "Gas Flare");
         add("block.hbm.machine_assembly_factory", "Assembly Factory");
         add("block.hbm.machine_purex", "PUREX");
@@ -298,6 +302,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_turbinegas", "Gas Turbine");
         add("block.hbm.glass_boron", "Boron Glass");
         add("container.machineAssemblyMachine", "Assembly Machine");
+        add("container.machineChemicalPlant", "Chemical Plant");
+        add("container.machineLiquefactor", "Liquefactor");
         add("container.hbm.battery", "Energy Storage Block");
         add("container.batterySocket", "Battery Socket");
         add("container.hbm.battery.red_low", "Low redstone mode");
@@ -402,6 +408,65 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.yellow_barrel", "Radioactive Barrel");
         add("block.hbm.vitrified_barrel", "Vitrified Nuclear Waste Drum");
         add("item.hbm.powder_tektite", "Tektite Powder");
+        add("item.hbm.powder_coal", "Coal Powder");
+        add("item.hbm.powder_coal_tiny", "Tiny Pile of Coal Powder");
+        add("item.hbm.coke_coal", "Coal Coke");
+        add("item.hbm.coke_lignite", "Lignite Coke");
+        add("item.hbm.coke_petroleum", "Petroleum Coke");
+        add("item.hbm.briquette_coal", "Coal Briquette");
+        add("item.hbm.briquette_lignite", "Lignite Briquette");
+        add("item.hbm.briquette_wood", "Sawdust Briquette");
+        add("item.hbm.oil_tar_crude", "Oil Tar");
+        add("item.hbm.oil_tar_crack", "Crack Oil Tar");
+        add("item.hbm.oil_tar_coal", "Coal Tar");
+        add("item.hbm.oil_tar_wood", "Wood Tar");
+        add("item.hbm.oil_tar_wax", "Chlorinated Petroleum Wax");
+        add("item.hbm.oil_tar_paraffin", "Paraffin Wax");
+        add("item.hbm.powder_ash_wood", "Wood Ash");
+        add("item.hbm.powder_ash_coal", "Coal Ash");
+        add("item.hbm.powder_ash_misc", "Ash");
+        add("item.hbm.powder_ash_fly", "Fly Ash");
+        add("item.hbm.powder_ash_soot", "Fine Soot");
+        add("item.hbm.powder_ash_fullerene", "Fullerene");
+        add("item.hbm.chunk_ore_rare", "Rare Earth Ore Chunk");
+        add("item.hbm.chunk_ore_malachite", "Malachite Chunk");
+        add("item.hbm.chunk_ore_cryolite", "Cryolite Chunk");
+        add("item.hbm.chunk_ore_moonstone", "Moonstone");
+        add("item.hbm.plant_item_tobacco", "Tobacco");
+        add("item.hbm.plant_item_rope", "Rope");
+        add("item.hbm.plant_item_mustardwillow", "Mustard Willow Leaf");
+        add("item.hbm.parts_legendary_tier1", "Legendary Parts");
+        add("item.hbm.parts_legendary_tier2", "Legendary Parts");
+        add("item.hbm.parts_legendary_tier3", "Legendary Parts");
+        add("item.hbm.part_generic_piston_pneumatic", "Pneumatic Piston");
+        add("item.hbm.part_generic_piston_hydraulic", "Hydraulic Piston");
+        add("item.hbm.part_generic_piston_electric", "Electric Piston");
+        add("item.hbm.part_generic_lde", "Low-Density Element");
+        add("item.hbm.part_generic_hde", "Heavy Duty Element");
+        add("item.hbm.part_generic_glass_polarized", "Polarized Lens");
+        add("item.hbm.item_expensive.desc", "Expensive mode item");
+        add("item.hbm.item_expensive_steel_plating", "Bolted Steel Plating");
+        add("item.hbm.item_expensive_heavy_frame", "Heavy Framework");
+        add("item.hbm.item_expensive_circuit", "Extensive Circuit Board");
+        add("item.hbm.item_expensive_lead_plating", "Radiation Resistant Plating");
+        add("item.hbm.item_expensive_ferro_plating", "Reinforced Ferrouranium Panels");
+        add("item.hbm.item_expensive_computer", "Mainframe");
+        add("item.hbm.item_expensive_bronze_tubes", "Bronze Structural Elements");
+        add("item.hbm.item_expensive_plastic", "Plastic Panels");
+        add("item.hbm.item_expensive_gold_dust", "Ultra Fine Gold Dust");
+        add("item.hbm.item_expensive_degenerate_matter", "Degenerate Matter");
+        add("item.hbm.casing_small", "Small Gunmetal Casing");
+        add("item.hbm.casing_large", "Large Gunmetal Casing");
+        add("item.hbm.casing_small_steel", "Small Weapon Steel Casing");
+        add("item.hbm.casing_large_steel", "Large Weapon Steel Casing");
+        add("item.hbm.casing_shotshell", "Black Powder Shotshell Casing");
+        add("item.hbm.casing_buckshot", "Plastic Shotshell Casing");
+        add("item.hbm.casing_buckshot_advanced", "Advanced Shotshell Casing");
+        add("item.hbm.fuel_additive_antiknock", "Tetraethyllead Antiknock Agent");
+        add("item.hbm.fuel_additive_deicer", "Deicer");
+        add("item.hbm.catalytic_converter", "Catalytic Converter");
+        add("item.hbm.powder_lignite", "Lignite Powder");
+        add("item.hbm.powder_limestone", "Limestone Powder");
         add("item.hbm.circuit_vacuum_tube", "Vacuum Tube");
         add("item.hbm.circuit_capacitor", "Capacitor");
         add("item.hbm.circuit_capacitor_tantalium", "Tantalum Capacitor");
@@ -485,7 +550,10 @@ public class HbmLanguageProvider extends LanguageProvider {
                  "singularity_spark",
                  "black_hole",
                  "particle_digamma",
-                 "pellet_antimatter" -> true;
+                 "pellet_antimatter",
+                 "catalytic_converter",
+                 "fuel_additive_antiknock",
+                 "fuel_additive_deicer" -> true;
             default -> false;
         };
     }
@@ -496,6 +564,60 @@ public class HbmLanguageProvider extends LanguageProvider {
         }
         return switch (id) {
             case "powder_tektite" -> true;
+            case "powder_coal", "powder_coal_tiny" -> true;
+            case "coke_coal",
+                 "coke_lignite",
+                 "coke_petroleum",
+                 "briquette_coal",
+                 "briquette_lignite",
+                 "briquette_wood" -> true;
+            case "oil_tar_crude",
+                 "oil_tar_crack",
+                 "oil_tar_coal",
+                 "oil_tar_wood",
+                 "oil_tar_wax",
+                 "oil_tar_paraffin" -> true;
+            case "powder_ash_wood",
+                 "powder_ash_coal",
+                 "powder_ash_misc",
+                 "powder_ash_fly",
+                 "powder_ash_soot",
+                 "powder_ash_fullerene" -> true;
+            case "chunk_ore_rare",
+                 "chunk_ore_malachite",
+                 "chunk_ore_cryolite",
+                 "chunk_ore_moonstone",
+                 "plant_item_tobacco",
+                 "plant_item_rope",
+                 "plant_item_mustardwillow",
+                 "parts_legendary_tier1",
+                 "parts_legendary_tier2",
+                 "parts_legendary_tier3",
+                 "part_generic_piston_pneumatic",
+                 "part_generic_piston_hydraulic",
+                 "part_generic_piston_electric",
+                 "part_generic_lde",
+                 "part_generic_hde",
+                 "part_generic_glass_polarized",
+                 "item_expensive_steel_plating",
+                 "item_expensive_heavy_frame",
+                 "item_expensive_circuit",
+                 "item_expensive_lead_plating",
+                 "item_expensive_ferro_plating",
+                 "item_expensive_computer",
+                 "item_expensive_bronze_tubes",
+                 "item_expensive_plastic",
+                 "item_expensive_gold_dust",
+                 "item_expensive_degenerate_matter",
+                 "casing_small",
+                 "casing_large",
+                 "casing_small_steel",
+                 "casing_large_steel",
+                 "casing_shotshell",
+                 "casing_buckshot",
+                 "casing_buckshot_advanced",
+                 "powder_lignite",
+                 "powder_limestone" -> true;
             default -> false;
         };
     }

@@ -59,6 +59,15 @@ public final class DamageResistanceHandler {
         currentPierceDr = 0.0F;
     }
 
+    public static PierceState capturePiercing() {
+        return new PierceState(currentPierceDt, currentPierceDr);
+    }
+
+    public static void restorePiercing(PierceState state) {
+        currentPierceDt = state.pierceDt();
+        currentPierceDr = state.pierceDr();
+    }
+
     public static float currentPierceDt() {
         return currentPierceDt;
     }
@@ -146,14 +155,17 @@ public final class DamageResistanceHandler {
 
         DamageResistanceStats innate = ENTITY_STATS.get(entity.getClass());
         String innateId = entity.getClass().getName();
+        String innateMatchKind = "class";
         if (innate == null) {
-            innate = ENTITY_SIMPLE_NAME_STATS.get(entity.getClass().getSimpleName());
-            innateId = entity.getClass().getSimpleName();
+            EntityStatsMatch match = entityStatsMatch(entity);
+            innate = match == null ? null : match.stats();
+            innateId = match == null ? entity.getClass().getName() : match.id();
+            innateMatchKind = match == null ? "class" : match.kind();
         }
         if (innate != null) {
             DamageResistanceStats.ResistanceMatch match = innate.match(source);
             if (match != null) {
-                addContribution(contributions, "entity", innateId, match.kind(), match.key(), match.resistance());
+                addContribution(contributions, "entity", innateMatchKind + ":" + innateId, match.kind(), match.key(), match.resistance());
             }
         }
 
@@ -210,6 +222,40 @@ public final class DamageResistanceHandler {
         return exactTypeKey(source);
     }
 
+    public static String categoryKey(String category) {
+        String normalized = exactTypeKey(category);
+        if (normalized.equals("phys") || normalized.equals("physical")) {
+            return CATEGORY_PHYSICAL;
+        }
+        if (normalized.equals("expl") || normalized.equals("explosion") || normalized.equals("explosive")) {
+            return CATEGORY_EXPLOSION;
+        }
+        if (normalized.equals("fire")) {
+            return CATEGORY_FIRE;
+        }
+        if (normalized.equals("en")
+                || normalized.equals("energy")
+                || normalized.equals("electric")
+                || normalized.equals("electricity")
+                || normalized.equals("laser")
+                || normalized.equals("plasma")
+                || normalized.equals("microwave")
+                || normalized.equals("subatomic")) {
+            return CATEGORY_ENERGY;
+        }
+        return category;
+    }
+
+    public static String categoryKey(DamageClass category) {
+        return switch (category) {
+            case PHYSICAL -> CATEGORY_PHYSICAL;
+            case FIRE -> CATEGORY_FIRE;
+            case EXPLOSIVE -> CATEGORY_EXPLOSION;
+            case ELECTRIC, PLASMA, LASER, MICROWAVE, SUBATOMIC -> CATEGORY_ENERGY;
+            case OTHER -> DamageClass.OTHER.name();
+        };
+    }
+
     public static DamageResistanceStats itemStats(Item item) {
         return ITEM_STATS.get(item);
     }
@@ -237,9 +283,10 @@ public final class DamageResistanceHandler {
 
         DamageResistanceStats innate = ENTITY_STATS.get(entity.getClass());
         String innateKey = entity.getClass().getName();
-        if (innate == null) {
-            innate = ENTITY_SIMPLE_NAME_STATS.get(entity.getClass().getSimpleName());
-            innateKey = entity.getClass().getSimpleName();
+        EntityStatsMatch match = entityStatsMatch(entity);
+        if (match != null) {
+            innate = match.stats();
+            innateKey = match.kind() + ":" + match.id();
         }
         return new ArmorBreakdown(setResistance, List.copyOf(slots), innateKey, innate);
     }
@@ -347,6 +394,23 @@ public final class DamageResistanceHandler {
         return itemId(set.helmet()) + ", " + itemId(set.chest()) + ", " + itemId(set.legs()) + ", " + itemId(set.boots());
     }
 
+    private static EntityStatsMatch entityStatsMatch(LivingEntity entity) {
+        DamageResistanceStats exact = ENTITY_STATS.get(entity.getClass());
+        if (exact != null) {
+            return new EntityStatsMatch("class", entity.getClass().getName(), exact);
+        }
+        DamageResistanceStats simple = ENTITY_SIMPLE_NAME_STATS.get(entity.getClass().getSimpleName());
+        if (simple != null) {
+            return new EntityStatsMatch("simpleName", entity.getClass().getSimpleName(), simple);
+        }
+        for (Map.Entry<Class<? extends Entity>, DamageResistanceStats> entry : ENTITY_STATS.entrySet()) {
+            if (entry.getKey().isAssignableFrom(entity.getClass())) {
+                return new EntityStatsMatch("assignable", entry.getKey().getName(), entry.getValue());
+            }
+        }
+        return null;
+    }
+
     private record ArmorSet(Item helmet, Item chest, Item legs, Item boots) {
         private static final EquipmentSlot[] ARMOR_SLOTS = {
                 EquipmentSlot.HEAD,
@@ -395,6 +459,12 @@ public final class DamageResistanceHandler {
 
     public record ResistanceContribution(String source, String id, String matchKind, String matchKey,
                                          float threshold, float resistance) {
+    }
+
+    public record PierceState(float pierceDt, float pierceDr) {
+    }
+
+    private record EntityStatsMatch(String kind, String id, DamageResistanceStats stats) {
     }
 
     private record ResistanceContributionTotals(List<ResistanceContribution> contributions) {

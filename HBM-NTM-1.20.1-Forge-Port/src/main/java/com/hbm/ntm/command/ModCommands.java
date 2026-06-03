@@ -6,6 +6,7 @@ import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
+import com.hbm.ntm.blockentity.FluidPipeAnchorBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.blockentity.HbmFluidBlockEntity;
 import com.hbm.ntm.client.ClientBinaryData;
@@ -355,7 +356,32 @@ public final class ModCommands {
                                                 .executes(context -> setFluidPipeType(
                                                         context.getSource(),
                                                         BlockPosArgument.getLoadedBlockPos(context, "pos"),
-                                                        parseFluid(StringArgumentType.getString(context, "fluid"))))))));
+                                                        parseFluid(StringArgumentType.getString(context, "fluid")))))))
+                        .then(Commands.literal("anchor")
+                                .then(Commands.literal("link")
+                                        .then(Commands.argument("first", BlockPosArgument.blockPos())
+                                                .then(Commands.argument("second", BlockPosArgument.blockPos())
+                                                        .executes(context -> linkFluidPipeAnchors(
+                                                                context.getSource(),
+                                                                BlockPosArgument.getLoadedBlockPos(context, "first"),
+                                                                BlockPosArgument.getLoadedBlockPos(context, "second"))))))
+                                .then(Commands.literal("unlink")
+                                        .then(Commands.argument("first", BlockPosArgument.blockPos())
+                                                .then(Commands.argument("second", BlockPosArgument.blockPos())
+                                                        .executes(context -> unlinkFluidPipeAnchors(
+                                                                context.getSource(),
+                                                                BlockPosArgument.getLoadedBlockPos(context, "first"),
+                                                                BlockPosArgument.getLoadedBlockPos(context, "second"))))))
+                                .then(Commands.literal("clear")
+                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                .executes(context -> clearFluidPipeAnchor(
+                                                        context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "pos")))))
+                                .then(Commands.literal("info")
+                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                .executes(context -> getFluidPipeAnchorInfo(
+                                                        context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "pos")))))));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> networkCommand() {
@@ -1197,6 +1223,90 @@ public final class ModCommands {
         return 1;
     }
 
+    private static int linkFluidPipeAnchors(CommandSourceStack source, BlockPos firstPos, BlockPos secondPos) {
+        FluidPipeAnchorBlockEntity first = fluidPipeAnchorAt(source, firstPos);
+        FluidPipeAnchorBlockEntity second = fluidPipeAnchorAt(source, secondPos);
+        if (first == null || second == null) {
+            return 0;
+        }
+        FluidPipeAnchorBlockEntity.LinkResult result = FluidPipeAnchorBlockEntity.link(first, second);
+        if (result != FluidPipeAnchorBlockEntity.LinkResult.CONNECTED) {
+            source.sendFailure(Component.literal("Fluid pipe anchor link failed: " + fluidAnchorLinkMessage(result)));
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("Fluid pipe anchors linked: "
+                + firstPos.toShortString() + " <-> " + secondPos.toShortString()), true);
+        return 1;
+    }
+
+    private static int unlinkFluidPipeAnchors(CommandSourceStack source, BlockPos firstPos, BlockPos secondPos) {
+        FluidPipeAnchorBlockEntity first = fluidPipeAnchorAt(source, firstPos);
+        FluidPipeAnchorBlockEntity second = fluidPipeAnchorAt(source, secondPos);
+        if (first == null || second == null) {
+            return 0;
+        }
+        boolean changed = first.unlinkRemote(secondPos) | second.unlinkRemote(firstPos);
+        if (!changed) {
+            source.sendFailure(Component.literal("Fluid pipe anchors were not linked: "
+                    + firstPos.toShortString() + " <-> " + secondPos.toShortString()));
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("Fluid pipe anchors unlinked: "
+                + firstPos.toShortString() + " <-> " + secondPos.toShortString()), true);
+        return 1;
+    }
+
+    private static int clearFluidPipeAnchor(CommandSourceStack source, BlockPos pos) {
+        FluidPipeAnchorBlockEntity anchor = fluidPipeAnchorAt(source, pos);
+        if (anchor == null) {
+            return 0;
+        }
+        int count = anchor.getRemoteConnections().size();
+        boolean changed = anchor.clearRemoteConnections();
+        if (!changed) {
+            source.sendFailure(Component.literal("Fluid pipe anchor has no remote links at " + pos.toShortString()));
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("Cleared " + count + " fluid pipe anchor link(s) at "
+                + pos.toShortString()), true);
+        return count;
+    }
+
+    private static int getFluidPipeAnchorInfo(CommandSourceStack source, BlockPos pos) {
+        FluidPipeAnchorBlockEntity anchor = fluidPipeAnchorAt(source, pos);
+        if (anchor == null) {
+            return 0;
+        }
+        List<String> connections = anchor.getRemoteConnections().stream()
+                .map(BlockPos::toShortString)
+                .sorted()
+                .toList();
+        source.sendSuccess(() -> Component.literal("Fluid pipe anchor at " + pos.toShortString()
+                + " type=" + anchor.getFluidType().getName()
+                + " remoteLinks=" + connections.size()
+                + " [" + String.join(", ", connections) + "]"), false);
+        return connections.size();
+    }
+
+    private static FluidPipeAnchorBlockEntity fluidPipeAnchorAt(CommandSourceStack source, BlockPos pos) {
+        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        if (!(blockEntity instanceof FluidPipeAnchorBlockEntity anchor)) {
+            source.sendFailure(Component.literal("No HBM fluid pipe anchor at " + pos.toShortString()));
+            return null;
+        }
+        return anchor;
+    }
+
+    private static String fluidAnchorLinkMessage(FluidPipeAnchorBlockEntity.LinkResult result) {
+        return switch (result) {
+            case CONNECTED -> "connected";
+            case INCOMPATIBLE -> "anchors are not compatible";
+            case SAME_BLOCK -> "cannot connect an anchor to itself";
+            case TOO_FAR -> "pipe anchor is too far away";
+            case FLUID_MISMATCH -> "pipe anchor fluid types do not match";
+        };
+    }
+
     private static int listAssemblyRecipes(CommandSourceStack source) {
         List<String> recipes = GenericMachineRecipeRuntime.recipeNames(source.getLevel(), GenericMachineRecipe.Machine.ASSEMBLY_MACHINE);
         source.sendSuccess(() -> Component.literal("Assembly recipes (" + recipes.size() + "): " + String.join(", ", recipes)), false);
@@ -1323,13 +1433,11 @@ public final class ModCommands {
                 continue;
             }
             families++;
-            List<RegistryObject<Item>> mappedItems = LegacyMetaItemMappings.variants(legacyId);
+            java.util.Map<Integer, RegistryObject<Item>> mappedItems = LegacyMetaItemMappings.mappingsByMeta().getOrDefault(legacyId, java.util.Map.of());
             variants += mappedItems.size();
             source.sendSuccess(() -> Component.literal("Legacy meta " + legacyId + " variants=" + mappedItems.size()), false);
-            for (int meta = 0; meta < mappedItems.size(); meta++) {
-                int currentMeta = meta;
-                RegistryObject<Item> item = mappedItems.get(meta);
-                source.sendSuccess(() -> Component.literal(" - " + currentMeta + " -> " + item.getId()), false);
+            for (java.util.Map.Entry<Integer, RegistryObject<Item>> entry : mappedItems.entrySet()) {
+                source.sendSuccess(() -> Component.literal(" - " + entry.getKey() + " -> " + entry.getValue().getId()), false);
             }
         }
         int totalFamilies = families;

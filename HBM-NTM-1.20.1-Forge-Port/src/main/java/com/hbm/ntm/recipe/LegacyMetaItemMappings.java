@@ -18,8 +18,23 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation BATTERY_PACK = hbm("battery_pack");
     public static final ResourceLocation BATTERY_SC = hbm("battery_sc");
     public static final ResourceLocation CIRCUIT = hbm("circuit");
+    public static final ResourceLocation PLATE_CAST = hbm("plate_cast");
+    public static final ResourceLocation WIRE_FINE = hbm("wire_fine");
+    public static final ResourceLocation WIRE_DENSE = hbm("wire_dense");
+    public static final ResourceLocation PIPE = hbm("pipe");
+    public static final ResourceLocation COKE = hbm("coke");
+    public static final ResourceLocation BRIQUETTE = hbm("briquette");
+    public static final ResourceLocation OIL_TAR = hbm("oil_tar");
+    public static final ResourceLocation POWDER_ASH = hbm("powder_ash");
+    public static final ResourceLocation CHUNK_ORE = hbm("chunk_ore");
+    public static final ResourceLocation PLANT_ITEM = hbm("plant_item");
+    public static final ResourceLocation PARTS_LEGENDARY = hbm("parts_legendary");
+    public static final ResourceLocation PART_GENERIC = hbm("part_generic");
+    public static final ResourceLocation ITEM_EXPENSIVE = hbm("item_expensive");
+    public static final ResourceLocation CASING = hbm("casing");
+    public static final ResourceLocation FUEL_ADDITIVE = hbm("fuel_additive");
 
-    private static final Map<ResourceLocation, List<RegistryObject<Item>>> ITEM_VARIANTS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, LinkedHashMap<Integer, RegistryObject<Item>>> ITEM_VARIANTS = new LinkedHashMap<>();
 
     static {
         register(BATTERY_PACK,
@@ -47,6 +62,72 @@ public final class LegacyMetaItemMappings {
                 ModItems.BATTERY_SC_PB209,
                 ModItems.BATTERY_SC_AM241);
         registerList(CIRCUIT, ModItems.CIRCUIT_ITEMS);
+        registerSparse(PLATE_CAST, Map.of(
+                39, requireLegacyItem("plate_cast_combine_steel"),
+                46, requireLegacyItem("plate_cast_bismuth_bronze"),
+                47, requireLegacyItem("plate_cast_arsenic_bronze")));
+        registerSparse(WIRE_FINE, Map.of(
+                7_900, requireLegacyItem("wire_gold")));
+        registerSparse(WIRE_DENSE, Map.of(
+                4_100, requireLegacyItem("wire_dense_niobium"),
+                7_900, requireLegacyItem("wire_dense_gold"),
+                48, requireLegacyItem("wire_dense_bscco")));
+        registerSparse(PIPE, Map.of(
+                30, requireLegacyItem("pipes_steel")));
+        registerSparse(COKE, Map.of(
+                0, requireLegacyItem("coke_coal"),
+                1, requireLegacyItem("coke_lignite"),
+                2, requireLegacyItem("coke_petroleum")));
+        registerSparse(BRIQUETTE, Map.of(
+                0, requireLegacyItem("briquette_coal"),
+                1, requireLegacyItem("briquette_lignite"),
+                2, requireLegacyItem("briquette_wood")));
+        registerSparse(OIL_TAR, Map.of(
+                0, requireLegacyItem("oil_tar_crude"),
+                1, requireLegacyItem("oil_tar_crack"),
+                2, requireLegacyItem("oil_tar_coal"),
+                3, requireLegacyItem("oil_tar_wood"),
+                4, requireLegacyItem("oil_tar_wax"),
+                5, requireLegacyItem("oil_tar_paraffin")));
+        registerSparse(POWDER_ASH, Map.of(
+                0, requireLegacyItem("powder_ash_wood"),
+                1, requireLegacyItem("powder_ash_coal"),
+                2, requireLegacyItem("powder_ash_misc"),
+                3, requireLegacyItem("powder_ash_fly"),
+                4, requireLegacyItem("powder_ash_soot"),
+                5, requireLegacyItem("powder_ash_fullerene")));
+        registerSparse(CHUNK_ORE, Map.of(
+                0, requireLegacyItem("chunk_ore_rare"),
+                1, requireLegacyItem("chunk_ore_malachite"),
+                2, requireLegacyItem("chunk_ore_cryolite"),
+                3, requireLegacyItem("chunk_ore_moonstone")));
+        registerSparse(PLANT_ITEM, Map.of(
+                0, requireLegacyItem("plant_item_tobacco"),
+                1, requireLegacyItem("plant_item_rope"),
+                2, requireLegacyItem("plant_item_mustardwillow")));
+        registerSparse(PARTS_LEGENDARY, Map.of(
+                0, requireLegacyItem("parts_legendary_tier1"),
+                1, requireLegacyItem("parts_legendary_tier2"),
+                2, requireLegacyItem("parts_legendary_tier3")));
+        registerSparse(PART_GENERIC, Map.of(
+                0, requireLegacyItem("part_generic_piston_pneumatic"),
+                1, requireLegacyItem("part_generic_piston_hydraulic"),
+                2, requireLegacyItem("part_generic_piston_electric"),
+                3, requireLegacyItem("part_generic_lde"),
+                4, requireLegacyItem("part_generic_hde"),
+                5, requireLegacyItem("part_generic_glass_polarized")));
+        registerList(ITEM_EXPENSIVE, ModItems.EXPENSIVE_MODE_ITEMS);
+        registerSparse(CASING, Map.of(
+                0, requireLegacyItem("casing_small"),
+                1, requireLegacyItem("casing_large"),
+                2, requireLegacyItem("casing_small_steel"),
+                3, requireLegacyItem("casing_large_steel"),
+                4, requireLegacyItem("casing_shotshell"),
+                5, requireLegacyItem("casing_buckshot"),
+                6, requireLegacyItem("casing_buckshot_advanced")));
+        registerSparse(FUEL_ADDITIVE, Map.of(
+                0, requireLegacyItem("fuel_additive_antiknock"),
+                1, requireLegacyItem("fuel_additive_deicer")));
     }
 
     @SafeVarargs
@@ -58,15 +139,30 @@ public final class LegacyMetaItemMappings {
         if (ITEM_VARIANTS.containsKey(legacyId)) {
             throw new IllegalStateException("Duplicate legacy item mapping family: " + legacyId);
         }
-        ITEM_VARIANTS.put(legacyId, List.copyOf(variantsByMeta));
+        LinkedHashMap<Integer, RegistryObject<Item>> variants = new LinkedHashMap<>();
+        for (int meta = 0; meta < variantsByMeta.size(); meta++) {
+            variants.put(meta, variantsByMeta.get(meta));
+        }
+        ITEM_VARIANTS.put(legacyId, variants);
+    }
+
+    public static void registerSparse(ResourceLocation legacyId, Map<Integer, RegistryObject<Item>> variantsByMeta) {
+        if (ITEM_VARIANTS.containsKey(legacyId)) {
+            throw new IllegalStateException("Duplicate legacy item mapping family: " + legacyId);
+        }
+        LinkedHashMap<Integer, RegistryObject<Item>> variants = new LinkedHashMap<>();
+        variantsByMeta.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> variants.put(entry.getKey(), entry.getValue()));
+        ITEM_VARIANTS.put(legacyId, variants);
     }
 
     public static Optional<RegistryObject<Item>> item(ResourceLocation legacyId, int legacyMeta) {
-        List<RegistryObject<Item>> variants = ITEM_VARIANTS.get(legacyId);
-        if (variants == null || legacyMeta < 0 || legacyMeta >= variants.size()) {
+        Map<Integer, RegistryObject<Item>> variants = ITEM_VARIANTS.get(legacyId);
+        if (variants == null) {
             return Optional.empty();
         }
-        return Optional.of(variants.get(legacyMeta));
+        return Optional.ofNullable(variants.get(legacyMeta));
     }
 
     public static RegistryObject<Item> requireItem(ResourceLocation legacyId, int legacyMeta) {
@@ -90,8 +186,8 @@ public final class LegacyMetaItemMappings {
     }
 
     public static List<RegistryObject<Item>> variants(ResourceLocation legacyId) {
-        List<RegistryObject<Item>> variants = ITEM_VARIANTS.get(legacyId);
-        return variants == null ? List.of() : variants;
+        Map<Integer, RegistryObject<Item>> variants = ITEM_VARIANTS.get(legacyId);
+        return variants == null ? List.of() : List.copyOf(variants.values());
     }
 
     public static int variantCount(ResourceLocation legacyId) {
@@ -103,7 +199,23 @@ public final class LegacyMetaItemMappings {
     }
 
     public static Map<ResourceLocation, List<RegistryObject<Item>>> mappings() {
-        return Collections.unmodifiableMap(new LinkedHashMap<>(ITEM_VARIANTS));
+        Map<ResourceLocation, List<RegistryObject<Item>>> mappings = new LinkedHashMap<>();
+        ITEM_VARIANTS.forEach((legacyId, variants) -> mappings.put(legacyId, List.copyOf(variants.values())));
+        return Collections.unmodifiableMap(mappings);
+    }
+
+    public static Map<ResourceLocation, Map<Integer, RegistryObject<Item>>> mappingsByMeta() {
+        Map<ResourceLocation, Map<Integer, RegistryObject<Item>>> mappings = new LinkedHashMap<>();
+        ITEM_VARIANTS.forEach((legacyId, variants) -> mappings.put(legacyId, Collections.unmodifiableMap(new LinkedHashMap<>(variants))));
+        return Collections.unmodifiableMap(mappings);
+    }
+
+    private static RegistryObject<Item> requireLegacyItem(String name) {
+        RegistryObject<Item> item = ModItems.legacyItem(name);
+        if (item == null) {
+            throw new IllegalStateException("Missing modern item for legacy meta mapping: " + name);
+        }
+        return item;
     }
 
     private static ResourceLocation hbm(String path) {

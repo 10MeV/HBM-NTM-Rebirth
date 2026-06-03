@@ -4,10 +4,12 @@ import com.hbm.ntm.HbmNtm;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ObjWeaponModels {
+    public static final LegacyWavefrontModel SHIMMER_SLEDGE = model("shimmer_sledge");
+    public static final LegacyWavefrontModel SHIMMER_AXE = model("shimmer_axe");
     public static final LegacyWavefrontModel STOPSIGN = model("stopsign");
     public static final LegacyWavefrontModel GAVEL = model("gavel").asVBO();
     public static final LegacyWavefrontModel CRUCIBLE = model("crucible").asVBO();
-    public static final LegacyWavefrontModel CHAINSAW = model("chainsaw").noSmooth();
+    public static final LegacyWavefrontModel CHAINSAW = model("chainsaw").noSmooth().asVBO();
     public static final LegacyWavefrontModel BOLTGUN = model("boltgun").asVBO();
     public static final LegacyWavefrontModel BOLTER = model("bolter").asVBO();
     public static final LegacyWavefrontModel DETONATOR_LASER = model("detonator_laser").asVBO();
@@ -60,7 +62,12 @@ public final class ObjWeaponModels {
     public static final LegacyWavefrontModel N_I_4_N_I = model("n_i_4_n_i").asVBO();
     public static final LegacyWavefrontModel LANCE = model("lance");
     public static final LegacyWavefrontModel GRENADES = model("grenades");
+    public static final LegacyWavefrontModel BUILDING = model("building");
+    public static final LegacyWavefrontModel TORPEDO = model("torpedo");
+    public static final LegacyWavefrontModel TOM_MAIN = model("tom_main");
 
+    public static final ResourceLocation SHIMMER_SLEDGE_TEXTURE = texture("shimmer_sledge");
+    public static final ResourceLocation SHIMMER_AXE_TEXTURE = texture("shimmer_axe");
     public static final ResourceLocation STOPSIGN_TEXTURE = texture("stopsign");
     public static final ResourceLocation SOPSIGN_TEXTURE = texture("sopsign");
     public static final ResourceLocation CHERNOBYLSIGN_TEXTURE = texture("chernobylsign");
@@ -163,6 +170,10 @@ public final class ObjWeaponModels {
     public static final ResourceLocation N_I_4_N_I_TEXTURE = texture("n_i_4_n_i");
     public static final ResourceLocation N_I_4_N_I_GREYSCALE_TEXTURE = texture("n_i_4_n_i_greyscale");
     public static final ResourceLocation LANCE_TEXTURE = texture("lance");
+    public static final ResourceLocation BUILDING_TEXTURE = texture("building");
+    public static final ResourceLocation TORPEDO_TEXTURE = texture("torpedo");
+    public static final ResourceLocation TOM_MAIN_TEXTURE = texture("tom_main");
+    public static final ResourceLocation TOM_FLAME_TEXTURE = texture("tom_flame");
     public static final ResourceLocation GRENADE_FRAG_TEXTURE = grenadeTexture("frag");
     public static final ResourceLocation GRENADE_FRAG_BODY_TEXTURE = grenadeTexture("frag_body");
     public static final ResourceLocation GRENADE_FRAG_LABEL_TEXTURE = grenadeTexture("frag_label");

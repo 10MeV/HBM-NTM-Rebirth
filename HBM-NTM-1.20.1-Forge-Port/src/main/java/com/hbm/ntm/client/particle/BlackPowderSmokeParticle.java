@@ -13,9 +13,11 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.awt.Color;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @OnlyIn(Dist.CLIENT)
 public class BlackPowderSmokeParticle extends TextureSheetParticle {
+    private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
     private static SpriteSet sharedSprites;
 
     private final SpriteSet sprites;
@@ -27,6 +29,7 @@ public class BlackPowderSmokeParticle extends TextureSheetParticle {
             double xSpeed, double ySpeed, double zSpeed, float scale, SpriteSet sprites) {
         super(level, x, y, z);
         this.sprites = sprites;
+        int visualId = NEXT_VISUAL_ID.incrementAndGet();
         this.lifetime = 30 + random.nextInt(15);
         this.baseScale = scale * 0.9F + random.nextFloat() * 0.2F;
         this.xd = xSpeed;
@@ -34,7 +37,7 @@ public class BlackPowderSmokeParticle extends TextureSheetParticle {
         this.zd = zSpeed;
         this.hasPhysics = false;
         this.hue = 20.0F + random.nextFloat() * 20.0F;
-        this.rollSpeed = (random.nextBoolean() ? 1.0F : -1.0F) * Mth.DEG_TO_RAD;
+        this.rollSpeed = (visualId % 2 - 0.5F) * 2.0F * Mth.DEG_TO_RAD;
         this.updateVisuals(0.0F);
         this.setSpriteFromAge(sprites);
     }

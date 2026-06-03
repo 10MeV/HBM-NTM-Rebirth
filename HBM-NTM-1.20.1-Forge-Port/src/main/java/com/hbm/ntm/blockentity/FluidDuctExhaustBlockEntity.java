@@ -1,5 +1,8 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnectionUtil;
 import com.hbm.ntm.fluid.HbmFluidConnector;
@@ -16,7 +19,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Set;
 
-public class FluidDuctExhaustBlockEntity extends BlockEntity implements HbmFluidConnector, HbmFluidNodeHost {
+public class FluidDuctExhaustBlockEntity extends BlockEntity implements HbmFluidConnector, HbmFluidNodeHost,
+        LegacyLookOverlayProvider {
     private static final FluidType[] SMOKES = {
             HbmFluids.SMOKE,
             HbmFluids.SMOKE_LEADED,
@@ -41,6 +45,11 @@ public class FluidDuctExhaustBlockEntity extends BlockEntity implements HbmFluid
             }
         }
         return null;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(net.minecraft.world.level.Level level, BlockPos viewedPos) {
+        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.fluidNames(SMOKES));
     }
 
     @Override

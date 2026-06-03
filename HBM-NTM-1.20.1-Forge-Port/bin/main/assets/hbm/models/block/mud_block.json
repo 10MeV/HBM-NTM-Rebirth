@@ -1,7 +1,5 @@
 {
   "parent": "minecraft:block/cube_all",
   "render_type": "minecraft:translucent",
-  "textures": {
-    "all": "hbm:block/mud_still"
-  }
+  "textures": { "all": "hbm:block/mud_still" }
 }

@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -41,6 +42,16 @@ public class FluidPipeAnchorBlock extends FluidPipeBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new FluidPipeAnchorBlockEntity(pos, state);
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())
+                && !level.isClientSide
+                && level.getBlockEntity(pos) instanceof FluidPipeAnchorBlockEntity anchor) {
+            anchor.disconnectAllRemotePartners();
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     public static Direction attachedSide(BlockState state) {

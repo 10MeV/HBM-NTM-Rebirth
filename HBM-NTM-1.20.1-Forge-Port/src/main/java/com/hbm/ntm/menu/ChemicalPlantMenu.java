@@ -1,19 +1,21 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
-import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmMenuDataSlots;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.SlotItemHandler;
+
+import java.util.List;
 
 public class ChemicalPlantMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = ChemicalPlantBlockEntity.ITEM_COUNT;
@@ -25,10 +27,8 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
     private long power;
     private long maxPower;
     private int progress;
-    private final int[] inputFill = new int[3];
-    private final int[] inputCapacity = new int[3];
-    private final int[] outputFill = new int[3];
-    private final int[] outputCapacity = new int[3];
+    private final HbmFluidGuiHelper.TankData[] inputTanks = new HbmFluidGuiHelper.TankData[3];
+    private final HbmFluidGuiHelper.TankData[] outputTanks = new HbmFluidGuiHelper.TankData[3];
 
     public ChemicalPlantMenu(int containerId, Inventory playerInventory, FriendlyByteBuf data) {
         this(containerId, playerInventory, getBlockEntity(playerInventory, data.readBlockPos()));
@@ -41,14 +41,14 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
         addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_BATTERY, 152, 81));
         addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_BLUEPRINT, 35, 126));
         addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_UPGRADE_START, 152, 108));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_UPGRADE_END, 170, 108));
+        addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_UPGRADE_END, 152, 126));
 
         for (int i = 0; i < 3; i++) {
             addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_START + i,
-                    8, 99 + i * 18));
+                    8 + i * 18, 99));
         }
         for (int i = 0; i < 3; i++) {
-            addOutputSlot(ChemicalPlantBlockEntity.SLOT_ITEM_OUTPUT_START + i, 80, 99 + i * 18);
+            addOutputSlot(ChemicalPlantBlockEntity.SLOT_ITEM_OUTPUT_START + i, 80 + i * 18, 99);
         }
         for (int i = 0; i < 3; i++) {
             addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_FLUID_INPUT_START + i,
@@ -90,175 +90,76 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
     }
 
     public int getInputTankFillHeight(int index, int maxHeight) {
-        return inputCapacity[index] <= 0 ? 0 : inputFill[index] * maxHeight / inputCapacity[index];
+        return inputTanks[index].scaledFill(maxHeight);
     }
 
     public int getOutputTankFillHeight(int index, int maxHeight) {
-        return outputCapacity[index] <= 0 ? 0 : outputFill[index] * maxHeight / outputCapacity[index];
+        return outputTanks[index].scaledFill(maxHeight);
+    }
+
+    public int getInputTankTint(int index) {
+        return inputTanks[index].guiTint();
+    }
+
+    public int getOutputTankTint(int index) {
+        return outputTanks[index].guiTint();
+    }
+
+    public HbmFluidGuiHelper.TankData getInputTankData(int index) {
+        return inputTanks[index];
+    }
+
+    public HbmFluidGuiHelper.TankData getOutputTankData(int index) {
+        return outputTanks[index];
     }
 
     public Component getInputTankInfo(int index) {
-        return tankInfo(blockEntity.getInputTank(index), inputFill[index], inputCapacity[index]);
+        return inputTanks[index].info();
     }
 
     public Component getOutputTankInfo(int index) {
-        return tankInfo(blockEntity.getOutputTank(index), outputFill[index], outputCapacity[index]);
+        return outputTanks[index].info();
+    }
+
+    public List<Component> getInputTankTooltip(int index) {
+        return inputTanks[index].tooltip();
+    }
+
+    public List<Component> getOutputTankTooltip(int index) {
+        return outputTanks[index].tooltip();
     }
 
     @Override
     public boolean stillValid(Player player) {
-        return !blockEntity.isRemoved() && player.distanceToSqr(
-                blockEntity.getBlockPos().getX() + 0.5D,
-                blockEntity.getBlockPos().getY() + 0.5D,
-                blockEntity.getBlockPos().getZ() + 0.5D) <= 64.0D;
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
     }
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack result = ItemStack.EMPTY;
-        Slot slot = slots.get(index);
-        if (slot != null && slot.hasItem()) {
-            ItemStack stack = slot.getItem();
-            result = stack.copy();
-
-            if (index < MACHINE_SLOT_COUNT) {
-                if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
-                    return ItemStack.EMPTY;
-                }
-            } else if (!moveItemStackTo(stack, ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_START,
-                    ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_END + 1, false)
-                    && !moveItemStackTo(stack, ChemicalPlantBlockEntity.SLOT_BATTERY,
-                    ChemicalPlantBlockEntity.SLOT_BATTERY + 1, false)) {
-                return ItemStack.EMPTY;
-            }
-
-            if (stack.isEmpty()) {
-                slot.set(ItemStack.EMPTY);
-            } else {
-                slot.setChanged();
-            }
-        }
-        return result;
+        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index, MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START,
+                HOTBAR_END,
+                ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_START, ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_END + 1,
+                ChemicalPlantBlockEntity.SLOT_FLUID_INPUT_START, ChemicalPlantBlockEntity.SLOT_FLUID_INPUT_END + 1,
+                ChemicalPlantBlockEntity.SLOT_FLUID_OUTPUT_START, ChemicalPlantBlockEntity.SLOT_FLUID_OUTPUT_END + 1,
+                ChemicalPlantBlockEntity.SLOT_BATTERY, ChemicalPlantBlockEntity.SLOT_BATTERY + 1);
     }
 
     private void addOutputSlot(int slot, int x, int y) {
-        addSlot(new SlotItemHandler(blockEntity.getItems(), slot, x, y) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return false;
-            }
-        });
+        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), slot, x, y));
     }
 
     private void addPlayerInventory(Inventory inventory) {
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 9; column++) {
-                addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 174 + row * 18));
-            }
-        }
-
-        for (int column = 0; column < 9; column++) {
-            addSlot(new Slot(inventory, column, 8 + column * 18, 232));
-        }
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 174, 232);
     }
 
     private void addDataSlots() {
-        addLongDataSlot(() -> blockEntity.getPower(), () -> power, value -> power = value);
-        addLongDataSlot(() -> blockEntity.getMaxPower(), () -> maxPower, value -> maxPower = value);
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) Math.round(blockEntity.getProgress() * 10_000.0D);
-            }
-
-            @Override
-            public void set(int value) {
-                progress = value;
-            }
-        });
+        HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getPower(), () -> power, value -> power = value);
+        HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getMaxPower(), () -> maxPower, value -> maxPower = value);
+        HbmMenuDataSlots.addProgress(this::addDataSlot, () -> blockEntity.getProgress(), value -> progress = value);
         for (int i = 0; i < 3; i++) {
-            int index = i;
-            addTankDataSlots(blockEntity.getInputTank(i), value -> inputFill[index] = value,
-                    value -> inputCapacity[index] = value);
-            addTankDataSlots(blockEntity.getOutputTank(i), value -> outputFill[index] = value,
-                    value -> outputCapacity[index] = value);
+            inputTanks[i] = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getInputTank(i));
+            outputTanks[i] = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getOutputTank(i));
         }
-    }
-
-    private void addTankDataSlots(HbmFluidTank tank, IntSetter fillSetter, IntSetter capacitySetter) {
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return tank.getFill();
-            }
-
-            @Override
-            public void set(int value) {
-                fillSetter.set(value);
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return tank.getMaxFill();
-            }
-
-            @Override
-            public void set(int value) {
-                capacitySetter.set(value);
-            }
-        });
-    }
-
-    private void addLongDataSlot(LongGetter serverGetter, LongGetter clientGetter, LongSetter setter) {
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) (serverGetter.get() & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~0xFFFFL) | (value & 0xFFFFL));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 16) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 16)) | ((long) (value & 0xFFFF) << 16));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 32) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 32)) | ((long) (value & 0xFFFF) << 32));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 48) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 48)) | ((long) (value & 0xFFFF) << 48));
-            }
-        });
-    }
-
-    private static Component tankInfo(HbmFluidTank tank, int fill, int capacity) {
-        return tank.getTankType().getDisplayName().copy().append(": " + fill + " / " + capacity + " mB");
     }
 
     private static ChemicalPlantBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
@@ -269,16 +170,4 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
         throw new IllegalStateException("Expected chemical plant block entity at " + pos);
     }
 
-    @FunctionalInterface
-    private interface LongGetter {
-        long get();
-    }
-
-    private interface LongSetter {
-        void set(long value);
-    }
-
-    private interface IntSetter {
-        void set(int value);
-    }
 }

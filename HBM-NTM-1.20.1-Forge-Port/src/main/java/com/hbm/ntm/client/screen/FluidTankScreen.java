@@ -29,12 +29,8 @@ public class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
         graphics.blit(TEXTURE, leftPos + 151, topPos + 34, 176, menu.getMode() * 18, 18, 18);
 
-        int tank = menu.getTankFillHeight(52);
-        if (tank > 0) {
-            int color = menu.getBlockEntity().getTank().getTankType().getColor();
-            graphics.fill(leftPos + 71, topPos + 17 + 52 - tank, leftPos + 105, topPos + 69,
-                    0xCC000000 | (color & 0xFFFFFF));
-        }
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 71, topPos + 69,
+                34, 52, menu.getTankData());
     }
 
     @Override
@@ -49,7 +45,7 @@ public class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(71, 17, 34, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, menu.getTankInfo(), mouseX, mouseY);
+            graphics.renderTooltip(font, menu.getTankTooltip().stream().map(Component::getVisualOrderText).toList(), mouseX, mouseY);
         } else if (isHovering(151, 34, 18, 18, mouseX, mouseY)) {
             graphics.renderTooltip(font, modeTooltip().stream().map(Component::getVisualOrderText).toList(), mouseX, mouseY);
         }

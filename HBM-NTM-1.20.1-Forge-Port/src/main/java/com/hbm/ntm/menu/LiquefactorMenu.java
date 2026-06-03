@@ -1,8 +1,10 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.LiquefactorBlockEntity;
-import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmMenuDataSlots;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -10,10 +12,11 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.SlotItemHandler;
+
+import java.util.List;
 
 public class LiquefactorMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = 4;
@@ -27,8 +30,7 @@ public class LiquefactorMenu extends AbstractContainerMenu {
     private int progress;
     private int processTime;
     private int usage;
-    private int tankFill;
-    private int tankCapacity;
+    private HbmFluidGuiHelper.TankData tank;
 
     public LiquefactorMenu(int containerId, Inventory playerInventory, FriendlyByteBuf data) {
         this(containerId, playerInventory, getBlockEntity(playerInventory, data.readBlockPos()));
@@ -71,62 +73,44 @@ public class LiquefactorMenu extends AbstractContainerMenu {
     }
 
     public int getTankFillHeight(int maxHeight) {
-        return tankCapacity <= 0 ? 0 : tankFill * maxHeight / tankCapacity;
+        return tank.scaledFill(maxHeight);
     }
 
     public Component getTankInfo() {
-        HbmFluidTank tank = blockEntity.getTank();
-        return tank.getTankType().getDisplayName().copy().append(": " + tankFill + " / " + tankCapacity + " mB");
+        return tank.info();
+    }
+
+    public int getTankTint() {
+        return tank.guiTint();
+    }
+
+    public HbmFluidGuiHelper.TankData getTankData() {
+        return tank;
+    }
+
+    public List<Component> getTankTooltip() {
+        return tank.tooltip();
     }
 
     @Override
     public boolean stillValid(Player player) {
-        return !blockEntity.isRemoved() && player.distanceToSqr(
-                blockEntity.getBlockPos().getX() + 0.5D,
-                blockEntity.getBlockPos().getY() + 0.5D,
-                blockEntity.getBlockPos().getZ() + 0.5D) <= 64.0D;
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
     }
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack result = ItemStack.EMPTY;
-        Slot slot = slots.get(index);
-        if (slot != null && slot.hasItem()) {
-            ItemStack stack = slot.getItem();
-            result = stack.copy();
-
-            if (index < MACHINE_SLOT_COUNT) {
-                if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
-                    return ItemStack.EMPTY;
-                }
-            } else if (!moveItemStackTo(stack, 0, MACHINE_SLOT_COUNT, false)) {
-                return ItemStack.EMPTY;
-            }
-
-            if (stack.isEmpty()) {
-                slot.set(ItemStack.EMPTY);
-            } else {
-                slot.setChanged();
-            }
-        }
-        return result;
+        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index, MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START,
+                HOTBAR_END,
+                0, MACHINE_SLOT_COUNT);
     }
 
     private void addPlayerInventory(Inventory inventory) {
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 9; column++) {
-                addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 122 + row * 18));
-            }
-        }
-
-        for (int column = 0; column < 9; column++) {
-            addSlot(new Slot(inventory, column, 8 + column * 18, 180));
-        }
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 122, 180);
     }
 
     private void addDataSlots() {
-        addLongDataSlot(() -> blockEntity.getPower(), () -> power, value -> power = value);
-        addLongDataSlot(() -> blockEntity.getMaxPower(), () -> maxPower, value -> maxPower = value);
+        HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getPower(), () -> power, value -> power = value);
+        HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getMaxPower(), () -> maxPower, value -> maxPower = value);
         addDataSlot(new DataSlot() {
             @Override
             public int get() {
@@ -160,79 +144,7 @@ public class LiquefactorMenu extends AbstractContainerMenu {
                 usage = value;
             }
         });
-        addTankDataSlots(blockEntity.getTank());
-    }
-
-    private void addTankDataSlots(HbmFluidTank tank) {
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return tank.getFill();
-            }
-
-            @Override
-            public void set(int value) {
-                tankFill = value;
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return tank.getMaxFill();
-            }
-
-            @Override
-            public void set(int value) {
-                tankCapacity = value;
-            }
-        });
-    }
-
-    private void addLongDataSlot(LongGetter serverGetter, LongGetter clientGetter, LongSetter setter) {
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) (serverGetter.get() & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~0xFFFFL) | (value & 0xFFFFL));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 16) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 16)) | ((long) (value & 0xFFFF) << 16));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 32) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 32)) | ((long) (value & 0xFFFF) << 32));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 48) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 48)) | ((long) (value & 0xFFFF) << 48));
-            }
-        });
+        tank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getTank());
     }
 
     private static LiquefactorBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
@@ -241,14 +153,5 @@ public class LiquefactorMenu extends AbstractContainerMenu {
             return liquefactor;
         }
         throw new IllegalStateException("Expected liquefactor block entity at " + pos);
-    }
-
-    @FunctionalInterface
-    private interface LongGetter {
-        long get();
-    }
-
-    private interface LongSetter {
-        void set(long value);
     }
 }

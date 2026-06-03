@@ -12,17 +12,27 @@ import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.menu.RemoteFluidMachineMenu;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,18 +40,44 @@ import org.jetbrains.annotations.Nullable;
  * machines whose full GUI/recipe systems are still being migrated.
  */
 public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFluidBlockEntity
-        implements HbmStandardFluidTransceiver {
+        implements MenuProvider, HbmStandardFluidTransceiver {
+    private static final String TAG_INVENTORY = "Inventory";
+
     private final List<HbmFluidTank> receivingTanks;
     private final List<HbmFluidTank> sendingTanks;
     private final boolean rejectsDownConnections;
+    @Nullable
+    private final ItemStackHandler items;
 
     protected LegacyRemoteFluidMachineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state,
             long maxPower, List<HbmFluidTank> allTanks, List<HbmFluidTank> receivingTanks,
             List<HbmFluidTank> sendingTanks, boolean rejectsDownConnections) {
+        this(type, pos, state, maxPower, allTanks, receivingTanks, sendingTanks, rejectsDownConnections, 0);
+    }
+
+    protected LegacyRemoteFluidMachineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state,
+            long maxPower, List<HbmFluidTank> allTanks, List<HbmFluidTank> receivingTanks,
+            List<HbmFluidTank> sendingTanks, boolean rejectsDownConnections, int itemSlotCount) {
         super(type, pos, state, new HbmEnergyStorage(maxPower, maxPower, 0L), allTanks);
         this.receivingTanks = List.copyOf(receivingTanks);
         this.sendingTanks = List.copyOf(sendingTanks);
         this.rejectsDownConnections = rejectsDownConnections;
+        this.items = itemSlotCount > 0 ? new ItemStackHandler(itemSlotCount) {
+            @Override
+            protected void onContentsChanged(int slot) {
+                setChanged();
+            }
+
+            @Override
+            public boolean isItemValid(int slot, ItemStack stack) {
+                return LegacyRemoteFluidMachineBlockEntity.this.isItemValid(slot, stack);
+            }
+
+            @Override
+            public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+                return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
+            }
+        } : null;
     }
 
     public static <T extends LegacyRemoteFluidMachineBlockEntity> void serverTick(Level level, BlockPos pos,
@@ -61,6 +97,38 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
 
     protected boolean tickLegacyMachine(Level level, BlockPos pos, BlockState state) {
         return false;
+    }
+
+    protected boolean isItemValid(int slot, ItemStack stack) {
+        return false;
+    }
+
+    @Nullable
+    public ItemStackHandler getItems() {
+        return items;
+    }
+
+    public List<ItemStack> getDrops() {
+        return items == null ? List.of() : HbmInventoryMenuHelper.clearToDrops(items);
+    }
+
+    public LegacyGuiProfile getLegacyGuiProfile() {
+        return LegacyGuiProfile.NONE;
+    }
+
+    public boolean hasLegacyGui() {
+        return getLegacyGuiProfile() != LegacyGuiProfile.NONE;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return getBlockState().getBlock().getName();
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+        return hasLegacyGui() ? new RemoteFluidMachineMenu(containerId, playerInventory, this) : null;
     }
 
     protected void refreshFluidPorts() {
@@ -118,7 +186,10 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
 
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
-        return side == null ? HbmFluidSideMode.BOTH : HbmFluidSideMode.INPUT;
+        if (side == null) {
+            return HbmFluidSideMode.BOTH;
+        }
+        return rejectsDownConnections && side == Direction.DOWN ? HbmFluidSideMode.NONE : HbmFluidSideMode.BOTH;
     }
 
     @Override
@@ -129,17 +200,7 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     @Override
     public boolean canConnectFluid(FluidType type, Direction side) {
         return type != null && type != HbmFluids.NONE && side != null
-                && (!rejectsDownConnections || side != Direction.DOWN)
-                && acceptsOrProvides(type);
-    }
-
-    private boolean acceptsOrProvides(FluidType type) {
-        for (HbmFluidTank tank : getAllTanks()) {
-            if (tank.getTankType() == type) {
-                return true;
-            }
-        }
-        return false;
+                && (!rejectsDownConnections || side != Direction.DOWN);
     }
 
     @Override
@@ -222,6 +283,23 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
         return List.copyOf(ports);
     }
 
+    protected boolean consumePower(long amount) {
+        if (amount <= 0L) {
+            return true;
+        }
+        if (energy.getPower() < amount) {
+            return false;
+        }
+        energy.setPower(energy.getPower() - amount);
+        return true;
+    }
+
+    protected void chargeFromSlot(int slot) {
+        if (items != null && slot >= 0 && slot < items.getSlots()) {
+            HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(slot), energy, energy.getReceiverSpeed());
+        }
+    }
+
     protected List<EnergyPort> energyPortsFromOffsets(List<BlockPos> offsets) {
         List<EnergyPort> ports = new ArrayList<>();
         for (BlockPos offset : offsets) {
@@ -236,5 +314,63 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
             return offset.getX() >= 0 ? Direction.EAST : Direction.WEST;
         }
         return offset.getZ() >= 0 ? Direction.SOUTH : Direction.NORTH;
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        if (items != null) {
+            tag.put(TAG_INVENTORY, HbmInventoryMenuHelper.saveLegacyItems(items));
+        }
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        if (items != null) {
+            HbmInventoryMenuHelper.loadLegacyItems(tag.getCompound(TAG_INVENTORY), items);
+        }
+    }
+
+    public enum LegacyGuiProfile {
+        NONE(176, 166, 84, 142, false),
+        COKER(176, 204, 122, 180, false),
+        HYDROTREATER(176, 238, 156, 214, true),
+        CATALYTIC_REFORMER(176, 238, 156, 214, true),
+        VACUUM_DISTILL(176, 238, 156, 214, true);
+
+        private final int width;
+        private final int height;
+        private final int inventoryY;
+        private final int hotbarY;
+        private final boolean energyBar;
+
+        LegacyGuiProfile(int width, int height, int inventoryY, int hotbarY, boolean energyBar) {
+            this.width = width;
+            this.height = height;
+            this.inventoryY = inventoryY;
+            this.hotbarY = hotbarY;
+            this.energyBar = energyBar;
+        }
+
+        public int width() {
+            return width;
+        }
+
+        public int height() {
+            return height;
+        }
+
+        public int inventoryY() {
+            return inventoryY;
+        }
+
+        public int hotbarY() {
+            return hotbarY;
+        }
+
+        public boolean hasEnergyBar() {
+            return energyBar;
+        }
     }
 }

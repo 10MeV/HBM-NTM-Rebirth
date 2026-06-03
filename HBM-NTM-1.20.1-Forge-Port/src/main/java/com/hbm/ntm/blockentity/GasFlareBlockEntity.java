@@ -8,6 +8,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -117,8 +118,8 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         blockEntity.fluidUsed = 0;
         blockEntity.lastOutput = 0;
         changed |= blockEntity.setTankTypeFromIdentifierSlot();
-        changed |= HbmFluidItemTransfer.loadTankFromSlot(blockEntity.items,
-                SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, blockEntity.tank);
+        changed |= HbmFluidItemTransfer.processTransfers(blockEntity.items,
+                List.of(TankSlotTransfer.load(SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, blockEntity.tank)));
         changed |= blockEntity.consumeFluid(level, pos);
         HbmEnergyUtil.chargeItemFromStorage(blockEntity.items.getStackInSlot(SLOT_ENERGY_OUTPUT),
                 blockEntity.energy, blockEntity.energy.getProviderSpeed());

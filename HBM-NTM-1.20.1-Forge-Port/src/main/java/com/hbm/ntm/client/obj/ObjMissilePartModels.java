@@ -13,7 +13,45 @@ public final class ObjMissilePartModels {
     public static final ResourceLocation UNIVERSAL_TEXTURE = texture("universal");
     public static final ResourceLocation BOXCAR_TEXTURE = texture("boxcar");
 
-    public static final LegacyWavefrontModel MISSILE_STEALTH = missileModel("missile_stealth").noSmooth();
+    public static final LegacyWavefrontModel MISSILE_V2 = missileModel("missile_v2").asVBO();
+    public static final LegacyWavefrontModel MISSILE_ABM = missileModel("missile_abm").asVBO();
+    public static final LegacyWavefrontModel MISSILE_STEALTH = missileModel("missile_stealth").noSmooth().asVBO();
+    public static final LegacyWavefrontModel MISSILE_STRONG = missileModel("missile_strong").asVBO();
+    public static final LegacyWavefrontModel MISSILE_HUGE = missileModel("missile_huge").asVBO();
+    public static final LegacyWavefrontModel MISSILE_ATLAS = missileModel("missile_atlas", "missile_atlas_nuclear").asVBO();
+    public static final LegacyWavefrontModel MISSILE_MICRO = missileModel("missile_micro").asVBO();
+    public static final LegacyWavefrontModel MISSILE_SHUTTLE = missileModel("missile_shuttle");
+    public static final LegacyWavefrontModel MINER_ROCKET = missileModel("miner_rocket");
+
+    public static final ResourceLocation MISSILE_V2_HE_TEXTURE = missileTexture("missile_v2");
+    public static final ResourceLocation MISSILE_V2_IN_TEXTURE = missileTexture("missile_v2_inc");
+    public static final ResourceLocation MISSILE_V2_CL_TEXTURE = missileTexture("missile_v2_cl");
+    public static final ResourceLocation MISSILE_V2_BU_TEXTURE = missileTexture("missile_v2_bu");
+    public static final ResourceLocation MISSILE_V2_DECOY_TEXTURE = missileTexture("missile_v2_decoy");
+    public static final ResourceLocation MISSILE_ABM_TEXTURE = missileTexture("missile_abm");
+    public static final ResourceLocation MISSILE_STEALTH_TEXTURE = missileTexture("missile_stealth");
+    public static final ResourceLocation MISSILE_STRONG_HE_TEXTURE = missileTexture("missile_strong");
+    public static final ResourceLocation MISSILE_STRONG_EMP_TEXTURE = missileTexture("missile_strong_emp");
+    public static final ResourceLocation MISSILE_STRONG_IN_TEXTURE = missileTexture("missile_strong_inc");
+    public static final ResourceLocation MISSILE_STRONG_CL_TEXTURE = missileTexture("missile_strong_cl");
+    public static final ResourceLocation MISSILE_STRONG_BU_TEXTURE = missileTexture("missile_strong_bu");
+    public static final ResourceLocation MISSILE_HUGE_HE_TEXTURE = missileTexture("missile_huge");
+    public static final ResourceLocation MISSILE_HUGE_IN_TEXTURE = missileTexture("missile_huge_inc");
+    public static final ResourceLocation MISSILE_HUGE_CL_TEXTURE = missileTexture("missile_huge_cl");
+    public static final ResourceLocation MISSILE_HUGE_BU_TEXTURE = missileTexture("missile_huge_bu");
+    public static final ResourceLocation MISSILE_ATLAS_NUCLEAR_TEXTURE = missileTexture("missile_atlas_nuclear");
+    public static final ResourceLocation MISSILE_ATLAS_THERMO_TEXTURE = missileTexture("missile_atlas_thermo");
+    public static final ResourceLocation MISSILE_ATLAS_VOLCANO_TEXTURE = missileTexture("missile_atlas_tectonic");
+    public static final ResourceLocation MISSILE_ATLAS_DOOMSDAY_TEXTURE = missileTexture("missile_atlas_doomsday");
+    public static final ResourceLocation MISSILE_ATLAS_DOOMSDAY_RUSTED_TEXTURE = missileTexture("missile_atlas_doomsday_weathered");
+    public static final ResourceLocation MISSILE_MICRO_TEXTURE = missileTexture("missile_micro");
+    public static final ResourceLocation MISSILE_MICRO_TAINT_TEXTURE = missileTexture("missile_micro_taint");
+    public static final ResourceLocation MISSILE_MICRO_BHOLE_TEXTURE = missileTexture("missile_micro_bhole");
+    public static final ResourceLocation MISSILE_MICRO_SCHRAB_TEXTURE = missileTexture("missile_micro_schrab");
+    public static final ResourceLocation MISSILE_MICRO_EMP_TEXTURE = missileTexture("missile_micro_emp");
+    public static final ResourceLocation MISSILE_MICRO_TEST_TEXTURE = missileTexture("missile_test");
+    public static final ResourceLocation MISSILE_SHUTTLE_TEXTURE = missileTexture("missile_shuttle");
+    public static final ResourceLocation MINER_ROCKET_TEXTURE = missileTexture("miner_rocket");
 
     public static final LegacyWavefrontModel MP_T_10_KEROSENE = legacyModel("mp_t_10_kerosene");
     public static final LegacyWavefrontModel MP_T_10_SOLID = legacyModel("mp_t_10_solid");
@@ -285,9 +323,17 @@ public final class ObjMissilePartModels {
     }
 
     private static LegacyWavefrontModel missileModel(String name) {
+        return missileModel(name, name);
+    }
+
+    private static LegacyWavefrontModel missileModel(String modelName, String textureName) {
         return new LegacyWavefrontModel(
-                new ResourceLocation(HbmNtm.MOD_ID, "models/block/missiles/" + name + ".obj"),
-                new ResourceLocation(HbmNtm.MOD_ID, "textures/block/missiles/" + name + ".png"));
+                new ResourceLocation(HbmNtm.MOD_ID, "models/block/missiles/" + modelName + ".obj"),
+                missileTexture(textureName));
+    }
+
+    private static ResourceLocation missileTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/missiles/" + name + ".png");
     }
 
     private static ResourceLocation texture(String path) {

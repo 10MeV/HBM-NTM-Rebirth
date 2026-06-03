@@ -6,6 +6,7 @@ import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -16,12 +17,14 @@ public class GasFlameParticle extends TextureSheetParticle {
     private static SpriteSet sharedSprites;
     private final SpriteSet sprites;
     private final float colorMod;
+    private final float baseScale;
 
     public GasFlameParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed,
             SpriteSet sprites, float scale) {
         super(level, x, y, z, xSpeed, ySpeed * 1.5D, zSpeed);
         this.sprites = sprites;
         this.colorMod = 0.8F + random.nextFloat() * 0.2F;
+        this.baseScale = scale;
         this.quadSize = scale;
         this.lifetime = 30 + random.nextInt(13);
         this.hasPhysics = false;
@@ -32,6 +35,12 @@ public class GasFlameParticle extends TextureSheetParticle {
 
     public static SpriteSet sharedSprites() {
         return sharedSprites;
+    }
+
+    @Override
+    public float getQuadSize(float partialTick) {
+        float smokeScale = Mth.clamp(((float) this.age + partialTick) / (float) this.lifetime * 32.0F, 0.0F, 1.0F);
+        return this.baseScale * smokeScale;
     }
 
     @Override
@@ -54,7 +63,6 @@ public class GasFlameParticle extends TextureSheetParticle {
         this.rCol = color.getRed() / 255.0F * colorMod;
         this.gCol = color.getGreen() / 255.0F * colorMod;
         this.bCol = color.getBlue() / 255.0F * colorMod;
-        this.alpha = (float) Math.pow(1.0F - Math.min(time, 1.0F), 0.35D);
     }
 
     @Override

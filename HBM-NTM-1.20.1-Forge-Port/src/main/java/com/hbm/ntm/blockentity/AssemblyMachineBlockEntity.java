@@ -1,5 +1,8 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayPorts;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
@@ -18,6 +21,7 @@ import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
+import com.hbm.ntm.recipe.GenericMachineRecipeSelector;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
@@ -50,7 +54,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver, HbmStandardFluidTransceiver, HbmTileSyncable {
+public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
+        HbmStandardFluidTransceiver, HbmTileSyncable, LegacyLookOverlayProvider {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_DID_PROCESS = "DidProcess";
     private static final String TAG_RING = "Ring";
@@ -64,8 +69,6 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private static final String TAG_OUTPUT_TANK = "o";
     private static final String TAG_PROGRESS = "progress0";
     private static final String TAG_RECIPE = "recipe0";
-    private static final String TAG_CONTROL_INDEX = "index";
-    private static final String TAG_CONTROL_SELECTION = "selection";
     private static final long DEFAULT_MAX_POWER = 100_000L;
     private static final int TANK_CAPACITY = 4_000;
     public static final int SLOT_BATTERY = 0;
@@ -168,6 +171,11 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        return LegacyLookOverlayPorts.factoryMachinePort(this, viewedPos);
+    }
+
+    @Override
     public List<HbmFluidTank> getAllTanks() {
         return List.of(inputTank, outputTank);
     }
@@ -208,19 +216,17 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public void setSelectedRecipe(String selectedRecipe) {
-        this.selectedRecipe = selectedRecipe == null || selectedRecipe.isBlank()
-                ? GenericMachineRecipeRuntime.NULL_RECIPE
-                : selectedRecipe;
+        this.selectedRecipe = GenericMachineRecipeSelector.normalize(selectedRecipe);
         this.progress = 0.0D;
         setChanged();
     }
 
     public boolean selectRecipe(String selectedRecipe) {
-        if (level == null || GenericMachineRecipeRuntime.NULL_RECIPE.equals(selectedRecipe)) {
+        if (level == null || GenericMachineRecipeSelector.isNullSelection(selectedRecipe)) {
             setSelectedRecipe(GenericMachineRecipeRuntime.NULL_RECIPE);
             return true;
         }
-        if (!GenericMachineRecipeRuntime.hasRecipe(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, selectedRecipe)) {
+        if (!GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, selectedRecipe)) {
             return false;
         }
         setSelectedRecipe(selectedRecipe);
@@ -250,10 +256,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public static CompoundTag recipeSelectionTag(String selection) {
-        CompoundTag tag = new CompoundTag();
-        tag.putInt(TAG_CONTROL_INDEX, 0);
-        tag.putString(TAG_CONTROL_SELECTION, selection == null ? GenericMachineRecipeRuntime.NULL_RECIPE : selection);
-        return tag;
+        return GenericMachineRecipeSelector.selectionTag(selection);
     }
 
     public List<ItemStack> getDrops() {
@@ -378,18 +381,21 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("container.machineAssemblyMachine");
+        return Component.translatableWithFallback("container.machineAssemblyMachine", "Assembly Machine");
     }
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        return tag.getInt(TAG_CONTROL_INDEX) == 0 && tag.contains(TAG_CONTROL_SELECTION);
+        return player.containerMenu instanceof AssemblyMachineMenu
+                && GenericMachineRecipeSelector.isSelectionTag(tag)
+                && GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE,
+                GenericMachineRecipeSelector.readSelection(tag));
     }
 
     @Override
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
-        if (tag.getInt(TAG_CONTROL_INDEX) == 0) {
-            selectRecipe(tag.getString(TAG_CONTROL_SELECTION));
+        if (GenericMachineRecipeSelector.isSelectionTag(tag)) {
+            selectRecipe(GenericMachineRecipeSelector.readSelection(tag));
         }
     }
 

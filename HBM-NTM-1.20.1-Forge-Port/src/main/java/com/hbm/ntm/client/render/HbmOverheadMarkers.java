@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.render;
 
+import com.hbm.ntm.client.ClientHbmPlayerProperties;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -54,7 +55,7 @@ public final class HbmOverheadMarkers {
         }
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
-        if (minecraft.level == null || player == null || minecraft.options.hideGui) {
+        if (minecraft.level == null || player == null || !ClientHbmPlayerProperties.shouldRenderHud()) {
             return;
         }
         pruneDistantMarkers(player);

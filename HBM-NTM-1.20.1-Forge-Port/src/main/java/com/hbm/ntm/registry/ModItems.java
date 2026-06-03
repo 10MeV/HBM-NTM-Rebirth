@@ -12,7 +12,9 @@ import com.hbm.ntm.item.AntimatterClusterItem;
 import com.hbm.ntm.item.DigammaParticleItem;
 import com.hbm.ntm.item.DigammaDiagnosticItem;
 import com.hbm.ntm.item.EffectPillItem;
+import com.hbm.ntm.item.ExpensiveModeItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
+import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.GeigerCounterItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
@@ -141,6 +143,8 @@ public final class ModItems {
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> BIOMASS_COMPRESSED = registerLegacy("biomass_compressed",
             () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> CATALYTIC_CONVERTER = registerLegacy("catalytic_converter",
+            () -> new Item(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> DISPERSER_CANISTER_EMPTY = registerLegacy("disperser_canister_empty",
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> DISPERSER_CANISTER = registerLegacy("disperser_canister",
@@ -157,6 +161,8 @@ public final class ModItems {
             () -> new HbmInfiniteFluidItem(new Item.Properties(), HbmFluids.CHLORINE, 1, 2, "Chlorine Pinwheel"));
     public static final RegistryObject<Item> FLUID_IDENTIFIER_MULTI = registerLegacy("fluid_identifier_multi",
             () -> new FluidIdentifierItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> FLUID_DUCT = registerLegacy("fluid_duct",
+            () -> new FluidPipeBlockItem(ModBlocks.FLUID_DUCT_NEO.get(), new Item.Properties()));
     public static final RegistryObject<Item> DETONATOR = registerLegacy("detonator",
             () -> new DetonatorItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> SINGULARITY = registerLegacy("singularity",
@@ -258,7 +264,20 @@ public final class ModItems {
             "circuit_numitron"
     );
 
-    public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = Stream.concat(CIRCUIT_ITEMS.stream(), simpleParts(
+    public static final List<RegistryObject<Item>> EXPENSIVE_MODE_ITEMS = expensiveModeItems(
+            "item_expensive_steel_plating",
+            "item_expensive_heavy_frame",
+            "item_expensive_circuit",
+            "item_expensive_lead_plating",
+            "item_expensive_ferro_plating",
+            "item_expensive_computer",
+            "item_expensive_bronze_tubes",
+            "item_expensive_plastic",
+            "item_expensive_gold_dust",
+            "item_expensive_degenerate_matter"
+    );
+
+    public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = Stream.concat(Stream.concat(CIRCUIT_ITEMS.stream(), EXPENSIVE_MODE_ITEMS.stream()), simpleParts(
             "ingot_pu_mix",
             "ingot_am241",
             "ingot_am242",
@@ -455,6 +474,49 @@ public final class ModItems {
             "solid_fuel_presto_triplet_bf",
             "rocket_fuel",
             "lignite",
+            "powder_coal",
+            "powder_coal_tiny",
+            "coke_coal",
+            "coke_lignite",
+            "coke_petroleum",
+            "briquette_coal",
+            "briquette_lignite",
+            "briquette_wood",
+            "oil_tar_crude",
+            "oil_tar_crack",
+            "oil_tar_coal",
+            "oil_tar_wood",
+            "oil_tar_wax",
+            "oil_tar_paraffin",
+            "powder_ash_wood",
+            "powder_ash_coal",
+            "powder_ash_misc",
+            "powder_ash_fly",
+            "powder_ash_soot",
+            "powder_ash_fullerene",
+            "chunk_ore_rare",
+            "chunk_ore_malachite",
+            "chunk_ore_cryolite",
+            "chunk_ore_moonstone",
+            "plant_item_tobacco",
+            "plant_item_rope",
+            "plant_item_mustardwillow",
+            "parts_legendary_tier1",
+            "parts_legendary_tier2",
+            "parts_legendary_tier3",
+            "part_generic_piston_pneumatic",
+            "part_generic_piston_hydraulic",
+            "part_generic_piston_electric",
+            "part_generic_lde",
+            "part_generic_hde",
+            "part_generic_glass_polarized",
+            "casing_small",
+            "casing_large",
+            "casing_small_steel",
+            "casing_large_steel",
+            "casing_shotshell",
+            "casing_buckshot",
+            "casing_buckshot_advanced",
             "powder_lignite",
             "coal_infernal",
             "cinnebar",
@@ -546,7 +608,9 @@ public final class ModItems {
             "pellet_rtg_strontium",
             "pellet_rtg_cobalt",
             "pellet_rtg_actinium",
-            "pellet_rtg_lead"
+            "pellet_rtg_lead",
+            "fuel_additive_antiknock",
+            "fuel_additive_deicer"
     ).stream(), simpleStackOneItems(
             "plate_fuel_u233",
             "plate_fuel_u235",
@@ -561,7 +625,8 @@ public final class ModItems {
             "pellet_rtg_polonium",
             "pellet_rtg_americium",
             "pellet_rtg_gold"
-    ).stream()), Stream.concat(SINGULARITY_FAMILY_ITEMS.stream(), CONTROL_BATTERY_ITEMS.stream())).toList();
+    ).stream()), Stream.concat(Stream.of(CATALYTIC_CONVERTER),
+            Stream.concat(SINGULARITY_FAMILY_ITEMS.stream(), CONTROL_BATTERY_ITEMS.stream()))).toList();
 
     public static final List<RegistryObject<Item>> PARTS_TAB_ITEMS = Stream.concat(Stream.of(
             URANIUM_INGOT,
@@ -648,7 +713,8 @@ public final class ModItems {
             INF_WATER,
             INF_WATER_MK2,
             CHLORINE_PINWHEEL,
-            FLUID_IDENTIFIER_MULTI
+            FLUID_IDENTIFIER_MULTI,
+            FLUID_DUCT
     ).toList();
 
     public static void register(IEventBus modBus) {
@@ -673,6 +739,10 @@ public final class ModItems {
 
     private static List<RegistryObject<Item>> simpleStackOneItems(String... names) {
         return Stream.of(names).map(ModItems::simpleStackOneItem).toList();
+    }
+
+    private static List<RegistryObject<Item>> expensiveModeItems(String... names) {
+        return Stream.of(names).map(ModItems::expensiveModeItem).toList();
     }
 
     private static RegistryObject<Item> registerLegacy(String name, java.util.function.Supplier<Item> supplier) {
@@ -713,6 +783,10 @@ public final class ModItems {
         RegistryObject<Item> item = ITEMS.register(name, () -> createSimpleItem(name));
         ITEMS_BY_LEGACY_NAME.put(name, item);
         return item;
+    }
+
+    private static RegistryObject<Item> expensiveModeItem(String name) {
+        return registerLegacy(name, () -> new ExpensiveModeItem(new Item.Properties()));
     }
 
     private static Item createSimpleItem(String name) {

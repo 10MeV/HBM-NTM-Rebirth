@@ -2,9 +2,11 @@ package com.hbm.ntm.client;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
+import com.hbm.ntm.client.overlay.LegacyLookOverlayRenderer;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.client.render.HbmRenderEffects;
+import com.hbm.ntm.client.render.LegacyMultiblockHighlightRenderer;
 import com.hbm.ntm.damage.DamageResistanceTooltipUtil;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.client.renderer.NukeTorexRenderer;
@@ -30,6 +32,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.event.RenderHighlightEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.TickEvent;
@@ -60,8 +63,7 @@ public final class ClientForgeEvents {
     @SubscribeEvent
     public static void onOverlayPre(RenderGuiOverlayEvent.Pre event) {
         Minecraft minecraft = Minecraft.getInstance();
-        Player player = minecraft.player;
-        if (player == null || minecraft.options.hideGui) {
+        if (!ClientHbmPlayerProperties.shouldRenderHud()) {
             popNukeHudShake(event.getGuiGraphics());
             return;
         }
@@ -81,10 +83,14 @@ public final class ClientForgeEvents {
     public static void onOverlay(RenderGuiOverlayEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
+        if (event.getOverlay().id().equals(VanillaGuiOverlay.CROSSHAIR.id())) {
+            LegacyLookOverlayRenderer.render(event);
+            return;
+        }
         if (!event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
             return;
         }
-        if (player == null || minecraft.options.hideGui) {
+        if (!ClientHbmPlayerProperties.shouldRenderHud()) {
             return;
         }
         if (RadiationHud.hasGeigerCounter(player)) {
@@ -119,6 +125,11 @@ public final class ClientForgeEvents {
             updateBlackHoleShaders(event.getPartialTick());
             HbmBlackHoleEffects.render(event);
         }
+    }
+
+    @SubscribeEvent
+    public static void onRenderBlockHighlight(RenderHighlightEvent.Block event) {
+        LegacyMultiblockHighlightRenderer.render(event);
     }
 
     private static void renderNukeTorexCloudlets(Minecraft minecraft, RenderLevelStageEvent event) {
@@ -162,6 +173,7 @@ public final class ClientForgeEvents {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        ClientHbmPlayerProperties.registerListener();
         LegacyHbmAnimations.tick();
         HbmClientKeybinds.tick();
         ClientMuzzleFlashEffects.tick();
@@ -269,6 +281,7 @@ public final class ClientForgeEvents {
         ClientBiomeSyncData.clearAll();
         ClientPermaSyncData.clearAll();
         ClientPlayerSyncData.clearAll();
+        ClientHbmPlayerProperties.clearAll();
         ClientRadiationData.clearAll();
         ClientPanelData.clearAll();
         ClientInformMessages.clearAll();

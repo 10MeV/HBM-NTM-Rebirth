@@ -3,9 +3,9 @@ package com.hbm.ntm.client.screen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.network.ModMessages;
-import com.hbm.ntm.network.packet.TileControlPacket;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
+import com.hbm.ntm.recipe.GenericMachineRecipeSelector;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -36,10 +36,10 @@ public class AssemblyRecipeSelectorScreen extends Screen {
     private EditBox search;
 
     protected AssemblyRecipeSelectorScreen(AssemblyMachineScreen previousScreen) {
-        super(Component.translatable("container.machineAssemblyMachine"));
+        super(Component.translatableWithFallback("container.machineAssemblyMachine", "Assembly Machine"));
         this.previousScreen = previousScreen;
         this.selection = previousScreen.getMenu().getBlockEntity().getSelectedRecipeName();
-        this.allRecipes = GenericMachineRecipeRuntime.recipes(
+        this.allRecipes = GenericMachineRecipeSelector.recipes(
                 previousScreen.getMenu().getBlockEntity().getLevel(),
                 GenericMachineRecipe.Machine.ASSEMBLY_MACHINE);
         regenerateRecipes("");
@@ -247,8 +247,7 @@ public class AssemblyRecipeSelectorScreen extends Screen {
     }
 
     private void sendSelection() {
-        ModMessages.sendToServer(new TileControlPacket(
-                previousScreen.getMenu().getBlockEntity().getBlockPos(),
-                AssemblyMachineBlockEntity.recipeSelectionTag(selection)));
+        ModMessages.sendTileControl(previousScreen.getMenu().getBlockEntity().getBlockPos(),
+                AssemblyMachineBlockEntity.recipeSelectionTag(selection));
     }
 }

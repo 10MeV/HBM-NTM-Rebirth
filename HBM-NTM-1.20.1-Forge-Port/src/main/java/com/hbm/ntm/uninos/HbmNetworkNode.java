@@ -38,6 +38,7 @@ public class HbmNetworkNode {
         this.positions = Set.copyOf(immutablePositions);
         this.connectionPoints = copyConnectionPoints(connectionPoints);
         this.connections = this.connectionPoints.stream()
+                .filter(connection -> !connection.direct())
                 .map(NodeConnection::direction)
                 .collect(() -> EnumSet.noneOf(Direction.class), EnumSet::add, EnumSet::addAll);
     }
@@ -129,17 +130,35 @@ public class HbmNetworkNode {
         }
         Set<NodeConnection> copy = new LinkedHashSet<>();
         for (NodeConnection point : points) {
-            copy.add(new NodeConnection(point.pos(), point.direction()));
+            copy.add(new NodeConnection(point.pos(), point.direction(), point.direct(), point.directOrigin()));
         }
         return Set.copyOf(copy);
     }
 
-    public record NodeConnection(BlockPos pos, Direction direction) {
+    public record NodeConnection(BlockPos pos, Direction direction, boolean direct, BlockPos directOrigin) {
+        public NodeConnection(BlockPos pos, Direction direction) {
+            this(pos, direction, false, null);
+        }
+
+        public static NodeConnection direct(BlockPos target, BlockPos origin) {
+            return new NodeConnection(target, Direction.UP, true, origin);
+        }
+
         public NodeConnection {
             pos = pos.immutable();
+            if (directOrigin != null) {
+                directOrigin = directOrigin.immutable();
+            }
         }
 
         public boolean connectsBackTo(NodeConnection incoming) {
+            if (direct || incoming.direct()) {
+                return direct && incoming.direct()
+                        && directOrigin != null
+                        && incoming.directOrigin() != null
+                        && pos.equals(incoming.directOrigin())
+                        && directOrigin.equals(incoming.pos());
+            }
             return pos.relative(direction.getOpposite()).equals(incoming.pos())
                     && direction == incoming.direction().getOpposite();
         }

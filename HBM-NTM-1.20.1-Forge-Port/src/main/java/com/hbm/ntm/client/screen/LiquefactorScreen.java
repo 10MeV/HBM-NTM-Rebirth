@@ -32,18 +32,13 @@ public class LiquefactorScreen extends AbstractContainerScreen<LiquefactorMenu> 
         if (progress > 0) {
             graphics.blit(TEXTURE, leftPos + 42, topPos + 17, 192, 0, progress, 35);
         }
-        int tank = menu.getTankFillHeight(52);
-        if (tank > 0) {
-            int color = menu.getBlockEntity().getTank().getTankType().getColor();
-            graphics.fill(leftPos + 71, topPos + 88 + 52 - tank, leftPos + 87, topPos + 140,
-                    0xCC000000 | (color & 0xFFFFFF));
-        }
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 71, topPos + 88,
+                16, 52, menu.getTankData());
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        String name = title.getString();
-        graphics.drawString(font, name, titleLabelX - font.width(name) / 2, titleLabelY, 0x404040, false);
+        LegacyGuiText.drawCenteredLabel(graphics, font, title.getString(), titleLabelX, titleLabelY, 124, 0x404040);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -51,8 +46,8 @@ public class LiquefactorScreen extends AbstractContainerScreen<LiquefactorMenu> 
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(71, 36, 16, 52, mouseX, mouseY) || isHovering(71, 88, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, menu.getTankInfo(), mouseX, mouseY);
+        if (isHovering(71, 36, 16, 52, mouseX, mouseY)) {
+            graphics.renderTooltip(font, menu.getTankTooltip().stream().map(Component::getVisualOrderText).toList(), mouseX, mouseY);
         } else if (isHovering(134, 18, 16, 52, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);
         } else if (isHovering(98, 36, 18, 36, mouseX, mouseY)) {

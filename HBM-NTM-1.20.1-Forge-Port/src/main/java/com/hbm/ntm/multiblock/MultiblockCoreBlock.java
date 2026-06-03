@@ -23,4 +23,16 @@ public interface MultiblockCoreBlock {
             CollisionContext context) {
         return getMultiblockShape(state, level, corePos, context);
     }
+
+    default boolean usesForwardedDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    default boolean usesForwardedDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return false;
+    }
+
+    default BlockState multiblockParticleState(BlockState state, BlockGetter level, BlockPos corePos) {
+        return MultiblockHelper.steelParticleState();
+    }
 }

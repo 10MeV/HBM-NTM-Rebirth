@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -9,6 +11,9 @@ import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
+import java.util.ArrayList;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -85,6 +90,18 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         return heat;
     }
 
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        List<Component> lines = new ArrayList<>();
+        lines.add(LegacyLookOverlayLines.tank(true, waterTank));
+        lines.add(LegacyLookOverlayLines.tank(false, steamTank));
+        if (display < 1) {
+            lines.add(Component.literal("Too cold!")
+                    .withStyle((level.getGameTime() / 10L) % 2L == 0L ? ChatFormatting.RED : ChatFormatting.YELLOW));
+        }
+        return LegacyLookOverlay.forBlock(this, lines);
+    }
+
     public void addHeat(int heat) {
         this.heat = Math.max(0, this.heat + Math.max(0, heat));
     }
@@ -148,7 +165,7 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
-        return side == null ? HbmFluidSideMode.BOTH : HbmFluidSideMode.INPUT;
+        return HbmFluidSideMode.BOTH;
     }
 
     @Override

@@ -221,3 +221,16 @@
 - 验证：
   - 复制 1.7.10 资源：`assets/hbm/textures/gui/processing/gui_chemplant.png`。
   - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-01 Recipe selector 通用约定收束
+
+- 新增 `GenericMachineRecipeSelector`：
+  - 集中旧 `GUIScreenRecipeSelector` 控制 tag 语义：`index=0`、`selection=<internal_name|null>`。
+  - 提供 `selectionTag(...)`、`normalize(...)`、`isNullSelection(...)`、`canSelect(...)`、`recipes(...)`。
+  - GUI selector 不直接解析 JSON，只通过 `GenericMachineRecipeRuntime.recipes(...)` / recipe manager 读取 runtime recipe。
+- `AssemblyMachineBlockEntity` 与 `ChemicalPlantBlockEntity` 改为复用 selector helper：
+  - 保存的 `recipe0` 仍是旧 internal name 字符串。
+  - `null` 选择仍走 `GenericMachineRecipeRuntime.NULL_RECIPE`。
+  - C2S receiver 现在要求玩家打开对应 Menu，并校验 internal name 存在后才接收。
+- `AssemblyRecipeSelectorScreen` 与 `ChemicalPlantRecipeSelectorScreen` 改用 `ModMessages.sendTileControl(...)` 发送选择，不直接依赖 packet 构造。
+- 验证：`.\gradlew.bat compileJava --no-daemon` 通过。

@@ -5,7 +5,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.Level;
 
@@ -13,9 +12,19 @@ public final class ParticleUtil {
     public static final String TYPE_GAS_FLAME = "gasfire";
     public static final String TYPE_DEBUG_LINE = "debugline";
     public static final String TYPE_DEBUG_DRONE = "debugdrone";
+    public static final String TYPE_WATER_SPLASH = "waterSplash";
+    public static final String TYPE_CLOUD_FX_2 = "cloudFX2";
     public static final String TYPE_SMOKE = "smoke";
     public static final String TYPE_VANILLA_EXT = "vanillaExt";
     public static final String TYPE_VANILLA_BURST = "vanillaburst";
+    public static final String TYPE_LAUNCH_SMOKE = "launchSmoke";
+    public static final String TYPE_MISSILE_CONTRAIL = "missileContrail";
+    public static final String TYPE_ABM_CONTRAIL = "ABMContrail";
+    public static final String TYPE_EX_KEROSENE = "exKerosene";
+    public static final String TYPE_EX_SOLID = "exSolid";
+    public static final String TYPE_EX_HYDROGEN = "exHydrogen";
+    public static final String TYPE_EX_BALEFIRE = "exBalefire";
+    public static final String TYPE_EXHAUST = "exhaust";
     public static final String TYPE_EXPLOSION_LARGE = "explosionLarge";
     public static final String TYPE_EXPLOSION_SMALL = "explosionSmall";
     public static final String TYPE_VNT_EXPLOSION = "vntExplosion";
@@ -53,6 +62,10 @@ public final class ParticleUtil {
     public static final String TYPE_JETPACK_BJ = "jetpack_bj";
     public static final String TYPE_JETPACK_DNS = "jetpack_dns";
     public static final String TYPE_RADIATION = "radiation";
+    public static final String TYPE_RADIATION_FOG = "radiationfog";
+    public static final String TYPE_RADIATION_FOG_SNAKE = "radiation_fog";
+    public static final String TYPE_RAD_FOG = "radFog";
+    public static final String TYPE_SCHRAB_FOG = "schrabfog";
     public static final String TYPE_SWEAT = "sweat";
     public static final String TYPE_VOMIT = "vomit";
     public static final String TYPE_VANISH = "vanish";
@@ -80,6 +93,8 @@ public final class ParticleUtil {
     public static final String VANILLA_LARGE_EXPLODE = "largeexplode";
     public static final String VANILLA_TOWN_AURA = "townaura";
     public static final String VANILLA_VOLCANO = "volcano";
+    public static final String EXHAUST_SOYUZ = "soyuz";
+    public static final String EXHAUST_METEOR = "meteor";
     public static final int GIBLET_MEAT = 0;
     public static final int GIBLET_SLIME = 1;
     public static final int GIBLET_METAL = 2;
@@ -155,7 +170,24 @@ public final class ParticleUtil {
         data.putString("type", TYPE_FIREWORKS);
         data.putInt("color", color);
         data.putInt("char", character);
-        spawnAux(level, x, y, z, data, 150.0D);
+        spawnAux(level, x, y, z, data, 300.0D);
+    }
+
+    public static void spawnExhaustSoyuz(Level level, double x, double y, double z, int count, double width) {
+        spawnExhaust(level, x, y, z, EXHAUST_SOYUZ, count, width);
+    }
+
+    public static void spawnExhaustMeteor(Level level, double x, double y, double z, int count, double width) {
+        spawnExhaust(level, x, y, z, EXHAUST_METEOR, count, width);
+    }
+
+    public static void spawnExhaust(Level level, double x, double y, double z, String mode, int count, double width) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_EXHAUST);
+        data.putString("mode", mode == null || mode.isEmpty() ? EXHAUST_SOYUZ : mode);
+        data.putInt("count", count);
+        data.putDouble("width", width);
+        spawnAux(level, x, y, z, data, 350.0D);
     }
 
     public static void spawnHaze(Level level, double x, double y, double z) {
@@ -225,6 +257,59 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
+    public static void spawnWaterSplash(Level level, double x, double y, double z) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_WATER_SPLASH);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnCloudFx2(Level level, double x, double y, double z) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_CLOUD_FX_2);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnLaunchSmoke(Level level, double x, double y, double z, double motionX, double motionY, double motionZ) {
+        CompoundTag data = motionParticleTag(TYPE_LAUNCH_SMOKE, motionX, motionY, motionZ);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnMissileContrail(Level level, double x, double y, double z, double motionX, double motionY, double motionZ) {
+        spawnMissileContrail(level, x, y, z, motionX, motionY, motionZ, 1.0F, -1);
+    }
+
+    public static void spawnMissileContrail(Level level, double x, double y, double z, double motionX, double motionY, double motionZ,
+            float scale, int maxAge) {
+        CompoundTag data = motionParticleTag(TYPE_MISSILE_CONTRAIL, motionX, motionY, motionZ);
+        if (scale > 0.0F) {
+            data.putFloat("scale", scale);
+        }
+        if (maxAge > 0) {
+            data.putInt("maxAge", maxAge);
+        }
+        spawnAux(level, x, y, z, data, 350.0D);
+    }
+
+    public static void spawnAbmContrail(Level level, double x, double y, double z) {
+        spawnStaticContrail(level, x, y, z, TYPE_ABM_CONTRAIL);
+    }
+
+    public static void spawnExKerosene(Level level, double x, double y, double z) {
+        spawnStaticContrail(level, x, y, z, TYPE_EX_KEROSENE);
+    }
+
+    public static void spawnExSolid(Level level, double x, double y, double z) {
+        spawnStaticContrail(level, x, y, z, TYPE_EX_SOLID);
+    }
+
+    public static void spawnExHydrogen(Level level, double x, double y, double z) {
+        spawnStaticContrail(level, x, y, z, TYPE_EX_HYDROGEN);
+    }
+
+    public static void spawnExBalefire(Level level, double x, double y, double z) {
+        spawnStaticContrail(level, x, y, z, TYPE_EX_BALEFIRE);
+    }
+
     public static void spawnJetpack(Level level, Entity player, int mode) {
         if (player == null) {
             return;
@@ -253,6 +338,18 @@ public final class ParticleUtil {
         data.putString("type", TYPE_RADIATION);
         data.putInt("count", count);
         spawnAux(level, 0.0D, 0.0D, 0.0D, data, 0.0D);
+    }
+
+    public static void spawnRadiationFog(Level level, double x, double y, double z) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_RAD_FOG);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnSchrabFog(Level level, double x, double y, double z) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_SCHRAB_FOG);
+        spawnAux(level, x, y, z, data, 150.0D);
     }
 
     public static void spawnVanish(Level level, Entity entity) {
@@ -312,8 +409,20 @@ public final class ParticleUtil {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_SWEAT);
         data.putInt("count", Math.max(0, count));
-        data.putInt("state", Block.getId(safeParticleState(state)));
+        putBlockState(data, state);
         data.putInt("meta", meta);
+        data.putInt("entity", entity.getId());
+        spawnAuxThreaded(entity.level(), entity.getX(), entity.getY(), entity.getZ(), data, 25.0D);
+    }
+
+    public static void spawnSweat(Entity entity, String legacyBlockName, int meta, int count) {
+        if (entity == null || legacyBlockName == null || legacyBlockName.isBlank()) {
+            return;
+        }
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_SWEAT);
+        data.putInt("count", Math.max(0, count));
+        putLegacyBlockName(data, legacyBlockName, meta);
         data.putInt("entity", entity.getId());
         spawnAuxThreaded(entity.level(), entity.getX(), entity.getY(), entity.getZ(), data, 25.0D);
     }
@@ -379,7 +488,21 @@ public final class ParticleUtil {
         data.putString("mode", VANILLA_BLOCK_DUST);
         data.putInt("count", count);
         data.putDouble("motion", motion);
-        data.putInt("state", Block.getId(safeParticleState(state)));
+        putBlockState(data, state);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaLegacyBlockDustBurst(Level level, double x, double y, double z, int count, double motion,
+            String legacyBlockName, int meta) {
+        if (legacyBlockName == null || legacyBlockName.isBlank()) {
+            return;
+        }
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_VANILLA_BURST);
+        data.putString("mode", VANILLA_BLOCK_DUST);
+        data.putInt("count", count);
+        data.putDouble("motion", motion);
+        putLegacyBlockName(data, legacyBlockName, meta);
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
@@ -414,7 +537,17 @@ public final class ParticleUtil {
     public static void spawnVanillaExtBlockDust(Level level, double x, double y, double z,
             double motionX, double motionY, double motionZ, BlockState state) {
         CompoundTag data = vanillaExtTag(VANILLA_BLOCK_DUST, motionX, motionY, motionZ);
-        data.putInt("state", Block.getId(safeParticleState(state)));
+        putBlockState(data, state);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaExtLegacyBlockDust(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ, String legacyBlockName, int meta) {
+        if (legacyBlockName == null || legacyBlockName.isBlank()) {
+            return;
+        }
+        CompoundTag data = vanillaExtTag(VANILLA_BLOCK_DUST, motionX, motionY, motionZ);
+        putLegacyBlockName(data, legacyBlockName, meta);
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
@@ -676,8 +809,27 @@ public final class ParticleUtil {
         return data;
     }
 
-    private static BlockState safeParticleState(BlockState state) {
-        return state == null || state.isAir() ? Blocks.STONE.defaultBlockState() : state;
+    private static CompoundTag motionParticleTag(String type, double motionX, double motionY, double motionZ) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", type);
+        data.putDouble("moX", motionX);
+        data.putDouble("moY", motionY);
+        data.putDouble("moZ", motionZ);
+        return data;
+    }
+
+    private static void spawnStaticContrail(Level level, double x, double y, double z, String type) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", type);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void putBlockState(CompoundTag data, BlockState state) {
+        LegacyBlockStateMappings.putState(data, state);
+    }
+
+    public static void putLegacyBlockName(CompoundTag data, String legacyBlockName, int meta) {
+        LegacyBlockStateMappings.putLegacyName(data, legacyBlockName, meta);
     }
 
     public static void spawnAux(Level level, double x, double y, double z, CompoundTag data, double range) {

@@ -30,6 +30,9 @@ public final class HbmFluidItemTransfer {
         if (input.getItem() instanceof HbmInfiniteFluidItem infinite) {
             return drainInfiniteItemToTank(infinite, tank, simulate);
         }
+        if (tank.getPressure() != 0) {
+            return false;
+        }
         if (usesDiscreteContainerSlots(input, inputSlot, outputSlot)) {
             return transferContainerItem(items, inputSlot, outputSlot, tank, maxAmount, TransferDirection.ITEM_TO_TANK, simulate);
         }
@@ -61,6 +64,9 @@ public final class HbmFluidItemTransfer {
         if (input.getItem() instanceof HbmInfiniteFluidItem infinite) {
             return fillTankToInfiniteItem(infinite, tank, simulate);
         }
+        if (tank.getPressure() != 0) {
+            return false;
+        }
         if (usesDiscreteContainerSlots(input, inputSlot, outputSlot)) {
             return transferContainerItem(items, inputSlot, outputSlot, tank, maxAmount, TransferDirection.TANK_TO_ITEM, simulate);
         }
@@ -83,7 +89,7 @@ public final class HbmFluidItemTransfer {
 
     private static TransferResult fillItemFromTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate,
             boolean useStandardContainers) {
-        if (stack.isEmpty() || tank == null || tank.isEmpty() || maxAmount <= 0) {
+        if (stack.isEmpty() || tank == null || tank.isEmpty() || tank.getPressure() != 0 || maxAmount <= 0) {
             return TransferResult.empty(stack);
         }
         int amount = Math.min(maxAmount, tank.getFill());
@@ -115,7 +121,7 @@ public final class HbmFluidItemTransfer {
 
     private static TransferResult drainItemToTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate,
             boolean useStandardContainers) {
-        if (stack.isEmpty() || tank == null || maxAmount <= 0) {
+        if (stack.isEmpty() || tank == null || tank.getPressure() != 0 || maxAmount <= 0) {
             return TransferResult.empty(stack);
         }
         ItemStack working = stack.copy();
@@ -434,6 +440,23 @@ public final class HbmFluidItemTransfer {
         return items != null && slot >= 0 && slot < items.getSlots();
     }
 
+    public static boolean processTransfers(IItemHandlerModifiable items, Iterable<TankSlotTransfer> transfers) {
+        return processTransfers(items, transfers, false);
+    }
+
+    public static boolean processTransfers(IItemHandlerModifiable items, Iterable<TankSlotTransfer> transfers, boolean simulate) {
+        if (items == null || transfers == null) {
+            return false;
+        }
+        boolean changed = false;
+        for (TankSlotTransfer transfer : transfers) {
+            if (transfer != null) {
+                changed |= transfer.process(items, simulate);
+            }
+        }
+        return changed;
+    }
+
     public record TransferResult(ItemStack stack, int amount) {
         public boolean moved() {
             return amount > 0;
@@ -441,6 +464,40 @@ public final class HbmFluidItemTransfer {
 
         private static TransferResult empty(ItemStack stack) {
             return new TransferResult(stack, 0);
+        }
+    }
+
+    public record TankSlotTransfer(int inputSlot, int outputSlot, HbmFluidTank tank, int maxAmount, Direction direction) {
+        public TankSlotTransfer {
+            maxAmount = maxAmount <= 0 ? Integer.MAX_VALUE : maxAmount;
+            direction = direction == null ? Direction.ITEM_TO_TANK : direction;
+        }
+
+        public static TankSlotTransfer load(int inputSlot, int outputSlot, HbmFluidTank tank) {
+            return load(inputSlot, outputSlot, tank, Integer.MAX_VALUE);
+        }
+
+        public static TankSlotTransfer load(int inputSlot, int outputSlot, HbmFluidTank tank, int maxAmount) {
+            return new TankSlotTransfer(inputSlot, outputSlot, tank, maxAmount, Direction.ITEM_TO_TANK);
+        }
+
+        public static TankSlotTransfer unload(int inputSlot, int outputSlot, HbmFluidTank tank) {
+            return unload(inputSlot, outputSlot, tank, Integer.MAX_VALUE);
+        }
+
+        public static TankSlotTransfer unload(int inputSlot, int outputSlot, HbmFluidTank tank, int maxAmount) {
+            return new TankSlotTransfer(inputSlot, outputSlot, tank, maxAmount, Direction.TANK_TO_ITEM);
+        }
+
+        private boolean process(IItemHandlerModifiable items, boolean simulate) {
+            return direction == Direction.ITEM_TO_TANK
+                    ? loadTankFromSlot(items, inputSlot, outputSlot, tank, maxAmount, simulate)
+                    : unloadTankToSlot(items, inputSlot, outputSlot, tank, maxAmount, simulate);
+        }
+
+        public enum Direction {
+            ITEM_TO_TANK,
+            TANK_TO_ITEM
         }
     }
 

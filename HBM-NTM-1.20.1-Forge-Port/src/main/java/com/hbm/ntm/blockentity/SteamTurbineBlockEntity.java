@@ -170,7 +170,7 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
-        return side == null ? HbmFluidSideMode.BOTH : HbmFluidSideMode.INPUT;
+        return HbmFluidSideMode.BOTH;
     }
 
     @Override

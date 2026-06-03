@@ -7,6 +7,7 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -15,17 +16,22 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 @OnlyIn(Dist.CLIENT)
 public class AshesParticle extends TextureSheetParticle {
+    private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
     private static SpriteSet sharedSprites;
 
     private final SpriteSet sprites;
     private final float baseScale;
     private final float rollSpeed;
+    private final boolean groundSmokeSeed;
 
     private AshesParticle(ClientLevel level, double x, double y, double z, float scale, SpriteSet sprites) {
         super(level, x, y, z);
         this.sprites = sprites;
+        int visualId = NEXT_VISUAL_ID.incrementAndGet();
         this.lifetime = 1200 + random.nextInt(20);
         this.baseScale = scale * 0.9F + random.nextFloat() * 0.2F;
         float color = random.nextFloat() * 0.1F + 0.1F;
@@ -36,7 +42,8 @@ public class AshesParticle extends TextureSheetParticle {
         this.quadSize = this.baseScale;
         this.gravity = 0.01F;
         this.hasPhysics = true;
-        this.rollSpeed = (random.nextBoolean() ? 1.0F : -1.0F) * Mth.DEG_TO_RAD;
+        this.rollSpeed = (visualId % 2 - 0.5F) * 2.0F * Mth.DEG_TO_RAD;
+        this.groundSmokeSeed = visualId % 5 == 0;
         this.setSpriteFromAge(sprites);
     }
 
@@ -65,6 +72,9 @@ public class AshesParticle extends TextureSheetParticle {
         this.move(this.xd, this.yd, this.zd);
         if (!wasOnGround && this.onGround) {
             this.oRoll = this.roll = random.nextFloat() * Mth.TWO_PI;
+        }
+        if (this.groundSmokeSeed && this.onGround && random.nextInt(15) == 0) {
+            this.level.addParticle(ParticleTypes.SMOKE, this.x, this.y + 0.125D, this.z, 0.0D, 0.05D, 0.0D);
         }
         float timeLeft = this.lifetime - this.age;
         this.alpha = timeLeft < 40.0F ? Math.max(timeLeft / 40.0F, 0.0F) : 1.0F;

@@ -11,10 +11,11 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class RocketFlameParticle extends TextureSheetParticle {
+    private static SpriteSet rocketFlameSprites;
     private final SpriteSet sprites;
     private final float baseScale;
 
-    private RocketFlameParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed,
+    public RocketFlameParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed,
             SpriteSet sprites, float baseScale, int lifetime) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.sprites = sprites;
@@ -47,11 +48,20 @@ public class RocketFlameParticle extends TextureSheetParticle {
         return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
+    public static RocketFlameParticle createLegacy(ClientLevel level, double x, double y, double z,
+            double xSpeed, double ySpeed, double zSpeed, float scale, int lifetime) {
+        if (rocketFlameSprites == null) {
+            return null;
+        }
+        return new RocketFlameParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, rocketFlameSprites, scale, lifetime);
+    }
+
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;
 
         public Provider(SpriteSet sprites) {
             this.sprites = sprites;
+            rocketFlameSprites = sprites;
         }
 
         @Override

@@ -1,0 +1,28 @@
+{
+  "values": [
+    "hbm:nugget_uranium",
+    "hbm:nugget_u233",
+    "hbm:nugget_u235",
+    "hbm:nugget_u238",
+    "hbm:nugget_th232",
+    "hbm:nugget_plutonium",
+    "hbm:nugget_pu238",
+    "hbm:nugget_pu239",
+    "hbm:nugget_pu240",
+    "hbm:nugget_pu241",
+    "hbm:nugget_pu_mix",
+    "hbm:nugget_am241",
+    "hbm:nugget_am242",
+    "hbm:nugget_am_mix",
+    "hbm:nugget_neptunium",
+    "hbm:nugget_polonium",
+    "hbm:nugget_technetium",
+    "hbm:nugget_cobalt",
+    "hbm:nugget_co60",
+    "hbm:nugget_sr90",
+    "hbm:nugget_au198",
+    "hbm:nugget_pb209",
+    "hbm:nugget_ra226",
+    "hbm:nugget_solinium"
+  ]
+}

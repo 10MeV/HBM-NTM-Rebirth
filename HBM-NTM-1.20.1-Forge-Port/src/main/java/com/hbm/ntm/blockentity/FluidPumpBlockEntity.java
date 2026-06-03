@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.fluid.FluidType;
@@ -51,6 +53,8 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity implements 
         boolean powered = level.hasNeighborSignal(pos);
         if (pump.redstone != powered) {
             pump.redstone = powered;
+            pump.invalidateFluidHandlers();
+            level.updateNeighborsAt(pos, state.getBlock());
             changed = true;
         }
 
@@ -72,6 +76,17 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity implements 
 
     public boolean isRedstoneBlocked() {
         return redstone;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        java.util.ArrayList<net.minecraft.network.chat.Component> lines = new java.util.ArrayList<>();
+        lines.add(LegacyLookOverlayLines.pumpLine(tank, bufferSize));
+        lines.add(LegacyLookOverlayLines.priority(priority));
+        if (tank.getFill() > 0) {
+            lines.add(LegacyLookOverlayLines.buffered(tank.getFill()));
+        }
+        return LegacyLookOverlay.forBlock(this, lines);
     }
 
     public boolean setIdentifiedType(FluidType type) {
@@ -213,6 +228,7 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity implements 
         }
         redstone = tag.getBoolean(TAG_REDSTONE);
         normalizeBuffer();
+        invalidateFluidHandlers();
     }
 
     @Override

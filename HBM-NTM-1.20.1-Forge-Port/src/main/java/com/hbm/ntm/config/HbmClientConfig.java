@@ -9,6 +9,7 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.IntValue GEIGER_OFFSET_VERTICAL;
     public static final ForgeConfigSpec.BooleanValue NUKE_HUD_FLASH;
     public static final ForgeConfigSpec.BooleanValue NUKE_HUD_SHAKE;
+    public static final ForgeConfigSpec.BooleanValue LEGACY_LOOK_OVERLAY;
     public static final ForgeConfigSpec.BooleanValue NUKE_WARP_SHOCKWAVE;
     public static final ForgeConfigSpec.DoubleValue NUKE_WARP_SHOCKWAVE_INTENSITY;
     public static final ForgeConfigSpec.IntValue NUKE_WARP_SHOCKWAVE_MESH_SEGMENTS;
@@ -30,6 +31,9 @@ public final class HbmClientConfig {
         NUKE_HUD_SHAKE = builder
                 .comment("Legacy ClientConfig.NUKE_HUD_SHAKE: enables the nuclear explosion HUD shake.")
                 .define("nukeHudShake", true);
+        LEGACY_LOOK_OVERLAY = builder
+                .comment("Legacy ClientConfig.DODD_RBMK_DIAGNOSTIC: enables crosshair look overlays for migrated blocks, items, and entities.")
+                .define("legacyLookOverlay", true);
         builder.pop();
 
         builder.push("effects");

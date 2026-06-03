@@ -1,53 +1,6 @@
 {
-  "parent": "minecraft:block/block",
-  "elements": [
-    {
-      "faces": {
-        "down": {
-          "cullface": "down",
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "east": {
-          "cullface": "east",
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "north": {
-          "cullface": "north",
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "south": {
-          "cullface": "south",
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "up": {
-          "cullface": "up",
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "west": {
-          "cullface": "west",
-          "texture": "#all",
-          "tintindex": 0
-        }
-      },
-      "from": [
-        0,
-        0,
-        0
-      ],
-      "to": [
-        16,
-        16,
-        16
-      ]
-    }
-  ],
+  "parent": "hbm:block/template_sellafield_slaked",
   "textures": {
-    "all": "hbm:block/sellafield_slaked_3",
-    "particle": "hbm:block/sellafield_slaked_3"
+    "all": "hbm:block/sellafield_slaked_3"
   }
 }

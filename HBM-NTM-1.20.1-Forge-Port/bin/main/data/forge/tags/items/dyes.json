@@ -1,0 +1,23 @@
+{
+  "values": [
+    "hbm:oil_tar_crude",
+    "hbm:oil_tar_crack",
+    "hbm:oil_tar_coal",
+    "hbm:oil_tar_wood",
+    "hbm:oil_tar_wax",
+    "hbm:oil_tar_paraffin",
+    "hbm:cinnebar",
+    "hbm:sulfur",
+    "hbm:powder_coal",
+    "hbm:powder_lignite",
+    "hbm:powder_titanium",
+    "hbm:fluorite",
+    "hbm:powder_cadmium",
+    "hbm:powder_ash_wood",
+    "hbm:powder_ash_coal",
+    "hbm:powder_ash_misc",
+    "hbm:powder_ash_fly",
+    "hbm:powder_ash_soot",
+    "hbm:powder_ash_fullerene"
+  ]
+}

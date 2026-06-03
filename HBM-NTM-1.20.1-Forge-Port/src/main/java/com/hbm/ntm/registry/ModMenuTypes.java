@@ -4,12 +4,14 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
 import com.hbm.ntm.menu.BasicMachineMenu;
 import com.hbm.ntm.menu.ChemicalPlantMenu;
+import com.hbm.ntm.menu.CompressorMenu;
 import com.hbm.ntm.menu.CustomNukeMenu;
 import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.menu.LiquefactorMenu;
 import com.hbm.ntm.menu.MachineBatteryMenu;
 import com.hbm.ntm.menu.MachineBatterySocketMenu;
 import com.hbm.ntm.menu.NuclearDeviceMenu;
+import com.hbm.ntm.menu.RemoteFluidMachineMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -30,11 +32,17 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<ChemicalPlantMenu>> CHEMICAL_PLANT =
             MENUS.register("chemical_plant", () -> IForgeMenuType.create(ChemicalPlantMenu::new));
 
+    public static final RegistryObject<MenuType<CompressorMenu>> COMPRESSOR =
+            MENUS.register("compressor", () -> IForgeMenuType.create(CompressorMenu::new));
+
     public static final RegistryObject<MenuType<LiquefactorMenu>> LIQUEFACTOR =
             MENUS.register("liquefactor", () -> IForgeMenuType.create(LiquefactorMenu::new));
 
     public static final RegistryObject<MenuType<FluidTankMenu>> FLUID_TANK =
             MENUS.register("fluid_tank", () -> IForgeMenuType.create(FluidTankMenu::new));
+
+    public static final RegistryObject<MenuType<RemoteFluidMachineMenu>> REMOTE_FLUID_MACHINE =
+            MENUS.register("remote_fluid_machine", () -> IForgeMenuType.create(RemoteFluidMachineMenu::new));
 
     public static final RegistryObject<MenuType<MachineBatteryMenu>> MACHINE_BATTERY =
             MENUS.register("machine_battery", () -> IForgeMenuType.create(MachineBatteryMenu::new));

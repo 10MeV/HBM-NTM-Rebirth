@@ -88,6 +88,18 @@
 - Forge simulate fill/drain 不改变 HBM tank。
 - 未映射的 HBM 流体不会被错误导出为其他 Forge 流体。
 
+## 2026-06-01 GUI/tank 接口补丁
+
+- 新增 `HbmFluidGuiHelper`：
+  - `watchTank(...)` 为 Menu 注册 tank fill/capacity DataSlot，并返回客户端只读 `TankData`。
+  - `TankData#scaledFill(...)` 统一流体条高度/宽度缩放，避免每台机器重复整数缩放规则。
+  - `TankData#info()` / `tankInfo(...)` 统一 tooltip 显示数据来源，仍由具体 Screen 决定旧坐标和渲染区域。
+- 已接入 `AssemblyMachineMenu` 与 `ChemicalPlantMenu`：
+  - 装配机输入/输出 tank 条继续使用旧横向区域。
+  - 化工厂三输入/三输出 tank 条继续使用旧纵向区域。
+- 本批不改变 `HbmFluidItemTransfer` 的容器装卸语义；化工厂仍通过该 helper 处理流体容器输入/输出槽。
+- 验证：`.\gradlew.bat compileJava --no-daemon` 通过。
+
 ## 2026-05-21 Modern Library Pass 1
 
 This pass starts the clean-port code layer for the shared fluid library. Scope is intentionally limited to reusable data structures and the Forge capability bridge:
@@ -255,6 +267,228 @@ Still deferred:
 Verification:
 
 - `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
+
+## 2026-06-03 Modern Library Pass 60
+
+本轮继续推进 fluid-mk2-network 的机器接入，集中补已迁移远端流体机器的右键 GUI 与 tank/HE 同步。按 1.7.10 对照，只给旧版确有容器 GUI 的机器开放屏幕；`machine_catalytic_cracker` 与 `machine_fraction_tower` 旧版主要通过准星 overlay/NEI 暴露信息，本轮不额外创造 GUI。
+
+1.7.10 对照：
+
+- `GUIMachineCoker.java` / `ContainerMachineCoker.java`
+  - 纹理 `textures/gui/processing/gui_coker.png`，`xSize=176`，`ySize=204`。
+  - tank 0 坐标 `(35,18..70)`，tank 1 坐标 `(125,18..70)`。
+  - 容器含流体识别码 slot 0 与输出 slot 1。
+- `GUIMachineHydrotreater.java` / `ContainerMachineHydrotreater.java`
+  - 纹理 `gui_hydrotreater.png`，`xSize=176`，`ySize=238`。
+  - 能量条 `(17,18..70)`；tank 坐标依次为 `35/53/125/143`。
+  - 容器含电池、容器装卸、流体识别码、催化转换器等 11 个机器 slot。
+- `GUIMachineCatalyticReformer.java` / `ContainerMachineCatalyticReformer.java`
+  - 纹理 `gui_catalytic_reformer.png`，`xSize=176`，`ySize=238`。
+  - 能量条 `(17,18..70)`；tank 坐标依次为 `35/107/125/143`。
+- `GUIMachineVacuumDistill.java` / `ContainerMachineVacuumDistill.java`
+  - 纹理 `gui_vacuum_distill.png`，`xSize=176`，`ySize=238`。
+  - 能量条 `(26,18..70)`；tank 坐标依次为 `44/80/98/116/134`。
+- `MachineCatalyticCracker.java` 与 `MachineFractionTower.java`
+  - 实现 `ILookOverlay`，未发现对应常规 `GUI*` / `Container*`；现代侧继续用准星 tank overlay，不开放额外 GUI。
+
+现代侧改动：
+
+- `LegacyRemoteFluidMachineBlockEntity` 实现 `MenuProvider`，新增 `LegacyGuiProfile`，由具体机器声明旧 GUI 形态。
+- `RemoteFluidMachineBlock#use(...)` 仅在机器有旧 GUI profile 时用 `NetworkHooks.openScreen(...)` 打开菜单。
+- 新增 `RemoteFluidMachineMenu`：
+  - 使用 `HbmFluidGuiHelper.watchTank(...)` 同步 `getAllTanks()` 中所有 tank。
+  - 使用 `HbmMenuDataSlots.addLong(...)` 同步 HE 与 max HE。
+  - 当前不放入机器 slot，避免在容器装卸、催化剂、旧升级/流体识别码细节未完整补齐前伪造 slot 语义。
+- 新增 `RemoteFluidMachineScreen`：
+  - 复用 1.7.10 GUI 纹理与 tank/energy 坐标。
+  - 渲染 Coker、Hydrotreater、Catalytic Reformer、Vacuum Distill 的 tank 与 HE 条，并提供现代 `FluidType` tooltip。
+- 复制旧资源：
+  - `assets/hbm/textures/gui/processing/gui_coker.png`
+  - `assets/hbm/textures/gui/processing/gui_hydrotreater.png`
+  - `assets/hbm/textures/gui/processing/gui_catalytic_reformer.png`
+  - `assets/hbm/textures/gui/processing/gui_vacuum_distill.png`
+
+Still deferred:
+
+- 四台旧容器的机器 slot 行为尚未迁移：流体识别码定型、流体容器装卸、电池充电、催化转换器消耗/耐久、旧输出 slot 规则需要后续和 fluid container / machine inventory 库一起补。
+- `machine_catalytic_cracker` / `machine_fraction_tower` 无旧 GUI，本轮不新增屏幕；继续依赖准星 overlay 与后续 JEI/NEI 配方展示迁移。
+- Hydrotreater/Reformer/Vacuum 的完整配方运行、催化剂与能耗逻辑仍需按 1.7.10 tile entity 后续推进。
+
+Progress estimate after Pass 60:
+
+- Core `FluidType` identity/NBT lookup/table: about 90%.
+- Basic tank/conform/Forge capability bridge: about 88%.
+- Fluid network/provider/receiver algorithm: about 82%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 76%.
+- Machine integration through the library: about 62%.
+- Tank GUI sync and remote machine screens: about 42%.
+- Fluid identifier item, GUI, NBT, and typed duct crafting semantics: about 93%.
+- Overall fluid library migration: about 80%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon --stacktrace` passed.
+
+## 2026-06-03 Modern Library Pass 61
+
+本轮继续补 fluid-mk2-network 的机器接入，重点把已开放旧 GUI 的电力远端流体机器从“tank 同步面板”推进到可保存物品槽、可通过流体容器装卸、可按旧配方运行。
+
+1.7.10 对照：
+
+- `TileEntityMachineHydrotreater.java`
+  - 11 slot：电池 0；输入油容器 1/2；氢气容器 3/4；两个输出容器 5/6、7/8；流体识别码 9；`catalytic_converter` 10。
+  - 每 20 tick 更新远端端口订阅；每 tick 从电池充 HE；`tanks[0].setType(9, slots)`。
+  - `loadTank(1,2)`、`loadTank(3,4)`，`unloadTank(5,6)`、`unloadTank(7,8)`。
+  - 每 2 tick 尝试反应：100 mB 输入油 + 加压氢气，消耗 20,000 HE；需要 catalyst，但 catalyst 不消耗。
+- `TileEntityMachineCatalyticReformer.java`
+  - 11 slot：电池 0；输入容器 1/2；三个输出容器 3/4、5/6、7/8；流体识别码 9；`catalytic_converter` 10。
+  - 每 tick 运行，100 mB 输入 + 20,000 HE；需要 catalyst，不消耗。
+- `TileEntityMachineVacuumDistill.java`
+  - 12 slot：电池 0；输入容器 1/2 为 `SlotDeprecated`（旧注释：removed, requires pressurization）；四个输出容器 3/4、5/6、7/8、9/10；流体识别码 11。
+  - 输入 tank 默认 2 PU；每 tick 100 mB 输入 + 10,000 HE，输出四路馏分。
+- `HydrotreatingRecipes.java` / `ReformingRecipes.java` / `VacuumRefineryRecipes.java`
+  - 本轮按旧默认表迁入 `LegacyOilFluidRecipes`。
+- `ModItems.catalytic_converter`
+  - 旧注册为普通物品，`maxStackSize=1`，`controlTab`，贴图 `textures/items/catalytic_converter.png`。
+
+现代侧改动：
+
+- `LegacyRemoteFluidMachineBlockEntity`
+  - 新增可选 `ItemStackHandler` 支撑旧机器 slot。
+  - 保存/读取 `Inventory`，并通过 `getDrops()` 给远端机器破坏掉落。
+  - 新增 `chargeFromSlot(...)`、`consumePower(...)`，供旧电力流体机器共用。
+- `RemoteFluidMachineBlock`
+  - 破坏核心时掉落远端流体机器内部 slot 内容。
+- `RemoteFluidMachineMenu`
+  - 按旧容器坐标补 Hydrotreater、Catalytic Reformer、Vacuum Distill 的机器槽。
+  - 电池、流体识别码、催化转换器槽有现代 slot 过滤；旧 `SlotTakeOnly` 使用 output slot。
+  - Vacuum Distill 的 2PU 输入容器槽保持禁用，符合旧 `SlotDeprecated` 注释。
+- `LegacyOilFluidRecipes`
+  - 新增 hydrotreating、reforming、vacuum recipe 查询表。
+- `HydrotreaterBlockEntity`
+  - 迁入旧识别码定型、容器装卸、电池充电、催化剂检查、2 tick 反应与输出 tank 定型。
+- `CatalyticReformerBlockEntity`
+  - 迁入旧识别码定型、容器装卸、电池充电、催化剂检查与反应。
+- `VacuumDistillBlockEntity`
+  - 迁入旧识别码定型、输出容器卸载、电池充电、2PU 输入保持、真空馏分反应。
+- `catalytic_converter`
+  - 已确认现代注册项存在并接入 control tab，本轮补旧贴图 `assets/hbm/textures/item/catalytic_converter.png`。
+
+Still deferred:
+
+- Coker 仍需单独批次补热源接口、热扩散、进度、固体输出、污染与完整 coker recipe 表；本轮未把 Coker 伪造成普通电力机器。
+- Hydrotreater/Reformer/Vacuum 的 OpenComputers 接口、音效/烟雾等视听效果仍未迁入。
+- 旧流体容器装卸已经走现代 `HbmFluidItemTransfer`，但若某些特殊容器缺少注册规则，需要在 fluid container 子库继续补。
+
+Progress estimate after Pass 61:
+
+- Core `FluidType` identity/NBT lookup/table: about 90%.
+- Basic tank/conform/Forge capability bridge: about 90%.
+- Fluid network/provider/receiver algorithm: about 82%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 80%.
+- Machine integration through the library: about 67%.
+- Tank GUI sync and remote machine screens: about 55%.
+- Fluid identifier item, GUI, NBT, and typed duct crafting semantics: about 93%.
+- Overall fluid library migration: about 82%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
+
+## 2026-06-03 准星 overlay 流体网络勘误
+
+1.7.10 对照：
+
+- `FluidDuctStandard`、`FluidDuctBox`、`FluidDuctPaintable`、`FluidValve`、`FluidSwitch`、`FluidPipeAnchor` 的 `printHook` 均显示当前流体名称一行，颜色取流体类型颜色。
+- `FluidCounterValve#printHook` 显示当前流体名称与 `Counter: ...`。
+- `FluidDuctGauge#printHook` 显示当前流体名称、`deltaTick mB/t`、`deltaLastSecond mB/s`。
+- `FluidPump#printHook` 显示 `-> fluid (pressure PU): buffermB/t ->`、`Priority: ...`，有缓冲时追加 `...mB buffered`。
+- `FluidDuctBoxExhaust` / `FluidDuctPaintableBlockExhaust` 显示 Smoke、Leaded Smoke、Poison Smoke 三种烟气名称。
+
+现代侧状态：
+
+- `FluidPipeBlockEntity#getLookOverlay` 覆盖基础流体管、阀门、开关、盒式管、可染色管、管锚的“一行当前流体”行为。
+- `FluidCounterValveBlockEntity`、`FluidDuctGaugeBlockEntity`、`FluidPumpBlockEntity`、`FluidDuctExhaustBlockEntity`、`FluidDuctPaintableExhaustBlockEntity` 已按旧端专用文本接入共享 overlay API。
+- `HbmFluidBlockEntity` 默认不显示 overlay，必须由具体旧端实现了 `ILookOverlay` 的机器显式覆盖；这避免 `machine_compressor`、`machine_fluidtank`、`machine_refinery`、普通 tank 机器出现 1.7.10 没有的常驻 tank 信息。
+
+## 2026-06-03 Modern Library Pass 59
+
+本轮继续补 Pass 58 留下的 compressor GUI/control 缺口，把压力档按钮、tank GUI 同步和右键打开流程接入现代菜单系统。
+
+1.7.10 对照：
+
+- `com/hbm/inventory/container/ContainerCompressor.java`
+  - 机器槽位：slot 0 Fluid ID `(17,72)`，slot 1 Battery `(152,72)`，slot 2/3 Upgrade `(52,72)/(70,72)`。
+  - shift-click 优先把 `IBatteryItem` 放入 battery 槽，把 `IItemFluidIdentifier` 放入 fluid ID 槽，其他进入 upgrade 槽。
+- `com/hbm/inventory/gui/GUICompressor.java`
+  - 使用 `textures/gui/processing/gui_compressor.png`，尺寸 `176x204`。
+  - 左输入 tank 区域 `(17,18,16,52)`，右输出 tank 区域 `(107,18,16,52)`，电量条 `(152,18,16,52)`。
+  - 0..4 PU 压力按钮位于 `x=43 + j*11, y=46, w=8, h=14`，点击发送 `compression=j` 控制包。
+  - 当前压力高亮使用贴图片段 `(193,18,8,124)` 的顶部 14px；进度条使用 `(192,0)`，电量条使用 `(176,52)`。
+
+现代侧改动：
+
+- 新增 `CompressorMenu`：
+  - 注册到 `ModMenuTypes.COMPRESSOR`。
+  - 槽位坐标按旧 `ContainerCompressor` 复刻。
+  - 通过 `HbmFluidGuiHelper.watchTank(...)` 同步输入/输出 tank 的 fill、capacity、fluid type、pressure。
+  - 通过 `HbmMenuDataSlots.addLong(...)` 同步 HE/max HE，并同步 progress、processTime、powerRequirement、inputPressure。
+- 新增 `CompressorScreen`：
+  - 复用旧 `gui_compressor.png`，并复制到现代资源目录。
+  - 复刻旧 tank tooltip、电量 tooltip、压力按钮 tooltip、进度条、电量条和压力高亮。
+  - 压力按钮通过 `ModMessages.sendLegacyButton(..., CONTROL_INPUT_PRESSURE)` 发送到服务器。
+- `CompressorBlockEntity`：
+  - 实现 `MenuProvider` 与 `HbmLegacyButtonReceiver`。
+  - 新增 `CONTROL_INPUT_PRESSURE`，服务器端限制 0..4 PU 并执行旧 `receiveControl("compression")` 等价逻辑：修改输入 tank pressure、重算输出 tank、清空进度、同步客户端。
+  - 暴露 power/maxPower，并在机器拆除时掉落内部槽。
+- `CompressorBlock`：
+  - 右键打开 compressor GUI。
+  - core 移除时掉落 `CompressorBlockEntity#getDrops()`。
+- `ClientModEvents`：
+  - 注册 `CompressorScreen`。
+  - 给 `ModBlockEntities.COMPRESSOR` 注册 `LegacyVisibleMachineRenderer`，保持 OBJ 可见机器渲染。
+
+Still deferred:
+
+- 旧 speed/power/overdrive 升级逻辑仍未迁移；两个 upgrade 槽已占位，但当前不接受升级物品。
+- 旧客户端风扇/活塞动画与活塞声音仍属于渲染/机器视觉批次。
+- GUI 文案仍沿用 block title 和通用 tooltip，没有迁移所有旧本地化细节。
+
+Progress estimate after Pass 59:
+
+- Core `FluidType` identity/NBT lookup/table: about 90%.
+- Basic tank/conform/Forge capability bridge: about 87%.
+- Fluid network/provider/receiver algorithm: about 82%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 77%.
+- Machine integration through the library: about 61%.
+- Fluid identifier item, GUI, NBT, and typed duct crafting semantics: about 93%.
+- Overall fluid library migration: about 80%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` passed.
+
+## 2026-06-03 管网 overlay 对齐扩展
+
+1.7.10 对照：
+
+- 普通流体阀、红石流体开关、箱式管、可涂装管、管道锚点均走 `TileEntityPipeBaseNT#getType()`，只显示一行彩色流体名。
+- `FluidCounterValve#printHook` 额外显示 `Counter: <counter>`。
+- 排烟箱管与可涂装排烟管固定显示三行：Smoke、Leaded Smoke、Poison Smoke。
+
+现代侧：
+
+- `FluidPipeBlockEntity` 的默认 overlay 继续作为普通管网方块共享入口。
+- `FluidCounterValveBlockEntity` 覆盖默认 overlay，追加 counter 行。
+- `FluidDuctExhaustBlockEntity` 与 `FluidDuctPaintableExhaustBlockEntity` 通过 `LegacyLookOverlayLines.fluidNames(...)` 固定声明三种 smoke 流体。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 - `.\gradlew.bat runData --no-daemon` passed and generated `fluid_duct_neo` blockstate/model/item/lang/loot/tag resources.
 - `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` passed after data generation.
 
@@ -363,6 +597,106 @@ Verification:
 
 - `.\gradlew.bat compileJava processResources --no-daemon` passed.
 
+## 2026-06-03 Modern Library Pass 56
+
+This pass repairs the modern fluid pipe item/variant split after re-checking the 1.7.10 pipe and valve sources:
+
+- Legacy sources re-read:
+  - `com/hbm/items/machine/ItemFluidDuct.java`
+  - `com/hbm/items/ModItems.java`
+  - `com/hbm/blocks/ModBlocks.java`
+  - `com/hbm/blocks/network/FluidDuctStandard.java`
+  - `com/hbm/tileentity/network/TileEntityPipeBaseNT.java`
+  - `com/hbm/main/CraftingManager.java` fluid duct recipe block
+- 1.7.10 contract confirmed:
+  - `ModItems.fluid_duct` is the only creative-tab item that expands into one stack per `Fluids.getInNiceOrder()` fluid type.
+  - That item places `ModBlocks.fluid_duct_neo` and writes the selected fluid id into `TileEntityPipeBaseNT.type`.
+  - `fluid_duct_neo`, `fluid_duct_box`, `fluid_duct_paintable`, `fluid_duct_gauge`, `fluid_duct_exhaust`, `fluid_duct_paintable_block_exhaust`, `pipe_anchor`, `fluid_valve`, `fluid_switch`, and `fluid_counter_valve` are registered as ordinary block items, not fluid-typed subitems.
+  - `FluidDuctStandard#getPickBlock` returns the typed `ModItems.fluid_duct` stack for standard pipes; valve/switch/counter-valve drops are ordinary untyped block items.
+- Modern fixes:
+  - Added `ModItems.FLUID_DUCT` as the modern equivalent of legacy `ModItems.fluid_duct`, backed by `FluidPipeBlockItem` and the `fluid_duct_neo` placed block.
+  - Creative-tab expansion for `FluidPipeBlockItem` now happens only through the item registry path, so typed fluid variants appear for `hbm:fluid_duct` but not for each pipe/valve block item.
+  - Fluid pipe, valve, switch, counter-valve, boxduct, gauge, exhaust, paintable duct, paintable exhaust, and pipe anchor block registrations use normal single block items.
+  - Standard fluid duct clone/pick returns typed `hbm:fluid_duct` based on the block entity fluid type; other pipe variants and valves clone their own single block item.
+  - Valve/switch/counter-valve typed drop overrides were removed, preserving their untyped item/drop contract.
+  - Added the missing `hbm:item/fluid_duct` layered model and language entries so the typed legacy duct item has a real model/name separate from the placed `fluid_duct_neo` block item.
+
+Closed by Pass 57:
+
+- The old identifier-retargeting crafting recipes that output typed `ModItems.fluid_duct` stacks are now mirrored by a custom crafting serializer instead of ordinary result JSON.
+
+Progress estimate after Pass 56:
+
+- Core `FluidType` identity/NBT lookup/table: about 90%.
+- Basic tank/conform/Forge capability bridge: about 82%.
+- Fluid network/provider/receiver algorithm: about 78%.
+- In-world pipe graph: about 60%.
+- Pipe/valve placement, pick/drop, and creative item semantics: about 82%.
+- Fluid item/container loading: about 68%.
+- Behavior traits and cross-system effects: about 70%.
+- Machine integration through the library: about 47%.
+- Overall fluid library migration: about 70%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` passed.
+
+## 2026-06-03 Modern Library Pass 57
+
+This pass ports the remaining `fluid_identifier_multi` mechanics from 1.7.10 and closes the typed duct recipe gap from Pass 56.
+
+- Legacy sources re-read:
+  - `com/hbm/items/machine/ItemFluidIDMulti.java`
+  - `com/hbm/items/machine/IItemFluidIdentifier.java`
+  - `com/hbm/inventory/gui/GUIScreenFluid.java`
+  - `com/hbm/main/CraftingManager.java` fluid identifier / duct recipe loop
+  - `com/hbm/blocks/network/FluidDuctBase.java`
+  - `com/hbm/blocks/network/FluidPump.java`
+  - `com/hbm/inventory/recipes/AnnihilatorRecipes.java`
+  - representative containers such as `ContainerMachineGasFlare.java`
+- 1.7.10 contract confirmed:
+  - `fluid_identifier_multi` stores primary and secondary fluid ids as integer NBT keys `fluid1` and `fluid2`; the item damage mirrors `fluid1` for old visual/recipe metadata.
+  - Creative entries are generated from `Fluids.getInNiceOrder()`, skipping `NONE` and fluids with `hasNoID()`.
+  - Non-sneak right click swaps primary and secondary, plays the orb sound, and informs the player of the new primary fluid.
+  - Sneak right click opens the search GUI. Left-clicking a GUI entry sets primary; right-clicking sets secondary; the GUI shows nine matching non-`NO_ID` fluids and uses fluid trait tooltip data.
+  - The identifier is a crafting container item and stays in the crafting grid.
+  - In-world blocks and machine slots read only the primary fluid through `IItemFluidIdentifier#getType(...)`; secondary is only the quick-swap/GUI alternate.
+  - `CraftingManager` retargets one or eight standard ducts, and one or eight already typed `fluid_duct` items, with a single identifier into typed `ModItems.fluid_duct` output.
+  - Some old non-fluid machines, such as the annihilator, treat an identifier stack as a fluid recipe key. That is a consumer-side contract for those future machine recipe ports, not a separate identifier behavior.
+- Modern fixes:
+  - `FluidIdentifierItem` now writes old-compatible integer `fluid1` / `fluid2` NBT and mirrors names under separate `fluid1_name` / `fluid2_name` keys.
+  - Existing modern stacks that stored string names under `fluid1` / `fluid2`, and interim stacks that stored `fluid1_id` / `fluid2_id`, are still readable.
+  - Tooltip layout now follows the old four-line `info`, indented primary, `info2`, indented secondary format.
+  - Overlay tint keeps the old white fallback if a fluid color is negative.
+  - The modern searchable `FluidIdentifierScreen` now mirrors GUI selections into the client held stack immediately while still sending the server item-control packet, preventing the local highlight from being overwritten before inventory sync returns.
+  - Added `FluidDuctIdentifierRecipe`, a special crafting recipe matching the four old retargeting shapes: one or eight `fluid_duct_neo`, or one or eight typed `fluid_duct`, plus one identifier.
+  - The recipe outputs `ModItems.FLUID_DUCT` with the identifier primary fluid and preserves the identifier through the existing crafting remaining item path.
+  - The special recipe counts occupied crafting slots, not `ItemStack#getCount()`, matching old shapeless recipes that consume one duct from each of one or eight grid slots.
+  - Registered the `hbm:fluid_duct_identifier` serializer and added/generated `data/hbm/recipes/fluid_network/fluid_duct_identifier.json`.
+
+Still deferred:
+
+- Consumer-specific uses such as `AnnihilatorRecipes#getHighestPayoutFromStack(...)` must be ported with their owning machines/recipe systems. This pass records that those consumers should call the identifier interface and read primary fluid, but it does not invent incomplete annihilator behavior.
+
+Progress estimate after Pass 57:
+
+- Core `FluidType` identity/NBT lookup/table: about 90%.
+- Basic tank/conform/Forge capability bridge: about 82%.
+- Fluid network/provider/receiver algorithm: about 78%.
+- In-world pipe graph: about 60%.
+- Pipe/valve placement, pick/drop, and creative item semantics: about 84%.
+- Fluid identifier item, GUI, NBT, and typed duct crafting semantics: about 93%.
+- Fluid item/container loading: about 68%.
+- Behavior traits and cross-system effects: about 70%.
+- Machine integration through the library: about 47%.
+- Overall fluid library migration: about 71%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` passed.
+
 ## 2026-05-31 Modern Library Pass 49
 
 This pass fills the workbench recipe/data gap for the registered fluid MK2 network block family, using the 1.7.10 `CraftingManager` block as the source:
@@ -414,6 +748,277 @@ Progress estimate after Pass 49:
 Verification:
 
 - `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` passed with proxy JVM options.
+
+## 2026-05-31 Modern Library Pass 50
+
+This pass closes the `pipe_anchor` remote-link half of the fluid MK2 port and makes it usable as the remote-port carrier for already migrated machines.
+
+- Legacy sources re-read:
+  - `com/hbm/tileentity/network/TileEntityPipelineBase.java`
+  - `com/hbm/tileentity/network/TileEntityPipeAnchor.java`
+  - `com/hbm/blocks/network/FluidPipeAnchor.java`
+  - `com/hbm/items/tool/ItemWrench.java`
+  - `com/hbm/uninos/UniNodespace.java`
+  - `com/hbm/uninos/GenNode.java`
+- Extend the modern shared UNINOS node model with directional-safe direct connection points:
+  - Normal cable/pipe side connections keep the old directional back-check.
+  - Direct remote points now require both nodes to point at each other, matching the old `DirPos(..., ForgeDirection.UNKNOWN)` anchor link without turning every same-position node into a connection.
+- Expand `FluidPipeAnchorBlockEntity` into the old `TileEntityPipelineBase` contract:
+  - Saves old-compatible `conCount` / `conN` int-array remote connection NBT and a modern `remoteConnections` long-list mirror.
+  - Creates a node with its normal attached-side port plus direct remote anchor points.
+  - Links anchors only when they are both `SMALL` anchors, not the same block, within 10 m, and on the same fluid type.
+  - Preserves old `NONE` adoption: an untyped anchor adopts the other anchor's fluid type before the fluid-match check.
+  - Disconnects the opposite anchor when the block is actually removed, while normal node unload/removal still only clears the transient nodespace node.
+- Extend recursive fluid retargeting through anchor remote links for `FluidPipeBlock` and valve-family typed blocks, matching old `FluidPipeAnchor#changeTypeRecursively(...)`.
+- Add temporary command hooks until the real modern wrench/tool item path is migrated:
+  - `/hbm fluid pipe anchor link <first> <second>`
+  - `/hbm fluid pipe anchor unlink <first> <second>`
+  - `/hbm fluid pipe anchor clear <pos>`
+  - `/hbm fluid pipe anchor info <pos>`
+
+Still deferred:
+
+- The actual survival `wrench` item is not registered or migrated in this pass. The command path is a validation and map-repair hook for the library while the broader tool item migration remains separate.
+- Client-side pipe-anchor cable rendering between two remote anchors is still not recreated; this pass ports the saved/network behavior and leaves the visual cable segment for the renderer pass.
+- Full copy/paste settings-tool behavior for anchors and other pipe-family blocks remains deferred to the common tool/copy library.
+
+Progress estimate after Pass 50:
+
+- Core `FluidType` identity/NBT lookup/table: about 96%.
+- Basic tank/conform/Forge capability bridge: about 95%.
+- Fluid network/provider/receiver algorithm: about 92%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 94%.
+- Behavior traits and cross-system effects: about 84%.
+- Machine integration through the library: about 81%.
+- Data/recipe/resource coverage for fluid MK2 blocks: about 93%.
+- Overall fluid library migration: about 98.2%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed with proxy JVM options.
+
+## 2026-06-02 Modern Library Pass 51
+
+本轮继续补 `fluid-mk2-network` 的机器接入层，优先处理用户指出的远端端口、tank GUI 同步、流体容器装卸、管道/机器连接规则。
+
+- 旧源码复核：
+  - `api/hbm/fluidmk2/IFluidConnectorMK2.java`：连接默认要求 `dir != UNKNOWN`，具体机器可按流体类型和方向收紧。
+  - `api/hbm/fluidmk2/IFluidUserMK2.java`：压力层仍是 `0..5`。
+  - `com/hbm/inventory/fluid/tank/FluidTank.java`：普通 `loadTank` 在 `pressure != 0` 时拒绝，只有无限流体桶例外；GUI tooltip 会提示 pressurized/use compressor。
+  - `com/hbm/inventory/fluid/tank/FluidLoaderStandard.java`：普通容器只处理非压力 tank。
+  - `com/hbm/inventory/fluid/tank/FluidLoaderFillableItem.java`：从 tank 灌入 `IFillableItem` 时同样拒绝压力 tank。
+  - `com/hbm/inventory/fluid/tank/FluidLoaderInfinite.java`：无限流体物品可按 `allowPressure(...)` 处理压力 tank。
+- 远端端口：
+  - `HbmFluidPortMachine.refreshReceiverPorts(...)` 按 `FluidType` 去重订阅，避免多 tank 同类型对同一端口重复刷新。
+  - `HbmFluidPortMachine.refreshProviderPorts(...)` 按 `FluidType + pressure` 去重输出；provider 本身会按 matching tank 汇总，因此同类型同压力多输出 tank 不应在同 tick 对同一网络重复 `tryProvide`。
+  - 保持 provider 在不同压力层各自输出，压力分配仍由 `HbmFluidNet` 的 provider/receiver range 执行。
+- tank GUI 同步：
+  - `HbmFluidGuiHelper.watchTank(...)` 从 fill/capacity 扩展为同步 fill、capacity、type id、pressure。
+  - `TankData#tooltip()` 统一输出流体名、mB、压力提示和 `FluidType.appendInfo(...)` trait 信息。
+  - `AssemblyMachineMenu`、`ChemicalPlantMenu` 增加 tank tooltip 入口；对应 screen 改用同步后的 tooltip 数据。
+- 流体容器装卸：
+  - `HbmFluidItemTransfer` 新增 `TankSlotTransfer` 和 `processTransfers(...)`，让机器用声明式批处理描述 load/unload 槽组。
+  - `ChemicalPlantBlockEntity` 的 3 组输入容器装 tank、3 组输出 tank 装容器改走该批处理。
+  - `FluidTankBlockEntity` 与 `GasFlareBlockEntity` 改走相同批处理入口，作为后续机器迁移模板。
+  - 非无限流体物品/Forge fluid item 对 `pressure != 0` 的 tank 装卸会被拒绝，匹配旧版“压力 tank 需 compressor”的容器规则；无限流体物品仍按 `allowPressure(...)` 走特殊路径。
+
+仍然延期：
+
+- 真正的 compressor/pressurized container 装卸机器尚未迁移，本轮只收紧旧版普通容器规则，不发明替代路径。
+- 旧 wrench 生存交互仍在工具迁移批次中；远端 anchor 链接暂时保留命令验证入口。
+- 大型汽轮机已按用户要求不再纳入迁移范围。
+
+Progress estimate after Pass 51:
+
+- Core `FluidType` identity/NBT lookup/table: about 96%.
+- Basic tank/conform/Forge capability bridge: about 96%.
+- Fluid network/provider/receiver algorithm: about 93%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 96%.
+- Behavior traits and cross-system effects: about 84%.
+- Machine integration through the library: about 84%.
+- Data/recipe/resource coverage for fluid MK2 blocks: about 93%.
+- Overall fluid library migration: about 98.5%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed with proxy JVM options.
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` passed with proxy JVM options.
+
+## 2026-06-02 Modern Library Pass 52
+
+本轮继续扩大机器接入面，重点修补 Forge capability 桥接与旧式管道/机器连接规则之间的落差。
+
+- 旧源码复核：
+  - `com/hbm/tileentity/machine/oil/TileEntityMachineVacuumDistill.java`
+  - `com/hbm/tileentity/machine/oil/TileEntityMachineHydrotreater.java`
+  - `com/hbm/tileentity/machine/oil/TileEntityMachineCatalyticReformer.java`
+  - 这些旧油处理机器的 `canConnect(FluidType, ForgeDirection)` 基本只检查方向有效且不是 `DOWN`，不按当前 tank 类型拒绝连接；实际传输仍由 receiver/provider demand 决定。
+  - `com/hbm/tileentity/TileEntityProxyCombo.java` 复核：旧 combo proxy 对 fluid receiver 与 fluid connector 是委托到核心对象，现代 `MultiblockDummyBlockEntity` 已有对应委托路径，本轮未改 proxy 行为。
+- Forge fluid adapter：
+  - `ForgeFluidHandlerAdapter` 支持输入 tank 列表与输出 tank 列表分离。
+  - `fill(...)` 只写 input tanks；`drain(...)` 只抽 output tanks；`getTanks()` 仍暴露二者的合并可见列表。
+  - `drain(int, ...)` 现在在实际抽取后触发 `onChanged`，避免自动化抽液后 BlockEntity 不保存/不同步。
+- `HbmFluidBlockEntity`：
+  - `HbmFluidSideMode.BOTH` 改为使用分离式 adapter，表达“同一侧可输入也可输出，但输入/输出 tank 不混用”。
+  - 默认单 tank 机器仍不受影响，因为默认 input/output 都是 all tanks。
+- 旧远端流体机器基类：
+  - `LegacyRemoteFluidMachineBlockEntity#getFluidSideMode(...)` 对有效侧返回 `BOTH`，让现代 Forge fluid pipes 可从侧面填输入 tank、抽输出 tank。
+  - 对 `rejectsDownConnections` 的机器，`DOWN` 侧返回 `NONE`。
+  - `canConnectFluid(...)` 调回旧式方向规则：只要求流体非 `NONE`、side 非 null、且方向未被禁止；不再要求当前 tank 类型已经匹配该流体。
+- GUI 同步补强：
+  - `HbmFluidGuiHelper.TankData` 增加 `guiTint()` 与 `isEmpty()`。
+  - 装配机与化工厂流体条颜色改用 Menu 同步的 tank type tint，不再依赖客户端 BlockEntity 及时刷新，也不再硬编码装配机输入/输出颜色。
+  - `ChemicalPlantBlockEntity` 的 null-side all-fluid handler 改用 input/output 分离式 adapter，避免 all handler 抽到输入 tank。
+
+仍然延期：
+
+- 各油处理机器的完整 GUI、配方 UI 和物品槽仍未在本轮迁移；本轮只补它们共用的 fluid capability/remote-port 接入基础。
+- 多方块 dummy 的流体 provider 代理未扩展，因为旧 `TileEntityProxyCombo` 本身只实现 fluid receiver/connector 代理；provider 输出继续走核心机器的远端端口定义。
+- 旧 compressor/pressurized container 专用装卸链仍未迁移。
+
+Progress estimate after Pass 52:
+
+- Core `FluidType` identity/NBT lookup/table: about 96%.
+- Basic tank/conform/Forge capability bridge: about 97%.
+- Fluid network/provider/receiver algorithm: about 93%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 96%.
+- Behavior traits and cross-system effects: about 84%.
+- Machine integration through the library: about 87%.
+- Data/recipe/resource coverage for fluid MK2 blocks: about 93%.
+- Overall fluid library migration: about 98.7%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed with proxy JVM options.
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` passed with proxy JVM options.
+
+## 2026-06-02 Modern Library Pass 53
+
+本轮继续推进机器接入前的 GUI/tank 同步收敛，处理还在手写 tank DataSlot 的流体罐与液化机。
+
+- 旧源码复核：
+  - `com/hbm/inventory/gui/GUIMachineFluidTank.java`：旧流体罐界面通过 `tank.tank.renderTankInfo(...)` 显示 tank tooltip，并用同一个 tank 渲染路径绘制流体条。
+  - `com/hbm/inventory/gui/GUILiquefactor.java`：旧液化机同样通过 `liquefactor.tank.renderTankInfo(...)` 显示产出 tank tooltip。
+  - `com/hbm/inventory/fluid/tank/FluidTank.java`：`renderTankInfo(...)` 的 tooltip 包含流体名、fill/max、压力提示与 `FluidType.addInfo(...)` trait 信息。
+- GUI/tank 同步：
+  - `FluidTankMenu` 改用 `HbmFluidGuiHelper.watchTank(...)`，同步 fill、capacity、type id、pressure，不再只同步 fill/capacity 后从客户端 BlockEntity 读取 tank type。
+  - `LiquefactorMenu` 改用同一 `HbmFluidGuiHelper.watchTank(...)`，液化机产出 tank 的颜色和 tooltip 现在由菜单同步数据提供。
+  - `FluidTankScreen` 与 `LiquefactorScreen` 改用 `menu.getTankTint()` 和 `menu.getTankTooltip()`，避免客户端 BE 延迟刷新导致流体颜色/名称/压力提示不一致。
+- 菜单通用化：
+  - `FluidTankMenu` 的输出槽改用 `HbmInventoryMenuHelper.outputSlot(...)`，明确禁止玩家放入类型识别输出、装载输出、卸载输出槽。
+  - `FluidTankMenu` 与 `LiquefactorMenu` 的玩家背包布局、`stillValid`、`quickMoveStack` 迁到 `HbmInventoryMenuHelper`。
+  - `LiquefactorMenu` 的 long power/maxPower 同步迁到 `HbmMenuDataSlots.addLong(...)`，移除菜单内手写 64-bit DataSlot 拆分。
+
+仍然延期：
+
+- 液化机旧版没有单独的流体容器装卸槽，本轮不新增不存在的槽位；它仍是物品输入转流体产出的机器。
+- Compressor/压力容器专用 GUI 与装卸链仍需后续机器迁移批次补齐。
+- 大型汽轮机继续按用户要求排除，不纳入后续流体库接入目标。
+
+Progress estimate after Pass 53:
+
+- Core `FluidType` identity/NBT lookup/table: about 96%.
+- Basic tank/conform/Forge capability bridge: about 97%.
+- Fluid network/provider/receiver algorithm: about 93%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 96%.
+- Behavior traits and cross-system effects: about 84%.
+- Machine integration through the library: about 88%.
+- Data/recipe/resource coverage for fluid MK2 blocks: about 93%.
+- Overall fluid library migration: about 98.8%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed with proxy JVM options.
+
+## 2026-06-02 Modern Library Pass 54
+
+本轮修正已迁移热工/蒸汽类机器的 Forge fluid capability 侧向规则，让现代外部管道与旧 `IFluidStandardTransceiver`/`IFluidStandardTransceiverMK2` 合同一致。
+
+- 旧源码复核：
+  - `api/hbm/fluidmk2/IFluidStandardTransceiverMK2.java`：标准收发一体接口是 receiver + sender 的组合。
+  - `api/hbm/fluidmk2/IFluidStandardReceiverMK2.java`：输入只写 `getReceivingTanks()`。
+  - `api/hbm/fluidmk2/IFluidStandardSenderMK2.java`：输出只抽 `getSendingTanks()`。
+  - `com/hbm/tileentity/machine/TileEntityHeatBoiler.java`：同一组 `getConPos()` 连接点既 `trySubscribe(tanks[0])` 又 `tryProvide(tanks[1])`。
+  - `com/hbm/tileentity/machine/TileEntitySolarBoiler.java`：上/下连接点既订阅 water 又提供 steam。
+  - `com/hbm/tileentity/machine/TileEntitySteamEngine.java`：`getConPos()` 同时订阅 steam、发送 spent steam，并可供电。
+  - `com/hbm/tileentity/machine/TileEntityTurbineBase.java`：旧式涡轮连接点同时 `tryProvide(tanks[1])` 与 `trySubscribe(tanks[0])`。
+- 现代 capability 修正：
+  - `BoilerBlockEntity` 显式侧从“down 输出、其余输入”改为 `BOTH`。
+  - `SolarBoilerBlockEntity` 显式侧从 `INPUT` 改为 `BOTH`。
+  - `SteamEngineBlockEntity` 显式侧从 `INPUT` 改为 `BOTH`。
+  - `SteamTurbineBlockEntity` 显式侧从 `INPUT` 改为 `BOTH`。
+  - `LegacySteamTurbineBlockEntity` 显式侧从 `INPUT` 改为 `BOTH`，覆盖其子类的旧式蒸汽涡轮接入。
+  - `CoolingTowerBlockEntity` 显式侧从 `INPUT` 改为 `BOTH`，使 spent steam 输入和 water 输出都能走同一类外部连接。
+- 安全边界：
+  - 这些类已经分别覆写 `getInputTanks(side)` 与 `getOutputTanks(side)`；`HbmFluidBlockEntity` 的 `BOTH` adapter 会把输入/输出 tank 分离传给 `ForgeFluidHandlerAdapter`。
+  - 因此外部 Forge 管道现在可在同一连接侧填输入 tank、抽输出 tank，但不会把输出 tank 当输入填，也不会从输入 tank 抽走流体。
+
+仍然延期：
+
+- 压力容器/compressor 专用装卸链仍未迁移。
+- 各热工机器的完整 GUI/仪表/旧视觉反馈仍在对应机器或渲染批次中继续补。
+- 大型汽轮机继续按用户要求排除，不纳入本轮或后续默认流体库目标。
+
+Progress estimate after Pass 54:
+
+- Core `FluidType` identity/NBT lookup/table: about 96%.
+- Basic tank/conform/Forge capability bridge: about 97.5%.
+- Fluid network/provider/receiver algorithm: about 93%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 96%.
+- Behavior traits and cross-system effects: about 84%.
+- Machine integration through the library: about 89%.
+- Data/recipe/resource coverage for fluid MK2 blocks: about 93%.
+- Overall fluid library migration: about 98.9%.
+
+Verification:
+
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` passed with proxy JVM options.
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed with proxy JVM options after a transient concurrent particle-file edit settled.
+
+## 2026-06-02 Modern Library Pass 55
+
+本轮修正动态侧向流体连接在现代 Forge capability 缓存下的失效问题，继续补机器接入与管道/机器连接规则。
+
+- 旧源码复核：
+  - `com/hbm/tileentity/machine/storage/TileEntityMachineFluidTank.java`：储罐 `mode` 在输入、缓冲、输出之间切换；缓冲模式创建节点并同时作为 provider/receiver，非缓冲模式按当前模式对 `getConPos()` 动态添加/移除 provider/receiver。
+  - `com/hbm/blocks/network/FluidPump.java`：泵每 tick 重新读取红石，红石为真时停止 `tryProvide(...)`，但仍在输入侧 `trySubscribe(...)`。
+  - `com/hbm/tileentity/network/pneumatic/TileEntityPneumoTube.java`：气动管 `canConnect(Fluids.AIR, dir)` 由 compressor 状态和 `insertionDir`/`ejectionDir` 动态决定，物品插入/弹出端口不能同时当空气输入口。
+- 现代库级修正：
+  - `HbmFluidBlockEntity` 新增受保护的 `invalidateFluidHandlers()`，专门失效并清空按侧缓存的 `LazyOptional<IFluidHandler>`，`invalidateCaps()` 复用该入口。
+  - `FluidTankBlockEntity` 在 `setMode(...)`、`explodeTank()` 和 NBT `load(...)` 后刷新流体 handler；模式变更和爆罐会通知邻居，使外部管道重新查询连接能力。
+  - `FluidPumpBlockEntity` 在红石状态变化和 NBT `load(...)` 后刷新流体 handler；输出侧会随红石从 `OUTPUT` 切到 `NONE`，输入侧保持可填。
+  - `PneumaticTubeBlockEntity` 在插入/弹出方向变化和 NBT `load(...)` 后刷新流体 handler；空气 capability 与旧 `canConnect` 一样随端口方向变化。
+- 安全边界：
+  - 本轮不改变任何流体转移公式、压力规则或网络订阅算法，只修正现代缓存生命周期。
+  - 大型汽轮机继续按用户要求排除。
+
+仍然延期：
+
+- 压力容器/compressor 专用装卸链仍未迁移。
+- 管道模型/可视连接仍需继续用客户端渲染与资源批次复核；本轮只处理 server/capability 连接契约。
+- 完整的机器 GUI/仪表/旧视觉反馈仍按各机器批次推进。
+
+Progress estimate after Pass 55:
+
+- Core `FluidType` identity/NBT lookup/table: about 96%.
+- Basic tank/conform/Forge capability bridge: about 98%.
+- Fluid network/provider/receiver algorithm: about 93.5%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 96%.
+- Behavior traits and cross-system effects: about 84%.
+- Machine integration through the library: about 90%.
+- Data/recipe/resource coverage for fluid MK2 blocks: about 93%.
+- Overall fluid library migration: about 99.0%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed with proxy JVM options.
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` passed with proxy JVM options.
 
 ## 2026-05-30 Modern Library Pass 46
 
@@ -1552,12 +2157,15 @@ This pass closes the main pipe-side fluid identification gap and restores typed 
   - `machine_large_turbine` remains intentionally excluded because the user confirmed the large turbine was removed.
   - `machine_industrial_turbine` remains active because the 1.7.10 source has a separate `MachineIndustrialTurbine` / `TileEntityMachineIndustrialTurbine` path and only `machine_large_turbine` is the deprecated/removed large turbine target.
 
+Closed by Pass 57:
+
+- The old Alt/Ctrl keybind path that copies a pipe's type back into `ItemFluidIDMulti` is now ported through the modern server keybind layer.
+- The fluid identifier selection GUI (`GUIScreenFluid`) is now ported as the modern searchable `FluidIdentifierScreen`.
+
 Still deferred:
 
-- The old Alt/Ctrl keybind path that copies a pipe's type back into `ItemFluidIDMulti` is not ported yet; the modern input/keybind layer needs a dedicated pass before this can be exact.
 - Typed pipe drops and old metadata-to-NBT world migration are not finalized; placed pipes save their BlockEntity type, and newly placed typed stacks work, but block drops still need explicit NBT preservation.
 - Pipe visuals still use the connected duct block model; in-world verification should check item tint, placement type, and client sync under multiplayer/client-server conditions.
-- Fluid identifier selection GUI (`GUIScreenFluid`) is still deferred.
 
 Progress estimate after Pass 26:
 
@@ -1592,6 +2200,8 @@ This pass tightens the typed duct and multi-fluid identifier behavior against th
 - Extend `IFluidIdentifierItem` with a conservative optional write-back hook:
   - Read-only identifiers can keep the default `false`.
   - `FluidIdentifierItem` writes primary/secondary NBT through the existing `fluid1`/`fluid2` keys.
+  - Later machine consumers may call `getPrimaryType(stack)` as a positionless primary-fluid read alias; the default delegates to `getIdentifiedFluid(null, BlockPos.ZERO, stack)` so existing identifier implementations keep the same contract.
+  - `catalytic_converter` is registered as the old stack-size-1 control item because hydrotreater/reformer machine integration consumes the legacy catalyst slot; this is a minimal shared item registration, not a full hydrotreating recipe pass.
 - Port the old duct keybind interaction:
   - `TOOL_ALT` on a pipe copies the pipe's current type back into the held identifier's primary slot, plays the old orb-style feedback sound, and consumes the interaction.
   - `TOOL_CTRL` now triggers the same 64-depth connected-pipe retagging path as sneak-right-click.
@@ -2368,4 +2978,112 @@ Progress estimate after Pass 13:
 Verification:
 
 - `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-06-03 准星流体端口信息与同步补丁
+
+1.7.10 对照：
+
+- 多个流体机器的准星信息由 render-library 的 `ILookOverlay` 调用，但数据源来自 fluid MK2 的 `FluidTank`：
+  - `MachineSteamEngine#printHook` 显示 `tanks[0]` 蒸汽输入与 `tanks[1]` 低压蒸汽输出。
+  - `MachineHeatBoiler#printHook` 显示 `heat + TU`、`tanks[0]` 输入与 `tanks[1]` 输出。
+  - `MachineSolarBoiler#printHook` 遍历 `getAllTanks()`，第一格为输入，其余为输出，并在 `display < 1` 时显示 `Too cold!`。
+  - `MachineIndustrialTurbine#printHook` 显示输入 tank、按 `FT_Coolable.coolsTo` 推导的输出流体名、输出 tank 填充量，以及 HE/spin 信息。
+  - `MachineAssemblyFactory` / `MachineChemicalFactory` 的冷却接口使用独立 `water` 与 `lps` tank，不等同于配方 fluid input/output tanks。
+
+本轮现代侧改动：
+
+- `HbmFluidBlockEntity` 显式实现 `HbmFluidUser`，统一暴露 `getAllTanks()` 给准星 overlay 与流体网络用户。
+- `HbmFluidBlockEntity` 新增 `getUpdateTag()` / `getUpdatePacket()`，让继承链上的锅炉、蒸汽机、储罐、冷却塔、远端流体机器等在 `sendBlockUpdated(...)` 后能把 tank 状态同步给客户端准星 overlay。
+- `LegacyLookOverlayRenderer` 的通用 tank 行通过 `HbmStandardFluidReceiver#getReceivingTanks()` 与 `HbmStandardFluidSender#getSendingTanks()` 判断箭头方向：
+  - 输入显示绿色 `->`。
+  - 输出显示红色 `<-`。
+  - tank 名称使用现代 `FluidType#getDisplayName()`，填充量使用旧式 mB 数值格式。
+- `AssemblyMachineBlockEntity` / `ChemicalPlantBlockEntity` 已有独立 update packet，本轮仅接入端口 overlay；其冷却 `water/lps` tank 仍需在后续机器行为迁移中按 1.7.10 补入。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+### 2026-06-03 追加：流体准星信息 API 接入
+
+本轮把准星流体信息从客户端硬编码迁到 common API：
+
+- `HbmFluidBlockEntity` 作为所有 HBM tank 机器的默认实现：
+  - 实现 `LegacyLookOverlayProvider`。
+  - 默认返回 `LegacyLookOverlayLines.fluidUserTanks(this)`。
+  - tank 箭头方向由 `HbmStandardFluidReceiver#getReceivingTanks()` / `HbmStandardFluidSender#getSendingTanks()` 判断。
+- 具备额外状态的流体机器覆盖默认实现：
+  - `BoilerBlockEntity`：TU + 输入/输出 tank。
+  - `SolarBoilerBlockEntity`：水/蒸汽 + `Too cold!`。
+  - `LegacySteamTurbineBlockEntity` / `IndustrialSteamTurbineBlockEntity`：输入/输出 tank + HE/spin。
+- 流体网络方块也接入同一 API：
+  - `FluidPipeBlockEntity`：显示当前流体类型。
+  - `FluidDuctGaugeBlockEntity`：显示当前流体、mB/t、mB/s。
+  - `FluidPumpBlockEntity`：显示类型、压力、传输速率、优先级、缓冲量。
+
+重要边界：
+
+- 准星 overlay 文本格式属于 render/common API；真实流体类型、压力、速率、优先级、tank fill 仍来自 fluid MK2 现代库。
+- 后续新增流体机器时，优先继承 `HbmFluidBlockEntity` 默认 overlay；只有 1.7.10 源码有额外信息时才覆盖 `getLookOverlay(...)`。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-03 Modern Library Pass 58
+
+本轮继续推进 fluid-mk2-network 的机器接入，优先补旧 compressor/压力流体链的可运行核心。该批不迁移完整 GUI 美术，但把压缩机从纯可见模型壳切到流体/能量运行时。
+
+1.7.10 对照：
+
+- `com/hbm/tileentity/machine/TileEntityMachineCompressorBase.java`
+  - 两个 tank：输入 `NONE, 16000`，输出 `NONE, 16000` 且默认压力 1。
+  - slot 0 放 `IItemFluidIdentifier` 时调用 `tanks[0].setType(0, slots)`，改变输入 tank 类型并清空旧填充。
+  - `setupTanks()` 根据 `(输入流体, 输入压力)` 查 `CompressorRecipes`；没有特殊配方时输出同流体、压力 `inputPressure + 1`。
+  - `canProcess()` 要求有电、输入量足够、输出 tank 有空间；普通路径为 1000 mB -> 1000 mB。
+  - 每 tick 对三个 `getConPos()` 远端端口订阅输入并提供输出。
+- `com/hbm/tileentity/machine/TileEntityMachineCompressor.java`
+  - 三个远端端口为左右两侧和后方：侧向端口方向为 `rot/rot.opposite`，后方端口方向为 `dir.opposite`。
+- `com/hbm/inventory/recipes/CompressorRecipes.java`
+  - `PETROLEUM@0 -> PETROLEUM@1`，2000 mB -> 2000 mB，20 tick。
+  - `PETROLEUM@1 -> LPG@0`，2000 mB -> 1000 mB，20 tick。
+  - `BLOOD@3 -> HEAVYOIL@0`，1000 mB -> 250 mB，200 tick。
+  - `PERFLUOROMETHYL@0 -> PERFLUOROMETHYL@1`，1000 mB -> 1000 mB，50 tick。
+  - `PERFLUOROMETHYL@1 -> PERFLUOROMETHYL_COLD@0`，1000 mB -> 1000 mB，50 tick。
+- `com/hbm/inventory/gui/GUICompressor.java`
+  - GUI 有 0..4 PU 压力档按钮，会向 tile 发送 `compression` 控制包；完整现代 GUI/menu 仍需后续补。
+
+现代侧改动：
+
+- 新增 `HbmFluidCompressorRecipes`，集中保存旧 compressor 特殊流体配方，并提供旧式通用 `pressure + 1` 输出规则。
+- 新增 `CompressorBlockEntity`：
+  - 继承 `HbmEnergyAndFluidBlockEntity` 并实现 `HbmStandardFluidTransceiver`。
+  - 持有输入/输出两个 `HbmFluidTank`，保存旧 NBT 兼容字段 `power`、`progress`、`inputPressure`。
+  - slot 0 只接受 `IFluidIdentifierItem`，用于定型输入 tank；slot 1 接受能量物品；upgrade 槽先保留为不可插入。
+  - 从能量物品和远端能量端口充电，按旧 `2500 HE/tick` 基础消耗运行。
+  - 按旧 `getConPos()` 三端口方向刷新 fluid receiver/provider 与 energy receiver，输出 tank 会直接/网络提供给流体端口。
+  - Forge fluid capability 对外暴露输入/输出 tank，但输入压力跟随输入 tank。
+- 新增 `CompressorBlock`，让 `machine_compressor` 拥有专用 BE/ticker，而不是继续挂在 `LegacyVisibleMachineBlockEntity` 纯展示壳上。
+- `ModBlockEntities` 新增 `compressor` BE 注册，并从 `legacy_visible_machine` 的方块列表中移除 `machine_compressor`。
+
+Still deferred:
+
+- 旧 `GUICompressor` / `ContainerCompressor` 尚未迁移，现代侧还不能通过 GUI 按钮切换 0..4 PU 输入压力；当前只能读取既有 NBT 压力或后续控制包/menu 接入。
+- 速度/省电/超频升级尚未接入，当前使用旧基础耗能和配方 duration。
+- 旧客户端风扇/活塞动画与声音仍属于渲染/机器视觉批次。
+
+Progress estimate after Pass 58:
+
+- Core `FluidType` identity/NBT lookup/table: about 90%.
+- Basic tank/conform/Forge capability bridge: about 86%.
+- Fluid network/provider/receiver algorithm: about 82%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 76%.
+- Machine integration through the library: about 58%.
+- Fluid identifier item, GUI, NBT, and typed duct crafting semantics: about 93%.
+- Overall fluid library migration: about 78%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
 

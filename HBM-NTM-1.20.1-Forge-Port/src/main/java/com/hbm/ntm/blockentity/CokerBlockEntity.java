@@ -24,6 +24,11 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
     }
 
     @Override
+    public LegacyGuiProfile getLegacyGuiProfile() {
+        return LegacyGuiProfile.COKER;
+    }
+
+    @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return fixedSurroundingPorts();
     }

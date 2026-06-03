@@ -100,12 +100,6 @@ public final class ModCreativeTabs {
         }
         if (item instanceof TrinketBlockItem trinket) {
             TrinketBlockItem.addCreativeStacks(output, trinket);
-        } else if (item instanceof FluidPipeBlockItem pipe
-                && (item == ModBlocks.FLUID_DUCT_NEO.get().asItem()
-                || item == ModBlocks.FLUID_VALVE.get().asItem()
-                || item == ModBlocks.FLUID_SWITCH.get().asItem()
-                || item == ModBlocks.FLUID_COUNTER_VALVE.get().asItem())) {
-            pipe.addCreativeStacks(output);
         } else if (item instanceof LegacyStateBlockItem stateItem) {
             stateItem.addCreativeStacks(output);
         } else {
@@ -118,6 +112,8 @@ public final class ModCreativeTabs {
             battery.addCreativeStacks(output, item.get().getDefaultInstance());
         } else if (item.get() instanceof FluidIdentifierItem identifier) {
             identifier.addCreativeStacks(output);
+        } else if (item.get() instanceof FluidPipeBlockItem pipe) {
+            pipe.addCreativeStacks(output);
         } else if (item.get() instanceof HbmInfiniteFluidItem) {
             output.accept(item.get().getDefaultInstance());
         } else if (item.get() instanceof HbmFluidContainerItem container) {

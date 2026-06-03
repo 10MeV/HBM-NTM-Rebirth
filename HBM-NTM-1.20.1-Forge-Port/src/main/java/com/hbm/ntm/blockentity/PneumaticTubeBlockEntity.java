@@ -299,6 +299,7 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         normalizeAirTank();
         insertionDirection = byteToDirection(tag.getByte(TAG_INSERTION));
         ejectionDirection = byteToDirection(tag.getByte(TAG_EJECTION));
+        invalidateFluidHandlers();
         whitelist = tag.getBoolean(TAG_WHITELIST);
         redstone = tag.getBoolean(TAG_REDSTONE);
         sendOrder = tag.getByte(TAG_SEND_ORDER);
@@ -365,6 +366,7 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
     }
 
     private void onEndpointDirectionChanged() {
+        invalidateFluidHandlers();
         removePneumaticNode();
         refreshPneumaticNode();
         setChanged();

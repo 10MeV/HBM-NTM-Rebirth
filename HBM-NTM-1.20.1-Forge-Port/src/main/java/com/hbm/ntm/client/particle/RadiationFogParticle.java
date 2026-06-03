@@ -104,18 +104,21 @@ public class RadiationFogParticle extends TextureSheetParticle {
         double baseY = Mth.lerp(partialTick, this.yo, this.y) - camera.getPosition().y();
         double baseZ = Mth.lerp(partialTick, this.zo, this.z) - camera.getPosition().z();
         Random legacyRandom = new Random(LEGACY_RANDOM_SEED);
+        float cumulativeX = 0.0F;
+        float cumulativeY = 0.0F;
+        float cumulativeZ = 0.0F;
 
         for (int i = 0; i < LEGACY_QUAD_COUNT; i++) {
-            float offsetX = (float) ((legacyRandom.nextGaussian() - 1.0D) * 2.5D);
-            float offsetY = (float) ((legacyRandom.nextGaussian() - 1.0D) * 0.15D);
-            float offsetZ = (float) ((legacyRandom.nextGaussian() - 1.0D) * 2.5D);
+            cumulativeX += (float) ((legacyRandom.nextGaussian() - 1.0D) * 2.5D);
+            cumulativeY += (float) ((legacyRandom.nextGaussian() - 1.0D) * 0.15D);
+            cumulativeZ += (float) ((legacyRandom.nextGaussian() - 1.0D) * 2.5D);
             float size = (float) (legacyRandom.nextDouble() * this.quadSize);
             float jitterX = (float) (legacyRandom.nextGaussian() * 0.5D);
             float jitterY = (float) (legacyRandom.nextGaussian() * 0.5D);
             float jitterZ = (float) (legacyRandom.nextGaussian() * 0.5D);
-            float x = (float) baseX + offsetX + jitterX;
-            float y = (float) baseY + offsetY + jitterY;
-            float z = (float) baseZ + offsetZ + jitterZ;
+            float x = (float) baseX + cumulativeX + jitterX;
+            float y = (float) baseY + cumulativeY + jitterY;
+            float z = (float) baseZ + cumulativeZ + jitterZ;
             renderQuad(consumer, rotation, corners, x, y, z, size, u0, u1, v0, v1, light);
         }
     }

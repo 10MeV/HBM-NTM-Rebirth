@@ -1,0 +1,14 @@
+{
+  "values": [
+    "hbm:plate_iron",
+    "hbm:plate_gold",
+    "hbm:plate_steel",
+    "hbm:plate_copper",
+    "hbm:plate_lead",
+    "hbm:plate_titanium",
+    "hbm:plate_aluminium",
+    "hbm:plate_advanced_alloy",
+    "hbm:plate_dura_steel",
+    "hbm:plate_gunmetal"
+  ]
+}

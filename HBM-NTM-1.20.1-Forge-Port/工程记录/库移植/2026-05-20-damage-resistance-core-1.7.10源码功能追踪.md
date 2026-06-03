@@ -287,3 +287,19 @@
 - 验证：
   - 初次增量 `compileJava` 因 Gradle 状态未同步误报 `ModCommands#queryLegacyOreMapping` 缺失；用 `--rerun-tasks` 强制重编后通过。
   - `.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks` 通过。
+
+## 2026-05-31 第十五轮核心稳定
+
+- 伤害类别 key 稳定：
+  - 新增 `DamageResistanceHandler.categoryKey(...)`，把旧/现代类别写法统一到旧核心 key：`PHYS`、`FIRE`、`EXPL`、`EN`。
+  - `DamageResistanceStats#addCategory(String/ DamageClass)` 现在统一走 category normalization，避免使用 `DamageClass.PHYSICAL` 时写入 `PHYSICAL` 而运行期 `typeToCategory(...)` 返回 `PHYS` 导致失配。
+  - 能量类 `ELECTRIC`、`PLASMA`、`LASER`、`MICROWAVE`、`SUBATOMIC` 作为 category 输入时统一映射到旧 `EN`。
+- 穿甲运行期状态稳定：
+  - 新增 `DamageResistanceHandler.PierceState`、`capturePiercing()`、`restorePiercing(...)`。
+  - `EntityDamageUtil.attackEntityFromNtDetailed(...)` 现在保存并恢复进入前的 pierce DT/DR，而不是无条件 `reset()`；这样嵌套伤害调用不会清掉外层旧 `EntityDamageUtil.attackEntityFromNT(...)` 语义中的穿甲上下文。
+- 实体抗性接口/实体 innate 诊断稳定：
+  - `ResistanceProvider#getCurrentDtDr(...)` 仍保持旧 `IResistanceProvider#getCurrentDTDR(...)` 的优先贡献顺序，后续装备、实体 innate 继续叠加。
+  - 实体 innate 抗性查询增加 assignable class fallback：精确 class 优先，其次 simple class name，最后兼容父类/接口注册。旧配置中按具体 class 注册仍保持原优先级。
+  - 贡献诊断里实体来源现在标明 `class:`、`simpleName:` 或 `assignable:`，便于排查配置命中来源。
+- 验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。

@@ -1,6 +1,4 @@
 {
   "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "hbm:block/glyphid_eggs_alt"
-  }
+  "textures": { "all": "hbm:block/glyphid_eggs_alt" }
 }

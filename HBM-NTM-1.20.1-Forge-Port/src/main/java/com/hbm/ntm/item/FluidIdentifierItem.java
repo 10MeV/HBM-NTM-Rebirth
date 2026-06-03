@@ -8,6 +8,7 @@ import com.hbm.ntm.network.ModMessages;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 public class FluidIdentifierItem extends Item implements IFluidIdentifierItem, HbmItemControlReceiver {
     private static final String TAG_PRIMARY = "fluid1";
     private static final String TAG_SECONDARY = "fluid2";
+    private static final String TAG_PRIMARY_NAME = "fluid1_name";
+    private static final String TAG_SECONDARY_NAME = "fluid2_name";
 
     public FluidIdentifierItem(Properties properties) {
         super(properties);
@@ -98,12 +101,10 @@ public class FluidIdentifierItem extends Item implements IFluidIdentifierItem, H
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.hbm.fluid_identifier_multi.info")
-                .append(" ")
-                .append(getType(stack, true).getDisplayName()));
-        tooltip.add(Component.translatable("item.hbm.fluid_identifier_multi.info2")
-                .append(" ")
-                .append(getType(stack, false).getDisplayName()));
+        tooltip.add(Component.translatable("item.hbm.fluid_identifier_multi.info"));
+        tooltip.add(Component.literal("   ").append(getType(stack, true).getDisplayName()));
+        tooltip.add(Component.translatable("item.hbm.fluid_identifier_multi.info2"));
+        tooltip.add(Component.literal("   ").append(getType(stack, false).getDisplayName()));
     }
 
     public void addCreativeStacks(CreativeModeTab.Output output) {
@@ -118,14 +119,18 @@ public class FluidIdentifierItem extends Item implements IFluidIdentifierItem, H
     }
 
     public int getTintColor(ItemStack stack, int tintIndex) {
-        return tintIndex == 1 ? getType(stack, true).getColor() : 0xFFFFFF;
+        if (tintIndex != 1) {
+            return 0xFFFFFF;
+        }
+        int color = getType(stack, true).getColor();
+        return color < 0 ? 0xFFFFFF : color;
     }
 
     public static void setType(ItemStack stack, FluidType type, boolean primary) {
         CompoundTag tag = stack.getOrCreateTag();
         FluidType next = type == null ? HbmFluids.NONE : type;
-        tag.putString(primary ? TAG_PRIMARY : TAG_SECONDARY, next.getName());
-        tag.putInt((primary ? TAG_PRIMARY : TAG_SECONDARY) + "_id", next.getId());
+        tag.putInt(primary ? TAG_PRIMARY : TAG_SECONDARY, next.getId());
+        tag.putString(primary ? TAG_PRIMARY_NAME : TAG_SECONDARY_NAME, next.getName());
     }
 
     public static FluidType getType(ItemStack stack, boolean primary) {
@@ -134,9 +139,17 @@ public class FluidIdentifierItem extends Item implements IFluidIdentifierItem, H
             return HbmFluids.NONE;
         }
         String key = primary ? TAG_PRIMARY : TAG_SECONDARY;
-        FluidType type = HbmFluids.fromName(tag.getString(key));
-        if (type == HbmFluids.NONE && tag.contains(key + "_id")) {
-            type = HbmFluids.fromId(tag.getInt(key + "_id"));
+        if (tag.contains(key, Tag.TAG_INT)) {
+            return HbmFluids.fromId(tag.getInt(key));
+        }
+        if (tag.contains(key + "_id", Tag.TAG_INT)) {
+            return HbmFluids.fromId(tag.getInt(key + "_id"));
+        }
+        FluidType type = tag.contains(key, Tag.TAG_STRING)
+                ? HbmFluids.fromName(tag.getString(key))
+                : HbmFluids.NONE;
+        if (type == HbmFluids.NONE) {
+            type = HbmFluids.fromName(tag.getString(primary ? TAG_PRIMARY_NAME : TAG_SECONDARY_NAME));
         }
         return type == null ? HbmFluids.NONE : type;
     }

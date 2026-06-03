@@ -1189,3 +1189,346 @@
 - 结果：通过。
 - 已运行：`git diff --check -- src/main/java/com/hbm/ntm/client/particle/HbmParticleEffects.java src/main/java/com/hbm/ntm/particle/ParticleUtil.java 工程记录/库移植/2026-05-20-sound-particle-effects-library-1.7.10源码功能追踪.md`
 - 结果：无 whitespace error；仅有 Git 对 CRLF 的提示。
+
+## 2026-05-31 第二十六批推进：HUD/player props 门控与 legacy blockstate 映射抽出
+
+- 1.7.10 对照：
+  - `HbmPlayerProps` 默认 `enableHUD = true`，按键 `EnumKeybind.TOGGLE_HEAD` 切换，并发送 `PlayerInformPacket("HUD ON/OFF", ID_HUD=7, 1000)`。
+  - `ModEventHandlerClient` 在渲染 `RenderOverhead.renderMarkers(...)`、热成像 HUD 等前读取 `HbmPlayerProps.getData(player).enableHUD`。
+  - 旧 `ClientProxy#effectNT` 的 `vanillaburst/blockdust`、`vanillaExt/blockdust`、`sweat` 依赖 `block/meta`；HBM 自定义方块旧 id 是运行时动态 id，不能直接在现代端可靠复原。
+- 本批现代迁移：
+  - 新增最小 `HbmPlayerProperties` / `ClientHbmPlayerProperties`：
+    - 服务端持久化 `hbm_player_props.enableHUD`，默认开启。
+    - `TOGGLE_HEAD` 按键触发 HUD 开关，并保留旧通知 id `7` 与 1000ms 显示时间。
+    - 登录、换维度、死亡克隆时同步到客户端。
+  - `ClientForgeEvents` 与 `HbmOverheadMarkers` 改为经 `ClientHbmPlayerProperties.shouldRenderHud()` 门控；隐藏原版 GUI 或关闭 HBM HUD 时不渲染现代共享 HUD/marker。
+  - 新增 `LegacyBlockStateMappings`：
+    - 从 `HbmParticleEffects` 抽出旧 `block/meta` 到现代 `BlockState` 的映射，成为 common-side 可复用入口。
+    - 优先解析现代 `state`，再解析 `blockName` / `legacyBlock` / `legacyBlockName` / `block_name` / `legacy_block`，最后兼容旧 numeric `block/meta` vanilla id。
+    - 保留常用 1.7.10 vanilla meta：石头变体、泥土变体、木板/原木/树叶、沙/红沙、羊毛、陶瓦、石砖、砂岩、石英、染色玻璃等。
+    - HBM 旧名通过 `ModBlocks.legacyBlock(...)` 解析；`sellafield` / `sellafield_slaked` / `sellafield_bedrock` / `ore_sellafield_*` 的 `meta` 写入现代 `level` 属性，`fallout` 的 `meta & 7` 映射为现代 layer 数。
+  - `ParticleUtil`：
+    - `BlockState` helper 统一使用 `LegacyBlockStateMappings.putState(...)` 写 `state`。
+    - 新增 legacy name helper：`spawnSweat(..., String legacyBlockName, int meta, ...)`、`spawnVanillaLegacyBlockDustBurst(...)`、`spawnVanillaExtLegacyBlockDust(...)`。
+- 边界：
+  - 旧 HBM 自定义方块 numeric id 仍不做猜测映射；后续爆炸、武器、机器迁移应优先发现代 `state`，或发明确的 `blockName/meta`。
+  - `sand_mix` / `sand_boron_layer` 当前现代端尚未有完整对应方块；legacy name 解码暂退到 `minecraft:sand` 作为粒子视觉兜底，具体方块本体留给对应方块迁移批次。
+  - 本批只迁入 `HbmPlayerProps.enableHUD` 对声音/粒子/HUD 所需的最小桥接，不替代完整 extprop living/player 数据库。
+
+## 2026-05-31 第二十六批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+- 备注：第一次编译被工作区并行 `ModCommands` fluid anchor 子命令的多余右括号阻塞；已做一行括号收尾修正后重跑通过。
+- 已运行：`git diff --check -- src/main/java/com/hbm/ntm/player/HbmPlayerProperties.java src/main/java/com/hbm/ntm/client/ClientHbmPlayerProperties.java src/main/java/com/hbm/ntm/network/HbmServerKeybinds.java src/main/java/com/hbm/ntm/event/CommonForgeEvents.java src/main/java/com/hbm/ntm/client/ClientForgeEvents.java src/main/java/com/hbm/ntm/client/render/HbmOverheadMarkers.java src/main/java/com/hbm/ntm/client/particle/HbmParticleEffects.java src/main/java/com/hbm/ntm/particle/ParticleUtil.java src/main/java/com/hbm/ntm/particle/LegacyBlockStateMappings.java src/main/java/com/hbm/ntm/command/ModCommands.java 工程记录/库移植/2026-05-20-sound-particle-effects-library-1.7.10源码功能追踪.md`
+- 结果：无 whitespace error；仅有 Git 对 CRLF 的提示。
+
+## 2026-06-02 第二十七批推进：旧导弹/爆炸尾迹与 MK1 云粒子合同补齐
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT` 的 `waterSplash`：生成 10 个 `EntityCloudFX`，位置为 `x/y/z + gaussian`，速度固定为 `0/0/0`。
+  - `cloudFX2`：生成 1 个 `EntityCloudFX`，速度固定为 `0/0.1/0`。
+  - `ABMContrail`：创建默认 `ParticleContrail`，默认颜色基底 `0/0/0`、`maxAge=100+rand(40)`、scale `1`。
+  - `exKerosene` / `exSolid` / `exHydrogen` / `exBalefire`：创建 `ParticleContrail`，颜色基底分别为黑、`0.3/0.2/0.05`、`0.7/0.7/0.7`、`0.2/0.7/0.2`，scale `1`。
+  - `missileContrail`：本地玩家距离超过 350 格直接跳过；读取 `moX/moY/moZ`、可选 `scale` 默认 `1`、可选 `maxAge`，最终只创建 `ParticleRocketFlame`；旧 `ParticleContrail` 代码块已被注释。
+- 本批现代迁移：
+  - 新增 `LegacyContrailParticle`：
+    - 使用现有 `hbm:contrail` 贴图。
+    - 复刻旧 `ParticleContrail` 的 6 层 billboard、`100+rand(40)` 寿命、fullbright、颜色基底加 `0.2..0.4` 随机偏移、alpha 线性衰减、scale `alpha + 0.5`。
+    - provider 替换 `ModParticleTypes.CONTRAIL` 原来的 `HbmSmokeParticle.ContrailProvider`。
+  - `HbmParticleEffects`：
+    - `waterSplash` 改为零速度 cloud burst，不再使用带随机速度的通用 `burstSimple`。
+    - `ABMContrail` 与 `ex*` 改为生成 `LegacyContrailParticle`，不再用 `SMOKE_PLUME` 或额外 `DustParticleOptions` 近似。
+    - `missileContrail` 恢复 350 格客户端距离裁剪，并通过 `RocketFlameParticle.createLegacy(...)` 支持旧 `scale/maxAge`；不再额外叠加普通 contrail。
+  - `RocketFlameParticle`：
+    - 缓存 provider sprites，提供旧式创建入口，以便分发层直接设置构造期 scale 与寿命。
+  - `ParticleUtil`：
+    - 新增旧 type 常量：`waterSplash`、`cloudFX2`、`launchSmoke`、`missileContrail`、`ABMContrail`、`exKerosene`、`exSolid`、`exHydrogen`、`exBalefire`。
+    - 新增公共 helper：`spawnWaterSplash`、`spawnCloudFx2`、`spawnLaunchSmoke`、`spawnMissileContrail`、`spawnAbmContrail`、`spawnExKerosene`、`spawnExSolid`、`spawnExHydrogen`、`spawnExBalefire`，字段名沿用旧 `moX/moY/moZ/scale/maxAge`。
+- 边界：
+  - 本批迁移的是旧 aux 粒子接收端与公共发包 helper，不迁移导弹实体、燃料系统或发射逻辑本身。
+  - `ParticleSmokePlume` 仍作为 `launchSmoke` / `SMOKE_PLUME` 使用；`CONTRAIL` 类型现在专门回到旧 `ParticleContrail` 视觉合同。
+  - 旧 OpenGL 颜色超过 `1.0` 的情况在现代顶点色中做了钳制，避免依赖底层实现。
+
+## 2026-06-02 第二十七批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+
+## 2026-06-02 第二十八批推进：旧 `exhaust` 与 `fireworks` aux 合同收紧
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT` 的 `type=exhaust`：
+    - `mode=soyuz`：若本地玩家到粒子坐标距离超过 350 格则直接返回；读取 `count/width`，每个粒子生成 `ParticleRocketFlame(x + gaussian*width, y, z + gaussian*width)`，`motionY = -0.75 + rand*0.5`。
+    - `mode=meteor`：同样做 350 格距离裁剪；每个粒子生成 `ParticleRocketFlame(x + gaussian*width, y + gaussian*width, z + gaussian*width)`，不额外设置 motion。
+  - `ClientProxy#effectNT` 的 `type=fireworks`：
+    - 读取 `color` 与 `char`。
+    - 生成 `ParticleLetter`，再生成 50 个 `EntityFireworkSparkFX`，每个火花速度为 `0.4 * gaussian`，并调用 `setColour(color)`。
+  - `EntityFireworks#onUpdate`：
+    - 旧实体 30 tick 后播放 `fireworks.blast`，发 `type=fireworks` aux，范围为 300。
+- 本批现代迁移：
+  - `HbmParticleEffects#spawnExhaust`：
+    - 恢复 350 格客户端距离裁剪。
+    - `soyuz` 只生成 `ROCKET_FLAME`，位置和 `motionY` 按旧合同；去掉上一版额外叠加的 vanilla flame。
+    - `meteor` 只生成 `ROCKET_FLAME`，位置三轴高斯扩散且 motion 为 `0/0/0`。
+  - `HbmParticleEffects#spawnFireworks`：
+    - 保留现代 `FireworkLetterParticle`。
+    - 50 个 `ParticleTypes.FIREWORK` 改为通过 `ParticleEngine#createParticle(...)` 创建后按旧 `color` 拆 RGB 写入，恢复旧 `setColour(color)` 语义。
+  - `ParticleUtil`：
+    - 新增 `TYPE_EXHAUST = "exhaust"`、`EXHAUST_SOYUZ = "soyuz"`、`EXHAUST_METEOR = "meteor"`。
+    - 新增 `spawnExhaustSoyuz(...)`、`spawnExhaustMeteor(...)`、`spawnExhaust(...)` helper。
+    - `spawnFireworks(...)` 的发送范围从 150 调整为旧实体使用的 300。
+- 边界：
+  - 本批迁移 aux 粒子接收端和发包 helper，不迁移 `EntityFireworks` 实体、烟花方块、音效播放或发射逻辑。
+  - `vanillaExt/mode=fireworks` 仍保持旧单个 firework spark 的通用 vanillaExt 分支；本批只处理顶层 `type=fireworks` 的字母烟花爆开效果。
+
+## 2026-06-02 第二十八批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+- 备注：编译输出提示部分输入文件使用/覆盖过时 API，未阻塞构建。
+
+## 2026-06-02 第二十九批推进：旧 `radiation` / `schrabfog` aura 与 `radFog` 分流
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT` 的 `type=radFog` 创建 `ParticleRadiationFog(man, world, x, y, z)`。
+  - `ClientProxy#effectNT` 的 `type=radiation`：读取 `count`，在本地玩家周围 `x + gaussian*4`、`y + gaussian*2`、`z + gaussian*4` 生成 `EntityAuraFX`，颜色为 `(0F, 0.75F, 1F)`，速度为三轴 gaussian。
+  - `EntityEffectHandler` 在玩家辐射值超过 600 时发送 `type=radiation`，`count` 按 600/800/900 阈值为 1/2/4。
+  - `ClientProxy#effectNT` 的 `type=schrabfog` 在包坐标生成 `EntityAuraFX`，速度为 0，颜色为 `(0F, 1F, 1F)`。
+  - `SchrabidicBlock#randomDisplayTick` 在方块周围随机偏移坐标发送 `type=schrabfog`。
+- 本批现代迁移：
+  - 新增 `LegacyAuraParticle`，复用 `TownAuraParticle` 的 sprite provider，提供可指定 RGB 的旧 aura 粒子入口。
+  - `TownAuraParticle` 暴露 provider 缓存的 `SpriteSet`，供旧 aura 变体复用同一纹理集。
+  - `HbmParticleEffects`：
+    - `radiationfog` / `radiation_fog` / `radFog` 明确保留为 `ModParticleTypes.RADIATION_FOG`。
+    - `schrabfog` 改走青色 `LegacyAuraParticle`，不再混用 RadiationFog。
+    - `radiation` 改为围绕本地玩家生成蓝色 legacy aura，并保留旧 count、位置扩散和 gaussian 速度合同。
+  - `ParticleUtil`：
+    - 新增 `TYPE_RADIATION_FOG`、`TYPE_RADIATION_FOG_SNAKE`、`TYPE_RAD_FOG`、`TYPE_SCHRAB_FOG` 常量。
+    - 新增 `spawnRadiationFog(...)` 与 `spawnSchrabFog(...)` helper，后续辐射、流体和方块迁移可直接复用。
+- 边界：
+  - `LegacyAuraParticle` 只迁移旧 `EntityAuraFX` 在 HBM 接收端实际使用到的颜色/位置/运动合同，不尝试替代所有 vanilla aura 行为。
+  - `SchrabFogParticle` 暂保留注册和类本体，避免影响已有或并行迁移中的直接粒子调用；本批仅修正 legacy aux `type=schrabfog` 的分发语义。
+
+## 2026-06-02 第二十九批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+
+## 2026-06-02 第三十批推进：旧 jetpack/bnuuy 粒子设置档位收紧
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT` 在 `jetpack`、`bnuuy`、`jetpack_bj`、`jetpack_dns` 开头检查 `particleSetting == 2`，最低粒子设置直接跳过。
+  - `jetpack`：
+    - 任意非最低粒子设置都生成左右两侧火焰。
+    - 只有 `particleSetting == 0` 时才做地面方块尘 ray trace，并额外生成左右两侧 smoke。
+  - `bnuuy`：
+    - 任意非最低粒子设置生成左右两侧 smoke，旧代码把 `EntitySmokeFX` scale 设为 `0.5F`。
+  - `jetpack_bj` / `jetpack_dns`：
+    - 任意非最低粒子设置生成左右两侧染色 red dust。
+    - 只有 `particleSetting == 0` 时才做地面方块尘 ray trace。
+- 本批现代迁移：
+  - `HbmParticleEffects` 新增旧粒子设置档位桥接：
+    - `ParticleStatus.MINIMAL` 对应旧 `particleSetting == 2`，直接跳过喷射背包类粒子。
+    - `ParticleStatus.ALL` 对应旧 `particleSetting == 0`，启用地面方块尘与 jetpack 额外 smoke。
+    - `ParticleStatus.DECREASED` 保留火焰、bnuuy smoke、BJ/DNS 染色 dust，但不生成地面方块尘和 jetpack 额外 smoke。
+  - `bnuuy` 改用 `ParticleEngine#createParticle(...)` 创建后缩放，恢复旧 `scale=0.5F` 的小烟雾视觉。
+  - `jetpack_bj` / `jetpack_dns` 的地面方块尘现在只在最高粒子质量下生成，避免低粒子设置仍大量出尘。
+- 边界：
+  - 本批只迁移旧 aux 接收端的粒子设置门控和 bnuuy smoke 缩放，不迁移背包物品、飞行物理或装备逻辑。
+  - `vanillaExt` 的 `noclip` 已在第二十四批记录为现代 vanilla 粒子无统一公开入口，本批不引入反射 workaround。
+
+## 2026-06-02 第三十批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+- 备注：编译输出提示部分输入文件使用/覆盖过时 API，未阻塞构建。
+
+## 2026-06-03 第三十一批推进：旧 `ExplosionCreator` / `ExplosionSmallCreator` 视觉合同收紧
+
+- 1.7.10 对照：
+  - `ExplosionCreator#makeParticle`：
+    - 读取 `cloudCount/cloudScale/cloudSpeedMult/waveScale/debrisCount/debrisSize/debrisRetry/debrisVelocity/debrisHorizontalDeviation/debrisVerticalOffset/soundRange`。
+    - 按玩家距离和旧 `speedOfSound = 17.15 * 0.5` 延迟播放 `weapon.explosionLargeNear/Far`，现代端此前已接入。
+    - 在 `(x, y + 2, z)` 生成 `ParticleMukeWave`，`setup(waveScale, (int)(25F * waveScale / 45))`。
+    - 每个烟柱粒子是 `ParticleRocketFlame(x,y,z).setScale(cloudScale)`，速度为水平 `gaussian*0.5*cloudSpeedMult`、垂直 `rand*3*cloudSpeedMult`，寿命 `70+rand(20)`，`noClip=true`。
+    - debris 是 `ParticleDebris` + `WorldInAJar` 旧碎块实体，当前仍未深迁。
+  - `ExplosionSmallCreator#makeParticle`：
+    - 按玩家距离和同一声速延迟播放 `weapon.explosionSmallNear/Far`，现代端此前已接入。
+    - 生成 `cloudCount` 个 `ParticleExplosionSmall`。
+    - 从爆点六向寻找第一个非 air 方块，生成 `debris` 个 `EntityBlockDustFX`，位置 `(x, y+0.1, z)`，速度 `gaussian*0.2 / 0.5+rand*0.7 / gaussian*0.2`，调用 `multipleParticleScaleBy(2)`，寿命 `50+rand(20)`。
+- 本批现代迁移：
+  - `HbmParticleEffects#spawnExplosionLarge`：
+    - 烟柱从默认 `ROCKET_FLAME + EX_SMOKE` 组合收紧为单个旧式 `RocketFlameParticle.createLegacy(...)`。
+    - 保留旧 `cloudScale` 与 `70-89 tick` 寿命；provider 不可用时才退回注册粒子。
+  - `HbmParticleEffects#spawnExplosionSmall`：
+    - debris 从不可控默认 `BlockParticleOption` 改为直接创建 `TerrainParticle`。
+    - 恢复旧 `scale=2.0F` 与 `50-69 tick` 寿命，速度和位置沿用旧合同。
+- 边界：
+  - 大爆炸旧 `ParticleDebris` / `WorldInAJar` 碎块实体仍未深迁，本批只收紧可由现代粒子系统安全表达的烟柱与小爆炸 blockdust 视觉。
+  - 旧 `ExplosionCreator` 的 `debrisSize/debrisRetry/debrisVelocity/debrisHorizontalDeviation/debrisVerticalOffset` 字段仍保留为后续深迁记录，现代端暂未完整消费。
+
+## 2026-06-03 第三十一批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+- 备注：文档更新后复跑同一命令时，被并行 GUI/look-overlay 迁移的 `LegacyLookOverlayProvider` 包名与 `LegacyLookOverlayLines` 组件拼接错误阻塞；该失败不来自本批声音粒子文件。本批相关文件的 `git diff --check` 通过，仅有 Git 对 CRLF 的提示。
+
+## 2026-06-03 第三十二批推进：旧 `tower` / `splash` / `deadleaf` 粒子设置门控
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT` 的 `type=tower` 只在 `particleSetting == 0`，或 `particleSetting == 1 && rand.nextBoolean()` 时创建 `ParticleCoolingTower`。
+  - 旧 `tower` 的寿命写入为 `life / (particleSetting + 1)`，所以低一级粒子质量会同时减少出现概率和单个云柱寿命。
+  - `type=splash` 使用同样的可见性门控，颜色存在时再乘 `1 - rand.nextFloat() * 0.2F` 的轻微暗化。
+  - `type=deadleaf` 使用同样的可见性门控；最低粒子设置完全跳过。
+- 本批现代迁移：
+  - `HbmParticleEffects` 新增 `legacyVisibleParticleSetting(...)`：
+    - `ParticleStatus.ALL` 对应旧 `particleSetting == 0`，总是显示。
+    - `ParticleStatus.DECREASED` 对应旧 `particleSetting == 1`，随机半量显示。
+    - `ParticleStatus.MINIMAL` 对应旧 `particleSetting == 2`，直接跳过。
+  - `spawnCoolingTower(...)` 接入旧门控，并按 `particleSettingDivisor()` 对 `life` 做旧式寿命缩短。
+  - `spawnSplash(...)` 接入旧门控，保留已有 legacy splash 粒子本体。
+  - `deadleaf` 分发接入旧门控，避免最低粒子设置仍持续落叶。
+- 边界：
+  - 本批只收紧旧 aux 接收端的粒子设置合同，不改变 `CoolingTowerParticle` / `LegacySplashParticle` / `DeadLeafParticle` 的渲染几何。
+  - `splash` 的颜色随机暗化仍由 `LegacySplashParticle.create(...)` 侧承载；若后续视觉精修发现该类未覆盖，可在粒子类本体补齐。
+
+## 2026-06-03 第三十三批推进：旧 `tau` / `giblets` / RBMK 粒子合同收紧
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT` 的 `type=tau`：
+    - 读取 `small` 与 byte `count`。
+    - 每个火花为 `ParticleSpark(x,y,z, gaussian*0.05, 0.05, gaussian*0.05).makeSmall(small)`。
+    - 额外生成一个 `ParticleHadron(...).makeSmall(small)`。
+  - `ParticleSpark`：
+    - 普通寿命 `20+rand(10)`，轨迹缓存 `4+rand(3)` 段，重力 `0.5`，fullbright 白色线段，无 alpha 衰减。
+    - small 模式寿命 `2+rand(3)`，轨迹缓存 3 段，`motionY=-abs(motionY)`。
+  - `type=giblets`：
+    - 先调用 `vanish(ent)` 隐藏原实体 2000ms。
+    - 数量为 `(int)(width / 0.25F) * 1.5 * (int)(height / 0.25F)`；存在 `cDiv` 时向上取整除以 `cDiv`，旧端没有额外固定上限。
+    - `1/15` 概率把所有碎块速度乘以 10。
+  - `ParticleGiblet`：
+    - 寿命 `140+rand(20)`，普通/黏液重力 2，金属重力 4。
+    - 非金属碎块飞行中每 tick 生成红石块或西瓜块 blockdust 尾尘，尾尘寿命 `20+rand(20)`。
+  - `rbmkflame/rbmksteam/rbmkmush` 当前现代类已经保留旧贴图、寿命、帧数和加色混合主体合同，本批仅审计，不做额外改动。
+- 本批现代迁移：
+  - `TauSparkParticle` 去掉现代端额外 alpha 衰减，恢复旧 `ParticleSpark` fullbright 不透明白线段。
+  - `HbmParticleEffects#spawnGiblets(...)` 去掉额外 `256` 数量上限，回到旧实体尺寸与 `cDiv` 驱动的数量模型；若计算结果小于等于 0 则直接跳过。
+  - `GibletParticle` 的非金属尾尘改为直接创建 `TerrainParticle`，显式设置 `20+rand(20)` 寿命，恢复旧 `ReflectionHelper` 写 `particleMaxAge` 的效果。
+- 边界：
+  - 本批不迁移新的实体死亡触发点，只收紧已经存在的 aux 接收端与公共 helper 行为。
+  - RBMK 三类粒子仍维持当前现代端实现；后续若做视觉截图审计，可再检查 `ParticleRBMKSteam` 旧 `texIndex` 起始帧为 `-1` 的历史边界是否需要像素级复刻。
+
+## 2026-06-03 第三十四批推进：旧 `splash` / `deadleaf` UV 翻转精修
+
+- 1.7.10 对照：
+  - `ParticleSplash#renderParticle(...)` 使用 `getEntityId()` 做贴图翻转：
+    - `flipU = getEntityId() % 2 == 0`。
+    - `flipV = getEntityId() % 4 < 2`。
+    - 四个顶点分别使用翻转后的 `minU/maxU/minV/maxV`，让同一水花贴图在大量粒子中产生 4 种朝向变化。
+  - `ParticleDeadLeaf#renderParticle(...)` 使用同一套 `getEntityId()` U/V 翻转逻辑。
+  - 两者其他主体合同此前已迁入：水花 alpha/scale/lifetime/gravity/落地消失，落叶灰白随机色/scale/lifetime/gravity/横向漂移与下落封顶。
+- 本批现代迁移：
+  - `LegacySplashParticle` 新增旧式 visual id 分配，按 id 奇偶和模 4 保存 `flipU/flipV`。
+  - `LegacySplashParticle#render(...)` 改为自定义 billboard 顶点写入，保留当前 camera-facing 粒子行为，同时按旧 U/V 翻转输出。
+  - `DeadLeafParticle` 同样新增 visual id 与自定义 billboard 渲染，恢复旧落叶贴图翻转变化。
+- 边界：
+  - 现代端没有直接暴露旧 `EntityFX#getEntityId()`；本批使用客户端本地递增 visual id 复刻同样的奇偶分布，保持视觉合同而不绑定实体系统。
+  - 本批只精修贴图朝向，不改变两类粒子的物理、寿命、颜色或粒子设置门控。
+
+## 2026-06-03 第三十四批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+- 已运行：`git diff --check -- src/main/java/com/hbm/ntm/client/particle/LegacySplashParticle.java src/main/java/com/hbm/ntm/client/particle/DeadLeafParticle.java`
+- 结果：无 whitespace error；仅有 Git 对 CRLF 的提示。
+
+## 2026-06-03 第三十五批推进：旧旋转粒子 id 奇偶与灰烬落地烟
+
+- 1.7.10 对照：
+  - `EntityFXRotating#renderParticleRotated(...)` 使用 `rotationPitch` 作为绕 billboard 法线的旋转角。
+  - `ParticleAshes#onUpdate(...)`：
+    - 空中每 tick 旋转增量为 `2 * ((getEntityId() % 2) - 0.5)` 度，即按粒子 id 奇偶决定顺/逆时针。
+    - 落地瞬间把 `rotationPitch` 随机到 `0..360`。
+    - 当 `getEntityId() % 5 == 0`、已经落地且 `rand.nextInt(15) == 0` 时，在 `posY + 0.125` 生成 vanilla `smoke`，速度 `0/0.05/0`。
+  - `ParticleBlackPowderSmoke#onUpdate(...)`：
+    - 旋转增量为 `(1-ageScaled) * 2 * ((getEntityId() % 2) - 0.5)`。
+  - `ParticleExplosionSmall#onUpdate(...)`：
+    - 旋转增量为 `(1-ageScaled) * 5 * ((getEntityId() % 2) - 0.5)`。
+- 本批现代迁移：
+  - `AshesParticle` 新增旧式 visual id：
+    - 空中 `rollSpeed` 按 visual id 奇偶决定，复刻旧 `getEntityId()` 的旋转方向分布。
+    - 保留落地瞬间随机 roll，并补回 `visualId % 5 == 0` 落地后 `1/15` 概率冒 smoke 的旧细节。
+  - `BlackPowderSmokeParticle` 新增 visual id，旋转方向从随机改为按 id 奇偶决定，角速度仍等价旧 `±1 degree/tick` 再乘 `(1-ageScaled)`。
+  - `ExplosionSmallParticle` 新增 visual id，旋转方向从随机改为按 id 奇偶决定，角速度等价旧 `±2.5 degree/tick` 再乘 `(1-ageScaled)`。
+- 边界：
+  - 现代端继续使用本地递增 visual id 复刻旧 `EntityFX#getEntityId()` 的奇偶分布，不引入实体依赖。
+  - 本批不改变黑火药/小爆炸烟的颜色、缩放、寿命和运动曲线；只收紧旋转方向来源，并补灰烬落地 smoke。
+
+## 2026-06-03 第三十五批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+- 已运行：`git diff --check -- src/main/java/com/hbm/ntm/client/particle/AshesParticle.java src/main/java/com/hbm/ntm/client/particle/BlackPowderSmokeParticle.java src/main/java/com/hbm/ntm/client/particle/ExplosionSmallParticle.java`
+- 结果：无 whitespace error；仅有 Git 对 CRLF 的提示。
+
+## 2026-06-03 第三十六批推进：旧 `amat` 闪光与 `radFog` 累积几何收紧
+
+- 1.7.10 对照：
+  - `ParticleAmatFlash`：
+    - `particleMaxAge=10`，`particleScale=scale`。
+    - 每帧使用 `Random(432L)`，生成 100 条光束。
+    - 每条光束前连续调用 5 次 `GL11.glRotatef(...)`，没有在每条光束之间重置矩阵，因此旋转会逐条累积。
+    - 全局缩放为 `0.2F * particleScale`；每条光束用 `GL_TRIANGLE_FAN` 从中心点连到 `y=vert1` 处的 3 个远端截面点，并重复第一个远端点闭合。
+  - `ParticleRadiationFog`：
+    - 使用 `textures/particle/fog.png`，构造时 `maxAge=100+rand(40)`，`onUpdate` 中若小于 400 则强制到 400。
+    - alpha 为 `sin(particleAge * PI / 400F) * 0.125F`，颜色固定 `0.85/0.9/0.5`。
+    - 每帧使用 `Random(50)` 生成 25 张雾片。
+    - 循环内每张雾片先 `GL11.glTranslatef(dX,dY,dZ)`，因此位移是累积矩阵变换，而不是每张雾片独立偏移。
+- 本批现代迁移：
+  - `AmatFlashParticle`：
+    - 光束循环不再对 `Quaternionf` 做逐条 `identity()` 重置，恢复旧 GL 矩阵的累积旋转分布。
+    - 远端三角截面改回位于 `length` 处，并由中心点发散到 3 个远端点，贴近旧 triangle fan 的白心透明尾结构。
+  - `RadiationFogParticle`：
+    - 渲染 25 张雾片时累加 `cumulativeX/Y/Z`，恢复旧 `glTranslatef` 累积偏移。
+    - 保持旧固定 seed、固定颜色、400 tick alpha 曲线和 fullbright 渲染。
+- 边界：
+  - `ParticleAmatFlash` 旧版会临时关闭纹理、启用 smooth shade 和 additive blend；现代端仍使用已有自定义 `ParticleRenderType` 表达核心 additive/fullbright/no-cull/不写深度合同，不逐项复刻所有 GL 状态。
+  - `RadiationFogParticle` 的现代资源仍走粒子图集贴图路径，几何与 alpha/color 合同已按旧类收紧。
+
+## 2026-06-03 第三十六批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+- 已运行：`git diff --check -- src/main/java/com/hbm/ntm/client/particle/AmatFlashParticle.java src/main/java/com/hbm/ntm/client/particle/RadiationFogParticle.java`
+- 结果：无 whitespace error；仅有 Git 对 CRLF 的提示。
+
+## 2026-06-03 第三十七批推进：旧 `gasfire` 烟雾缩放与喷火器旋转奇偶
+
+- 1.7.10 对照：
+  - `ParticleGasFlame`：
+    - 继承 `EntitySmokeFX`，构造时把 `mY` 放大 1.5 倍，`particleScale=scale`，`noClip=true`。
+    - `colorMod=0.8F+rand(0.2F)`，寿命 `30+rand(13)`。
+    - 每 tick 保存旧 `motionY`，执行父类 smoke 更新后恢复 `motionY`，随后 `motionX/Z *= 0.75D`、`motionY += 0.005D`。
+    - `updateColor()` 使用 HSB：色相 `(60-time*100)/360` 下限 0，饱和 `1-time*0.25`，亮度 `1-time*0.5`，再乘 `colorMod`，亮度 fullbright。
+    - 旧父类 `EntitySmokeFX` 使用 `smokeParticleScale` 做起始烟雾膨胀曲线；旧 HBM 在其他 smoke 分支中也通过反射写 `smokeParticleScale`。
+  - `ParticleFlamethrower`：
+    - 寿命 `20+rand(10)`，基础 scale `0.5F`，水平随机速度 `gaussian*0.02`。
+    - 每 tick 速度乘 `0.91D`，`motionY += 0.01D`。
+    - `rotationPitch += 30 * ((getEntityId() % 2) - 0.5)`，即按粒子 id 奇偶决定 `±15 degree/tick` 旋转。
+    - meta 0/1/2/3/4 分别为普通火、balefire、digamma、oxy、black，颜色/alpha/scale 渲染曲线已在早前批次迁入现代 `FlamethrowerParticle`。
+- 本批现代迁移：
+  - `GasFlameParticle`：
+    - 新增 `baseScale` 并覆盖 `getQuadSize(...)`，使用旧 smoke 的 `clamp((age+partial)/lifetime*32, 0, 1)` 起始膨胀曲线。
+    - 去掉现代端额外 `alpha = pow(1-time, 0.35)` 淡出，回到旧 `ParticleGasFlame` 自身只改 RGB、继承 smoke 缩放的表现。
+  - `FlamethrowerParticle`：
+    - 新增本地递增 visual id，旋转方向由 `visualId % 2` 决定。
+    - `rollSpeed` 等价旧 `±15 degree/tick`，替换原先随机布尔方向。
+- 边界：
+  - 现代端没有旧 `EntityFX#getEntityId()`；本批沿用前面旋转粒子的本地 visual id 方案，复刻奇偶分布而不依赖实体系统。
+  - `GasFlameParticle` 的旧父类 `EntitySmokeFX` 贴图帧/内部随机细节没有完整 MCP 源码可直接对照，本批只收紧能从 HBM 旧源码和 `smokeParticleScale` 合同确认的缩放、颜色、寿命、速度与亮度行为。
+
+## 2026-06-03 第三十七批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。

@@ -13,9 +13,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.awt.Color;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @OnlyIn(Dist.CLIENT)
 public class FlamethrowerParticle extends TextureSheetParticle {
+    private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
+
     public static final int META_FIRE = 0;
     public static final int META_BALEFIRE = 1;
     public static final int META_DIGAMMA = 2;
@@ -39,7 +42,8 @@ public class FlamethrowerParticle extends TextureSheetParticle {
         this.xd = level.random.nextGaussian() * 0.02D;
         this.yd = 0.0D;
         this.zd = level.random.nextGaussian() * 0.02D;
-        this.rollSpeed = (level.random.nextBoolean() ? 1.0F : -1.0F) * 15.0F * Mth.DEG_TO_RAD;
+        int visualId = NEXT_VISUAL_ID.incrementAndGet();
+        this.rollSpeed = (visualId % 2 - 0.5F) * 30.0F * Mth.DEG_TO_RAD;
 
         float initialColor = 15.0F + level.random.nextFloat() * 25.0F;
         if (legacyType == META_BALEFIRE) {

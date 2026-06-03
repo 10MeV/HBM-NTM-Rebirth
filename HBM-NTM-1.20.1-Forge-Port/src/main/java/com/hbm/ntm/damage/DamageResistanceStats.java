@@ -38,12 +38,13 @@ public class DamageResistanceStats {
     }
 
     public DamageResistanceStats addCategory(String type, float threshold, float resistance) {
-        categoryResistances.put(type, new DamageResistance(threshold, resistance));
+        categoryResistances.put(DamageResistanceHandler.categoryKey(type), new DamageResistance(threshold, resistance));
         return this;
     }
 
     public DamageResistanceStats addCategory(DamageClass type, float threshold, float resistance) {
-        return addCategory(type.name(), threshold, resistance);
+        categoryResistances.put(DamageResistanceHandler.categoryKey(type), new DamageResistance(threshold, resistance));
+        return this;
     }
 
     public DamageResistanceStats setOther(float threshold, float resistance) {

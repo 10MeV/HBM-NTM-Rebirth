@@ -1,7 +1,1 @@
-{
-  "variants": {
-    "": {
-      "model": "hbm:block/glyphid_spawner"
-    }
-  }
-}
+{ "variants": { "": { "model": "hbm:block/glyphid_spawner" } } }

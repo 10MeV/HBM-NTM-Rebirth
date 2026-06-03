@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -141,6 +143,14 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
         return operational;
     }
 
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        return LegacyLookOverlay.forBlock(this, List.of(
+                LegacyLookOverlayLines.tank(true, inputTank),
+                LegacyLookOverlayLines.tank(false, outputTank),
+                LegacyLookOverlayLines.energyOut(lastPowerProduced)));
+    }
+
     protected Direction facing() {
         BlockState state = getBlockState();
         return state.hasProperty(HorizontalMachineBlock.FACING)
@@ -206,7 +216,7 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
 
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
-        return side == null ? HbmFluidSideMode.BOTH : HbmFluidSideMode.INPUT;
+        return HbmFluidSideMode.BOTH;
     }
 
     @Override

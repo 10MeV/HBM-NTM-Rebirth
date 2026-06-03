@@ -239,6 +239,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.decon", "\u6d88\u6c61\u5668");
         add("block.hbm.red_cable", "\u7d2b\u94dc\u7535\u7ebf");
         add("block.hbm.fluid_duct_neo", "\u6d41\u4f53\u7ba1\u9053");
+        add("item.hbm.fluid_duct", "\u6d41\u4f53\u7ba1\u9053:");
         add("block.hbm.fluid_duct_box", "\u901a\u7528\u6d41\u4f53\u7ba1\u9053\uff08\u65b9\u5f62\uff09");
         add("block.hbm.fluid_duct_gauge", "\u6d41\u91cf\u8ba1\u7ba1");
         add("block.hbm.fluid_duct_exhaust", "\u6392\u6c14\u7ba1");
@@ -274,7 +275,10 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_fluidtank", "\u6d41\u4f53\u50a8\u7f50");
         add("block.hbm.machine_pumpjack", "\u77f3\u6cb9\u94bb\u673a");
         add("block.hbm.machine_centrifuge", "\u79bb\u5fc3\u673a");
+        add("block.hbm.machine_gascent", "\u6c14\u4f53\u79bb\u5fc3\u673a");
         add("block.hbm.machine_ore_slopper", "\u77ff\u77f3\u7ffb\u6599\u673a");
+        add("block.hbm.machine_sawmill", "\u65af\u7279\u6797\u952f\u6728\u673a");
+        add("block.hbm.machine_crucible", "\u5769\u57da");
         add("block.hbm.machine_gasflare", "\u6c14\u4f53\u706b\u70ac");
         add("block.hbm.machine_assembly_factory", "\u5927\u578b\u88c5\u914d\u5382");
         add("block.hbm.machine_purex", "\u94b8\u94c0\u8fd8\u539f\u63d0\u53d6\u8bbe\u5907\uff08PUREX\uff09");
@@ -295,6 +299,8 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_turbinegas", "\u71c3\u6c14\u8f6e\u673a");
         add("block.hbm.glass_boron", "\u787c\u73bb\u7483");
         add("container.machineAssemblyMachine", "\u88c5\u914d\u673a");
+        add("container.machineChemicalPlant", "\u5316\u5de5\u5382");
+        add("container.machineLiquefactor", "\u6db2\u5316\u673a");
         add("container.hbm.battery", "\u84c4\u7535\u6c60");
         add("container.batterySocket", "\u7535\u6c60\u63d2\u5ea7");
         add("container.hbm.battery.red_low", "\u4f4e\u7ea2\u77f3\u6a21\u5f0f");
@@ -399,6 +405,65 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.yellow_barrel", "\u6838\u5e9f\u6599\u6876");
         add("block.hbm.vitrified_barrel", "\u73bb\u7483\u5316\u6838\u5e9f\u6599\u6876");
         add("item.hbm.powder_tektite", "\u7194\u878d\u77f3\u7c89");
+        add("item.hbm.powder_coal", "\u7164\u7c89");
+        add("item.hbm.powder_coal_tiny", "\u5c0f\u64ae\u7164\u7c89");
+        add("item.hbm.coke_coal", "\u7164\u7126\u70ad");
+        add("item.hbm.coke_lignite", "\u8910\u7164\u7126\u70ad");
+        add("item.hbm.coke_petroleum", "\u77f3\u6cb9\u7126\u70ad");
+        add("item.hbm.briquette_coal", "\u7164\u7403");
+        add("item.hbm.briquette_lignite", "\u8910\u7164\u7164\u7403");
+        add("item.hbm.briquette_wood", "\u6728\u5c51\u7403");
+        add("item.hbm.oil_tar_crude", "\u7126\u6cb9");
+        add("item.hbm.oil_tar_crack", "\u88c2\u5316\u7126\u6cb9");
+        add("item.hbm.oil_tar_coal", "\u7164\u7126\u6cb9");
+        add("item.hbm.oil_tar_wood", "\u6728\u998f\u6cb9");
+        add("item.hbm.oil_tar_wax", "\u6c2f\u5316\u77f3\u8721");
+        add("item.hbm.oil_tar_paraffin", "\u77f3\u8721");
+        add("item.hbm.powder_ash_wood", "\u6728\u7070");
+        add("item.hbm.powder_ash_coal", "\u7164\u7070");
+        add("item.hbm.powder_ash_misc", "\u7070\u5c18");
+        add("item.hbm.powder_ash_fly", "\u98de\u5c18");
+        add("item.hbm.powder_ash_soot", "\u7ec6\u70df\u7070");
+        add("item.hbm.powder_ash_fullerene", "\u5bcc\u52d2\u70ef");
+        add("item.hbm.chunk_ore_rare", "\u7a00\u571f\u77ff\u77f3\u5757");
+        add("item.hbm.chunk_ore_malachite", "\u5b54\u96c0\u77f3\u5757");
+        add("item.hbm.chunk_ore_cryolite", "\u51b0\u6676\u77f3\u5757");
+        add("item.hbm.chunk_ore_moonstone", "\u6708\u957f\u77f3");
+        add("item.hbm.plant_item_tobacco", "\u70df\u53f6");
+        add("item.hbm.plant_item_rope", "\u9ebb\u7ef3");
+        add("item.hbm.plant_item_mustardwillow", "\u82a5\u5b50\u67f3\u53f6");
+        add("item.hbm.parts_legendary_tier1", "\u4f20\u5947\u96f6\u4ef6");
+        add("item.hbm.parts_legendary_tier2", "\u4f20\u5947\u96f6\u4ef6");
+        add("item.hbm.parts_legendary_tier3", "\u4f20\u5947\u96f6\u4ef6");
+        add("item.hbm.part_generic_piston_pneumatic", "\u6c14\u52a8\u6d3b\u585e");
+        add("item.hbm.part_generic_piston_hydraulic", "\u6db2\u538b\u6d3b\u585e");
+        add("item.hbm.part_generic_piston_electric", "\u7535\u52a8\u6d3b\u585e");
+        add("item.hbm.part_generic_lde", "\u4f4e\u5bc6\u5ea6\u5143\u4ef6");
+        add("item.hbm.part_generic_hde", "\u91cd\u578b\u5143\u4ef6");
+        add("item.hbm.part_generic_glass_polarized", "\u504f\u5149\u955c\u7247");
+        add("item.hbm.item_expensive.desc", "Expensive mode item");
+        add("item.hbm.item_expensive_steel_plating", "\u94c6\u63a5\u56fa\u5b9a\u94a2\u677f");
+        add("item.hbm.item_expensive_heavy_frame", "\u91cd\u578b\u6846\u67b6");
+        add("item.hbm.item_expensive_circuit", "\u5927\u578b\u7535\u8def\u677f");
+        add("item.hbm.item_expensive_lead_plating", "\u9632\u8f90\u5c04\u9540\u5c42");
+        add("item.hbm.item_expensive_ferro_plating", "\u5f3a\u5316\u94c0\u94c1\u5408\u91d1\u677f");
+        add("item.hbm.item_expensive_computer", "\u5904\u7406\u5668\u4e3b\u673a");
+        add("item.hbm.item_expensive_bronze_tubes", "\u9752\u94dc\u7ed3\u6784\u4ef6");
+        add("item.hbm.item_expensive_plastic", "\u5851\u6599\u677f");
+        add("item.hbm.item_expensive_gold_dust", "\u8d85\u7cbe\u7ec6\u91d1\u7c89");
+        add("item.hbm.item_expensive_degenerate_matter", "\u7b80\u5e76\u6001\u7269\u8d28");
+        add("item.hbm.casing_small", "\u5c0f\u53e3\u5f84\u94dc\u5f39\u58f3");
+        add("item.hbm.casing_large", "\u5927\u53e3\u5f84\u94dc\u5f39\u58f3");
+        add("item.hbm.casing_small_steel", "\u5c0f\u53e3\u5f84\u94a2\u5f39\u58f3");
+        add("item.hbm.casing_large_steel", "\u5927\u53e3\u5f84\u94a2\u5f39\u58f3");
+        add("item.hbm.casing_shotshell", "\u9ed1\u706b\u836f\u9730\u5f39\u5f39\u58f3");
+        add("item.hbm.casing_buckshot", "\u5851\u6599\u9730\u5f39\u5f39\u58f3");
+        add("item.hbm.casing_buckshot_advanced", "\u9ad8\u7ea7\u9730\u5f39\u5f39\u58f3");
+        add("item.hbm.fuel_additive_antiknock", "\u56db\u4e59\u57fa\u94c5\u6297\u7206\u5242");
+        add("item.hbm.fuel_additive_deicer", "\u9664\u51b0\u5242");
+        add("item.hbm.catalytic_converter", "\u50ac\u5316\u8f6c\u5316\u5668");
+        add("item.hbm.powder_lignite", "\u8910\u7164\u7c89");
+        add("item.hbm.powder_limestone", "\u77f3\u7070\u77f3\u7c89");
         add("item.hbm.circuit_vacuum_tube", "\u771f\u7a7a\u7ba1");
         add("item.hbm.circuit_capacitor", "\u7535\u5bb9\u5668");
         add("item.hbm.circuit_capacitor_tantalium", "\u94bd\u7535\u5bb9\u5668");
@@ -482,7 +547,10 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
                  "singularity_spark",
                  "black_hole",
                  "particle_digamma",
-                 "pellet_antimatter" -> true;
+                 "pellet_antimatter",
+                 "catalytic_converter",
+                 "fuel_additive_antiknock",
+                 "fuel_additive_deicer" -> true;
             default -> false;
         };
     }
@@ -493,6 +561,60 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         }
         return switch (id) {
             case "powder_tektite" -> true;
+            case "powder_coal", "powder_coal_tiny" -> true;
+            case "coke_coal",
+                 "coke_lignite",
+                 "coke_petroleum",
+                 "briquette_coal",
+                 "briquette_lignite",
+                 "briquette_wood" -> true;
+            case "oil_tar_crude",
+                 "oil_tar_crack",
+                 "oil_tar_coal",
+                 "oil_tar_wood",
+                 "oil_tar_wax",
+                 "oil_tar_paraffin" -> true;
+            case "powder_ash_wood",
+                 "powder_ash_coal",
+                 "powder_ash_misc",
+                 "powder_ash_fly",
+                 "powder_ash_soot",
+                 "powder_ash_fullerene" -> true;
+            case "chunk_ore_rare",
+                 "chunk_ore_malachite",
+                 "chunk_ore_cryolite",
+                 "chunk_ore_moonstone",
+                 "plant_item_tobacco",
+                 "plant_item_rope",
+                 "plant_item_mustardwillow",
+                 "parts_legendary_tier1",
+                 "parts_legendary_tier2",
+                 "parts_legendary_tier3",
+                 "part_generic_piston_pneumatic",
+                 "part_generic_piston_hydraulic",
+                 "part_generic_piston_electric",
+                 "part_generic_lde",
+                 "part_generic_hde",
+                 "part_generic_glass_polarized",
+                 "item_expensive_steel_plating",
+                 "item_expensive_heavy_frame",
+                 "item_expensive_circuit",
+                 "item_expensive_lead_plating",
+                 "item_expensive_ferro_plating",
+                 "item_expensive_computer",
+                 "item_expensive_bronze_tubes",
+                 "item_expensive_plastic",
+                 "item_expensive_gold_dust",
+                 "item_expensive_degenerate_matter",
+                 "casing_small",
+                 "casing_large",
+                 "casing_small_steel",
+                 "casing_large_steel",
+                 "casing_shotshell",
+                 "casing_buckshot",
+                 "casing_buckshot_advanced",
+                 "powder_lignite",
+                 "powder_limestone" -> true;
             default -> false;
         };
     }

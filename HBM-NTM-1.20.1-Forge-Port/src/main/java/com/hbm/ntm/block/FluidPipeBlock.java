@@ -1,14 +1,15 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
+import com.hbm.ntm.blockentity.FluidPipeAnchorBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmServerKeybinds;
+import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModItems;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
@@ -26,8 +27,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.loot.LootParams;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -98,21 +97,12 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
 
     @Override
     public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
-        return createTypedStack(level.getBlockEntity(pos), super.getCloneItemStack(level, pos, state));
-    }
-
-    @Override
-    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
-        List<ItemStack> drops = new ArrayList<>(super.getDrops(state, builder));
-        BlockEntity blockEntity = builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
-        if (blockEntity instanceof FluidPipeBlockEntity pipe && asItem() instanceof FluidPipeBlockItem item) {
-            if (drops.isEmpty() && builder.getOptionalParameter(LootContextParams.EXPLOSION_RADIUS) == null) {
-                drops.add(FluidPipeBlockItem.createStack(item, pipe.getFluidType()));
-                return drops;
-            }
-            drops.replaceAll(stack -> createTypedStack(blockEntity, stack));
+        if (state.is(ModBlocks.FLUID_DUCT_NEO.get())
+                && level.getBlockEntity(pos) instanceof FluidPipeBlockEntity pipe
+                && ModItems.FLUID_DUCT.get() instanceof FluidPipeBlockItem item) {
+            return FluidPipeBlockItem.createStack(item, pipe.getFluidType());
         }
-        return drops;
+        return super.getCloneItemStack(level, pos, state);
     }
 
     @Override
@@ -187,6 +177,11 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
             for (Direction direction : Direction.values()) {
                 queue.add(new PipeVisit(visit.pos().relative(direction), visit.distance() + 1));
             }
+            if (pipe instanceof FluidPipeAnchorBlockEntity anchor) {
+                for (BlockPos remote : anchor.getRemoteConnections()) {
+                    queue.add(new PipeVisit(remote, visit.distance() + 1));
+                }
+            }
         }
         return changed;
     }
@@ -203,13 +198,5 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
                 | (north ? 1 : 0);
     }
 
-    private ItemStack createTypedStack(@Nullable BlockEntity blockEntity, ItemStack fallback) {
-        if (blockEntity instanceof FluidPipeBlockEntity pipe
-                && asItem() instanceof FluidPipeBlockItem item
-                && fallback.is(asItem())) {
-            return FluidPipeBlockItem.createStack(item, pipe.getFluidType());
-        }
-        return fallback;
-    }
 }
 

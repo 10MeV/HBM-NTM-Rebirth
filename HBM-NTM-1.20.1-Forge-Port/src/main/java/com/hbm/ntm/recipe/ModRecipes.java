@@ -16,6 +16,10 @@ public final class ModRecipes {
     public static final DeferredRegister<RecipeSerializer<?>> SERIALIZERS =
             DeferredRegister.create(ForgeRegistries.RECIPE_SERIALIZERS, HbmNtm.MOD_ID);
 
+    public static final RegistryObject<RecipeSerializer<FluidDuctIdentifierRecipe>> FLUID_DUCT_IDENTIFIER =
+            SERIALIZERS.register("fluid_duct_identifier",
+                    () -> new net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer<>(
+                            FluidDuctIdentifierRecipe::new));
     public static final RecipeHolder<PressRecipe> PRESS = register("press", PressRecipe.Serializer::new);
     public static final RecipeHolder<GenericMachineRecipe> CHEMICAL_PLANT =
             register("chemical_plant", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.CHEMICAL_PLANT));

@@ -1,6 +1,8 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.FluidValveBlock;
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
@@ -14,6 +16,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
         implements RORValueProvider, RORInteractive {
@@ -43,6 +47,13 @@ public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
 
     public long getCounter() {
         return counter;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        return LegacyLookOverlay.forBlock(this, List.of(
+                LegacyLookOverlayLines.fluidName(getFluidType()),
+                LegacyLookOverlayLines.counter(counter)));
     }
 
     public void resetCounter() {

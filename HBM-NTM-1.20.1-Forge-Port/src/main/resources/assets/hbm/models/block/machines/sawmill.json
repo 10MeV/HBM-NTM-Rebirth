@@ -1,0 +1,7 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/sawmill.obj",
+  "flip-v": true,
+  "detectCullableFaces": false,
+  "textures": { "particle": "hbm:block/machines/sawmill", "default": "hbm:block/machines/sawmill" }
+}

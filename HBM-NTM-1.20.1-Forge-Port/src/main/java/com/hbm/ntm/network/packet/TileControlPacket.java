@@ -1,11 +1,10 @@
 package com.hbm.ntm.network.packet;
 
-import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.network.HbmGuiControlSecurity;
 import com.hbm.ntm.network.HbmTileSyncable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.network.NetworkEvent;
@@ -13,8 +12,6 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 public record TileControlPacket(BlockPos pos, CompoundTag data) {
-    private static final double MAX_DISTANCE_SQ = 16.0D * 16.0D;
-
     public TileControlPacket {
         data = data == null ? new CompoundTag() : data.copy();
     }
@@ -41,19 +38,13 @@ public record TileControlPacket(BlockPos pos, CompoundTag data) {
         if (player == null) {
             return;
         }
-        if (player.distanceToSqr(packet.pos.getX() + 0.5D, packet.pos.getY() + 0.5D, packet.pos.getZ() + 0.5D) > MAX_DISTANCE_SQ) {
-            HbmNtm.LOGGER.warn("Blocked remote tile control from {} at {}", player.getGameProfile().getName(), packet.pos);
+        BlockEntity blockEntity = HbmGuiControlSecurity.validateTileControl(player, packet.pos, "tile control");
+        if (!(blockEntity instanceof HbmTileSyncable syncable)) {
             return;
         }
-        ServerLevel level = player.serverLevel();
-        if (!level.hasChunk(packet.pos.getX() >> 4, packet.pos.getZ() >> 4)) {
-            return;
-        }
-        BlockEntity blockEntity = level.getBlockEntity(packet.pos);
-        if (blockEntity instanceof HbmTileSyncable syncable && syncable.canReceiveClientControl(player, packet.data)) {
+        if (syncable.canReceiveClientControl(player, packet.data)) {
             syncable.handleClientControl(player, packet.data);
-            blockEntity.setChanged();
-            level.sendBlockUpdated(packet.pos, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
+            HbmGuiControlSecurity.markChangedAndUpdate(blockEntity);
         }
     }
 }

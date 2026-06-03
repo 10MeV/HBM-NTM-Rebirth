@@ -8,6 +8,7 @@ import com.hbm.ntm.blockentity.BoilerBlockEntity;
 import com.hbm.ntm.blockentity.CatalyticCrackerBlockEntity;
 import com.hbm.ntm.blockentity.CatalyticReformerBlockEntity;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
+import com.hbm.ntm.blockentity.CompressorBlockEntity;
 import com.hbm.ntm.blockentity.CokerBlockEntity;
 import com.hbm.ntm.blockentity.CustomNukeBlockEntity;
 import com.hbm.ntm.blockentity.DeconBlockEntity;
@@ -198,6 +199,11 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(CokerBlockEntity::new,
                             ModBlocks.MACHINE_COKER.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<CompressorBlockEntity>> COMPRESSOR =
+            BLOCK_ENTITIES.register("compressor", () ->
+                    BlockEntityType.Builder.of(CompressorBlockEntity::new,
+                            ModBlocks.MACHINE_COMPRESSOR.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<SteamEngineBlockEntity>> STEAM_ENGINE =
             BLOCK_ENTITIES.register("steam_engine", () ->
                     BlockEntityType.Builder.of(SteamEngineBlockEntity::new,
@@ -226,10 +232,12 @@ public final class ModBlockEntities {
                             ModBlocks.MACHINE_REFINERY.get(),
                             ModBlocks.MACHINE_PYROOVEN.get(),
                             ModBlocks.MACHINE_SOLIDIFIER.get(),
-                            ModBlocks.MACHINE_COMPRESSOR.get(),
                             ModBlocks.MACHINE_PUMPJACK.get(),
                             ModBlocks.MACHINE_CENTRIFUGE.get(),
+                            ModBlocks.MACHINE_GASCENT.get(),
                             ModBlocks.MACHINE_ORE_SLOPPER.get(),
+                            ModBlocks.MACHINE_SAWMILL.get(),
+                            ModBlocks.MACHINE_CRUCIBLE.get(),
                             ModBlocks.MACHINE_ASSEMBLY_FACTORY.get(),
                             ModBlocks.MACHINE_PUREX.get(),
                             ModBlocks.MACHINE_SILEX.get(),

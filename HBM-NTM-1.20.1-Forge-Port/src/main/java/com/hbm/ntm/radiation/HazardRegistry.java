@@ -100,7 +100,9 @@ public final class HazardRegistry {
 
     private static void registerLegacyTagHazards() {
         registerForgeTag("dusts/coal", HazardType.COAL, RadiationConstants.POWDER_MULTIPLIER);
+        registerForgeTag("tiny_dusts/coal", HazardType.COAL, RadiationConstants.NUGGET * RadiationConstants.POWDER_MULTIPLIER);
         registerForgeTag("dusts/lignite", HazardType.COAL, RadiationConstants.POWDER_MULTIPLIER);
+        registerForgeTag("tiny_dusts/lignite", HazardType.COAL, RadiationConstants.NUGGET * RadiationConstants.POWDER_MULTIPLIER);
         registerForgeTag("gems/lignite", HazardType.COAL, RadiationConstants.INGOT);
     }
 

@@ -22,6 +22,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
 import net.minecraftforge.network.NetworkHooks;
@@ -64,7 +65,7 @@ public class LiquefactorBlock extends LegacyVisibleMultiblockMachineBlock implem
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return getMultiblockShape(state, level, pos, context);
+        return Shapes.block();
     }
 
     @Override
@@ -74,13 +75,13 @@ public class LiquefactorBlock extends LegacyVisibleMultiblockMachineBlock implem
 
     @Override
     public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos, CollisionContext context) {
-        return definition().collisionShape(state);
+        return Shapes.block();
     }
 
     @Override
     public VoxelShape getMultiblockCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
             CollisionContext context) {
-        return getMultiblockShape(state, level, corePos, context);
+        return definition().hasCollisionShapeFactory() ? definition().collisionShape(state) : Shapes.block();
     }
 
     @Override

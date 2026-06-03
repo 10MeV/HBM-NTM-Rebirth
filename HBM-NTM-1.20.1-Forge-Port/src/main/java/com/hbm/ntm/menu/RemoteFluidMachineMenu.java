@@ -1,0 +1,246 @@
+package com.hbm.ntm.menu;
+
+import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
+import com.hbm.ntm.blockentity.CatalyticReformerBlockEntity;
+import com.hbm.ntm.blockentity.HydrotreaterBlockEntity;
+import com.hbm.ntm.blockentity.LegacyRemoteFluidMachineBlockEntity;
+import com.hbm.ntm.blockentity.LegacyRemoteFluidMachineBlockEntity.LegacyGuiProfile;
+import com.hbm.ntm.blockentity.VacuumDistillBlockEntity;
+import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmMenuDataSlots;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.SlotItemHandler;
+
+public class RemoteFluidMachineMenu extends AbstractContainerMenu {
+    private static final int PLAYER_INVENTORY_SIZE = 36;
+
+    private final LegacyRemoteFluidMachineBlockEntity blockEntity;
+    private final LegacyGuiProfile profile;
+    private final List<HbmFluidGuiHelper.TankData> tanks = new ArrayList<>();
+    private final int machineSlotCount;
+    private final int playerInventoryStart;
+    private final int playerSlotEnd;
+    private long power;
+    private long maxPower;
+
+    public RemoteFluidMachineMenu(int containerId, Inventory playerInventory, FriendlyByteBuf data) {
+        this(containerId, playerInventory, getBlockEntity(playerInventory, data.readBlockPos()));
+    }
+
+    public RemoteFluidMachineMenu(int containerId, Inventory playerInventory,
+            LegacyRemoteFluidMachineBlockEntity blockEntity) {
+        super(ModMenuTypes.REMOTE_FLUID_MACHINE.get(), containerId);
+        this.blockEntity = blockEntity;
+        this.profile = blockEntity.getLegacyGuiProfile();
+        this.machineSlotCount = addMachineSlots();
+        this.playerInventoryStart = machineSlotCount;
+        this.playerSlotEnd = playerInventoryStart + PLAYER_INVENTORY_SIZE;
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory,
+                8, profile.inventoryY(), profile.hotbarY());
+        addDataSlots();
+    }
+
+    public LegacyRemoteFluidMachineBlockEntity getBlockEntity() {
+        return blockEntity;
+    }
+
+    public LegacyGuiProfile getProfile() {
+        return profile;
+    }
+
+    public int getImageWidth() {
+        return profile.width();
+    }
+
+    public int getImageHeight() {
+        return profile.height();
+    }
+
+    public List<HbmFluidGuiHelper.TankData> getTanks() {
+        return tanks;
+    }
+
+    public HbmFluidGuiHelper.TankData getTank(int index) {
+        return index >= 0 && index < tanks.size() ? tanks.get(index) : null;
+    }
+
+    public List<Component> getTankTooltip(int index) {
+        HbmFluidGuiHelper.TankData tank = getTank(index);
+        return tank == null ? List.of() : tank.tooltip();
+    }
+
+    public long getPower() {
+        return power;
+    }
+
+    public long getMaxPower() {
+        return maxPower;
+    }
+
+    public int getPowerBarHeight(int maxHeight) {
+        return maxPower <= 0L ? 0 : (int) (power * maxHeight / maxPower);
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+    }
+
+    @Override
+    public ItemStack quickMoveStack(Player player, int index) {
+        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
+                machineSlotCount, playerInventoryStart, playerSlotEnd, insertionRanges());
+    }
+
+    private void addDataSlots() {
+        HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
+        HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getMaxPower, () -> maxPower, value -> maxPower = value);
+        blockEntity.getAllTanks().forEach(tank -> tanks.add(HbmFluidGuiHelper.watchTank(this::addDataSlot, tank)));
+    }
+
+    private int addMachineSlots() {
+        ItemStackHandler items = blockEntity.getItems();
+        if (items == null) {
+            return 0;
+        }
+        switch (profile) {
+            case HYDROTREATER -> addHydrotreaterSlots(items);
+            case CATALYTIC_REFORMER -> addCatalyticReformerSlots(items);
+            case VACUUM_DISTILL -> addVacuumDistillSlots(items);
+            default -> {
+                return 0;
+            }
+        }
+        return items.getSlots();
+    }
+
+    private void addHydrotreaterSlots(ItemStackHandler items) {
+        addSlot(energySlot(items, HydrotreaterBlockEntity.SLOT_BATTERY, 17, 90));
+        addSlot(new SlotItemHandler(items, HydrotreaterBlockEntity.SLOT_INPUT_CONTAINER, 35, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, HydrotreaterBlockEntity.SLOT_INPUT_CONTAINER_OUTPUT, 35, 108));
+        addSlot(new SlotItemHandler(items, HydrotreaterBlockEntity.SLOT_HYDROGEN_INPUT, 53, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, HydrotreaterBlockEntity.SLOT_HYDROGEN_OUTPUT, 53, 108));
+        addSlot(new SlotItemHandler(items, HydrotreaterBlockEntity.SLOT_OUTPUT_LEFT_CONTAINER, 125, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, HydrotreaterBlockEntity.SLOT_OUTPUT_LEFT_CONTAINER_OUTPUT, 125, 108));
+        addSlot(new SlotItemHandler(items, HydrotreaterBlockEntity.SLOT_OUTPUT_RIGHT_CONTAINER, 143, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, HydrotreaterBlockEntity.SLOT_OUTPUT_RIGHT_CONTAINER_OUTPUT, 143, 108));
+        addSlot(identifierSlot(items, HydrotreaterBlockEntity.SLOT_IDENTIFIER, 17, 108));
+        addSlot(catalystSlot(items, HydrotreaterBlockEntity.SLOT_CATALYST, 89, 36));
+    }
+
+    private void addCatalyticReformerSlots(ItemStackHandler items) {
+        addSlot(energySlot(items, CatalyticReformerBlockEntity.SLOT_BATTERY, 17, 90));
+        addSlot(new SlotItemHandler(items, CatalyticReformerBlockEntity.SLOT_INPUT_CONTAINER, 35, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, CatalyticReformerBlockEntity.SLOT_INPUT_CONTAINER_OUTPUT, 35, 108));
+        addSlot(new SlotItemHandler(items, CatalyticReformerBlockEntity.SLOT_OUTPUT_1_CONTAINER, 107, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, CatalyticReformerBlockEntity.SLOT_OUTPUT_1_CONTAINER_OUTPUT, 107, 108));
+        addSlot(new SlotItemHandler(items, CatalyticReformerBlockEntity.SLOT_OUTPUT_2_CONTAINER, 125, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, CatalyticReformerBlockEntity.SLOT_OUTPUT_2_CONTAINER_OUTPUT, 125, 108));
+        addSlot(new SlotItemHandler(items, CatalyticReformerBlockEntity.SLOT_OUTPUT_3_CONTAINER, 143, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, CatalyticReformerBlockEntity.SLOT_OUTPUT_3_CONTAINER_OUTPUT, 143, 108));
+        addSlot(identifierSlot(items, CatalyticReformerBlockEntity.SLOT_IDENTIFIER, 17, 108));
+        addSlot(catalystSlot(items, CatalyticReformerBlockEntity.SLOT_CATALYST, 71, 36));
+    }
+
+    private void addVacuumDistillSlots(ItemStackHandler items) {
+        addSlot(energySlot(items, VacuumDistillBlockEntity.SLOT_BATTERY, 26, 90));
+        addSlot(disabledSlot(items, VacuumDistillBlockEntity.SLOT_INPUT_CONTAINER, 44, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, VacuumDistillBlockEntity.SLOT_INPUT_CONTAINER_OUTPUT, 44, 108));
+        addSlot(new SlotItemHandler(items, VacuumDistillBlockEntity.SLOT_OUTPUT_HEAVY_CONTAINER, 80, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, VacuumDistillBlockEntity.SLOT_OUTPUT_HEAVY_CONTAINER_OUTPUT, 80, 108));
+        addSlot(new SlotItemHandler(items, VacuumDistillBlockEntity.SLOT_OUTPUT_REFORMATE_CONTAINER, 98, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, VacuumDistillBlockEntity.SLOT_OUTPUT_REFORMATE_CONTAINER_OUTPUT, 98, 108));
+        addSlot(new SlotItemHandler(items, VacuumDistillBlockEntity.SLOT_OUTPUT_LIGHT_CONTAINER, 116, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, VacuumDistillBlockEntity.SLOT_OUTPUT_LIGHT_CONTAINER_OUTPUT, 116, 108));
+        addSlot(new SlotItemHandler(items, VacuumDistillBlockEntity.SLOT_OUTPUT_GAS_CONTAINER, 134, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, VacuumDistillBlockEntity.SLOT_OUTPUT_GAS_CONTAINER_OUTPUT, 134, 108));
+        addSlot(identifierSlot(items, VacuumDistillBlockEntity.SLOT_IDENTIFIER, 26, 108));
+    }
+
+    private SlotItemHandler energySlot(ItemStackHandler items, int slot, int x, int y) {
+        return new SlotItemHandler(items, slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
+            }
+        };
+    }
+
+    private SlotItemHandler identifierSlot(ItemStackHandler items, int slot, int x, int y) {
+        return new SlotItemHandler(items, slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return stack.getItem() instanceof IFluidIdentifierItem;
+            }
+        };
+    }
+
+    private SlotItemHandler catalystSlot(ItemStackHandler items, int slot, int x, int y) {
+        return new SlotItemHandler(items, slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return stack.is(ModItems.CATALYTIC_CONVERTER.get());
+            }
+        };
+    }
+
+    private SlotItemHandler disabledSlot(ItemStackHandler items, int slot, int x, int y) {
+        return new SlotItemHandler(items, slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return false;
+            }
+        };
+    }
+
+    private int[] insertionRanges() {
+        return switch (profile) {
+            case HYDROTREATER -> new int[] {
+                    HydrotreaterBlockEntity.SLOT_BATTERY, HydrotreaterBlockEntity.SLOT_BATTERY + 1,
+                    HydrotreaterBlockEntity.SLOT_IDENTIFIER, HydrotreaterBlockEntity.SLOT_IDENTIFIER + 1,
+                    HydrotreaterBlockEntity.SLOT_CATALYST, HydrotreaterBlockEntity.SLOT_CATALYST + 1,
+                    HydrotreaterBlockEntity.SLOT_INPUT_CONTAINER, HydrotreaterBlockEntity.SLOT_INPUT_CONTAINER + 1,
+                    HydrotreaterBlockEntity.SLOT_HYDROGEN_INPUT, HydrotreaterBlockEntity.SLOT_HYDROGEN_INPUT + 1,
+                    HydrotreaterBlockEntity.SLOT_OUTPUT_LEFT_CONTAINER, HydrotreaterBlockEntity.SLOT_OUTPUT_LEFT_CONTAINER + 1,
+                    HydrotreaterBlockEntity.SLOT_OUTPUT_RIGHT_CONTAINER, HydrotreaterBlockEntity.SLOT_OUTPUT_RIGHT_CONTAINER + 1 };
+            case CATALYTIC_REFORMER -> new int[] {
+                    CatalyticReformerBlockEntity.SLOT_BATTERY, CatalyticReformerBlockEntity.SLOT_BATTERY + 1,
+                    CatalyticReformerBlockEntity.SLOT_IDENTIFIER, CatalyticReformerBlockEntity.SLOT_IDENTIFIER + 1,
+                    CatalyticReformerBlockEntity.SLOT_CATALYST, CatalyticReformerBlockEntity.SLOT_CATALYST + 1,
+                    CatalyticReformerBlockEntity.SLOT_INPUT_CONTAINER, CatalyticReformerBlockEntity.SLOT_INPUT_CONTAINER + 1,
+                    CatalyticReformerBlockEntity.SLOT_OUTPUT_1_CONTAINER, CatalyticReformerBlockEntity.SLOT_OUTPUT_1_CONTAINER + 1,
+                    CatalyticReformerBlockEntity.SLOT_OUTPUT_2_CONTAINER, CatalyticReformerBlockEntity.SLOT_OUTPUT_2_CONTAINER + 1,
+                    CatalyticReformerBlockEntity.SLOT_OUTPUT_3_CONTAINER, CatalyticReformerBlockEntity.SLOT_OUTPUT_3_CONTAINER + 1 };
+            case VACUUM_DISTILL -> new int[] {
+                    VacuumDistillBlockEntity.SLOT_BATTERY, VacuumDistillBlockEntity.SLOT_BATTERY + 1,
+                    VacuumDistillBlockEntity.SLOT_IDENTIFIER, VacuumDistillBlockEntity.SLOT_IDENTIFIER + 1,
+                    VacuumDistillBlockEntity.SLOT_OUTPUT_HEAVY_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_HEAVY_CONTAINER + 1,
+                    VacuumDistillBlockEntity.SLOT_OUTPUT_REFORMATE_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_REFORMATE_CONTAINER + 1,
+                    VacuumDistillBlockEntity.SLOT_OUTPUT_LIGHT_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_LIGHT_CONTAINER + 1,
+                    VacuumDistillBlockEntity.SLOT_OUTPUT_GAS_CONTAINER, VacuumDistillBlockEntity.SLOT_OUTPUT_GAS_CONTAINER + 1 };
+            default -> new int[0];
+        };
+    }
+
+    private static LegacyRemoteFluidMachineBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
+        BlockEntity blockEntity = inventory.player.level().getBlockEntity(pos);
+        if (blockEntity instanceof LegacyRemoteFluidMachineBlockEntity remoteMachine) {
+            return remoteMachine;
+        }
+        throw new IllegalStateException("Expected remote fluid machine block entity at " + pos);
+    }
+}

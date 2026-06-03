@@ -1,5 +1,8 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayPorts;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
@@ -9,6 +12,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
 import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -20,6 +24,7 @@ import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
+import com.hbm.ntm.recipe.GenericMachineRecipeSelector;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -51,7 +56,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver, HbmTileSyncable, HbmStandardFluidTransceiver {
+public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
+        HbmTileSyncable, HbmStandardFluidTransceiver, LegacyLookOverlayProvider {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_LEGACY_POWER = "power";
@@ -63,8 +69,6 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     private static final String TAG_DID_PROCESS = "DidProcess";
     private static final String TAG_ANIM = "Anim";
     private static final String TAG_FRAME = "Frame";
-    private static final String TAG_CONTROL_INDEX = "index";
-    private static final String TAG_CONTROL_SELECTION = "selection";
     private static final long DEFAULT_MAX_POWER = 100_000L;
     private static final int TANK_CAPACITY = 24_000;
 
@@ -151,13 +155,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
                 blockEntity.getReceiverSpeed());
         blockEntity.subscribeEnergyReceiverToPorts();
 
-        boolean changed = false;
-        for (int i = 0; i < 3; i++) {
-            changed |= HbmFluidItemTransfer.loadTankFromSlot(blockEntity.items,
-                    SLOT_FLUID_INPUT_START + i, SLOT_FLUID_INPUT_RETURN_START + i, blockEntity.inputTanks[i]);
-            changed |= HbmFluidItemTransfer.unloadTankToSlot(blockEntity.items,
-                    SLOT_FLUID_OUTPUT_START + i, SLOT_FLUID_OUTPUT_RETURN_START + i, blockEntity.outputTanks[i]);
-        }
+        boolean changed = blockEntity.processFluidContainers();
         blockEntity.refreshFluidPortSubscriptions();
         changed |= blockEntity.tickRecipe(level);
         changed |= oldPower != blockEntity.energy.getPower();
@@ -193,6 +191,11 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
 
     public HbmFluidTank getOutputTank(int index) {
         return outputTanks[index];
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        return LegacyLookOverlayPorts.factoryMachinePort(this, viewedPos);
     }
 
     @Override
@@ -236,19 +239,17 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     }
 
     public void setSelectedRecipe(String selectedRecipe) {
-        this.selectedRecipe = selectedRecipe == null || selectedRecipe.isBlank()
-                ? GenericMachineRecipeRuntime.NULL_RECIPE
-                : selectedRecipe;
+        this.selectedRecipe = GenericMachineRecipeSelector.normalize(selectedRecipe);
         this.progress = 0.0D;
         setChanged();
     }
 
     public boolean selectRecipe(String selectedRecipe) {
-        if (level == null || GenericMachineRecipeRuntime.NULL_RECIPE.equals(selectedRecipe)) {
+        if (level == null || GenericMachineRecipeSelector.isNullSelection(selectedRecipe)) {
             setSelectedRecipe(GenericMachineRecipeRuntime.NULL_RECIPE);
             return true;
         }
-        if (!GenericMachineRecipeRuntime.hasRecipe(level, GenericMachineRecipe.Machine.CHEMICAL_PLANT, selectedRecipe)) {
+        if (!GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.CHEMICAL_PLANT, selectedRecipe)) {
             return false;
         }
         setSelectedRecipe(selectedRecipe);
@@ -278,10 +279,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     }
 
     public static CompoundTag recipeSelectionTag(String selection) {
-        CompoundTag tag = new CompoundTag();
-        tag.putInt(TAG_CONTROL_INDEX, 0);
-        tag.putString(TAG_CONTROL_SELECTION, selection == null ? GenericMachineRecipeRuntime.NULL_RECIPE : selection);
-        return tag;
+        return GenericMachineRecipeSelector.selectionTag(selection);
     }
 
     public List<ItemStack> getDrops() {
@@ -377,18 +375,21 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("container.machineChemicalPlant");
+        return Component.translatableWithFallback("container.machineChemicalPlant", "Chemical Plant");
     }
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        return tag.getInt(TAG_CONTROL_INDEX) == 0 && tag.contains(TAG_CONTROL_SELECTION);
+        return player.containerMenu instanceof ChemicalPlantMenu
+                && GenericMachineRecipeSelector.isSelectionTag(tag)
+                && GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.CHEMICAL_PLANT,
+                GenericMachineRecipeSelector.readSelection(tag));
     }
 
     @Override
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
-        if (tag.getInt(TAG_CONTROL_INDEX) == 0) {
-            selectRecipe(tag.getString(TAG_CONTROL_SELECTION));
+        if (GenericMachineRecipeSelector.isSelectionTag(tag)) {
+            selectRecipe(GenericMachineRecipeSelector.readSelection(tag));
         }
     }
 
@@ -548,6 +549,21 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
                 inputTankList, outputTankList, this);
     }
 
+    private boolean processFluidContainers() {
+        List<TankSlotTransfer> transfers = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            transfers.add(TankSlotTransfer.load(
+                    SLOT_FLUID_INPUT_START + i,
+                    SLOT_FLUID_INPUT_RETURN_START + i,
+                    inputTanks[i]));
+            transfers.add(TankSlotTransfer.unload(
+                    SLOT_FLUID_OUTPUT_START + i,
+                    SLOT_FLUID_OUTPUT_RETURN_START + i,
+                    outputTanks[i]));
+        }
+        return HbmFluidItemTransfer.processTransfers(items, transfers);
+    }
+
     private static boolean isOutputOnlySlot(int slot) {
         return (slot >= SLOT_ITEM_OUTPUT_START && slot <= SLOT_ITEM_OUTPUT_END)
                 || (slot >= SLOT_FLUID_INPUT_RETURN_START && slot <= SLOT_FLUID_INPUT_RETURN_END)
@@ -556,8 +572,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
 
     private class ChemicalPlantFluidHandler extends ForgeFluidHandlerAdapter {
         private ChemicalPlantFluidHandler(Runnable onChanged) {
-            super(List.of(inputTanks[0], inputTanks[1], inputTanks[2], outputTanks[0], outputTanks[1], outputTanks[2]),
-                    0, true, true, onChanged);
+            super(inputTankList, outputTankList, 0, true, true, onChanged);
         }
 
         @Override

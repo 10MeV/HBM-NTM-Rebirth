@@ -124,6 +124,12 @@ public class DummyBlock extends Block implements EntityBlock {
     private VoxelShape forwardedShape(BlockGetter level, BlockPos pos, CollisionContext context, boolean collision) {
         MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
         if (core != null && core.state().getBlock() instanceof MultiblockCoreBlock coreBlock) {
+            if (!collision && !coreBlock.usesForwardedDummyShape(core.state(), level, core.pos())) {
+                return SHAPE;
+            }
+            if (collision && !coreBlock.usesForwardedDummyCollisionShape(core.state(), level, core.pos())) {
+                return SHAPE;
+            }
             VoxelShape shape = collision
                     ? coreBlock.getMultiblockCollisionShape(core.state(), level, core.pos(), context)
                     : coreBlock.getMultiblockShape(core.state(), level, core.pos(), context);
@@ -135,12 +141,20 @@ public class DummyBlock extends Block implements EntityBlock {
         return SHAPE;
     }
 
+    private BlockState particleState(BlockGetter level, BlockPos pos) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core != null && core.state().getBlock() instanceof MultiblockCoreBlock coreBlock) {
+            return coreBlock.multiblockParticleState(core.state(), level, core.pos());
+        }
+        return MultiblockHelper.steelParticleState();
+    }
+
     @Override
     public void initializeClient(Consumer<IClientBlockExtensions> consumer) {
         consumer.accept(new IClientBlockExtensions() {
             @Override
             public boolean addDestroyEffects(BlockState state, Level level, BlockPos pos, ParticleEngine manager) {
-                manager.destroy(pos, MultiblockHelper.steelParticleState());
+                manager.destroy(pos, particleState(level, pos));
                 return true;
             }
         });

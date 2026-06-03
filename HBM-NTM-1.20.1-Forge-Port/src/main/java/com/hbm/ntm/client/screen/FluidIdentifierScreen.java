@@ -59,8 +59,6 @@ public class FluidIdentifierScreen extends Screen {
         super.tick();
         if (!isHeldIdentifier()) {
             onClose();
-        } else {
-            refreshHeldTypes();
         }
     }
 
@@ -91,6 +89,7 @@ public class FluidIdentifierScreen extends Screen {
                 } else {
                     secondary = selected;
                 }
+                updateHeldStack(selected, primaryClick);
                 return true;
             }
         }
@@ -211,6 +210,16 @@ public class FluidIdentifierScreen extends Screen {
         CompoundTag tag = new CompoundTag();
         tag.putInt(primarySelection ? "primary" : "secondary", type.getId());
         ModMessages.sendNbtItemControl(hand, tag);
+    }
+
+    private void updateHeldStack(FluidType type, boolean primarySelection) {
+        if (minecraft == null || minecraft.player == null) {
+            return;
+        }
+        ItemStack stack = minecraft.player.getItemInHand(hand);
+        if (stack.getItem() instanceof FluidIdentifierItem) {
+            FluidIdentifierItem.setType(stack, type, primarySelection);
+        }
     }
 
 }

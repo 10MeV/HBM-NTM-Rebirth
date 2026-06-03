@@ -95,14 +95,13 @@ public class TauSparkParticle extends Particle {
         double currentX = Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x();
         double currentY = Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y();
         double currentZ = Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z();
-        int alpha = Mth.clamp((int) (255.0F * (1.0F - (this.age + partialTick) / (float) this.lifetime)), 0, 255);
-        consumer.vertex(currentX, currentY, currentZ).color(255, 255, 255, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        consumer.vertex(currentX, currentY, currentZ).color(255, 255, 255, 255).uv2(LightTexture.FULL_BRIGHT).endVertex();
         for (int i = this.steps.size() - 1; i >= 1; i--) {
             Vec3 step = this.steps.get(i);
             currentX -= step.x;
             currentY -= step.y;
             currentZ -= step.z;
-            consumer.vertex(currentX, currentY, currentZ).color(255, 255, 255, alpha).uv2(LightTexture.FULL_BRIGHT).endVertex();
+            consumer.vertex(currentX, currentY, currentZ).color(255, 255, 255, 255).uv2(LightTexture.FULL_BRIGHT).endVertex();
         }
     }
 

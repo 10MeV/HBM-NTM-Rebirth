@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -90,6 +92,11 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.allFluidUserTanks(this));
+    }
+
+    @Override
     public List<HbmFluidTank> getReceivingTanks() {
         return List.of(inputTank);
     }
@@ -148,7 +155,7 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
-        return side == null ? HbmFluidSideMode.BOTH : HbmFluidSideMode.INPUT;
+        return HbmFluidSideMode.BOTH;
     }
 
     @Override

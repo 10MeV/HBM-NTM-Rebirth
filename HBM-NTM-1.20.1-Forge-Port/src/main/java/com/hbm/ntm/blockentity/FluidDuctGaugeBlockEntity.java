@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.fluid.HbmFluidNet;
@@ -54,6 +56,14 @@ public class FluidDuctGaugeBlockEntity extends FluidDuctBoxBlockEntity implement
 
     public long getDeltaLastSecond() {
         return deltaLastSecond;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        return LegacyLookOverlay.forBlock(this, java.util.List.of(
+                LegacyLookOverlayLines.fluidName(getFluidType()),
+                LegacyLookOverlayLines.rate(deltaTick, "mB/t"),
+                LegacyLookOverlayLines.rate(deltaLastSecond, "mB/s")));
     }
 
     @Override

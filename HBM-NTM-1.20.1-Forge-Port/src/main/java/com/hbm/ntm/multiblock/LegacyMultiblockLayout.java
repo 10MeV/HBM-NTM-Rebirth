@@ -174,21 +174,17 @@ public final class LegacyMultiblockLayout {
     }
 
     public VoxelShape shape(double height) {
-        int minX = 0;
-        int minY = 0;
-        int minZ = 0;
-        int maxX = 1;
-        double maxY = height;
-        int maxZ = 1;
+        VoxelShape shape = Shapes.empty();
         for (BlockPos offset : offsets) {
-            minX = Math.min(minX, offset.getX());
-            minY = Math.min(minY, offset.getY());
-            minZ = Math.min(minZ, offset.getZ());
-            maxX = Math.max(maxX, offset.getX() + 1);
-            maxY = Math.max(maxY, offset.getY() + height);
-            maxZ = Math.max(maxZ, offset.getZ() + 1);
+            shape = Shapes.or(shape, Shapes.box(
+                    offset.getX(),
+                    offset.getY(),
+                    offset.getZ(),
+                    offset.getX() + 1.0D,
+                    offset.getY() + height,
+                    offset.getZ() + 1.0D));
         }
-        return Shapes.box(minX, minY, minZ, maxX, maxY, maxZ);
+        return shape.optimize();
     }
 
     public static BlockPos behind(Direction facing) {

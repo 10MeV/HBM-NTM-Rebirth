@@ -639,3 +639,273 @@
 - 本批验证：
   - `.\gradlew.bat compileJava --no-daemon` 通过。
   - `.\gradlew.bat compileJava --rerun-tasks --no-daemon` 通过。
+
+## 2026-06-02 继续推进：按未解析分组补 legacy ore/tag/meta 桥
+
+- 1.7.10 对照：
+  - `OreDictManager.DictFrame` 用 `MaterialShapes` 前缀 + 材料名生成旧 ore dict key，例如 `ingotUranium`、`dustCopper`、`plateSteel`、`billetPu238`、`wireDenseBSCCO`。
+  - `DictFrame` 多名材料会注册全部别名，例如 `Thorium232` / `Th232` / `Thorium`，`Plutonium238` / `Pu238`。
+  - `ItemAutogen` 族使用 material id 作为旧 metadata，不是连续 ordinal；例如 `plate_cast`、`wire_dense`、`pipe` 的 meta 来自 `Mats` 中的 material id。
+  - `MaterialShapes.CASTPLATE` 的旧前缀是 `plateTriple`，现代兼容层同时保留 `plateCast` 别名。
+- 本批接入：
+  - `LegacyOreDictionaryMappings#materialPath(...)` 增加命名修正：
+    - 旧 `Aluminum` -> 现代 `aluminium` tag path。
+    - 旧 `CMBSteel` -> 现代 `combine_steel` tag path。
+  - `HbmItemTagsProvider` 新增集中 `addLegacyMaterialTags()`：
+    - 为已迁现代 item 补齐旧 `ingot*`、`dust*`、`plate*`、`nugget*`、`billet*`、`wireFine*`、`wireDense*`、`ntmpipe*`、`plateTriple*` / `plateCast*` 到 `forge:` tag 的桥。
+    - 覆盖放射性材料别名（如 `U233`、`Pu238`、`Am241`、`Np237`、`Po210`、`Ra226` 等）和基础/合金材料（如 `Copper`、`Steel`、`AdvancedAlloy`、`BismuthBronze`、`ArsenicBronze`、`BSCCO`）。
+    - 继续只加入现代端已经注册的 item；不存在的旧族不在本轮造物品、不猜内容。
+    - 补 `ingots/any_bismoid_bronze` 与 `cast_plates/any_bismoid_bronze` 聚合 tag，承接旧 `ANY_BISMOIDBRONZE`。
+  - `LegacyMetaItemMappings` 从连续 list 扩展为真实 meta key 映射：
+    - 保持 battery/circuit 连续 meta 族兼容。
+    - 新增 sparse meta 家族：
+      - `hbm:plate_cast` meta `39/46/47` -> `plate_cast_combine_steel` / `plate_cast_bismuth_bronze` / `plate_cast_arsenic_bronze`。
+      - `hbm:wire_fine` meta `7900` -> `wire_gold`。
+      - `hbm:wire_dense` meta `4100/7900/48` -> `wire_dense_niobium` / `wire_dense_gold` / `wire_dense_bscco`。
+      - `hbm:pipe` meta `30` -> `pipes_steel`。
+    - `/hbm recipe legacyMeta` 改为显示真实 legacy meta key，而不是列表下标。
+  - `HbmRecipeProvider` 修正 `assembly_machine/emptypackage`：
+    - 旧空塑料包现代 item 最大堆叠为 1，原配方单输入 count=2 被生成期护栏拦截。
+    - 改成两个 count=1 输入，配合当前 runtime 的无序匹配要求两个槽位各放一个。
+  - `HbmFluidGuiHelper` 做了一个编译解锁修正：
+    - `tankInfo(...)` 局部变量从 `Component` 改为 `MutableComponent`，只为解锁本轮 `runData` 验证，不改变流体行为。
+- 迁移边界：
+  - 本批只补“现代端已有 item”的 tag/meta 桥，不新增物品、不迁世界矿、不补旧 autogen 全量材料族。
+  - 对旧别名 tag 的填充以 1.7.10 `OreDictManager` 注册为来源；如果现代 item 尚未迁移，tag 仍可能为空，后续应由对应物品族迁移补齐。
+  - sparse meta 映射只登记已拆出的现代独立物品；旧 `ItemAutogen` 全族仍待后续材料系统/物品族批次继续扩展。
+- 本批验证：
+  - `.\gradlew.bat compileJava --rerun-tasks --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过，item tag、recipe、loot provider 均完成。
+
+## 2026-06-02 收尾：legacy material tag 去重与剩余空 tag 审计
+
+- 本批接入：
+  - `HbmItemTagsProvider` 增加 legacy tag 写入去重表：
+    - 同一 `TagKey<Item>` 下同一 item id 只写出一次，避免手工桥与 material alias 桥重复生成相同 JSON value。
+  - 删除已由 `addLegacyMaterialTags()` 集中覆盖的早期手工桥：
+    - `dusts/*`、`ingots/*`、`plates/*`、`wires/*`、`dense_wires/*`、`pipes/steel`、`cast_plates/*` 的重复来源已合并。
+    - 仍保留 material 规则未覆盖的兼容别名，例如 `ingots/pc`、`ingots/tantalium`、塑料聚合 tag 与 `dusts/spark_mix`。
+- 静态审计：
+  - 扫描当前 main/generated recipe JSON 后，未发现残留 `legacy_ore` / `legacy_meta` 原始字段；旧输入已经经导入器落成现代 exact/tag 输入。
+  - 当前 recipe 引用的本地 tag 均有内容；剩余扫描项：
+    - `minecraft:logs` 为 vanilla item tag，非本地生成缺口。
+    - `forge:dusts/coal` 仍无本地现代 item 内容。1.7.10 来源为 `OreDictManager.COAL.dust(powder_coal)`，现代端尚未迁移 `powder_coal` / `powder_coal_tiny` 物品族，因此本批不把它错误映射到 `minecraft:coal`。
+- 本批验证：
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
+
+## 2026-06-02 继续推进：煤粉物品族补齐以清理 `dusts/coal` 缺口
+
+- 1.7.10 对照：
+  - `ModItems` 注册 `powder_coal` 与 `powder_coal_tiny`，贴图分别为 `textures/items/powder_coal.png`、`textures/items/powder_coal_tiny.png`。
+  - `OreDictManager.registerOres()` 中 `COAL.gem(Items.coal).dustSmall(powder_coal_tiny).dust(powder_coal)`：
+    - `dustCoal` -> `powder_coal`。
+    - `dustTinyCoal` -> `powder_coal_tiny`。
+  - `HazardRegistry` 中 `dustCoal` 使用 `COAL` hazard `powder = 3.0F`，`dustTinyCoal` 使用 `powder_tiny = 0.3F`。
+- 本批接入：
+  - 现代 `ModItems` 补 `powder_coal` / `powder_coal_tiny`，进入 parts tab 和 legacy item lookup。
+  - 从 1.7.10 原资源复制煤粉/小撮煤粉贴图到现代 `assets/hbm/textures/item/`。
+  - `HbmItemTagsProvider` 补：
+    - `forge:dusts/coal` / 聚合 `forge:dusts` -> `hbm:powder_coal`。
+    - `forge:tiny_dusts/coal` / 聚合 `forge:tiny_dusts` -> `hbm:powder_coal_tiny`。
+  - `HazardRegistry` 补 `forge:tiny_dusts/coal` 与 `forge:tiny_dusts/lignite` 的 `COAL` hazard，数值使用旧 `powder_tiny` 公式 `NUGGET * POWDER_MULTIPLIER`。
+  - en_us / zh_cn datagen 增加明确物品名，避免 fallback 名称把 tiny item 显示得过于机械。
+  - `HbmIngredient` 普通 tag/item 输入诊断增强：
+    - 单对象 `{ "tag": "..." }` 输入输出 `tag #namespace:path` 与 `tag:namespace:path` 分组 key。
+    - 单对象 `{ "item": "..." }` 输入输出 `item namespace:path` 与 `item:namespace:path` 分组 key。
+    - 这样 `/hbm recipe unresolved` 不再只对 legacy ore/meta 友好，普通现代 tag 空洞也能直接按 tag id 分组补桥。
+- 迁移边界：
+  - 本批只迁移煤粉基础物品、tag、贴图、语言和 hazard 接线；不迁 `dustSmall` 全材料族、不新增煤焦/煤焦油 metadata 族，也不改变煤矿世界生成。
+  - `forge:dusts/coal` 现在承接旧 `dustCoal` 的煤粉条目；`forge:gems/coal` 仍承接 vanilla coal/charcoal。
+- 本批验证：
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 静态扫描当前 recipe 引用 tag，除 vanilla `minecraft:logs` 外，所有本地 recipe tag 均有内容。
+  - 生成的 `forge:dusts/coal` -> `hbm:powder_coal`，`forge:tiny_dusts/coal` -> `hbm:powder_coal_tiny`。
+
+## 2026-06-02 继续推进：`oil_tar` legacy meta 家族与 tar/dye tag 桥
+
+- 1.7.10 对照：
+  - `ModItems.oil_tar` 是 `ItemEnumMulti(EnumTarType.class, true, true)`，旧 meta 顺序为 `CRUDE=0`、`CRACK=1`、`COAL=2`、`WOOD=3`、`WAX=4`、`PARAFFIN=5`。
+  - `OreDictManager.registerOres()` 显式注册：
+    - `oiltar` -> `oil_tar` meta `CRUDE`。
+    - `cracktar` -> `oil_tar` meta `CRACK`。
+    - `coaltar` -> `oil_tar` meta `COAL`。
+    - `woodtar` -> `oil_tar` meta `WOOD`。
+    - `dyeBlack` -> `CRUDE` 与 `CRACK`，`dyeGray` -> `COAL`，`dyeBrown` -> `WOOD`，`dyeCyan` -> `WAX`，`dyeWhite` -> `PARAFFIN`，`dye` -> wildcard `oil_tar`。
+  - 贴图来源为 `textures/items/oil_tar.<variant>.png`。
+- 本批接入：
+  - 现代 `ModItems` 拆出 `oil_tar_crude`、`oil_tar_crack`、`oil_tar_coal`、`oil_tar_wood`、`oil_tar_wax`、`oil_tar_paraffin`，进入 parts tab 与 legacy item lookup。
+  - `LegacyMetaItemMappings` 新增旧 `hbm:oil_tar` meta `0..5` 到现代独立 item 的映射，使旧 `ComparableStack(ModItems.oil_tar, meta)` 和旧输出诊断可走统一 HbmIngredient/meta 路径。
+  - `HbmItemTagsProvider` 补：
+    - `forge:tar` 聚合 tag。
+    - `forge:tar/oil`、`forge:tar/crack`、`forge:tar/coal`、`forge:tar/wood`，承接旧 `oiltar/cracktar/coaltar/woodtar`。
+    - `forge:dyes` 聚合与 `dyes/black`、`dyes/gray`、`dyes/brown`、`dyes/cyan`、`dyes/white`，承接旧 tar 染料别名。
+  - `HbmItemModelProvider` 按 `oil_tar_<variant>` 生成到旧贴图 `item/oil_tar.<variant>`。
+  - en_us / zh_cn datagen 补六个 tar 变体名称。
+- 迁移边界：
+  - 本批只迁 `oil_tar` metadata 物品族和旧 ore/dye tag 桥，不迁 `coke`、`briquette`、焦化/炼油具体 recipe 批量导入，也不新增 tar 方块/流体图标 item 行为。
+  - `LegacyOreDictionaryMappings` 原有 `oiltar/cracktar/coaltar/woodtar -> forge:tar/*` 映射保持不变；本批补的是这些 tag 的实际内容。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 生成的 `forge:tar/oil` -> `hbm:oil_tar_crude`，`forge:tar/crack` -> `hbm:oil_tar_crack`，`forge:dyes/black` -> `hbm:oil_tar_crude` / `hbm:oil_tar_crack`。
+  - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
+
+## 2026-06-03 继续推进：`coke` / `briquette` / `powder_ash` legacy meta 家族与 ore/tag 桥
+
+- 1.7.10 对照：
+  - `ModItems.coke` 是 `ItemEnumMulti(EnumCokeType.class, true, true)`，旧 meta 顺序为 `COAL=0`、`LIGNITE=1`、`PETROLEUM=2`。
+  - `ModItems.briquette` 是 `ItemEnumMulti(EnumBriquetteType.class, true, true)`，旧 meta 顺序为 `COAL=0`、`LIGNITE=1`、`WOOD=2`。
+  - `ModItems.powder_ash` 是 `ItemEnumMulti(EnumAshType.class, true, true)`，旧 meta 顺序为 `WOOD=0`、`COAL=1`、`MISC=2`、`FLY=3`、`SOOT=4`、`FULLERENE=5`。
+  - `OreDictManager.registerOres()` 显式注册：
+    - `CoalCoke.gem()` / `PetCoke.gem()` / `LigniteCoke.gem()` 分别指向三种 coke；`AnyCoke.gem()` 指向全部三种 coke。
+    - 兼容旧 ore 名 `coalCoke`、`fuelCoke`、`coke`，其中 `fuelCoke` 与 `coke` 都注册全部三种 coke。
+    - `briquetteCoal`、`briquetteLignite`、`briquetteWood` 分别指向三种 briquette。
+    - `ANY_ASH.any()` 只包含 `WOOD/COAL/MISC/FLY/SOOT`，不包含 `FULLERENE`。
+    - ash 染料别名为 `dyeLightGray=WOOD`、`dyeBlack=COAL+SOOT`、`dyeGray=MISC`、`dyeBrown=FLY`、`dyeMagenta=FULLERENE`，`dye` wildcard 覆盖全部 ash 变体。
+  - 贴图来源为 `textures/items/coke.<variant>.png`、`briquette.<variant>.png`、`powder_ash.<variant>.png`。
+- 本批接入：
+  - 现代 `ModItems` 拆出：
+    - `coke_coal`、`coke_lignite`、`coke_petroleum`。
+    - `briquette_coal`、`briquette_lignite`、`briquette_wood`。
+    - `powder_ash_wood`、`powder_ash_coal`、`powder_ash_misc`、`powder_ash_fly`、`powder_ash_soot`、`powder_ash_fullerene`。
+  - `LegacyMetaItemMappings` 新增旧 `hbm:coke`、`hbm:briquette`、`hbm:powder_ash` meta 到现代独立 item 的映射，使旧 recipe、loot、hazard 与物品迁移都走同一解析入口。
+  - `LegacyOreDictionaryMappings` 精确补 `fuelCoke` / `coke` -> `forge:gems/coke`；`coalCoke`、`briquette*` 既有映射保持不变。
+  - `HbmItemTagsProvider` 补：
+    - `forge:gems/coke`、`gems/coal_coke`、`gems/lignite_coke`、`gems/pet_coke` 与聚合 `forge:gems`。
+    - `forge:briquettes`、`briquettes/coal`、`briquettes/lignite`、`briquettes/wood`。
+    - `forge:any/ash`，按旧 `ANY_ASH` 只放 wood/coal/misc/fly/soot。
+    - ash 的 `forge:dyes` 聚合与 `dyes/light_gray`、`black`、`gray`、`brown`、`magenta`。
+  - `HbmItemModelProvider` 按拆分 item id 生成到旧 metadata 贴图路径。
+  - en_us / zh_cn datagen 补 12 个变体名称。
+- 迁移边界：
+  - 本批只补 metadata 物品族、tag 内容桥、贴图、模型和语言；不迁 `block_coke`、coker/combination/press/pyro/silex 等具体机器配方，也不新增 ash/coke hazard，因为本次未在旧 `HazardRegistry` 中确认到对应登记。
+  - `powder_ash_fullerene` 参与旧 `dye` / `dyeMagenta`，但不参与 `ANY_ASH.any()`，保持 1.7.10 注册差异。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
+  - 生成的 `forge:gems/coke` -> `hbm:coke_coal` / `hbm:coke_lignite` / `hbm:coke_petroleum`。
+  - 生成的 `forge:briquettes/coal` -> `hbm:briquette_coal`。
+  - 生成的 `forge:any/ash` -> `hbm:powder_ash_wood` / `hbm:powder_ash_coal` / `hbm:powder_ash_misc` / `hbm:powder_ash_fly` / `hbm:powder_ash_soot`，不含 fullerene。
+  - 生成的 `forge:dyes/black` -> tar 黑色别名与 `hbm:powder_ash_coal` / `hbm:powder_ash_soot`。
+
+## 2026-06-03 继续推进：轻量 `ItemEnumMulti` 家族 meta 桥批次
+
+- 1.7.10 对照：
+  - `chunk_ore = ItemEnumMulti(EnumChunkType.class, true, true)`，旧 meta 顺序为 `RARE=0`、`MALACHITE=1`、`CRYOLITE=2`、`MOONSTONE=3`。
+  - `plant_item = ItemEnumMulti(EnumPlantType.class, true, true)`，旧 meta 顺序为 `TOBACCO=0`、`ROPE=1`、`MUSTARDWILLOW=2`。
+  - `parts_legendary = ItemEnumMulti(EnumLegendaryType.class, false, true)`，旧 meta 顺序为 `TIER1=0`、`TIER2=1`、`TIER3=2`；旧 lang 是单一 `item.parts_legendary.name=Legendary Parts`。
+  - `casing = ItemEnumMulti(EnumCasingType.class, true, true)`，旧 meta 顺序为 `SMALL=0`、`LARGE=1`、`SMALL_STEEL=2`、`LARGE_STEEL=3`、`SHOTSHELL=4`、`BUCKSHOT=5`、`BUCKSHOT_ADVANCED=6`。
+  - `fuel_additive = ItemEnumMulti(EnumFuelAdditive.class, true, true)`，旧 meta 顺序为 `ANTIKNOCK=0`、`DEICER=1`。
+  - `OreDictManager.registerOres()` 中已确认：
+    - `MALACHITE.ingot()` -> `chunk_ore` meta `MALACHITE`。
+    - `CRYOLITE.crystal()` -> `chunk_ore` meta `CRYOLITE`。
+    - `RAREEARTH.ingot()` -> `chunk_ore` meta `RARE`。
+  - 旧配方/物品池引用：
+    - `plant_item` 用于烟草、绳、芥子柳叶相关 crafting/crystallizer/smelting。
+    - `parts_legendary` tier2 用于 AJR/RPA 装甲配方。
+    - `casing` 用于 press、ammo press、assembly、weapon crafting 和 legacy loot pool。
+    - `fuel_additive` 用于 chemical plant 输出与 mixer 固体输入。
+- 本批接入：
+  - 现代 `ModItems` 拆出：
+    - `chunk_ore_rare`、`chunk_ore_malachite`、`chunk_ore_cryolite`、`chunk_ore_moonstone`。
+    - `plant_item_tobacco`、`plant_item_rope`、`plant_item_mustardwillow`。
+    - `parts_legendary_tier1`、`parts_legendary_tier2`、`parts_legendary_tier3`。
+    - `casing_small`、`casing_large`、`casing_small_steel`、`casing_large_steel`、`casing_shotshell`、`casing_buckshot`、`casing_buckshot_advanced`。
+    - `fuel_additive_antiknock`、`fuel_additive_deicer`；保持旧 `fuel_additive` 的 control tab 归属。
+  - `LegacyMetaItemMappings` 新增旧 `hbm:chunk_ore`、`hbm:plant_item`、`hbm:parts_legendary`、`hbm:casing`、`hbm:fuel_additive` meta 到现代独立 item 的映射。
+  - `HbmItemTagsProvider` 补旧 `OreDictManager` 明确登记的 chunk ore tag 内容：
+    - `forge:ingots/rare_earth` -> `hbm:chunk_ore_rare`。
+    - `forge:ingots/malachite` -> `hbm:chunk_ore_malachite`。
+    - `forge:crystals/cryolite` -> `hbm:chunk_ore_cryolite`。
+    - 对应聚合 `forge:ingots` / `forge:crystals`。
+  - `HbmItemModelProvider` 按拆分 item id 生成到旧 metadata 贴图路径：
+    - `chunk_ore.<variant>`、`plant_item.<variant>`、`parts_legendary.<tier>`、`casing.<variant>`、`fuel_additive.<variant>`。
+  - 从 1.7.10 资源复制 19 张旧贴图到现代 `assets/hbm/textures/item/`。
+  - en_us / zh_cn datagen 补 19 个变体名称；`parts_legendary_*` 保持旧单一显示名。
+- 迁移边界：
+  - 本批只迁轻量 metadata 物品族、meta 映射、明确 ore dict 内容、贴图、模型和语言；不迁 ammo 本体、弹药 press runtime、植物方块行为、月石/稀土完整矿物链，也不凭空为 `plant_item` 猜额外 tag。
+  - `chunk_ore_moonstone` 只接 meta 映射和资源；旧 `OreDictManager` 未确认对应 ore dict tag，本批不新增 tag。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
+  - 生成的 `forge:ingots/rare_earth` -> `hbm:chunk_ore_rare`，`forge:ingots/malachite` -> `hbm:chunk_ore_malachite`，`forge:crystals/cryolite` -> `hbm:chunk_ore_cryolite`。
+  - 生成的 `chunk_ore_moonstone`、`casing_buckshot_advanced`、`fuel_additive_antiknock` item model 均指向旧 metadata 贴图。
+  - 确认未生成本批刻意不猜的 `forge:crops/tobacco`、`forge:ropes`、`forge:ingots/moonstone` tag。
+
+## 2026-06-03 继续推进：`part_generic` meta 桥与旧 dye ore tag 补强
+
+- 1.7.10 对照：
+  - `ModItems.part_generic = new ItemGenericPart()`，旧 ID 为 `hbm:part_generic`，进入 `MainRegistry.partsTab`。
+  - `ItemGenericPart.EnumPartType` 旧 meta 顺序为：
+    - `PISTON_PNEUMATIC=0`，贴图 `textures/items/piston_pneumatic.png`。
+    - `PISTON_HYDRAULIC=1`，贴图 `textures/items/piston_hydraulic.png`。
+    - `PISTON_ELECTRIC=2`，贴图 `textures/items/piston_electric.png`。
+    - `LDE=3`，贴图 `textures/items/low_density_element.png`。
+    - `HDE=4`，贴图 `textures/items/heavy_duty_element.png`。
+    - `GLASS_POLARIZED=5`，贴图 `textures/items/glass_polarized.png`。
+  - 旧配方引用已确认：
+    - `AssemblyMachineRecipes` 使用 hydraulic piston、polarized lens 与 LDE。
+    - `ChemicalPlantRecipes` 输出 `GLASS_POLARIZED`。
+    - `ArcWelderRecipes` 消耗 `LDE`。
+    - `PlasmaForgeRecipes` 输出/消耗 `HDE`。
+  - `OreDictManager.registerOres()` 显式登记基础 dye 别名：
+    - `dyeBlack` / `dye` -> `powder_coal`。
+    - `dyeBrown` / `dye` -> `powder_lignite`。
+    - `dyeLightGray` / `dye` -> `powder_titanium`。
+    - `dyeOrange` / `dye` -> `powder_cadmium`。
+    - `dyeRed` / `dye` -> `cinnebar`，`dyeYellow` / `dye` -> `sulfur`，`dyeWhite` / `dye` -> `fluorite`。
+  - `OreDictManager` 已明确登记 `LIGNITE.dust(powder_lignite)` 与 `LIMESTONE.dust(powder_limestone)`。
+- 本批接入：
+  - 现代 `ModItems` 拆出 `part_generic_piston_pneumatic`、`part_generic_piston_hydraulic`、`part_generic_piston_electric`、`part_generic_lde`、`part_generic_hde`、`part_generic_glass_polarized`。
+  - `LegacyMetaItemMappings` 新增旧 `hbm:part_generic` meta `0..5` 到现代独立 item 的映射，使旧 assembly/chemical/plasma/arc welder recipe 输入输出能走统一 `HbmIngredient` meta 入口。
+  - `HbmItemModelProvider` 为 `part_generic_*` 生成到旧贴图名的模型，其中 `LDE/HDE/GLASS_POLARIZED` 保留旧自定义贴图路径。
+  - 从 1.7.10 资源复制 6 张旧贴图到现代 `assets/hbm/textures/item/`。
+  - en_us / zh_cn datagen 补 6 个 `part_generic` 变体名称，并补 `powder_lignite` / `powder_limestone` 的显式名称，避免 fallback 名称偏离旧 lang。
+  - `HbmItemTagsProvider` 增加旧 dye ore dict 桥；只填现代端已经注册的 item，不为本批未迁的 `powder_lapis` 等缺口造物品。
+- 迁移边界：
+  - 本批只迁 `part_generic` metadata 物品族、模型/贴图/语言和已确认的 dye tag 桥；不迁 `ore_byproduct`、bedrock ore byproduct、具体机器配方批量导入或 JEI 显示。
+  - `powder_lignite` 既有 `HazardRegistry` 煤尘 hazard 保持不变；`part_generic` 未在旧 hazard 注册中确认危险属性，本批不新增 hazard。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
+  - 生成的 `forge:dyes/black` -> tar 黑色别名、`hbm:powder_coal`、`hbm:powder_ash_coal`、`hbm:powder_ash_soot`。
+  - 生成的 `forge:dyes/brown` -> `hbm:oil_tar_wood`、`hbm:powder_lignite`、`hbm:powder_ash_fly`。
+  - 生成的 `part_generic_lde` / `part_generic_hde` / `part_generic_glass_polarized` item model 分别指向 `low_density_element` / `heavy_duty_element` / `glass_polarized`。
+
+## 2026-06-03 继续推进：`item_expensive` meta 桥与昂贵模式部件
+
+- 1.7.10 对照：
+  - `ModItems.item_expensive = new ItemExpensive().setUnlocalizedName("item_expensive").setCreativeTab(MainRegistry.partsTab).setTextureName(RefStrings.MODID + ":item_expensive")`，旧 ID 为 `hbm:item_expensive`。
+  - `ItemExpensive` 继承 `ItemEnumMulti(EnumExpensiveType.class, true, true)`，并在 tooltip 追加红色文本 `Expensive mode item`。
+  - `ItemEnums.EnumExpensiveType` 旧 meta 顺序为：
+    - `STEEL_PLATING=0`，`HEAVY_FRAME=1`，`CIRCUIT=2`，`LEAD_PLATING=3`，`FERRO_PLATING=4`，`COMPUTER=5`，`BRONZE_TUBES=6`，`PLASTIC=7`，`GOLD_DUST=8`，`DEGENERATE_MATTER=9`。
+  - 旧配方引用已确认：
+    - `AssemblyMachineRecipes` 大量消耗/输出昂贵模式部件。
+    - `PlasmaForgeRecipes` 消耗 `BRONZE_TUBES`、`FERRO_PLATING`、`STEEL_PLATING`、`COMPUTER` 等变体。
+    - `ParticleAcceleratorRecipes` 使用 `GOLD_DUST` 并输出 `DEGENERATE_MATTER`。
+    - `ExposureChamberRecipes` 使用 `DEGENERATE_MATTER`。
+  - 旧 lang：
+    - en_US：`Bolted Steel Plating`、`Heavy Framework`、`Extensive Circuit Board`、`Radiation Resistant Plating`、`Reinforced Ferrouranium Panels`、`Mainframe`、`Bronze Structural Elements`、`Plastic Panels`、`Ultra Fine Gold Dust`、`Degenerate Matter`。
+    - zh_CN：`铆接固定钢板`、`重型框架`、`大型电路板`、`防辐射镀层`、`强化铀铁合金板`、`处理器主机`、`青铜结构件`、`塑料板`、`超精细金粉`、`简并态物质`。
+  - 旧贴图位于 `assets/hbm/textures/items/item_expensive.<variant>.png`；同目录存在 `item_expensive.bronze_tubes_alt.png`，但本批未发现枚举或注册使用证据。
+- 本批接入：
+  - 现代 `ModItems` 拆出 `item_expensive_steel_plating`、`item_expensive_heavy_frame`、`item_expensive_circuit`、`item_expensive_lead_plating`、`item_expensive_ferro_plating`、`item_expensive_computer`、`item_expensive_bronze_tubes`、`item_expensive_plastic`、`item_expensive_gold_dust`、`item_expensive_degenerate_matter`，并保持 parts tab 归属。
+  - 新增 `ExpensiveModeItem`，为所有拆分变体保留旧 `Expensive mode item` 红色 tooltip。
+  - `LegacyMetaItemMappings` 新增旧 `hbm:item_expensive` meta `0..9` 到现代独立 item 的映射，使旧 recipe、loot、hazard 与物品迁移能共用 `HbmIngredient` / legacy meta 入口。
+  - `HbmItemModelProvider` 为 `item_expensive_*` 生成到旧 `item_expensive.<variant>` 贴图路径的模型。
+  - 从 1.7.10 资源复制 10 张旧贴图到现代 `assets/hbm/textures/item/`。
+  - en_us / zh_cn datagen 补 10 个变体名称；tooltip 保留旧硬编码英文文本。
+- 迁移边界：
+  - 本批只迁 `item_expensive` metadata 物品族、tooltip、meta 映射、贴图、模型和语言；不迁昂贵模式配置开关、具体机器配方批量导入或 JEI 显示。
+  - 未在旧 hazard 注册中确认 `item_expensive` 危险属性，本批不新增 hazard。
+  - 未使用 `item_expensive.bronze_tubes_alt.png`，等待后续源码证据。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
+  - 生成的 `item_expensive_steel_plating` / `item_expensive_degenerate_matter` item model 分别指向 `item_expensive.steel_plating` / `item_expensive.degenerate_matter`。
+  - 生成的 en_us / zh_cn lang 分别包含旧英文名、旧中文名和旧硬编码 tooltip 文本。

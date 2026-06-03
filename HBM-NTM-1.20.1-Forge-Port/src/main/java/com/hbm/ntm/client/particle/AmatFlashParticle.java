@@ -83,27 +83,25 @@ public class AmatFlashParticle extends Particle {
         Quaternionf rotation = new Quaternionf();
 
         for (int i = 0; i < BEAM_COUNT; i++) {
-            rotation.identity()
-                    .rotateX(random.nextFloat() * ((float) Math.PI * 2.0F))
+            rotation.rotateX(random.nextFloat() * ((float) Math.PI * 2.0F))
                     .rotateY(random.nextFloat() * ((float) Math.PI * 2.0F))
                     .rotateZ(random.nextFloat() * ((float) Math.PI * 2.0F))
                     .rotateX(random.nextFloat() * ((float) Math.PI * 2.0F))
                     .rotateY(random.nextFloat() * ((float) Math.PI * 2.0F));
             float length = (random.nextFloat() * 20.0F + 15.0F) * (float) (intensity * 0.5D) * globalScale;
             float width = (random.nextFloat() * 2.0F + 3.0F) * (float) (intensity * 0.5D) * globalScale;
-            Vector3f tip = new Vector3f(0.0F, length, 0.0F).rotate(rotation).add(x, y, z);
-            Vector3f left = new Vector3f(-0.866F * width, 0.0F, -0.5F * width).rotate(rotation).add(x, y, z);
-            Vector3f right = new Vector3f(0.866F * width, 0.0F, -0.5F * width).rotate(rotation).add(x, y, z);
-            Vector3f back = new Vector3f(0.0F, 0.0F, width).rotate(rotation).add(x, y, z);
+            Vector3f left = new Vector3f(-0.866F * width, length, -0.5F * width).rotate(rotation).add(x, y, z);
+            Vector3f right = new Vector3f(0.866F * width, length, -0.5F * width).rotate(rotation).add(x, y, z);
+            Vector3f back = new Vector3f(0.0F, length, width).rotate(rotation).add(x, y, z);
             vertex(consumer, x, y, z, alpha);
             vertex(consumer, left, 0.0F);
-            vertex(consumer, tip, 0.0F);
-            vertex(consumer, x, y, z, alpha);
-            vertex(consumer, tip, 0.0F);
             vertex(consumer, right, 0.0F);
             vertex(consumer, x, y, z, alpha);
             vertex(consumer, right, 0.0F);
             vertex(consumer, back, 0.0F);
+            vertex(consumer, x, y, z, alpha);
+            vertex(consumer, back, 0.0F);
+            vertex(consumer, left, 0.0F);
         }
     }
 

@@ -1,5 +1,8 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
@@ -25,6 +28,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -38,7 +42,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, HbmTileSyncable, RORValueProvider, RORInteractive {
+public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, HbmTileSyncable,
+        RORValueProvider, RORInteractive, LegacyLookOverlayProvider {
     private static final String TAG_INVENTORY = "Inventory";
     private static final long MAX_POWER = 1_000_000L;
     private static final long MAX_RECEIVE = MAX_POWER / 200L;
@@ -145,6 +150,9 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         if (inventoryChanged || previousPower != blockEntity.energy.getPower() || previousRedstone != blockEntity.lastRedstone) {
             blockEntity.setChanged();
             level.updateNeighbourForOutputSignal(pos, state.getBlock());
+            if (level.getGameTime() % 15L == 0L) {
+                level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            }
         }
     }
 
@@ -262,6 +270,11 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
 
     public long getMaxPower() {
         return energy.getMaxPower();
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.energyStorage(getPower(), getMaxPower()));
     }
 
     public short getRedLow() {

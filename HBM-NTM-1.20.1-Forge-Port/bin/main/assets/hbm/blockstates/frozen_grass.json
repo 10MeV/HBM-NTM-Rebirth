@@ -1,7 +1,1 @@
-{
-  "variants": {
-    "": {
-      "model": "hbm:block/frozen_grass"
-    }
-  }
-}
+{ "variants": { "": { "model": "hbm:block/frozen_grass" } } }

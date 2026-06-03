@@ -4,6 +4,7 @@ import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -129,8 +130,9 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     private boolean handleItemTransfer() {
         boolean changed = false;
         changed |= setTankTypeFromIdentifierSlot();
-        changed |= HbmFluidItemTransfer.loadTankFromSlot(items, SLOT_LOAD_INPUT, SLOT_LOAD_OUTPUT, tank);
-        changed |= HbmFluidItemTransfer.unloadTankToSlot(items, SLOT_UNLOAD_INPUT, SLOT_UNLOAD_OUTPUT, tank);
+        changed |= HbmFluidItemTransfer.processTransfers(items, List.of(
+                TankSlotTransfer.load(SLOT_LOAD_INPUT, SLOT_LOAD_OUTPUT, tank),
+                TankSlotTransfer.unload(SLOT_UNLOAD_INPUT, SLOT_UNLOAD_OUTPUT, tank)));
         return changed;
     }
 
@@ -199,7 +201,13 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         }
         exploded = true;
         onFire = tank.getTankType().hasTrait(FlammableFluidTrait.class);
+        invalidateFluidHandlers();
         setChanged();
+        if (level != null) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
     }
 
     public void cycleMode() {
@@ -210,7 +218,11 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         int clamped = Math.max(MODE_INPUT, Math.min(MODE_NONE, mode));
         if (this.mode != clamped) {
             this.mode = clamped;
+            invalidateFluidHandlers();
             onFluidContentsChanged();
+            if (level != null) {
+                level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+            }
         }
     }
 
@@ -393,6 +405,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         onFire = tag.getBoolean("onFire");
         age = Math.floorMod(tag.getInt("age"), 20);
         lastComparatorPower = Math.max(0, Math.min(15, tag.getInt("lastComparatorPower")));
+        invalidateFluidHandlers();
     }
 
     @Override

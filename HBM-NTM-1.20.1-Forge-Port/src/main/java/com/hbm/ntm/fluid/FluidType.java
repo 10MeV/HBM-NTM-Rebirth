@@ -37,7 +37,7 @@ public final class FluidType {
         this.id = id;
         this.name = name.toUpperCase(Locale.US);
         this.color = color;
-        this.guiTint = color;
+        this.guiTint = 0xFFFFFF;
         this.poison = poison;
         this.flammability = flammability;
         this.reactivity = reactivity;

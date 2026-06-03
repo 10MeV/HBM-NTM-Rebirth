@@ -10,7 +10,13 @@
       }
     },
     {
-      "count": 2,
+      "count": 1,
+      "ingredient": {
+        "item": "hbm:plastic_bag"
+      }
+    },
+    {
+      "count": 1,
       "ingredient": {
         "item": "hbm:plastic_bag"
       }

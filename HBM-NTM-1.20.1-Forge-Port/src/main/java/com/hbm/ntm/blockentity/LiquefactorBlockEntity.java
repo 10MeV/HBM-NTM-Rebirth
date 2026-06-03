@@ -266,7 +266,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("container.machineLiquefactor");
+        return Component.translatableWithFallback("container.machineLiquefactor", "Liquefactor");
     }
 
     @Nullable

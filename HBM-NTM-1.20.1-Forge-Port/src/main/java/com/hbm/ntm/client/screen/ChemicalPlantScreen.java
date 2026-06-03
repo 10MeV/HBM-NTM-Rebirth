@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
-import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.menu.ChemicalPlantMenu;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import net.minecraft.client.Minecraft;
@@ -40,10 +39,10 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
             graphics.blit(TEXTURE, leftPos + 62, topPos + 126, 176, 61, progress, 16);
         }
         for (int i = 0; i < 3; i++) {
-            renderTankFill(graphics, 8 + i * 18, 52, menu.getInputTankFillHeight(i, 34),
-                    menu.getBlockEntity().getInputTank(i));
-            renderTankFill(graphics, 80 + i * 18, 52, menu.getOutputTankFillHeight(i, 34),
-                    menu.getBlockEntity().getOutputTank(i));
+            LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 8 + i * 18, topPos + 52,
+                    16, 34, menu.getInputTankData(i));
+            LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 80 + i * 18, topPos + 52,
+                    16, 34, menu.getOutputTankData(i));
         }
         GenericMachineRecipe recipe = menu.getBlockEntity().getSelectedRecipeDefinition();
         if (menu.getBlockEntity().canProcessSelectedRecipe()) {
@@ -60,8 +59,7 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        String name = title.getString();
-        graphics.drawString(font, name, titleLabelX - font.width(name) / 2, titleLabelY, 0x404040, false);
+        LegacyGuiText.drawCenteredLabel(graphics, font, title.getString(), titleLabelX, titleLabelY, 124, 0x404040);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -88,22 +86,14 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    private void renderTankFill(GuiGraphics graphics, int x, int y, int fillHeight, HbmFluidTank tank) {
-        if (fillHeight <= 0 || tank.isEmpty()) {
-            return;
-        }
-        int color = 0xCC000000 | (tank.getTankType().getGuiTint() & 0xFFFFFF);
-        graphics.fill(leftPos + x, topPos + y + 34 - fillHeight, leftPos + x + 16, topPos + y + 34, color);
-    }
-
     private void renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
         for (int i = 0; i < 3; i++) {
-            if (isHovering(8 + i * 18, 18, 16, 68, mouseX, mouseY)) {
-                graphics.renderTooltip(font, menu.getInputTankInfo(i), mouseX, mouseY);
+            if (isHovering(8 + i * 18, 18, 16, 34, mouseX, mouseY)) {
+                graphics.renderTooltip(font, splitTooltip(menu.getInputTankTooltip(i)), mouseX, mouseY);
                 return;
             }
-            if (isHovering(80 + i * 18, 18, 16, 68, mouseX, mouseY)) {
-                graphics.renderTooltip(font, menu.getOutputTankInfo(i), mouseX, mouseY);
+            if (isHovering(80 + i * 18, 18, 16, 34, mouseX, mouseY)) {
+                graphics.renderTooltip(font, splitTooltip(menu.getOutputTankTooltip(i)), mouseX, mouseY);
                 return;
             }
         }

@@ -61,6 +61,7 @@ public final class EntityDamageUtil {
 
         DamageResistanceHandler.ResistanceBreakdown breakdown =
                 DamageResistanceHandler.breakdown(living, source, amount, pierceDt, pierceDr);
+        DamageResistanceHandler.PierceState previousPiercing = DamageResistanceHandler.capturePiercing();
         DamageResistanceHandler.setup(pierceDt, pierceDr);
         boolean previousAllowSpecialCancel = ALLOW_SPECIAL_CANCEL.get();
         ALLOW_SPECIAL_CANCEL.set(allowSpecialCancel);
@@ -81,7 +82,7 @@ public final class EntityDamageUtil {
             if (ignoreIFrame) {
                 living.invulnerableTime = Math.min(living.invulnerableTime, invulnerableTime);
             }
-            DamageResistanceHandler.reset();
+            DamageResistanceHandler.restorePiercing(previousPiercing);
         }
     }
 

@@ -7,6 +7,7 @@ import com.hbm.ntm.block.BalefireBlock;
 import com.hbm.ntm.block.BigAssTankBlock;
 import com.hbm.ntm.block.BoilerBlock;
 import com.hbm.ntm.block.ChemicalPlantBlock;
+import com.hbm.ntm.block.CompressorBlock;
 import com.hbm.ntm.block.CoolingTowerBlock;
 import com.hbm.ntm.block.CustomNukeBlock;
 import com.hbm.ntm.block.DeconBlock;
@@ -71,7 +72,6 @@ import com.hbm.ntm.block.conveyor.DoubleConveyorBlock;
 import com.hbm.ntm.block.conveyor.ExpressConveyorBlock;
 import com.hbm.ntm.block.conveyor.LiftConveyorBlock;
 import com.hbm.ntm.block.conveyor.TripleConveyorBlock;
-import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.MultiblockBlockItem;
 import com.hbm.ntm.item.NuclearDeviceBlockItem;
@@ -193,7 +193,7 @@ public final class ModBlocks {
             pyroOvenDefinition());
     public static final RegistryObject<Block> MACHINE_SOLIDIFIER = visibleMultiblockMachine("machine_solidifier",
             solidifierDefinition());
-    public static final RegistryObject<Block> MACHINE_COMPRESSOR = visibleMultiblockMachine("machine_compressor",
+    public static final RegistryObject<Block> MACHINE_COMPRESSOR = compressorMachine("machine_compressor",
             compressorDefinition());
     public static final RegistryObject<Block> MACHINE_BIGASSTANK = bigAssTankMachine("machine_bigasstank",
             bigAssTankDefinition());
@@ -203,8 +203,14 @@ public final class ModBlocks {
             pumpjackDefinition());
     public static final RegistryObject<Block> MACHINE_CENTRIFUGE = visibleMultiblockMachine("machine_centrifuge",
             centrifugeDefinition());
+    public static final RegistryObject<Block> MACHINE_GASCENT = visibleMultiblockMachine("machine_gascent",
+            gasCentDefinition());
     public static final RegistryObject<Block> MACHINE_ORE_SLOPPER = visibleMultiblockMachine("machine_ore_slopper",
             oreSlopperDefinition());
+    public static final RegistryObject<Block> MACHINE_SAWMILL = visibleMultiblockMachine("machine_sawmill",
+            sawmillDefinition());
+    public static final RegistryObject<Block> MACHINE_CRUCIBLE = visibleMultiblockMachine("machine_crucible",
+            crucibleDefinition());
     public static final RegistryObject<Block> MACHINE_GASFLARE = gasFlareMachine("machine_gasflare",
             gasFlareDefinition());
     public static final RegistryObject<Block> MACHINE_ASSEMBLY_FACTORY = visibleMultiblockMachine("machine_assembly_factory",
@@ -360,7 +366,10 @@ public final class ModBlocks {
             MACHINE_FLUIDTANK,
             MACHINE_PUMPJACK,
             MACHINE_CENTRIFUGE,
+            MACHINE_GASCENT,
             MACHINE_ORE_SLOPPER,
+            MACHINE_SAWMILL,
+            MACHINE_CRUCIBLE,
             MACHINE_GASFLARE,
             MACHINE_ASSEMBLY_FACTORY,
             MACHINE_PUREX,
@@ -754,8 +763,7 @@ public final class ModBlocks {
                         .strength(5.0F, 10.0F)
                         .sound(PIPE_SOUND)
                         .requiresCorrectToolForDrops()
-                        .noOcclusion()),
-                block -> new FluidPipeBlockItem(block.get(), new Item.Properties()));
+                        .noOcclusion()));
     }
 
     private static RegistryObject<Block> fluidValve(String name, FluidValveBlock.Kind kind) {
@@ -765,8 +773,7 @@ public final class ModBlocks {
                         .mapColor(MapColor.METAL)
                         .strength(5.0F, 10.0F)
                         .sound(PIPE_SOUND)
-                        .requiresCorrectToolForDrops(), kind),
-                block -> new FluidPipeBlockItem(block.get(), new Item.Properties()));
+                        .requiresCorrectToolForDrops(), kind));
     }
 
     private static RegistryObject<Block> fluidPump(String name) {
@@ -781,29 +788,25 @@ public final class ModBlocks {
     private static RegistryObject<Block> fluidDuctBox(String name) {
         return registerBlockWithItem(
                 name,
-                () -> new FluidDuctBoxBlock(fluidPipeProperties()),
-                block -> new FluidPipeBlockItem(block.get(), new Item.Properties()));
+                () -> new FluidDuctBoxBlock(fluidPipeProperties()));
     }
 
     private static RegistryObject<Block> fluidDuctGauge(String name) {
         return registerBlockWithItem(
                 name,
-                () -> new FluidDuctGaugeBlock(fluidPipeProperties()),
-                block -> new FluidPipeBlockItem(block.get(), new Item.Properties()));
+                () -> new FluidDuctGaugeBlock(fluidPipeProperties()));
     }
 
     private static RegistryObject<Block> fluidDuctExhaust(String name) {
         return registerBlockWithItem(
                 name,
-                () -> new FluidDuctExhaustBlock(fluidPipeProperties()),
-                block -> new FluidPipeBlockItem(block.get(), new Item.Properties()));
+                () -> new FluidDuctExhaustBlock(fluidPipeProperties()));
     }
 
     private static RegistryObject<Block> fluidDuctPaintable(String name) {
         return registerBlockWithItem(
                 name,
-                () -> new FluidDuctPaintableBlock(fluidPipeProperties()),
-                block -> new FluidPipeBlockItem(block.get(), new Item.Properties()));
+                () -> new FluidDuctPaintableBlock(fluidPipeProperties()));
     }
 
     private static RegistryObject<Block> fluidDuctPaintableExhaust(String name) {
@@ -815,8 +818,7 @@ public final class ModBlocks {
     private static RegistryObject<Block> fluidPipeAnchor(String name) {
         return registerBlockWithItem(
                 name,
-                () -> new FluidPipeAnchorBlock(fluidPipeProperties()),
-                block -> new FluidPipeBlockItem(block.get(), new Item.Properties()));
+                () -> new FluidPipeAnchorBlock(fluidPipeProperties()));
     }
 
     private static BlockBehaviour.Properties fluidPipeProperties() {
@@ -935,6 +937,18 @@ public final class ModBlocks {
                         .sound(SoundType.METAL)
                         .requiresCorrectToolForDrops()
                         .noOcclusion(), definition, kind),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> compressorMachine(String name, LegacyMachineDefinition definition) {
+        return registerBlockWithItem(
+                name,
+                () -> new CompressorBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), definition),
                 block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
     }
 
@@ -1100,7 +1114,6 @@ public final class ModBlocks {
                 .renderParts("Turbine", "Gauge", "Flywheel")
                 .legacyItemScale(3.0D, 0.75D)
                 .yRotation(facing -> 270.0F - facing.toYRot())
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-5, 0, -5), pos.offset(6, 4, 6)))
                 .build();
     }
@@ -1206,7 +1219,6 @@ public final class ModBlocks {
                 .renderParts("Oven", "Slider", "Fan")
                 .legacyItemScale(3.5D, 0.5D)
                 .yRotation(ModBlocks::pyroOvenRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .build();
     }
 
@@ -1220,7 +1232,6 @@ public final class ModBlocks {
                 .itemRenderParts("Main")
                 .legacyItemScale(3.0F)
                 .yRotation(ModBlocks::solidifierRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 5, 3)))
                 .build();
     }
@@ -1235,7 +1246,6 @@ public final class ModBlocks {
                 .renderParts("Compressor", "Pump", "Fan")
                 .legacyItemScale(3.0D, 0.5D)
                 .yRotation(ModBlocks::solidifierRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-5, -4, -2), pos.offset(9, 10, 3)))
                 .build();
     }
@@ -1249,7 +1259,6 @@ public final class ModBlocks {
                         .withProxyOffsets(bigAssTankProxyOffsets(facing), proxyFluid()))
                 .legacyItemScale(2.5D, 0.5D)
                 .yRotation(ModBlocks::bigAssTankRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-7, -1, -7), pos.offset(8, 7, 8)))
                 .build();
     }
@@ -1301,6 +1310,23 @@ public final class ModBlocks {
                 .build();
     }
 
+    private static LegacyMachineDefinition gasCentDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("gascent"), machineTexture("gascent"))
+                .legacyXrDimensions(3, 0, 0, 0, 0, 0)
+                .legacyOffset(0)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 0, 0, 0, 0 }, facing))
+                .renderParts("Centrifuge", "Flag")
+                .itemRenderParts("Centrifuge")
+                .legacyItemScale(3.5F)
+                .yRotation(facing -> normalizeRotation(centrifugeRotation(facing) + 180.0F))
+                .collisionShape(state -> legacyRotatedShape(state,
+                        new AABB(-0.5D, 0.0D, -0.5D, 0.5D, 1.0D, 0.5D),
+                        new AABB(-0.4375D, 1.0D, -0.4375D, 0.4375D, 4.0D, 0.4375D)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-1, 0, -1), pos.offset(2, 5, 2)))
+                .particleState(legacyBlockParticleState("block_steel"))
+                .build();
+    }
+
     private static LegacyMachineDefinition oreSlopperDefinition() {
         return LegacyMachineDefinition.builder(machineModel("ore_slopper"), machineTexture("ore_slopper"))
                 .legacyXrDimensions(3, 0, 3, 3, 1, 1)
@@ -1319,6 +1345,49 @@ public final class ModBlocks {
                         new AABB(-2.0D, 1.0D, -0.75D, 0.0D, 2.0D, 0.75D),
                         new AABB(-3.25D, 1.0D, -1.0D, -2.25D, 3.0D, 1.0D)))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-4, 0, -2), pos.offset(4, 7, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition sawmillDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("sawmill"), machineTexture("sawmill"))
+                .legacyXrDimensions(1, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 1, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyInventory()))
+                .renderParts("Main", "Blade", "GearLeft", "GearRight")
+                .legacyItemScale(3.25F)
+                .yRotation(ModBlocks::sawmillRotation)
+                .collisionShape(state -> legacyRotatedShape(state,
+                        new AABB(-1.5D, 0.0D, -1.5D, 1.5D, 1.0D, 1.5D),
+                        new AABB(-1.25D, 1.0D, -0.5D, -0.625D, 1.875D, 0.5D),
+                        new AABB(-0.625D, 1.0D, -1.0D, 1.375D, 2.0D, 1.0D)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(2, 3, 2)))
+                .particleState(legacyBlockParticleState("block_steel"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition crucibleDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("crucible"), machineTexture("crucible_heat"))
+                .legacyXrDimensions(1, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 1, 0, 1, 1, 1, 1 }, facing)
+                        .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyInventory()))
+                .legacyItemScale(3.25F)
+                .yRotation(ModBlocks::crucibleRotation)
+                .collisionShape(state -> legacyRotatedShape(state,
+                        new AABB(-1.5D, 0.0D, -1.5D, 1.5D, 0.5D, 1.5D),
+                        new AABB(-1.25D, 0.5D, -1.25D, 1.25D, 1.5D, -1.0D),
+                        new AABB(-1.25D, 0.5D, -1.25D, -1.0D, 1.5D, 1.25D),
+                        new AABB(-1.25D, 0.5D, 1.0D, 1.25D, 1.5D, 1.25D),
+                        new AABB(1.0D, 0.5D, -1.25D, 1.25D, 1.5D, 1.25D)))
+                .highlightShape(state -> legacyUnrotatedShape(
+                        new AABB(-1.5D, 0.0D, -1.5D, 1.5D, 0.5D, 1.5D),
+                        new AABB(-1.25D, 0.5D, -1.25D, 1.25D, 1.5D, -1.0D),
+                        new AABB(-1.25D, 0.5D, -1.25D, -1.0D, 1.5D, 1.25D),
+                        new AABB(-1.25D, 0.5D, 1.0D, 1.25D, 1.5D, 1.25D),
+                        new AABB(1.0D, 0.5D, -1.25D, 1.25D, 1.5D, 1.25D)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(2, 3, 2)))
+                .particleState(legacyBlockParticleState("brick_fire"))
                 .build();
     }
 
@@ -1353,7 +1422,6 @@ public final class ModBlocks {
                         "Blade2", "Blade4")
                 .legacyItemScale(3.0D, 0.75D)
                 .yRotation(ModBlocks::assemblyFactoryRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 3, 3)))
                 .build();
     }
@@ -1367,7 +1435,6 @@ public final class ModBlocks {
                 .renderParts("Base", "Frame", "Fan", "Pump")
                 .legacyItemScale(2.5D, 0.75D)
                 .yRotation(ModBlocks::assemblyFactoryRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 5, 3)))
                 .build();
     }
@@ -1380,7 +1447,6 @@ public final class ModBlocks {
                         .withProxyOffsets(silexProxyOffsets(facing), proxyInventoryFluid()))
                 .legacyItemScale(3.25F)
                 .yRotation(ModBlocks::solidifierRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-1, 0, -1), pos.offset(2, 3, 2)))
                 .build();
     }
@@ -1398,7 +1464,6 @@ public final class ModBlocks {
                 .renderParts("Chamber", "Magnets", "Core")
                 .legacyItemScale(3.0D, 0.5D)
                 .yRotation(ModBlocks::solidifierRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 5, 9)))
                 .build();
     }
@@ -1412,7 +1477,6 @@ public final class ModBlocks {
                 .renderParts("Body", "B1", "B2", "B3", "B4")
                 .legacyItemScale(2.25F)
                 .yRotation(facing -> 0.0F)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 4, 3)))
                 .build();
     }
@@ -1426,7 +1490,6 @@ public final class ModBlocks {
                 .legacyItemScale(4.0F)
                 .yRotation(ModBlocks::solidifierRotation)
                 .modelTranslation(-0.5D, 0.0D, 0.0D)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(2, 3, 2)))
                 .build();
     }
@@ -1440,7 +1503,6 @@ public final class ModBlocks {
                 .legacyItemScale(5.0F)
                 .yRotation(ModBlocks::solidifierRotation)
                 .modelTranslation(-0.5D, 0.0D, 0.5D)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-1, 0, -1), pos.offset(2, 2, 2)))
                 .build();
     }
@@ -1452,7 +1514,6 @@ public final class ModBlocks {
                 .renderParts("Main", "Mixer")
                 .legacyItemScale(5.0F)
                 .yRotation(facing -> 0.0F)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-1, 0, -1), pos.offset(2, 3, 2)))
                 .build();
     }
@@ -1465,7 +1526,6 @@ public final class ModBlocks {
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyInventoryPowerFluid()))
                 .legacyItemScale(3.0F)
                 .yRotation(ModBlocks::radiolysisRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 3, 3)))
                 .build();
     }
@@ -1479,7 +1539,6 @@ public final class ModBlocks {
                 .renderParts("Base", "Rotor", "Light", "Glass")
                 .legacyItemScale(4.5D, 0.5D)
                 .yRotation(ModBlocks::solidifierRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-5, 0, -3), pos.offset(5, 4, 3)))
                 .build();
     }
@@ -1493,7 +1552,6 @@ public final class ModBlocks {
                 .renderParts("Furnace", "Piston")
                 .legacyItemScale(3.5D, 0.625D)
                 .yRotation(ModBlocks::solidifierRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-4, 0, -4), pos.offset(4, 6, 4)))
                 .build();
     }
@@ -1508,7 +1566,6 @@ public final class ModBlocks {
                 .legacyItemScale(2.0F)
                 .yRotation(ModBlocks::steamEngineRotation)
                 .modelTranslation(2.0D, 0.0D, 0.0D)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(6, 3, 3)))
                 .build();
     }
@@ -1522,7 +1579,6 @@ public final class ModBlocks {
                 .renderParts("Base")
                 .legacyItemScale(3.25F)
                 .yRotation(ModBlocks::solidifierRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 3, 3)))
                 .build();
     }
@@ -1535,7 +1591,6 @@ public final class ModBlocks {
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(2), proxyFluid()))
                 .legacyItemScale(3.0D, 0.25D)
                 .yRotation(facing -> 0.0F)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-3, 0, -3), pos.offset(4, 19, 4)))
                 .build();
     }
@@ -1548,7 +1603,6 @@ public final class ModBlocks {
                         .withExtraProxyOffsets(towerLargeProxyOffsets(), proxyFluid()))
                 .legacyItemScale(3.8D, 0.25D)
                 .yRotation(facing -> 0.0F)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-5, 0, -5), pos.offset(6, 13, 6)))
                 .build();
     }
@@ -1563,7 +1617,6 @@ public final class ModBlocks {
                 .itemPartTextures(Map.of("Afterburner", machineTexture("turbofan_back")))
                 .legacyItemScale(2.25F)
                 .yRotation(ModBlocks::solidifierRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-4, 0, -4), pos.offset(5, 3, 5)))
                 .build();
     }
@@ -1576,7 +1629,6 @@ public final class ModBlocks {
                         .withExtraProxyOffsets(turbineGasProxyOffsets(facing), proxyPowerFluid()))
                 .legacyItemScale(2.5D, 0.75D)
                 .yRotation(ModBlocks::solidifierRotation)
-                .collisionShape(state -> stateLayoutShape(state))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-6, 0, -6), pos.offset(6, 4, 6)))
                 .build();
     }
@@ -1915,6 +1967,20 @@ public final class ModBlocks {
         return shape;
     }
 
+    private static VoxelShape legacyUnrotatedShape(AABB... boxes) {
+        VoxelShape shape = Shapes.empty();
+        for (AABB box : boxes) {
+            shape = Shapes.or(shape, Shapes.box(
+                    box.minX + 0.5D,
+                    box.minY,
+                    box.minZ + 0.5D,
+                    box.maxX + 0.5D,
+                    box.maxY,
+                    box.maxZ + 0.5D));
+        }
+        return shape;
+    }
+
     private static Direction legacyDetailedHitboxRotation(Direction facing) {
         return switch (facing) {
             case NORTH -> Direction.EAST;
@@ -1933,12 +1999,29 @@ public final class ModBlocks {
         };
     }
 
-    private static VoxelShape stateLayoutShape(BlockState state) {
-        LegacyVisibleMultiblockMachineBlock block = (LegacyVisibleMultiblockMachineBlock) state.getBlock();
-        return block.definition().layout(state).shape(1.0D);
+    private static float centrifugeRotation(Direction facing) {
+        return switch (facing) {
+            case SOUTH -> 90.0F;
+            case WEST -> 180.0F;
+            case NORTH -> 270.0F;
+            default -> 0.0F;
+        };
     }
 
-    private static float centrifugeRotation(Direction facing) {
+    private static float normalizeRotation(float rotation) {
+        return (rotation % 360.0F + 360.0F) % 360.0F;
+    }
+
+    private static float sawmillRotation(Direction facing) {
+        return switch (facing) {
+            case SOUTH -> 180.0F;
+            case WEST -> 270.0F;
+            case NORTH -> 0.0F;
+            default -> 90.0F;
+        };
+    }
+
+    private static float crucibleRotation(Direction facing) {
         return switch (facing) {
             case SOUTH -> 90.0F;
             case WEST -> 180.0F;
@@ -1991,6 +2074,13 @@ public final class ModBlocks {
 
     private static ResourceLocation machineTexture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/" + name + ".png");
+    }
+
+    private static Function<BlockState, BlockState> legacyBlockParticleState(String legacyName) {
+        return state -> {
+            RegistryObject<? extends Block> block = BLOCKS_BY_LEGACY_NAME.get(legacyName);
+            return block == null || !block.isPresent() ? state : block.get().defaultBlockState();
+        };
     }
 
     private static RegistryObject<Block> machineBattery(String name) {

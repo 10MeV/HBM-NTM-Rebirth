@@ -52,6 +52,8 @@ public final class LegacyOreDictionaryMappings {
 
         registerExact("itemRubber", FORGE, "rubber");
         registerExact("coalCoke", FORGE, "gems/coal_coke");
+        registerExact("fuelCoke", FORGE, "gems/coke");
+        registerExact("coke", FORGE, "gems/coke");
         registerExact("briquetteCoal", FORGE, "briquettes/coal");
         registerExact("briquetteLignite", FORGE, "briquettes/lignite");
         registerExact("briquetteWood", FORGE, "briquettes/wood");
@@ -147,12 +149,13 @@ public final class LegacyOreDictionaryMappings {
 
     private static String materialPath(String materialName) {
         return splitCamel(materialName)
+                .replace("aluminum", "aluminium")
                 .replace("nether_quartz", "quartz")
                 .replace("advanced_alloy", "advanced_alloy")
                 .replace("tc_alloy", "tc_alloy")
                 .replace("cd_alloy", "cd_alloy")
                 .replace("bscco", "bscco")
-                .replace("cmb_steel", "cmb_steel");
+                .replace("cmb_steel", "combine_steel");
     }
 
     private static String fallbackPath(String legacyName) {

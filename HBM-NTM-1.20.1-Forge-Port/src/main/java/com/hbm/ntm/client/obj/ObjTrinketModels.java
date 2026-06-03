@@ -7,6 +7,9 @@ import net.minecraft.resources.ResourceLocation;
 public final class ObjTrinketModels {
     public static final LegacyWavefrontModel LANTERN = legacyModel("lantern").noSmooth();
 
+    public static final ResourceLocation LANTERN_TEXTURE = texture("lantern");
+    public static final ResourceLocation LANTERN_RUSTY_TEXTURE = texture("lantern_rusty");
+
     public static ObjModelPart part(String name, RenderType renderType) {
         return ObjModelLibrary.blockPart("trinkets/" + name, renderType);
     }

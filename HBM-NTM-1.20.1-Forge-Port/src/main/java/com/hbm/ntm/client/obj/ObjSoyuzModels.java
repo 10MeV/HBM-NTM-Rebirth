@@ -8,13 +8,13 @@ import net.minecraft.resources.ResourceLocation;
 public final class ObjSoyuzModels {
     public static final LegacyWavefrontModel SOYUZ = new LegacyWavefrontModel(
             model("soyuz"),
-            texture("soyuz/engineblock"));
+            texture("soyuz/engineblock")).asVBO();
     public static final LegacyWavefrontModel LANDER = new LegacyWavefrontModel(
             model("soyuz_lander"),
-            texture("capsule/soyuz_lander"));
+            texture("capsule/soyuz_lander")).asVBO();
     public static final LegacyWavefrontModel MODULE = new LegacyWavefrontModel(
             model("soyuz_module"),
-            texture("capsule/module_dome"));
+            texture("capsule/module_dome")).asVBO();
 
     public static final SoyuzTextureSet SOYUZ_TEXTURES = textureSet("soyuz");
     public static final SoyuzTextureSet LUNA_TEXTURES = textureSet("soyuz_luna");

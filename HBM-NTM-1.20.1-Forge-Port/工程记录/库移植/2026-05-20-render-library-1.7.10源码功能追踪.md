@@ -1168,6 +1168,255 @@
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+### 2026-06-03 追加：ILookOverlay 现代 API 化
+
+问题修正：
+
+- 上一轮初版 `LegacyLookOverlayRenderer` 仍直接识别若干具体 `BlockEntity` 类型，虽然能显示信息，但不符合 1.7.10 `ILookOverlay` “方块/物品/实体自行提供信息，渲染库只统一绘制”的库边界。
+
+本轮现代 API：
+
+- 新增 common API，不依赖 client 包：
+  - `com.hbm.ntm.api.block.LegacyLookOverlay`
+  - `LegacyLookOverlayProvider`
+  - `LegacyLookOverlayLines`
+  - `LegacyLookOverlayPort`
+  - `LegacyLookOverlayPorts`
+- `LegacyLookOverlayRenderer` 现在只做三件事：
+  - 在 CROSSHAIR overlay 时获取命中方块。
+  - 通过 `MultiblockHelper.resolveCoreBlockEntity(...)` 解析 dummy/proxy 到核心方块实体。
+  - 若核心实现 `LegacyLookOverlayProvider`，绘制其返回的 `LegacyLookOverlay`。
+- 机器/网络方块实体只实现 common API：
+  - 普通流体机器继承 `HbmFluidBlockEntity` 后自动获得 `getLookOverlay(...)`，按 `HbmFluidUser` / `HbmStandardFluidReceiver` / `HbmStandardFluidSender` 生成 tank 行。
+  - 有额外状态的机器覆盖 `getLookOverlay(...)` 添加热量、警告、能量/spin 等行。
+  - 有端口说明的机器通过 `LegacyLookOverlayPort` 声明端口坐标、朝向和文本；渲染器不关心具体机器。
+
+新增 1.7.10 对齐覆盖：
+
+- `FluidDuctStandard#printHook`：
+  - 旧版显示当前管道流体名，并用流体颜色染色。
+  - 现代 `FluidPipeBlockEntity` 实现 `LegacyLookOverlayProvider`，显示 `getFluidType()` 名称和颜色。
+- `FluidDuctGauge#printHook`：
+  - 旧版显示当前流体名、`deltaTick mB/t`、`deltaLastSecond mB/s`。
+  - 现代 `FluidDuctGaugeBlockEntity` 覆盖 `getLookOverlay(...)` 显示同三行。
+- `FluidPump#printHook`：
+  - 旧版显示 `-> fluid (pressure PU): bufferSize mB/t ->`、`Priority: ...`、可选 `...mB buffered`。
+  - 现代 `FluidPumpBlockEntity` 覆盖 `getLookOverlay(...)` 使用 `LegacyLookOverlayLines.pumpLine/priority/buffered` 生成同类信息。
+
+迁移规则更新：
+
+- 后续不要在 `LegacyLookOverlayRenderer` 中继续 `instanceof` 某台机器。
+- 需要准星信息的机器应实现/继承 `LegacyLookOverlayProvider`，并尽量复用：
+  - `LegacyLookOverlayLines`：tank、流体名、速率、热量、能量、优先级等文本格式。
+  - `LegacyLookOverlayPorts` / `LegacyLookOverlayPort`：端口命中匹配。
+  - `HbmFluidBlockEntity` 默认 tank overlay。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-05-31 ResourceManager VBO 契约补漏：机器、核弹/地雷、Soyuz
+
+1.7.10 对照：
+
+- `ResourceManager` lines 110、303、310：`turbine`、`solar_boiler`、`cargo_elevator` 都是 `HFRWavefrontObject(...).asVBO()`；现代库已有 baked/part 入口，但缺少旧式 facade 或 `SOLAR_BOILER` 未标 VBO。
+- `ResourceManager` lines 61-64：`mine_ap`、`mine_marelet`、`mine_naval` 为 `.asVBO()`，`mine_fat` 是 `AdvancedModelLoader.loadModel(...)`，所以本轮保持 `mine_fat` 非 VBO。
+- `ResourceManager` lines 279-293：`bomb_gadget`、`bomb_man`、`bomb_tsar`、`bomb_prototype`、`bomb_fleija`、`bomb_solinium`、`n2`、`fstbmb`、四个 dud bomb 为 `.asVBO()`；`bomb_boy` 是 `AdvancedModelLoader`，`bomb_mike` 是普通 `HFRWavefrontObject` 无 `.asVBO()`，所以现代 `BOY/MIKE` 仍保持非 VBO。
+- `ResourceManager` lines 1229-1231：`soyuz`、`soyuz_lander`、`soyuz_module` 都是 `.asVBO()`；发射架六个 `soyuz_launcher_*` 的 `.noSmooth().asVBO()` 已在前序批次对齐。
+
+现代侧改动：
+
+- `ObjMachineModels` 增加 `TURBINE_LEGACY`、`ELEVATOR_LEGACY`，并把 `SOLAR_BOILER` 改为 `.asVBO()`；`ObjModelLibrary` 暴露对应 `MACHINE_*` facade。
+- `ObjBombModels` 为 1.7.10 明确 `.asVBO()` 的地雷、核弹/哑弹块模型补 `.asVBO()`，同时保留 `MINE_FAT`、`IVYMIKE` 的旧端非 VBO 语义。
+- `ObjNukeModels` 为世界核弹 renderer 使用的 `GADGET/MAN/TSAR/PROTOTYPE/FLEIJA/SOLINIUM/N2` 补 `.asVBO()`，保留 `BOY/MIKE` 非 VBO，避免把 1.7.10 不存在的 VBO 契约强行套上去。
+- `ObjSoyuzModels` 为 `SOYUZ/LANDER/MODULE` 补 `.asVBO()`，不改分 part 渲染和贴图选择。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-03 准星信息 overlay 实体分支与文本 helper
+
+1.7.10 对照：
+
+- `ModEventHandlerClient#onOverlayRender` 的实体分支只在 `mop.typeOfHit == ENTITY` 时执行，并且只检查 `entity instanceof ILookOverlay`；手持物品优先级只存在于 block hit 分支。
+- 已确认旧端实体侧主要承载点之一是 `EntityRailCarBase implements ILookOverlay`，其 `BoundingBoxDummyEntity implements ILookOverlay` 会把 overlay 委托给关联的 rail car；现代对应火车实体库尚未迁移，本轮只先补共享 API 入口。
+- 旧端常见文本 helper 形态包括：`BobMathUtil.getShortNumber(...) + unit`、`Max.: ...HE/t`、`Priority: ...`、`Freq: ...`、`Signal: ...`、物品栈 `-> item xN` / `<- item xN`、`! ! ! WARNING ! ! !`，以及 `BobMathUtil.getBlink()` 的 1000ms 红/黄闪烁。
+
+现代侧改动：
+
+- 新增 `LegacyLookOverlayEntityProvider`，现代实体可通过同一准星 overlay API 提供文字。
+- `LegacyLookOverlayRenderer` 增加实体命中分支：block hit 时按手持物品 -> 方块 -> core BlockEntity；entity hit 时只查实体 provider，贴合 1.7.10 顺序。
+- `LegacyLookOverlayLines` 补齐可复用行 helper：`shortRate(...)`、`maxRate(...)`、`freq(...)`、`signal(...)`、`itemStack(...)`、`warning(...)`、`blinkingWarning(...)`、`error(...)`、`percent(...)`、`percentColor(...)`。
+- `blinkingWarning(...)` 使用 `System.currentTimeMillis() % 1000 < 500` 复刻旧 `BobMathUtil.getBlink()` 节奏。
+
+边界：
+
+- 本轮不迁火车实体本体、不新增 `BlockRemap` 注册、不为未迁现代承载点生造 overlay 行为；这里只补库入口与通用文本 API。
+
+验证：
+
+- 待跑 `.\gradlew.bat compileJava processResources --no-daemon`。
+
+## 2026-06-03 准星信息 overlay 勘误与收口
+
+1.7.10 对照：
+
+- 准星文字由 `com.hbm.blocks.ILookOverlay` 提供，`ModEventHandlerClient#onOverlayRender` 在 `ElementType.CROSSHAIRS && ClientConfig.DODD_RBMK_DIAGNOSTIC` 下调用。
+- 旧版不是所有流体机器都会显示 tank 信息：
+  - `MachineSteamEngine`：显示 steam input 与 spent steam output 两行，不显示功率。
+  - `MachineTowerSmall` / `MachineTowerLarge`：显示全部 tanks，第 0 个为输入，其余为输出。
+  - `MachineFractionTower`：显示全部 tanks，第 0 个为输入，其余为输出。
+  - `MachineCatalyticCracker`：显示全部 tanks，前两个为输入，其余为输出。
+  - `MachineFluidTank` 与 `MachineRefinery` 的 `printHook` 只调用 `IRepairable.addGenericOverlay(...)`；只有玩家手持喷灯、核心实现 `IRepairable` 且损坏时才显示维修材料，不是常驻 tank overlay。
+  - `MachineBigAssTank` / `MachineBigAssTank9000` 没有实现 `ILookOverlay`。
+  - `MachineCompressor`、`MachineCompressorCompact`、`MachineLiquefactor`、`MachineGasFlare`、`MachineCoker`、`MachineHydrotreater`、`MachineCatalyticReformer`、`MachineVacuumDistill` 也没有旧版准星 overlay；这些机器的状态主要通过 GUI、持久 NBT tooltip 或其它信息接口体现。
+- 因此现代共享实现不能把所有 `HbmFluidBlockEntity` 默认映射成 tank 准星文字，否则会产生猜测内容。
+
+现代侧修正：
+
+- `HbmFluidBlockEntity#getLookOverlay(...)` 改为默认不显示，只有覆写或显式打开的机器提供准星信息。
+- `LegacyLookOverlayLines` 增加 `allFluidUserTanks(...)`，供旧版明确“无论 empty/NONE 都按 tank 数组列出”的机器复用。
+- 明确接回旧版有 tank 准星 overlay 的机器：
+  - `SteamEngineBlockEntity`：仅显示 steam/spent steam 两个 tank。
+  - `CoolingTowerBlockEntity`：显示全部 tank。
+  - `FractionTowerBlockEntity`：显示全部 tank。
+  - `CatalyticCrackerBlockEntity`：显示全部 tank。
+- `machine_fluidtank`、`machine_bigasstank`、`compressor`、`liquefactor`、`gas_flare`、`coker`、`hydrotreater`、`catalytic_reformer`、`vacuum_distill` 等现代 BE 不再因继承流体基类而自动显示未对齐的 tank 准星文字。
+- 后续若迁移喷灯/维修材料 API，应按 `IRepairable.addGenericOverlay(...)` 的旧契约实现“手持喷灯 + 已损坏”条件，而不是恢复常驻 tank overlay。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-03 准星 overlay API 扩展到网络与能量存储
+
+1.7.10 对照：
+
+- `ILookOverlay` 仍是准星信息事实入口，`ModEventHandlerClient#onOverlayRender` 命中方块后调用目标 block 的 `printHook(...)`。
+- `FluidValve` / `FluidSwitch` / `FluidDuctBox` / `FluidDuctPaintable` / `FluidPipeAnchor` 均只显示当前管道流体名。
+- `FluidCounterValve#printHook` 在流体名下追加 `Counter: <value>`。
+- `FluidDuctBoxExhaust` 与 `FluidDuctPaintableBlockExhaust` 固定列出 `SMOKE`、`SMOKE_LEADED`、`SMOKE_POISON` 三种可连接流体。
+- `MachineBattery#printHook` 显示 `power / maxPower HE` 与红-绿渐变百分比。
+- `MachineBatterySocket#printHook` 只有插入电池包时显示，标题为插入物品显示名，正文为该电池包当前能量与百分比。
+
+现代侧：
+
+- `LegacyLookOverlayLines` 增加 `counter(...)`、`energyStored(...)`、`chargePercent(...)`、`energyStorage(...)`、`fluidNames(...)`，让通用准星文本由 API 统一生成。
+- `LegacyLookOverlay.withTitle(...)` 支持标题不是方块名的旧行为，例如电池接口显示插入电池包名称。
+- `FluidCounterValveBlockEntity`、`FluidDuctExhaustBlockEntity`、`FluidDuctPaintableExhaustBlockEntity`、`MachineBatteryBlockEntity`、`MachineBatterySocketBlockEntity` 接入 `LegacyLookOverlayProvider`。
+- `HbmEnergyBlockEntity` 增加标准 BE update packet/tag，使能量型准星 overlay 能读取客户端侧动态能量。
+
+边界：
+
+- 本轮没有迁移尚未注册现代 BE 的旧能量转换器、FENSU 独立方块或 cable gauge；只记录 1.7.10 行格式，后续等对应机器/网络块迁移时接入同一 API。
+- `LegacyLookOverlayRenderer` 仍只负责命中解析、core BE 解析和绘制，不含具体机器逻辑。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-03 ILookOverlay 准星诊断面板迁移
+
+触发来源：
+
+- 实机/迁移反馈：准星指向机器或机器接口时，旧版会显示水、蒸汽输入口、配方接口等信息；现代端缺少这类看向方块的提示。
+
+1.7.10 对照：
+
+- 该功能不属于 Waila，而属于 HBM 自有 `com.hbm.blocks.ILookOverlay`。
+- 调用入口在 `com.hbm.main.ModEventHandlerClient#onOverlayRender(RenderGameOverlayEvent.Pre)`：
+  - 仅在 `ElementType.CROSSHAIRS` 且 `ClientConfig.DODD_RBMK_DIAGNOSTIC` 为 true 时执行。
+  - 若手持物品实现 `ILookOverlay`，优先调用物品 `printHook`。
+  - 否则命中方块实现 `ILookOverlay` 时调用方块 `printHook`。
+  - 命中实体实现 `ILookOverlay` 时调用实体 `printHook`。
+- `ILookOverlay#printGeneric(...)` 的绘制位置固定为屏幕中心右侧：
+  - `x = scaledWidth / 2 + 8`
+  - `y = scaledHeight / 2`
+  - 标题先以 `bgCol` 在 `x+1,y-9` 画阴影，再以 `titleCol` 在 `x,y-10` 画正文。
+  - 每行正文 `drawStringWithShadow`，默认白色；以 `&[color&]` 开头的行可覆盖颜色。
+- 与此不同，`com.hbm.render.util.RenderInfoSystem` 是短暂提示消息队列：
+  - 由 `ClientProxy.theInfoSystem` 注册为客户端事件。
+  - `PlayerInformPacket` / `MainRegistry.proxy.displayTooltip(...)` 可推入消息。
+  - 现代端已有 `ClientInformMessages` 承担这类短暂提示；本轮不重复迁移。
+
+本轮现代侧改动：
+
+- 新增 `com.hbm.ntm.client.overlay.LegacyLookOverlayProvider`，作为现代端方块实体/机器提供准星诊断数据的接口。
+- 新增 `LegacyLookOverlayRenderer`：
+  - 挂到 `ClientForgeEvents` 的 `RenderGuiOverlayEvent.Post` / `VanillaGuiOverlay.CROSSHAIR`。
+  - 使用 `Minecraft.hitResult` 获取命中方块。
+  - 通过 `MultiblockHelper.resolveCoreBlockEntity(...)` 对齐旧 `BlockDummyable#findCore(...)` 行为，使 dummy/proxy/核心都能显示核心方块实体信息。
+  - 复刻旧版准星右侧绘制位置、标题颜色、标题阴影与正文阴影。
+- 已接入的旧版事实源机器：
+  - `SteamEngineBlockEntity`：显示蒸汽输入 tank 与低压蒸汽输出 tank。
+  - `BoilerBlockEntity`：显示 TU 热量、进料 tank 与蒸汽输出 tank。
+  - `SolarBoilerBlockEntity`：显示水输入、蒸汽输出，并在 `display < 1` 时显示 `Too cold!` 闪烁警告。
+  - `IndustrialSteamTurbineBlockEntity`：显示输入/输出 tank 与输出 HE/spin 信息。
+  - `LegacySteamTurbineBlockEntity`：显示输入/输出 tank 与最近发电量。
+- `AssemblyMachineBlockEntity` 与 `ChemicalPlantBlockEntity` 接入旧端口规则：
+  - 旧版 `MachineAssemblyFactory` / `MachineChemicalFactory` 只在 `getCoolPos()` 和 `getIOPos()` 对应接口显示提示。
+  - 现代端按 1.7.10 `DirPos.compare(x + dir.offsetX, y, z + dir.offsetZ)` 的命中偏移逻辑判断。
+  - 冷却接口显示 `Water` 输入与 `Spent Steam` 输出；配方接口显示 `Recipe field [n]`。
+
+勘误/限制：
+
+- 现代 `AssemblyMachineBlockEntity` / `ChemicalPlantBlockEntity` 当前尚未迁入 1.7.10 的专用冷却 `water` / `lps` tank，只迁了配方流体 tank；因此本轮端口 overlay 只显示端口流体类型，不显示冷却 tank 容量，避免伪造不存在的数据。
+- 持有物品和实体实现 `ILookOverlay` 的路径已经记录，但本轮只迁机器/方块实体准星信息；后续结构工具、drone linker、铁路实体等应在对应物品/实体迁移时接入同一接口。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-02 追加：导弹本体 OBJ 与贴图入口批量接入
+
+1.7.10 对照：
+
+- `ResourceManager` lines 1220-1226 声明导弹本体模型：
+  - `missileV2`、`missileABM`、`missileStrong`、`missileHuge`、`missileNuclear`、`missileMicro` 全部为 `HFRWavefrontObject(...).asVBO()`。
+  - `missileStealth` 为 `HFRWavefrontObject(...).noSmooth().asVBO()`，该 VBO 契约已在前一轮补齐。
+- `ResourceManager` lines 1349-1375 声明导弹贴图变体：
+  - V2：HE/IN/CL/BU/decoy。
+  - ABM：`missile_abm`。
+  - Stealth：`missile_stealth`。
+  - Strong：HE/EMP/IN/CL/BU。
+  - Huge：HE/IN/CL/BU。
+  - Atlas：nuclear/thermo/tectonic/doomsday/doomsday weathered。
+  - Micro：normal/taint/black hole/schrab/EMP/test。
+- 旧 `RenderMissileGeneric`、`RenderMissileStrong`、`RenderMissileHuge`、`RenderMissileNuclear`、`RenderMissileTaint` 和 `ItemRenderMissileGeneric` 都通过这些模型与贴图组合渲染实体/物品；本轮只迁资源库入口，不迁 renderer 逻辑。
+
+现代侧改动：
+
+- 从 1.7.10 原资源复制 `missile_v2.obj`、`missile_abm.obj`、`missile_strong.obj`、`missile_huge.obj`、`missile_atlas.obj`、`missile_micro.obj` 到 `assets/hbm/models/block/missiles/`。
+- 从 1.7.10 原资源复制上述 26 张导弹贴图到 `assets/hbm/textures/block/missiles/`，保留旧文件名。
+- `ObjMissilePartModels` 增加 `MISSILE_V2`、`MISSILE_ABM`、`MISSILE_STRONG`、`MISSILE_HUGE`、`MISSILE_ATLAS`、`MISSILE_MICRO`，均按旧端 `.asVBO()`；`MISSILE_ATLAS` 默认贴图使用旧 `missile_atlas_nuclear`。
+- `ObjMissilePartModels` 补齐导弹本体贴图 `ResourceLocation` 常量，供后续导弹实体/物品 renderer 迁移复用。
+- `ObjModelLibrary` 暴露六个新增导弹本体 facade。
+
+验证：
+
+- 待跑 `.\gradlew.bat compileJava processResources --no-daemon`。
+
+## 2026-06-02 ResourceManager VBO 契约补漏：武器、导弹、弹壳与 C130
+
+1.7.10 对照：
+
+- `ResourceManager` line 887：`chainsaw = new HFRWavefrontObject(...).noSmooth().asVBO()`；现代 `ObjWeaponModels.CHAINSAW` 原本只有 `.noSmooth()`。
+- `ResourceManager` line 1222：`missileStealth = new HFRWavefrontObject(...).noSmooth().asVBO()`；现代 `ObjMissilePartModels.MISSILE_STEALTH` 原本只有 `.noSmooth()`。
+- `ResourceManager` lines 1212、1336：`casings = new HFRWavefrontObject("models/effect/casings.obj").asVBO()`，贴图为 `textures/particle/casings.png`。旧 `ParticleSpentCasing` 绑定该贴图后按 `config.getType().partNames` 调 `ResourceManager.casings.renderPart(name)` 并逐 part 上色；这是粒子/效果资源，不是普通方块模型。
+- `ResourceManager` lines 1217、1346 和 `RenderC130`：`c130 = new HFRWavefrontObject("models/weapons/c130.obj").asVBO()`，贴图为 `textures/models/weapons/c130_0.png`；旧 renderer 渲染 `Plane` 与 `Prop1`-`Prop4`，四个螺旋桨有独立旋转变换。
+
+现代侧改动：
+
+- `ObjWeaponModels.CHAINSAW` 改为 `.noSmooth().asVBO()`；`ObjMissilePartModels.MISSILE_STEALTH` 改为 `.noSmooth().asVBO()`。
+- `ObjEffectModels` 新增 `CASINGS_TEXTURE` 与 `CASINGS`，路径保留旧资源实际所在的 `models/effect/casings.obj` 与 `textures/particle/casings.png`，并在 `ObjModelLibrary` 暴露 `EFFECT_CASINGS`。
+- 从 1.7.10 原资源复制 `models/weapons/c130.obj` 到现代 `assets/hbm/models/block/entities/c130.obj`，复制 `textures/models/weapons/c130_0.png` 到 `assets/hbm/textures/block/entities/c130_0.png`；`ObjEntityModels` 新增 `C130`/`C130_TEXTURE`，并在 `ObjModelLibrary` 暴露 `ENTITY_C130`。
+- 本轮只补渲染库资源入口和旧 VBO 契约；C130 实体注册/renderer、弹壳粒子运动与烟雾行为仍应分别在实体/粒子迁移批次中按旧 `RenderC130`、`ParticleSpentCasing` 继续对齐。
+
+验证：
+
+- 待跑 `.\gradlew.bat compileJava processResources --no-daemon`。
+
 ## 2026-05-28 ResourceManager 效果、发射架与反应堆 facade 修正
 
 1.7.10 对照：
@@ -2539,3 +2788,228 @@ noSmooth 对照报告：
 验证：
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-02 发射架 erector 与导弹部件库门面补齐
+
+1.7.10 对照：
+
+- `ResourceManager` lines 1220-1226：导弹本体 `missileV2`、`missileABM`、`missileStrong`、`missileHuge`、`missileNuclear/missile_atlas`、`missileMicro` 均为 `HFRWavefrontObject(...).asVBO()`；`missileStealth` 为 `.noSmooth().asVBO()`。
+- `ResourceManager` lines 1240-1253：大型发射台同组资源中，`missile_pad`、`missile_assembly`、`compact_launcher`、`launch_table_*` 均为 `AdvancedModelLoader.loadModel(...)`；只有 `missile_erector = new HFRWavefrontObject("models/weapons/launch_pad_erector.obj").asVBO()`。
+- `ResourceManager` lines 1433-1451：发射台贴图包括 `textures/models/launchpad/pad.png` 与 `erector_micro/v2/strong/huge/atlas/abm.png`，launch table 子件贴图仍来自 `textures/models/missile_parts/launch_table*.png`。
+- `RenderLaunchPadLarge` 使用 `ResourceManager.missile_erector.renderPart("Pad")` 渲染底座，并按导弹规格切换 `ABM/Micro/V2/Strong/Huge/Atlas` 的 `*_Pad`、`*_Erector`、`*_Pivot`、`*_Rope` OBJ group；角度、lift 与待渲染导弹实体行为仍属于后续发射台 renderer/方块实体迁移，不在本轮渲染库基础入口内。
+- `MissilePart.registerAllParts()` 真实注册 117 个导弹部件 item->模型/贴图映射；现代 `ObjMissilePartModels.parts()` 已与旧注册数量和 ID 完全一致，没有额外加入 1.7.10 未注册的贴图变体。
+
+现代侧改动：
+
+- 从 1.7.10 复制 `models/weapons/launch_pad_erector.obj` 到 `assets/hbm/models/block/launch_table/launch_pad_erector.obj`，复制 `pad.png` 与 6 张 `erector_*` 贴图到 `assets/hbm/textures/block/launch_table/`。
+- `ObjLaunchModels` 新增 `MISSILE_ERECTOR = legacyModel("launch_pad_erector", "pad").asVBO()`，并补齐 `MISSILE_ERECTOR_*_TEXTURE` 贴图句柄；`ObjModelLibrary` 暴露 `MISSILE_ERECTOR`。
+- `ObjModelLibrary` 显式暴露 43 个 `MISSILE_PART_MP_*` 模型门面，覆盖旧 `ResourceManager` 中所有 `mp_t_*`、`mp_s_*`、`mp_f_*`、`mp_w_*` OBJ 静态模型入口，方便后续装配台、发射台、GUI/物品 renderer 直接从总渲染库取模型。
+- 本轮没有把 `missile_pad`、`missile_assembly`、`compact_launcher` 或 `launch_table_*` 改成 legacy VBO facade：旧端这些入口不是 `HFRWavefrontObject(...).asVBO()`，现代已有 baked/part 入口或需后续专门 renderer 迁移。
+
+验证：
+
+- 待跑 `.\gradlew.bat compileJava processResources --no-daemon`。
+
+## 2026-06-03 武器/投射物零散 OBJ 入口补齐
+
+1.7.10 对照：
+
+- `ResourceManager` lines 882-883：`shimmer_sledge`、`shimmer_axe` 均为 `AdvancedModelLoader.loadModel("models/shimmer_*.obj")`；`ClientProxy` 将二者绑定到 `ItemRenderShim`，旧 renderer 按 `ResourceManager.shimmer_*_tex` 绑定贴图后 `renderAll()`。
+- `ResourceManager` lines 1203-1206：`building` 为 `AdvancedModelLoader.loadModel("models/weapons/building.obj")`，`torpedo` 为普通 `new HFRWavefrontObject("models/weapons/torpedo.obj")`，`tom_main` 为 `AdvancedModelLoader.loadModel("models/weapons/tom_main.obj")`，`tom_flame` 为 `AdvancedModelLoader.loadModel("models/weapons/tom_flame.hmf")`。
+- `RenderBoxcar` 对 `EntityBuilding` 使用 `building_tex + building.renderAll()`，对 `EntityTorpedo` 使用 `torpedo_tex + torpedo.renderAll()`，其中 torpedo 还会按存在 tick 做 pitch 旋转并临时切到 smooth shade。
+- `TomPronter` 使用 `tom_main_tex + tom_main.renderAll()` 渲染主体；火焰层使用 `tom_flame_tex + tom_flame.renderAll()`，但旧模型格式为 `.hmf`，不属于本轮 OBJ/LegacyWavefrontModel 可承载范围。
+- 旧 `ResourceManager` 还声明了 `pch_tex`、`bolter_digamma_tex`、`sky_stinger_tex`、`ff_gun_bright/dark/normal`，但本地 1.7.10 资源树没有对应贴图文件；本轮不生造这些资源，也不在现代渲染库暴露可用句柄。
+
+现代侧改动：
+
+- 从 1.7.10 复制 `shimmer_sledge.obj`、`shimmer_axe.obj`、`building.obj`、`torpedo.obj`、`tom_main.obj` 到 `assets/hbm/models/block/weapons/`，复制对应 `shimmer_*`、`building`、`torpedo`、`tom_main`、`tom_flame` 贴图到 `assets/hbm/textures/block/weapons/`。
+- `ObjWeaponModels` 新增 `SHIMMER_SLEDGE`、`SHIMMER_AXE`、`BUILDING`、`TORPEDO`、`TOM_MAIN` 模型 facade，并补 `SHIMMER_*_TEXTURE`、`BUILDING_TEXTURE`、`TORPEDO_TEXTURE`、`TOM_MAIN_TEXTURE`、`TOM_FLAME_TEXTURE` 贴图句柄。
+- `ObjModelLibrary` 暴露 `WEAPON_SHIMMER_SLEDGE`、`WEAPON_SHIMMER_AXE`、`WEAPON_BUILDING`、`WEAPON_TORPEDO`、`WEAPON_TOM_MAIN`。
+- 本轮不迁 `tom_flame.hmf` 的模型 loader/渲染行为，也不迁 `ItemRenderShim`、`RenderBoxcar`、`TomPronter` 的具体矩阵动画；这些属于后续物品/实体/特效 renderer 移植。
+
+验证：
+
+- 待跑 `.\gradlew.bat compileJava processResources --no-daemon`。
+
+## 2026-06-03 飞行器/Boxcar/火箭实体 OBJ 入口补齐
+
+1.7.10 对照：
+
+- `ResourceManager` lines 1201-1202：`boxcar`、`duchessgambit` 均为 `AdvancedModelLoader.loadModel(...)`；`RenderBoxcar` 分别使用 `boxcar_tex`、`duchessgambit_tex` 后 `renderAll()`，`RenderDecoBlock` 与 `ItemRenderLibrary` 也复用这两个模型入口。
+- `ResourceManager` lines 1215-1216：`dornier`、`b29` 均为 `AdvancedModelLoader.loadModel(...)`；`RenderBomber` 按实体 data watcher byte 16 切换整机贴图：`0/1/3/default -> dornier_1`，`2 -> dornier_2`，`4 -> dornier_4`，`5 -> b29_0`，`6 -> b29_1`，`7 -> b29_2`，`8 -> b29_3`。旧端不是 OBJ part 分贴图。
+- `ResourceManager` lines 1227-1228：`missileShuttle`、`minerRocket` 均为 `AdvancedModelLoader.loadModel(...)`；`RenderMissileShuttle` 绑定 `missileShuttle_tex` 后渲染，`RenderMinerRocket` 对矿工火箭绑定 `minerRocket_tex`，对 Bobmazon 分支绑定另一个贴图但仍复用 `minerRocket` 模型。
+- `ResourceManager` line 1207 还声明 `nikonium = AdvancedModelLoader.loadModel("models/nikonium.obj")`，`RendererObjTester` 会测试渲染；但对应 `textures/models/misc/nikonium.png` 在本地 1.7.10 资源树中缺失。本轮不暴露现代 `nikonium` facade，避免后续调用得到缺贴图模型。
+
+现代侧改动：
+
+- 从 1.7.10 复制 `boxcar.obj`、`duchessgambit.obj`、`dornier.obj`、`b29.obj` 到 `assets/hbm/models/block/entities/`，复制对应 `boxcar`、`duchessgambit`、`dornier_1/2/4`、`b29_0/1/2/3` 贴图到 `assets/hbm/textures/block/entities/`。
+- 从 1.7.10 复制 `missileShuttle.obj`、`minerRocket.obj` 到现代小写路径 `assets/hbm/models/block/missiles/missile_shuttle.obj`、`miner_rocket.obj`，复制 `missile_shuttle.png`、`minerRocket.png` 到现代 `missile_shuttle.png`、`miner_rocket.png`。
+- `ObjEntityModels` 新增 `BOXCAR`、`DUCHESS_GAMBIT`、`DORNIER`、`B29` 模型 facade 与旧贴图句柄；`ObjMissilePartModels` 新增 `MISSILE_SHUTTLE`、`MINER_ROCKET` 模型 facade 与贴图句柄；`ObjModelLibrary` 暴露对应 `ENTITY_*` / `MISSILE_*` 总门面。
+- 本轮只接基础渲染库入口，不迁 `RenderBoxcar`、`RenderBomber`、`RenderMissileShuttle`、`RenderMinerRocket` 的矩阵、旋转、实体数据同步和 Bobmazon 分支贴图。
+
+验证：
+
+- 待跑 `.\gradlew.bat compileJava processResources --no-daemon`。
+
+## 2026-06-03 ISBRH 方块/贴附炸药/碎片入口复核
+
+1.7.10 对照：
+
+- `ResourceManager` lines 1598-1615、1669-1671：`scaffold`、`taperecorder`、`beam`、`barrel`、`pole`、`barbed_wire`、`spikes`、`antenna_top`、`conservecrate`、`pipe`、`pipe_rim`、`pipe_quad`、`pipe_frame`、`rtty`、`crt`、`toaster`、`deco_computer`、`hev_battery`、`anvil`、`crystal_*`、`cable_neo`、`pipe_neo`、`difurnace_extension`、`splitter`、`crane_buffer`、`rail_*`、`capacitor`、`funnel`、`charge_dynamite`、`charge_c4` 均在旧端以 `HFRWavefrontObject` 加载，其中除 `pipe_neo` 外均为 `.noSmooth()`，`skeleton_holder` 另有 `.noSmooth().asVBO()`。
+- `ClientProxy` lines 783、805-806：`deco_computer` 使用 `RenderBlockDecoModel`，`charge_dynamite`、`charge_c4` 使用 `RenderBlockRotated`。
+- `RenderBlockDecoModel`、`RenderBlockRotated` 不是绑定固定 `ResourceLocation` 贴图，而是取方块 `getIcon(...)` 并调用 `ObjUtil.renderWithIcon(...)`；因此现代 `ObjBlockModels` 中的默认 texture 只能作为基础 facade/预览贴图，后续真正迁 renderer 时仍需按旧端 `IIcon`/sprite 路径动态喂贴图。
+- `ModBlocks` line 1586：`deco_computer` 方块纹理名为 `hbm:deco_computer`，不是 CRT 的 `crt_clean`。旧 `DecoComputerEnum` 仅有 `IBM_300PL` 一个变体。
+- `ResourceManager` lines 1674-1685 与 `RenderRBMKDebris`、`RenderZirnoxDebris`：RBMK 六种碎片和 Zirnox 五种碎片均为 `AdvancedModelLoader.loadModel(...)`，现代 `ObjProjectileModels` 已有 `DEBRIS_*`、`ZIRNOX_DEBRIS_*` facade，且贴图句柄覆盖 `rbmk_*`、`block_graphite`、`zirnox`、`zirnox_destroyed`、`zirnox_deb_element`。
+
+现代侧修正：
+
+- 补入 1.7.10 原始 `textures/blocks/deco_computer.png` 到 `assets/hbm/textures/block/legacy_blocks/deco_computer.png`。
+- `ObjBlockModels.DECO_COMPUTER` 默认贴图由 `crt_clean` 改为 `deco_computer`，与旧 `BlockDecoModel#setBlockTextureName(...)` 对齐。
+- 复核确认：`charge_dynamite`、`charge_c4`、`charge_thrower`、RBMK/Zirnox debris 的模型与贴图资源入口已存在；本轮不重复复制，也不把旧 `ObjUtil.renderWithIcon` 的动态 sprite 行为压成固定单贴图 renderer。
+
+验证：
+
+- `git diff --check -- src/main/java/com/hbm/ntm/client/obj/ObjMachineModels.java src/main/java/com/hbm/ntm/client/obj/ObjModelLibrary.java 工程记录/库移植/2026-05-20-render-library-1.7.10源码功能追踪.md ...tank resources` 通过；仅有既有 LF/CRLF 提示。
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-03 发射台/导弹装配台 legacy facade 补齐
+
+1.7.10 对照：
+
+- `ResourceManager` lines 1240-1253：`missile_pad`、`missile_assembly`、`strut`、`compact_launcher`、`launch_table_base`、`launch_table_large_pad`、`launch_table_small_pad`、六个 `launch_table_*_scaffold_*` 均为 `AdvancedModelLoader.loadModel(...)`；只有同段 `missile_erector` 是 `HFRWavefrontObject(...).asVBO()`。因此本轮新增入口全部保持非 VBO。
+- `ResourceManager` lines 1433-1451：贴图路径分别为 `textures/models/launchpad/silo(.rusted).png`、`textures/models/missile_assembly.png`、`textures/models/strut.png`、`textures/models/compact_launcher.png`、`textures/models/missile_parts/launch_table*.png`。
+- `RenderLaunchPad` / `RenderLaunchPadRusted` 使用同一个 `missile_pad` 模型，按普通/锈蚀发射井切换 `silo` / `silo_rusted` 贴图。
+- `RenderMissileAssembly` 使用 `missile_assembly` 渲染主体，并按装载导弹高度重复渲染 `strut`。
+- `RenderCompactLauncher` 使用 `compact_launcher_tex + compact_launcher.renderAll()`。
+- `RenderLaunchTable` 使用 `launch_table_base`、按 `padSize` 切换 small/large pad，并按高度重复渲染 scaffold。旧端 `launch_table_large_scaffold_empty` 绑定 `launch_table_large_scaffold_base_tex`，`launch_table_small_scaffold_empty` 绑定 `launch_table_small_scaffold_base_tex`，不是独立 empty 贴图。
+
+现代侧改动：
+
+- 从 1.7.10 复制 `launch_pad_silo.obj`、`missile_assembly.obj`、`strut.obj`、`compact_launcher.obj` 到 `assets/hbm/models/block/launch_table/`。
+- 从 1.7.10 复制 `silo.png`、`silo_rusted.png`、`missile_assembly.png`、`strut.png`、`compact_launcher.png` 到 `assets/hbm/textures/block/launch_table/`。
+- `ObjLaunchModels` 新增 `MISSILE_PAD`、`MISSILE_ASSEMBLY`、`STRUT`、`COMPACT_LAUNCHER` 与全部 `LAUNCH_TABLE_*_LEGACY` 普通 legacy facade；保留既有 baked `ObjModelPart` 入口供现代 block model 继续使用。
+- `ObjLaunchModels` 补齐上述贴图 `ResourceLocation` 常量，其中两个 scaffold empty legacy facade 默认复用 base 贴图，贴合旧 renderer 绑定行为。
+- `ObjModelLibrary` 暴露 `MISSILE_PAD`、`MISSILE_ASSEMBLY`、`LAUNCH_STRUT`、`COMPACT_LAUNCHER` 与全部 `LAUNCH_TABLE_*_LEGACY` 总门面。
+
+验证：
+
+- 待跑 `git diff --check`。
+- 待跑 `.\gradlew.bat compileJava processResources --no-daemon`。
+
+## 2026-06-03 准星信息 overlay API 顺序对齐
+
+1.7.10 对照：
+
+- `ModEventHandlerClient#onOverlayRender` 在 `ElementType.CROSSHAIRS && ClientConfig.DODD_RBMK_DIAGNOSTIC` 时调用准星信息逻辑。
+- 旧端解析顺序为：手持物品实现 `ILookOverlay` 时优先调用；否则若命中方块实现 `ILookOverlay` 则调用方块；否则命中实体实现 `ILookOverlay` 时调用实体。
+- `ILookOverlay.printGeneric(...)` 允许只显示标题、正文列表为空；例如 `BlockRemap#printHook` 标题为 `Compatibility block, will convert on update tick.`，正文为空。
+- 旧端方块级 overlay 会由方块自己查找 dummy/core，例如 `BlockDummyable#findCore(...)` 后读取 core TE；现代侧等价路径应仍通过共享 overlay renderer + multiblock core 解析，不在 renderer 中硬写每台机器。
+
+现代侧改动：
+
+- 新增 `LegacyLookOverlayBlockProvider`，允许没有 BlockEntity 或需要以命中方块为主体的方块直接提供准星 overlay。
+- 新增 `LegacyLookOverlayItemProvider`，允许结构工具、传送带工具等旧 `Item implements ILookOverlay` 的手持物品以后按旧端优先级接入。
+- `LegacyLookOverlayRenderer` 的解析顺序改为手持物品 -> 命中方块 -> 解析 multiblock core BlockEntity，与 1.7.10 的 block hit 分支顺序对齐；实体分支暂未迁移，等待对应实体库/命中解析迁移。
+- `LegacyLookOverlay` 新增 `forBlockState(...)` 与 `forItem(...)` 便捷工厂；renderer 不再因为正文为空而跳过 overlay，以兼容 `BlockRemap` 这类只有标题的旧 overlay。
+
+勘误/边界：
+
+- `machine_turbine` 在 1.7.10 是 `MachineTurbine extends BlockContainer implements ITooltipProvider`，不是 `ILookOverlay`；现代 `SteamTurbineBlockEntity` 虽然有 tank/产能状态，本轮不新增常驻准星文字。
+- `machine_compressor` / `machine_compressor_compact` 的旧 `MachineCompressor` 不实现 `ILookOverlay`；现代 `CompressorBlockEntity` 不应因继承流体/能量基类而显示 tank overlay。
+- `machine_fluidtank` 旧端 `printHook` 仅调用 `IRepairable.addGenericOverlay(...)`，常规 tank 信息不显示；现代 `FluidTankBlockEntity` 保持无常驻 overlay。
+- 电缆流量计 `BlockCableGauge` 与电缆二极管 `CableDiode` 旧端有 `HE/t`、`HE/s`、`Max.`、`Priority` overlay，但现代注册目前只有 `red_cable`，没有对应 BlockEntity/方块承载点；本轮只记录，不生造现代行为。
+
+验证：
+
+- 待跑 `.\gradlew.bat compileJava processResources --no-daemon`。
+
+## 2026-06-03 车辆复核与 Taint Crab 实体入口补齐
+
+1.7.10 对照：
+
+- `ResourceManager` lines 1302-1306：`cart`、`cart_destroyer`、`cart_powder`、`train_cargo_tram`、`train_cargo_tram_trailer` 均为 `AdvancedModelLoader.loadModel(...)`。
+- `ResourceManager` lines 1582-1590：矿车贴图来自 `textures/entity/cart_*`，粉末/semtex 变体复用 `textures/blocks/block_gunpowder.png`、`semtex_side.png`、`semtex_bottom.png`；tram 贴图来自 `textures/models/trains/tram*.png`。
+- `RenderNeoCart` 使用 `cart.renderPart("Carriage")` 和 `cart.renderPart("Bucket")`，按 cart 类型切换金属/裸金属/木质贴图；`RenderTrainCargoTram` 与 trailer renderer 分别使用 `train_tram` / `tram_trailer`。
+- 现代 `ObjVehicleModels` 与 `ObjModelLibrary` 已有上述五个模型 facade 和全部车辆贴图句柄，本轮只复核记录，不重复复制。
+- `ResourceManager` lines 383、820：`taintcrab = AdvancedModelLoader.loadModel("models/mobs/taintcrab.obj")`，贴图为 `textures/entity/taintcrab.png`，另有 `taintcrab_clean.png` 资源。
+- `ModelTaintCrab` 按 `Body`、`Legs1`、`Legs2` 三个 OBJ part 渲染，并用 `limbSwing` 旋转两组腿；`RenderTaintCrab` 还会按实体 `targets` 绘制随机波形 beam。上述动画/beam 属于后续实体 renderer 迁移，不在本轮渲染库基础入口内。
+
+现代侧改动：
+
+- 从 1.7.10 复制 `models/mobs/taintcrab.obj` 到 `assets/hbm/models/block/entities/taintcrab.obj`。
+- 从 1.7.10 复制 `textures/entity/taintcrab.png`、`taintcrab_clean.png` 到 `assets/hbm/textures/block/entities/`。
+- `ObjEntityModels` 新增 `TAINTCRAB` facade 与 `TAINTCRAB_TEXTURE`、`TAINTCRAB_CLEAN_TEXTURE` 贴图句柄；`ObjModelLibrary` 暴露 `ENTITY_TAINTCRAB`。
+
+验证：
+
+- 待跑 `git diff --check`。
+- 待跑 `.\gradlew.bat compileJava processResources --no-daemon`。
+
+## 2026-06-03 小型 utility/trinket/卫星入口复核
+
+1.7.10 对照：
+
+- `ResourceManager` lines 375、814-815：`lantern = HFRWavefrontObject("models/trinkets/lantern.obj").noSmooth()`，贴图句柄包含 `textures/models/trinkets/lantern.png` 与 `lantern_rusty.png`。
+- `ResourceManager` lines 296-300、766-776：FOEQ 卫星燃烧/火焰模型和卫星 dock 均为 `AdvancedModelLoader.loadModel(...)`；`RenderFOEQ` 绑定 `sat_foeq_burning_tex` 后渲染 `sat_foeq_burning`，火焰层继续复用同一张 `sat_foeq_burning_tex` 渲染 `sat_foeq_fire`。
+- 旧 `ResourceManager.sat_foeq_tex` 声明为 `textures/models/sat_foeq.png`，但本地 1.7.10 资源树没有该文件；资源树实际存在的是 `textures/blocks/sat_foeq.png` 与 `textures/items/sat_foeq.png`。本轮不把缺失的 `textures/models/sat_foeq.png` 生造为现代可用模型贴图句柄。
+- 现代 `ObjUtilityModels` 已有 `SAT_FOEQ_BURNING`、`SAT_FOEQ_FIRE`、`SAT_DOCK` 和总库 facade；现代 `ObjTrinketModels` 已有 `LANTERN` 模型 facade。
+
+现代侧改动：
+
+- `ObjTrinketModels` 补齐 `LANTERN_TEXTURE` 与 `LANTERN_RUSTY_TEXTURE`，供后续灯笼 renderer 按旧端普通/锈蚀变体切换贴图。
+- `ObjUtilityModels` 增加 `SAT_FOEQ_FIRE_TEXTURE = SAT_FOEQ_BURNING_TEXTURE` 显式别名，记录旧 `RenderFOEQ` 火焰层复用燃烧贴图的资源合同。
+- 本轮只补资源句柄和复核记录，不迁 `RenderFOEQ` 的矩阵、旋转、四向火焰层或 `RendererObjTester` 调试渲染行为。
+
+验证：
+
+- `git diff --check -- src/main/java/com/hbm/ntm/client/obj/ObjTrinketModels.java src/main/java/com/hbm/ntm/client/obj/ObjUtilityModels.java 工程记录/库移植/2026-05-20-render-library-1.7.10源码功能追踪.md` 通过；仅有既有 LF/CRLF 提示。
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-03 UF6/PUF6 小罐模型入口补齐与 bomb_multi 复核
+
+1.7.10 对照：
+
+- `ResourceManager` line 165：`tank = AdvancedModelLoader.loadModel("models/tank.obj")`，不是 `.asVBO()`。
+- `ResourceManager` lines 617-618：小罐贴图为 `textures/models/UF6Tank.png` 与 `textures/models/PUF6Tank.png`。
+- `RenderUF6Tank` / `RenderPuF6Tank` 在世界中按方块 metadata 旋转后分别绑定 `uf6_tex` / `puf6_tex`，再 `ResourceManager.tank.renderAll()`。
+- `ItemRenderLibrary` 对对应物品也复用同一个 `ResourceManager.tank`，按物品类型切换 UF6/PUF6 贴图。
+- `ResourceManager` line 288 的 `bomb_multi = AdvancedModelLoader.loadModel("models/BombGeneric.obj")` 与 `bomb_multi_tex` 已在现代资源中以 `models/block/nuke/bomb_multi.obj`、`textures/block/nuke/bomb_multi.png` 存在，贴图 hash 与 1.7.10 `BombGeneric.png` 一致。但现代 OBJ 已为 block model/baked 路径做了坐标适配，不在本轮新增旧 TESR facade，避免和旧 `RenderBombMulti` 的 `x + 0.5, y + 0.5, z + 0.5` 原点规则混用。
+- `RenderBombMultiLarge` 的 `BombGenericLarge.obj` / `BombGenericLargeLayout.png` 是 renderer 内部私有加载，不是 `ResourceManager` 静态 facade；本轮不迁。
+
+现代侧改动：
+
+- 从 1.7.10 复制 `models/tank.obj` 到 `assets/hbm/models/block/machines/tank.obj`。
+- 从 1.7.10 复制 `textures/models/tank.png`、`UF6Tank.png`、`PUF6Tank.png` 到 `assets/hbm/textures/block/machines/tank.png`、`uf6_tank.png`、`puf6_tank.png`。
+- `ObjMachineModels` 新增 `TANK = legacyModel("tank")` 普通非 VBO facade，并补 `TANK_TEXTURE`、`UF6_TANK_TEXTURE`、`PUF6_TANK_TEXTURE` 贴图句柄。
+- `ObjModelLibrary` 暴露 `MACHINE_TANK`，供后续 UF6/PUF6 小罐方块实体 renderer 或物品 renderer 使用。
+
+验证：
+
+- `git diff --check -- src/main/java/com/hbm/ntm/client/obj/ObjMachineModels.java src/main/java/com/hbm/ntm/client/obj/ObjModelLibrary.java 工程记录/库移植/2026-05-20-render-library-1.7.10源码功能追踪.md ...tank resources` 通过；仅有既有 LF/CRLF 提示。
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-03 准星信息 overlay API 继续对齐
+
+1.7.10 对照：
+
+- `ILookOverlay#printGeneric(RenderGameOverlayEvent.Pre, String title, int titleCol, int bgCol, List<String> text)` 由每个实现传入标题颜色和标题阴影颜色；常规值为 `0xffff00 / 0x404000`，但 `MachineIGenerator` 使用 `0xff8000 / 0x804000`，`MachineStrandCaster` 与 foundry casting/outlet 使用 `0xFF4000 / 0x401000`。
+- 旧正文行可用字符串前缀 `&[<color>&]` 覆盖单行颜色；现代侧以 `Component` 样式承载，不复刻脆弱字符串协议，但需要提供通用 colored helper。
+- `ClientConfig.DODD_RBMK_DIAGNOSTIC` 旧默认值为 `true`，是整个准星信息分支的开关；`SHOW_BLOCK_META_OVERLAY` 旧默认值为 `false`，仅为 debug meta overlay，本轮不迁 debug 分支。
+- `BlockRemap` 证明旧 overlay 可以只有标题且正文为空。
+
+现代侧改动：
+
+- `LegacyLookOverlay` 新增自定义标题颜色工厂 `withTitle(title, titleColor, titleShadowColor, lines)`，并补 `titleOnly(...)` 便捷入口，供后续兼容块、纪念牌、熔铸系等旧非黄色标题 overlay 接入。
+- `LegacyLookOverlayLines` 新增 `colored(message, color)`，作为旧 `&[color&]` 单行颜色协议的现代等价入口。
+- `HbmClientConfig` 新增 `hud.legacyLookOverlay`，默认 `true`，注释明确对应旧 `ClientConfig.DODD_RBMK_DIAGNOSTIC`。
+- `LegacyLookOverlayRenderer` 在解析命中目标前读取 `HbmClientConfig.LEGACY_LOOK_OVERLAY`，恢复旧端总开关语义。
+
+勘误/边界：
+
+- 现代 `LegacyRemoteFluidMachineBlockEntity` 是共享油处理/远程流体机器基类，但旧端并非所有油处理机器都有 `ILookOverlay`。已复核：`MachineCatalyticCracker` 有 overlay；`MachineCatalyticReformer`、`MachineHydrotreater`、`MachineCoker`、`MachineVacuumDistill`、`MachineGasFlare` 没有 `ILookOverlay`，后续不得因为现代 BE 有 tank 就统一显示常驻准星文字。
+- 现代资源已有 `strand_caster.obj` facade，但尚无对应方块/BlockEntity 行为承载；本轮只补 API，不迁 `MachineStrandCaster#printHook`。
+- `MachineIGenerator` 旧 overlay 是纪念文字且使用橙色标题；现代端尚未注册对应方块/BE，本轮只补 API 承载能力。
+
+验证：
+
+- 待跑 `.\gradlew.bat compileJava processResources --no-daemon`。

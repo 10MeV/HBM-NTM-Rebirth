@@ -1,10 +1,14 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.fluid.ForgeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidNode;
 import com.hbm.ntm.fluid.HbmFluidNodeHost;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidUser;
 import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import java.util.EnumMap;
@@ -16,6 +20,7 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -27,7 +32,8 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFluidNodeHost {
+public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFluidNodeHost, HbmFluidUser,
+        LegacyLookOverlayProvider {
     private static final String TAG_FLUIDS = "hbm_fluids";
     private static final String TAG_TANK_PREFIX = "tank_";
 
@@ -43,6 +49,18 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     public List<HbmFluidTank> getAllTanks() {
         return tanks;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(net.minecraft.world.level.Level level, BlockPos viewedPos) {
+        if (!showsLegacyFluidLookOverlay()) {
+            return null;
+        }
+        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.allFluidUserTanks(this));
+    }
+
+    protected boolean showsLegacyFluidLookOverlay() {
+        return false;
     }
 
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
@@ -145,8 +163,23 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     }
 
     @Override
+    public CompoundTag getUpdateTag() {
+        return saveWithoutMetadata();
+    }
+
+    @Nullable
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        invalidateFluidHandlers();
+    }
+
+    protected void invalidateFluidHandlers() {
         for (LazyOptional<IFluidHandler> handler : sidedFluidHandlers.values()) {
             handler.invalidate();
         }
@@ -187,9 +220,16 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
         if (mode == HbmFluidSideMode.NONE) {
             return LazyOptional.empty();
         }
-        List<HbmFluidTank> visibleTanks = mode == HbmFluidSideMode.INPUT ? getInputTanks(side)
-                : mode == HbmFluidSideMode.OUTPUT ? getOutputTanks(side)
-                : tanks;
+        if (mode == HbmFluidSideMode.BOTH) {
+            return LazyOptional.of(() -> new ForgeFluidHandlerAdapter(
+                    getInputTanks(side),
+                    getOutputTanks(side),
+                    getInputPressure(side),
+                    true,
+                    true,
+                    this::onFluidContentsChanged));
+        }
+        List<HbmFluidTank> visibleTanks = mode == HbmFluidSideMode.INPUT ? getInputTanks(side) : getOutputTanks(side);
         return LazyOptional.of(() -> new ForgeFluidHandlerAdapter(
                 visibleTanks,
                 getInputPressure(side),

@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.fluid.FluidType;
@@ -63,6 +65,14 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
 
     public int getHeat() {
         return heat;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        return LegacyLookOverlay.forBlock(this, List.of(
+                LegacyLookOverlayLines.heatTu(heat),
+                LegacyLookOverlayLines.tank(true, feedTank),
+                LegacyLookOverlayLines.tank(false, steamTank)));
     }
 
     @Override
@@ -207,10 +217,7 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
 
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
-        if (side == null) {
-            return HbmFluidSideMode.BOTH;
-        }
-        return side == Direction.DOWN ? HbmFluidSideMode.OUTPUT : HbmFluidSideMode.INPUT;
+        return HbmFluidSideMode.BOTH;
     }
 
     @Override

@@ -19,6 +19,7 @@ import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.network.HbmServerKeybinds;
+import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ArmorUtil;
@@ -440,9 +441,27 @@ public final class CommonForgeEvents {
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
         RadiationData.copyForRespawn(event.getOriginal(), event.getEntity());
+        HbmPlayerProperties.copyForRespawn(event.getOriginal(), event.getEntity());
         RadiationData.applyDigammaModifier(event.getEntity());
         if (event.getOriginal() instanceof ServerPlayer oldPlayer) {
             HbmServerKeybinds.clear(oldPlayer);
+        }
+        if (event.getEntity() instanceof ServerPlayer player) {
+            HbmPlayerProperties.sync(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            HbmPlayerProperties.sync(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            HbmPlayerProperties.sync(player);
         }
     }
 

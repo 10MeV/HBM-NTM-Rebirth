@@ -20,7 +20,7 @@ public final class ObjBlockModels {
     public static final LegacyWavefrontModel RTTY = model("rtty", "rtty_controller").noSmooth();
     public static final LegacyWavefrontModel CRT = model("crt", "crt_clean").noSmooth();
     public static final LegacyWavefrontModel TOASTER = model("toaster", "toaster_iron").noSmooth();
-    public static final LegacyWavefrontModel DECO_COMPUTER = model("puter", "crt_clean").noSmooth();
+    public static final LegacyWavefrontModel DECO_COMPUTER = model("puter", "deco_computer").noSmooth();
     public static final LegacyWavefrontModel HEV_BATTERY = model("battery", "battery_top").noSmooth();
     public static final LegacyWavefrontModel SKELETON_HOLDER = model("skeleton_holder", "skeleton").noSmooth().asVBO();
     public static final LegacyWavefrontModel ANVIL = model("anvil", "anvil_iron").noSmooth();

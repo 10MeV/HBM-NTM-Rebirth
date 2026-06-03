@@ -9,6 +9,10 @@ import org.jetbrains.annotations.Nullable;
 public interface IFluidIdentifierItem {
     FluidType getIdentifiedFluid(@Nullable Level level, BlockPos pos, ItemStack stack);
 
+    default FluidType getPrimaryType(ItemStack stack) {
+        return getIdentifiedFluid(null, BlockPos.ZERO, stack);
+    }
+
     default boolean setIdentifiedFluid(ItemStack stack, FluidType type, boolean primary) {
         return false;
     }

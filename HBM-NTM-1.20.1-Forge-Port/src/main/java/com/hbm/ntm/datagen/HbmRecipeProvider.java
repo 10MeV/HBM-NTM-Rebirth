@@ -7,6 +7,7 @@ import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.recipe.HbmFluidContainerIngredient;
 import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
@@ -17,6 +18,7 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.data.recipes.SpecialRecipeBuilder;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.nbt.CompoundTag;
@@ -287,7 +289,8 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
         GenericMachineRecipeBuilder.assembly("ass.emptypackage", 40, 100)
                 .inputItem(ModItems.TITANIUM_PLATE.get(), 4)
-                .inputItem(ModItems.PLASTIC_BAG.get(), 2)
+                .inputItem(ModItems.PLASTIC_BAG.get(), 1)
+                .inputItem(ModItems.PLASTIC_BAG.get(), 1)
                 .outputItem(ModItems.FLUID_PACK_EMPTY.get())
                 .save(consumer, id("assembly_machine/emptypackage"));
 
@@ -309,6 +312,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void fluidNetworkRecipes(Consumer<FinishedRecipe> consumer) {
+        SpecialRecipeBuilder.special(ModRecipes.FLUID_DUCT_IDENTIFIER.get())
+                .save(consumer, id("fluid_network/fluid_duct_identifier").toString());
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.FLUID_DUCT_NEO.get(), 8)
                 .pattern("SAS")
                 .pattern("   ")

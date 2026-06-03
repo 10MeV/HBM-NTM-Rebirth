@@ -1,12 +1,26 @@
 {
   "values": [
-    "hbm:powder_lignite",
+    "hbm:powder_spark_mix",
+    "hbm:powder_uranium",
+    "hbm:powder_plutonium",
+    "hbm:powder_thorium",
+    "hbm:powder_titanium",
+    "hbm:powder_tungsten",
+    "hbm:powder_copper",
     "hbm:powder_iron",
+    "hbm:powder_steel",
     "hbm:powder_lead",
     "hbm:powder_lithium",
     "hbm:powder_cobalt",
     "hbm:powder_sodium",
     "hbm:powder_schrabidium",
-    "hbm:powder_spark_mix"
+    "hbm:powder_calcium",
+    "hbm:powder_cadmium",
+    "hbm:powder_bismuth",
+    "hbm:powder_caesium",
+    "hbm:powder_coltan_ore",
+    "hbm:powder_coal",
+    "hbm:powder_lignite",
+    "hbm:powder_limestone"
   ]
 }

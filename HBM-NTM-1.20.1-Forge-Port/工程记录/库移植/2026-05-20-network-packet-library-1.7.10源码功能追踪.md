@@ -1199,3 +1199,9 @@
 - 2026-05-26 协议映射查询与自检命令批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度保持 99%。
 - 2026-05-26 协议 audit 启动自检与重复检测批次：`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度保持 99%。
 - 2026-05-26 注册表守门与旧 wrapper 安全发送批次：首次编译遇到 `PacketDistributor.TargetPoint` 无 `x()/y()/z()` accessor；改为稳定 `near` 诊断目标后，`.\gradlew.bat compileJava processResources --no-daemon` 通过；网络库基础功能可用度保持 99%。
+- 2026-06-01 GUI 按钮/NBT 控制统一校验批次：
+  - 新增 `HbmGuiControlSecurity`，作为旧 `AuxButtonPacket` / `NBTControlPacket` / typed tile action 的现代 GUI 安全底座。
+  - `TileControlPacket`、`LegacyButtonPacket`、`ServerTileActionPacket` 统一走 sender、16 格距离、chunk loaded、目标 BlockEntity 类型校验。
+  - 具体菜单类型校验不在通用 packet 中硬编码，由 receiver 的 `canReceiveClientControl` / `canReceiveLegacyButton` / `canReceiveTypedTileAction` 执行。
+  - 化工厂和装配机 recipe selector receiver 已要求玩家当前打开对应 Menu，避免未开 GUI 或错误 GUI 时修改机器状态。
+  - `.\gradlew.bat compileJava --no-daemon` 通过。

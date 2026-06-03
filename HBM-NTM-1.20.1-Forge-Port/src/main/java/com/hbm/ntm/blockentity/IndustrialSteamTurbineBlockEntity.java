@@ -1,10 +1,13 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmTurbineConversion;
 import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -12,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEntity {
+    private static final String[] SPIN_BLOCKS = new String[] {"", "|", "/", "\\"};
     private static final long MAX_STORED_POWER = 100_000_000L;
     private static final int INPUT_TANK_SIZE = 750_000;
     private static final int OUTPUT_TANK_SIZE = 3_000_000;
@@ -73,6 +77,17 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
 
     public long getMaxPowerTarget() {
         return maxPowerTarget;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        int spinner = flywheelEnergy <= 0L ? 0 : (int) ((level.getGameTime() / 4L) % 4L);
+        int spinPercent = (int) Math.round(spin * 100.0D);
+        return LegacyLookOverlay.forBlock(this, List.of(
+                LegacyLookOverlayLines.tank(true, inputTank),
+                LegacyLookOverlayLines.tank(false, outputTank),
+                LegacyLookOverlayLines.energyOut(lastPowerTarget,
+                        Component.literal("(" + SPIN_BLOCKS[spinner] + spinPercent + "%)"))));
     }
 
     @Override

@@ -2,17 +2,18 @@ package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.particle.ParticleUtil;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.client.particle.TerrainParticle;
 import net.minecraft.client.particle.TextureSheetParticle;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -73,9 +74,12 @@ public class GibletParticle extends TextureSheetParticle {
             this.rotationPitch += this.momentumPitch;
             this.rotationYaw += this.momentumYaw;
             if (this.gibType != ParticleUtil.GIBLET_METAL) {
-                this.level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK,
-                                this.gibType == ParticleUtil.GIBLET_SLIME ? Blocks.MELON.defaultBlockState() : Blocks.REDSTONE_BLOCK.defaultBlockState()),
-                        this.x, this.y, this.z, 0.0D, 0.0D, 0.0D);
+                BlockState state = this.gibType == ParticleUtil.GIBLET_SLIME
+                        ? Blocks.MELON.defaultBlockState()
+                        : Blocks.REDSTONE_BLOCK.defaultBlockState();
+                TerrainParticle trail = new TerrainParticle(this.level, this.x, this.y, this.z, 0.0D, 0.0D, 0.0D, state);
+                trail.setLifetime(20 + this.random.nextInt(20));
+                Minecraft.getInstance().particleEngine.add(trail);
             }
         }
 

@@ -210,6 +210,176 @@
 
 - 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
 
+## 2026-06-02 详细 hitbox 勘误与 gascent/sawmill/crucible 接入
+
+触发来源：
+
+- 继续推进多方块库移植，并对用户指出的 1.7.10 选中框/碰撞/粒子行为重新对齐。
+- 本轮优先迁入已有 OBJ/贴图资源且 1.7.10 `BlockDummyable#bounding` 明确的三台机器：`machine_gascent`、`machine_sawmill`、`machine_crucible`。
+
+1.7.10 事实来源：
+
+- `com.hbm.blocks.BlockDummyable`：
+  - `useDetailedHitbox()` 为 `!bounding.isEmpty()`。
+  - 无 `bounding` 时，`addCollisionBoxesToList(...)` 与 `collisionRayTrace(...)` 调用 `super`，因此选中/碰撞表现为命中到的单个 core/dummy 方块。
+  - 有 `bounding` 时，碰撞和射线检测先 `findCore(...)`，再按 core metadata 旋转每个 AABB；`shouldDrawHighlight(...)` 返回 true，并由 `drawHighlight(...)` 取消默认高亮后绘制整组详细线框。
+  - `setBlockBoundsBasedOnState(...)` 对详细 hitbox 方块保留 `0..1, maxY=0.999` 的单块 bounds，用于物品碰撞修正。
+- `com.hbm.blocks.machine.MachineGasCent`：
+  - `getDimensions() = {3,0,0,0,0,0}`，`getOffset() = 0`。
+  - `bounding` 为 `(-0.5,0,-0.5 -> 0.5,1,0.5)` 与 `(-0.4375,1,-0.4375 -> 0.4375,4,0.4375)`。
+  - `createNewTileEntity(meta >= 12)` 为 `TileEntityMachineGasCent`；`meta >= 6` 理论为 `TileEntityProxyCombo(false,true,true)`，但 `fillSpace(...)` 只调用 super，实际没有 `makeExtra(...)` 生成 proxy。
+  - `RenderCentrifuge` 对 gas cent 在普通离心机方向旋转后额外 `GL11.glRotatef(180, 0, 1, 0)`，并渲染 `Centrifuge`、`Flag`；物品只渲染 `Centrifuge`。
+- `com.hbm.blocks.machine.MachineSawmill`：
+  - `getDimensions() = {1,0,1,1,1,1}`，`getOffset() = 1`。
+  - `fillSpace(...)` 先 super，再对 core 周围四个水平 cardinal 位置 `makeExtra(...)`；这些 extra dummy 使用 `TileEntityProxyCombo().inventory()`。
+  - `bounding` 为 `(-1.5,0,-1.5 -> 1.5,1,1.5)`、`(-1.25,1,-0.5 -> -0.625,1.875,0.5)`、`(-0.625,1,-1 -> 1.375,2,1)`。
+  - `RenderSawmill` 渲染 `Main`、`Blade`、`GearLeft`、`GearRight`，方向为 meta 3/5/2/4 -> 0/90/180/270。
+- `com.hbm.blocks.machine.MachineCrucible`：
+  - `getDimensions() = {1,0,1,1,1,1}`，`getOffset() = 1`。
+  - 所有非 core metadata 都返回 `TileEntityProxyCombo().inventory()`，因此现代端所有 dummy offset 都标记 inventory proxy。
+  - `bounding` 为 `(-1.5,0,-1.5 -> 1.5,0.5,1.5)`、四条边框 `(-1.25,0.5,-1.25 -> 1.25,1.5,-1)`、`(-1.25,0.5,-1.25 -> -1,1.5,1.25)`、`(-1.25,0.5,1 -> 1.25,1.5,1.25)`、`(1,0.5,-1.25 -> 1.25,1.5,1.25)`。
+  - 碰撞/射线检测继承 `BlockDummyable`，因此按 core 朝向旋转详细 AABB；但 `MachineCrucible#drawHighlight(...)` 自己 override，绘制未旋转的 `bounding`。
+- 旧注册材质：
+  - `machine_gascent` 与 `machine_sawmill` 的 `setBlockTextureName(...)` 为 `block_steel`。
+  - `machine_crucible` 的 `setBlockTextureName(...)` 为 `brick_fire`。
+  - 旧 `zh_CN.lang` / `en_US.lang` 名称：气体离心机/Gas Centrifuge、斯特林锯木机/Stirling Sawmill、坩埚/Crucible。
+
+本轮现代侧补齐：
+
+- `LegacyMachineDefinition` 新增：
+  - `highlightShape(...)`：默认使用 `collisionShape(...)`，用于承载坩埚这种“碰撞旋转、线框不旋转”的旧特例。
+  - `particleState(...)`：默认返回旧结构填充块粒子；可按机器旧 `setBlockTextureName(...)` 覆盖。
+- `MultiblockCoreBlock` 新增 `usesForwardedDummyShape(...)`、`usesForwardedDummyCollisionShape(...)` 与 `multiblockParticleState(...)`：
+  - 默认不转发整机 shape，dummy 仍显示/碰撞自身一格。
+  - 默认粒子为 `block_steel` 结构填充材质，保持 core/dummy 破坏粒子与旧结构填充块一致。
+- `DummyBlock` 的 shape/collision 转发改为受 core 明确声明控制：
+  - 无 `bounding` 的 legacy visible machine 不再让 dummy 使用整机 shape。
+  - 有 `bounding` 的 legacy visible machine 才把 dummy 的选中/碰撞转发到 core 的详细 shape。
+  - dummy 破坏粒子从 core 的 `multiblockParticleState(...)` 获取，坩埚这类非钢材质机器可回到旧材质粒子。
+- `LegacyVisibleMultiblockMachineBlock`：
+  - 无详细 `bounding` 时 core 自身仍是单方块 shape/collision。
+  - 有详细 `bounding` 时 core/dummy 使用定义内详细 shape。
+  - core 破坏粒子使用定义内 `particleState(...)`。
+- 新接入 `machine_gascent`、`machine_sawmill`、`machine_crucible`：
+  - 注册到 `ModBlocks` / 机器创造栏 / `LEGACY_VISIBLE_MACHINE` BlockEntity。
+  - 接入 legacy XR layout、offset、proxy 标记、OBJ part 渲染、物品渲染、详细 AABB。
+  - `gascent` 按旧 renderer 在离心机朝向基础上额外旋转 180 度。
+  - `sawmill` 四个 cardinal dummy 使用 inventory proxy。
+  - `crucible` 所有非 core dummy 使用 inventory proxy，碰撞 shape 旋转，高亮 shape 不旋转。
+  - 新增 `gascent.json`、`sawmill.json` Forge OBJ 模型声明；`crucible.json` 已存在。
+  - datagen 生成 blockstate、builtin/entity item model、loot table、pickaxe/iron-tool tags、英文/中文语言。
+
+对 1.7.10 的勘误：
+
+- “多方块不会显示整个碰撞箱，只显示命中方块单个方块体积”只适用于 `bounding` 为空的 `BlockDummyable` 机器。
+- `bounding` 非空的机器在 1.7.10 会用详细 AABB 做碰撞和射线检测，并取消默认高亮绘制整组详细线框。
+- 坩埚是特殊例外：碰撞/射线检测仍继承 `BlockDummyable` 的旋转详细 AABB，但高亮 override 绘制未旋转的 `bounding`。
+
+仍然延期：
+
+- `TileEntityMachineGasCent`、`TileEntitySawmill`、`TileEntityCrucible` 的真实菜单、配方、热量、材料栈、刀片状态、熔融液面渲染与右键逻辑尚未迁入；本轮只完成多方块库、占位、资源和可见模型脚手架。
+- 锯木机旧物品损伤值 `1` 表示无刀片并影响掉落，目前现代注册还是单一 block item，待真实方块实体/掉落逻辑迁入时继续对齐。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava --no-daemon --rerun-tasks`，通过。
+- 首次 `runData` 在 `downloadAssets` 阶段因 `minecraft/lang/fr_fr.json` 下载超时失败；使用项目代理参数重跑 `runData` 成功。
+- 已跑：`$env:JAVA_OPTS='-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7890 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7890 -Dnet.minecraftforge.gradle.check.certs=false'; .\gradlew.bat runData --no-daemon --rerun-tasks`，通过。
+
+## 2026-06-02 详细 bounding 自定义高亮迁移
+
+触发来源：
+
+- 用户继续要求推进多方块库，并强调 1.7.10 默认不会显示整机碰撞/选择框，只显示当前指向方块的单格体积；需要在这个前提下对齐旧版详细 hitbox 行为。
+- 上一轮已把普通无 `bounding` 多方块修回单格选择框/单格默认碰撞；本轮补齐旧 `ICustomBlockHighlight` 客户端高亮路径，避免用 `getShape(...)` 伪装整机高亮。
+
+1.7.10 事实来源：
+
+- `BlockDummyable#useDetailedHitbox()` 只在 `bounding` 非空时返回 true。
+- `BlockDummyable#shouldDrawHighlight(...)` 只检查 `!bounding.isEmpty()`；无 `bounding` 的机器不画整机自定义高亮。
+- `BlockDummyable#drawHighlight(...)` 通过 `findCore(...)` 从 core/dummy 回溯到 core，按 core metadata 计算 `ForgeDirection.getRotation(ForgeDirection.UP)`，对每个 `bounding` AABB 执行旧旋转、`expand(0.002F)` 和相对玩家/camera 偏移，再用 `RenderGlobal.drawOutlinedBoundingBox(...)` 绘制。
+- `ICustomBlockHighlight#setup()` 使用黑色半透明线框、禁纹理、深度 mask false；`ModEventHandlerRenderer#onDrawHighlight(...)` 在命中块实现 `ICustomBlockHighlight` 且允许绘制时调用自定义绘制并取消默认高亮事件。
+
+本轮现代侧补齐：
+
+- 新增 `LegacyMultiblockHighlightRenderer`，订阅现代 Forge `RenderHighlightEvent.Block` 前置高亮事件。
+- 命中位置先走 `MultiblockHelper.findCore(...)`，因此 core 与 dummy 都复用同一回溯/归属校验路径；无效残留 dummy 不会触发自定义高亮。
+- 仅当 core 是 `LegacyVisibleMultiblockMachineBlock` 且 `LegacyMachineDefinition#hasCollisionShapeFactory()` 为 true 时绘制整机详细线框；这对应旧 `bounding` 非空机器。当前已声明详细 AABB 的机器包括 `machine_centrifuge`、`machine_ore_slopper`、`machine_gasflare`。
+- 线框使用 `LegacyMachineDefinition#collisionShape(...)` 的旧 AABB 旋转结果，按 core 坐标减 camera 坐标渲染，逐个 `AABB.inflate(0.002D)` 后用 `LevelRenderer.renderLineBox(...)` 绘制黑色 0.4 alpha 线框，并取消原版单格 outline。
+
+对 1.7.10 的对齐说明：
+
+- 普通无 `bounding` 多方块仍保持原版单格高亮，不显示整机线框。
+- 有 `bounding` 的多方块在指向 core 或任意有效 dummy 时显示整机详细线框；这和旧 `BlockDummyable#drawHighlight(...)` 的 core 回溯合同一致。
+- 本轮没有把详细高亮混入普通 `getShape(...)`，因此不会再次把“选择框”误修成整机 shape。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
+## 2026-06-02 选择框、默认碰撞与破坏粒子勘误
+
+触发来源：
+
+- 用户指出 1.7.10 多方块不会显示整机碰撞箱，只会显示当前指向方块的单格碰撞体积；破坏时也只掉当前方块粒子，core 破坏粒子同样是结构填充块粒子。
+- 复查旧 `BlockDummyable` 后确认，前几轮现代端把 layout shape 同时当作选择框和默认碰撞的做法混入了猜测内容；它能掩盖 dummy 填充缺失，但不是旧版默认合同。
+
+1.7.10 事实来源：
+
+- `BlockDummyable#useDetailedHitbox()` 只在 `bounding` 非空时返回 true。
+- `BlockDummyable#addCollisionBoxesToList(...)` 在 `useDetailedHitbox() == false` 时直接调用 `super.addCollisionBoxesToList(...)`，因此默认物理碰撞来自当前 core/dummy 方块自己的 vanilla 单格完整方块。
+- `BlockDummyable#collisionRayTrace(...)` 在 `useDetailedHitbox() == false` 时直接调用 `super.collisionRayTrace(...)`，因此默认选择/射线命中只针对当前指向的单个 core/dummy 方块。
+- `BlockDummyable#setBlockBoundsBasedOnState(...)` 在无详细 hitbox 时调用 super；有详细 hitbox 时也只把当前方块 bounds 设为 `0..1, 0..0.999, 0..1`，整机详细高亮另由 `ICustomBlockHighlight#drawHighlight(...)` 绘制。
+- `BlockDummyable#shouldDrawHighlight(...)` 只有 `bounding` 非空才返回 true；无 `bounding` 的机器没有整机自定义高亮。
+- 旧源码未在 `BlockDummyable` 中实现整机破坏粒子；破坏效果沿 vanilla 当前被破坏方块生成。旧注册中组装机等 `BlockDummyable` 机器使用 `hbm:block_steel` 作为 block texture，所以 core/dummy 破坏粒子都是结构填充块/钢块粒子，而不是 OBJ 整机粒子。
+
+本轮现代侧勘误：
+
+- `DummyBlock#getShape(...)` 固定返回单格 `Shapes.block()`，不再把 core 的整机 layout shape 平移到 dummy 位置。
+- `LegacyVisibleMultiblockMachineBlock`、`AssemblyMachineBlock`、`LiquefactorBlock`、`FluidTankBlock`、`MachineBatterySocketBlock` 的 `getShape(...)` / `getMultiblockShape(...)` 回到单格 shape，避免玩家指向 core 或 dummy 时显示整机选择框。
+- `LegacyXrMultiblockBlock` 与 `LegacyOffsetMultiblockBlock` 的默认 `getMultiblockCollisionShape(...)` 回到单格 shape；默认物理碰撞由实际填充出的 dummy/core 方块集合自然组成，和 1.7.10 无 `bounding` 路径一致。`MachineBatterySocketBlock` 旧源码同属无 `bounding` 的 `BlockDummyable`，现代端也不再保留 2x2 整体 collision shape。
+- `MultiblockCoreBlock` 新增 `usesForwardedDummyCollisionShape(...)`。默认 false；只有有明确详细 collision factory 的可见多方块返回 true，使 dummy 只在旧详细 `bounding` 类机器上转发整机/精细碰撞。
+- `ModBlocks` 移除所有 `.collisionShape(state -> stateLayoutShape(state))` 的 layout 兜底声明，只保留直接来自旧详细 AABB 的 `legacyRotatedShape(...)`。这一步清理了“用整机 layout shape 近似旧默认碰撞”的猜测内容。
+- `LegacyXrMultiblockBlock` 与 `LegacyOffsetMultiblockBlock` 增加统一 `addDestroyEffects(...)`，使用 `MultiblockHelper.steelParticleState()`；此前已有的 dummy、组装机、液化机钢块破坏粒子路径保持一致，流体罐和普通可见多方块 core 也补回结构填充块粒子。
+
+对 1.7.10 的对齐说明：
+
+- 无详细 `bounding` 的机器：选择框、ray trace、默认物理碰撞和破坏粒子都按当前指向/破坏的单个 core 或 dummy 方块处理；外围是否能挡人依赖 dummy 是否按旧结构完整填充。
+- 有详细 `bounding` 的机器：仍保留从 dummy 回溯 core 并使用 `legacyRotatedShape(...)` 的整机/精细碰撞路径；旧版自定义整机高亮渲染本轮尚未迁入，后续若要补，应单独实现类似 `ICustomBlockHighlight` 的客户端高亮层，而不是继续滥用 `getShape(...)`。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
+## 2026-05-31 默认 layout shape 从外接盒改为离散 dummy 方块集合
+
+触发来源：
+
+- 继续推进多方块库移植时复核 1.7.10 `BlockDummyable` 的碰撞路径，发现现代端上一轮把默认 shape 修到三维高度后，仍然使用整机外接包围盒。
+- 外接包围盒虽然能避免“只剩一层碰撞”，但会把旧版中真实为空的凹槽、中空和不连续结构也变成实心，不符合没有 `bounding` 详细盒时的旧 dummy 碰撞语义。
+
+1.7.10 事实来源：
+
+- `BlockDummyable#addCollisionBoxesToList(...)` 在 `useDetailedHitbox() == false` 时直接走 `super.addCollisionBoxesToList(...)`，也就是当前被命中的 core/dummy 方块自己的普通整方块碰撞。
+- `BlockDummyable#collisionRayTrace(...)` 在无详细 `bounding` 时同样回到 vanilla 单方块 ray trace。
+- `MultiblockHandlerXR.fillSpace(...)` 会在每个结构坐标放置一个 dummy metadata；因此默认碰撞不是整机外接盒，而是实际填充出来的 core/dummy 方块集合。
+- 有详细 `bounding` 的机器仍走 `findCore(...) -> core 朝向 -> bounding 列表旋转` 的单独路径，现代端对应已有 `legacyRotatedShape(...)`。
+
+本轮现代侧修正：
+
+- `LegacyMultiblockLayout#shape(double height)` 从计算所有 offset 的外接长方体，改为对 `offsets()` 中每个实际填充坐标生成 `1xheightx1` 的 `VoxelShape` 并 union。
+- 所有使用默认 `layout(state).shape(1.0D)` 的可见多方块、组装机以及 offset 型电池座，都会按真实 dummy 足迹提供选择/碰撞形状。
+- `renderBoundingBox(...)` 仍保留外接盒逻辑，因为渲染包围盒需要覆盖整机可视范围，而不是模拟碰撞实体积。
+
+对 1.7.10 的对齐说明：
+
+- 这一步是对上一轮“碰撞高度修复”的继续收紧：高度仍来自旧 `getDimensions()` / 额外 offset 的实际 Y 层，但 X/Z/Y 空间不再把未填充位置当作实体。
+- 已迁入详细 `bounding` 的机器不受默认 shape 变化影响，仍优先使用来源于 1.7.10 renderer/block 构造器的 AABB。
+
+验证：
+
+- 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
+
 ## 2026-05-26 makeExtra 偏移勘误：工业涡轮/液化机/SILEX
 
 触发来源：
@@ -578,7 +748,7 @@
 
 暂缓内容：
 
-- `machine_sawmill` 旧代码已经确认有独立 `bounding`、proxy 和动态锯片，但现代端当前没有对应 OBJ/贴图资源；不在本轮硬接空模型。
+- 勘误：本轮当时判断 `machine_sawmill` 现代端缺少 OBJ/贴图资源是错误记录；2026-06-02 已确认 `sawmill.obj/png` 存在并接入可见多方块 scaffold，动态锯片状态仍待机器逻辑切片。
 - 三台机器本轮仍是可见多方块 scaffold：GUI、库存、能量/流体规则、动画状态、配方运行和声音粒子留给机器逻辑切片。
 
 ## 2026-05-23 炼油后段可见多方块批次

@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_fluid_switch": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "hbm:fluid_switch"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "hbm:fluid_network/fluid_counter_valve"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_fluid_switch",
+      "has_the_recipe"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "hbm:fluid_network/fluid_counter_valve"
+    ]
+  },
+  "sends_telemetry_event": false
+}

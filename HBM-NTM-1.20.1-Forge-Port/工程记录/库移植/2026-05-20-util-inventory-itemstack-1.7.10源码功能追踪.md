@@ -48,3 +48,16 @@
 - 空 slot 填充和剩余返回语义一致。
 - NBT 内嵌物品可保存/读取。
 - 掉落物数量和随机偏移合理。
+
+## 2026-06-01 GUI/Menu 库接入补丁
+
+- 新增 `HbmInventoryMenuHelper`：
+  - `outputSlot(...)`：统一机器输出槽/返回槽 `mayPlace=false`。
+  - `addPlayerInventoryAndHotbar(...)`：保留旧坐标由具体 Menu 传入，不抽象 GUI 布局。
+  - `moveMachineStack(...)`：提供机器槽到玩家背包、玩家背包到指定机器槽 range 的 shift-click 规则，具体可插入范围仍由机器 Menu 按旧 Container 传入。
+  - `saveLegacyItems(...)` / `loadLegacyItems(...)`：集中旧 ItemStack NBT `items` list + 每项 `slot` key 语义，供 toolbox、crate、容器物品和后续旧库存迁移复用。
+  - `clearToDrops(...)`：集中清空 `ItemStackHandler` 并返回掉落 stack 的常用逻辑。
+- 新增 `HbmMenuDataSlots`：
+  - 统一 64-bit long 拆为四个 16-bit DataSlot 的同步写法。
+  - 统一 `progress 0..1 -> 0..10000` 的菜单同步约定。
+- 已接入 `AssemblyMachineMenu` 与 `ChemicalPlantMenu`，验证不改变旧 slot 坐标。

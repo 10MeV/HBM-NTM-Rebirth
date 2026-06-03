@@ -1,5 +1,8 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.HbmFluidNodeBlock;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidNet;
@@ -18,9 +21,11 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 
-public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnector, HbmFluidNodeHost, HbmFluidNodeBlock.FluidTypedBlockEntity {
+public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnector, HbmFluidNodeHost,
+        HbmFluidNodeBlock.FluidTypedBlockEntity, LegacyLookOverlayProvider {
     private static final String TAG_TYPE = "type";
 
     protected HbmFluidNode node;
@@ -67,6 +72,11 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
                 nodeBlock.updateFluidConnectionGraph(level, worldPosition);
             }
         }
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(net.minecraft.world.level.Level level, BlockPos viewedPos) {
+        return LegacyLookOverlay.forBlock(this, List.of(LegacyLookOverlayLines.fluidName(type)));
     }
 
     @Override

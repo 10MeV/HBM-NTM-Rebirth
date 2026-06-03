@@ -1,11 +1,14 @@
 package com.hbm.ntm.fluid;
 
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
 public class ForgeFluidHandlerAdapter implements IFluidHandler {
     private final List<HbmFluidTank> tanks;
+    private final List<HbmFluidTank> inputTanks;
+    private final List<HbmFluidTank> outputTanks;
     private final int inputPressure;
     private final boolean canFill;
     private final boolean canDrain;
@@ -25,7 +28,14 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
     }
 
     public ForgeFluidHandlerAdapter(List<HbmFluidTank> tanks, int inputPressure, boolean canFill, boolean canDrain, Runnable onChanged) {
-        this.tanks = List.copyOf(tanks);
+        this(tanks, tanks, inputPressure, canFill, canDrain, onChanged);
+    }
+
+    public ForgeFluidHandlerAdapter(List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks, int inputPressure,
+            boolean canFill, boolean canDrain, Runnable onChanged) {
+        this.inputTanks = List.copyOf(inputTanks == null ? List.of() : inputTanks);
+        this.outputTanks = List.copyOf(outputTanks == null ? List.of() : outputTanks);
+        this.tanks = mergeVisibleTanks(this.inputTanks, this.outputTanks);
         this.inputPressure = HbmFluidTank.clampPressure(inputPressure);
         this.canFill = canFill;
         this.canDrain = canDrain;
@@ -57,8 +67,12 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
         if (!canFill || !isValidTank(tank) || stack == null || stack.isEmpty()) {
             return false;
         }
+        HbmFluidTank hbmTank = tanks.get(tank);
+        if (!inputTanks.contains(hbmTank)) {
+            return false;
+        }
         FluidType type = HbmFluidForgeMappings.fromForge(stack);
-        return type != HbmFluids.NONE && tanks.get(tank).canAccept(type, inputPressure);
+        return type != HbmFluids.NONE && hbmTank.canAccept(type, inputPressure);
     }
 
     @Override
@@ -73,7 +87,7 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
         int remaining = resource.getAmount();
         int filled = 0;
         boolean simulate = action.simulate();
-        for (HbmFluidTank tank : tanks) {
+        for (HbmFluidTank tank : inputTanks) {
             if (remaining <= 0) {
                 break;
             }
@@ -105,12 +119,15 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
         if (!canDrain || maxDrain <= 0) {
             return FluidStack.EMPTY;
         }
-        for (HbmFluidTank tank : tanks) {
+        for (HbmFluidTank tank : outputTanks) {
             FluidType type = tank.getTankType();
             if (tank.getFill() <= 0 || !HbmFluidForgeMappings.canExport(type)) {
                 continue;
             }
             int drained = tank.drain(maxDrain, action.simulate());
+            if (!action.simulate() && drained > 0) {
+                onChanged.run();
+            }
             return HbmFluidForgeMappings.toForge(type, drained);
         }
         return FluidStack.EMPTY;
@@ -119,7 +136,7 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
     private int drainMatching(FluidType type, int amount, boolean simulate) {
         int remaining = amount;
         int drained = 0;
-        for (HbmFluidTank tank : tanks) {
+        for (HbmFluidTank tank : outputTanks) {
             if (remaining <= 0) {
                 break;
             }
@@ -138,5 +155,20 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
 
     private boolean isValidTank(int tank) {
         return tank >= 0 && tank < tanks.size();
+    }
+
+    private static List<HbmFluidTank> mergeVisibleTanks(List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks) {
+        List<HbmFluidTank> visible = new ArrayList<>();
+        for (HbmFluidTank tank : inputTanks) {
+            if (tank != null && !visible.contains(tank)) {
+                visible.add(tank);
+            }
+        }
+        for (HbmFluidTank tank : outputTanks) {
+            if (tank != null && !visible.contains(tank)) {
+                visible.add(tank);
+            }
+        }
+        return List.copyOf(visible);
     }
 }

@@ -1,5 +1,8 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnectionUtil;
 import com.hbm.ntm.fluid.HbmFluidConnector;
@@ -24,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
-        implements HbmFluidConnector, HbmFluidNodeHost, PaintableDuctBlockEntity {
+        implements HbmFluidConnector, HbmFluidNodeHost, PaintableDuctBlockEntity, LegacyLookOverlayProvider {
     private static final String TAG_PAINT_BLOCK = "block";
     private static final String TAG_PAINT_META = "meta";
     private static final String TAG_PAINT_BLOCK_NAME = "paint_block";
@@ -79,6 +82,11 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
             }
         }
         return null;
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(net.minecraft.world.level.Level level, BlockPos viewedPos) {
+        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.fluidNames(SMOKES));
     }
 
     @Override

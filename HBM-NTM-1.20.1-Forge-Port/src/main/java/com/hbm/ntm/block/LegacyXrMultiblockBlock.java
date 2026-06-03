@@ -5,6 +5,7 @@ import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.multiblock.MultiblockCoreBlock;
 import com.hbm.ntm.multiblock.MultiblockExtents;
 import com.hbm.ntm.multiblock.MultiblockHelper;
+import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,9 +15,14 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
+import java.util.function.Consumer;
 
 @SuppressWarnings("deprecation")
 public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock implements MultiblockCoreBlock, LegacyMultiblockPlaceable {
@@ -57,6 +63,17 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
     @Override
     public boolean ownsMultiblockDummy(BlockState state, BlockGetter level, BlockPos corePos, BlockPos dummyPos) {
         return getLayout(state).containsOffset(dummyPos.subtract(corePos));
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return getMultiblockCollisionShape(state, level, pos, context);
+    }
+
+    @Override
+    public VoxelShape getMultiblockCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
+            CollisionContext context) {
+        return Shapes.block();
     }
 
     @Override
@@ -133,6 +150,17 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
     }
 
     protected void onCoreRemoved(Level level, BlockPos pos, BlockState state) {
+    }
+
+    @Override
+    public void initializeClient(Consumer<IClientBlockExtensions> consumer) {
+        consumer.accept(new IClientBlockExtensions() {
+            @Override
+            public boolean addDestroyEffects(BlockState state, Level level, BlockPos pos, ParticleEngine manager) {
+                manager.destroy(pos, MultiblockHelper.steelParticleState());
+                return true;
+            }
+        });
     }
 
     private void fillLayout(Level level, BlockPos corePos, BlockState state) {

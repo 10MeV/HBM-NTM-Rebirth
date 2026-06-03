@@ -16,6 +16,7 @@ public final class ObjUtilityModels {
     public static final ResourceLocation FORCEFIELD_BASE_TEXTURE = texture("forcefield_base");
     public static final ResourceLocation FORCEFIELD_TOP_TEXTURE = texture("forcefield_top");
     public static final ResourceLocation SAT_FOEQ_BURNING_TEXTURE = texture("sat_foeq_burning");
+    public static final ResourceLocation SAT_FOEQ_FIRE_TEXTURE = SAT_FOEQ_BURNING_TEXTURE;
     public static final ResourceLocation SAT_DOCK_TEXTURE = texture("sat_dock");
     public static final ResourceLocation TESLA_TEXTURE = texture("tesla");
     public static final ResourceLocation FILE_CABINET_TEXTURE = texture("file_cabinet");

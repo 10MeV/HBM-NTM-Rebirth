@@ -3,9 +3,9 @@ package com.hbm.ntm.client.screen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.network.ModMessages;
-import com.hbm.ntm.network.packet.TileControlPacket;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
+import com.hbm.ntm.recipe.GenericMachineRecipeSelector;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -36,10 +36,10 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
     private EditBox search;
 
     protected ChemicalPlantRecipeSelectorScreen(ChemicalPlantScreen previousScreen) {
-        super(Component.translatable("container.machineChemicalPlant"));
+        super(Component.translatableWithFallback("container.machineChemicalPlant", "Chemical Plant"));
         this.previousScreen = previousScreen;
         this.selection = previousScreen.getMenu().getBlockEntity().getSelectedRecipeName();
-        this.allRecipes = GenericMachineRecipeRuntime.recipes(
+        this.allRecipes = GenericMachineRecipeSelector.recipes(
                 previousScreen.getMenu().getBlockEntity().getLevel(),
                 GenericMachineRecipe.Machine.CHEMICAL_PLANT);
         regenerateRecipes("");
@@ -247,8 +247,7 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
     }
 
     private void sendSelection() {
-        ModMessages.sendToServer(new TileControlPacket(
-                previousScreen.getMenu().getBlockEntity().getBlockPos(),
-                ChemicalPlantBlockEntity.recipeSelectionTag(selection)));
+        ModMessages.sendTileControl(previousScreen.getMenu().getBlockEntity().getBlockPos(),
+                ChemicalPlantBlockEntity.recipeSelectionTag(selection));
     }
 }

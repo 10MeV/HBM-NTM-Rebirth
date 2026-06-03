@@ -1,5 +1,6 @@
 package com.hbm.ntm.network;
 
+import com.hbm.ntm.player.HbmPlayerProperties;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -30,6 +31,9 @@ public final class HbmServerKeybinds {
 
     public static void handle(ServerPlayer player, HbmKeybind keybind, boolean pressed) {
         setPressed(player, keybind, pressed);
+        if (pressed && keybind == HbmKeybind.TOGGLE_HEAD) {
+            HbmPlayerProperties.toggleHud(player);
+        }
         ItemStack held = player.getMainHandItem();
         if (!held.isEmpty() && held.getItem() instanceof HbmKeybindReceiver receiver && receiver.canHandleKeybind(player, held, keybind)) {
             receiver.handleKeybind(player, held, keybind, pressed);

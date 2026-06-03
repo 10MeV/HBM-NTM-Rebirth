@@ -18,6 +18,7 @@ import com.hbm.ntm.client.particle.GibletParticle;
 import com.hbm.ntm.client.particle.HadronParticle;
 import com.hbm.ntm.client.particle.HazeParticle;
 import com.hbm.ntm.client.particle.HbmSmokeParticle;
+import com.hbm.ntm.client.particle.LegacyContrailParticle;
 import com.hbm.ntm.client.particle.LegacySplashParticle;
 import com.hbm.ntm.client.particle.MukeWaveParticle;
 import com.hbm.ntm.client.particle.NetworkDebugParticle;
@@ -58,12 +59,14 @@ import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
 import com.hbm.ntm.client.screen.BasicMachineScreen;
 import com.hbm.ntm.client.screen.AssemblyMachineScreen;
 import com.hbm.ntm.client.screen.ChemicalPlantScreen;
+import com.hbm.ntm.client.screen.CompressorScreen;
 import com.hbm.ntm.client.screen.CustomNukeScreen;
 import com.hbm.ntm.client.screen.FluidTankScreen;
 import com.hbm.ntm.client.screen.LiquefactorScreen;
 import com.hbm.ntm.client.screen.MachineBatteryScreen;
 import com.hbm.ntm.client.screen.MachineBatterySocketScreen;
 import com.hbm.ntm.client.screen.NuclearDeviceScreen;
+import com.hbm.ntm.client.screen.RemoteFluidMachineScreen;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.item.DepletedFuelItem;
@@ -121,8 +124,10 @@ public final class ClientModEvents {
             MenuScreens.register(ModMenuTypes.BASIC_MACHINE.get(), BasicMachineScreen::new);
             MenuScreens.register(ModMenuTypes.ASSEMBLY_MACHINE.get(), AssemblyMachineScreen::new);
             MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT.get(), ChemicalPlantScreen::new);
+            MenuScreens.register(ModMenuTypes.COMPRESSOR.get(), CompressorScreen::new);
             MenuScreens.register(ModMenuTypes.LIQUEFACTOR.get(), LiquefactorScreen::new);
             MenuScreens.register(ModMenuTypes.FLUID_TANK.get(), FluidTankScreen::new);
+            MenuScreens.register(ModMenuTypes.REMOTE_FLUID_MACHINE.get(), RemoteFluidMachineScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY.get(), MachineBatteryScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY_SOCKET.get(), MachineBatterySocketScreen::new);
             MenuScreens.register(ModMenuTypes.NUCLEAR_DEVICE.get(), NuclearDeviceScreen::new);
@@ -150,6 +155,7 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.FRACTION_TOWER.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.HYDROTREATER.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.COKER.get(), LegacyVisibleMachineRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.COMPRESSOR.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.STEAM_ENGINE.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SOLAR_BOILER.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SMALL_COOLING_TOWER.get(), LegacyVisibleMachineRenderer::new);
@@ -214,14 +220,7 @@ public final class ClientModEvents {
                 return pipe.getTintColor(stack, tintIndex);
             }
             return 0xFFFFFF;
-        }, ModBlocks.FLUID_DUCT_NEO.get().asItem(),
-                ModBlocks.FLUID_DUCT_BOX.get().asItem(),
-                ModBlocks.FLUID_DUCT_GAUGE.get().asItem(),
-                ModBlocks.FLUID_DUCT_PAINTABLE.get().asItem(),
-                ModBlocks.PIPE_ANCHOR.get().asItem(),
-                ModBlocks.FLUID_VALVE.get().asItem(),
-                ModBlocks.FLUID_SWITCH.get().asItem(),
-                ModBlocks.FLUID_COUNTER_VALVE.get().asItem());
+        }, ModItems.FLUID_DUCT.get());
         event.register((stack, tintIndex) -> {
             if (tintIndex == 0 && stack.getItem() instanceof LegacyStateBlockItem item) {
                 return sellafieldLevelTint(item.getVariant(stack));
@@ -349,7 +348,7 @@ public final class ClientModEvents {
         event.registerSpriteSet(ModParticleTypes.RADIATION_FOG.get(), RadiationFogParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.ROCKET_FLAME.get(), RocketFlameParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.GAS_FLAME.get(), GasFlameParticle.Provider::new);
-        event.registerSpriteSet(ModParticleTypes.CONTRAIL.get(), HbmSmokeParticle.ContrailProvider::new);
+        event.registerSpriteSet(ModParticleTypes.CONTRAIL.get(), LegacyContrailParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.SMOKE_PLUME.get(), SmokePlumeParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.LAUNCH_SMOKE.get(), HbmSmokeParticle.LaunchSmokeProvider::new);
         event.registerSpriteSet(ModParticleTypes.EX_SMOKE.get(), HbmSmokeParticle.ExSmokeProvider::new);

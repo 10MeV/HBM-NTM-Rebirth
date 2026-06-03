@@ -1,7 +1,1 @@
-{
-  "variants": {
-    "": {
-      "model": "hbm:block/crystal_virus"
-    }
-  }
-}
+{ "variants": { "": { "model": "hbm:block/crystal_virus" } } }

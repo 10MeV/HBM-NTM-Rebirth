@@ -1,5 +1,6 @@
 package com.hbm.ntm.recipe;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -161,6 +162,14 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         if (hasExactStack()) {
             return BuiltInRegistries.ITEM.getKey(exactStack.getItem()).toString();
         }
+        String tagId = ingredientTagId();
+        if (tagId != null) {
+            return "tag #" + tagId;
+        }
+        String itemId = ingredientItemId();
+        if (itemId != null) {
+            return "item " + itemId;
+        }
         return ingredient.toJson().toString();
     }
 
@@ -175,6 +184,14 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         }
         if (hasExactStack()) {
             return "item:" + BuiltInRegistries.ITEM.getKey(exactStack.getItem());
+        }
+        String tagId = ingredientTagId();
+        if (tagId != null) {
+            return "tag:" + tagId;
+        }
+        String itemId = ingredientItemId();
+        if (itemId != null) {
+            return "item:" + itemId;
         }
         return "ingredient:" + ingredient.toJson();
     }
@@ -338,5 +355,23 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
             object.addProperty("nbt", stack.getTag().toString());
         }
         return object;
+    }
+
+    @Nullable
+    private String ingredientTagId() {
+        JsonObject object = singleIngredientObject();
+        return object != null && object.has("tag") ? object.get("tag").getAsString() : null;
+    }
+
+    @Nullable
+    private String ingredientItemId() {
+        JsonObject object = singleIngredientObject();
+        return object != null && object.has("item") ? object.get("item").getAsString() : null;
+    }
+
+    @Nullable
+    private JsonObject singleIngredientObject() {
+        JsonElement json = ingredient.toJson();
+        return json.isJsonObject() ? json.getAsJsonObject() : null;
     }
 }

@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
 import net.minecraftforge.network.NetworkHooks;
@@ -108,7 +109,7 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
 
     @Override
     public VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, CollisionContext context) {
-        return getMultiblockShape(state, level, pos, context);
+        return Shapes.block();
     }
 
     @Override
@@ -120,13 +121,13 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
     @Override
     public VoxelShape getMultiblockShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos corePos,
             CollisionContext context) {
-        return getLayout(state).shape(1.0D);
+        return Shapes.block();
     }
 
     @Override
     public VoxelShape getMultiblockCollisionShape(BlockState state, net.minecraft.world.level.BlockGetter level,
             BlockPos corePos, CollisionContext context) {
-        return getMultiblockShape(state, level, corePos, context);
+        return Shapes.block();
     }
 
     @Override

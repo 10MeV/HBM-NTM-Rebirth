@@ -3,6 +3,7 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.blockentity.LegacyVisibleMachineBlockEntity;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import net.minecraft.core.BlockPos;
+import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
@@ -10,8 +11,12 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 @SuppressWarnings("deprecation")
 public class LegacyVisibleMultiblockMachineBlock extends LegacyXrMultiblockBlock implements EntityBlock {
@@ -74,16 +79,42 @@ public class LegacyVisibleMultiblockMachineBlock extends LegacyXrMultiblockBlock
 
     @Override
     public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos, CollisionContext context) {
-        return definition.collisionShape(state);
+        return definition.hasCollisionShapeFactory() ? definition.collisionShape(state) : Shapes.block();
     }
 
     @Override
     public VoxelShape getMultiblockCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
             CollisionContext context) {
-        return getMultiblockShape(state, level, corePos, context);
+        return definition.hasCollisionShapeFactory() ? definition.collisionShape(state) : Shapes.block();
+    }
+
+    @Override
+    public boolean usesForwardedDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return definition.hasCollisionShapeFactory();
+    }
+
+    @Override
+    public boolean usesForwardedDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
+        return definition.hasCollisionShapeFactory();
+    }
+
+    @Override
+    public BlockState multiblockParticleState(BlockState state, BlockGetter level, BlockPos corePos) {
+        return definition.particleState(state);
     }
 
     @Override
     protected void onCoreRemoved(Level level, BlockPos pos, BlockState state) {
+    }
+
+    @Override
+    public void initializeClient(Consumer<IClientBlockExtensions> consumer) {
+        consumer.accept(new IClientBlockExtensions() {
+            @Override
+            public boolean addDestroyEffects(BlockState state, Level level, BlockPos pos, ParticleEngine manager) {
+                manager.destroy(pos, definition.particleState(state));
+                return true;
+            }
+        });
     }
 }

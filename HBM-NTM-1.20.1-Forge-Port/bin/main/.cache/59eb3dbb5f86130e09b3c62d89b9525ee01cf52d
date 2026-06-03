@@ -1,4 +1,4 @@
-// 1.20.1	2026-05-30T20:55:41.5870176	Loot Tables
+// 1.20.1	2026-06-02T23:54:04.5012999	Loot Tables
 1d566948370849820de3c0d2a03a1da2b54f3f8d data/hbm/loot_tables/blocks/ancient_scrap.json
 e33e09e9b7de4edfe47464adbc55ba1b3074df85 data/hbm/loot_tables/blocks/ash_digamma.json
 4dea21baadd671e0fc70004833537e05da50d388 data/hbm/loot_tables/blocks/asphalt.json
@@ -153,7 +153,16 @@ f6e4a3d04e3a6c188df68f833237334dec986698 data/hbm/loot_tables/blocks/ducrete.jso
 7ff7935df65bd744c79ef8f2ab5bf8510ec34ae6 data/hbm/loot_tables/blocks/fallout.json
 5bccf5f981b39d0bf7457f33eae9bdea4c44d170 data/hbm/loot_tables/blocks/fire_digamma.json
 c7769f0edc1b5b064fac5d0562c7552398cd8c56 data/hbm/loot_tables/blocks/floodlight.json
+10cb952b24116e3528ce14acae698730b7f04b51 data/hbm/loot_tables/blocks/fluid_counter_valve.json
+4b808b5b201223c2cf055f369f616a49ed9cab33 data/hbm/loot_tables/blocks/fluid_duct_box.json
+a00b709f1dcf779c4030f417ed839d9c3e42c4ac data/hbm/loot_tables/blocks/fluid_duct_exhaust.json
+0bb57d8e8e82e8e3e5cbbc0a1153dd5b9f186e6c data/hbm/loot_tables/blocks/fluid_duct_gauge.json
 acea5bcb24e57e81fb9bedd5520bfb3ec42c7d2c data/hbm/loot_tables/blocks/fluid_duct_neo.json
+97589643e538361cdb98c56fa2f0aa440dc0457d data/hbm/loot_tables/blocks/fluid_duct_paintable.json
+8fd7d5e84a81020471c3ed44ce553d0775af7110 data/hbm/loot_tables/blocks/fluid_duct_paintable_block_exhaust.json
+6a0de71d29042e2626722785b61616b7d4f4fd15 data/hbm/loot_tables/blocks/fluid_pump.json
+6625a63f494299b4df9048f64e9ff0e397e37567 data/hbm/loot_tables/blocks/fluid_switch.json
+1a38d4f090b6c18b09c767c6ec205f4d95d21570 data/hbm/loot_tables/blocks/fluid_valve.json
 de56993a24fa8c6f6eb1e3e81b7704c3d961cb82 data/hbm/loot_tables/blocks/frozen_dirt.json
 45ae55cbc76dbfa4b0daa5df49b7a48c75b0aac4 data/hbm/loot_tables/blocks/frozen_grass.json
 ff5cb0b51baf10f1b634077bbaf9611b0a7bfe9e data/hbm/loot_tables/blocks/frozen_log.json
@@ -192,12 +201,14 @@ f5c3c861dac8f88ebaa79530911c996f62c65946 data/hbm/loot_tables/blocks/machine_che
 22bd8a3c270a5f3519a1e78e43c7c80d9ebec9f8 data/hbm/loot_tables/blocks/machine_chemical_plant.json
 045ebef7433bdd7c33a15a07d45fb79ad9ec7838 data/hbm/loot_tables/blocks/machine_coker.json
 132bb8bf2baf6202e887dee1971a2e829e4e3038 data/hbm/loot_tables/blocks/machine_compressor.json
+8f8e7b44b9afc8643939051fbdca93d7cefef0a4 data/hbm/loot_tables/blocks/machine_crucible.json
 872eb7f1a48234783e361bd22e0ffbc991a7faa5 data/hbm/loot_tables/blocks/machine_cyclotron.json
 d5bd538a458a38d2505c944316ff700d67e79491 data/hbm/loot_tables/blocks/machine_difurnace_off.json
 ae7c356f74307fe0ce2af309f31df8eb9bc41e75 data/hbm/loot_tables/blocks/machine_electric_furnace_off.json
 0fb95f5149f418b91a3f0214ad1245c13a45fd60 data/hbm/loot_tables/blocks/machine_exposure_chamber.json
 b52e6463df74157e8611ba336741bf7c448e6d65 data/hbm/loot_tables/blocks/machine_fluidtank.json
 dc121c4806dbba47b3feb0c9d17570c21ea3af51 data/hbm/loot_tables/blocks/machine_fraction_tower.json
+da0da675e9d8928c155bdd652abadf4899149ebb data/hbm/loot_tables/blocks/machine_gascent.json
 e11e2907ef78cf5aca7bf84b77a3d5efc1aed20b data/hbm/loot_tables/blocks/machine_gasflare.json
 c1a16c0d1b5b1fb21dfc5f9e03856aed6884f3d0 data/hbm/loot_tables/blocks/machine_hydrotreater.json
 2b854843c255ecbb36229aa0663687062063edc0 data/hbm/loot_tables/blocks/machine_industrial_turbine.json
@@ -212,6 +223,7 @@ f4e09043edb14dd31702e8e150e478605f25932c data/hbm/loot_tables/blocks/machine_rad
 6a49961d3330d8c506e85bca16be37e21e99d739 data/hbm/loot_tables/blocks/machine_radiolysis.json
 deccc3c05bd0d1dfa4a09a357809efe08e9e281d data/hbm/loot_tables/blocks/machine_refinery.json
 c711373d66dc8243d15a9937edeed514e70089b5 data/hbm/loot_tables/blocks/machine_rotary_furnace.json
+374bf0e30bb96c46efcd444405d0856fd17a44bf data/hbm/loot_tables/blocks/machine_sawmill.json
 c271c25a17bb58b36e5907a2318565c074d6fa52 data/hbm/loot_tables/blocks/machine_shredder.json
 59ad223def3856ace26f87821d93b08633e22e43 data/hbm/loot_tables/blocks/machine_silex.json
 dde6f699454ecb80dd92ccda4021c5200fc1d62c data/hbm/loot_tables/blocks/machine_solar_boiler.json
@@ -293,6 +305,7 @@ bf8863b2e7e321eede5dc5923b3e99e05d06bb15 data/hbm/loot_tables/blocks/ore_tungste
 9925012f10990952a95da4a20b93bd501f6419be data/hbm/loot_tables/blocks/ore_uranium.json
 ce6fd180ae254cc541309608fc6d59b93649937d data/hbm/loot_tables/blocks/ore_uranium_scorched.json
 bbd794a0fa9b7391345581275200e3b1acf688aa data/hbm/loot_tables/blocks/part_emitter.json
+8cc688e4eb06a13968b31070023cde92c33019b7 data/hbm/loot_tables/blocks/pipe_anchor.json
 8a96d4b7b6934c375ae4f1bf9de4c531e7e4d316 data/hbm/loot_tables/blocks/plushie.json
 fc935ee87273ba6f4f74a34b792ad068a902ce7a data/hbm/loot_tables/blocks/pneumatic_tube.json
 d15ee22644055f5b0f238c9cc9607d3099174740 data/hbm/loot_tables/blocks/pribris_digamma.json

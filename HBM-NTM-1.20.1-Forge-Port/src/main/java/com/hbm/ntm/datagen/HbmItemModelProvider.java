@@ -94,6 +94,50 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "pellets_charged");
             return;
         }
+        if (path.startsWith("coke_")) {
+            generatedItem(path, "coke." + path.substring("coke_".length()));
+            return;
+        }
+        if (path.startsWith("briquette_")) {
+            generatedItem(path, "briquette." + path.substring("briquette_".length()));
+            return;
+        }
+        if (path.startsWith("oil_tar_")) {
+            generatedItem(path, "oil_tar." + path.substring("oil_tar_".length()));
+            return;
+        }
+        if (path.startsWith("powder_ash_")) {
+            generatedItem(path, "powder_ash." + path.substring("powder_ash_".length()));
+            return;
+        }
+        if (path.startsWith("chunk_ore_")) {
+            generatedItem(path, "chunk_ore." + path.substring("chunk_ore_".length()));
+            return;
+        }
+        if (path.startsWith("plant_item_")) {
+            generatedItem(path, "plant_item." + path.substring("plant_item_".length()));
+            return;
+        }
+        if (path.startsWith("parts_legendary_")) {
+            generatedItem(path, "parts_legendary." + path.substring("parts_legendary_".length()));
+            return;
+        }
+        if (path.startsWith("part_generic_")) {
+            generatedItem(path, partGenericTexture(path));
+            return;
+        }
+        if (path.startsWith("item_expensive_")) {
+            generatedItem(path, "item_expensive." + path.substring("item_expensive_".length()));
+            return;
+        }
+        if (path.startsWith("casing_")) {
+            generatedItem(path, "casing." + path.substring("casing_".length()));
+            return;
+        }
+        if (path.startsWith("fuel_additive_")) {
+            generatedItem(path, "fuel_additive." + path.substring("fuel_additive_".length()));
+            return;
+        }
         if (path.equals("singularity_counter_resonant")) {
             generatedItem(path, "singularity_alt");
             return;
@@ -126,7 +170,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "trigger");
             return;
         }
-        if (path.equals("fluid_duct_neo") || path.equals("fluid_valve") || path.equals("fluid_switch")
+        if (path.equals("fluid_duct") || path.equals("fluid_duct_neo") || path.equals("fluid_valve") || path.equals("fluid_switch")
                 || path.equals("fluid_counter_valve") || path.equals("fluid_duct_box")
                 || path.equals("fluid_duct_gauge") || path.equals("fluid_duct_paintable")) {
             getBuilder(path)
@@ -188,5 +232,14 @@ public class HbmItemModelProvider extends ItemModelProvider {
 
     private static String circuitTexture(String itemPath) {
         return "circuit." + itemPath.substring("circuit_".length());
+    }
+
+    private static String partGenericTexture(String itemPath) {
+        return switch (itemPath) {
+            case "part_generic_lde" -> "low_density_element";
+            case "part_generic_hde" -> "heavy_duty_element";
+            case "part_generic_glass_polarized" -> "glass_polarized";
+            default -> itemPath.substring("part_generic_".length());
+        };
     }
 }

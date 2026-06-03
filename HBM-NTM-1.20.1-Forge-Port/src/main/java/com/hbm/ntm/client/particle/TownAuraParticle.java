@@ -11,6 +11,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class TownAuraParticle extends TextureSheetParticle {
+    private static SpriteSet sharedSprites;
     private final SpriteSet sprites;
     private final float baseScale;
 
@@ -48,11 +49,16 @@ public class TownAuraParticle extends TextureSheetParticle {
         return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
+    public static SpriteSet sharedSprites() {
+        return sharedSprites;
+    }
+
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;
 
         public Provider(SpriteSet sprites) {
             this.sprites = sprites;
+            sharedSprites = sprites;
         }
 
         @Override
