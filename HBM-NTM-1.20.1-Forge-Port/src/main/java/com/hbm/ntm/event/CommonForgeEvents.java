@@ -12,6 +12,7 @@ import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
+import com.hbm.ntm.explosion.ExplosionNukeSmall;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.network.ModMessages;
@@ -25,16 +26,17 @@ import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.CraterRadiationData;
+import com.hbm.ntm.radiation.HazardEntry;
 import com.hbm.ntm.radiation.HazardRegistry;
 import com.hbm.ntm.radiation.HazmatRegistry;
 import com.hbm.ntm.radiation.HazardType;
-import com.hbm.ntm.radiation.ItemRadiationRegistry;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.uninos.HbmUninosNodespaces;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -84,6 +86,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 @Mod.EventBusSubscriber(modid = HbmNtm.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -182,15 +185,30 @@ public final class CommonForgeEvents {
 
         if (entity.tickCount % 20 == 0) {
             RadiationData.flushEnvironmentBuffer(entity);
-            if (entity instanceof ServerPlayer serverPlayer) {
-                syncRadiation(serverPlayer);
-            }
         }
 
+        handleBombTimer(entity);
         handleChunkRadiation(entity);
         handleLegacyRadiationEffects(entity);
         handleDigammaEffects(entity);
         handleLegacyLongTermEffects(entity);
+
+        if (entity.tickCount % 20 == 0 && entity instanceof ServerPlayer serverPlayer) {
+            syncRadiation(serverPlayer);
+        }
+    }
+
+    private static void handleBombTimer(LivingEntity entity) {
+        int timer = RadiationData.getBombTimer(entity);
+        if (timer <= 0) {
+            return;
+        }
+
+        RadiationData.setBombTimer(entity, timer - 1);
+        if (timer == 1) {
+            ExplosionNukeSmall.explode(entity.level(), entity.getX(), entity.getY(), entity.getZ(),
+                    ExplosionNukeSmall.PARAMS_MEDIUM);
+        }
     }
 
     private static Block legacyBlockOrNull(String legacyName) {
@@ -262,20 +280,7 @@ public final class CommonForgeEvents {
         applyInventoryHazards(player, HazardType.BLINDING);
         applyInventoryHazards(player, HazardType.HYDROACTIVE);
         applyInventoryHazards(player, HazardType.EXPLOSIVE);
-        float itemRadiation = 0.0F;
-        for (ItemStack stack : player.getInventory().items) {
-            itemRadiation += ItemRadiationRegistry.getRadiation(stack) * stack.getCount() / 20.0F;
-        }
-        for (ItemStack stack : player.getInventory().armor) {
-            itemRadiation += ItemRadiationRegistry.getRadiation(stack) * stack.getCount() / 20.0F;
-        }
-        for (ItemStack stack : player.getInventory().offhand) {
-            itemRadiation += ItemRadiationRegistry.getRadiation(stack) * stack.getCount() / 20.0F;
-        }
-
-        if (itemRadiation > 0.0F) {
-            RadiationUtil.contaminate(player, HazardType.RADIATION, ContaminationType.CREATIVE, itemRadiation);
-        }
+        applyInventoryRadiologicalHazards(player);
     }
 
     private static void applyInventoryHazards(Player player, HazardType type) {
@@ -288,6 +293,42 @@ public final class CommonForgeEvents {
         for (ItemStack stack : player.getInventory().offhand) {
             applyInventoryHazard(player, stack, type);
         }
+    }
+
+    private static void applyInventoryRadiologicalHazards(Player player) {
+        float radiation = 0.0F;
+        float digamma = 0.0F;
+        for (ItemStack stack : player.getInventory().items) {
+            radiation += getInventoryRadiologicalHazard(player, stack, HazardType.RADIATION);
+            digamma += getInventoryRadiologicalHazard(player, stack, HazardType.DIGAMMA);
+        }
+        for (ItemStack stack : player.getInventory().armor) {
+            radiation += getInventoryRadiologicalHazard(player, stack, HazardType.RADIATION);
+            digamma += getInventoryRadiologicalHazard(player, stack, HazardType.DIGAMMA);
+        }
+        for (ItemStack stack : player.getInventory().offhand) {
+            radiation += getInventoryRadiologicalHazard(player, stack, HazardType.RADIATION);
+            digamma += getInventoryRadiologicalHazard(player, stack, HazardType.DIGAMMA);
+        }
+        if (radiation > 0.0F) {
+            RadiationUtil.contaminate(player, HazardType.RADIATION, ContaminationType.CREATIVE, radiation);
+        }
+        if (digamma > 0.0F) {
+            RadiationUtil.applyDigammaData(player, digamma);
+        }
+    }
+
+    private static float getInventoryRadiologicalHazard(Player player, ItemStack stack, HazardType type) {
+        if (stack.isEmpty()) {
+            return 0.0F;
+        }
+        float total = 0.0F;
+        for (HazardEntry entry : HazardRegistry.getHazards(stack)) {
+            if (entry.type() == type) {
+                total += entry.modifiedLevel(stack, player) * stack.getCount() / 20.0F;
+            }
+        }
+        return total;
     }
 
     @SubscribeEvent
@@ -383,35 +424,49 @@ public final class CommonForgeEvents {
         if (stack.isEmpty()) {
             return;
         }
-        float level = HazardRegistry.getHazardLevel(stack, type, player);
+        float level = 0.0F;
+        for (HazardEntry entry : HazardRegistry.getHazards(stack)) {
+            if (entry.type() == type) {
+                level += entry.modifiedLevel(stack, player);
+            }
+        }
+        applyInventoryHazard(player, stack, type, level);
+    }
+
+    private static void applyInventoryHazard(Player player, ItemStack stack, HazardType type, float level) {
         if (level <= 0.0F) {
             return;
         }
-        if (type == HazardType.ASBESTOS) {
-            if (ArmorUtil.hasProtection(player, HazardClass.PARTICLE_FINE)) {
-                ArmorUtil.damageGasMaskFilter(player, (int) level);
-            } else {
-                RadiationData.incrementAsbestos(player, (int) Math.min(level, 10.0F));
-            }
-        } else if (type == HazardType.COAL) {
-            if (ArmorUtil.hasProtection(player, HazardClass.PARTICLE_COARSE)) {
-                int chance = Math.max(65 - stack.getCount(), 1);
-                if (player.getRandom().nextInt(chance) == 0) {
-                    ArmorUtil.damageGasMaskFilter(player, (int) level);
+        switch (type) {
+            case ASBESTOS -> RadiationUtil.applyAsbestos(player, (int) Math.min(level, 10.0F), (int) level);
+            case COAL -> RadiationUtil.applyCoalDust(player, (int) Math.min(level * stack.getCount(), 10.0F),
+                    (int) level, Math.max(65 - stack.getCount(), 1));
+            case HOT -> {
+                if (!player.isInWaterOrRain()) {
+                    player.setSecondsOnFire((int) Math.ceil(level));
                 }
-            } else {
-                RadiationData.incrementBlackLung(player, (int) Math.min(level * stack.getCount(), 10.0F));
             }
-        } else if (type == HazardType.HOT && !player.isInWaterOrRain()) {
-            player.setSecondsOnFire((int) Math.ceil(level));
-        } else if (type == HazardType.BLINDING && !ArmorUtil.hasProtection(player, HazardClass.LIGHT)) {
-            player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, (int) Math.ceil(level), 0));
-        } else if (type == HazardType.HYDROACTIVE && player.isInWaterOrRain() && player.level() instanceof ServerLevel levelAccessor) {
-            stack.shrink(stack.getCount());
-            WeaponExplosionUtil.explodeStandard(levelAccessor, player.getX(), player.getEyeY(), player.getZ(), level, player, true, false);
-        } else if (type == HazardType.EXPLOSIVE && player.isOnFire() && player.level() instanceof ServerLevel levelAccessor) {
-            stack.shrink(stack.getCount());
-            WeaponExplosionUtil.explodeStandard(levelAccessor, player.getX(), player.getEyeY(), player.getZ(), level, player, true, true);
+            case BLINDING -> {
+                if (!ArmorUtil.hasProtection(player, HazardClass.LIGHT)) {
+                    player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, (int) Math.ceil(level), 0));
+                }
+            }
+            case HYDROACTIVE -> {
+                if (player.isInWaterOrRain() && player.level() instanceof ServerLevel levelAccessor) {
+                    stack.shrink(stack.getCount());
+                    WeaponExplosionUtil.explodeStandard(levelAccessor, player.getX(), player.getEyeY(), player.getZ(),
+                            level, player, true, false);
+                }
+            }
+            case EXPLOSIVE -> {
+                if (player.isOnFire() && player.level() instanceof ServerLevel levelAccessor) {
+                    stack.shrink(stack.getCount());
+                    WeaponExplosionUtil.explodeStandard(levelAccessor, player.getX(), player.getEyeY(), player.getZ(),
+                            level, player, true, true);
+                }
+            }
+            default -> {
+            }
         }
     }
 
@@ -609,20 +664,22 @@ public final class CommonForgeEvents {
         }
 
         long time = level.getGameTime();
-        int seed = entity.getId();
-        if (radiation > 600.0F && (time + Math.floorMod(seed * 31, 600)) % 600 < 20) {
+        Random random = new Random(entity.getId());
+        int r600 = random.nextInt(600);
+        int r1200 = random.nextInt(1200);
+        if (radiation > 600.0F && (time + r600) % 600 < 20) {
             spawnVomit(entity, ParticleUtil.VOMIT_BLOOD, 25);
-            if ((time + Math.floorMod(seed * 31, 600)) % 600 == 1) {
+            if ((time + r600) % 600 == 1) {
                 playVomit(level, entity);
             }
-        } else if (radiation > 200.0F && (time + Math.floorMod(seed * 17, 1200)) % 1200 < 20) {
+        } else if (radiation > 200.0F && (time + r1200) % 1200 < 20) {
             spawnVomit(entity, ParticleUtil.VOMIT_NORMAL, 15);
-            if ((time + Math.floorMod(seed * 17, 1200)) % 1200 == 1) {
+            if ((time + r1200) % 1200 == 1) {
                 playVomit(level, entity);
             }
         }
 
-        if (radiation > 900.0F && entity.getRandom().nextInt(10) == 0) {
+        if (radiation > 900.0F && (time + random.nextInt(10)) % 10 == 0) {
             ParticleUtil.spawnSweat(entity, Blocks.REDSTONE_BLOCK, 1);
         }
     }
@@ -655,29 +712,11 @@ public final class CommonForgeEvents {
     }
 
     private static void handleContaminationEffects(LivingEntity entity) {
-        net.minecraft.nbt.ListTag contamination = RadiationData.getContamination(entity);
-        if (contamination.isEmpty()) {
-            return;
+        for (RadiationData.ContaminationEffect effect : RadiationData.tickContamination(entity)) {
+            RadiationUtil.contaminate(entity, HazardType.RADIATION,
+                    effect.ignoreArmor() ? ContaminationType.RAD_BYPASS : ContaminationType.CREATIVE,
+                    effect.currentRadiation());
         }
-        net.minecraft.nbt.ListTag next = new net.minecraft.nbt.ListTag();
-        for (int i = 0; i < contamination.size(); i++) {
-            net.minecraft.nbt.CompoundTag effect = contamination.getCompound(i);
-            int time = effect.getInt("time");
-            int maxTime = Math.max(1, effect.getInt("maxTime"));
-            float maxRad = effect.getFloat("maxRad");
-            boolean ignoreArmor = effect.getBoolean("ignoreArmor");
-            if (time > 0) {
-                float delta = maxRad * ((float) time / (float) maxTime);
-                RadiationUtil.contaminate(entity, HazardType.RADIATION,
-                        ignoreArmor ? ContaminationType.RAD_BYPASS : ContaminationType.CREATIVE,
-                        delta);
-                effect.putInt("time", time - 1);
-                if (time - 1 > 0) {
-                    next.add(effect);
-                }
-            }
-        }
-        RadiationData.setContamination(entity, next);
     }
 
     private static void handleContagion(LivingEntity entity) {
@@ -799,6 +838,8 @@ public final class CommonForgeEvents {
 
         int frequency = Math.max((int) (1000 - 950 * total), 20);
         if (entity.level().getGameTime() % frequency == Math.floorMod(entity.getId(), frequency) && entity.level() instanceof ServerLevel level) {
+            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), ModSounds.PLAYER_COUGH.get(),
+                    SoundSource.HOSTILE, 1.0F, 1.0F);
             if (coughsBlood) {
                 spawnVomit(entity, ParticleUtil.VOMIT_BLOOD, 5);
             }

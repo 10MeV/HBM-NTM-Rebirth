@@ -1,0 +1,10 @@
+{
+  "type": "hbm:press",
+  "ingredient": {
+    "tag": "forge:gems/coke"
+  },
+  "result": {
+    "item": "hbm:ingot_graphite"
+  },
+  "stamp": "flat"
+}

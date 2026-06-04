@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -27,6 +28,7 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -40,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
  * machines whose full GUI/recipe systems are still being migrated.
  */
 public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFluidBlockEntity
-        implements MenuProvider, HbmStandardFluidTransceiver {
+        implements MenuProvider, HbmStandardFluidTransceiver, HbmPersistentBlockState {
     private static final String TAG_INVENTORY = "Inventory";
 
     private final List<HbmFluidTank> receivingTanks;
@@ -110,6 +112,12 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
 
     public List<ItemStack> getDrops() {
         return items == null ? List.of() : HbmInventoryMenuHelper.clearToDrops(items);
+    }
+
+    public ItemStack createPersistentBlockDrop(Item item) {
+        ItemStack stack = new ItemStack(item);
+        writePersistentStateToStack(stack);
+        return stack;
     }
 
     public LegacyGuiProfile getLegacyGuiProfile() {
@@ -212,6 +220,23 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void writePersistentState(CompoundTag persistent) {
+        HbmPersistentBlockState.writeIndexedTanks(persistent, getAllTanks());
+    }
+
+    @Override
+    public void readPersistentState(CompoundTag persistent) {
+        HbmPersistentBlockState.readIndexedTanks(persistent, getAllTanks());
+        invalidateFluidHandlers();
+        setChanged();
+        if (level != null) {
+            refreshFluidPorts();
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
     }
 
     protected Direction facing() {

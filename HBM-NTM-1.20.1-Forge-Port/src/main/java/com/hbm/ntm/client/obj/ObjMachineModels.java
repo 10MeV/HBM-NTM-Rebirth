@@ -13,6 +13,10 @@ public final class ObjMachineModels {
     public static final ObjPartModel PRESS = new ObjPartModel()
             .part("Cube.001_Cube.002", PRESS_HEAD, "Head")
             .legacyOrder("Cube_Cube.000", "Cube.001_Cube.002");
+    public static final LegacyWavefrontModel PRESS_BODY_LEGACY = legacyModel("press_body");
+    public static final LegacyWavefrontModel PRESS_HEAD_LEGACY = legacyModel("press_head");
+    public static final LegacyWavefrontModel EPRESS_BODY = legacyModel("epress_body");
+    public static final LegacyWavefrontModel EPRESS_HEAD = legacyModel("epress_head");
     public static final ObjModelPart BATTERY_SOCKET_SOCKET = directPart("battery_socket_socket")
             .withOrigin(ObjPartTransform.BLOCK_CENTER);
     public static final ObjModelPart BATTERY_SOCKET_SUPPORTS = directPart("battery_socket_supports")
@@ -294,6 +298,10 @@ public final class ObjMachineModels {
     public static final ResourceLocation DELIVERY_DRONE_TEXTURE = machineTexture("drone");
     public static final ResourceLocation DELIVERY_DRONE_EXPRESS_TEXTURE = machineTexture("drone_express");
     public static final ResourceLocation DELIVERY_DRONE_REQUEST_TEXTURE = machineTexture("drone_request");
+    public static final ResourceLocation PRESS_BODY_TEXTURE = machineTexture("press_body");
+    public static final ResourceLocation PRESS_HEAD_TEXTURE = machineTexture("press_head");
+    public static final ResourceLocation EPRESS_BODY_TEXTURE = machineTexture("epress_body");
+    public static final ResourceLocation EPRESS_HEAD_TEXTURE = machineTexture("epress_head");
 
     public static ObjModelPart part(String name) {
         return part(name, RenderType.cutout());

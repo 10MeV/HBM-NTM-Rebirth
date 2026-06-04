@@ -90,11 +90,17 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         return heat;
     }
 
+    @Nullable
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return null;
+    }
+
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         List<Component> lines = new ArrayList<>();
-        lines.add(LegacyLookOverlayLines.tank(true, waterTank));
-        lines.add(LegacyLookOverlayLines.tank(false, steamTank));
+        lines.add(LegacyLookOverlayLines.compactTank(true, waterTank));
+        lines.add(LegacyLookOverlayLines.compactTank(false, steamTank));
         if (display < 1) {
             lines.add(Component.literal("Too cold!")
                     .withStyle((level.getGameTime() / 10L) % 2L == 0L ? ChatFormatting.RED : ChatFormatting.YELLOW));

@@ -11,6 +11,7 @@ import com.hbm.ntm.explosion.ExplosionRay;
 import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -127,24 +128,24 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         for (LivingEntity entity : entities) {
             Vec3 offset = new Vec3(entity.getX() - getX(), entity.getEyeY() - getY(), entity.getZ() - getZ());
             double distance = offset.length();
-            if (distance <= 0.0D || distance > range) {
+            if (distance <= 0.0D) {
                 continue;
             }
 
             Vec3 direction = offset.normalize();
             float resistance = 0.0F;
             for (int i = 1; i < distance; i++) {
-                resistance += ExplosionNukeRayBatched.masqueradeResistance(level().getBlockState(blockPositionFrom(origin.add(direction.scale(i)))));
+                resistance += level().getBlockState(BlockPos.containing(origin.add(direction.scale(i))))
+                        .getBlock()
+                        .getExplosionResistance();
             }
-            resistance = Math.max(resistance, 1.0F);
+            if (resistance < 1.0F) {
+                resistance = 1.0F;
+            }
 
             float entityRads = rads / resistance / (float) (distance * distance);
             RadiationUtil.contaminate(entity, HazardType.RADIATION, RadiationUtil.ContaminationType.RAD_BYPASS, entityRads);
         }
-    }
-
-    private static net.minecraft.core.BlockPos blockPositionFrom(Vec3 position) {
-        return net.minecraft.core.BlockPos.containing(position);
     }
 
     private int falloutScale() {

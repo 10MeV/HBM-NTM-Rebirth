@@ -50,6 +50,10 @@ public final class ModFluids {
         }
     }
 
+    public static HbmFluidRegistryEntry getEntry(FluidType hbmType) {
+        return ENTRIES.get(hbmType);
+    }
+
     private static HbmFluidRegistryEntry register(FluidType hbmType) {
         if (ENTRIES.containsKey(hbmType)) {
             return ENTRIES.get(hbmType);

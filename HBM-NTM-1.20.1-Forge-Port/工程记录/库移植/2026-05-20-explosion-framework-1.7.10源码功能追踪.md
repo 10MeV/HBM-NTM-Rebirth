@@ -1397,7 +1397,7 @@
 - MK5 旧版完成爆炸后只生成 `EntityFalloutRain`，并在前 10 tick 对实体做一次强直射辐射；当前现代 `NukeExplosionMk5Entity` 已保留该结构。
 - MK3 waste 旧版在破坏阶段完成后生成 `EntityFalloutRain`；当前现代 `NukeExplosionMk3Entity` 已保留该结构。
 - 旧 `EntityFalloutRain` 不直接增加 `ChunkRadiationManager` 的区块辐射值，而是做落尘层、废土/废木/废叶替换和陨坑生物群系；当前现代 `FalloutRainEntity` 使用 `LegacyFalloutConversions` 与 `CraterRadiationData` 承接该后效应。
-- `ExplosionNukeSmall` 的 mini-nuke 区块辐射脚印公式 `50 / (abs(i)+abs(j)+1) * radiationLevel/3` 已在现代 `ExplosionNukeSmall#irradiateMiniNukeFootprint(...)` 中存在。
+- `ExplosionNukeSmall` 的 mini-nuke 区块辐射脚印公式 `50 / (abs(i)+abs(j)+1) * radiationLevel/3` 保留在现代 `ExplosionNukeSmall#irradiateMiniNukeFootprint(...)`，并通过 `ChunkRadiationManager` 写入区块辐射。
 - `NukeEnvironmentalEffect.applyStandardAOE(...)` 在旧源码中标注 deprecated，且主 MK5/MK3 链路没有调用；当前现代类存在但不作为本轮核爆后效应入口。
 - `NukeMike` 旧源码有半装载分支传入 `manRadius`，但 `igniteTestBomb(...)` 内部实际硬编码生成 `BombConfig.mikeRadius` 的 MK5；现代 `MIKE` 继续按 `mikeRadius` 起爆，不改成半装载降级，避免偏离旧实现细节。
 
@@ -2558,6 +2558,71 @@
 - `NuclearExplosionUtil` 的基础核弹方块、Fleija/Solinium/N2、Fatman/Nuka 与 missile/doomsday/rusted 入口半径和旧源码一致。
 - `spawnMissileMirv(...)` 保持 `missileRadius() * 2`，未改用 `mirvRadius()`；后者保留为配置访问器，等待后续发现真实旧调用点再接入。
 - `CustomNukeExplosion` 保持旧方块中心/坠落实体坐标输入语义，并保留各分支内部偏移；本次复核只记录，不做代码修改。
+
+### 2026-06-04 追加：核爆辐射后效接入 Radiation 库
+
+复核来源：
+
+- `com.hbm.entity.logic.EntityNukeExplosionMK5#radiate`
+- `com.hbm.explosion.ExplosionNukeSmall#explode`
+- 现代 `NukeExplosionMk5Entity`
+- 现代 `ExplosionNukeSmall`
+- 现代 `RadiationUtil`
+- 现代 `ChunkRadiationManager`
+
+旧版合同：
+
+- MK5 早期直接辐射在 fallout 开启、爆炸 worker 已创建、`ticksExisted < 10`、`strength >= 75` 时运行，剂量为 `2_500_000F / (ticksExisted * 5 + 1)`，范围为 `length * 2`。
+- 直接辐射用扩展 AABB 收集 `EntityLivingBase`，不额外做球形范围剔除；到实体眼高路径上逐格累加普通方块爆炸抗性，最低抗性为 `1`，最后以 `RAD_BYPASS` 写入实体辐射。
+- mini-nuke 对 simple chunk radiation 写入 5x5 曼哈顿距离 footprint：`abs(i) + abs(j) < 4` 时增加 `50 / (distance + 1) * radiationLevel / 3`。
+
+现代修正：
+
+- 按 1.7.10 归属边界保留 `NukeExplosionMk5Entity#radiate(...)` 与 `ExplosionNukeSmall#irradiateMiniNukeFootprint(...)`，没有新增并行核爆辐射库。
+- MK5 直射最终通过 `RadiationUtil.contaminate(... RAD_BYPASS, amount)` 接入现代辐射数据。
+- mini-nuke footprint 最终通过 `ChunkRadiationManager.incrementRadiation(...)` 接入现代区块辐射数据。
+- MK5 直接辐射阻挡源从现代核爆 ray 的 `masqueradeResistance` 改回旧版普通 `getExplosionResistance()`，并移除额外球形距离剔除。
+
+### 2026-06-04 追加：MK3/MK5 Fallout 后效接入 Radiation 库
+
+复核来源：
+
+- `com.hbm.entity.logic.EntityNukeExplosionMK5`
+- `com.hbm.entity.logic.EntityNukeExplosionMK3`
+- `com.hbm.entity.effect.EntityFalloutRain`
+- 现代 `CraterRadiationData`
+
+旧版合同：
+
+- MK5 在 fallout 开启且爆炸完成后生成 `EntityFalloutRain`，scale 为 `(int)(length * 2.5 + falloutAdd) * falloutRange / 100`。
+- MK3 waste 在 destruction 阶段完成后只生成一次 `EntityFalloutRain`，scale 为 `(int)(destructionRange * 1.8)`。
+- fallout rain 遍历区块、落尘/火焰/坍塌、陨坑 zone 选择仍是实体调度工作；后续环境辐射读取由现代 `CraterRadiationData` 持久标记桥承接。
+
+现代修正：
+
+- MK5 与 MK3 waste fallout 生成保留在对应核爆实体中，匹配 1.7.10。
+- `FalloutRainEntity` 保留 crater zone 选择公式，匹配旧 `EntityFalloutRain#getBiomeChange(...)`。
+- `CraterRadiationData` 只作为现代持久 marker 与 ambient radiation 查询桥，避免把旧实体调度公式误归入辐射库。
+
+### 2026-06-04 追加：Solinium 范围辐射接入 Radiation 库
+
+复核来源：
+
+- `com.hbm.explosion.ExplosionHurtUtil#doRadiation`
+- `com.hbm.entity.logic.EntityNukeExplosionMK3`
+- 现代 `ExplosionHurtUtil`
+- 现代 `RadiationUtil`
+
+旧版合同：
+
+- `ExplosionHurtUtil#doRadiation` 在半径 AABB 中枚举活体，按真实距离剔除球外实体，并在 `outer` 与 `inner` 间线性插值辐射值。
+- MK3 Solinium 在 destruction 未完成期间调用 `doRadiation(15000, 250000, destructionRange)`。
+
+现代修正：
+
+- `ExplosionHurtUtil#doRadiation(...)` 保留旧范围辐射污染公式，匹配 1.7.10。
+- `NukeExplosionMk3Entity` 的 Solinium tick 保持调用 `ExplosionHurtUtil.doRadiation(15000, 250000, destructionRange)`。
+- `ExplosionHurtUtil` 最终通过 `RadiationUtil.contaminate(... CREATIVE, amount)` 接入现代辐射数据。
 
 ## 验证清单
 

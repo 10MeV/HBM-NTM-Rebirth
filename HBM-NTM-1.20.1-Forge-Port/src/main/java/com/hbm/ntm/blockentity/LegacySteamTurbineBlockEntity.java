@@ -143,6 +143,12 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
         return operational;
     }
 
+    @Nullable
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return null;
+    }
+
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         return LegacyLookOverlay.forBlock(this, List.of(

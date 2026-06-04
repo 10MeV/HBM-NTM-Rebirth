@@ -98,7 +98,7 @@ public final class ChunkRadiationManager {
     }
 
     private static void handleWorldEffects(ServerLevel level) {
-        List<Map.Entry<Long, Float>> entries = getData(level).loadedEntries(level);
+        List<Map.Entry<Long, Float>> entries = getData(level).entriesSnapshot();
         if (entries.isEmpty()) {
             return;
         }
@@ -169,9 +169,8 @@ public final class ChunkRadiationManager {
     }
 
     public static void unloadChunk(Level level, ChunkPos chunkPos) {
-        if (level instanceof ServerLevel serverLevel) {
-            getData(serverLevel).remove(chunkPos);
-        }
+        // 1.7.10 Simple handler keeps chunk radiation in its world map when chunks unload.
+        // Use the explicit prune command for debug cleanup instead of losing radiation on unload.
     }
 
     public static void unloadLevel(Level level) {

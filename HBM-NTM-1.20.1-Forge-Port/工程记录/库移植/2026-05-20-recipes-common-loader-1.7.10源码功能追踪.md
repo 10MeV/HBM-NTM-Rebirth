@@ -694,6 +694,76 @@
   - `.\gradlew.bat runData --no-daemon` 通过。
   - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
 
+## 2026-06-04 继续推进：Press WIRE 首个 legacy meta 闭环
+
+- 1.7.10 对照：
+  - `PressRecipes#registerDefaults()` 会遍历 `Mats.orderedList`：
+    - 若材料含 `MaterialShapes.WIRE` 且存在对应 `ingot*` ore dict，则生成 `StampType.WIRE + ingot -> ModItems.wire_fine x8`。
+  - `Mats.MAT_GOLD` 的 material id 为 `7900`，含 `WIRE` autogen。
+  - `OreDictManager` 对 `MaterialShapes.WIRE` 会注册旧 `wireFineGold`，目标为 `ModItems.wire_fine` meta `7900`。
+- 本批接入：
+  - 现代端已有 `wire_gold`、`forge:wires/gold` tag、旧 `hbm:wire_fine` meta `7900 -> hbm:wire_gold` 映射。
+  - `HbmRecipeProvider` 新增压机 recipe 代码：
+    - `press/wire_gold`：`StampType.WIRE + minecraft:gold_ingot -> hbm:wire_gold x8`。
+  - 本批只接入已完整迁移的 gold wire 单条，不展开全 `WIRE` 材料矩阵，避免给尚未迁移的 `wire_fine` meta 输出制造空洞。
+- 迁移边界：
+  - 旧 `WIRE` 全矩阵仍待后续按现代已注册 wire item 分批补齐。
+  - 本条输入使用 `minecraft:gold_ingot`，对应旧 `ingotGold` 的 vanilla 稳定入口；后续若项目建立 vanilla forge ingot tag provider，可改为 `forge:ingots/gold`。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat compileJava --rerun-tasks --no-daemon` 通过。
+  - `.\gradlew.bat runData --rerun-tasks --no-daemon` 未完成：Forge datagen 启动阶段报 `fml.modloading.missingclasses`，`build/resources/main` 被构造成 0 个 mod，但 `mods.toml` 指定了 `hbm`；`build/classes/java/main/com/hbm/ntm/HbmNtm.class` 实际存在。该阻塞发生在 provider 执行前，`press/wire_gold.json` 尚未生成，应在 datagen 环境恢复后复跑。
+
+## 2026-06-04 继续推进：Press FLAT 首批 legacy ore/tag/meta 链路
+
+- 1.7.10 对照：
+  - `PressRecipes` 的 `StampType.FLAT` 包含一批粉末/宝石压制、biomass 压缩、焦炭石墨、briquette、树脂配方。
+  - `OreDictManager` 定义并注册：
+    - `NETHERQUARTZ = new DictFrame("NetherQuartz")`，含 `dustNetherQuartz` / `dustQuartz` 对应旧 `powder_quartz`。
+    - `LAPIS = new DictFrame("Lapis")`，含旧 `powder_lapis`。
+    - `DIAMOND = new DictFrame("Diamond")`，含旧 `powder_diamond`。
+    - `EMERALD = new DictFrame("Emerald")`，含旧 `powder_emerald`。
+    - `ANY_COKE = new DictFrame("AnyCoke", "Coke")`，用于 `ingot_graphite` 压制入口。
+    - `COAL` / `LIGNITE` 的 dust 注册用于 coal/lignite briquette。
+  - 旧 `Blocks.log` meta `3` 在该 recipe 中表示 jungle log，输出 `ball_resin`。
+- 本批接入：
+  - 现代 `ModItems.EXTRA_PARTS_TAB_ITEMS` 补普通 legacy item 落点：
+    - `powder_quartz`
+    - `powder_lapis`
+    - `powder_diamond`
+    - `powder_emerald`
+    - `powder_sawdust`
+    - `ball_resin`
+  - 从 1.7.10 资源复制对应旧贴图到现代 `assets/hbm/textures/item/`。
+  - `HbmItemTagsProvider` 补 legacy ore/tag alias：
+    - `dustNetherQuartz` / `dustQuartz` -> `forge:dusts/quartz`
+    - `dustLapis` -> `forge:dusts/lapis`
+    - `dustDiamond` -> `forge:dusts/diamond`
+    - `dustEmerald` -> `forge:dusts/emerald`
+  - `HbmRecipeProvider` 生成首批 `FLAT` 压机 recipe：
+    - `press/flat_quartz`：`forge:dusts/quartz` -> `minecraft:quartz`
+    - `press/flat_lapis`：`forge:dusts/lapis` -> `minecraft:lapis_lazuli`
+    - `press/flat_diamond`：`forge:dusts/diamond` -> `minecraft:diamond`
+    - `press/flat_emerald`：`forge:dusts/emerald` -> `minecraft:emerald`
+    - `press/flat_biomass`：`hbm:biomass` -> `hbm:biomass_compressed`
+    - `press/flat_graphite`：`forge:gems/coke` -> `hbm:ingot_graphite`
+    - `press/flat_briquette_coal`：`forge:dusts/coal` -> `hbm:briquette_coal`
+    - `press/flat_briquette_lignite`：`forge:dusts/lignite` -> `hbm:briquette_lignite`
+    - `press/flat_briquette_wood`：`hbm:powder_sawdust` -> `hbm:briquette_wood`
+    - `press/flat_resin`：`minecraft:jungle_log` -> `hbm:ball_resin`
+- 迁移边界：
+  - 旧 `Blocks.log` meta `3` 先按 1.20.1 的具体方块 `minecraft:jungle_log` 落地；若后续建立更通用的 legacy block meta bridge，可把该 recipe 改为共享映射输出。
+  - `meteorite_sword_reforged -> meteorite_sword_hardened` 的 `FLAT` 配方未迁；对应剑族尚未在当前普通物品/行为链路中闭环。
+  - 本批只补 recipe/ore/tag/meta 缺口，不迁完整木材/树脂生态或 sword hardening 行为。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 抽样生成：
+    - `press/flat_resin.json`：`minecraft:jungle_log` -> `hbm:ball_resin`，`stamp: "flat"`。
+    - `forge:dusts/quartz`、`forge:dusts/lapis`、`forge:dusts/diamond`、`forge:dusts/emerald` 均包含对应 HBM powder。
+    - 新增普通 item model：`powder_quartz`、`powder_lapis`、`powder_diamond`、`powder_emerald`、`powder_sawdust`、`ball_resin`。
+  - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
+
 ## 2026-06-02 继续推进：煤粉物品族补齐以清理 `dusts/coal` 缺口
 
 - 1.7.10 对照：
@@ -909,3 +979,407 @@
   - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
   - 生成的 `item_expensive_steel_plating` / `item_expensive_degenerate_matter` item model 分别指向 `item_expensive.steel_plating` / `item_expensive.degenerate_matter`。
   - 生成的 en_us / zh_cn lang 分别包含旧英文名、旧中文名和旧硬编码 tooltip 文本。
+
+## 2026-06-04 继续推进：`ore_byproduct` meta 桥与彩色副产物碎片
+
+- 1.7.10 对照：
+  - `ModItems.ore_byproduct = new ItemByproduct().setUnlocalizedName("ore_byproduct").setCreativeTab(MainRegistry.partsTab).setTextureName(RefStrings.MODID + ":byproduct")`。
+  - `ItemByproduct` 继承 `ItemEnumMulti(EnumByproduct.class, true, false)`，旧资源为单张 `textures/items/byproduct.png`，每个 meta 通过 `getColorFromItemStack` 返回枚举颜色。
+  - `EnumByproduct` 旧 meta 顺序与颜色：
+    - `B_IRON=0` `0xE2C0AA`
+    - `B_COPPER=1` `0xEC9A63`
+    - `B_LITHIUM=2` `0xEDEDED`
+    - `B_SILICON=3` `0xFFFBD1`
+    - `B_LEAD=4` `0x646470`
+    - `B_TITANIUM=5` `0xF2EFE2`
+    - `B_ALUMINIUM=6` `0xE8F2F9`
+    - `B_SULFUR=7` `0xEAD377`
+    - `B_CALCIUM=8` `0xCFCFA6`
+    - `B_BISMUTH=9` `0x8D8577`
+    - `B_RADIUM=10` `0xE9FAF6`
+    - `B_TECHNETIUM=11` `0xCADFDF`
+    - `B_POLONIUM=12` `0xCADFDF`
+    - `B_URANIUM=13` `0x868D82`
+  - 旧配方引用：
+    - `CentrifugeRecipes` 将 bedrock ore / ore centrifuge 副产物输出为 `DictFrame.fromOne(ModItems.ore_byproduct, EnumByproduct, 1)`。
+    - `MineralRecipes` 定义 9 合 1 的 byproduct -> powder/billet/sulfur 转换。
+- 本批接入：
+  - 新增现代 `OreByproductItem`，保存 legacy tint 颜色并通过 client item color handler 对 layer 0 染色。
+  - 现代 `ModItems` 拆出 14 个独立物品：
+    - `ore_byproduct_b_iron`
+    - `ore_byproduct_b_copper`
+    - `ore_byproduct_b_lithium`
+    - `ore_byproduct_b_silicon`
+    - `ore_byproduct_b_lead`
+    - `ore_byproduct_b_titanium`
+    - `ore_byproduct_b_aluminium`
+    - `ore_byproduct_b_sulfur`
+    - `ore_byproduct_b_calcium`
+    - `ore_byproduct_b_bismuth`
+    - `ore_byproduct_b_radium`
+    - `ore_byproduct_b_technetium`
+    - `ore_byproduct_b_polonium`
+    - `ore_byproduct_b_uranium`
+  - `LegacyMetaItemMappings` 新增旧 `hbm:ore_byproduct` meta `0..13` 到现代独立 item 的映射，使旧 recipe、loot、hazard 与物品迁移能共用 `HbmIngredient` / legacy meta 入口。
+  - `HbmItemModelProvider` 为所有 `ore_byproduct_*` 生成到旧单贴图 `item/byproduct`。
+  - 从 1.7.10 资源复制 `byproduct.png` 到现代 `assets/hbm/textures/item/`。
+  - en_us / zh_cn datagen 补 14 个旧语言名。
+- 迁移边界：
+  - 本批只迁 `ore_byproduct` metadata 物品族、legacy meta 映射、单贴图 tint、模型和语言。
+  - 旧源码未确认 `ore_byproduct` 有直接 `OreDictManager` 登记，本批不新增 ore/tag 桥。
+  - 旧源码未确认 `ore_byproduct` 有直接 hazard 登记，本批不新增 hazard；放射性相关后续应由对应 material/powder/billet 产物链或明确旧 hazard 证据驱动。
+  - 不迁 `MineralRecipes` 的 9 合 1 crafting、`CentrifugeRecipes` 批量 recipe、bedrock ore runtime，也不使用未确认的 `byproduct_base_*` 备用贴图。
+
+## 2026-06-04 继续推进：`stamp_book` / `page_of_` 打印 press 链路 meta 桥
+
+- 1.7.10 对照：
+  - `ModItems.stamp_book = new ItemStampBook().setUnlocalizedName("stamp_book").setMaxStackSize(1).setCreativeTab(null).setTextureName(RefStrings.MODID + ":stamp_book")`。
+  - `ItemStampBook` 继承 `ItemStamp`，旧 meta `0..7` 分别映射到 `StampType.PRINTING1..PRINTING8`，并注册进旧 `ItemStamp.stamps`。
+  - `ModItems.page_of_ = new ItemEnumMulti(ItemEnums.EnumPages.class, true, false).setUnlocalizedName("page_of_").setMaxStackSize(1).setCreativeTab(null).setTextureName(RefStrings.MODID + ":page_of_")`，旧 meta 顺序为 `PAGE1..PAGE8`。
+  - `PressRecipes` 定义 8 条旧打印配方：
+    - `PRINTING1 + paper -> page_of_ PAGE1`
+    - `PRINTING2 + paper -> page_of_ PAGE2`
+    - `PRINTING3 + paper -> page_of_ PAGE3`
+    - `PRINTING4 + paper -> page_of_ PAGE4`
+    - `PRINTING5 + paper -> page_of_ PAGE5`
+    - `PRINTING6 + paper -> page_of_ PAGE6`
+    - `PRINTING7 + paper -> page_of_ PAGE7`
+    - `PRINTING8 + paper -> page_of_ PAGE8`
+  - `ItemPoolsComponent` 会把 `stamp_book` meta `0..7` 作为旧战利品池条目。
+- 本批接入：
+  - 扩展现代 `ItemPressStamp.StampType`，新增 `PRINTING1..PRINTING8`，使现代 press recipe serializer/runtime 能识别旧打印 stamp 类型。
+  - 现代 `ModItems` 拆出隐藏配方物品：
+    - `stamp_book_printing1..stamp_book_printing8`
+    - `page_of_page1..page_of_page8`
+  - 新增 `ModItems.HIDDEN_RECIPE_ITEMS`，供模型和语言 datagen 遍历隐藏配方/战利品用物品，不把它们放入创造栏。
+  - `LegacyMetaItemMappings` 新增：
+    - 旧 `hbm:stamp_book` meta `0..7` -> 现代 `stamp_book_printing1..8`
+    - 旧 `hbm:page_of_` meta `0..7` -> 现代 `page_of_page1..8`
+  - `HbmItemModelProvider` 为隐藏拆分物品生成模型：
+    - `stamp_book_*` -> 旧单贴图 `item/stamp_book`
+    - `page_of_*` -> 旧单贴图 `item/page_of_`
+  - 从 1.7.10 资源复制 `stamp_book.png` 与 `page_of_.png` 到现代 `assets/hbm/textures/item/`。
+  - en_us / zh_cn datagen 补 16 个旧语言名。
+- 迁移边界：
+  - 本批只迁打印 press 链路的隐藏 metadata 物品族、press stamp 类型、legacy meta 映射、模型/贴图/语言。
+  - 不批量导入 `PressRecipes` 的 8 条打印 recipe；后续可直接用现代 press recipe JSON 的 `stamp: "printingN"` 与 `outputLegacyMeta(PAGE_OF, n)` 落地。
+  - 不迁 `book_of_`、`CraftingManager` 的 8 页合成书、书 GUI 或 lore book 系统。
+  - `stamp_book` 在旧版 `creativeTab(null)`，现代拆分项保持隐藏，只进入统一 legacy lookup 和 datagen。
+
+## 2026-06-04 继续推进：`upgrade_template` / `template_folder` 普通 legacy 物品落点
+
+- 1.7.10 对照：
+  - `ModItems.upgrade_template = new ItemCustomLore().setUnlocalizedName("upgrade_template").setCreativeTab(MainRegistry.partsTab).setTextureName(RefStrings.MODID + ":upgrade_template")`。
+  - `ModItems.template_folder = new Item().setUnlocalizedName("template_folder").setTextureName(RefStrings.MODID + ":template_folder")`，旧注册未设置 creative tab。
+  - 旧配方引用：
+    - `CraftingManager` 使用 `upgrade_template` 合成多种机器升级，并在早期 crafting 中生成 `upgrade_template`。
+    - `SolderingRecipes` 使用 `upgrade_template` 作为多条升级配方输入。
+    - `CraftingManager` 使用 paper + dye 合成 `template_folder`。
+  - 旧语言：
+    - en_US：`Machine Upgrade Template`、`Machine Template Folder`，`template_folder.desc` 为 `$` 分隔的提示文本。
+    - zh_CN：`机器升级模板`、`机器模板文件夹`，并有 `template_folder.desc`。
+- 本批接入：
+  - 现代 `ModItems` 新增 `upgrade_template` 普通 parts-tab 物品，给旧配方 importer / `ModItems.legacyItem("upgrade_template")` 提供稳定落点。
+  - 现代 `ModItems` 新增 `template_folder` 普通隐藏物品，并加入 `HIDDEN_RECIPE_ITEMS` 以生成模型/语言但不进入创造栏。
+  - 从 1.7.10 资源复制 `upgrade_template.png`、`template_folder.png` 到现代 `assets/hbm/textures/item/`。
+  - en_us / zh_cn datagen 补两个物品名和旧 `template_folder.desc` 文本键。
+- 迁移边界：
+  - 本批只补普通 legacy item ID 的解析落点、贴图、模型和语言，改善配方/战利品/hazard/物品迁移对旧 ID 的共用查找。
+  - 不迁 `ItemCustomLore` 通用 tooltip 系统；`template_folder.desc` 只作为旧语言内容保留。
+  - 不迁 template tab、blueprints、machine template GUI、assembly/chemistry/crucible template 行为或配方。
+
+## 2026-06-04 继续推进：press recipe datagen 与弹壳 stamp 链路
+
+- 1.7.10 对照：
+  - `ItemStamp.StampType` 旧枚举顺序包含 `FLAT`、`PLATE`、`WIRE`、`CIRCUIT`、`C357`、`C44`、`C50`、`C9`、`PRINTING1..PRINTING8`。
+  - `ModItems` 注册普通弹壳 stamp：
+    - `stamp_357 = new ItemStamp(1000, StampType.C357)`，贴图 `stamp_357`。
+    - `stamp_44 = new ItemStamp(1000, StampType.C44)`，贴图 `stamp_44`。
+    - `stamp_9 = new ItemStamp(1000, StampType.C9)`，贴图 `stamp_9`。
+    - `stamp_50 = new ItemStamp(1000, StampType.C50)`，贴图 `stamp_50`。
+  - `PressRecipes` 定义 8 条打印配方：
+    - `PRINTING1..8 + paper -> page_of_ PAGE1..8`。
+  - `PressRecipes` 定义 4 条弹壳压制配方：
+    - `C9 + plateGunMetal -> casing SMALL x4`。
+    - `C50 + plateGunMetal -> casing LARGE x2`。
+    - `C9 + plateWeaponSteel -> casing SMALL_STEEL x4`。
+    - `C50 + plateWeaponSteel -> casing LARGE_STEEL x2`。
+- 本批接入：
+  - 现代 `ItemPressStamp.StampType` 新增 `C357("357")`、`C44("44")`、`C50("50")`、`C9("9")`，保持现代 press JSON 的 `stamp` 字段可表达旧小/大口径弹壳锻模。
+  - 现代 `ModItems` 新增普通 parts-tab stamp：
+    - `stamp_357`
+    - `stamp_44`
+    - `stamp_9`
+    - `stamp_50`
+  - 四个 stamp 通过 `registerLegacy(...)` 登记，保证后续旧配方 importer、战利品、hazard、物品迁移可以用 `ModItems.legacyItem(...)` 解析旧 ID。
+  - 从 1.7.10 资源复制 4 张旧贴图到现代 `assets/hbm/textures/item/`：
+    - `stamp_357.png`
+    - `stamp_44.png`
+    - `stamp_9.png`
+    - `stamp_50.png`
+  - en_us / zh_cn datagen 补四个旧 stamp 名称。
+  - `HbmRecipeProvider` 新增轻量 `PressRecipeBuilder`，统一生成现代 `hbm:press` JSON，字段为：
+    - `stamp`
+    - `ingredient`
+    - `result`
+  - 用 `LegacyMetaItemMappings.PAGE_OF` 生成 8 条打印 press 配方：
+    - `press/page_of_page1..8`
+  - 用 `LegacyMetaItemMappings.CASING` 和旧 `plateGunMetal` tag 桥生成 2 条 gunmetal 弹壳 press 配方：
+    - `press/casing_small_gunmetal`：`stamp: "9"`，`forge:plates/gun_metal` -> `casing_small x4`。
+    - `press/casing_large_gunmetal`：`stamp: "50"`，`forge:plates/gun_metal` -> `casing_large x2`。
+  - 修复 `HbmBlockStateProvider` 中 OBJ datagen loader 构造入口，改用 Forge 公开 `ObjModelBuilder::begin`，解除当前 `compileJava` 阻塞。
+- 迁移边界：
+  - 本批只迁普通 `stamp_357/44/9/50`，不迁 `stamp_desh_357/44/9/50`，因为 desh stamp 旧版耐久为 0 且需要后续结合完整 stamp 材质族/耐久语义统一处理。
+  - 本批只生成 gunmetal 两条弹壳 press 配方；`WeaponSteel` 现代物品和 tag 落点尚未确认，不生成 `casing_small_steel` / `casing_large_steel` 两条配方，避免把旧 `plateWeaponSteel` 静默映射到错误材料。
+  - 本批不迁 ammo press runtime、子弹本体、弹药战利品池或弹药 hazard。
+  - `PressRecipeBuilder` 是当前 press JSON 的数据生成入口，不改变 press machine runtime 语义。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 生成的 `src/generated/resources/data/hbm/recipes/press/page_of_page1.json` 为 `stamp: "printing1"` + `minecraft:paper` -> `hbm:page_of_page1`。
+  - 生成的 `press/casing_small_gunmetal.json` / `press/casing_large_gunmetal.json` 分别为 `stamp: "9"` / `"50"`，输入 `forge:plates/gun_metal`，输出 `hbm:casing_small x4` / `hbm:casing_large x2`。
+  - 生成的 `stamp_9` / `stamp_50` item model 指向旧贴图 `hbm:item/stamp_9` / `hbm:item/stamp_50`。
+  - 生成的 en_us / zh_cn lang 包含 `stamp_357`、`stamp_44`、`stamp_9`、`stamp_50`。
+  - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
+
+## 2026-06-04 继续推进：通用机器 recipe type 覆盖 PUREX / 精密装配
+
+- 1.7.10 对照：
+  - `SerializableRecipe#registerDefaults()` 会登记 `PUREXRecipes.INSTANCE`、`PrecAssRecipes.INSTANCE`、`PlasmaForgeRecipes.INSTANCE`、`FusionRecipes.INSTANCE`、`CrucibleRecipes.INSTANCE` 等可序列化配方集合。
+  - `PUREXRecipes extends GenericRecipes<GenericRecipe>`：
+    - 文件名 `hbmPUREX.json`。
+    - `inputItemLimit=3`、`inputFluidLimit=3`、`outputItemLimit=6`、`outputFluidLimit=1`。
+    - 运行时通过 `ModuleMachinePUREX#getRecipeSet()` 接到 `PUREXRecipes.INSTANCE`。
+  - `PrecAssRecipes extends GenericRecipes<GenericRecipe>`：
+    - 文件名 `hbmPrecisionAssembly.json`。
+    - `inputItemLimit=9`、`inputFluidLimit=1`、`outputItemLimit=9`、`outputFluidLimit=1`。
+    - 运行时通过 `ModuleMachinePrecAss#getRecipeSet()` 接到 `PrecAssRecipes.INSTANCE`。
+  - `PlasmaForgeRecipes extends GenericRecipes<PlasmaForgeRecipe>`，普通通用字段外还要求额外 JSON 字段 `ignitionTemp`。
+  - `FusionRecipes extends GenericRecipes<FusionRecipe>`，普通通用字段外还要求 `ignitionTemp`、`outputTemp`、`outputFlux`、`r`、`g`、`b`，并在 `registerPost()` 统计 `maxInput`。
+  - `CrucibleRecipes` 虽继承 `GenericRecipes<CrucibleRecipe>`，但自定义 `frequency`、`input/output MaterialStack`、mold/smelting NEI 查询等格式，不属于当前 `GenericMachineRecipe` 普通字段集。
+- 本批接入：
+  - `GenericMachineRecipe.Machine` 新增：
+    - `PUREX(3, 3, 6, 1)`。
+    - `PRECASS(9, 1, 9, 1)`。
+  - `ModRecipes` 注册现代 recipe type / serializer：
+    - `hbm:purex`。
+    - `hbm:precass`。
+  - `HbmRecipeProvider.GenericMachineRecipeBuilder` 新增：
+    - `purex(...)`。
+    - `precass(...)`。
+  - 现有 `/hbm recipe audit [machine]`、`/hbm recipe unresolvedInputs [machine]` 等命令会随 `Machine.values()` 自动覆盖这两个新类型。
+- 迁移边界：
+  - 本批只迁可与当前普通 `GenericMachineRecipe` 字段完全对齐的 recipe type/loader 入口；不批量导入具体 PUREX/精密装配配方。
+  - `machine_purex` 现代端已有 block/model 落点，toast symbol 使用 `ModBlocks.MACHINE_PUREX`。
+  - 旧 `machine_precass` 现代端尚未注册；`PRECASS` 目前只是 recipe type/loader 落点，toast symbol 暂用同 legacy 模型族的 `machine_assembly_machine` 作为展示兜底。后续迁 `machine_precass` 方块/BlockEntity/GUI 后应改为真实方块。
+  - `PlasmaForgeRecipes` / `FusionRecipes` 不能仅靠当前普通 serializer 迁移；必须先补额外字段模型、网络同步、显示行和对应机器运行时，再接入正式机器枚举。
+  - `CrucibleRecipes` 属于材料坩埚特殊库，应单独迁移 `CrucibleRecipe` / material stack / mold recipes，不并入普通机器配方。
+
+## 2026-06-04 继续推进：GenericRecipes extra data 承接层
+
+- 1.7.10 对照：
+  - `GenericRecipes#readRecipe(...)` 在读取普通字段后调用 `readExtraData(element, recipe)`，写出时在普通字段后调用 `writeExtraData(recipe, writer)`。
+  - `PlasmaForgeRecipes#readExtraData(...)` / `writeExtraData(...)` 只读写：
+    - `ignitionTemp`：`PlasmaForgeRecipe.ignitionTemp`，含义为 minimum plasma energy，GUI 显示为 `gui.recipe.plasmaIn` + `TU/t`。
+  - `FusionRecipes#readExtraData(...)` / `writeExtraData(...)` 读写：
+    - `ignitionTemp`：minimum klystron energy，GUI 显示 `gui.recipe.fusionIn` + `KyU/t`。
+    - `outputTemp`：plasma output energy，GUI 显示 `gui.recipe.fusionOut` + `TU/t`。
+    - `outputFlux`：neutron output flux，GUI 显示 `gui.recipe.fusionFlux` + `flux/t`。
+    - `r` / `g` / `b`：fusion recipe color。
+  - `FusionRecipes#registerPost()` 会遍历全部 fusion recipe 的 `ignitionTemp` 计算 `maxInput`，供 creative klystron 使用。
+- 本批接入：
+  - 新增 `GenericMachineRecipeExtraData`，作为现代 `GenericMachineRecipe` 的强类型 extra data 容器：
+    - `PlasmaForge(long ignitionTemp)`。
+    - `Fusion(long ignitionTemp, long outputTemp, double outputFlux, float r, float g, float b)`。
+  - `GenericMachineRecipe`：
+    - 构造、getter、JSON 读取、network 同步均保留 extra data。
+    - `getDisplayLines()` 增加 legacy 对应的 plasma/fusion 能量与通量显示行。
+    - `getSearchText()` 纳入 extra data 数值，方便命令/界面筛选和审计。
+  - `LegacyGenericRecipeFormat#writeLegacyRecipe(...)` 写回 legacy JSON 时保留 extra data 字段。
+  - `LegacyGenericRecipeImporter#toModernJson(...)` 从 legacy JSON 导入现代 JSON 时保留 `ignitionTemp`、`outputTemp`、`outputFlux`、`r`、`g`、`b`。
+  - `HbmRecipeProvider.GenericMachineRecipeBuilder` 新增：
+    - `plasmaForgeExtra(long ignitionTemp)`。
+    - `fusionExtra(long ignitionTemp, long outputTemp, double outputFlux, float r, float g, float b)`。
+- 迁移边界：
+  - 本批只迁 `GenericRecipes#readExtraData/writeExtraData` 的现代承接层；不注册 `PLASMA_FORGE` / `FUSION` 为正式 `GenericMachineRecipe.Machine`。
+  - 当前现代端只有 fusion/plasma OBJ 模型资源，尚未在 `ModBlocks` 注册 `fusion_plasma_forge`、`fusion_torus` 等运行时机器方块；在机器本体、BlockEntity、GUI、能量/等离子/聚变节点运行时迁完前，不应把这些 recipe type 暴露成可运行机器。
+  - extra data 的 JSON 字段名保持 1.7.10 原名大小写，不改成 snake_case，避免 legacy JSON 导入/导出时丢失对应关系。
+  - `GenericMachineRecipeExtraData#fromJson(...)` 以 fusion 专属字段 `outputTemp/outputFlux/r/g/b` 判断 fusion；只有 `ignitionTemp` 时按 plasma forge extra data 处理，与 legacy 两个 `readExtraData` 实现一致。
+  - `FusionRecipes#maxInput` 尚未迁；后续迁 creative klystron / fusion runtime 时应通过 fusion recipe extra data 计算。
+
+## 2026-06-04 继续推进：legacy generic recipe handler 文件名注册表
+
+- 1.7.10 对照：
+  - `SerializableRecipe#registerAllHandlers()` 在 `GENERIC` 段登记：
+    - `CrucibleRecipes.INSTANCE`
+    - `AssemblyMachineRecipes.INSTANCE`
+    - `ChemicalPlantRecipes.INSTANCE`
+    - `PUREXRecipes.INSTANCE`
+    - `FusionRecipes.INSTANCE`
+    - `PrecAssRecipes.INSTANCE`
+    - `PlasmaForgeRecipes.INSTANCE`
+  - 对应 legacy JSON 文件名：
+    - `AssemblyMachineRecipes#getFileName()` -> `hbmAssemblyMachine.json`
+    - `ChemicalPlantRecipes#getFileName()` -> `hbmChemicalPlant.json`
+    - `PUREXRecipes#getFileName()` -> `hbmPUREX.json`
+    - `PrecAssRecipes#getFileName()` -> `hbmPrecisionAssembly.json`
+    - `PlasmaForgeRecipes#getFileName()` -> `hbmPlasmaForge.json`
+    - `FusionRecipes#getFileName()` -> `hbmFusion.json`
+    - `CrucibleRecipes#getFileName()` -> `hbmCrucible.json`
+  - 旧 `SerializableRecipe#initialize()` 以 handler 的 `getFileName()` 查配置目录中的 JSON、同步流或模板文件。
+- 本批接入：
+  - 新增 `LegacyGenericRecipeHandlers`，集中记录 legacy generic recipe 文件名到现代导入目标的映射。
+  - 已支持导入的普通 `GenericRecipe` 文件：
+    - `hbmAssemblyMachine.json` -> `GenericMachineRecipe.Machine.ASSEMBLY_MACHINE`，现代输出目录 `hbm:assembly_machine`。
+    - `hbmChemicalPlant.json` -> `GenericMachineRecipe.Machine.CHEMICAL_PLANT`，现代输出目录 `hbm:chemical_plant`。
+    - `hbmPUREX.json` -> `GenericMachineRecipe.Machine.PUREX`，现代输出目录 `hbm:purex`。
+    - `hbmPrecisionAssembly.json` -> `GenericMachineRecipe.Machine.PRECASS`，现代输出目录 `hbm:precass`。
+  - 明确登记但暂不支持的文件：
+    - `hbmPlasmaForge.json`：需要 `fusion_plasma_forge` 机器运行时和 plasma ignition 处理。
+    - `hbmFusion.json`：需要 `fusion_torus` 运行时、klystron energy、output flux、recipe color、`maxInput` 处理。
+    - `hbmCrucible.json`：使用材料坩埚自定义格式，不属于普通 `GenericRecipe` 字段集。
+  - `LegacyGenericRecipeImporter` 新增按 legacy 文件名读取的重载：
+    - `read(String legacyFileName, Reader reader)`
+    - `readWithReport(String legacyFileName, Reader reader)`
+    - `readLenientWithReport(String legacyFileName, Reader reader)`
+  - `/hbm recipe legacyHandlers` 输出当前 legacy generic 文件名注册状态，便于后续批量导入前核对。
+- 迁移边界：
+  - 本批只是 loader/importer registry；不新增具体 recipe JSON，不从磁盘自动扫描或写入 datapack。
+  - 旧 `SerializableRecipe` 的配置目录模板写出、客户端同步 `recipeSyncHandlers`、`IRecipeRegisterListener` 仍未迁移；现代端应优先走 datapack reload 与 recipe manager。
+  - 对 `hbmPlasmaForge.json` / `hbmFusion.json` / `hbmCrucible.json` 使用 `requireSupported(...)` 会明确失败，而不是静默导入成错误 machine。
+
+## 2026-06-04 继续推进：`SerializableRecipe` 总 handler 覆盖索引
+
+- 1.7.10 对照：
+  - `SerializableRecipe#registerAllHandlers()` 会按固定顺序登记 44 个可序列化配方 handler：
+    - `PressRecipes`
+    - `BlastFurnaceRecipes`
+    - `ShredderRecipes`
+    - `SolderingRecipes`
+    - `CombinationRecipes`
+    - `CentrifugeRecipes`
+    - `CrystallizerRecipes`
+    - `RefineryRecipes`
+    - `VacuumRefineryRecipes`
+    - `FractionRecipes`
+    - `CrackingRecipes`
+    - `ReformingRecipes`
+    - `HydrotreatingRecipes`
+    - `LiquefactionRecipes`
+    - `SolidificationRecipes`
+    - `CokerRecipes`
+    - `PyroOvenRecipes`
+    - `BreederRecipes`
+    - `CyclotronRecipes`
+    - `FuelPoolRecipes`
+    - `MixerRecipes`
+    - `OutgasserRecipes`
+    - `FluidBreederRecipes`
+    - `CompressorRecipes`
+    - `ElectrolyserFluidRecipes`
+    - `ElectrolyserMetalRecipes`
+    - `ArcWelderRecipes`
+    - `RotaryFurnaceRecipes`
+    - `ExposureChamberRecipes`
+    - `ParticleAcceleratorRecipes`
+    - `AmmoPressRecipes`
+    - `AnvilRecipes`
+    - `PedestalRecipes`
+    - `AnnihilatorRecipes`
+    - `CrucibleRecipes.INSTANCE`
+    - `AssemblyMachineRecipes.INSTANCE`
+    - `ChemicalPlantRecipes.INSTANCE`
+    - `PUREXRecipes.INSTANCE`
+    - `FusionRecipes.INSTANCE`
+    - `PrecAssRecipes.INSTANCE`
+    - `PlasmaForgeRecipes.INSTANCE`
+    - `MatDistribution`
+    - `CustomMachineRecipes`
+    - `ArcFurnaceRecipes`
+  - 旧初始化流程：
+    - 先 `deleteRecipes()`。
+    - 若有同步流或 config 目录同名 JSON，读入并标记 `modified=true`。
+    - 否则执行 `registerDefaults()`，通知 `IRecipeRegisterListener`，写出带 `_` 前缀的模板文件。
+    - 最后每个 handler 都调用 `registerPost()`。
+- 本批接入：
+  - 新增 `LegacySerializableRecipeHandlers`，集中记录旧 `SerializableRecipe#registerAllHandlers()` 的完整文件名、旧类名、现代分类与导入状态。
+  - 当前状态分类：
+    - `SUPPORTED_GENERIC`：可由 `LegacyGenericRecipeImporter` 安全读取的普通 `GenericRecipe` 文件。
+      - `hbmAssemblyMachine.json`
+      - `hbmChemicalPlant.json`
+      - `hbmPUREX.json`
+      - `hbmPrecisionAssembly.json`
+    - `MODERN_SERIALIZER_ONLY`：现代端已有对应 serializer 或部分 JSON 落点，但尚未有完整 legacy bulk importer。
+      - `hbmPress.json` -> `hbm:press`
+      - `hbmLiquefactor.json` -> `hbm:liquefaction`
+    - `UNSUPPORTED`：旧格式需要专用机器/流体/核燃料/材料库迁移，不能丢给普通 `GenericMachineRecipe`。
+  - `LegacyGenericRecipeImporter#readWithReport(String, Reader)` 改为先经 `LegacySerializableRecipeHandlers.requireSupportedGeneric(...)` 护栏确认，再进入旧 generic handler 映射。
+  - `LegacyGenericRecipeImporter.ImportReport` 新增：
+    - `legacyFileName`
+    - `legacyClassName`
+    - `machine`
+    - `outputFolder`
+    用于后续批量导入工具或命令输出溯源。
+  - `/hbm recipe legacySerializableHandlers` 列出 44 个旧 handler 的覆盖状态和导入边界。
+- 迁移边界：
+  - 本批不自动扫描 config 目录，也不写出 datapack bulk recipe；只补 1.7.10 handler 总目录与导入护栏。
+  - `IRecipeRegisterListener` / `CompatRecipeRegistry` 的动态注册桥尚未迁移；现代端仍应优先通过 datapack recipe reload 和生成器落地。
+  - `recipeSyncHandlers` 的客户端同步流不迁为旧式全量 JSON 覆盖；现代配方同步应走 1.20.1 recipe manager 或专用网络同步。
+  - 对 `hbmPlasmaForge.json`、`hbmFusion.json`、`hbmCrucible.json` 继续显式拒绝普通导入，避免把 extra data 或 material stack 格式误装成可运行普通机器配方。
+
+## 2026-06-04 继续推进：SA326 / CMB / Saturnite / DuraSteel 材料 tag 与 plate recipe 链路
+
+- 1.7.10 对照：
+  - `OreDictManager` 定义并注册：
+    - `SA326 = new DictFrame("Schrabidium")`，含 `ingot_schrabidium` / `powder_schrabidium` / `plate_schrabidium`。
+    - `DURA = new DictFrame("DuraSteel")`，含 `ingot_dura_steel` / `powder_dura_steel` / `plate_dura_steel`。
+    - `CMB = new DictFrame("CMBSteel")`，含 `ingot_combine_steel` / `powder_combine_steel` / `plate_combine_steel`。
+    - `BIGMT = new DictFrame("Saturnite")`，含 `ingot_saturnite` / `plate_saturnite`。
+  - `AssemblyMachineRecipes` 的 `autoswitch.plates` 组包含：
+    - `ass.plateschrab`
+    - `ass.platecmb`
+    - `ass.plateweaponsteel`
+    - `ass.platesaturnite`
+    - `ass.platedura`
+  - `PressRecipes` 对同一批材料提供 `StampType.PLATE + ingot ore dict -> plate` 的压机配方。
+- 本批接入：
+  - 现代 `ModItems.EXTRA_PARTS_TAB_ITEMS` 补普通 legacy item 落点：
+    - `ingot_dura_steel`
+    - `powder_dura_steel`
+    - `ingot_combine_steel`
+    - `powder_combine_steel`
+    - `plate_combine_steel`
+    - `ingot_saturnite`
+    - `plate_saturnite`
+    - `plate_schrabidium`
+  - 从 1.7.10 资源复制对应旧贴图到现代 `assets/hbm/textures/item/`。
+  - `HbmItemTagsProvider` 补 legacy ore/tag alias：
+    - `ingotDuraSteel` / `dustDuraSteel` / `plateDuraSteel`
+    - `ingotCMBSteel` / `dustCMBSteel` / `plateCMBSteel`
+    - `ingotSaturnite` / `plateSaturnite`
+    - `plateSchrabidium`
+  - `HbmRecipeProvider` 生成装配机 plate recipe：
+    - `assembly_machine/plate_schrabidium`
+    - `assembly_machine/plate_combine_steel`
+    - `assembly_machine/plate_weaponsteel`
+    - `assembly_machine/plate_saturnite`
+    - `assembly_machine/plate_dura_steel`
+  - 这些装配机 recipe 使用现代 pool `alt.plates`，并保留旧 `autoswitch.plates` 分组。
+  - `HbmRecipeProvider` 生成压机 plate recipe：
+    - `press/schrabidium_plate`
+    - `press/combine_steel_plate`
+    - `press/saturnite_plate`
+    - `press/dura_steel_plate`
+  - 同批前置的 `weaponsteel_plate`、`casing_small_weaponsteel`、`casing_large_weaponsteel` 已通过 `WeaponSteel` tag 落地。
+- 迁移边界：
+  - 本批只补普通材料 item/tag/recipe 落点，不迁 `ItemCustomLore` tooltip、完整矿物合成/冶炼/anvil/crucible/lemetegon 产线。
+  - `CMBSteel` 在现代 tag path 中继续按现有 `LegacyOreDictionaryMappings.materialPath(...)` 规则解析为 `combine_steel`。
+  - `SA326` 的 hazard/blinding 语义仍归 `item-hazard-system` 与辐射库后续补齐；本批只避免 recipe/loot/hazard 解析旧 ID 时缺少 item/tag 目标。
+- 本批验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 抽样生成：
+    - `assembly_machine/plate_combine_steel.json`：`forge:ingots/combine_steel` -> `hbm:plate_combine_steel`，`pools=["alt.plates"]`，`auto_switch_group="autoswitch.plates"`。
+    - `press/dura_steel_plate.json`：`stamp: "plate"`，`forge:ingots/dura_steel` -> `hbm:plate_dura_steel`。
+    - `forge:ingots/saturnite`、`forge:plates/schrabidium`、`forge:ingots/combine_steel` 均包含对应 HBM item。
+  - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。

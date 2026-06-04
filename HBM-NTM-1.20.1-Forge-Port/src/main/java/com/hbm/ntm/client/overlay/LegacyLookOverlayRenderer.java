@@ -70,7 +70,7 @@ public final class LegacyLookOverlayRenderer {
     private static LegacyLookOverlay resolveBlockOverlay(Minecraft minecraft, BlockHitResult hit) {
         BlockState state = minecraft.level.getBlockState(hit.getBlockPos());
         if (state.getBlock() instanceof LegacyLookOverlayBlockProvider provider) {
-            return provider.getLookOverlay(minecraft.level, hit.getBlockPos(), state);
+            return provider.getLookOverlay(minecraft.level, minecraft.player, hit.getBlockPos(), state);
         }
         return null;
     }
@@ -80,7 +80,7 @@ public final class LegacyLookOverlayRenderer {
         if (!(blockEntity instanceof LegacyLookOverlayProvider provider)) {
             return null;
         }
-        return provider.getLookOverlay(minecraft.level, hit.getBlockPos());
+        return provider.getLookOverlay(minecraft.level, minecraft.player, hit.getBlockPos());
     }
 
     private static LegacyLookOverlay resolveEntityOverlay(Minecraft minecraft, EntityHitResult hit) {

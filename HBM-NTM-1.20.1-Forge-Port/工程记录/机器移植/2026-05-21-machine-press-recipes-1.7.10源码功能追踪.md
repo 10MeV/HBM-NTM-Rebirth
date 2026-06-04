@@ -41,14 +41,32 @@ This record covers the next small migration slice for the 1.7.10 burner press re
   - `minecraft:gold_ingot` -> `hbm:plate_gold`
   - `hbm:ingot_advanced_alloy` -> `hbm:plate_advanced_alloy`
   - `hbm:ingot_gunmetal` -> `hbm:plate_gunmetal`
+- Later recipe-common-loader batches added:
+  - `PRINTING1..8 + minecraft:paper -> hbm:page_of_page1..8`
+  - `C9/C50 + forge:plates/gun_metal -> hbm:casing_small/large`
+  - `C9/C50 + forge:plates/weapon_steel -> hbm:casing_small_steel/large_steel`
+  - `PLATE + forge:ingots/weapon_steel -> hbm:plate_weaponsteel`
+  - `PLATE + forge:ingots/schrabidium/combine_steel/saturnite/dura_steel -> matching migrated plates`
+  - First `FLAT` batch:
+    - quartz/lapis/diamond/emerald dust compression to vanilla gem/item outputs.
+    - biomass to compressed biomass.
+    - coke gem tag to graphite ingot.
+    - coal/lignite/sawdust to legacy briquette meta-split items.
+    - legacy `Blocks.log` meta `3` to modern `minecraft:jungle_log` for `ball_resin`.
+  - First `WIRE` batch in code:
+    - `WIRE + minecraft:gold_ingot -> hbm:wire_gold x8`, backed by old `wire_fine` meta `7900`.
 
 ## Deferred
 
 - `wire_fine` output is not registered yet, so `WIRE` recipes are deferred despite the new stamp type.
 - `circuit` multi-variant item is not registered yet, so the silicon `CIRCUIT` recipe is deferred.
-- Casing stamps and printing stamps are deferred until casing/page item models and metadata replacement semantics are migrated.
-- `plate_schrabidium`, `plate_combine_steel`, `plate_weaponsteel`, `plate_saturnite`, and `ingot_dura_steel` inputs or outputs are not fully present in the current clean port, so those plate recipes are deferred.
+- Casing stamps and printing stamps are now present for the ordinary gunmetal/weapon steel casing and page-printing chains; desh stamp durability/material variants remain deferred.
+- `plate_schrabidium`, `plate_combine_steel`, `plate_weaponsteel`, `plate_saturnite`, and `ingot_dura_steel` item/tag落点与对应 `PLATE` recipe 已由 recipes-common-loader 后续批次补齐。
+- `FLAT` 首批粉末/biomass/graphite/briquette/resin recipe 已由 recipes-common-loader 后续批次补齐。
+- Remaining press surface still deferred: meteorite sword hardening, any still-unmigrated `FLAT` outputs, generated `WIRE` recipe matrix beyond gold, silicon `CIRCUIT` recipe, desh stamp family, ammo item runtime, and non-migrated material families.
 
 ## Verification
 
-- Run `.\gradlew.bat compileJava processResources --no-daemon`.
+- Original slice: run `.\gradlew.bat compileJava processResources --no-daemon`.
+- 2026-06-04 follow-up material/press batches: `.\gradlew.bat compileJava --no-daemon` and `.\gradlew.bat runData --no-daemon` passed.
+- 2026-06-04 gold `WIRE` code pass: `.\gradlew.bat compileJava --no-daemon` and `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed; `runData --rerun-tasks` reached Forge datagen startup but failed before providers with `fml.modloading.missingclasses`, so generated `press/wire_gold.json` is pending.

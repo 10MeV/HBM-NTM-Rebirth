@@ -15,8 +15,10 @@ public final class ObjVehicleModels {
     public static final ResourceLocation CART_WOOD_TEXTURE = texture("cart_wood");
     public static final ResourceLocation CART_DESTROYER_TEXTURE = texture("cart_destroyer");
     public static final ResourceLocation CART_POWDER_TEXTURE = texture("cart_powder");
+    public static final ResourceLocation CART_GUNPOWDER_BLOCK_TEXTURE = CART_POWDER_TEXTURE;
     public static final ResourceLocation CART_SEMTEX_SIDE_TEXTURE = texture("cart_semtex_side");
     public static final ResourceLocation CART_SEMTEX_TOP_TEXTURE = texture("cart_semtex_top");
+    public static final ResourceLocation CART_SEMTEX_BOTTOM_BLOCK_TEXTURE = CART_SEMTEX_TOP_TEXTURE;
     public static final ResourceLocation TRAM_TEXTURE = texture("tram");
     public static final ResourceLocation TRAM_TRAILER_TEXTURE = texture("tram_trailer");
 

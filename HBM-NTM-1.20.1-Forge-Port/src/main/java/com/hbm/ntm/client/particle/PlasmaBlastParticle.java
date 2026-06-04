@@ -125,6 +125,11 @@ public class PlasmaBlastParticle extends TextureSheetParticle {
         return RENDER_TYPE;
     }
 
+    @Override
+    public boolean shouldCull() {
+        return false;
+    }
+
     public static final class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;
 

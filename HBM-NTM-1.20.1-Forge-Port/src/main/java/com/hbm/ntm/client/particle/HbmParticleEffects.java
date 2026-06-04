@@ -30,6 +30,7 @@ import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.monster.ZombifiedPiglin;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ClipContext;
@@ -107,7 +108,7 @@ public final class HbmParticleEffects {
         } else if (ParticleUtil.TYPE_RAD_FOG.equals(type)) {
             level.addParticle(ModParticleTypes.RADIATION_FOG.get(), x, y, z, 0.0D, 0.0D, 0.0D);
         } else if (ParticleUtil.TYPE_SCHRAB_FOG.equals(type)) {
-            addLegacyAura(level, x, y, z, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, 1.0F);
+            level.addParticle(ModParticleTypes.SCHRAB_FOG.get(), x, y, z, 0.0D, 0.0D, 0.0D);
         } else if ("weaponExplosion".equals(type)) {
             spawnWeaponExplosion(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_TAU.equals(type)) {
@@ -453,27 +454,21 @@ public final class HbmParticleEffects {
             return;
         }
         if ("largeexplode".equals(mode)) {
-            int count = Math.max(1, data.getByte("count"));
-            Particle primary = Minecraft.getInstance().particleEngine.createParticle(ParticleTypes.EXPLOSION,
-                    x, y, z, 0.0D, 0.0D, 0.0D);
+            int count = Math.max(0, data.getByte("count"));
+            Particle primary = LargeExplodeParticle.primary(level, x, y, z, data.getFloat("size"));
             if (primary != null) {
-                float color = 1.0F - level.random.nextFloat() * 0.2F;
-                primary.setColor(color, 0.9F * color, 0.5F * color);
-                primary.scale(Math.max(0.1F, data.getFloat("size")));
+                Minecraft.getInstance().particleEngine.add(primary);
             }
             for (int i = 0; i < count; i++) {
-                Particle secondary = Minecraft.getInstance().particleEngine.createParticle(ParticleTypes.POOF,
-                        x, y, z, 0.0D, 0.0D, 0.0D);
+                Particle secondary = LargeExplodeParticle.secondary(level, x, y, z, i + 1.0F);
                 if (secondary != null) {
-                    float color = 1.0F - level.random.nextFloat() * 0.5F;
-                    secondary.setColor(0.5F * color, 0.5F * color, 0.5F * color);
-                    secondary.scale(i + 1.0F);
+                    Minecraft.getInstance().particleEngine.add(secondary);
                 }
             }
             return;
         }
         if ("townaura".equals(mode)) {
-            level.addParticle(ModParticleTypes.TOWN_AURA.get(), x, y, z, motionX, motionY, motionZ);
+            addTownAuraWithVelocity(level, x, y, z, motionX, motionY, motionZ);
             return;
         }
         Particle particle = createVanillaExtParticle(level, data, x, y, z, motionX, motionY, motionZ);
@@ -643,7 +638,7 @@ public final class HbmParticleEffects {
 
         Vec3 look = entity.getLookAngle();
         double x = entity.getX();
-        double y = entity.getY() - entity.getMyRidingOffset() + entity.getEyeHeight() + (entity == Minecraft.getInstance().player ? 1.0D : 0.0D);
+        double y = entity.getY() - entity.getMyRidingOffset() + entity.getEyeHeight() + (entity instanceof Player ? 1.0D : 0.0D);
         double z = entity.getZ();
         for (int i = 0; i < count; i++) {
             double randomX = level.random.nextGaussian();
@@ -652,22 +647,26 @@ public final class HbmParticleEffects {
 
             if (ParticleUtil.VOMIT_SMOKE.equals(mode)) {
                 if (HbmSmokeParticle.exSmokeSprites() != null) {
+                    double motionX = (look.x + randomX * 0.1D) * 0.05D;
+                    double motionY = (look.y + randomY * 0.1D) * 0.05D;
+                    double motionZ = (look.z + randomZ * 0.1D) * 0.05D;
                     Particle particle = new HbmSmokeParticle(level, x, y, z,
-                            (look.x + randomX * 0.1D) * 0.05D,
-                            (look.y + randomY * 0.1D) * 0.05D,
-                            (look.z + randomZ * 0.1D) * 0.05D,
+                            motionX, motionY, motionZ,
                             HbmSmokeParticle.exSmokeSprites(), 0.2F, 10 + level.random.nextInt(10));
+                    particle.setParticleSpeed(motionX, motionY, motionZ);
                     Minecraft.getInstance().particleEngine.add(particle);
                 }
             } else {
                 BlockState state = ParticleUtil.VOMIT_BLOOD.equals(mode)
                         ? Blocks.REDSTONE_BLOCK.defaultBlockState()
                         : (level.random.nextBoolean() ? Blocks.LIME_TERRACOTTA : Blocks.GREEN_TERRACOTTA).defaultBlockState();
+                double motionX = (look.x + randomX * 0.2D) * 0.2D;
+                double motionY = (look.y + randomY * 0.2D) * 0.2D;
+                double motionZ = (look.z + randomZ * 0.2D) * 0.2D;
                 Particle particle = new TerrainParticle(level, x, y, z,
-                        (look.x + randomX * 0.2D) * 0.2D,
-                        (look.y + randomY * 0.2D) * 0.2D,
-                        (look.z + randomZ * 0.2D) * 0.2D,
+                        motionX, motionY, motionZ,
                         state);
+                particle.setParticleSpeed(motionX, motionY, motionZ);
                 addWithLifetime(particle, 150 + level.random.nextInt(50));
             }
         }
@@ -1259,6 +1258,7 @@ public final class HbmParticleEffects {
             case "flame" -> ParticleTypes.FLAME;
             case "smoke" -> ParticleTypes.SMOKE;
             case "cloud" -> ParticleTypes.CLOUD;
+            case "townaura" -> ModParticleTypes.TOWN_AURA.get();
             case "reddust" -> DustParticleOptions.REDSTONE;
             case "bluedust" -> new DustParticleOptions(new Vector3f(0.01F, 0.01F, 1.0F), 1.0F);
             case "greendust" -> new DustParticleOptions(new Vector3f(0.01F, 0.5F, 0.1F), 1.0F);
@@ -1319,9 +1319,15 @@ public final class HbmParticleEffects {
             return null;
         }
         HbmSmokeParticle particle = new HbmSmokeParticle(level, x, y, z, motionX, motionY, motionZ,
-                HbmSmokeParticle.exSmokeSprites(), scale, lifetime);
+                HbmSmokeParticle.exSmokeSprites(), scale, lifetime, true);
         particle.setColor(red, green, blue);
         return particle;
+    }
+
+    private static void addTownAuraWithVelocity(ClientLevel level, double x, double y, double z,
+            double motionX, double motionY, double motionZ) {
+        float color = 0.5F + level.random.nextFloat() * 0.5F;
+        addLegacyAura(level, x, y, z, motionX, motionY, motionZ, 0.8F * color, 0.9F * color, color);
     }
 
     private static void spawnRadial(ClientLevel level, ParticleOptions particle, double x, double y, double z, int count, double strength) {

@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
@@ -27,6 +28,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -42,7 +44,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
-        implements MenuProvider, HbmStandardFluidReceiver, HbmStandardFluidSender, HbmLegacyButtonReceiver {
+        implements MenuProvider, HbmStandardFluidReceiver, HbmStandardFluidSender, HbmLegacyButtonReceiver,
+        HbmPersistentBlockState {
     public static final int SLOT_TYPE_INPUT = 0;
     public static final int SLOT_TYPE_OUTPUT = 1;
     public static final int SLOT_LOAD_INPUT = 2;
@@ -127,7 +130,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         }
     }
 
-    private boolean handleItemTransfer() {
+    protected boolean handleItemTransfer() {
         boolean changed = false;
         changed |= setTankTypeFromIdentifierSlot();
         changed |= HbmFluidItemTransfer.processTransfers(items, List.of(
@@ -136,7 +139,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         return changed;
     }
 
-    private boolean setTankTypeFromIdentifierSlot() {
+    protected boolean setTankTypeFromIdentifierSlot() {
         ItemStack input = items.getStackInSlot(SLOT_TYPE_INPUT);
         if (input.isEmpty() || !(input.getItem() instanceof IFluidIdentifierItem identifier)) {
             return false;
@@ -156,7 +159,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         return true;
     }
 
-    private boolean checkHazards() {
+    protected boolean checkHazards() {
         if (tank.isEmpty()) {
             return false;
         }
@@ -174,7 +177,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         return false;
     }
 
-    private boolean leakDamagedTank(Level level, BlockPos pos) {
+    protected boolean leakDamagedTank(Level level, BlockPos pos) {
         if (tank.isEmpty()) {
             return false;
         }
@@ -247,12 +250,37 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         return mode;
     }
 
+    @Override
+    public int[] getFluidIdsToCopy() {
+        FluidType type = tank.getTankType();
+        return type == null || type.hasNoId() ? new int[0] : new int[] {type.getId()};
+    }
+
+    @Nullable
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return tank;
+    }
+
     public boolean isExploded() {
         return exploded;
     }
 
     public boolean isOnFire() {
         return onFire;
+    }
+
+    public void repairTank() {
+        if (!exploded) {
+            return;
+        }
+        exploded = false;
+        onFire = false;
+        invalidateFluidHandlers();
+        onFluidContentsChanged();
+        if (level != null) {
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
     }
 
     public int getComparatorPower() {
@@ -426,6 +454,38 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    public void writePersistentState(CompoundTag persistent) {
+        if (tank.getFill() == 0 && !exploded) {
+            return;
+        }
+        tank.writeToNbt(persistent, "tank");
+        persistent.putShort("mode", (short) mode);
+        persistent.putBoolean("hasExploded", exploded);
+        persistent.putBoolean("onFire", onFire);
+    }
+
+    @Override
+    public void readPersistentState(CompoundTag persistent) {
+        tank.readFromNbt(persistent, "tank");
+        mode = Math.max(MODE_INPUT, Math.min(MODE_NONE, persistent.getShort("mode")));
+        exploded = persistent.getBoolean("hasExploded");
+        onFire = persistent.getBoolean("onFire");
+        invalidateFluidHandlers();
+        refreshFluidNodeState();
+        setChanged();
+        if (level != null) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
+    }
+
+    public ItemStack createPersistentBlockDrop(Item item) {
+        ItemStack stack = new ItemStack(item);
+        writePersistentStateToStack(stack);
+        return stack;
+    }
+
+    @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
             return itemHandler.cast();
@@ -443,5 +503,12 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
             }
         }
         return drops;
+    }
+
+    protected void copyInventoryFrom(FluidTankBlockEntity other) {
+        for (int slot = 0; slot < items.getSlots() && slot < other.items.getSlots(); slot++) {
+            items.setStackInSlot(slot, other.items.getStackInSlot(slot).copy());
+            other.items.setStackInSlot(slot, ItemStack.EMPTY);
+        }
     }
 }

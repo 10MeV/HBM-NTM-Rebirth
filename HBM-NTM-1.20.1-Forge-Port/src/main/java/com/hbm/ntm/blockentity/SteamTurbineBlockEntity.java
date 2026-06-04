@@ -111,6 +111,12 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
         return lastPowerProduced;
     }
 
+    @Nullable
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return null;
+    }
+
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
         return List.of(inputTank);

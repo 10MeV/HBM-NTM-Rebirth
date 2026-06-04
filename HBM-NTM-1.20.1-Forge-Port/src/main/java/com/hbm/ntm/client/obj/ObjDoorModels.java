@@ -7,6 +7,10 @@ import net.minecraft.resources.ResourceLocation;
 public final class ObjDoorModels {
     public static final LegacyWavefrontModel SILO_HATCH_LEGACY = legacyModel("silo_hatch").asVBO();
     public static final LegacyWavefrontModel SILO_HATCH_LARGE_LEGACY = legacyModel("silo_hatch_large").asVBO();
+    public static final LegacyWavefrontModel BLAST_DOOR_BASE_LEGACY = legacyModel("blast_door_base");
+    public static final LegacyWavefrontModel BLAST_DOOR_TOOTH_LEGACY = legacyModel("blast_door_tooth");
+    public static final LegacyWavefrontModel BLAST_DOOR_SLIDER_LEGACY = legacyModel("blast_door_slider");
+    public static final LegacyWavefrontModel BLAST_DOOR_BLOCK_LEGACY = legacyModel("blast_door_block");
 
     public static final ObjModelPart SILO_HATCH = part("silo_hatch");
     public static final ObjModelPart SILO_HATCH_HATCH = part("silo_hatch_hatch");
@@ -30,6 +34,10 @@ public final class ObjDoorModels {
 
     public static final ResourceLocation SILO_HATCH_TEXTURE = texture("silo_hatch");
     public static final ResourceLocation SILO_HATCH_LARGE_TEXTURE = texture("silo_hatch_large");
+    public static final ResourceLocation BLAST_DOOR_BASE_TEXTURE = texture("blast_door_base");
+    public static final ResourceLocation BLAST_DOOR_TOOTH_TEXTURE = texture("blast_door_tooth");
+    public static final ResourceLocation BLAST_DOOR_SLIDER_TEXTURE = texture("blast_door_slider");
+    public static final ResourceLocation BLAST_DOOR_BLOCK_TEXTURE = texture("blast_door_block");
 
     public static ObjModelPart part(String name) {
         return ObjModelLibrary.blockPart("doors/" + name, RenderType.cutout());

@@ -1,0 +1,10 @@
+{
+  "type": "hbm:press",
+  "ingredient": {
+    "tag": "forge:dusts/quartz"
+  },
+  "result": {
+    "item": "minecraft:quartz"
+  },
+  "stamp": "flat"
+}

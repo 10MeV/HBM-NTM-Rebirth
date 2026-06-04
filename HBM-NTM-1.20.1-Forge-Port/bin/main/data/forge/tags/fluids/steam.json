@@ -1,0 +1,12 @@
+{
+  "values": [
+    "hbm:steam",
+    "hbm:steam_flowing",
+    "hbm:hotsteam",
+    "hbm:hotsteam_flowing",
+    "hbm:superhotsteam",
+    "hbm:superhotsteam_flowing",
+    "hbm:ultrahotsteam",
+    "hbm:ultrahotsteam_flowing"
+  ]
+}

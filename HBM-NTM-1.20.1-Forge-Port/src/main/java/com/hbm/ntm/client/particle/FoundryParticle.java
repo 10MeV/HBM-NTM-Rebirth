@@ -102,7 +102,7 @@ public class FoundryParticle extends Particle {
         double rotZW = rot.z * width;
         double uMin = 0.5D - width;
         double uMax = 0.5D + width;
-        double add = (this.level.getGameTime() % 16L) / 16.0D;
+        double add = (System.currentTimeMillis() / 100L % 16L) / 16.0D;
 
         vertexBox(consumer, pX, pY, pZ, rotXW, rotZW, dirXG, dirZG, girth, uMin, uMax, add);
     }

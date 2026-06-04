@@ -1,5 +1,6 @@
 package com.hbm.ntm.item;
 
+import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.client.renderer.LegacyItemRendererBridge;
 import com.hbm.ntm.client.renderer.LegacyVisibleMachineItemRenderer;
 import com.hbm.ntm.multiblock.LegacyMultiblockPlaceable;
@@ -14,6 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -61,6 +63,7 @@ public class MultiblockBlockItem extends BlockItem {
         if (placedState.is(state.getBlock())) {
             updateCustomBlockEntityTag(level, player, corePos, stack);
             multiblock.afterDirectCorePlaced(level, corePos, placedState, player, stack);
+            restorePersistentState(level, corePos, stack);
             multiblock.completeDirectMultiblockPlacement(level, corePos, placedState, player, stack);
             if (player instanceof ServerPlayer serverPlayer) {
                 CriteriaTriggers.PLACED_BLOCK.trigger(serverPlayer, corePos, stack);
@@ -75,5 +78,15 @@ public class MultiblockBlockItem extends BlockItem {
             stack.shrink(1);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    private static void restorePersistentState(Level level, BlockPos corePos, ItemStack stack) {
+        if (level.isClientSide) {
+            return;
+        }
+        BlockEntity blockEntity = level.getBlockEntity(corePos);
+        if (blockEntity instanceof HbmPersistentBlockState persistent) {
+            persistent.readPersistentStateFromStack(stack);
+        }
     }
 }

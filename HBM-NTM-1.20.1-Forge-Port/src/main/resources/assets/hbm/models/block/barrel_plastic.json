@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/legacy_blocks/barrel.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/legacy_blocks/barrel_plastic",
+    "default": "hbm:block/legacy_blocks/barrel_plastic",
+    "texture0": "hbm:block/legacy_blocks/barrel_plastic"
+  }
+}

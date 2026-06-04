@@ -231,6 +231,7 @@ public final class LegacyGenericRecipeFormat {
         if (recipe.getAutoSwitchGroup() != null) {
             object.addProperty("autoSwitchGroup", recipe.getAutoSwitchGroup());
         }
+        recipe.getExtraData().writeToJson(object);
         return object;
     }
 

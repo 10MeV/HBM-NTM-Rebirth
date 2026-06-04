@@ -61,7 +61,7 @@ public class HazeParticle extends TextureSheetParticle {
         super(level, x, y, z);
         this.sprites = sprites;
         this.lifetime = 600 + this.random.nextInt(100);
-        this.rCol = this.gCol = this.bCol = 0.0F;
+        this.rCol = this.gCol = this.bCol = 1.0F;
         this.quadSize = 10.0F;
         this.hasPhysics = false;
         this.setSpriteFromAge(sprites);
@@ -83,6 +83,10 @@ public class HazeParticle extends TextureSheetParticle {
         this.xd *= 0.96D;
         this.yd *= 0.96D;
         this.zd *= 0.96D;
+        if (this.onGround) {
+            this.xd *= 0.7D;
+            this.zd *= 0.7D;
+        }
         this.move(this.xd, this.yd, this.zd);
         int x = Mth.floor(this.x) + this.random.nextInt(15) - 7;
         int z = Mth.floor(this.z) + this.random.nextInt(15) - 7;
@@ -101,14 +105,17 @@ public class HazeParticle extends TextureSheetParticle {
         Vec3 cameraPos = camera.getPosition();
         Quaternionf rotation = camera.rotation();
         Random fixed = new Random(50L);
+        float cumulativeX = 0.0F;
+        float cumulativeY = 0.0F;
+        float cumulativeZ = 0.0F;
         for (int i = 0; i < 25; i++) {
-            double dx = fixed.nextGaussian() * 2.5D;
-            double dy = fixed.nextGaussian() * 0.15D;
-            double dz = fixed.nextGaussian() * 2.5D;
+            cumulativeX += (float) (fixed.nextGaussian() * 2.5D);
+            cumulativeY += (float) (fixed.nextGaussian() * 0.15D);
+            cumulativeZ += (float) (fixed.nextGaussian() * 2.5D);
             float size = (float) ((fixed.nextDouble() * 0.25D + 0.75D) * this.quadSize);
-            float x = (float) (Mth.lerp(partialTick, this.xo, this.x) + dx + fixed.nextGaussian() * 0.5D - cameraPos.x());
-            float y = (float) (Mth.lerp(partialTick, this.yo, this.y) + dy + fixed.nextGaussian() * 0.5D - cameraPos.y());
-            float z = (float) (Mth.lerp(partialTick, this.zo, this.z) + dz + fixed.nextGaussian() * 0.5D - cameraPos.z());
+            float x = (float) (Mth.lerp(partialTick, this.xo, this.x) + cumulativeX + fixed.nextGaussian() * 0.5D - cameraPos.x());
+            float y = (float) (Mth.lerp(partialTick, this.yo, this.y) + cumulativeY + fixed.nextGaussian() * 0.5D - cameraPos.y());
+            float z = (float) (Mth.lerp(partialTick, this.zo, this.z) + cumulativeZ + fixed.nextGaussian() * 0.5D - cameraPos.z());
             Vector3f[] corners = new Vector3f[] {
                     new Vector3f(-size, -size, 0.0F),
                     new Vector3f(-size, size, 0.0F),

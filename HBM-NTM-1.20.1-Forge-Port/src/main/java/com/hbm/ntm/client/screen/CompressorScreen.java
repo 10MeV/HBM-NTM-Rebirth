@@ -57,9 +57,9 @@ public class CompressorScreen extends AbstractContainerScreen<CompressorMenu> {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(17, 18, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, split(menu.getInputTankTooltip()), mouseX, mouseY);
+            graphics.renderTooltip(font, split(menu.getInputTankTooltip(hasShiftDown())), mouseX, mouseY);
         } else if (isHovering(107, 18, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, split(menu.getOutputTankTooltip()), mouseX, mouseY);
+            graphics.renderTooltip(font, split(menu.getOutputTankTooltip(hasShiftDown())), mouseX, mouseY);
         } else if (isHovering(152, 18, 16, 52, mouseX, mouseY)) {
             graphics.renderTooltip(font,
                     Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);

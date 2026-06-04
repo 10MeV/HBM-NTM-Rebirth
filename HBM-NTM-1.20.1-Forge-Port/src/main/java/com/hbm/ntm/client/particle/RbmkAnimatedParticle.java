@@ -147,12 +147,12 @@ public class RbmkAnimatedParticle extends TextureSheetParticle {
         float v0 = getV0();
         float v1 = getV1();
         if (mode == Mode.FLAME) {
-            int frame = ((int) renderAge * 5) % 14;
+            int frame = (((int) renderAge * 5) % 14) % 5;
             float width = (u1 - u0) / 14.0F;
             return new Uv(u0 + width * frame, u0 + width * (frame + 1), v0, v1);
         }
         if (mode == Mode.STEAM) {
-            int frame = Mth.clamp((int) (renderAge / (float) this.lifetime * 20.0F), 0, 19);
+            int frame = ((int) (renderAge / (float) this.lifetime * 20.0F) % 20 + 19) % 20;
             float width = (u1 - u0) / 20.0F;
             return new Uv(u0 + width * frame, u0 + width * (frame + 1), v0, v1);
         }

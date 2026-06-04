@@ -332,12 +332,21 @@ public final class ObjMissilePartModels {
                 missileTexture(textureName));
     }
 
-    private static ResourceLocation missileTexture(String name) {
+    public static ResourceLocation missileTexture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/missiles/" + name + ".png");
     }
 
-    private static ResourceLocation texture(String path) {
+    public static ResourceLocation missilePartTexture(String path) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/missile_parts/" + path + ".png");
+    }
+
+    public static ResourceLocation textureForPart(String legacyItemName) {
+        LegacyMissilePart part = part(legacyItemName);
+        return part == null ? null : part.texture();
+    }
+
+    private static ResourceLocation texture(String path) {
+        return missilePartTexture(path);
     }
 
     private ObjMissilePartModels() {

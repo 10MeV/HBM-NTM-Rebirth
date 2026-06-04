@@ -17,6 +17,7 @@ public final class ObjProjectileModels {
     public static final LegacyWavefrontModel ZIRNOX_DEBRIS_ELEMENT = model("zirnox_deb_element", "zirnox_deb_element");
     public static final LegacyWavefrontModel ZIRNOX_DEBRIS_EXCHANGER = model("zirnox_deb_exchanger", "zirnox");
     public static final LegacyWavefrontModel ZIRNOX_DEBRIS_SHRAPNEL = model("zirnox_deb_shrapnel", "zirnox");
+    public static final LegacyWavefrontModel BOMBLET_ZETA = model("bomblet_theta", "bomblet_zeta");
 
     public static final ResourceLocation HIMARS_STANDARD_TEXTURE = texture("himars_standard");
     public static final ResourceLocation HIMARS_SINGLE_TEXTURE = texture("himars_single");
@@ -46,6 +47,7 @@ public final class ObjProjectileModels {
     public static final ResourceLocation ZIRNOX_TEXTURE = texture("zirnox");
     public static final ResourceLocation ZIRNOX_DESTROYED_TEXTURE = texture("zirnox_destroyed");
     public static final ResourceLocation ZIRNOX_DEBRIS_ELEMENT_TEXTURE = texture("zirnox_deb_element");
+    public static final ResourceLocation BOMBLET_ZETA_TEXTURE = texture("bomblet_zeta");
 
     public static LegacyWavefrontModel model(String modelName, String textureName) {
         return new LegacyWavefrontModel(

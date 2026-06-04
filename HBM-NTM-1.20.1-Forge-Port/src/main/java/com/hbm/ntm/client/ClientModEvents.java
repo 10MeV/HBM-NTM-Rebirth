@@ -18,6 +18,7 @@ import com.hbm.ntm.client.particle.GibletParticle;
 import com.hbm.ntm.client.particle.HadronParticle;
 import com.hbm.ntm.client.particle.HazeParticle;
 import com.hbm.ntm.client.particle.HbmSmokeParticle;
+import com.hbm.ntm.client.particle.LargeExplodeParticle;
 import com.hbm.ntm.client.particle.LegacyContrailParticle;
 import com.hbm.ntm.client.particle.LegacySplashParticle;
 import com.hbm.ntm.client.particle.MukeWaveParticle;
@@ -74,6 +75,7 @@ import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
+import com.hbm.ntm.item.OreByproductItem;
 import com.hbm.ntm.radiation.CraterRadiationData;
 import com.hbm.ntm.radiation.CraterBiomeUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -145,8 +147,10 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.ASSEMBLY_MACHINE.get(), AssemblyMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.CHEMICAL_PLANT.get(), ChemicalPlantRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LIQUEFACTOR.get(), LiquefactorRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.REFINERY.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FLUID_TANK.get(), FluidTankRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.BIG_ASS_TANK.get(), FluidTankRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.OIL_DRILL.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_VISIBLE_MACHINE.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.GAS_FLARE.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.CATALYTIC_CRACKER.get(), LegacyVisibleMachineRenderer::new);
@@ -215,6 +219,10 @@ public final class ClientModEvents {
                 .map(RegistryObject::get)
                 .filter(FluidIdentifierItem.class::isInstance)
                 .forEach(item -> event.register((stack, tintIndex) -> ((FluidIdentifierItem) item).getTintColor(stack, tintIndex), item));
+        ModItems.ORE_BYPRODUCT_ITEMS.stream()
+                .map(RegistryObject::get)
+                .filter(OreByproductItem.class::isInstance)
+                .forEach(item -> event.register((stack, tintIndex) -> ((OreByproductItem) item).getTintColor(tintIndex), item));
         event.register((stack, tintIndex) -> {
             if (stack.getItem() instanceof FluidPipeBlockItem pipe) {
                 return pipe.getTintColor(stack, tintIndex);
@@ -364,6 +372,7 @@ public final class ClientModEvents {
         event.registerSpriteSet(ModParticleTypes.FLAMETHROWER_BLACK.get(),
                 sprites -> new FlamethrowerParticle.Provider(sprites, FlamethrowerParticle.META_BLACK));
         event.registerSpriteSet(ModParticleTypes.BLACK_POWDER_SPARK.get(), BlackPowderSparkParticle.Provider::new);
+        event.registerSpriteSet(ModParticleTypes.LARGE_EXPLODE.get(), LargeExplodeParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.EXPLOSION_SMALL.get(), ExplosionSmallParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.BLACK_POWDER_SMOKE.get(), BlackPowderSmokeParticle.Provider::new);
         event.registerSpriteSet(ModParticleTypes.ASHES.get(), AshesParticle.Provider::new);

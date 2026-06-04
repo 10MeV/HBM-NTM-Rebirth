@@ -1,0 +1,10 @@
+{
+  "type": "hbm:press",
+  "ingredient": {
+    "tag": "forge:ingots/schrabidium"
+  },
+  "result": {
+    "item": "hbm:plate_schrabidium"
+  },
+  "stamp": "plate"
+}

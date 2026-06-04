@@ -1,6 +1,7 @@
 package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.api.RadiationImmune;
+import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.registry.ModEffects;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -81,11 +82,21 @@ public final class RadiationUtil {
         if (isDigammaDataImmune(entity)) {
             return;
         }
+        if (entity.hasEffect(ModEffects.STABILITY.get())) {
+            return;
+        }
         contaminate(entity, HazardType.DIGAMMA, ContaminationType.DIGAMMA, amount);
     }
 
+    public static void applyDigammaItemHazard(LivingEntity entity, float level, int stackCount) {
+        if (level <= 0.0F || stackCount <= 0) {
+            return;
+        }
+        applyDigammaData(entity, level * stackCount / 20.0F);
+    }
+
     public static void applyDigammaDirect(LivingEntity entity, float amount) {
-        if (amount <= 0.0F || entity instanceof RadiationImmune || isLegacyImmuneEntityName(entity)) {
+        if (amount <= 0.0F || entity instanceof RadiationImmune) {
             return;
         }
         if (entity instanceof Player player && player.isCreative()) {
@@ -132,6 +143,64 @@ public final class RadiationUtil {
 
     public static void applyRadaway(LivingEntity entity, float amount) {
         RadiationData.incrementRadiation(entity, -amount);
+    }
+
+    public static boolean applyAsbestos(LivingEntity entity, int amount, int filterDamage) {
+        return applyAsbestos(entity, amount, filterDamage, false);
+    }
+
+    public static boolean applyAsbestosExposure(LivingEntity entity, int amount, int filterDamage) {
+        return applyAsbestos(entity, amount, filterDamage, true);
+    }
+
+    private static boolean applyAsbestos(LivingEntity entity, int amount, int filterDamage, boolean playerExposureProtection) {
+        if (amount <= 0) {
+            return false;
+        }
+        if (playerExposureProtection && blocksNewPlayerOrCreative(entity)) {
+            return false;
+        }
+        if (ArmorUtil.hasProtection(entity, HazardClass.PARTICLE_FINE)) {
+            if (filterDamage > 0) {
+                ArmorUtil.damageGasMaskFilter(entity, filterDamage);
+            }
+            return false;
+        }
+        RadiationData.incrementAsbestos(entity, amount);
+        return true;
+    }
+
+    public static boolean applyCoalDust(LivingEntity entity, int amount, int filterDamage, int filterDamageChance) {
+        return applyCoalDust(entity, amount, filterDamage, filterDamageChance, false);
+    }
+
+    public static boolean applyCoalDustExposure(LivingEntity entity, int amount, int filterDamage, int filterDamageChance) {
+        return applyCoalDust(entity, amount, filterDamage, filterDamageChance, true);
+    }
+
+    private static boolean applyCoalDust(LivingEntity entity, int amount, int filterDamage, int filterDamageChance,
+            boolean playerExposureProtection) {
+        if (amount <= 0) {
+            return false;
+        }
+        if (playerExposureProtection && blocksNewPlayerOrCreative(entity)) {
+            return false;
+        }
+        if (ArmorUtil.hasProtection(entity, HazardClass.PARTICLE_COARSE)) {
+            if (filterDamage > 0 && entity.getRandom().nextInt(Math.max(filterDamageChance, 1)) == 0) {
+                ArmorUtil.damageGasMaskFilter(entity, filterDamage);
+            }
+            return false;
+        }
+        RadiationData.incrementBlackLung(entity, amount);
+        return true;
+    }
+
+    private static boolean blocksNewPlayerOrCreative(LivingEntity entity) {
+        if (!(entity instanceof Player player)) {
+            return false;
+        }
+        return player.isCreative() || player.tickCount < 200;
     }
 
     public static void printGeigerData(Player player) {

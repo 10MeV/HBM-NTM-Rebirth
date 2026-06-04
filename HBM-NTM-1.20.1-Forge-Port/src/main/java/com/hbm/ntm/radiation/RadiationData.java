@@ -1,14 +1,18 @@
 package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.network.ModMessages;
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.LivingEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +22,8 @@ public final class RadiationData {
     public static final UUID DIGAMMA_UUID = UUID.fromString("2a3d8aec-5ab9-4218-9b8b-ca812bdf378b");
     public static final int MAX_ASBESTOS = 60 * 60 * 20;
     public static final int MAX_BLACK_LUNG = 2 * 60 * 60 * 20;
+    private static final int INFORM_ID_GAS_HAZARD = 12;
+    private static final int INFORM_GAS_HAZARD_MILLIS = 3_000;
     private static final String TAG_ROOT = "HbmLivingProps";
     private static final String TAG_PREVIOUS_ROOT = "hbm_radiation";
     private static final String TAG_RADIATION = "hfr_radiation";
@@ -134,7 +140,11 @@ public final class RadiationData {
     }
 
     public static void incrementAsbestos(LivingEntity entity, int amount) {
+        if (RadiationConfig.DISABLE_ASBESTOS.get()) {
+            return;
+        }
         setAsbestos(entity, getAsbestos(entity) + amount);
+        informGasHazard(entity, "info.asbestos");
     }
 
     public static int getBombTimer(LivingEntity entity) {
@@ -174,7 +184,11 @@ public final class RadiationData {
     }
 
     public static void incrementBlackLung(LivingEntity entity, int amount) {
+        if (RadiationConfig.DISABLE_COAL.get()) {
+            return;
+        }
         setBlackLung(entity, getBlackLung(entity) + amount);
+        informGasHazard(entity, "info.coaldust");
     }
 
     public static int getOil(LivingEntity entity) {
@@ -284,6 +298,38 @@ public final class RadiationData {
         return count;
     }
 
+    public static List<ContaminationEffect> tickContamination(LivingEntity entity) {
+        ListTag contamination = getContamination(entity);
+        if (contamination.isEmpty()) {
+            return List.of();
+        }
+
+        List<ContaminationEffect> active = new ArrayList<>(contamination.size());
+        ListTag next = new ListTag();
+        for (int i = 0; i < contamination.size(); i++) {
+            CompoundTag effect = contamination.getCompound(i).copy();
+            int time = effect.getInt(TAG_CONTAMINATION_TIME);
+            if (time <= 0) {
+                continue;
+            }
+
+            int maxTime = Math.max(1, effect.getInt(TAG_CONTAMINATION_MAX_TIME));
+            float maxRad = effect.getFloat(TAG_CONTAMINATION_MAX_RAD);
+            boolean ignoreArmor = effect.getBoolean(TAG_CONTAMINATION_IGNORE_ARMOR);
+            ContaminationEffect activeEffect = new ContaminationEffect(maxRad, maxTime, time, ignoreArmor);
+            active.add(activeEffect);
+
+            int nextTime = time - 1;
+            if (nextTime > 0) {
+                effect.putInt(TAG_CONTAMINATION_TIME, nextTime);
+                effect.putInt(TAG_CONTAMINATION_MAX_TIME, maxTime);
+                next.add(effect);
+            }
+        }
+        setContamination(entity, next);
+        return active;
+    }
+
     public static void copyForRespawn(LivingEntity original, LivingEntity replacement) {
         CompoundTag originalData = original.getPersistentData();
         if (originalData.contains(TAG_ROOT, Tag.TAG_COMPOUND)) {
@@ -335,6 +381,13 @@ public final class RadiationData {
 
     private static float clampPlayerRadiation(float value) {
         return Mth.clamp(value, 0.0F, RadiationConstants.MAX_PLAYER_RADIATION);
+    }
+
+    private static void informGasHazard(LivingEntity entity, String translationKey) {
+        if (entity instanceof ServerPlayer player) {
+            ModMessages.informPlayer(player, Component.translatable(translationKey).withStyle(ChatFormatting.RED),
+                    INFORM_ID_GAS_HAZARD, INFORM_GAS_HAZARD_MILLIS);
+        }
     }
 
     public record ContaminationEffect(float maxRad, int maxTime, int time, boolean ignoreArmor) {

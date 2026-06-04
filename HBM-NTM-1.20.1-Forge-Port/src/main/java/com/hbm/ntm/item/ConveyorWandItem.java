@@ -1,9 +1,11 @@
 package com.hbm.ntm.item;
 
+import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.conveyor.ConveyorMath;
 import com.hbm.ntm.api.conveyor.ConveyorRoutePlanner;
 import com.hbm.ntm.api.conveyor.IConveyorBelt;
 import com.hbm.ntm.api.conveyor.IEnterableBlock;
+import com.hbm.ntm.api.item.LegacyLookOverlayItemProvider;
 import com.hbm.ntm.block.conveyor.ConveyorBlock;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.ChatFormatting;
@@ -28,7 +30,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Locale;
 
-public class ConveyorWandItem extends Item {
+public class ConveyorWandItem extends Item implements LegacyLookOverlayItemProvider {
     private static final String TAG_TYPE = "Type";
     private static final String TAG_START = "Start";
     private static final String TAG_SIDE = "Side";
@@ -138,6 +140,18 @@ public class ConveyorWandItem extends Item {
     @Override
     public boolean isFoil(ItemStack stack) {
         return hasStart(stack) || super.isFoil(stack);
+    }
+
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, Player player, ItemStack stack, BlockHitResult hit) {
+        if (player == null || !player.isShiftKeyDown() || !player.getAbilities().instabuild) {
+            return null;
+        }
+        BlockState state = level.getBlockState(hit.getBlockPos());
+        if (!(state.getBlock() instanceof ConveyorBlock)) {
+            return null;
+        }
+        return LegacyLookOverlay.forBlockState(state, List.of(Component.literal("Break whole conveyor line")));
     }
 
     private InteractionResult placeSingle(UseOnContext context, ItemStack stack, Player player, BlockPos clickedPos, Direction side) {

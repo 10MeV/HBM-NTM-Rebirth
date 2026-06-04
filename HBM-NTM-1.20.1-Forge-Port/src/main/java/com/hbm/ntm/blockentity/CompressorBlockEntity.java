@@ -7,6 +7,7 @@ import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidCompressorRecipes;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidPortMachine;
@@ -56,6 +57,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_LEGACY_POWER = "power";
     private static final String TAG_PROGRESS = "progress";
     private static final String TAG_INPUT_PRESSURE = "inputPressure";
+    private static final String TAG_LEGACY_COMPRESSION = "compression";
     private static final long MAX_POWER = 100_000L;
     private static final int TANK_CAPACITY = 16_000;
     private static final int BASE_POWER_REQUIREMENT = 2_500;
@@ -174,6 +176,42 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public boolean isOn() {
         return on;
+    }
+
+    @Override
+    public CompoundTag getFluidSettings() {
+        CompoundTag tag = new CompoundTag();
+        int[] ids = getFluidIdsToCopy();
+        if (ids.length > 0) {
+            tag.putIntArray(HbmFluidCopiable.TAG_FLUID_IDS, ids);
+        }
+        tag.putInt(TAG_LEGACY_COMPRESSION, inputTank.getPressure());
+        return tag;
+    }
+
+    @Override
+    public boolean pasteFluidSettings(CompoundTag tag, int index, @Nullable Player player, boolean recursive) {
+        boolean changed = false;
+        if (tag != null && tag.contains(TAG_LEGACY_COMPRESSION)) {
+            int before = inputTank.getPressure();
+            setInputPressure(tag.getInt(TAG_LEGACY_COMPRESSION));
+            changed |= inputTank.getPressure() != before;
+        }
+        HbmFluidTank pasteTarget = getTankToPasteFluidSettings();
+        if (pasteTarget != null && tag != null && tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
+            int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
+            if (ids.length > 0) {
+                int safeIndex = index >= 0 && index < ids.length ? index : 0;
+                FluidType before = pasteTarget.getTankType();
+                pasteTarget.setTankType(HbmFluids.fromId(ids[safeIndex]));
+                changed |= pasteTarget.getTankType() != before;
+            }
+        }
+        setupOutputTank();
+        if (changed) {
+            onFluidContentsChanged();
+        }
+        return changed;
     }
 
     public long getPower() {

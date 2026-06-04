@@ -53,6 +53,49 @@ public final class LegacyLookOverlayPorts {
     }
 
     @Nullable
+    public static LegacyLookOverlay turbineGasPort(BlockEntity blockEntity, BlockPos viewedPos) {
+        Direction facing = facing(blockEntity);
+        Direction rot = facing.getClockWise();
+        if (exactMatches(blockEntity, viewedPos, facing, rot, -1, 1, 0)
+                || exactMatches(blockEntity, viewedPos, facing, rot, 1, 1, 0)) {
+            return LegacyLookOverlay.forBlock(blockEntity,
+                    LegacyLookOverlayLines.fluidPorts(true, HbmFluids.GAS, HbmFluids.LUBRICANT));
+        }
+        if (exactMatches(blockEntity, viewedPos, facing, rot, -1, -4, 0)
+                || exactMatches(blockEntity, viewedPos, facing, rot, 1, -4, 0)) {
+            return LegacyLookOverlay.forBlock(blockEntity,
+                    List.of(LegacyLookOverlayLines.fluidPort(true, HbmFluids.WATER)));
+        }
+        if (exactMatches(blockEntity, viewedPos, facing, rot, 0, -5, 1)) {
+            return LegacyLookOverlay.forBlock(blockEntity,
+                    List.of(LegacyLookOverlayLines.fluidPort(false, HbmFluids.HOTSTEAM)));
+        }
+        if (exactMatches(blockEntity, viewedPos, facing, rot, 0, 4, 1)) {
+            return LegacyLookOverlay.forBlock(blockEntity,
+                    List.of(LegacyLookOverlayLines.powerPort(false)));
+        }
+        return null;
+    }
+
+    @Nullable
+    public static LegacyLookOverlay rotaryFurnacePort(BlockEntity blockEntity, BlockPos viewedPos) {
+        Direction facing = facing(blockEntity);
+        Direction rot = facing.getCounterClockWise();
+        if (exactMatches(blockEntity, viewedPos, facing, rot, -1, -1, 0)
+                || exactMatches(blockEntity, viewedPos, facing, rot, -1, -2, 0)) {
+            return LegacyLookOverlay.forBlock(blockEntity,
+                    List.of(
+                            LegacyLookOverlayLines.fluidPort(true, HbmFluids.STEAM),
+                            LegacyLookOverlayLines.fluidPort(false, HbmFluids.SPENTSTEAM)));
+        }
+        if (exactMatches(blockEntity, viewedPos, facing, rot, 1, 1, 0)) {
+            return LegacyLookOverlay.forBlock(blockEntity,
+                    List.of(LegacyLookOverlayLines.itemPort(true, "Fuel")));
+        }
+        return null;
+    }
+
+    @Nullable
     public static LegacyLookOverlay match(BlockEntity blockEntity, BlockPos viewedPos, List<LegacyLookOverlayPort> ports) {
         for (LegacyLookOverlayPort port : ports) {
             if (port.matches(blockEntity.getBlockPos(), viewedPos)) {
@@ -112,6 +155,14 @@ public final class LegacyLookOverlayPorts {
     private static LegacyLookOverlayPort port(int x, int y, int z, Direction direction,
             java.util.function.Supplier<List<net.minecraft.network.chat.Component>> lines) {
         return new LegacyLookOverlayPort(new BlockPos(x, y, z), direction, lines);
+    }
+
+    private static boolean exactMatches(BlockEntity blockEntity, BlockPos viewedPos, Direction facing,
+            Direction sideAxis, int forward, int side, int y) {
+        return viewedPos.equals(blockEntity.getBlockPos().offset(
+                facing.getStepX() * forward + sideAxis.getStepX() * side,
+                y,
+                facing.getStepZ() * forward + sideAxis.getStepZ() * side));
     }
 
     private LegacyLookOverlayPorts() {

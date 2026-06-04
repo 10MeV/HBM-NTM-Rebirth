@@ -62,6 +62,12 @@ public final class ObjLaunchModels {
     public static final ResourceLocation LAUNCH_TABLE_LARGE_SCAFFOLD_CONNECTOR_TEXTURE = texture("launch_table_large_scaffold_connector");
     public static final ResourceLocation LAUNCH_TABLE_SMALL_SCAFFOLD_BASE_TEXTURE = texture("launch_table_small_scaffold_base");
     public static final ResourceLocation LAUNCH_TABLE_SMALL_SCAFFOLD_CONNECTOR_TEXTURE = texture("launch_table_small_scaffold_connector");
+    public static final ResourceLocation SOYUZ_LAUNCHER_LEG_TEXTURE = texture("soyuz_launcher_legs");
+    public static final ResourceLocation SOYUZ_LAUNCHER_TABLE_TEXTURE = texture("soyuz_launcher_table");
+    public static final ResourceLocation SOYUZ_LAUNCHER_TOWER_BASE_TEXTURE = texture("soyuz_launcher_tower_base");
+    public static final ResourceLocation SOYUZ_LAUNCHER_TOWER_TEXTURE = texture("soyuz_launcher_tower");
+    public static final ResourceLocation SOYUZ_LAUNCHER_SUPPORT_BASE_TEXTURE = texture("soyuz_launcher_support_base");
+    public static final ResourceLocation SOYUZ_LAUNCHER_SUPPORT_TEXTURE = texture("soyuz_launcher_support");
 
     public static ObjModelPart part(String name) {
         return ObjModelLibrary.blockPart("launch_table/" + name, RenderType.cutout());

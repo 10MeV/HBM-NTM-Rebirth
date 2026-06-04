@@ -113,6 +113,14 @@ public class AssemblyMachineMenu extends AbstractContainerMenu {
         return outputTank.tooltip();
     }
 
+    public List<Component> getInputTankTooltip(boolean showHidden) {
+        return inputTank.tooltip(showHidden);
+    }
+
+    public List<Component> getOutputTankTooltip(boolean showHidden) {
+        return outputTank.tooltip(showHidden);
+    }
+
     @Override
     public boolean stillValid(Player player) {
         return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);

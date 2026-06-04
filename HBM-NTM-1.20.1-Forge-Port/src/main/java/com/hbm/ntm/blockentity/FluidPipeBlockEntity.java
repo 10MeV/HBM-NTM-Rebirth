@@ -5,6 +5,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.HbmFluidNodeBlock;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidNet;
 import com.hbm.ntm.fluid.HbmFluidNode;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
@@ -13,19 +14,23 @@ import com.hbm.ntm.fluid.HbmFluidConnectionUtil;
 import com.hbm.ntm.fluid.HbmFluidConnector;
 import com.hbm.ntm.fluid.HbmFluidNodeHost;
 import com.hbm.ntm.registry.ModBlockEntities;
+import java.util.ArrayDeque;
+import java.util.HashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 
 public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnector, HbmFluidNodeHost,
-        HbmFluidNodeBlock.FluidTypedBlockEntity, LegacyLookOverlayProvider {
+        HbmFluidNodeBlock.FluidTypedBlockEntity, HbmFluidCopiable, LegacyLookOverlayProvider {
     private static final String TAG_TYPE = "type";
 
     protected HbmFluidNode node;
@@ -72,6 +77,29 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
                 nodeBlock.updateFluidConnectionGraph(level, worldPosition);
             }
         }
+    }
+
+    @Override
+    public int[] getFluidIdsToCopy() {
+        return new int[] {type.getId()};
+    }
+
+    @Override
+    public boolean pasteFluidSettings(CompoundTag tag, int index, @Nullable Player player, boolean recursive) {
+        if (tag == null || !tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
+            return false;
+        }
+        int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
+        if (ids.length <= 0) {
+            return false;
+        }
+        int safeIndex = index >= 0 && index < ids.length ? index : 0;
+        FluidType target = HbmFluids.fromId(ids[safeIndex]);
+        if (recursive && level != null && !level.isClientSide) {
+            return changeConnectedPipeTypes(level, worldPosition, getFluidType(), target, 64) > 0;
+        }
+        setFluidType(target);
+        return true;
     }
 
     @Override
@@ -155,5 +183,47 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
     public void setRemoved() {
         removeFluidNode();
         super.setRemoved();
+    }
+
+    public static int changeConnectedPipeTypes(net.minecraft.world.level.Level level, BlockPos start,
+            FluidType previous, FluidType target, int maxDistance) {
+        if (previous == target) {
+            return 0;
+        }
+
+        Queue<PipeVisit> queue = new ArrayDeque<>();
+        Set<BlockPos> visited = new HashSet<>();
+        queue.add(new PipeVisit(start.immutable(), 0));
+        int changed = 0;
+
+        while (!queue.isEmpty()) {
+            PipeVisit visit = queue.remove();
+            if (!visited.add(visit.pos())) {
+                continue;
+            }
+            if (!(level.getBlockEntity(visit.pos()) instanceof FluidPipeBlockEntity pipe)
+                    || pipe.getFluidType() != previous) {
+                continue;
+            }
+
+            pipe.setFluidType(target);
+            changed++;
+
+            if (visit.distance() >= maxDistance) {
+                continue;
+            }
+            for (Direction direction : Direction.values()) {
+                queue.add(new PipeVisit(visit.pos().relative(direction), visit.distance() + 1));
+            }
+            if (pipe instanceof FluidPipeAnchorBlockEntity anchor) {
+                for (BlockPos remote : anchor.getRemoteConnections()) {
+                    queue.add(new PipeVisit(remote, visit.distance() + 1));
+                }
+            }
+        }
+        return changed;
+    }
+
+    private record PipeVisit(BlockPos pos, int distance) {
     }
 }

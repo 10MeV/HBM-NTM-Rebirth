@@ -16,6 +16,7 @@ import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.HazardTooltipUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -192,6 +193,17 @@ public final class ClientForgeEvents {
             return;
         }
         hadLevel = true;
+        spawnRadiationAura(minecraft);
+    }
+
+    private static void spawnRadiationAura(Minecraft minecraft) {
+        if (minecraft.player == null) {
+            return;
+        }
+        float radiation = ClientRadiationData.getRadiation();
+        if (radiation > 600.0F) {
+            ParticleUtil.spawnRadiationAura(minecraft.level, radiation > 900.0F ? 4 : radiation > 800.0F ? 2 : 1);
+        }
     }
 
     private static void pruneNetworkTransfers() {

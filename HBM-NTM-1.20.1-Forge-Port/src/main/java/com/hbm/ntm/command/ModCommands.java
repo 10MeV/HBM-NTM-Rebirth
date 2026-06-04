@@ -41,6 +41,8 @@ import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import com.hbm.ntm.recipe.HbmIngredient;
+import com.hbm.ntm.recipe.LegacyGenericRecipeHandlers;
+import com.hbm.ntm.recipe.LegacySerializableRecipeHandlers;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
@@ -509,7 +511,11 @@ public final class ModCommands {
                         .then(Commands.argument("oreName", StringArgumentType.word())
                                 .executes(context -> queryLegacyOreMapping(
                                         context.getSource(),
-                                        StringArgumentType.getString(context, "oreName")))));
+                                        StringArgumentType.getString(context, "oreName")))))
+                .then(Commands.literal("legacyHandlers")
+                        .executes(context -> listLegacyGenericRecipeHandlers(context.getSource())))
+                .then(Commands.literal("legacySerializableHandlers")
+                        .executes(context -> listLegacySerializableRecipeHandlers(context.getSource())));
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> fluidNetworkArgument() {
@@ -1462,6 +1468,31 @@ public final class ModCommands {
                 + (mapping.materialOrPath().isBlank() ? "" : " path=" + mapping.materialOrPath())
                 + " entries=" + tagEntries), false);
         return tagEntries;
+    }
+
+    private static int listLegacyGenericRecipeHandlers(CommandSourceStack source) {
+        List<LegacyGenericRecipeHandlers.Handler> handlers = LegacyGenericRecipeHandlers.all();
+        long supported = handlers.stream().filter(LegacyGenericRecipeHandlers.Handler::supported).count();
+        source.sendSuccess(() -> Component.literal("Legacy generic recipe handlers: supported=" + supported
+                + "/" + handlers.size()), false);
+        for (LegacyGenericRecipeHandlers.Handler handler : handlers) {
+            source.sendSuccess(() -> Component.literal(" - " + handler.commandSummary()), false);
+        }
+        return (int) supported;
+    }
+
+    private static int listLegacySerializableRecipeHandlers(CommandSourceStack source) {
+        List<LegacySerializableRecipeHandlers.Handler> handlers = LegacySerializableRecipeHandlers.all();
+        LegacySerializableRecipeHandlers.Coverage coverage = LegacySerializableRecipeHandlers.coverage();
+        source.sendSuccess(() -> Component.literal("Legacy SerializableRecipe handlers: total="
+                + coverage.totalHandlers()
+                + ", genericImporter=" + coverage.genericSupported()
+                + ", modernSerializerOnly=" + coverage.modernSerializerOnly()
+                + ", unsupported=" + coverage.unsupported()), false);
+        for (LegacySerializableRecipeHandlers.Handler handler : handlers) {
+            source.sendSuccess(() -> Component.literal(" - " + handler.commandSummary()), false);
+        }
+        return coverage.genericSupported();
     }
 
     private static int getAssemblyInfo(CommandSourceStack source, BlockPos pos) {

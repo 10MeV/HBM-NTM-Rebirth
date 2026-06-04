@@ -10,6 +10,7 @@ import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
+import com.hbm.ntm.block.RedCableGaugeBlock;
 import com.hbm.ntm.block.conveyor.ConveyorBlock;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.Direction;
@@ -66,6 +67,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "decon_side",
                 "decon_side");
         redCableWithItem();
+        redCableGaugeWithItem();
         fluidPipeWithItem();
         fluidDuctBoxWithItem(ModBlocks.FLUID_DUCT_BOX, "boxduct_silver");
         fluidDuctGaugeWithItem();
@@ -74,6 +76,12 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         fluidDuctPaintableWithItem(ModBlocks.FLUID_DUCT_PAINTABLE_BLOCK_EXHAUST,
                 "fluid_duct_paintable_block_exhaust");
         fluidPipeAnchorWithItem();
+        fluidBarrelWithItem(ModBlocks.BARREL_PLASTIC, "barrel_plastic");
+        fluidBarrelWithItem(ModBlocks.BARREL_CORRODED, "barrel_corroded");
+        fluidBarrelWithItem(ModBlocks.BARREL_IRON, "barrel_iron");
+        fluidBarrelWithItem(ModBlocks.BARREL_STEEL, "barrel_steel");
+        fluidBarrelWithItem(ModBlocks.BARREL_TCALLOY, "barrel_tcalloy");
+        fluidBarrelWithItem(ModBlocks.BARREL_ANTIMATTER, "barrel_antimatter");
         fluidValveWithItem(ModBlocks.FLUID_VALVE, "fluid_valve_off", "fluid_valve_on");
         fluidValveWithItem(ModBlocks.FLUID_SWITCH, "fluid_switch_off", "fluid_switch_on");
         fluidValveWithItem(ModBlocks.FLUID_COUNTER_VALVE, "fluid_counter_valve_off", "fluid_counter_valve_on");
@@ -109,7 +117,9 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_COMPRESSOR, "machines/compressor");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_BIGASSTANK, "machines/bigasstank");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_FLUIDTANK, "machines/fluidtank");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_WELL, "machines/derrick");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_PUMPJACK, "machines/pumpjack");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_FRACKING_TOWER, "machines/fracking_tower");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CENTRIFUGE, "machines/centrifuge");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_GASCENT, "machines/gascent");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ORE_SLOPPER, "machines/ore_slopper");
@@ -212,6 +222,20 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     private void customBlockItem(RegistryObject<Block> block) {
         itemModels().getBuilder(block.getId().getPath())
                 .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
+    }
+
+    private void fluidBarrelWithItem(RegistryObject<Block> block, String textureName) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().getBuilder(blockName)
+                .customLoader(net.minecraftforge.client.model.generators.loaders.ObjModelBuilder::begin)
+                .modelLocation(new ResourceLocation(HbmNtm.MOD_ID, "models/block/legacy_blocks/barrel.obj"))
+                .flipV(true)
+                .end()
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/" + textureName))
+                .texture("default", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/" + textureName))
+                .texture("texture0", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/" + textureName));
+        simpleBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
     }
 
     private void existingModelBlockOnly(RegistryObject<Block> block, String modelName) {
@@ -372,6 +396,22 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
     }
 
+    private void redCableGaugeWithItem() {
+        ModelFile[] models = new ModelFile[Direction.values().length];
+        for (Direction direction : Direction.values()) {
+            models[direction.ordinal()] = redCableGaugeModel("red_cable_gauge_" + direction.getName(), direction);
+        }
+        var builder = getMultipartBuilder(ModBlocks.RED_CABLE_GAUGE.get());
+        for (Direction direction : Direction.values()) {
+            builder.part()
+                    .modelFile(models[direction.ordinal()])
+                    .addModel()
+                    .condition(RedCableGaugeBlock.FACING, direction)
+                    .end();
+        }
+        simpleBlockItem(ModBlocks.RED_CABLE_GAUGE.get(), models[Direction.NORTH.ordinal()]);
+    }
+
     private void fluidPipeWithItem() {
         ModelFile marker = models().getBuilder(ModBlocks.FLUID_DUCT_NEO.getId().getPath())
                 .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/pipe_neo"));
@@ -481,6 +521,37 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                     .from(0.0F, 0.0F, 0.0F)
                     .to(16.0F, 16.0F, 16.0F)
                     .allFaces((direction, face) -> face.texture(direction == gaugeFace ? "#gauge" : "#overlay").cullface(direction))
+                    .end();
+    }
+
+    private ModelFile redCableGaugeModel(String modelName, Direction gaugeFace) {
+        float minX = 0.0F;
+        float minY = 0.0F;
+        float minZ = 0.0F;
+        float maxX = 16.0F;
+        float maxY = 16.0F;
+        float maxZ = 16.0F;
+        switch (gaugeFace) {
+            case DOWN -> minY = -0.01F;
+            case UP -> maxY = 16.01F;
+            case NORTH -> minZ = -0.01F;
+            case SOUTH -> maxZ = 16.01F;
+            case WEST -> minX = -0.01F;
+            case EAST -> maxX = 16.01F;
+        }
+        return models().withExistingParent(modelName, new ResourceLocation("block/block"))
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/deco_red_copper"))
+                .texture("base", new ResourceLocation(HbmNtm.MOD_ID, "block/deco_red_copper"))
+                .texture("gauge", new ResourceLocation(HbmNtm.MOD_ID, "block/cable_gauge"))
+                .element()
+                    .from(0.0F, 0.0F, 0.0F)
+                    .to(16.0F, 16.0F, 16.0F)
+                    .allFaces((direction, face) -> face.texture("#base").cullface(direction))
+                    .end()
+                .element()
+                    .from(minX, minY, minZ)
+                    .to(maxX, maxY, maxZ)
+                    .face(gaugeFace).texture("#gauge").cullface(gaugeFace).end()
                     .end();
     }
 

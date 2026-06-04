@@ -1,0 +1,10 @@
+{
+  "type": "hbm:press",
+  "ingredient": {
+    "tag": "forge:dusts/lapis"
+  },
+  "result": {
+    "item": "minecraft:lapis_lazuli"
+  },
+  "stamp": "flat"
+}

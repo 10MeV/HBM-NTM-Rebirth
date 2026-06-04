@@ -18,8 +18,13 @@ import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.GeigerCounterItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
+import com.hbm.ntm.item.ItemBlueprints;
+import com.hbm.ntm.item.ItemMachineUpgrade;
+import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.item.ItemPressStamp;
+import com.hbm.ntm.item.OreByproductItem;
 import com.hbm.ntm.item.RadawayItem;
+import com.hbm.ntm.item.SettingsToolItem;
 import com.hbm.ntm.item.SingularityItem;
 import com.hbm.ntm.item.ToolboxItem;
 import com.hbm.ntm.fluid.HbmFluidContainerRules;
@@ -84,6 +89,20 @@ public final class ModItems {
     public static final RegistryObject<Item> TUNGSTEN_COIL = part("coil_tungsten");
     public static final RegistryObject<Item> GOLD_COIL = part("coil_gold");
     public static final RegistryObject<Item> MOTOR = part("motor");
+    public static final RegistryObject<Item> UPGRADE_TEMPLATE = part("upgrade_template");
+    public static final RegistryObject<Item> BLUEPRINTS = registerLegacy("blueprints",
+            () -> new ItemBlueprints(new Item.Properties()));
+    public static final RegistryObject<Item> UPGRADE_SPEED_1 = machineUpgrade("upgrade_speed_1", UpgradeType.SPEED, 1);
+    public static final RegistryObject<Item> UPGRADE_SPEED_2 = machineUpgrade("upgrade_speed_2", UpgradeType.SPEED, 2);
+    public static final RegistryObject<Item> UPGRADE_SPEED_3 = machineUpgrade("upgrade_speed_3", UpgradeType.SPEED, 3);
+    public static final RegistryObject<Item> UPGRADE_POWER_1 = machineUpgrade("upgrade_power_1", UpgradeType.POWER, 1);
+    public static final RegistryObject<Item> UPGRADE_POWER_2 = machineUpgrade("upgrade_power_2", UpgradeType.POWER, 2);
+    public static final RegistryObject<Item> UPGRADE_POWER_3 = machineUpgrade("upgrade_power_3", UpgradeType.POWER, 3);
+    public static final RegistryObject<Item> UPGRADE_OVERDRIVE_1 = machineUpgrade("upgrade_overdrive_1", UpgradeType.OVERDRIVE, 1);
+    public static final RegistryObject<Item> UPGRADE_OVERDRIVE_2 = machineUpgrade("upgrade_overdrive_2", UpgradeType.OVERDRIVE, 2);
+    public static final RegistryObject<Item> UPGRADE_OVERDRIVE_3 = machineUpgrade("upgrade_overdrive_3", UpgradeType.OVERDRIVE, 3);
+    public static final RegistryObject<Item> TEMPLATE_FOLDER = registerLegacy("template_folder",
+            () -> new Item(new Item.Properties()));
 
     public static final RegistryObject<Item> IRON_PLATE_STAMP = ITEMS.register("stamp_iron_plate",
             () -> new ItemPressStamp(new Item.Properties().durability(64), ItemPressStamp.StampType.PLATE));
@@ -93,22 +112,32 @@ public final class ModItems {
             () -> new ItemPressStamp(new Item.Properties().durability(64), ItemPressStamp.StampType.WIRE));
     public static final RegistryObject<Item> IRON_CIRCUIT_STAMP = ITEMS.register("stamp_iron_circuit",
             () -> new ItemPressStamp(new Item.Properties().durability(64), ItemPressStamp.StampType.CIRCUIT));
+    public static final RegistryObject<Item> STAMP_357 = registerLegacy("stamp_357",
+            () -> new ItemPressStamp(new Item.Properties().durability(1_000), ItemPressStamp.StampType.C357));
+    public static final RegistryObject<Item> STAMP_44 = registerLegacy("stamp_44",
+            () -> new ItemPressStamp(new Item.Properties().durability(1_000), ItemPressStamp.StampType.C44));
+    public static final RegistryObject<Item> STAMP_9 = registerLegacy("stamp_9",
+            () -> new ItemPressStamp(new Item.Properties().durability(1_000), ItemPressStamp.StampType.C9));
+    public static final RegistryObject<Item> STAMP_50 = registerLegacy("stamp_50",
+            () -> new ItemPressStamp(new Item.Properties().durability(1_000), ItemPressStamp.StampType.C50));
 
     public static final RegistryObject<Item> GEIGER_COUNTER = ITEMS.register("geiger_counter",
             () -> new GeigerCounterItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> DIGAMMA_DIAGNOSTIC = ITEMS.register("digamma_diagnostic",
             () -> new DigammaDiagnosticItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> RADAWAY = ITEMS.register("radaway",
-            () -> new RadawayItem(new Item.Properties().stacksTo(16), 14, 9));
+            () -> new RadawayItem(new Item.Properties().stacksTo(16), 140, 0));
     public static final RegistryObject<Item> RADAWAY_STRONG = ITEMS.register("radaway_strong",
-            () -> new RadawayItem(new Item.Properties().stacksTo(16), 20 * 20, 1));
+            () -> new RadawayItem(new Item.Properties().stacksTo(16), 350, 0));
     public static final RegistryObject<Item> RADAWAY_FLUSH = ITEMS.register("radaway_flush",
-            () -> new RadawayItem(new Item.Properties().stacksTo(16), 50, 19));
+            () -> new RadawayItem(new Item.Properties().stacksTo(16), 500, 0));
     public static final RegistryObject<Item> RADX = ITEMS.register("radx",
             () -> new EffectPillItem(new Item.Properties().stacksTo(16), ModEffects.RADX, 3 * 60 * 20, 0, null, true));
     public static final RegistryObject<Item> CONTAINMENT_BOX = simpleStackOneItem("containment_box");
     public static final RegistryObject<Item> PLASTIC_BAG = simpleStackOneItem("plastic_bag");
     public static final RegistryObject<Item> TOOLBOX = registerLegacy("toolbox", () -> new ToolboxItem(new Item.Properties()));
+    public static final RegistryObject<Item> SETTINGS_TOOL = registerLegacy("settings_tool",
+            () -> new SettingsToolItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CONVEYOR_WAND = registerLegacy("conveyor_wand",
             () -> new ConveyorWandItem(new Item.Properties().stacksTo(64)));
     public static final RegistryObject<Item> CANISTER_EMPTY = registerLegacy("canister_empty",
@@ -277,7 +306,50 @@ public final class ModItems {
             "item_expensive_degenerate_matter"
     );
 
-    public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = Stream.concat(Stream.concat(CIRCUIT_ITEMS.stream(), EXPENSIVE_MODE_ITEMS.stream()), simpleParts(
+    public static final List<RegistryObject<Item>> ORE_BYPRODUCT_ITEMS = oreByproductItems(
+            new OreByproductSpec("ore_byproduct_b_iron", 0xE2C0AA),
+            new OreByproductSpec("ore_byproduct_b_copper", 0xEC9A63),
+            new OreByproductSpec("ore_byproduct_b_lithium", 0xEDEDED),
+            new OreByproductSpec("ore_byproduct_b_silicon", 0xFFFBD1),
+            new OreByproductSpec("ore_byproduct_b_lead", 0x646470),
+            new OreByproductSpec("ore_byproduct_b_titanium", 0xF2EFE2),
+            new OreByproductSpec("ore_byproduct_b_aluminium", 0xE8F2F9),
+            new OreByproductSpec("ore_byproduct_b_sulfur", 0xEAD377),
+            new OreByproductSpec("ore_byproduct_b_calcium", 0xCFCFA6),
+            new OreByproductSpec("ore_byproduct_b_bismuth", 0x8D8577),
+            new OreByproductSpec("ore_byproduct_b_radium", 0xE9FAF6),
+            new OreByproductSpec("ore_byproduct_b_technetium", 0xCADFDF),
+            new OreByproductSpec("ore_byproduct_b_polonium", 0xCADFDF),
+            new OreByproductSpec("ore_byproduct_b_uranium", 0x868D82)
+    );
+
+    public static final List<RegistryObject<Item>> STAMP_BOOK_ITEMS = pressStampItems(
+            new PressStampSpec("stamp_book_printing1", ItemPressStamp.StampType.PRINTING1),
+            new PressStampSpec("stamp_book_printing2", ItemPressStamp.StampType.PRINTING2),
+            new PressStampSpec("stamp_book_printing3", ItemPressStamp.StampType.PRINTING3),
+            new PressStampSpec("stamp_book_printing4", ItemPressStamp.StampType.PRINTING4),
+            new PressStampSpec("stamp_book_printing5", ItemPressStamp.StampType.PRINTING5),
+            new PressStampSpec("stamp_book_printing6", ItemPressStamp.StampType.PRINTING6),
+            new PressStampSpec("stamp_book_printing7", ItemPressStamp.StampType.PRINTING7),
+            new PressStampSpec("stamp_book_printing8", ItemPressStamp.StampType.PRINTING8)
+    );
+
+    public static final List<RegistryObject<Item>> PAGE_OF_ITEMS = simpleHiddenItems(
+            "page_of_page1",
+            "page_of_page2",
+            "page_of_page3",
+            "page_of_page4",
+            "page_of_page5",
+            "page_of_page6",
+            "page_of_page7",
+            "page_of_page8"
+    );
+
+    public static final List<RegistryObject<Item>> HIDDEN_RECIPE_ITEMS = Stream.concat(
+            Stream.concat(STAMP_BOOK_ITEMS.stream(), PAGE_OF_ITEMS.stream()),
+            Stream.of(TEMPLATE_FOLDER)).toList();
+
+    public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = Stream.concat(Stream.concat(Stream.concat(CIRCUIT_ITEMS.stream(), EXPENSIVE_MODE_ITEMS.stream()), ORE_BYPRODUCT_ITEMS.stream()), simpleParts(
             "ingot_pu_mix",
             "ingot_am241",
             "ingot_am242",
@@ -324,6 +396,8 @@ public final class ModItems {
             "ingot_tungsten_carbide",
             "fluorite",
             "plate_dura_steel",
+            "ingot_dura_steel",
+            "powder_dura_steel",
             "plate_gold",
             "plate_advanced_alloy",
             "lithium",
@@ -331,7 +405,13 @@ public final class ModItems {
             "powder_cobalt",
             "powder_sodium",
             "powder_schrabidium",
+            "powder_quartz",
+            "powder_lapis",
+            "powder_diamond",
+            "powder_emerald",
+            "powder_sawdust",
             "powder_spark_mix",
+            "ball_resin",
             "ingot_zirconium",
             "ingot_phosphorus",
             "coil_advanced_alloy",
@@ -407,6 +487,14 @@ public final class ModItems {
             "billet_nuclear_waste",
             "ingot_gunmetal",
             "plate_gunmetal",
+            "ingot_weaponsteel",
+            "plate_weaponsteel",
+            "ingot_combine_steel",
+            "powder_combine_steel",
+            "plate_combine_steel",
+            "ingot_saturnite",
+            "plate_saturnite",
+            "plate_schrabidium",
             "ingot_calcium",
             "powder_calcium",
             "ingot_cadmium",
@@ -597,7 +685,20 @@ public final class ModItems {
             PELLET_ANTIMATTER
     );
 
-    public static final List<RegistryObject<Item>> CONTROL_TAB_ITEMS = Stream.concat(Stream.concat(simpleParts(
+    private static final List<RegistryObject<Item>> MACHINE_UPGRADE_ITEMS = List.of(
+            BLUEPRINTS,
+            UPGRADE_SPEED_1,
+            UPGRADE_SPEED_2,
+            UPGRADE_SPEED_3,
+            UPGRADE_POWER_1,
+            UPGRADE_POWER_2,
+            UPGRADE_POWER_3,
+            UPGRADE_OVERDRIVE_1,
+            UPGRADE_OVERDRIVE_2,
+            UPGRADE_OVERDRIVE_3
+    );
+
+    public static final List<RegistryObject<Item>> CONTROL_TAB_ITEMS = Stream.<List<RegistryObject<Item>>>of(simpleParts(
             "pile_rod_uranium",
             "pile_rod_pu239",
             "pile_rod_plutonium",
@@ -611,7 +712,7 @@ public final class ModItems {
             "pellet_rtg_lead",
             "fuel_additive_antiknock",
             "fuel_additive_deicer"
-    ).stream(), simpleStackOneItems(
+    ), simpleStackOneItems(
             "plate_fuel_u233",
             "plate_fuel_u235",
             "plate_fuel_mox",
@@ -625,8 +726,9 @@ public final class ModItems {
             "pellet_rtg_polonium",
             "pellet_rtg_americium",
             "pellet_rtg_gold"
-    ).stream()), Stream.concat(Stream.of(CATALYTIC_CONVERTER),
-            Stream.concat(SINGULARITY_FAMILY_ITEMS.stream(), CONTROL_BATTERY_ITEMS.stream()))).toList();
+    ), MACHINE_UPGRADE_ITEMS, List.<RegistryObject<Item>>of(CATALYTIC_CONVERTER), SINGULARITY_FAMILY_ITEMS, CONTROL_BATTERY_ITEMS)
+            .flatMap(List::stream)
+            .toList();
 
     public static final List<RegistryObject<Item>> PARTS_TAB_ITEMS = Stream.concat(Stream.of(
             URANIUM_INGOT,
@@ -672,10 +774,15 @@ public final class ModItems {
             TUNGSTEN_COIL,
             GOLD_COIL,
             MOTOR,
+            UPGRADE_TEMPLATE,
             IRON_PLATE_STAMP,
             IRON_FLAT_STAMP,
             IRON_WIRE_STAMP,
-            IRON_CIRCUIT_STAMP
+            IRON_CIRCUIT_STAMP,
+            STAMP_357,
+            STAMP_44,
+            STAMP_9,
+            STAMP_50
     ), EXTRA_PARTS_TAB_ITEMS.stream()).toList();
 
     public static final List<RegistryObject<Item>> CONSUMABLE_TAB_ITEMS = Stream.of(
@@ -688,6 +795,7 @@ public final class ModItems {
             CONTAINMENT_BOX,
             PLASTIC_BAG,
             TOOLBOX,
+            SETTINGS_TOOL,
             CONVEYOR_WAND
     ).toList();
 
@@ -745,6 +853,18 @@ public final class ModItems {
         return Stream.of(names).map(ModItems::expensiveModeItem).toList();
     }
 
+    private static List<RegistryObject<Item>> oreByproductItems(OreByproductSpec... specs) {
+        return Stream.of(specs).map(spec -> oreByproductItem(spec.name(), spec.tintColor())).toList();
+    }
+
+    private static List<RegistryObject<Item>> pressStampItems(PressStampSpec... specs) {
+        return Stream.of(specs).map(spec -> pressStampItem(spec.name(), spec.stampType())).toList();
+    }
+
+    private static List<RegistryObject<Item>> simpleHiddenItems(String... names) {
+        return Stream.of(names).map(ModItems::simpleStackOneItem).toList();
+    }
+
     private static RegistryObject<Item> registerLegacy(String name, java.util.function.Supplier<Item> supplier) {
         RegistryObject<Item> item = ITEMS.register(name, supplier);
         ITEMS_BY_LEGACY_NAME.put(name, item);
@@ -762,6 +882,10 @@ public final class ModItems {
                 name,
                 legacyMeta,
                 capacitor));
+    }
+
+    private static RegistryObject<Item> machineUpgrade(String name, UpgradeType type, int tier) {
+        return registerLegacy(name, () -> new ItemMachineUpgrade(new Item.Properties(), type, tier));
     }
 
     private static RegistryObject<Item> batteryPack(String name, int legacyMeta, long dischargeRate, long duration) {
@@ -787,6 +911,14 @@ public final class ModItems {
 
     private static RegistryObject<Item> expensiveModeItem(String name) {
         return registerLegacy(name, () -> new ExpensiveModeItem(new Item.Properties()));
+    }
+
+    private static RegistryObject<Item> oreByproductItem(String name, int tintColor) {
+        return registerLegacy(name, () -> new OreByproductItem(new Item.Properties(), tintColor));
+    }
+
+    private static RegistryObject<Item> pressStampItem(String name, ItemPressStamp.StampType stampType) {
+        return registerLegacy(name, () -> new ItemPressStamp(new Item.Properties().stacksTo(1), stampType));
     }
 
     private static Item createSimpleItem(String name) {
@@ -822,6 +954,12 @@ public final class ModItems {
                  "waste_plate_pu238be" -> true;
             default -> false;
         };
+    }
+
+    private record OreByproductSpec(String name, int tintColor) {
+    }
+
+    private record PressStampSpec(String name, ItemPressStamp.StampType stampType) {
     }
 
     private ModItems() {

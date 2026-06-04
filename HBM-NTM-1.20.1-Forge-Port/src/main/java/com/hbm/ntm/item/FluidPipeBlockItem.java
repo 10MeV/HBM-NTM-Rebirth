@@ -2,6 +2,7 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.fluid.HbmFluids;
 import java.util.List;
 import net.minecraft.nbt.CompoundTag;
@@ -47,7 +48,7 @@ public class FluidPipeBlockItem extends BlockItem {
         FluidType type = getFluidType(stack);
         if (type != HbmFluids.NONE) {
             tooltip.add(type.getDisplayName());
-            type.appendInfo(tooltip, flag.isAdvanced());
+            type.appendInfo(tooltip, HbmFluidGuiHelper.showHiddenFluidInfo());
         }
     }
 

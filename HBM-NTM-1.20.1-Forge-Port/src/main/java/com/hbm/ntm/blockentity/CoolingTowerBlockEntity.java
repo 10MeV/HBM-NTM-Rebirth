@@ -93,7 +93,7 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.allFluidUserTanks(this));
+        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.allCompactFluidUserTanks(this));
     }
 
     @Override

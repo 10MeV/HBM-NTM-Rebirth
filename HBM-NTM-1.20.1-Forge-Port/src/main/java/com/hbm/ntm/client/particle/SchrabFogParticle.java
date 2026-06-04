@@ -21,7 +21,7 @@ public class SchrabFogParticle extends TextureSheetParticle {
         this.xd *= 0.019999999552965164D;
         this.yd *= 0.019999999552965164D;
         this.zd *= 0.019999999552965164D;
-        this.lifetime = (int) (20.0D / (Math.random() * 0.8D + 0.2D));
+        this.lifetime = Math.max(1, (int) (20.0D / (this.random.nextDouble() * 0.8D + 0.2D)));
         this.friction = 0.99F;
         this.gravity = 0.0F;
         this.hasPhysics = false;

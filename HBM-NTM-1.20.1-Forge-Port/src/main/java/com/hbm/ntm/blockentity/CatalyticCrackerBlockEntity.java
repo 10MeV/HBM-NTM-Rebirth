@@ -114,7 +114,7 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.allFluidUserTanks(this));
+        return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.allCompactFluidUserTanks(this));
     }
 
     @Override

@@ -1,0 +1,12 @@
+{
+  "values": [
+    "hbm:diesel",
+    "hbm:diesel_flowing",
+    "hbm:diesel_crack",
+    "hbm:diesel_crack_flowing",
+    "hbm:diesel_reform",
+    "hbm:diesel_reform_flowing",
+    "hbm:diesel_crack_reform",
+    "hbm:diesel_crack_reform_flowing"
+  ]
+}

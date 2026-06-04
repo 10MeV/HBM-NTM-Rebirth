@@ -58,11 +58,16 @@ sourceSets.main.resources {
 
 repositories {
     maven { url = 'https://maven.aliyun.com/repository/public' }
+    maven { url = 'https://maven.blamejared.com' }
     mavenCentral()
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${mc_version}-${forge_version}"
+
+    compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")
+    compileOnly fg.deobf("mezz.jei:jei-${mc_version}-forge-api:${jei_version}")
+    runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}-forge:${jei_version}")
 }
 
 tasks.named('processResources', ProcessResources).configure {

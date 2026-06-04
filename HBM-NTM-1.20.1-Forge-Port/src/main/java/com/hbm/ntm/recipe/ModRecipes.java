@@ -25,6 +25,10 @@ public final class ModRecipes {
             register("chemical_plant", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.CHEMICAL_PLANT));
     public static final RecipeHolder<GenericMachineRecipe> ASSEMBLY_MACHINE =
             register("assembly_machine", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.ASSEMBLY_MACHINE));
+    public static final RecipeHolder<GenericMachineRecipe> PUREX =
+            register("purex", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.PUREX));
+    public static final RecipeHolder<GenericMachineRecipe> PRECASS =
+            register("precass", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.PRECASS));
     public static final RecipeHolder<LiquefactionRecipe> LIQUEFACTION = register("liquefaction", LiquefactionRecipe.Serializer::new);
 
     public static void register(IEventBus modBus) {

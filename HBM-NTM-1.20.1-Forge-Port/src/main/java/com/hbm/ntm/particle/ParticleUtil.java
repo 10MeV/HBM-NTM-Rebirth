@@ -514,7 +514,7 @@ public final class ParticleUtil {
     public static void spawnVanillaExtLargeExplode(Level level, double x, double y, double z, float size, int count) {
         CompoundTag data = vanillaExtTag(VANILLA_LARGE_EXPLODE, 0.0D, 0.0D, 0.0D);
         data.putFloat("size", size);
-        data.putByte("count", (byte) Math.max(1, Math.min(127, count)));
+        data.putByte("count", (byte) Math.max(0, Math.min(127, count)));
         spawnAux(level, x, y, z, data, 100.0D);
     }
 

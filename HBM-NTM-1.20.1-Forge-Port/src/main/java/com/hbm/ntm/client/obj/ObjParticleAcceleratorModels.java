@@ -11,6 +11,13 @@ public final class ObjParticleAcceleratorModels {
     public static final LegacyWavefrontModel DIPOLE = model("dipole").asVBO();
     public static final LegacyWavefrontModel DETECTOR = model("detector").asVBO();
 
+    public static final ResourceLocation SOURCE_TEXTURE = texture("source");
+    public static final ResourceLocation BEAMLINE_TEXTURE = texture("beamline");
+    public static final ResourceLocation RFC_TEXTURE = texture("rfc");
+    public static final ResourceLocation QUADRUPOLE_TEXTURE = texture("quadrupole");
+    public static final ResourceLocation DIPOLE_TEXTURE = texture("dipole");
+    public static final ResourceLocation DETECTOR_TEXTURE = texture("detector");
+
     public static LegacyWavefrontModel model(String name) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/block/particleaccelerator/" + name + ".obj"),

@@ -25,6 +25,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
         ModItems.CONTROL_FLUID_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.NUKE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
+        ModItems.HIDDEN_RECIPE_ITEMS.forEach(item -> itemModel(item.get()));
         itemModel(ModItems.CONVEYOR_WAND.get());
     }
 
@@ -74,6 +75,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "fluid_pack");
             return;
         }
+        if (path.equals("blueprints")) {
+            generatedItem(path, "blueprints");
+            return;
+        }
         if (path.equals("disperser_canister_empty")) {
             generatedItem(path, "disperser_canister");
             return;
@@ -92,6 +97,14 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.equals("pellet_charged")) {
             generatedItem(path, "pellets_charged");
+            return;
+        }
+        if (path.equals("ingot_weaponsteel")) {
+            generatedItem(path, "ingot_gunsteel");
+            return;
+        }
+        if (path.equals("plate_weaponsteel")) {
+            generatedItem(path, "plate_gunsteel");
             return;
         }
         if (path.startsWith("coke_")) {
@@ -128,6 +141,18 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.startsWith("item_expensive_")) {
             generatedItem(path, "item_expensive." + path.substring("item_expensive_".length()));
+            return;
+        }
+        if (path.startsWith("ore_byproduct_")) {
+            generatedItem(path, "byproduct");
+            return;
+        }
+        if (path.startsWith("stamp_book_")) {
+            generatedItem(path, "stamp_book");
+            return;
+        }
+        if (path.startsWith("page_of_")) {
+            generatedItem(path, "page_of_");
             return;
         }
         if (path.startsWith("casing_")) {

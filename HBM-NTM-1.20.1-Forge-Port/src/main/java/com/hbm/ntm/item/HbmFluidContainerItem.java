@@ -5,13 +5,18 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerItemCapabilityProvider;
 import com.hbm.ntm.fluid.HbmFluidContainerRules;
+import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.ContainerFluidTrait;
+import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,6 +168,25 @@ public class HbmFluidContainerItem extends Item implements IFillableItem {
         return new HbmFluidContainerItemCapabilityProvider(stack, this);
     }
 
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+        FluidType type = tooltipFluidType(stack);
+        if (type == HbmFluids.NONE) {
+            return;
+        }
+
+        int fill = getFill(stack);
+        if (fill > 0) {
+            tooltip.add(Component.literal(fill + " / " + capacity + " mB"));
+        }
+        int pressure = getPressure(stack);
+        if (pressure > 0) {
+            tooltip.add(Component.literal(pressure + " PU").withStyle(ChatFormatting.RED));
+            tooltip.add(Component.literal("Pressurized, use compressor!").withStyle(ChatFormatting.DARK_RED));
+        }
+        type.appendInfo(tooltip, HbmFluidGuiHelper.showHiddenFluidInfo());
+    }
+
     public int getPressure(ItemStack stack) {
         CompoundTag tag = stack.getTag();
         return tag == null ? 0 : tag.getInt(TAG_PRESSURE);
@@ -216,5 +240,13 @@ public class HbmFluidContainerItem extends Item implements IFillableItem {
             }
         }
         return builder.toString();
+    }
+
+    private FluidType tooltipFluidType(ItemStack stack) {
+        if (this instanceof HbmInfiniteFluidItem infinite) {
+            FluidType type = infinite.getType();
+            return type == null ? HbmFluids.NONE : type;
+        }
+        return getFirstFluidType(stack);
     }
 }

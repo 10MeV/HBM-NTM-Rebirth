@@ -57,10 +57,43 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.coil_tungsten", "Heating Coil");
         add("item.hbm.coil_gold", "Gold Coil");
         add("item.hbm.motor", "Motor");
+        add("item.hbm.upgrade_template", "Machine Upgrade Template");
+        add("item.hbm.blueprints", "Blueprints");
+        add("item.hbm.upgrade_speed_1", "Speed Upgrade I");
+        add("item.hbm.upgrade_speed_2", "Speed Upgrade II");
+        add("item.hbm.upgrade_speed_3", "Speed Upgrade III");
+        add("item.hbm.upgrade_power_1", "Power Saving Upgrade I");
+        add("item.hbm.upgrade_power_2", "Power Saving Upgrade II");
+        add("item.hbm.upgrade_power_3", "Power Saving Upgrade III");
+        add("item.hbm.upgrade_overdrive_1", "Overdrive Upgrade I");
+        add("item.hbm.upgrade_overdrive_2", "Overdrive Upgrade II");
+        add("item.hbm.upgrade_overdrive_3", "Overdrive Upgrade III");
+        add("item.hbm.template_folder", "Machine Template Folder");
+        add("item.hbm.template_folder.desc", "Machine Templates: Paper + Dye$Press Stamps: Flat Stamp$Siren Tracks: Insulator + Steel Plate");
         add("item.hbm.stamp_iron_plate", "Plate Stamp (Iron)");
         add("item.hbm.stamp_iron_flat", "Flat Stamp (Iron)");
         add("item.hbm.stamp_iron_wire", "Wire Stamp (Iron)");
         add("item.hbm.stamp_iron_circuit", "Circuit Stamp (Iron)");
+        add("item.hbm.stamp_357", ".357 Magnum Stamp");
+        add("item.hbm.stamp_44", ".44 Magnum Stamp");
+        add("item.hbm.stamp_50", "Large Caliber Stamp");
+        add("item.hbm.stamp_9", "Small Caliber Stamp");
+        add("item.hbm.stamp_book_printing1", "Printing Press Stamp (Part 1)");
+        add("item.hbm.stamp_book_printing2", "Printing Press Stamp (Part 2)");
+        add("item.hbm.stamp_book_printing3", "Printing Press Stamp (Part 3)");
+        add("item.hbm.stamp_book_printing4", "Printing Press Stamp (Part 4)");
+        add("item.hbm.stamp_book_printing5", "Printing Press Stamp (Part 5)");
+        add("item.hbm.stamp_book_printing6", "Printing Press Stamp (Part 6)");
+        add("item.hbm.stamp_book_printing7", "Printing Press Stamp (Part 7)");
+        add("item.hbm.stamp_book_printing8", "Printing Press Stamp (Part 8)");
+        add("item.hbm.page_of_page1", "Page 1");
+        add("item.hbm.page_of_page2", "Page 2");
+        add("item.hbm.page_of_page3", "Page 3");
+        add("item.hbm.page_of_page4", "Page 4");
+        add("item.hbm.page_of_page5", "Page 5");
+        add("item.hbm.page_of_page6", "Page 6");
+        add("item.hbm.page_of_page7", "Page 7");
+        add("item.hbm.page_of_page8", "Page 8");
         add("item.hbm.geiger_counter", "Geiger Counter");
         add("item.hbm.digamma_diagnostic", "Digamma Diagnostic");
         add("item.hbm.radaway", "RadAway");
@@ -68,11 +101,23 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.radaway_flush", "RadAway Flush");
         add("item.hbm.radx", "Rad-X");
         add("item.hbm.radx.desc", "Increases radiation resistance by 0.2 (37%) for 3 minutes");
+        add("info.asbestos", "My lungs are burning.");
+        add("info.coaldust", "It's hard to breathe here.");
         add("item.hbm.containment_box", "Lead-Lined Box");
         add("item.hbm.plastic_bag", "Plastic Bag");
         add("item.hbm.toolbox", "Toolbox");
         add("item.hbm.toolbox.desc.swap", "Click with the toolbox to swap hotbars in/out of the toolbox.");
         add("item.hbm.toolbox.desc.open", "Shift-click with the toolbox to open the toolbox.");
+        add("item.hbm.settings_tool", "Settings Tool");
+        add("item.hbm.settings_tool.desc1", "Can copy the settings (filters, fluid ID, etc) of machines");
+        add("item.hbm.settings_tool.desc2", "Shift right-click to copy, right click to paste");
+        add("item.hbm.settings_tool.desc3", "Ctrl click on pipes to paste settings to multiple pipes");
+        add("item.hbm.settings_tool.none", " None ");
+        add("item.hbm.settings_tool.unknown", "Unknown");
+        add("item.hbm.settings_tool.copied", "Copied settings of %s");
+        add("item.hbm.settings_tool.copy_failed", "Copy failed");
+        add("item.hbm.settings_tool.pasted", "Pasted settings");
+        add("item.hbm.settings_tool.paste_failed", "Paste failed");
         add("item.hbm.conveyor_wand", "Conveyor Belt");
         add("item.hbm.conveyor_wand.regular", "Conveyor Belt");
         add("item.hbm.conveyor_wand.express", "Express Conveyor Belt");
@@ -185,12 +230,22 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("tooltip.hbm.damage.exact.mudpoisoning", "Mud poisoning");
         add("block.hbm.machine_press", "Burner Press");
         add("subtitles.hbm.block.press_operate", "Burner Press operates");
+        add("subtitles.hbm.block.assembler_operate", "Assembly machine operates");
+        add("subtitles.hbm.block.assembler_strike", "Assembly machine strikes");
+        add("subtitles.hbm.block.assembler_start", "Assembly machine starts");
+        add("subtitles.hbm.block.assembler_stop", "Assembly machine stops");
+        add("subtitles.hbm.block.assembler_cut", "Assembly machine cuts");
+        add("subtitles.hbm.block.chemplant_operate", "Chemical plant operates");
+        add("subtitles.hbm.block.chemical_plant", "Chemical plant reacts");
         add("subtitles.hbm.block.debris", "Debris tumbles");
         add("subtitles.hbm.tool.geiger", "Geiger counter clicks");
         add("subtitles.hbm.tool.tech_boop", "Device beeps");
         add("subtitles.hbm.tool.tech_bleep", "Detonator bleeps");
         add("subtitles.hbm.tool.radaway", "RadAway injector hisses");
+        add("subtitles.hbm.player.cough", "Player coughs");
         add("subtitles.hbm.entity.ufo_blast", "Energy discharge");
+        add("subtitles.hbm.entity.chopper", "Chopper drones");
+        add("subtitles.hbm.alarm.siren", "Siren blares");
         add("item.hbm.detonator", "Detonator");
         add("item.hbm.singularity", "Singularity");
         add("item.hbm.singularity_counter_resonant", "Contained Counter-Resonant Singularity");
@@ -240,6 +295,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_industrial_turbine", "Industrial Steam Turbine");
         add("block.hbm.decon", "Decontaminator");
         add("block.hbm.red_cable", "Red Copper Cable");
+        add("block.hbm.red_cable_gauge", "Power Gauge");
         add("block.hbm.fluid_duct_neo", "Fluid Duct");
         add("item.hbm.fluid_duct", "Fluid Duct:");
         add("block.hbm.fluid_duct_box", "Universal Fluid Duct (Boxduct)");
@@ -276,7 +332,15 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_compressor", "Compressor");
         add("block.hbm.machine_bigasstank", "Big Industrial Tank");
         add("block.hbm.machine_fluidtank", "Fluid Tank");
+        add("block.hbm.barrel_plastic", "Safe Barrel");
+        add("block.hbm.barrel_corroded", "Corroded Barrel");
+        add("block.hbm.barrel_iron", "Iron Barrel");
+        add("block.hbm.barrel_steel", "Steel Barrel");
+        add("block.hbm.barrel_tcalloy", "Technetium Steel Barrel");
+        add("block.hbm.barrel_antimatter", "Magnetic Antimatter Container");
         add("block.hbm.machine_pumpjack", "Pumpjack");
+        add("block.hbm.machine_well", "Oil Derrick");
+        add("block.hbm.machine_fracking_tower", "Hydraulic Fracking Tower");
         add("block.hbm.machine_centrifuge", "Centrifuge");
         add("block.hbm.machine_gascent", "Gas Centrifuge");
         add("block.hbm.machine_ore_slopper", "Ore Slopper");
@@ -319,6 +383,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.hbm.battery.priority.recommended", "Recommended: Low");
         HbmFluidLangEntries.addEnglish(this::add);
         add("container.fluidtank", "Fluid Tank");
+        add("container.barrel", "Fluid Barrel");
         add("container.bigAssTank", "Big Industrial Tank");
         add("container.gasFlare", "Gas Flare");
         add("container.fluidtank.mode", "Mode");
@@ -328,6 +393,21 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.fluidtank.mode.none", "Disabled");
         add("container.fluidtank.damaged", "Damaged");
         add("container.fluidtank.burning", "Burning");
+        add("barrel.tooltip.capacity.6000", "Capacity: 6,000mB");
+        add("barrel.tooltip.capacity.8000", "Capacity: 8,000mB");
+        add("barrel.tooltip.capacity.12000", "Capacity: 12,000mB");
+        add("barrel.tooltip.capacity.16000", "Capacity: 16,000mB");
+        add("barrel.tooltip.capacity.24000", "Capacity: 24,000mB");
+        add("barrel.tooltip.no_hot", "Cannot store hot fluids");
+        add("barrel.tooltip.no_corrosive", "Cannot store corrosive fluids");
+        add("barrel.tooltip.no_antimatter", "Cannot store antimatter");
+        add("barrel.tooltip.can_hot", "Can store hot fluids");
+        add("barrel.tooltip.can_corrosive", "Can store corrosive fluids");
+        add("barrel.tooltip.can_high_corrosive", "Can store highly corrosive fluids");
+        add("barrel.tooltip.can_antimatter", "Can store antimatter");
+        add("barrel.tooltip.no_corrosive_properly", "Cannot store corrosive fluids properly");
+        add("barrel.tooltip.no_high_corrosive_properly", "Cannot store highly corrosive fluids properly");
+        add("barrel.tooltip.leaky", "Leaky");
         add("block.hbm.gas_meltdown", "Meltdown Gas");
         add("block.hbm.gas_monoxide", "Carbon Monoxide");
         add("block.hbm.gas_asbestos", "Asbestos Dust");
@@ -455,6 +535,20 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.item_expensive_plastic", "Plastic Panels");
         add("item.hbm.item_expensive_gold_dust", "Ultra Fine Gold Dust");
         add("item.hbm.item_expensive_degenerate_matter", "Degenerate Matter");
+        add("item.hbm.ore_byproduct_b_iron", "Crystalline Iron Fragment");
+        add("item.hbm.ore_byproduct_b_copper", "Crystalline Copper Fragment");
+        add("item.hbm.ore_byproduct_b_lithium", "Crystalline Lithium Fragment");
+        add("item.hbm.ore_byproduct_b_silicon", "Crystalline Silicon Fragment");
+        add("item.hbm.ore_byproduct_b_lead", "Crystalline Lead Fragment");
+        add("item.hbm.ore_byproduct_b_titanium", "Crystalline Titanium Fragment");
+        add("item.hbm.ore_byproduct_b_aluminium", "Crystalline Aluminium Fragment");
+        add("item.hbm.ore_byproduct_b_sulfur", "Crystalline Sulfur Fragment");
+        add("item.hbm.ore_byproduct_b_calcium", "Crystalline Calcium Fragment");
+        add("item.hbm.ore_byproduct_b_bismuth", "Crystalline Bismuth Fragment");
+        add("item.hbm.ore_byproduct_b_radium", "Crystalline Radium Fragment");
+        add("item.hbm.ore_byproduct_b_technetium", "Crystalline Technetium Fragment");
+        add("item.hbm.ore_byproduct_b_polonium", "Crystalline Polonium Fragment");
+        add("item.hbm.ore_byproduct_b_uranium", "Crystalline Uranium Fragment");
         add("item.hbm.casing_small", "Small Gunmetal Casing");
         add("item.hbm.casing_large", "Large Gunmetal Casing");
         add("item.hbm.casing_small_steel", "Small Weapon Steel Casing");
@@ -462,10 +556,22 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.casing_shotshell", "Black Powder Shotshell Casing");
         add("item.hbm.casing_buckshot", "Plastic Shotshell Casing");
         add("item.hbm.casing_buckshot_advanced", "Advanced Shotshell Casing");
+        add("item.hbm.ingot_weaponsteel", "Weapon Steel Ingot");
+        add("item.hbm.plate_weaponsteel", "Weapon Steel Plate");
+        add("item.hbm.ingot_dura_steel", "High-Speed Steel Ingot");
+        add("item.hbm.plate_schrabidium", "Schrabidium Plate");
+        add("item.hbm.plate_combine_steel", "CMB Steel Plate");
+        add("item.hbm.plate_saturnite", "Saturnite Plate");
         add("item.hbm.fuel_additive_antiknock", "Tetraethyllead Antiknock Agent");
         add("item.hbm.fuel_additive_deicer", "Deicer");
         add("item.hbm.catalytic_converter", "Catalytic Converter");
         add("item.hbm.powder_lignite", "Lignite Powder");
+        add("item.hbm.powder_quartz", "Quartz Powder");
+        add("item.hbm.powder_lapis", "Lapis Lazuli Powder");
+        add("item.hbm.powder_diamond", "Diamond Powder");
+        add("item.hbm.powder_emerald", "Emerald Powder");
+        add("item.hbm.powder_sawdust", "Sawdust");
+        add("item.hbm.ball_resin", "Latex");
         add("item.hbm.powder_limestone", "Limestone Powder");
         add("item.hbm.circuit_vacuum_tube", "Vacuum Tube");
         add("item.hbm.circuit_capacitor", "Capacitor");
@@ -564,6 +670,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         }
         return switch (id) {
             case "powder_tektite" -> true;
+            case "ingot_weaponsteel", "plate_weaponsteel",
+                 "ingot_dura_steel",
+                 "plate_schrabidium",
+                 "plate_combine_steel",
+                 "plate_saturnite" -> true;
             case "powder_coal", "powder_coal_tiny" -> true;
             case "coke_coal",
                  "coke_lignite",
@@ -609,6 +720,20 @@ public class HbmLanguageProvider extends LanguageProvider {
                  "item_expensive_plastic",
                  "item_expensive_gold_dust",
                  "item_expensive_degenerate_matter",
+                 "ore_byproduct_b_iron",
+                 "ore_byproduct_b_copper",
+                 "ore_byproduct_b_lithium",
+                 "ore_byproduct_b_silicon",
+                 "ore_byproduct_b_lead",
+                 "ore_byproduct_b_titanium",
+                 "ore_byproduct_b_aluminium",
+                 "ore_byproduct_b_sulfur",
+                 "ore_byproduct_b_calcium",
+                 "ore_byproduct_b_bismuth",
+                 "ore_byproduct_b_radium",
+                 "ore_byproduct_b_technetium",
+                 "ore_byproduct_b_polonium",
+                 "ore_byproduct_b_uranium",
                  "casing_small",
                  "casing_large",
                  "casing_small_steel",
@@ -617,6 +742,12 @@ public class HbmLanguageProvider extends LanguageProvider {
                  "casing_buckshot",
                  "casing_buckshot_advanced",
                  "powder_lignite",
+                 "powder_quartz",
+                 "powder_lapis",
+                 "powder_diamond",
+                 "powder_emerald",
+                 "powder_sawdust",
+                 "ball_resin",
                  "powder_limestone" -> true;
             default -> false;
         };

@@ -195,6 +195,10 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("ingot", "ingots", "ingot_pvc", "PVC");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_magnetized_tungsten", "MagnetizedTungsten");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_gunmetal", "GunMetal");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_weaponsteel", "WeaponSteel");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_dura_steel", "DuraSteel");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_combine_steel", "CMBSteel");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_saturnite", "Saturnite");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_cft", "CFT");
 
         addLegacyMaterialAliases("dust", "dusts", "powder_uranium", "Uranium");
@@ -210,6 +214,8 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("dust", "dusts", "powder_cobalt", "Cobalt");
         addLegacyMaterialAliases("dust", "dusts", "powder_sodium", "Sodium");
         addLegacyMaterialAliases("dust", "dusts", "powder_schrabidium", "Schrabidium");
+        addLegacyMaterialAliases("dust", "dusts", "powder_dura_steel", "DuraSteel");
+        addLegacyMaterialAliases("dust", "dusts", "powder_combine_steel", "CMBSteel");
         addLegacyMaterialAliases("dust", "dusts", "powder_calcium", "Calcium");
         addLegacyMaterialAliases("dust", "dusts", "powder_cadmium", "Cadmium");
         addLegacyMaterialAliases("dust", "dusts", "powder_bismuth", "Bismuth");
@@ -218,6 +224,10 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("dust", "dusts", "powder_coal", "Coal");
         addLegacyMaterialAliases("dustTiny", "tiny_dusts", "powder_coal_tiny", "Coal");
         addLegacyMaterialAliases("dust", "dusts", "powder_lignite", "Lignite");
+        addLegacyMaterialAliases("dust", "dusts", "powder_quartz", "NetherQuartz", "Quartz");
+        addLegacyMaterialAliases("dust", "dusts", "powder_lapis", "Lapis");
+        addLegacyMaterialAliases("dust", "dusts", "powder_diamond", "Diamond");
+        addLegacyMaterialAliases("dust", "dusts", "powder_emerald", "Emerald");
         addLegacyMaterialAliases("dust", "dusts", "powder_limestone", "Limestone");
 
         addLegacyMaterialAliases("plate", "plates", "plate_iron", "Iron");
@@ -230,6 +240,10 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("plate", "plates", "plate_advanced_alloy", "AdvancedAlloy");
         addLegacyMaterialAliases("plate", "plates", "plate_dura_steel", "DuraSteel");
         addLegacyMaterialAliases("plate", "plates", "plate_gunmetal", "GunMetal");
+        addLegacyMaterialAliases("plate", "plates", "plate_weaponsteel", "WeaponSteel");
+        addLegacyMaterialAliases("plate", "plates", "plate_schrabidium", "Schrabidium");
+        addLegacyMaterialAliases("plate", "plates", "plate_combine_steel", "CMBSteel");
+        addLegacyMaterialAliases("plate", "plates", "plate_saturnite", "Saturnite");
 
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_uranium", "Uranium");
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_u233", "Uranium233", "U233");

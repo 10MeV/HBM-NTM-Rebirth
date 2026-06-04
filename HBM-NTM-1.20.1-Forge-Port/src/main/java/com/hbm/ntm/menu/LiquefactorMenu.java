@@ -92,6 +92,10 @@ public class LiquefactorMenu extends AbstractContainerMenu {
         return tank.tooltip();
     }
 
+    public List<Component> getTankTooltip(boolean showHidden) {
+        return tank.tooltip(showHidden);
+    }
+
     @Override
     public boolean stillValid(Player player) {
         return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);

@@ -14,6 +14,19 @@ public final class ObjFusionModels {
     public static final LegacyWavefrontModel COUPLER_LEGACY = legacyModel("coupler").asVBO();
     public static final LegacyWavefrontModel PLASMA_FORGE_LEGACY = legacyModel("plasma_forge").asVBO();
 
+    public static final ResourceLocation TORUS_TEXTURE = texture("torus");
+    public static final ResourceLocation PLASMA_TEXTURE = texture("plasma");
+    public static final ResourceLocation PLASMA_GLOW_TEXTURE = texture("plasma_glow");
+    public static final ResourceLocation PLASMA_SPARKLE_TEXTURE = texture("plasma_sparkle");
+    public static final ResourceLocation KLYSTRON_TEXTURE = texture("klystron");
+    public static final ResourceLocation KLYSTRON_CREATIVE_TEXTURE = texture("klystron_creative");
+    public static final ResourceLocation BREEDER_TEXTURE = texture("breeder");
+    public static final ResourceLocation COLLECTOR_TEXTURE = texture("collector");
+    public static final ResourceLocation BOILER_TEXTURE = texture("boiler");
+    public static final ResourceLocation MHDT_TEXTURE = texture("mhdt");
+    public static final ResourceLocation COUPLER_TEXTURE = texture("coupler");
+    public static final ResourceLocation PLASMA_FORGE_TEXTURE = texture("plasma_forge");
+
     public static final ObjModelPart TORUS = part("fusion_torus");
     public static final ObjModelPart TORUS_BODY = part("fusion_torus_torus");
     public static final ObjModelPart TORUS_MAGNET = part("fusion_torus_magnet");

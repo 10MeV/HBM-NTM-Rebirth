@@ -3,11 +3,14 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
+import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmTurbineConversion;
+import com.hbm.ntm.fluid.trait.CoolableFluidTrait;
+import com.hbm.ntm.fluid.trait.CoolableFluidTrait.CoolingType;
 import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
-import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -83,11 +86,17 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         int spinner = flywheelEnergy <= 0L ? 0 : (int) ((level.getGameTime() / 4L) % 4L);
         int spinPercent = (int) Math.round(spin * 100.0D);
+        FluidType inputType = inputTank.getTankType();
+        CoolableFluidTrait trait = inputType.getTrait(CoolableFluidTrait.class);
+        FluidType outputType = trait != null && trait.getEfficiency(CoolingType.TURBINE) > 0.0D
+                ? trait.getCoolsTo()
+                : HbmFluids.NONE;
         return LegacyLookOverlay.forBlock(this, List.of(
-                LegacyLookOverlayLines.tank(true, inputTank),
-                LegacyLookOverlayLines.tank(false, outputTank),
-                LegacyLookOverlayLines.energyOut(lastPowerTarget,
-                        Component.literal("(" + SPIN_BLOCKS[spinner] + spinPercent + "%)"))));
+                LegacyLookOverlayLines.groupedCompactTank(true, inputTank),
+                LegacyLookOverlayLines.groupedCompactTank(false, outputType, outputTank.getFill(),
+                        outputTank.getMaxFill()),
+                LegacyLookOverlayLines.industrialTurbineEnergyOut(lastPowerTarget, SPIN_BLOCKS[spinner],
+                        spinPercent, spin)));
     }
 
     @Override

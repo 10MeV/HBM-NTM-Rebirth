@@ -1,0 +1,8 @@
+{
+  "values": [
+    "hbm:kerosene",
+    "hbm:kerosene_flowing",
+    "hbm:kerosene_reform",
+    "hbm:kerosene_reform_flowing"
+  ]
+}

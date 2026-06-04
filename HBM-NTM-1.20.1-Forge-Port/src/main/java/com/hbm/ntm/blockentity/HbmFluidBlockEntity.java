@@ -4,6 +4,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.fluid.ForgeFluidHandlerAdapter;
+import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidNode;
 import com.hbm.ntm.fluid.HbmFluidNodeHost;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFluidNodeHost, HbmFluidUser,
+        HbmFluidCopiable,
         LegacyLookOverlayProvider {
     private static final String TAG_FLUIDS = "hbm_fluids";
     private static final String TAG_TANK_PREFIX = "tank_";
@@ -203,6 +205,12 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public void onFluidSettingsPasted() {
+        onFluidContentsChanged();
+        invalidateFluidHandlers();
     }
 
     private LazyOptional<IFluidHandler> getFluidHandler(@Nullable Direction side) {

@@ -25,7 +25,7 @@ public class RiftParticle extends Particle {
         @Override
         public void begin(BufferBuilder builder, net.minecraft.client.renderer.texture.TextureManager textureManager) {
             RenderSystem.depthMask(false);
-            RenderSystem.disableCull();
+            RenderSystem.enableCull();
             RenderSystem.enableBlend();
             RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR);
             RenderSystem.setShader(GameRenderer::getPositionColorShader);

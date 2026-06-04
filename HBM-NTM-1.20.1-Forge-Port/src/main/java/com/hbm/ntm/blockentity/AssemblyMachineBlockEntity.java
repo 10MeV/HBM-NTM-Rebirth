@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayPorts;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
@@ -21,8 +22,16 @@ import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
+import com.hbm.ntm.recipe.GenericMachineRecipeRuntime.ProcessingFactors;
+import com.hbm.ntm.recipe.GenericMachineRecipeRuntime.ProcessingResult;
 import com.hbm.ntm.recipe.GenericMachineRecipeSelector;
+import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
+import com.hbm.ntm.item.ItemBlueprints;
+import com.hbm.ntm.item.ItemMachineUpgrade;
+import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
+import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -52,6 +61,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.List;
 
 public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
@@ -82,6 +92,10 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     public static final int[] OUTPUT_SLOTS = new int[] { SLOT_OUTPUT };
     private static final List<EnergyPort> ENERGY_PORTS = LegacyMultiblockPorts.xrFloorRingEnergyPorts(2);
     private static final List<FluidPort> FLUID_PORTS = LegacyMultiblockPorts.xrFloorRingFluidPorts(2);
+    private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(
+            UpgradeType.SPEED, 3,
+            UpgradeType.POWER, 3,
+            UpgradeType.OVERDRIVE, 3);
 
     private final ItemStackHandler items = new ItemStackHandler(17) {
         @Override
@@ -91,7 +105,21 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot != SLOT_OUTPUT;
+            if (slot == SLOT_BATTERY) {
+                return true;
+            }
+            if (slot == SLOT_BLUEPRINT) {
+                return stack.getItem() instanceof ItemBlueprints;
+            }
+            if (slot >= SLOT_UPGRADE_START && slot <= SLOT_UPGRADE_END) {
+                return stack.getItem() instanceof ItemMachineUpgrade;
+            }
+            if (slot >= SLOT_INPUT_START && slot <= SLOT_INPUT_END) {
+                GenericMachineRecipe recipe = getSelectedRecipeDefinition();
+                return level != null && GenericMachineRecipeRuntime.isItemValidForCurrentRecipe(
+                        recipe, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, level, slot, stack, INPUT_SLOTS);
+            }
+            return false;
         }
 
         @Override
@@ -118,6 +146,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private int ringDelay;
     private double progress;
     private String selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
+    private Object audioLoop;
 
     public AssemblyMachineBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ASSEMBLY_MACHINE.get(), pos, state);
@@ -140,7 +169,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, AssemblyMachineBlockEntity blockEntity) {
         blockEntity.prevRing = blockEntity.ring;
-        boolean animate = blockEntity.didProcess || blockEntity.previewAnimation();
+        boolean animate = blockEntity.didProcess;
         if (animate) {
             blockEntity.updateRing(level);
         }
@@ -152,6 +181,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
                 arm.returnToNullPos();
             }
         }
+        blockEntity.updateAudioLoop();
     }
 
     public ItemStackHandler getItems() {
@@ -283,8 +313,11 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         return level != null && !level.getBlockState(worldPosition.above(3)).isAir();
     }
 
-    private boolean previewAnimation() {
-        return level != null && level.isClientSide && level.getGameTime() % 120L < 80L;
+    private void updateAudioLoop() {
+        if (level == null || !level.isClientSide) {
+            return;
+        }
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_ASSEMBLER_OPERATE.getId(), didProcess, 30.0D, 15.0F);
     }
 
     private void updateRing(Level level) {
@@ -462,50 +495,43 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
         GenericMachineRecipe recipe = GenericMachineRecipeRuntime.findByInternalName(
                 level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, selectedRecipe);
-        if (recipe == null) {
-            progress = 0.0D;
-            updateDynamicCapacity(null);
-            return wasProcessing || oldProgress != progress;
-        }
-
-        GenericMachineRecipe switchedRecipe = GenericMachineRecipeRuntime.findAutoSwitchRecipe(
-                level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, recipe, items.getStackInSlot(INPUT_SLOTS[0]));
-        if (switchedRecipe != null) {
-            selectedRecipe = switchedRecipe.getInternalName();
-            progress = 0.0D;
-            setupTanks(switchedRecipe);
-            updateDynamicCapacity(switchedRecipe);
-            return true;
-        }
-
-        setupTanks(recipe);
         updateDynamicCapacity(recipe);
-        boolean canProcess = energy.getPower() >= recipe.getPower()
-                && GenericMachineRecipeRuntime.canProcess(recipe, items, INPUT_SLOTS, OUTPUT_SLOTS,
-                List.of(inputTank), List.of(outputTank));
-        if (!canProcess) {
-            progress = 0.0D;
-            return wasProcessing || oldProgress != progress;
+
+        ProcessingResult result = GenericMachineRecipeRuntime.update(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE,
+                selectedRecipe, progress, items.getStackInSlot(SLOT_BLUEPRINT), energy, items, INPUT_SLOTS, OUTPUT_SLOTS,
+                List.of(inputTank), List.of(outputTank), upgradeFactors(), true, TANK_CAPACITY);
+        selectedRecipe = result.selectedRecipe();
+        progress = result.progress();
+        didProcess = result.didProcess();
+        updateDynamicCapacity(result.recipe());
+        if (result.completed()) {
+            processMeteoriteSword();
         }
 
-        energy.setPower(energy.getPower() - recipe.getPower());
-        int duration = Math.max(recipe.getDuration(), 1);
-        progress = Math.min(1.0D, progress + 1.0D / duration);
-        didProcess = true;
+        return result.changed() || wasProcessing != didProcess || oldProgress != progress || oldPower != energy.getPower();
+    }
 
-        if (progress >= 1.0D) {
-            GenericMachineRecipeRuntime.consumeInputs(recipe, items, INPUT_SLOTS, List.of(inputTank));
-            GenericMachineRecipeRuntime.produceOutputs(recipe, items, OUTPUT_SLOTS, List.of(outputTank));
-            if (GenericMachineRecipeRuntime.canProcess(recipe, items, INPUT_SLOTS, OUTPUT_SLOTS,
-                    List.of(inputTank), List.of(outputTank))
-                    && energy.getPower() >= recipe.getPower()) {
-                progress -= 1.0D;
-            } else {
-                progress = 0.0D;
-            }
-        }
+    private ProcessingFactors upgradeFactors() {
+        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(
+                items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
+        double speed = 1.0D;
+        double pow = 1.0D;
+        int speedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
+        int powerLevel = Math.min(levels.getLevel(UpgradeType.POWER), 3);
+        int overdriveLevel = Math.min(levels.getLevel(UpgradeType.OVERDRIVE), 3);
+        speed += speedLevel / 3.0D;
+        speed += overdriveLevel;
+        pow -= powerLevel * 0.25D;
+        pow += speedLevel;
+        pow += overdriveLevel * 10.0D / 3.0D;
+        return new ProcessingFactors(speed, pow);
+    }
 
-        return wasProcessing != didProcess || oldProgress != progress || oldPower != energy.getPower();
+    private void processMeteoriteSword() {
+        java.util.Optional.ofNullable(ModItems.legacyItem("meteorite_sword_alloyed"))
+                .filter(item -> items.getStackInSlot(SLOT_BATTERY).is(item.get()))
+                .flatMap(ignored -> java.util.Optional.ofNullable(ModItems.legacyItem("meteorite_sword_machined")))
+                .ifPresent(item -> items.setStackInSlot(SLOT_BATTERY, new ItemStack(item.get())));
     }
 
     private void setupTanks(@Nullable GenericMachineRecipe recipe) {

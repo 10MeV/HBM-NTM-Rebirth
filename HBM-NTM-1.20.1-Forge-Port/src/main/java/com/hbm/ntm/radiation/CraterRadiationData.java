@@ -53,22 +53,6 @@ public class CraterRadiationData extends SavedData {
         return tag;
     }
 
-    public static CraterZone zoneForFalloutPercent(double percent, int scale) {
-        if (!RadiationConfig.ENABLE_CRATER_BIOME_RADIATION.get()) {
-            return CraterZone.NONE;
-        }
-        if (scale >= 150 && percent < 15.0D) {
-            return CraterZone.INNER;
-        }
-        if (scale >= 100 && percent < 55.0D) {
-            return CraterZone.CRATER;
-        }
-        if (scale >= 25) {
-            return CraterZone.OUTER;
-        }
-        return CraterZone.NONE;
-    }
-
     public static boolean setZone(ServerLevel level, int x, int z, CraterZone zone) {
         if (zone == CraterZone.NONE) {
             return false;

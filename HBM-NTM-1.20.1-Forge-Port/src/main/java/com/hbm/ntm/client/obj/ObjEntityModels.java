@@ -18,6 +18,14 @@ public final class ObjEntityModels {
     public static final LegacyWavefrontModel DUCHESS_GAMBIT = model("duchessgambit");
     public static final LegacyWavefrontModel DORNIER = model("dornier", "dornier_1");
     public static final LegacyWavefrontModel B29 = model("b29", "b29_0");
+    public static final LegacyWavefrontModel BOT_PRIME_HEAD = model("bot_prime_head", "mark_zero_head");
+    public static final LegacyWavefrontModel BOT_PRIME_BODY = model("bot_prime_body", "mark_zero_body");
+    public static final LegacyWavefrontModel PLASTIC_BAG = model("plasticbag");
+    public static final LegacyWavefrontModel TUNNELER = new LegacyWavefrontModel(
+            new ResourceLocation(HbmNtm.MOD_ID, "models/block/entities/tunneler.obj"));
+    public static final LegacyWavefrontModel CAPSULE = new LegacyWavefrontModel(
+            new ResourceLocation(HbmNtm.MOD_ID, "models/block/entities/capsule.obj"),
+            machineTexture("turbofan_blades"));
 
     public static final ResourceLocation TESLACRAB_TEXTURE = texture("teslacrab");
     public static final ResourceLocation MASKMAN_TEXTURE = texture("maskman");
@@ -47,6 +55,10 @@ public final class ObjEntityModels {
     public static final ResourceLocation B29_1_TEXTURE = texture("b29_1");
     public static final ResourceLocation B29_2_TEXTURE = texture("b29_2");
     public static final ResourceLocation B29_3_TEXTURE = texture("b29_3");
+    public static final ResourceLocation BOT_PRIME_HEAD_TEXTURE = texture("mark_zero_head");
+    public static final ResourceLocation BOT_PRIME_BODY_TEXTURE = texture("mark_zero_body");
+    public static final ResourceLocation PLASTIC_BAG_TEXTURE = texture("plasticbag");
+    public static final ResourceLocation CAPSULE_TEXTURE = machineTexture("turbofan_blades");
 
     public static LegacyWavefrontModel model(String name) {
         return model(name, name);
@@ -60,6 +72,10 @@ public final class ObjEntityModels {
 
     public static ResourceLocation texture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/entities/" + name + ".png");
+    }
+
+    public static ResourceLocation machineTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/" + name + ".png");
     }
 
     private ObjEntityModels() {

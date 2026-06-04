@@ -88,7 +88,20 @@ public class RadiationSavedData extends SavedData {
 
     public List<Map.Entry<Long, Float>> loadedEntries(ServerLevel level) {
         List<Map.Entry<Long, Float>> entries = new ArrayList<>();
-        pruneUnloaded(level, entries);
+        for (Map.Entry<Long, Float> entry : chunkRadiation.entrySet()) {
+            ChunkPos pos = new ChunkPos(entry.getKey());
+            if (level.hasChunk(pos.x, pos.z)) {
+                entries.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue()));
+            }
+        }
+        return entries;
+    }
+
+    public List<Map.Entry<Long, Float>> entriesSnapshot() {
+        List<Map.Entry<Long, Float>> entries = new ArrayList<>();
+        for (Map.Entry<Long, Float> entry : chunkRadiation.entrySet()) {
+            entries.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue()));
+        }
         return entries;
     }
 
@@ -165,18 +178,12 @@ public class RadiationSavedData extends SavedData {
             }
 
             ChunkPos origin = new ChunkPos(entry.getKey());
-            if (!level.hasChunk(origin.x, origin.z)) {
-                continue;
-            }
 
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
                     int type = Math.abs(dx) + Math.abs(dz);
                     float percent = type == 0 ? 0.6F : type == 1 ? 0.075F : 0.025F;
                     ChunkPos target = new ChunkPos(origin.x + dx, origin.z + dz);
-                    if (!level.hasChunk(target.x, target.z)) {
-                        continue;
-                    }
 
                     long targetKey = target.toLong();
                     float spread = value * percent;

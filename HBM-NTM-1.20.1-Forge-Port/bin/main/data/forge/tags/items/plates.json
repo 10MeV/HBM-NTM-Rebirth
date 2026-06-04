@@ -9,6 +9,10 @@
     "hbm:plate_aluminium",
     "hbm:plate_advanced_alloy",
     "hbm:plate_dura_steel",
-    "hbm:plate_gunmetal"
+    "hbm:plate_gunmetal",
+    "hbm:plate_weaponsteel",
+    "hbm:plate_schrabidium",
+    "hbm:plate_combine_steel",
+    "hbm:plate_saturnite"
   ]
 }

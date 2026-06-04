@@ -3,11 +3,14 @@ package com.hbm.ntm.datagen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
+import com.hbm.ntm.recipe.GenericMachineRecipeExtraData;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.recipe.ModRecipes;
+import com.hbm.ntm.recipe.LegacyBlueprintPools;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.recipe.HbmFluidContainerIngredient;
 import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
@@ -40,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public final class HbmRecipeProvider extends RecipeProvider {
     public HbmRecipeProvider(PackOutput output) {
@@ -111,6 +115,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         fluidContainerRecipes(consumer);
         fluidNetworkRecipes(consumer);
         liquefactionRecipes(consumer);
+        pressRecipes(consumer);
     }
 
     private static void selfChargingConversion(Consumer<FinishedRecipe> consumer, ItemLike result, String recipeName, ItemLike isotopeBillet) {
@@ -196,6 +201,22 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 11)
                 .outputFluid(HbmFluids.PERFLUOROMETHYL, 8_000)
                 .save(consumer, id("assembly_machine/capacitorspark"));
+
+        assemblyPlateRecipe(consumer, "ass.plateschrab", "schrabidium", "ingots/schrabidium", "plate_schrabidium");
+        assemblyPlateRecipe(consumer, "ass.platecmb", "combine_steel", "ingots/combine_steel", "plate_combine_steel");
+        assemblyPlateRecipe(consumer, "ass.plateweaponsteel", "weaponsteel", "ingots/weapon_steel", "plate_weaponsteel");
+        assemblyPlateRecipe(consumer, "ass.platesaturnite", "saturnite", "ingots/saturnite", "plate_saturnite");
+        assemblyPlateRecipe(consumer, "ass.platedura", "dura_steel", "ingots/dura_steel", "plate_dura_steel");
+    }
+
+    private static void assemblyPlateRecipe(Consumer<FinishedRecipe> consumer, String internalName, String recipeName,
+            String inputTag, String outputItem) {
+        GenericMachineRecipeBuilder.assembly(internalName, 60, 100)
+                .inputTag(forgeTag(inputTag), 1)
+                .outputItem(item(outputItem))
+                .pool(LegacyBlueprintPools.PREFIX_ALT + "plates")
+                .autoSwitchGroup("autoswitch.plates")
+                .save(consumer, id("assembly_machine/plate_" + recipeName));
     }
 
     private static void fluidContainerRecipes(Consumer<FinishedRecipe> consumer) {
@@ -462,6 +483,81 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("liquefaction/sunflower"));
     }
 
+    private static void pressRecipes(Consumer<FinishedRecipe> consumer) {
+        flatPressRecipes(consumer);
+
+        for (int i = 0; i < 8; i++) {
+            ItemPressStamp.StampType stamp = ItemPressStamp.StampType.byName("printing" + (i + 1));
+            PressRecipeBuilder.press(stamp, Ingredient.of(Items.PAPER),
+                            new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.PAGE_OF, i).get()))
+                    .save(consumer, id("press/page_of_page" + (i + 1)));
+        }
+
+        PressRecipeBuilder.press(ItemPressStamp.StampType.C9, Ingredient.of(forgeTag("plates/gun_metal")),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 0).get(), 4))
+                .save(consumer, id("press/casing_small_gunmetal"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.C50, Ingredient.of(forgeTag("plates/gun_metal")),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 1).get(), 2))
+                .save(consumer, id("press/casing_large_gunmetal"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, Ingredient.of(forgeTag("ingots/weapon_steel")),
+                        new ItemStack(item("plate_weaponsteel")))
+                .save(consumer, id("press/weaponsteel_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, Ingredient.of(forgeTag("ingots/schrabidium")),
+                        new ItemStack(item("plate_schrabidium")))
+                .save(consumer, id("press/schrabidium_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, Ingredient.of(forgeTag("ingots/combine_steel")),
+                        new ItemStack(item("plate_combine_steel")))
+                .save(consumer, id("press/combine_steel_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, Ingredient.of(forgeTag("ingots/saturnite")),
+                        new ItemStack(item("plate_saturnite")))
+                .save(consumer, id("press/saturnite_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, Ingredient.of(forgeTag("ingots/dura_steel")),
+                        new ItemStack(item("plate_dura_steel")))
+                .save(consumer, id("press/dura_steel_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.C9, Ingredient.of(forgeTag("plates/weapon_steel")),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 2).get(), 4))
+                .save(consumer, id("press/casing_small_weaponsteel"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.C50, Ingredient.of(forgeTag("plates/weapon_steel")),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 3).get(), 2))
+                .save(consumer, id("press/casing_large_weaponsteel"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, Ingredient.of(Items.GOLD_INGOT),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.WIRE_FINE, 7_900).get(), 8))
+                .save(consumer, id("press/wire_gold"));
+    }
+
+    private static void flatPressRecipes(Consumer<FinishedRecipe> consumer) {
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/quartz")),
+                        new ItemStack(Items.QUARTZ))
+                .save(consumer, id("press/flat_quartz"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/lapis")),
+                        new ItemStack(Items.LAPIS_LAZULI))
+                .save(consumer, id("press/flat_lapis"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/diamond")),
+                        new ItemStack(Items.DIAMOND))
+                .save(consumer, id("press/flat_diamond"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/emerald")),
+                        new ItemStack(Items.EMERALD))
+                .save(consumer, id("press/flat_emerald"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(item("biomass")),
+                        new ItemStack(item("biomass_compressed")))
+                .save(consumer, id("press/flat_biomass"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("gems/coke")),
+                        new ItemStack(item("ingot_graphite")))
+                .save(consumer, id("press/flat_graphite"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/coal")),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BRIQUETTE, 0).get()))
+                .save(consumer, id("press/flat_briquette_coal"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/lignite")),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BRIQUETTE, 1).get()))
+                .save(consumer, id("press/flat_briquette_lignite"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(item("powder_sawdust")),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BRIQUETTE, 2).get()))
+                .save(consumer, id("press/flat_briquette_wood"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(new ItemStack(Blocks.JUNGLE_LOG)),
+                        new ItemStack(item("ball_resin")))
+                .save(consumer, id("press/flat_resin"));
+    }
+
     private static ItemLike item(String legacyName) {
         RegistryObject<Item> item = ModItems.legacyItem(legacyName);
         if (item == null) {
@@ -508,6 +604,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         private final JsonArray pools = new JsonArray();
         private ItemStack icon = ItemStack.EMPTY;
         private boolean customLocalization;
+        private GenericMachineRecipeExtraData extraData = GenericMachineRecipeExtraData.EMPTY;
         @Nullable
         private String autoSwitchGroup;
         @Nullable
@@ -530,6 +627,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
         private static GenericMachineRecipeBuilder assembly(String internalName, int duration, long power) {
             return new GenericMachineRecipeBuilder(GenericMachineRecipe.Machine.ASSEMBLY_MACHINE,
                     id("assembly_machine"), internalName, duration, power);
+        }
+
+        private static GenericMachineRecipeBuilder purex(String internalName, int duration, long power) {
+            return new GenericMachineRecipeBuilder(GenericMachineRecipe.Machine.PUREX,
+                    id("purex"), internalName, duration, power);
+        }
+
+        private static GenericMachineRecipeBuilder precass(String internalName, int duration, long power) {
+            return new GenericMachineRecipeBuilder(GenericMachineRecipe.Machine.PRECASS,
+                    id("precass"), internalName, duration, power);
         }
 
         private GenericMachineRecipeBuilder inputItem(ItemLike item, int count) {
@@ -645,6 +752,22 @@ public final class HbmRecipeProvider extends RecipeProvider {
             return this;
         }
 
+        private GenericMachineRecipeBuilder plasmaForgeExtra(long ignitionTemp) {
+            this.extraData = new GenericMachineRecipeExtraData(
+                    Optional.of(new GenericMachineRecipeExtraData.PlasmaForge(ignitionTemp)),
+                    Optional.empty());
+            return this;
+        }
+
+        private GenericMachineRecipeBuilder fusionExtra(long ignitionTemp, long outputTemp, double outputFlux,
+                float r, float g, float b) {
+            this.extraData = new GenericMachineRecipeExtraData(
+                    Optional.empty(),
+                    Optional.of(new GenericMachineRecipeExtraData.Fusion(ignitionTemp, outputTemp,
+                            outputFlux, r, g, b)));
+            return this;
+        }
+
         private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId) {
             validate(recipeId);
             consumer.accept(new FinishedRecipe() {
@@ -670,6 +793,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                     if (nameWrapper != null) {
                         json.addProperty("name_wrapper", nameWrapper);
                     }
+                    extraData.writeToJson(json);
                 }
 
                 @Override
@@ -762,6 +886,70 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 }
                 return object;
             }
+        }
+    }
+
+    private static final class PressRecipeBuilder {
+        private final ItemPressStamp.StampType stamp;
+        private final Ingredient ingredient;
+        private final ItemStack result;
+
+        private PressRecipeBuilder(ItemPressStamp.StampType stamp, Ingredient ingredient, ItemStack result) {
+            this.stamp = stamp;
+            this.ingredient = ingredient;
+            this.result = result.copy();
+        }
+
+        private static PressRecipeBuilder press(ItemPressStamp.StampType stamp, Ingredient ingredient, ItemStack result) {
+            return new PressRecipeBuilder(stamp, ingredient, result);
+        }
+
+        private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId) {
+            if (result.isEmpty()) {
+                throw new IllegalStateException("HBM press recipe has no output: " + recipeId);
+            }
+            consumer.accept(new FinishedRecipe() {
+                @Override
+                public void serializeRecipeData(JsonObject json) {
+                    json.addProperty("stamp", stamp.getSerializedName());
+                    json.add("ingredient", ingredient.toJson());
+                    json.add("result", itemStackJson(result));
+                }
+
+                @Override
+                public ResourceLocation getId() {
+                    return recipeId;
+                }
+
+                @Override
+                public RecipeSerializer<?> getType() {
+                    return BuiltInRegistries.RECIPE_SERIALIZER.get(id("press"));
+                }
+
+                @Nullable
+                @Override
+                public JsonObject serializeAdvancement() {
+                    return null;
+                }
+
+                @Nullable
+                @Override
+                public ResourceLocation getAdvancementId() {
+                    return null;
+                }
+            });
+        }
+
+        private static JsonObject itemStackJson(ItemStack stack) {
+            JsonObject object = new JsonObject();
+            object.addProperty("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+            if (stack.getCount() > 1) {
+                object.addProperty("count", stack.getCount());
+            }
+            if (stack.hasTag() && !stack.getTag().isEmpty()) {
+                object.addProperty("nbt", stack.getTag().toString());
+            }
+            return object;
         }
     }
 

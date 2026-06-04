@@ -2,6 +2,8 @@ package com.hbm.ntm.recipe;
 
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.item.ItemBlueprints;
+import com.hbm.ntm.energy.HbmEnergyStorage;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.util.RandomSource;
@@ -11,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,102 @@ public final class GenericMachineRecipeRuntime {
                 && canFitFluidOutputs(recipe, outputTanks);
     }
 
+    public static ProcessingResult update(Level level, GenericMachineRecipe.Machine machine, String selectedRecipe,
+            double progress, ItemStack blueprint, HbmEnergyStorage energy, ItemStackHandler items, int[] inputSlots,
+            int[] outputSlots, List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks,
+            ProcessingFactors factors, boolean extraCondition, int defaultTankCapacity) {
+        GenericMachineRecipe recipe = findByInternalName(level, machine, selectedRecipe);
+        if (recipe != null && !isAllowedByBlueprint(recipe, blueprint)) {
+            return new ProcessingResult(NULL_RECIPE, 0.0D, false, true, null, false);
+        }
+        setupTanks(recipe, inputTanks, outputTanks, defaultTankCapacity);
+
+        if (recipe == null) {
+            return new ProcessingResult(normalize(selectedRecipe), 0.0D, false, false, null, false);
+        }
+
+        GenericMachineRecipe switchedRecipe = findAutoSwitchRecipe(level, machine, recipe, items.getStackInSlot(inputSlots[0]));
+        if (switchedRecipe != null) {
+            setupTanks(switchedRecipe, inputTanks, outputTanks, defaultTankCapacity);
+            return new ProcessingResult(switchedRecipe.getInternalName(), 0.0D, false, true, switchedRecipe, false);
+        }
+
+        boolean canProcess = extraCondition
+                && canProcess(recipe, items, inputSlots, outputSlots, inputTanks, outputTanks)
+                && hasPower(energy, recipe, factors.powerMultiplier());
+        if (!canProcess) {
+            return new ProcessingResult(recipe.getInternalName(), 0.0D, false, progress != 0.0D, recipe, false);
+        }
+
+        energy.setPower(energy.getPower() - requiredPower(recipe, factors.powerMultiplier()));
+        double nextProgress = progress + Math.min(factors.speedMultiplier() / Math.max(recipe.getDuration(), 1), 1.0D);
+        boolean completed = false;
+        if (nextProgress >= 1.0D) {
+            consumeInputs(recipe, items, inputSlots, inputTanks);
+            produceOutputs(recipe, items, outputSlots, outputTanks);
+            completed = true;
+            if (canProcess(recipe, items, inputSlots, outputSlots, inputTanks, outputTanks)
+                    && hasPower(energy, recipe, factors.powerMultiplier())) {
+                nextProgress -= 1.0D;
+            } else {
+                nextProgress = 0.0D;
+            }
+        }
+
+        return new ProcessingResult(recipe.getInternalName(), nextProgress, true, true, recipe, completed);
+    }
+
+    public static void setupTanks(@Nullable GenericMachineRecipe recipe, List<HbmFluidTank> inputTanks,
+            List<HbmFluidTank> outputTanks, int defaultCapacity) {
+        if (recipe == null) {
+            return;
+        }
+        List<HbmFluidStack> fluidInputs = recipe.getFluidInputs();
+        List<HbmFluidStack> fluidOutputs = recipe.getFluidOutputs();
+        for (int i = 0; i < inputTanks.size(); i++) {
+            conformTank(inputTanks.get(i), i < fluidInputs.size() ? fluidInputs.get(i) : null, defaultCapacity);
+        }
+        for (int i = 0; i < outputTanks.size(); i++) {
+            conformTank(outputTanks.get(i), i < fluidOutputs.size() ? fluidOutputs.get(i) : null, defaultCapacity);
+        }
+    }
+
+    public static boolean isItemValidForCurrentRecipe(GenericMachineRecipe recipe, GenericMachineRecipe.Machine machine,
+            Level level, int slot, ItemStack stack, int[] inputSlots) {
+        if (recipe == null || recipe.getItemInputs().isEmpty()) {
+            return false;
+        }
+        List<HbmIngredient> inputs = recipe.getItemInputs();
+        for (int i = 0; i < Math.min(inputSlots.length, inputs.size()); i++) {
+            if (inputSlots[i] == slot && inputs.get(i).test(stack, true)) {
+                return true;
+            }
+        }
+        if (recipe.getAutoSwitchGroup() == null || inputSlots.length == 0 || inputSlots[0] != slot) {
+            return false;
+        }
+        return index(level, machine).recipes().stream()
+                .filter(candidate -> recipe.getAutoSwitchGroup().equals(candidate.getAutoSwitchGroup()))
+                .filter(candidate -> !candidate.getItemInputs().isEmpty())
+                .anyMatch(candidate -> candidate.getItemInputs().get(0).test(stack, true));
+    }
+
+    public static boolean isSlotClogged(GenericMachineRecipe recipe, GenericMachineRecipe.Machine machine, Level level,
+            ItemStackHandler items, int slot, int[] inputSlots) {
+        boolean inputSlot = false;
+        for (int candidate : inputSlots) {
+            if (candidate == slot) {
+                inputSlot = true;
+                break;
+            }
+        }
+        if (!inputSlot) {
+            return false;
+        }
+        ItemStack stack = items.getStackInSlot(slot);
+        return !stack.isEmpty() && !isItemValidForCurrentRecipe(recipe, machine, level, slot, stack, inputSlots);
+    }
+
     public static void consumeInputs(GenericMachineRecipe recipe, ItemStackHandler items, int[] inputSlots,
             List<HbmFluidTank> inputTanks) {
         ItemInputMatchPlan itemPlan = matchItemInputs(recipe, items, inputSlots);
@@ -150,35 +247,76 @@ public final class GenericMachineRecipeRuntime {
         if (itemInputs.size() > inputSlots.length) {
             return null;
         }
-        List<IndexedIngredient> remaining = new ArrayList<>(itemInputs.size());
-        for (int i = 0; i < itemInputs.size(); i++) {
-            remaining.add(new IndexedIngredient(i, itemInputs.get(i)));
-        }
         int[] matchedSlots = new int[itemInputs.size()];
         Arrays.fill(matchedSlots, -1);
 
-        for (int inputSlot : inputSlots) {
+        for (int i = 0; i < itemInputs.size(); i++) {
+            int inputSlot = inputSlots[i];
             ItemStack stack = items.getStackInSlot(inputSlot);
             if (stack.isEmpty()) {
-                continue;
-            }
-
-            boolean hasMatch = false;
-            Iterator<IndexedIngredient> iterator = remaining.iterator();
-            while (iterator.hasNext()) {
-                IndexedIngredient candidate = iterator.next();
-                if (candidate.ingredient().test(stack)) {
-                    matchedSlots[candidate.index()] = inputSlot;
-                    iterator.remove();
-                    hasMatch = true;
-                    break;
-                }
-            }
-            if (!hasMatch) {
                 return null;
             }
+            HbmIngredient input = itemInputs.get(i);
+            if (!input.test(stack)) {
+                return null;
+            }
+            matchedSlots[i] = inputSlot;
         }
-        return remaining.isEmpty() ? new ItemInputMatchPlan(matchedSlots) : null;
+        return new ItemInputMatchPlan(matchedSlots);
+    }
+
+    private static boolean isAllowedByBlueprint(GenericMachineRecipe recipe, ItemStack blueprint) {
+        if (recipe.getPools().isEmpty()) {
+            return true;
+        }
+        String pool = ItemBlueprints.grabPool(blueprint);
+        return pool != null && recipe.getPools().contains(pool);
+    }
+
+    private static boolean hasPower(HbmEnergyStorage energy, GenericMachineRecipe recipe, double powerMultiplier) {
+        return energy.getPower() >= requiredPower(recipe, powerMultiplier);
+    }
+
+    private static long requiredPower(GenericMachineRecipe recipe, double powerMultiplier) {
+        if (powerMultiplier == 1.0D) {
+            return recipe.getPower();
+        }
+        return (long) (recipe.getPower() * powerMultiplier);
+    }
+
+    private static String normalize(String selectedRecipe) {
+        return selectedRecipe == null || selectedRecipe.isBlank() ? NULL_RECIPE : selectedRecipe;
+    }
+
+    private static void conformTank(HbmFluidTank tank, @Nullable HbmFluidStack stack, int defaultCapacity) {
+        if (stack == null) {
+            if (tank.isEmpty()) {
+                tank.resetTank();
+            }
+            if (defaultCapacity > 0) {
+                tank.changeTankSize(Math.max(tank.getFill(), defaultCapacity));
+            }
+            return;
+        }
+        tank.conform(stack);
+        if (defaultCapacity > 0) {
+            tank.changeTankSize(Math.max(Math.max(tank.getFill(), stack.amount() * 2), defaultCapacity));
+        }
+    }
+
+    public record ProcessingFactors(double speedMultiplier, double powerMultiplier) {
+        public ProcessingFactors {
+            speedMultiplier = Math.max(0.0D, speedMultiplier);
+            powerMultiplier = Math.max(0.0D, powerMultiplier);
+        }
+
+        public static ProcessingFactors normal() {
+            return new ProcessingFactors(1.0D, 1.0D);
+        }
+    }
+
+    public record ProcessingResult(String selectedRecipe, double progress, boolean didProcess, boolean changed,
+                                   @Nullable GenericMachineRecipe recipe, boolean completed) {
     }
 
     private static boolean hasFluidInputs(GenericMachineRecipe recipe, List<HbmFluidTank> inputTanks) {
@@ -391,9 +529,6 @@ public final class GenericMachineRecipeRuntime {
 
     private static boolean hasUnresolvedItemInput(GenericMachineRecipe recipe) {
         return recipe.getItemInputs().stream().anyMatch(HbmIngredient::unresolvedDisplayInput);
-    }
-
-    private record IndexedIngredient(int index, HbmIngredient ingredient) {
     }
 
     private record ItemInputMatchPlan(int[] matchedSlots) {

@@ -23,7 +23,11 @@ public class HbmDynamicSound extends AbstractSoundInstance implements TickableSo
     private Entity parentEntity;
 
     public HbmDynamicSound(ResourceLocation location) {
-        super(location, SoundSource.BLOCKS, RandomSource.create());
+        this(location, SoundSource.BLOCKS);
+    }
+
+    public HbmDynamicSound(ResourceLocation location, SoundSource source) {
+        super(location, source, RandomSource.create());
         this.looping = true;
         this.attenuation = SoundInstance.Attenuation.NONE;
         this.volume = 1.0F;

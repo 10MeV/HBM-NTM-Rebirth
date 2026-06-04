@@ -14,6 +14,10 @@ public final class ObjModelLibrary {
 
     public static final ObjModelPart PRESS_HEAD = ObjMachineModels.PRESS_HEAD;
     public static final ObjPartModel PRESS = ObjMachineModels.PRESS;
+    public static final LegacyWavefrontModel MACHINE_PRESS_BODY_LEGACY = ObjMachineModels.PRESS_BODY_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_PRESS_HEAD_LEGACY = ObjMachineModels.PRESS_HEAD_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_EPRESS_BODY = ObjMachineModels.EPRESS_BODY;
+    public static final LegacyWavefrontModel MACHINE_EPRESS_HEAD = ObjMachineModels.EPRESS_HEAD;
     public static final ObjModelPart MACHINE_RADAR_SCREEN = ObjMachineModels.RADAR_SCREEN;
     public static final ObjModelPart MACHINE_SOLAR_MIRROR = ObjMachineModels.SOLAR_MIRROR;
     public static final ObjModelPart MACHINE_DRAIN = ObjMachineModels.DRAIN;
@@ -170,6 +174,10 @@ public final class ObjModelLibrary {
     public static final ObjModelPart DOOR_BLAST_DOOR_TOOTH = ObjDoorModels.BLAST_DOOR_TOOTH;
     public static final ObjModelPart DOOR_BLAST_DOOR_SLIDER = ObjDoorModels.BLAST_DOOR_SLIDER;
     public static final ObjModelPart DOOR_BLAST_DOOR_BLOCK = ObjDoorModels.BLAST_DOOR_BLOCK;
+    public static final LegacyWavefrontModel DOOR_BLAST_DOOR_BASE_LEGACY = ObjDoorModels.BLAST_DOOR_BASE_LEGACY;
+    public static final LegacyWavefrontModel DOOR_BLAST_DOOR_TOOTH_LEGACY = ObjDoorModels.BLAST_DOOR_TOOTH_LEGACY;
+    public static final LegacyWavefrontModel DOOR_BLAST_DOOR_SLIDER_LEGACY = ObjDoorModels.BLAST_DOOR_SLIDER_LEGACY;
+    public static final LegacyWavefrontModel DOOR_BLAST_DOOR_BLOCK_LEGACY = ObjDoorModels.BLAST_DOOR_BLOCK_LEGACY;
     public static final LegacyWavefrontModel PHEO_FIRE_DOOR = ObjPheoDoorModels.FIRE_DOOR;
     public static final LegacyWavefrontModel PHEO_AIRLOCK_DOOR = ObjPheoDoorModels.AIRLOCK_DOOR;
     public static final LegacyWavefrontModel PHEO_BLAST_DOOR = ObjPheoDoorModels.BLAST_DOOR;
@@ -248,6 +256,8 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel CAGE_LAMP_LEGACY = ObjLightModels.CAGE_LAMP_LEGACY;
     public static final LegacyWavefrontModel FLUORESCENT_LAMP_LEGACY = ObjLightModels.FLUORESCENT_LAMP_LEGACY;
     public static final LegacyWavefrontModel FLOOD_LAMP_LEGACY = ObjLightModels.FLOOD_LAMP_LEGACY;
+    public static final LegacyWavefrontModel FLOODLIGHT_LEGACY = ObjLightModels.FLOODLIGHT_LEGACY;
+    public static final LegacyWavefrontModel DEMON_LAMP_LEGACY = ObjLightModels.DEMON_LAMP_LEGACY;
 
     public static final LegacyWavefrontModel BLOCK_SCAFFOLD = ObjBlockModels.SCAFFOLD;
     public static final LegacyWavefrontModel BLOCK_BEAM = ObjBlockModels.BEAM;
@@ -324,6 +334,7 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel BOMB_DUD_SALTED = ObjBombModels.DUD_SALTED;
     public static final LegacyWavefrontModel NUKE_GADGET = ObjNukeModels.GADGET;
     public static final LegacyWavefrontModel NUKE_BOY = ObjNukeModels.BOY;
+    public static final LegacyWavefrontModel NUKE_BOY_LEGACY = ObjNukeModels.BOY_LEGACY;
     public static final LegacyWavefrontModel NUKE_MAN = ObjNukeModels.MAN;
     public static final LegacyWavefrontModel NUKE_TSAR = ObjNukeModels.TSAR;
     public static final LegacyWavefrontModel NUKE_MIKE = ObjNukeModels.MIKE;
@@ -331,6 +342,7 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel NUKE_FLEIJA = ObjNukeModels.FLEIJA;
     public static final LegacyWavefrontModel NUKE_SOLINIUM = ObjNukeModels.SOLINIUM;
     public static final LegacyWavefrontModel NUKE_N2 = ObjNukeModels.N2;
+    public static final LegacyWavefrontModel NUKE_BOMB_MULTI_LEGACY = ObjNukeModels.BOMB_MULTI_LEGACY;
 
     public static final LegacyWavefrontModel PROJECTILES = ObjProjectileModels.PROJECTILES;
     public static final LegacyWavefrontModel PROJECTILE_LEADBURSTER = ObjProjectileModels.LEADBURSTER;
@@ -345,12 +357,20 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel PROJECTILE_ZIRNOX_DEBRIS_ELEMENT = ObjProjectileModels.ZIRNOX_DEBRIS_ELEMENT;
     public static final LegacyWavefrontModel PROJECTILE_ZIRNOX_DEBRIS_EXCHANGER = ObjProjectileModels.ZIRNOX_DEBRIS_EXCHANGER;
     public static final LegacyWavefrontModel PROJECTILE_ZIRNOX_DEBRIS_SHRAPNEL = ObjProjectileModels.ZIRNOX_DEBRIS_SHRAPNEL;
+    public static final LegacyWavefrontModel PROJECTILE_BOMBLET_ZETA = ObjProjectileModels.BOMBLET_ZETA;
     public static final LegacyWavefrontModel TRINKET_LANTERN = ObjTrinketModels.LANTERN;
+    public static final LegacyWavefrontModel TRINKET_BOBBLE_LEGACY = ObjTrinketModels.BOBBLE_LEGACY;
+    public static final LegacyWavefrontModel TRINKET_YOMI_LEGACY = ObjTrinketModels.YOMI_LEGACY;
+    public static final LegacyWavefrontModel TRINKET_HUNDUN_LEGACY = ObjTrinketModels.HUNDUN_LEGACY;
+    public static final LegacyWavefrontModel TRINKET_DERG_LEGACY = ObjTrinketModels.DERG_LEGACY;
+    public static final LegacyWavefrontModel TRINKET_SNOWGLOBE_LEGACY = ObjTrinketModels.SNOWGLOBE_LEGACY;
+    public static final LegacyWavefrontModel TRINKET_CHIP_LEGACY = ObjTrinketModels.CHIP_LEGACY;
     public static final LegacyWavefrontModel EFFECT_SPHERE_RUV = ObjEffectModels.SPHERE_RUV;
     public static final LegacyWavefrontModel EFFECT_SPHERE_IUV = ObjEffectModels.SPHERE_IUV;
     public static final LegacyWavefrontModel EFFECT_SPHERE_UV = ObjEffectModels.SPHERE_UV;
     public static final LegacyWavefrontModel EFFECT_SPHERE_NEW = ObjEffectModels.SPHERE_NEW;
     public static final LegacyWavefrontModel EFFECT_SPHERE = ObjEffectModels.SPHERE;
+    public static final LegacyWavefrontModel EFFECT_RING = ObjEffectModels.RING;
     public static final LegacyWavefrontModel EFFECT_CASINGS = ObjEffectModels.CASINGS;
     public static final LegacyWavefrontModel UTILITY_GEIGER_COUNTER = ObjUtilityModels.GEIGER_COUNTER;
     public static final LegacyWavefrontModel UTILITY_FORCEFIELD_TOP = ObjUtilityModels.FORCEFIELD_TOP;
@@ -373,6 +393,11 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel ENTITY_DUCHESS_GAMBIT = ObjEntityModels.DUCHESS_GAMBIT;
     public static final LegacyWavefrontModel ENTITY_DORNIER = ObjEntityModels.DORNIER;
     public static final LegacyWavefrontModel ENTITY_B29 = ObjEntityModels.B29;
+    public static final LegacyWavefrontModel ENTITY_BOT_PRIME_HEAD = ObjEntityModels.BOT_PRIME_HEAD;
+    public static final LegacyWavefrontModel ENTITY_BOT_PRIME_BODY = ObjEntityModels.BOT_PRIME_BODY;
+    public static final LegacyWavefrontModel ENTITY_PLASTIC_BAG = ObjEntityModels.PLASTIC_BAG;
+    public static final LegacyWavefrontModel ENTITY_TUNNELER = ObjEntityModels.TUNNELER;
+    public static final LegacyWavefrontModel ENTITY_CAPSULE = ObjEntityModels.CAPSULE;
     public static final LegacyWavefrontModel VEHICLE_CART = ObjVehicleModels.CART;
     public static final LegacyWavefrontModel VEHICLE_CART_DESTROYER = ObjVehicleModels.CART_DESTROYER;
     public static final LegacyWavefrontModel VEHICLE_CART_POWDER = ObjVehicleModels.CART_POWDER;
@@ -511,6 +536,8 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MISSILE_PART_MP_W_15_N2 = ObjMissilePartModels.MP_W_15_N2;
     public static final LegacyWavefrontModel MISSILE_PART_MP_W_15_BALEFIRE = ObjMissilePartModels.MP_W_15_BALEFIRE;
     public static final LegacyWavefrontModel MISSILE_PART_MP_W_15_TURBINE = ObjMissilePartModels.MP_W_15_TURBINE;
+    public static final ResourceLocation MISSILE_PART_UNIVERSAL_TEXTURE = ObjMissilePartModels.UNIVERSAL_TEXTURE;
+    public static final ResourceLocation MISSILE_PART_BOXCAR_TEXTURE = ObjMissilePartModels.BOXCAR_TEXTURE;
 
     public static final LegacyWavefrontModel PA_SOURCE = ObjParticleAcceleratorModels.SOURCE;
     public static final LegacyWavefrontModel PA_BEAMLINE = ObjParticleAcceleratorModels.BEAMLINE;
@@ -518,6 +545,12 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel PA_QUADRUPOLE = ObjParticleAcceleratorModels.QUADRUPOLE;
     public static final LegacyWavefrontModel PA_DIPOLE = ObjParticleAcceleratorModels.DIPOLE;
     public static final LegacyWavefrontModel PA_DETECTOR = ObjParticleAcceleratorModels.DETECTOR;
+    public static final ResourceLocation PA_SOURCE_TEXTURE = ObjParticleAcceleratorModels.SOURCE_TEXTURE;
+    public static final ResourceLocation PA_BEAMLINE_TEXTURE = ObjParticleAcceleratorModels.BEAMLINE_TEXTURE;
+    public static final ResourceLocation PA_RFC_TEXTURE = ObjParticleAcceleratorModels.RFC_TEXTURE;
+    public static final ResourceLocation PA_QUADRUPOLE_TEXTURE = ObjParticleAcceleratorModels.QUADRUPOLE_TEXTURE;
+    public static final ResourceLocation PA_DIPOLE_TEXTURE = ObjParticleAcceleratorModels.DIPOLE_TEXTURE;
+    public static final ResourceLocation PA_DETECTOR_TEXTURE = ObjParticleAcceleratorModels.DETECTOR_TEXTURE;
 
     public static final LegacyWavefrontModel REACTOR_SMALL_BASE = ObjReactorModels.SMALL_BASE;
     public static final LegacyWavefrontModel REACTOR_SMALL_RODS = ObjReactorModels.SMALL_RODS;
@@ -545,6 +578,31 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel RBMK_INDICATOR = ObjRbmkModels.INDICATOR;
     public static final LegacyWavefrontModel RBMK_TERMINAL = ObjRbmkModels.TERMINAL;
     public static final LegacyWavefrontModel RBMK_DEBRIS = ObjRbmkModels.DEBRIS;
+    public static final ResourceLocation RBMK_CRANE_CONSOLE_TEXTURE = ObjRbmkModels.CRANE_CONSOLE_TEXTURE;
+    public static final ResourceLocation RBMK_CRANE_TEXTURE = ObjRbmkModels.CRANE_TEXTURE;
+    public static final ResourceLocation RBMK_AUTOLOADER_TEXTURE = ObjRbmkModels.AUTOLOADER_TEXTURE;
+    public static final ResourceLocation RBMK_CONSOLE_TEXTURE = ObjRbmkModels.CONSOLE_TEXTURE;
+    public static final ResourceLocation RBMK_KEYPAD_TEXTURE = ObjRbmkModels.KEYPAD_TEXTURE;
+    public static final ResourceLocation RBMK_GAUGE_TEXTURE = ObjRbmkModels.GAUGE_TEXTURE;
+    public static final ResourceLocation RBMK_NUMITRON_TEXTURE = ObjRbmkModels.NUMITRON_TEXTURE;
+    public static final ResourceLocation RBMK_NUMITRON_LIGHTS_TEXTURE = ObjRbmkModels.NUMITRON_LIGHTS_TEXTURE;
+    public static final ResourceLocation RBMK_LEVER_TEXTURE = ObjRbmkModels.LEVER_TEXTURE;
+    public static final ResourceLocation RBMK_INDICATOR_TEXTURE = ObjRbmkModels.INDICATOR_TEXTURE;
+    public static final ResourceLocation RBMK_TERMINAL_TEXTURE = ObjRbmkModels.TERMINAL_TEXTURE;
+    public static final ResourceLocation RBMK_ELEMENT_TEXTURE = ObjRbmkModels.ELEMENT_TEXTURE;
+    public static final ResourceLocation RBMK_ELEMENT_INNER_TEXTURE = ObjRbmkModels.ELEMENT_INNER_TEXTURE;
+    public static final ResourceLocation RBMK_ELEMENT_FUEL_TEXTURE = ObjRbmkModels.ELEMENT_FUEL_TEXTURE;
+    public static final ResourceLocation RBMK_CONTROL_STANDARD_TEXTURE = ObjRbmkModels.CONTROL_STANDARD_TEXTURE;
+    public static final ResourceLocation RBMK_CONTROL_AUTO_TEXTURE = ObjRbmkModels.CONTROL_AUTO_TEXTURE;
+    public static final ResourceLocation RBMK_CONTROL_RED_TEXTURE = ObjRbmkModels.CONTROL_RED_TEXTURE;
+    public static final ResourceLocation RBMK_CONTROL_YELLOW_TEXTURE = ObjRbmkModels.CONTROL_YELLOW_TEXTURE;
+    public static final ResourceLocation RBMK_CONTROL_GREEN_TEXTURE = ObjRbmkModels.CONTROL_GREEN_TEXTURE;
+    public static final ResourceLocation RBMK_CONTROL_BLUE_TEXTURE = ObjRbmkModels.CONTROL_BLUE_TEXTURE;
+    public static final ResourceLocation RBMK_CONTROL_PURPLE_TEXTURE = ObjRbmkModels.CONTROL_PURPLE_TEXTURE;
+    public static final ResourceLocation RBMK_DEBRIS_TEXTURE = ObjRbmkModels.DEBRIS_TEXTURE;
+    public static final ResourceLocation RBMK_DEBRIS_BURNING_TEXTURE = ObjRbmkModels.DEBRIS_BURNING_TEXTURE;
+    public static final ResourceLocation RBMK_DEBRIS_RADIATING_TEXTURE = ObjRbmkModels.DEBRIS_RADIATING_TEXTURE;
+    public static final ResourceLocation RBMK_DEBRIS_DIGAMMA_TEXTURE = ObjRbmkModels.DEBRIS_DIGAMMA_TEXTURE;
 
     public static ObjModelPart blockPart(String name) {
         return blockPart(name, RenderType.cutout());
@@ -600,6 +658,18 @@ public final class ObjModelLibrary {
 
     public static ObjMissilePartModels.LegacyMissilePart missilePart(String legacyItemName) {
         return ObjMissilePartModels.part(legacyItemName);
+    }
+
+    public static ResourceLocation missileTexture(String legacyTextureName) {
+        return ObjMissilePartModels.missileTexture(legacyTextureName);
+    }
+
+    public static ResourceLocation missilePartTexture(String legacyTexturePath) {
+        return ObjMissilePartModels.missilePartTexture(legacyTexturePath);
+    }
+
+    public static ResourceLocation missilePartTextureForItem(String legacyItemName) {
+        return ObjMissilePartModels.textureForPart(legacyItemName);
     }
 
     public static ObjModelPartBuilder machinePartBuilder(String name, RenderType renderType) {

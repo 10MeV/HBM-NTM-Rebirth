@@ -27,7 +27,35 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
 
     @Override
     protected void generate() {
-        ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
+        ModBlocks.MACHINE_TAB_BLOCKS.stream()
+                .filter(block -> block != ModBlocks.MACHINE_FLUIDTANK && block != ModBlocks.MACHINE_BIGASSTANK)
+                .filter(block -> block != ModBlocks.BARREL_PLASTIC
+                        && block != ModBlocks.BARREL_STEEL
+                        && block != ModBlocks.BARREL_TCALLOY
+                        && block != ModBlocks.BARREL_ANTIMATTER)
+                .filter(block -> block != ModBlocks.MACHINE_REFINERY
+                        && block != ModBlocks.MACHINE_WELL
+                        && block != ModBlocks.MACHINE_PUMPJACK
+                        && block != ModBlocks.MACHINE_FRACKING_TOWER)
+                .filter(block -> block != ModBlocks.MACHINE_CATALYTIC_REFORMER
+                        && block != ModBlocks.MACHINE_VACUUM_DISTILL
+                        && block != ModBlocks.MACHINE_HYDROTREATER)
+                .forEach(block -> dropSelf(block.get()));
+        add(ModBlocks.MACHINE_FLUIDTANK.get(), noDrop());
+        add(ModBlocks.MACHINE_BIGASSTANK.get(), noDrop());
+        add(ModBlocks.MACHINE_REFINERY.get(), noDrop());
+        add(ModBlocks.BARREL_PLASTIC.get(), noDrop());
+        add(ModBlocks.BARREL_CORRODED.get(), noDrop());
+        add(ModBlocks.BARREL_IRON.get(), noDrop());
+        add(ModBlocks.BARREL_STEEL.get(), noDrop());
+        add(ModBlocks.BARREL_TCALLOY.get(), noDrop());
+        add(ModBlocks.BARREL_ANTIMATTER.get(), noDrop());
+        add(ModBlocks.MACHINE_WELL.get(), noDrop());
+        add(ModBlocks.MACHINE_PUMPJACK.get(), noDrop());
+        add(ModBlocks.MACHINE_FRACKING_TOWER.get(), noDrop());
+        add(ModBlocks.MACHINE_CATALYTIC_REFORMER.get(), noDrop());
+        add(ModBlocks.MACHINE_VACUUM_DISTILL.get(), noDrop());
+        add(ModBlocks.MACHINE_HYDROTREATER.get(), noDrop());
         add(ModBlocks.CONVEYOR.get(), conveyorWandDrop("REGULAR"));
         add(ModBlocks.CONVEYOR_EXPRESS.get(), conveyorWandDrop("EXPRESS"));
         add(ModBlocks.CONVEYOR_DOUBLE.get(), conveyorWandDrop("DOUBLE"));

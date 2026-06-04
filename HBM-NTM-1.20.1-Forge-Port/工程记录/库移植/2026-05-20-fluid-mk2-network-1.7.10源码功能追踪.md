@@ -268,6 +268,581 @@ Verification:
 
 - `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
 
+## 2026-06-04 Modern Library Pass 69
+
+本轮继续推进 fluid-mk2-network 的机器接入，集中补旧油处理链里已经存在现代 BlockEntity 的远端端口与设置工具行为。
+
+1.7.10 对照：
+
+- `com/hbm/tileentity/machine/oil/TileEntityMachineGasFlare.java`
+  - `getSettings(...)` 写入 `"fluidID"`、`"isOn"`、`"doesBurn"`。
+  - `pasteSettings(...)` 按 `copyIndex` 设置 flare tank 类型，并恢复开关/燃烧模式。
+- `com/hbm/tileentity/machine/oil/TileEntityOilDrillBase.java`
+  - 油井族实现 `IFluidStandardTransceiver`，但 `getReceivingTanks()` 为空、`getSendingTanks()` 返回 oil/gas tanks。
+  - `getTankToPaste()` 返回 `null`，设置工具不能改油井输出 tank。
+  - 每 tick 对 `getConPos()` 远端端口订阅，并向端口发送 oil/gas。
+- `TileEntityMachineOilWell` / `TileEntityMachineFrackingTower`
+  - 四个水平相邻端口，方向分别为东西南北。
+- `TileEntityMachinePumpjack`
+  - 四个朝向相关远端端口，使用旧 `dir` 与 `rot` 组合偏移。
+- `com/hbm/tileentity/machine/oil/TileEntityMachineRefinery.java`
+  - `getReceivingTanks()` 为 hot oil 输入 tank；`getSendingTanks()` 为 heavy/naphtha/light/petroleum 四个输出 tank。
+  - `canConnect(...)` 明确拒绝 `DOWN`。
+  - 未炸毁时更新远端端口并订阅输入流体；炸毁且 `onFire` 时每 tick 每个非空 tank 消耗最多 10 mB。
+
+现代侧改动：
+
+- `GasFlareBlockEntity`
+  - 覆盖 `getFluidSettings()` / `pasteFluidSettings(...)`，补齐旧 `"isOn"` 与 `"doesBurn"` 的设置工具复制/粘贴。
+- `OilDrillBlockEntity`
+  - 接入 `HbmStandardFluidSender`，现代侧成为纯 sender：oil/gas tanks 可通过 fluid MK2 远端端口和 Forge fluid capability 输出。
+  - 覆盖 `getTankToPasteFluidSettings()` 返回 `null`，保持旧油井不可被设置工具改 fluid ID。
+  - 根据方块类型复刻 oil well/fracking tower/pumpjack 的旧 `getConPos()` 远端端口。
+  - `OilDrillBlock` 打开 server ticker，让远端端口订阅/输出实际运行。
+- `RefineryBlockEntity`
+  - 接入 `HbmStandardFluidTransceiver`：输入 hot oil，输出四个精炼产物 tank。
+  - 远端端口使用旧 8 个四周端口；炸毁后停止 receiver/provider 订阅并禁用 capability 连接。
+  - 覆盖 `canConnectFluid(...)`，保留旧版拒绝 `DOWN` 的连接规则。
+  - 补入炸毁起火后的残留流体消耗链，先只迁旧 tank 消耗状态，不迁粒子/污染视觉。
+  - `RefineryBlock` 打开 server ticker。
+
+Still deferred:
+
+- 油井真实钻探/抽取、升级、物品槽装卸与 afterburn 燃气发电仍未迁完整；本轮只补 fluid MK2 端口输出层。
+- 炼油厂配方运行、能量消耗、GUI 槽装卸、声音、粒子、污染和实体点燃仍未迁完整。
+- refinery repair 材料消耗链已有状态方法但没有完整现代维修交互系统，本轮不扩展。
+
+Progress estimate after Pass 69:
+
+- Core `FluidType` identity/NBT lookup/table: about 90%.
+- Basic tank/conform/Forge capability bridge: about 86%.
+- Fluid network/provider/receiver algorithm: about 82%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 76%.
+- Machine integration through the library: about 61%.
+- Fluid identifier item, GUI, NBT, and typed duct crafting semantics: about 93%.
+- Overall fluid library migration: about 79%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` passed.
+
+## 2026-06-04 Settings Tool Fluid Copy Slice
+
+本轮把旧 `IFluidCopiable` 的流体设置复制链接入现代 `fluid-mk2-network`，使已经迁移的流体管道、储罐、Big Ass Tank、fluid barrel 能通过设置工具复制/粘贴流体类型。
+
+1.7.10 对照：
+
+- `com/hbm/tileentity/IFluidCopiable.java`
+  - 默认复制所有 `IFluidUserMK2#getAllTanks()` 中非 `hasNoID` 的 `FluidTank` ID，NBT key 为 `"fluidID"`。
+  - 默认粘贴到 `IFluidStandardTransceiverMK2#getReceivingTanks()[0]`，按 `copyIndex` 从 `"fluidID"` 数组选目标流体。
+  - `infoForDisplay(...)` 返回流体 unlocalized name，供设置工具 HUD 循环显示。
+- `com/hbm/items/tool/ItemSettingsTool.java`
+  - 潜行右键复制，普通右键粘贴。
+  - 栈 NBT 保存 `"tileName"`、`"copyIndex"`、`"inputDelay"`、`"displayInfo"`。
+  - 手持时按 Alt 每 4 tick 后循环 `copyIndex`，每 5 tick 向玩家显示当前可选复制项；Ctrl 粘贴给管道时触发递归粘贴。
+- `com/hbm/tileentity/machine/storage/TileEntityMachineFluidTank.java`
+  - 覆盖 `getFluidIDToCopy()` 只复制主 tank 类型。
+  - 覆盖 `getTankToPaste()` 永远返回主 tank，不受输入/缓冲/输出模式影响。
+- `com/hbm/tileentity/machine/storage/TileEntityBarrel.java`
+  - 同样只复制/粘贴主 tank；`MachineBigAssTank`、`BAT9000`、`Orbus` 继承该行为。
+- `com/hbm/items/ModItems.java`
+  - `settings_tool` 最大堆叠 1，位于 `consumableTab`，贴图 `textures/items/settings_tool.png`。
+
+现代侧改动：
+
+- 新增 `SettingsToolItem`：
+  - 注册 legacy ID `settings_tool`，最大堆叠 1，加入 consumables 创造栏。
+  - 潜行右键对 `HbmFluidCopiable` 方块/BE 复制流体设置，保留旧 NBT 键 `"fluidID"`、`"copyIndex"`、`"inputDelay"`、`"displayInfo"`、`"tileName"`。
+  - 普通右键粘贴到目标 `HbmFluidCopiable`；按住 Ctrl 时把 `recursive=true` 传给现有管道递归粘贴实现。
+  - 手持时按住 Alt 以旧式延迟循环 `copyIndex`，并通过现代 `ModMessages.informPlayer(...)` 周期显示复制到的流体候选。
+  - tooltip 迁移旧三行说明与当前复制源显示。
+- `FluidTankBlockEntity` 覆盖 `getFluidIdsToCopy()` / `getTankToPasteFluidSettings()`：
+  - 只复制主 tank 类型。
+  - 粘贴目标永远是主 tank，不再依赖当前 mode 是否暴露 receiving tanks。
+  - 该行为覆盖现代 Big Ass Tank 与流体桶继承链，匹配 1.7.10 storage tank/barrel。
+- 资源与数据：
+  - 从 1.7.10 复制 `textures/items/settings_tool.png` 到现代 `textures/item/settings_tool.png`。
+  - 添加 `models/item/settings_tool.json`。
+  - 添加 en_us/zh_cn 语言键，并补入 datagen language provider。
+
+Still deferred:
+
+- 本轮只接入 fluid-side `HbmFluidCopiable`；旧公共 `ICopiable` 的金属、过滤器、涂装、机器模板等非流体设置复制还未迁移，不能把 `settings_tool` 当作完整旧版设置工具。
+- 旧 `displayInfo` 保存的是翻译 key 字符串；现代侧保存 Component JSON，以便当前流体显示名可直接显示。NBT 顶层键名仍与旧流体复制链兼容。
+- 旧端某些机器覆盖 `getTankToPaste()` 为 null 或特殊 tank，后续迁移具体机器时应按各自 1.7.10 源码覆盖现代 `HbmFluidCopiable` 方法。
+
+Progress estimate after this slice:
+
+- Core `FluidType` identity/NBT lookup/table: about 90%.
+- Basic tank/conform/Forge capability bridge: about 87%.
+- Fluid network/provider/receiver algorithm: about 82%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 76%.
+- Machine integration through the library: about 60%.
+- Fluid identifier item, GUI, NBT, and typed duct/settings-tool semantics: about 96%.
+- Overall fluid library migration: about 80%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+### 2026-06-04 追加：Fixed-Fluid Machines Settings Tool Paste Guard
+
+本轮按 1.7.10 `IFluidCopiable#getTankToPaste()` 的特殊覆盖，修正已经迁入现代侧的固定流体机器，避免设置工具把蒸汽/水等固定输入 tank 错误改成任意复制流体。
+
+1.7.10 对照：
+
+- `TileEntityTurbineBase#getTankToPaste()` 明确返回 `null`：
+  - 工业蒸汽涡轮等继承类可以被设置工具复制流体显示信息，但不能粘贴改 tank type。
+- `TileEntityMachineTurbine` / `TileEntitySteamEngine` 旧端也在类尾覆盖 `getTankToPaste()` 返回 `null`。
+- `TileEntitySolarBoiler#getTankToPaste()` 明确返回 `null`：
+  - 水/蒸汽 tank 为固定工艺流体，不允许设置工具重定型。
+
+现代侧改动：
+
+- `LegacySteamTurbineBlockEntity#getTankToPasteFluidSettings()` 返回 `null`，覆盖工业蒸汽涡轮继承链。
+- `SteamTurbineBlockEntity#getTankToPasteFluidSettings()` 返回 `null`，覆盖普通蒸汽涡轮。
+- `SteamEngineBlockEntity#getTankToPasteFluidSettings()` 返回 `null`，覆盖蒸汽引擎。
+- `SolarBoilerBlockEntity#getTankToPasteFluidSettings()` 返回 `null`，覆盖太阳能锅炉。
+
+Still deferred:
+
+- 冷却塔、锅炉、其它固定流体机器未在本轮强行禁止粘贴；只有 1.7.10 源码中明确 `getTankToPaste() == null` 且现代侧已迁入的机器被修正。
+- 设置工具仍可复制这些机器的流体信息用于显示/循环；只是粘贴不会改机器 tank 类型。
+
+Verification:
+
+- `.\gradlew.bat compileJava --no-daemon` 当前被并行工作树中的非流体错误阻塞：
+  - `ModCommands#listLegacyGenericRecipeHandlers(...)` 缺失。
+  - `ItemBlueprints` 引用尚未注册/存在的 `ModItems.BLUEPRINTS`。
+  - 本轮修改的 turbine/engine/solar boiler 类没有出现在编译错误中。
+
+### 2026-06-04 追加：Compressor Settings Tool Compression Copy
+
+本轮补上旧 `TileEntityMachineCompressorBase` 在 `IFluidCopiable` 之外附带的压力档复制字段：
+
+- 1.7.10 对照：
+  - `TileEntityMachineCompressorBase#getSettings(...)` 会写入 `"fluidID"` 与 `"compression"`，其中 `"compression"` 为输入 tank 当前 pressure。
+  - `pasteSettings(...)` 先读取 `"compression"`，若不同则修改输入 tank pressure，并按 `CompressorRecipes` 重算输出 tank；无特殊配方时输出 pressure 为 `compression + 1`。
+  - 随后调用 `IFluidCopiable.super.pasteSettings(...)`，将复制到的流体 ID 粘贴到输入 tank。
+- 现代侧改动：
+  - `CompressorBlockEntity#getFluidSettings()` 继续写旧 `"fluidID"`，并额外保存旧键 `"compression"`。
+  - `pasteFluidSettings(...)` 恢复 `"compression"`、复用现代 compressor 配方表重算输出 tank，再粘贴流体 ID，确保设置工具复制 compressor 时连压力档一起带走。
+  - GUI 压力按钮与 `CONTROL_INPUT_PRESSURE` 已由前一批现代 compressor GUI 接入，本轮只补 settings-tool NBT 兼容。
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-06-04 Fluid Barrel Storage Slice
+
+本轮继续补未完成的 fluid-mk2-network 旧流体存储内容，选择 `BlockFluidBarrel` / `TileEntityBarrel` 方块族作为机器接入前置库能力。该族覆盖旧单格流体储罐、6 槽容器装卸、流体识别码定型、持久化掉落、比较器、六面连接和材质危险反应。
+
+1.7.10 对照：
+
+- `com/hbm/blocks/machine/BlockFluidBarrel.java`
+  - 6 个旧 ID：`barrel_plastic` 12000mB、`barrel_corroded` 6000mB、`barrel_iron` 8000mB、`barrel_steel` 16000mB、`barrel_tcalloy` 24000mB、`barrel_antimatter` 16000mB。
+  - 创造栏只显示 plastic/steel/tcalloy/antimatter；corroded/iron 隐藏但注册并可作为世界生成/腐蚀结果/掉落物。
+  - 普通右键打开 `GUIBarrel`；潜行手持 `IItemFluidIdentifier` 右键设置 tank type。
+  - 方块 bounds 为 x/z `2/16..14/16`、y `0..1`，非普通不透明渲染。
+  - 破坏时通过 `IPersistentNBT` 保留 tank 数据，并额外掉落 6 槽物品。
+- `com/hbm/tileentity/machine/storage/TileEntityBarrel.java`
+  - 6 槽语义与现代 `FluidTankBlockEntity` 一致：0/1 识别码输入/输出，2/3 容器装入，4/5 容器卸出。
+  - `mode`：0 input、1 buffer、2 output、3 disabled；buffer 低优先级并作为管道节点，input/output 直接订阅相邻六面。
+  - `canConnect(fluid, dir)` 仅允许相同 tank type。
+  - 比较器输出为空 0，否则 `fill/max*15+1` clamp 到 0..15。
+  - 材质反应：
+    - 非 antimatter 桶装反物质会破坏方块并 5F 爆炸。
+    - plastic 装 hot/corrosive 流体会破坏并 fizz。
+    - iron 装 corrosive、steel 装腐蚀等级 > 50 会变成 `barrel_corroded`，保留 6 槽、流体 type、fill clamp 到新容量。
+    - corroded 每 tick 1/3 泄漏 1mB 并按流体释放污染；1/(3*60*20) 概率破坏。
+    - Tom firestorm + 水 + 天光爆炸依赖 `TomSaveData`，现代端尚未迁移该 saveddata，本轮记录为 deferred。
+  - 持久化写入 `persistent.tank` 和 `persistent.mode`；旧 `readNBT` 读取 `"nbt"` 是源码遗留错误，现代端读取 `mode` 并兼容 fallback `nbt`。
+
+现代侧改动：
+
+- 新增 `FluidBarrelBlockEntity extends FluidTankBlockEntity`：
+  - 使用旧容量创建单 tank，复用现代储罐 GUI、6 槽容器装卸、Forge fluid capability、HBM provider/receiver 与持久化接口。
+  - 覆盖六个相邻 `FluidPort`，让 barrel 作为旧单格六面流体节点参与网络，而不是沿用大型 fluid tank 的远端端口。
+  - 覆盖材质 hazard 规则：反物质爆炸、plastic 熔毁、iron/steel 腐蚀成 corroded、corroded 泄漏/随机破坏。
+  - 常规/危险破坏时保留旧 6 槽掉落语义；普通采掘由持久化方块掉落保存 tank 状态。
+- 新增 `FluidBarrelBlock`：
+  - 单格 shape 为旧 `2/16..14/16` x/z。
+  - 普通右键打开现有 `FluidTankMenu`；潜行识别码设置 tank type。
+  - 支持比较器、放置恢复、持久化 tooltip 与旧静态材质 tooltip。
+- `FluidTankBlockEntity` 开放 subclass hooks：
+  - `handleItemTransfer()`、`setTankTypeFromIdentifierSlot()`、`checkHazards()`、`leakDamagedTank()` 改为 protected。
+  - 新增 `copyInventoryFrom(...)`，用于旧腐蚀变块保留 6 槽。
+- 注册和资源：
+  - `ModBlocks` 注册六个旧 barrel ID；只有 plastic/steel/tcalloy/antimatter 进入机器创造栏。
+  - `ModBlocks.HIDDEN_MACHINE_BLOCKS` 单独保存 hidden machine blocks，datagen 仍给 corroded/iron 添加 pickaxe/iron tool tag。
+  - `ModBlockEntities.FLUID_BARREL` 覆盖六个 barrel block。
+  - 复制旧 `models/blocks/barrel.obj` 和六张旧 barrel 贴图到现代资源树。
+  - 补 blockstate、OBJ block model、item model、no-drop loot、英文 lang、datagen 中英文 lang。
+
+Still deferred:
+
+- 旧 `RenderFluidBarrel` 的四向 Connector OBJ 动态显示和危险菱形 NFPA 标识尚未迁到现代 BER；本轮先用 OBJ 本体模型保证可见和行为正确。
+- `TomSaveData.fire` / firestorm 水桶爆炸联动等待 Tom/firestorm saveddata 库迁移后接入。
+- OpenComputers/ROR 交互函数暂未迁移；现代网络/GUI 已覆盖主要玩家与机器迁移需求。
+
+Progress estimate after Fluid Barrel Storage Slice:
+
+- Core `FluidType` identity/NBT lookup/table: about 90%.
+- Basic tank/conform/Forge capability bridge: about 88%.
+- Fluid network/provider/receiver algorithm: about 83%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 78%.
+- Fluid storage-machine family integration: about 70%.
+- Machine integration through the library: about 60%.
+- Fluid identifier item, GUI, NBT, and typed duct/barrel semantics: about 94%.
+- Overall fluid library migration: about 79%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-06-04 Modern Library Pass 68
+
+本轮继续推进旧 `IPersistentNBT` 流体机器接入，重点是油钻类机器与炼油厂拆放持久化和损坏状态链。
+
+1.7.10 对照：
+
+- `MachineOilWell` / `MachinePumpjack` / `MachineFrackingTower`
+  - 三者最终复用 `TileEntityOilDrillBase` 的持久化契约。
+  - 持久化字段：`power`，两个 tank 使用 `t0` / `t1`；tank 类型分别为 `OIL`、`GAS`，容量均为 `64000`。
+  - 只有 `power != 0` 或任意 tank 非空时才写入 persistent tag。
+  - 物品 tooltip 显示 `power` 与两个 tank 信息。
+  - `machine_well` 爆炸时若含油/气，清空 tank 并触发二次爆炸；完整旧 VNT/粒子效果仍等爆炸库补齐后再接。
+- `MachineRefinery` / `TileEntityMachineRefinery`
+  - 持久化字段：5 个 indexed tank `0..4`，`hasExploded`，`onFire`。
+  - 常规 NBT 字段仍保留旧名：`input`、`heavy`、`naphtha`、`light`、`petroleum`、`sulfur`、`exploded`、`onFire`。
+  - tank 类型/容量：`HOTOIL 64000`，`HEAVYOIL/NAPHTHA/LIGHTOIL/PETROLEUM 24000`。
+  - 第一次爆炸只置 `hasExploded/onFire`；第二次爆炸移除核心方块。
+  - `tryExtinguish`: FOAM/CO2 清 `onFire`；WATER 且仍有流体时触发小爆炸。
+  - `repair()` 只清 `hasExploded`。
+
+现代侧改动：
+
+- 新增 `OilDrillBlockEntity` / `OilDrillBlock`：
+  - 注册并接入 `machine_well`、`machine_pumpjack`、`machine_fracking_tower`。
+  - 三者共用旧 `power/t0/t1` persistent NBT；电量上限按旧值区分：derrick `100000`、pumpjack `250000`、fracking tower `5000000`。
+  - tank 对 Forge capability 暴露为输出；不在本批实现真实钻井生产循环和升级槽。
+  - 拆毁掉落由 BE 写 `persistent`，loot datagen 对这三块设为 `noDrop()` 防重复掉落。
+  - tooltip 读取旧字段并显示 HE 与两个 tank。
+- 新增 `RefineryBlockEntity` / `RefineryBlock`：
+  - 接入旧 5 tank persistent NBT、`hasExploded/onFire`、普通保存 NBT 旧字段，以及 block item tooltip。
+  - 炼油厂从 `LegacyVisibleMachineBlockEntity` 纯展示壳移出，改为专用 BE。
+  - 方块爆炸遵循旧两段式：第一次损坏着火，第二次移除核心。
+  - BE 预留 `tryExtinguish(...)` 与 `repair()`，供后续化学弹/泡沫/吹焊枪维修链接入。
+  - 炼油厂损坏时关闭流体与能量 capability；未损坏时输入 tank 0、输出 tank 1..4，DOWN 面不连接，保持旧 `canConnect(dir != DOWN)`。
+- 注册/资源：
+  - `ModBlocks` 新增 `machine_well`、`machine_fracking_tower`，并把 `machine_refinery`/油钻类切到专用方块。
+  - `ModBlockEntities` 新增 `refinery`、`oil_drill`，客户端仍复用 `LegacyVisibleMachineRenderer`。
+  - `HbmBlockStateProvider` 增加 derrick/fracking tower 的可见机器 blockstate/item model datagen。
+  - 语言增加 `Oil Derrick` / `Hydraulic Fracking Tower` 与中文名。
+
+Deferred:
+
+- 旧 `TileEntityOilDrillBase#updateEntity()` 的钻杆下钻、油矿/基岩油抽取、fracking solution 消耗、升级槽、GUI/container 尚未迁移。
+- 炼油厂完整 `refine()` 配方、13 槽容器、GUI、音效、燃烧 tick 和硫副产物尚未迁移。
+- 旧 `BlockFluidBarrel` 方块族现代端仍未注册；本轮不伪造桶方块，只保留已有流体桶 item 机制。
+- 炼油厂吹焊枪维修耗材链需等现代 `Toolable`/维修材料库明确后接入，当前 BE 已提供 `repair()` 状态入口。
+
+Verification:
+
+- 首次 `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` 命中 Gradle 增量缓存缺失旧 class；已执行 `clean` 清理构建输出。
+- `.\gradlew.bat compileJava processResources --no-daemon` passed.
+
+## 2026-06-04 Modern Library Pass 67
+
+本轮继续补 `fluid-mk2-network` 的旧 `IPersistentNBT` 机器搬迁能力，从单独储罐扩展到炼油链远端流体机器基类。
+
+1.7.10 对照：
+
+- `com/hbm/tileentity/machine/oil/TileEntityMachineCatalyticReformer.java`
+  - 实现 `IPersistentNBT`。
+  - `writeNBT(...)` 在 4 个 tank 全空时不写；否则把 `tanks[0..3]` 写到 `persistent` 下的字符串键 `"0".."3"`。
+  - `readNBT(...)` 从相同键恢复 4 个 tank。
+- `com/hbm/tileentity/machine/oil/TileEntityMachineVacuumDistill.java`
+  - 实现 `IPersistentNBT`。
+  - 5 个 tank 全空时不写；否则写 `"0".."4"`。
+- `com/hbm/tileentity/machine/oil/TileEntityMachineHydrotreater.java`
+  - 实现 `IPersistentNBT`。
+  - 4 个 tank 全空时不写；否则写 `"0".."3"`。
+- 方块层核对：
+  - `MachineCatalyticReformer` 和 `MachineHydrotreater` 实现 `IPersistentInfoProvider`，tooltip 读取 `persistent` 下 indexed tanks。
+  - `MachineVacuumDistill` 方块本身未实现 `IPersistentInfoProvider`，但 BE 实现 `IPersistentNBT`，本轮按 BE 读写契约接入掉落恢复，不额外显示旧源码没有的 tooltip。
+  - `TileEntityMachineCatalyticCracker`、`TileEntityMachineFractionTower`、`TileEntityMachineCoker` 未实现 `IPersistentNBT`，因此本轮不为这些机器新增 persistent 本体掉落。
+
+现代侧改动：
+
+- `HbmPersistentBlockState` 新增 indexed tank helper：
+  - `writeIndexedTanks(...)` 只要所有 tank fill 都为 0 就不写，匹配旧机器的全空短路规则。
+  - `readIndexedTanks(...)` 使用旧字符串键 `"0".."n"` 恢复 tank。
+- `LegacyRemoteFluidMachineBlockEntity` 实现 `HbmPersistentBlockState`：
+  - 默认按 `getAllTanks()` 写/读 indexed tanks。
+  - 读取后刷新 Forge fluid handler、远端 fluid ports、客户端同步和邻居更新。
+  - 新增 `createPersistentBlockDrop(...)`，供 BE-aware loot 创建带 `persistent` 的机器本体。
+- `RemoteFluidMachineBlock` 按旧边界接入 persistent：
+  - `CATALYTIC_REFORMER`、`VACUUM_DISTILL`、`HYDROTREATER` 的 `getDrops(...)` 从 loot `BLOCK_ENTITY` 创建带 persistent 的机器本体。
+  - 这三者 `dropFromExplosion(...)` 返回 false，避免爆炸掉出带液体机器物品。
+  - Reformer/Hydrotreater 的物品 tooltip 按旧源码显示 indexed tank 容量行；VacuumDistill 不加 tooltip，因为旧方块没有 `IPersistentInfoProvider`。
+- `HbmBlockLootProvider` 将 `machine_catalytic_reformer`、`machine_vacuum_distill`、`machine_hydrotreater` 从普通 `dropSelf` 中排除并生成 `noDrop`，实际本体掉落由 BE-aware block drop 负责，避免双掉。
+
+Still deferred:
+
+- `MachineRefinery` 的 persistent tank + `hasExploded/onFire`、维修/灭火行为仍独立于本轮；现代炼油厂 BlockEntity 族还需要单独按旧爆炸/维修契约补齐。
+- 油井、泵井、fracking tower、fluid barrel、battery 等其它 `IPersistentNBT` 机器仍需后续逐一接入同一接口。
+- VacuumDistill 旧 BE 有 persistent 读写但旧方块无 tooltip；本轮不创造额外 tooltip 文本。
+
+Progress estimate after Pass 67:
+
+- Core `FluidType` identity/NBT lookup/table: about 90%.
+- Basic tank/conform/Forge capability bridge: about 88%.
+- Fluid network/provider/receiver algorithm: about 82%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 76%.
+- Machine integration through the library: about 61%.
+- Fluid identifier item, GUI, NBT, and typed duct crafting semantics: about 93%.
+- Persistent fluid machine item state: about 46%.
+- Overall fluid library migration: about 80%.
+
+Verification:
+
+- `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` passed.
+
+## 2026-06-04 Modern Library Pass 66
+
+本轮补 fluid-mk2-network 中阻塞储罐机器迁移的旧 `IPersistentNBT` 契约，重点覆盖流体储罐/大型储罐的破坏、掉落、放置恢复和物品提示。
+
+1.7.10 对照：
+
+- `com/hbm/tileentity/IPersistentNBT.java`
+  - 持久物品标签固定 key 为 `persistent`。
+  - `getDrops(Block)` 创建一个方块物品并调用 `writeNBT(data)`；只有 data 非空时才把 NBT 写到掉落物。
+  - `restoreData(...)` 在放置后的 tile 上调用 `readNBT(stack.stackTagCompound)`。
+- `com/hbm/blocks/machine/MachineFluidTank.java`
+  - `getDrops(...)` 委托 `IPersistentNBT.getDrops(...)`，即储罐本体作为唯一机器掉落携带持久数据。
+  - 物品 tooltip 从 `persistent` 内读取 `tank` 并显示 `fill/max mB fluid`。
+  - `canDropFromExplosion(...)` 返回 false。
+- `com/hbm/tileentity/machine/storage/TileEntityMachineFluidTank.java`
+  - `writeNBT(NBTTagCompound nbt)` 在 `tank.fill == 0 && !hasExploded` 时不写任何持久数据。
+  - 持久数据写入 `persistent.tank`、`persistent.mode`、`persistent.hasExploded`、`persistent.onFire`。
+  - `readNBT(...)` 恢复同名字段；运行时保存仍使用 `mode`、`tank`、`exploded`、`onFire`。
+
+现代侧改动：
+
+- 新增通用库接口 `HbmPersistentBlockState`：
+  - 固定 key `persistent`，提供 `writePersistentStateToStack(...)` / `readPersistentStateFromStack(...)`。
+  - 供后续旧电池、流体桶、油井/炼油机器等同样实现过 `IPersistentNBT` 的机器复用。
+- `MultiblockBlockItem` 在自定义多方块核心放置后，若 BE 实现 `HbmPersistentBlockState`，统一读取物品 `persistent` 标签。
+- `FluidTankBlockEntity` 实现 `HbmPersistentBlockState`：
+  - 空且未损坏时不写 persistent，匹配旧版。
+  - 写入/读取 `tank`、`mode`、`hasExploded`、`onFire`。
+  - 读取后刷新 Forge fluid handler、fluid node state、客户端同步和邻居更新。
+  - 新增 `createPersistentBlockDrop(...)`，供 loot 路径创建带旧 key 的储罐本体。
+- `FluidTankBlock`：
+  - 覆盖 `getDrops(...)`，从 loot `BLOCK_ENTITY` 创建带 persistent 的储罐本体。
+  - `onCoreRemoved(...)` 仅弹内部 6 个槽，储罐本体交由 loot 掉落，避免普通自掉落与手动掉落重复。
+  - `dropFromExplosion(...)` 返回 false，延续旧版爆炸不掉落储罐物品。
+  - `appendHoverText(...)` 从 `persistent` 读 tank 并显示旧式流体容量行，同时显示 damaged/burning 状态。
+  - 普通非自定义放置路径也会尝试恢复 `persistent`；自定义多方块放置由 `MultiblockBlockItem` 统一处理。
+- `HbmBlockLootProvider` 将 `machine_fluidtank` 与 `machine_bigasstank` 从普通 `dropSelf` 中排除并生成 `noDrop`，实际本体掉落由 `FluidTankBlock#getDrops(...)` 的 BE-aware 路径负责。
+
+Still deferred:
+
+- 旧 `IRepairable` 的焊枪/火炬维修材料消耗、灭火弹/泡沫/CO2 灭火入口仍未接入；本轮仅保留 `FluidTankBlockEntity#repairTank()` 作为后续维修库接入点。
+- 旧“第一次外部爆炸只损坏储罐、再次爆炸移除”的完整 `onBlockExploded(...)` 行为尚未接入现代爆炸框架。
+- 同样实现 `IPersistentNBT` 的油井、炼油塔、蒸馏塔、桶、电池等还未逐个接入新接口。
+
+Progress estimate after Pass 66:
+
+- Core `FluidType` identity/NBT lookup/table: about 90%.
+- Basic tank/conform/Forge capability bridge: about 88%.
+- Fluid network/provider/receiver algorithm: about 82%.
+- In-world pipe graph: about 95%.
+- Fluid item/container loading: about 76%.
+- Machine integration through the library: about 60%.
+- Fluid identifier item, GUI, NBT, and typed duct crafting semantics: about 93%.
+- Persistent fluid machine item state: about 35%.
+- Overall fluid library migration: about 79%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` passed.
+
+## 2026-06-04 Modern Library Pass 65
+
+本轮补 `fluid-mk2-network` 中长期挂起的流体设置复制/粘贴库入口，先迁入 1.7.10 `IFluidCopiable` 的流体 ID 合同，不抢先完整迁移全局 settings tool 物品。
+
+1.7.10 对照：
+
+- `com/hbm/interfaces/ICopiable.java`
+  - 方块/TileEntity 可导出 `NBTTagCompound getSettings(...)`，并通过 `pasteSettings(...)` 写回。
+  - `infoForDisplay(...)` 给 `ItemSettingsTool` 的当前复制 index HUD 提供候选显示行。
+- `com/hbm/tileentity/IFluidCopiable.java`
+  - 默认遍历 `IFluidUserMK2#getAllTanks()`，复制所有非 `FT_NoID` tank 的流体 ID 到 NBT int array `fluidID`。
+  - 粘贴时读取 `fluidID[index]`，写入 `IFluidStandardTransceiverMK2#getReceivingTanks()[0]` 的 tank type。
+  - `NONE` 没有 `FT_NoID`，因此旧默认路径允许复制/粘贴空类型。
+- `com/hbm/tileentity/network/TileEntityPipeBaseNT.java`
+  - 管道覆盖 `getFluidIDToCopy()`，始终返回当前 pipe type。
+  - 管道覆盖 `pasteSettings(...)`，普通粘贴设置单根管道类型；按住旧 `TOOL_CTRL` 时调用 `IBlockFluidDuct#changeTypeRecursively(..., 64)` 递归重定型。
+- `com/hbm/items/tool/ItemSettingsTool.java`
+  - 物品本体负责 sneak-copy、normal-paste、Alt 切换 copy index 和 HUD 提示；这是全局 tool/copy 库内容，本轮不注册新物品。
+
+现代侧改动：
+
+- 新增 `HbmFluidCopiable`：
+  - 保留旧 NBT 键 `fluidID`。
+  - 默认从 `HbmFluidUser#getAllTanks()` 收集所有非 `hasNoId()` tank 流体 ID。
+  - 默认粘贴到 `HbmStandardFluidReceiver#getReceivingTanks()` 第一格，写入 `HbmFluidTank#setTankType(...)`。
+  - 提供 `fluidSettingsDisplayInfo()`，返回当前复制候选的本地化 `FluidType#getDisplayName()`。
+- 新增 `HbmFluidSettingsCopy`：
+  - 作为窄范围库服务，集中提供 `copy(...)` / `paste(...)` / `displayInfo(...)` / `copiableAt(...)`。
+  - 供后续 settings tool、菜单按钮或调试命令接入，避免各处重复判断 BlockEntity 类型。
+- `HbmFluidBlockEntity` 实现 `HbmFluidCopiable`：
+  - 已迁移的普通 HBM tank/机器会天然暴露旧流体设置复制合同。
+  - 粘贴后调用 `onFluidContentsChanged()` 并刷新 Forge fluid handler cache。
+- `HbmFluidNetworkBlockEntity` 在粘贴后立即 `refreshFluidNodeState()`，避免依赖 tank type 的本地/远端流体节点短暂保留旧类型。
+- `FluidPipeBlockEntity` 实现 `HbmFluidCopiable`：
+  - 覆盖复制，始终返回当前管道流体 ID，包括 `NONE`。
+  - 覆盖粘贴，普通粘贴设置当前管道类型；recursive 粘贴复用 64 步 flood-fill，并穿过 `FluidPipeAnchorBlockEntity#getRemoteConnections()`。
+- `FluidPipeBlock` 与 `FluidValveBlock` 的识别码 Ctrl/Shift 递归 retarget 复用 `FluidPipeBlockEntity.changeConnectedPipeTypes(...)`，避免 settings 粘贴路径和识别码路径维护两份 BFS。
+
+Still deferred:
+
+- 旧 `ItemSettingsTool` 本体、贴图、创造栏、Alt-index HUD、跨库 `ICopiable` 总入口仍属于 common tool/copy library，未在本轮注册。
+- Paintable duct 的 paint payload copy/paste 仍需随全局 settings tool 或 paintable duct 库补齐；本轮只关闭流体 ID 复制合同。
+- Anchor 两次点击 wrench 的生存模式远端链接仍未接入工具物品；已有 `/hbm fluid pipe anchor ...` 命令验证入口继续保留。
+
+Progress estimate after Pass 65:
+
+- Core `FluidType` identity/NBT lookup/table: about 92%.
+- Basic tank/conform/Forge capability bridge: about 87%.
+- Fluid network/provider/receiver algorithm: about 83%.
+- In-world pipe graph: about 96%.
+- Fluid item/container loading: about 76%.
+- Machine integration through the library: about 58%.
+- Fluid identifier item, GUI, NBT, and typed duct crafting semantics: about 93%.
+- Settings-tool fluid copy/paste contract: about 55% for the fluid side; global tool item/UI remains separate.
+- Overall fluid library migration: about 79%.
+
+Verification:
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` passed.
+
+## 2026-06-04 Modern Library Pass 64
+
+本轮补齐 Pass 63 留下的反向 Forge fluid tag 互通缺口：HBM 自己注册的 Forge fluids 现在会通过 datagen 写入常见 `forge:*` fluid tags，便于其他 mod 以标准标签识别 HBM 的油、蒸汽、酸、气体等。
+
+现代侧改动：
+
+- 新增 `HbmFluidTagsProvider`：
+  - 使用 `FluidTagsProvider` 生成 `data/forge/tags/fluids/*.json`。
+  - 每个已注册 HBM Forge fluid 同时写入 source 与 flowing 变体。
+  - 不为 `hbm:water` / `hbm:lava` 写 tag，因为现代侧明确沿用 vanilla `minecraft:water` / `minecraft:lava`，不注册重复 HBM 水/岩浆。
+- `HbmDataGenerators` 注册 fluid tags provider。
+- `ModFluids` 新增 `getEntry(FluidType)`，供 datagen 从 HBM `FluidType` 查到对应 source/flowing `RegistryObject`。
+- 已生成 24 个 `forge` 命名空间 fluid tags，包括：
+  - `steam`、`hot_steam`、`superheated_steam`、`super_hot_steam`
+  - `crude_oil`、`oil`、`heavy_oil`、`diesel`、`kerosene`、`gasoline`
+  - `sulfuric_acid`、`nitric_acid`
+  - `hydrogen`、`deuterium`、`tritium`、`oxygen`、`chlorine`、`carbon_dioxide`
+  - `heavy_water`、`ethanol`、`biofuel`、`lubricant`、`mercury`、`coolant`
+
+实际效果：
+
+- Pass 63 解决“外部带 `forge:*` tag 的 Forge 流体导入 HBM tank”。
+- 本轮解决“HBM 自己的 Forge fluids 对外也带 `forge:*` tags”，让其他 mod 的过滤器、配方、储罐和管道更容易识别 HBM 流体。
+- `src/generated/resources` 是项目生成资源目录且被 `.gitignore` 忽略；运行 `runData` 会重建这些 tag JSON，`processResources` 会把它们纳入运行资源。
+
+仍需后续：
+
+- 完全自定义外部流体 alias 仍需 config 或 datapack 驱动表；当前是安全默认 tag 集。
+- 真实世界流体方块、桶、流动模型和旧流体贴图仍属于 world-fluid 专项，不在本轮范围。
+
+验证：
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` 通过。
+- `.\gradlew.bat runData --rerun-tasks --no-daemon` 通过。
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` 通过。
+
+## 2026-06-04 Modern Library Pass 63
+
+本轮推进 fluid-mk2-network 的 Forge 标准流体互通，优先解决“其他 mod 的标准 Forge 流体能否进入 HBM 储罐/机器输入”的迁移堵点。
+
+1.7.10 对照与现代边界：
+
+- 1.7.10 的 HBM 流体系统使用 `FluidType` / `Fluids` 自有注册表，不是现代 Forge registry fluid。
+- 现代 port 已经把 HBM `FluidType` 注册为 Forge fluids，并通过 `ForgeFluidHandlerAdapter` 暴露 `ForgeCapabilities.FLUID_HANDLER`。
+- 为保持旧 HBM 网络语义，外部 Forge 流体导入后不会作为未知动态流体保存，而是转换为最接近的 HBM canonical `FluidType`；压力仍为 HBM 内部状态，外部 Forge 流体默认按 `0 PU` 导入。
+
+现代侧改动：
+
+- 扩展 `HbmFluidForgeMappings`：
+  - 仍优先使用直接映射：vanilla water/lava 与 HBM 自注册 Forge fluid 直接对应。
+  - 新增 `registerTagAlias(ResourceLocation, FluidType)`，允许把 Forge fluid tag 映射到 HBM `FluidType`。
+  - `fromForge(Fluid)` 在直接映射失败时检查 tag alias。
+- 新增默认 `forge:*` tag alias：
+  - `water`、`lava`
+  - `steam`、`hot_steam`、`superheated_steam`、`super_hot_steam`
+  - `crude_oil`、`oil`、`heavy_oil`、`diesel`、`kerosene`、`gasoline`
+  - `sulfuric_acid`、`nitric_acid`
+  - `hydrogen`、`deuterium`、`tritium`、`oxygen`、`chlorine`、`carbon_dioxide`
+  - `heavy_water`、`ethanol`、`biofuel`、`lubricant`、`mercury`
+
+实际效果：
+
+- 其他 mod 的 fluid container / pipe / machine 若提供带上述 Forge tag 的 `FluidStack`，HBM 储罐和机器输入 capability 会将其识别为对应 HBM 流体并进入 `HbmFluidTank`。
+- 导入后 tank 内部仍只保存 HBM `FluidType`、fill、pressure，因此识别码、管网、机器配方和 tooltip 不需要引入未知 Forge fluid 状态。
+- `drain(FluidStack requested, ...)` 对外部请求栈会按 tag alias 识别目标 HBM 类型，并返回请求方指定的 Forge fluid；无参 `drain(maxDrain, ...)` 仍导出 HBM 自己注册的 Forge fluid。
+
+仍需后续：
+
+- 其他 mod 反向通过 tags 识别 HBM 自己 Forge fluids 的缺口已由 Pass 64 补齐。
+- 若要支持完全自定义映射，应再加 config 或 datapack 驱动的 alias 表；本轮只迁移安全默认映射。
+
+验证：
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` 通过。
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` 通过。
+
+## 2026-06-04 Modern Library Pass 62
+
+本轮补全流体 tooltip 的 LSHIFT 展开机制，重点是让现代端不再把“更多信息”误接到 F3+H advanced tooltip，也让机器 GUI tank 与流体容器物品都走同一个流体库入口。
+
+1.7.10 对照：
+
+- `com/hbm/inventory/fluid/FluidType.java`
+  - `addInfo(List<String>)` 内部通过 `Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)` 判断是否显示隐藏 trait 信息。
+  - 非室温温度先显示；然后每个 trait 添加 visible info；按住 LSHIFT 时追加 hidden info。
+  - 存在 hidden info 但未按 LSHIFT 时追加 `Hold <LSHIFT> to display more info` 提示。
+- `com/hbm/inventory/fluid/tank/FluidTank.java`
+  - `renderTankInfo(...)` 在 GUI tank tooltip 中调用 `type.addInfo(list)`，因此旧 GUI tank tooltip 同样支持 LSHIFT 展开。
+- `com/hbm/items/machine/ItemFluidIcon.java`
+  - 流体图标/流体栈物品显示数量、压力提示后调用 `Fluids.fromID(...).addInfo(list)`。
+- `com/hbm/items/machine/ItemFluidIDMulti.java`
+  - 流体识别码物品本体 tooltip 只列 primary/secondary 选中流体；搜索 GUI 的流体列表才显示对应流体信息。
+
+现代侧改动：
+
+- `HbmFluidGuiHelper` 新增 `showHiddenFluidInfo()`，通过客户端桥接读取 `Screen.hasShiftDown()`；`TankData#tooltip(boolean showHidden)` 作为 GUI tank tooltip 的统一入口。
+- `FluidTankScreen`、`CompressorScreen`、`AssemblyMachineScreen`、`ChemicalPlantScreen`、`LiquefactorScreen`、`RemoteFluidMachineScreen` 的 tank hover tooltip 现在传入 `hasShiftDown()`。
+- `HbmFluidContainerItem#appendHoverText(...)` 新增容器 tooltip：显示 fill/capacity、压力提示，并调用 `FluidType.appendInfo(..., showHiddenFluidInfo())`。
+  - 对普通容器读取 NBT 流体类型。
+  - 对 `HbmInfiniteFluidItem` 读取字段流体类型，避免无限水/氯气类物品因为没有普通容器 NBT 而丢失流体 trait tooltip。
+- `FluidPipeBlockItem` 的流体信息 tooltip 从 `TooltipFlag#isAdvanced()` 改为 LSHIFT 状态，贴回 1.7.10 的操作习惯。
+- `FluidIdentifierItem` 物品本体保持旧行为，只显示 primary/secondary 名称；现代 `FluidIdentifierScreen` 已经在搜索列表 hover 中使用 `appendInfo(..., hasShiftDown())`。
+
+验证：
+
+- `.\gradlew.bat compileJava --rerun-tasks --no-daemon` 通过。
+- `.\gradlew.bat processResources --rerun-tasks --no-daemon` 通过。
+
 ## 2026-06-03 Modern Library Pass 60
 
 本轮继续推进 fluid-mk2-network 的机器接入，集中补已迁移远端流体机器的右键 GUI 与 tank/HE 同步。按 1.7.10 对照，只给旧版确有容器 GUI 的机器开放屏幕；`machine_catalytic_cracker` 与 `machine_fraction_tower` 旧版主要通过准星 overlay/NEI 暴露信息，本轮不额外创造 GUI。

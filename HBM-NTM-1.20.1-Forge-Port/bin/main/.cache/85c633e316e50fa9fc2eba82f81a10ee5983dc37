@@ -1,6 +1,12 @@
-// 1.20.1	2026-06-02T23:54:04.4972054	Block States: hbm
+// 1.20.1	2026-06-04T18:35:20.9453548	Block States: hbm
 f4eb25b664a0458dbb40546da729386871750a3d assets/hbm/blockstates/ash_digamma.json
 8c6c51f054fa20e59275bf5c7c77e28e7790b34c assets/hbm/blockstates/balefire.json
+8954caa191028e344c422054eecafd33ba658dd5 assets/hbm/blockstates/barrel_antimatter.json
+1a731f69623018c95bb667e2f33b832f163c1306 assets/hbm/blockstates/barrel_corroded.json
+519569d8974dffc3e88f86093c2e4283a28a95e8 assets/hbm/blockstates/barrel_iron.json
+050690ba6a8826cde5c5801815976b75a62436a1 assets/hbm/blockstates/barrel_plastic.json
+7604f4efe4915fafc6b4b6e5d2d11b1145f7ba63 assets/hbm/blockstates/barrel_steel.json
+988f3710c20415bd99d39f6b543b2e2cd46bcc70 assets/hbm/blockstates/barrel_tcalloy.json
 cba35d35e4f0682b55e9cc361bbbf6247efa3976 assets/hbm/blockstates/bomb_multi.json
 4c3a6aae9d5e7851a9188b3573be71ec928baa66 assets/hbm/blockstates/chlorine_gas.json
 dc72650da97aa191b061b12513a2ce1792b6572a assets/hbm/blockstates/conveyor.json
@@ -59,6 +65,7 @@ fb2ff35df45a2f9686c9c4bd12a36e1681322ee3 assets/hbm/blockstates/machine_crucible
 631b0eeee5cd57ac16ac2d44350c5039d6f90ff7 assets/hbm/blockstates/machine_electric_furnace_off.json
 88ee9414099b628a932004a66c6883ae3c862eb6 assets/hbm/blockstates/machine_exposure_chamber.json
 6c01eaf1a610300f00660d7ba99bfc7cf18c8da9 assets/hbm/blockstates/machine_fluidtank.json
+0720830670652de118e9f859089911f04b855ba4 assets/hbm/blockstates/machine_fracking_tower.json
 3fdf508fa10a4eeb86bb2b11c3bf47c9168b1c37 assets/hbm/blockstates/machine_fraction_tower.json
 5ed97da485ae85f5760a3e5ba28d680a5053cf3e assets/hbm/blockstates/machine_gascent.json
 2f7eb5b409eb8e68737486f420541430a2393e9c assets/hbm/blockstates/machine_gasflare.json
@@ -88,6 +95,7 @@ ffff23a5e72ae5f3d70c7a142bc93ecbc3a280f0 assets/hbm/blockstates/machine_steam_en
 32dc04ed2a20925bc407c591a48c6237779a70b7 assets/hbm/blockstates/machine_turbinegas.json
 60a512966e8c7e522116d55bf5c92ef7ca0b16a3 assets/hbm/blockstates/machine_turbofan.json
 5d25e9fe2a86a8afc5b7b0ca55a3c2378316e44d assets/hbm/blockstates/machine_vacuum_distill.json
+4b119fbf6b0f88c5560c072568f71b10abcf82ac assets/hbm/blockstates/machine_well.json
 94f0dd33838d04e96915f87fa990a51318301a64 assets/hbm/blockstates/mud_block.json
 25114ad8f9016b483b356ef1c910e101088c64de assets/hbm/blockstates/nuke_boy.json
 3db5f9db163983504fd46ad032f2edfba3591307 assets/hbm/blockstates/nuke_custom.json
@@ -111,6 +119,7 @@ dd706c131ebf00640db99a2b8ba6143a9bc21f1a assets/hbm/blockstates/pribris_digamma.
 a0e65f052c993c4b3dcc1210e59b99d0a66f4693 assets/hbm/blockstates/rad_absorber.json
 c0082be33edf22a7f350c858d0c221ef600ca48a assets/hbm/blockstates/rad_lava_block.json
 3b291a5670c34ab659d0852c68cc6d66296db3e6 assets/hbm/blockstates/red_cable.json
+6aea7787eabf0ff7dcb24797b88b374e8806ef62 assets/hbm/blockstates/red_cable_gauge.json
 af6986d44062976170bd71d6897a55ecd632d089 assets/hbm/blockstates/sellafield.json
 350c2a5f49f0270107d5746c6a476bbe1fc7253b assets/hbm/blockstates/sellafield_bedrock.json
 246b668895fc0a75288fdf17f055037d163b0f7c assets/hbm/blockstates/sellafield_slaked.json
@@ -124,6 +133,12 @@ b6bb0e91cf8610468b59acac5ada52751830ea6d assets/hbm/blockstates/waste_trinitite.
 5ba02c4954fd00838813263a348e818128316d1a assets/hbm/blockstates/yellow_barrel.json
 f76370dc339a0ff18575cbd6935a006033208ff6 assets/hbm/models/block/ash_digamma.json
 d61a76e7ed3dc20aad4d156014d04ad0eeec8ed9 assets/hbm/models/block/balefire.json
+5e6cce26346ebf08143083aa0c07a54efdff563b assets/hbm/models/block/barrel_antimatter.json
+6c7d4dd90f5babe23397dadb3c32af40c0c54d80 assets/hbm/models/block/barrel_corroded.json
+3fedfae8dc968212204f79b9f073ac34bd6db39f assets/hbm/models/block/barrel_iron.json
+0233751bf819fb855d12fda42c4c823f8c29e0a9 assets/hbm/models/block/barrel_plastic.json
+98c572ab65e129db389a4d3eaaa160018914641a assets/hbm/models/block/barrel_steel.json
+cdd71ea1706346b42dfcc39a2c9175fbfd72ae2e assets/hbm/models/block/barrel_tcalloy.json
 30b4e60361dc4a2bb745089d1c329499f2546a7e assets/hbm/models/block/chlorine_gas.json
 db12f798961a511e2b6ecfac5d6599bcf71809bd assets/hbm/models/block/conveyor.json
 3ea0355c39e641d52a46e3a5a01e392b70dbecaf assets/hbm/models/block/conveyor_chute.json
@@ -214,6 +229,12 @@ b480990a862715d22a421abb7caff73caa196a7a assets/hbm/models/block/rad_absorber_pi
 5aa95e5a7c684a5d8b3af1c95815ed7838a46d66 assets/hbm/models/block/rad_absorber_red.json
 d96de9370a968bd1802a70538a0edd6335ec11f0 assets/hbm/models/block/rad_lava_block.json
 09e4dcf74149b561ee97b37694b04234053d74de assets/hbm/models/block/red_cable.json
+ccc010d24ea1b6a0ce34c38b7be2046b7e23c177 assets/hbm/models/block/red_cable_gauge_down.json
+742f1c1f156584f038e2b4b241b8fe20e9beb900 assets/hbm/models/block/red_cable_gauge_east.json
+84e83ad940e1baa0847627a3175e0c9e211c261b assets/hbm/models/block/red_cable_gauge_north.json
+2ac8abb0f522e3bb2ed64dadd012a486aa5bd4c5 assets/hbm/models/block/red_cable_gauge_south.json
+34a1e4398dbbb2fcc306dfaa9b3552c20a4ade24 assets/hbm/models/block/red_cable_gauge_up.json
+6bb357be0c531b75e24cdefcd51415ccfa3d45eb assets/hbm/models/block/red_cable_gauge_west.json
 32f034a97616e366dba06d3cf30f1e3ebe64045b assets/hbm/models/block/sellafield.json
 46013180b7a20708c48adc599ad7be6ace939566 assets/hbm/models/block/sellafield_1.json
 0441b62b58a9815e1e5a0f259b4724a46a41100f assets/hbm/models/block/sellafield_2.json
@@ -238,6 +259,12 @@ de8440de213ba05a98b75ee70e7be912280a378b assets/hbm/models/block/waste_planks.js
 44f7de42c042d15a794407a9e98f841c1cea36d3 assets/hbm/models/block/waste_trinitite_red.json
 b6588953ecb44934097103cf22ab2c2c5671d722 assets/hbm/models/block/yellow_barrel.json
 97283b6fc336ae3aee7ac50ffeffc54ba83b3780 assets/hbm/models/item/ash_digamma.json
+b7d68b423e78ed59dca6d2c29867ce863dea866a assets/hbm/models/item/barrel_antimatter.json
+7fc2fb08131d19c4e069374a75d0631e4b2eeb9d assets/hbm/models/item/barrel_corroded.json
+8e4e174aa04b94eb78e8669a62749c5e6c867d76 assets/hbm/models/item/barrel_iron.json
+ea1bb3b3274a0d2e46ab156a94a9d9993664e17d assets/hbm/models/item/barrel_plastic.json
+d17208db2d97261a9d8cf24fcc3abe55873bb99a assets/hbm/models/item/barrel_steel.json
+8b943852e2ea83527f1f48f87d9fbdc562c63f7f assets/hbm/models/item/barrel_tcalloy.json
 596d9ea4f7d258161fb8536745cc345a5af3b6fe assets/hbm/models/item/bomb_multi.json
 3cfbafe4f1b67151cf78f78e7c05fa1a4fbe876d assets/hbm/models/item/chlorine_gas.json
 1d5c88915642c4297e4802298d12ae1e04633634 assets/hbm/models/item/conveyor.json
@@ -295,6 +322,7 @@ e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_cyclotro
 234d33a9fb76a6887580d657d759c3fcd2ddc79a assets/hbm/models/item/machine_electric_furnace_off.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_exposure_chamber.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_fluidtank.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_fracking_tower.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_fraction_tower.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_gascent.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_gasflare.json
@@ -324,6 +352,7 @@ e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_tower_sm
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_turbinegas.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_turbofan.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_vacuum_distill.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_well.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_boy.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_custom.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/nuke_fleija.json
@@ -346,6 +375,7 @@ ae9624f7a2ef885b490bee743178fe017eea9e28 assets/hbm/models/item/pribris_digamma.
 bec54b13a31802839ddd2e0f2341dfdafd3eaab8 assets/hbm/models/item/rad_absorber.json
 f24c21c36f148ed2c14025557611f8573f80e1ec assets/hbm/models/item/rad_lava_block.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/red_cable.json
+717162ae0dd12ccc4ec3ddc983538d4c134042e3 assets/hbm/models/item/red_cable_gauge.json
 ee1cd7bcfa14a28ab301accf274ba7994d09cf37 assets/hbm/models/item/sellafield.json
 4453a6ec567402d0f5f12adbe8ea99d3c58d86a7 assets/hbm/models/item/sellafield_bedrock.json
 de9158afe7c5e2ca9799cef692e8b410b0fd6c25 assets/hbm/models/item/sellafield_slaked.json

@@ -25,6 +25,7 @@ public final class HbmDataGenerators {
         HbmBlockTagsProvider blockTagsProvider = new HbmBlockTagsProvider(output, event.getLookupProvider(), HbmNtm.MOD_ID, existingFileHelper);
         generator.addProvider(event.includeServer(), blockTagsProvider);
         generator.addProvider(event.includeServer(), new HbmItemTagsProvider(output, event.getLookupProvider(), blockTagsProvider.contentsGetter(), existingFileHelper));
+        generator.addProvider(event.includeServer(), new HbmFluidTagsProvider(output, event.getLookupProvider(), HbmNtm.MOD_ID, existingFileHelper));
         generator.addProvider(event.includeServer(), new HbmRecipeProvider(output));
         generator.addProvider(event.includeServer(), (DataProvider.Factory<LootTableProvider>) lootOutput -> new LootTableProvider(
                 lootOutput,

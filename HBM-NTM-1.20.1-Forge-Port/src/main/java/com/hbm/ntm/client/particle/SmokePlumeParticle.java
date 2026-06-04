@@ -17,9 +17,11 @@ import org.joml.Vector3f;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @OnlyIn(Dist.CLIENT)
 public class SmokePlumeParticle extends TextureSheetParticle {
+    private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
     private static final int LEGACY_QUAD_COUNT = 6;
     private final SpriteSet sprites;
     private final int seed;
@@ -28,7 +30,7 @@ public class SmokePlumeParticle extends TextureSheetParticle {
             SpriteSet sprites) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.sprites = sprites;
-        this.seed = random.nextInt();
+        this.seed = NEXT_VISUAL_ID.incrementAndGet();
         this.lifetime = 80 + random.nextInt(20);
         this.quadSize = 0.25F;
         this.hasPhysics = true;

@@ -234,3 +234,35 @@
   - C2S receiver 现在要求玩家打开对应 Menu，并校验 internal name 存在后才接收。
 - `AssemblyRecipeSelectorScreen` 与 `ChemicalPlantRecipeSelectorScreen` 改用 `ModMessages.sendTileControl(...)` 发送选择，不直接依赖 packet 构造。
 - 验证：`.\gradlew.bat compileJava --no-daemon` 通过。
+
+## 2026-06-04 组装机/化工厂全功能推进：按旧库归属补 ModuleMachineBase 契约
+
+- 本轮边界：
+  - 只把 1.7.10 本来就是共享库/模块的行为补入现代共享层。
+  - `ModuleMachineBase` 的 recipe/progress/blueprint pool/tank conform/auto-switch/输入槽合法性属于共享 runtime。
+  - `ItemBlueprints` 与 `ItemMachineUpgrade`/`UpgradeManagerNT` 是旧版共享物品/升级库，迁入现代共享 item/runtime。
+  - 组装机 `meteorite_sword_alloyed -> meteorite_sword_machined`、化工厂 `meteorite_sword_machined -> meteorite_sword_treated` 是各自 TE 的私有完成副作用，不放进共享库。
+- 本轮现代接入：
+  - `GenericMachineRecipeRuntime.update(...)` 对齐 `ModuleMachineBase#update/process`：
+    - recipe 为旧 internal name 字符串。
+    - pooled recipe 必须由蓝图槽 `ItemBlueprints.grabPool(...)` 匹配，否则 recipe 归 `null` 且进度清零。
+    - 自动切换只按第一个固体输入槽匹配同 auto-switch group。
+    - 每 tick 扣 `recipe.power * pow`，进度推进 `speed / recipe.duration`，完成后若仍能继续加工则保留剩余进度，否则清零。
+    - tank 按 recipe fluid 输入/输出 conform 类型与压力，并按默认容量/配方用量动态扩容。
+  - 输入槽匹配修正为 1.7.10 位置语义：第 `i` 个 recipe item input 只匹配第 `i` 个机器 input slot，不再 shapeless 混槽匹配。
+  - 新增 `GenericMachineRecipeRuntime.isItemValidForCurrentRecipe(...)` 与 `isSlotClogged(...)`，用于机器/代理/搬运后续按旧 `ModuleMachineBase#isItemValid/isSlotClogged` 对齐。
+  - 新增 `ItemBlueprints`：
+    - NBT key `pool`。
+    - 右键消耗纸复制，secret pool 不可复制。
+    - tooltip 展示 pool 与可查到的 recipe 名。
+  - 新增 `ItemMachineUpgrade` 与 `LegacyMachineUpgradeManager`：
+    - 支持 `SPEED`、`POWER`、`OVERDRIVE` 三类及 tier。
+    - 组装机/化工厂各自按旧源码公式计算 speed/pow。
+- 本轮机器接入：
+  - 组装机和化工厂 tickRecipe 改用共享 runtime。
+  - 两台机器槽位合法性改回 1.7.10：电池、蓝图、升级、recipe 输入/流体容器槽按旧规则限制，输出/返回槽禁止插入。
+  - 组装机去掉现代假动画 preview，只按 `didProcess` 驱动机械臂/ring。
+- 仍需后续核对：
+  - 旧音频循环/strike/start/stop 需要按旧客户端逻辑接入现代 sound helper。
+  - 蓝图 NBT 变体贴图目前先保留默认贴图，后续补 model override 或 item color/renderer。
+  - 1.7.10 全量配方数量远超当前 datagen 可映射内容，后续应继续用 `LegacyGenericRecipeImporter` 或逐批 datagen 迁入可解析配方。

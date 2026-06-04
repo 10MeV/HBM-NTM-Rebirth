@@ -2,6 +2,7 @@ package com.hbm.ntm.entity.effect;
 
 import com.hbm.ntm.block.FalloutLayerBlock;
 import com.hbm.ntm.config.BombConfig;
+import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoadingEntity;
 import com.hbm.ntm.multiblock.DummyBlock;
 import com.hbm.ntm.radiation.CraterBiomeUtil;
@@ -251,12 +252,28 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
 
     private boolean applyCraterRadiationMarker(int x, int z, double percent) {
         if (level() instanceof ServerLevel serverLevel) {
-            CraterRadiationData.CraterZone zone = CraterRadiationData.zoneForFalloutPercent(percent, getScale());
+            CraterRadiationData.CraterZone zone = craterZoneForFalloutPercent(percent, getScale());
             if (zone != CraterRadiationData.CraterZone.NONE && CraterRadiationData.setZone(serverLevel, x, z, zone)) {
                 return CraterBiomeUtil.setCraterBiome(serverLevel, x, z, zone);
             }
         }
         return false;
+    }
+
+    private static CraterRadiationData.CraterZone craterZoneForFalloutPercent(double percent, int scale) {
+        if (!RadiationConfig.ENABLE_CRATER_BIOME_RADIATION.get()) {
+            return CraterRadiationData.CraterZone.NONE;
+        }
+        if (scale >= 150 && percent < 15.0D) {
+            return CraterRadiationData.CraterZone.INNER;
+        }
+        if (scale >= 100 && percent < 55.0D) {
+            return CraterRadiationData.CraterZone.CRATER;
+        }
+        if (scale >= 25) {
+            return CraterRadiationData.CraterZone.OUTER;
+        }
+        return CraterRadiationData.CraterZone.NONE;
     }
 
     private boolean canReplaceWithFallout(BlockState state, BlockPos pos) {

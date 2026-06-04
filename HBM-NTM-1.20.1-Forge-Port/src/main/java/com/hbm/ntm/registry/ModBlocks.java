@@ -18,6 +18,7 @@ import com.hbm.ntm.block.FluidDuctExhaustBlock;
 import com.hbm.ntm.block.FluidDuctGaugeBlock;
 import com.hbm.ntm.block.FluidDuctPaintableBlock;
 import com.hbm.ntm.block.FluidDuctPaintableExhaustBlock;
+import com.hbm.ntm.block.FluidBarrelBlock;
 import com.hbm.ntm.block.FluidPipeBlock;
 import com.hbm.ntm.block.FluidPipeAnchorBlock;
 import com.hbm.ntm.block.FluidPumpBlock;
@@ -59,7 +60,10 @@ import com.hbm.ntm.block.RadiatingHazardBlock;
 import com.hbm.ntm.block.RadioactiveWasteEarthBlock;
 import com.hbm.ntm.block.MachineBatterySocketBlock;
 import com.hbm.ntm.block.RedCableBlock;
+import com.hbm.ntm.block.RedCableGaugeBlock;
 import com.hbm.ntm.block.RemoteFluidMachineBlock;
+import com.hbm.ntm.block.OilDrillBlock;
+import com.hbm.ntm.block.RefineryBlock;
 import com.hbm.ntm.block.SolarBoilerBlock;
 import com.hbm.ntm.block.SteamEngineBlock;
 import com.hbm.ntm.block.SteamTurbineBlock;
@@ -136,6 +140,7 @@ public final class ModBlocks {
             "machine_industrial_turbine", industrialTurbineDefinition(), SteamTurbineMultiblockBlock.Kind.INDUSTRIAL);
     public static final RegistryObject<Block> DECON = decon("decon");
     public static final RegistryObject<Block> RED_CABLE = redCable("red_cable");
+    public static final RegistryObject<Block> RED_CABLE_GAUGE = redCableGauge("red_cable_gauge");
     public static final RegistryObject<Block> FLUID_DUCT_NEO = fluidPipe("fluid_duct_neo");
     public static final RegistryObject<Block> FLUID_VALVE = fluidValve("fluid_valve", FluidValveBlock.Kind.VALVE);
     public static final RegistryObject<Block> FLUID_SWITCH = fluidValve("fluid_switch", FluidValveBlock.Kind.SWITCH);
@@ -149,6 +154,18 @@ public final class ModBlocks {
     public static final RegistryObject<Block> FLUID_DUCT_PAINTABLE_BLOCK_EXHAUST =
             fluidDuctPaintableExhaust("fluid_duct_paintable_block_exhaust");
     public static final RegistryObject<Block> PIPE_ANCHOR = fluidPipeAnchor("pipe_anchor");
+    public static final RegistryObject<Block> BARREL_PLASTIC =
+            fluidBarrel("barrel_plastic", FluidBarrelBlock.Variant.PLASTIC);
+    public static final RegistryObject<Block> BARREL_CORRODED =
+            fluidBarrel("barrel_corroded", FluidBarrelBlock.Variant.CORRODED);
+    public static final RegistryObject<Block> BARREL_IRON =
+            fluidBarrel("barrel_iron", FluidBarrelBlock.Variant.IRON);
+    public static final RegistryObject<Block> BARREL_STEEL =
+            fluidBarrel("barrel_steel", FluidBarrelBlock.Variant.STEEL);
+    public static final RegistryObject<Block> BARREL_TCALLOY =
+            fluidBarrel("barrel_tcalloy", FluidBarrelBlock.Variant.TCALLOY);
+    public static final RegistryObject<Block> BARREL_ANTIMATTER =
+            fluidBarrel("barrel_antimatter", FluidBarrelBlock.Variant.ANTIMATTER);
     public static final RegistryObject<Block> PNEUMATIC_TUBE = pneumaticTube("pneumatic_tube");
     public static final RegistryObject<Block> CONVEYOR = conveyor("conveyor", ConveyorBlock::new);
     public static final RegistryObject<Block> CONVEYOR_EXPRESS = conveyor("conveyor_express", ExpressConveyorBlock::new);
@@ -175,7 +192,7 @@ public final class ModBlocks {
             liquefactorDefinition());
     public static final RegistryObject<Block> MACHINE_CHEMICAL_FACTORY = visibleMultiblockMachine("machine_chemical_factory",
             chemicalFactoryDefinition());
-    public static final RegistryObject<Block> MACHINE_REFINERY = visibleMultiblockMachine("machine_refinery",
+    public static final RegistryObject<Block> MACHINE_REFINERY = refineryMachine("machine_refinery",
             refineryDefinition());
     public static final RegistryObject<Block> MACHINE_CATALYTIC_CRACKER = remoteFluidMachine("machine_catalytic_cracker",
             catalyticCrackerDefinition(), RemoteFluidMachineBlock.Kind.CATALYTIC_CRACKER);
@@ -199,8 +216,12 @@ public final class ModBlocks {
             bigAssTankDefinition());
     public static final RegistryObject<Block> MACHINE_FLUIDTANK = fluidTankMachine("machine_fluidtank",
             fluidTankDefinition());
-    public static final RegistryObject<Block> MACHINE_PUMPJACK = visibleMultiblockMachine("machine_pumpjack",
+    public static final RegistryObject<Block> MACHINE_WELL = oilDrillMachine("machine_well",
+            oilWellDefinition());
+    public static final RegistryObject<Block> MACHINE_PUMPJACK = oilDrillMachine("machine_pumpjack",
             pumpjackDefinition());
+    public static final RegistryObject<Block> MACHINE_FRACKING_TOWER = oilDrillMachine("machine_fracking_tower",
+            frackingTowerDefinition());
     public static final RegistryObject<Block> MACHINE_CENTRIFUGE = visibleMultiblockMachine("machine_centrifuge",
             centrifugeDefinition());
     public static final RegistryObject<Block> MACHINE_GASCENT = visibleMultiblockMachine("machine_gascent",
@@ -334,6 +355,7 @@ public final class ModBlocks {
             MACHINE_INDUSTRIAL_TURBINE,
             DECON,
             RED_CABLE,
+            RED_CABLE_GAUGE,
             FLUID_DUCT_NEO,
             FLUID_VALVE,
             FLUID_SWITCH,
@@ -345,6 +367,10 @@ public final class ModBlocks {
             FLUID_DUCT_PAINTABLE,
             FLUID_DUCT_PAINTABLE_BLOCK_EXHAUST,
             PIPE_ANCHOR,
+            BARREL_PLASTIC,
+            BARREL_STEEL,
+            BARREL_TCALLOY,
+            BARREL_ANTIMATTER,
             PNEUMATIC_TUBE,
             MACHINE_BATTERY,
             MACHINE_BATTERY_SOCKET,
@@ -364,7 +390,9 @@ public final class ModBlocks {
             MACHINE_COMPRESSOR,
             MACHINE_BIGASSTANK,
             MACHINE_FLUIDTANK,
+            MACHINE_WELL,
             MACHINE_PUMPJACK,
+            MACHINE_FRACKING_TOWER,
             MACHINE_CENTRIFUGE,
             MACHINE_GASCENT,
             MACHINE_ORE_SLOPPER,
@@ -401,6 +429,11 @@ public final class ModBlocks {
 
     public static final List<RegistryObject<Block>> MACHINE_TAB_EXTRA_BLOCKS = List.of(
             GLASS_BORON
+    );
+
+    public static final List<RegistryObject<Block>> HIDDEN_MACHINE_BLOCKS = List.of(
+            BARREL_CORRODED,
+            BARREL_IRON
     );
 
     public static final List<RegistryObject<Block>> EXTRA_BLOCK_TAB_BLOCKS = simpleResourceBlocks(
@@ -755,6 +788,14 @@ public final class ModBlocks {
                 block -> new RedCableBlockItem(block.get(), new Item.Properties()));
     }
 
+    private static RegistryObject<Block> redCableGauge(String name) {
+        return registerBlockWithItem(name, () -> new RedCableGaugeBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
+    }
+
     private static RegistryObject<Block> fluidPipe(String name) {
         return registerBlockWithItem(
                 name,
@@ -828,6 +869,15 @@ public final class ModBlocks {
                 .sound(PIPE_SOUND)
                 .requiresCorrectToolForDrops()
                 .noOcclusion();
+    }
+
+    private static RegistryObject<Block> fluidBarrel(String name, FluidBarrelBlock.Variant variant) {
+        return registerBlockWithItem(name, () -> new FluidBarrelBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(2.0F, 5.0F)
+                .sound(variant == FluidBarrelBlock.Variant.PLASTIC ? SoundType.STONE : SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion(), variant));
     }
 
     private static RegistryObject<Block> pneumaticTube(String name) {
@@ -937,6 +987,30 @@ public final class ModBlocks {
                         .sound(SoundType.METAL)
                         .requiresCorrectToolForDrops()
                         .noOcclusion(), definition, kind),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> refineryMachine(String name, LegacyMachineDefinition definition) {
+        return registerBlockWithItem(
+                name,
+                () -> new RefineryBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), definition),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> oilDrillMachine(String name, LegacyMachineDefinition definition) {
+        return registerBlockWithItem(
+                name,
+                () -> new OilDrillBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), definition),
                 block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
     }
 
@@ -1141,6 +1215,18 @@ public final class ModBlocks {
                 .build();
     }
 
+    private static LegacyMachineDefinition oilWellDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("derrick"), machineTexture("derrick"))
+                .legacyXrDimensions(9, 0, 1, 1, 1, 1)
+                .legacyOffset(0)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 9, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraOffsets(oilWellStructureOffsets(facing)))
+                .legacyItemScale(3.0D, 0.5D)
+                .yRotation(facing -> 180.0F - facing.toYRot())
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, -1, -2), pos.offset(11, 3, 3)))
+                .build();
+    }
+
     private static LegacyMachineDefinition catalyticCrackerDefinition() {
         return LegacyMachineDefinition.builder(machineModel("catalytic_cracker"), machineTexture("catalytic_cracker"))
                 .legacyXrDimensions(0, 0, 3, 3, 2, 3)
@@ -1293,6 +1379,23 @@ public final class ModBlocks {
                 .legacyItemScale(4.0D, 0.5D)
                 .yRotation(facing -> 270.0F - facing.toYRot())
                 .renderBoundingBox(pos -> new AABB(pos.offset(-7, 0, -7), pos.offset(8, 6, 8)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition frackingTowerDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("fracking_tower"), machineTexture("fracking_tower"))
+                .legacyXrDimensions(3, 0, 0, 0, 0, 0)
+                .legacyOffset(0)
+                .layout(facing -> {
+                    Function<BlockPos, LegacyProxyMode> proxyModes = offset -> frackingTowerProxyOffsets(facing).contains(offset)
+                            ? proxyPowerFluid()
+                            : LegacyProxyMode.none();
+                    return LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 0, 0, 0, 0 }, facing)
+                            .withExtraOffsets(frackingTowerStructureOffsets(facing), proxyModes);
+                })
+                .legacyItemScale(4.0D, 0.5D)
+                .yRotation(facing -> 180.0F - facing.toYRot())
+                .renderBoundingBox(pos -> new AABB(pos.offset(-10, -9, -10), pos.offset(11, 19, 11)))
                 .build();
     }
 
@@ -1792,6 +1895,18 @@ public final class ModBlocks {
                 .toList();
     }
 
+    private static List<BlockPos> oilWellStructureOffsets(Direction facing) {
+        return Stream.of(
+                LegacyMultiblockOffsets.xrBox(new int[] { 1, -1, 0, 0, 0, 0 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 8, 0, 1, 1, 1, 1 }, facing, new BlockPos(0, 1, 0), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(1, 1, 1), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(1, 1, -1), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(-1, 1, 1), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(-1, 1, -1), true))
+                .flatMap(List::stream)
+                .toList();
+    }
+
     private static List<BlockPos> pyroOvenProxyOffsets(Direction facing) {
         Direction rot = LegacyMultiblockOffsets.legacyDownSide(facing);
         return LegacyMultiblockOffsets.combine(
@@ -1841,6 +1956,24 @@ public final class ModBlocks {
         return List.of(
                 LegacyMultiblockOffsets.relative(facing, rot, 6, 0, 0),
                 LegacyMultiblockOffsets.relative(facing, rot, -6, 0, 0));
+    }
+
+    private static List<BlockPos> frackingTowerStructureOffsets(Direction facing) {
+        return Stream.of(
+                LegacyMultiblockOffsets.xrBox(new int[] { 1, 0, 3, 3, 3, 3 }, facing, new BlockPos(0, 2, 0), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(-2, 2, -2), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(-2, 2, 3), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(3, 2, -2), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(3, 2, 3), true),
+                LegacyMultiblockOffsets.xrBox(new int[] { 10, -4, 2, 2, 2, 2 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 24, -9, 1, 1, 1, 1 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 1, 0, 1, 1, -2, 3 }, Direction.WEST, new BlockPos(0, 15, 0), true))
+                .flatMap(List::stream)
+                .toList();
+    }
+
+    private static Set<BlockPos> frackingTowerProxyOffsets(Direction facing) {
+        return new LinkedHashSet<>(LegacyMultiblockOffsets.squarePerimeter(3));
     }
 
     private static List<BlockPos> catalyticCrackerProxyOffsets(Direction facing) {

@@ -129,6 +129,14 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
         return outputTanks[index].tooltip();
     }
 
+    public List<Component> getInputTankTooltip(int index, boolean showHidden) {
+        return inputTanks[index].tooltip(showHidden);
+    }
+
+    public List<Component> getOutputTankTooltip(int index, boolean showHidden) {
+        return outputTanks[index].tooltip(showHidden);
+    }
+
     @Override
     public boolean stillValid(Player player) {
         return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);

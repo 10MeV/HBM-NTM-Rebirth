@@ -7,6 +7,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
@@ -182,6 +183,47 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
         return List.of(tank);
+    }
+
+    @Override
+    public CompoundTag getFluidSettings() {
+        CompoundTag tag = new CompoundTag();
+        int[] ids = getFluidIdsToCopy();
+        if (ids.length > 0) {
+            tag.putIntArray(HbmFluidCopiable.TAG_FLUID_IDS, ids);
+        }
+        tag.putBoolean("isOn", on);
+        tag.putBoolean("doesBurn", burn);
+        return tag;
+    }
+
+    @Override
+    public boolean pasteFluidSettings(CompoundTag tag, int index, @Nullable net.minecraft.world.entity.player.Player player,
+            boolean recursive) {
+        if (tag == null) {
+            return false;
+        }
+        boolean changed = false;
+        if (tag.contains(HbmFluidCopiable.TAG_FLUID_IDS)) {
+            int[] ids = tag.getIntArray(HbmFluidCopiable.TAG_FLUID_IDS);
+            if (ids.length > 0) {
+                int safeIndex = index >= 0 && index < ids.length ? index : 0;
+                tank.setTankType(HbmFluids.fromId(ids[safeIndex]));
+                changed = true;
+            }
+        }
+        if (tag.contains("isOn")) {
+            on = tag.getBoolean("isOn");
+            changed = true;
+        }
+        if (tag.contains("doesBurn")) {
+            burn = tag.getBoolean("doesBurn");
+            changed = true;
+        }
+        if (changed) {
+            onFluidContentsChanged();
+        }
+        return changed;
     }
 
     @Override

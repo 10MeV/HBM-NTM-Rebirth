@@ -24,16 +24,40 @@ public final class LegacyGenericRecipeImporter {
         return readWithReport(machine, folder, reader).recipes();
     }
 
+    public static List<ImportedRecipe> read(String legacyFileName, Reader reader) {
+        return readWithReport(legacyFileName, reader).recipes();
+    }
+
     public static ImportReport readWithReport(GenericMachineRecipe.Machine machine, ResourceLocation folder, Reader reader) {
-        return readWithReport(machine, folder, reader, false);
+        return readWithReport(LegacySerializableRecipeHandlers.MANUAL_SOURCE, LegacySerializableRecipeHandlers.MANUAL_SOURCE,
+                machine, folder, reader, false);
+    }
+
+    public static ImportReport readWithReport(String legacyFileName, Reader reader) {
+        LegacySerializableRecipeHandlers.Handler serializableHandler =
+                LegacySerializableRecipeHandlers.requireSupportedGeneric(legacyFileName);
+        LegacyGenericRecipeHandlers.Handler handler = LegacyGenericRecipeHandlers.requireSupported(
+                serializableHandler.legacyFileName());
+        return readWithReport(serializableHandler.legacyFileName(), serializableHandler.legacyClassName(),
+                handler.requireMachine(), handler.outputFolder(), reader, false);
     }
 
     public static ImportReport readLenientWithReport(GenericMachineRecipe.Machine machine, ResourceLocation folder, Reader reader) {
-        return readWithReport(machine, folder, reader, true);
+        return readWithReport(LegacySerializableRecipeHandlers.MANUAL_SOURCE, LegacySerializableRecipeHandlers.MANUAL_SOURCE,
+                machine, folder, reader, true);
     }
 
-    private static ImportReport readWithReport(GenericMachineRecipe.Machine machine, ResourceLocation folder, Reader reader,
-            boolean lenient) {
+    public static ImportReport readLenientWithReport(String legacyFileName, Reader reader) {
+        LegacySerializableRecipeHandlers.Handler serializableHandler =
+                LegacySerializableRecipeHandlers.requireSupportedGeneric(legacyFileName);
+        LegacyGenericRecipeHandlers.Handler handler = LegacyGenericRecipeHandlers.requireSupported(
+                serializableHandler.legacyFileName());
+        return readWithReport(serializableHandler.legacyFileName(), serializableHandler.legacyClassName(),
+                handler.requireMachine(), handler.outputFolder(), reader, true);
+    }
+
+    private static ImportReport readWithReport(String legacyFileName, String legacyClassName,
+            GenericMachineRecipe.Machine machine, ResourceLocation folder, Reader reader, boolean lenient) {
         JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
         JsonArray recipes = root.getAsJsonArray("recipes");
         if (recipes == null) {
@@ -76,7 +100,7 @@ public final class LegacyGenericRecipeImporter {
                 failures.add(new ImportFailure(sourceIndex, internalName, baseId, exception.getMessage()));
             }
         }
-        return new ImportReport(recipes.size(), List.copyOf(imported), List.copyOf(idRemaps),
+        return new ImportReport(legacyFileName, legacyClassName, machine, folder, recipes.size(), List.copyOf(imported), List.copyOf(idRemaps),
                 List.copyOf(duplicateInternalNames), Map.copyOf(poolKindCounts), List.copyOf(failures));
     }
 
@@ -132,6 +156,7 @@ public final class LegacyGenericRecipeImporter {
         if (nameWrapper != null) {
             modern.addProperty("name_wrapper", nameWrapper);
         }
+        GenericMachineRecipeExtraData.fromJson(legacy).writeToJson(modern);
         return modern;
     }
 
@@ -183,7 +208,8 @@ public final class LegacyGenericRecipeImporter {
         return candidate;
     }
 
-    public record ImportReport(int sourceRecipeCount, List<ImportedRecipe> recipes, List<IdRemap> idRemaps,
+    public record ImportReport(String legacyFileName, String legacyClassName, GenericMachineRecipe.Machine machine,
+                               ResourceLocation outputFolder, int sourceRecipeCount, List<ImportedRecipe> recipes, List<IdRemap> idRemaps,
                                List<DuplicateInternalName> duplicateInternalNames,
                                Map<LegacyBlueprintPools.Kind, Integer> poolKindCounts,
                                List<ImportFailure> failures) {

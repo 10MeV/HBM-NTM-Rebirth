@@ -10,23 +10,26 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class LegacyAuraParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
-    private final float baseScale;
 
     private LegacyAuraParticle(ClientLevel level, double x, double y, double z,
             double xSpeed, double ySpeed, double zSpeed, SpriteSet sprites,
             float red, float green, float blue) {
-        super(level, x, y, z, xSpeed, ySpeed, zSpeed);
+        super(level, x, y, z, 0.0D, 0.0D, 0.0D);
         this.sprites = sprites;
-        this.baseScale = 0.55F + random.nextFloat() * 0.35F;
+        this.setSize(0.02F, 0.02F);
+        this.quadSize *= this.random.nextFloat() * 0.6F + 0.5F;
+        this.xd *= 0.019999999552965164D;
+        this.yd *= 0.019999999552965164D;
+        this.zd *= 0.019999999552965164D;
         this.rCol = red;
         this.gCol = green;
         this.bCol = blue;
-        this.quadSize = baseScale;
-        this.lifetime = 35 + random.nextInt(20);
-        this.friction = 0.96F;
-        this.gravity = -0.01F;
+        this.lifetime = Math.max(1, (int) (20.0D / (this.random.nextDouble() * 0.8D + 0.2D)));
+        this.friction = 0.99F;
+        this.gravity = 0.0F;
         this.hasPhysics = false;
-        this.alpha = 0.55F;
+        this.alpha = 1.0F;
+        this.setParticleSpeed(xSpeed, ySpeed, zSpeed);
         this.setSpriteFromAge(sprites);
     }
 
@@ -34,9 +37,6 @@ public class LegacyAuraParticle extends TextureSheetParticle {
     public void tick() {
         super.tick();
         if (!this.removed) {
-            float progress = (float) this.age / (float) this.lifetime;
-            this.alpha = 0.55F * (1.0F - progress);
-            this.quadSize = baseScale * (1.0F + progress * 0.75F);
             this.setSpriteFromAge(sprites);
         }
     }

@@ -57,10 +57,43 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.coil_tungsten", "\u52a0\u70ed\u7ebf\u5708");
         add("item.hbm.coil_gold", "\u91d1\u7ebf\u5708");
         add("item.hbm.motor", "\u9a6c\u8fbe");
+        add("item.hbm.upgrade_template", "\u673a\u5668\u5347\u7ea7\u6a21\u677f");
+        add("item.hbm.blueprints", "\u84dd\u56fe");
+        add("item.hbm.upgrade_speed_1", "\u901f\u5ea6\u5347\u7ea7 I");
+        add("item.hbm.upgrade_speed_2", "\u901f\u5ea6\u5347\u7ea7 II");
+        add("item.hbm.upgrade_speed_3", "\u901f\u5ea6\u5347\u7ea7 III");
+        add("item.hbm.upgrade_power_1", "\u8282\u80fd\u5347\u7ea7 I");
+        add("item.hbm.upgrade_power_2", "\u8282\u80fd\u5347\u7ea7 II");
+        add("item.hbm.upgrade_power_3", "\u8282\u80fd\u5347\u7ea7 III");
+        add("item.hbm.upgrade_overdrive_1", "\u8d85\u9891\u5347\u7ea7 I");
+        add("item.hbm.upgrade_overdrive_2", "\u8d85\u9891\u5347\u7ea7 II");
+        add("item.hbm.upgrade_overdrive_3", "\u8d85\u9891\u5347\u7ea7 III");
+        add("item.hbm.template_folder", "\u673a\u5668\u6a21\u677f\u6587\u4ef6\u5939");
+        add("item.hbm.template_folder.desc", "\u673a\u5668\u6a21\u677f\uff1a\u7eb8\u5f20+\u67d3\u6599$\u953b\u6a21\uff1a\u7a7a\u767d\u953b\u6a21 $\u8b66\u62a5\u58f0\u8f68:\u7edd\u7f18\u4f53+\u94a2\u677f ");
         add("item.hbm.stamp_iron_plate", "\u677f\u6750\u6a21\u5177\uff08\u94c1\uff09");
         add("item.hbm.stamp_iron_flat", "\u5e73\u677f\u6a21\u5177\uff08\u94c1\uff09");
         add("item.hbm.stamp_iron_wire", "\u7ebf\u6750\u6a21\u5177\uff08\u94c1\uff09");
         add("item.hbm.stamp_iron_circuit", "\u7535\u8def\u6a21\u5177\uff08\u94c1\uff09");
+        add("item.hbm.stamp_357", ".357\u9a6c\u683c\u5357\u953b\u6a21");
+        add("item.hbm.stamp_44", ".44\u9a6c\u683c\u5357\u953b\u6a21");
+        add("item.hbm.stamp_50", "\u5927\u53e3\u5f84\u5f39\u58f3\u953b\u6a21");
+        add("item.hbm.stamp_9", "\u5c0f\u53e3\u5f84\u5f39\u58f3\u953b\u6a21");
+        add("item.hbm.stamp_book_printing1", "\u4e66\u9875\u953b\u6a21\u4e4b\u4e00");
+        add("item.hbm.stamp_book_printing2", "\u4e66\u9875\u953b\u6a21\u4e4b\u4e8c");
+        add("item.hbm.stamp_book_printing3", "\u4e66\u9875\u953b\u6a21\u4e4b\u4e09");
+        add("item.hbm.stamp_book_printing4", "\u4e66\u9875\u953b\u6a21\u4e4b\u56db");
+        add("item.hbm.stamp_book_printing5", "\u4e66\u9875\u953b\u6a21\u4e4b\u4e94");
+        add("item.hbm.stamp_book_printing6", "\u4e66\u9875\u953b\u6a21\u4e4b\u516d");
+        add("item.hbm.stamp_book_printing7", "\u4e66\u9875\u953b\u6a21\u4e4b\u4e03");
+        add("item.hbm.stamp_book_printing8", "\u4e66\u9875\u953b\u6a21\u4e4b\u516b");
+        add("item.hbm.page_of_page1", "\u4e66\u9875\u4e4b\u4e00");
+        add("item.hbm.page_of_page2", "\u4e66\u9875\u4e4b\u4e8c");
+        add("item.hbm.page_of_page3", "\u4e66\u9875\u4e4b\u4e09");
+        add("item.hbm.page_of_page4", "\u4e66\u9875\u4e4b\u56db");
+        add("item.hbm.page_of_page5", "\u4e66\u9875\u4e4b\u4e94");
+        add("item.hbm.page_of_page6", "\u4e66\u9875\u4e4b\u516d");
+        add("item.hbm.page_of_page7", "\u4e66\u9875\u4e4b\u4e03");
+        add("item.hbm.page_of_page8", "\u4e66\u9875\u4e4b\u516b");
         add("item.hbm.geiger_counter", "\u76d6\u9769\u8ba1\u6570\u5668");
         add("item.hbm.digamma_diagnostic", "\u73a9\u5bb6F-\u8fea\u4f3d\u9a6c\u8f90\u5c04\u81ea\u68c0\u5668");
         add("item.hbm.radaway", "\u6d88\u8f90\u5b81");
@@ -68,11 +101,23 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.radaway_flush", "\u51b2\u5237\u578b\u6d88\u8f90\u5b81");
         add("item.hbm.radx", "\u9632\u8f90\u5c04\u836f");
         add("item.hbm.radx.desc", "\u57283\u5206\u949f\u5185\u589e\u52a00.2\uff0837%\uff09\u7684\u6297\u8f90\u5c04\u80fd\u529b");
+        add("info.asbestos", "\u6211\u7684\u80ba\u5728\u707c\u70e7\u3002");
+        add("info.coaldust", "\u8fd9\u91cc\u5f88\u96be\u547c\u5438\u3002");
         add("item.hbm.containment_box", "\u94c5\u886c\u76d2");
         add("item.hbm.plastic_bag", "\u5851\u6599\u888b");
         add("item.hbm.toolbox", "\u5de5\u5177\u7bb1");
         add("item.hbm.toolbox.desc.swap", "\u53f3\u952e\u5de5\u5177\u7bb1\u53ef\u5c06\u70ed\u952e\u680f\u5b58\u5165/\u53d6\u51fa\u5de5\u5177\u7bb1\u3002");
         add("item.hbm.toolbox.desc.open", "\u6f5c\u884c\u53f3\u952e\u6253\u5f00\u5de5\u5177\u7bb1\u3002");
+        add("item.hbm.settings_tool", "\u8bbe\u7f6e\u5de5\u5177");
+        add("item.hbm.settings_tool.desc1", "\u53ef\u590d\u5236\u673a\u5668\u7684\u8bbe\u7f6e\uff08\u8fc7\u6ee4\u5668\u3001\u6d41\u4f53 ID \u7b49\uff09");
+        add("item.hbm.settings_tool.desc2", "\u6f5c\u884c\u53f3\u952e\u590d\u5236\uff0c\u53f3\u952e\u7c98\u8d34");
+        add("item.hbm.settings_tool.desc3", "Ctrl \u70b9\u51fb\u7ba1\u9053\u53ef\u5c06\u8bbe\u7f6e\u7c98\u8d34\u5230\u591a\u6839\u7ba1\u9053");
+        add("item.hbm.settings_tool.none", "\u65e0");
+        add("item.hbm.settings_tool.unknown", "\u672a\u77e5");
+        add("item.hbm.settings_tool.copied", "\u5df2\u590d\u5236 %s \u7684\u8bbe\u7f6e");
+        add("item.hbm.settings_tool.copy_failed", "\u590d\u5236\u5931\u8d25");
+        add("item.hbm.settings_tool.pasted", "\u5df2\u7c98\u8d34\u8bbe\u7f6e");
+        add("item.hbm.settings_tool.paste_failed", "\u7c98\u8d34\u5931\u8d25");
         add("item.hbm.conveyor_wand", "\u8f93\u9001\u5e26");
         add("item.hbm.conveyor_wand.regular", "\u8f93\u9001\u5e26");
         add("item.hbm.conveyor_wand.express", "\u5feb\u901f\u8f93\u9001\u5e26");
@@ -183,12 +228,22 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("tooltip.hbm.damage.exact.mudpoisoning", "\u6bd2\u6ce5\u4e2d\u6bd2");
         add("block.hbm.machine_press", "\u706b\u529b\u953b\u538b\u673a");
         add("subtitles.hbm.block.press_operate", "\u706b\u529b\u953b\u538b\u673a\u8fd0\u4f5c");
+        add("subtitles.hbm.block.assembler_operate", "\u88c5\u914d\u673a\u8fd0\u8f6c");
+        add("subtitles.hbm.block.assembler_strike", "\u88c5\u914d\u673a\u51b2\u51fb");
+        add("subtitles.hbm.block.assembler_start", "\u88c5\u914d\u673a\u542f\u52a8");
+        add("subtitles.hbm.block.assembler_stop", "\u88c5\u914d\u673a\u505c\u6b62");
+        add("subtitles.hbm.block.assembler_cut", "\u88c5\u914d\u673a\u5207\u5272");
+        add("subtitles.hbm.block.chemplant_operate", "\u5316\u5de5\u5382\u8fd0\u8f6c");
+        add("subtitles.hbm.block.chemical_plant", "\u5316\u5de5\u5382\u53cd\u5e94");
         add("subtitles.hbm.block.debris", "\u788e\u5757\u6eda\u843d");
         add("subtitles.hbm.tool.geiger", "\u76d6\u9769\u8ba1\u6570\u5668\u54d2\u54d2\u4f5c\u54cd");
         add("subtitles.hbm.tool.tech_boop", "\u8bbe\u5907\u63d0\u793a\u97f3");
         add("subtitles.hbm.tool.tech_bleep", "\u8d77\u7206\u5668\u63d0\u793a\u97f3");
         add("subtitles.hbm.tool.radaway", "\u6d88\u8f90\u5b81\u6ce8\u5c04");
+        add("subtitles.hbm.player.cough", "\u73a9\u5bb6\u54b3\u55fd");
         add("subtitles.hbm.entity.ufo_blast", "\u80fd\u91cf\u653e\u7535");
+        add("subtitles.hbm.entity.chopper", "\u76f4\u5347\u673a\u8f70\u9e23");
+        add("subtitles.hbm.alarm.siren", "\u8b66\u62a5\u9e23\u54cd");
         add("item.hbm.detonator", "\u8d77\u7206\u5668");
         add("item.hbm.singularity", "\u5947\u70b9");
         add("item.hbm.singularity_counter_resonant", "\u53ef\u63a7\u53cd\u8c10\u632f\u5947\u70b9");
@@ -238,6 +293,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_industrial_turbine", "\u5de5\u4e1a\u84b8\u6c7d\u8f6e\u673a");
         add("block.hbm.decon", "\u6d88\u6c61\u5668");
         add("block.hbm.red_cable", "\u7d2b\u94dc\u7535\u7ebf");
+        add("block.hbm.red_cable_gauge", "\u529f\u7387\u8ba1");
         add("block.hbm.fluid_duct_neo", "\u6d41\u4f53\u7ba1\u9053");
         add("item.hbm.fluid_duct", "\u6d41\u4f53\u7ba1\u9053:");
         add("block.hbm.fluid_duct_box", "\u901a\u7528\u6d41\u4f53\u7ba1\u9053\uff08\u65b9\u5f62\uff09");
@@ -273,7 +329,15 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_compressor", "\u538b\u7f29\u673a");
         add("block.hbm.machine_bigasstank", "\u5927\u578b\u5de5\u4e1a\u50a8\u7f50");
         add("block.hbm.machine_fluidtank", "\u6d41\u4f53\u50a8\u7f50");
+        add("block.hbm.barrel_plastic", "\u5b89\u5168\u6876");
+        add("block.hbm.barrel_corroded", "\u88ab\u8150\u8680\u7684\u6876");
+        add("block.hbm.barrel_iron", "\u94c1\u6876");
+        add("block.hbm.barrel_steel", "\u94a2\u6876");
+        add("block.hbm.barrel_tcalloy", "\u953d-\u94a2\u5408\u91d1\u6876");
+        add("block.hbm.barrel_antimatter", "\u78c1\u7ea6\u675f\u53cd\u7269\u8d28\u5bb9\u5668");
         add("block.hbm.machine_pumpjack", "\u77f3\u6cb9\u94bb\u673a");
+        add("block.hbm.machine_well", "\u94bb\u6cb9\u5854");
+        add("block.hbm.machine_fracking_tower", "\u6db2\u538b\u7834\u88c2\u5854");
         add("block.hbm.machine_centrifuge", "\u79bb\u5fc3\u673a");
         add("block.hbm.machine_gascent", "\u6c14\u4f53\u79bb\u5fc3\u673a");
         add("block.hbm.machine_ore_slopper", "\u77ff\u77f3\u7ffb\u6599\u673a");
@@ -316,6 +380,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("container.hbm.battery.priority.recommended", "\u63a8\u8350\uff1a\u4f4e");
         HbmFluidLangEntries.addChinese(this::add);
         add("container.fluidtank", "\u6d41\u4f53\u50a8\u7f50");
+        add("container.barrel", "\u6d41\u4f53\u6876");
         add("container.bigAssTank", "\u5927\u578b\u5de5\u4e1a\u50a8\u7f50");
         add("container.gasFlare", "\u6c14\u4f53\u706b\u70ac");
         add("container.fluidtank.mode", "\u6a21\u5f0f");
@@ -325,6 +390,21 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("container.fluidtank.mode.none", "\u505c\u7528");
         add("container.fluidtank.damaged", "\u635f\u574f");
         add("container.fluidtank.burning", "\u71c3\u70e7");
+        add("barrel.tooltip.capacity.6000", "\u5bb9\u91cf\uff1a6,000mB");
+        add("barrel.tooltip.capacity.8000", "\u5bb9\u91cf\uff1a8,000mB");
+        add("barrel.tooltip.capacity.12000", "\u5bb9\u91cf\uff1a12,000mB");
+        add("barrel.tooltip.capacity.16000", "\u5bb9\u91cf\uff1a16,000mB");
+        add("barrel.tooltip.capacity.24000", "\u5bb9\u91cf\uff1a24,000mB");
+        add("barrel.tooltip.no_hot", "\u4e0d\u80fd\u50a8\u5b58\u9ad8\u6e29\u6d41\u4f53");
+        add("barrel.tooltip.no_corrosive", "\u4e0d\u80fd\u50a8\u5b58\u8150\u8680\u6027\u6d41\u4f53");
+        add("barrel.tooltip.no_antimatter", "\u4e0d\u80fd\u50a8\u5b58\u53cd\u7269\u8d28");
+        add("barrel.tooltip.can_hot", "\u53ef\u50a8\u5b58\u9ad8\u6e29\u6d41\u4f53");
+        add("barrel.tooltip.can_corrosive", "\u53ef\u50a8\u5b58\u8150\u8680\u6027\u6d41\u4f53");
+        add("barrel.tooltip.can_high_corrosive", "\u53ef\u50a8\u5b58\u5f3a\u8150\u8680\u6027\u6d41\u4f53");
+        add("barrel.tooltip.can_antimatter", "\u53ef\u50a8\u5b58\u53cd\u7269\u8d28");
+        add("barrel.tooltip.no_corrosive_properly", "\u4e0d\u80fd\u59a5\u5584\u50a8\u5b58\u8150\u8680\u6027\u6d41\u4f53");
+        add("barrel.tooltip.no_high_corrosive_properly", "\u4e0d\u80fd\u59a5\u5584\u50a8\u5b58\u5f3a\u8150\u8680\u6027\u6d41\u4f53");
+        add("barrel.tooltip.leaky", "\u4f1a\u6cc4\u6f0f");
         add("block.hbm.gas_meltdown", "\u7194\u6bc1\u6c14\u4f53");
         add("block.hbm.gas_monoxide", "\u4e00\u6c27\u5316\u78b3");
         add("block.hbm.gas_asbestos", "\u77f3\u68c9\u7c89\u5c18");
@@ -452,6 +532,20 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.item_expensive_plastic", "\u5851\u6599\u677f");
         add("item.hbm.item_expensive_gold_dust", "\u8d85\u7cbe\u7ec6\u91d1\u7c89");
         add("item.hbm.item_expensive_degenerate_matter", "\u7b80\u5e76\u6001\u7269\u8d28");
+        add("item.hbm.ore_byproduct_b_iron", "\u94c1\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_copper", "\u94dc\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_lithium", "\u9502\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_silicon", "\u7845\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_lead", "\u94c5\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_titanium", "\u949b\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_aluminium", "\u94dd\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_sulfur", "\u786b\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_calcium", "\u9499\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_bismuth", "\u94cb\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_radium", "\u956d\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_technetium", "\u951d\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_polonium", "\u948b\u6676\u4f53\u788e\u7247");
+        add("item.hbm.ore_byproduct_b_uranium", "\u94c0\u6676\u4f53\u788e\u7247");
         add("item.hbm.casing_small", "\u5c0f\u53e3\u5f84\u94dc\u5f39\u58f3");
         add("item.hbm.casing_large", "\u5927\u53e3\u5f84\u94dc\u5f39\u58f3");
         add("item.hbm.casing_small_steel", "\u5c0f\u53e3\u5f84\u94a2\u5f39\u58f3");
@@ -459,10 +553,22 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.casing_shotshell", "\u9ed1\u706b\u836f\u9730\u5f39\u5f39\u58f3");
         add("item.hbm.casing_buckshot", "\u5851\u6599\u9730\u5f39\u5f39\u58f3");
         add("item.hbm.casing_buckshot_advanced", "\u9ad8\u7ea7\u9730\u5f39\u5f39\u58f3");
+        add("item.hbm.ingot_weaponsteel", "\u6b66\u5668\u7ea7\u94a2\u952d");
+        add("item.hbm.plate_weaponsteel", "\u6b66\u5668\u7ea7\u94a2\u677f");
+        add("item.hbm.ingot_dura_steel", "\u9ad8\u901f\u94a2\u952d");
+        add("item.hbm.plate_schrabidium", "Sa326\u677f");
+        add("item.hbm.plate_combine_steel", "CMB\u94a2\u677f");
+        add("item.hbm.plate_saturnite", "\u571f\u661f\u677f");
         add("item.hbm.fuel_additive_antiknock", "\u56db\u4e59\u57fa\u94c5\u6297\u7206\u5242");
         add("item.hbm.fuel_additive_deicer", "\u9664\u51b0\u5242");
         add("item.hbm.catalytic_converter", "\u50ac\u5316\u8f6c\u5316\u5668");
         add("item.hbm.powder_lignite", "\u8910\u7164\u7c89");
+        add("item.hbm.powder_quartz", "\u77f3\u82f1\u7c89");
+        add("item.hbm.powder_lapis", "\u9752\u91d1\u77f3\u7c89");
+        add("item.hbm.powder_diamond", "\u94bb\u77f3\u7c89");
+        add("item.hbm.powder_emerald", "\u7eff\u5b9d\u77f3\u7c89");
+        add("item.hbm.powder_sawdust", "\u952f\u672b");
+        add("item.hbm.ball_resin", "\u4e73\u80f6");
         add("item.hbm.powder_limestone", "\u77f3\u7070\u77f3\u7c89");
         add("item.hbm.circuit_vacuum_tube", "\u771f\u7a7a\u7ba1");
         add("item.hbm.circuit_capacitor", "\u7535\u5bb9\u5668");
@@ -561,6 +667,11 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         }
         return switch (id) {
             case "powder_tektite" -> true;
+            case "ingot_weaponsteel", "plate_weaponsteel",
+                 "ingot_dura_steel",
+                 "plate_schrabidium",
+                 "plate_combine_steel",
+                 "plate_saturnite" -> true;
             case "powder_coal", "powder_coal_tiny" -> true;
             case "coke_coal",
                  "coke_lignite",
@@ -606,6 +717,20 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
                  "item_expensive_plastic",
                  "item_expensive_gold_dust",
                  "item_expensive_degenerate_matter",
+                 "ore_byproduct_b_iron",
+                 "ore_byproduct_b_copper",
+                 "ore_byproduct_b_lithium",
+                 "ore_byproduct_b_silicon",
+                 "ore_byproduct_b_lead",
+                 "ore_byproduct_b_titanium",
+                 "ore_byproduct_b_aluminium",
+                 "ore_byproduct_b_sulfur",
+                 "ore_byproduct_b_calcium",
+                 "ore_byproduct_b_bismuth",
+                 "ore_byproduct_b_radium",
+                 "ore_byproduct_b_technetium",
+                 "ore_byproduct_b_polonium",
+                 "ore_byproduct_b_uranium",
                  "casing_small",
                  "casing_large",
                  "casing_small_steel",
@@ -614,6 +739,12 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
                  "casing_buckshot",
                  "casing_buckshot_advanced",
                  "powder_lignite",
+                 "powder_quartz",
+                 "powder_lapis",
+                 "powder_diamond",
+                 "powder_emerald",
+                 "powder_sawdust",
+                 "ball_resin",
                  "powder_limestone" -> true;
             default -> false;
         };

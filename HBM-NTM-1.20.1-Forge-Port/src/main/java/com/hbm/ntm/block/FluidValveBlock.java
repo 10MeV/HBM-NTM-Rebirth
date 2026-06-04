@@ -10,12 +10,7 @@ import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModSounds;
-import java.util.ArrayDeque;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -168,50 +163,11 @@ public class FluidValveBlock extends HbmFluidNodeBlock {
         }
 
         if (toolCtrl || player.isShiftKeyDown()) {
-            changeConnectedPipeTypes(level, pos, pipe.getFluidType(), target, 64);
+            FluidPipeBlockEntity.changeConnectedPipeTypes(level, pos, pipe.getFluidType(), target, 64);
         } else {
             pipe.setFluidType(target);
         }
         return InteractionResult.CONSUME;
-    }
-
-    private static int changeConnectedPipeTypes(Level level, BlockPos start, FluidType previous, FluidType target,
-            int maxDistance) {
-        if (previous == target) {
-            return 0;
-        }
-
-        Queue<PipeVisit> queue = new ArrayDeque<>();
-        Set<BlockPos> visited = new HashSet<>();
-        queue.add(new PipeVisit(start.immutable(), 0));
-        int changed = 0;
-
-        while (!queue.isEmpty()) {
-            PipeVisit visit = queue.remove();
-            if (!visited.add(visit.pos())) {
-                continue;
-            }
-            if (!(level.getBlockEntity(visit.pos()) instanceof FluidPipeBlockEntity pipe)
-                    || pipe.getFluidType() != previous) {
-                continue;
-            }
-
-            pipe.setFluidType(target);
-            changed++;
-
-            if (visit.distance() >= maxDistance) {
-                continue;
-            }
-            for (Direction direction : Direction.values()) {
-                queue.add(new PipeVisit(visit.pos().relative(direction), visit.distance() + 1));
-            }
-            if (pipe instanceof FluidPipeAnchorBlockEntity anchor) {
-                for (BlockPos remote : anchor.getRemoteConnections()) {
-                    queue.add(new PipeVisit(remote, visit.distance() + 1));
-                }
-            }
-        }
-        return changed;
     }
 
     @Override
@@ -226,6 +182,4 @@ public class FluidValveBlock extends HbmFluidNodeBlock {
         COUNTER
     }
 
-    private record PipeVisit(BlockPos pos, int distance) {
-    }
 }

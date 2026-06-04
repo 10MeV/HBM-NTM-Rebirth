@@ -45,6 +45,8 @@ public final class ModParticleTypes {
             PARTICLE_TYPES.register("flamethrower_black", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> BLACK_POWDER_SPARK =
             PARTICLE_TYPES.register("black_powder_spark", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> LARGE_EXPLODE =
+            PARTICLE_TYPES.register("large_explode", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> EXPLOSION_SMALL =
             PARTICLE_TYPES.register("explosion_small", () -> new SimpleParticleType(false));
     public static final RegistryObject<SimpleParticleType> BLACK_POWDER_SMOKE =

@@ -1,0 +1,8 @@
+{
+  "values": [
+    "hbm:gasoline",
+    "hbm:gasoline_flowing",
+    "hbm:gasoline_leaded",
+    "hbm:gasoline_leaded_flowing"
+  ]
+}

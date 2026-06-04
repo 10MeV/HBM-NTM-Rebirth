@@ -38,6 +38,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
     private final List<String> pools;
     private final ItemStack icon;
     private final boolean customLocalization;
+    private final GenericMachineRecipeExtraData extraData;
     @Nullable
     private final String autoSwitchGroup;
     @Nullable
@@ -47,7 +48,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
             List<HbmIngredient> itemInputs, List<HbmFluidStack> fluidInputs,
             List<HbmItemOutput> itemOutputs, List<HbmFluidStack> fluidOutputs,
             List<String> pools, ItemStack icon, boolean customLocalization,
-            @Nullable String autoSwitchGroup, @Nullable String nameWrapper) {
+            GenericMachineRecipeExtraData extraData, @Nullable String autoSwitchGroup, @Nullable String nameWrapper) {
         this.id = id;
         this.machine = machine;
         this.internalName = internalName.isBlank() ? id.toString() : internalName;
@@ -60,6 +61,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
         this.pools = List.copyOf(pools);
         this.icon = icon == null ? ItemStack.EMPTY : icon.copy();
         this.customLocalization = customLocalization;
+        this.extraData = extraData == null ? GenericMachineRecipeExtraData.EMPTY : extraData;
         this.autoSwitchGroup = autoSwitchGroup;
         this.nameWrapper = nameWrapper;
     }
@@ -118,6 +120,10 @@ public class GenericMachineRecipe implements Recipe<Container> {
         return pools;
     }
 
+    public GenericMachineRecipeExtraData getExtraData() {
+        return extraData;
+    }
+
     public ItemStack getIcon() {
         if (!icon.isEmpty()) {
             return icon.copy();
@@ -153,6 +159,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
             lines.add(Component.translatableWithFallback("gui.recipe.consumption", "Consumption")
                     .append(Component.literal(": " + power + "HE/t")).withStyle(ChatFormatting.RED));
         }
+        addExtraDisplayLines(lines);
 
         lines.add(Component.translatableWithFallback("gui.recipe.input", "Input")
                 .append(Component.literal(":")).withStyle(ChatFormatting.BOLD));
@@ -185,6 +192,12 @@ public class GenericMachineRecipe implements Recipe<Container> {
         if (autoSwitchGroup != null) {
             appendSearch(builder, autoSwitchGroup);
         }
+        extraData.plasmaForge().ifPresent(plasma -> appendSearch(builder, Long.toString(plasma.ignitionTemp())));
+        extraData.fusion().ifPresent(fusion -> {
+            appendSearch(builder, Long.toString(fusion.ignitionTemp()));
+            appendSearch(builder, Long.toString(fusion.outputTemp()));
+            appendSearch(builder, Double.toString(fusion.outputFlux()));
+        });
         for (HbmIngredient input : itemInputs) {
             appendSearch(builder, input.legacyOreName());
             input.displayStacks().forEach(stack -> appendSearch(builder, stack.getHoverName().getString()));
@@ -206,6 +219,24 @@ public class GenericMachineRecipe implements Recipe<Container> {
 
     public boolean hasCustomLocalization() {
         return customLocalization;
+    }
+
+    private void addExtraDisplayLines(List<Component> lines) {
+        extraData.plasmaForge().ifPresent(plasma -> lines.add(
+                Component.translatableWithFallback("gui.recipe.plasmaIn", "Plasma input")
+                        .append(Component.literal(": " + plasma.ignitionTemp() + "TU/t"))
+                        .withStyle(ChatFormatting.LIGHT_PURPLE)));
+        extraData.fusion().ifPresent(fusion -> {
+            lines.add(Component.translatableWithFallback("gui.recipe.fusionIn", "Fusion input")
+                    .append(Component.literal(": " + fusion.ignitionTemp() + "KyU/t"))
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+            lines.add(Component.translatableWithFallback("gui.recipe.fusionOut", "Fusion output")
+                    .append(Component.literal(": " + fusion.outputTemp() + "TU/t"))
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+            lines.add(Component.translatableWithFallback("gui.recipe.fusionFlux", "Fusion flux")
+                    .append(Component.literal(": " + Math.floor(fusion.outputFlux() * 10.0D) / 10.0D + " flux/t"))
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+        });
     }
 
     @Nullable
@@ -250,6 +281,8 @@ public class GenericMachineRecipe implements Recipe<Container> {
         return switch (machine) {
             case ASSEMBLY_MACHINE -> new ItemStack(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get());
             case CHEMICAL_PLANT -> new ItemStack(ModBlocks.MACHINE_CHEMICAL_PLANT.get());
+            case PUREX -> new ItemStack(ModBlocks.MACHINE_PUREX.get());
+            case PRECASS -> new ItemStack(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get());
         };
     }
 
@@ -275,7 +308,9 @@ public class GenericMachineRecipe implements Recipe<Container> {
 
     public enum Machine {
         CHEMICAL_PLANT(3, 3, 3, 3),
-        ASSEMBLY_MACHINE(12, 1, 1, 1);
+        ASSEMBLY_MACHINE(12, 1, 1, 1),
+        PUREX(3, 3, 6, 1),
+        PRECASS(9, 1, 9, 1);
 
         private final int inputItemLimit;
         private final int inputFluidLimit;
@@ -309,6 +344,8 @@ public class GenericMachineRecipe implements Recipe<Container> {
             return switch (this) {
                 case CHEMICAL_PLANT -> ModRecipes.CHEMICAL_PLANT.serializer().getId();
                 case ASSEMBLY_MACHINE -> ModRecipes.ASSEMBLY_MACHINE.serializer().getId();
+                case PUREX -> ModRecipes.PUREX.serializer().getId();
+                case PRECASS -> ModRecipes.PRECASS.serializer().getId();
             };
         }
 
@@ -323,6 +360,8 @@ public class GenericMachineRecipe implements Recipe<Container> {
             return switch (this) {
                 case CHEMICAL_PLANT -> ModRecipes.CHEMICAL_PLANT.type().get();
                 case ASSEMBLY_MACHINE -> ModRecipes.ASSEMBLY_MACHINE.type().get();
+                case PUREX -> ModRecipes.PUREX.type().get();
+                case PRECASS -> ModRecipes.PRECASS.type().get();
             };
         }
 
@@ -330,10 +369,12 @@ public class GenericMachineRecipe implements Recipe<Container> {
             return switch (this) {
                 case CHEMICAL_PLANT -> ModRecipes.CHEMICAL_PLANT.serializer().get();
                 case ASSEMBLY_MACHINE -> ModRecipes.ASSEMBLY_MACHINE.serializer().get();
+                case PUREX -> ModRecipes.PUREX.serializer().get();
+                case PRECASS -> ModRecipes.PRECASS.serializer().get();
             };
         }
 
-    private static void validateLimit(ResourceLocation id, String label, int actual, int limit) {
+        private static void validateLimit(ResourceLocation id, String label, int actual, int limit) {
             if (limit >= 0 && actual > limit) {
                 throw new JsonSyntaxException("HBM machine recipe " + id + " has too many " + label
                         + ": " + actual + " > " + limit);
@@ -399,10 +440,11 @@ public class GenericMachineRecipe implements Recipe<Container> {
             boolean customLocalization = LegacyGenericRecipeFormat.readCustomLocalization(json);
             String autoSwitchGroup = LegacyGenericRecipeFormat.readAutoSwitchGroup(json);
             String nameWrapper = LegacyGenericRecipeFormat.readNameWrapper(json);
+            GenericMachineRecipeExtraData extraData = GenericMachineRecipeExtraData.fromJson(json);
             machine.validateRecipeLimits(id, itemInputs.size(), fluidInputs.size(), itemOutputs.size(), fluidOutputs.size());
             validateItemInputStackLimits(id, itemInputs);
             return new GenericMachineRecipe(id, machine, internalName, duration, power, itemInputs, fluidInputs, itemOutputs, fluidOutputs,
-                    pools, icon, customLocalization, autoSwitchGroup, nameWrapper);
+                    pools, icon, customLocalization, extraData, autoSwitchGroup, nameWrapper);
         }
 
         private static void validateItemInputStackLimits(ResourceLocation id, List<HbmIngredient> itemInputs) {
@@ -428,10 +470,11 @@ public class GenericMachineRecipe implements Recipe<Container> {
             List<String> pools = buffer.readList(FriendlyByteBuf::readUtf);
             ItemStack icon = buffer.readItem();
             boolean customLocalization = buffer.readBoolean();
+            GenericMachineRecipeExtraData extraData = GenericMachineRecipeExtraData.fromNetwork(buffer);
             String autoSwitchGroup = buffer.readBoolean() ? buffer.readUtf() : null;
             String nameWrapper = buffer.readBoolean() ? buffer.readUtf() : null;
             return new GenericMachineRecipe(id, machine, internalName, duration, power, itemInputs, fluidInputs, itemOutputs, fluidOutputs,
-                    pools, icon, customLocalization, autoSwitchGroup, nameWrapper);
+                    pools, icon, customLocalization, extraData, autoSwitchGroup, nameWrapper);
         }
 
         @Override
@@ -446,6 +489,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
             buffer.writeCollection(recipe.pools, FriendlyByteBuf::writeUtf);
             buffer.writeItem(recipe.icon);
             buffer.writeBoolean(recipe.customLocalization);
+            recipe.extraData.toNetwork(buffer);
             buffer.writeBoolean(recipe.autoSwitchGroup != null);
             if (recipe.autoSwitchGroup != null) {
                 buffer.writeUtf(recipe.autoSwitchGroup);

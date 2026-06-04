@@ -8,6 +8,55 @@
       }
     ]
   },
+  "block.assembler_operate": {
+    "subtitle": "subtitles.hbm.block.assembler_operate",
+    "sounds": [
+      {
+        "name": "hbm:block/assemblerOperate",
+        "stream": true
+      }
+    ]
+  },
+  "block.assembler_strike": {
+    "subtitle": "subtitles.hbm.block.assembler_strike",
+    "sounds": [
+      "hbm:block/assemblerStrike1",
+      "hbm:block/assemblerStrike2"
+    ]
+  },
+  "block.assembler_start": {
+    "subtitle": "subtitles.hbm.block.assembler_start",
+    "sounds": [
+      "hbm:block/assemblerStart"
+    ]
+  },
+  "block.assembler_stop": {
+    "subtitle": "subtitles.hbm.block.assembler_stop",
+    "sounds": [
+      "hbm:block/assemblerStop"
+    ]
+  },
+  "block.assembler_cut": {
+    "subtitle": "subtitles.hbm.block.assembler_cut",
+    "sounds": [
+      "hbm:block/assemblerCut"
+    ]
+  },
+  "block.chemplant_operate": {
+    "subtitle": "subtitles.hbm.block.chemplant_operate",
+    "sounds": [
+      {
+        "name": "hbm:block/chemplantOperate",
+        "stream": true
+      }
+    ]
+  },
+  "block.chemical_plant": {
+    "subtitle": "subtitles.hbm.block.chemical_plant",
+    "sounds": [
+      "hbm:block/chemicalPlant"
+    ]
+  },
   "block.pipe_placed": {
     "subtitle": "subtitles.hbm.block.pipe_placed",
     "sounds": [
@@ -88,6 +137,15 @@
       "hbm:tool/radaway"
     ]
   },
+  "player.cough": {
+    "subtitle": "subtitles.hbm.player.cough",
+    "sounds": [
+      "hbm:player/cough1",
+      "hbm:player/cough2",
+      "hbm:player/cough3",
+      "hbm:player/cough4"
+    ]
+  },
   "player.vomit": {
     "subtitle": "subtitles.hbm.player.vomit",
     "sounds": [
@@ -100,6 +158,60 @@
       {
         "name": "hbm:entity/ufo_blast",
         "stream": false
+      }
+    ]
+  },
+  "entity.chopper_flying_loop": {
+    "subtitle": "subtitles.hbm.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm:entity/chopper_flying_loop",
+        "stream": true
+      }
+    ]
+  },
+  "entity.chopper_crashing_loop": {
+    "subtitle": "subtitles.hbm.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm:entity/chopper_crashing_loop",
+        "stream": true
+      }
+    ]
+  },
+  "entity.chopper_mine_loop": {
+    "subtitle": "subtitles.hbm.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm:entity/chopper_mine_loop",
+        "stream": false
+      }
+    ]
+  },
+  "entity.chopper_drop": {
+    "subtitle": "subtitles.hbm.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm:entity/chopper_drop",
+        "stream": false
+      }
+    ]
+  },
+  "entity.chopper_charge": {
+    "subtitle": "subtitles.hbm.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm:entity/chopper_charge",
+        "stream": false
+      }
+    ]
+  },
+  "entity.chopper_damage": {
+    "subtitle": "subtitles.hbm.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm:entity/chopper_damage",
+        "stream": true
       }
     ]
   },
@@ -227,6 +339,186 @@
       "hbm:weapon/casing/large1",
       "hbm:weapon/casing/large2",
       "hbm:weapon/casing/large3"
+    ]
+  },
+  "alarm.hatch": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/hatch",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.autopilot": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/autopilot",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.ams_siren": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/ams_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.blast_door_alarm": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/blast_door_alarm",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.apc_loop": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/apc_loop",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.klaxon": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/klaxon",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.fo_klaxon_a": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/fo_klaxon_a",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.fo_klaxon_b": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/fo_klaxon_b",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.regular_siren": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/regular_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.classic": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/classic_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.bank_alarm": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/bank_alarm",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.beep_siren": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/beep_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.container_alarm": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/container_alarm",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.sweep_siren": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/sweep_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.strider_siren": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/strider_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.air_raid": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/air_raid",
+        "stream": true
+      }
+    ]
+  },
+  "alarm.nostromo_siren": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/nostromo_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.eas_alarm": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/eas_alarm",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.apc_pass": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/apc_pass",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.razortrain_horn": {
+    "subtitle": "subtitles.hbm.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm:alarm/razortrain_horn",
+        "stream": false
+      }
     ]
   }
 }

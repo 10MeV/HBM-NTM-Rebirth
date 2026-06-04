@@ -264,6 +264,8 @@
 - smoke 改为使用项目 `HbmSmokeParticle`，恢复前向速度与 `10..19` tick 短寿命。
 - `spawnEntitySweat` 改为旧包围盒随机点和 `150..199` tick 留存。
 - `ParticleUtil` 增加 `spawnVomit` / `spawnSweat` helper，作为 common 侧旧 NBT 协议入口。
+- 2026-06-04 re-check: modern `TerrainParticle` construction can randomize or dilute the constructor velocity, so vomit particles now call `setParticleSpeed` after creation with the exact old look-vector formula. This fixes the visible center-burst behavior and makes normal/blood/smoke actually travel forward from the entity head.
+- 2026-06-04 re-check 2: old client code adds the extra `+1` Y offset for every `EntityPlayer`, not only the local player. Modern `spawnEntityVomit` now applies that offset to all `Player` entities so remote players also vomit from the old player head/eye origin.
 
 边界：
 
@@ -1532,3 +1534,358 @@
 
 - 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
 - 结果：通过。
+
+## 2026-06-04 第三十八批推进：旧 `haze` / `plasmablast` / `foam` 视觉合同收紧
+
+- 1.7.10 对照：
+  - `ParticleHaze`：
+    - 默认构造寿命 `600+rand(100)`，`particleScale=10F`。
+    - 每 tick 速度乘 `0.9599999785D`；落地时额外 `motionX/Z *= 0.699999988D`。
+    - 每 tick 在粒子周围 `15x15` 范围取地表高度，生成一个 vanilla `lava` 粒子。
+    - 渲染使用 `textures/particle/haze.png`，alpha 为 `sin(age * PI / 400F) * 0.25F` 后再乘 `0.1F`，颜色固定白色。
+    - 每帧使用 `Random(50)` 生成 25 张雾片；循环内先 `GL11.glTranslatef(dX,dY,dZ)`，所以雾片位移会累积。
+  - `ParticlePlasmaBlast`：
+    - 使用 `textures/particle/shockwave.png`，寿命 20。
+    - `rotationYaw` / `rotationPitch` 来自 packet，渲染时按 yaw 再 pitch 旋转水平 quad。
+    - alpha 为 `1 - (age+interp)/maxAge`，scale 为 `(1 - e^(-(age+interp)*0.125)) * particleScale`。
+    - 旧渲染禁用 cull、关闭深度写入、加色混合并临时关闭 fog。
+  - `ParticleFoam`：
+    - 寿命 `60+rand(60)`，`particleGravity=0.005+rand(0.015)`。
+    - 默认 `baseScale=1.0F`、`maxScale=1.5F`、`trailLength=15`、`buoyancy=0.05F`、`jitter=0.15F`、`drag=0.96F`。
+    - `foamSplash` 旧入口在圆环上生成 `ParticleFoam` 后把 `maxAge=50` 且 `motionX/Y/Z=0`。
+    - 每 tick 记录当前位置到 trail；生命周期分三段：
+      - `<30%` burst：先强浮力，后按比例减弱，scale 从 base 到 max。
+      - `30%-60%` peak：`motionY *= 0.98`，scale 固定 max。
+      - `>60%` settle：受 gravity 下落，scale 衰减到 max 的 30%。
+    - alpha 为 `0.8F * (1 - phaseRatio^2)`；每 tick 加水平 jitter，再统一乘 drag；落地或进网后消失。
+    - 渲染当前点和 trail 点，每个点按阶段生成 8/6/4 个随机白色 bubble，trail alpha 再乘 `0.7` 衰减。
+- 本批现代迁移：
+  - `HazeParticle`：
+    - 颜色从黑色修回旧版白色低透明热雾。
+    - tick 补回落地时水平速度额外衰减。
+    - 25 张雾片的偏移改为 `cumulativeX/Y/Z` 累积，恢复旧 `glTranslatef` 矩阵行为。
+  - `PlasmaBlastParticle`：
+    - 增加 `shouldCull=false`，避免大 shockwave quad 被粒子包围盒提前裁剪，贴近旧即时 GL 绘制路径。
+  - `FoamParticle`：
+    - 从单张 `TextureSheetParticle` 泡沫扩展为旧式多 bubble + trail 渲染。
+    - 补回 base/max scale、trailLength、buoyancy、jitter、drag、三阶段 scale/alpha/运动曲线和落地消失。
+    - 渲染随机 seed 使用本地 visual id 加坐标复刻旧 `getEntityId()+坐标` 的稳定 bubble 分布。
+- 边界：
+  - `ParticleHaze` 旧构造存在带 RGB/scale 的重载，当前已迁入口只使用默认 `haze`；本批不新增未调用的参数化 packet。
+  - `ParticlePlasmaBlast` 旧端会临时关闭 fog；现代粒子 render type 当前保留加色、禁 cull、不写深度和 fullbright 的核心视觉合同，fog 状态仍不单独切换。
+  - `ParticleFoam` 旧类构造会给普通实例随机初速度，但 `foamSplash` 入口随后清零；现代 `spawnRing` 已传零速度并设置 50 tick，本批按当前入口保持零速度起步，非零速度保留给未来调用方。
+
+## 2026-06-04 第三十八批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+
+## 2026-06-04 第三十九批推进：旧 `exSmoke` 多子烟团与烟迹随机源收紧
+
+- 1.7.10 对照：
+  - `ParticleExSmoke`：
+    - 使用 `ModEventHandlerClient.particleBase`，`maxAge=100+rand(40)`。
+    - 每 tick：`particleAlpha = 1 - age/maxAge`，随后年龄递增；速度三轴都乘 `0.7599999785D` 并移动。
+    - 渲染时用 `Random(getEntityId())`，每帧稳定生成 6 张 billboard。
+    - 每张 billboard 的灰度为 `rand*0.25+0.25`，scale 为 `rand+0.5`，位置偏移为 `(gaussian-1)*0.75`。
+  - `ParticleContrail`：
+    - 每帧使用 `Random(getEntityId())` 生成 6 张 contrail billboard。
+    - 每张颜色为基础 RGB 加 `0.2..0.4` 的 mod，scale 为 `(particleAlpha+0.5F)*particleScale`，偏移为 `gaussian*0.5*particleScale`。
+  - `ParticleSmokePlume`：
+    - 每帧同样用 `Random(getEntityId())` 生成 6 张 plume billboard。
+    - 每张灰度为 `rand*0.75+0.1`，位置偏移为 `gaussian*0.5*particleScale`。
+    - 运动与缩放此前现代端已迁入：`80+rand(20)` 寿命、alpha 衰减、scale 从 `0.25` 增至 `2.25`、移动时补 `scale-prevScale` 的 Y 抬升、撞地时把 `motionY` 改为原速度长度、速度乘 `0.925`。
+- 本批现代迁移：
+  - `HbmSmokeParticle`：
+    - 新增 `legacyExSmoke` 模式，只用于 `EX_SMOKE` provider 与 `HbmParticleEffects#createExSmoke(...)`。
+    - legacy ex smoke 不再使用单张缩放 smoke，而是在 `render(...)` 中按旧合同生成 6 张随机子烟团。
+    - 随机源改为本地递增 visual id，复刻旧 `EntityFX#getEntityId()` 的稳定分布。
+    - 保持 ex smoke 的旧速度摩擦、alpha 和寿命；`launch_smoke` 继续走原有单粒子缩放路径，不受本批影响。
+  - `LegacyContrailParticle`：
+    - 随机 seed 从普通随机 int 改成本地 visual id，贴近旧 `getEntityId()` 分布。
+  - `SmokePlumeParticle`：
+    - 随机 seed 从普通随机 int 改成本地 visual id，贴近旧 `getEntityId()` 分布。
+- 边界：
+  - 现代端没有旧 `EntityFX#getEntityId()`；本批沿用前面粒子的本地 visual id 方案，只复刻稳定分布，不接入实体系统。
+  - `HbmSmokeParticle` 仍保留非 legacy 模式给 launch smoke / 其他现代烟使用，避免误改导弹发射烟的既有表现。
+
+## 2026-06-04 第三十九批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+
+## 2026-06-04 第四十批推进：旧 `EntityAuraFX` / `townaura` / `schrabfog` 协议收紧
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT type=vanillaExt, mode=townaura`：
+    - 创建 `EntityAuraFX(world, x, y, z, 0, 0, 0)`。
+    - 随机 `color=0.5F+rand*0.5F`，颜色设为 `(0.8*color, 0.9*color, 1.0*color)`。
+    - 随后 `setVelocity(mX, mY, mZ)`，即外部速度不再走构造器内部的微缩放。
+  - `ClientProxy#effectNT type=radiation`：
+    - 围绕客户端玩家生成 `EntityAuraFX`，颜色 `(0F, 0.75F, 1F)`。
+    - 随后 `setVelocity(randGaussian, randGaussian, randGaussian)`。
+  - `ClientProxy#effectNT type=schrabfog`：
+    - 在包坐标生成单个 `EntityAuraFX`，颜色 `(0F, 1F, 1F)`，不再额外设置速度。
+  - 旧 `EntityAuraFX` 合同已在 2026-05-24 修正中核定：
+    - `setSize(0.02F, 0.02F)`。
+    - `particleScale *= rand*0.6F+0.5F`。
+    - 构造器内速度再乘 `0.02D`。
+    - 寿命为 `20 / (rand*0.8D+0.2D)`。
+    - tick 摩擦为 `0.99D`，无额外 alpha 淡出或放大曲线。
+- 本批现代迁移：
+  - `LegacyAuraParticle`：
+    - 去掉现代端自定义的 35-55 tick 寿命、上浮、线性 alpha 淡出和逐渐放大曲线。
+    - 恢复旧 `EntityAuraFX` 尺寸、scale 随机、寿命、0.99 摩擦和常量 alpha。
+    - 保留旧 `setVelocity(...)` 语义，用于 `radiation` 与 `vanillaExt/townaura` 的外部速度覆盖。
+  - `TownAuraParticle`：
+    - 改回旧 vanilla `townaura` 的短寿命小 aura 行为。
+    - 颜色仍按旧 `0.5..1.0` 随机亮度乘 `(0.8,0.9,1.0)`。
+    - 保留构造器速度微缩放路径，服务 `world.spawnParticle("townaura", ..., mX,mY,mZ)` 等价分支。
+  - `SchrabFogParticle`：
+    - 使用本粒子自身随机源计算寿命，避免混用全局 `Math.random()`。
+    - 保持旧 `schrabfog` 的单个青色 aura 小粒子形态。
+  - `HbmParticleEffects`：
+    - `type=schrabfog` 直接发 `ModParticleTypes.SCHRAB_FOG`，让旧 NBT 包和方块随机 tick 共享同一专用 schrab aura provider。
+    - `vanillaExt/mode=townaura` 改为通过 `LegacyAuraParticle` 设置旧随机蓝白色与外部速度。
+    - `type=vanilla, mode=townaura` 补回到 `ModParticleTypes.TOWN_AURA`，不再掉到默认 `POOF`。
+- 边界：
+  - 本批只迁移 HBM 调用到的 `EntityAuraFX` 外观与速度合同，不尝试覆盖所有 vanilla portal/aura 粒子的内部贴图帧细节。
+  - `schrab_fog.json` 继续使用 `minecraft:generic_0` 单像素 sprite；`town_aura` 继续沿用已有 HBM 粒子 sprite，不在本批调整资源。
+  - `TauSparkParticle` 与旧 `ParticleSpark` 已对齐寿命、重力、线宽、轨迹阈值、小型模式和落地反弹，本批不做无差异改写。
+
+## 2026-06-04 第四十批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`
+- 结果：通过；仅有既存 deprecation 提示。
+- 已运行：`git diff --check -- src/main/java/com/hbm/ntm/client/particle/HbmParticleEffects.java src/main/java/com/hbm/ntm/client/particle/LegacyAuraParticle.java src/main/java/com/hbm/ntm/client/particle/TownAuraParticle.java src/main/java/com/hbm/ntm/client/particle/SchrabFogParticle.java 工程记录/库移植/2026-05-20-sound-particle-effects-library-1.7.10源码功能追踪.md`
+- 结果：无 whitespace error；仅有 Git 对 CRLF 的提示。
+
+## 2026-06-04 第四十一批推进：旧 `rift` / `foundry` / `fluidfill` 视觉细节收紧
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT type=rift`：
+    - 直接创建 `ParticleRift(man, world, x, y, z)`。
+    - `ParticleRift` 使用 `textures/particle/hadron.png`，寿命 10，`getFXLayer=3`。
+    - 渲染时关闭深度写入，使用反相混合 `ONE_MINUS_DST_COLOR / ONE_MINUS_SRC_COLOR`。
+    - 旧 GL 路径会关闭 `TEXTURE_2D` 后启用 `GL_CULL_FACE`，在粒子位置绘制 5 层 `ResourceManager.sphere_uv`，scale 为 `(age+interp)*0.5F` 后按 `1.02/1.05/1.02/1.05` 继续嵌套放大。
+  - `ClientProxy#effectNT type=foundry`：
+    - 从 NBT 读取 `color`、`dir`、`len`、`base`、`off`，创建 `ParticleFoundry`。
+    - `ParticleFoundry` 使用 `textures/blocks/lava_gray.png`，寿命 20，不移动，只按年龄展开/收束熔融金属几何。
+    - 宽度为 `0.0625 + progress * 0.0625`，girth 为 `0.125 * (1 - progress)`。
+    - 颜色先 `new Color(color).brighter()`，再按 `brightener=0.7` 往白色提亮。
+    - UV 滚动使用 `(int)(System.currentTimeMillis() / 100 % 16) / 16D`，不是 world time。
+  - `ClientProxy#effectNT type=fluidfill`：
+    - 从 NBT 读取 `mX/mY/mZ`，创建 vanilla `EntityCritFX(world, x, y, z, mX, mY, mZ)`。
+    - 随后调用 `fx.nextTextureIndexX()`。
+    - 若 NBT 存在 `color`，则调用 `setRBGColorF(red/255F, green/255F, blue/255F)`。
+- 本批现代迁移：
+  - `RiftParticle`：
+    - 自定义 render type 的 begin 阶段改为启用 cull，恢复旧 `GL11.glEnable(GL11.GL_CULL_FACE)`。
+    - 保留此前已迁入的反相混合、关闭深度写入、5 层球体和寿命合同。
+  - `FoundryParticle`：
+    - UV 偏移改回 `System.currentTimeMillis() / 100L % 16L`，与旧熔融材质 100ms 帧步进一致。
+  - `FluidFillParticle`：
+    - 从长寿命自定义 hadron sheet 粒子改为现代 `CritParticle` 等价合同：`friction=0.7`、`gravity=0.5`、速度按旧/vanilla crit 路径加 `m*0.4`、短寿命 `6/(rand*0.8+0.6)`、无碰撞、初始 tick、绿色/蓝色逐 tick 衰减。
+    - 支持旧 NBT `color` 覆盖 RGB。
+    - 渲染类型改为 `PARTICLE_SHEET_OPAQUE`，`fluid_fill.json` 贴图改为 `minecraft:critical_hit`。
+- 边界：
+  - 现代端没有 1.7.10 粒子图集上的 `nextTextureIndexX()` 直接等价项；本批使用 1.20.1 `CritParticle` 的 `critical_hit` sprite 与行为合同承接旧 `EntityCritFX` 语义。
+  - `FluidFillParticle` 仍保留 HBM 自有 `ModParticleTypes.FLUID_FILL` provider 和 `HbmParticleEffects#spawnFluidFill` 入口，避免影响现有网络包/调用方。
+  - `ParticleRift` 旧版在渲染时还临时关闭 `TEXTURE_2D`；现代端球体 mesh 当前仍走已有 shader 顶点颜色路径，本批只收紧可安全表达的 cull/混合/深度合同。
+
+## 2026-06-04 第四十一批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过；仅有既存 deprecation 提示。
+- 已运行：`git diff --check -- src/main/java/com/hbm/ntm/client/particle/RiftParticle.java src/main/java/com/hbm/ntm/client/particle/FoundryParticle.java src/main/java/com/hbm/ntm/client/particle/FluidFillParticle.java src/main/resources/assets/hbm/particles/fluid_fill.json 工程记录/库移植/2026-05-20-sound-particle-effects-library-1.7.10源码功能追踪.md`
+- 结果：无 whitespace error；仅有 Git 对 CRLF 的提示。
+
+## 2026-06-04 第四十二批推进：旧 RBMK 条带帧索引历史行为收紧
+
+- 1.7.10 对照：
+  - `ParticleRBMKFlame`：
+    - 旧贴图 `textures/particle/rbmk_fire.png` 实际资源为 448x64，即 14 个 32px 横向帧。
+    - 旧代码先计算 `texIndex = particleAge * 5 % 14`，随后 U 坐标使用 `texIndex % 5 * (1F / 14F)`，因此视觉上只采样前 5 个横向帧，并按 `0,0,0,1,1,1,2,2,...` 一类旧节奏重复。
+  - `ParticleRBMKSteam`：
+    - 旧贴图 `textures/particle/rbmk_jet_steam.png` 实际资源为 640x64，即 20 个 32px 横向帧。
+    - 旧代码帧号为 `((age / maxAge) * 20) % 20 - 1`，第 0 tick 会得到 `-1`，在旧固定管线贴图 wrap 下等价从最后一帧起步。
+- 本批现代迁移：
+  - `RbmkAnimatedParticle`：
+    - `Mode.FLAME` 的 UV 帧选择从完整 14 帧轮播改为旧 `((age * 5) % 14) % 5` 采样。
+    - `Mode.STEAM` 的首帧改为按旧 `-1` 行为 wrap 到第 19 帧，后续按旧 `0..18` 进度播放。
+- 边界：
+  - 本批只复刻旧源码中能确认的条带 UV 索引历史行为，不改变 RBMK flame/steam/mush 的贴图资源、寿命、alpha、加色混合、fullbright 或几何尺寸。
+  - 现代端仍通过粒子 atlas 内部 UV 手动切帧承接旧直接绑定整张贴图的行为；贴图 wrap 使用显式第 19 帧模拟，避免采样 atlas 外区域。
+
+## 2026-06-04 第四十二批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过。第一次编译曾被并行机器/多方块迁移的临时 Java 缺口挡住；确认并行缺口补齐后重跑通过。
+- 已运行：`git diff --check -- src/main/java/com/hbm/ntm/client/particle/RbmkAnimatedParticle.java 工程记录/库移植/2026-05-20-sound-particle-effects-library-1.7.10源码功能追踪.md`
+- 结果：无 whitespace error；仅有 Git 对 CRLF 的提示。
+
+## 2026-06-04 第四十三批推进：旧 siren cassette track 与循环警报音基础库
+
+- 1.7.10 对照：
+  - `ItemCassette.TrackType`：
+    - metadata/id 0 为 `NULL`，1..20 为全部 siren cassette 曲目。
+    - 每条曲目记录 GUI 标题、旧 sound event、`SoundType`、cassette overlay 颜色和声音范围/音量字段。
+    - `SoundType` 只有 `LOOP`、`PASS`、`SOUND` 三类；`SoundLoopSiren` 只对 `LOOP` 设置 repeat。
+  - `SoundLoopSiren`：
+    - 继承 `SoundLoopMachine`，静态 `list` 用于按 TileEntity 去重。
+    - 默认 `intendedVolume=10F`，关闭 vanilla attenuation。
+    - 每 tick 按玩家到 TileEntity 坐标距离计算 `volume=(distance/intendedVolume)*-2+2`。
+    - 若 TE 不是 `TileEntityMachineSiren`，则停止；若是 siren，按曲目类型决定是否 repeat。
+  - `TESirenPacket`：
+    - 字段为 `x,y,z,id,active`。
+    - active 且本地没有声音时，`id>0` 才启动声音。
+    - active 且已有声音时，曲目路径改变则停止旧声音并重启。
+    - inactive 时停止并从静态 list 移除。
+  - 旧 `assets/hbm/sounds.json` alarm 声明使用 `category=record`，`alarm.airRaid` 使用 `stream=true`，其余本批曲目为 `stream=false`。
+- 本批现代迁移：
+  - 新增 `LegacySirenTrack`：
+    - 保留旧 id 顺序、旧 enum 名称、标题、旧 sound id、`SoundType`、颜色和 volume 字段。
+    - 提供 `byId(int)`，越界按旧逻辑回落 `NULL`。
+    - 现代 sound event 使用小写合法路径，例如旧 `hbm:alarm.amsSiren` 映射为现代 `hbm:alarm.ams_siren`。
+  - 新增 `SoundLoopSiren`：
+    - 继承现代 `SoundLoopMachine`，按 `BlockPos` 去重。
+    - 走 `SoundSource.RECORDS`，对应旧 `category=record`。
+    - 复刻旧 `func(distance, intendedVolume)` 音量曲线并 clamp 到 `>=0`，避免现代声音系统收到负 volume。
+    - `LOOP` 曲目循环播放，`PASS` / `SOUND` 曲目不循环并在播放结束后从本地 map 清理。
+    - 支持 `handleClientTileEvent(BlockEntity, CompoundTag)`，直接读取现代 `sendSirenEvent` 的 `trackId` / `active`。
+  - `HbmDynamicSound` / `SoundLoopMachine`：
+    - 补可选 `SoundSource` 构造器，默认仍为 `BLOCKS`，现有动态声音调用方不变。
+  - `ClientTileEventPacket`：
+    - 对 `HbmNetworkActions.SIREN` 添加通用客户端分发，后续 siren 机器只要调用 `ModMessages.sendSirenEvent(blockEntity, trackId, active)` 即可接入本批声音库。
+  - `ModSounds` / `sounds.json`：
+    - 注册 20 条 siren cassette 曲目 sound event。
+    - 复制旧版 `.ogg` 到 `src/main/resources/assets/hbm/sounds/alarm/`，文件内容来自 1.7.10 资源，现代文件名统一小写 snake_case。
+    - 补 `subtitles.hbm.alarm.siren` 英文/中文字幕与 datagen provider。
+- 现代 alarm 事件与旧资源映射：
+  - `hbm:alarm.hatch` -> `hbm:alarm.hatch` -> `alarm/hatch.ogg`（旧文件 `lpfhaiwg.ogg`）。
+  - `hbm:alarm.autopilot` -> `hbm:alarm.autopilot` -> `alarm/autopilot.ogg`（旧文件 `boeing707AutopilotDisconnected.ogg`）。
+  - `hbm:alarm.amsSiren` -> `hbm:alarm.ams_siren` -> `alarm/ams_siren.ogg`。
+  - `hbm:alarm.blastDoorAlarm` -> `hbm:alarm.blast_door_alarm` -> `alarm/blast_door_alarm.ogg`。
+  - `hbm:alarm.apcLoop` -> `hbm:alarm.apc_loop` -> `alarm/apc_loop.ogg`。
+  - `hbm:alarm.klaxon` -> `hbm:alarm.klaxon` -> `alarm/klaxon.ogg`。
+  - `hbm:alarm.foKlaxonA` -> `hbm:alarm.fo_klaxon_a` -> `alarm/fo_klaxon_a.ogg`。
+  - `hbm:alarm.foKlaxonB` -> `hbm:alarm.fo_klaxon_b` -> `alarm/fo_klaxon_b.ogg`。
+  - `hbm:alarm.regularSiren` -> `hbm:alarm.regular_siren` -> `alarm/regular_siren.ogg`。
+  - `hbm:alarm.classic` -> `hbm:alarm.classic` -> `alarm/classic_siren.ogg`（旧文件 `classicSiren.ogg`）。
+  - `hbm:alarm.bankAlarm` -> `hbm:alarm.bank_alarm` -> `alarm/bank_alarm.ogg`。
+  - `hbm:alarm.beepSiren` -> `hbm:alarm.beep_siren` -> `alarm/beep_siren.ogg`。
+  - `hbm:alarm.containerAlarm` -> `hbm:alarm.container_alarm` -> `alarm/container_alarm.ogg`。
+  - `hbm:alarm.sweepSiren` -> `hbm:alarm.sweep_siren` -> `alarm/sweep_siren.ogg`。
+  - `hbm:alarm.striderSiren` -> `hbm:alarm.strider_siren` -> `alarm/strider_siren.ogg`。
+  - `hbm:alarm.airRaid` -> `hbm:alarm.air_raid` -> `alarm/air_raid.ogg`，保留 `stream=true`。
+  - `hbm:alarm.nostromoSiren` -> `hbm:alarm.nostromo_siren` -> `alarm/nostromo_siren.ogg`。
+  - `hbm:alarm.easAlarm` -> `hbm:alarm.eas_alarm` -> `alarm/eas_alarm.ogg`。
+  - `hbm:alarm.apcPass` -> `hbm:alarm.apc_pass` -> `alarm/apc_pass.ogg`。
+  - `hbm:alarm.razortrainHorn` -> `hbm:alarm.razortrain_horn` -> `alarm/razortrain_horn.ogg`。
+- 边界：
+  - 本批只迁移 siren 声音库、track 数据表、网络事件客户端承接与音频资源，不迁移 `ItemCassette` 物品、siren 机器方块/GUI、cassette 合成或贴图 overlay。
+  - 旧 `SoundLoopSiren` 会检查 TE 类型必须是 `TileEntityMachineSiren`；现代 siren 机器尚未迁入，本批以 `hbm:siren` tile event 作为库级入口，具体机器迁入后再补专属 BlockEntity 状态和交互。
+  - 现代 `ResourceLocation` 路径禁止旧 `amsSiren` / `blastDoorAlarm` 等大写字符；因此运行时事件名做小写 snake_case 迁移，但 `LegacySirenTrack#legacySoundId` 保留旧 id 供后续 NBT/命令/文档兼容。
+
+## 2026-06-04 第四十三批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过；仅有既存 deprecation 提示。
+- 已运行：`git diff --check --` 本批触碰的 siren 声音库源码、`sounds.json`、lang、alarm `.ogg` 目录与本追踪文档。
+- 结果：无 whitespace error；仅有 Git 对 CRLF 的提示。
+
+## 2026-06-04 第四十四批推进：旧 `MovingSoundPlayerLoop` 与 chopper 实体循环音基础库
+
+- 1.7.10 对照：
+  - `MovingSoundPlayerLoop`：
+    - 继承 `MovingSound`，静态 `globalSoundList` 按 `Entity` 引用与 `EnumHbmSound` 去重。
+    - `EnumHbmSound` 包含 `soundTauLoop`、`soundChopperLoop`、`soundCrashingLoop`、`soundMineLoop`。
+    - 构造时设置 `repeat=true`；若同实体同类型没有声音，则加入全局 list。
+    - `update()` 每 tick 把声音坐标跟随实体 `posX/posY/posZ`，实体为空或死亡则 `stop()`。
+    - `stop()` 设置 `donePlaying=true`、`repeat=false`，并移除同实体同类型的所有全局声音。
+  - `MovingSoundChopper`：
+    - 基于 `MovingSoundPlayerLoop`，若 `EntityHunterChopper#getIsDying()` 为 true 则停止飞行循环。
+  - `MovingSoundCrashing`：
+    - 基于 `MovingSoundPlayerLoop`，若 `EntityHunterChopper#getIsDying()` 为 false 则停止坠毁循环。
+  - `MovingSoundChopperMine`：
+    - 仅继承基础循环逻辑，无额外停止条件。
+  - `ModEventHandlerClient#onPlaySound(PlaySoundEvent17)`：
+    - 旧代码拦截占位事件 `hbm:misc.nullChopper`、`hbm:misc.nullCrashing`、`hbm:misc.nullMine`。
+    - 通过 `Library.getClosestChopperForSound(...)` / `getClosestMineForSound(...)` 找 2 格内实体。
+    - 分别播放 `hbm:entity.chopperFlyingLoop`、`hbm:entity.chopperCrashingLoop`、`hbm:entity.chopperMineLoop`，音量设为 `10.0F`。
+    - 每次事件尾部遍历 `globalSoundList`，未 init 或 donePlaying 的声音重新交给 sound handler 播放。
+  - 旧 `sounds.json`：
+    - `entity.chopperFlyingLoop`：`category=hostile`，资源 `entity/chopperFlyingLoop`，`stream=true`。
+    - `entity.chopperCrashingLoop`：`category=hostile`，资源 `entity/chopperCrashingLoop`，`stream=true`。
+    - `entity.chopperMineLoop`：`category=hostile`，资源 `entity/chopperMineLoop`，`stream=false`。
+    - `entity.chopperDrop`、`entity.chopperCharge`、`entity.chopperDamage` 同属 chopper 音效；`chopperDamage` 为 `stream=true`。
+- 本批现代迁移：
+  - 新增 `LegacyMovingEntitySound`：
+    - 继承现代 `AbstractSoundInstance` + `TickableSoundInstance`。
+    - 以 `entityId + LoopType` 去重，承接旧 `getSoundByPlayer(Entity, EnumHbmSound)` 合同。
+    - 每 tick 跟随实体坐标；实体移除、死亡或外部 `keepPlaying` predicate 返回 false 时停止并从静态 map 移除。
+    - 默认 `looping=true`，使用 `SoundInstance.Attenuation.LINEAR` 与传入 `SoundSource`。
+    - 提供 `startForEntity(...)`、`getSoundByEntity(...)`、`stop(...)`，以及 `startChopperFlying(...)` / `startChopperCrashing(...)` / `startChopperMine(...)` 三个旧 chopper 便捷入口。
+  - `ModSounds` / `sounds.json`：
+    - 注册并声明现代小写事件：
+      - `hbm:entity.chopper_flying_loop`
+      - `hbm:entity.chopper_crashing_loop`
+      - `hbm:entity.chopper_mine_loop`
+      - `hbm:entity.chopper_drop`
+      - `hbm:entity.chopper_charge`
+      - `hbm:entity.chopper_damage`
+    - 从 1.7.10 资源复制 chopper `.ogg` 到 `src/main/resources/assets/hbm/sounds/entity/`，文件名改为小写 snake_case。
+    - 保留旧 `stream` 设置：飞行 loop、坠毁 loop 和 damage 为 `true`，mine/drop/charge 为 `false`。
+    - 补 `subtitles.hbm.entity.chopper` 英文/中文字幕与 datagen provider。
+- 现代 chopper 事件与旧资源映射：
+  - `hbm:entity.chopperFlyingLoop` -> `hbm:entity.chopper_flying_loop` -> `entity/chopper_flying_loop.ogg`。
+  - `hbm:entity.chopperCrashingLoop` -> `hbm:entity.chopper_crashing_loop` -> `entity/chopper_crashing_loop.ogg`。
+  - `hbm:entity.chopperMineLoop` -> `hbm:entity.chopper_mine_loop` -> `entity/chopper_mine_loop.ogg`。
+  - `hbm:entity.chopperDrop` -> `hbm:entity.chopper_drop` -> `entity/chopper_drop.ogg`。
+  - `hbm:entity.chopperCharge` -> `hbm:entity.chopper_charge` -> `entity/chopper_charge.ogg`。
+  - `hbm:entity.chopperDamage` -> `hbm:entity.chopper_damage` -> `entity/chopper_damage.ogg`。
+- 边界：
+  - 现代端尚未迁入 `EntityHunterChopper` / `EntityChopperMine`，本批不伪造实体和旧 `PlaySoundEvent17` 的 `misc.null*` 占位声桥。
+  - 旧 chopper 飞行/坠毁状态由 `EntityHunterChopper#getIsDying()` 决定；现代实体迁入后，应通过 `startChopperFlying(entity, e -> !isDying)` 与 `startChopperCrashing(entity, e -> isDying)` 接入，而不是在声音库里猜实体字段。
+  - `soundTauLoop` 暂只保留 enum 兼容占位；tau gun loop 已由 `AudioWrapper`/`HbmDynamicSound` 路径服务，具体武器迁入时再按旧 `NTMSounds.GUN_TAU_LOOP` 注册资源。
+
+## 2026-06-04 第四十四批验证
+
+- 已运行：`.\gradlew.bat compileJava processResources --no-daemon`
+- 结果：通过；仅有既存 deprecation 提示。
+
+## 2026-06-04 第四十五批推进：旧 `vanillaExt/largeexplode` 大爆炸粒子深迁
+
+- 1.7.10 对照：
+  - `ClientProxy#effectNT type=vanillaExt, mode=largeexplode`：
+    - 创建 `EntityLargeExplodeFX(man, world, x, y, z, data.getFloat("size"), 0, 0)`。
+    - 主粒子颜色为 `r=1-rand*0.2` 后设为 `(r, 0.9*r, 0.5*r)`。
+    - 随后循环 `data.getByte("count")` 次创建 `EntityExplodeFX`，颜色为灰阶 `0.5*(1-rand*0.5)`，并调用 `multipleParticleScaleBy(i+1)`。
+  - 旧 `EntityLargeExplodeFX`：
+    - 贴图为 `textures/entity/explosion.png` 4x4 sheet。
+    - 寿命 `6 + rand(4)`，fullbright，帧索引 `(age+interp)*15/maxAge`。
+    - 尺寸为 `2.0F * (1.0F - size * 0.5F)`，因此旧调用里 `size=0` 会显示最大主爆。
+  - 旧 `EntityExplodeFX`：
+    - 构造速度加 `+-0.05` 随机扰动，颜色初始为 `rand*0.3+0.7`，HBM 随后覆盖灰阶。
+    - `particleScale = rand*rand*6 + 1`，再由 HBM 的 `multipleParticleScaleBy(i+1)` 放大。
+    - 寿命 `16/(rand*0.8+0.2)+2`，每 tick 贴图 index `7-age*8/maxAge`，`motionY += 0.004`，整体摩擦 `0.9`，落地 X/Z 再乘 `0.7`。
+- 本批现代迁移：
+  - 新增 `ModParticleTypes.LARGE_EXPLODE` 与 `LargeExplodeParticle`。
+  - 新增 `assets/hbm/particles/large_explode.json`：
+    - 前 16 帧引用原版 `minecraft:explosion_0..15`，承接旧 `EntityLargeExplodeFX` sheet。
+    - 后 8 帧引用 `minecraft:generic_7..0`，承接旧 `EntityExplodeFX` 的 texture index 倒序播放。
+  - `LargeExplodeParticle`：
+    - primary 模式复刻旧大爆炸的 6-9 tick、fullbright、`2*(1-size*0.5)` 尺寸、暖色 RGB 与 `age*15/maxAge` 帧节奏。
+    - secondary 模式复刻旧爆炸烟的随机 `+-0.05` 速度、`gravity=-0.1` 对应每 tick 上浮 `+0.004`、`friction=0.9`、地面横向衰减、旧随机缩放和灰阶颜色。
+  - `HbmParticleEffects#spawnVanillaExt`：
+    - `largeexplode` 不再使用现代 vanilla `ParticleTypes.EXPLOSION` / `POOF` 近似。
+    - 按旧 NBT `size/count` 直接加入一个 primary 与 `count` 个 secondary。
+    - `count` 改回允许 0，避免旧 `getByte("count")` 缺省为 0 时现代端额外生成一颗 secondary。
+  - `ParticleUtil#spawnVanillaExtLargeExplode`：
+    - common helper 的 `count` clamp 改为 `0..127`，与旧 NBT 语义一致。
+- 边界：
+  - 本批迁移的是 HBM `type=vanillaExt, mode=largeexplode` 协议，不替换普通 vanilla `world.spawnParticle("largeexplode")` / `hugeexplosion` 路径；这些普通原版爆炸粒子仍由现代 Minecraft 原生效果承担。
+  - 现代资源使用 `minecraft:explosion_*` 与 `minecraft:generic_*` 粒子 atlas 名称承接旧 vanilla 贴图，不复制原版贴图到 HBM 命名空间。
+  - 旧源码中的普通爆炸声音、炮塔/boltgun/实体调用方仍按各自系统后续迁移；本批只收紧客户端视觉粒子。

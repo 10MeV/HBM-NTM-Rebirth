@@ -40,6 +40,18 @@
 - 配方注入在服务端和客户端一致。
 - JEI 展示不改变实际机器配方数据。
 
+## 2026-06-04 JEI 可选依赖接入
+
+- Gradle 接入 JEI 1.20.1 Forge 最新 Maven release：`15.20.0.130`。
+- 依赖策略：
+  - `compileOnly`：`jei-1.20.1-common-api` 与 `jei-1.20.1-forge-api`。
+  - `runtimeOnly`：`jei-1.20.1-forge`，仅用于开发运行环境验证。
+  - `mods.toml` 声明 `jei` 为 `mandatory=false`、`ordering="AFTER"`，玩家不安装 JEI 时 HBM 不应强制失败。
+- 代码归属决策：
+  - 后续 JEI 插件、recipe category、transfer handler、ingredient hiding 等联动代码放在兼容集成层下的 `com.hbm.ntm.compat.jei`。
+  - JEI 展示只读取统一 HBM recipe model/runtime，例如 `GenericMachineRecipe`、`GenericMachineRecipeRuntime` 和普通 `RecipeType`，不把 JEI API 引入机器方块、方块实体、菜单或核心 recipe 数据模型。
+  - 若需要 JEI 专用 DTO/渲染包装，放在 `compat.jei` 内部，核心配方库继续保持无 JEI 类引用。
+
 ## 2026-05-23 能量库兼容层推进
 
 - `CompatEnergyControl.dischargeItem` 已按 1.7.10 外层限速语义修正：

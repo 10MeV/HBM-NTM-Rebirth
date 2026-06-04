@@ -111,6 +111,12 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         return lastPowerProduced;
     }
 
+    @Nullable
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return null;
+    }
+
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         return LegacyLookOverlay.forBlock(this, List.of(

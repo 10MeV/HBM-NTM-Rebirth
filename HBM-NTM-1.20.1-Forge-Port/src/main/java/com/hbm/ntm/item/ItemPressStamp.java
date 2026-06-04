@@ -24,7 +24,19 @@ public class ItemPressStamp extends Item {
         FLAT("flat"),
         PLATE("plate"),
         WIRE("wire"),
-        CIRCUIT("circuit");
+        CIRCUIT("circuit"),
+        C357("357"),
+        C44("44"),
+        C50("50"),
+        C9("9"),
+        PRINTING1("printing1"),
+        PRINTING2("printing2"),
+        PRINTING3("printing3"),
+        PRINTING4("printing4"),
+        PRINTING5("printing5"),
+        PRINTING6("printing6"),
+        PRINTING7("printing7"),
+        PRINTING8("printing8");
 
         private final String serializedName;
 

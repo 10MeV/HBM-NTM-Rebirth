@@ -22,15 +22,25 @@ public final class ObjLightModels {
     public static final LegacyWavefrontModel CAGE_LAMP_LEGACY = legacyModel("cage_lamp").noSmooth();
     public static final LegacyWavefrontModel FLUORESCENT_LAMP_LEGACY = legacyModel("fluorescent_lamp").noSmooth();
     public static final LegacyWavefrontModel FLOOD_LAMP_LEGACY = legacyModel("flood_lamp").noSmooth();
+    public static final LegacyWavefrontModel FLOODLIGHT_LEGACY = legacyModel("floodlight", machineTexture("floodlight"));
+    public static final LegacyWavefrontModel DEMON_LAMP_LEGACY = legacyModel("demon_lamp", machineTexture("demon_lamp"));
 
     public static LegacyWavefrontModel legacyModel(String name) {
+        return legacyModel(name, texture(name));
+    }
+
+    public static LegacyWavefrontModel legacyModel(String name, ResourceLocation texture) {
         return new LegacyWavefrontModel(
                 new ResourceLocation(HbmNtm.MOD_ID, "models/block/lights/" + name + ".obj"),
-                texture(name));
+                texture);
     }
 
     public static ResourceLocation texture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/" + name + ".png");
+    }
+
+    public static ResourceLocation machineTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/" + name + ".png");
     }
 
     private ObjLightModels() {

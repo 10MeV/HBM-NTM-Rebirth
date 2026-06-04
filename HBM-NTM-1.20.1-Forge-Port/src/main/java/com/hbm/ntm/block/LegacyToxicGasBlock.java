@@ -3,7 +3,7 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
-import com.hbm.ntm.radiation.RadiationData;
+import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -34,20 +34,8 @@ public class LegacyToxicGasBlock extends LegacyGasBlock {
         }
 
         switch (kind) {
-            case ASBESTOS -> {
-                if (ArmorUtil.hasFineParticleProtection(living)) {
-                    ArmorUtil.damageGasMaskFilter(living, 1);
-                } else {
-                    RadiationData.incrementAsbestos(living, 1);
-                }
-            }
-            case COAL -> {
-                if (ArmorUtil.hasCoarseParticleProtection(living)) {
-                    ArmorUtil.damageGasMaskFilter(living, 1);
-                } else {
-                    RadiationData.incrementBlackLung(living, 10);
-                }
-            }
+            case ASBESTOS -> RadiationUtil.applyAsbestos(living, 1, 0);
+            case COAL -> RadiationUtil.applyCoalDust(living, 10, 0, 1);
             case MONOXIDE -> {
                 if (ArmorUtil.hasMonoxideGasProtection(living)) {
                     ArmorUtil.damageGasMaskFilter(living, 1);

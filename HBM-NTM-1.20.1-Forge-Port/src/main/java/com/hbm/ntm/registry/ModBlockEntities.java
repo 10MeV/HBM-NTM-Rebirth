@@ -17,6 +17,7 @@ import com.hbm.ntm.blockentity.FluidDuctExhaustBlockEntity;
 import com.hbm.ntm.blockentity.FluidDuctGaugeBlockEntity;
 import com.hbm.ntm.blockentity.FluidDuctPaintableBlockEntity;
 import com.hbm.ntm.blockentity.FluidDuctPaintableExhaustBlockEntity;
+import com.hbm.ntm.blockentity.FluidBarrelBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeAnchorBlockEntity;
 import com.hbm.ntm.blockentity.FluidPumpBlockEntity;
@@ -37,8 +38,11 @@ import com.hbm.ntm.blockentity.MachineBatteryBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
+import com.hbm.ntm.blockentity.OilDrillBlockEntity;
 import com.hbm.ntm.blockentity.PneumaticTubeBlockEntity;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
+import com.hbm.ntm.blockentity.RedCableGaugeBlockEntity;
+import com.hbm.ntm.blockentity.RefineryBlockEntity;
 import com.hbm.ntm.blockentity.SolarBoilerBlockEntity;
 import com.hbm.ntm.blockentity.SmallCoolingTowerBlockEntity;
 import com.hbm.ntm.blockentity.SteamTurbineBlockEntity;
@@ -79,6 +83,11 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<RedCableBlockEntity>> RED_CABLE =
             BLOCK_ENTITIES.register("red_cable", () ->
                     BlockEntityType.Builder.of(RedCableBlockEntity::new, ModBlocks.RED_CABLE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RedCableGaugeBlockEntity>> RED_CABLE_GAUGE =
+            BLOCK_ENTITIES.register("red_cable_gauge", () ->
+                    BlockEntityType.Builder.of(RedCableGaugeBlockEntity::new,
+                            ModBlocks.RED_CABLE_GAUGE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<FluidPipeBlockEntity>> FLUID_PIPE =
             BLOCK_ENTITIES.register("fluid_pipe", () ->
@@ -129,6 +138,16 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(FluidPipeAnchorBlockEntity::new,
                             ModBlocks.PIPE_ANCHOR.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<FluidBarrelBlockEntity>> FLUID_BARREL =
+            BLOCK_ENTITIES.register("fluid_barrel", () ->
+                    BlockEntityType.Builder.of(FluidBarrelBlockEntity::new,
+                            ModBlocks.BARREL_PLASTIC.get(),
+                            ModBlocks.BARREL_CORRODED.get(),
+                            ModBlocks.BARREL_IRON.get(),
+                            ModBlocks.BARREL_STEEL.get(),
+                            ModBlocks.BARREL_TCALLOY.get(),
+                            ModBlocks.BARREL_ANTIMATTER.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<PneumaticTubeBlockEntity>> PNEUMATIC_TUBE =
             BLOCK_ENTITIES.register("pneumatic_tube", () ->
                     BlockEntityType.Builder.of(PneumaticTubeBlockEntity::new, ModBlocks.PNEUMATIC_TUBE.get()).build(null));
@@ -157,6 +176,11 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("liquefactor", () ->
                     BlockEntityType.Builder.of(LiquefactorBlockEntity::new, ModBlocks.MACHINE_LIQUEFACTOR.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<RefineryBlockEntity>> REFINERY =
+            BLOCK_ENTITIES.register("refinery", () ->
+                    BlockEntityType.Builder.of(RefineryBlockEntity::new,
+                            ModBlocks.MACHINE_REFINERY.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<FluidTankBlockEntity>> FLUID_TANK =
             BLOCK_ENTITIES.register("fluid_tank", () ->
                     BlockEntityType.Builder.of(FluidTankBlockEntity::new, ModBlocks.MACHINE_FLUIDTANK.get()).build(null));
@@ -168,6 +192,13 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<GasFlareBlockEntity>> GAS_FLARE =
             BLOCK_ENTITIES.register("gas_flare", () ->
                     BlockEntityType.Builder.of(GasFlareBlockEntity::new, ModBlocks.MACHINE_GASFLARE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<OilDrillBlockEntity>> OIL_DRILL =
+            BLOCK_ENTITIES.register("oil_drill", () ->
+                    BlockEntityType.Builder.of(OilDrillBlockEntity::new,
+                            ModBlocks.MACHINE_WELL.get(),
+                            ModBlocks.MACHINE_PUMPJACK.get(),
+                            ModBlocks.MACHINE_FRACKING_TOWER.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<CatalyticCrackerBlockEntity>> CATALYTIC_CRACKER =
             BLOCK_ENTITIES.register("catalytic_cracker", () ->
@@ -229,10 +260,8 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(
                             LegacyVisibleMachineBlockEntity::new,
                             ModBlocks.MACHINE_CHEMICAL_FACTORY.get(),
-                            ModBlocks.MACHINE_REFINERY.get(),
                             ModBlocks.MACHINE_PYROOVEN.get(),
                             ModBlocks.MACHINE_SOLIDIFIER.get(),
-                            ModBlocks.MACHINE_PUMPJACK.get(),
                             ModBlocks.MACHINE_CENTRIFUGE.get(),
                             ModBlocks.MACHINE_GASCENT.get(),
                             ModBlocks.MACHINE_ORE_SLOPPER.get(),

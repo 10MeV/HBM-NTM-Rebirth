@@ -83,6 +83,11 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
         return tank == null ? List.of() : tank.tooltip();
     }
 
+    public List<Component> getTankTooltip(int index, boolean showHidden) {
+        HbmFluidGuiHelper.TankData tank = getTank(index);
+        return tank == null ? List.of() : tank.tooltip(showHidden);
+    }
+
     public long getPower() {
         return power;
     }

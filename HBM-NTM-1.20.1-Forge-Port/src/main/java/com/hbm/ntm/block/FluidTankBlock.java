@@ -1,16 +1,28 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.registry.ModBlockEntities;
+import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -19,6 +31,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -66,6 +81,12 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
     }
 
     @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        restorePersistentState(level, pos, stack);
+    }
+
+    @Override
     public boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
@@ -108,5 +129,48 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
                 Block.popResource(level, pos, stack);
             }
         }
+    }
+
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        if (builder.getLevel() instanceof ServerLevel
+                && builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY) instanceof FluidTankBlockEntity tank) {
+            return List.of(tank.createPersistentBlockDrop(asItem()));
+        }
+        return super.getDrops(state, builder);
+    }
+
+    @Override
+    public boolean dropFromExplosion(Explosion explosion) {
+        return false;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        CompoundTag tag = stack.getTag();
+        if (tag == null || !tag.contains(HbmPersistentBlockState.TAG_PERSISTENT, Tag.TAG_COMPOUND)) {
+            return;
+        }
+        CompoundTag persistent = tag.getCompound(HbmPersistentBlockState.TAG_PERSISTENT);
+        HbmFluidTank tank = new HbmFluidTank(HbmFluids.NONE, 0);
+        tank.readFromNbt(persistent, "tank");
+        tooltip.add(HbmFluidGuiHelper.tankInfo(tank, tank.getFill(), tank.getMaxFill())
+                .copy()
+                .withStyle(ChatFormatting.YELLOW));
+        if (persistent.getBoolean("hasExploded")) {
+            tooltip.add(Component.translatable("container.fluidtank.damaged").withStyle(ChatFormatting.RED));
+        }
+        if (persistent.getBoolean("onFire")) {
+            tooltip.add(Component.translatable("container.fluidtank.burning").withStyle(ChatFormatting.RED));
+        }
+    }
+
+    private static void restorePersistentState(Level level, BlockPos pos, ItemStack stack) {
+        if (level.isClientSide || !(level.getBlockEntity(pos) instanceof HbmPersistentBlockState persistent)) {
+            return;
+        }
+        persistent.readPersistentStateFromStack(stack);
     }
 }

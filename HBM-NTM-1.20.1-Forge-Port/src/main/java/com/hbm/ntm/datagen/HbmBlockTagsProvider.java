@@ -23,6 +23,8 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
     protected void addTags(HolderLookup.Provider provider) {
         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
+        ModBlocks.HIDDEN_MACHINE_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
+        ModBlocks.HIDDEN_MACHINE_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.DUMMY_BLOCK.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.DUMMY_BLOCK.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),

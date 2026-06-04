@@ -1,0 +1,8 @@
+{
+  "values": [
+    "hbm:heavyoil",
+    "hbm:heavyoil_flowing",
+    "hbm:heavyoil_vacuum",
+    "hbm:heavyoil_vacuum_flowing"
+  ]
+}

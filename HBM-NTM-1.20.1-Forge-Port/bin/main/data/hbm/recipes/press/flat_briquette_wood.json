@@ -1,0 +1,10 @@
+{
+  "type": "hbm:press",
+  "ingredient": {
+    "item": "hbm:powder_sawdust"
+  },
+  "result": {
+    "item": "hbm:briquette_wood"
+  },
+  "stamp": "flat"
+}

@@ -105,6 +105,12 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         return true;
     }
 
+    @Override
+    public void onFluidSettingsPasted() {
+        super.onFluidSettingsPasted();
+        refreshFluidNodeState();
+    }
+
     protected boolean shouldSubscribeAsFluidProvider() {
         return false;
     }

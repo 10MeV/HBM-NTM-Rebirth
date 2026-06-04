@@ -1,0 +1,8 @@
+{
+  "values": [
+    "hbm:heavywater",
+    "hbm:heavywater_flowing",
+    "hbm:heavywater_hot",
+    "hbm:heavywater_hot_flowing"
+  ]
+}

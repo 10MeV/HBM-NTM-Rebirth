@@ -4,12 +4,20 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.inventory.DataSlot;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class HbmFluidGuiHelper {
     private HbmFluidGuiHelper() {
+    }
+
+    public static boolean showHiddenFluidInfo() {
+        return DistExecutor.unsafeRunForDist(
+                () -> () -> com.hbm.ntm.client.ClientTooltipState.hasShiftDown(),
+                () -> () -> false);
     }
 
     public static TankData watchTank(DataSlotSink sink, HbmFluidTank tank) {
@@ -80,6 +88,10 @@ public final class HbmFluidGuiHelper {
         }
 
         public List<Component> tooltip() {
+            return tooltip(false);
+        }
+
+        public List<Component> tooltip(boolean showHidden) {
             List<Component> tooltip = new ArrayList<>();
             FluidType type = type();
             tooltip.add(type.getDisplayName());
@@ -88,7 +100,7 @@ public final class HbmFluidGuiHelper {
                 tooltip.add(Component.literal("Pressure: " + pressure + " PU").withStyle(ChatFormatting.RED));
                 tooltip.add(Component.literal("Pressurized, use compressor!").withStyle(ChatFormatting.DARK_RED));
             }
-            type.appendInfo(tooltip, false);
+            type.appendInfo(tooltip, showHidden);
             return tooltip;
         }
 

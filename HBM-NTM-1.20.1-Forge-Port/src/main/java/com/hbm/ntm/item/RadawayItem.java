@@ -6,6 +6,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -25,7 +26,10 @@ public class RadawayItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (!level.isClientSide) {
-            player.addEffect(new MobEffectInstance(ModEffects.RADAWAY.get(), duration, amplifier));
+            MobEffect effect = ModEffects.RADAWAY.get();
+            MobEffectInstance active = player.getEffect(effect);
+            int appliedDuration = active == null ? duration : active.getDuration() + duration;
+            player.addEffect(new MobEffectInstance(effect, appliedDuration, amplifier));
             level.playSound(null, player.blockPosition(), ModSounds.TOOL_RADAWAY.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);

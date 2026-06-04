@@ -31,6 +31,9 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation PARTS_LEGENDARY = hbm("parts_legendary");
     public static final ResourceLocation PART_GENERIC = hbm("part_generic");
     public static final ResourceLocation ITEM_EXPENSIVE = hbm("item_expensive");
+    public static final ResourceLocation ORE_BYPRODUCT = hbm("ore_byproduct");
+    public static final ResourceLocation STAMP_BOOK = hbm("stamp_book");
+    public static final ResourceLocation PAGE_OF = hbm("page_of_");
     public static final ResourceLocation CASING = hbm("casing");
     public static final ResourceLocation FUEL_ADDITIVE = hbm("fuel_additive");
 
@@ -117,6 +120,9 @@ public final class LegacyMetaItemMappings {
                 4, requireLegacyItem("part_generic_hde"),
                 5, requireLegacyItem("part_generic_glass_polarized")));
         registerList(ITEM_EXPENSIVE, ModItems.EXPENSIVE_MODE_ITEMS);
+        registerList(ORE_BYPRODUCT, ModItems.ORE_BYPRODUCT_ITEMS);
+        registerList(STAMP_BOOK, ModItems.STAMP_BOOK_ITEMS);
+        registerList(PAGE_OF, ModItems.PAGE_OF_ITEMS);
         registerSparse(CASING, Map.of(
                 0, requireLegacyItem("casing_small"),
                 1, requireLegacyItem("casing_large"),

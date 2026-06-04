@@ -3,7 +3,6 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.HazardType;
-import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlocks;
@@ -54,7 +53,7 @@ public class LegacyGasMeltdownBlock extends LegacyGasBlock {
         if (ArmorUtil.hasFineParticleProtection(living)) {
             ArmorUtil.damageGasMaskFilter(living, 1);
         } else {
-            RadiationData.incrementAsbestos(living, 5);
+            RadiationUtil.applyAsbestos(living, 5, 1);
         }
     }
 

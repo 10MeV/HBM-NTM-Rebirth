@@ -485,7 +485,7 @@
 - 世界副作用现在能落 `waste_earth/waste_leaves`，但旧版 fallout、sellafield、rad gas 等更大环境改造还未迁。
 - HazardRegistry 只补了当前现代端已注册资源；燃料棒、RTG、容器/NBT/meta modifier、机器/流体/反应堆来源仍需后续批次。
 - HazmatRegistry 只会注册已经存在的现代物品；大多数 HBM 护甲本体还未迁移。
-- 长期状态的粒子/音效使用现代可用资源桥接，尚未完全还原旧版 AuxParticle 类型、player.cough 音效、MKU 专用 damage type、ArmorRegistry 细粒度防护类。
+- 长期状态的粒子/音效使用现代可用资源桥接，尚未完全还原旧版 AuxParticle 类型、MKU 专用 damage type、ArmorRegistry 细粒度防护类。
 - contagion 的玩家背包随机感染扫描只补了附近 ItemEntity 标记，尚未复刻玩家背包 unstackable 物品的随机 `ntmContagion` 写入。
 
 验证：
@@ -641,44 +641,47 @@ Legacy source check:
 
 - `ChunkRadiationManager#updateSystem` calls `ChunkRadiationHandlerSimple#updateSystem` every 20 server ticks.
 - `ChunkRadiationHandlerSimple#updateSystem` owns both simple 3x3 diffusion and `radFog` spawning.
-- The old simple handler only keeps loaded chunks in its runtime map:
+- The old simple handler reads/writes chunk-local NBT, but its runtime map can retain unloaded entries:
   - chunk load reads `hfr_simple_radiation` into the map
   - chunk save writes it back
-  - chunk unload removes it from the map
+  - chunk unload calls `radiation.remove(event.getChunk())` while the map key type is `ChunkCoordIntPair`, so the intended removal does not actually match existing keys
+  - diffusion writes neighboring coordinates without requiring target chunks to be loaded; fog and terrain mutation still guard world access with loaded-chunk checks
 - Old fog is `ParticleRadiationFog`, spawned from the server effect bridge with:
   - threshold `RadiationConfig.fogRad`
   - chance `RadiationConfig.fogCh`
   - y position `world.getHeightValue(x, z) + rand.nextInt(5)`
   - render color `0.85F, 0.9F, 0.5F` with a translucent fog texture
-- `handleWorldDestruction` is a radiation-library effect, not per-block logic. In the simple handler it runs every server tick, chooses 5 random loaded radiation chunks, uses 10 operation batches, scans the 16x16 surface with a 1/3 random pass, and converts grass, tallgrass, and leaves.
+- `handleWorldDestruction` is a radiation-library effect, not per-block logic. In the simple handler it runs every server tick, copies the whole runtime radiation map into an entry array, chooses 5 random entries, then checks `chunkExists(...)` before terrain access; loaded chunks are not pre-filtered out of the random pool. It uses 10 operation batches, scans the 16x16 surface with a 1/3 random pass, and converts grass, tallgrass, and leaves.
 - The old simple handler contains hardcoded local `threshold = 10` in `handleWorldDestruction`, despite `RadiationConfig.worldRadThreshold` defaulting to `20`.
 
 Bug source in the 1.20.1 port:
 
-- Current `RadiationSavedData` persisted a global per-level map and did not remove chunk entries on unload, so diffusion and terrain mutation could keep iterating stale/offline chunk coordinates.
-- Current terrain mutation and fog paths copied all saved entries and queried heightmaps without first enforcing the old loaded-chunk runtime boundary. This can cause expensive chunk work when many radiating sources have expanded the map.
+- Current `RadiationSavedData` persisted a global per-level map, but earlier modern pruning/deletion behavior could also erase nuclear chunk radiation when chunks unloaded.
+- Current terrain mutation and fog paths copied all saved entries and queried heightmaps without first checking loaded chunks. This can cause expensive chunk work when many radiating sources have expanded the map.
 - Current fog used `ParticleTypes.MYCELIUM`, so the visible result did not match the old yellow-green `ParticleRadiationFog`.
 - Current world-effect threshold used the config value directly, so chunks in the old simple handler's 10-20 RAD behavior band did not mutate terrain.
 
 Completed in the 1.20.1 port:
 
-- `RadiationSavedData#updateDiffusion` now accepts `ServerLevel` and only diffuses through chunks that are currently loaded, matching the old runtime-map boundary.
-- Added `RadiationSavedData#loadedEntries` to prune stale/offline chunk entries before terrain mutation and fog selection.
-- `CommonForgeEvents#onChunkUnload` now calls `ChunkRadiationManager.unloadChunk`, mirroring old `receiveChunkUnload`.
+- `RadiationSavedData#updateDiffusion` now accepts `ServerLevel`; fog candidates and world access are checked against loaded chunks, while the radiation values themselves continue diffusing through saved chunk coordinates.
+- Added `RadiationSavedData#entriesSnapshot` so terrain mutation samples from the full saved/runtime radiation table like the old `list.radiation.entrySet().toArray()` path, then still skips unloaded chunks before heightmap/block access.
+- Kept `RadiationSavedData#loadedEntries` for diagnostics/stats style uses without deleting unloaded radiation data.
+- `CommonForgeEvents#onChunkUnload` still calls `ChunkRadiationManager.unloadChunk`, but the radiation manager intentionally keeps saved radiation data on unload to match the 1.7.10 Simple handler's observable behavior.
 - `ChunkRadiationManager` now spawns radiation fog during the once-per-second diffusion tick, matching the old simple handler timing.
 - Replaced the `MYCELIUM` fog bridge with a yellow-green `DustParticleOptions` plus light smoke, using the old fog color and height range until the full custom particle renderer is migrated.
 - World radiation terrain mutation now keeps the legacy 5 random chunks and configurable 10 operation batches, but clamps the threshold to the old simple-handler `10` behavior so moderate radioactive chunks can rot grass like 1.7.10.
-- Terrain mutation and fog now skip entries whose chunk is not loaded before heightmap/block access.
+- Terrain mutation and fog now skip entries whose chunk is not loaded before heightmap/block access; terrain mutation no longer pre-filters the random pool to loaded chunks.
 
 Still incomplete:
 
 - This is still a modern particle bridge. A full `ParticleRadiationFog` port needs a custom particle type/provider and the legacy `textures/particle/fog.png` render behavior.
-- The global `SavedData` bridge remains different from the old chunk-local NBT runtime model. The new unload/prune behavior narrows the observable runtime behavior, but a future strict port should consider replacing the global saved list with chunk-attached radiation data.
-- Existing worlds with a very large stale `hbm_chunk_radiation` saved-data file will be pruned gradually as levels tick/load; a one-shot cleanup command may be useful later if old test worlds are already bloated.
+- The global `SavedData` bridge remains different from the old chunk-local NBT runtime model. The explicit prune command is a modern diagnostic cleanup path and must not be treated as normal tick/unload behavior.
+- Existing worlds with a very large stale `hbm_chunk_radiation` saved-data file can be cleaned with `/hbm radiation chunk prune`; automatic tick/unload cleanup would diverge from the old Simple handler and can erase nuclear fallout footprints.
 
 Verification:
 
 - 2026-05-21 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+- 2026-06-04 re-ran `.\gradlew.bat compileJava processResources --no-daemon` after restoring full-entry world-effect sampling: passed.
 
 ## 2026-05-21 Special Chunk Radiation Source Block Pass
 
@@ -1455,6 +1458,141 @@ Verification:
 
 - 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
+## 2026-06-04 Nuclear Fallout Library Boundary Re-audit
+
+Legacy source re-checked:
+
+- `com.hbm.entity.logic.EntityNukeExplosionMK5`
+- `com.hbm.entity.logic.EntityNukeExplosionMK3`
+- `com.hbm.explosion.ExplosionNukeSmall`
+- `com.hbm.explosion.ExplosionHurtUtil`
+- `com.hbm.entity.effect.EntityFalloutRain`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple`
+
+Ownership decision:
+
+- Do not create a broad `NuclearRadiationEffects`-style library. 1.7.10 keeps nuclear formulas at their callers:
+  - MK5 direct line radiation belongs to `EntityNukeExplosionMK5#radiate`.
+  - Solinium spherical falloff belongs to `ExplosionHurtUtil#doRadiation`.
+  - Mini-nuke 5x5 chunk footprint belongs to `ExplosionNukeSmall#explode`.
+  - Fallout crater-zone selection belongs to `EntityFalloutRain#getBiomeChange`.
+- The radiation library owns final contamination/storage boundaries:
+  - `RadiationUtil.contaminate(...)` for entity radiation/digamma writes.
+  - `ChunkRadiationManager` / `RadiationSavedData` for simple chunk radiation writes, diffusion, fog, terrain mutation, and persistence.
+  - `CraterRadiationData` only as the modern persistent marker and ambient-radiation bridge for crater zones.
+
+Corrected in this pass:
+
+- `RadiationSavedData#loadedEntries` no longer prunes unloaded entries while gathering candidates for terrain mutation.
+- `RadiationSavedData#updateDiffusion` no longer requires origin/target chunks to be loaded before propagating simple chunk radiation. This keeps the old Simple handler's world-map diffusion shape for nuclear fallout and mini-nuke footprints.
+- `ChunkRadiationManager#unloadChunk` no longer removes saved radiation data on chunk unload. 1.7.10 Simple handler appears to intend removal, but uses a `Chunk` key against a `ChunkCoordIntPair` map, so the observable runtime behavior keeps entries.
+- Fog spawning and world terrain mutation still check loaded chunks before world access, matching the old `chunkExists(...)` guard around visible/world effects.
+
+Still incomplete:
+
+- PRISM/3D/NT radiation handlers remain deferred optional systems.
+- The modern global SavedData bridge is still not a literal chunk-attached NBT implementation; keep `/hbm radiation chunk prune` as an explicit diagnostic cleanup command only.
+
+Verification:
+
+- 2026-06-04 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-06-04 Nuclear Explosion Radiation Coupling Pass
+
+Legacy source re-checked:
+
+- `com.hbm.entity.logic.EntityNukeExplosionMK5#radiate`
+- `com.hbm.explosion.ExplosionNukeSmall#explode`
+- `com.hbm.handler.radiation.ChunkRadiationManager`
+
+Legacy contracts:
+
+- MK5 early direct radiation only runs when fallout is enabled, an explosion worker already exists, `ticksExisted < 10`, and `strength >= 75`.
+- The direct radiation source uses an AABB expanded by `length * 2`; legacy does not apply an extra spherical range rejection after collecting entities.
+- The ray to each living entity targets `posY + getEyeHeight()`, accumulates ordinary block explosion resistance at each integer step, clamps total resistance to at least `1`, then applies `RAD_BYPASS` radiation as `rads / resistance / distance^2`.
+- Mini-nuke fallout footprint increments simple chunk radiation in a 5x5 chunk diamond where `abs(i) + abs(j) < 4`, with amount `50 / (abs(i) + abs(j) + 1) * radiationLevel / 3`.
+
+Corrected in this pass:
+
+- Kept MK5 early direct-radiation calculation in `NukeExplosionMk5Entity#radiate(...)`, matching the 1.7.10 ownership boundary.
+- Kept mini-nuke footprint calculation in `ExplosionNukeSmall`, matching the 1.7.10 ownership boundary.
+- Connected those call sites to the modern radiation library only at the old library boundary:
+  - MK5 direct entity contamination writes through `RadiationUtil.contaminate(... RAD_BYPASS, amount)`.
+  - Mini-nuke chunk footprint writes through `ChunkRadiationManager.incrementRadiation(...)`.
+- Restored the MK5 direct-radiation resistance source to ordinary block explosion resistance instead of reusing nuclear ray masquerade resistance.
+- Removed the modern extra `distance > range` rejection so the modern AABB entity set matches the 1.7.10 `radiate` method.
+
+Ownership note:
+
+- Explosion entities/utilities still own nuclear blast scheduling, direct-radiation formulas, mini-nuke footprint formulas, fallout entity spawning, and cloud visuals, as in 1.7.10.
+- The radiation library owns contamination application and chunk-radiation storage, not the nuclear explosion formulas themselves.
+
+Verification:
+
+- 2026-06-04 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-06-04 Solinium Spherical Radiation Coupling Pass
+
+Legacy source re-checked:
+
+- `com.hbm.explosion.ExplosionHurtUtil#doRadiation`
+- `com.hbm.entity.logic.EntityNukeExplosionMK3`
+
+Legacy contracts:
+
+- `ExplosionHurtUtil#doRadiation` enumerates `EntityLivingBase` in a radius AABB, rejects entities whose true distance is greater than `radius`, then linearly interpolates radiation between `outer` at the edge and `inner` at the center.
+- The contamination type is `CREATIVE`, so normal radiation resistance still applies.
+- The only legacy nuclear caller is MK3 Solinium while destruction is not complete: `doRadiation(world, pos, 15000, 250000, destructionRange)`.
+
+Corrected in this pass:
+
+- Kept the spherical falloff formula in `ExplosionHurtUtil#doRadiation(...)`, matching the 1.7.10 ownership boundary.
+- Ensured the final entity contamination still enters the modern radiation library through `RadiationUtil.contaminate(... CREATIVE, amount)`.
+- Kept `NukeExplosionMk3Entity` using the old `ExplosionHurtUtil.doRadiation(15000, 250000, destructionRange)` Solinium call shape.
+
+Ownership note:
+
+- `ExplosionHurtUtil` owns this old explosion-side falloff formula.
+- `RadiationUtil` owns the contamination write and resistance handling.
+- Non-nuclear VNT antimatter contamination remains outside this nuclear coupling pass.
+
+Verification:
+
+- 2026-06-04 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-06-04 Nuclear Fallout Ownership Reconciliation Pass
+
+Legacy source re-checked:
+
+- `com.hbm.entity.logic.EntityNukeExplosionMK5`
+- `com.hbm.entity.logic.EntityNukeExplosionMK3`
+- `com.hbm.entity.effect.EntityFalloutRain`
+- `com.hbm.world.biome.BiomeGenCraterBase`
+
+Legacy contracts:
+
+- MK5 spawns fallout rain after the ray explosion completes when `fallout` is enabled; its scale is `(int)(length * 2.5 + falloutAdd) * BombConfig.falloutRange / 100`.
+- MK3 waste spawns fallout rain once destruction completes and before vapor completion; its effective scale is `(int)(destructionRange * 1.8)`.
+- Fallout rain owns the scan/work queue and crater zone choice: inner crater when `scale >= 150 && percent < 15`, crater when `scale >= 100 && percent < 55`, outer crater when `scale >= 25`.
+- Crater zones later apply ambient radiation through the crater-biome radiation config values in the entity-effect tick path.
+
+Corrected in this pass:
+
+- Kept MK5 and MK3 waste fallout spawning in their explosion entities, matching 1.7.10.
+- Kept crater zone selection in `FalloutRainEntity`, matching old `EntityFalloutRain#getBiomeChange(...)`.
+- Kept `FalloutRainEntity` responsible for legacy chunk traversal, block fallout conversion, layer placement, fire placement, collapse checks, crater biome mutation, and biome packet resend after a changed chunk.
+- Kept `CraterRadiationData` as the modern 1.20.1 bridge for persistent crater-zone markers and ambient-radiation lookup, not as the owner of the legacy fallout zone-selection formula.
+
+Ownership note:
+
+- Explosion entities schedule blast processors and spawn fallout entities.
+- `FalloutRainEntity` owns fallout terrain/biome transformation formulas.
+- `CraterRadiationData` owns persistent crater marker storage and ambient-radiation lookup.
+
+Verification:
+
+- 2026-06-04 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
 ## 2026-05-25 Nuclear Fallout Coupling Audit
 
 Legacy source re-checked:
@@ -1748,6 +1886,223 @@ Library ownership:
 Verification:
 
 - 2026-05-27 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-06-04 Radiation/Nuclear Coupling Re-Audit Pass 2
+
+Legacy source re-checked:
+
+- `com.hbm.handler.EntityEffectHandler#onUpdate`
+- `com.hbm.handler.EntityEffectHandler#handleRadiationFX`
+- `com.hbm.main.ClientProxy#effectNT`
+- `com.hbm.entity.logic.EntityNukeExplosionMK5`
+- `com.hbm.entity.logic.EntityNukeExplosionMK3`
+- `com.hbm.explosion.ExplosionNukeSmall`
+- `com.hbm.handler.radiation.ChunkRadiationHandlerSimple`
+
+Corrected in this pass:
+
+- Restored the old `hfr_bomb` / bomb timer behavior in the modern living tick chain:
+  - decrement the stored timer every server tick;
+  - when the old value is `1`, call `ExplosionNukeSmall.explode(..., ExplosionNukeSmall.PARAMS_MEDIUM)` at the entity position.
+- Re-checked the nuclear/radiation ownership boundary after the bomb timer restore:
+  - the timer lives in `RadiationData` because it is part of old `HbmLivingProps`;
+  - the triggered explosion remains owned by `ExplosionNukeSmall`, not by the radiation library.
+- Confirmed no broad nuclear radiation helper is needed: MK5 direct radiation, MK3 Solinium falloff, mini-nuke chunk footprint, and fallout rain zone/terrain formulas still belong to their 1.7.10 caller classes.
+
+Still incomplete / blocked by unported content:
+
+- `EntityCreeperNuclear`, `EntityDuck`, `EntityQuackos`, and lootable-body concrete classes are not present as modern registered entities, so those old transformation targets cannot be fully restored yet; current radiation immunity keeps class-name/interface bridges for future migrations.
+- `crashed_bomb` block/tile ambient contamination from 1.7.10 remains a content-migration gap because the modern block/entity registration is not present in this clean port.
+
+Verification:
+
+- 2026-06-04 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-06-04 Contamination Helper Expansion Pass
+
+Legacy source re-checked:
+
+- `com.hbm.util.ContaminationUtil`
+- `com.hbm.hazard.type.HazardTypeAsbestos`
+- `com.hbm.hazard.type.HazardTypeCoal`
+- `com.hbm.blocks.gas.BlockGasAsbestos`
+- `com.hbm.blocks.gas.BlockGasCoal`
+- `com.hbm.blocks.gas.BlockGasRadon`
+- `com.hbm.blocks.gas.BlockGasRadonDense`
+- `com.hbm.blocks.gas.BlockGasMeltdown`
+
+Corrected in this pass:
+
+- Added radiation-library helper entry points for long-term lung hazards:
+  - `RadiationUtil.applyAsbestos(entity, amount, filterDamage)`;
+  - `RadiationUtil.applyCoalDust(entity, amount, filterDamage, filterDamageChance)`.
+- Routed inventory asbestos/coal hazards through those helpers, preserving old hazard behavior:
+  - asbestos hazard is blocked by fine-particle protection and damages the gas-mask filter by the hazard level;
+  - coal hazard is blocked by coarse-particle protection and only sometimes damages the filter with chance `1 / max(65 - stackSize, 1)`;
+  - unprotected targets receive the same capped asbestos / black-lung increments as 1.7.10.
+- Routed already-migrated asbestos/coal/radon/meltdown gas collision branches through the same helper where the old source used the same protection contract, while keeping legacy differences:
+  - plain `gas_asbestos` and `gas_coal` block the hazard when protected but do not damage the filter;
+  - `gas_radon` / dense radon / meltdown protected branches damage the filter by 1;
+  - `gas_radon_tomb` still directly increments asbestos after removing RadAway/Rad-X, matching its old special source.
+- Narrowed `RadiationUtil.applyDigammaDirect` to match old `ContaminationUtil#applyDigammaDirect`: it ignores only the modern `RadiationImmune` marker and creative players, not the whole ordinary radiation-immune entity list.
+
+Ownership note:
+
+- `RadiationData` remains the raw stored-property layer.
+- `RadiationUtil` now owns asbestos/coal dust contamination entrance semantics where old source code used hazard/protection logic.
+- Commands and natural long-term disease decay may still write `RadiationData` directly because they are state maintenance/debug paths rather than contamination sources.
+
+Still incomplete:
+
+- Full `ArmorRegistry` category parity still depends on later armor/filter item migration; current helpers use the already-migrated `ArmorUtil` bridge.
+
+Verification:
+
+- 2026-06-04 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
+
+## 2026-06-04 Gas Inform, RadAway, and Cough Parity Pass
+
+Legacy source re-checked:
+
+- `com.hbm.extprop.HbmLivingProps`
+- `com.hbm.main.ServerProxy`
+- `com.hbm.packet.toclient.PlayerInformPacket`
+- `com.hbm.items.ModItems`
+- `com.hbm.items.special.ItemSimpleConsumable`
+- `com.hbm.items.special.ItemSyringe`
+- `com.hbm.handler.EntityEffectHandler#handleLungDisease`
+
+Findings:
+
+- Old asbestos and black-lung exposure warnings belong to `HbmLivingProps.incrementAsbestos` and `incrementBlackLung`, not to each individual gas or hazard source.
+  - player packet ID is `MainRegistry.proxy.ID_GAS_HAZARD`, whose server proxy value is `12`;
+  - duration is `3000` ms;
+  - messages use `info.asbestos` and `info.coaldust`, red formatted.
+- The currently registered old RadAway items are the `ItemSimpleConsumable.init()` definitions:
+  - `radaway`: radaway effect `140` ticks, amplifier `0`;
+  - `radaway_strong`: radaway effect `350` ticks, amplifier `0`;
+  - `radaway_flush`: radaway effect `500` ticks, amplifier `0`;
+  - all three add duration to an existing radaway effect instead of replacing it.
+- `ItemSyringe` still contains older-looking `radaway*` branches, but those do not define the currently assigned `ModItems.radaway*` objects after `ItemSimpleConsumable.init()` runs.
+- Old lung disease plays `hbm:player.cough` on every cough tick before spawning blood/smoke vomit particles.
+
+Corrected in this pass:
+
+- `RadiationData.incrementAsbestos` and `incrementBlackLung` now send modern `ClientInformPacket` notifications to `ServerPlayer`, preserving old gas-hazard ID `12`, red formatting, and `3000` ms duration.
+- Added `info.asbestos` and `info.coaldust` language entries to checked-in lang JSON and datagen providers.
+- `RadawayItem` now appends duration to any active RadAway effect, matching `ItemSimpleConsumable.addPotionEffect`.
+- `ModItems.RADAWAY`, `RADAWAY_STRONG`, and `RADAWAY_FLUSH` now use `140/350/500` tick durations with amplifier `0`.
+- Restored the legacy cough sound asset set (`player/cough1..4.ogg`), registered `player.cough`, added `sounds.json`/subtitle entries, and play it from the modern lung-disease handler.
+
+Still incomplete:
+
+- Old lung disease also factors in world soot pollution and gas-mask soot protection. The clean port currently has fluid pollution traits but not the old `PollutionHandler` world-state library, so this pass intentionally did not invent a soot proxy.
+- Potion sickness and IV container returns are still item-system work, not radiation-core behavior, and remain deferred until the consumable/syringe library is migrated.
+
+## 2026-06-04 Radiation FX Timing and Client Aura Pass
+
+Legacy source re-checked:
+
+- `com.hbm.handler.EntityEffectHandler#handleRadiationFX`
+- `com.hbm.main.ClientProxy#effectNT`
+
+Findings:
+
+- Old server-side radiation sickness vomit timing is not a fresh random roll each tick:
+  - it creates `new Random(entity.getEntityId())`;
+  - `r600 = rand.nextInt(600)` drives the `radiation > 600` blood-vomit window;
+  - `r1200 = rand.nextInt(1200)` drives the `radiation > 200` normal-vomit window;
+  - the `radiation > 900` red sweat particle uses the next fixed `rand.nextInt(10)` as a per-entity phase offset.
+- Old client-side local player radiation aura is not sent by the server. In the `world.isRemote` branch, if the local player has radiation above `600`, the client calls `effectNT(type="radiation")` every tick with count:
+  - `4` above `900`;
+  - `2` above `800`;
+  - `1` otherwise.
+- The modern particle library already had `ParticleUtil.TYPE_RADIATION` and `HbmParticleEffects#spawnRadiationAura`; it was missing the old client-side trigger.
+
+Corrected in this pass:
+
+- `CommonForgeEvents#handleRadiationParticles` now recreates the old per-entity seeded `Random(entityId)` timing for radiation vomit and red sweat particles.
+- `ClientForgeEvents#onClientTick` now reads `ClientRadiationData.getRadiation()` and locally triggers `ParticleUtil.spawnRadiationAura` with the old count thresholds.
+- The ownership stays split like 1.7.10:
+  - radiation sickness state/effect thresholds remain in the common radiation tick;
+  - local aura rendering remains a client-side particle-library trigger.
+
+Still incomplete:
+
+- Old `EntityAuraFX` rendering is still implemented through the modern particle bridge; this pass only restored the missing trigger/timing contract.
+- The client aura depends on normal `PlayerRadiationSyncPacket` cadence, so the displayed effect may lag the server value by the existing sync interval.
+
+## 2026-06-04 Inventory Hazard and Digamma Entry Pass
+
+Legacy source re-checked:
+
+- `com.hbm.hazard.type.HazardTypeRadiation`
+- `com.hbm.hazard.type.HazardTypeDigamma`
+- `com.hbm.hazard.type.HazardTypeAsbestos`
+- `com.hbm.hazard.type.HazardTypeCoal`
+- `com.hbm.util.ContaminationUtil#applyDigammaData`
+- `com.hbm.blocks.gas.BlockGasAsbestos`
+- `com.hbm.blocks.gas.BlockGasCoal`
+
+Findings:
+
+- Old item radiation hazard applies every tick as `level * stackSize / 20F`, then enters `ContaminationUtil.contaminate(... CREATIVE, rad)`.
+- Old item digamma hazard applies every tick as `level / 20F` in `HazardTypeDigamma`; because the old hazard loop visits each stack, the effective stack behavior is `level * stackSize / 20F`.
+- `applyDigammaData` is blocked by duck/ocelot, creative players, player spawn protection, stability, and digamma armor checks. The modern helper already covered most of this but was missing the explicit stability check.
+- Old asbestos/coal item hazard does not use the `ContaminationUtil.applyAsbestos` player creative/spawn-protection path; it applies the hazard type's direct armor/filter logic. Plain asbestos/coal gas blocks also write `HbmLivingProps` directly after particle protection checks.
+
+Corrected in this pass:
+
+- `CommonForgeEvents#applyInventoryRadiation` now includes DIGAMMA item hazards instead of only RADIATION plus non-radiological hazards.
+- Inventory radiological hazards are gathered from `HazardRegistry.getHazards(stack)` entries, so hazard modifiers/transformers remain the single library source for item hazard levels.
+- RADIATION and DIGAMMA inventory entries are applied with the old per-second-to-per-tick conversion: `level * stackSize / 20F`.
+- Non-radiological inventory hazards still run in the old stable type order: asbestos, coal, hot, blinding, hydroactive, explosive.
+- `RadiationUtil.applyDigammaData` now blocks when the target has the modern `STABILITY` effect, matching old `HbmPotion.stability`.
+- `RadiationUtil` exposes asbestos/coal helper entry points for old hazard/filter semantics while keeping the existing direct lung-contamination behavior for plain asbestos/coal gas blocks.
+
+Still incomplete:
+
+- Reacher item attenuation in old `HazardTypeRadiation` is still deferred because the modern reacher item/content is not present in this clean port.
+- Full digamma armor parity still depends on later armor item migration; current `ArmorUtil` remains a keyword/available-item bridge.
+
+## 2026-06-04 Contamination Tick Ownership Pass
+
+Legacy source re-checked:
+
+- `com.hbm.extprop.HbmLivingProps`
+- `com.hbm.handler.EntityEffectHandler#handleContamination`
+- `com.hbm.handler.EntityEffectHandler#onUpdate`
+
+Findings:
+
+- The old contamination list is stored inside `HbmLivingProps` as `hfr_cont_count` and `cont_<index>` entries.
+- The old per-tick behavior belongs to the radiation living-data layer plus the common entity-effect tick:
+  - apply current radiation as `maxRad * time / maxTime`;
+  - use `RAD_BYPASS` only when `ignoreArmor` is true;
+  - decrement `time`;
+  - remove entries after their timer reaches zero.
+- The modern event handler had the right behavior, but it was manually manipulating the legacy NBT keys outside `RadiationData`.
+- The once-per-second player sync was happening immediately after `radEnv -> radBuf` and before long-term statuses ticked, so fields like contagion/oil/fire/contamination could be one tick stale on the client.
+
+Corrected in this pass:
+
+- Added `RadiationData.tickContamination(entity)` as the single library owner for legacy contamination-list ticking and list compaction.
+- `CommonForgeEvents#handleContaminationEffects` now consumes the typed `ContaminationEffect` snapshots from `RadiationData` instead of directly reading/writing NBT.
+- Player radiation sync now still flushes `radEnv -> radBuf` at the old once-per-second boundary, but sends the packet after chunk radiation, radiation effects, digamma, and long-term status ticking for that server tick.
+
+Ownership note:
+
+- `RadiationData` owns the stored contamination contract and timer mutation.
+- `CommonForgeEvents` owns applying the per-tick contamination amount through `RadiationUtil.contaminate`, matching old `EntityEffectHandler`.
+- Fallout layers, commands, and future item/entity sources should continue using `RadiationData.addContamination/removeContamination/clearContamination` instead of writing `cont_<index>` tags directly.
+
+Still incomplete:
+
+- The old pollution library remains unported; soot/poison/heavy-metal world pollution should stay documented rather than approximated in radiation core.
+
+Verification:
+
+- 2026-06-04 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
 ## 2026-05-24 Legacy Height Blocking Re-Audit Fix
 

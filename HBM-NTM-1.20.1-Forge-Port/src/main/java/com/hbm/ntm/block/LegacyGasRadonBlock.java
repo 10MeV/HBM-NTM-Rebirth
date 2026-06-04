@@ -49,10 +49,10 @@ public class LegacyGasRadonBlock extends LegacyGasBlock {
         if (kind == Kind.DENSE) {
             RadiationUtil.contaminate(living, HazardType.RADIATION, ContaminationType.CREATIVE, 0.5F);
             RadiationUtil.addRadiationPoisoning(living, 15 * 20, 0);
-            RadiationData.incrementAsbestos(living, 5);
+            RadiationUtil.applyAsbestos(living, 5, 1);
         } else {
             RadiationUtil.contaminate(living, HazardType.RADIATION, ContaminationType.RAD_BYPASS, 0.05F);
-            RadiationData.incrementAsbestos(living, 1);
+            RadiationUtil.applyAsbestos(living, 1, 1);
         }
     }
 

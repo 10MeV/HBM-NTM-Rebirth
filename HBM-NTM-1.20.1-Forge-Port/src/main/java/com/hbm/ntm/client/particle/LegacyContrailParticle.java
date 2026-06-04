@@ -16,9 +16,11 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @OnlyIn(Dist.CLIENT)
 public class LegacyContrailParticle extends TextureSheetParticle {
+    private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
     private static final int LEGACY_QUAD_COUNT = 6;
     private static SpriteSet contrailSprites;
     private final SpriteSet sprites;
@@ -32,7 +34,7 @@ public class LegacyContrailParticle extends TextureSheetParticle {
             SpriteSet sprites, float red, float green, float blue, float scale) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.sprites = sprites;
-        this.seed = random.nextInt();
+        this.seed = NEXT_VISUAL_ID.incrementAndGet();
         this.baseRed = red;
         this.baseGreen = green;
         this.baseBlue = blue;

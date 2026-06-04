@@ -1,0 +1,10 @@
+{
+  "type": "hbm:press",
+  "ingredient": {
+    "tag": "forge:ingots/weapon_steel"
+  },
+  "result": {
+    "item": "hbm:plate_weaponsteel"
+  },
+  "stamp": "plate"
+}

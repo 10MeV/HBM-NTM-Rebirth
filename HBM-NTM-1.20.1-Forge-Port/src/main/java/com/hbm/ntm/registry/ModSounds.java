@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.sound.LegacySirenTrack;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -8,11 +9,22 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
+
 public final class ModSounds {
     public static final DeferredRegister<SoundEvent> SOUNDS =
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, HbmNtm.MOD_ID);
 
     public static final RegistryObject<SoundEvent> BLOCK_PRESS_OPERATE = register("block.press_operate");
+    public static final RegistryObject<SoundEvent> BLOCK_ASSEMBLER_OPERATE = register("block.assembler_operate");
+    public static final RegistryObject<SoundEvent> BLOCK_ASSEMBLER_STRIKE = register("block.assembler_strike");
+    public static final RegistryObject<SoundEvent> BLOCK_ASSEMBLER_START = register("block.assembler_start");
+    public static final RegistryObject<SoundEvent> BLOCK_ASSEMBLER_STOP = register("block.assembler_stop");
+    public static final RegistryObject<SoundEvent> BLOCK_ASSEMBLER_CUT = register("block.assembler_cut");
+    public static final RegistryObject<SoundEvent> BLOCK_CHEMPLANT_OPERATE = register("block.chemplant_operate");
+    public static final RegistryObject<SoundEvent> BLOCK_CHEMICAL_PLANT = register("block.chemical_plant");
     public static final RegistryObject<SoundEvent> BLOCK_PIPE_PLACED = register("block.pipe_placed");
     public static final RegistryObject<SoundEvent> BLOCK_DEBRIS = register("block.debris");
     public static final RegistryObject<SoundEvent> BLOCK_REACTOR_START = register("block.reactor_start");
@@ -25,8 +37,15 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> TOOL_TECH_BOOP = register("tool.tech_boop");
     public static final RegistryObject<SoundEvent> TOOL_TECH_BLEEP = register("tool.tech_bleep");
     public static final RegistryObject<SoundEvent> TOOL_RADAWAY = register("tool.radaway");
+    public static final RegistryObject<SoundEvent> PLAYER_COUGH = register("player.cough");
     public static final RegistryObject<SoundEvent> PLAYER_VOMIT = register("player.vomit");
     public static final RegistryObject<SoundEvent> ENTITY_UFO_BLAST = register("entity.ufo_blast");
+    public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_FLYING_LOOP = register("entity.chopper_flying_loop");
+    public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_CRASHING_LOOP = register("entity.chopper_crashing_loop");
+    public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_MINE_LOOP = register("entity.chopper_mine_loop");
+    public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_DROP = register("entity.chopper_drop");
+    public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_CHARGE = register("entity.chopper_charge");
+    public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_DAMAGE = register("entity.chopper_damage");
     public static final RegistryObject<SoundEvent> WEAPON_MUKE_EXPLOSION = register("weapon.muke_explosion");
     public static final RegistryObject<SoundEvent> WEAPON_NUCLEAR_EXPLOSION = register("weapon.nuclear_explosion");
     public static final RegistryObject<SoundEvent> WEAPON_FSTBMB_START = register("weapon.fstbmb_start");
@@ -42,6 +61,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> WEAPON_CASING_SMALL = register("weapon.casing.small");
     public static final RegistryObject<SoundEvent> WEAPON_CASING_MEDIUM = register("weapon.casing.medium");
     public static final RegistryObject<SoundEvent> WEAPON_CASING_LARGE = register("weapon.casing.large");
+    public static final Map<LegacySirenTrack, RegistryObject<SoundEvent>> ALARM_TRACKS = registerAlarmTracks();
 
     public static void register(IEventBus modBus) {
         SOUNDS.register(modBus);
@@ -56,6 +76,21 @@ public final class ModSounds {
             case 6 -> TOOL_GEIGER_6.get();
             default -> TOOL_GEIGER_1.get();
         };
+    }
+
+    public static SoundEvent sirenTrack(LegacySirenTrack track) {
+        RegistryObject<SoundEvent> sound = ALARM_TRACKS.get(track);
+        return sound == null ? null : sound.get();
+    }
+
+    private static Map<LegacySirenTrack, RegistryObject<SoundEvent>> registerAlarmTracks() {
+        EnumMap<LegacySirenTrack, RegistryObject<SoundEvent>> sounds = new EnumMap<>(LegacySirenTrack.class);
+        for (LegacySirenTrack track : LegacySirenTrack.values()) {
+            if (track.hasSound()) {
+                sounds.put(track, register(track.eventPath()));
+            }
+        }
+        return Collections.unmodifiableMap(sounds);
     }
 
     private static RegistryObject<SoundEvent> register(String name) {

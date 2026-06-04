@@ -1,0 +1,8 @@
+{
+  "values": [
+    "hbm:coolant",
+    "hbm:coolant_flowing",
+    "hbm:coolant_hot",
+    "hbm:coolant_hot_flowing"
+  ]
+}

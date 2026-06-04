@@ -1,0 +1,25 @@
+// 1.20.1	2026-06-04T14:03:00.0169367	Tags for minecraft:fluid mod id hbm
+50c99819648dbbb31f1a52d8d22705a2af6f2a74 data/forge/tags/fluids/biofuel.json
+84e51c8f82daa1f5e7146befebbb383a67570dce data/forge/tags/fluids/carbon_dioxide.json
+f618a17404cb5f2cc6ded270004e6addcd12c37a data/forge/tags/fluids/chlorine.json
+5b729a8cbe23231f6c0db92150f94ce5cd25aa86 data/forge/tags/fluids/coolant.json
+3830a2c978c21d27612a1031c1e2fe65294525b7 data/forge/tags/fluids/crude_oil.json
+3a3122d50564cf233175b63f1e76f75cdf856be1 data/forge/tags/fluids/deuterium.json
+702bb5b83d37295b7fd4aefe24470a178d8c18f2 data/forge/tags/fluids/diesel.json
+6eab160aafb47066627dfab12c4c6cad70baf072 data/forge/tags/fluids/ethanol.json
+1242d586523ae22eb0ef8de5d6077137c7a7925a data/forge/tags/fluids/gasoline.json
+da6bc9b4ab5f4ddaf2f17b7457ecdec370a3a884 data/forge/tags/fluids/heavy_oil.json
+c305b943f846e3cd9153051ab6fb43312c90ac43 data/forge/tags/fluids/heavy_water.json
+a9bfd5e1fd03bfe73533c8366db775aa2f90d41c data/forge/tags/fluids/hot_steam.json
+24b8213693b77ffe29ef4b073471252a777d35c3 data/forge/tags/fluids/hydrogen.json
+1892e394de89b21ad72090ae79332a4bd828e515 data/forge/tags/fluids/kerosene.json
+228c4ef71d8baae8730510a1255128f0147f9fd5 data/forge/tags/fluids/lubricant.json
+526e0a49adf28e5f577df3c21896ed2d9c5951e9 data/forge/tags/fluids/mercury.json
+f3d9bfe9eb9c34c3bf8c7d223c61626238b7ce4d data/forge/tags/fluids/nitric_acid.json
+4ca018343c63103dc1705d8ef7f423cec4f1deca data/forge/tags/fluids/oil.json
+963360ad3b25cf84818e6de3e7775aa14db0cc72 data/forge/tags/fluids/oxygen.json
+f5d4e7c70e8c7c97125963c66091dff7d8f227bb data/forge/tags/fluids/steam.json
+ad6d9b8f9b2319bcffcd5b70866f60933d25b924 data/forge/tags/fluids/sulfuric_acid.json
+abe4a97ea88469cca0eb2c0cf8e374984b101efd data/forge/tags/fluids/superheated_steam.json
+abe4a97ea88469cca0eb2c0cf8e374984b101efd data/forge/tags/fluids/super_hot_steam.json
+bca79faf3d445ca50d97db31fe8902860aa2a3a0 data/forge/tags/fluids/tritium.json
