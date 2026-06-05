@@ -92,17 +92,9 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
             }
             return super.insertItem(slot, stack, simulate);
         }
-
-        @Override
-        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            ItemStack stack = getStackInSlot(slot);
-            if (!HbmBatteryTransfer.isFullBattery(stack)) {
-                return ItemStack.EMPTY;
-            }
-            return super.extractItem(slot, amount, simulate);
-        }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> sidedItemHandler = LazyOptional.of(() -> new SocketSidedItemHandler(items));
     private final SocketEnergyStorage socketEnergy;
     private final long[] powerLog = new long[20];
     private long delta;
@@ -302,7 +294,8 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
     }
 
     public int getPowerBarHeight(int maxHeight) {
-        return getMaxPower() <= 0L ? 0 : (int) (getPower() * maxHeight / getMaxPower());
+        long maxPower = getMaxPower();
+        return maxPower <= 0L ? 0 : Mth.clamp((int) Math.floor((double) getPower() / (double) maxPower * maxHeight), 0, maxHeight);
     }
 
     public int getComparatorPower() {
@@ -586,12 +579,13 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        sidedItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : sidedItemHandler.cast();
         }
         return super.getCapability(capability, side);
     }
@@ -625,6 +619,49 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
             return HbmEnergyReceiver.ConnectionPriority.LOW;
         }
         return priority;
+    }
+
+    private static final class SocketSidedItemHandler implements IItemHandler {
+        private final ItemStackHandler items;
+
+        private SocketSidedItemHandler(ItemStackHandler items) {
+            this.items = items;
+        }
+
+        @Override
+        public int getSlots() {
+            return 1;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return slot == SLOT_BATTERY ? items.getStackInSlot(SLOT_BATTERY) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return slot == SLOT_BATTERY && items.isItemValid(SLOT_BATTERY, stack)
+                    ? items.insertItem(SLOT_BATTERY, stack, simulate)
+                    : stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            if (slot != SLOT_BATTERY || !HbmBatteryTransfer.isFullBattery(items.getStackInSlot(SLOT_BATTERY))) {
+                return ItemStack.EMPTY;
+            }
+            return items.extractItem(SLOT_BATTERY, amount, simulate);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return slot == SLOT_BATTERY ? items.getSlotLimit(SLOT_BATTERY) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return slot == SLOT_BATTERY && items.isItemValid(SLOT_BATTERY, stack);
+        }
     }
 
     private static final class SocketEnergyStorage extends HbmEnergyStorage {

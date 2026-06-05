@@ -3,9 +3,13 @@ package com.hbm.ntm.recipe;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidContainerRules;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.item.FluidIconItem;
+import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
@@ -22,10 +26,16 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
 public class GenericMachineRecipe implements Recipe<Container> {
+    public static final int UNSPECIFIED_SOURCE_ORDER = Integer.MAX_VALUE;
+    public static final Comparator<GenericMachineRecipe> LEGACY_ORDER =
+            Comparator.comparingInt(GenericMachineRecipe::getSourceOrder)
+                    .thenComparing(recipe -> recipe.getId().toString());
+
     private final ResourceLocation id;
     private final Machine machine;
     private final String internalName;
@@ -43,12 +53,23 @@ public class GenericMachineRecipe implements Recipe<Container> {
     private final String autoSwitchGroup;
     @Nullable
     private final String nameWrapper;
+    private final int sourceOrder;
 
     public GenericMachineRecipe(ResourceLocation id, Machine machine, String internalName, int duration, long power,
             List<HbmIngredient> itemInputs, List<HbmFluidStack> fluidInputs,
             List<HbmItemOutput> itemOutputs, List<HbmFluidStack> fluidOutputs,
             List<String> pools, ItemStack icon, boolean customLocalization,
             GenericMachineRecipeExtraData extraData, @Nullable String autoSwitchGroup, @Nullable String nameWrapper) {
+        this(id, machine, internalName, duration, power, itemInputs, fluidInputs, itemOutputs, fluidOutputs,
+                pools, icon, customLocalization, extraData, autoSwitchGroup, nameWrapper, UNSPECIFIED_SOURCE_ORDER);
+    }
+
+    public GenericMachineRecipe(ResourceLocation id, Machine machine, String internalName, int duration, long power,
+            List<HbmIngredient> itemInputs, List<HbmFluidStack> fluidInputs,
+            List<HbmItemOutput> itemOutputs, List<HbmFluidStack> fluidOutputs,
+            List<String> pools, ItemStack icon, boolean customLocalization,
+            GenericMachineRecipeExtraData extraData, @Nullable String autoSwitchGroup, @Nullable String nameWrapper,
+            int sourceOrder) {
         this.id = id;
         this.machine = machine;
         this.internalName = internalName.isBlank() ? id.toString() : internalName;
@@ -64,6 +85,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
         this.extraData = extraData == null ? GenericMachineRecipeExtraData.EMPTY : extraData;
         this.autoSwitchGroup = autoSwitchGroup;
         this.nameWrapper = nameWrapper;
+        this.sourceOrder = sourceOrder < 0 ? UNSPECIFIED_SOURCE_ORDER : sourceOrder;
     }
 
     public Machine getMachine() {
@@ -124,6 +146,10 @@ public class GenericMachineRecipe implements Recipe<Container> {
         return extraData;
     }
 
+    public int getSourceOrder() {
+        return sourceOrder;
+    }
+
     public ItemStack getIcon() {
         if (!icon.isEmpty()) {
             return icon.copy();
@@ -131,7 +157,36 @@ public class GenericMachineRecipe implements Recipe<Container> {
         if (!itemOutputs.isEmpty()) {
             return itemOutputs.get(0).representativeStack();
         }
+        if (!fluidOutputs.isEmpty()) {
+            ItemStack fluidIcon = fluidIcon(fluidOutputs.get(0));
+            if (!fluidIcon.isEmpty()) {
+                return fluidIcon;
+            }
+        }
         return getToastSymbol();
+    }
+
+    private static ItemStack fluidIcon(HbmFluidStack fluid) {
+        FluidType type = fluid.type();
+        if (type == null || type == HbmFluids.NONE) {
+            return ItemStack.EMPTY;
+        }
+        if (ModItems.FLUID_ICON.isPresent()) {
+            return FluidIconItem.make(type, Math.max(1, fluid.amount()), fluid.pressure());
+        }
+        if (HbmFluidContainerRules.canFillGasTank(type)
+                && ModItems.GAS_FULL.get() instanceof HbmFluidContainerItem gasTank) {
+            return gasTank.createFilledStack(type, Math.max(1, fluid.amount()), fluid.pressure());
+        }
+        if (HbmFluidContainerRules.canFillCanister(type)
+                && ModItems.CANISTER_FULL.get() instanceof HbmFluidContainerItem canister) {
+            return canister.createFilledStack(type, Math.max(1, fluid.amount()), fluid.pressure());
+        }
+        if (HbmFluidContainerRules.canFillFluidPack(type)
+                && ModItems.FLUID_PACK_FULL.get() instanceof HbmFluidContainerItem fluidPack) {
+            return fluidPack.createFilledStack(type, Math.max(1, fluid.amount()), fluid.pressure());
+        }
+        return ItemStack.EMPTY;
     }
 
     public Component getDisplayName() {
@@ -440,11 +495,12 @@ public class GenericMachineRecipe implements Recipe<Container> {
             boolean customLocalization = LegacyGenericRecipeFormat.readCustomLocalization(json);
             String autoSwitchGroup = LegacyGenericRecipeFormat.readAutoSwitchGroup(json);
             String nameWrapper = LegacyGenericRecipeFormat.readNameWrapper(json);
+            int sourceOrder = LegacyGenericRecipeFormat.readSourceOrder(json);
             GenericMachineRecipeExtraData extraData = GenericMachineRecipeExtraData.fromJson(json);
             machine.validateRecipeLimits(id, itemInputs.size(), fluidInputs.size(), itemOutputs.size(), fluidOutputs.size());
             validateItemInputStackLimits(id, itemInputs);
             return new GenericMachineRecipe(id, machine, internalName, duration, power, itemInputs, fluidInputs, itemOutputs, fluidOutputs,
-                    pools, icon, customLocalization, extraData, autoSwitchGroup, nameWrapper);
+                    pools, icon, customLocalization, extraData, autoSwitchGroup, nameWrapper, sourceOrder);
         }
 
         private static void validateItemInputStackLimits(ResourceLocation id, List<HbmIngredient> itemInputs) {
@@ -473,8 +529,9 @@ public class GenericMachineRecipe implements Recipe<Container> {
             GenericMachineRecipeExtraData extraData = GenericMachineRecipeExtraData.fromNetwork(buffer);
             String autoSwitchGroup = buffer.readBoolean() ? buffer.readUtf() : null;
             String nameWrapper = buffer.readBoolean() ? buffer.readUtf() : null;
+            int sourceOrder = buffer.readVarInt();
             return new GenericMachineRecipe(id, machine, internalName, duration, power, itemInputs, fluidInputs, itemOutputs, fluidOutputs,
-                    pools, icon, customLocalization, extraData, autoSwitchGroup, nameWrapper);
+                    pools, icon, customLocalization, extraData, autoSwitchGroup, nameWrapper, sourceOrder);
         }
 
         @Override
@@ -498,6 +555,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
             if (recipe.nameWrapper != null) {
                 buffer.writeUtf(recipe.nameWrapper);
             }
+            buffer.writeVarInt(recipe.sourceOrder);
         }
 
         private static HbmFluidStack readFluidStack(FriendlyByteBuf buffer) {

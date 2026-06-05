@@ -8,6 +8,15 @@
       }
     ]
   },
+  "block.motor": {
+    "subtitle": "subtitles.hbm.block.motor",
+    "sounds": [
+      {
+        "name": "hbm:block/motor",
+        "stream": false
+      }
+    ]
+  },
   "block.assembler_operate": {
     "subtitle": "subtitles.hbm.block.assembler_operate",
     "sounds": [

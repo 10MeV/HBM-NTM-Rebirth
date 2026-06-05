@@ -32,8 +32,10 @@ import com.hbm.ntm.client.particle.TownAuraParticle;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.particle.RocketFlameParticle;
+import com.hbm.ntm.client.renderer.AssemblyFactoryRenderer;
 import com.hbm.ntm.client.renderer.AssemblyMachineRenderer;
 import com.hbm.ntm.client.renderer.BasicMachineRenderer;
+import com.hbm.ntm.client.renderer.ChemicalFactoryRenderer;
 import com.hbm.ntm.client.renderer.ChemicalPlantRenderer;
 import com.hbm.ntm.client.renderer.CloudFleijaRenderer;
 import com.hbm.ntm.client.renderer.CloudFleijaRainbowRenderer;
@@ -58,7 +60,9 @@ import com.hbm.ntm.client.renderer.RubbleRenderer;
 import com.hbm.ntm.client.renderer.ShrapnelRenderer;
 import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
 import com.hbm.ntm.client.screen.BasicMachineScreen;
+import com.hbm.ntm.client.screen.AssemblyFactoryScreen;
 import com.hbm.ntm.client.screen.AssemblyMachineScreen;
+import com.hbm.ntm.client.screen.ChemicalFactoryScreen;
 import com.hbm.ntm.client.screen.ChemicalPlantScreen;
 import com.hbm.ntm.client.screen.CompressorScreen;
 import com.hbm.ntm.client.screen.CustomNukeScreen;
@@ -72,6 +76,7 @@ import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
+import com.hbm.ntm.item.FluidIconItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
@@ -126,6 +131,8 @@ public final class ClientModEvents {
             MenuScreens.register(ModMenuTypes.BASIC_MACHINE.get(), BasicMachineScreen::new);
             MenuScreens.register(ModMenuTypes.ASSEMBLY_MACHINE.get(), AssemblyMachineScreen::new);
             MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT.get(), ChemicalPlantScreen::new);
+            MenuScreens.register(ModMenuTypes.ASSEMBLY_FACTORY.get(), AssemblyFactoryScreen::new);
+            MenuScreens.register(ModMenuTypes.CHEMICAL_FACTORY.get(), ChemicalFactoryScreen::new);
             MenuScreens.register(ModMenuTypes.COMPRESSOR.get(), CompressorScreen::new);
             MenuScreens.register(ModMenuTypes.LIQUEFACTOR.get(), LiquefactorScreen::new);
             MenuScreens.register(ModMenuTypes.FLUID_TANK.get(), FluidTankScreen::new);
@@ -146,9 +153,12 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.MACHINE_BATTERY_SOCKET.get(), MachineBatterySocketRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.ASSEMBLY_MACHINE.get(), AssemblyMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.CHEMICAL_PLANT.get(), ChemicalPlantRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.ASSEMBLY_FACTORY.get(), AssemblyFactoryRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.CHEMICAL_FACTORY.get(), ChemicalFactoryRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LIQUEFACTOR.get(), LiquefactorRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.REFINERY.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FLUID_TANK.get(), FluidTankRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.BAT9000.get(), FluidTankRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.BIG_ASS_TANK.get(), FluidTankRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.OIL_DRILL.get(), LegacyVisibleMachineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_VISIBLE_MACHINE.get(), LegacyVisibleMachineRenderer::new);
@@ -210,11 +220,12 @@ public final class ClientModEvents {
         ModItems.CONSUMABLE_TAB_ITEMS.stream()
                 .map(RegistryObject::get)
                 .filter(HbmFluidContainerItem.class::isInstance)
-                .forEach(item -> event.register((stack, tintIndex) -> ((HbmFluidContainerItem) item).getTintColor(stack), item));
+                .forEach(item -> event.register((stack, tintIndex) -> ((HbmFluidContainerItem) item).getTintColor(stack, tintIndex), item));
         ModItems.CONTROL_FLUID_ITEMS.stream()
                 .map(RegistryObject::get)
                 .filter(HbmFluidContainerItem.class::isInstance)
                 .forEach(item -> event.register((stack, tintIndex) -> ((HbmFluidContainerItem) item).getTintColor(stack, tintIndex), item));
+        event.register(FluidIconItem::getTintColor, ModItems.FLUID_ICON.get());
         ModItems.CONTROL_FLUID_ITEMS.stream()
                 .map(RegistryObject::get)
                 .filter(FluidIdentifierItem.class::isInstance)

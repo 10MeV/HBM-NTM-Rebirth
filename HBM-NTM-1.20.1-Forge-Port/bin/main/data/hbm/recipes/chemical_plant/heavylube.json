@@ -1,0 +1,25 @@
+{
+  "type": "hbm:chemical_plant",
+  "custom_localization": true,
+  "duration": 40,
+  "input_fluids": [
+    {
+      "amount": 2000,
+      "fluid": "hbm:heavyoil"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.heavylube",
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm:lubricant"
+    }
+  ],
+  "output_items": [],
+  "pools": [
+    "alt..lube"
+  ],
+  "power": 100,
+  "source_order": 15
+}

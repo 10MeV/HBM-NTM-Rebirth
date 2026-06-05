@@ -1,0 +1,45 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 400,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm:sulfuric_acid"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 12,
+      "ingredient": {
+        "item": "hbm:circuit_basic"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 8
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm:circuit_capacitor"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 1
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
+    }
+  ],
+  "internal_name": "ass.excircuit",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:item_expensive_circuit"
+    }
+  ],
+  "pools": [],
+  "power": 4000,
+  "source_order": 20
+}

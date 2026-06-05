@@ -80,3 +80,12 @@
   - 数据生成阶段应报错或在 trace 中显式记录跳过原因。
   - 运行时抽取入口不得把缺失条目变成 air、空栈或错误物品。
 - 这条规则与 recipe/hazard 共用同一事实来源，避免 battery/circuit 等拆分物品在战利品池中出现另一套映射。
+
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- 新增 `ItemPoolsVendingMachine`，注册 `POOL_SODA` 与 `POOL_SNACKS`；`ItemPool.initialize()` 现在会调用该池初始化。
+- `BlockVendingMachine` 消耗新增物品 `coin_token`，按机器变体从 soda/snacks 池抽取掉落；`coin_token` 也加入了 legacy item pool 的部分战利品来源。
+- `LootGenerator` 新增 `LOOT_MECHANICAL` 与 `LOOT_GEAR`，分别抽取 pile mechanical / gear 池；注意当前源码 `case LOOT_GEAR` 调用了 `lootMechanical(...)`，看起来与新增 `lootGear(...)` 不一致，现代迁移时需要按新版源码确认是否保留这个疑似上游笔误。
+- legacy high-tech item pool 把 Advanced Alloy ingot/wire/coil 条目改为 copper coil 与 mingrade wire，战利品池迁移应同步材料基线变化。

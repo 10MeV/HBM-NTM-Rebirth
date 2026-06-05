@@ -28,7 +28,9 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
     @Override
     protected void generate() {
         ModBlocks.MACHINE_TAB_BLOCKS.stream()
-                .filter(block -> block != ModBlocks.MACHINE_FLUIDTANK && block != ModBlocks.MACHINE_BIGASSTANK)
+                .filter(block -> block != ModBlocks.MACHINE_FLUIDTANK
+                        && block != ModBlocks.MACHINE_BAT9000
+                        && block != ModBlocks.MACHINE_BIGASSTANK)
                 .filter(block -> block != ModBlocks.BARREL_PLASTIC
                         && block != ModBlocks.BARREL_STEEL
                         && block != ModBlocks.BARREL_TCALLOY
@@ -42,11 +44,11 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         && block != ModBlocks.MACHINE_HYDROTREATER)
                 .forEach(block -> dropSelf(block.get()));
         add(ModBlocks.MACHINE_FLUIDTANK.get(), noDrop());
+        add(ModBlocks.MACHINE_BAT9000.get(), noDrop());
         add(ModBlocks.MACHINE_BIGASSTANK.get(), noDrop());
         add(ModBlocks.MACHINE_REFINERY.get(), noDrop());
         add(ModBlocks.BARREL_PLASTIC.get(), noDrop());
-        add(ModBlocks.BARREL_CORRODED.get(), noDrop());
-        add(ModBlocks.BARREL_IRON.get(), noDrop());
+        dropSelf(ModBlocks.BARREL_CORRODED.get());
         add(ModBlocks.BARREL_STEEL.get(), noDrop());
         add(ModBlocks.BARREL_TCALLOY.get(), noDrop());
         add(ModBlocks.BARREL_ANTIMATTER.get(), noDrop());
@@ -84,6 +86,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.CHLORINE_GAS.get(), noDrop());
         add(ModBlocks.DUMMY_BLOCK.get(), noDrop());
         add(ModBlocks.GLASS_BORON.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_BORON.get()));
+        add(ModBlocks.GLASS_QUARTZ.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_QUARTZ.get()));
         add(ModBlocks.GLASS_TRINITITE.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_TRINITITE.get()));
         add(ModBlocks.FALLOUT.get(), block -> createSingleItemTable(ModItems.legacyItem("fallout").get()));
         add(ModBlocks.WASTE_TRINITITE.get(), block -> singleItemDrop(ModItems.legacyItem("trinitite").get()));

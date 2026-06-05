@@ -3,7 +3,13 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
+import com.hbm.ntm.client.obj.LegacyObjTransforms;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.ObjRenderContext;
+import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.fluid.HbmFluidStack;
+import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -13,6 +19,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantBlockEntity> {
@@ -55,17 +62,63 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         }
 
         poseStack.pushPose();
-        poseStack.translate(Math.sin(anim * 0.125F) * 0.375D, 0.0D, 0.0D);
+        poseStack.translate(LegacyObjTransforms.softPeakSine(anim * 0.125F) * 0.375D, 0.0D, 0.0D);
         model.renderPart("Slider", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
         poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees((anim * 15.0F) % 360.0F));
-        poseStack.translate(-0.5D, 0.0D, -0.5D);
+        LegacyObjTransforms.rotateAroundY(poseStack, 0.5D, 0.0D, 0.5D, (anim * 15.0F) % 360.0F);
         model.renderPart("Spinner", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
 
+        renderProcessingFluid(chemicalPlant, state, model, poseStack, buffer, modelLight, packedOverlay, anim);
+
         poseStack.popPose();
+    }
+
+    private static void renderProcessingFluid(ChemicalPlantBlockEntity chemicalPlant, BlockState state,
+            LegacyWavefrontModel model, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, float anim) {
+        if (!chemicalPlant.isProcessing()) {
+            return;
+        }
+        GenericMachineRecipe recipe = chemicalPlant.getSelectedRecipeDefinition();
+        if (recipe == null) {
+            return;
+        }
+        int[] color = averageFluidColor(recipe.getFluidOutputs());
+        if (color == null) {
+            color = averageFluidColor(recipe.getFluidInputs());
+        }
+        if (color == null) {
+            return;
+        }
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
+                .withRgba(color[0], color[1], color[2], 128)
+                .withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE)
+                .withLegacyTextureMatrix(1.0F, 1.0F, -anim / 100.0F, legacyFluidVOffset(anim));
+        model.renderPart("Fluid", ObjMachineModels.CHEMICAL_PLANT_FLUID_TEXTURE, context);
+    }
+
+    private static float legacyFluidVOffset(float anim) {
+        return (float) (LegacyObjTransforms.softPeakSine(anim * 0.1D) * 0.1D - 0.25D);
+    }
+
+    private static int[] averageFluidColor(List<HbmFluidStack> stacks) {
+        if (stacks.isEmpty()) {
+            return null;
+        }
+        int red = 0;
+        int green = 0;
+        int blue = 0;
+        int count = 0;
+        for (HbmFluidStack stack : stacks) {
+            int color = stack.type().getColor();
+            red += color >> 16 & 255;
+            green += color >> 8 & 255;
+            blue += color & 255;
+            count++;
+        }
+        return count == 0 ? null : new int[] { red / count, green / count, blue / count };
     }
 }

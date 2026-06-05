@@ -1,0 +1,8 @@
+{
+  "values": [
+    "hbm:air",
+    "hbm:air_flowing",
+    "hbm:airblast",
+    "hbm:airblast_flowing"
+  ]
+}

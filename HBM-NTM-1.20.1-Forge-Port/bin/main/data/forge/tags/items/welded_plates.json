@@ -1,0 +1,7 @@
+{
+  "values": [
+    "hbm:plate_welded_steel",
+    "hbm:plate_welded_copper",
+    "hbm:plate_welded_zirconium"
+  ]
+}

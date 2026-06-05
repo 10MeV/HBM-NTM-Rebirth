@@ -6,6 +6,7 @@ import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import com.hbm.ntm.recipe.GenericMachineRecipeSelector;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -18,7 +19,6 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class ChemicalPlantRecipeSelectorScreen extends Screen {
     private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/processing/gui_recipe_selector.png");
@@ -34,6 +34,7 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
     private int topPos;
     private int page;
     private EditBox search;
+    private boolean selectionSent;
 
     protected ChemicalPlantRecipeSelectorScreen(ChemicalPlantScreen previousScreen) {
         super(Component.translatableWithFallback("container.machineChemicalPlant", "Chemical Plant"));
@@ -41,7 +42,9 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
         this.selection = previousScreen.getMenu().getBlockEntity().getSelectedRecipeName();
         this.allRecipes = GenericMachineRecipeSelector.recipes(
                 previousScreen.getMenu().getBlockEntity().getLevel(),
-                GenericMachineRecipe.Machine.CHEMICAL_PLANT);
+                GenericMachineRecipe.Machine.CHEMICAL_PLANT,
+                previousScreen.getMenu().getBlockEntity().getItems()
+                        .getStackInSlot(ChemicalPlantBlockEntity.SLOT_BLUEPRINT));
         regenerateRecipes("");
     }
 
@@ -49,12 +52,11 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
     protected void init() {
         leftPos = (width - IMAGE_WIDTH) / 2;
         topPos = (height - IMAGE_HEIGHT) / 2;
-        search = new EditBox(font, leftPos + 28, topPos + 109, 102, 12, Component.empty());
+        search = new EditBox(font, leftPos + 28, topPos + 111, 102, 12, Component.empty());
         search.setBordered(false);
         search.setTextColor(0xFFFFFF);
         search.setMaxLength(32);
         addRenderableWidget(search);
-        setInitialFocus(search);
     }
 
     @Override
@@ -79,7 +81,6 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
         }
         if (isInside(mouseX, mouseY, 151, 71, 18, 18)) {
             selection = GenericMachineRecipeRuntime.NULL_RECIPE;
-            sendSelection();
             return true;
         }
         if (isInside(mouseX, mouseY, 152, 90, 16, 16)) {
@@ -90,13 +91,13 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
         if (isInside(mouseX, mouseY, 134, 108, 16, 16)) {
             search.setValue("");
             regenerateRecipes("");
+            search.setFocused(true);
             return true;
         }
         int index = hoveredRecipeIndex(mouseX, mouseY);
         if (index >= 0 && index < visibleRecipes.size()) {
             String clicked = visibleRecipes.get(index).getInternalName();
             selection = clicked.equals(selection) ? GenericMachineRecipeRuntime.NULL_RECIPE : clicked;
-            sendSelection();
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -114,6 +115,10 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
         if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == Minecraft.getInstance().options.keyInventory.getKey().getValue()) {
             sendSelection();
             minecraft.setScreen(previousScreen);
+            return true;
+        }
+        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+            search.setFocused(!search.isFocused());
             return true;
         }
         if (keyCode == GLFW.GLFW_KEY_UP || keyCode == GLFW.GLFW_KEY_PAGE_UP) {
@@ -144,7 +149,16 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
         return false;
     }
 
+    @Override
+    public void removed() {
+        sendSelection();
+        super.removed();
+    }
+
     private void renderHighlights(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (search != null && search.isFocused()) {
+            graphics.blit(TEXTURE, leftPos + 26, topPos + 108, 0, 132, 106, 16);
+        }
         if (isInside(mouseX, mouseY, 152, 18, 16, 16)) {
             graphics.blit(TEXTURE, leftPos + 152, topPos + 18, 176, 0, 16, 16);
         }
@@ -156,6 +170,9 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
         }
         if (isInside(mouseX, mouseY, 134, 108, 16, 16)) {
             graphics.blit(TEXTURE, leftPos + 134, topPos + 108, 176, 48, 16, 16);
+        }
+        if (isInside(mouseX, mouseY, 8, 108, 16, 16)) {
+            graphics.blit(TEXTURE, leftPos + 8, topPos + 108, 176, 64, 16, 16);
         }
     }
 
@@ -186,15 +203,14 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
             graphics.renderTooltip(font, Component.literal("Close"), mouseX, mouseY);
         } else if (isInside(mouseX, mouseY, 134, 108, 16, 16)) {
             graphics.renderTooltip(font, Component.literal("Clear search"), mouseX, mouseY);
+        } else if (isInside(mouseX, mouseY, 8, 108, 16, 16)) {
+            graphics.renderTooltip(font, Component.literal("Press ENTER to toggle focus")
+                    .withStyle(ChatFormatting.ITALIC), mouseX, mouseY);
         }
     }
 
     private List<Component> recipeTooltip(GenericMachineRecipe recipe) {
-        List<Component> tooltip = new ArrayList<>();
-        tooltip.add(Component.literal(recipe.getInternalName()));
-        tooltip.add(Component.literal("Power: " + recipe.getPower() + " HE/t"));
-        tooltip.add(Component.literal("Duration: " + recipe.getDuration() + " ticks"));
-        return tooltip;
+        return recipe.getDisplayLines();
     }
 
     private static List<FormattedCharSequence> splitTooltip(List<Component> tooltip) {
@@ -202,12 +218,9 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
     }
 
     private void regenerateRecipes(String filter) {
-        String needle = filter == null ? "" : filter.toLowerCase(Locale.ROOT);
         visibleRecipes.clear();
         for (GenericMachineRecipe recipe : allRecipes) {
-            if (needle.isBlank()
-                    || recipe.getInternalName().toLowerCase(Locale.ROOT).contains(needle)
-                    || recipe.getId().toString().toLowerCase(Locale.ROOT).contains(needle)) {
+            if (recipe.matchesSearch(filter)) {
                 visibleRecipes.add(recipe);
             }
         }
@@ -242,11 +255,14 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
     }
 
     private static ItemStack recipeIcon(GenericMachineRecipe recipe) {
-        ItemStack result = recipe.getResultItem(Minecraft.getInstance().level.registryAccess());
-        return result.isEmpty() ? recipe.getToastSymbol() : result;
+        return recipe.getIcon();
     }
 
     private void sendSelection() {
+        if (selectionSent) {
+            return;
+        }
+        selectionSent = true;
         ModMessages.sendTileControl(previousScreen.getMenu().getBlockEntity().getBlockPos(),
                 ChemicalPlantBlockEntity.recipeSelectionTag(selection));
     }

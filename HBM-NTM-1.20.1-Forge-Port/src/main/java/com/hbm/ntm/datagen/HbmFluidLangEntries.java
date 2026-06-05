@@ -18,6 +18,7 @@ final class HbmFluidLangEntries {
             hazard.prot=Protects against hazards:
             hazard.sand=Eye Irritants
             hbmfluid.air=Compressed Air
+            hbmfluid.airblast=Hot Air Blast
             hbmfluid.alumina=Alumina
             hbmfluid.amat=Antimatter
             hbmfluid.aromatics=Aromatic Hydrocarbons
@@ -60,6 +61,7 @@ final class HbmFluidLangEntries {
             hbmfluid.estradiol=Estradiol Solution
             hbmfluid.ethanol=Ethanol
             hbmfluid.fishoil=Fish Oil
+            hbmfluid.flue=Flue Gas
             hbmfluid.fracksol=Fracking Solution
             hbmfluid.fullerene=Fullerene Solution
             hbmfluid.gas=Natural Gas
@@ -188,6 +190,7 @@ final class HbmFluidLangEntries {
             hazard.prot=防止危险：
             hazard.sand=眼睛刺激物
             hbmfluid.air=压缩空气
+            hbmfluid.airblast=热鼓风
             hbmfluid.alumina=氧化铝溶液
             hbmfluid.amat=反物质
             hbmfluid.aromatics=芳香烃
@@ -230,6 +233,7 @@ final class HbmFluidLangEntries {
             hbmfluid.estradiol=雌二醇溶液
             hbmfluid.ethanol=乙醇
             hbmfluid.fishoil=鱼油
+            hbmfluid.flue=烟道气
             hbmfluid.fracksol=压裂液
             hbmfluid.fullerene=富勒烯溶液
             hbmfluid.gas=天然气

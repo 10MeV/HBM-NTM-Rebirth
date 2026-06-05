@@ -1,0 +1,37 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/magnetized_tungsten"
+      },
+      "legacy_ore": "ingotMagnetizedTungsten"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm:ducrete"
+      }
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm:cmb_brick"
+      }
+    }
+  ],
+  "internal_name": "ass.cmbbrick",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 8,
+      "item": "hbm:cmb_brick_reinforced"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 45
+}

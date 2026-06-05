@@ -1,0 +1,37 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:cast_plates/lead"
+      },
+      "legacy_ore": "plateCastLead"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/copper"
+      },
+      "legacy_ore": "plateCopper"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm:thermo_element"
+      }
+    }
+  ],
+  "internal_name": "ass.rtgunit",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:rtg_unit"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 34
+}

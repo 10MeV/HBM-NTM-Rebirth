@@ -9,8 +9,8 @@ public final class LegacySerializableRecipeHandlers {
 
     private static final List<Handler> HANDLERS = List.of(
             press("PressRecipes", "hbmPress.json", "modern hbm:press covers a safe subset; full legacy import still needs stamp/meta coverage"),
-            unsupported("BlastFurnaceRecipes", "hbmBlastFurnace.json", Category.BLAST,
-                    "blast furnace has a dedicated legacy map format and no modern serializer yet"),
+            unsupported("BlastFurnaceRecipes", "hbmBlastFurnaceLegacy.json", Category.BLAST,
+                    "legacy blast furnace has a deprecated dedicated map format; 5714 hbmBlastFurnace.json belongs to BlastFurnaceRecipesNT"),
             unsupported("ShredderRecipes", "hbmShredder.json", Category.MACHINE,
                     "shredder has custom byproduct/chance semantics and no modern serializer yet"),
             unsupported("SolderingRecipes", "hbmSoldering.json", Category.MACHINE,

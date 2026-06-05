@@ -1,0 +1,1909 @@
+{
+  "machines": [
+    {
+      "legacy_count": 74,
+      "legacy_file": "ChemicalPlantRecipes.java",
+      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/ChemicalPlantRecipes.java",
+      "machine": "chemical_plant",
+      "missing": [
+        {
+          "internal_name": "chem.helium3",
+          "source_order": 5
+        },
+        {
+          "internal_name": "chem.desh",
+          "source_order": 33
+        },
+        {
+          "internal_name": "chem.deshcracked",
+          "source_order": 34
+        },
+        {
+          "internal_name": "chem.meth",
+          "source_order": 41
+        },
+        {
+          "internal_name": "chem.meatprocessing",
+          "source_order": 43
+        },
+        {
+          "internal_name": "chem.oilelectrodes",
+          "source_order": 47
+        },
+        {
+          "internal_name": "chem.lubeelectrodes",
+          "source_order": 48
+        },
+        {
+          "internal_name": "chem.coltancleaning",
+          "source_order": 55
+        },
+        {
+          "internal_name": "chem.coltancrystal",
+          "source_order": 57
+        },
+        {
+          "internal_name": "chem.cordite",
+          "source_order": 58
+        },
+        {
+          "internal_name": "chem.dynamite",
+          "source_order": 60
+        },
+        {
+          "internal_name": "chem.tnt",
+          "source_order": 61
+        },
+        {
+          "internal_name": "chem.tatb",
+          "source_order": 62
+        },
+        {
+          "internal_name": "chem.c4",
+          "source_order": 63
+        },
+        {
+          "internal_name": "chem.laminate",
+          "source_order": 65
+        },
+        {
+          "internal_name": "chem.polarized",
+          "source_order": 66
+        },
+        {
+          "internal_name": "chem.balefire",
+          "source_order": 71
+        }
+      ],
+      "missing_count": 17,
+      "modern_count": 57,
+      "present": [
+        {
+          "internal_name": "chem.hydrogen",
+          "modern_id": "hbm:chemical_plant/hydrogen",
+          "modern_source_order": 0,
+          "source_order": 0
+        },
+        {
+          "internal_name": "chem.hydrogencoke",
+          "modern_id": "hbm:chemical_plant/hydrogencoke",
+          "modern_source_order": 1,
+          "source_order": 1
+        },
+        {
+          "internal_name": "chem.oxygen",
+          "modern_id": "hbm:chemical_plant/oxygen",
+          "modern_source_order": 2,
+          "source_order": 2
+        },
+        {
+          "internal_name": "chem.xenon",
+          "modern_id": "hbm:chemical_plant/xenon",
+          "modern_source_order": 3,
+          "source_order": 3
+        },
+        {
+          "internal_name": "chem.xenonoxy",
+          "modern_id": "hbm:chemical_plant/xenonoxy",
+          "modern_source_order": 4,
+          "source_order": 4
+        },
+        {
+          "internal_name": "chem.co2",
+          "modern_id": "hbm:chemical_plant/co2",
+          "modern_source_order": 6,
+          "source_order": 6
+        },
+        {
+          "internal_name": "chem.perfluoromethyl",
+          "modern_id": "hbm:chemical_plant/perfluoromethyl",
+          "modern_source_order": 7,
+          "source_order": 7
+        },
+        {
+          "internal_name": "chem.cccentrifuge",
+          "modern_id": "hbm:chemical_plant/cccentrifuge",
+          "modern_source_order": 8,
+          "source_order": 8
+        },
+        {
+          "internal_name": "chem.ethanol",
+          "modern_id": "hbm:chemical_plant/ethanol",
+          "modern_source_order": 9,
+          "source_order": 9
+        },
+        {
+          "internal_name": "chem.biogas",
+          "modern_id": "hbm:chemical_plant/biogas",
+          "modern_source_order": 10,
+          "source_order": 10
+        },
+        {
+          "internal_name": "chem.biofuel",
+          "modern_id": "hbm:chemical_plant/biofuel",
+          "modern_source_order": 11,
+          "source_order": 11
+        },
+        {
+          "internal_name": "chem.reoil",
+          "modern_id": "hbm:chemical_plant/reoil",
+          "modern_source_order": 12,
+          "source_order": 12
+        },
+        {
+          "internal_name": "chem.gasoline",
+          "modern_id": "hbm:chemical_plant/gasoline",
+          "modern_source_order": 13,
+          "source_order": 13
+        },
+        {
+          "internal_name": "chem.coallube",
+          "modern_id": "hbm:chemical_plant/coallube",
+          "modern_source_order": 14,
+          "source_order": 14
+        },
+        {
+          "internal_name": "chem.heavylube",
+          "modern_id": "hbm:chemical_plant/heavylube",
+          "modern_source_order": 15,
+          "source_order": 15
+        },
+        {
+          "internal_name": "chem.tarsand",
+          "modern_id": "hbm:chemical_plant/tarsand",
+          "modern_source_order": 16,
+          "source_order": 16
+        },
+        {
+          "internal_name": "chem.tel",
+          "modern_id": "hbm:chemical_plant/tel",
+          "modern_source_order": 17,
+          "source_order": 17
+        },
+        {
+          "internal_name": "chem.deicer",
+          "modern_id": "hbm:chemical_plant/deicer",
+          "modern_source_order": 18,
+          "source_order": 18
+        },
+        {
+          "internal_name": "chem.cobble",
+          "modern_id": "hbm:chemical_plant/cobble",
+          "modern_source_order": 19,
+          "source_order": 19
+        },
+        {
+          "internal_name": "chem.stone",
+          "modern_id": "hbm:chemical_plant/stone",
+          "modern_source_order": 20,
+          "source_order": 20
+        },
+        {
+          "internal_name": "chem.obsidian",
+          "modern_id": "hbm:chemical_plant/obsidian",
+          "modern_source_order": 21,
+          "source_order": 21
+        },
+        {
+          "internal_name": "chem.aggregate",
+          "modern_id": "hbm:chemical_plant/aggregate",
+          "modern_source_order": 22,
+          "source_order": 22
+        },
+        {
+          "internal_name": "chem.concrete",
+          "modern_id": "hbm:chemical_plant/concrete",
+          "modern_source_order": 21,
+          "source_order": 23
+        },
+        {
+          "internal_name": "chem.concreteasbestos",
+          "modern_id": "hbm:chemical_plant/concreteasbestos",
+          "modern_source_order": 22,
+          "source_order": 24
+        },
+        {
+          "internal_name": "chem.ducrete",
+          "modern_id": "hbm:chemical_plant/ducrete",
+          "modern_source_order": 23,
+          "source_order": 25
+        },
+        {
+          "internal_name": "chem.liquidconk",
+          "modern_id": "hbm:chemical_plant/liquidconk",
+          "modern_source_order": 24,
+          "source_order": 26
+        },
+        {
+          "internal_name": "chem.asphalt",
+          "modern_id": "hbm:chemical_plant/asphalt",
+          "modern_source_order": 25,
+          "source_order": 27
+        },
+        {
+          "internal_name": "chem.batterylead",
+          "modern_id": "hbm:chemical_plant/batterylead",
+          "modern_source_order": 26,
+          "source_order": 28
+        },
+        {
+          "internal_name": "chem.batterylithium",
+          "modern_id": "hbm:chemical_plant/batterylithium",
+          "modern_source_order": 27,
+          "source_order": 29
+        },
+        {
+          "internal_name": "chem.batterysodium",
+          "modern_id": "hbm:chemical_plant/batterysodium",
+          "modern_source_order": 28,
+          "source_order": 30
+        },
+        {
+          "internal_name": "chem.batteryschrabidium",
+          "modern_id": "hbm:chemical_plant/batteryschrabidium",
+          "modern_source_order": 29,
+          "source_order": 31
+        },
+        {
+          "internal_name": "chem.batteryquantum",
+          "modern_id": "hbm:chemical_plant/batteryquantum",
+          "modern_source_order": 30,
+          "source_order": 32
+        },
+        {
+          "internal_name": "chem.polymer",
+          "modern_id": "hbm:chemical_plant/polymer",
+          "modern_source_order": 33,
+          "source_order": 35
+        },
+        {
+          "internal_name": "chem.bakelite",
+          "modern_id": "hbm:chemical_plant/bakelite",
+          "modern_source_order": 34,
+          "source_order": 36
+        },
+        {
+          "internal_name": "chem.rubber",
+          "modern_id": "hbm:chemical_plant/rubber",
+          "modern_source_order": 35,
+          "source_order": 37
+        },
+        {
+          "internal_name": "chem.hardplastic",
+          "modern_id": "hbm:chemical_plant/hardplastic",
+          "modern_source_order": 36,
+          "source_order": 38
+        },
+        {
+          "internal_name": "chem.pvc",
+          "modern_id": "hbm:chemical_plant/pvc",
+          "modern_source_order": 37,
+          "source_order": 39
+        },
+        {
+          "internal_name": "chem.kevlar",
+          "modern_id": "hbm:chemical_plant/kevlar",
+          "modern_source_order": 38,
+          "source_order": 40
+        },
+        {
+          "internal_name": "chem.epearl",
+          "modern_id": "hbm:chemical_plant/epearl",
+          "modern_source_order": 40,
+          "source_order": 42
+        },
+        {
+          "internal_name": "chem.rustysteel",
+          "modern_id": "hbm:chemical_plant/rustysteel",
+          "modern_source_order": 42,
+          "source_order": 44
+        },
+        {
+          "internal_name": "chem.biosolidfuel",
+          "modern_id": "hbm:chemical_plant/biosolidfuel",
+          "modern_source_order": 43,
+          "source_order": 45
+        },
+        {
+          "internal_name": "chem.biooilsolidfuel",
+          "modern_id": "hbm:chemical_plant/biooilsolidfuel",
+          "modern_source_order": 44,
+          "source_order": 46
+        },
+        {
+          "internal_name": "chem.peroxide",
+          "modern_id": "hbm:chemical_plant/peroxide",
+          "modern_source_order": 47,
+          "source_order": 49
+        },
+        {
+          "internal_name": "chem.sulfuricacid",
+          "modern_id": "hbm:chemical_plant/sulfuricacid",
+          "modern_source_order": 48,
+          "source_order": 50
+        },
+        {
+          "internal_name": "chem.nitricacid",
+          "modern_id": "hbm:chemical_plant/nitricacid",
+          "modern_source_order": 49,
+          "source_order": 51
+        },
+        {
+          "internal_name": "chem.birkeland",
+          "modern_id": "hbm:chemical_plant/birkeland",
+          "modern_source_order": 50,
+          "source_order": 52
+        },
+        {
+          "internal_name": "chem.schrabidic",
+          "modern_id": "hbm:chemical_plant/schrabidic",
+          "modern_source_order": 51,
+          "source_order": 53
+        },
+        {
+          "internal_name": "chem.schrabidate",
+          "modern_id": "hbm:chemical_plant/schrabidate",
+          "modern_source_order": 52,
+          "source_order": 54
+        },
+        {
+          "internal_name": "chem.coltanpain",
+          "modern_id": "hbm:chemical_plant/coltanpain",
+          "modern_source_order": 54,
+          "source_order": 56
+        },
+        {
+          "internal_name": "chem.rocketfuel",
+          "modern_id": "hbm:chemical_plant/rocketfuel",
+          "modern_source_order": 57,
+          "source_order": 59
+        },
+        {
+          "internal_name": "chem.napalm",
+          "modern_id": "hbm:chemical_plant/napalm",
+          "modern_source_order": 58,
+          "source_order": 64
+        },
+        {
+          "internal_name": "chem.yellowcake",
+          "modern_id": "hbm:chemical_plant/yellowcake",
+          "modern_source_order": 64,
+          "source_order": 67
+        },
+        {
+          "internal_name": "chem.uf6",
+          "modern_id": "hbm:chemical_plant/uf6",
+          "modern_source_order": 65,
+          "source_order": 68
+        },
+        {
+          "internal_name": "chem.puf6",
+          "modern_id": "hbm:chemical_plant/puf6",
+          "modern_source_order": 66,
+          "source_order": 69
+        },
+        {
+          "internal_name": "chem.sas3",
+          "modern_id": "hbm:chemical_plant/sas3",
+          "modern_source_order": 67,
+          "source_order": 70
+        },
+        {
+          "internal_name": "chem.dhc",
+          "modern_id": "hbm:chemical_plant/dhc",
+          "modern_source_order": 69,
+          "source_order": 72
+        },
+        {
+          "internal_name": "chem.osmiridiumdeath",
+          "modern_id": "hbm:chemical_plant/osmiridiumdeath",
+          "modern_source_order": 70,
+          "source_order": 73
+        }
+      ],
+      "present_count": 57,
+      "status": "checked"
+    },
+    {
+      "legacy_count": 335,
+      "legacy_file": "AssemblyMachineRecipes.java",
+      "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/AssemblyMachineRecipes.java",
+      "machine": "assembly_machine",
+      "missing": [
+        {
+          "internal_name": "ass.chip",
+          "source_order": 29
+        },
+        {
+          "internal_name": "ass.chipBismoid",
+          "source_order": 30
+        },
+        {
+          "internal_name": "ass.chipQuantum",
+          "source_order": 31
+        },
+        {
+          "internal_name": "ass.atomicClock",
+          "source_order": 32
+        },
+        {
+          "internal_name": "ass.analogAlt",
+          "source_order": 33
+        },
+        {
+          "internal_name": "ass.factorioChip",
+          "source_order": 34
+        },
+        {
+          "internal_name": "ass.atomicClockAlt",
+          "source_order": 35
+        },
+        {
+          "internal_name": "ass.sealframe",
+          "source_order": 52
+        },
+        {
+          "internal_name": "ass.sealcontroller",
+          "source_order": 53
+        },
+        {
+          "internal_name": "ass.vaultdoor",
+          "source_order": 56
+        },
+        {
+          "internal_name": "ass.blastdoor",
+          "source_order": 57
+        },
+        {
+          "internal_name": "ass.firedoor",
+          "source_order": 58
+        },
+        {
+          "internal_name": "ass.seal",
+          "source_order": 59
+        },
+        {
+          "internal_name": "ass.slidingdoor",
+          "source_order": 60
+        },
+        {
+          "internal_name": "ass.vehicledoor",
+          "source_order": 61
+        },
+        {
+          "internal_name": "ass.waterdoor",
+          "source_order": 62
+        },
+        {
+          "internal_name": "ass.qedoor",
+          "source_order": 63
+        },
+        {
+          "internal_name": "ass.queslidingdoor",
+          "source_order": 64
+        },
+        {
+          "internal_name": "ass.roundairlock",
+          "source_order": 65
+        },
+        {
+          "internal_name": "ass.secureaccess",
+          "source_order": 66
+        },
+        {
+          "internal_name": "ass.slidingseal",
+          "source_order": 67
+        },
+        {
+          "internal_name": "ass.silohatch",
+          "source_order": 68
+        },
+        {
+          "internal_name": "ass.silohatchlarge",
+          "source_order": 69
+        },
+        {
+          "internal_name": "ass.capnuka",
+          "source_order": 70
+        },
+        {
+          "internal_name": "ass.capquantum",
+          "source_order": 71
+        },
+        {
+          "internal_name": "ass.capsparkle",
+          "source_order": 72
+        },
+        {
+          "internal_name": "ass.caprad",
+          "source_order": 73
+        },
+        {
+          "internal_name": "ass.capfritz",
+          "source_order": 74
+        },
+        {
+          "internal_name": "ass.capkorl",
+          "source_order": 75
+        },
+        {
+          "internal_name": "ass.precass",
+          "source_order": 80
+        },
+        {
+          "internal_name": "ass.arcfurnace",
+          "source_order": 83
+        },
+        {
+          "internal_name": "ass.acidizer",
+          "source_order": 84
+        },
+        {
+          "internal_name": "ass.electrolyzer",
+          "source_order": 85
+        },
+        {
+          "internal_name": "ass.rtg",
+          "source_order": 86
+        },
+        {
+          "internal_name": "ass.flarestack",
+          "source_order": 90
+        },
+        {
+          "internal_name": "ass.crackingtower",
+          "source_order": 92
+        },
+        {
+          "internal_name": "ass.radiolysis",
+          "source_order": 93
+        },
+        {
+          "internal_name": "ass.coker",
+          "source_order": 94
+        },
+        {
+          "internal_name": "ass.vaccumrefinery",
+          "source_order": 95
+        },
+        {
+          "internal_name": "ass.reformer",
+          "source_order": 96
+        },
+        {
+          "internal_name": "ass.hydrotreater",
+          "source_order": 97
+        },
+        {
+          "internal_name": "ass.pyrooven",
+          "source_order": 98
+        },
+        {
+          "internal_name": "ass.liquefactor",
+          "source_order": 99
+        },
+        {
+          "internal_name": "ass.solidifier",
+          "source_order": 100
+        },
+        {
+          "internal_name": "ass.compressor",
+          "source_order": 101
+        },
+        {
+          "internal_name": "ass.compactcompressor",
+          "source_order": 102
+        },
+        {
+          "internal_name": "ass.epress",
+          "source_order": 103
+        },
+        {
+          "internal_name": "ass.fel",
+          "source_order": 104
+        },
+        {
+          "internal_name": "ass.silex",
+          "source_order": 105
+        },
+        {
+          "internal_name": "ass.excavator",
+          "source_order": 106
+        },
+        {
+          "internal_name": "ass.drillsteel",
+          "source_order": 107
+        },
+        {
+          "internal_name": "ass.drillsteeldiamond",
+          "source_order": 108
+        },
+        {
+          "internal_name": "ass.drilldura",
+          "source_order": 109
+        },
+        {
+          "internal_name": "ass.drillduradiamond",
+          "source_order": 110
+        },
+        {
+          "internal_name": "ass.drilldesh",
+          "source_order": 111
+        },
+        {
+          "internal_name": "ass.drilldeshdiamond",
+          "source_order": 112
+        },
+        {
+          "internal_name": "ass.drilltc",
+          "source_order": 113
+        },
+        {
+          "internal_name": "ass.drilltcdiamond",
+          "source_order": 114
+        },
+        {
+          "internal_name": "ass.drillferro",
+          "source_order": 115
+        },
+        {
+          "internal_name": "ass.drillferrodiamond",
+          "source_order": 116
+        },
+        {
+          "internal_name": "ass.slopper",
+          "source_order": 117
+        },
+        {
+          "internal_name": "ass.mininglaser",
+          "source_order": 118
+        },
+        {
+          "internal_name": "ass.teleporter",
+          "source_order": 119
+        },
+        {
+          "internal_name": "ass.radar",
+          "source_order": 120
+        },
+        {
+          "internal_name": "ass.radarlarge",
+          "source_order": 121
+        },
+        {
+          "internal_name": "ass.forcefield",
+          "source_order": 122
+        },
+        {
+          "internal_name": "ass.strandcaster",
+          "source_order": 123
+        },
+        {
+          "internal_name": "ass.assemfac",
+          "source_order": 124
+        },
+        {
+          "internal_name": "ass.chemfac",
+          "source_order": 125
+        },
+        {
+          "internal_name": "ass.dieselgen",
+          "source_order": 126
+        },
+        {
+          "internal_name": "ass.combustiongen",
+          "source_order": 127
+        },
+        {
+          "internal_name": "ass.pistonsetsteel",
+          "source_order": 128
+        },
+        {
+          "internal_name": "ass.pistonsetdura",
+          "source_order": 129
+        },
+        {
+          "internal_name": "ass.pistonsetdesh",
+          "source_order": 130
+        },
+        {
+          "internal_name": "ass.pistonsetstar",
+          "source_order": 131
+        },
+        {
+          "internal_name": "ass.turbofan",
+          "source_order": 132
+        },
+        {
+          "internal_name": "ass.gasturbine",
+          "source_order": 133
+        },
+        {
+          "internal_name": "ass.hephaestus",
+          "source_order": 134
+        },
+        {
+          "internal_name": "ass.iturbine",
+          "source_order": 135
+        },
+        {
+          "internal_name": "ass.leviturbine",
+          "source_order": 136
+        },
+        {
+          "internal_name": "ass.radgen",
+          "source_order": 137
+        },
+        {
+          "internal_name": "ass.hpcondenser",
+          "source_order": 138
+        },
+        {
+          "internal_name": "ass.tank",
+          "source_order": 144
+        },
+        {
+          "internal_name": "ass.bigasstank",
+          "source_order": 145
+        },
+        {
+          "internal_name": "ass.orbus",
+          "source_order": 146
+        },
+        {
+          "internal_name": "ass.cyclotron",
+          "source_order": 147
+        },
+        {
+          "internal_name": "ass.beamline",
+          "source_order": 148
+        },
+        {
+          "internal_name": "ass.rfc",
+          "source_order": 149
+        },
+        {
+          "internal_name": "ass.quadrupole",
+          "source_order": 150
+        },
+        {
+          "internal_name": "ass.dipole",
+          "source_order": 151
+        },
+        {
+          "internal_name": "ass.source",
+          "source_order": 152
+        },
+        {
+          "internal_name": "ass.detector",
+          "source_order": 153
+        },
+        {
+          "internal_name": "ass.pagold",
+          "source_order": 154
+        },
+        {
+          "internal_name": "ass.panbti",
+          "source_order": 155
+        },
+        {
+          "internal_name": "ass.pabscco",
+          "source_order": 156
+        },
+        {
+          "internal_name": "ass.pachlorophyte",
+          "source_order": 157
+        },
+        {
+          "internal_name": "ass.exposurechamber",
+          "source_order": 158
+        },
+        {
+          "internal_name": "ass.breedingreactor",
+          "source_order": 159
+        },
+        {
+          "internal_name": "ass.researchreactor",
+          "source_order": 160
+        },
+        {
+          "internal_name": "ass.cirnox",
+          "source_order": 161
+        },
+        {
+          "internal_name": "ass.rbmk",
+          "source_order": 162
+        },
+        {
+          "internal_name": "ass.rbmkautoloader",
+          "source_order": 163
+        },
+        {
+          "internal_name": "ass.pwrfuel",
+          "source_order": 164
+        },
+        {
+          "internal_name": "ass.pwrcontrol",
+          "source_order": 165
+        },
+        {
+          "internal_name": "ass.pwrchannel",
+          "source_order": 166
+        },
+        {
+          "internal_name": "ass.pwrheatex",
+          "source_order": 167
+        },
+        {
+          "internal_name": "ass.pwrheatsink",
+          "source_order": 168
+        },
+        {
+          "internal_name": "ass.pwrreflector",
+          "source_order": 169
+        },
+        {
+          "internal_name": "ass.pwrreflectoralt",
+          "source_order": 170
+        },
+        {
+          "internal_name": "ass.pwrcasing",
+          "source_order": 171
+        },
+        {
+          "internal_name": "ass.pwrcontroller",
+          "source_order": 172
+        },
+        {
+          "internal_name": "ass.pwrport",
+          "source_order": 173
+        },
+        {
+          "internal_name": "ass.pwrneutronsource",
+          "source_order": 174
+        },
+        {
+          "internal_name": "ass.fusioncore",
+          "source_order": 175
+        },
+        {
+          "internal_name": "ass.fusionbscco",
+          "source_order": 176
+        },
+        {
+          "internal_name": "ass.fusionblanket",
+          "source_order": 177
+        },
+        {
+          "internal_name": "ass.fusionpipes",
+          "source_order": 178
+        },
+        {
+          "internal_name": "ass.fusionklystron",
+          "source_order": 179
+        },
+        {
+          "internal_name": "ass.fusioncollector",
+          "source_order": 180
+        },
+        {
+          "internal_name": "ass.fusionbreeder",
+          "source_order": 181
+        },
+        {
+          "internal_name": "ass.fusionboiler",
+          "source_order": 182
+        },
+        {
+          "internal_name": "ass.fusionmhdt",
+          "source_order": 183
+        },
+        {
+          "internal_name": "ass.fusioncoupler",
+          "source_order": 184
+        },
+        {
+          "internal_name": "ass.fusionplasmaforge",
+          "source_order": 185
+        },
+        {
+          "internal_name": "ass.watzrod",
+          "source_order": 186
+        },
+        {
+          "internal_name": "ass.watzcooler",
+          "source_order": 187
+        },
+        {
+          "internal_name": "ass.watzcasing",
+          "source_order": 188
+        },
+        {
+          "internal_name": "ass.overdrive1",
+          "source_order": 189
+        },
+        {
+          "internal_name": "ass.overdrive2",
+          "source_order": 190
+        },
+        {
+          "internal_name": "ass.overdrive3",
+          "source_order": 191
+        },
+        {
+          "internal_name": "ass.chopper",
+          "source_order": 192
+        },
+        {
+          "internal_name": "ass.ballsotron",
+          "source_order": 193
+        },
+        {
+          "internal_name": "ass.clusterpellets",
+          "source_order": 194
+        },
+        {
+          "internal_name": "ass.buckshot",
+          "source_order": 195
+        },
+        {
+          "internal_name": "ass.minenaval",
+          "source_order": 196
+        },
+        {
+          "internal_name": "ass.gadget",
+          "source_order": 197
+        },
+        {
+          "internal_name": "ass.littleboy",
+          "source_order": 198
+        },
+        {
+          "internal_name": "ass.fatman",
+          "source_order": 199
+        },
+        {
+          "internal_name": "ass.ivymike",
+          "source_order": 200
+        },
+        {
+          "internal_name": "ass.tsarbomba",
+          "source_order": 201
+        },
+        {
+          "internal_name": "ass.ninadidnothingwrong",
+          "source_order": 202
+        },
+        {
+          "internal_name": "ass.fleija",
+          "source_order": 203
+        },
+        {
+          "internal_name": "ass.solinium",
+          "source_order": 204
+        },
+        {
+          "internal_name": "ass.n2mine",
+          "source_order": 205
+        },
+        {
+          "internal_name": "ass.balefirebomb",
+          "source_order": 206
+        },
+        {
+          "internal_name": "ass.customnuke",
+          "source_order": 207
+        },
+        {
+          "internal_name": "ass.levibomb",
+          "source_order": 208
+        },
+        {
+          "internal_name": "ass.endobomb",
+          "source_order": 209
+        },
+        {
+          "internal_name": "ass.exobomb",
+          "source_order": 210
+        },
+        {
+          "internal_name": "ass.explosivelenses1",
+          "source_order": 211
+        },
+        {
+          "internal_name": "ass.explosivelenses2",
+          "source_order": 212
+        },
+        {
+          "internal_name": "ass.wiring",
+          "source_order": 213
+        },
+        {
+          "internal_name": "ass.core1",
+          "source_order": 214
+        },
+        {
+          "internal_name": "ass.boyshield",
+          "source_order": 215
+        },
+        {
+          "internal_name": "ass.boytarget",
+          "source_order": 216
+        },
+        {
+          "internal_name": "ass.boybullet",
+          "source_order": 217
+        },
+        {
+          "internal_name": "ass.boypropellant",
+          "source_order": 218
+        },
+        {
+          "internal_name": "ass.boyigniter",
+          "source_order": 219
+        },
+        {
+          "internal_name": "ass.manigniter",
+          "source_order": 220
+        },
+        {
+          "internal_name": "ass.mancore",
+          "source_order": 221
+        },
+        {
+          "internal_name": "ass.mikecore",
+          "source_order": 222
+        },
+        {
+          "internal_name": "ass.mikedeut",
+          "source_order": 223
+        },
+        {
+          "internal_name": "ass.mikecooler",
+          "source_order": 224
+        },
+        {
+          "internal_name": "ass.fleijaigniter",
+          "source_order": 225
+        },
+        {
+          "internal_name": "ass.fleijacore",
+          "source_order": 226
+        },
+        {
+          "internal_name": "ass.fleijacharge",
+          "source_order": 227
+        },
+        {
+          "internal_name": "ass.soliniumigniter",
+          "source_order": 228
+        },
+        {
+          "internal_name": "ass.soliniumcore",
+          "source_order": 229
+        },
+        {
+          "internal_name": "ass.soliniumcharge",
+          "source_order": 230
+        },
+        {
+          "internal_name": "ass.turretchekhov",
+          "source_order": 231
+        },
+        {
+          "internal_name": "ass.turretfriendly",
+          "source_order": 232
+        },
+        {
+          "internal_name": "ass.turretjeremy",
+          "source_order": 233
+        },
+        {
+          "internal_name": "ass.turrettauon",
+          "source_order": 234
+        },
+        {
+          "internal_name": "ass.turretrichard",
+          "source_order": 235
+        },
+        {
+          "internal_name": "ass.turrethoward",
+          "source_order": 236
+        },
+        {
+          "internal_name": "ass.maxwell",
+          "source_order": 237
+        },
+        {
+          "internal_name": "ass.fritz",
+          "source_order": 238
+        },
+        {
+          "internal_name": "ass.arty",
+          "source_order": 239
+        },
+        {
+          "internal_name": "ass.himars",
+          "source_order": 240
+        },
+        {
+          "internal_name": "ass.himarssmall",
+          "source_order": 241
+        },
+        {
+          "internal_name": "ass.himarssmallhe",
+          "source_order": 242
+        },
+        {
+          "internal_name": "ass.himarssmallwp",
+          "source_order": 243
+        },
+        {
+          "internal_name": "ass.himarssmalltb",
+          "source_order": 244
+        },
+        {
+          "internal_name": "ass.himarssmallnuke",
+          "source_order": 245
+        },
+        {
+          "internal_name": "ass.himarssmalllava",
+          "source_order": 246
+        },
+        {
+          "internal_name": "ass.himarslarge",
+          "source_order": 247
+        },
+        {
+          "internal_name": "ass.himarslargetb",
+          "source_order": 248
+        },
+        {
+          "internal_name": "ass.missileassembly",
+          "source_order": 249
+        },
+        {
+          "internal_name": "ass.warheadhe1",
+          "source_order": 250
+        },
+        {
+          "internal_name": "ass.warheadhe2",
+          "source_order": 251
+        },
+        {
+          "internal_name": "ass.warheadhe3",
+          "source_order": 252
+        },
+        {
+          "internal_name": "ass.warheadinc1",
+          "source_order": 253
+        },
+        {
+          "internal_name": "ass.warheadinc2",
+          "source_order": 254
+        },
+        {
+          "internal_name": "ass.warheadinc3",
+          "source_order": 255
+        },
+        {
+          "internal_name": "ass.warheadcl1",
+          "source_order": 256
+        },
+        {
+          "internal_name": "ass.warheadcl2",
+          "source_order": 257
+        },
+        {
+          "internal_name": "ass.warheadcl3",
+          "source_order": 258
+        },
+        {
+          "internal_name": "ass.warheadbb1",
+          "source_order": 259
+        },
+        {
+          "internal_name": "ass.warheadbb2",
+          "source_order": 260
+        },
+        {
+          "internal_name": "ass.warheadbb3",
+          "source_order": 261
+        },
+        {
+          "internal_name": "ass.warheadnuke",
+          "source_order": 262
+        },
+        {
+          "internal_name": "ass.warheadthermonuke",
+          "source_order": 263
+        },
+        {
+          "internal_name": "ass.warheadvolcano",
+          "source_order": 264
+        },
+        {
+          "internal_name": "ass.thrusternerva",
+          "source_order": 265
+        },
+        {
+          "internal_name": "ass.stealthmissile",
+          "source_order": 266
+        },
+        {
+          "internal_name": "ass.shuttlemissile",
+          "source_order": 267
+        },
+        {
+          "internal_name": "ass.launchpad",
+          "source_order": 268
+        },
+        {
+          "internal_name": "ass.launchpadsilo",
+          "source_order": 269
+        },
+        {
+          "internal_name": "ass.mpt10kero",
+          "source_order": 270
+        },
+        {
+          "internal_name": "ass.mpt10solid",
+          "source_order": 271
+        },
+        {
+          "internal_name": "ass.mpt10xenon",
+          "source_order": 272
+        },
+        {
+          "internal_name": "ass.mpt15kero",
+          "source_order": 273
+        },
+        {
+          "internal_name": "ass.mpt15kerodual",
+          "source_order": 274
+        },
+        {
+          "internal_name": "ass.mpt15kerotriple",
+          "source_order": 275
+        },
+        {
+          "internal_name": "ass.mpt15solid",
+          "source_order": 276
+        },
+        {
+          "internal_name": "ass.mpt15solid16",
+          "source_order": 277
+        },
+        {
+          "internal_name": "ass.mpt15hydro",
+          "source_order": 278
+        },
+        {
+          "internal_name": "ass.mpt15hydrodual",
+          "source_order": 279
+        },
+        {
+          "internal_name": "ass.mpt15bfshort",
+          "source_order": 280
+        },
+        {
+          "internal_name": "ass.mpt15bf",
+          "source_order": 281
+        },
+        {
+          "internal_name": "ass.mpt15bflarge",
+          "source_order": 282
+        },
+        {
+          "internal_name": "ass.mpt20kero",
+          "source_order": 283
+        },
+        {
+          "internal_name": "ass.mpt20kerodual",
+          "source_order": 284
+        },
+        {
+          "internal_name": "ass.mpt20kerotriple",
+          "source_order": 285
+        },
+        {
+          "internal_name": "ass.mpt20solid",
+          "source_order": 286
+        },
+        {
+          "internal_name": "ass.mpt20solidmulti",
+          "source_order": 287
+        },
+        {
+          "internal_name": "ass.mpt20solidmultier",
+          "source_order": 288
+        },
+        {
+          "internal_name": "ass.mpf10kero",
+          "source_order": 289
+        },
+        {
+          "internal_name": "ass.mpf10kerolong",
+          "source_order": 290
+        },
+        {
+          "internal_name": "ass.mpf10solid",
+          "source_order": 291
+        },
+        {
+          "internal_name": "ass.mpf10solidlong",
+          "source_order": 292
+        },
+        {
+          "internal_name": "ass.mpf10xenon",
+          "source_order": 293
+        },
+        {
+          "internal_name": "ass.mpf1015kero",
+          "source_order": 294
+        },
+        {
+          "internal_name": "ass.mpf1015solid",
+          "source_order": 295
+        },
+        {
+          "internal_name": "ass.mpf1015hydro",
+          "source_order": 296
+        },
+        {
+          "internal_name": "ass.mpf1015bf",
+          "source_order": 297
+        },
+        {
+          "internal_name": "ass.mpf15kero",
+          "source_order": 298
+        },
+        {
+          "internal_name": "ass.mpf15solid",
+          "source_order": 299
+        },
+        {
+          "internal_name": "ass.mpf15hydro",
+          "source_order": 300
+        },
+        {
+          "internal_name": "ass.mpf1520kero",
+          "source_order": 301
+        },
+        {
+          "internal_name": "ass.mpf1520solid",
+          "source_order": 302
+        },
+        {
+          "internal_name": "ass.mpw10he",
+          "source_order": 303
+        },
+        {
+          "internal_name": "ass.mpw10inc",
+          "source_order": 304
+        },
+        {
+          "internal_name": "ass.mpw10bus",
+          "source_order": 305
+        },
+        {
+          "internal_name": "ass.mpw10nukesmall",
+          "source_order": 306
+        },
+        {
+          "internal_name": "ass.mpw10nukelarge",
+          "source_order": 307
+        },
+        {
+          "internal_name": "ass.mpw10taint",
+          "source_order": 308
+        },
+        {
+          "internal_name": "ass.mpw10cloud",
+          "source_order": 309
+        },
+        {
+          "internal_name": "ass.mpw15he",
+          "source_order": 310
+        },
+        {
+          "internal_name": "ass.mpw15inc",
+          "source_order": 311
+        },
+        {
+          "internal_name": "ass.mpw15nuke",
+          "source_order": 312
+        },
+        {
+          "internal_name": "ass.mpw15n2",
+          "source_order": 313
+        },
+        {
+          "internal_name": "ass.mpw15bf",
+          "source_order": 314
+        },
+        {
+          "internal_name": "ass.50bmgsm",
+          "source_order": 315
+        },
+        {
+          "internal_name": "ass.50bmgbypass",
+          "source_order": 316
+        },
+        {
+          "internal_name": "chem.shellchlorine",
+          "source_order": 317
+        },
+        {
+          "internal_name": "ass.shellphosgene",
+          "source_order": 318
+        },
+        {
+          "internal_name": "ass.shellmustard",
+          "source_order": 319
+        },
+        {
+          "internal_name": "ass.soyuzcore",
+          "source_order": 320
+        },
+        {
+          "internal_name": "ass.soyuz",
+          "source_order": 321
+        },
+        {
+          "internal_name": "ass.lander",
+          "source_order": 322
+        },
+        {
+          "internal_name": "ass.satellitebase",
+          "source_order": 323
+        },
+        {
+          "internal_name": "ass.satellitemapper",
+          "source_order": 324
+        },
+        {
+          "internal_name": "ass.satellitescanner",
+          "source_order": 325
+        },
+        {
+          "internal_name": "ass.satelliteradar",
+          "source_order": 326
+        },
+        {
+          "internal_name": "ass.satellitelaser",
+          "source_order": 327
+        },
+        {
+          "internal_name": "ass.satelliteresonator",
+          "source_order": 328
+        },
+        {
+          "internal_name": "ass.satelliterelay",
+          "source_order": 329
+        },
+        {
+          "internal_name": "ass.satelliteasteroidminer",
+          "source_order": 330
+        },
+        {
+          "internal_name": "ass.satellitelunarminer",
+          "source_order": 331
+        },
+        {
+          "internal_name": "ass.nitra",
+          "source_order": 332
+        },
+        {
+          "internal_name": "ass.digimemer",
+          "source_order": 334
+        }
+      ],
+      "missing_count": 272,
+      "modern_count": 337,
+      "present": [
+        {
+          "internal_name": "ass.plateiron",
+          "modern_id": "hbm:assembly_machine/plate_iron",
+          "modern_source_order": 0,
+          "source_order": 0
+        },
+        {
+          "internal_name": "ass.plategold",
+          "modern_id": "hbm:assembly_machine/plate_gold",
+          "modern_source_order": 1,
+          "source_order": 1
+        },
+        {
+          "internal_name": "ass.platetitanium",
+          "modern_id": "hbm:assembly_machine/plate_titanium",
+          "modern_source_order": 2,
+          "source_order": 2
+        },
+        {
+          "internal_name": "ass.platealu",
+          "modern_id": "hbm:assembly_machine/plate_aluminium",
+          "modern_source_order": 3,
+          "source_order": 3
+        },
+        {
+          "internal_name": "ass.platesteel",
+          "modern_id": "hbm:assembly_machine/plate_steel",
+          "modern_source_order": 4,
+          "source_order": 4
+        },
+        {
+          "internal_name": "ass.platelead",
+          "modern_id": "hbm:assembly_machine/plate_lead",
+          "modern_source_order": 5,
+          "source_order": 5
+        },
+        {
+          "internal_name": "ass.platecopper",
+          "modern_id": "hbm:assembly_machine/plate_copper",
+          "modern_source_order": 6,
+          "source_order": 6
+        },
+        {
+          "internal_name": "ass.plateschrab",
+          "modern_id": "hbm:assembly_machine/plate_schrabidium",
+          "modern_source_order": 8,
+          "source_order": 7
+        },
+        {
+          "internal_name": "ass.platecmb",
+          "modern_id": "hbm:assembly_machine/plate_combine_steel",
+          "modern_source_order": 9,
+          "source_order": 8
+        },
+        {
+          "internal_name": "ass.plategunmetal",
+          "modern_id": "hbm:assembly_machine/plate_gunmetal",
+          "modern_source_order": 10,
+          "source_order": 9
+        },
+        {
+          "internal_name": "ass.plateweaponsteel",
+          "modern_id": "hbm:assembly_machine/plate_weaponsteel",
+          "modern_source_order": 11,
+          "source_order": 10
+        },
+        {
+          "internal_name": "ass.platesaturnite",
+          "modern_id": "hbm:assembly_machine/plate_saturnite",
+          "modern_source_order": 12,
+          "source_order": 11
+        },
+        {
+          "internal_name": "ass.platedura",
+          "modern_id": "hbm:assembly_machine/plate_dura_steel",
+          "modern_source_order": 13,
+          "source_order": 12
+        },
+        {
+          "internal_name": "ass.platemixed",
+          "modern_id": "hbm:assembly_machine/plate_mixed",
+          "modern_source_order": 14,
+          "source_order": 13
+        },
+        {
+          "internal_name": "ass.dalekanium",
+          "modern_id": "hbm:assembly_machine/dalekanium",
+          "modern_source_order": 15,
+          "source_order": 14
+        },
+        {
+          "internal_name": "ass.platedesh",
+          "modern_id": "hbm:assembly_machine/plate_desh",
+          "modern_source_order": 16,
+          "source_order": 15
+        },
+        {
+          "internal_name": "ass.platebismuth",
+          "modern_id": "hbm:assembly_machine/plate_bismuth",
+          "modern_source_order": 17,
+          "source_order": 16
+        },
+        {
+          "internal_name": "ass.exsteelplating",
+          "modern_id": "hbm:assembly_machine/expensive_steel_plating",
+          "modern_source_order": 18,
+          "source_order": 17
+        },
+        {
+          "internal_name": "ass.exheavyframe",
+          "modern_id": "hbm:assembly_machine/expensive_heavy_frame",
+          "modern_source_order": 19,
+          "source_order": 18
+        },
+        {
+          "internal_name": "ass.excircuit",
+          "modern_id": "hbm:assembly_machine/expensive_circuit",
+          "modern_source_order": 20,
+          "source_order": 19
+        },
+        {
+          "internal_name": "ass.exleadplating",
+          "modern_id": "hbm:assembly_machine/expensive_lead_plating",
+          "modern_source_order": 21,
+          "source_order": 20
+        },
+        {
+          "internal_name": "ass.exferroplating",
+          "modern_id": "hbm:assembly_machine/expensive_ferro_plating",
+          "modern_source_order": 22,
+          "source_order": 21
+        },
+        {
+          "internal_name": "ass.excomputer",
+          "modern_id": "hbm:assembly_machine/expensive_computer",
+          "modern_source_order": 23,
+          "source_order": 22
+        },
+        {
+          "internal_name": "ass.bronzetubes",
+          "modern_id": "hbm:assembly_machine/expensive_bronze_tubes",
+          "modern_source_order": 24,
+          "source_order": 23
+        },
+        {
+          "internal_name": "ass.explastic",
+          "modern_id": "hbm:assembly_machine/expensive_plastic",
+          "modern_source_order": 25,
+          "source_order": 24
+        },
+        {
+          "internal_name": "ass.exgold",
+          "modern_id": "hbm:assembly_machine/expensive_gold_dust",
+          "modern_source_order": 26,
+          "source_order": 25
+        },
+        {
+          "internal_name": "ass.hazcloth",
+          "modern_id": "hbm:assembly_machine/hazmat_cloth",
+          "modern_source_order": 27,
+          "source_order": 26
+        },
+        {
+          "internal_name": "ass.firecloth",
+          "modern_id": "hbm:assembly_machine/asbestos_cloth",
+          "modern_source_order": 28,
+          "source_order": 27
+        },
+        {
+          "internal_name": "ass.filtercoal",
+          "modern_id": "hbm:assembly_machine/filter_coal",
+          "modern_source_order": 29,
+          "source_order": 28
+        },
+        {
+          "internal_name": "ass.centrifugetower",
+          "modern_id": "hbm:assembly_machine/centrifuge_tower",
+          "modern_source_order": 30,
+          "source_order": 36
+        },
+        {
+          "internal_name": "ass.reactorcore",
+          "modern_id": "hbm:assembly_machine/reactor_core",
+          "modern_source_order": 31,
+          "source_order": 37
+        },
+        {
+          "internal_name": "ass.thermoelement",
+          "modern_id": "hbm:assembly_machine/thermo_element",
+          "modern_source_order": 32,
+          "source_order": 38
+        },
+        {
+          "internal_name": "ass.thermoelementsilicon",
+          "modern_id": "hbm:assembly_machine/thermo_element_silicon",
+          "modern_source_order": 33,
+          "source_order": 39
+        },
+        {
+          "internal_name": "ass.rtgunit",
+          "modern_id": "hbm:assembly_machine/rtg_unit",
+          "modern_source_order": 34,
+          "source_order": 40
+        },
+        {
+          "internal_name": "ass.magnetron",
+          "modern_id": "hbm:assembly_machine/magnetron",
+          "modern_source_order": 35,
+          "source_order": 41
+        },
+        {
+          "internal_name": "ass.titaniumdrill",
+          "modern_id": "hbm:assembly_machine/titanium_drill",
+          "modern_source_order": 36,
+          "source_order": 42
+        },
+        {
+          "internal_name": "ass.entanglementkit",
+          "modern_id": "hbm:assembly_machine/entanglement_kit",
+          "modern_source_order": 37,
+          "source_order": 43
+        },
+        {
+          "internal_name": "ass.protoreactor",
+          "modern_id": "hbm:assembly_machine/proto_reactor",
+          "modern_source_order": 38,
+          "source_order": 44
+        },
+        {
+          "internal_name": "ass.partlith",
+          "modern_id": "hbm:assembly_machine/part_lithium",
+          "modern_source_order": 39,
+          "source_order": 45
+        },
+        {
+          "internal_name": "ass.partberyl",
+          "modern_id": "hbm:assembly_machine/part_beryllium",
+          "modern_source_order": 40,
+          "source_order": 46
+        },
+        {
+          "internal_name": "ass.partcoal",
+          "modern_id": "hbm:assembly_machine/part_carbon",
+          "modern_source_order": 41,
+          "source_order": 47
+        },
+        {
+          "internal_name": "ass.partcop",
+          "modern_id": "hbm:assembly_machine/part_copper",
+          "modern_source_order": 42,
+          "source_order": 48
+        },
+        {
+          "internal_name": "ass.partplut",
+          "modern_id": "hbm:assembly_machine/part_plutonium",
+          "modern_source_order": 43,
+          "source_order": 49
+        },
+        {
+          "internal_name": "ass.cmbtile",
+          "modern_id": "hbm:assembly_machine/cmb_tile",
+          "modern_source_order": 44,
+          "source_order": 50
+        },
+        {
+          "internal_name": "ass.cmbbrick",
+          "modern_id": "hbm:assembly_machine/cmb_brick",
+          "modern_source_order": 45,
+          "source_order": 51
+        },
+        {
+          "internal_name": "ass.yellowbarrel",
+          "modern_id": "hbm:assembly_machine/yellow_barrel",
+          "modern_source_order": 48,
+          "source_order": 54
+        },
+        {
+          "internal_name": "ass.vitrifiedbarrel",
+          "modern_id": "hbm:assembly_machine/vitrified_barrel",
+          "modern_source_order": 49,
+          "source_order": 55
+        },
+        {
+          "internal_name": "ass.shredder",
+          "modern_id": "hbm:assembly_machine/shredder",
+          "modern_source_order": 70,
+          "source_order": 76
+        },
+        {
+          "internal_name": "ass.assembler",
+          "modern_id": "hbm:assembly_machine/assembler",
+          "modern_source_order": 71,
+          "source_order": 77
+        },
+        {
+          "internal_name": "ass.chemplant",
+          "modern_id": "hbm:assembly_machine/chemplant",
+          "modern_source_order": 72,
+          "source_order": 78
+        },
+        {
+          "internal_name": "ass.purex",
+          "modern_id": "hbm:assembly_machine/purex",
+          "modern_source_order": 73,
+          "source_order": 79
+        },
+        {
+          "internal_name": "ass.centrifuge",
+          "modern_id": "hbm:assembly_machine/centrifuge",
+          "modern_source_order": 75,
+          "source_order": 81
+        },
+        {
+          "internal_name": "ass.gascent",
+          "modern_id": "hbm:assembly_machine/gascent",
+          "modern_source_order": 76,
+          "source_order": 82
+        },
+        {
+          "internal_name": "ass.derrick",
+          "modern_id": "hbm:assembly_machine/derrick",
+          "modern_source_order": 81,
+          "source_order": 87
+        },
+        {
+          "internal_name": "ass.pumpjack",
+          "modern_id": "hbm:assembly_machine/pumpjack",
+          "modern_source_order": 82,
+          "source_order": 88
+        },
+        {
+          "internal_name": "ass.fracker",
+          "modern_id": "hbm:assembly_machine/fracker",
+          "modern_source_order": 83,
+          "source_order": 89
+        },
+        {
+          "internal_name": "ass.refinery",
+          "modern_id": "hbm:assembly_machine/refinery",
+          "modern_source_order": 85,
+          "source_order": 91
+        },
+        {
+          "internal_name": "ass.capacitorgold",
+          "modern_id": "hbm:assembly_machine/capacitorgold",
+          "modern_source_order": 134,
+          "source_order": 139
+        },
+        {
+          "internal_name": "ass.capacitorniobium",
+          "modern_id": "hbm:assembly_machine/capacitorniobium",
+          "modern_source_order": 135,
+          "source_order": 140
+        },
+        {
+          "internal_name": "ass.capacitortantalum",
+          "modern_id": "hbm:assembly_machine/capacitortantalum",
+          "modern_source_order": 136,
+          "source_order": 141
+        },
+        {
+          "internal_name": "ass.capacitorbismuth",
+          "modern_id": "hbm:assembly_machine/capacitorbismuth",
+          "modern_source_order": 137,
+          "source_order": 142
+        },
+        {
+          "internal_name": "ass.capacitorspark",
+          "modern_id": "hbm:assembly_machine/capacitorspark",
+          "modern_source_order": 138,
+          "source_order": 143
+        },
+        {
+          "internal_name": "ass.emptypackage",
+          "modern_id": "hbm:assembly_machine/emptypackage",
+          "modern_source_order": 327,
+          "source_order": 333
+        }
+      ],
+      "present_count": 63,
+      "status": "checked"
+    }
+  ],
+  "note": "Coverage is extracted from 1.7.10 Java GenericRecipe registrations, not legacy template JSON."
+}

@@ -16,6 +16,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MachineBatterySocketScreen extends AbstractContainerScreen<MachineBatterySocketMenu> {
     private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/storage/gui_battery_socket.png");
@@ -88,11 +89,11 @@ public class MachineBatterySocketScreen extends AbstractContainerScreen<MachineB
 
     private List<Component> energyTooltip() {
         List<Component> tooltip = new ArrayList<>();
-        tooltip.add(Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"));
+        tooltip.add(Component.literal(shortNumber(menu.getPower()) + "/" + shortNumber(menu.getMaxPower()) + "HE"));
         long delta = menu.getDelta();
         ChatFormatting color = delta > 0L ? ChatFormatting.GREEN : delta < 0L ? ChatFormatting.RED : ChatFormatting.YELLOW;
         String sign = delta >= 0L ? "+" : "-";
-        tooltip.add(Component.literal(sign + Math.abs(delta) + " HE/s").withStyle(color));
+        tooltip.add(Component.literal(sign + shortNumber(Math.abs(delta)) + "HE/s").withStyle(color));
         return tooltip;
     }
 
@@ -136,5 +137,34 @@ public class MachineBatterySocketScreen extends AbstractContainerScreen<MachineB
             case HIGH -> 2;
             default -> 0;
         };
+    }
+
+    private static String shortNumber(long value) {
+        double result;
+        String suffix;
+        double abs = Math.abs((double) value);
+        if (abs >= 1_000_000_000_000_000_000.0D) {
+            result = value / 1_000_000_000_000_000_000.0D;
+            suffix = "E";
+        } else if (abs >= 1_000_000_000_000_000.0D) {
+            result = value / 1_000_000_000_000_000.0D;
+            suffix = "P";
+        } else if (abs >= 1_000_000_000_000.0D) {
+            result = value / 1_000_000_000_000.0D;
+            suffix = "T";
+        } else if (abs >= 1_000_000_000.0D) {
+            result = value / 1_000_000_000.0D;
+            suffix = "G";
+        } else if (abs >= 1_000_000.0D) {
+            result = value / 1_000_000.0D;
+            suffix = "M";
+        } else if (abs >= 1_000.0D) {
+            result = value / 1_000.0D;
+            suffix = "k";
+        } else {
+            return Long.toString(value);
+        }
+        double rounded = result <= -100.0D ? Math.round(result * 10.0D) / 10.0D : Math.round(result * 100.0D) / 100.0D;
+        return String.format(Locale.US, "%s%s", rounded, suffix);
     }
 }

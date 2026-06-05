@@ -694,6 +694,23 @@
   - `.\gradlew.bat runData --no-daemon` 通过。
   - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
 
+## 2026-06-04 继续推进：组装机/化工厂配方迁移改走现代通用 JSON 导入链
+
+- 1.7.10 对照：
+  - `AssemblyMachineRecipes#getFileName()` 为 `hbmAssemblyMachine.json`，旧显式 `new GenericRecipe(...)` 顺序共 329 条。
+  - `ChemicalPlantRecipes#getFileName()` 为 `hbmChemicalPlant.json`，旧显式 `new GenericRecipe(...)` 顺序共 71 条。
+  - 旧 `GenericRecipes` 的 `recipeOrderedList` 顺序是 GUI recipe selector / NEI 展示的重要顺序来源，不能按现代 recipe id 字母序替代。
+- 本批接入：
+  - `GenericMachineRecipe` 增加 `source_order` 字段和 `LEGACY_ORDER` comparator；serializer/network 同步该字段。
+  - `LegacyGenericRecipeImporter` 从旧 `recipes[]` 数组下标写入 `source_order`，现代 datagen builder 也可手动写入该字段。
+  - `GenericMachineRecipeRuntime.recipes(...)` 和 recipe selector 名称列表改按 `LEGACY_ORDER` 输出，保持 1.7.10 选择页顺序。
+  - `LegacyGenericRecipeImportProvider` 接入 `runData`，读取 `legacy_recipes/hbmAssemblyMachine.json`、`legacy_recipes/hbmChemicalPlant.json` 等受支持旧模板，输出现代 datapack JSON 到 `src/generated/resources/data/hbm/recipes/<machine>/`。
+  - 同步生成 `reports/legacy_generic_recipe_import_report.json`，记录缺失模板、导入数量、pool 统计和逐条跳过原因。
+- 迁移边界：
+  - 当前本地源码包没有找到 `hbmAssemblyMachine.json` / `hbmChemicalPlant.json` 模板，因此尚未完成 1.7.10 全量配方 JSON 生成。
+  - 参考 1.20.1 移植版的 `AssemblerRecipe` / `ChemplantRecipe` 是独立小样本 serializer，不承接 1.7.10 `GenericRecipes` 的完整字段、pool、internal name 与排序语义；干净端继续以 `GenericMachineRecipe` 作为统一事实来源。
+  - 缺失 legacy item/meta、ore dictionary、fluid 或机器槽位映射时，不猜测替代物；在导入报告中记录 skipped，后续按 1.7.10 映射补库后再重跑 `runData`。
+
 ## 2026-06-04 继续推进：Press WIRE 首个 legacy meta 闭环
 
 - 1.7.10 对照：
@@ -1383,3 +1400,164 @@
     - `press/dura_steel_plate.json`：`stamp: "plate"`，`forge:ingots/dura_steel` -> `hbm:plate_dura_steel`。
     - `forge:ingots/saturnite`、`forge:plates/schrabidium`、`forge:ingots/combine_steel` 均包含对应 HBM item。
   - 生成的 `src/generated/resources/data/forge/tags/items/**/*.json` 已无重复 value。
+
+## 2026-06-04 勘误：组装机/化工厂无 legacy 模板 JSON，改用 1.7.10 Java 源覆盖核对
+
+- 勘误：
+  - 本地 1.7.10 源码包中没有可直接读取的 `hbmAssemblyMachine.json` / `hbmChemicalPlant.json` 模板。
+  - 这两类配方在旧版事实源中由 `AssemblyMachineRecipes.java` / `ChemicalPlantRecipes.java` 通过 `new GenericRecipe("...")` 逐条注册。
+  - 现代迁移不得继续假定存在外部模板 JSON；模板导入器只能保留为兼容未来导出的旧格式，不能作为这两台机器的当前事实来源。
+- 本批现代接入：
+  - 新增 `LegacyJavaRecipeCoverageProvider`：
+    - 读取 1.7.10 Java 源中的 `new GenericRecipe("...")` 出现顺序。
+    - 临时运行现代 `HbmRecipeProvider` 收集 `internal_name` / `source_order`。
+    - 输出 `reports/legacy_java_recipe_coverage_report.json`，列出 present/missing。
+  - `HbmDataGenerators` 在 server datagen 中接入该覆盖率报告。
+  - `GenericMachineRecipeBuilder` 补 `inputFluid(..., pressure)` / `outputFluid(..., pressure)`，对应旧 `FluidStack(FluidType, amount, pressure)`。
+- 化工厂配方本批推进：
+  - 以 `ChemicalPlantRecipes.java` 为事实源，新增一批现代 JSON 配方，保留旧 `internal_name` 与 `source_order`。
+  - 生成覆盖从原先少量电池配方扩展到 `54 / 71` 条。
+  - 保留旧 `OreDictStack` 语义：使用 `inputLegacyOre(...)` 写出 `legacy_ore`，由 `LegacyOreDictionaryMappings` 映射到现代 Forge tag，而不是强行替换为单个现代物品。
+  - 已确认并生成带压力字段的例子：`chem.osmiridiumdeath` 的 `PEROXIDE 1000` 输入压力 `5`。
+  - 为配方必要的旧版普通材料补现代简单 item 落点和 1.7.10 贴图：
+    - `powder_cement`
+    - `ingot_rubber`
+    - `powder_paleogenite`
+    - `nugget_bismuth`
+    - `powder_schrabidate`
+- 当前明确剩余缺口：
+  - 化工厂：`17 / 71` 条未迁移，报告列出：
+    - `chem.helium3`
+    - `chem.desh`
+    - `chem.deshcracked`
+    - `chem.meth`
+    - `chem.meatprocessing`
+    - `chem.oilelectrodes`
+    - `chem.lubeelectrodes`
+    - `chem.coltancleaning`
+    - `chem.coltancrystal`
+    - `chem.cordite`
+    - `chem.dynamite`
+    - `chem.tnt`
+    - `chem.tatb`
+    - `chem.c4`
+    - `chem.laminate`
+    - `chem.polarized`
+    - `chem.balefire`
+  - 装配机：当前仅 `11 / 329` 条旧源配方有现代对应；缺口列表由同一报告继续维护。
+- 迁移边界：
+  - 本批没有把 `GeneralConfig.enableLBSM`、`enableLBSMSimpleChemsitry`、`enable528PressurizedRecipes` 的分支做成现代配置化 recipe 变体；已迁配方按 1.7.10 默认非配置分支落地。
+  - `arc_electrode` 等旧版存在专用 Item 类/耐久/metadata 行为的内容不作为简单物品硬补，等对应物品/库迁移后再补配方。
+  - `chem.helium3` 依赖月壤/太空内容，`chem.meatprocessing` 依赖 glyphid 肉食物族，爆炸物配方依赖爆炸物/武器材料族；后续按各自 1.7.10 源库补齐后再迁。
+- 验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 覆盖率摘要：
+    - `chemical_plant: legacy=71 modern=54 present=54 missing=17`
+    - `assembly_machine: legacy=329 modern=281 present=11 missing=318`
+
+## 2026-06-04 继续推进：组装机机器本体配方与自动材料形态勘误
+
+- 1.7.10 对照：
+  - `AssemblyMachineRecipes.java` 中 `ass.shredder`、`ass.assembler`、`ass.chemplant`、`ass.purex`、`ass.centrifuge`、`ass.gascent`、`ass.derrick`、`ass.pumpjack`、`ass.fracker`、`ass.refinery` 均由 `registerDefaults()` 直接注册。
+  - `GenericRecipe.inputItemsEx(...)` 不是“并列替代输入组”，而是在 `GeneralConfig.enableExpensiveMode` 开启时覆盖普通 `inputItems(...)` 的昂贵模式输入。本轮按 1.7.10 默认配置迁普通 `inputItems(...)`，不把 `inputItemsEx(...)` 写成可同时使用的现代配方。
+  - `MaterialShapes` 中自动生成形态：
+    - `BOLT -> bolt`
+    - `CASTPLATE -> plateTriple`
+    - `WELDEDPLATE -> plateSextuple`
+    - `SHELL -> shell`
+    - `PIPE -> ntmpipe`
+    - `WIRE -> wireFine`
+  - 这些形态在 1.7.10 是 `ItemAutogen` 物品，不应在现代 tag 中指向 ingot。
+- 勘误与现代接入：
+  - 修正旧 tag 近似错误：
+    - `boltSteel` / `boltTungsten` / `boltDuraSteel` 改为 `bolt_steel` / `bolt_tungsten` / `bolt_dura_steel`。
+    - `shellSteel` / `shellTitanium` 改为 `shell_steel` / `shell_titanium`。
+    - `ntmpipeCopper` / `ntmpipeRubber` / `ntmpipeDuraSteel` 改为 `pipes_copper` / `pipes_rubber` / `pipes_dura_steel`。
+    - `plateTripleSteel` / `Lead` / `Copper` / `DuraSteel` 改为独立 `plate_cast_*` 物品。
+    - `plateSextupleSteel` / `Copper` / `Zirconium` 改为独立 `plate_welded_*` 物品。
+  - 新增 1.7.10 贴图资源：
+    - `textures/items/bolt.png -> assets/hbm/textures/item/bolt.png`
+    - `textures/items/shell.png -> assets/hbm/textures/item/shell.png`
+    - `textures/items/pipe.png -> assets/hbm/textures/item/pipe.png`
+    - `textures/items/plate_welded.png -> assets/hbm/textures/item/plate_welded.png`
+  - 组装机新增默认配方：
+    - `ass.shredder` source order `70`
+    - `ass.assembler` source order `71`
+    - `ass.chemplant` source order `72`
+    - `ass.purex` source order `73`
+    - `ass.centrifuge` source order `75`
+    - `ass.gascent` source order `76`
+    - `ass.derrick` source order `81`
+    - `ass.pumpjack` source order `82`
+    - `ass.fracker` source order `83`
+    - `ass.refinery` source order `85`
+  - `ass.rtg` 已核对并撤回：1.7.10 输出是 `machine_rtg_grey`，现代已迁的 `machine_radgen` 对应旧 `machine_radgen`，两者不是同一方块。不得为提高覆盖率把 `ass.rtg` 误绑到 `machine_radgen`。
+- 迁移边界：
+  - `seal_frame` / `seal_controller` 和核门族仍不迁配方；旧版含专门方块行为，不能只补空壳。
+  - `ass.precass` 等输出方块尚未有现代正确落点或依赖库未完整迁移，本批跳过。
+  - 本批不迁昂贵模式 recipe 变体；后续需要配置感知配方系统或 JEI/选择页分支展示后再补。
+- 验证：
+  - `.\gradlew.bat compileJava --no-daemon` 通过。
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - 覆盖率摘要：
+    - `chemical_plant: legacy=71 modern=54 present=54 missing=17`
+    - `assembly_machine: legacy=329 modern=334 present=64 missing=265`
+  - 抽样生成：
+    - `assembly_machine/chemplant.json` 使用 `forge:pipes/copper -> hbm:pipes_copper`。
+    - `assembly_machine/purex.json` 使用 `forge:pipes/rubber -> hbm:pipes_rubber`、`forge:cast_plates/lead -> hbm:plate_cast_lead`。
+    - `assembly_machine/refinery.json` 使用 `forge:welded_plates/steel -> hbm:plate_welded_steel`。
+  - 抽样 tag 已确认 `bolts` / `shells` / `pipes` / `cast_plates` / `welded_plates` 目录不再把上述形态指向 `ingot_*`。
+
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- 新增 `BlastFurnaceRecipe` / `BlastFurnaceRecipesNT`，文件名为 `hbmBlastFurnace.json`，旧 `BlastFurnaceRecipes` 标为 `@Deprecated` 且文件名改为 `hbmBlastFurnaceLegacy.json`。现代配方导入器后续不能再把两个 blast furnace recipe surface 混为同一批。
+- 新 `BlastFurnaceRecipesNT` 使用 1-2 个 item 输入、0 fluid 输入、最多 2 item 输出，默认配方包括 steel、mingrade、meteorite sword、starmetal、PAA、firebrick 等。
+- `PUREXRecipes` 由 `GenericRecipe` 专门化为 `PUREXRecipe`，新增 NEI 额外文本渲染 duration 与 HE/t；现代 recipe display/JEI 说明应保留这个机器特有显示面。
+- 配方基线移除 Advanced Alloy 系列作为普通 ingot/dust/plate/block/coil/wire 形态，`OreDictManager.ALLOY` 与 `Mats.MAT_ALLOY` 不再作为可用材料注册。后续导入配方时要按新版源码的替代材料处理，而不是继续补旧 `advanced_alloy` 输出。
+
+## 2026-06-05 5714 已迁配方对齐
+
+- 已按新版 `ChemicalPlantRecipes.java` 补齐现代 datagen 中已具备依赖的化工厂配方：
+  - `chem.obsidian`：water `1000` + lava `500` + air `4000` -> obsidian，discover 池 `.stone`。
+  - `chem.aggregate`：cobblestone `16` -> gravel `8` + sand `8`，`setupNamed(320, 500)`，discover 池 `.stone`。
+  - `chem.napalm`：`canister_empty` + gasoline `100` + aromatics `50` -> `canister_napalm`。
+- `chem.stone` 的 pool 已从 discover 根池改为 `discover.stone` 子池，和新版源码一致。
+- 已按新版组装机配方删除 `ass.platealloy`，并把 `ass.platemixed` 的 `plateAdvancedAlloy x2` 改为 `plateCopper x2`。
+- 已停止生成 Advanced Alloy 普通材料线相关 tag/语言/press recipe；`LegacyOreDictionaryMappings` 中仅保留旧导入器字符串规范化，不再由其注册新物品或生成新版配方。
+- `LegacySerializableRecipeHandlers` 已将 deprecated `BlastFurnaceRecipes` 的旧文件名改为 `hbmBlastFurnaceLegacy.json`；新版 `hbmBlastFurnace.json` 预留给尚未迁入的 `BlastFurnaceRecipesNT`。
+
+## 2026-06-05 配方选择页屏障/占位物品勘误
+
+- 1.7.10 对照：
+  - `GenericRecipe#getIcon()` 在无 item output 且有 fluid output 时使用 `ItemFluidIcon.make(...)`；装配机 `ass.unpackage*` 配方也显式用 `ModItems.fluid_icon` 作为 recipe icon。
+  - `OreDictManager` 中硝石材料为 `KNO = new DictFrame("Saltpeter")`，旧物品 ID 为 `niter`，贴图为 `salpeter.png`；不是现代临时名 `nitra`。
+  - `MaterialShapes.WELDEDPLATE` 的旧矿辞前缀是 `plateSextuple`，因此 `CU/ZR.plateWelded()` 应解析为 `forge:welded_plates/copper|zirconium`，不是 `forge:plates/welded_*`。
+  - `Mats.MAT_FERRO` autogen `CASTPLATE`，`FERRO.plateCast()` 是合法旧配方输入，应有 `plate_cast_ferrouranium` 对应 tag/显示物品。
+- 勘误与现代接入：
+  - 已补现代 `fluid_icon` 隐藏配方物品，用于流体输出/拆包 recipe icon，避免用满流体包或空白容器代替旧 `ItemFluidIcon`。
+  - 已补装配机/化工厂配方引用但此前无生成文件的 tag 与对应旧物品/alias，包括：
+    - `forge:any/tar`
+    - `forge:billets/silicon`
+    - `forge:cast_plates/ferrouranium`
+    - `forge:dusts/beryllium|fluorite|gold|niobium|saltpeter|niter|sulfur`
+    - `forge:gems/any_coke`
+    - `forge:ingots/any_hard_plastic|asbestos|ferrouranium|gold|iron`
+    - `forge:welded_plates/copper|zirconium`
+    - `forge:sand`
+  - 配方 datagen 已把 `chem.nitricacid` 从 `dustNiter` 改回 `dustSaltpeter`；现代仍保留 `dusts/niter` alias 兼容旧错误路径。
+  - 配方 datagen 已把 `ass.exheavyframe` / `ass.bronzetubes` 的焊接板输入改为 `plateSextupleCopper` / `plateSextupleZirconium`，生成路径回到 `forge:welded_plates/*`。
+  - 已从 1.7.10 资源复制新增显示物品贴图：`salpeter.png`、`powder_beryllium.png`、`powder_asbestos.png`、`ingot_asbestos.png`；先前已复制的硅/铁铀/金粉/铌粉贴图继续沿用。
+- 验证：
+  - `.\gradlew.bat runData --no-daemon` 通过。
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+  - 扫描 `src/generated/resources/data/hbm/recipes/{assembly_machine,chemical_plant}`：
+    - tag refs: `85`
+    - missing tag files: `0`
+    - `minecraft:barrier` / `hbm:barrier` recipe refs: `0`
+  - 抽样生成：
+    - `chemical_plant/nitricacid.json` 使用 `forge:dusts/saltpeter`。
+    - `assembly_machine/expensive_heavy_frame.json` 使用 `forge:welded_plates/copper`。
+    - `assembly_machine/expensive_bronze_tubes.json` 使用 `forge:welded_plates/zirconium`。

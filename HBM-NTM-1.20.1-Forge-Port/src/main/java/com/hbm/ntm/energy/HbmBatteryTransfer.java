@@ -82,8 +82,7 @@ public final class HbmBatteryTransfer {
         long toCharge = Math.min(Math.min(power, batRate), batMax - batCharge);
 
         if (toCharge > 0L) {
-            battery.setCharge(stack, batCharge + toCharge);
-            power -= toCharge;
+            power -= battery.chargeBattery(stack, toCharge);
         }
         return power;
     }
@@ -101,8 +100,7 @@ public final class HbmBatteryTransfer {
         long toDischarge = Math.min(Math.min(maxPower - power, batRate), batCharge);
 
         if (toDischarge > 0L) {
-            battery.setCharge(stack, batCharge - toDischarge);
-            power += toDischarge;
+            power += battery.dischargeBattery(stack, toDischarge);
         }
         return power;
     }

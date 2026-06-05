@@ -1,0 +1,26 @@
+{
+  "type": "hbm:assembly_machine",
+  "auto_switch_group": "autoswitch.plates",
+  "duration": 60,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/copper"
+      }
+    }
+  ],
+  "internal_name": "ass.platecopper",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:plate_copper"
+    }
+  ],
+  "pools": [
+    "alt.plates"
+  ],
+  "power": 100,
+  "source_order": 6
+}

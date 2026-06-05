@@ -115,6 +115,16 @@ public final class LegacyGenericRecipeFormat {
         return getString(json, "name_wrapper", getString(json, "nameWrapper", null));
     }
 
+    public static int readSourceOrder(JsonObject json) {
+        if (json.has("source_order")) {
+            return json.get("source_order").getAsInt();
+        }
+        if (json.has("legacy_order")) {
+            return json.get("legacy_order").getAsInt();
+        }
+        return GenericMachineRecipe.UNSPECIFIED_SOURCE_ORDER;
+    }
+
     public static JsonArray writeLegacyAStack(HbmIngredient ingredient) {
         JsonArray array = new JsonArray();
         if (ingredient.legacyOreName() != null) {

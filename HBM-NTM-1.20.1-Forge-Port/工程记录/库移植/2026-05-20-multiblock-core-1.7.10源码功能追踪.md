@@ -210,6 +210,14 @@
 
 - 已跑：`.\gradlew.bat compileJava processResources --no-daemon --rerun-tasks`，通过。
 
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- `BlockDummyable#getDimensions()` 新增源码注释，明确六元数组顺序为 `UP, DOWN, FORWARD, BACKWARD, LEFT, RIGHT`。这与当前现代 `LegacyXrMultiblockBlock` 的旧 XR 解释方向一致，后续机器 trace 应继续按该顺序记录。
+- `BlockDummyable#breakBlock` 清理逻辑只是压缩旧注释/空分支，没有恢复 core 侧 `MultiblockHandler.emptySpace`；现代端仍应以已迁入的 core/dummy 显式清理库为准。
+- 新增上游多方块机器 `machine_blast_furnace` 与 `radio_autocal`，以及双高 `vending_machine`。其中 blast furnace 使用 `getDimensions()={6,0,1,1,1,1}`、`getOffset()=1` 并在 core 四侧、前方高位、顶部加 proxy/extra；这些足迹不应套用现有可见机器批次的默认尺寸。
+
 ## 2026-06-02 详细 hitbox 勘误与 gascent/sawmill/crucible 接入
 
 触发来源：

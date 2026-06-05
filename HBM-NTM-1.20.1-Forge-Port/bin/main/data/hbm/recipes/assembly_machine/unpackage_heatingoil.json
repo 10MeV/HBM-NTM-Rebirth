@@ -1,6 +1,10 @@
 {
   "type": "hbm:assembly_machine",
   "duration": 40,
+  "icon": {
+    "item": "hbm:fluid_icon",
+    "nbt": "{hbm_fluid:\"HEATINGOIL\",hbm_fluid_amount:32000}"
+  },
   "input_fluids": [],
   "input_items": [
     {

@@ -1,11 +1,14 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.block.AssemblyFactoryBlock;
 import com.hbm.ntm.block.AssemblyMachineBlock;
 import com.hbm.ntm.block.BalefireBombBlock;
 import com.hbm.ntm.block.BalefireBlock;
+import com.hbm.ntm.block.Bat9000Block;
 import com.hbm.ntm.block.BigAssTankBlock;
 import com.hbm.ntm.block.BoilerBlock;
+import com.hbm.ntm.block.ChemicalFactoryBlock;
 import com.hbm.ntm.block.ChemicalPlantBlock;
 import com.hbm.ntm.block.CompressorBlock;
 import com.hbm.ntm.block.CoolingTowerBlock;
@@ -158,8 +161,6 @@ public final class ModBlocks {
             fluidBarrel("barrel_plastic", FluidBarrelBlock.Variant.PLASTIC);
     public static final RegistryObject<Block> BARREL_CORRODED =
             fluidBarrel("barrel_corroded", FluidBarrelBlock.Variant.CORRODED);
-    public static final RegistryObject<Block> BARREL_IRON =
-            fluidBarrel("barrel_iron", FluidBarrelBlock.Variant.IRON);
     public static final RegistryObject<Block> BARREL_STEEL =
             fluidBarrel("barrel_steel", FluidBarrelBlock.Variant.STEEL);
     public static final RegistryObject<Block> BARREL_TCALLOY =
@@ -190,7 +191,7 @@ public final class ModBlocks {
             chemicalPlantDefinition());
     public static final RegistryObject<Block> MACHINE_LIQUEFACTOR = liquefactorMachine("machine_liquefactor",
             liquefactorDefinition());
-    public static final RegistryObject<Block> MACHINE_CHEMICAL_FACTORY = visibleMultiblockMachine("machine_chemical_factory",
+    public static final RegistryObject<Block> MACHINE_CHEMICAL_FACTORY = chemicalFactoryMachine("machine_chemical_factory",
             chemicalFactoryDefinition());
     public static final RegistryObject<Block> MACHINE_REFINERY = refineryMachine("machine_refinery",
             refineryDefinition());
@@ -212,6 +213,8 @@ public final class ModBlocks {
             solidifierDefinition());
     public static final RegistryObject<Block> MACHINE_COMPRESSOR = compressorMachine("machine_compressor",
             compressorDefinition());
+    public static final RegistryObject<Block> MACHINE_BAT9000 = bat9000Machine("machine_bat9000",
+            bat9000Definition());
     public static final RegistryObject<Block> MACHINE_BIGASSTANK = bigAssTankMachine("machine_bigasstank",
             bigAssTankDefinition());
     public static final RegistryObject<Block> MACHINE_FLUIDTANK = fluidTankMachine("machine_fluidtank",
@@ -234,7 +237,7 @@ public final class ModBlocks {
             crucibleDefinition());
     public static final RegistryObject<Block> MACHINE_GASFLARE = gasFlareMachine("machine_gasflare",
             gasFlareDefinition());
-    public static final RegistryObject<Block> MACHINE_ASSEMBLY_FACTORY = visibleMultiblockMachine("machine_assembly_factory",
+    public static final RegistryObject<Block> MACHINE_ASSEMBLY_FACTORY = assemblyFactoryMachine("machine_assembly_factory",
             assemblyFactoryDefinition());
     public static final RegistryObject<Block> MACHINE_PUREX = visibleMultiblockMachine("machine_purex",
             purexDefinition());
@@ -269,6 +272,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_TURBINEGAS = visibleMultiblockMachine("machine_turbinegas",
             turbineGasDefinition());
     public static final RegistryObject<Block> GLASS_BORON = legacyGlass("glass_boron");
+    public static final RegistryObject<Block> GLASS_QUARTZ = quartzGlass("glass_quartz");
 
     // Legacy 1.7.10 blockTab entries used as an early chunk-radiation test bed.
     public static final RegistryObject<Block> WASTE_EARTH = wasteEarth("waste_earth", false);
@@ -388,6 +392,7 @@ public final class ModBlocks {
             MACHINE_PYROOVEN,
             MACHINE_SOLIDIFIER,
             MACHINE_COMPRESSOR,
+            MACHINE_BAT9000,
             MACHINE_BIGASSTANK,
             MACHINE_FLUIDTANK,
             MACHINE_WELL,
@@ -432,8 +437,7 @@ public final class ModBlocks {
     );
 
     public static final List<RegistryObject<Block>> HIDDEN_MACHINE_BLOCKS = List.of(
-            BARREL_CORRODED,
-            BARREL_IRON
+            BARREL_CORRODED
     );
 
     public static final List<RegistryObject<Block>> EXTRA_BLOCK_TAB_BLOCKS = simpleResourceBlocks(
@@ -564,7 +568,6 @@ public final class ModBlocks {
             "block_dineutronium:block_dineutronium",
             "block_schrabidium_cluster:block_schrabidium_cluster_side",
             "block_euphemium_cluster:block_euphemium_cluster_side",
-            "block_advanced_alloy:block_advanced_alloy",
             "block_magnetized_tungsten:block_magnetized_tungsten",
             "block_combine_steel:block_combine_steel",
             "block_desh:block_desh",
@@ -977,6 +980,30 @@ public final class ModBlocks {
                 block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
     }
 
+    private static RegistryObject<Block> assemblyFactoryMachine(String name, LegacyMachineDefinition definition) {
+        return registerBlockWithItem(
+                name,
+                () -> new AssemblyFactoryBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), definition),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> chemicalFactoryMachine(String name, LegacyMachineDefinition definition) {
+        return registerBlockWithItem(
+                name,
+                () -> new ChemicalFactoryBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), definition),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
     private static RegistryObject<Block> remoteFluidMachine(String name, LegacyMachineDefinition definition,
             RemoteFluidMachineBlock.Kind kind) {
         return registerBlockWithItem(
@@ -1104,6 +1131,18 @@ public final class ModBlocks {
         return registerBlockWithItem(
                 name,
                 () -> new BigAssTankBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), definition),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> bat9000Machine(String name, LegacyMachineDefinition definition) {
+        return registerBlockWithItem(
+                name,
+                () -> new Bat9000Block(BlockBehaviour.Properties.of()
                         .mapColor(MapColor.METAL)
                         .strength(5.0F, 30.0F)
                         .sound(SoundType.METAL)
@@ -1349,12 +1388,25 @@ public final class ModBlocks {
                 .build();
     }
 
+    private static LegacyMachineDefinition bat9000Definition() {
+        return LegacyMachineDefinition.builder(machineModel("bat9000"), machineTexture("bat9000"))
+                .legacyXrDimensions(4, 0, 2, 2, 1, 1)
+                .legacyOffset(2)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 4, 0, 2, 2, 1, 1 }, facing)
+                        .withExtraOffsets(bat9000StructureOffsets(facing))
+                        .withProxyOffsets(bat9000ProxyOffsets(facing), proxyFluid()))
+                .legacyItemScale(2.5D, 0.5D)
+                .yRotation(ModBlocks::bigAssTankRotation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-3, -1, -3), pos.offset(4, 6, 4)))
+                .build();
+    }
+
     private static LegacyMachineDefinition fluidTankDefinition() {
         return LegacyMachineDefinition.builder(machineModel("fluidtank"), machineTexture("fluidtank"))
                 .legacyXrDimensions(2, 0, 1, 1, 2, 2)
                 .legacyOffset(1)
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 2, 2 }, facing)
-                        .withExtraProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyFluid()))
+                        .withExtraOffsets(LegacyMultiblockOffsets.floorCorners(1)))
                 .legacyItemScale(3.5D, 0.75D)
                 .yRotation(facing -> (360.0F - facing.toYRot()) % 360.0F)
                 .build();
@@ -1958,6 +2010,37 @@ public final class ModBlocks {
                 LegacyMultiblockOffsets.relative(facing, rot, -6, 0, 0));
     }
 
+    private static List<BlockPos> bat9000StructureOffsets(Direction facing) {
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return Stream.of(
+                LegacyMultiblockOffsets.xrBox(new int[] { 4, 0, 1, 1, 2, -2 }, facing, BlockPos.ZERO),
+                LegacyMultiblockOffsets.xrBox(new int[] { 4, 0, 1, 1, -2, 2 }, facing, BlockPos.ZERO),
+                List.of(
+                        LegacyMultiblockOffsets.relative(facing, rot, 2, 1, 0),
+                        LegacyMultiblockOffsets.relative(facing, rot, 2, -1, 0),
+                        LegacyMultiblockOffsets.relative(facing, rot, -2, 1, 0),
+                        LegacyMultiblockOffsets.relative(facing, rot, -2, -1, 0),
+                        LegacyMultiblockOffsets.relative(facing, rot, 1, 2, 0),
+                        LegacyMultiblockOffsets.relative(facing, rot, 1, -2, 0),
+                        LegacyMultiblockOffsets.relative(facing, rot, -1, 2, 0),
+                        LegacyMultiblockOffsets.relative(facing, rot, -1, -2, 0)))
+                .flatMap(List::stream)
+                .toList();
+    }
+
+    private static List<BlockPos> bat9000ProxyOffsets(Direction facing) {
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                LegacyMultiblockOffsets.relative(facing, rot, 3, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 3, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -3, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -3, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 1, 3, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 3, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 1, -3, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, -3, 0));
+    }
+
     private static List<BlockPos> frackingTowerStructureOffsets(Direction facing) {
         return Stream.of(
                 LegacyMultiblockOffsets.xrBox(new int[] { 1, 0, 3, 3, 3, 3 }, facing, new BlockPos(0, 2, 0), true),
@@ -2425,6 +2508,17 @@ public final class ModBlocks {
         return registerBlockWithItem(name, () -> new LegacyNtmGlassBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.COLOR_CYAN)
                 .strength(0.3F)
+                .sound(SoundType.GLASS)
+                .noOcclusion()
+                .isValidSpawn((state, level, pos, type) -> false)
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false)));
+    }
+
+    private static RegistryObject<Block> quartzGlass(String name) {
+        return registerBlockWithItem(name, () -> new LegacyNtmGlassBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_CYAN)
+                .strength(1.0F, 40.0F)
                 .sound(SoundType.GLASS)
                 .noOcclusion()
                 .isValidSpawn((state, level, pos, type) -> false)

@@ -1,0 +1,23 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm:block_meteor"
+      }
+    }
+  ],
+  "internal_name": "ass.dalekanium",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:plate_dalekanium"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 15
+}

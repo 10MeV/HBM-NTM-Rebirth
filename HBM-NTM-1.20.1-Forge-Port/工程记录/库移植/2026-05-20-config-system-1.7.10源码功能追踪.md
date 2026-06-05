@@ -54,3 +54,12 @@
 - 配置默认值与旧版一致。
 - JSON 配置缺失时能生成/使用默认数据。
 - 配置变更不会要求客户端读取服务端专有类。
+
+## 2026-06-04 新版源码差异补记
+
+对比 `源码包/old-code/Hbm-s-Nuclear-Tech-GIT-master` 与新版 `源码包/Hbm-s-Nuclear-Tech-GIT-master/Hbm-s-Nuclear-Tech-GIT-master`：
+
+- `RefStrings.VERSION` 从 `1.0.27 BETA (5687)` 更新为 `1.0.27 BETA (5714)`；后续 trace 引用 1.7.10 行为时需标明是否来自 5714 快照。
+- `GeneralConfig.enableMachineGravity` 的配置默认值改为 `false`，说明旧端大型机器倾斜/地基检查不再默认启用。
+- `ServerConfig` 新增运行时配置 `STRUCTURE_DEBUG=false` 与 `AUTOCAL_MAX_CLOCK=20`，后者是 `radio_autocal` 脚本执行速度上限。
+- `WorldConfig` 移除 `geyserWater` 配置，`HbmWorldGen` 同步删除水/蒸汽 geyser 生成路径，并修正 chlorine geyser 使用 `geyserChlorine` 频率。

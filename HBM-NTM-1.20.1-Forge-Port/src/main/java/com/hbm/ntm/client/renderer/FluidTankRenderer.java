@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
+import com.hbm.ntm.blockentity.Bat9000BlockEntity;
 import com.hbm.ntm.blockentity.BigAssTankBlockEntity;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
@@ -40,12 +41,27 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
 
-        if (blockEntity instanceof BigAssTankBlockEntity) {
+        if (blockEntity instanceof Bat9000BlockEntity) {
+            ObjModelLibrary.MACHINE_BAT9000.renderAll(poseStack, buffer, packedLight, packedOverlay);
+            LegacyFluidTankRenderHelper.renderBat9000Diamonds(blockEntity.getTank().getTankType(), poseStack, buffer,
+                    packedLight, packedOverlay);
+            LegacyFluidTankRenderHelper.renderBat9000Fluid(blockEntity.getTank(), state, poseStack, buffer,
+                    packedLight, packedOverlay);
+        } else if (blockEntity instanceof BigAssTankBlockEntity) {
             ObjModelLibrary.MACHINE_BIGASSTANK.renderAll(poseStack, buffer, packedLight, packedOverlay);
+            LegacyFluidTankRenderHelper.renderBigAssTankDiamonds(blockEntity.getTank().getTankType(), poseStack, buffer,
+                    packedLight, packedOverlay);
+            LegacyFluidTankRenderHelper.renderBigAssTankFluid(blockEntity.getTank(), state, poseStack, buffer,
+                    packedLight, packedOverlay, blockEntity.getLevel() == null ? partialTick
+                            : blockEntity.getLevel().getGameTime() + partialTick);
         } else if (blockEntity.isExploded()) {
-            ObjModelLibrary.MACHINE_FLUIDTANK_EXPLODED.renderAll(poseStack, buffer, packedLight, packedOverlay);
+            LegacyFluidTankRenderHelper.renderSmallTank(ObjModelLibrary.MACHINE_FLUIDTANK,
+                    ObjModelLibrary.MACHINE_FLUIDTANK_EXPLODED, blockEntity.getTank(), true, poseStack, buffer,
+                    packedLight, packedOverlay);
         } else {
-            ObjModelLibrary.MACHINE_FLUIDTANK.renderAll(poseStack, buffer, packedLight, packedOverlay);
+            LegacyFluidTankRenderHelper.renderSmallTank(ObjModelLibrary.MACHINE_FLUIDTANK,
+                    ObjModelLibrary.MACHINE_FLUIDTANK_EXPLODED, blockEntity.getTank(), false, poseStack, buffer,
+                    packedLight, packedOverlay);
         }
         poseStack.popPose();
     }

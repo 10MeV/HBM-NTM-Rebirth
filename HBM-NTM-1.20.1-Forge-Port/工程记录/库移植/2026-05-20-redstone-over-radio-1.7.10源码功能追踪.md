@@ -60,3 +60,12 @@
 - 现代边界：
   - 这不是完整无线红石方块网络或外部集成，只是把旧组件 API 与能量库消费者先固定下来。
   - 后续迁移无线红石方块时，应直接调用这些接口，而不是重新定义一套命令格式。
+
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- 新增 `radio_autocal` 方块、`TileEntityRadioAUTOCAL`、`GUIScreenRadioAUTOCAL`、`RenderAUTOCAL` 与 `ParseMSES1`/`IParse` 脚本解析模块。
+- AUTOCAL 通过 RoR 读写外部信号，脚本状态包含 `isOn`、`ignoreError`、`autoReboot`、`script[]`、`current`、`clockSpeed`、`buffer`、`variables` 与 6 行 history。
+- `ServerConfig.AUTOCAL_MAX_CLOCK` 默认 `20`，GUI 文档说明最大 clock speed 由该 server config 限制。
+- 现代 RoR 迁移后续要把 AUTOCAL 作为脚本化 RoR 设备单独建模，而不是只按普通无线红石收发器处理。

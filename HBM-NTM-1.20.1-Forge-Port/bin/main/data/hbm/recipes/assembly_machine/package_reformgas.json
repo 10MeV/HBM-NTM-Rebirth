@@ -1,6 +1,10 @@
 {
   "type": "hbm:assembly_machine",
   "duration": 40,
+  "icon": {
+    "item": "hbm:fluid_pack_full",
+    "nbt": "{hbm_fluid:\"REFORMGAS\",hbm_fluid_amount:32000,hbm_fluid_pressure:0}"
+  },
   "input_fluids": [
     {
       "amount": 32000,

@@ -5,6 +5,7 @@ import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -71,7 +72,7 @@ public class MachineBatterySocketMenu extends AbstractContainerMenu {
     }
 
     public int getPowerBarHeight(int maxHeight) {
-        return maxPower <= 0L ? 0 : (int) (power * maxHeight / maxPower);
+        return maxPower <= 0L ? 0 : Mth.clamp((int) Math.floor((double) power / (double) maxPower * maxHeight), 0, maxHeight);
     }
 
     @Override

@@ -268,6 +268,15 @@ Verification:
 
 - `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
 
+## 2026-06-04 New 1.7.10 Source Diff Note
+
+Comparison source: old snapshot under `源码包/old-code/Hbm-s-Nuclear-Tech-GIT-master` versus new upstream snapshot `1.0.27 BETA (5714)`.
+
+- `Fluids` adds `AIRBLAST` and `FLUE`. `AIR` gains a heat step that turns it into `AIRBLAST`; `FLUE` is a gaseous, flammable, heavily soot-polluting exhaust fluid with a gastank container and new GUI/tank textures.
+- `P_GAS` now releases poison on spill/release, while `SOURGAS` gets its own stronger poison-pollution trait instead of sharing the generic gas trait.
+- `FluidTank#renderInfo` now routes hover text through new `GUIElements.drawHoveringTextFluid(...)`, so modern fluid GUI parity should preserve fluid-colored tooltip borders instead of plain text boxes.
+- New blast furnace logic uses `AIRBLAST` as input and `FLUE` as output; fluid capability/network migration should treat this as a real new machine integration target, not a cosmetic asset-only change.
+
 ## 2026-06-04 Modern Library Pass 69
 
 本轮继续推进 fluid-mk2-network 的机器接入，集中补旧油处理链里已经存在现代 BlockEntity 的远端端口与设置工具行为。
@@ -442,8 +451,8 @@ Verification:
 1.7.10 对照：
 
 - `com/hbm/blocks/machine/BlockFluidBarrel.java`
-  - 6 个旧 ID：`barrel_plastic` 12000mB、`barrel_corroded` 6000mB、`barrel_iron` 8000mB、`barrel_steel` 16000mB、`barrel_tcalloy` 24000mB、`barrel_antimatter` 16000mB。
-  - 创造栏只显示 plastic/steel/tcalloy/antimatter；corroded/iron 隐藏但注册并可作为世界生成/腐蚀结果/掉落物。
+  - 当前 1.7.10 源码注册 5 个旧 ID：`barrel_plastic` 12000mB、`barrel_corroded` 6000mB、`barrel_steel` 16000mB、`barrel_tcalloy` 24000mB、`barrel_antimatter` 16000mB。
+  - 创造栏只显示 plastic/steel/tcalloy/antimatter；corroded 隐藏但注册。`barrel_corroded` 旧源码 `createNewTileEntity(...)` 返回 `null`，右键直接 false，主要作为世界结构/普通方块存在。当前 1.7.10 上游没有 `barrel_iron` 字段、初始化或注册；现代端不得保留该额外桶种。
   - 普通右键打开 `GUIBarrel`；潜行手持 `IItemFluidIdentifier` 右键设置 tank type。
   - 方块 bounds 为 x/z `2/16..14/16`、y `0..1`，非普通不透明渲染。
   - 破坏时通过 `IPersistentNBT` 保留 tank 数据，并额外掉落 6 槽物品。
@@ -455,8 +464,8 @@ Verification:
   - 材质反应：
     - 非 antimatter 桶装反物质会破坏方块并 5F 爆炸。
     - plastic 装 hot/corrosive 流体会破坏并 fizz。
-    - iron 装 corrosive、steel 装腐蚀等级 > 50 会变成 `barrel_corroded`，保留 6 槽、流体 type、fill clamp 到新容量。
-    - corroded 每 tick 1/3 泄漏 1mB 并按流体释放污染；1/(3*60*20) 概率破坏。
+    - 旧源码没有 steel 自动变成 `barrel_corroded` 的逻辑；当前 1.7.10 源码也没有已注册的 iron barrel，现代端不得添加这些额外行为。
+    - `TileEntityBarrel` 中 corroded 泄漏分支因 `barrel_corroded` 不创建 TE，在旧注册路径下没有实际承载；现代端按无 TE 方块对齐。
     - Tom firestorm + 水 + 天光爆炸依赖 `TomSaveData`，现代端尚未迁移该 saveddata，本轮记录为 deferred。
   - 持久化写入 `persistent.tank` 和 `persistent.mode`；旧 `readNBT` 读取 `"nbt"` 是源码遗留错误，现代端读取 `mode` 并兼容 fallback `nbt`。
 
@@ -465,7 +474,7 @@ Verification:
 - 新增 `FluidBarrelBlockEntity extends FluidTankBlockEntity`：
   - 使用旧容量创建单 tank，复用现代储罐 GUI、6 槽容器装卸、Forge fluid capability、HBM provider/receiver 与持久化接口。
   - 覆盖六个相邻 `FluidPort`，让 barrel 作为旧单格六面流体节点参与网络，而不是沿用大型 fluid tank 的远端端口。
-  - 覆盖材质 hazard 规则：反物质爆炸、plastic 熔毁、iron/steel 腐蚀成 corroded、corroded 泄漏/随机破坏。
+  - 覆盖材质 hazard 规则：反物质爆炸、plastic 熔毁；不添加旧源码没有的 iron/steel 腐蚀转换。
   - 常规/危险破坏时保留旧 6 槽掉落语义；普通采掘由持久化方块掉落保存 tank 状态。
 - 新增 `FluidBarrelBlock`：
   - 单格 shape 为旧 `2/16..14/16` x/z。
@@ -475,10 +484,10 @@ Verification:
   - `handleItemTransfer()`、`setTankTypeFromIdentifierSlot()`、`checkHazards()`、`leakDamagedTank()` 改为 protected。
   - 新增 `copyInventoryFrom(...)`，用于旧腐蚀变块保留 6 槽。
 - 注册和资源：
-  - `ModBlocks` 注册六个旧 barrel ID；只有 plastic/steel/tcalloy/antimatter 进入机器创造栏。
-  - `ModBlocks.HIDDEN_MACHINE_BLOCKS` 单独保存 hidden machine blocks，datagen 仍给 corroded/iron 添加 pickaxe/iron tool tag。
-  - `ModBlockEntities.FLUID_BARREL` 覆盖六个 barrel block。
-  - 复制旧 `models/blocks/barrel.obj` 和六张旧 barrel 贴图到现代资源树。
+  - `ModBlocks` 注册五个旧 barrel ID；只有 plastic/steel/tcalloy/antimatter 进入机器创造栏。
+  - `ModBlocks.HIDDEN_MACHINE_BLOCKS` 单独保存 hidden machine blocks，datagen 仍给 corroded 添加 pickaxe/iron tool tag。
+  - `ModBlockEntities.FLUID_BARREL` 覆盖四个可交互 barrel block；`barrel_corroded` 不创建 BlockEntity。
+  - 复制旧 `models/blocks/barrel.obj` 和五张旧 barrel 贴图到现代资源树。
   - 补 blockstate、OBJ block model、item model、no-drop loot、英文 lang、datagen 中英文 lang。
 
 Still deferred:
@@ -1064,6 +1073,69 @@ Verification:
 验证：
 
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-05 Tank Family Follow-up 5: GUI 槽位与桶背景
+
+本轮继续核查储罐自身 GUI/Menu 行为，排除现代 GUI 层额外限制。
+
+1.7.10 对照：
+
+- `ContainerMachineFluidTank` 与 `ContainerBarrel` 六个机器槽坐标一致：
+  - 0: `8,17`
+  - 1: `8,53`
+  - 2: `35,17`
+  - 3: `35,53`
+  - 4: `125,17`
+  - 5: `125,53`
+- 两个旧 container 都使用普通 `Slot`，没有把 1/3/5 设成玩家不可放入的 output slot，也没有把 0 槽限制成 `IItemFluidIdentifier`。
+- `transferStackInSlot(...)`：
+  - 小储罐从机器槽 shift 到玩家背包；从玩家背包 shift 到机器槽时尝试范围 `0..4`。
+  - 桶从机器槽 shift 到玩家背包；从玩家背包 shift 到机器槽时尝试范围 `0..5`。
+  - BigAss/BAT9000 继承 `ContainerBarrel`，因此按桶范围。
+- GUI 背景：
+  - 小储罐使用 `textures/gui/storage/gui_tank.png`。
+  - `GUIBarrel` 使用 `textures/gui/storage/gui_barrel.png`。
+  - 两者模式按钮、流体槽和 tooltip 区域一致。
+
+现代侧对齐：
+
+- `FluidTankMenu` 六个机器槽改回普通 `SlotItemHandler`，去掉现代端额外的 identifier-only/input-output 锁槽限制；玩家手动放入行为按旧普通槽处理。
+- `quickMoveStack(...)` 按旧范围区分：
+  - 小储罐使用机器槽 `0..4` 范围。
+  - `FluidBarrelBlockEntity` 与 `LegacyBigTankBlockEntity` 使用机器槽 `0..5` 范围，并保留旧 `ContainerBarrel` 从 container index 7 开始合并到玩家背包的边界。
+- 从 1.7.10 资源复制 `gui_barrel.png`，现代文件 SHA256 与旧资源一致。
+- `FluidTankScreen` 按 BE 类型选择 GUI 背景：桶用 `gui_barrel.png`，其它储罐族仍用 `gui_tank.png`。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- `gui_barrel.png` SHA256：`3866A18CBA72C585EC3D9FF4D2F7EB2ECF5F0E19277A1D3BE86F003E28C3C7B9`，与 1.7.10 资源一致。
+
+## 2026-06-05 Tank Family Follow-up 6: 大罐 GUI 继承与爆炸掉落
+
+本轮继续沿储罐自身行为审计 BigAss/BAT9000 的旧继承路径。
+
+1.7.10 对照：
+
+- `TileEntityMachineBigAssTank extends TileEntityBarrel`，`TileEntityMachineBAT9000 extends TileEntityBarrel`。
+- 两者没有自己的 GUI provider，继承 `TileEntityBarrel#provideGUI(...)`，因此使用 `GUIBarrel` 和 `textures/gui/storage/gui_barrel.png`。
+- 旧 `MachineFluidTank` 明确覆写 `canDropFromExplosion(...)` 返回 false，并有小储罐外部爆炸破损链。
+- 旧 `MachineBigAssTank` / `MachineBigAssTank9000` 没有覆写 `canDropFromExplosion(...)` 或 `onBlockExploded(...)`，只通过自身 BE 的 antimatter `checkFluidInteraction()` 自毁爆炸。
+- 旧英文 lang：
+  - `container.bigAssTank=Big-Ass Tank`
+  - `tile.machine_bigasstank.name=Big-Ass Tank`
+  - `container.bat9000=Big-Ass Tank 9000`
+
+现代侧对齐：
+
+- `FluidTankScreen` 的 barrel GUI 背景判定扩展到 `LegacyBigTankBlockEntity`，使 BigAss/BAT9000 与旧继承链一致使用 `gui_barrel.png`。
+- `BigAssTankBlock` / `Bat9000Block` 覆写 `dropFromExplosion(...)` 返回 true，避免继承小储罐的“爆炸不掉落”专用规则。
+- `container.bigAssTank` 英文改回 `Big-Ass Tank`，中文与旧资源保持“巨尻储罐”；`runData` 已同步生成语言资源。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- `.\gradlew.bat runData --no-daemon` 通过。
 - `.\gradlew.bat runData --no-daemon` passed and generated `fluid_duct_neo` blockstate/model/item/lang/loot/tag resources.
 - `.\gradlew.bat compileJava processResources --rerun-tasks --no-daemon` passed after data generation.
 
@@ -3661,4 +3733,271 @@ Progress estimate after Pass 58:
 Verification:
 
 - `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed.
+
+## 2026-06-05 5714 新源码删除前对齐审计
+
+本轮对比旧快照 `old-code` 与新 1.7.10 上游后，只在已经有现代承载库的流体体系中补齐新增内容。新上游里的若干新机器方块、RBMK 细节和 geyser/worldgen 变化仍未进入“已移植内容”范围，本轮只记录为已审计边界，不用近似实现。
+
+1.7.10 新源码事实：
+
+- `com/hbm/inventory/fluid/Fluids.java`
+  - 新增 `AIRBLAST = new FluidType("AIRBLAST", 0xFFDADA, 0, 3, 0, EnumSymbol.NONE).setTemp(1_200).addTraits(GASEOUS)`。
+  - 新增 `FLUE = new FluidType(155, "FLUE", 0x131313, 1, 4, 1, EnumSymbol.NONE)`，带 `CD_Gastank(0xFF4545, 0xFFE97F)`、`FT_Flammable(10_000)`、`GASEOUS` 和 `FT_Polluting().burn(SOOT, SOOT_GAS).release(SOOT, SOOT_GAS * 25)`。
+  - `AIR` 新增 `FT_Heatable().setEff(BOILER, 1.0D).addStep(5, 1, AIRBLAST, 1)`。
+  - `metaOrder` 把 `AIRBLAST` 放入空气附近，把 `FLUE` 放入流体表。
+- 语言资源新增：
+  - `hbmfluid.airblast=Hot Air Blast`
+  - `hbmfluid.flue=Flue Gas`
+- 贴图资源新增：
+  - `textures/gui/fluids/airblast.png`
+  - `textures/gui/fluids/flue.png`
+  - `textures/models/tank/tank_AIRBLAST.png`
+  - `textures/models/tank/tank_FLUE.png`
+
+现代侧对齐：
+
+- `HbmFluids` 新增 `AIRBLAST` / `FLUE`，并按旧源码补齐：
+  - `AIRBLAST` 温度 1200、气体、污染/反应数值沿用旧源码。
+  - `FLUE` 气体、热值 10000、燃烧烟尘 `sootGas()`、释放烟尘 `sootGas() * 25`、气瓶颜色 `0xFF4545 / 0xFFE97F`。
+  - `AIR` 增加 BOILER 热处理步骤 `5, 1 -> AIRBLAST, 1`。
+  - `NICE_ORDER_NAMES` 展示顺序加入 `AIRBLAST` 和 `FLUE`。
+- `HbmFluidTagsProvider` 新增 Forge 标签：
+  - `forge:air` = `AIR` + `AIRBLAST`
+  - `forge:flue_gas` = `FLUE`
+  - `forge:flue` = `FLUE`
+- `HbmFluidLangEntries` 新增英中名称：
+  - `Hot Air Blast` / `热鼓风`
+  - `Flue Gas` / `烟道气`
+- 从新 1.7.10 源码复制 GUI 流体贴图、气瓶贴图；现代 Forge fluid sprite 额外复用 GUI 流体贴图到 `textures/block/fluid/airblast.png` 和 `textures/block/fluid/flue.png`。
+
+兼容边界：
+
+- 旧源码显式给 `FLUE` 分配 legacy id 155；现代端口现有流体表已经包含后续迁移批次内容，id 155 已被其它已移植流体占用。本轮不重排现有注册表，避免破坏现代存档/网络/NBT 映射；`FLUE` 通过名称、Forge 注册名、标签和现代 `FluidType` 表稳定识别。
+- 新上游中与 `FLUE` 相关的高炉/新机器运行时尚未迁移；本轮只补 fluid MK2 库可承载的流体定义、特性、资源和数据生成。
+
+## 2026-06-05 Tank Family Render/Behavior Pass
+
+本轮针对流体罐族补齐 1.7.10 罐体渲染与大罐行为承载，重点修复小储罐贴图错乱，并补上缺失的 BAT9000。
+
+1.7.10 对照：
+
+- `RenderFluidTank`：
+  - `Frame` 使用 `tank.png`，`Tank` 使用 `textures/models/tank/tank_<FLUID>.png`。
+  - 只有旧 `FluidType.renderWithTint` 为真时，才用 `tank_NONE.png` 叠加 `getTint()`；普通 HBM 流体专用 tank 贴图不额外染色。
+  - 爆炸态使用 `fluidtank_exploded.obj` 的 `Frame`、`TankInner`、`Tank` 三个部件。
+  - 2026-06-05 修复：1.20.1 `ResourceLocation` 路径只允许小写字符；现代端运行时路径统一为 `textures/models/tank/tank_<fluid>.png` 小写形式，并将迁入的旧 `tank_*.png` 文件名规范为小写，避免 `tank_NONE.png` 在方块实体渲染时触发路径校验崩溃。
+  - 两面绘制 `DiamondPronter` NFPA 菱形。
+- `RenderBigAssTank`：
+  - 静态 OBJ 后绘制两条侧面流体条纹，贴 `tank.getTankType().getTexture()`，随世界时间滚动 UV，不额外按流体色染色。
+  - 两侧绘制 NFPA 菱形。
+- `RenderBAT9000`：
+  - 静态 OBJ 后绘制四面纯色液柱，颜色来自 `type.getColor()`，不使用纹理。
+  - 四面绘制 NFPA 菱形。
+- `TileEntityMachineBigAssTank` / `TileEntityMachineBAT9000`：
+  - BigAss 容量 `16_000_000`，BAT9000 容量 `2_048_000`。
+  - 两者走旧 `TileEntityBarrel` 风格持久流体状态，无小储罐 `hasExploded/onFire/repair` 破损链。
+  - 两者遇 antimatter 时移除方块并触发强度 10 爆炸。
+
+现代侧对齐：
+
+- 新增 `LegacyFluidTankRenderHelper` 作为流体罐族库层渲染承载：
+  - 小储罐按 OBJ part 分离绘制，修复 `Frame` 与 `Tank` 贴图混用造成的错乱。
+  - NFPA 菱形从旧 `DiamondPronter` 迁入现代 quad 渲染，供小储罐、BigAss、BAT9000 复用。
+  - 小储罐恢复旧 `renderWithTint` 语义：普通 HBM tank 贴图保持白色，只有标记为 tint 承载的流体才用 `tank_NONE.png + guiTint`。
+  - BigAss 液面条纹恢复旧版白色贴图滚动；BAT9000 液柱恢复旧版纯色四面板。
+- `FluidType` 新增 `renderTankWithTint()` / `shouldRenderTankWithTint()`，为后续外部/兼容流体保留旧式 tank tint 承载。
+- `FluidTankRenderer` 接入共享 helper；小储罐、BigAss、BAT9000 不再各自近似绘制液面/NFPA。
+- 新增 `LegacyBigTankBlockEntity`，把 BigAss/BAT9000 从小储罐破损链中分离，保留旧大罐持久流体和 antimatter 爆炸行为。
+- 新增 `Bat9000BlockEntity`、`Bat9000Block`、`machine_bat9000` 注册、BE 注册、客户端 renderer 注册、blockstate/item model/lang/loot/tag/datagen 接入。
+- BigAss 改为继承 `LegacyBigTankBlockEntity`，容量、端口和大罐行为保持旧语义。
+- 从 1.7.10 资源补齐 `textures/models/tank/tank_*.png` 与 `textures/models/misc/danger_diamond.png`。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+后续注意：
+
+- BAT9000 旧渲染器不读取 metadata；现代可见多方块壳仍有 facing。若实测发现 BAT9000 视觉方向与旧版不一致，需要单独决定是否冻结其 TESR 旋转。
+
+## 2026-06-05 Tank Family Follow-up: 贴图语义与破坏链
+
+本轮继续核查 1.7.10 储罐族，修正小储罐贴图语义，并补齐小储罐外部爆炸/识别码交互承载。
+
+1.7.10 对照：
+
+- `ResourceManager.tank_tex` = `textures/models/tank.png`，只用于小储罐 OBJ `Frame`。
+- `ResourceManager.tank_inner_tex` = `textures/models/tank/tank_inner.png`，只用于爆炸态 `TankInner`。
+- `MachineFluidTank` 方块/粒子贴图是 `textures/blocks/machine_fluidtank.png`，不是 OBJ frame 贴图。
+- 小储罐 shift + `IItemFluidIdentifier` 会设置 tank type，并向玩家显示 `Changed type to <fluid>!`。
+- 小储罐外部爆炸命中任意 dummy/core：
+  - 同一个 `Explosion` 对象只处理一次。
+  - 第一次命中调用 `tank.explode()`，进入 `hasExploded/onFire` 损坏泄漏状态。
+  - 已损坏后再次命中移除核心。
+- 小储罐灭火语义记录：
+  - 水命中燃烧且流体为液体时触发强度 5 爆炸。
+  - 水命中燃烧非液体时熄灭。
+  - 泡沫/CO2 熄灭。
+- BigAss/BAT9000 走旧 barrel 风格持久状态，没有小储罐 `hasExploded/onFire/repair` 链。
+
+现代侧对齐：
+
+- `textures/block/machines/fluidtank.png` 已替换为旧 `textures/blocks/machine_fluidtank.png`，恢复方块模型/粒子贴图语义。
+- `ObjMachineModels.LEGACY_FLUIDTANK_FRAME_TEXTURE` 明确指向 `textures/block/machines/tank.png`，对应旧 `textures/models/tank.png`。
+- 新增 `ObjMachineModels.LEGACY_FLUIDTANK_INNER_TEXTURE` 指向 `textures/models/tank/tank_inner.png`，`LegacyFluidTankRenderHelper` 的爆炸内胆不再语义上依赖 `block/machines/fluidtank_inner.png`。
+- `FluidTankBlock` 的 shift 识别码交互补回旧版聊天反馈；BigAss/BAT9000 继承同一入口。
+- `FluidTankBlock` 补回小储罐外部爆炸链：
+  - `FluidTankBlockEntity#markExplosionHandled(...)` 防止同一爆炸重复处理。
+  - `usesExternalExplosionDamageChain()` 由小储罐启用，`LegacyBigTankBlockEntity` 显式关闭。
+  - 第一次爆炸置损坏，第二次移除核心。
+- `DummyBlock#onBlockExploded(...)` 转发到核心方块，让多方块外壳命中也能触发旧 `findCore` 风格行为。
+- `FluidTankBlockEntity#tryExtinguish(...)` 补入旧小储罐水/泡沫/CO2 语义，等待现代灭火器/维修工具统一派发接入。
+
+仍待后续：
+
+- 旧 `IRepairable` 的火炬维修入口需要现代工具/维修库统一接线后调用 `FluidTankBlockEntity#repairTank()`，材料仍应为 6 个 steel plate。
+- 小储罐玩家侧面 ladder 行为旧版依赖 `HbmPlayerProps.isOnLadder`，现代没有同等玩家攀爬库承载；需要先补玩家扩展/攀爬事件库，再按旧 AABB 接入。
+- 灭火弹/灭火器命中机器的统一派发仍需在特效/工具库中接到 `tryExtinguish(...)`。
+
+验证：
+
+- 已核对贴图 SHA256：
+  - 现代 `textures/block/machines/fluidtank.png` == 旧 `textures/blocks/machine_fluidtank.png`。
+  - 现代 `textures/block/machines/tank.png` == 旧 `textures/models/tank.png`。
+  - 现代 `textures/models/tank/tank_inner.png` == 旧 `textures/models/tank/tank_inner.png`。
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-05 Tank Family Follow-up 2: 非库层储罐行为收口
+
+本轮按“除库层待补外尽量全部对齐”的要求，重新核查 `MachineFluidTank`、`BlockFluidBarrel`、`TileEntityBarrel`、`MachineBigAssTank`、`MachineBigAssTank9000`，并修正现代端额外/偏离行为。
+
+1.7.10 对照：
+
+- 小储罐：
+  - `canConnect(FluidType, ForgeDirection)` 直接返回 `true`；只要没损坏且模式允许，连接不按当前 tank type 拒绝。
+  - buffer 模式 `getFluidPriority()` 返回 `ConnectionPriority.LOW`；其它模式为 normal。
+- 普通流体桶：
+  - `canConnect(...)` 要求 `fluid == tank.getTankType()`。
+  - buffer 模式低优先级，其它模式 normal。
+  - 非 antimatter 桶装 antimatter：销毁无掉落并强度 5 爆炸。
+  - 塑料桶遇 hot 或 corrosive 流体：销毁无掉落并播放 fizz。
+  - 旧源码没有“铁/钢桶自动转成腐蚀桶”的行为。
+- `barrel_corroded`：
+  - 注册但 creative tab 为 `null`。
+  - `BlockFluidBarrel#createNewTileEntity(...)` 对该块返回 `null`。
+  - 右键直接返回 false，不开 GUI、不设置流体识别码。
+  - 破坏逻辑不走持久流体桶 drop，普通掉落方块本身。
+  - `TileEntityBarrel` 中对腐蚀桶泄漏的分支在旧注册路径下没有 TE 承载，不能按可存流体桶实现。
+- BigAss/BAT9000：
+  - 继承旧 `TileEntityBarrel` 语义，连接要求类型匹配，buffer 模式低优先级。
+  - BigAss footprint/端口：主体 `5,0,4,4,4,4`、offset 6、两个 fluid proxy 在相对 ±6，网络连接点实际为 ±7。
+  - BAT9000 footprint/端口：主体 `4,0,2,2,1,1`、offset 2、8 个 fluid proxy 对齐旧 `getConPos()`。
+
+现代侧对齐：
+
+- `FluidTankBlockEntity#canConnectFluid(...)` 改回小储罐旧语义：不再要求 `type == tank.getTankType()`，只要求未损坏、side/type 有效且模式不是 disabled。
+- `FluidTankBlockEntity#getFluidPriority()` 补回 buffer 模式 `LOW`，其它模式 `NORMAL`；桶、大罐继承该模式优先级。
+- `FluidBarrelBlockEntity#canConnectFluid(...)` 覆盖为旧桶语义：连接流体必须等于当前 tank type。
+- `LegacyBigTankBlockEntity#canConnectFluid(...)` 覆盖为旧 barrel 风格：连接流体必须等于当前 tank type。
+- 移除现代端铁/钢桶遇腐蚀流体自动转换为 `barrel_corroded` 的额外行为。
+- `barrel_corroded` 对齐旧行为：
+  - `FluidBarrelBlock#newBlockEntity(...)` 对 `CORRODED` 返回 `null`。
+  - `use(...)` 对 `CORRODED` 直接 `PASS`，不打开 GUI，不接受识别码。
+  - comparator 对 `CORRODED` 返回 0。
+  - drops 对 `CORRODED` 回到普通方块掉落。
+  - `ModBlockEntities.FLUID_BARREL` 不再包含 `BARREL_CORRODED`。
+  - `barrel_corroded` loot 从 no-drop 改为普通自身掉落。
+
+仍待库层/外部系统：
+
+- 小储罐 ladder 行为仍需现代玩家攀爬库承载。
+- 小储罐 blowtorch 维修、泡沫/CO2/水灭火命中派发仍需现代工具/化学弹系统调用已补的 `repairTank()` / `tryExtinguish(...)`。
+- 旧 Tom firestorm 与 water barrel 的特殊爆炸依赖 TomSaveData/天火系统，当前现代端无对应系统承载，未近似实现。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- `.\gradlew.bat runData --no-daemon` 通过，已生成 `barrel_corroded` 自身掉落 loot。
+
+## 2026-06-05 Recipe Machine Fluid Capability 勘误
+
+1.7.10 对照：
+
+- `TileEntityMachineChemicalPlant#getConPos()` 的 12 个连接点在 server tick 中都执行：
+  - `trySubscribe(worldObj, pos)` 订阅能量；
+  - 对每个 `inputTanks`，仅当 `tank.getTankType() != Fluids.NONE` 时 `trySubscribe(tank.getTankType(), worldObj, pos)`；
+  - 对每个 `outputTanks`，仅当 `tank.getFill() > 0` 时 `tryProvide(tank, worldObj, pos)`。
+- 大化工/大组装 recipe IO 口同样应只暴露 recipe tank；water/lps 冷却槽由单独 delegate 在冷却线 proxy 暴露。
+- `ModuleMachineBase#setupTanks(recipe)` 会让无对应 fluid 的 recipe slot `resetTank()`，所以网络填入未声明槽位在旧版不会发生。
+
+现代侧对齐：
+
+- 新增 `ForgeRecipeFluidHandlerAdapter`，专用于 recipe-machine 流体 capability：
+  - 只允许 `tank.getTankType() != HbmFluids.NONE` 的输入 tank 被填充；
+  - 填充时按 tank 自身 recipe pressure 调用 `tank.fill(type, amount, tank.getPressure(), ...)`，支持高压 recipe 槽；
+  - 输出仍从 recipe output tank drain。
+- `ChemicalPlantBlockEntity` 所有 side 的 Forge fluid capability 改为 recipe IO handler，不再把 DOWN 特判为只输出；这是对齐旧小化工所有连接点同时输入/输出的行为。
+- `AssemblyFactoryBlockEntity` / `ChemicalFactoryBlockEntity` 主 recipe handler 与模块 delegate handler 改用该 adapter；冷却 delegate 仍使用普通固定 water/lps handler。
+- `AssemblyMachineBlockEntity` 也改用该 adapter。旧小装配与小化工一样，只在 recipe 将 input tank 设置为具体流体后才订阅/接收该流体；现代自写 handler 已移除，避免空 input tank 接受任意流体。
+
+验证：
+
+- `.\gradlew.bat compileJava --no-daemon` 通过。
+
+## 2026-06-05 Tank Family Follow-up 3: 旧桶种与反物质小储罐收口
+
+本轮继续按“储罐自身能直接对齐的内容一次收口”的要求核查旧 `MachineFluidTank` / `BlockFluidBarrel` / `TileEntityBarrel`。
+
+1.7.10 对照：
+
+- `MachineFluidTank` 中小储罐装入 antimatter 时调用 `new ExplosionVNT(..., 5F).makeAmat().setBlockAllocator(null).setBlockProcessor(null).explode()`，随后 `explode()` 进入损坏态并清空 fill；这不是普通方块破坏爆炸。
+- 当前 1.7.10 `ModBlocks` 只声明、初始化、注册 `barrel_plastic`、`barrel_corroded`、`barrel_steel`、`barrel_tcalloy`、`barrel_antimatter` 五种流体桶。
+- 当前 1.7.10 源码没有 `barrel_iron` 字段、初始化、注册、创造栏入口或配方入口。
+- 当前 1.7.10 `TileEntityBarrel#checkFluidInteraction()` 没有 steel/iron 遇腐蚀流体自动变 `barrel_corroded` 的逻辑；`barrel_corroded` 本身不创建 TE。
+
+现代侧对齐：
+
+- `FluidTankBlockEntity` 的 antimatter hazard 改走现代 VNT `ExplosionVnt.makeAmat()`，并按旧版禁用 block allocator/block processor，只保留反物质爆炸效果与实体处理；随后进入小储罐损坏态并清空 tank。
+- 移除现代端额外注册的 `barrel_iron`：
+  - 删除 `ModBlocks.BARREL_IRON`、`FluidBarrelBlock.Variant.IRON`、`ModBlockEntities.FLUID_BARREL` 中的铁桶绑定。
+  - 删除 blockstate、block model、item model、贴图、loot、tag、lang/datagen 中的铁桶资源与数据。
+  - `runData` 后确认不会重新生成 `barrel_iron` 资源。
+- 保留 steel 桶旧 tooltip “Cannot store highly corrosive fluids properly”，但不添加旧源码没有的腐蚀变块行为。
+
+验证：
+
+- `rg "barrel_iron|BARREL_IRON|IRON\\(8_000|capacity.8000|no_corrosive_properly" src/main/java src/main/resources src/generated/resources`：无代码/资源残留。
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+- `.\gradlew.bat runData --no-daemon` 通过。
+
+## 2026-06-05 Tank Family Follow-up 4: 储罐物品自动化边界
+
+本轮继续核查储罐自身行为，重点排除库层外的未对齐点。
+
+1.7.10 对照：
+
+- `TileEntityMachineFluidTank` 继承 `TileEntityMachineBase`，没有覆写 sided inventory：
+  - `isItemValidForSlot(...)` 恒 false。
+  - `canExtractItem(...)` 恒 false。
+  - `getAccessibleSlotsFromSide(...)` 返回空数组。
+  - 因此小储罐 GUI 内部 6 槽可用，但外部自动化不能插入/抽出物品。
+- `TileEntityBarrel` 覆写 sided inventory：
+  - `getAccessibleSlotsFromSide(...)` 返回内部槽号 `{2, 3, 4, 5}`。
+  - `canExtractItem(...)` 只允许槽 3、5 抽出。
+  - `isItemValidForSlot(...)` 只允许槽 2 接受能给当前 tank type 装入的满流体容器，槽 4 接受能被当前 tank type 灌满的空/可填容器。
+- `TileEntityMachineBigAssTank` 与 `TileEntityMachineBAT9000` 均继承 `TileEntityBarrel`，所以大罐/BAT9000 也继承桶式容器自动化规则，而不是小储罐的“无外部物品槽”规则。
+
+现代侧对齐：
+
+- `FluidTankBlockEntity` 默认 Forge item capability 改为空 handler，保留 GUI 内部槽和 server tick 的识别码/容器处理；这对齐小储罐旧行为。
+- 新增基类受保护 helper `getTankContainerAutomationItemHandler()`：
+  - 外部视图保留 6 个内部槽号，只让旧版 2/3/4/5 可见可用。
+  - 2、4 仅在 `HbmFluidItemTransfer` 模拟判定能完成装卸时允许插入。
+  - 3、5 允许抽出；0、1 和其它槽不能插入/抽出。
+- `FluidBarrelBlockEntity` 改用该 helper，去掉现代端压缩成 4 个外部槽的偏差。
+- `LegacyBigTankBlockEntity` 也改用该 helper，使 BigAss/BAT9000 恢复旧版继承桶的容器自动化规则。
+
+验证：
+
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 

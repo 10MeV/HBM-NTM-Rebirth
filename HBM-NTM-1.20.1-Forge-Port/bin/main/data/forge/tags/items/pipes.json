@@ -1,5 +1,8 @@
 {
   "values": [
-    "hbm:pipes_steel"
+    "hbm:pipes_steel",
+    "hbm:pipes_copper",
+    "hbm:pipes_rubber",
+    "hbm:pipes_dura_steel"
   ]
 }

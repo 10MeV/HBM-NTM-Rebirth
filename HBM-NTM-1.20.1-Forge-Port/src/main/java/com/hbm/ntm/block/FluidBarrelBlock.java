@@ -58,12 +58,18 @@ public class FluidBarrelBlock extends Block implements EntityBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        if (variant == Variant.CORRODED) {
+            return null;
+        }
         return new FluidBarrelBlockEntity(pos, state);
     }
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        if (variant == Variant.CORRODED) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof FluidBarrelBlockEntity barrel) {
             ItemStack held = player.getItemInHand(hand);
@@ -111,6 +117,9 @@ public class FluidBarrelBlock extends Block implements EntityBlock {
 
     @Override
     public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        if (variant == Variant.CORRODED) {
+            return 0;
+        }
         return level.getBlockEntity(pos) instanceof FluidBarrelBlockEntity barrel ? barrel.getComparatorPower() : 0;
     }
 
@@ -126,6 +135,9 @@ public class FluidBarrelBlock extends Block implements EntityBlock {
 
     @Override
     public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        if (variant == Variant.CORRODED) {
+            return super.getDrops(state, builder);
+        }
         if (builder.getLevel() instanceof ServerLevel
                 && builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY) instanceof FluidBarrelBlockEntity barrel) {
             List<ItemStack> drops = new java.util.ArrayList<>();
@@ -169,11 +181,6 @@ public class FluidBarrelBlock extends Block implements EntityBlock {
                 "barrel.tooltip.can_high_corrosive",
                 "barrel.tooltip.no_antimatter",
                 "barrel.tooltip.leaky"
-        }),
-        IRON(8_000, "barrel.tooltip.capacity.8000", new String[] {
-                "barrel.tooltip.can_hot",
-                "barrel.tooltip.no_corrosive_properly",
-                "barrel.tooltip.no_antimatter"
         }),
         STEEL(16_000, "barrel.tooltip.capacity.16000", new String[] {
                 "barrel.tooltip.can_hot",

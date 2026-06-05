@@ -1,0 +1,37 @@
+{
+  "type": "hbm:chemical_plant",
+  "custom_localization": true,
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm:ore_oil_sand"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:any/tar"
+      },
+      "legacy_ore": "anyTar"
+    }
+  ],
+  "internal_name": "chem.tarsand",
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm:bitumen"
+    }
+  ],
+  "output_items": [
+    {
+      "count": 16,
+      "item": "minecraft:sand"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 16
+}

@@ -1,0 +1,33 @@
+{
+  "type": "hbm:chemical_plant",
+  "duration": 200,
+  "input_fluids": [
+    {
+      "amount": 200,
+      "fluid": "hbm:petroleum"
+    },
+    {
+      "amount": 100,
+      "fluid": "hbm:nitric_acid"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm:solid_fuel"
+      }
+    }
+  ],
+  "internal_name": "chem.rocketfuel",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm:rocket_fuel"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 57
+}

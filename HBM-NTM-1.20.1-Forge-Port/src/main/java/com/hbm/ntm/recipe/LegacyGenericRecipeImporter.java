@@ -92,6 +92,7 @@ public final class LegacyGenericRecipeImporter {
             }
             try {
                 JsonObject modern = toModernJson(machine, id, legacy);
+                modern.addProperty("source_order", sourceIndex);
                 imported.add(new ImportedRecipe(id, modern));
             } catch (RuntimeException exception) {
                 if (!lenient) {

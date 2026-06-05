@@ -1,12 +1,11 @@
-// 1.20.1	2026-06-04T18:35:20.9477751	Loot Tables
+// 1.20.1	2026-06-05T18:14:32.7333072	Loot Tables
 1d566948370849820de3c0d2a03a1da2b54f3f8d data/hbm/loot_tables/blocks/ancient_scrap.json
 e33e09e9b7de4edfe47464adbc55ba1b3074df85 data/hbm/loot_tables/blocks/ash_digamma.json
 4dea21baadd671e0fc70004833537e05da50d388 data/hbm/loot_tables/blocks/asphalt.json
 fb8bbca081abce158c2e2c99aad65884a8ac42bc data/hbm/loot_tables/blocks/asphalt_light.json
 ac4aa7fb9a18c76eab92c1ad6d77a20da10a52ed data/hbm/loot_tables/blocks/balefire.json
 bd057be61f0fec2040f29cdcc8bfd2740cf7b1c2 data/hbm/loot_tables/blocks/barrel_antimatter.json
-9e46e3edcc9f7a2a797d852f4da818f8b6857d58 data/hbm/loot_tables/blocks/barrel_corroded.json
-f4a5b685b7ee734c1a7d5b95de86ec79d115f083 data/hbm/loot_tables/blocks/barrel_iron.json
+c1c1e235bfafc3d08abcbe9d4fc24a5f83f3acfc data/hbm/loot_tables/blocks/barrel_corroded.json
 da317a353cae8eb5c8ba34196d9cef6d0b98e837 data/hbm/loot_tables/blocks/barrel_plastic.json
 e3886e7c3ec75a0f2944243a32ceb3b0a71e295c data/hbm/loot_tables/blocks/barrel_steel.json
 76dbba96cc88811311675ee6239718a3d31b4cee data/hbm/loot_tables/blocks/barrel_tcalloy.json
@@ -16,7 +15,6 @@ e3886e7c3ec75a0f2944243a32ceb3b0a71e295c data/hbm/loot_tables/blocks/barrel_stee
 5a52d5d94487a8c31e231581d4e4c61c6ec3a9ce data/hbm/loot_tables/blocks/basalt_smooth.json
 e1a66ce3ae45350c4e75396986210326e0c9f6be data/hbm/loot_tables/blocks/basalt_tiles.json
 2a65125c6ecf27b9a702c02c93bc1e334972cfcb data/hbm/loot_tables/blocks/block_actinium.json
-02f3fa2af2b0bbc0d7b45424d42e3d75e788b18c data/hbm/loot_tables/blocks/block_advanced_alloy.json
 745125a830b21f948519e4224de75759343de503 data/hbm/loot_tables/blocks/block_aluminium.json
 37c6b9d0de5a3d2ab5785f7b906090ece17e36e1 data/hbm/loot_tables/blocks/block_asbestos.json
 81ebeb31aac48c82589c3ce40c2d695dbcff73fa data/hbm/loot_tables/blocks/block_australium.json
@@ -181,6 +179,7 @@ c7cdd2ec614664af5c6198f3da2143b967f30da1 data/hbm/loot_tables/blocks/gas_meltdow
 7d0071bbcca8eb117d0b7b382b7f87ccb0ca6782 data/hbm/loot_tables/blocks/gas_radon_dense.json
 eb8d706c9ed135063e6662d5e8283f4f564a1a07 data/hbm/loot_tables/blocks/gas_radon_tomb.json
 d8682797fe8cf425e456c2aff158b4c150531c24 data/hbm/loot_tables/blocks/glass_boron.json
+fe6aad92c9f4dafce0a76f59ea2fe80f13e4b0fb data/hbm/loot_tables/blocks/glass_quartz.json
 1ab3638097be3dffb65557618dd37782ea48973d data/hbm/loot_tables/blocks/glass_trinitite.json
 73f6335b35b25b363b2ebf85f60cc2c47092ac3f data/hbm/loot_tables/blocks/glyphid_spawner.json
 a7dbed77574e2335ecbe2749558f5bae06e10fd6 data/hbm/loot_tables/blocks/gneiss_brick.json
@@ -196,6 +195,7 @@ d44c916a56947db3daa8e99fdc8f44a0ab6014b7 data/hbm/loot_tables/blocks/lamp_tritiu
 290f62235da3a3d384fea4aeb857757765fb4ea0 data/hbm/loot_tables/blocks/machine_arc_welder.json
 327cb5f72747c504a1ba7725e3339812d7cc956a data/hbm/loot_tables/blocks/machine_assembly_factory.json
 c0e81affa3629908bc47643b92b299c70343b3ba data/hbm/loot_tables/blocks/machine_assembly_machine.json
+fad72ee9dbb9b97678a12a9f0ae4e4bfee69d894 data/hbm/loot_tables/blocks/machine_bat9000.json
 0a730e503e32696bec7d06da19d02320f69bfffe data/hbm/loot_tables/blocks/machine_battery.json
 96bfe6f1e732bec37806dfa1ce573f3585213678 data/hbm/loot_tables/blocks/machine_battery_socket.json
 a5ad54f268f9cda6dd368e75b9bdfe047d060369 data/hbm/loot_tables/blocks/machine_bigasstank.json

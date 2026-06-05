@@ -78,7 +78,6 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         fluidPipeAnchorWithItem();
         fluidBarrelWithItem(ModBlocks.BARREL_PLASTIC, "barrel_plastic");
         fluidBarrelWithItem(ModBlocks.BARREL_CORRODED, "barrel_corroded");
-        fluidBarrelWithItem(ModBlocks.BARREL_IRON, "barrel_iron");
         fluidBarrelWithItem(ModBlocks.BARREL_STEEL, "barrel_steel");
         fluidBarrelWithItem(ModBlocks.BARREL_TCALLOY, "barrel_tcalloy");
         fluidBarrelWithItem(ModBlocks.BARREL_ANTIMATTER, "barrel_antimatter");
@@ -115,6 +114,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_PYROOVEN, "machines/pyrooven");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SOLIDIFIER, "machines/solidifier");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_COMPRESSOR, "machines/compressor");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_BAT9000, "machines/bat9000");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_BIGASSTANK, "machines/bigasstank");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_FLUIDTANK, "machines/fluidtank");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_WELL, "machines/derrick");
@@ -145,6 +145,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBINEGAS, "machines/turbinegas");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_INDUSTRIAL_TURBINE, "machines/industrial_turbine");
         translucentCubeWithItem(ModBlocks.GLASS_BORON, "glass_boron");
+        translucentCubeWithItem(ModBlocks.GLASS_QUARTZ, "glass_quartz");
         simpleCubeWithItem(ModBlocks.GAS_RADON, "gas_radon");
         simpleCubeWithItem(ModBlocks.GAS_RADON_DENSE, "gas_radon_dense");
         simpleCubeWithItem(ModBlocks.GAS_RADON_TOMB, "gas_radon_tomb");

@@ -52,6 +52,21 @@
   - JEI 展示只读取统一 HBM recipe model/runtime，例如 `GenericMachineRecipe`、`GenericMachineRecipeRuntime` 和普通 `RecipeType`，不把 JEI API 引入机器方块、方块实体、菜单或核心 recipe 数据模型。
   - 若需要 JEI 专用 DTO/渲染包装，放在 `compat.jei` 内部，核心配方库继续保持无 JEI 类引用。
 
+## 2026-06-04 组装机/化工厂 JEI 配方说明接入
+
+- 1.7.10 对照：
+  - 旧 NEI handler 是展示层；配方事实仍来自 `AssemblyMachineRecipes` / `ChemicalPlantRecipes` 的 `GenericRecipe` 数据。
+  - 现代 JEI 不直接搬旧 NEI handler，而应读取统一 recipe model。
+- 本批现代接入：
+  - 新增 `com.hbm.ntm.compat.jei.HbmJeiPlugin` 与 `HbmMachineRecipeCategory`。
+  - 注册 Assembly Machine / Chemical Plant 两个 JEI category 和对应 catalyst。
+  - JEI recipe 列表直接读取 `ModRecipes.ASSEMBLY_MACHINE` / `ModRecipes.CHEMICAL_PLANT`，并按 `GenericMachineRecipe.LEGACY_ORDER` 排序。
+  - item/fluid 输入输出从 `GenericMachineRecipe` 的 display API 读取；底部 tooltip 复用 `GenericMachineRecipe#getDisplayLines()`，与机器 selector 保持同源说明。
+- 迁移边界：
+  - 当前 JEI 布局是通用机器配方布局，不是旧 NEI/GUI 像素级复刻。
+  - 无法映射成 Forge `FluidStack` 的 HBM 流体暂不显示为 JEI fluid slot，但仍会出现在库层 display lines 中。
+  - JEI 只展示已加载的现代 datapack JSON；若旧模板未导入或导入失败，JEI 不会补造配方。
+
 ## 2026-05-23 能量库兼容层推进
 
 - `CompatEnergyControl.dischargeItem` 已按 1.7.10 外层限速语义修正：
@@ -79,3 +94,11 @@
 - 边界：
   - 现代端目前没有完整 RBMK base 运行时对象；热量 helper 先以通用 `HeatSource` 承载旧入口语义。
   - tank 过滤暂不硬编码旧 smoke 三种流体，因为现代 `HbmFluids` 当前未完整暴露对应类型；后续烟雾流体迁入时应按旧入口补过滤。
+
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- 旧 `GUIHandler` 抽出统一 `getGUIProvider(...)`，使 TileEntity、Block、手持 Item、Entity 的 GUI provider 查找在 server/client 两侧复用；现代兼容层如果暴露外部 GUI/控制入口，应复用同一 provider 解析语义。
+- 新增 `BlastFurnaceHandler` 并从 `NEIRegistry` 移除旧 `AlloyFurnaceRecipeHandler`，说明 NEI/JEI 兼容面的 blast furnace 分类已经从旧 alloy furnace recipe surface 切换到 `BlastFurnaceRecipesNT`。
+- `GenericRecipe#printNEIExtras()`、`PUREXRecipe#printNEIExtras()` 与 `BlastFurnaceRecipe#printNEIExtras()` 增加了机器配方的 NEI 额外信息面，现代外部查看器兼容不应只展示输入/输出。

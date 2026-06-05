@@ -1,0 +1,37 @@
+{
+  "type": "hbm:chemical_plant",
+  "duration": 200,
+  "input_fluids": [
+    {
+      "amount": 2000,
+      "fluid": "hbm:peroxide"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/schrabidium"
+      },
+      "legacy_ore": "dustSchrabidium"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:dusts/sulfur"
+      },
+      "legacy_ore": "dustSulfur"
+    }
+  ],
+  "internal_name": "chem.sas3",
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm:sas3"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 5000,
+  "source_order": 67
+}

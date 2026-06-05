@@ -8,7 +8,6 @@ import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.CorrosiveFluidTrait;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModBlocks;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -19,6 +18,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.items.IItemHandler;
 
 public class FluidBarrelBlockEntity extends FluidTankBlockEntity {
     private static final List<FluidPort> ADJACENT_PORTS = List.of(
@@ -65,13 +65,6 @@ public class FluidBarrelBlockEntity extends FluidTankBlockEntity {
             return true;
         }
 
-        if ((variant == FluidBarrelBlock.Variant.IRON && corrosive != null)
-                || (variant == FluidBarrelBlock.Variant.STEEL && corrosive != null && corrosive.getRating() > 50)) {
-            corrodeIntoLeakyBarrel();
-            playFizz();
-            return true;
-        }
-
         if (variant == FluidBarrelBlock.Variant.CORRODED) {
             boolean changed = false;
             if (level.random.nextInt(3) == 0) {
@@ -105,6 +98,16 @@ public class FluidBarrelBlockEntity extends FluidTankBlockEntity {
     }
 
     @Override
+    public boolean canConnectFluid(FluidType type, Direction side) {
+        return super.canConnectFluid(type, side) && type == getTank().getTankType();
+    }
+
+    @Override
+    protected IItemHandler getExternalItemHandler() {
+        return getTankContainerAutomationItemHandler();
+    }
+
+    @Override
     public void writePersistentState(CompoundTag persistent) {
         if (getTank().getFill() == 0) {
             return;
@@ -123,23 +126,6 @@ public class FluidBarrelBlockEntity extends FluidTankBlockEntity {
             refreshFluidNodeState();
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
-        }
-    }
-
-    private void corrodeIntoLeakyBarrel() {
-        if (level == null || level.isClientSide) {
-            return;
-        }
-        FluidType type = getTank().getTankType();
-        int fill = getTank().getFill();
-        int mode = getMode();
-        level.setBlock(worldPosition, ModBlocks.BARREL_CORRODED.get().defaultBlockState(), Block.UPDATE_ALL);
-        if (level.getBlockEntity(worldPosition) instanceof FluidBarrelBlockEntity corroded) {
-            corroded.getTank().setTankType(type);
-            corroded.getTank().setFill(Math.min(corroded.getTank().getMaxFill(), fill));
-            corroded.setMode(mode);
-            corroded.copyInventoryFrom(this);
-            corroded.setChanged();
         }
     }
 

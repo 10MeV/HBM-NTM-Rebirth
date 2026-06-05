@@ -11,7 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class BigAssTankBlockEntity extends FluidTankBlockEntity {
+public class BigAssTankBlockEntity extends LegacyBigTankBlockEntity {
     private static final int TANK_CAPACITY = 16_000_000;
     private static final long TRANSFER_SPEED_FLOOR = 50_000L;
 

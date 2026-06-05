@@ -198,6 +198,8 @@ public final class HbmFluids {
     public static final FluidType AIR = register("AIR", 0xE7EAEB, 0, 0, 0, FluidSymbol.NONE, GASEOUS);
     public static final FluidType CONCRETE = register("CONCRETE", 0xA2A2A2, 0, 0, 0, FluidSymbol.NONE, LIQUID);
     public static final FluidType DHC = register("DHC", 0xD2AFFF, 0, 0, 0, FluidSymbol.NONE, GASEOUS);
+    public static final FluidType FLUE = register("FLUE", 0x131313, 1, 4, 1, FluidSymbol.NONE, GASEOUS);
+    public static final FluidType AIRBLAST = register("AIRBLAST", 0xFFDADA, 0, 3, 0, FluidSymbol.NONE, GASEOUS).setTemperature(1200);
 
     static {
         registerLegacyBehaviorTraits();
@@ -262,6 +264,7 @@ public final class HbmFluids {
     private static void addLegacyContainerTraits() {
         addGasTank(DEUTERIUM, 0x0000FF, 0xFFFFFF);
         addGasTank(TRITIUM, 0x000099, 0xE9FFAA);
+        addGasTank(FLUE, 0xFF4545, 0xFFE97F);
         addCanister(OIL, 0x424242);
         addCanister(HEAVYOIL, 0x513F39);
         addCanister(BITUMEN, 0x5A5877);
@@ -465,6 +468,8 @@ public final class HbmFluids {
         long coaloil = heatEnergy(COALOIL);
         registerCalculatedFuel(COALGAS, coaloil / 0.3D * flammabilityNormal * demandMedium * complexityChemplant * complexityFraction, 1.5D, FuelGrade.MEDIUM, pollutingFuel());
         registerCalculatedFuel(COALGAS_LEADED, coaloil / 0.3D * flammabilityNormal * demandMedium * complexityChemplant * complexityFraction * complexityLeaded, 1.5D, FuelGrade.MEDIUM, pollutingLeadedFuel());
+        FLUE.addTraits(new FlammableFluidTrait(10_000),
+                new PollutingFluidTrait().burn(PollutionKind.SOOT, sootGas()).release(PollutionKind.SOOT, sootGas() * 25.0F));
         registerCalculatedFuel(ETHANOL, 275_000.0D, 2.5D, FuelGrade.HIGH, pollutingFuel());
         registerCalculatedFuel(BIOGAS, 250_000.0D * flammabilityLow, 1.25D, FuelGrade.GAS, pollutingGas());
         registerCalculatedFuel(BIOFUEL, 500_000.0D, 2.5D, FuelGrade.HIGH, pollutingFuel());
@@ -492,6 +497,7 @@ public final class HbmFluids {
         SUPERHOTSTEAM.addTraits(new CoolableFluidTrait(HOTSTEAM, 1, 10, 18).setEfficiency(CoolingType.TURBINE, 1.0D).setEfficiency(CoolingType.HEATEXCHANGER, 0.5D));
         ULTRAHOTSTEAM.addTraits(new CoolableFluidTrait(SUPERHOTSTEAM, 1, 10, 120).setEfficiency(CoolingType.TURBINE, 1.0D).setEfficiency(CoolingType.HEATEXCHANGER, 0.5D));
 
+        AIR.addTraits(new HeatableFluidTrait().setEfficiency(HeatingType.BOILER, 1.0D).addStep(5, 1, AIRBLAST, 1));
         addHeatPair(OIL, HOTOIL, 10, 1, 1, 1, HeatingType.BOILER, HeatingType.HEATEXCHANGER);
         addHeatPair(OIL_DS, HOTOIL_DS, 10, 1, 1, 1, HeatingType.BOILER, HeatingType.HEATEXCHANGER);
         addHeatPair(CRACKOIL, HOTCRACKOIL, 10, 1, 1, 1, HeatingType.BOILER, HeatingType.HEATEXCHANGER);
@@ -645,7 +651,7 @@ public final class HbmFluids {
     }
 
     private static final List<String> NICE_ORDER_NAMES = List.of(
-            "NONE", "AIR", "WATER", "HEAVYWATER", "HEAVYWATER_HOT", "LAVA",
+            "NONE", "AIR", "AIRBLAST", "WATER", "HEAVYWATER", "HEAVYWATER_HOT", "LAVA",
             "STEAM", "HOTSTEAM", "SUPERHOTSTEAM", "ULTRAHOTSTEAM", "SPENTSTEAM",
             "CARBONDIOXIDE", "COOLANT", "COOLANT_HOT", "PERFLUOROMETHYL", "PERFLUOROMETHYL_COLD",
             "PERFLUOROMETHYL_HOT", "CRYOGEL", "MUG", "MUG_HOT", "BLOOD", "BLOOD_HOT",
@@ -657,7 +663,7 @@ public final class HbmFluids {
             "NAPHTHA_CRACK", "NAPHTHA_COKER", "REFORMATE", "LIGHTOIL", "LIGHTOIL_DS",
             "LIGHTOIL_CRACK", "LIGHTOIL_VACUUM", "BITUMEN", "SMEAR", "HEATINGOIL",
             "HEATINGOIL_VACUUM", "RECLAIMED", "LUBRICANT", "GAS", "GAS_COKER", "PETROLEUM",
-            "SOURGAS", "LPG", "SYNGAS", "OXYHYDROGEN", "AROMATICS", "UNSATURATEDS", "XYLENE",
+            "SOURGAS", "FLUE", "LPG", "SYNGAS", "OXYHYDROGEN", "AROMATICS", "UNSATURATEDS", "XYLENE",
             "REFORMGAS", "DIESEL", "DIESEL_REFORM", "DIESEL_CRACK", "DIESEL_CRACK_REFORM",
             "KEROSENE", "KEROSENE_REFORM", "PETROIL", "PETROIL_LEADED", "GASOLINE",
             "GASOLINE_LEADED", "COALGAS", "COALGAS_LEADED", "COALCREOSOTE", "WOODOIL",

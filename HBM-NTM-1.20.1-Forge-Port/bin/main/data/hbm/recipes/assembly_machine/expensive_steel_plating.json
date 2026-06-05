@@ -1,0 +1,38 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/titanium"
+      },
+      "legacy_ore": "plateTitanium"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:bolts/steel"
+      },
+      "legacy_ore": "boltSteel"
+    }
+  ],
+  "internal_name": "ass.exsteelplating",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:item_expensive_steel_plating"
+    }
+  ],
+  "pools": [],
+  "power": 400,
+  "source_order": 18
+}

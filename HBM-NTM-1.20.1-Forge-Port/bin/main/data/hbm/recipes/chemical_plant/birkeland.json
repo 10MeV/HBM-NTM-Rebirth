@@ -1,0 +1,29 @@
+{
+  "type": "hbm:chemical_plant",
+  "custom_localization": true,
+  "duration": 200,
+  "input_fluids": [
+    {
+      "amount": 8000,
+      "fluid": "hbm:air"
+    },
+    {
+      "amount": 2000,
+      "fluid": "hbm:water"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.birkeland",
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm:nitric_acid"
+    }
+  ],
+  "output_items": [],
+  "pools": [
+    "alt..birkeland"
+  ],
+  "power": 5000,
+  "source_order": 50
+}

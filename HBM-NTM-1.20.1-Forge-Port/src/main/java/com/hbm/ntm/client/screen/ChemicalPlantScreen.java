@@ -3,7 +3,8 @@ package com.hbm.ntm.client.screen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.ChemicalPlantMenu;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
-import net.minecraft.client.Minecraft;
+import com.hbm.ntm.registry.ModItems;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -12,11 +13,11 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMenu> {
     private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/processing/gui_chemplant.png");
+    private static final int[] ITEM_INPUT_MENU_SLOTS = new int[] { 4, 5, 6 };
 
     public ChemicalPlantScreen(ChemicalPlantMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -45,7 +46,7 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
                     16, 34, menu.getOutputTankData(i));
         }
         GenericMachineRecipe recipe = menu.getBlockEntity().getSelectedRecipeDefinition();
-        if (menu.getBlockEntity().canProcessSelectedRecipe()) {
+        if (menu.getBlockEntity().isProcessing()) {
             graphics.blit(TEXTURE, leftPos + 51, topPos + 121, 195, 0, 3, 6);
             graphics.blit(TEXTURE, leftPos + 56, topPos + 121, 195, 0, 3, 6);
         } else if (recipe != null) {
@@ -55,6 +56,8 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
             }
         }
         graphics.renderItem(recipeIcon(recipe), leftPos + 8, topPos + 126);
+        LegacyRecipeGhostRenderer.renderItemInputGhosts(graphics, minecraft, menu, TEXTURE, leftPos, topPos,
+                recipe, ITEM_INPUT_MENU_SLOTS);
     }
 
     @Override
@@ -101,15 +104,11 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
 
     private List<Component> recipeTooltip() {
         GenericMachineRecipe recipe = menu.getBlockEntity().getSelectedRecipeDefinition();
-        List<Component> tooltip = new ArrayList<>();
         if (recipe == null) {
-            tooltip.add(Component.literal("Set recipe"));
-        } else {
-            tooltip.add(Component.literal(recipe.getInternalName()));
-            tooltip.add(Component.literal("Power: " + recipe.getPower() + " HE/t"));
-            tooltip.add(Component.literal("Duration: " + recipe.getDuration() + " ticks"));
+            return List.of(Component.translatableWithFallback("gui.recipe.setRecipe", "Set recipe")
+                    .withStyle(ChatFormatting.YELLOW));
         }
-        return tooltip;
+        return recipe.getDisplayLines();
     }
 
     private static List<FormattedCharSequence> splitTooltip(List<Component> tooltip) {
@@ -117,10 +116,6 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
     }
 
     private static ItemStack recipeIcon(GenericMachineRecipe recipe) {
-        if (recipe == null) {
-            return ItemStack.EMPTY;
-        }
-        ItemStack result = recipe.getResultItem(Minecraft.getInstance().level.registryAccess());
-        return result.isEmpty() ? recipe.getToastSymbol() : result;
+        return recipe == null ? new ItemStack(ModItems.TEMPLATE_FOLDER.get()) : recipe.getIcon();
     }
 }

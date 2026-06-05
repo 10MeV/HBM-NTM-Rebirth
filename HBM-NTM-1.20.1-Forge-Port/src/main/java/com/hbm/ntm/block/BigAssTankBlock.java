@@ -4,6 +4,7 @@ import com.hbm.ntm.blockentity.BigAssTankBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -32,5 +33,10 @@ public class BigAssTankBlock extends FluidTankBlock {
                 ? null
                 : (tickLevel, tickPos, tickState, blockEntity) ->
                 BigAssTankBlockEntity.serverTick(tickLevel, tickPos, tickState, (BigAssTankBlockEntity) blockEntity);
+    }
+
+    @Override
+    public boolean dropFromExplosion(Explosion explosion) {
+        return true;
     }
 }

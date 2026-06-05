@@ -25,6 +25,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -61,7 +62,14 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
             ItemStack held = player.getItemInHand(hand);
             if (player.isShiftKeyDown() && held.getItem() instanceof IFluidIdentifierItem identifier) {
                 FluidType type = identifier.getIdentifiedFluid(level, pos, held);
-                return tank.setIdentifiedType(type) ? InteractionResult.CONSUME : InteractionResult.PASS;
+                if (tank.setIdentifiedType(type)) {
+                    serverPlayer.displayClientMessage(Component.literal("Changed type to ")
+                            .withStyle(ChatFormatting.YELLOW)
+                            .append(type.getDisplayName())
+                            .append(Component.literal("!").withStyle(ChatFormatting.YELLOW)), true);
+                    return InteractionResult.CONSUME;
+                }
+                return InteractionResult.PASS;
             }
             NetworkHooks.openScreen(serverPlayer, tank, pos);
         }
@@ -143,6 +151,26 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
     @Override
     public boolean dropFromExplosion(Explosion explosion) {
         return false;
+    }
+
+    @Override
+    public void onBlockExploded(BlockState state, Level level, BlockPos pos, Explosion explosion) {
+        if (!(level.getBlockEntity(pos) instanceof FluidTankBlockEntity tank)) {
+            super.onBlockExploded(state, level, pos, explosion);
+            return;
+        }
+        if (!tank.markExplosionHandled(explosion)) {
+            return;
+        }
+        if (!tank.usesExternalExplosionDamageChain()) {
+            super.onBlockExploded(state, level, pos, explosion);
+            return;
+        }
+        if (!tank.isExploded()) {
+            tank.explodeTank();
+        } else {
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        }
     }
 
     @Override

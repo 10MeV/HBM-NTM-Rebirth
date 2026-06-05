@@ -1,0 +1,31 @@
+{
+  "found_template_count": 0,
+  "handlers": [
+    {
+      "legacy_class": "AssemblyMachineRecipes",
+      "legacy_file": "hbmAssemblyMachine.json",
+      "modern_recipe_type": "assembly_machine",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "ChemicalPlantRecipes",
+      "legacy_file": "hbmChemicalPlant.json",
+      "modern_recipe_type": "chemical_plant",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "PUREXRecipes",
+      "legacy_file": "hbmPUREX.json",
+      "modern_recipe_type": "purex",
+      "status": "missing_template"
+    },
+    {
+      "legacy_class": "PrecAssRecipes",
+      "legacy_file": "hbmPrecisionAssembly.json",
+      "modern_recipe_type": "precass",
+      "status": "missing_template"
+    }
+  ],
+  "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes",
+  "supported_generic_handler_count": 4
+}

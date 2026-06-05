@@ -2858,6 +2858,15 @@ noSmooth 对照报告：
 - `git diff --check` 通过；仅有既有 LF/CRLF 提示。
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- 旧 `render/util/GaugeUtil.java` 被删除，GUI gauge/tooltip helper 改由新增 `inventory/gui/element/GUIElements.java` 承担；现代渲染库后续不要再把 GaugeUtil 当作旧事实来源。
+- `ResourceManager` 新增 `blast_furnace`、`thresher`、`vending_machine`、`autocal` 模型与贴图入口；对应资源新增 `models/machines/{blast_furnace,thresher,vending_machine,autocal}.obj` 与 `textures/models/machines/...png`。
+- `RenderBlastFurnace`、`RenderThresher`、`RenderVendingMachine`、`RenderAUTOCAL` 是新版新增 TESR，且 blast furnace/thresher 使用动画分件；现代 OBJ/BER 迁移应为这些机器单独记录 part 名和旋转公式。
+- `ColorUtil` 新增 `color(r,g,b)`，被 `GUIElements.drawHoveringTextFluid(...)` 用于根据 fluid color 生成 tooltip 边框次色。
+
 ## 2026-06-04 missile part / PA / RBMK ResourceManager facade 审计与贴图入口补齐
 
 1.7.10 对照：
@@ -3490,4 +3499,127 @@ noSmooth 对照报告：
 验证：
 
 - `git diff --check -- src/main/java/com/hbm/ntm/api/block/LegacyLookOverlayLines.java src/main/java/com/hbm/ntm/api/block/LegacyLookOverlayPorts.java src/main/java/com/hbm/ntm/blockentity/LegacyVisibleMachineBlockEntity.java 工程记录/库移植/2026-05-20-render-library-1.7.10源码功能追踪.md` 通过；仅有既有 LF/CRLF 提示。
+- `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-04 legacy OBJ 颜色/透明/UV 滚动库层补齐
+
+1.7.10 对照：
+
+- `HFRWavefrontObject` / `IModelCustomNamed` 只负责 group 顶点、法线、UV 与 `renderPart` / `renderOnly` / `renderAllExcept` / `tessellate*` 输出；颜色、alpha、blend、贴图绑定、UV 动画通常由具体 TESR 在调用前后通过旧 GL 状态控制。
+- 现代迁移中，`LegacyWavefrontModel` 已成为旧 `bindTexture(...) + HFRWavefrontObject.renderPart(...)` 的主要承载路径，尤其适合化工厂 `Fluid` 这类动态颜色/透明分件和后续需要运行时整张贴图替换的 OBJ。
+- `ObjUtil.renderWithIcon(...)` / `renderPartWithIcon(...)` 是旧 ISBRH 方块 OBJ 的 atlas sprite 桥；它把 OBJ 原始 `t.u/t.v` 映射到 `icon.getInterpolatedU/V(t * 16)`，并在 `renderPartWithIcon` 中支持 `ObjUtil.setColor(...)` 与 partBrightness 风格阴影。
+- `render/loader/S_Face#addFaceForRender(tessellator, textureOffset)` 不是全局 UV scroll，而是按当前 face 的平均 U/V 判断每个顶点，将 U/V 以 `textureOffset` 朝 face 中心轻微收缩或外扩。
+- `RenderAnnihilator` 的 `Belt` 分件使用旧 texture matrix 纯滚动：`GL_TEXTURE` 下 `glLoadIdentity()`，绑定 belt 贴图，再 `glTranslated(-System.currentTimeMillis() / 3000D % 1D, 0, 0)` 后渲染 `Belt`。
+- `RenderHephaestus` 的点火 core 使用旧 GL texture matrix：先 `GL_TEXTURE` 下 `glScalef(0.5,0.5,0.5)`，再按动画 `glTranslatef(0, movement / 10F, 0)` 后渲染 `Core`；熄火态还会用鹅卵石贴图和 `glColor3f(0.5,0.5,0.5)` 降亮。
+- `RenderMiscEffects.renderClassicGlint(...)` 旧端在模型分件上叠两次 glint：`GL_BLEND`、`glDepthFunc(GL_EQUAL)`、`depthMask(false)`、`glBlendFunc(SRC_COLOR, ONE)`，每层 texture matrix 执行 `scale -> rotate -> translate` 后再渲染指定 part/all。
+  - 已确认旧调用点包括 `RenderSiegeCraft` 的 `ResourceManager.siege_ufo`、`RenderNukeFstbmb`/`RendererObjTester` 的 `fstbmb Balefire`、`ItemRendererMeteorSword`、`ItemRenderTransformer`、`ItemRenderFatMan` 等武器/物品 renderer。
+- `ParticleMukeFlash`、`ParticleRift`、`RenderNTMSkybox*` 与蘑菇云特效存在 `SRC_ALPHA, ONE` 加色混合和 `depthMask(false)` 组合；HUD/armor overlay 则主要是普通 `SRC_ALPHA, ONE_MINUS_SRC_ALPHA` + 关闭深度写。
+- 旧端多处 TESR 在渲染透明火花、液面、玻璃/能量片或物品 GUI 前临时调整 `glAlphaFunc(...)`：
+  - `RenderAssemblyFactory` 火花先 `glAlphaFunc(GL_GREATER, 0)`，结束恢复 `0.1F`。
+  - `RenderBigAssTank` 流体面、`RenderMixer` 液体、`RenderRadGen` 透明球、`RenderSolidifier` 外层透明体、`RenderSolarBoiler` 光束等同样使用 `GL_GREATER, 0` + alpha blend 或 additive blend。
+  - `RenderDecoItem` 在 GUI 方块物品路径中按 render pass 切换 `0.1F` / `0.5F` cutoff。
+  - 1.20.1 `RenderType`/shader 路径不再提供旧固定管线 `glAlphaFunc` 的直接库层等价；本轮记录为边界，后续遇到实际贴图 cutoff 错误时应在具体材质/RenderType/shader 层处理，而不是在 OBJ 库里伪造全局 alpha test。
+- 无贴图 OBJ/几何路径同样存在透明需求：旧端大量 `GL11.glDisable(GL_TEXTURE_2D)` 后通过顶点颜色 alpha 画光束、球体或面片，并分别使用普通 alpha blend 或 `SRC_ALPHA, ONE` 加色 blend。
+- 旧端还大量使用 `Tessellator.startDrawingQuads()` + `addVertexWithUV(...)` 直接画贴图面片，不经过 OBJ：
+  - `RenderAssemblyFactory` 的切割火花绑定 `assembly_factory_sparks_tex`，用 `uMin = (worldTime / 10D + interp) % 10`、`uMax = uMin + 1` 做滚动 UV，并通过每顶点 `setColorRGBA_F(..., alpha 0/1)` 做纵向渐隐。
+  - `RenderBigAssTank` 的大储罐流体面绑定 tank texture，`minU = -((worldTime % 250 + interp) / 250) % 1`、`maxU = minU + 1`，V 坐标按液面高度写成 `0` 到 `-height * 2`，依赖 wrap 贴图滚动。
+  - `RenderTurretMaxwell` 曾用无贴图顶点 alpha 光锥：近端 alpha `0.35F`，远端 alpha `0F`，加色混合且 depth mask false；现代无贴图库层已承载这种 per-vertex alpha。
+- atlas sprite 贴图面片有两种旧端 UV 语义：
+  - `ObjUtil.renderWithIcon(...)` 与 `RenderBlocksNT` 使用 `IIcon#getInterpolatedU/V(pixel)`，调用方传入的是 0..16 像素坐标或按方块盒子比例折算后的像素坐标。
+  - `RenderFoundry#drawBlock(...)`、`SmallBlockPronter#drawSmolBlockAt(...)`、若干 item/block renderer 直接使用 `IIcon#getMinU/getMaxU/getMinV/getMaxV`，本质是整张 sprite 的四角。
+- `SmallBlockPronter` 是旧端小方块 atlas cuboid helper：
+  - `startDrawing()` 开启普通 alpha blend、开启 cull、关闭 alpha test、`glDepthMask(false)`，全局 `glColor4f(1,1,1,0.75F)`。
+  - `drawSmolBlockAt(Block, meta, x, y, z)` 取六个 `ForgeDirection` 方向的 `IIcon`，按 11/16 盒子尺寸拼六面。
+  - 这类路径需要现代 helper 同时承载 atlas sprite 六面、全局 alpha、透明 depth mask 和每面正常法线。
+- `RenderChain` 是旧 `ISimpleBlockRenderingHandler` 中典型的 sprite 双面面片：
+  - metadata 0 渲染两条对角交叉面。
+  - metadata 2/3/4/5 渲染贴墙平面，使用 `wallOffset = 0.05D`。
+  - 所有面都使用同一 block `IIcon` 的 min/max UV，靠成对反向顶点实现双面可见。
+- `RenderFoundry` 同时覆盖两种贴图面片：
+  - 输出方块预览绑定 `TextureMap.locationBlocksTexture`，使用输出方块顶面 `IIcon`，顶点 alpha 为 `0.3F`。
+  - 熔融液面绑定独立 `lava_gray.png`，使用材料 `moltenColor`，先普通不透明颜色 pass，再加色 alpha `0.3F` pass 且 `depthMask(false)`。
+- 旧 `render/loader/HbmFace#addFaceForRender(currentTime, tessellator, textureOffset)` 还叠加 HMF 动画偏移：`animOffset = (currentTime % HmfController.modoloMod) / HmfController.quotientMod` 后加到 V 坐标。默认 mod/quotient 为 `100000D / 5000D`，`TomPronter` 临时改为 `50000D / 2500D` 后重置。
+
+现代侧改动：
+
+- `ObjRenderContext` 扩展为可携带：
+  - RGB 颜色与 alpha。
+  - 显式旧版贴图渲染模式。
+  - OBJ UV 缩放、偏移与 legacy face texture offset。
+- 新增 `LegacyTexturedRenderMode`，集中承载旧版贴图 RenderType：
+  - `CUTOUT_NO_CULL`：默认 OBJ pass。
+  - `TRANSLUCENT`：普通 alpha 透明。
+  - `TRANSLUCENT_NO_DEPTH_WRITE` / `TRANSLUCENT_DEPTH_WRITE`：普通 alpha 混合，可显式控制深度写入。
+  - `ADDITIVE_NO_DEPTH_WRITE` / `ADDITIVE_DEPTH_WRITE`：`SRC_ALPHA, ONE` 加色混合，可显式控制深度写入。
+  - `GLINT_NO_DEPTH_WRITE`：`SRC_COLOR, ONE`，用于承载普通 glint blend pass。
+  - `GLINT_EQUAL_DEPTH`：`SRC_COLOR, ONE` + `GL_EQUAL` depth test + no depth write，用于承载旧 `RenderMiscEffects.renderClassicGlint(...)` 的覆盖式 glint pass。
+- 新增上下文 helper：
+  - `withColor(int color, int alpha)`、`withArgb(int argb)`。
+  - `withColor(float r, float g, float b, float a)` 与 `withAlpha(float/int)`，便于迁旧 `GL11.glColor4f(...)`。
+  - `withRenderMode(...)`、`withTranslucency()`、`withTranslucencyNoDepthWrite()`、`withTranslucencyDepthWrite()`、`withAdditiveTranslucency()`、`withAdditiveTranslucencyDepthWrite()`、`withoutTranslucency()`。
+  - `withGlintTranslucency()`。
+  - `withGlintEqualDepth()`。
+  - `withUvScroll(...)`、`withUvTransform(uScale, vScale, uOffset, vOffset)`、`withUvMatrix(uScale, uFromV, vFromU, vScale, uOffset, vOffset)`、`withLegacyTextureMatrix(uScale, vScale, uTranslate, vTranslate)`、`withLegacyTextureMatrix(uScale, vScale, rotationDegrees, uTranslate, vTranslate)`、`withLegacyTextureOffset(...)`、`clearUvTransform()`。
+- `LegacyWavefrontModel` 的上下文入口现在会把 alpha、透明 pass、UV 偏移传到真实顶点输出：
+  - `renderAll(ObjRenderContext)`。
+  - `renderPart(String, ObjRenderContext)`。
+  - `renderOnly(ObjRenderContext, ...)`。
+  - `renderOnlyInCallOrder(ObjRenderContext, ...)`。
+  - `renderAllExcept(ObjRenderContext, ...)`。
+- `LegacyWavefrontModel` 新增 `ResourceLocation + ObjRenderContext` 组合入口，供旧版“临时绑定另一张贴图再渲染同一个 OBJ group”的迁移复用。
+- `LegacyWavefrontModel.renderPartWithUvScroll(...)` 与 `renderPartWithUvTransform(...)` 提供直接调用版，用于不想构造上下文的小型 renderer。
+- `LegacyWavefrontModel.renderPartWithLegacyTextureMatrix(...)` 与 `LegacyWavefrontModel.legacyTextureMatrix(...)` 明确按旧 OpenGL 调用顺序折算 texture matrix：旧端 `glScale(s)` 后 `glTranslate(t)` 的现代 UV 为 `uv * s + t * s`。`RenderAnnihilator` 这种纯 translate 仍可用 `withUvScroll(...)`；`RenderHephaestus` 这种 `scale -> translate` 应使用 legacy texture matrix helper。
+- UV transform 内部扩展为 2x2 矩阵加 offset：`u' = u * uScale + v * uFromV + uOffset`，`v' = u * vFromU + v * vScale + vOffset`，因此 `RenderMiscEffects.renderClassicGlint(...)` 的 `scale -> rotate -> translate` texture matrix 也可以由 `withLegacyTextureMatrix(uScale, vScale, rotationDegrees, uTranslate, vTranslate)` 表达。
+- `LegacyWavefrontModel` 顶点输出改为 `u * uScale + uOffset` / `v * vScale + vOffset`，并可叠加 `S_Face` 风格的 per-face `textureOffset`。
+- 新增 `LegacyObjGlintRenderer.renderClassicGlint(...)`：
+  - 通过 `LegacyTexturedRenderMode.GLINT_EQUAL_DEPTH` 承载旧 `glDepthFunc(GL_EQUAL)`、`depthMask(false)`、`glBlendFunc(SRC_COLOR, ONE)`。
+  - 复刻旧端两层 glint pass：每层按 `movement = age * (0.001F + k * 0.003F) * speed`，并用 `withLegacyTextureMatrix(scale, scale, 30F - k * 60F, 0, movement)` 表达旧 `scale -> rotate -> translate` texture matrix。
+  - 支持旧 `part == "all"` 时渲染整模，否则渲染指定 part。
+  - 旧端 `colorMod` 在 `renderClassicGlint` 中会被随后每层的 `glColor4f(r * 0.76, g * 0.76, b * 0.76, 1)` 覆盖；现代 helper 保留该实际颜色行为，不额外把 `colorMod` 乘入分件颜色。
+- `ObjRenderContext` 新增 `withRgb(int rgb)`、`withRgb(int red, int green, int blue)`、`withRgba(int red, int green, int blue, int alpha)`，用于直接承载旧 `GL11.glColor3ub(...)`、`ColorUtil.fr/fg/fb(...)`、流体/材料 0xRRGGBB 颜色等常见迁移形态。
+- `LegacyUntexturedQuadRenderer` 补齐普通 alpha 透明 RenderType：
+  - `LEGACY_TRANSLUCENT_NO_CULL`：无贴图 `POSITION_COLOR`，普通 `SRC_ALPHA, ONE_MINUS_SRC_ALPHA`，关闭深度写。
+  - `LEGACY_TRANSLUCENT_DEPTH_WRITE_NO_CULL`：同上但保留深度写，用于旧端明确 depth mask true 的透明几何。
+  - `LEGACY_ADDITIVE_DEPTH_WRITE_NO_CULL`：无贴图加色混合但保留深度写。
+  - 新增 `type(LegacyTexturedRenderMode, alpha)`，让无贴图 OBJ 与有贴图 OBJ 共享同一套透明/加色/深度写语义。
+- `LegacyWavefrontModel` 的无贴图 `ObjRenderContext` 入口现在不再只用布尔 additive：
+  - `renderPartUntextured(context)`、`renderAllUntextured(context)`、`renderOnlyUntextured(context, ...)` 会按 `context.renderMode()` 选择 solid、普通透明、普通透明深度写、加色或加色深度写 RenderType。
+  - `alpha < 255` 且未显式指定加色时会走普通透明无深度写路径，避免旧端透明无贴图分件在现代端按不透明几何输出。
+- 新增 `LegacyTexturedQuadRenderer`，承载旧 `Tessellator.addVertexWithUV(...)` 风格贴图面片：
+  - `Vertex` 保存位置、原始 UV、0xRRGGBB 颜色和 alpha，支持每顶点 alpha/颜色渐变。
+  - `quad(...)` / `doubleSidedQuad(...)` 从 `ObjRenderContext` 读取 texture RenderMode、全局颜色/alpha、packed light、overlay 和 UV matrix。
+  - `spriteQuad(...)` 按旧 `IIcon#getInterpolatedU/V(pixel)` 语义处理 atlas sprite：顶点 UV 是 0..16 像素坐标。
+  - `spriteUnitQuad(...)` 按 OBJ/单位 UV 语义处理 atlas sprite：顶点 UV 是 0..1，内部乘 16 后映射到 sprite。
+  - `fullSpriteQuad(...)` 快速绘制整张 block atlas sprite，服务旧 `getMinU/getMaxU/getMinV/getMaxV` 四角面片。
+  - `blockSprite(ResourceLocation)` 和 `atlasConsumer(...)` 供旧 `TextureMap.locationBlocksTexture` 迁移点直接接入现代 `InventoryMenu.BLOCK_ATLAS`。
+  - 全局 `context.withColor/withAlpha` 与每顶点颜色/alpha 按旧 GL `glColor * tessellator.setColor` 风格相乘。
+  - 顶点 alpha 或上下文 alpha 小于 255 时自动用透明 RenderType；显式 `withAdditiveTranslucency()`、`withTranslucencyDepthWrite()` 等仍沿用 `LegacyTexturedRenderMode`。
+  - UV 坐标不裁剪到 0..1，保留旧端依赖 wrap 的滚动贴图行为，例如装配厂火花 `uMin > 1` 和大储罐液面负 V。
+  - 同样支持 `withLegacyTextureOffset(...)` 和 `withUvMatrix(...)`，因此可以复用 OBJ 库层的 UV scroll/texture matrix 语义。
+- 新增 `LegacyAtlasCuboidRenderer`，在 `LegacyTexturedQuadRenderer` 之上承载旧 atlas cuboid/双面面片：
+  - `smallBlock(...)` 对齐旧 `SmallBlockPronter` 的 11/16 小方块尺寸，接收 top/bottom/north/south/east/west 六个 `TextureAtlasSprite`。
+  - `cuboid(...)` 用 0..16 像素 UV 绘制任意六面 atlas cuboid，沿用 `ObjRenderContext` 的颜色、alpha、透明模式和 light。
+  - `cross(...)` 对齐 `RenderChain` metadata 0 的双面对角交叉面。
+  - `wallQuad(...)` 提供贴墙双面 sprite 面片基础形态，供链条/藤蔓/薄片类 ISBRH 后续迁移复用。
+- `ObjRenderContext` 新增 `withLegacyHmfAnimation(currentTime)` 与 `withLegacyHmfAnimation(currentTime, modulo, quotient)`，按旧 `HbmFace`/`HmfController` 公式把 V 动画偏移叠加到当前 UV matrix 上。
+- `NukeTorexRenderer` 的本地 textured translucent/additive RenderType helper 改为复用 `LegacyTexturedRenderMode`，使特效与 OBJ 库共享同一组旧 GL 状态映射。
+- 追加补齐 atlas sprite/icon OBJ 路径：
+  - `LegacyWavefrontModel.renderWithSprite(...)` / `renderPartWithSprite(...)` 的 `ObjRenderContext` 入口现在同样会传递 alpha、`LegacyTexturedRenderMode` 与 UV transform。
+  - `renderGroupWithSprite` 不再固定 `entityCutoutNoCull(BLOCK_ATLAS)`，而是通过 `LegacyTexturedRenderMode.renderType(InventoryMenu.BLOCK_ATLAS)` 选择普通透明、无深度写或加色混合 pass。
+  - `emitVertexWithSprite` 现在使用同一套 `u * scale + offset + legacyTextureOffset` 后再映射到 `TextureAtlasSprite#getU/getV`，对齐 `ObjUtil.renderWithIcon` 的 atlas sprite 语义。
+  - `LegacyIsbrhObjRenderer` 新增 `renderWithTextureAdditive(...)` / `renderPartWithTextureAdditive(...)`，供旧 ISBRH 外层加色混合场景直接接入。
+
+勘误/边界：
+
+- 本轮不把 baked Forge OBJ 分件伪装成支持顶点 alpha。`BakedQuad` 路径现有 `ObjRenderUtils` 仍主要承载 RGB/亮度/legacy shadow；透明分件应优先使用 `LegacyWavefrontModel` 直绘路径，或在 baked 分件定义阶段选择正确 `RenderType`。
+- `withAlpha(<255)` 会自动标记上下文透明；显式 `withTranslucency()` 可用于 alpha 仍为 255 但旧端启用了透明 pass 的分件。
+- UV transform 是对 OBJ 原始 UV 的运行时缩放/偏移；direct texture 路径与 atlas sprite/icon 路径均已支持，不修改模型资源，也不修复缺 UV face；缺 UV/非法索引仍按 `LegacyObjDiagnostics` 的审计结果处理。
+- 透明排序仍遵循现代 `MultiBufferSource`/`RenderType.entityTranslucent(...)` 的普通排序限制；大型多层玻璃/流体机器后续如有排序问题，需要在具体 renderer 调整分件顺序。
+- `LegacyObjGlintRenderer` 只承载旧 `RenderMiscEffects.renderClassicGlint(...)` 的 OBJ 分件覆盖 pass；普通 OBJ 渲染入口不会隐式开启 glint，调用方仍需在主体模型渲染后显式追加 glint pass。
+- 旧固定管线 `glAlphaFunc` cutoff 尚未通用迁入。当前库层保证 alpha blend/depth write 语义；具体贴图透明裁剪阈值如确实影响现代显示，需要在具体 renderer 或专用 RenderType/shader 中按个案补。
+- 手写 Tessellator 火花、光束、流体面和 HUD overlay 属于“无贴图/自定义几何渲染”库面；本轮补齐通用 `POSITION_COLOR` 透明 RenderType 与贴图四边形 helper，不把这些具体几何算法塞进 OBJ 库。
+
+验证：
+
+- `git diff --check` 通过；仅有既有 LF/CRLF 提示。
 - `.\gradlew.bat compileJava processResources --no-daemon` 通过。

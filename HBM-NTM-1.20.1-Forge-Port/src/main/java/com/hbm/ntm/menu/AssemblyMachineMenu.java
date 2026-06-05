@@ -2,6 +2,8 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.item.ItemBlueprints;
+import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -11,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.SlotItemHandler;
@@ -128,10 +131,48 @@ public class AssemblyMachineMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index, MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START,
-                HOTBAR_END,
-                AssemblyMachineBlockEntity.SLOT_INPUT_START, AssemblyMachineBlockEntity.SLOT_INPUT_END + 1,
-                AssemblyMachineBlockEntity.SLOT_BATTERY, AssemblyMachineBlockEntity.SLOT_BATTERY + 1);
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        Slot slot = slots.get(index);
+        if (slot == null || !slot.hasItem()) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack stack = slot.getItem();
+        ItemStack original = stack.copy();
+        if (index < MACHINE_SLOT_COUNT) {
+            if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
+                return ItemStack.EMPTY;
+            }
+        } else if (!movePlayerStackToMachine(stack)) {
+            return ItemStack.EMPTY;
+        }
+        if (stack.isEmpty()) {
+            slot.set(ItemStack.EMPTY);
+        } else {
+            slot.setChanged();
+        }
+        return original;
+    }
+
+    private boolean movePlayerStackToMachine(ItemStack stack) {
+        if (stack.getItem() instanceof ItemBlueprints) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    AssemblyMachineBlockEntity.SLOT_BLUEPRINT, AssemblyMachineBlockEntity.SLOT_BLUEPRINT + 1);
+        }
+        if (stack.getItem() instanceof ItemMachineUpgrade) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    AssemblyMachineBlockEntity.SLOT_UPGRADE_START, AssemblyMachineBlockEntity.SLOT_UPGRADE_END + 1);
+        }
+        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    AssemblyMachineBlockEntity.SLOT_BATTERY, AssemblyMachineBlockEntity.SLOT_BATTERY + 1);
+        }
+        if (HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                AssemblyMachineBlockEntity.SLOT_INPUT_START, AssemblyMachineBlockEntity.SLOT_INPUT_END + 1)) {
+            return true;
+        }
+        return false;
     }
 
     private void addPlayerInventory(Inventory inventory) {

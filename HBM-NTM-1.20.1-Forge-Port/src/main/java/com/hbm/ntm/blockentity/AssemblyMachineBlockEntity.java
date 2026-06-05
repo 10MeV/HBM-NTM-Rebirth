@@ -11,8 +11,8 @@ import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidStack;
-import com.hbm.ntm.fluid.HbmFluidForgeMappings;
 import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -53,7 +53,6 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
@@ -68,10 +67,6 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         HbmStandardFluidTransceiver, HbmTileSyncable, LegacyLookOverlayProvider {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_DID_PROCESS = "DidProcess";
-    private static final String TAG_RING = "Ring";
-    private static final String TAG_RING_TARGET = "RingTarget";
-    private static final String TAG_RING_SPEED = "RingSpeed";
-    private static final String TAG_RING_DELAY = "RingDelay";
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_LEGACY_POWER = "power";
     private static final String TAG_LEGACY_MAX_POWER = "maxPower";
@@ -90,6 +85,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     public static final int SLOT_OUTPUT = 16;
     public static final int[] INPUT_SLOTS = new int[] { 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
     public static final int[] OUTPUT_SLOTS = new int[] { SLOT_OUTPUT };
+    private static final int[] EXTERNAL_ITEM_SLOTS = new int[] { 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
     private static final List<EnergyPort> ENERGY_PORTS = LegacyMultiblockPorts.xrFloorRingEnergyPorts(2);
     private static final List<FluidPort> FLUID_PORTS = LegacyMultiblockPorts.xrFloorRingFluidPorts(2);
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(
@@ -133,9 +129,10 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private final HbmEnergyStorage energy = new HbmEnergyStorage(DEFAULT_MAX_POWER, DEFAULT_MAX_POWER, 0L);
     private final HbmFluidTank inputTank = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
     private final HbmFluidTank outputTank = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AssemblyAccessibleItemHandler());
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
-    private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(AssemblyFluidHandler::new);
+    private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
+            new ForgeRecipeFluidHandlerAdapter(List.of(inputTank), List.of(outputTank), 0, this::onFluidContentsChanged));
     private final AssemblerArm[] arms = new AssemblerArm[] { new AssemblerArm(1L), new AssemblerArm(2L) };
 
     private boolean didProcess;
@@ -147,6 +144,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private double progress;
     private String selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
     private Object audioLoop;
+    private boolean wasClientProcessing;
 
     public AssemblyMachineBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ASSEMBLY_MACHINE.get(), pos, state);
@@ -177,11 +175,20 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
             arm.updateInterp();
             if (animate) {
                 arm.updateArm();
+                if (arm.struckThisTick()) {
+                    LegacyMachineAudioBridge.playLocal(blockEntity, ModSounds.BLOCK_ASSEMBLER_STRIKE.getId(),
+                            0.5F, 1.0F, 50.0D);
+                }
             } else {
                 arm.returnToNullPos();
             }
         }
         blockEntity.updateAudioLoop();
+        if (blockEntity.wasClientProcessing && !blockEntity.didProcess) {
+            LegacyMachineAudioBridge.playLocal(blockEntity, ModSounds.BLOCK_ASSEMBLER_STOP.getId(),
+                    0.25F, 1.5F, 50.0D);
+        }
+        blockEntity.wasClientProcessing = blockEntity.didProcess;
     }
 
     public ItemStackHandler getItems() {
@@ -247,7 +254,6 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     public void setSelectedRecipe(String selectedRecipe) {
         this.selectedRecipe = GenericMachineRecipeSelector.normalize(selectedRecipe);
-        this.progress = 0.0D;
         setChanged();
     }
 
@@ -256,7 +262,8 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
             setSelectedRecipe(GenericMachineRecipeRuntime.NULL_RECIPE);
             return true;
         }
-        if (!GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, selectedRecipe)) {
+        if (!GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE,
+                selectedRecipe, items.getStackInSlot(SLOT_BLUEPRINT))) {
             return false;
         }
         setSelectedRecipe(selectedRecipe);
@@ -283,6 +290,10 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
                 && energy.getPower() >= recipe.getPower()
                 && GenericMachineRecipeRuntime.canProcess(recipe, items, INPUT_SLOTS, OUTPUT_SLOTS,
                 List.of(inputTank), List.of(outputTank));
+    }
+
+    public boolean isProcessing() {
+        return didProcess;
     }
 
     public static CompoundTag recipeSelectionTag(String selection) {
@@ -317,7 +328,8 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         if (level == null || !level.isClientSide) {
             return;
         }
-        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_ASSEMBLER_OPERATE.getId(), didProcess, 30.0D, 15.0F);
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_MOTOR.getId(),
+                didProcess, 50.0D, 15.0F, 0.5F, 0.75F);
     }
 
     private void updateRing(Level level) {
@@ -346,6 +358,8 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
             if (ringDelay <= 0) {
                 ringTarget += (level.random.nextDouble() * 2.0D - 1.0D) * 135.0D;
                 ringSpeed = 10.0D + level.random.nextDouble() * 5.0D;
+                LegacyMachineAudioBridge.playLocal(this, ModSounds.BLOCK_ASSEMBLER_START.getId(),
+                        0.25F, 1.25F + level.random.nextFloat() * 0.25F, 50.0D);
             }
         }
     }
@@ -362,10 +376,6 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         tag.putDouble(TAG_PROGRESS, progress);
         tag.putString(TAG_RECIPE, selectedRecipe);
         tag.putBoolean(TAG_DID_PROCESS, didProcess);
-        tag.putDouble(TAG_RING, ring);
-        tag.putDouble(TAG_RING_TARGET, ringTarget);
-        tag.putDouble(TAG_RING_SPEED, ringSpeed);
-        tag.putInt(TAG_RING_DELAY, ringDelay);
     }
 
     @Override
@@ -389,11 +399,6 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
             selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
         }
         didProcess = tag.getBoolean(TAG_DID_PROCESS);
-        ring = tag.getDouble(TAG_RING);
-        prevRing = ring;
-        ringTarget = tag.getDouble(TAG_RING_TARGET);
-        ringSpeed = tag.getDouble(TAG_RING_SPEED);
-        ringDelay = tag.getInt(TAG_RING_DELAY);
     }
 
     @Override
@@ -419,10 +424,9 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        return player.containerMenu instanceof AssemblyMachineMenu
-                && GenericMachineRecipeSelector.isSelectionTag(tag)
+        return GenericMachineRecipeSelector.isSelectionTag(tag)
                 && GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE,
-                GenericMachineRecipeSelector.readSelection(tag));
+                GenericMachineRecipeSelector.readSelection(tag), items.getStackInSlot(SLOT_BLUEPRINT));
     }
 
     @Override
@@ -565,86 +569,65 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
                 : HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, ENERGY_PORTS, this);
     }
 
+    private boolean canExtractExternalSlot(int slot) {
+        return slot == SLOT_OUTPUT || isCloggedInputSlot(slot);
+    }
+
+    private boolean isCloggedInputSlot(int slot) {
+        if (level == null) {
+            return false;
+        }
+        GenericMachineRecipe recipe = getSelectedRecipeDefinition();
+        return GenericMachineRecipeRuntime.isSlotClogged(
+                recipe, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, level, items, slot, INPUT_SLOTS);
+    }
+
     private void refreshFluidPortSubscriptions() {
         HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, FLUID_PORTS,
                 List.of(inputTank), List.of(outputTank), this);
     }
 
-    private class AssemblyFluidHandler implements IFluidHandler {
+    private class AssemblyAccessibleItemHandler implements IItemHandler {
         @Override
-        public int getTanks() {
-            return 2;
+        public int getSlots() {
+            return EXTERNAL_ITEM_SLOTS.length;
         }
 
         @Override
-        public FluidStack getFluidInTank(int tank) {
-            HbmFluidTank hbmTank = getTank(tank);
-            return hbmTank == null ? FluidStack.EMPTY : HbmFluidForgeMappings.toForge(hbmTank.getTankType(), hbmTank.getFill());
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            int mapped = mapExternalSlot(slot);
+            return mapped < 0 ? ItemStack.EMPTY : items.getStackInSlot(mapped);
         }
 
         @Override
-        public int getTankCapacity(int tank) {
-            HbmFluidTank hbmTank = getTank(tank);
-            return hbmTank == null ? 0 : hbmTank.getMaxFill();
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            int mapped = mapExternalSlot(slot);
+            return mapped < 0 ? stack : items.insertItem(mapped, stack, simulate);
         }
 
         @Override
-        public boolean isFluidValid(int tank, FluidStack stack) {
-            if (tank != 0 || stack == null || stack.isEmpty()) {
-                return false;
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            int mapped = mapExternalSlot(slot);
+            if (mapped < 0 || !canExtractExternalSlot(mapped)) {
+                return ItemStack.EMPTY;
             }
-            FluidType type = HbmFluidForgeMappings.fromForge(stack);
-            return type != HbmFluids.NONE && inputTank.canAccept(type, 0);
+            return items.extractItem(mapped, amount, simulate);
         }
 
         @Override
-        public int fill(FluidStack resource, FluidAction action) {
-            if (resource == null || resource.isEmpty()) {
-                return 0;
-            }
-            FluidType type = HbmFluidForgeMappings.fromForge(resource);
-            if (type == HbmFluids.NONE) {
-                return 0;
-            }
-            int filled = inputTank.fill(type, resource.getAmount(), 0, action.simulate());
-            if (!action.simulate() && filled > 0) {
-                onFluidContentsChanged();
-            }
-            return filled;
+        public int getSlotLimit(int slot) {
+            int mapped = mapExternalSlot(slot);
+            return mapped < 0 ? 0 : items.getSlotLimit(mapped);
         }
 
         @Override
-        public FluidStack drain(FluidStack resource, FluidAction action) {
-            if (resource == null || resource.isEmpty()) {
-                return FluidStack.EMPTY;
-            }
-            FluidType type = HbmFluidForgeMappings.fromForge(resource);
-            if (type == HbmFluids.NONE || outputTank.getTankType() != type) {
-                return FluidStack.EMPTY;
-            }
-            int drained = outputTank.drain(resource.getAmount(), action.simulate());
-            if (!action.simulate() && drained > 0) {
-                onFluidContentsChanged();
-            }
-            return drained <= 0 ? FluidStack.EMPTY : new FluidStack(resource.getFluid(), drained);
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            int mapped = mapExternalSlot(slot);
+            return mapped >= 0 && items.isItemValid(mapped, stack);
         }
 
-        @Override
-        public FluidStack drain(int maxDrain, FluidAction action) {
-            if (maxDrain <= 0 || outputTank.isEmpty() || !HbmFluidForgeMappings.canExport(outputTank.getTankType())) {
-                return FluidStack.EMPTY;
-            }
-            FluidType type = outputTank.getTankType();
-            int drained = outputTank.drain(maxDrain, action.simulate());
-            if (!action.simulate() && drained > 0) {
-                onFluidContentsChanged();
-            }
-            return HbmFluidForgeMappings.toForge(type, drained);
-        }
-
-        @Nullable
-        private HbmFluidTank getTank(int tank) {
-            return tank == 0 ? inputTank : tank == 1 ? outputTank : null;
+        private int mapExternalSlot(int slot) {
+            return slot >= 0 && slot < EXTERNAL_ITEM_SLOTS.length ? EXTERNAL_ITEM_SLOTS[slot] : -1;
         }
     }
 
@@ -747,6 +730,10 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
                 }
             }
             return !didMove;
+        }
+
+        private boolean struckThisTick() {
+            return prevAngles[3] != angles[3] && angles[3] == -0.75D;
         }
 
         public double[] getPositions(float partialTick) {

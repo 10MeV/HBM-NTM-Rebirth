@@ -61,7 +61,7 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
             ResourceLocation texture = new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/" + pack.getLegacyTextureName() + ".png");
             String part = pack.isCapacitor() ? "Capacitor" : "Battery";
             MODEL.renderPart(part, texture, poseStack, buffer, modelLight, packedOverlay);
-        } else if (stack.getItem() instanceof HbmSelfChargingBatteryItem battery && battery.isLoaded()) {
+        } else if (stack.getItem() instanceof HbmSelfChargingBatteryItem) {
             MODEL.renderPart("Battery", SELF_CHARGING_TEXTURE, poseStack, buffer, modelLight, packedOverlay);
         } else if (stack.is(ModItems.BATTERY_CREATIVE.get())) {
             renderCreativeBatteryEffect(socket, partialTick, poseStack, buffer, modelLight, packedOverlay);

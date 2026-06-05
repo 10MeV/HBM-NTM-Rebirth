@@ -79,6 +79,18 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "blueprints");
             return;
         }
+        if (path.equals("fluid_icon")) {
+            layeredItem(path, "fluid_icon", "fluid_identifier_overlay");
+            return;
+        }
+        if (path.equals("niter")) {
+            generatedItem(path, "salpeter");
+            return;
+        }
+        if (path.equals("plate_cast_ferrouranium")) {
+            generatedItem(path, "ferrouranium_plate");
+            return;
+        }
         if (path.equals("disperser_canister_empty")) {
             generatedItem(path, "disperser_canister");
             return;
@@ -91,12 +103,40 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "wire_dense");
             return;
         }
+        if (path.startsWith("bolt_")) {
+            generatedItem(path, "bolt");
+            return;
+        }
+        if (path.startsWith("shell_")) {
+            generatedItem(path, "shell");
+            return;
+        }
+        if (path.startsWith("pipes_") && !path.equals("pipes_steel")) {
+            generatedItem(path, "pipe");
+            return;
+        }
+        if (path.equals("wire_fine_mingrade")) {
+            generatedItem(path, "wire_red_copper");
+            return;
+        }
+        if (path.equals("wire_fine_tungsten")) {
+            generatedItem(path, "wire_tungsten");
+            return;
+        }
         if (path.startsWith("plate_cast_")) {
             generatedItem(path, "plate_cast");
             return;
         }
+        if (path.startsWith("plate_welded_")) {
+            generatedItem(path, "plate_welded");
+            return;
+        }
         if (path.equals("pellet_charged")) {
             generatedItem(path, "pellets_charged");
+            return;
+        }
+        if (path.equals("magnetron")) {
+            generatedItem(path, "magnetron_alt");
             return;
         }
         if (path.equals("ingot_weaponsteel")) {

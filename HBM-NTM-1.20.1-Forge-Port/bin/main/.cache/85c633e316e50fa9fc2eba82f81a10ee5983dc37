@@ -1,9 +1,8 @@
-// 1.20.1	2026-06-04T18:35:20.9453548	Block States: hbm
+// 1.20.1	2026-06-05T18:14:32.7280432	Block States: hbm
 f4eb25b664a0458dbb40546da729386871750a3d assets/hbm/blockstates/ash_digamma.json
 8c6c51f054fa20e59275bf5c7c77e28e7790b34c assets/hbm/blockstates/balefire.json
 8954caa191028e344c422054eecafd33ba658dd5 assets/hbm/blockstates/barrel_antimatter.json
 1a731f69623018c95bb667e2f33b832f163c1306 assets/hbm/blockstates/barrel_corroded.json
-519569d8974dffc3e88f86093c2e4283a28a95e8 assets/hbm/blockstates/barrel_iron.json
 050690ba6a8826cde5c5801815976b75a62436a1 assets/hbm/blockstates/barrel_plastic.json
 7604f4efe4915fafc6b4b6e5d2d11b1145f7ba63 assets/hbm/blockstates/barrel_steel.json
 988f3710c20415bd99d39f6b543b2e2cd46bcc70 assets/hbm/blockstates/barrel_tcalloy.json
@@ -42,12 +41,14 @@ a56c4064bba21128455caceebefa280d8eb023a4 assets/hbm/blockstates/frozen_log.json
 6f2f1311fff49e8bdcdec5ba79775edc2e682aea assets/hbm/blockstates/gas_radon_dense.json
 199b7ca0db2679259671168747ea2a60f95711d7 assets/hbm/blockstates/gas_radon_tomb.json
 26d24f7242f3bedf9f949ab68400ea7dbb196471 assets/hbm/blockstates/glass_boron.json
+8b3fa599b03fd53418f60006f9fde1e33844064c assets/hbm/blockstates/glass_quartz.json
 9983d0f4201df9375d138257befeef927ed87b32 assets/hbm/blockstates/glass_trinitite.json
 34d7824af93b85516649967f40d716ba48c08a47 assets/hbm/blockstates/glyphid_spawner.json
 e4024fd8ffbc0a0fbffdeeee633ef704e2c13231 assets/hbm/blockstates/leaves_layer.json
 3830e2c094b387a411aadc431c18a9a586f7f2a2 assets/hbm/blockstates/machine_arc_welder.json
 67570794a28d7de7f34d910525783256c64e8646 assets/hbm/blockstates/machine_assembly_factory.json
 b8871d32a01792a91f78772c75b357084d7f20b0 assets/hbm/blockstates/machine_assembly_machine.json
+293e37cb79909fb36b1415573f637d904336e2a8 assets/hbm/blockstates/machine_bat9000.json
 7a576b656728e50690c2cbee68fa1e0dad958212 assets/hbm/blockstates/machine_battery.json
 db24a78fa993c82c1b9ab4f7779961a756174866 assets/hbm/blockstates/machine_battery_socket.json
 8a30d64f3a34e1bd00657aa4e4f7123345faf3e4 assets/hbm/blockstates/machine_bigasstank.json
@@ -135,7 +136,6 @@ f76370dc339a0ff18575cbd6935a006033208ff6 assets/hbm/models/block/ash_digamma.jso
 d61a76e7ed3dc20aad4d156014d04ad0eeec8ed9 assets/hbm/models/block/balefire.json
 5e6cce26346ebf08143083aa0c07a54efdff563b assets/hbm/models/block/barrel_antimatter.json
 6c7d4dd90f5babe23397dadb3c32af40c0c54d80 assets/hbm/models/block/barrel_corroded.json
-3fedfae8dc968212204f79b9f073ac34bd6db39f assets/hbm/models/block/barrel_iron.json
 0233751bf819fb855d12fda42c4c823f8c29e0a9 assets/hbm/models/block/barrel_plastic.json
 98c572ab65e129db389a4d3eaaa160018914641a assets/hbm/models/block/barrel_steel.json
 cdd71ea1706346b42dfcc39a2c9175fbfd72ae2e assets/hbm/models/block/barrel_tcalloy.json
@@ -191,6 +191,7 @@ b75d70dab695b587a4c427a50344198cb90c8c61 assets/hbm/models/block/gas_radon.json
 50a9e33dfad9889494844126461fa717004dc6ba assets/hbm/models/block/gas_radon_dense.json
 733d89f80da09f08c13dc543983a586132a0c796 assets/hbm/models/block/gas_radon_tomb.json
 8d1afce3ebf097329c5d7b6e34b6211d00345d27 assets/hbm/models/block/glass_boron.json
+2e63344a2b83a9e0354fe7a2f6fe1c5ddd2b88c3 assets/hbm/models/block/glass_quartz.json
 8d6aee4ae9bad1a23e5758929074637a21ef16fe assets/hbm/models/block/glass_trinitite.json
 83b6d3bf65fec2132af3f67e14abfb1605e04b7a assets/hbm/models/block/glyphid_spawner.json
 7a4103e9e3d4aacc6e5a6a872a3768907b1ebe9e assets/hbm/models/block/leaves_layer.json
@@ -261,7 +262,6 @@ b6588953ecb44934097103cf22ab2c2c5671d722 assets/hbm/models/block/yellow_barrel.j
 97283b6fc336ae3aee7ac50ffeffc54ba83b3780 assets/hbm/models/item/ash_digamma.json
 b7d68b423e78ed59dca6d2c29867ce863dea866a assets/hbm/models/item/barrel_antimatter.json
 7fc2fb08131d19c4e069374a75d0631e4b2eeb9d assets/hbm/models/item/barrel_corroded.json
-8e4e174aa04b94eb78e8669a62749c5e6c867d76 assets/hbm/models/item/barrel_iron.json
 ea1bb3b3274a0d2e46ab156a94a9d9993664e17d assets/hbm/models/item/barrel_plastic.json
 d17208db2d97261a9d8cf24fcc3abe55873bb99a assets/hbm/models/item/barrel_steel.json
 8b943852e2ea83527f1f48f87d9fbdc562c63f7f assets/hbm/models/item/barrel_tcalloy.json
@@ -299,12 +299,14 @@ d592d174ad3e46430bbf88d9c2533c9f907fd46c assets/hbm/models/item/gas_monoxide.jso
 45116cd0532a75b298cc3529f27713d1abe83930 assets/hbm/models/item/gas_radon_dense.json
 4e35a50fcf5467d5c73b6af9587d8be07f4288fb assets/hbm/models/item/gas_radon_tomb.json
 4d0c63cb9b76b79518de4e4ac3a835371e38c01b assets/hbm/models/item/glass_boron.json
+3946c740d1a10af4f9664819242b1beefc031d24 assets/hbm/models/item/glass_quartz.json
 8a62e00ea217e824b72f1e59744be03a1836e776 assets/hbm/models/item/glass_trinitite.json
 792cfc7c9ccfc92532334d41faf30edb9eaa0345 assets/hbm/models/item/glyphid_spawner.json
 65cccfac49986d3488b444884dbf219ca95255ac assets/hbm/models/item/leaves_layer.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_arc_welder.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_assembly_factory.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_assembly_machine.json
+e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_bat9000.json
 d65c5b16c19731ebc640490cfd26ec54ae9dbef6 assets/hbm/models/item/machine_battery.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_battery_socket.json
 e0f7b66a84e6588f01abbbce75b1803ffe5d46e2 assets/hbm/models/item/machine_bigasstank.json

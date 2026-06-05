@@ -1,0 +1,30 @@
+{
+  "type": "hbm:chemical_plant",
+  "duration": 100,
+  "input_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm:unsaturateds"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/sulfur"
+      },
+      "legacy_ore": "dustSulfur"
+    }
+  ],
+  "internal_name": "chem.rubber",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 2,
+      "item": "hbm:ingot_rubber"
+    }
+  ],
+  "pools": [],
+  "power": 200,
+  "source_order": 35
+}

@@ -1,5 +1,7 @@
 {
   "values": [
-    "hbm:wire_gold"
+    "hbm:wire_gold",
+    "hbm:wire_fine_mingrade",
+    "hbm:wire_fine_tungsten"
   ]
 }

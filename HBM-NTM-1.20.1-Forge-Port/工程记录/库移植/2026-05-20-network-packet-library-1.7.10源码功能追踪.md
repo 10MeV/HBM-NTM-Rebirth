@@ -1205,3 +1205,11 @@
   - 具体菜单类型校验不在通用 packet 中硬编码，由 receiver 的 `canReceiveClientControl` / `canReceiveLegacyButton` / `canReceiveTypedTileAction` 执行。
   - 化工厂和装配机 recipe selector receiver 已要求玩家当前打开对应 Menu，避免未开 GUI 或错误 GUI 时修改机器状态。
   - `.\gradlew.bat compileJava --no-daemon` 通过。
+
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- `GUIHandler` 抽出 `getGUIProvider(...)`，server/client GUI 查找统一走 TileEntity、Block、held Item、Entity 的 `IGUIProvider` 优先链。
+- `TileEntityRadioAUTOCAL` 使用 `NBTControlPacket` 接收 GUI 按钮与脚本 payload，属于旧网络库的 NBT control 设备新实例；现代 `HbmGuiControlSecurity` 需要把它纳入“必须有权限/距离/打开状态”的接收端审计。
+- 新增 `TileEntityMachineBlastFurnace` 走 `networkPackNT(100)` 同步 `isProgressing/progress/speed/fuel/tanks`，新增 `TileEntityMachineThresher` 与 autosaw 类似走 `IBufPacketReceiver` 同步动画角度和运行状态。

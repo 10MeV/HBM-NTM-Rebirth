@@ -1889,3 +1889,12 @@
   - 本批迁移的是 HBM `type=vanillaExt, mode=largeexplode` 协议，不替换普通 vanilla `world.spawnParticle("largeexplode")` / `hugeexplosion` 路径；这些普通原版爆炸粒子仍由现代 Minecraft 原生效果承担。
   - 现代资源使用 `minecraft:explosion_*` 与 `minecraft:generic_*` 粒子 atlas 名称承接旧 vanilla 贴图，不复制原版贴图到 HBM 命名空间。
   - 旧源码中的普通爆炸声音、炮塔/boltgun/实体调用方仍按各自系统后续迁移；本批只收紧客户端视觉粒子。
+
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- `TileEntityMachineAutosaw` 新增 `AudioWrapper` 循环声，运行且未暂停、玩家 15 格内时播放 `NTMSounds.ENGINE_LOOP`，卸载/失效时停止。
+- 新增 `TileEntityMachineThresher` 复用同类 engine loop 声音，并在作物/实体切割时触发烟雾、blockdust、zombie woodbreak 等旧粒子/声音路径。
+- `ClientProxy` 移除 `EntityWaterSplash` 的空 renderer 注册，同时新增 blast furnace、thresher、vending machine、AUTOCAL 的 TESR 绑定。
+- 新 `TileEntityMachineBlastFurnace` 客户端运行时生成 lava 粒子，并在 FLUE 足量且玩家距离小于 100 格时发送 `type=tower` 黑烟效果；现代粒子库后续需要支持该 NBT effect surface。

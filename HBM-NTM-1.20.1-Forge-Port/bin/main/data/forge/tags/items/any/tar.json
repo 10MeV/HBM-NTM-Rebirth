@@ -1,0 +1,10 @@
+{
+  "values": [
+    "hbm:oil_tar_crude",
+    "hbm:oil_tar_crack",
+    "hbm:oil_tar_coal",
+    "hbm:oil_tar_wood",
+    "hbm:oil_tar_wax",
+    "hbm:oil_tar_paraffin"
+  ]
+}

@@ -168,6 +168,15 @@
   - 这避免多个装备/实体来源叠加 DR 超过 100% 后产生负伤害，同时保留旧版“完全吸收为 0”的语义。
 - 验证：
   - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- `MainRegistry.tMatSteel` 从 harvest level 2 / durability 500 / speed 7.5 改为 level 3 / durability 750 / speed 8.0；`tMatTitan` durability 从 750 改为 1000。
+- `MainRegistry.aMatSteel` 从 durability 20、护甲 `{2,6,5,2}` 改为 durability 30、护甲 `{3,8,6,3}`。
+- `DamageResistanceHandler` 给 steel armor 增加物理抗性 `dt=2, dr=0.1`，给 titanium armor 增加物理抗性 `dt=3, dr=0.1`。
+- `ModItems` 给 steel sword 添加 `STUN`，给 steel pickaxe/axe/shovel 添加 `RECURSION`；这些属于装备能力/抗性迁移的新版事实来源。
   - 验证前清理过一次 `build/resources/main/.cache` 生成缓存；该目录属于 Gradle 输出，原因是 `processResources` 发现旧 MD5 缓存文件缺失。
 
 ## 2026-05-30 第八轮扩展

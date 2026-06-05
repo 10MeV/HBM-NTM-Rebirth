@@ -1,12 +1,15 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.blockentity.AssemblyFactoryBlockEntity;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
+import com.hbm.ntm.blockentity.Bat9000BlockEntity;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.blockentity.BigAssTankBlockEntity;
 import com.hbm.ntm.blockentity.BoilerBlockEntity;
 import com.hbm.ntm.blockentity.CatalyticCrackerBlockEntity;
 import com.hbm.ntm.blockentity.CatalyticReformerBlockEntity;
+import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.blockentity.CompressorBlockEntity;
 import com.hbm.ntm.blockentity.CokerBlockEntity;
@@ -142,8 +145,6 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("fluid_barrel", () ->
                     BlockEntityType.Builder.of(FluidBarrelBlockEntity::new,
                             ModBlocks.BARREL_PLASTIC.get(),
-                            ModBlocks.BARREL_CORRODED.get(),
-                            ModBlocks.BARREL_IRON.get(),
                             ModBlocks.BARREL_STEEL.get(),
                             ModBlocks.BARREL_TCALLOY.get(),
                             ModBlocks.BARREL_ANTIMATTER.get()).build(null));
@@ -172,6 +173,14 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("chemical_plant", () ->
                     BlockEntityType.Builder.of(ChemicalPlantBlockEntity::new, ModBlocks.MACHINE_CHEMICAL_PLANT.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<AssemblyFactoryBlockEntity>> ASSEMBLY_FACTORY =
+            BLOCK_ENTITIES.register("assembly_factory", () ->
+                    BlockEntityType.Builder.of(AssemblyFactoryBlockEntity::new, ModBlocks.MACHINE_ASSEMBLY_FACTORY.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<ChemicalFactoryBlockEntity>> CHEMICAL_FACTORY =
+            BLOCK_ENTITIES.register("chemical_factory", () ->
+                    BlockEntityType.Builder.of(ChemicalFactoryBlockEntity::new, ModBlocks.MACHINE_CHEMICAL_FACTORY.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<LiquefactorBlockEntity>> LIQUEFACTOR =
             BLOCK_ENTITIES.register("liquefactor", () ->
                     BlockEntityType.Builder.of(LiquefactorBlockEntity::new, ModBlocks.MACHINE_LIQUEFACTOR.get()).build(null));
@@ -184,6 +193,10 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<FluidTankBlockEntity>> FLUID_TANK =
             BLOCK_ENTITIES.register("fluid_tank", () ->
                     BlockEntityType.Builder.of(FluidTankBlockEntity::new, ModBlocks.MACHINE_FLUIDTANK.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<Bat9000BlockEntity>> BAT9000 =
+            BLOCK_ENTITIES.register("bat9000", () ->
+                    BlockEntityType.Builder.of(Bat9000BlockEntity::new, ModBlocks.MACHINE_BAT9000.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<BigAssTankBlockEntity>> BIG_ASS_TANK =
             BLOCK_ENTITIES.register("big_ass_tank", () ->
@@ -259,7 +272,6 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("legacy_visible_machine", () ->
                     BlockEntityType.Builder.of(
                             LegacyVisibleMachineBlockEntity::new,
-                            ModBlocks.MACHINE_CHEMICAL_FACTORY.get(),
                             ModBlocks.MACHINE_PYROOVEN.get(),
                             ModBlocks.MACHINE_SOLIDIFIER.get(),
                             ModBlocks.MACHINE_CENTRIFUGE.get(),
@@ -267,7 +279,6 @@ public final class ModBlockEntities {
                             ModBlocks.MACHINE_ORE_SLOPPER.get(),
                             ModBlocks.MACHINE_SAWMILL.get(),
                             ModBlocks.MACHINE_CRUCIBLE.get(),
-                            ModBlocks.MACHINE_ASSEMBLY_FACTORY.get(),
                             ModBlocks.MACHINE_PUREX.get(),
                             ModBlocks.MACHINE_SILEX.get(),
                             ModBlocks.MACHINE_EXPOSURE_CHAMBER.get(),

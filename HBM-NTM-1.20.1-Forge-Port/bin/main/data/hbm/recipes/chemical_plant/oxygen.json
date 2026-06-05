@@ -1,0 +1,23 @@
+{
+  "type": "hbm:chemical_plant",
+  "custom_localization": true,
+  "duration": 20,
+  "input_fluids": [
+    {
+      "amount": 8000,
+      "fluid": "hbm:air"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.oxygen",
+  "output_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm:oxygen"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 400,
+  "source_order": 2
+}

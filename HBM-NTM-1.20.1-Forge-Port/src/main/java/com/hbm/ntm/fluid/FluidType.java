@@ -32,6 +32,7 @@ public final class FluidType {
     private final FluidSymbol symbol;
     private final Map<Class<? extends FluidTrait>, FluidTrait> traits = new LinkedHashMap<>();
     private int temperature = ROOM_TEMPERATURE;
+    private boolean renderTankWithTint;
 
     FluidType(int id, String name, int color, int poison, int flammability, int reactivity, FluidSymbol symbol) {
         this.id = id;
@@ -104,6 +105,15 @@ public final class FluidType {
 
     public int getGuiTint() {
         return guiTint;
+    }
+
+    public FluidType renderTankWithTint() {
+        this.renderTankWithTint = true;
+        return this;
+    }
+
+    public boolean shouldRenderTankWithTint() {
+        return renderTankWithTint;
     }
 
     public int getPoison() {

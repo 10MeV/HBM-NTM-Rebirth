@@ -42,3 +42,11 @@
 - subchunk key hash/equals 稳定。
 - 世界卸载时缓存释放。
 - SavedData markDirty 调用正确。
+
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- `HbmWorldGen` 修正 chlorine geyser 生成判断，原先使用 `WorldConfig.geyserWater` 的随机频率，5714 改为 `WorldConfig.geyserChlorine`。
+- 水 geyser 与 vapor geyser 生成逻辑被移除，`WorldConfig.geyserWater` 同步删除；后续世界生成迁移不要继续为旧 `geysir_water` / `geysir_vapor` 建立现代配置入口。
+- 新增 `STRUCTURE_DEBUG` server config 与 `logic_block_invis` / NBT structure 相关更新，结构调试和 logic block 行为后续应按新版源码重新追踪，不要只沿用旧 5687 的结构生成面。

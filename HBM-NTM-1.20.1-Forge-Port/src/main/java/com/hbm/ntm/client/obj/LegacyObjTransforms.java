@@ -41,9 +41,29 @@ public final class LegacyObjTransforms {
     }
 
     public static void rotateAroundBlockCenterY(PoseStack poseStack, float degrees) {
-        poseStack.translate(0.5D, 0.0D, 0.5D);
+        rotateAroundY(poseStack, 0.5D, 0.0D, 0.5D, degrees);
+    }
+
+    public static void rotateAroundY(PoseStack poseStack, double pivotX, double pivotY, double pivotZ, float degrees) {
+        poseStack.translate(pivotX, pivotY, pivotZ);
         poseStack.mulPose(Axis.YP.rotationDegrees(degrees));
-        poseStack.translate(-0.5D, 0.0D, -0.5D);
+        poseStack.translate(-pivotX, -pivotY, -pivotZ);
+    }
+
+    public static void rotateAroundX(PoseStack poseStack, double pivotX, double pivotY, double pivotZ, float degrees) {
+        poseStack.translate(pivotX, pivotY, pivotZ);
+        poseStack.mulPose(Axis.XP.rotationDegrees(degrees));
+        poseStack.translate(-pivotX, -pivotY, -pivotZ);
+    }
+
+    public static void rotateAroundZ(PoseStack poseStack, double pivotX, double pivotY, double pivotZ, float degrees) {
+        poseStack.translate(pivotX, pivotY, pivotZ);
+        poseStack.mulPose(Axis.ZP.rotationDegrees(degrees));
+        poseStack.translate(-pivotX, -pivotY, -pivotZ);
+    }
+
+    public static double softPeakSine(double value) {
+        return Math.sin(Math.PI / 2.0D * Math.cos(value));
     }
 
     public static void applySixFaceAttachmentRotation(PoseStack poseStack, Direction face) {

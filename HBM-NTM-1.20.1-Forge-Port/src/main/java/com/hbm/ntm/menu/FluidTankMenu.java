@@ -1,7 +1,7 @@
 package com.hbm.ntm.menu;
 
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
+import com.hbm.ntm.blockentity.LegacyBigTankBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -38,17 +38,12 @@ public class FluidTankMenu extends AbstractContainerMenu {
         super(ModMenuTypes.FLUID_TANK.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), FluidTankBlockEntity.SLOT_TYPE_INPUT, 8, 17) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof IFluidIdentifierItem;
-            }
-        });
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), FluidTankBlockEntity.SLOT_TYPE_OUTPUT, 8, 53));
+        addSlot(new SlotItemHandler(blockEntity.getItems(), FluidTankBlockEntity.SLOT_TYPE_INPUT, 8, 17));
+        addSlot(new SlotItemHandler(blockEntity.getItems(), FluidTankBlockEntity.SLOT_TYPE_OUTPUT, 8, 53));
         addSlot(new SlotItemHandler(blockEntity.getItems(), FluidTankBlockEntity.SLOT_LOAD_INPUT, 35, 17));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), FluidTankBlockEntity.SLOT_LOAD_OUTPUT, 35, 53));
+        addSlot(new SlotItemHandler(blockEntity.getItems(), FluidTankBlockEntity.SLOT_LOAD_OUTPUT, 35, 53));
         addSlot(new SlotItemHandler(blockEntity.getItems(), FluidTankBlockEntity.SLOT_UNLOAD_INPUT, 125, 17));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), FluidTankBlockEntity.SLOT_UNLOAD_OUTPUT, 125, 53));
+        addSlot(new SlotItemHandler(blockEntity.getItems(), FluidTankBlockEntity.SLOT_UNLOAD_OUTPUT, 125, 53));
         addPlayerInventory(playerInventory);
         addDataSlots();
     }
@@ -100,11 +95,15 @@ public class FluidTankMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index, MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START,
-                HOTBAR_END,
-                FluidTankBlockEntity.SLOT_TYPE_INPUT, FluidTankBlockEntity.SLOT_TYPE_INPUT + 1,
-                FluidTankBlockEntity.SLOT_LOAD_INPUT, FluidTankBlockEntity.SLOT_LOAD_INPUT + 1,
-                FluidTankBlockEntity.SLOT_UNLOAD_INPUT, FluidTankBlockEntity.SLOT_UNLOAD_INPUT + 1);
+        if (blockEntity instanceof LegacyBigTankBlockEntity
+                || blockEntity instanceof com.hbm.ntm.blockentity.FluidBarrelBlockEntity) {
+            return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
+                    MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START + 1, HOTBAR_END,
+                    0, MACHINE_SLOT_COUNT);
+        }
+        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
+                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, HOTBAR_END,
+                0, MACHINE_SLOT_COUNT - 1);
     }
 
     private void addPlayerInventory(Inventory inventory) {

@@ -1,0 +1,45 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:cast_plates/lead"
+      },
+      "legacy_ore": "plateCastLead"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/beryllium"
+      },
+      "legacy_ore": "ingotBeryllium"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/dura_steel"
+      },
+      "legacy_ore": "plateDuraSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/asbestos"
+      },
+      "legacy_ore": "ingotAsbestos"
+    }
+  ],
+  "internal_name": "ass.reactorcore",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:reactor_core"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 31
+}

@@ -40,6 +40,11 @@ public class HbmBatteryPackItem extends HbmBatteryItem {
     }
 
     @Override
+    protected long getDefaultCharge(ItemStack stack) {
+        return 0L;
+    }
+
+    @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
         LegacyItemRendererBridge.accept(consumer, () -> BatteryPackItemRenderer.INSTANCE);
     }
@@ -47,7 +52,7 @@ public class HbmBatteryPackItem extends HbmBatteryItem {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         long maxCharge = getMaxCharge(stack);
-        long charge = getCharge(stack);
+        long charge = stack.hasTag() ? stack.getTag().getLong(getChargeTagName(stack)) : maxCharge;
         long chargeRate = getChargeRate(stack);
         long dischargeRate = getDischargeRate(stack);
         double percent = maxCharge <= 0L ? 0.0D : charge * 1000L / maxCharge / 10.0D;

@@ -1,0 +1,31 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 40,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 3,
+      "ingredient": {
+        "tag": "forge:plates/copper"
+      },
+      "legacy_ore": "plateCopper"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:wires/tungsten"
+      },
+      "legacy_ore": "wireFineTungsten"
+    }
+  ],
+  "internal_name": "ass.magnetron",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:magnetron"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 35
+}

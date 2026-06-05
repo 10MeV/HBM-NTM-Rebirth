@@ -37,7 +37,6 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.ingot_aluminium", "\u94dd\u952d");
         add("item.hbm.ingot_beryllium", "\u94cd\u952d");
         add("item.hbm.ingot_schrabidium", "Sa326\u952d");
-        add("item.hbm.ingot_advanced_alloy", "\u9ad8\u7ea7\u5408\u91d1\u952d");
         add("item.hbm.plate_steel", "\u94a2\u677f");
         add("item.hbm.plate_iron", "\u94c1\u677f");
         add("item.hbm.plate_copper", "\u94dc\u677f");
@@ -143,6 +142,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm.fluid_barrel_infinite", "\u65e0\u9650\u6d41\u4f53\u6876");
         add("item.hbm.fluid_pack_empty", "\u7a7a\u6d41\u4f53\u5305");
         add("item.hbm.fluid_pack_full", "\u6d41\u4f53\u5305");
+        add("item.hbm.fluid_icon", "\u6d41\u4f53");
         add("item.hbm.disperser_canister_empty", "\u7a7a\u55b7\u6563\u7f50");
         add("item.hbm.disperser_canister", "\u55b7\u6563\u7f50");
         add("item.hbm.glyphid_gland_empty", "\u7a7a\u817a\u4f53");
@@ -228,6 +228,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("tooltip.hbm.damage.exact.mudpoisoning", "\u6bd2\u6ce5\u4e2d\u6bd2");
         add("block.hbm.machine_press", "\u706b\u529b\u953b\u538b\u673a");
         add("subtitles.hbm.block.press_operate", "\u706b\u529b\u953b\u538b\u673a\u8fd0\u4f5c");
+        add("subtitles.hbm.block.motor", "\u7535\u673a\u8fd0\u8f6c");
         add("subtitles.hbm.block.assembler_operate", "\u88c5\u914d\u673a\u8fd0\u8f6c");
         add("subtitles.hbm.block.assembler_strike", "\u88c5\u914d\u673a\u51b2\u51fb");
         add("subtitles.hbm.block.assembler_start", "\u88c5\u914d\u673a\u542f\u52a8");
@@ -327,11 +328,11 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_pyrooven", "\u70ed\u89e3\u7089");
         add("block.hbm.machine_solidifier", "\u5de5\u4e1a\u56fa\u5316\u673a");
         add("block.hbm.machine_compressor", "\u538b\u7f29\u673a");
-        add("block.hbm.machine_bigasstank", "\u5927\u578b\u5de5\u4e1a\u50a8\u7f50");
-        add("block.hbm.machine_fluidtank", "\u6d41\u4f53\u50a8\u7f50");
+        add("block.hbm.machine_bat9000", "\u5de8\u5c3b-9000 \u50a8\u7f50");
+        add("block.hbm.machine_bigasstank", "\u5de8\u5c3b\u50a8\u7f50");
+        add("block.hbm.machine_fluidtank", "\u50a8\u7f50");
         add("block.hbm.barrel_plastic", "\u5b89\u5168\u6876");
         add("block.hbm.barrel_corroded", "\u88ab\u8150\u8680\u7684\u6876");
-        add("block.hbm.barrel_iron", "\u94c1\u6876");
         add("block.hbm.barrel_steel", "\u94a2\u6876");
         add("block.hbm.barrel_tcalloy", "\u953d-\u94a2\u5408\u91d1\u6876");
         add("block.hbm.barrel_antimatter", "\u78c1\u7ea6\u675f\u53cd\u7269\u8d28\u5bb9\u5668");
@@ -380,8 +381,9 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("container.hbm.battery.priority.recommended", "\u63a8\u8350\uff1a\u4f4e");
         HbmFluidLangEntries.addChinese(this::add);
         add("container.fluidtank", "\u6d41\u4f53\u50a8\u7f50");
+        add("container.bat9000", "\u5de8\u5c3b-9000 \u50a8\u7f50");
         add("container.barrel", "\u6d41\u4f53\u6876");
-        add("container.bigAssTank", "\u5927\u578b\u5de5\u4e1a\u50a8\u7f50");
+        add("container.bigAssTank", "\u5de8\u5c3b\u50a8\u7f50");
         add("container.gasFlare", "\u6c14\u4f53\u706b\u70ac");
         add("container.fluidtank.mode", "\u6a21\u5f0f");
         add("container.fluidtank.mode.input", "\u8f93\u5165");
@@ -391,7 +393,6 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("container.fluidtank.damaged", "\u635f\u574f");
         add("container.fluidtank.burning", "\u71c3\u70e7");
         add("barrel.tooltip.capacity.6000", "\u5bb9\u91cf\uff1a6,000mB");
-        add("barrel.tooltip.capacity.8000", "\u5bb9\u91cf\uff1a8,000mB");
         add("barrel.tooltip.capacity.12000", "\u5bb9\u91cf\uff1a12,000mB");
         add("barrel.tooltip.capacity.16000", "\u5bb9\u91cf\uff1a16,000mB");
         add("barrel.tooltip.capacity.24000", "\u5bb9\u91cf\uff1a24,000mB");
@@ -402,7 +403,6 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("barrel.tooltip.can_corrosive", "\u53ef\u50a8\u5b58\u8150\u8680\u6027\u6d41\u4f53");
         add("barrel.tooltip.can_high_corrosive", "\u53ef\u50a8\u5b58\u5f3a\u8150\u8680\u6027\u6d41\u4f53");
         add("barrel.tooltip.can_antimatter", "\u53ef\u50a8\u5b58\u53cd\u7269\u8d28");
-        add("barrel.tooltip.no_corrosive_properly", "\u4e0d\u80fd\u59a5\u5584\u50a8\u5b58\u8150\u8680\u6027\u6d41\u4f53");
         add("barrel.tooltip.no_high_corrosive_properly", "\u4e0d\u80fd\u59a5\u5584\u50a8\u5b58\u5f3a\u8150\u8680\u6027\u6d41\u4f53");
         add("barrel.tooltip.leaky", "\u4f1a\u6cc4\u6f0f");
         add("block.hbm.gas_meltdown", "\u7194\u6bc1\u6c14\u4f53");
@@ -622,6 +622,9 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
     }
 
     private static boolean hasExplicitControlName(String id) {
+        if (id.startsWith("upgrade_")) {
+            return true;
+        }
         return switch (id) {
             case "battery_potato",
                  "battery_creative",
@@ -653,6 +656,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
                  "singularity_spark",
                  "black_hole",
                  "particle_digamma",
+                 "blueprints",
                  "pellet_antimatter",
                  "catalytic_converter",
                  "fuel_additive_antiknock",

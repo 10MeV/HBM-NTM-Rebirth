@@ -649,7 +649,7 @@
   - `src/main/resources/assets/hbm/textures/item/capacitor_*.png`
 - 1.7.10 对照：
   - `api.hbm.energymk2.IBatteryItem`：物品电池契约使用 `charge` NBT，提供空/满电 stack 工具方法。
-  - `com.hbm.items.machine.ItemBatteryPack`：`battery_pack` 通过 meta 区分 12 种电池/电容；没有 `charge` NBT 的普通新 stack 默认写入并返回满电，创造栏额外显式加入空电 stack。
+  - `com.hbm.items.machine.ItemBatteryPack`：`battery_pack` 通过 meta 区分 12 种电池/电容；真实能量读取时没有 NBT 的普通新 stack 会写入并返回 `charge=0`。但 tooltip 里若完全无 NBT，会临时按满电显示；创造栏额外显式加入空电和满电 stack。
   - 旧创造栏会为每种可充/可放电电池同时加入空电和满电两个 stack。
 - 已迁移的旧枚举参数：
   - `battery_redstone`：输出 100 HE/t，容量 `100 * 20 * 60 * 15`，充电速率 1,000 HE/t。
@@ -939,6 +939,39 @@
   - 旧版 `battery_sc` 超级电容随机放电/电击爆炸行为仍未迁移，因为现代对应物品与弹丸/电击爆炸链路还未完全闭合。
   - 旧 `ILookOverlay#printHook` 的准星能量提示尚未迁移。
   - OpenComputers/ROR 函数仍未接入现代兼容层。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-05 复查修正：电池座与电池物品行为对齐
+
+- 1.7.10 对照：
+  - `ItemBatteryPack#getCharge`：完全无 NBT 的 `battery_pack` 真实读取时会创建 NBT 并写入 `charge=0`，不是默认满电。
+  - `ItemBatteryPack#addInformation`：tooltip 先把 `charge` 临时设为 `maxCharge`，只有 stack 已有 NBT 时才读取 NBT 内 `charge`；因此“无 NBT 提示满电、真实能量读取初始化为空”是旧版怪癖。
+  - `ContainerBatterySocket` 使用普通 `SlotNonRetarded`，GUI/玩家手动操作不限制取出半电电池。
+  - `TileEntityBatterySocket#getAccessibleSlotsFromSide` 对所有方向暴露唯一 slot 0；`canExtractItem` 因 `mode_input=0` 与唯一 slot 0，实际只允许自动化抽出满电 `IBatteryItem`。
+  - `GUIBatterySocket` 能量条对超大数值先缩放后计算，避免 `Long.MAX_VALUE` 级创造电池造成乘法溢出。
+  - `RenderBatterySocket` 对 `ModItems.battery_sc` 只按 item 类型渲染 `Battery` part，不要求 `battery_sc` 处于非空/加载态。
+- 本批接入：
+  - `HbmBatteryPackItem#getDefaultCharge` 改为 `0`，保证配方/机器产出的无 NBT 电池包第一次参与能量逻辑时为空电，避免凭空满电。
+  - `HbmBatteryPackItem#appendHoverText` 保留旧版 tooltip 怪癖：完全无 NBT 时显示满电，已有 NBT 时按 `charge` 键显示，缺键则为 0。
+  - `MachineBatterySocketBlockEntity` 主 `ItemStackHandler` 取消满电取出限制，使 GUI 手动取出与破坏掉落不再被自动化规则误伤。
+  - `MachineBatterySocketBlockEntity` 新增侧面 `SocketSidedItemHandler`：任意方向可插入 HBM 电池，但只有满电电池可被自动化抽出，匹配旧 `ISidedInventory` 的实际 slot 0 行为。
+  - `MachineBatterySocketBlockEntity` / `MachineBatterySocketMenu` 的能量条高度改为 `double` 比例 + clamp，避免创造电池 `Long.MAX_VALUE / 2` 显示时溢出。
+  - `MachineBatterySocketRenderer` 对所有 `HbmSelfChargingBatteryItem` 渲染旧 `battery_sc` 模型；是否加载仍只影响能量与随机放电行为。
+- 本批验证：
+  - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
+
+## 2026-06-05 继续复查：电池传输 helper 与 GUI 数值显示对齐
+
+- 1.7.10 对照：
+  - `Library#chargeItemsFromTE` 先按机器能量、电池充电速率和剩余容量计算 `toCharge`，随后调用 `IBatteryItem#chargeBattery`，不直接写 NBT。
+  - `Library#chargeTEFromItems` 先按机器剩余容量、电池放电速率和电池当前能量计算 `toDischarge`，随后调用 `IBatteryItem#dischargeBattery`，不直接写 NBT。
+  - 这个虚方法契约对 `battery_sc`、`battery_creative` 和后续特殊电池很重要：这些物品可以选择不改变 NBT，但仍按旧 helper 的返回语义给机器供能或吞能。
+  - `GUIBatterySocket` 能量 tooltip 使用 `BobMathUtil.getShortNumber` 显示 `charge/max HE` 与 `delta HE/s`，不是直接显示完整 long。
+- 本批接入：
+  - `HbmBatteryTransfer#chargeItemsFromPower` / `chargePowerFromItem` 改为通过 `HbmBatteryItem#chargeBattery` / `dischargeBattery` 执行实际写入或扣除，保留旧 `Library` 的虚方法边界。
+  - `MachineBatterySocketScreen` 能量 tooltip 改为短数字格式，避免创造电池和高阶电池在 GUI 内显示一整串 long。
+  - 上一批的电池座侧面自动化/GUI 主槽拆分复查无新问题：主槽给玩家菜单和破坏掉落使用，侧面 capability 继续执行满电抽出规则。
 - 本批验证：
   - `.\gradlew.bat compileJava processResources --no-daemon` 通过。
 

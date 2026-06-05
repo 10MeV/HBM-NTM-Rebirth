@@ -112,3 +112,24 @@
   - 现代 `FluidType` 的 GUI tint 改回旧默认白色，避免对已着色旧流体图标二次染色。
   - 装配机输入槽改回 4 行 x 3 列；装配机和化工厂升级槽改回旧 `2 行 x 1 列` 竖排。
   - 化工厂固体输入/输出按旧 `1 行 x 3 列` 改回横排，流体容器槽同样保持横排。
+
+## 2026-06-04 Recipe selector 与 JEI 说明同源
+
+- 1.7.10 对照：
+  - 旧 recipe selector 顺序来自 `GenericRecipes.recipeOrderedList`。
+  - 旧配方说明来源于 `GenericRecipe#print()` 风格的库层 recipe 数据，不是每台 GUI 单独硬写。
+- 本批现代接入：
+  - `AssemblyRecipeSelectorScreen` 与 `ChemicalPlantRecipeSelectorScreen` 的 hover 说明改为直接渲染 `GenericMachineRecipe#getDisplayLines()`。
+  - 选择页的 recipe 列表继续通过 `GenericMachineRecipeRuntime.recipes(...)` 获取，因此自动继承 `source_order` 排序。
+  - JEI category 使用同一个 `getDisplayLines()`，保证选择页和 JEI 对 duration、consumption、输入、输出、pool/auto-switch 的描述同源。
+- 迁移边界：
+  - GUI 层不解析 legacy template，也不扫描 datapack JSON；模板导入、缺失映射和 skipped 诊断归 `recipes-common-loader`。
+
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- 新增 `GUIElements` 作为 1.7.10 GUI helper，包含平滑 gauge、recipe hover tooltip、fluid-colored tooltip 等绘制入口。
+- `GUIMachineAssemblyMachine`、`GUIMachineChemicalPlant`、`GUIScreenRecipeSelector` 的配方 hover 从原版 `func_146283_a` 改为 `GUIElements.drawHoveringTextRecipe(...)`，现代 GUI/JEI 同源说明应保留 recipe tooltip 的橙黄边框语义。
+- `FluidTank#renderInfo` 改为 `GUIElements.drawHoveringTextFluid(...)`，现代 fluid tooltip 不应只复用普通 item tooltip 样式。
+- 新增 `GUIBlastFurnace` 与 `GUIScreenRadioAUTOCAL`，后续机器 GUI 迁移需要单独记录 blast furnace 燃料/流体/进度面板，以及 AUTOCAL 文件上传/文档按钮和 NBT control 包交互。

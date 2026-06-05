@@ -1,0 +1,37 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/copper"
+      },
+      "legacy_ore": "plateCopper"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm:motor"
+      }
+    }
+  ],
+  "internal_name": "ass.shredder",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:machine_shredder"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 70
+}

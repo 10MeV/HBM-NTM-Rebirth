@@ -1458,6 +1458,14 @@ Verification:
 
 - 2026-05-24 ran `.\gradlew.bat compileJava processResources --no-daemon`: passed.
 
+## 2026-06-04 New 1.7.10 Source Diff Note
+
+Comparison source: old snapshot under `源码包/old-code/Hbm-s-Nuclear-Tech-GIT-master` versus new upstream snapshot `1.0.27 BETA (5714)`.
+
+- `TileEntityRBMKRod` meltdown threshold check changes from hull heat `>= 150` to `>= 1500`, which is a functional safety/radiation-adjacent behavior change for RBMK fuel rods.
+- `RBMKRod#breakBlock` now guards the meltdown/drop side effect with `!world.isRemote`, preventing client-side break handling from running the rod meltdown path.
+- Advanced Alloy material/block/item radiation or hazard entries should be re-audited against the 5714 material removal, because `block_advanced_alloy`, `ingot_advanced_alloy`, `powder_advanced_alloy`, and `plate_advanced_alloy` are no longer registered as normal source items.
+
 ## 2026-06-04 Nuclear Fallout Library Boundary Re-audit
 
 Legacy source re-checked:

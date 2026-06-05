@@ -18,6 +18,7 @@ public final class ModSounds {
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, HbmNtm.MOD_ID);
 
     public static final RegistryObject<SoundEvent> BLOCK_PRESS_OPERATE = register("block.press_operate");
+    public static final RegistryObject<SoundEvent> BLOCK_MOTOR = register("block.motor");
     public static final RegistryObject<SoundEvent> BLOCK_ASSEMBLER_OPERATE = register("block.assembler_operate");
     public static final RegistryObject<SoundEvent> BLOCK_ASSEMBLER_STRIKE = register("block.assembler_strike");
     public static final RegistryObject<SoundEvent> BLOCK_ASSEMBLER_START = register("block.assembler_start");

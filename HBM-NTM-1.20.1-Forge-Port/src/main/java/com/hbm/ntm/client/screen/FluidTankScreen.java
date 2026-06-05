@@ -1,7 +1,9 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.blockentity.FluidBarrelBlockEntity;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
+import com.hbm.ntm.blockentity.LegacyBigTankBlockEntity;
 import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.network.ModMessages;
 import net.minecraft.ChatFormatting;
@@ -15,7 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/storage/gui_tank.png");
+    private static final ResourceLocation TANK_TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/storage/gui_tank.png");
+    private static final ResourceLocation BARREL_TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/storage/gui_barrel.png");
 
     public FluidTankScreen(FluidTankMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -26,8 +31,9 @@ public class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        graphics.blit(TEXTURE, leftPos + 151, topPos + 34, 176, menu.getMode() * 18, 18, 18);
+        ResourceLocation texture = backgroundTexture();
+        graphics.blit(texture, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        graphics.blit(texture, leftPos + 151, topPos + 34, 176, menu.getMode() * 18, 18, 18);
 
         LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 71, topPos + 69,
                 34, 52, menu.getTankData());
@@ -72,6 +78,13 @@ public class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
             tooltip.add(Component.translatable("container.fluidtank.burning").withStyle(ChatFormatting.RED));
         }
         return tooltip;
+    }
+
+    private ResourceLocation backgroundTexture() {
+        return menu.getBlockEntity() instanceof FluidBarrelBlockEntity
+                || menu.getBlockEntity() instanceof LegacyBigTankBlockEntity
+                ? BARREL_TEXTURE
+                : TANK_TEXTURE;
     }
 
     private static String modeName(int mode) {

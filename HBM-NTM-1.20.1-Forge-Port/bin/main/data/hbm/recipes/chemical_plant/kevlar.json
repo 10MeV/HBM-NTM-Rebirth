@@ -1,0 +1,30 @@
+{
+  "type": "hbm:chemical_plant",
+  "duration": 60,
+  "input_fluids": [
+    {
+      "amount": 200,
+      "fluid": "hbm:aromatics"
+    },
+    {
+      "amount": 100,
+      "fluid": "hbm:nitric_acid"
+    },
+    {
+      "amount": 100,
+      "fluid": "hbm:chlorine"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.kevlar",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm:plate_kevlar"
+    }
+  ],
+  "pools": [],
+  "power": 300,
+  "source_order": 38
+}

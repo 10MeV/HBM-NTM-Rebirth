@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm:models/block/machines/bat9000.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm:block/machines/bat9000",
+    "default": "hbm:block/machines/bat9000",
+    "texture0": "hbm:block/machines/bat9000"
+  }
+}

@@ -3,7 +3,8 @@ package com.hbm.ntm.client.screen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
-import net.minecraft.client.Minecraft;
+import com.hbm.ntm.registry.ModItems;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -12,11 +13,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AssemblyMachineScreen extends AbstractContainerScreen<AssemblyMachineMenu> {
     private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/processing/gui_assembler.png");
+    private static final int[] INPUT_MENU_SLOTS = new int[] { 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
     public AssemblyMachineScreen(AssemblyMachineMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -43,7 +44,7 @@ public class AssemblyMachineScreen extends AbstractContainerScreen<AssemblyMachi
         LegacyFluidGuiRenderer.renderHorizontalTank(graphics, leftPos + 80, topPos + 115,
                 52, 16, menu.getOutputTankData());
         GenericMachineRecipe recipe = menu.getBlockEntity().getSelectedRecipeDefinition();
-        if (menu.getBlockEntity().canProcessSelectedRecipe()) {
+        if (menu.getBlockEntity().isProcessing()) {
             graphics.blit(TEXTURE, leftPos + 51, topPos + 121, 195, 0, 3, 6);
             graphics.blit(TEXTURE, leftPos + 56, topPos + 121, 195, 0, 3, 6);
         } else if (recipe != null) {
@@ -53,6 +54,8 @@ public class AssemblyMachineScreen extends AbstractContainerScreen<AssemblyMachi
             }
         }
         graphics.renderItem(recipeIcon(recipe), leftPos + 8, topPos + 126);
+        LegacyRecipeGhostRenderer.renderItemInputGhosts(graphics, minecraft, menu, TEXTURE, leftPos, topPos,
+                recipe, INPUT_MENU_SLOTS);
     }
 
     @Override
@@ -88,15 +91,11 @@ public class AssemblyMachineScreen extends AbstractContainerScreen<AssemblyMachi
 
     private List<Component> recipeTooltip() {
         GenericMachineRecipe recipe = menu.getBlockEntity().getSelectedRecipeDefinition();
-        List<Component> tooltip = new ArrayList<>();
         if (recipe == null) {
-            tooltip.add(Component.literal("Set recipe"));
-        } else {
-            tooltip.add(Component.literal(recipe.getInternalName()));
-            tooltip.add(Component.literal("Power: " + recipe.getPower() + " HE/t"));
-            tooltip.add(Component.literal("Duration: " + recipe.getDuration() + " ticks"));
+            return List.of(Component.translatableWithFallback("gui.recipe.setRecipe", "Set recipe")
+                    .withStyle(ChatFormatting.YELLOW));
         }
-        return tooltip;
+        return recipe.getDisplayLines();
     }
 
     private static List<FormattedCharSequence> splitTooltip(List<Component> tooltip) {
@@ -104,6 +103,6 @@ public class AssemblyMachineScreen extends AbstractContainerScreen<AssemblyMachi
     }
 
     private static ItemStack recipeIcon(GenericMachineRecipe recipe) {
-        return recipe == null ? ItemStack.EMPTY : recipe.getResultItem(Minecraft.getInstance().level.registryAccess());
+        return recipe == null ? new ItemStack(ModItems.TEMPLATE_FOLDER.get()) : recipe.getIcon();
     }
 }

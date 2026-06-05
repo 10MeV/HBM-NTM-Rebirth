@@ -1,8 +1,10 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.menu.AssemblyFactoryMenu;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
 import com.hbm.ntm.menu.BasicMachineMenu;
+import com.hbm.ntm.menu.ChemicalFactoryMenu;
 import com.hbm.ntm.menu.ChemicalPlantMenu;
 import com.hbm.ntm.menu.CompressorMenu;
 import com.hbm.ntm.menu.CustomNukeMenu;
@@ -31,6 +33,12 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<ChemicalPlantMenu>> CHEMICAL_PLANT =
             MENUS.register("chemical_plant", () -> IForgeMenuType.create(ChemicalPlantMenu::new));
+
+    public static final RegistryObject<MenuType<AssemblyFactoryMenu>> ASSEMBLY_FACTORY =
+            MENUS.register("assembly_factory", () -> IForgeMenuType.create(AssemblyFactoryMenu::new));
+
+    public static final RegistryObject<MenuType<ChemicalFactoryMenu>> CHEMICAL_FACTORY =
+            MENUS.register("chemical_factory", () -> IForgeMenuType.create(ChemicalFactoryMenu::new));
 
     public static final RegistryObject<MenuType<CompressorMenu>> COMPRESSOR =
             MENUS.register("compressor", () -> IForgeMenuType.create(CompressorMenu::new));

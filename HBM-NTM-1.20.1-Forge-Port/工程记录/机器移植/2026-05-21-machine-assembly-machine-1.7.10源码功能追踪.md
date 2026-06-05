@@ -141,3 +141,40 @@
   - 存档重载后 dummy 仍能定位 core。
   - BER 能显示 Base/Ring/双臂，且无缺失模型紫黑。
   - 上方第 3 格放置方块时 Frame 显示。
+
+## 2026-06-04 新版源码差异补记
+
+对比旧快照与新版 5714 源码：
+
+- `AssemblyMachineRecipes` 移除 `ass.platealloy`，且多处配方把 `ALLOY` 输入改为 copper、steel、dura、gold、mingrade、titanium 等新版材料路径；现代组装机配方导入应以 5714 为准重新审计 Advanced Alloy 相关 skipped/missing。
+- 新增 `enable528` 关闭时的芯片/原子钟组装机配方：`ass.chip`、`ass.chipBismoid`、`ass.chipQuantum`、`ass.atomicClock` 及若干 alt circuit 配方。
+- `ass.partlith/partberyl/partcoal/partcop/partplut` 加入 `autoswitch.cyclotron` group，现代 recipe selector 的 group/auto-switch 显示需要保留该分组。
+- `GUIMachineAssemblyMachine` 的 recipe hover 改为 `GUIElements.drawHoveringTextRecipe(...)`；现代 GUI 已同源化 display lines，但后续样式对齐时应补旧 recipe tooltip 边框语义。
+
+## 2026-06-05 5714 已迁组装机配方对齐
+
+- 已在现代 `HbmRecipeProvider` 中删除 `ass.platealloy`，不再生成 Advanced Alloy plate 的组装机配方。
+- 已将 `ass.platemixed` 输入从 `plateAdvancedAlloy x2` 改为 `plateCopper x2`，保持 `neutron_reflector x1 + plateSaturnite x1 -> plate_mixed x4` 不变。
+- 已同步移除现代注册表中的 Advanced Alloy 普通 ingot/plate/coil/block 暴露；后续新增组装机配方时不得再把 `OreDictManager.ALLOY` 旧材料名作为普通材料线补回。
+
+## 2026-06-05 selector/GUI ghost/输出槽运行时勘误
+
+- 旧 `GUIScreenRecipeSelector` 关闭时发送 `NBTControlPacket`，服务端不校验当前 container 类型；现代 selector 服务端接收条件已移除额外 `player.containerMenu instanceof AssemblyMachineMenu`，保留距离、BE、selector tag、蓝图池与 recipe 合法性。
+- 旧 `GUIMachineAssemblyMachine` 的半透明输入物品只在输入槽为空时渲染提示；它本身不负责锁槽，但提示位置与真实验证槽位一致。
+- 旧 GUI 手动放入也会锁槽：`ContainerMachineAssemblyMachine` 的机器槽使用 `ContainerBase#addSlots(...)` / `SlotNonRetarded`，`SlotNonRetarded#isItemValid` 调用 `inventory.isItemValidForSlot(this.slotNumber, stack)`；装配机槽位按机器 inventory 0..16 顺序加入 container，因此 `slotNumber` 与机器 slot id 对齐。`TileEntityMachineAssemblyMachine#isItemValidForSlot` 再委托 `ModuleMachineBase#isItemValid`，要求第 `i` 个 input item 只能进入 `inputSlots[i]`，`autoSwitchGroup` 只允许第一个输入槽接受同组 recipe 的第一个输入。
+- 现代 GUI 继续保持上述锁槽语义：`SlotItemHandler#mayPlace` 走机器 `ItemStackHandler#isItemValid`，并且 `HbmInventoryMenuHelper#moveMachineStack` 的玩家背包 shift-click 迁移已改成旧 `InventoryUtil.mergeItemStack` 语义，合并已有堆时也会先检查目标 slot 的 `mayPlace`，避免快捷转移绕过 recipe slot 验证。
+- 旧 `ModuleMachineBase#canFitOutput` 直接读写输出槽，不走 `isItemValidForSlot`。现代通用 runtime 已改为直接检查/写入输出槽，避免输出槽拒绝手动插入时把机器自身产出也错误挡掉。
+
+## 2026-06-05 recipe icon 与 ghost 渲染勘误
+
+- 旧 `RenderAssemblyMachine` 的世界内 recipe icon 不是独立世界坐标 GUI 图标；它在组装机 TESR 主矩阵内继续执行：
+  - 机器矩阵：`translate(x + 0.5, y, z + 0.5)` -> `rotateY(90)` -> metadata facing 旋转。
+  - 图标矩阵：`rotateY(90)` -> `translate(0, 1.0625, 0)`。
+  - 方块 item：3D 方块下移 `0.0625`；非 3D 方块下移 `0.125` 并缩放 `0.5`。
+  - 非方块 item：`rotateX(-90)` 后下移 `0.25`，再统一缩放 `1.25`。
+  - 渲染路径使用 `EntityItem`，`hoverStart = 0`，并临时打开 `RenderItem.renderInFrame`。
+- 现代 `AssemblyMachineRenderer` 已把 recipe icon 渲染移回机器局部矩阵中，并按上述分支应用姿态；方块 item 的 3D 判断改走 `BakedModel#isGui3d()`，现代 item 渲染继续使用最接近旧 `renderInFrame` 的 `ItemDisplayContext.FIXED`。
+- 旧 `GUIMachineAssemblyMachine` 的输入 ghost 是两阶段渲染：
+  - 第一阶段对所有空输入槽调用 `renderItem(..., 10F)`，不渲染数量/耐久 overlay。
+  - 第二阶段重新绑定 GUI 贴图，`alpha = 0.5`、`zLevel = 300`，用槽位自身坐标作为贴图源覆盖 `16x16` 槽位区域。
+- 现代 `LegacyRecipeGhostRenderer` 已改为收集空槽后两阶段渲染，并移除 ghost 物品的 `renderItemDecorations`，因此配方需求物品仍只是视觉提示，不负责锁定输入槽，也不把需求数量画成真实物品数量；真实锁槽由 menu slot/handler 校验完成。

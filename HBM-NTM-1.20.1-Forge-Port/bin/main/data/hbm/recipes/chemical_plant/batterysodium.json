@@ -30,5 +30,6 @@
     }
   ],
   "pools": [],
-  "power": 10000
+  "power": 10000,
+  "source_order": 28
 }

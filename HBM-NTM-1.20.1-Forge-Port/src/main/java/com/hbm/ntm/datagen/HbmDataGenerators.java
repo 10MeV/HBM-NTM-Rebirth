@@ -27,11 +27,20 @@ public final class HbmDataGenerators {
         generator.addProvider(event.includeServer(), new HbmItemTagsProvider(output, event.getLookupProvider(), blockTagsProvider.contentsGetter(), existingFileHelper));
         generator.addProvider(event.includeServer(), new HbmFluidTagsProvider(output, event.getLookupProvider(), HbmNtm.MOD_ID, existingFileHelper));
         generator.addProvider(event.includeServer(), new HbmRecipeProvider(output));
+        generator.addProvider(event.includeServer(), new LegacyGenericRecipeImportProvider(output, projectRoot()));
+        generator.addProvider(event.includeServer(), new LegacyJavaRecipeCoverageProvider(output, projectRoot()));
         generator.addProvider(event.includeServer(), (DataProvider.Factory<LootTableProvider>) lootOutput -> new LootTableProvider(
                 lootOutput,
                 Collections.emptySet(),
                 List.of(new LootTableProvider.SubProviderEntry(HbmBlockLootProvider::new, LootContextParamSets.BLOCK))
         ));
+    }
+
+    private static java.nio.file.Path projectRoot() {
+        java.nio.file.Path current = java.nio.file.Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
+        return "run-data".equals(current.getFileName().toString()) && current.getParent() != null
+                ? current.getParent()
+                : current;
     }
 
     private HbmDataGenerators() {

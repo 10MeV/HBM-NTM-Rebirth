@@ -1,0 +1,25 @@
+{
+  "type": "hbm:chemical_plant",
+  "custom_localization": true,
+  "duration": 40,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm:coalcreosote"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.coallube",
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm:lubricant"
+    }
+  ],
+  "output_items": [],
+  "pools": [
+    "alt..lube"
+  ],
+  "power": 100,
+  "source_order": 14
+}

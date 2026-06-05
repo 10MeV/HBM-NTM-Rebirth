@@ -1,0 +1,23 @@
+{
+  "type": "hbm:chemical_plant",
+  "custom_localization": true,
+  "duration": 300,
+  "input_fluids": [
+    {
+      "amount": 16000,
+      "fluid": "hbm:air"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.xenon",
+  "output_fluids": [
+    {
+      "amount": 50,
+      "fluid": "hbm:xenon"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 1000,
+  "source_order": 3
+}

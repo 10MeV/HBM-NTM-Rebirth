@@ -37,7 +37,6 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.ingot_aluminium", "Aluminium Ingot");
         add("item.hbm.ingot_beryllium", "Beryllium Ingot");
         add("item.hbm.ingot_schrabidium", "Schrabidium Ingot");
-        add("item.hbm.ingot_advanced_alloy", "Advanced Alloy Ingot");
         add("item.hbm.plate_steel", "Steel Plate");
         add("item.hbm.plate_iron", "Iron Plate");
         add("item.hbm.plate_copper", "Copper Plate");
@@ -143,6 +142,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm.fluid_barrel_infinite", "Infinite Fluid Barrel");
         add("item.hbm.fluid_pack_empty", "Empty Fluid Pack");
         add("item.hbm.fluid_pack_full", "Fluid Pack");
+        add("item.hbm.fluid_icon", "Fluid");
         add("item.hbm.biomass", "Biomass");
         add("item.hbm.biomass_compressed", "Compressed Biomass");
         add("item.hbm.disperser_canister_empty", "Empty Disperser Canister");
@@ -230,6 +230,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("tooltip.hbm.damage.exact.mudpoisoning", "Mud poisoning");
         add("block.hbm.machine_press", "Burner Press");
         add("subtitles.hbm.block.press_operate", "Burner Press operates");
+        add("subtitles.hbm.block.motor", "Motor hums");
         add("subtitles.hbm.block.assembler_operate", "Assembly machine operates");
         add("subtitles.hbm.block.assembler_strike", "Assembly machine strikes");
         add("subtitles.hbm.block.assembler_start", "Assembly machine starts");
@@ -330,11 +331,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm.machine_pyrooven", "Pyrolysis Oven");
         add("block.hbm.machine_solidifier", "Industrial Solidification Machine");
         add("block.hbm.machine_compressor", "Compressor");
-        add("block.hbm.machine_bigasstank", "Big Industrial Tank");
-        add("block.hbm.machine_fluidtank", "Fluid Tank");
+        add("block.hbm.machine_bat9000", "Big-Ass Tank 9000 (LEGACY)");
+        add("block.hbm.machine_bigasstank", "Big-Ass Tank");
+        add("block.hbm.machine_fluidtank", "Tank");
         add("block.hbm.barrel_plastic", "Safe Barrel");
         add("block.hbm.barrel_corroded", "Corroded Barrel");
-        add("block.hbm.barrel_iron", "Iron Barrel");
         add("block.hbm.barrel_steel", "Steel Barrel");
         add("block.hbm.barrel_tcalloy", "Technetium Steel Barrel");
         add("block.hbm.barrel_antimatter", "Magnetic Antimatter Container");
@@ -383,8 +384,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.hbm.battery.priority.recommended", "Recommended: Low");
         HbmFluidLangEntries.addEnglish(this::add);
         add("container.fluidtank", "Fluid Tank");
+        add("container.bat9000", "Big-Ass Tank 9000");
         add("container.barrel", "Fluid Barrel");
-        add("container.bigAssTank", "Big Industrial Tank");
+        add("container.bigAssTank", "Big-Ass Tank");
         add("container.gasFlare", "Gas Flare");
         add("container.fluidtank.mode", "Mode");
         add("container.fluidtank.mode.input", "Input");
@@ -394,7 +396,6 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.fluidtank.damaged", "Damaged");
         add("container.fluidtank.burning", "Burning");
         add("barrel.tooltip.capacity.6000", "Capacity: 6,000mB");
-        add("barrel.tooltip.capacity.8000", "Capacity: 8,000mB");
         add("barrel.tooltip.capacity.12000", "Capacity: 12,000mB");
         add("barrel.tooltip.capacity.16000", "Capacity: 16,000mB");
         add("barrel.tooltip.capacity.24000", "Capacity: 24,000mB");
@@ -405,7 +406,6 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("barrel.tooltip.can_corrosive", "Can store corrosive fluids");
         add("barrel.tooltip.can_high_corrosive", "Can store highly corrosive fluids");
         add("barrel.tooltip.can_antimatter", "Can store antimatter");
-        add("barrel.tooltip.no_corrosive_properly", "Cannot store corrosive fluids properly");
         add("barrel.tooltip.no_high_corrosive_properly", "Cannot store highly corrosive fluids properly");
         add("barrel.tooltip.leaky", "Leaky");
         add("block.hbm.gas_meltdown", "Meltdown Gas");
@@ -625,6 +625,9 @@ public class HbmLanguageProvider extends LanguageProvider {
     }
 
     private static boolean hasExplicitControlName(String id) {
+        if (id.startsWith("upgrade_")) {
+            return true;
+        }
         return switch (id) {
             case "battery_potato",
                  "battery_creative",
@@ -656,6 +659,7 @@ public class HbmLanguageProvider extends LanguageProvider {
                  "singularity_spark",
                  "black_hole",
                  "particle_digamma",
+                 "blueprints",
                  "pellet_antimatter",
                  "catalytic_converter",
                  "fuel_additive_antiknock",

@@ -19,10 +19,22 @@
     "hbm:powder_calcium",
     "hbm:powder_cadmium",
     "hbm:powder_bismuth",
+    "hbm:powder_beryllium",
+    "hbm:powder_gold",
+    "hbm:powder_niobium",
+    "hbm:powder_asbestos",
+    "hbm:powder_ferrouranium",
     "hbm:powder_caesium",
     "hbm:powder_coltan_ore",
     "hbm:powder_coal",
     "hbm:powder_lignite",
-    "hbm:powder_limestone"
+    "hbm:powder_quartz",
+    "hbm:powder_lapis",
+    "hbm:powder_diamond",
+    "hbm:powder_emerald",
+    "hbm:powder_limestone",
+    "hbm:sulfur",
+    "hbm:niter",
+    "hbm:fluorite"
   ]
 }

@@ -272,6 +272,8 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel DELIVERY_DRONE = legacyModel("drone");
 
     public static final ResourceLocation FLUIDTANK_INNER_TEXTURE = machineTexture("fluidtank_inner");
+    public static final ResourceLocation LEGACY_FLUIDTANK_INNER_TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/tank/tank_inner.png");
     public static final ResourceLocation TURBOFAN_BACK_TEXTURE = machineTexture("turbofan_back");
     public static final ResourceLocation TURBOFAN_AFTERBURNER_TEXTURE = machineTexture("turbofan_afterburner");
     public static final ResourceLocation TURBOFAN_BLADES_TEXTURE = machineTexture("turbofan_blades");
@@ -291,7 +293,7 @@ public final class ObjMachineModels {
     public static final ResourceLocation CONVEYOR_PRESS_BELT_TEXTURE = machineTexture("conveyor_press_belt");
     public static final ResourceLocation MICROWAVE_TEXTURE = machineTexture("microwave");
     public static final ResourceLocation PISTON_INSERTER_TEXTURE = machineTexture("piston_inserter");
-    public static final ResourceLocation TANK_TEXTURE = machineTexture("tank");
+    public static final ResourceLocation LEGACY_FLUIDTANK_FRAME_TEXTURE = machineTexture("tank");
     public static final ResourceLocation UF6_TANK_TEXTURE = machineTexture("uf6_tank");
     public static final ResourceLocation PUF6_TANK_TEXTURE = machineTexture("puf6_tank");
     public static final ResourceLocation IGEN_TEXTURE = machineTexture("igen");

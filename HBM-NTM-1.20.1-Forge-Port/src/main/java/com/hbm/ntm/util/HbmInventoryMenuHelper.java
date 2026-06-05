@@ -1,5 +1,6 @@
 package com.hbm.ntm.util;
 
+import com.hbm.ntm.energy.HbmBatteryItem;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -8,6 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
@@ -72,7 +74,7 @@ public final class HbmInventoryMenuHelper {
             if (!mover.move(stack, playerInventoryStart, playerSlotEnd, true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (!moveToAnyRange(mover, stack, machineInsertionRanges)) {
+        } else if (!moveToAnyRange(slots, stack, machineInsertionRanges)) {
             return ItemStack.EMPTY;
         }
 
@@ -82,6 +84,15 @@ public final class HbmInventoryMenuHelper {
             slot.setChanged();
         }
         return result;
+    }
+
+    public static boolean moveStackToAnyRange(java.util.List<Slot> slots, ItemStack stack, int... ranges) {
+        return moveToAnyRange(slots, stack, ranges);
+    }
+
+    public static boolean isBatteryLike(ItemStack stack) {
+        return !stack.isEmpty() && (stack.getItem() instanceof HbmBatteryItem
+                || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent());
     }
 
     public static CompoundTag saveLegacyItems(ItemStackHandler items) {
@@ -143,16 +154,65 @@ public final class HbmInventoryMenuHelper {
         return drops;
     }
 
-    private static boolean moveToAnyRange(StackMover mover, ItemStack stack, int... ranges) {
+    private static boolean moveToAnyRange(java.util.List<Slot> slots, ItemStack stack, int... ranges) {
         if (ranges == null || ranges.length % 2 != 0) {
             return false;
         }
+        boolean moved = false;
         for (int i = 0; i < ranges.length; i += 2) {
-            if (mover.move(stack, ranges[i], ranges[i + 1], false)) {
-                return true;
+            moved |= legacyMergeItemStack(slots, stack, ranges[i], ranges[i + 1], false);
+            if (stack.isEmpty()) {
+                break;
             }
         }
-        return false;
+        return moved;
+    }
+
+    private static boolean legacyMergeItemStack(java.util.List<Slot> slots, ItemStack stack, int start, int end,
+            boolean reverse) {
+        boolean moved = false;
+        if (stack.isStackable()) {
+            int index = reverse ? end - 1 : start;
+            while (!stack.isEmpty() && inRange(index, start, end, reverse)) {
+                Slot slot = slots.get(index);
+                ItemStack current = slot.getItem();
+                if (!current.isEmpty() && ItemStack.isSameItemSameTags(stack, current)) {
+                    int max = Math.min(slot.getMaxStackSize(stack), stack.getMaxStackSize());
+                    int transfer = Math.min(stack.getCount(), max - current.getCount());
+                    if (transfer > 0 && slot.mayPlace(stack.copyWithCount(transfer))) {
+                        stack.shrink(transfer);
+                        current.grow(transfer);
+                        slot.setByPlayer(current);
+                        slot.setChanged();
+                        moved = true;
+                    }
+                }
+                index += reverse ? -1 : 1;
+            }
+        }
+
+        if (!stack.isEmpty()) {
+            int index = reverse ? end - 1 : start;
+            while (!stack.isEmpty() && inRange(index, start, end, reverse)) {
+                Slot slot = slots.get(index);
+                ItemStack current = slot.getItem();
+                if (current.isEmpty()) {
+                    int transfer = Math.min(stack.getCount(),
+                            Math.min(slot.getMaxStackSize(stack), stack.getMaxStackSize()));
+                    if (transfer > 0 && slot.mayPlace(stack.copyWithCount(transfer))) {
+                        slot.setByPlayer(stack.split(transfer));
+                        slot.setChanged();
+                        moved = true;
+                    }
+                }
+                index += reverse ? -1 : 1;
+            }
+        }
+        return moved;
+    }
+
+    private static boolean inRange(int index, int start, int end, boolean reverse) {
+        return reverse ? index >= start : index < end;
     }
 
     @FunctionalInterface

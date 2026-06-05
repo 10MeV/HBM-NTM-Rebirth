@@ -52,6 +52,11 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         renderArm(poseStack, buffer, modelLight, packedOverlay, assembler.getArm(1).getPositions(partialTick), true);
         poseStack.popPose();
 
+        if (LegacyRecipeIconRenderer.shouldRender(assembler)) {
+            LegacyRecipeIconRenderer.renderInLegacyMachineSpace(assembler.getSelectedRecipeDefinition(),
+                    assembler.getLevel(), poseStack, buffer, packedLight);
+        }
+
         poseStack.popPose();
     }
 

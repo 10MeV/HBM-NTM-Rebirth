@@ -18,6 +18,15 @@ public final class LegacyIsbrhObjRenderer {
         model.renderWithSprite(sprite(spriteTexture), context, yawRadians, pitchRadians, rollRadians);
     }
 
+    public static void renderWithTextureAdditive(LegacyWavefrontModel model, ResourceLocation spriteTexture, ObjRenderContext context) {
+        renderWithTextureAdditive(model, spriteTexture, context, 0.0F, 0.0F, 0.0F);
+    }
+
+    public static void renderWithTextureAdditive(LegacyWavefrontModel model, ResourceLocation spriteTexture, ObjRenderContext context,
+            float yawRadians, float pitchRadians, float rollRadians) {
+        renderWithTexture(model, spriteTexture, context.withAdditiveTranslucency(), yawRadians, pitchRadians, rollRadians);
+    }
+
     public static void renderPartWithTexture(LegacyWavefrontModel model, String partName, ResourceLocation spriteTexture,
             ObjRenderContext context) {
         renderPartWithTexture(model, partName, spriteTexture, context, 0.0F, 0.0F, 0.0F);
@@ -26,6 +35,16 @@ public final class LegacyIsbrhObjRenderer {
     public static void renderPartWithTexture(LegacyWavefrontModel model, String partName, ResourceLocation spriteTexture,
             ObjRenderContext context, float yawRadians, float pitchRadians, float rollRadians) {
         model.renderPartWithSprite(partName, sprite(spriteTexture), context, yawRadians, pitchRadians, rollRadians);
+    }
+
+    public static void renderPartWithTextureAdditive(LegacyWavefrontModel model, String partName, ResourceLocation spriteTexture,
+            ObjRenderContext context) {
+        renderPartWithTextureAdditive(model, partName, spriteTexture, context, 0.0F, 0.0F, 0.0F);
+    }
+
+    public static void renderPartWithTextureAdditive(LegacyWavefrontModel model, String partName, ResourceLocation spriteTexture,
+            ObjRenderContext context, float yawRadians, float pitchRadians, float rollRadians) {
+        renderPartWithTexture(model, partName, spriteTexture, context.withAdditiveTranslucency(), yawRadians, pitchRadians, rollRadians);
     }
 
     public static TextureAtlasSprite sprite(ResourceLocation textureLocation) {

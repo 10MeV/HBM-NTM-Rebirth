@@ -22,6 +22,7 @@ public class HbmFluidTagsProvider extends FluidTagsProvider {
     @Override
     protected void addTags(HolderLookup.Provider provider) {
         addForgeTag("water", HbmFluids.WATER);
+        addForgeTag("air", HbmFluids.AIR, HbmFluids.AIRBLAST);
         addForgeTag("lava", HbmFluids.LAVA);
         addForgeTag("steam", HbmFluids.STEAM, HbmFluids.HOTSTEAM, HbmFluids.SUPERHOTSTEAM, HbmFluids.ULTRAHOTSTEAM);
         addForgeTag("hot_steam", HbmFluids.HOTSTEAM);
@@ -44,6 +45,8 @@ public class HbmFluidTagsProvider extends FluidTagsProvider {
         addForgeTag("oxygen", HbmFluids.OXYGEN);
         addForgeTag("chlorine", HbmFluids.CHLORINE);
         addForgeTag("carbon_dioxide", HbmFluids.CARBONDIOXIDE);
+        addForgeTag("flue_gas", HbmFluids.FLUE);
+        addForgeTag("flue", HbmFluids.FLUE);
         addForgeTag("heavy_water", HbmFluids.HEAVYWATER, HbmFluids.HEAVYWATER_HOT);
         addForgeTag("ethanol", HbmFluids.ETHANOL);
         addForgeTag("biofuel", HbmFluids.BIOFUEL);

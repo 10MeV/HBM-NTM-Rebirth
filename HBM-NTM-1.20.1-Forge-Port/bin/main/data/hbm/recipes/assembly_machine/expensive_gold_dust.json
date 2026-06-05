@@ -1,0 +1,31 @@
+{
+  "type": "hbm:assembly_machine",
+  "duration": 600,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 64,
+      "ingredient": {
+        "tag": "forge:dusts/gold"
+      },
+      "legacy_ore": "dustGold"
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "tag": "forge:dusts/gold"
+      },
+      "legacy_ore": "dustGold"
+    }
+  ],
+  "internal_name": "ass.exgold",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm:item_expensive_gold_dust"
+    }
+  ],
+  "pools": [],
+  "power": 10000,
+  "source_order": 26
+}

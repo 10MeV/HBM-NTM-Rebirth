@@ -2,6 +2,8 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.item.ItemBlueprints;
+import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -11,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.SlotItemHandler;
@@ -144,12 +147,45 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index, MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START,
-                HOTBAR_END,
-                ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_START, ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_END + 1,
-                ChemicalPlantBlockEntity.SLOT_FLUID_INPUT_START, ChemicalPlantBlockEntity.SLOT_FLUID_INPUT_END + 1,
-                ChemicalPlantBlockEntity.SLOT_FLUID_OUTPUT_START, ChemicalPlantBlockEntity.SLOT_FLUID_OUTPUT_END + 1,
-                ChemicalPlantBlockEntity.SLOT_BATTERY, ChemicalPlantBlockEntity.SLOT_BATTERY + 1);
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        Slot slot = slots.get(index);
+        if (slot == null || !slot.hasItem()) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack stack = slot.getItem();
+        ItemStack original = stack.copy();
+        if (index < MACHINE_SLOT_COUNT) {
+            if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
+                return ItemStack.EMPTY;
+            }
+        } else if (!movePlayerStackToMachine(stack)) {
+            return ItemStack.EMPTY;
+        }
+        if (stack.isEmpty()) {
+            slot.set(ItemStack.EMPTY);
+        } else {
+            slot.setChanged();
+        }
+        return original;
+    }
+
+    private boolean movePlayerStackToMachine(ItemStack stack) {
+        if (stack.getItem() instanceof ItemBlueprints) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    ChemicalPlantBlockEntity.SLOT_BLUEPRINT, ChemicalPlantBlockEntity.SLOT_BLUEPRINT + 1);
+        }
+        if (stack.getItem() instanceof ItemMachineUpgrade) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    ChemicalPlantBlockEntity.SLOT_UPGRADE_START, ChemicalPlantBlockEntity.SLOT_UPGRADE_END + 1);
+        }
+        if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    ChemicalPlantBlockEntity.SLOT_BATTERY, ChemicalPlantBlockEntity.SLOT_BATTERY + 1);
+        }
+        return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_START, ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_END + 1);
     }
 
     private void addOutputSlot(int slot, int x, int y) {

@@ -1,0 +1,23 @@
+{
+  "type": "hbm:chemical_plant",
+  "custom_localization": true,
+  "duration": 40,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm:smear"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.reoil",
+  "output_fluids": [
+    {
+      "amount": 800,
+      "fluid": "hbm:reclaimed"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 100,
+  "source_order": 12
+}

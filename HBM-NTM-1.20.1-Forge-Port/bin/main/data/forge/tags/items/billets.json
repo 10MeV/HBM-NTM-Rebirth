@@ -27,6 +27,7 @@
     "hbm:billet_solinium",
     "hbm:billet_beryllium",
     "hbm:billet_bismuth",
+    "hbm:billet_silicon",
     "hbm:billet_zirconium"
   ]
 }

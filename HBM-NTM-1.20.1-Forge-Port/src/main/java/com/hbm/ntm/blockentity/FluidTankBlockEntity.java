@@ -15,6 +15,9 @@ import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.fluid.trait.CorrosiveFluidTrait;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
+import com.hbm.ntm.blockentity.RefineryBlockEntity.ExtinguishType;
+import com.hbm.ntm.energy.HbmEnergyReceiver;
+import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -31,6 +34,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -78,13 +82,14 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
             setChanged();
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(this::getExternalItemHandler);
 
     private int mode = MODE_INPUT;
     private boolean exploded;
     private boolean onFire;
     private int age;
     private int lastComparatorPower;
+    private Explosion lastExplosion;
 
     public FluidTankBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmFluidTank(HbmFluids.NONE, DEFAULT_TANK_CAPACITY));
@@ -165,6 +170,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         }
         FluidType type = tank.getTankType();
         if (type.isAntimatter()) {
+            explodeAntimatterContents();
             explodeTank();
             tank.setFill(0);
             return true;
@@ -213,6 +219,18 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         }
     }
 
+    protected void explodeAntimatterContents() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        new ExplosionVnt(level, worldPosition.getX() + 0.5D, worldPosition.getY() + 1.5D,
+                worldPosition.getZ() + 0.5D, 5.0F)
+                .makeAmat()
+                .setBlockAllocator(null)
+                .setBlockProcessor(null)
+                .explode();
+    }
+
     public void cycleMode() {
         setMode((mode + 1) % 4);
     }
@@ -246,6 +264,14 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         return items;
     }
 
+    protected IItemHandler getExternalItemHandler() {
+        return EmptyItemHandler.INSTANCE;
+    }
+
+    protected IItemHandler getTankContainerAutomationItemHandler() {
+        return new TankContainerAutomationItemHandler();
+    }
+
     public int getMode() {
         return mode;
     }
@@ -270,6 +296,10 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         return onFire;
     }
 
+    protected boolean hasDamageState() {
+        return true;
+    }
+
     public void repairTank() {
         if (!exploded) {
             return;
@@ -280,6 +310,38 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         onFluidContentsChanged();
         if (level != null) {
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        }
+    }
+
+    public boolean markExplosionHandled(Explosion explosion) {
+        if (lastExplosion == explosion) {
+            return false;
+        }
+        lastExplosion = explosion;
+        return true;
+    }
+
+    public boolean usesExternalExplosionDamageChain() {
+        return hasDamageState();
+    }
+
+    public void tryExtinguish(ExtinguishType type) {
+        if (!exploded || !onFire) {
+            return;
+        }
+        if (type == ExtinguishType.WATER) {
+            if (tank.getTankType().hasTrait(SimpleFluidTraits.Liquid.class) && level != null) {
+                level.explode(null, worldPosition.getX() + 0.5D, worldPosition.getY() + 1.5D,
+                        worldPosition.getZ() + 0.5D, 5.0F, Level.ExplosionInteraction.TNT);
+            } else {
+                onFire = false;
+                onFluidContentsChanged();
+            }
+            return;
+        }
+        if (type == ExtinguishType.FOAM || type == ExtinguishType.CO2) {
+            onFire = false;
+            onFluidContentsChanged();
         }
     }
 
@@ -343,6 +405,13 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    public HbmEnergyReceiver.ConnectionPriority getFluidPriority() {
+        return mode == MODE_BUFFER
+                ? HbmEnergyReceiver.ConnectionPriority.LOW
+                : HbmEnergyReceiver.ConnectionPriority.NORMAL;
+    }
+
+    @Override
     protected boolean shouldCreateFluidNode() {
         return !exploded && mode == MODE_BUFFER && !tank.isEmpty();
     }
@@ -386,7 +455,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public boolean canConnectFluid(FluidType type, Direction side) {
-        return !exploded && side != null && type != null && type == tank.getTankType()
+        return !exploded && side != null && type != null && type != HbmFluids.NONE
                 && (mode == MODE_INPUT || mode == MODE_BUFFER || mode == MODE_OUTPUT);
     }
 
@@ -455,21 +524,23 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public void writePersistentState(CompoundTag persistent) {
-        if (tank.getFill() == 0 && !exploded) {
+        if (tank.getFill() == 0 && (!hasDamageState() || !exploded)) {
             return;
         }
         tank.writeToNbt(persistent, "tank");
         persistent.putShort("mode", (short) mode);
-        persistent.putBoolean("hasExploded", exploded);
-        persistent.putBoolean("onFire", onFire);
+        if (hasDamageState()) {
+            persistent.putBoolean("hasExploded", exploded);
+            persistent.putBoolean("onFire", onFire);
+        }
     }
 
     @Override
     public void readPersistentState(CompoundTag persistent) {
         tank.readFromNbt(persistent, "tank");
         mode = Math.max(MODE_INPUT, Math.min(MODE_NONE, persistent.getShort("mode")));
-        exploded = persistent.getBoolean("hasExploded");
-        onFire = persistent.getBoolean("onFire");
+        exploded = hasDamageState() && persistent.getBoolean("hasExploded");
+        onFire = hasDamageState() && persistent.getBoolean("onFire");
         invalidateFluidHandlers();
         refreshFluidNodeState();
         setChanged();
@@ -509,6 +580,114 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         for (int slot = 0; slot < items.getSlots() && slot < other.items.getSlots(); slot++) {
             items.setStackInSlot(slot, other.items.getStackInSlot(slot).copy());
             other.items.setStackInSlot(slot, ItemStack.EMPTY);
+        }
+    }
+
+    private class TankContainerAutomationItemHandler implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return items.getSlots();
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return isAutomationSlot(slot) ? items.getStackInSlot(slot) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            if (stack.isEmpty() || !isItemValid(slot, stack)) {
+                return stack;
+            }
+            return items.insertItem(slot, stack, simulate);
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            if (slot != SLOT_LOAD_OUTPUT && slot != SLOT_UNLOAD_OUTPUT) {
+                return ItemStack.EMPTY;
+            }
+            return items.extractItem(slot, amount, simulate);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return isAutomationSlot(slot) ? items.getSlotLimit(slot) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            if (slot == SLOT_LOAD_INPUT) {
+                return wouldLoadFluid(stack);
+            }
+            if (slot == SLOT_UNLOAD_INPUT) {
+                return wouldUnloadFluid(stack);
+            }
+            return false;
+        }
+
+        private boolean isAutomationSlot(int slot) {
+            return slot == SLOT_LOAD_INPUT || slot == SLOT_LOAD_OUTPUT
+                    || slot == SLOT_UNLOAD_INPUT || slot == SLOT_UNLOAD_OUTPUT;
+        }
+
+        private boolean wouldLoadFluid(ItemStack stack) {
+            if (stack.isEmpty() || stack.getCount() <= 0) {
+                return false;
+            }
+            ItemStackHandlerPreview preview = new ItemStackHandlerPreview(SLOT_LOAD_INPUT, stack);
+            return HbmFluidItemTransfer.loadTankFromSlot(preview, SLOT_LOAD_INPUT, SLOT_LOAD_OUTPUT,
+                    tank, Integer.MAX_VALUE, true);
+        }
+
+        private boolean wouldUnloadFluid(ItemStack stack) {
+            if (stack.isEmpty() || stack.getCount() <= 0) {
+                return false;
+            }
+            ItemStackHandlerPreview preview = new ItemStackHandlerPreview(SLOT_UNLOAD_INPUT, stack);
+            return HbmFluidItemTransfer.unloadTankToSlot(preview, SLOT_UNLOAD_INPUT, SLOT_UNLOAD_OUTPUT,
+                    tank, Integer.MAX_VALUE, true);
+        }
+    }
+
+    private static class ItemStackHandlerPreview extends ItemStackHandler {
+        ItemStackHandlerPreview(int slot, ItemStack stack) {
+            super(6);
+            setStackInSlot(slot, stack.copy());
+        }
+    }
+
+    private enum EmptyItemHandler implements IItemHandler {
+        INSTANCE;
+
+        @Override
+        public int getSlots() {
+            return 0;
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            return stack;
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return false;
         }
     }
 }

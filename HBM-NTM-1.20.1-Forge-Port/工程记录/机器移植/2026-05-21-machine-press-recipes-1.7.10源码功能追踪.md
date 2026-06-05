@@ -70,3 +70,11 @@ This record covers the next small migration slice for the 1.7.10 burner press re
 - Original slice: run `.\gradlew.bat compileJava processResources --no-daemon`.
 - 2026-06-04 follow-up material/press batches: `.\gradlew.bat compileJava --no-daemon` and `.\gradlew.bat runData --no-daemon` passed.
 - 2026-06-04 gold `WIRE` code pass: `.\gradlew.bat compileJava --no-daemon` and `.\gradlew.bat compileJava --rerun-tasks --no-daemon` passed; `runData --rerun-tasks` reached Forge datagen startup but failed before providers with `fml.modloading.missingclasses`, so generated `press/wire_gold.json` is pending.
+
+## 2026-06-04 New 1.7.10 Source Diff Note
+
+Comparison source: old snapshot under `源码包/old-code/Hbm-s-Nuclear-Tech-GIT-master` versus new upstream snapshot `1.0.27 BETA (5714)`.
+
+- `PressRecipes` removes the `PLATE + ALLOY.ingot() -> plate_advanced_alloy` recipe. The modern press batch should no longer treat `plate_advanced_alloy` as a required 5714 press output.
+- `ModItems` removes the normal `ingot_advanced_alloy`, `plate_advanced_alloy`, `powder_advanced_alloy`, `coil_advanced_alloy`, `coil_advanced_torus`, and `blades_advanced_alloy` registrations; related press/tag outputs should be reclassified as legacy-only or removed from the 5714 coverage target.
+- Existing modern note above that added `hbm:ingot_advanced_alloy -> hbm:plate_advanced_alloy` now represents the older snapshot, not the current upstream target. Future coverage reports should mark this as superseded by 5714 unless the user explicitly wants backwards compatibility.
