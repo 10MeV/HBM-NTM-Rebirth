@@ -1,2 +1,0 @@
-﻿block,legacy_class,legacy_chunk_rad_per_update,legacy_item_hazard_rad,legacy_hazard_expr,modern_hazard_expr,modern_estimated_bridge_tick,status,legacy_modblocks_line,note
-ore_gneiss_gas,BlockOre,0.0,,,1.0F,0.1,modern_overemits_if_registered_as_radiating_block,1277,"1.7.10 normal BlockOre has item/block hazard, but no ChunkRadiationManager increment in updateTick."
