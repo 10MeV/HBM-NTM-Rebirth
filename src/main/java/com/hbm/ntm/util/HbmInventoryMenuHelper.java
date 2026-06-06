@@ -1,5 +1,6 @@
 package com.hbm.ntm.util;
 
+import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -9,6 +10,10 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
@@ -69,12 +74,40 @@ public final class HbmInventoryMenuHelper {
         addHotbar(sink, inventory, x, hotbarY);
     }
 
-    public static boolean stillValidBlockEntity(Player player, net.minecraft.world.level.block.entity.BlockEntity blockEntity,
-            double maxDistanceSqr) {
+    public static boolean stillValidBlockEntity(Player player, BlockEntity blockEntity, double maxDistanceSqr) {
         return !blockEntity.isRemoved() && player.distanceToSqr(
                 blockEntity.getBlockPos().getX() + 0.5D,
                 blockEntity.getBlockPos().getY() + 0.5D,
                 blockEntity.getBlockPos().getZ() + 0.5D) <= maxDistanceSqr;
+    }
+
+    public static boolean stillValidMultiblockMachine(Player player, BlockEntity blockEntity, double maxDistanceSqr) {
+        if (blockEntity.isRemoved()) {
+            return false;
+        }
+        BlockState state = blockEntity.getBlockState();
+        if (!(state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock machineBlock)) {
+            return stillValidBlockEntity(player, blockEntity, maxDistanceSqr);
+        }
+        AABB bounds = machineBlock.definition().renderBoundingBox(state, blockEntity.getBlockPos());
+        return distanceToSqr(bounds, player.position()) <= maxDistanceSqr;
+    }
+
+    private static double distanceToSqr(AABB bounds, Vec3 point) {
+        double dx = axisDistance(point.x, bounds.minX, bounds.maxX);
+        double dy = axisDistance(point.y, bounds.minY, bounds.maxY);
+        double dz = axisDistance(point.z, bounds.minZ, bounds.maxZ);
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    private static double axisDistance(double value, double min, double max) {
+        if (value < min) {
+            return min - value;
+        }
+        if (value > max) {
+            return value - max;
+        }
+        return 0.0D;
     }
 
     public static ItemStack moveMachineStack(java.util.List<Slot> slots, StackMover mover, int index, int machineSlotCount,

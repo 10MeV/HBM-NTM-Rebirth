@@ -132,7 +132,7 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 64.0D);
     }
 
     @Override

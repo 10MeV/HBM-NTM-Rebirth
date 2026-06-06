@@ -105,7 +105,7 @@ public class GasFlareMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 256.0D);
+        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 256.0D);
     }
 
     @Override

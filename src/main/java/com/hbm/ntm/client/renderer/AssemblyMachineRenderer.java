@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -14,8 +15,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMachineBlockEntity> {
     static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(
-            new ResourceLocation("hbm", "models/block/machines/assembly_machine.obj"),
-            new ResourceLocation("hbm", "textures/block/machines/assembly_machine.png"));
+            new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/assembly_machine.obj"),
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/assembly_machine.png"));
 
     public AssemblyMachineRenderer(BlockEntityRendererProvider.Context context) {
     }
