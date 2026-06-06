@@ -30,9 +30,9 @@ public class SingularityItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
         for (int line = 1; line <= tooltipLines; line++) {
-            tooltip.add(Component.translatable("item.hbm." + legacyName + ".desc." + line)
+            tooltip.add(Component.translatable("item.hbm_ntm_rebirth." + legacyName + ".desc." + line)
                     .withStyle(ChatFormatting.GRAY));
         }
-        tooltip.add(Component.translatable("item.hbm.trait.drop").withStyle(ChatFormatting.RED));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.trait.drop").withStyle(ChatFormatting.RED));
     }
 }

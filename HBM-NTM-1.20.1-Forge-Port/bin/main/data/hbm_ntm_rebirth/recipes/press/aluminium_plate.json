@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "stamp": "plate",
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:ingot_aluminium"
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:plate_aluminium"
+  }
+}

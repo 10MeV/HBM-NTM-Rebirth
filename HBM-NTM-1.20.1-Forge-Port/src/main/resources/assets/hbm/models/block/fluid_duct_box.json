@@ -1,7 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "hbm:block/boxduct_silver",
-    "particle": "hbm:block/boxduct_silver"
-  }
-}

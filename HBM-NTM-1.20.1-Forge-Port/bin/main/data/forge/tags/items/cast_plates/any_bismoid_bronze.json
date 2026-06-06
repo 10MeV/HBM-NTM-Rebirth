@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:plate_cast_bismuth_bronze",
-    "hbm:plate_cast_arsenic_bronze"
+    "hbm_ntm_rebirth:plate_cast_bismuth_bronze",
+    "hbm_ntm_rebirth:plate_cast_arsenic_bronze"
   ]
 }

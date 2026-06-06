@@ -1,0 +1,16 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/doors/silo_hatch_large.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "parts": {
+    "visibility": {
+      "Hatch": true,
+      "Frame": false
+    }
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/doors/silo_hatch_large",
+    "default": "hbm_ntm_rebirth:block/doors/silo_hatch_large"
+  }
+}

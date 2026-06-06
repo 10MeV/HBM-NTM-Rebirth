@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 40,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/lithium"
+      },
+      "legacy_ore": "dustLithium"
+    }
+  ],
+  "internal_name": "ass.partlith",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 8,
+      "item": "hbm_ntm_rebirth:part_lithium"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 39
+}

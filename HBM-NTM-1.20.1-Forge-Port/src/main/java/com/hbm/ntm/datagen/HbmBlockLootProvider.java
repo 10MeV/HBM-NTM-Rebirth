@@ -55,6 +55,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.MACHINE_WELL.get(), noDrop());
         add(ModBlocks.MACHINE_PUMPJACK.get(), noDrop());
         add(ModBlocks.MACHINE_FRACKING_TOWER.get(), noDrop());
+        add(ModBlocks.OIL_PIPE.get(), noDrop());
         add(ModBlocks.MACHINE_CATALYTIC_REFORMER.get(), noDrop());
         add(ModBlocks.MACHINE_VACUUM_DISTILL.get(), noDrop());
         add(ModBlocks.MACHINE_HYDROTREATER.get(), noDrop());

@@ -1,7 +1,0 @@
-{
-  "loader": "forge:obj",
-  "model": "hbm:models/block/machines/rotary_furnace.obj",
-  "flip_v": true,
-  "render_type": "minecraft:cutout",
-  "textures": { "particle": "hbm:block/machines/rotary_furnace", "default": "hbm:block/machines/rotary_furnace" }
-}

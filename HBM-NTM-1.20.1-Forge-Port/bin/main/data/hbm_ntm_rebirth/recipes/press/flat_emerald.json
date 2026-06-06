@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "ingredient": {
+    "tag": "forge:dusts/emerald"
+  },
+  "result": {
+    "item": "minecraft:emerald"
+  },
+  "stamp": "flat"
+}

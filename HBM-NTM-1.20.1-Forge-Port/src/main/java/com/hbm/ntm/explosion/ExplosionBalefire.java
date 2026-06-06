@@ -144,6 +144,6 @@ public class ExplosionBalefire {
 
     private void setLegacy(BlockPos pos, String name) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        level.setBlock(pos, Objects.requireNonNull(block, "Missing legacy block hbm:" + name).get().defaultBlockState(), 3);
+        level.setBlock(pos, Objects.requireNonNull(block, "Missing legacy block hbm_ntm_rebirth:" + name).get().defaultBlockState(), 3);
     }
 }

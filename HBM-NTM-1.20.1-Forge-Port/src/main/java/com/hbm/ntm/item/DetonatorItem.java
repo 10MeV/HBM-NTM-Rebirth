@@ -36,14 +36,14 @@ public class DetonatorItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.hbm.detonator.set"));
-        tooltip.add(Component.translatable("tooltip.hbm.detonator.trigger"));
+        tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.detonator.set"));
+        tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.detonator.trigger"));
         if (!hasLinkedPosition(stack)) {
-            tooltip.add(Component.translatable("tooltip.hbm.detonator.no_position").withStyle(ChatFormatting.RED));
+            tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.detonator.no_position").withStyle(ChatFormatting.RED));
             return;
         }
         BlockPos pos = linkedPosition(stack);
-        tooltip.add(Component.translatable("tooltip.hbm.detonator.linked", pos.getX(), pos.getY(), pos.getZ())
+        tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.detonator.linked", pos.getX(), pos.getY(), pos.getZ())
                 .withStyle(ChatFormatting.YELLOW));
     }
 
@@ -64,7 +64,7 @@ public class DetonatorItem extends Item {
         Level level = context.getLevel();
         level.playSound(null, player.blockPosition(), ModSounds.TOOL_TECH_BOOP.get(), SoundSource.PLAYERS, 2.0F, 1.0F);
         if (!level.isClientSide()) {
-            player.displayClientMessage(prefixed(Component.translatable("msg.hbm.detonator.position_set")
+            player.displayClientMessage(prefixed(Component.translatable("msg.hbm_ntm_rebirth.detonator.position_set")
                     .withStyle(ChatFormatting.GREEN)), false);
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
@@ -75,7 +75,7 @@ public class DetonatorItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         if (!hasLinkedPosition(stack)) {
             if (!level.isClientSide()) {
-                player.displayClientMessage(prefixed(Component.translatable("msg.hbm.detonator.no_position")
+                player.displayClientMessage(prefixed(Component.translatable("msg.hbm_ntm_rebirth.detonator.no_position")
                         .withStyle(ChatFormatting.RED)), false);
             }
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
@@ -120,7 +120,7 @@ public class DetonatorItem extends Item {
     private static MutableComponent prefixed(Component message) {
         return Component.literal("[")
                 .withStyle(ChatFormatting.DARK_AQUA)
-                .append(Component.translatable("item.hbm.detonator").withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.translatable("item.hbm_ntm_rebirth.detonator").withStyle(ChatFormatting.DARK_AQUA))
                 .append(Component.literal("] ").withStyle(ChatFormatting.DARK_AQUA))
                 .append(message);
     }

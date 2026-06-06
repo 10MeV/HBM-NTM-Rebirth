@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "face=down": { "model": "hbm_ntm_rebirth:block/lamp_demon_particle" },
+    "face=up": { "model": "hbm_ntm_rebirth:block/lamp_demon_particle" },
+    "face=north": { "model": "hbm_ntm_rebirth:block/lamp_demon_particle" },
+    "face=south": { "model": "hbm_ntm_rebirth:block/lamp_demon_particle" },
+    "face=west": { "model": "hbm_ntm_rebirth:block/lamp_demon_particle" },
+    "face=east": { "model": "hbm_ntm_rebirth:block/lamp_demon_particle" }
+  }
+}

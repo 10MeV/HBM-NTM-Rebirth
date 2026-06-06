@@ -1,16 +1,16 @@
 {
   "values": [
-    "hbm:oil",
-    "hbm:oil_flowing",
-    "hbm:heavyoil",
-    "hbm:heavyoil_flowing",
-    "hbm:crackoil",
-    "hbm:crackoil_flowing",
-    "hbm:coaloil",
-    "hbm:coaloil_flowing",
-    "hbm:oil_ds",
-    "hbm:oil_ds_flowing",
-    "hbm:crackoil_ds",
-    "hbm:crackoil_ds_flowing"
+    "hbm_ntm_rebirth:oil",
+    "hbm_ntm_rebirth:oil_flowing",
+    "hbm_ntm_rebirth:heavyoil",
+    "hbm_ntm_rebirth:heavyoil_flowing",
+    "hbm_ntm_rebirth:crackoil",
+    "hbm_ntm_rebirth:crackoil_flowing",
+    "hbm_ntm_rebirth:coaloil",
+    "hbm_ntm_rebirth:coaloil_flowing",
+    "hbm_ntm_rebirth:oil_ds",
+    "hbm_ntm_rebirth:oil_ds_flowing",
+    "hbm_ntm_rebirth:crackoil_ds",
+    "hbm_ntm_rebirth:crackoil_ds_flowing"
   ]
 }

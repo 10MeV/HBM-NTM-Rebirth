@@ -14,11 +14,11 @@ public final class DamageResistanceTooltipUtil {
         }
         DamageResistanceStats set = DamageResistanceHandler.setStatsForItem(stack.getItem());
         if (set != null) {
-            addStats(tooltip, "tooltip.hbm.damage.set", set);
+            addStats(tooltip, "tooltip.hbm_ntm_rebirth.damage.set", set);
         }
         DamageResistanceStats item = DamageResistanceHandler.itemStats(stack.getItem());
         if (item != null) {
-            addStats(tooltip, "tooltip.hbm.damage.item", item);
+            addStats(tooltip, "tooltip.hbm_ntm_rebirth.damage.item", item);
         }
     }
 
@@ -28,18 +28,18 @@ public final class DamageResistanceTooltipUtil {
         }
         tooltip.add(Component.translatable(titleKey).withStyle(ChatFormatting.DARK_PURPLE));
         for (Map.Entry<String, DamageResistance> entry : stats.categoryResistances().entrySet()) {
-            tooltip.add(line("tooltip.hbm.damage.category." + entry.getKey(), entry.getValue()));
+            tooltip.add(line("tooltip.hbm_ntm_rebirth.damage.category." + entry.getKey(), entry.getValue()));
         }
         for (Map.Entry<String, DamageResistance> entry : stats.exactResistances().entrySet()) {
-            tooltip.add(line("tooltip.hbm.damage.exact." + entry.getKey(), entry.getValue()));
+            tooltip.add(line("tooltip.hbm_ntm_rebirth.damage.exact." + entry.getKey(), entry.getValue()));
         }
         if (stats.otherResistance() != null) {
-            tooltip.add(line("tooltip.hbm.damage.other", stats.otherResistance()));
+            tooltip.add(line("tooltip.hbm_ntm_rebirth.damage.other", stats.otherResistance()));
         }
     }
 
     private static Component line(String labelKey, DamageResistance resistance) {
-        return Component.translatable("tooltip.hbm.damage.line",
+        return Component.translatable("tooltip.hbm_ntm_rebirth.damage.line",
                 Component.translatable(labelKey),
                 format(resistance.threshold()),
                 (int) (resistance.resistance() * 100.0F)).withStyle(ChatFormatting.GRAY);

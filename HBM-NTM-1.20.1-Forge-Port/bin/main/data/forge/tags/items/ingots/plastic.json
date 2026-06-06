@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:ingot_polymer",
-    "hbm:ingot_bakelite"
+    "hbm_ntm_rebirth:ingot_polymer",
+    "hbm_ntm_rebirth:ingot_bakelite"
   ]
 }

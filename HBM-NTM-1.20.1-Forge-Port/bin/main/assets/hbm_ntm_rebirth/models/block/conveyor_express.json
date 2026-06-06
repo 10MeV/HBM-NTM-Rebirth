@@ -1,0 +1,8 @@
+{
+  "parent": "hbm_ntm_rebirth:block/template_conveyor",
+  "textures": {
+    "top": "hbm_ntm_rebirth:block/conveyor_express",
+    "side": "hbm_ntm_rebirth:block/conveyor_side",
+    "particle": "hbm_ntm_rebirth:block/conveyor_express"
+  }
+}

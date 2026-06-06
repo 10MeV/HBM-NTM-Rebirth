@@ -18,6 +18,6 @@ public class BlockAllocatorGlyphidDig extends BlockAllocatorBulkie {
 
     private static boolean isDigImmune(BlockState state) {
         RegistryObject<? extends Block> glyphidSpawner = ModBlocks.legacyBlock("glyphid_spawner");
-        return state.is(Objects.requireNonNull(glyphidSpawner, "Missing legacy block hbm:glyphid_spawner").get());
+        return state.is(Objects.requireNonNull(glyphidSpawner, "Missing legacy block hbm_ntm_rebirth:glyphid_spawner").get());
     }
 }

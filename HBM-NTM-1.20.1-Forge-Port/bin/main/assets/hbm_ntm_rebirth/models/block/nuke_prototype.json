@@ -1,0 +1,17 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/nuke/prototype.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/nuke/prototype",
+    "default": "hbm_ntm_rebirth:block/nuke/prototype",
+    "texture0": "hbm_ntm_rebirth:block/nuke/prototype"
+  },
+  "display": {
+    "gui": { "rotation": [30, 225, 0], "translation": [0, -3, 0], "scale": [0.3, 0.3, 0.3] },
+    "ground": { "translation": [0, 3, 0], "scale": [0.15, 0.15, 0.15] },
+    "thirdperson_righthand": { "rotation": [75, 225, 0], "translation": [0, 1, 0], "scale": [0.3, 0.3, 0.3] },
+    "firstperson_righthand": { "rotation": [0, 135, 0], "translation": [0, 2, 0], "scale": [0.3, 0.3, 0.3] }
+  }
+}

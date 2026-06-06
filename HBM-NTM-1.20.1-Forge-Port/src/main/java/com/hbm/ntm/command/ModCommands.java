@@ -38,6 +38,9 @@ import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
+import com.hbm.ntm.pollution.PollutionManager;
+import com.hbm.ntm.pollution.PollutionSavedData;
+import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import com.hbm.ntm.recipe.HbmIngredient;
@@ -179,6 +182,7 @@ public final class ModCommands {
                         .then(statusCommand())
                         .then(contaminationCommand()))
                 .then(energyCommand())
+                .then(pollutionCommand())
                 .then(damageCommand())
                 .then(recipeCommand())
                 .then(machineCommand())
@@ -281,6 +285,32 @@ public final class ModCommands {
                                 .then(Commands.argument("enabled", StringArgumentType.word())
                                         .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{"false", "true"}, builder))
                                         .executes(context -> setEnergyDebugParticles(context.getSource(), parseBoolean(StringArgumentType.getString(context, "enabled")))))));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> pollutionCommand() {
+        return Commands.literal("pollution")
+                .then(Commands.literal("get")
+                        .executes(context -> getPollution(context.getSource())))
+                .then(Commands.literal("set")
+                        .then(Commands.argument("type", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(pollutionTypeNames(), builder))
+                                .then(Commands.argument("amount", FloatArgumentType.floatArg(0.0F, PollutionManager.MAX_POLLUTION))
+                                        .executes(context -> setPollution(context.getSource(),
+                                                StringArgumentType.getString(context, "type"),
+                                                FloatArgumentType.getFloat(context, "amount"))))))
+                .then(Commands.literal("add")
+                        .then(Commands.argument("type", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(pollutionTypeNames(), builder))
+                                .then(Commands.argument("amount", FloatArgumentType.floatArg(-PollutionManager.MAX_POLLUTION, PollutionManager.MAX_POLLUTION))
+                                        .executes(context -> addPollution(context.getSource(),
+                                                StringArgumentType.getString(context, "type"),
+                                                FloatArgumentType.getFloat(context, "amount"))))))
+                .then(Commands.literal("stats")
+                        .executes(context -> getPollutionStats(context.getSource())))
+                .then(Commands.literal("prune")
+                        .executes(context -> prunePollution(context.getSource())))
+                .then(Commands.literal("clear")
+                        .executes(context -> clearPollution(context.getSource())));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> damageCommand() {
@@ -617,6 +647,84 @@ public final class ModCommands {
         return removed;
     }
 
+    private static int getPollution(CommandSourceStack source) {
+        BlockPos pos = BlockPos.containing(source.getPosition());
+        PollutionSavedData.PollutionSample sample = PollutionManager.getPollutionData(source.getLevel(), pos);
+        source.sendSuccess(() -> Component.literal("Pollution at " + pos.toShortString()
+                + ": soot=" + round(sample.get(PollutionType.SOOT))
+                + " poison=" + round(sample.get(PollutionType.POISON))
+                + " heavymetal=" + round(sample.get(PollutionType.HEAVYMETAL))
+                + " fallout=" + round(sample.get(PollutionType.FALLOUT))), false);
+        return Math.round(sample.sum());
+    }
+
+    private static int setPollution(CommandSourceStack source, String typeName, float amount) {
+        PollutionType type = parsePollutionType(source, typeName);
+        if (type == null) {
+            return 0;
+        }
+        PollutionManager.setPollution(source.getLevel(), BlockPos.containing(source.getPosition()), type, amount);
+        source.sendSuccess(() -> Component.literal("Set " + type.id() + " pollution to " + round(amount) + "."), true);
+        return Math.round(amount);
+    }
+
+    private static int addPollution(CommandSourceStack source, String typeName, float amount) {
+        PollutionType type = parsePollutionType(source, typeName);
+        if (type == null) {
+            return 0;
+        }
+        BlockPos pos = BlockPos.containing(source.getPosition());
+        PollutionManager.incrementPollution(source.getLevel(), pos, type, amount);
+        float current = PollutionManager.getPollution(source.getLevel(), pos, type);
+        source.sendSuccess(() -> Component.literal(type.id() + " pollution: " + round(current)), true);
+        return Math.round(current);
+    }
+
+    private static int clearPollution(CommandSourceStack source) {
+        PollutionManager.clear(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Cleared pollution data."), true);
+        return 1;
+    }
+
+    private static int getPollutionStats(CommandSourceStack source) {
+        PollutionSavedData.Stats stats = PollutionManager.getStats(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Pollution stats: entries=" + stats.totalEntries()
+                + " loaded=" + stats.loadedEntries()
+                + " total=" + round(stats.totalPollution())
+                + " loadedTotal=" + round(stats.loadedPollution())
+                + " max=" + round(stats.maxPollution())
+                + " loadedMax=" + round(stats.loadedMaxPollution())), false);
+        source.sendSuccess(() -> Component.literal("Totals: soot=" + round(stats.totals()[PollutionType.SOOT.ordinal()])
+                + " poison=" + round(stats.totals()[PollutionType.POISON.ordinal()])
+                + " heavymetal=" + round(stats.totals()[PollutionType.HEAVYMETAL.ordinal()])
+                + " fallout=" + round(stats.totals()[PollutionType.FALLOUT.ordinal()])), false);
+        return stats.totalEntries();
+    }
+
+    private static int prunePollution(CommandSourceStack source) {
+        int removed = PollutionManager.pruneUnloaded(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Pruned " + removed + " unloaded pollution entrie(s)."), true);
+        return removed;
+    }
+
+    private static PollutionType parsePollutionType(CommandSourceStack source, String typeName) {
+        PollutionType type = PollutionType.byName(typeName);
+        if (type == null) {
+            source.sendFailure(Component.literal("Unknown pollution type '" + typeName + "'. Valid: "
+                    + String.join(", ", pollutionTypeNames())));
+        }
+        return type;
+    }
+
+    private static String[] pollutionTypeNames() {
+        PollutionType[] types = PollutionType.values();
+        String[] names = new String[types.length];
+        for (int i = 0; i < types.length; i++) {
+            names[i] = types[i].id();
+        }
+        return names;
+    }
+
     private static int getCraterRadiationStats(CommandSourceStack source) {
         CraterRadiationData.Stats stats = CraterRadiationData.getStats(source.getLevel());
         source.sendSuccess(() -> Component.literal("Crater radiation markers: entries=" + stats.totalMarkers()
@@ -890,12 +998,12 @@ public final class ModCommands {
                 "minecraft:player_attack",
                 "minecraft:on_fire",
                 "minecraft:fall",
-                "hbm:explosion",
-                "hbm:nuclear_blast",
-                "hbm:laser",
-                "hbm:plasma",
-                "hbm:microwave",
-                "hbm:electric",
+                "hbm_ntm_rebirth:explosion",
+                "hbm_ntm_rebirth:nuclear_blast",
+                "hbm_ntm_rebirth:laser",
+                "hbm_ntm_rebirth:plasma",
+                "hbm_ntm_rebirth:microwave",
+                "hbm_ntm_rebirth:electric",
                 "nuclearBlast",
                 "mudPoisoning",
                 "tauBlast",
@@ -1832,7 +1940,7 @@ public final class ModCommands {
         List<ModMessages.PacketRegistration> registrations = ModMessages.packetRegistrations();
         long clientbound = registrations.stream().filter(registration -> "S2C".equals(registration.direction())).count();
         long serverbound = registrations.stream().filter(registration -> "C2S".equals(registration.direction())).count();
-        source.sendSuccess(() -> Component.literal("HBM network protocol: channel=hbm:main version="
+        source.sendSuccess(() -> Component.literal("HBM network protocol: channel=hbm_ntm_rebirth:main version="
                 + ModMessages.protocolVersion()
                 + " packets=" + ModMessages.registeredPacketCount()
                 + " s2c=" + clientbound

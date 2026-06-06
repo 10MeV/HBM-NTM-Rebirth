@@ -1,8 +1,0 @@
-{
-  "loader": "forge:obj",
-  "model": "hbm:models/block/machines/assembly_machine.obj",
-  "flip_v": true,
-  "render_type": "minecraft:cutout",
-  "parts": { "visibility": { "Ring2": false, "Base": true, "Frame": false, "Spike1": false, "Spike2": false, "Head1": false, "ArmUpper1": false, "ArmUpper2": false, "ArmLower2": false, "ArmLower1": false, "Ring": false, "Head2": false } },
-  "textures": { "particle": "hbm:block/machines/assembly_machine", "default": "hbm:block/machines/assembly_machine" }
-}

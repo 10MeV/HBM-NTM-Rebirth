@@ -1,41 +1,116 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
+import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmExtinguishType;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidRepairMaterials;
+import com.hbm.ntm.fluid.HbmFluidRepairMaterials.HbmRepairMaterial;
+import com.hbm.ntm.fluid.HbmFluidStack;
+import com.hbm.ntm.fluid.HbmFluidOverpressurable;
+import com.hbm.ntm.fluid.HbmFluidRepairable;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
+import com.hbm.ntm.fluid.LegacyOilFluidRecipes.RefineryRecipe;
+import com.hbm.ntm.menu.RefineryMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.sound.LegacyMachineAudioBridge;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
-        implements HbmPersistentBlockState, HbmStandardFluidTransceiver {
+        implements HbmPersistentBlockState, HbmStandardFluidTransceiver, HbmFluidOverpressurable,
+        HbmFluidRepairable, MenuProvider {
     private static final String TAG_SULFUR = "sulfur";
     private static final String TAG_EXPLODED = "exploded";
     private static final String TAG_ON_FIRE = "onFire";
+    private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_IS_ON = "isOn";
+    private static final int MAX_SULFUR = 10;
+    private static final long POWER_PER_OPERATION = 5L;
+    private static final int INPUT_PER_OPERATION = 100;
+
+    public static final int SLOT_BATTERY = 0;
+    public static final int SLOT_INPUT_CONTAINER = 1;
+    public static final int SLOT_INPUT_CONTAINER_OUTPUT = 2;
+    public static final int SLOT_HEAVY_CONTAINER = 3;
+    public static final int SLOT_HEAVY_CONTAINER_OUTPUT = 4;
+    public static final int SLOT_NAPHTHA_CONTAINER = 5;
+    public static final int SLOT_NAPHTHA_CONTAINER_OUTPUT = 6;
+    public static final int SLOT_LIGHT_CONTAINER = 7;
+    public static final int SLOT_LIGHT_CONTAINER_OUTPUT = 8;
+    public static final int SLOT_PETROLEUM_CONTAINER = 9;
+    public static final int SLOT_PETROLEUM_CONTAINER_OUTPUT = 10;
+    public static final int SLOT_SOLID_OUTPUT = 11;
+    public static final int SLOT_IDENTIFIER = 12;
+    public static final int ITEM_COUNT = 13;
 
     private boolean exploded;
     private boolean onFire;
+    private boolean isOn;
     private int sulfur;
     private Explosion lastExplosion;
+    private Object audioLoop;
+    private final ItemStackHandler items = new ItemStackHandler(ITEM_COUNT) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            setChanged();
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return switch (slot) {
+                case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
+                case SLOT_INPUT_CONTAINER, SLOT_HEAVY_CONTAINER, SLOT_NAPHTHA_CONTAINER, SLOT_LIGHT_CONTAINER,
+                     SLOT_PETROLEUM_CONTAINER -> true;
+                default -> slot == SLOT_BATTERY && stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
+            };
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
+        }
+    };
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(() -> new RefineryExternalItemHandler(items));
 
     public RefineryBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.REFINERY.get(), pos, state, new HbmEnergyStorage(1_000_000L, 1_000_000L, 0L),
+        super(ModBlockEntities.REFINERY.get(), pos, state, new HbmEnergyStorage(1_000L, 1_000L, 0L),
                 List.of(
                         new HbmFluidTank(HbmFluids.HOTOIL, 64_000),
                         new HbmFluidTank(HbmFluids.HEAVYOIL, 24_000),
@@ -52,6 +127,8 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         boolean changed = false;
         if (refinery.exploded && refinery.onFire) {
             changed = refinery.burnResidualFluid();
+        } else if (!refinery.exploded) {
+            changed |= refinery.tickRefinery();
         }
         if (changed) {
             refinery.setChanged();
@@ -59,6 +136,10 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+    }
+
+    public static void clientTick(Level level, BlockPos pos, BlockState state, RefineryBlockEntity refinery) {
+        refinery.updateAudioLoop();
     }
 
     @Override
@@ -146,12 +227,22 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
                 && type != null && getFluidNodeTypes().contains(type);
     }
 
+    public ItemStackHandler getItems() {
+        return items;
+    }
+
+    public boolean isProcessing() {
+        return isOn;
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putInt(TAG_SULFUR, sulfur);
         tag.putBoolean(TAG_EXPLODED, exploded);
         tag.putBoolean(TAG_ON_FIRE, onFire);
+        tag.putBoolean(TAG_IS_ON, isOn);
+        tag.put(TAG_INVENTORY, HbmInventoryMenuHelper.saveLegacyItems(items));
         getAllTanks().get(0).writeToNbt(tag, "input");
         getAllTanks().get(1).writeToNbt(tag, "heavy");
         getAllTanks().get(2).writeToNbt(tag, "naphtha");
@@ -165,6 +256,8 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         sulfur = tag.getInt(TAG_SULFUR);
         exploded = tag.getBoolean(TAG_EXPLODED);
         onFire = tag.getBoolean(TAG_ON_FIRE);
+        isOn = tag.getBoolean(TAG_IS_ON);
+        HbmInventoryMenuHelper.loadLegacyItems(tag.getCompound(TAG_INVENTORY), items);
         getAllTanks().get(0).readFromNbt(tag, "input");
         getAllTanks().get(1).readFromNbt(tag, "heavy");
         getAllTanks().get(2).readFromNbt(tag, "naphtha");
@@ -206,10 +299,40 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
     }
 
+    public List<ItemStack> getDrops() {
+        return HbmInventoryMenuHelper.clearToDrops(items);
+    }
+
     public ItemStack createPersistentBlockDrop(Item item) {
         ItemStack stack = new ItemStack(item);
         writePersistentStateToStack(stack);
         return stack;
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatableWithFallback("container.machineRefinery", "Refinery");
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+        return exploded ? null : new RefineryMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
+        if (capability == ForgeCapabilities.ITEM_HANDLER && !exploded) {
+            return side == null ? itemHandler.cast() : externalItemHandler.cast();
+        }
+        return super.getCapability(capability, side);
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        itemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     public boolean isExploded() {
@@ -245,11 +368,11 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         return true;
     }
 
-    public void tryExtinguish(ExtinguishType type) {
+    public void tryExtinguish(HbmExtinguishType type) {
         if (!exploded || !onFire) {
             return;
         }
-        if (type == ExtinguishType.FOAM || type == ExtinguishType.CO2) {
+        if (type == HbmExtinguishType.FOAM || type == HbmExtinguishType.CO2) {
             onFire = false;
             setChanged();
             if (level != null) {
@@ -257,7 +380,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
             }
             return;
         }
-        if (type == ExtinguishType.WATER && level != null && hasStoredFluid()) {
+        if (type == HbmExtinguishType.WATER && level != null && hasStoredFluid()) {
             level.explode(null, worldPosition.getX() + 0.5D, worldPosition.getY() + 1.5D,
                     worldPosition.getZ() + 0.5D, 5.0F, Level.ExplosionInteraction.TNT);
         }
@@ -272,6 +395,29 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
     }
 
+    @Override
+    public boolean isDamagedForFluidRepair() {
+        return exploded;
+    }
+
+    @Override
+    public List<HbmRepairMaterial> getFluidRepairMaterials() {
+        return List.of(
+                HbmFluidRepairMaterials.item(ModItems.STEEL_PLATE.get(), 8),
+                HbmFluidRepairMaterials.optionalLegacyItem("ducttape", 4,
+                        HbmFluidRepairMaterials.UNRESOLVED_DUCT_TAPE));
+    }
+
+    @Override
+    public void repairFluidMachine() {
+        repair();
+    }
+
+    @Override
+    public void explodeFromFluidOverpressure(Level level, BlockPos pos) {
+        explode();
+    }
+
     private boolean burnResidualFluid() {
         boolean changed = false;
         for (HbmFluidTank tank : getAllTanks()) {
@@ -284,9 +430,184 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         return changed;
     }
 
-    public enum ExtinguishType {
-        WATER,
-        FOAM,
-        CO2
+    private boolean tickRefinery() {
+        boolean changed = false;
+        boolean oldOn = isOn;
+        isOn = false;
+        changed |= setInputTypeFromIdentifier();
+        changed |= HbmFluidItemTransfer.processTransfers(items, List.of(
+                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank()),
+                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_HEAVY_CONTAINER, SLOT_HEAVY_CONTAINER_OUTPUT, outputTank(0)),
+                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_NAPHTHA_CONTAINER, SLOT_NAPHTHA_CONTAINER_OUTPUT, outputTank(1)),
+                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_LIGHT_CONTAINER, SLOT_LIGHT_CONTAINER_OUTPUT, outputTank(2)),
+                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_PETROLEUM_CONTAINER, SLOT_PETROLEUM_CONTAINER_OUTPUT, outputTank(3))));
+        long oldPower = energy.getPower();
+        HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
+        changed |= oldPower != energy.getPower();
+        changed |= refine();
+        return changed || oldOn != isOn;
     }
+
+    private void updateAudioLoop() {
+        if (level == null || !level.isClientSide) {
+            return;
+        }
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_BOILER.getId(),
+                isOn, 30.0D, 15.0F, 0.25F, 1.0F);
+    }
+
+    private boolean setInputTypeFromIdentifier() {
+        ItemStack stack = items.getStackInSlot(SLOT_IDENTIFIER);
+        if (!(stack.getItem() instanceof IFluidIdentifierItem identifier)) {
+            return false;
+        }
+        FluidType selected = identifier.getPrimaryType(stack);
+        if (selected == null || selected == HbmFluids.NONE || inputTank().getTankType() == selected) {
+            return false;
+        }
+        inputTank().conform(new HbmFluidStack(selected, 0));
+        return true;
+    }
+
+    private boolean refine() {
+        RefineryRecipe recipe = LegacyOilFluidRecipes.getRefinery(inputTank().getTankType());
+        boolean changed = setupRecipeTanks(recipe);
+        if (recipe == null) {
+            return changed;
+        }
+        HbmFluidStack[] outputs = recipe.outputs();
+        if (energy.getPower() < POWER_PER_OPERATION || inputTank().getFill() < INPUT_PER_OPERATION) {
+            return changed;
+        }
+        for (int i = 0; i < outputs.length; i++) {
+            if (!canFitOutput(outputTank(i), outputs[i])) {
+                return changed;
+            }
+        }
+        if (sulfur + 1 >= MAX_SULFUR && !canFitSolid(recipe.solidStack())) {
+            return changed;
+        }
+        inputTank().setFill(inputTank().getFill() - INPUT_PER_OPERATION);
+        energy.setPower(energy.getPower() - POWER_PER_OPERATION);
+        for (int i = 0; i < outputs.length; i++) {
+            outputTank(i).fill(outputs[i].type(), outputs[i].amount(), outputs[i].pressure(), false);
+        }
+        sulfur++;
+        if (sulfur >= MAX_SULFUR) {
+            addSolid(recipe.solidStack());
+            sulfur = 0;
+        }
+        isOn = true;
+        onFluidContentsChanged();
+        return true;
+    }
+
+    private boolean setupRecipeTanks(@Nullable RefineryRecipe recipe) {
+        if (recipe == null) {
+            boolean changed = false;
+            for (int i = 0; i < 4; i++) {
+                HbmFluidTank tank = outputTank(i);
+                changed |= tank.getTankType() != HbmFluids.NONE;
+                tank.setTankType(HbmFluids.NONE);
+            }
+            return changed;
+        }
+        HbmFluidStack[] outputs = recipe.outputs();
+        boolean changed = false;
+        for (int i = 0; i < outputs.length; i++) {
+            HbmFluidTank tank = outputTank(i);
+            changed |= tank.getTankType() != outputs[i].type();
+            tank.setTankType(outputs[i].type());
+        }
+        return changed;
+    }
+
+    private static boolean canFitOutput(HbmFluidTank tank, HbmFluidStack output) {
+        return output.isEmpty() || tank.getTankType() == output.type()
+                && tank.getFill() + output.amount() <= tank.getMaxFill();
+    }
+
+    private boolean canFitSolid(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return true;
+        }
+        ItemStack existing = items.getStackInSlot(SLOT_SOLID_OUTPUT);
+        return existing.isEmpty()
+                || ItemHandlerHelper.canItemStacksStack(existing, stack)
+                && existing.getCount() + stack.getCount() <= Math.min(existing.getMaxStackSize(), items.getSlotLimit(SLOT_SOLID_OUTPUT));
+    }
+
+    private void addSolid(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        ItemStack existing = items.getStackInSlot(SLOT_SOLID_OUTPUT);
+        if (existing.isEmpty()) {
+            items.setStackInSlot(SLOT_SOLID_OUTPUT, stack.copy());
+            return;
+        }
+        ItemStack merged = existing.copy();
+        merged.grow(stack.getCount());
+        items.setStackInSlot(SLOT_SOLID_OUTPUT, merged);
+    }
+
+    private HbmFluidTank inputTank() {
+        return getAllTanks().get(0);
+    }
+
+    private HbmFluidTank outputTank(int index) {
+        return getAllTanks().get(index + 1);
+    }
+
+    private static final class RefineryExternalItemHandler implements IItemHandler {
+        private final IItemHandlerModifiable items;
+
+        private RefineryExternalItemHandler(IItemHandlerModifiable items) {
+            this.items = items;
+        }
+
+        @Override
+        public int getSlots() {
+            return 1;
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return slot == 0 ? items.getStackInSlot(SLOT_SOLID_OUTPUT) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            return stack;
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            if (slot != 0 || amount <= 0) {
+                return ItemStack.EMPTY;
+            }
+            ItemStack existing = items.getStackInSlot(SLOT_SOLID_OUTPUT);
+            if (existing.isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+            ItemStack extracted = existing.copyWithCount(Math.min(amount, existing.getCount()));
+            if (!simulate) {
+                ItemStack remaining = existing.copy();
+                remaining.shrink(extracted.getCount());
+                items.setStackInSlot(SLOT_SOLID_OUTPUT, remaining.isEmpty() ? ItemStack.EMPTY : remaining);
+            }
+            return extracted;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return 64;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return false;
+        }
+    }
+
 }

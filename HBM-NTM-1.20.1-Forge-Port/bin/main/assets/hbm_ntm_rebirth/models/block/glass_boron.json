@@ -1,0 +1,5 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "render_type": "minecraft:translucent",
+  "textures": { "all": "hbm_ntm_rebirth:block/glass_boron" }
+}

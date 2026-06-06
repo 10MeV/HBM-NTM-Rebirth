@@ -1,0 +1,7 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/solar_boiler.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": { "particle": "hbm_ntm_rebirth:block/machines/solar_boiler", "default": "hbm_ntm_rebirth:block/machines/solar_boiler" }
+}

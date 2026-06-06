@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:powder_polymer",
-    "hbm:powder_bakelite"
+    "hbm_ntm_rebirth:powder_polymer",
+    "hbm_ntm_rebirth:powder_bakelite"
   ]
 }

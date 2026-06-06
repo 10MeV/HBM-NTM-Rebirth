@@ -1,7 +1,0 @@
-{
-  "loader": "forge:obj",
-  "model": "hbm:models/block/fusion/fusion_torus.obj",
-  "flip_v": true,
-  "render_type": "minecraft:cutout",
-  "textures": { "particle": "hbm:block/fusion/torus", "default": "hbm:block/fusion/torus" }
-}

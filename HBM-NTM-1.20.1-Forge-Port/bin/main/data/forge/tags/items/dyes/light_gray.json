@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:powder_titanium",
-    "hbm:powder_ash_wood"
+    "hbm_ntm_rebirth:powder_titanium",
+    "hbm_ntm_rebirth:powder_ash_wood"
   ]
 }

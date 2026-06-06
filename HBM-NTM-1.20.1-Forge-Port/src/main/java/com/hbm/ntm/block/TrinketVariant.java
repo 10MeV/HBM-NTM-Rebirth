@@ -91,7 +91,7 @@ public final class TrinketVariant {
     }
 
     public static String displayKey(Kind kind, int variant) {
-        return "tooltip.hbm." + switch (kind) {
+        return "tooltip.hbm_ntm_rebirth." + switch (kind) {
             case BOBBLEHEAD -> "bobblehead";
             case SNOWGLOBE -> "snowglobe";
             case PLUSHIE -> "plushie";

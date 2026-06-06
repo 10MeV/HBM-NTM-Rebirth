@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": {
+      "item": "hbm_ntm_rebirth:plate_aluminium"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:plate_steel"
+    }
+  },
+  "pattern": [
+    "S ",
+    "AA",
+    "AA"
+  ],
+  "result": {
+    "count": 2,
+    "item": "hbm_ntm_rebirth:canister_empty"
+  },
+  "show_notification": true
+}

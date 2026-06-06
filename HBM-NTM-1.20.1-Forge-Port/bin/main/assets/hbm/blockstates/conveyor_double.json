@@ -1,5 +1,0 @@
-{
-  "multipart": [
-    { "apply": { "model": "hbm:block/conveyor_double" } }
-  ]
-}

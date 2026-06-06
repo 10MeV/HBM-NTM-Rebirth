@@ -1,0 +1,11 @@
+{
+    "render_type":  "minecraft:cutout",
+    "loader":  "forge:obj",
+    "flip_v":  true,
+    "model":  "hbm_ntm_rebirth:models/block/trinkets/bobble_classic.obj",
+    "textures":  {
+                     "default":  "hbm_ntm_rebirth:block/trinkets/abel",
+                     "texture0":  "hbm_ntm_rebirth:block/trinkets/abel",
+                     "particle":  "hbm_ntm_rebirth:block/trinkets/abel"
+                 }
+}

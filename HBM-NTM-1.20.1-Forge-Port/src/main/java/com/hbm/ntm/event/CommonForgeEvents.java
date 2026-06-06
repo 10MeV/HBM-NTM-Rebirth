@@ -23,6 +23,7 @@ import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.CraterRadiationData;
@@ -51,6 +52,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.animal.Cow;
@@ -70,6 +72,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -136,6 +139,7 @@ public final class CommonForgeEvents {
 
         for (ServerLevel level : event.getServer().getAllLevels()) {
             ChunkRadiationManager.tick(level);
+            PollutionManager.tick(level);
             HbmEnergyNodespace.tick(level);
             HbmFluidNodespace.tick(level);
             HbmUninosNodespaces.tick(level);
@@ -262,6 +266,12 @@ public final class CommonForgeEvents {
             return true;
         }
         return false;
+    }
+
+    @SubscribeEvent
+    public static void onMobFinalizeSpawn(MobSpawnEvent.FinalizeSpawn event) {
+        Mob mob = event.getEntity();
+        PollutionManager.decorateMob(mob);
     }
 
     @SubscribeEvent
@@ -561,6 +571,7 @@ public final class CommonForgeEvents {
             HbmEnergyNodespace.unloadLevel(level);
             HbmFluidNodespace.unloadLevel(level);
             HbmUninosNodespaces.unloadLevel(level);
+            PollutionManager.unloadLevel(level);
             TRACKED_ITEM_ENTITIES.remove(level.dimension());
         }
     }

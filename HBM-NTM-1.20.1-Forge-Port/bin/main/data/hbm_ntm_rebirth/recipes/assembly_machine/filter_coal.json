@@ -1,0 +1,36 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 50,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:dusts/coal"
+      },
+      "legacy_ore": "dustCoal"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "minecraft:string"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "minecraft:paper"
+      }
+    }
+  ],
+  "internal_name": "ass.filtercoal",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:filter_coal"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 29
+}

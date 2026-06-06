@@ -45,8 +45,8 @@ public class ToolboxItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        tooltip.add(Component.translatable("item.hbm.toolbox.desc.swap"));
-        tooltip.add(Component.translatable("item.hbm.toolbox.desc.open"));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.toolbox.desc.swap"));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.toolbox.desc.open"));
     }
 
     private static void moveRows(ItemStack box, Player player) {

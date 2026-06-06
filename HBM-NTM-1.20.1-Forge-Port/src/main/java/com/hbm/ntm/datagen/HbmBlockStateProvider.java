@@ -276,7 +276,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     private void simpleCubeWithItem(String legacyName, String textureName) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(legacyName);
         if (block == null) {
-            throw new IllegalStateException("Missing legacy block hbm:" + legacyName);
+            throw new IllegalStateException("Missing legacy block hbm_ntm_rebirth:" + legacyName);
         }
         String blockName = block.getId().getPath();
         ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));

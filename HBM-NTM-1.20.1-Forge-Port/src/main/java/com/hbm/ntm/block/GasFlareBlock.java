@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
@@ -34,7 +35,7 @@ public class GasFlareBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && player instanceof ServerPlayer
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof GasFlareBlockEntity gasFlare) {
             ItemStack held = player.getItemInHand(hand);
             if (player.isShiftKeyDown() && held.getItem() instanceof IFluidIdentifierItem identifier) {
@@ -46,6 +47,7 @@ public class GasFlareBlock extends LegacyVisibleMultiblockMachineBlock {
                     return InteractionResult.CONSUME;
                 }
             }
+            NetworkHooks.openScreen(serverPlayer, gasFlare, pos);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -57,7 +59,8 @@ public class GasFlareBlock extends LegacyVisibleMultiblockMachineBlock {
             return null;
         }
         return level.isClientSide
-                ? null
+                ? (tickLevel, tickPos, tickState, blockEntity) ->
+                GasFlareBlockEntity.clientTick(tickLevel, tickPos, tickState, (GasFlareBlockEntity) blockEntity)
                 : (tickLevel, tickPos, tickState, blockEntity) ->
                 GasFlareBlockEntity.serverTick(tickLevel, tickPos, tickState, (GasFlareBlockEntity) blockEntity);
     }

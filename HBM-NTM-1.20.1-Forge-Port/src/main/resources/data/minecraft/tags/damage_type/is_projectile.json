@@ -1,13 +1,13 @@
 {
   "replace": false,
   "values": [
-    "hbm:suicide",
-    "hbm:rubble",
-    "hbm:shrapnel",
-    "hbm:revolver_bullet",
-    "hbm:chopper_bullet",
-    "hbm:tau",
-    "hbm:combine_ball",
-    "hbm:subatomic"
+    "hbm_ntm_rebirth:suicide",
+    "hbm_ntm_rebirth:rubble",
+    "hbm_ntm_rebirth:shrapnel",
+    "hbm_ntm_rebirth:revolver_bullet",
+    "hbm_ntm_rebirth:chopper_bullet",
+    "hbm_ntm_rebirth:tau",
+    "hbm_ntm_rebirth:combine_ball",
+    "hbm_ntm_rebirth:subatomic"
   ]
 }

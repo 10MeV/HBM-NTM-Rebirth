@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.blockentity.CatalyticCrackerBlockEntity;
 import com.hbm.ntm.blockentity.CatalyticReformerBlockEntity;
@@ -8,6 +9,7 @@ import com.hbm.ntm.blockentity.FractionTowerBlockEntity;
 import com.hbm.ntm.blockentity.HydrotreaterBlockEntity;
 import com.hbm.ntm.blockentity.LegacyRemoteFluidMachineBlockEntity;
 import com.hbm.ntm.blockentity.VacuumDistillBlockEntity;
+import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -18,6 +20,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -63,12 +66,35 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (level.getBlockEntity(pos) instanceof LegacyRemoteFluidMachineBlockEntity machine
-                && machine.hasLegacyGui()) {
-            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-                NetworkHooks.openScreen(serverPlayer, machine, pos);
+        if (level.getBlockEntity(pos) instanceof LegacyRemoteFluidMachineBlockEntity machine) {
+            ItemStack held = player.getItemInHand(hand);
+            if (machine.canSetInputTypeWithIdentifier()
+                    && held.getItem() instanceof IFluidIdentifierItem identifier) {
+                if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+                    if (machine instanceof FractionTowerBlockEntity fractionTower && !fractionTower.isBottomSegment()) {
+                        serverPlayer.displayClientMessage(
+                                Component.literal("You can only change the type in the bottom segment!")
+                                        .withStyle(ChatFormatting.RED), false);
+                        return InteractionResult.CONSUME;
+                    }
+                    FluidType type = identifier.getIdentifiedFluid(level, pos, held);
+                    if (machine.setInputTypeFromIdentifier(type)) {
+                        serverPlayer.displayClientMessage(Component.literal("Changed type to ")
+                                .withStyle(ChatFormatting.YELLOW)
+                                .append(type.getDisplayName())
+                                .append(Component.literal("!").withStyle(ChatFormatting.YELLOW)), true);
+                        level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+                        return InteractionResult.CONSUME;
+                    }
+                }
+                return InteractionResult.sidedSuccess(level.isClientSide);
             }
-            return InteractionResult.sidedSuccess(level.isClientSide);
+            if (machine.hasLegacyGui()) {
+                if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+                    NetworkHooks.openScreen(serverPlayer, machine, pos);
+                }
+                return InteractionResult.sidedSuccess(level.isClientSide);
+            }
         }
         return InteractionResult.PASS;
     }
@@ -90,7 +116,11 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
                             (CatalyticReformerBlockEntity) blockEntity);
         }
         if (kind == Kind.VACUUM_DISTILL && type == ModBlockEntities.VACUUM_DISTILL.get()) {
-            return (tickLevel, tickPos, tickState, blockEntity) ->
+            return level.isClientSide
+                    ? (tickLevel, tickPos, tickState, blockEntity) ->
+                    VacuumDistillBlockEntity.clientTick(tickLevel, tickPos, tickState,
+                            (VacuumDistillBlockEntity) blockEntity)
+                    : (tickLevel, tickPos, tickState, blockEntity) ->
                     VacuumDistillBlockEntity.serverTick(tickLevel, tickPos, tickState,
                             (VacuumDistillBlockEntity) blockEntity);
         }

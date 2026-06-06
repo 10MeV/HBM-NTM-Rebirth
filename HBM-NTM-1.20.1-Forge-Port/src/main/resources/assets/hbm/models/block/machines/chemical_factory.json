@@ -1,7 +1,0 @@
-{
-  "loader": "forge:obj",
-  "model": "hbm:models/block/machines/chemical_factory.obj",
-  "flip_v": true,
-  "render_type": "minecraft:cutout",
-  "textures": { "particle": "hbm:block/machines/chemical_factory", "default": "hbm:block/machines/chemical_factory" }
-}

@@ -1,0 +1,43 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/steel"
+      },
+      "legacy_ore": "ingotSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/copper"
+      },
+      "legacy_ore": "plateCopper"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_analog"
+      }
+    }
+  ],
+  "internal_name": "ass.assembler",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_assembly_machine"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 71
+}

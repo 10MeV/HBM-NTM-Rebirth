@@ -191,7 +191,7 @@ public class CustomNukeBlockEntity extends BlockEntity implements MenuProvider {
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.hbm.nuke_custom");
+        return Component.translatable("block.hbm_ntm_rebirth.nuke_custom");
     }
 
     @Nullable

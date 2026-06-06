@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:ingot_pc",
-    "hbm:ingot_pvc"
+    "hbm_ntm_rebirth:ingot_pc",
+    "hbm_ntm_rebirth:ingot_pvc"
   ]
 }

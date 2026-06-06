@@ -47,6 +47,7 @@ import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.blockentity.RedCableGaugeBlockEntity;
 import com.hbm.ntm.blockentity.RefineryBlockEntity;
 import com.hbm.ntm.blockentity.SolarBoilerBlockEntity;
+import com.hbm.ntm.blockentity.SolidifierBlockEntity;
 import com.hbm.ntm.blockentity.SmallCoolingTowerBlockEntity;
 import com.hbm.ntm.blockentity.SteamTurbineBlockEntity;
 import com.hbm.ntm.blockentity.SteamEngineBlockEntity;
@@ -243,6 +244,11 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(CokerBlockEntity::new,
                             ModBlocks.MACHINE_COKER.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<SolidifierBlockEntity>> SOLIDIFIER =
+            BLOCK_ENTITIES.register("solidifier", () ->
+                    BlockEntityType.Builder.of(SolidifierBlockEntity::new,
+                            ModBlocks.MACHINE_SOLIDIFIER.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<CompressorBlockEntity>> COMPRESSOR =
             BLOCK_ENTITIES.register("compressor", () ->
                     BlockEntityType.Builder.of(CompressorBlockEntity::new,
@@ -273,7 +279,6 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(
                             LegacyVisibleMachineBlockEntity::new,
                             ModBlocks.MACHINE_PYROOVEN.get(),
-                            ModBlocks.MACHINE_SOLIDIFIER.get(),
                             ModBlocks.MACHINE_CENTRIFUGE.get(),
                             ModBlocks.MACHINE_GASCENT.get(),
                             ModBlocks.MACHINE_ORE_SLOPPER.get(),

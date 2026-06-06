@@ -1,7 +1,0 @@
-{
-  "variants": {
-    "": {
-      "model": "hbm:block/dummy_block"
-    }
-  }
-}

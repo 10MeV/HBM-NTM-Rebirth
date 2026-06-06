@@ -1,17 +1,17 @@
 {
   "values": [
-    "hbm:plate_iron",
-    "hbm:plate_gold",
-    "hbm:plate_steel",
-    "hbm:plate_copper",
-    "hbm:plate_lead",
-    "hbm:plate_titanium",
-    "hbm:plate_aluminium",
-    "hbm:plate_dura_steel",
-    "hbm:plate_gunmetal",
-    "hbm:plate_weaponsteel",
-    "hbm:plate_schrabidium",
-    "hbm:plate_combine_steel",
-    "hbm:plate_saturnite"
+    "hbm_ntm_rebirth:plate_iron",
+    "hbm_ntm_rebirth:plate_gold",
+    "hbm_ntm_rebirth:plate_steel",
+    "hbm_ntm_rebirth:plate_copper",
+    "hbm_ntm_rebirth:plate_lead",
+    "hbm_ntm_rebirth:plate_titanium",
+    "hbm_ntm_rebirth:plate_aluminium",
+    "hbm_ntm_rebirth:plate_dura_steel",
+    "hbm_ntm_rebirth:plate_gunmetal",
+    "hbm_ntm_rebirth:plate_weaponsteel",
+    "hbm_ntm_rebirth:plate_schrabidium",
+    "hbm_ntm_rebirth:plate_combine_steel",
+    "hbm_ntm_rebirth:plate_saturnite"
   ]
 }

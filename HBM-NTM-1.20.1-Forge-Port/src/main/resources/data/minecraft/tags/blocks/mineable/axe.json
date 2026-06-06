@@ -1,7 +1,7 @@
 {
   "replace": false,
   "values": [
-    "hbm:frozen_log",
-    "hbm:frozen_planks"
+    "hbm_ntm_rebirth:frozen_log",
+    "hbm_ntm_rebirth:frozen_planks"
   ]
 }

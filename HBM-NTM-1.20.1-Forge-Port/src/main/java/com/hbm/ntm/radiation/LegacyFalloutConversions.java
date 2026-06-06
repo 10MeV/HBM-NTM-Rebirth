@@ -394,67 +394,67 @@ public final class LegacyFalloutConversions {
     private static void writeTemplate(Path template) throws Exception {
         JsonObject root = new JsonObject();
         JsonArray templateEntries = new JsonArray();
-        templateEntries.add(templateEntry("matchesBlock", "minecraft:mushroom_stem", 0.0D, WOOD_EFFECT_RANGE, false, outcome("hbm:waste_log", 0, 1)));
-        templateEntries.add(templateEntry("matchesTag", BlockTags.LOGS.location().toString(), 0.0D, WOOD_EFFECT_RANGE, false, outcome("hbm:waste_log", 0, 1)));
+        templateEntries.add(templateEntry("matchesBlock", "minecraft:mushroom_stem", 0.0D, WOOD_EFFECT_RANGE, false, outcome("hbm_ntm_rebirth:waste_log", 0, 1)));
+        templateEntries.add(templateEntry("matchesTag", BlockTags.LOGS.location().toString(), 0.0D, WOOD_EFFECT_RANGE, false, outcome("hbm_ntm_rebirth:waste_log", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:red_mushroom_block", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:brown_mushroom_block", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:snow", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
-        templateEntries.add(templateEntry("matchesTag", BlockTags.PLANKS.location().toString(), 0.0D, WOOD_EFFECT_RANGE, false, outcome("hbm:waste_planks", 0, 1)));
+        templateEntries.add(templateEntry("matchesTag", BlockTags.PLANKS.location().toString(), 0.0D, WOOD_EFFECT_RANGE, false, outcome("hbm_ntm_rebirth:waste_planks", 0, 1)));
         templateEntries.add(templateEntry("matchesMaterial", "wood", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
         templateEntries.add(templateEntry("matchesMaterial", "leaves", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
         templateEntries.add(templateEntry("matchesMaterial", "plants", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
         templateEntries.add(templateEntry("matchesMaterial", "vine", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
-        templateEntries.add(templateEntry("matchesTag", BlockTags.LEAVES.location().toString(), 60.0D, 100.0D, false, outcome("hbm:waste_leaves", 0, 1)));
+        templateEntries.add(templateEntry("matchesTag", BlockTags.LEAVES.location().toString(), 60.0D, 100.0D, false, outcome("hbm_ntm_rebirth:waste_leaves", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:mossy_cobblestone", 0.0D, 100.0D, false, outcome("minecraft:coal_ore", 0, 1)));
-        templateEntries.add(templateEntry("matchesBlock", "hbm:ore_nether_uranium", 0.0D, 100.0D, false,
-                outcome("hbm:ore_nether_schrabidium", 0, 1), outcome("hbm:ore_nether_uranium_scorched", 0, 99)));
+        templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_nether_uranium", 0.0D, 100.0D, false,
+                outcome("hbm_ntm_rebirth:ore_nether_schrabidium", 0, 1), outcome("hbm_ntm_rebirth:ore_nether_uranium_scorched", 0, 99)));
         for (int distanceBand = 1; distanceBand <= 10; distanceBand++) {
             int level = 10 - distanceBand;
             double maxDistance = distanceBand * 5.0D;
             templateEntries.add(templateEntryWithChance("matchesBlock", "minecraft:coal_ore", 0.0D, maxDistance, 0.5D, true,
-                    outcome("hbm:ore_sellafield_diamond", level, 3), outcome("hbm:ore_sellafield_emerald", level, 2)));
+                    outcome("hbm_ntm_rebirth:ore_sellafield_diamond", level, 3), outcome("hbm_ntm_rebirth:ore_sellafield_emerald", level, 2)));
             templateEntries.add(templateEntryWithChance("matchesBlock", "minecraft:deepslate_coal_ore", 0.0D, maxDistance, 0.5D, true,
-                    outcome("hbm:ore_sellafield_diamond", level, 3), outcome("hbm:ore_sellafield_emerald", level, 2)));
-            templateEntries.add(templateEntryWithChance("matchesBlock", "hbm:ore_lignite", 0.0D, maxDistance, 0.2D, true,
-                    outcome("hbm:ore_sellafield_diamond", level, 1)));
-            templateEntries.add(templateEntry("matchesBlock", "hbm:ore_beryllium", 0.0D, maxDistance, true,
-                    outcome("hbm:ore_sellafield_emerald", level, 1)));
+                    outcome("hbm_ntm_rebirth:ore_sellafield_diamond", level, 3), outcome("hbm_ntm_rebirth:ore_sellafield_emerald", level, 2)));
+            templateEntries.add(templateEntryWithChance("matchesBlock", "hbm_ntm_rebirth:ore_lignite", 0.0D, maxDistance, 0.2D, true,
+                    outcome("hbm_ntm_rebirth:ore_sellafield_diamond", level, 1)));
+            templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_beryllium", 0.0D, maxDistance, true,
+                    outcome("hbm_ntm_rebirth:ore_sellafield_emerald", level, 1)));
             if (level > 4) {
-                templateEntries.add(templateEntry("matchesBlock", "hbm:ore_uranium", 0.0D, maxDistance, true,
-                        outcome("hbm:ore_sellafield_schrabidium", level, 1), outcome("hbm:ore_sellafield_uranium_scorched", level, 9)));
-                templateEntries.add(templateEntry("matchesBlock", "hbm:ore_gneiss_uranium", 0.0D, maxDistance, true,
-                        outcome("hbm:ore_sellafield_schrabidium", level, 1), outcome("hbm:ore_sellafield_uranium_scorched", level, 9)));
+                templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_uranium", 0.0D, maxDistance, true,
+                        outcome("hbm_ntm_rebirth:ore_sellafield_schrabidium", level, 1), outcome("hbm_ntm_rebirth:ore_sellafield_uranium_scorched", level, 9)));
+                templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_gneiss_uranium", 0.0D, maxDistance, true,
+                        outcome("hbm_ntm_rebirth:ore_sellafield_schrabidium", level, 1), outcome("hbm_ntm_rebirth:ore_sellafield_uranium_scorched", level, 9)));
             }
             templateEntries.add(templateEntry("matchesBlock", "minecraft:diamond_ore", 0.0D, maxDistance, true,
-                    outcome("hbm:ore_sellafield_radgem", level, 1)));
+                    outcome("hbm_ntm_rebirth:ore_sellafield_radgem", level, 1)));
             templateEntries.add(templateEntry("matchesBlock", "minecraft:deepslate_diamond_ore", 0.0D, maxDistance, true,
-                    outcome("hbm:ore_sellafield_radgem", level, 1)));
+                    outcome("hbm_ntm_rebirth:ore_sellafield_radgem", level, 1)));
             templateEntries.add(templateEntry("matchesBlock", "minecraft:bedrock", 0.0D, maxDistance, true,
-                    outcome("hbm:sellafield_bedrock", level, 1)));
-            templateEntries.add(templateEntry("matchesBlock", "hbm:ore_bedrock", 0.0D, maxDistance, true,
-                    outcome("hbm:sellafield_bedrock", level, 1)));
-            templateEntries.add(templateEntry("matchesBlock", "hbm:ore_bedrock_oil", 0.0D, maxDistance, true,
-                    outcome("hbm:sellafield_bedrock", level, 1)));
-            templateEntries.add(templateEntry("matchesBlock", "hbm:sellafield_bedrock", 0.0D, maxDistance, true,
-                    outcome("hbm:sellafield_bedrock", level, 1)));
+                    outcome("hbm_ntm_rebirth:sellafield_bedrock", level, 1)));
+            templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_bedrock", 0.0D, maxDistance, true,
+                    outcome("hbm_ntm_rebirth:sellafield_bedrock", level, 1)));
+            templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_bedrock_oil", 0.0D, maxDistance, true,
+                    outcome("hbm_ntm_rebirth:sellafield_bedrock", level, 1)));
+            templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:sellafield_bedrock", 0.0D, maxDistance, true,
+                    outcome("hbm_ntm_rebirth:sellafield_bedrock", level, 1)));
             templateEntries.add(templateEntry("matchesMaterial", "iron", 0.0D, maxDistance, true,
-                    outcome("hbm:sellafield_slaked", level, 1)));
+                    outcome("hbm_ntm_rebirth:sellafield_slaked", level, 1)));
             templateEntries.add(templateEntry("matchesMaterial", "ground", 0.0D, maxDistance, true,
-                    outcome("hbm:sellafield_slaked", level, 1)));
+                    outcome("hbm_ntm_rebirth:sellafield_slaked", level, 1)));
             templateEntries.add(templateEntry("matchesMaterial", "rock", 0.0D, maxDistance, true,
-                    outcome("hbm:sellafield_slaked", level, 1)));
+                    outcome("hbm_ntm_rebirth:sellafield_slaked", level, 1)));
             templateEntries.add(templateEntry("matchesMaterial", "sand", 0.0D, maxDistance, true,
-                    outcome("hbm:sellafield_slaked", level, 1)));
+                    outcome("hbm_ntm_rebirth:sellafield_slaked", level, 1)));
             if (distanceBand <= 9) {
                 templateEntries.add(templateEntry("matchesMaterial", "grass", 0.0D, maxDistance, true,
-                        outcome("hbm:sellafield_slaked", level, 1)));
+                        outcome("hbm_ntm_rebirth:sellafield_slaked", level, 1)));
             }
         }
-        templateEntries.add(templateEntry("matchesBlock", "minecraft:mycelium", 0.0D, 100.0D, false, outcome("hbm:waste_mycelium", 0, 1)));
+        templateEntries.add(templateEntry("matchesBlock", "minecraft:mycelium", 0.0D, 100.0D, false, outcome("hbm_ntm_rebirth:waste_mycelium", 0, 1)));
         templateEntries.add(templateEntryWithChance("matchesBlock", "minecraft:sand", 0.0D, 100.0D, 0.05D, false,
-                outcome("hbm:waste_trinitite", 0, 1)));
+                outcome("hbm_ntm_rebirth:waste_trinitite", 0, 1)));
         templateEntries.add(templateEntryWithChance("matchesBlock", "minecraft:red_sand", 0.0D, 100.0D, 0.05D, false,
-                outcome("hbm:waste_trinitite_red", 0, 1)));
+                outcome("hbm_ntm_rebirth:waste_trinitite_red", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:clay", 0.0D, 100.0D, false, outcome("minecraft:terracotta", 0, 1)));
         root.add("entries", templateEntries);
         try (Writer writer = Files.newBufferedWriter(template, StandardCharsets.UTF_8)) {

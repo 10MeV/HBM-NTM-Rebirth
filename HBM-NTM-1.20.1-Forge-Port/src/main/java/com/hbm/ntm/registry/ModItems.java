@@ -94,6 +94,9 @@ public final class ModItems {
     public static final RegistryObject<Item> UPGRADE_SPEED_1 = machineUpgrade("upgrade_speed_1", UpgradeType.SPEED, 1);
     public static final RegistryObject<Item> UPGRADE_SPEED_2 = machineUpgrade("upgrade_speed_2", UpgradeType.SPEED, 2);
     public static final RegistryObject<Item> UPGRADE_SPEED_3 = machineUpgrade("upgrade_speed_3", UpgradeType.SPEED, 3);
+    public static final RegistryObject<Item> UPGRADE_EFFECT_1 = machineUpgrade("upgrade_effect_1", UpgradeType.EFFECT, 1);
+    public static final RegistryObject<Item> UPGRADE_EFFECT_2 = machineUpgrade("upgrade_effect_2", UpgradeType.EFFECT, 2);
+    public static final RegistryObject<Item> UPGRADE_EFFECT_3 = machineUpgrade("upgrade_effect_3", UpgradeType.EFFECT, 3);
     public static final RegistryObject<Item> UPGRADE_POWER_1 = machineUpgrade("upgrade_power_1", UpgradeType.POWER, 1);
     public static final RegistryObject<Item> UPGRADE_POWER_2 = machineUpgrade("upgrade_power_2", UpgradeType.POWER, 2);
     public static final RegistryObject<Item> UPGRADE_POWER_3 = machineUpgrade("upgrade_power_3", UpgradeType.POWER, 3);
@@ -745,6 +748,9 @@ public final class ModItems {
             UPGRADE_SPEED_1,
             UPGRADE_SPEED_2,
             UPGRADE_SPEED_3,
+            UPGRADE_EFFECT_1,
+            UPGRADE_EFFECT_2,
+            UPGRADE_EFFECT_3,
             UPGRADE_POWER_1,
             UPGRADE_POWER_2,
             UPGRADE_POWER_3,

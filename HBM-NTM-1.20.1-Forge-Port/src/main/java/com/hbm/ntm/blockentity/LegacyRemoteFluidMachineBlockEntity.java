@@ -105,6 +105,14 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
         return false;
     }
 
+    public boolean canSetInputTypeWithIdentifier() {
+        return false;
+    }
+
+    public boolean setInputTypeFromIdentifier(FluidType type) {
+        return false;
+    }
+
     @Nullable
     public ItemStackHandler getItems() {
         return items;

@@ -1,7 +1,7 @@
 {
   "replace": false,
   "values": [
-    "hbm:glass_boron",
-    "hbm:glass_trinitite"
+    "hbm_ntm_rebirth:glass_boron",
+    "hbm_ntm_rebirth:glass_trinitite"
   ]
 }

@@ -1,0 +1,31 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/trinkets/bobble_socket.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/trinkets/socket",
+    "default": "hbm_ntm_rebirth:block/trinkets/socket",
+    "texture0": "hbm_ntm_rebirth:block/trinkets/socket"
+  },
+  "display": {
+    "gui": {
+      "rotation": [30, 45, 0],
+      "translation": [0, -3, 0],
+      "scale": [0.45, 0.45, 0.45]
+    },
+    "ground": {
+      "translation": [0, 3, 0],
+      "scale": [0.25, 0.25, 0.25]
+    },
+    "thirdperson_righthand": {
+      "rotation": [75, 45, 0],
+      "scale": [0.45, 0.45, 0.45]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 315, 0],
+      "translation": [0, 2, 0],
+      "scale": [0.45, 0.45, 0.45]
+    }
+  }
+}

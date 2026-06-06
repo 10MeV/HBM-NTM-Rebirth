@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:flue",
-    "hbm:flue_flowing"
+    "hbm_ntm_rebirth:flue",
+    "hbm_ntm_rebirth:flue_flowing"
   ]
 }

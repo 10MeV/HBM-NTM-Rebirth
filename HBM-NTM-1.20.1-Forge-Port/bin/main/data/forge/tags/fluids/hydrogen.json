@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:hydrogen",
-    "hbm:hydrogen_flowing"
+    "hbm_ntm_rebirth:hydrogen",
+    "hbm_ntm_rebirth:hydrogen_flowing"
   ]
 }

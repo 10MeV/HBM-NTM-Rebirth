@@ -1,7 +1,0 @@
-{
-  "loader": "forge:obj",
-  "model": "hbm:models/block/launch_table/soyuz_launcher_legs.obj",
-  "flip_v": true,
-  "render_type": "minecraft:cutout",
-  "textures": { "particle": "hbm:block/launch_table/soyuz_launcher_legs", "default": "hbm:block/launch_table/soyuz_launcher_legs" }
-}

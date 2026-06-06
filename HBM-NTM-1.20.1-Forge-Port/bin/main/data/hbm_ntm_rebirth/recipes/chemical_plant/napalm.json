@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 40,
+  "input_fluids": [
+    {
+      "amount": 100,
+      "fluid": "hbm_ntm_rebirth:gasoline"
+    },
+    {
+      "amount": 50,
+      "fluid": "hbm_ntm_rebirth:aromatics"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:canister_empty"
+      }
+    }
+  ],
+  "internal_name": "chem.napalm",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:canister_napalm"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 58
+}

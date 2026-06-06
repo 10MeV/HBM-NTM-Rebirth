@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:mercury",
-    "hbm:mercury_flowing"
+    "hbm_ntm_rebirth:mercury",
+    "hbm_ntm_rebirth:mercury_flowing"
   ]
 }

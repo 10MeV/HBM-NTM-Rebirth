@@ -17,7 +17,7 @@
     "minecraft:green_stained_glass",
     "minecraft:red_stained_glass",
     "minecraft:black_stained_glass",
-    "hbm:glass_boron",
-    "hbm:glass_trinitite"
+    "hbm_ntm_rebirth:glass_boron",
+    "hbm_ntm_rebirth:glass_trinitite"
   ]
 }

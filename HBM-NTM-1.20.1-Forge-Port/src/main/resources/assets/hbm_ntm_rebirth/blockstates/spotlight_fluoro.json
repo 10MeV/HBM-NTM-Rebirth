@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "face=up,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" },
+    "face=up,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" },
+    "face=down,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" },
+    "face=down,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" },
+    "face=north,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" },
+    "face=north,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" },
+    "face=south,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" },
+    "face=south,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" },
+    "face=west,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" },
+    "face=west,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" },
+    "face=east,top_bottom_rotated=false": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" },
+    "face=east,top_bottom_rotated=true": { "model": "hbm_ntm_rebirth:block/spotlight_fluoro" }
+  }
+}

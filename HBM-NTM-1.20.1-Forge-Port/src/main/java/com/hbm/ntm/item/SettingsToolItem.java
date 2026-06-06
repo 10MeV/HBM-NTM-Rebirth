@@ -54,14 +54,14 @@ public class SettingsToolItem extends Item {
                     stack.setTag(settings);
                     if (player instanceof ServerPlayer serverPlayer) {
                         ModMessages.informPlayer(serverPlayer,
-                                Component.translatable("item.hbm.settings_tool.copied",
+                                Component.translatable("item.hbm_ntm_rebirth.settings_tool.copied",
                                         Component.translatable(settings.getString(TAG_TILE_NAME))),
                                 INFORM_ID_BASE - 1, 3000);
                     }
                 }, () -> {
                     if (player instanceof ServerPlayer serverPlayer) {
                         ModMessages.informPlayer(serverPlayer,
-                                Component.translatable("item.hbm.settings_tool.copy_failed").withStyle(ChatFormatting.RED),
+                                Component.translatable("item.hbm_ntm_rebirth.settings_tool.copy_failed").withStyle(ChatFormatting.RED),
                                 INFORM_ID_BASE - 1, 3000);
                     }
                 });
@@ -81,8 +81,8 @@ public class SettingsToolItem extends Item {
             if (player instanceof ServerPlayer serverPlayer) {
                 ModMessages.informPlayer(serverPlayer,
                         Component.translatable(pasted
-                                ? "item.hbm.settings_tool.pasted"
-                                : "item.hbm.settings_tool.paste_failed"),
+                                ? "item.hbm_ntm_rebirth.settings_tool.pasted"
+                                : "item.hbm_ntm_rebirth.settings_tool.paste_failed"),
                         INFORM_ID_BASE - 1, 3000);
             }
         }
@@ -129,14 +129,14 @@ public class SettingsToolItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.hbm.settings_tool.desc1"));
-        tooltip.add(Component.translatable("item.hbm.settings_tool.desc2"));
-        tooltip.add(Component.translatable("item.hbm.settings_tool.desc3"));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.settings_tool.desc1"));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.settings_tool.desc2"));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.settings_tool.desc3"));
         CompoundTag tag = stack.getTag();
         if (tag != null && tag.contains(TAG_TILE_NAME, Tag.TAG_STRING)) {
             tooltip.add(Component.translatable(tag.getString(TAG_TILE_NAME)).withStyle(ChatFormatting.BLUE));
         } else {
-            tooltip.add(Component.translatable("item.hbm.settings_tool.none").withStyle(ChatFormatting.RED));
+            tooltip.add(Component.translatable("item.hbm_ntm_rebirth.settings_tool.none").withStyle(ChatFormatting.RED));
         }
     }
 

@@ -16,8 +16,8 @@ public class AntimatterClusterItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.hbm.pellet_antimatter.desc.1").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("item.hbm.pellet_antimatter.desc.2").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("item.hbm.trait.drop").withStyle(ChatFormatting.RED));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.pellet_antimatter.desc.1").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.pellet_antimatter.desc.2").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.trait.drop").withStyle(ChatFormatting.RED));
     }
 }

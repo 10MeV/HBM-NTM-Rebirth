@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "ingredient": {
+    "item": "minecraft:gold_ingot"
+  },
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:wire_gold"
+  },
+  "stamp": "wire"
+}

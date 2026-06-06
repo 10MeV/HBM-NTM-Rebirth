@@ -1,12 +1,12 @@
 {
   "values": [
-    "hbm:steam",
-    "hbm:steam_flowing",
-    "hbm:hotsteam",
-    "hbm:hotsteam_flowing",
-    "hbm:superhotsteam",
-    "hbm:superhotsteam_flowing",
-    "hbm:ultrahotsteam",
-    "hbm:ultrahotsteam_flowing"
+    "hbm_ntm_rebirth:steam",
+    "hbm_ntm_rebirth:steam_flowing",
+    "hbm_ntm_rebirth:hotsteam",
+    "hbm_ntm_rebirth:hotsteam_flowing",
+    "hbm_ntm_rebirth:superhotsteam",
+    "hbm_ntm_rebirth:superhotsteam_flowing",
+    "hbm_ntm_rebirth:ultrahotsteam",
+    "hbm_ntm_rebirth:ultrahotsteam_flowing"
   ]
 }

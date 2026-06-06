@@ -84,8 +84,6 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     private static final long DEFAULT_MAX_POWER = 1_000_000L;
     private static final int TANK_CAPACITY = 4_000;
     private static final int MODULES = 4;
-    private static final List<EnergyPort> ENERGY_PORTS = LegacyMultiblockPorts.xrFloorRingEnergyPorts(3);
-    private static final List<FluidPort> FLUID_PORTS = LegacyMultiblockPorts.xrFloorRingFluidPorts(3);
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(
             UpgradeType.SPEED, 3,
             UpgradeType.POWER, 3,
@@ -97,6 +95,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     public static final int MODULE_STRIDE = 14;
     public static final int MODULE_BASE = 4;
 
+    private final HbmStandardFluidTransceiver coolingFluidNetwork = new CoolingFluidNetwork();
     private final ItemStackHandler items = new ItemStackHandler(60) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -169,14 +168,14 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         receivingTankList = inputTankList;
         sendingTankList = outputTankList;
         allTankList = join(join(inputTankList, outputTankList), List.of(water, spentSteam));
-        fluidHandler = LazyOptional.of(() -> new ForgeRecipeFluidHandlerAdapter(receivingTankList, sendingTankList, 0,
-                this::onFluidContentsChanged));
+        IFluidHandler recipeFluidHandler = new ForgeRecipeFluidHandlerAdapter(receivingTankList, sendingTankList, 0,
+                this::onFluidContentsChanged);
+        fluidHandler = LazyOptional.of(() -> recipeFluidHandler);
         coolingDelegate = new CapabilityDelegate(null, new ForgeFluidHandlerAdapter(List.of(water), List.of(spentSteam), 0,
                 true, true, this::onFluidContentsChanged));
         for (int i = 0; i < MODULES; i++) {
             moduleDelegates[i] = new CapabilityDelegate(new MappedItemHandler(moduleExternalSlots(i)),
-                    new ForgeRecipeFluidHandlerAdapter(List.of(inputTanks[i]), List.of(outputTanks[i]), 0,
-                            this::onFluidContentsChanged));
+                    recipeFluidHandler);
         }
     }
 
@@ -551,12 +550,14 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     private int subscribeEnergyReceiverToPorts() {
         return level == null || level.isClientSide
                 ? 0
-                : HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, ENERGY_PORTS, this);
+                : HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, energyPorts(), this);
     }
 
     private void refreshFluidPortSubscriptions() {
-        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, FLUID_PORTS,
+        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, recipeFluidPorts(),
                 receivingTankList, sendingTankList, this);
+        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, coolingFluidPorts(),
+                List.of(water), List.of(spentSteam), coolingFluidNetwork);
     }
 
     private void onFluidContentsChanged() {
@@ -657,6 +658,27 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         return List.copyOf(joined);
     }
 
+    private Direction facing() {
+        return getBlockState().hasProperty(com.hbm.ntm.block.HorizontalMachineBlock.FACING)
+                ? getBlockState().getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING)
+                : Direction.SOUTH;
+    }
+
+    private List<EnergyPort> energyPorts() {
+        Direction facing = facing();
+        return LegacyMultiblockPorts.combineEnergyPorts(
+                LegacyMultiblockPorts.factoryRecipeEnergyPorts(facing, false),
+                LegacyMultiblockPorts.factoryCoolingEnergyPorts(facing));
+    }
+
+    private List<FluidPort> recipeFluidPorts() {
+        return LegacyMultiblockPorts.factoryRecipeFluidPorts(facing(), false);
+    }
+
+    private List<FluidPort> coolingFluidPorts() {
+        return LegacyMultiblockPorts.factoryCoolingFluidPorts(facing());
+    }
+
     private void setSelectedRecipe(int module, String recipe) {
         selectedRecipes[module] = GenericMachineRecipeSelector.normalize(recipe);
         setChanged();
@@ -706,6 +728,40 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
 
         private int map(int slot) {
             return slot >= 0 && slot < slots.length ? slots[slot] : -1;
+        }
+    }
+
+    private class CoolingFluidNetwork implements HbmStandardFluidTransceiver {
+        @Override
+        public List<HbmFluidTank> getAllTanks() {
+            return List.of(water, spentSteam);
+        }
+
+        @Override
+        public List<HbmFluidTank> getReceivingTanks() {
+            return List.of(water);
+        }
+
+        @Override
+        public List<HbmFluidTank> getSendingTanks() {
+            return List.of(spentSteam);
+        }
+
+        @Override
+        public long transferFluid(FluidType type, int pressure, long amount) {
+            long leftover = HbmStandardFluidTransceiver.super.transferFluid(type, pressure, amount);
+            if (leftover != amount) {
+                onFluidContentsChanged();
+            }
+            return leftover;
+        }
+
+        @Override
+        public void useUpFluid(FluidType type, int pressure, long amount) {
+            HbmStandardFluidTransceiver.super.useUpFluid(type, pressure, amount);
+            if (amount > 0L) {
+                onFluidContentsChanged();
+            }
         }
     }
 

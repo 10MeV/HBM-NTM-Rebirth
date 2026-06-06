@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 
 @Mod(HbmNtm.MOD_ID)
 public class HbmNtm {
-    public static final String MOD_ID = "hbm";
+    public static final String MOD_ID = "hbm_ntm_rebirth";
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public HbmNtm() {
@@ -57,8 +57,8 @@ public class HbmNtm {
         modBus.addListener(this::commonSetup);
         modBus.addListener(HbmDataGenerators::gatherData);
 
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, HbmCommonConfig.SPEC, "hbm-common.toml");
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, HbmClientConfig.SPEC, "hbm-client.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, HbmCommonConfig.SPEC, "hbm_ntm_rebirth-common.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, HbmClientConfig.SPEC, "hbm_ntm_rebirth-client.toml");
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

@@ -1,11 +1,19 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
+import com.hbm.ntm.api.redstoneoverradio.RORInfo;
+import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
+import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmExtinguishType;
+import com.hbm.ntm.fluid.HbmFluidOverpressurable;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
+import com.hbm.ntm.fluid.HbmFluidRepairMaterials;
+import com.hbm.ntm.fluid.HbmFluidRepairMaterials.HbmRepairMaterial;
+import com.hbm.ntm.fluid.HbmFluidRepairable;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -15,12 +23,12 @@ import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.fluid.trait.CorrosiveFluidTrait;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
-import com.hbm.ntm.blockentity.RefineryBlockEntity.ExtinguishType;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -49,7 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         implements MenuProvider, HbmStandardFluidReceiver, HbmStandardFluidSender, HbmLegacyButtonReceiver,
-        HbmPersistentBlockState {
+        HbmPersistentBlockState, RORValueProvider, RORInteractive, HbmFluidOverpressurable, HbmFluidRepairable {
     public static final int SLOT_TYPE_INPUT = 0;
     public static final int SLOT_TYPE_OUTPUT = 1;
     public static final int SLOT_LOAD_INPUT = 2;
@@ -279,7 +287,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public int[] getFluidIdsToCopy() {
         FluidType type = tank.getTankType();
-        return type == null || type.hasNoId() ? new int[0] : new int[] {type.getId()};
+        return new int[] {(type == null ? HbmFluids.NONE : type).getId()};
     }
 
     @Nullable
@@ -305,7 +313,6 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
             return;
         }
         exploded = false;
-        onFire = false;
         invalidateFluidHandlers();
         onFluidContentsChanged();
         if (level != null) {
@@ -325,11 +332,11 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         return hasDamageState();
     }
 
-    public void tryExtinguish(ExtinguishType type) {
+    public void tryExtinguish(HbmExtinguishType type) {
         if (!exploded || !onFire) {
             return;
         }
-        if (type == ExtinguishType.WATER) {
+        if (type == HbmExtinguishType.WATER) {
             if (tank.getTankType().hasTrait(SimpleFluidTraits.Liquid.class) && level != null) {
                 level.explode(null, worldPosition.getX() + 0.5D, worldPosition.getY() + 1.5D,
                         worldPosition.getZ() + 0.5D, 5.0F, Level.ExplosionInteraction.TNT);
@@ -339,10 +346,30 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
             }
             return;
         }
-        if (type == ExtinguishType.FOAM || type == ExtinguishType.CO2) {
+        if (type == HbmExtinguishType.FOAM || type == HbmExtinguishType.CO2) {
             onFire = false;
             onFluidContentsChanged();
         }
+    }
+
+    @Override
+    public boolean isDamagedForFluidRepair() {
+        return exploded;
+    }
+
+    @Override
+    public List<HbmRepairMaterial> getFluidRepairMaterials() {
+        return List.of(HbmFluidRepairMaterials.item(ModItems.STEEL_PLATE.get(), 6));
+    }
+
+    @Override
+    public void repairFluidMachine() {
+        repairTank();
+    }
+
+    @Override
+    public void explodeFromFluidOverpressure(Level level, BlockPos pos) {
+        explodeTank();
     }
 
     public int getComparatorPower() {
@@ -354,6 +381,62 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     public int getTankFillHeight(int maxHeight) {
         return tank.getMaxFill() <= 0 ? 0 : tank.getFill() * maxHeight / tank.getMaxFill();
+    }
+
+    public Object[] getFluidStored() {
+        return new Object[] {tank.getFill()};
+    }
+
+    public Object[] getMaxStored() {
+        return new Object[] {tank.getMaxFill()};
+    }
+
+    public Object[] getTypeStored() {
+        return new Object[] {tank.getTankType().getName()};
+    }
+
+    public Object[] getInfo() {
+        return new Object[] {tank.getFill(), tank.getMaxFill(), tank.getTankType().getName()};
+    }
+
+    @Override
+    public String[] getFunctionInfo() {
+        return new String[] {
+                RORInfo.PREFIX_VALUE + "type",
+                RORInfo.PREFIX_VALUE + "fill",
+                RORInfo.PREFIX_VALUE + "fillpercent",
+                RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "mode (0-3)",
+                RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "mode"
+                        + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)"
+        };
+    }
+
+    @Override
+    public String provideRORValue(String name) {
+        if ((RORInfo.PREFIX_VALUE + "type").equals(name)) {
+            return tank.getTankType().getName();
+        }
+        if ((RORInfo.PREFIX_VALUE + "fill").equals(name)) {
+            return Integer.toString(tank.getFill());
+        }
+        if ((RORInfo.PREFIX_VALUE + "fillpercent").equals(name)) {
+            return Integer.toString(tank.getFill() * 100 / Math.max(tank.getMaxFill(), 1));
+        }
+        return null;
+    }
+
+    @Override
+    public String runRORFunction(String name, String[] params) {
+        if ((RORInfo.PREFIX_FUNCTION + "setmode").equals(name) && params.length > 0) {
+            int mode = RORInteractive.parseInt(params[0], MODE_INPUT, MODE_NONE);
+            if (mode != this.mode) {
+                setMode(mode);
+            } else if (params.length > 1) {
+                setMode(RORInteractive.parseInt(params[1], MODE_INPUT, MODE_NONE));
+            }
+            return null;
+        }
+        return null;
     }
 
     @Override
@@ -413,7 +496,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected boolean shouldCreateFluidNode() {
-        return !exploded && mode == MODE_BUFFER && !tank.isEmpty();
+        return !exploded && mode == MODE_BUFFER && tank.getTankType() != HbmFluids.NONE;
     }
 
     @Override
@@ -423,7 +506,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected boolean shouldSubscribeAsFluidProvider(FluidType type) {
-        return !exploded && (mode == MODE_BUFFER || mode == MODE_OUTPUT) && tank.getTankType() == type && tank.getFill() > 0;
+        return !exploded && (mode == MODE_BUFFER || mode == MODE_OUTPUT) && tank.getTankType() == type;
     }
 
     @Override
@@ -632,21 +715,26 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         }
 
         private boolean wouldLoadFluid(ItemStack stack) {
-            if (stack.isEmpty() || stack.getCount() <= 0) {
+            if (stack.isEmpty() || stack.getCount() <= 0 || tank.getTankType() == HbmFluids.NONE) {
                 return false;
             }
             ItemStackHandlerPreview preview = new ItemStackHandlerPreview(SLOT_LOAD_INPUT, stack);
+            HbmFluidTank previewTank = new HbmFluidTank(tank.getTankType(), tank.getMaxFill())
+                    .withPressure(tank.getPressure());
             return HbmFluidItemTransfer.loadTankFromSlot(preview, SLOT_LOAD_INPUT, SLOT_LOAD_OUTPUT,
-                    tank, Integer.MAX_VALUE, true);
+                    previewTank, Integer.MAX_VALUE, true);
         }
 
         private boolean wouldUnloadFluid(ItemStack stack) {
-            if (stack.isEmpty() || stack.getCount() <= 0) {
+            if (stack.isEmpty() || stack.getCount() <= 0 || tank.getTankType() == HbmFluids.NONE) {
                 return false;
             }
             ItemStackHandlerPreview preview = new ItemStackHandlerPreview(SLOT_UNLOAD_INPUT, stack);
+            HbmFluidTank previewTank = new HbmFluidTank(tank.getTankType(), tank.getMaxFill())
+                    .withPressure(tank.getPressure());
+            previewTank.setFill(previewTank.getMaxFill());
             return HbmFluidItemTransfer.unloadTankToSlot(preview, SLOT_UNLOAD_INPUT, SLOT_UNLOAD_OUTPUT,
-                    tank, Integer.MAX_VALUE, true);
+                    previewTank, Integer.MAX_VALUE, true);
         }
     }
 

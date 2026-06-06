@@ -1,0 +1,51 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:lubricant"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:item_expensive_steel_plating"
+      },
+      "legacy_id": "hbm_ntm_rebirth:item_expensive",
+      "legacy_meta": 0
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:cast_plates/lead"
+      },
+      "legacy_ore": "plateCastLead"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:ingots/boron"
+      },
+      "legacy_ore": "ingotBoron"
+    },
+    {
+      "count": 32,
+      "ingredient": {
+        "tag": "forge:bolts/tungsten"
+      },
+      "legacy_ore": "boltTungsten"
+    }
+  ],
+  "internal_name": "ass.exleadplating",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:item_expensive_lead_plating"
+    }
+  ],
+  "pools": [],
+  "power": 4000,
+  "source_order": 21
+}

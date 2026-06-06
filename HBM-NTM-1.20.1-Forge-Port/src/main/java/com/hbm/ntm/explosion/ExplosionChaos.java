@@ -38,8 +38,8 @@ public final class ExplosionChaos {
         }
         RegistryObject<? extends Block> virus = ModBlocks.legacyBlock("crystal_virus");
         RegistryObject<? extends Block> hardened = ModBlocks.legacyBlock("crystal_hardened");
-        Block virusBlock = Objects.requireNonNull(virus, "Missing legacy block hbm:crystal_virus").get();
-        Block hardenedBlock = Objects.requireNonNull(hardened, "Missing legacy block hbm:crystal_hardened").get();
+        Block virusBlock = Objects.requireNonNull(virus, "Missing legacy block hbm_ntm_rebirth:crystal_virus").get();
+        Block hardenedBlock = Objects.requireNonNull(hardened, "Missing legacy block hbm_ntm_rebirth:crystal_hardened").get();
 
         applyHalfSphere(level, x, y, z, bombStartStrength, pos -> {
             if (level.getBlockState(pos).is(virusBlock)) {

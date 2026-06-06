@@ -1,7 +1,7 @@
 {
   "values": [
-    "hbm:wire_dense_gold",
-    "hbm:wire_dense_niobium",
-    "hbm:wire_dense_bscco"
+    "hbm_ntm_rebirth:wire_dense_gold",
+    "hbm_ntm_rebirth:wire_dense_niobium",
+    "hbm_ntm_rebirth:wire_dense_bscco"
   ]
 }

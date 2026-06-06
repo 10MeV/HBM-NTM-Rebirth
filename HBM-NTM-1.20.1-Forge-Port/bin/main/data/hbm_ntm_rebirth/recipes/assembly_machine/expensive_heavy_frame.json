@@ -1,0 +1,53 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 600,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:item_expensive_steel_plating"
+      },
+      "legacy_id": "hbm_ntm_rebirth:item_expensive",
+      "legacy_meta": 0
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:welded_plates/copper"
+      },
+      "legacy_ore": "plateSextupleCopper"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/workers_alloy"
+      },
+      "legacy_ore": "ingotWorkersAlloy"
+    },
+    {
+      "count": 32,
+      "ingredient": {
+        "tag": "forge:bolts/dura_steel"
+      },
+      "legacy_ore": "boltDuraSteel"
+    }
+  ],
+  "internal_name": "ass.exheavyframe",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:item_expensive_heavy_frame"
+    }
+  ],
+  "pools": [],
+  "power": 800,
+  "source_order": 19
+}

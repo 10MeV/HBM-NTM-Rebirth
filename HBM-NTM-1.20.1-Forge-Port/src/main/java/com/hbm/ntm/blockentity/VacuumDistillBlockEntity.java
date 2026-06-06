@@ -10,8 +10,11 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.VacuumRecipe;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,6 +22,7 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.ItemStackHandler;
 
 public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
+    private static final String TAG_IS_ON = "isOn";
     public static final int SLOT_BATTERY = 0;
     public static final int SLOT_INPUT_CONTAINER = 1;
     public static final int SLOT_INPUT_CONTAINER_OUTPUT = 2;
@@ -40,6 +44,8 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
     private final HbmFluidTank reformateTank;
     private final HbmFluidTank lightOilTank;
     private final HbmFluidTank sourGasTank;
+    private boolean isOn;
+    private Object audioLoop;
 
     public VacuumDistillBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state,
@@ -70,13 +76,19 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
         return LegacyGuiProfile.VACUUM_DISTILL;
     }
 
+    public static void clientTick(Level level, BlockPos pos, BlockState state, VacuumDistillBlockEntity blockEntity) {
+        blockEntity.updateAudioLoop();
+    }
+
     @Override
     protected boolean tickLegacyMachine(Level level, BlockPos pos, BlockState state) {
+        boolean wasOn = isOn;
+        isOn = false;
         boolean changed = setInputTypeFromIdentifier();
         changed |= processFluidContainers();
         chargeFromSlot(SLOT_BATTERY);
         changed |= refine();
-        return changed;
+        return changed || wasOn != isOn;
     }
 
     @Override
@@ -129,6 +141,8 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
     private boolean processFluidContainers() {
         ItemStackHandler items = getItems();
         return items != null && HbmFluidItemTransfer.processTransfers(items, List.of(
+                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_INPUT_CONTAINER,
+                        SLOT_INPUT_CONTAINER_OUTPUT, inputTank),
                 HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT_HEAVY_CONTAINER,
                         SLOT_OUTPUT_HEAVY_CONTAINER_OUTPUT, heavyOilTank),
                 HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT_REFORMATE_CONTAINER,
@@ -158,6 +172,7 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
         addFluid(lightOilTank, recipe.lightOil().type(), recipe.lightOil().amount());
         addFluid(sourGasTank, recipe.gas().type(), recipe.gas().amount());
         consumePower(POWER_PER_OPERATION);
+        isOn = true;
         onFluidContentsChanged();
         return true;
     }
@@ -183,5 +198,25 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
         configureTank(lightOilTank, recipe.lightOil().type());
         configureTank(sourGasTank, recipe.gas().type());
         return changed;
+    }
+
+    private void updateAudioLoop() {
+        if (level == null || !level.isClientSide) {
+            return;
+        }
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_BOILER.getId(),
+                isOn, 30.0D, 15.0F, 0.25F, 1.0F);
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.putBoolean(TAG_IS_ON, isOn);
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        isOn = tag.getBoolean(TAG_IS_ON);
     }
 }

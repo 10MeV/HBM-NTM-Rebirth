@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:liquefaction",
+  "ingredient": {
+    "item": "minecraft:sugar"
+  },
+  "output": {
+    "amount": 100,
+    "fluid": "ETHANOL",
+    "pressure": 0
+  }
+}

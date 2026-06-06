@@ -1,8 +1,0 @@
-{
-  "loader": "forge:obj",
-  "model": "hbm:models/block/machines/firebox.obj",
-  "flip_v": true,
-  "render_type": "minecraft:cutout",
-  "parts": { "visibility": { "InnerEmpty": false, "InnerBurning": false, "Door": true, "Main": false } },
-  "textures": { "particle": "hbm:block/machines/firebox", "default": "hbm:block/machines/firebox" }
-}

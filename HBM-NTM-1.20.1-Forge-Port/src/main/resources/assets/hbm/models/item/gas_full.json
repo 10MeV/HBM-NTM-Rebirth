@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "hbm:item/gas_empty",
-    "layer1": "hbm:item/gas_bottle",
-    "layer2": "hbm:item/gas_label"
-  }
-}

@@ -1,12 +1,12 @@
 {
   "values": [
-    "hbm:plate_cast_steel",
-    "hbm:plate_cast_lead",
-    "hbm:plate_cast_copper",
-    "hbm:plate_cast_dura_steel",
-    "hbm:plate_cast_bismuth_bronze",
-    "hbm:plate_cast_arsenic_bronze",
-    "hbm:plate_cast_combine_steel",
-    "hbm:plate_cast_ferrouranium"
+    "hbm_ntm_rebirth:plate_cast_steel",
+    "hbm_ntm_rebirth:plate_cast_lead",
+    "hbm_ntm_rebirth:plate_cast_copper",
+    "hbm_ntm_rebirth:plate_cast_dura_steel",
+    "hbm_ntm_rebirth:plate_cast_bismuth_bronze",
+    "hbm_ntm_rebirth:plate_cast_arsenic_bronze",
+    "hbm_ntm_rebirth:plate_cast_combine_steel",
+    "hbm_ntm_rebirth:plate_cast_ferrouranium"
   ]
 }

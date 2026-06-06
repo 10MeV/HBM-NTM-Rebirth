@@ -1,0 +1,10 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/doors/blast_door_block.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/doors/blast_door_block",
+    "default": "hbm_ntm_rebirth:block/doors/blast_door_block"
+  }
+}

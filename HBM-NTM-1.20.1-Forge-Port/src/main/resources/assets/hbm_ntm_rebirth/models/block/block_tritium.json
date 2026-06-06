@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "hbm_ntm_rebirth:block/block_tritium_side",
+    "top": "hbm_ntm_rebirth:block/block_tritium_top",
+    "bottom": "hbm_ntm_rebirth:block/block_tritium_top"
+  }
+}

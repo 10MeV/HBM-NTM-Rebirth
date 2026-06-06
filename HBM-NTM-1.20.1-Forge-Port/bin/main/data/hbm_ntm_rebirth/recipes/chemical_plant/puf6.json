@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 200,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:water"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/plutonium"
+      },
+      "legacy_ore": "dustPlutonium"
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "tag": "forge:dusts/fluorite"
+      },
+      "legacy_ore": "dustFluorite"
+    }
+  ],
+  "internal_name": "chem.puf6",
+  "output_fluids": [
+    {
+      "amount": 900,
+      "fluid": "hbm_ntm_rebirth:puf6"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 500,
+  "source_order": 66
+}

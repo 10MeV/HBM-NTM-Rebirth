@@ -2,6 +2,7 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.CatalyticReformerBlockEntity;
+import com.hbm.ntm.blockentity.CokerBlockEntity;
 import com.hbm.ntm.blockentity.HydrotreaterBlockEntity;
 import com.hbm.ntm.blockentity.LegacyRemoteFluidMachineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyRemoteFluidMachineBlockEntity.LegacyGuiProfile;
@@ -19,6 +20,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -36,6 +38,8 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
     private final int playerSlotEnd;
     private long power;
     private long maxPower;
+    private int cokerProgress;
+    private int cokerHeat;
 
     public RemoteFluidMachineMenu(int containerId, Inventory playerInventory, FriendlyByteBuf data) {
         this(containerId, playerInventory, getBlockEntity(playerInventory, data.readBlockPos()));
@@ -100,6 +104,32 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
         return maxPower <= 0L ? 0 : (int) (power * maxHeight / maxPower);
     }
 
+    public int getCokerProgress() {
+        return cokerProgress;
+    }
+
+    public int getCokerHeat() {
+        return cokerHeat;
+    }
+
+    public int getCokerProcessTime() {
+        return blockEntity instanceof CokerBlockEntity coker ? coker.getProcessTime() : 20_000;
+    }
+
+    public int getCokerMaxHeat() {
+        return blockEntity instanceof CokerBlockEntity coker ? coker.getMaxHeat() : 100_000;
+    }
+
+    public int getCokerProgressBarWidth(int width) {
+        int max = getCokerProcessTime();
+        return max <= 0 ? 0 : cokerProgress * width / max;
+    }
+
+    public int getCokerHeatBarWidth(int width) {
+        int max = getCokerMaxHeat();
+        return max <= 0 ? 0 : cokerHeat * width / max;
+    }
+
     @Override
     public boolean stillValid(Player player) {
         return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
@@ -115,6 +145,20 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getMaxPower, () -> maxPower, value -> maxPower = value);
         blockEntity.getAllTanks().forEach(tank -> tanks.add(HbmFluidGuiHelper.watchTank(this::addDataSlot, tank)));
+        if (blockEntity instanceof CokerBlockEntity coker) {
+            addDataSlot(new DataSlot() {
+                @Override
+                public int get() {
+                    return coker.getProgress();
+                }
+
+                @Override
+                public void set(int value) {
+                    cokerProgress = value;
+                }
+            });
+            HbmMenuDataSlots.addLong(this::addDataSlot, coker::getHeat, () -> cokerHeat, value -> cokerHeat = (int) value);
+        }
     }
 
     private int addMachineSlots() {
@@ -123,6 +167,7 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
             return 0;
         }
         switch (profile) {
+            case COKER -> addCokerSlots(items);
             case HYDROTREATER -> addHydrotreaterSlots(items);
             case CATALYTIC_REFORMER -> addCatalyticReformerSlots(items);
             case VACUUM_DISTILL -> addVacuumDistillSlots(items);
@@ -133,12 +178,17 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
         return items.getSlots();
     }
 
+    private void addCokerSlots(ItemStackHandler items) {
+        addSlot(identifierSlot(items, CokerBlockEntity.SLOT_IDENTIFIER, 35, 72));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, CokerBlockEntity.SLOT_OUTPUT, 97, 27));
+    }
+
     private void addHydrotreaterSlots(ItemStackHandler items) {
         addSlot(energySlot(items, HydrotreaterBlockEntity.SLOT_BATTERY, 17, 90));
         addSlot(new SlotItemHandler(items, HydrotreaterBlockEntity.SLOT_INPUT_CONTAINER, 35, 90));
         addSlot(HbmInventoryMenuHelper.outputSlot(items, HydrotreaterBlockEntity.SLOT_INPUT_CONTAINER_OUTPUT, 35, 108));
-        addSlot(new SlotItemHandler(items, HydrotreaterBlockEntity.SLOT_HYDROGEN_INPUT, 53, 90));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, HydrotreaterBlockEntity.SLOT_HYDROGEN_OUTPUT, 53, 108));
+        addSlot(HbmInventoryMenuHelper.deprecatedSlot(items, HydrotreaterBlockEntity.SLOT_HYDROGEN_INPUT, 53, 90));
+        addSlot(HbmInventoryMenuHelper.deprecatedSlot(items, HydrotreaterBlockEntity.SLOT_HYDROGEN_OUTPUT, 53, 108));
         addSlot(new SlotItemHandler(items, HydrotreaterBlockEntity.SLOT_OUTPUT_LEFT_CONTAINER, 125, 90));
         addSlot(HbmInventoryMenuHelper.outputSlot(items, HydrotreaterBlockEntity.SLOT_OUTPUT_LEFT_CONTAINER_OUTPUT, 125, 108));
         addSlot(new SlotItemHandler(items, HydrotreaterBlockEntity.SLOT_OUTPUT_RIGHT_CONTAINER, 143, 90));
@@ -163,8 +213,8 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
 
     private void addVacuumDistillSlots(ItemStackHandler items) {
         addSlot(energySlot(items, VacuumDistillBlockEntity.SLOT_BATTERY, 26, 90));
-        addSlot(disabledSlot(items, VacuumDistillBlockEntity.SLOT_INPUT_CONTAINER, 44, 90));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, VacuumDistillBlockEntity.SLOT_INPUT_CONTAINER_OUTPUT, 44, 108));
+        addSlot(HbmInventoryMenuHelper.deprecatedSlot(items, VacuumDistillBlockEntity.SLOT_INPUT_CONTAINER, 44, 90));
+        addSlot(HbmInventoryMenuHelper.deprecatedSlot(items, VacuumDistillBlockEntity.SLOT_INPUT_CONTAINER_OUTPUT, 44, 108));
         addSlot(new SlotItemHandler(items, VacuumDistillBlockEntity.SLOT_OUTPUT_HEAVY_CONTAINER, 80, 90));
         addSlot(HbmInventoryMenuHelper.outputSlot(items, VacuumDistillBlockEntity.SLOT_OUTPUT_HEAVY_CONTAINER_OUTPUT, 80, 108));
         addSlot(new SlotItemHandler(items, VacuumDistillBlockEntity.SLOT_OUTPUT_REFORMATE_CONTAINER, 98, 90));
@@ -203,23 +253,15 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
         };
     }
 
-    private SlotItemHandler disabledSlot(ItemStackHandler items, int slot, int x, int y) {
-        return new SlotItemHandler(items, slot, x, y) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return false;
-            }
-        };
-    }
-
     private int[] insertionRanges() {
         return switch (profile) {
+            case COKER -> new int[] {
+                    CokerBlockEntity.SLOT_IDENTIFIER, CokerBlockEntity.SLOT_IDENTIFIER + 1 };
             case HYDROTREATER -> new int[] {
                     HydrotreaterBlockEntity.SLOT_BATTERY, HydrotreaterBlockEntity.SLOT_BATTERY + 1,
                     HydrotreaterBlockEntity.SLOT_IDENTIFIER, HydrotreaterBlockEntity.SLOT_IDENTIFIER + 1,
                     HydrotreaterBlockEntity.SLOT_CATALYST, HydrotreaterBlockEntity.SLOT_CATALYST + 1,
                     HydrotreaterBlockEntity.SLOT_INPUT_CONTAINER, HydrotreaterBlockEntity.SLOT_INPUT_CONTAINER + 1,
-                    HydrotreaterBlockEntity.SLOT_HYDROGEN_INPUT, HydrotreaterBlockEntity.SLOT_HYDROGEN_INPUT + 1,
                     HydrotreaterBlockEntity.SLOT_OUTPUT_LEFT_CONTAINER, HydrotreaterBlockEntity.SLOT_OUTPUT_LEFT_CONTAINER + 1,
                     HydrotreaterBlockEntity.SLOT_OUTPUT_RIGHT_CONTAINER, HydrotreaterBlockEntity.SLOT_OUTPUT_RIGHT_CONTAINER + 1 };
             case CATALYTIC_REFORMER -> new int[] {

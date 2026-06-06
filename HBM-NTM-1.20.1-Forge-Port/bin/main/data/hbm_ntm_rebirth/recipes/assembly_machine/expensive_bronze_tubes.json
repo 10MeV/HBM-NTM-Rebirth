@@ -1,0 +1,57 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 3000,
+  "input_fluids": [
+    {
+      "amount": 4000,
+      "fluid": "hbm_ntm_rebirth:perfluoromethyl_cold"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:item_expensive_heavy_frame"
+      },
+      "legacy_id": "hbm_ntm_rebirth:item_expensive",
+      "legacy_meta": 1
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:item_expensive_ferro_plating"
+      },
+      "legacy_id": "hbm_ntm_rebirth:item_expensive",
+      "legacy_meta": 4
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:cast_plates/any_bismoid_bronze"
+      },
+      "legacy_ore": "plateCastAnyBismoidBronze"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:welded_plates/zirconium"
+      },
+      "legacy_ore": "plateSextupleZirconium"
+    }
+  ],
+  "internal_name": "ass.bronzetubes",
+  "output_fluids": [
+    {
+      "amount": 4000,
+      "fluid": "hbm_ntm_rebirth:perfluoromethyl"
+    }
+  ],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:item_expensive_bronze_tubes"
+    }
+  ],
+  "pools": [],
+  "power": 250000,
+  "source_order": 24
+}

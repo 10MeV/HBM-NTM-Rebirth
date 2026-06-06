@@ -13,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -30,6 +31,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
@@ -48,7 +50,13 @@ public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (level.getBlockEntity(pos) instanceof RefineryBlockEntity refinery) {
-            return refinery.isExploded() ? InteractionResult.PASS : InteractionResult.sidedSuccess(level.isClientSide);
+            if (refinery.isExploded()) {
+                return InteractionResult.PASS;
+            }
+            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+                NetworkHooks.openScreen(serverPlayer, refinery, pos);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
         return InteractionResult.PASS;
     }
@@ -59,11 +67,11 @@ public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock {
         if (type != ModBlockEntities.REFINERY.get()) {
             return null;
         }
-        return (tickLevel, tickPos, tickState, blockEntity) -> {
-            if (blockEntity instanceof RefineryBlockEntity refinery) {
-                RefineryBlockEntity.serverTick(tickLevel, tickPos, tickState, refinery);
-            }
-        };
+        return level.isClientSide
+                ? (tickLevel, tickPos, tickState, blockEntity) ->
+                RefineryBlockEntity.clientTick(tickLevel, tickPos, tickState, (RefineryBlockEntity) blockEntity)
+                : (tickLevel, tickPos, tickState, blockEntity) ->
+                RefineryBlockEntity.serverTick(tickLevel, tickPos, tickState, (RefineryBlockEntity) blockEntity);
     }
 
     @Override

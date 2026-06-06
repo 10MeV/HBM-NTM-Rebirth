@@ -9,11 +9,15 @@ import com.hbm.ntm.menu.ChemicalPlantMenu;
 import com.hbm.ntm.menu.CompressorMenu;
 import com.hbm.ntm.menu.CustomNukeMenu;
 import com.hbm.ntm.menu.FluidTankMenu;
+import com.hbm.ntm.menu.GasFlareMenu;
 import com.hbm.ntm.menu.LiquefactorMenu;
 import com.hbm.ntm.menu.MachineBatteryMenu;
 import com.hbm.ntm.menu.MachineBatterySocketMenu;
 import com.hbm.ntm.menu.NuclearDeviceMenu;
+import com.hbm.ntm.menu.OilDrillMenu;
 import com.hbm.ntm.menu.RemoteFluidMachineMenu;
+import com.hbm.ntm.menu.RefineryMenu;
+import com.hbm.ntm.menu.SolidifierMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -45,6 +49,18 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<LiquefactorMenu>> LIQUEFACTOR =
             MENUS.register("liquefactor", () -> IForgeMenuType.create(LiquefactorMenu::new));
+
+    public static final RegistryObject<MenuType<RefineryMenu>> REFINERY =
+            MENUS.register("refinery", () -> IForgeMenuType.create(RefineryMenu::new));
+
+    public static final RegistryObject<MenuType<SolidifierMenu>> SOLIDIFIER =
+            MENUS.register("solidifier", () -> IForgeMenuType.create(SolidifierMenu::new));
+
+    public static final RegistryObject<MenuType<OilDrillMenu>> OIL_DRILL =
+            MENUS.register("oil_drill", () -> IForgeMenuType.create(OilDrillMenu::new));
+
+    public static final RegistryObject<MenuType<GasFlareMenu>> GAS_FLARE =
+            MENUS.register("gas_flare", () -> IForgeMenuType.create(GasFlareMenu::new));
 
     public static final RegistryObject<MenuType<FluidTankMenu>> FLUID_TANK =
             MENUS.register("fluid_tank", () -> IForgeMenuType.create(FluidTankMenu::new));

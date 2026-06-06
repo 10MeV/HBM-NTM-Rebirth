@@ -36,7 +36,7 @@ public class FluidIdentifierScreen extends Screen {
     private FluidType secondary = HbmFluids.NONE;
 
     public FluidIdentifierScreen(InteractionHand hand) {
-        super(Component.translatable("item.hbm.fluid_identifier_multi"));
+        super(Component.translatable("item.hbm_ntm_rebirth.fluid_identifier_multi"));
         this.hand = hand == null ? InteractionHand.MAIN_HAND : hand;
     }
 

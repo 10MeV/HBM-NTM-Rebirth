@@ -1,7 +1,0 @@
-{
-  "loader": "forge:obj",
-  "model": "hbm:models/block/machines/oilburner.obj",
-  "flip_v": true,
-  "render_type": "minecraft:cutout",
-  "textures": { "particle": "hbm:block/machines/oilburner", "default": "hbm:block/machines/oilburner" }
-}

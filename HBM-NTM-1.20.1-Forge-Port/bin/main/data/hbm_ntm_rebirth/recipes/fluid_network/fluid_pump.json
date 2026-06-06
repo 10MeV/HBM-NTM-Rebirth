@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": { "item": "hbm_ntm_rebirth:ingot_graphite" },
+    "I": { "item": "hbm_ntm_rebirth:ingot_steel" },
+    "M": { "item": "hbm_ntm_rebirth:motor" },
+    "P": { "item": "hbm_ntm_rebirth:pipes_steel" },
+    "S": { "item": "hbm_ntm_rebirth:plate_steel" }
+  },
+  "pattern": [
+    " S ",
+    "PGP",
+    "IMI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:fluid_pump"
+  },
+  "show_notification": true
+}

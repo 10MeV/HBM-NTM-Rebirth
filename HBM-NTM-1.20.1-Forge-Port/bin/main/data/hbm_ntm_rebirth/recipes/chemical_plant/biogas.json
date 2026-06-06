@@ -1,0 +1,30 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "custom_localization": true,
+  "duration": 60,
+  "input_fluids": [
+    {
+      "amount": 4000,
+      "fluid": "hbm_ntm_rebirth:air"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:biomass"
+      }
+    }
+  ],
+  "internal_name": "chem.biogas",
+  "output_fluids": [
+    {
+      "amount": 2000,
+      "fluid": "hbm_ntm_rebirth:biogas"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 100,
+  "source_order": 10
+}

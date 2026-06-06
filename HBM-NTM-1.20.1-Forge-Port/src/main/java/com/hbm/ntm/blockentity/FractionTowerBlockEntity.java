@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -56,6 +57,25 @@ public class FractionTowerBlockEntity extends LegacyRemoteFluidMachineBlockEntit
             changed |= fractionate(recipe);
         }
         return changed;
+    }
+
+    @Override
+    public boolean canSetInputTypeWithIdentifier() {
+        return true;
+    }
+
+    public boolean isBottomSegment() {
+        return level == null || !(level.getBlockEntity(worldPosition.below(3)) instanceof FractionTowerBlockEntity);
+    }
+
+    @Override
+    public boolean setInputTypeFromIdentifier(FluidType type) {
+        if (!isBottomSegment() || type == null || type == HbmFluids.NONE || inputTank.getTankType() == type) {
+            return false;
+        }
+        inputTank.conform(new HbmFluidStack(type, 0));
+        onFluidContentsChanged();
+        return true;
     }
 
     private boolean setupTanks(PairRecipe recipe) {

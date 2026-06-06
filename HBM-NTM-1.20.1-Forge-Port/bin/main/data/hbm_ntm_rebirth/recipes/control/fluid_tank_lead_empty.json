@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "L": {
+      "item": "hbm_ntm_rebirth:plate_lead"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:fluid_tank_empty"
+    },
+    "U": {
+      "item": "hbm_ntm_rebirth:billet_u238"
+    }
+  },
+  "pattern": [
+    "LUL",
+    "LTL",
+    "LUL"
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:fluid_tank_lead_empty"
+  },
+  "show_notification": true
+}

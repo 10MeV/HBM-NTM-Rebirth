@@ -1,0 +1,542 @@
+{
+  "block.press_operate": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.press_operate",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/press_operate",
+        "stream": false
+      }
+    ]
+  },
+  "block.motor": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.motor",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/motor",
+        "stream": false
+      }
+    ]
+  },
+  "block.assembler_operate": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.assembler_operate",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/assemblerOperate",
+        "stream": true
+      }
+    ]
+  },
+  "block.assembler_strike": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.assembler_strike",
+    "sounds": [
+      "hbm_ntm_rebirth:block/assemblerStrike1",
+      "hbm_ntm_rebirth:block/assemblerStrike2"
+    ]
+  },
+  "block.assembler_start": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.assembler_start",
+    "sounds": [
+      "hbm_ntm_rebirth:block/assemblerStart"
+    ]
+  },
+  "block.assembler_stop": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.assembler_stop",
+    "sounds": [
+      "hbm_ntm_rebirth:block/assemblerStop"
+    ]
+  },
+  "block.assembler_cut": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.assembler_cut",
+    "sounds": [
+      "hbm_ntm_rebirth:block/assemblerCut"
+    ]
+  },
+  "block.chemplant_operate": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.chemplant_operate",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/chemplantOperate",
+        "stream": true
+      }
+    ]
+  },
+  "block.chemical_plant": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.chemical_plant",
+    "sounds": [
+      "hbm_ntm_rebirth:block/chemicalPlant"
+    ]
+  },
+  "block.pipe_placed": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.pipe_placed",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/pipe_placed",
+        "stream": false
+      }
+    ]
+  },
+  "block.debris": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.debris",
+    "sounds": [
+      "hbm_ntm_rebirth:block/debris1",
+      "hbm_ntm_rebirth:block/debris2",
+      "hbm_ntm_rebirth:block/debris3"
+    ]
+  },
+  "block.reactor_start": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.reactor_start",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/reactorStart",
+        "stream": false
+      }
+    ]
+  },
+  "block.boiler": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.boiler",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/boiler",
+        "stream": false
+      }
+    ]
+  },
+  "tool.geiger1": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.tool.geiger",
+    "sounds": [
+      "hbm_ntm_rebirth:tool/geiger1"
+    ]
+  },
+  "tool.geiger2": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.tool.geiger",
+    "sounds": [
+      "hbm_ntm_rebirth:tool/geiger2"
+    ]
+  },
+  "tool.geiger3": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.tool.geiger",
+    "sounds": [
+      "hbm_ntm_rebirth:tool/geiger3"
+    ]
+  },
+  "tool.geiger4": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.tool.geiger",
+    "sounds": [
+      "hbm_ntm_rebirth:tool/geiger4"
+    ]
+  },
+  "tool.geiger5": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.tool.geiger",
+    "sounds": [
+      "hbm_ntm_rebirth:tool/geiger5"
+    ]
+  },
+  "tool.geiger6": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.tool.geiger",
+    "sounds": [
+      "hbm_ntm_rebirth:tool/geiger6"
+    ]
+  },
+  "tool.tech_boop": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.tool.tech_boop",
+    "sounds": [
+      "hbm_ntm_rebirth:tool/tech_boop"
+    ]
+  },
+  "tool.tech_bleep": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.tool.tech_bleep",
+    "sounds": [
+      "hbm_ntm_rebirth:tool/tech_bleep"
+    ]
+  },
+  "tool.radaway": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.tool.radaway",
+    "sounds": [
+      "hbm_ntm_rebirth:tool/radaway"
+    ]
+  },
+  "player.cough": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.player.cough",
+    "sounds": [
+      "hbm_ntm_rebirth:player/cough1",
+      "hbm_ntm_rebirth:player/cough2",
+      "hbm_ntm_rebirth:player/cough3",
+      "hbm_ntm_rebirth:player/cough4"
+    ]
+  },
+  "player.vomit": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.player.vomit",
+    "sounds": [
+      "hbm_ntm_rebirth:player/vomit"
+    ]
+  },
+  "entity.ufo_blast": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.entity.ufo_blast",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:entity/ufo_blast",
+        "stream": false
+      }
+    ]
+  },
+  "entity.chopper_flying_loop": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:entity/chopper_flying_loop",
+        "stream": true
+      }
+    ]
+  },
+  "entity.chopper_crashing_loop": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:entity/chopper_crashing_loop",
+        "stream": true
+      }
+    ]
+  },
+  "entity.chopper_mine_loop": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:entity/chopper_mine_loop",
+        "stream": false
+      }
+    ]
+  },
+  "entity.chopper_drop": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:entity/chopper_drop",
+        "stream": false
+      }
+    ]
+  },
+  "entity.chopper_charge": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:entity/chopper_charge",
+        "stream": false
+      }
+    ]
+  },
+  "entity.chopper_damage": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.entity.chopper",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:entity/chopper_damage",
+        "stream": true
+      }
+    ]
+  },
+  "weapon.muke_explosion": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.muke_explosion",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/muke_explosion",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.nuclear_explosion": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.nuclear_explosion",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/nuclear_explosion",
+        "stream": true
+      }
+    ]
+  },
+  "weapon.fstbmb_start": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.fstbmb",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/fstbmb_start",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.fstbmb_ping": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.fstbmb",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/fstbmb_ping",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.explosion_large_near": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.explosion",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/explosion_large_near",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.explosion_large_far": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.explosion",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/explosion_large_far",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.explosion_small_near": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.explosion",
+    "sounds": [
+      "hbm_ntm_rebirth:weapon/explosion_small_near1",
+      "hbm_ntm_rebirth:weapon/explosion_small_near2",
+      "hbm_ntm_rebirth:weapon/explosion_small_near3"
+    ]
+  },
+  "weapon.explosion_small_far": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.explosion",
+    "sounds": [
+      "hbm_ntm_rebirth:weapon/explosion_small_far1",
+      "hbm_ntm_rebirth:weapon/explosion_small_far2"
+    ]
+  },
+  "weapon.explosion_tiny": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.explosion",
+    "sounds": [
+      "hbm_ntm_rebirth:weapon/explosion_tiny1",
+      "hbm_ntm_rebirth:weapon/explosion_tiny2"
+    ]
+  },
+  "weapon.explosion_medium": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.explosion",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/explosion_medium",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.reload.tube_fwoomp": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.reload.tube_fwoomp",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/reload/tube_fwoomp",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.casing.shell": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.casing",
+    "sounds": [
+      "hbm_ntm_rebirth:weapon/casing/shell1",
+      "hbm_ntm_rebirth:weapon/casing/shell2",
+      "hbm_ntm_rebirth:weapon/casing/shell3"
+    ]
+  },
+  "weapon.casing.small": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.casing",
+    "sounds": [
+      "hbm_ntm_rebirth:weapon/casing/small1",
+      "hbm_ntm_rebirth:weapon/casing/small2",
+      "hbm_ntm_rebirth:weapon/casing/small3"
+    ]
+  },
+  "weapon.casing.medium": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.casing",
+    "sounds": [
+      "hbm_ntm_rebirth:weapon/casing/medium1",
+      "hbm_ntm_rebirth:weapon/casing/medium2",
+      "hbm_ntm_rebirth:weapon/casing/medium3"
+    ]
+  },
+  "weapon.casing.large": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.casing",
+    "sounds": [
+      "hbm_ntm_rebirth:weapon/casing/large1",
+      "hbm_ntm_rebirth:weapon/casing/large2",
+      "hbm_ntm_rebirth:weapon/casing/large3"
+    ]
+  },
+  "alarm.hatch": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/hatch",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.autopilot": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/autopilot",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.ams_siren": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/ams_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.blast_door_alarm": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/blast_door_alarm",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.apc_loop": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/apc_loop",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.klaxon": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/klaxon",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.fo_klaxon_a": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/fo_klaxon_a",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.fo_klaxon_b": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/fo_klaxon_b",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.regular_siren": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/regular_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.classic": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/classic_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.bank_alarm": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/bank_alarm",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.beep_siren": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/beep_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.container_alarm": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/container_alarm",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.sweep_siren": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/sweep_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.strider_siren": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/strider_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.air_raid": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/air_raid",
+        "stream": true
+      }
+    ]
+  },
+  "alarm.nostromo_siren": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/nostromo_siren",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.eas_alarm": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/eas_alarm",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.apc_pass": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/apc_pass",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.razortrain_horn": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.siren",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/razortrain_horn",
+        "stream": false
+      }
+    ]
+  }
+}

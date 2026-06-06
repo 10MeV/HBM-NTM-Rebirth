@@ -405,7 +405,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("container.hbm.battery");
+        return Component.translatable("container.hbm_ntm_rebirth.battery");
     }
 
     @Nullable

@@ -1,8 +1,8 @@
 {
   "values": [
-    "hbm:air",
-    "hbm:air_flowing",
-    "hbm:airblast",
-    "hbm:airblast_flowing"
+    "hbm_ntm_rebirth:air",
+    "hbm_ntm_rebirth:air_flowing",
+    "hbm_ntm_rebirth:airblast",
+    "hbm_ntm_rebirth:airblast_flowing"
   ]
 }

@@ -1,7 +1,7 @@
 {
   "values": [
-    "hbm:briquette_coal",
-    "hbm:briquette_lignite",
-    "hbm:briquette_wood"
+    "hbm_ntm_rebirth:briquette_coal",
+    "hbm_ntm_rebirth:briquette_lignite",
+    "hbm_ntm_rebirth:briquette_wood"
   ]
 }

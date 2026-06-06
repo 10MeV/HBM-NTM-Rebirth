@@ -4,8 +4,10 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.LegacyRemoteFluidMachineBlockEntity.LegacyGuiProfile;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.menu.RemoteFluidMachineMenu;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -15,6 +17,7 @@ import net.minecraft.world.entity.player.Inventory;
 public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFluidMachineMenu> {
     private static final int TANK_WIDTH = 16;
     private static final int TANK_HEIGHT = 52;
+    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getIntegerInstance(Locale.US);
 
     public RemoteFluidMachineScreen(RemoteFluidMachineMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -28,6 +31,7 @@ public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFlui
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(texture(menu.getProfile()), leftPos, topPos, 0, 0, imageWidth, imageHeight);
         renderEnergy(graphics);
+        renderCokerBars(graphics);
         for (TankRect rect : tankRects(menu.getProfile())) {
             LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + rect.x(), topPos + rect.bottom(),
                     TANK_WIDTH, TANK_HEIGHT, menu.getTank(rect.index()));
@@ -58,6 +62,15 @@ public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFlui
             graphics.renderTooltip(font,
                     Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);
         }
+        if (menu.getProfile() == LegacyGuiProfile.COKER) {
+            if (isHovering(60, 45, 54, 7, mouseX, mouseY)) {
+                graphics.renderTooltip(font, Component.literal(NUMBER_FORMAT.format(menu.getCokerProgress()) + " / "
+                        + NUMBER_FORMAT.format(menu.getCokerProcessTime()) + "TU"), mouseX, mouseY);
+            } else if (isHovering(60, 54, 54, 7, mouseX, mouseY)) {
+                graphics.renderTooltip(font, Component.literal(NUMBER_FORMAT.format(menu.getCokerHeat()) + " / "
+                        + NUMBER_FORMAT.format(menu.getCokerMaxHeat()) + "TU"), mouseX, mouseY);
+            }
+        }
         renderTooltip(graphics, mouseX, mouseY);
     }
 
@@ -70,6 +83,20 @@ public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFlui
         if (height > 0) {
             graphics.blit(texture(menu.getProfile()), leftPos + rect.x(), topPos + rect.bottom() - height,
                     176, rect.height() - height, rect.width(), height);
+        }
+    }
+
+    private void renderCokerBars(GuiGraphics graphics) {
+        if (menu.getProfile() != LegacyGuiProfile.COKER) {
+            return;
+        }
+        int progressWidth = menu.getCokerProgressBarWidth(53);
+        if (progressWidth > 0) {
+            graphics.blit(texture(menu.getProfile()), leftPos + 61, topPos + 46, 176, 0, progressWidth, 5);
+        }
+        int heatWidth = menu.getCokerHeatBarWidth(52);
+        if (heatWidth > 0) {
+            graphics.blit(texture(menu.getProfile()), leftPos + 61, topPos + 55, 176, 5, heatWidth, 5);
         }
     }
 

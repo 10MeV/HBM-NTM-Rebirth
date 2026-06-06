@@ -85,7 +85,7 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
             case SLOT_BATTERY -> stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
             case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
             case SLOT_CATALYST -> stack.is(ModItems.CATALYTIC_CONVERTER.get());
-            case SLOT_INPUT_CONTAINER, SLOT_HYDROGEN_INPUT, SLOT_OUTPUT_LEFT_CONTAINER, SLOT_OUTPUT_RIGHT_CONTAINER -> true;
+            case SLOT_INPUT_CONTAINER, SLOT_OUTPUT_LEFT_CONTAINER, SLOT_OUTPUT_RIGHT_CONTAINER -> true;
             default -> false;
         };
     }

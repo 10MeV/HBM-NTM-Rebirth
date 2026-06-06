@@ -309,7 +309,7 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.hbm." + switch (kind) {
+        return Component.translatable("block.hbm_ntm_rebirth." + switch (kind) {
             case GADGET -> "nuke_gadget";
             case BOY -> "nuke_boy";
             case MAN -> "nuke_man";

@@ -1,8 +1,8 @@
 {
   "values": [
-    "hbm:heavywater",
-    "hbm:heavywater_flowing",
-    "hbm:heavywater_hot",
-    "hbm:heavywater_hot_flowing"
+    "hbm_ntm_rebirth:heavywater",
+    "hbm_ntm_rebirth:heavywater_flowing",
+    "hbm_ntm_rebirth:heavywater_hot",
+    "hbm_ntm_rebirth:heavywater_hot_flowing"
   ]
 }

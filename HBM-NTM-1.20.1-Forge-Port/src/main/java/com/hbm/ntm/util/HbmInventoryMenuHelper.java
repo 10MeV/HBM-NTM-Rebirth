@@ -30,6 +30,25 @@ public final class HbmInventoryMenuHelper {
         };
     }
 
+    public static SlotItemHandler deprecatedSlot(IItemHandler items, int slot, int x, int y) {
+        return new SlotItemHandler(items, slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return false;
+            }
+
+            @Override
+            public boolean mayPickup(Player player) {
+                return false;
+            }
+
+            @Override
+            public boolean isActive() {
+                return false;
+            }
+        };
+    }
+
     public static void addPlayerInventory(SlotSink sink, Inventory inventory, int x, int y) {
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {

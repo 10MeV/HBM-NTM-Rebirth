@@ -1,7 +1,0 @@
-{
-  "loader": "forge:obj",
-  "model": "hbm:models/block/launch_table/launch_table_small_scaffold_connector.obj",
-  "flip_v": true,
-  "render_type": "minecraft:cutout",
-  "textures": { "particle": "hbm:block/launch_table/launch_table_small_scaffold_connector", "default": "hbm:block/launch_table/launch_table_small_scaffold_connector" }
-}

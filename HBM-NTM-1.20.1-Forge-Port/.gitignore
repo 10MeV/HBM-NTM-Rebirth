@@ -7,3 +7,22 @@
 *.iws
 *.iml
 out/
+
+# Local migration notes and handoff/index documents
+/工程记录/
+*交接*.md
+*索引*.md
+*handoff*.md
+*HANDOFF*.md
+*INDEX*.md
+*index*.md
+*历史修改*.md
+*任务清单*.md
+*新窗口续接提示*.md
+*迁移开发文档*.md
+*双版本迁移总览*.md
+/build.bat
+/run-client.bat
+/run-client.ps1
+/run-client.pt
+*.pt

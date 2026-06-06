@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/telex.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/telex",
+    "default": "hbm_ntm_rebirth:block/machines/telex",
+    "texture0": "hbm_ntm_rebirth:block/machines/telex"
+  }
+}

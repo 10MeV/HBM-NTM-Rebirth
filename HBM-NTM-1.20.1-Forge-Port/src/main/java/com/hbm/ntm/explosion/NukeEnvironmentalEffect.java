@@ -103,7 +103,7 @@ public final class NukeEnvironmentalEffect {
 
     private static BlockState requireLegacyState(String name) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
-        return Objects.requireNonNull(block, "Missing legacy block hbm:" + name).get().defaultBlockState();
+        return Objects.requireNonNull(block, "Missing legacy block hbm_ntm_rebirth:" + name).get().defaultBlockState();
     }
 
     private NukeEnvironmentalEffect() {

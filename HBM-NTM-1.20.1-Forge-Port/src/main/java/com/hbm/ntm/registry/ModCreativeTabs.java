@@ -26,7 +26,7 @@ public final class ModCreativeTabs {
 
     public static final RegistryObject<CreativeModeTab> PARTS = CREATIVE_TABS.register("parts",
             () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.hbm.parts"))
+                    .title(Component.translatable("itemGroup.hbm_ntm_rebirth.parts"))
                     .icon(() -> ModItems.URANIUM_INGOT.get().getDefaultInstance())
                     .displayItems((parameters, output) -> ModItems.PARTS_TAB_ITEMS.forEach(item -> {
                         if (item.get() instanceof DepletedFuelItem depletedFuel) {
@@ -39,7 +39,7 @@ public final class ModCreativeTabs {
 
     public static final RegistryObject<CreativeModeTab> MACHINES = CREATIVE_TABS.register("machines",
             () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.hbm.machines"))
+                    .title(Component.translatable("itemGroup.hbm_ntm_rebirth.machines"))
                     .icon(() -> ModBlocks.MACHINE_PRESS.get().asItem().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));
@@ -52,7 +52,7 @@ public final class ModCreativeTabs {
 
     public static final RegistryObject<CreativeModeTab> CONSUMABLES = CREATIVE_TABS.register("consumables",
             () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.hbm.consumables"))
+                    .title(Component.translatable("itemGroup.hbm_ntm_rebirth.consumables"))
                     .icon(() -> ModItems.GEIGER_COUNTER.get().getDefaultInstance())
                     .displayItems((parameters, output) -> ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> {
                         if (item.get() instanceof HbmBatteryItem battery) {
@@ -65,7 +65,7 @@ public final class ModCreativeTabs {
 
     public static final RegistryObject<CreativeModeTab> CONTROL = CREATIVE_TABS.register("control",
             () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.hbm.control"))
+                    .title(Component.translatable("itemGroup.hbm_ntm_rebirth.control"))
                     .icon(() -> ModItems.legacyItem("plate_fuel_u235").get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         ModItems.CONTROL_TAB_ITEMS.forEach(item -> acceptItem(output, item));
@@ -75,14 +75,14 @@ public final class ModCreativeTabs {
 
     public static final RegistryObject<CreativeModeTab> BLOCKS = CREATIVE_TABS.register("blocks",
             () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.hbm.blocks"))
+                    .title(Component.translatable("itemGroup.hbm_ntm_rebirth.blocks"))
                     .icon(() -> ModBlocks.WASTE_EARTH.get().asItem().getDefaultInstance())
                     .displayItems((parameters, output) -> ModBlocks.BLOCK_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem())))
                     .build());
 
     public static final RegistryObject<CreativeModeTab> NUKES = CREATIVE_TABS.register("nukes",
             () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.hbm.nukes"))
+                    .title(Component.translatable("itemGroup.hbm_ntm_rebirth.nukes"))
                     .icon(() -> ModBlocks.NUKE_GADGET.get().asItem().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));

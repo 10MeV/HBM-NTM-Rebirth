@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:lubricant",
-    "hbm:lubricant_flowing"
+    "hbm_ntm_rebirth:lubricant",
+    "hbm_ntm_rebirth:lubricant_flowing"
   ]
 }

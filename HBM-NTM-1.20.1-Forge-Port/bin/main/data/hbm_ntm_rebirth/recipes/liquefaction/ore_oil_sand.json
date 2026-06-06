@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:liquefaction",
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:ore_oil_sand"
+  },
+  "output": {
+    "amount": 100,
+    "fluid": "BITUMEN",
+    "pressure": 0
+  }
+}

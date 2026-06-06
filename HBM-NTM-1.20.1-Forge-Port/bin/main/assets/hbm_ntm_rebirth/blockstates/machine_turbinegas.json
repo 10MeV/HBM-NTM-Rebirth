@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/machines/turbinegas",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/machines/turbinegas"
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/machines/turbinegas",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/machines/turbinegas",
+      "y": 270
+    }
+  }
+}

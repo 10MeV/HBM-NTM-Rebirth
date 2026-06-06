@@ -298,7 +298,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.hbm.machine_press");
+        return Component.translatable("block.hbm_ntm_rebirth.machine_press");
     }
 
     @Nullable

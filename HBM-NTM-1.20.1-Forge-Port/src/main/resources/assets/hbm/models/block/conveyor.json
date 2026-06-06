@@ -1,8 +1,0 @@
-{
-  "parent": "hbm:block/template_conveyor",
-  "textures": {
-    "top": "hbm:block/conveyor",
-    "side": "hbm:block/conveyor_side",
-    "particle": "hbm:block/conveyor"
-  }
-}

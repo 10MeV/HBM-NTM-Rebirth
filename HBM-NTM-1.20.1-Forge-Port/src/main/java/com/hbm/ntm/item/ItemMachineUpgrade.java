@@ -22,6 +22,7 @@ public class ItemMachineUpgrade extends Item {
 
     public enum UpgradeType {
         SPEED,
+        EFFECT,
         POWER,
         OVERDRIVE
     }

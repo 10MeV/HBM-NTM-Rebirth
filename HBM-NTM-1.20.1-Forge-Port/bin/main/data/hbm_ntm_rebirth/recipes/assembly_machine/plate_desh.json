@@ -1,0 +1,39 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/workers_alloy"
+      },
+      "legacy_ore": "ingotWorkersAlloy"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:dusts/any_plastic"
+      },
+      "legacy_ore": "dustAnyPlastic"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/dura_steel"
+      },
+      "legacy_ore": "ingotDuraSteel"
+    }
+  ],
+  "internal_name": "ass.platedesh",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:plate_desh"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 16
+}

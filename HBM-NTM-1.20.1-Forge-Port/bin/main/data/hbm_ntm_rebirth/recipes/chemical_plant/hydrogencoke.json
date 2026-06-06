@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "custom_localization": true,
+  "duration": 20,
+  "input_fluids": [
+    {
+      "amount": 8000,
+      "fluid": "hbm_ntm_rebirth:water"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:gems/any_coke"
+      },
+      "legacy_ore": "gemAnyCoke"
+    }
+  ],
+  "internal_name": "chem.hydrogencoke",
+  "output_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:hydrogen"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 400,
+  "source_order": 1
+}

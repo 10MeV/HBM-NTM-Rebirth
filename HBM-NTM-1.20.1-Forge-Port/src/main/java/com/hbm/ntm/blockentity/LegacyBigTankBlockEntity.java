@@ -56,6 +56,22 @@ public abstract class LegacyBigTankBlockEntity extends FluidTankBlockEntity {
     }
 
     @Override
+    public boolean isDamagedForFluidRepair() {
+        return false;
+    }
+
+    @Override
+    public void explodeFromFluidOverpressure(Level level, BlockPos pos) {
+        if (level == null || level.isClientSide || level.isEmptyBlock(pos)) {
+            return;
+        }
+        dropInventoryItems();
+        level.removeBlock(pos, false);
+        level.explode(null, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 5.0F,
+                Level.ExplosionInteraction.NONE);
+    }
+
+    @Override
     public void writePersistentState(CompoundTag persistent) {
         if (getTank().getFill() == 0) {
             return;
@@ -79,8 +95,7 @@ public abstract class LegacyBigTankBlockEntity extends FluidTankBlockEntity {
 
     @Override
     public int[] getFluidIdsToCopy() {
-        FluidType type = getTank().getTankType();
-        return type == null || type.hasNoId() ? new int[0] : new int[] {type.getId()};
+        return super.getFluidIdsToCopy();
     }
 
     @Override

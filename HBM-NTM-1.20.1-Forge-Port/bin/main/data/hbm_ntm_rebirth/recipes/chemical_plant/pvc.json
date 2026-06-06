@@ -1,0 +1,34 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 100,
+  "input_fluids": [
+    {
+      "amount": 250,
+      "fluid": "hbm_ntm_rebirth:unsaturateds"
+    },
+    {
+      "amount": 250,
+      "fluid": "hbm_ntm_rebirth:chlorine"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/cadmium"
+      },
+      "legacy_ore": "dustCadmium"
+    }
+  ],
+  "internal_name": "chem.pvc",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:ingot_pvc"
+    }
+  ],
+  "pools": [],
+  "power": 1000,
+  "source_order": 37
+}

@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:ethanol",
-    "hbm:ethanol_flowing"
+    "hbm_ntm_rebirth:ethanol",
+    "hbm_ntm_rebirth:ethanol_flowing"
   ]
 }

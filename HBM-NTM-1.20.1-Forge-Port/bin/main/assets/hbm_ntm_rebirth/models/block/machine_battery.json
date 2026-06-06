@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/battery_side_alt",
+    "down": "hbm_ntm_rebirth:block/battery_top",
+    "up": "hbm_ntm_rebirth:block/battery_top",
+    "north": "hbm_ntm_rebirth:block/battery_side_alt",
+    "east": "hbm_ntm_rebirth:block/battery_side_alt",
+    "south": "hbm_ntm_rebirth:block/battery_front_alt",
+    "west": "hbm_ntm_rebirth:block/battery_side_alt"
+  }
+}

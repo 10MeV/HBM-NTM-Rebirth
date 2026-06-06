@@ -1,0 +1,30 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 50,
+  "input_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:sulfuric_acid"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/saltpeter"
+      },
+      "legacy_ore": "dustSaltpeter"
+    }
+  ],
+  "internal_name": "chem.nitricacid",
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:nitric_acid"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 100,
+  "source_order": 49
+}

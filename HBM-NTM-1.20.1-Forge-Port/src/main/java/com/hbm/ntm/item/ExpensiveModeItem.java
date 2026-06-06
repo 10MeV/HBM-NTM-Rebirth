@@ -16,6 +16,6 @@ public class ExpensiveModeItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.hbm.item_expensive.desc").withStyle(ChatFormatting.RED));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.item_expensive.desc").withStyle(ChatFormatting.RED));
     }
 }

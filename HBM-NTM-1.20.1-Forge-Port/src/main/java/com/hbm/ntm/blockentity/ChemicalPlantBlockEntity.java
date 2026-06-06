@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayPorts;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
@@ -126,10 +125,10 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
                 return stack.getItem() instanceof ItemMachineUpgrade;
             }
             if (slot >= SLOT_FLUID_INPUT_START && slot <= SLOT_FLUID_INPUT_END) {
-                return true;
+                return isFluidInputContainerSlotActive(slot);
             }
             if (slot >= SLOT_FLUID_OUTPUT_START && slot <= SLOT_FLUID_OUTPUT_END) {
-                return true;
+                return isFluidOutputContainerSlotActive(slot);
             }
             if (slot >= SLOT_ITEM_INPUT_START && slot <= SLOT_ITEM_INPUT_END) {
                 GenericMachineRecipe recipe = getSelectedRecipeDefinition();
@@ -229,7 +228,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlayPorts.factoryMachinePort(this, viewedPos);
+        return null;
     }
 
     @Override
@@ -594,16 +593,30 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     private boolean processFluidContainers() {
         List<TankSlotTransfer> transfers = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            transfers.add(TankSlotTransfer.load(
-                    SLOT_FLUID_INPUT_START + i,
-                    SLOT_FLUID_INPUT_RETURN_START + i,
-                    inputTanks[i]));
-            transfers.add(TankSlotTransfer.unload(
-                    SLOT_FLUID_OUTPUT_START + i,
-                    SLOT_FLUID_OUTPUT_RETURN_START + i,
-                    outputTanks[i]));
+            if (inputTanks[i].getTankType() != HbmFluids.NONE) {
+                transfers.add(TankSlotTransfer.load(
+                        SLOT_FLUID_INPUT_START + i,
+                        SLOT_FLUID_INPUT_RETURN_START + i,
+                        inputTanks[i]));
+            }
+            if (outputTanks[i].getTankType() != HbmFluids.NONE) {
+                transfers.add(TankSlotTransfer.unload(
+                        SLOT_FLUID_OUTPUT_START + i,
+                        SLOT_FLUID_OUTPUT_RETURN_START + i,
+                        outputTanks[i]));
+            }
         }
         return HbmFluidItemTransfer.processTransfers(items, transfers);
+    }
+
+    private boolean isFluidInputContainerSlotActive(int slot) {
+        int index = slot - SLOT_FLUID_INPUT_START;
+        return index >= 0 && index < inputTanks.length && inputTanks[index].getTankType() != HbmFluids.NONE;
+    }
+
+    private boolean isFluidOutputContainerSlotActive(int slot) {
+        int index = slot - SLOT_FLUID_OUTPUT_START;
+        return index >= 0 && index < outputTanks.length && outputTanks[index].getTankType() != HbmFluids.NONE;
     }
 
     private class ChemicalPlantAccessibleItemHandler implements IItemHandler {

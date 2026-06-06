@@ -1,12 +1,12 @@
 {
   "replace": false,
   "values": [
-    "hbm:ash_digamma",
-    "hbm:waste_trinitite",
-    "hbm:waste_trinitite_red",
-    "hbm:frozen_grass",
-    "hbm:frozen_dirt",
-    "hbm:tektite",
-    "hbm:ore_tektite_osmiridium"
+    "hbm_ntm_rebirth:ash_digamma",
+    "hbm_ntm_rebirth:waste_trinitite",
+    "hbm_ntm_rebirth:waste_trinitite_red",
+    "hbm_ntm_rebirth:frozen_grass",
+    "hbm_ntm_rebirth:frozen_dirt",
+    "hbm_ntm_rebirth:tektite",
+    "hbm_ntm_rebirth:ore_tektite_osmiridium"
   ]
 }

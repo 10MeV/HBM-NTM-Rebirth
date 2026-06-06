@@ -1,0 +1,18 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/battery.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "parts": {
+    "visibility": {
+      "Supports": false,
+      "Capacitor": false,
+      "Battery": false,
+      "Socket": true
+    }
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/battery_socket",
+    "default": "hbm_ntm_rebirth:block/machines/battery_socket"
+  }
+}

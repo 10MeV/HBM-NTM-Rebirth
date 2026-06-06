@@ -1,8 +1,8 @@
 {
   "values": [
-    "hbm:kerosene",
-    "hbm:kerosene_flowing",
-    "hbm:kerosene_reform",
-    "hbm:kerosene_reform_flowing"
+    "hbm_ntm_rebirth:kerosene",
+    "hbm_ntm_rebirth:kerosene_flowing",
+    "hbm_ntm_rebirth:kerosene_reform",
+    "hbm_ntm_rebirth:kerosene_reform_flowing"
   ]
 }

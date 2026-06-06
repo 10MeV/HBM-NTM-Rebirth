@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.block.LegacyLookOverlayPorts;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -209,7 +208,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
-        return LegacyLookOverlayPorts.factoryMachinePort(this, viewedPos);
+        return null;
     }
 
     @Override

@@ -30,13 +30,13 @@ public class DigammaParticleItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.hbm.particle_digamma.desc.half_particle").withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.translatable("item.hbm.particle_digamma.desc.half_player",
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.particle_digamma.desc.half_particle").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.particle_digamma.desc.half_player",
                 String.format(java.util.Locale.ROOT, "%.1fs", digammaHalfLifeTicks / 20.0F)).withStyle(ChatFormatting.RED));
         tooltip.add(Component.empty());
-        tooltip.add(Component.translatable("item.hbm.particle_digamma.desc.digamma",
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.particle_digamma.desc.digamma",
                 String.format(java.util.Locale.ROOT, "%.1f", ((1000.0F / digammaHalfLifeTicks) * 200.0F) / 10.0F))
                 .withStyle(ChatFormatting.DARK_RED));
-        tooltip.add(Component.translatable("item.hbm.trait.drop").withStyle(ChatFormatting.RED));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.trait.drop").withStyle(ChatFormatting.RED));
     }
 }

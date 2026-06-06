@@ -1,6 +1,0 @@
-﻿{
-    "textures":  {
-                     "layer0":  "hbm:item/plate_iron"
-                 },
-    "parent":  "minecraft:item/generated"
-}

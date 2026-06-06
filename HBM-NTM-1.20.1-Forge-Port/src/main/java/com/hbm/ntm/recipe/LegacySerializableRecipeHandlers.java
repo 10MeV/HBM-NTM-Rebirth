@@ -8,7 +8,7 @@ public final class LegacySerializableRecipeHandlers {
     public static final String MANUAL_SOURCE = "<manual>";
 
     private static final List<Handler> HANDLERS = List.of(
-            press("PressRecipes", "hbmPress.json", "modern hbm:press covers a safe subset; full legacy import still needs stamp/meta coverage"),
+            press("PressRecipes", "hbmPress.json", "modern hbm_ntm_rebirth:press covers a safe subset; full legacy import still needs stamp/meta coverage"),
             unsupported("BlastFurnaceRecipes", "hbmBlastFurnaceLegacy.json", Category.BLAST,
                     "legacy blast furnace has a deprecated dedicated map format; 5714 hbmBlastFurnace.json belongs to BlastFurnaceRecipesNT"),
             unsupported("ShredderRecipes", "hbmShredder.json", Category.MACHINE,
@@ -34,7 +34,7 @@ public final class LegacySerializableRecipeHandlers {
             unsupported("HydrotreatingRecipes", "hbmHydrotreating.json", Category.FLUID,
                     "hydrotreating recipe format belongs to the oil/fluid processing library"),
             modern("LiquefactionRecipes", "hbmLiquefactor.json", Category.FLUID, "liquefaction",
-                    "modern hbm:liquefaction serializer exists; legacy bulk importer is still separate work"),
+                    "modern hbm_ntm_rebirth:liquefaction serializer exists; legacy bulk importer is still separate work"),
             unsupported("SolidificationRecipes", "hbmSolidifier.json", Category.FLUID,
                     "solidifier uses mold/fluid solidification logic and no modern serializer yet"),
             unsupported("CokerRecipes", "hbmCoker.json", Category.FLUID,

@@ -48,10 +48,10 @@ public final class HbmMachineRecipeCategory implements IRecipeCategory<GenericMa
     @Override
     public Component getTitle() {
         return switch (machine) {
-            case ASSEMBLY_MACHINE -> Component.translatableWithFallback("block.hbm.machine_assembly_machine", "Assembly Machine");
-            case CHEMICAL_PLANT -> Component.translatableWithFallback("block.hbm.machine_chemical_plant", "Chemical Plant");
-            case PUREX -> Component.translatableWithFallback("block.hbm.machine_purex", "PUREX");
-            case PRECASS -> Component.translatableWithFallback("block.hbm.machine_assembly_machine", "Precision Assembler");
+            case ASSEMBLY_MACHINE -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_assembly_machine", "Assembly Machine");
+            case CHEMICAL_PLANT -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_chemical_plant", "Chemical Plant");
+            case PUREX -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_purex", "PUREX");
+            case PRECASS -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_assembly_machine", "Precision Assembler");
         };
     }
 

@@ -57,9 +57,9 @@ public class MachineBatterySocketScreen extends AbstractContainerScreen<MachineB
         if (isHovering(62, 17, 34, 52, mouseX, mouseY)) {
             graphics.renderTooltip(font, splitTooltip(energyTooltip()), mouseX, mouseY);
         } else if (isHovering(106, 16, 18, 18, mouseX, mouseY)) {
-            graphics.renderTooltip(font, splitTooltip(modeTooltip("container.hbm.battery.red_low", menu.getRedLow())), mouseX, mouseY);
+            graphics.renderTooltip(font, splitTooltip(modeTooltip("container.hbm_ntm_rebirth.battery.red_low", menu.getRedLow())), mouseX, mouseY);
         } else if (isHovering(106, 52, 18, 18, mouseX, mouseY)) {
-            graphics.renderTooltip(font, splitTooltip(modeTooltip("container.hbm.battery.red_high", menu.getRedHigh())), mouseX, mouseY);
+            graphics.renderTooltip(font, splitTooltip(modeTooltip("container.hbm_ntm_rebirth.battery.red_high", menu.getRedHigh())), mouseX, mouseY);
         } else if (isHovering(125, 35, 16, 16, mouseX, mouseY)) {
             graphics.renderTooltip(font, splitTooltip(priorityTooltip()), mouseX, mouseY);
         }
@@ -100,14 +100,14 @@ public class MachineBatterySocketScreen extends AbstractContainerScreen<MachineB
     private static List<Component> modeTooltip(String labelKey, int mode) {
         return List.of(
                 Component.translatable(labelKey),
-                Component.translatable("container.hbm.battery.mode." + modeName(mode)).withStyle(ChatFormatting.YELLOW));
+                Component.translatable("container.hbm_ntm_rebirth.battery.mode." + modeName(mode)).withStyle(ChatFormatting.YELLOW));
     }
 
     private List<Component> priorityTooltip() {
         return List.of(
-                Component.translatable("container.hbm.battery.priority"),
-                Component.translatable("container.hbm.battery.priority." + priorityName(menu.getPriority())).withStyle(ChatFormatting.YELLOW),
-                Component.translatable("container.hbm.battery.priority.recommended").withStyle(ChatFormatting.GRAY));
+                Component.translatable("container.hbm_ntm_rebirth.battery.priority"),
+                Component.translatable("container.hbm_ntm_rebirth.battery.priority." + priorityName(menu.getPriority())).withStyle(ChatFormatting.YELLOW),
+                Component.translatable("container.hbm_ntm_rebirth.battery.priority.recommended").withStyle(ChatFormatting.GRAY));
     }
 
     private List<FormattedCharSequence> splitTooltip(List<Component> tooltip) {

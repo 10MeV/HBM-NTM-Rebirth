@@ -18,6 +18,9 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.DoubleValue CRATER_BIOME_INNER_RAD;
     public static ForgeConfigSpec.DoubleValue CRATER_BIOME_OUTER_RAD;
     public static ForgeConfigSpec.DoubleValue CRATER_BIOME_WATER_MULT;
+    public static ForgeConfigSpec.BooleanValue ENABLE_POLLUTION;
+    public static ForgeConfigSpec.DoubleValue POLLUTION_MULT;
+    public static ForgeConfigSpec.DoubleValue POLLUTION_BUFF_MOB_THRESHOLD;
 
     public static ForgeConfigSpec.BooleanValue DISABLE_ASBESTOS;
     public static ForgeConfigSpec.BooleanValue DISABLE_BLINDING;
@@ -77,6 +80,18 @@ public final class RadiationConfig {
         ENABLE_CHUNK_RADS = builder
                 .comment("Legacy RADIATION_01_enableChunkRads: toggles chunk radiation.")
                 .define("enableChunkRads", true);
+        builder.pop();
+
+        builder.push("pollution");
+        ENABLE_POLLUTION = builder
+                .comment("Legacy POL_00_enablePollution: toggles soot, poison, heavy metal, and fallout pollution.")
+                .define("enablePollution", true);
+        POLLUTION_MULT = builder
+                .comment("Legacy MobConfig 12.R08_pollutionMult: multiplier applied to emitted pollution amounts.")
+                .defineInRange("pollutionMult", 1.0D, 0.0D, Double.MAX_VALUE);
+        POLLUTION_BUFF_MOB_THRESHOLD = builder
+                .comment("Legacy POL_05_buffMobThreshold: soot required to buff naturally spawning hostile mobs.")
+                .defineInRange("buffMobThreshold", 15.0D, 0.0D, Double.MAX_VALUE);
         builder.pop();
 
         builder.push("hazards");

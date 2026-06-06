@@ -67,17 +67,17 @@ public class ConveyorWandItem extends Item implements LegacyLookOverlayItemProvi
     @Override
     public Component getName(ItemStack stack) {
         String typeName = getType(stack).name().toLowerCase(Locale.ROOT);
-        return Component.translatable("item.hbm.conveyor_wand." + typeName);
+        return Component.translatable("item.hbm_ntm_rebirth.conveyor_wand." + typeName);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.hbm.conveyor_wand.desc").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.conveyor_wand.desc").withStyle(ChatFormatting.GRAY));
         if (getType(stack).hasVertical()) {
-            tooltip.add(Component.translatable("item.hbm.conveyor_wand.vertical.desc").withStyle(ChatFormatting.AQUA));
+            tooltip.add(Component.translatable("item.hbm_ntm_rebirth.conveyor_wand.vertical.desc").withStyle(ChatFormatting.AQUA));
         }
         if (hasStart(stack)) {
-            tooltip.add(Component.translatable("item.hbm.conveyor_wand.selected").withStyle(ChatFormatting.YELLOW));
+            tooltip.add(Component.translatable("item.hbm_ntm_rebirth.conveyor_wand.selected").withStyle(ChatFormatting.YELLOW));
         }
     }
 
@@ -119,10 +119,10 @@ public class ConveyorWandItem extends Item implements LegacyLookOverlayItemProvi
                 case SUCCESS -> {
                     placeRoute(level, player, stack, result.placements());
                     consumeRouteItems(player, stack, result.placements().size());
-                    player.displayClientMessage(Component.translatable("item.hbm.conveyor_wand.built"), true);
+                    player.displayClientMessage(Component.translatable("item.hbm_ntm_rebirth.conveyor_wand.built"), true);
                 }
-                case NOT_ENOUGH_CONVEYORS -> player.displayClientMessage(Component.translatable("item.hbm.conveyor_wand.not_enough"), true);
-                case OBSTRUCTED -> player.displayClientMessage(Component.translatable("item.hbm.conveyor_wand.obstructed"), true);
+                case NOT_ENOUGH_CONVEYORS -> player.displayClientMessage(Component.translatable("item.hbm_ntm_rebirth.conveyor_wand.not_enough"), true);
+                case OBSTRUCTED -> player.displayClientMessage(Component.translatable("item.hbm_ntm_rebirth.conveyor_wand.obstructed"), true);
             }
         }
 

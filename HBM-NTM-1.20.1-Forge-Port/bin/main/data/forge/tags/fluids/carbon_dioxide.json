@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:carbondioxide",
-    "hbm:carbondioxide_flowing"
+    "hbm_ntm_rebirth:carbondioxide",
+    "hbm_ntm_rebirth:carbondioxide_flowing"
   ]
 }

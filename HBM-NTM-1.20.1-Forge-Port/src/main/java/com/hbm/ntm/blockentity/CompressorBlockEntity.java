@@ -367,7 +367,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.hbm.machine_compressor");
+        return Component.translatable("block.hbm_ntm_rebirth.machine_compressor");
     }
 
     @Nullable

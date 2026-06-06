@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:chlorine",
-    "hbm:chlorine_flowing"
+    "hbm_ntm_rebirth:chlorine",
+    "hbm_ntm_rebirth:chlorine_flowing"
   ]
 }

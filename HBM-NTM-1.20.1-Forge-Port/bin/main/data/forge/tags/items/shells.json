@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:shell_steel",
-    "hbm:shell_titanium"
+    "hbm_ntm_rebirth:shell_steel",
+    "hbm_ntm_rebirth:shell_titanium"
   ]
 }

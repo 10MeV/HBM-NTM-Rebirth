@@ -101,9 +101,9 @@ public class FluidIdentifierItem extends Item implements IFluidIdentifierItem, H
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.hbm.fluid_identifier_multi.info"));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.fluid_identifier_multi.info"));
         tooltip.add(Component.literal("   ").append(getType(stack, true).getDisplayName()));
-        tooltip.add(Component.translatable("item.hbm.fluid_identifier_multi.info2"));
+        tooltip.add(Component.translatable("item.hbm_ntm_rebirth.fluid_identifier_multi.info2"));
         tooltip.add(Component.literal("   ").append(getType(stack, false).getDisplayName()));
     }
 

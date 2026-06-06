@@ -1,0 +1,43 @@
+{
+  "blend": {
+    "func": "add",
+    "srcrgb": "srcalpha",
+    "dstrgb": "1-srcalpha"
+  },
+  "vertex": "hbm_ntm_rebirth:black_hole",
+  "fragment": "hbm_ntm_rebirth:black_hole",
+  "attributes": [
+    "Position"
+  ],
+  "samplers": [
+    { "name": "MainDepthSampler" },
+    { "name": "MainColorSampler" },
+    { "name": "TextureSampler" },
+    { "name": "ColorSampler" }
+  ],
+  "uniforms": [
+    { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "time", "type": "float", "count": 1, "values": [ 0.0 ] },
+    { "name": "screenSize", "type": "float", "count": 2, "values": [ 1920.0, 1080.0 ] },
+    { "name": "projectionMatrix", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "modelViewMatrix", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "cameraPos", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
+    { "name": "entityPos", "type": "float", "count": 3, "values": [ 0.0, 0.0, 0.0 ] },
+    { "name": "scale", "type": "float", "count": 1, "values": [ 6.0 ] },
+    { "name": "accretionDiskRadiusScale", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "accretionDiskThicknessScale", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "accretionDiskDensity", "type": "float", "count": 1, "values": [ 0.01 ] },
+    { "name": "tiltAngle", "type": "float", "count": 1, "values": [ 0.4363 ] },
+    { "name": "intensity", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "renderQuality", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "ditherStrength", "type": "float", "count": 1, "values": [ 2.0 ] },
+    { "name": "lensBoundarySoftness", "type": "float", "count": 1, "values": [ 0.6 ] },
+    { "name": "diskNoiseStrength", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "diskTextureStrength", "type": "float", "count": 1, "values": [ 0.35 ] },
+    { "name": "noiseTextureSize", "type": "float", "count": 1, "values": [ 256.0 ] },
+    { "name": "accretionDiskColor", "type": "float", "count": 3, "values": [ 1.0, 1.0, 1.0 ] },
+    { "name": "accretionDiskInnerColor", "type": "float", "count": 3, "values": [ 1.7, 0.5, 0.1 ] },
+    { "name": "accretionDiskOuterColor", "type": "float", "count": 3, "values": [ 0.5, 0.6, 1.0 ] }
+  ]
+}

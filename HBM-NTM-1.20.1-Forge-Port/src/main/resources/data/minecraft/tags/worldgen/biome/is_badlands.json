@@ -1,8 +1,8 @@
 {
   "replace": false,
   "values": [
-    "hbm:crater",
-    "hbm:crater_inner",
-    "hbm:crater_outer"
+    "hbm_ntm_rebirth:crater",
+    "hbm_ntm_rebirth:crater_inner",
+    "hbm_ntm_rebirth:crater_outer"
   ]
 }

@@ -18,8 +18,15 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
+import com.hbm.ntm.item.ItemMachineUpgrade;
+import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
+import com.hbm.ntm.menu.GasFlareMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import java.util.Map;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -27,20 +34,27 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
-        implements HbmStandardFluidReceiver, HbmLegacyButtonReceiver {
+        implements HbmStandardFluidReceiver, HbmLegacyButtonReceiver, MenuProvider {
     public static final int SLOT_ENERGY_OUTPUT = 0;
     public static final int SLOT_FLUID_INPUT = 1;
     public static final int SLOT_FLUID_OUTPUT = 2;
@@ -54,6 +68,9 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final int TANK_CAPACITY = 64_000;
     private static final int BASE_MAX_VENT = 50;
     private static final int BASE_MAX_BURN = 10;
+    private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(
+            UpgradeType.SPEED, 3,
+            UpgradeType.EFFECT, 3);
     private static final List<FluidPort> FLUID_PORTS = List.of(
             FluidPort.of(2, 0, 0, Direction.EAST),
             FluidPort.of(-2, 0, 0, Direction.WEST),
@@ -78,7 +95,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
                 case SLOT_ENERGY_OUTPUT -> stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
                 case SLOT_FLUID_INPUT -> true;
                 case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
-                case SLOT_UPGRADE_SPEED, SLOT_UPGRADE_EFFECT -> false;
+                case SLOT_UPGRADE_SPEED, SLOT_UPGRADE_EFFECT -> stack.getItem() instanceof ItemMachineUpgrade;
                 default -> false;
             };
         }
@@ -89,11 +106,15 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler =
+            LazyOptional.of(() -> new EmptyExternalItemHandler(items));
 
     private boolean on;
     private boolean burn;
     private int fluidUsed;
     private int lastOutput;
+    private int speedLevel;
+    private int effectLevel;
 
     public GasFlareBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmEnergyStorage(MAX_POWER, 0L, MAX_POWER), new HbmFluidTank(HbmFluids.GAS, TANK_CAPACITY));
@@ -118,6 +139,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         blockEntity.fluidUsed = 0;
         blockEntity.lastOutput = 0;
+        changed |= blockEntity.updateUpgrades();
         changed |= blockEntity.setTankTypeFromIdentifierSlot();
         changed |= HbmFluidItemTransfer.processTransfers(blockEntity.items,
                 List.of(TankSlotTransfer.load(SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, blockEntity.tank)));
@@ -135,6 +157,30 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+        }
+    }
+
+    public static void clientTick(Level level, BlockPos pos, BlockState state, GasFlareBlockEntity blockEntity) {
+        if (!level.isClientSide || !blockEntity.on || blockEntity.tank.isEmpty()) {
+            return;
+        }
+        FluidType type = blockEntity.tank.getTankType();
+        FlammableFluidTrait flammable = type.getTrait(FlammableFluidTrait.class);
+        if ((!blockEntity.burn || flammable == null)
+                && (type.hasTrait(SimpleFluidTraits.Gaseous.class)
+                || type.hasTrait(SimpleFluidTraits.GaseousAtRoomTemperature.class))) {
+            ParticleUtil.spawnCoolingTower(level, pos.getX() + 0.5D, pos.getY() + 11.0D, pos.getZ() + 0.5D,
+                    1.0F, 0.25F, 3.0F, 150 + level.random.nextInt(20), false, 0.075F, 0.25F,
+                    type.getColor());
+        }
+        if (blockEntity.burn && flammable != null) {
+            if (level.random.nextBoolean()) {
+                ParticleUtil.spawnVanillaExt(level, pos.getX() + 1.5D, pos.getY() + 10.75D, pos.getZ() + 1.5D,
+                        ParticleUtil.VANILLA_SMOKE, 0.0D, 0.0D, 0.0D);
+            } else {
+                ParticleUtil.spawnVanillaExt(level, pos.getX() + 1.125D, pos.getY() + 11.75D, pos.getZ() - 0.5D,
+                        ParticleUtil.VANILLA_SMOKE, 0.0D, 0.0D, 0.0D);
+            }
         }
     }
 
@@ -160,6 +206,14 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public int getLastOutput() {
         return lastOutput;
+    }
+
+    public int getSpeedLevel() {
+        return speedLevel;
+    }
+
+    public int getEffectLevel() {
+        return effectLevel;
     }
 
     public long getPower() {
@@ -279,6 +333,12 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         return Component.translatable("container.gasFlare");
     }
 
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+        return new GasFlareMenu(containerId, inventory, this);
+    }
+
     @Override
     public boolean canReceiveLegacyButton(ServerPlayer player, int value, int id) {
         return id == CONTROL_VALVE || id == CONTROL_BURN;
@@ -304,7 +364,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
                     && !type.hasTrait(SimpleFluidTraits.GaseousAtRoomTemperature.class)) {
                 return false;
             }
-            int eject = Math.min(BASE_MAX_VENT, tank.getFill());
+            int eject = Math.min(maxVent(), tank.getFill());
             if (eject <= 0) {
                 return false;
             }
@@ -313,7 +373,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             return true;
         }
 
-        int eject = Math.min(BASE_MAX_BURN, tank.getFill());
+        int eject = Math.min(maxBurn(), tank.getFill());
         if (eject <= 0) {
             return false;
         }
@@ -322,13 +382,44 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         int penalty = type.hasTrait(SimpleFluidTraits.Gaseous.class)
                 || type.hasTrait(SimpleFluidTraits.GaseousAtRoomTemperature.class) ? 5 : 10;
         powerProduced /= penalty;
+        powerProduced += powerProduced * effectLevel / 3L;
         if (powerProduced > 0L) {
             long before = energy.getPower();
             energy.setPower(Math.min(MAX_POWER, before + powerProduced));
             lastOutput = (int) Math.min(Integer.MAX_VALUE, energy.getPower() - before);
         }
         fluidUsed = eject;
+        ParticleUtil.spawnGasFlame(level, pos.getX() + 0.5D, pos.getY() + 11.75D, pos.getZ() + 0.5D,
+                level.random.nextGaussian() * 0.15D, 0.2D, level.random.nextGaussian() * 0.15D);
+        burnEntities(level, pos);
         return true;
+    }
+
+    private int maxVent() {
+        return BASE_MAX_VENT + BASE_MAX_VENT * speedLevel;
+    }
+
+    private int maxBurn() {
+        return BASE_MAX_BURN + BASE_MAX_BURN * speedLevel;
+    }
+
+    private void burnEntities(Level level, BlockPos pos) {
+        AABB box = new AABB(pos.getX() - 1.0D, pos.getY() + 12.0D, pos.getZ() - 2.0D,
+                pos.getX() + 2.0D, pos.getY() + 17.0D, pos.getZ() + 2.0D);
+        for (Entity entity : level.getEntities(null, box)) {
+            entity.setSecondsOnFire(5);
+            entity.hurt(level.damageSources().onFire(), 5.0F);
+        }
+    }
+
+    private boolean updateUpgrades() {
+        int oldSpeed = speedLevel;
+        int oldEffect = effectLevel;
+        LegacyMachineUpgradeManager.Levels levels =
+                LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_SPEED, SLOT_UPGRADE_EFFECT, VALID_UPGRADES);
+        speedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
+        effectLevel = Math.min(levels.getLevel(UpgradeType.EFFECT), 3);
+        return oldSpeed != speedLevel || oldEffect != effectLevel;
     }
 
     private boolean setTankTypeFromIdentifierSlot() {
@@ -361,6 +452,8 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putBoolean("doesBurn", burn);
         tag.putInt("fluidUsed", fluidUsed);
         tag.putInt("output", lastOutput);
+        tag.putInt("speedLevel", speedLevel);
+        tag.putInt("effectLevel", effectLevel);
     }
 
     @Override
@@ -371,6 +464,8 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         burn = tag.getBoolean("doesBurn");
         fluidUsed = tag.getInt("fluidUsed");
         lastOutput = tag.getInt("output");
+        speedLevel = tag.getInt("speedLevel");
+        effectLevel = tag.getInt("effectLevel");
     }
 
     @Override
@@ -388,25 +483,57 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : externalItemHandler.cast();
         }
         return super.getCapability(capability, side);
     }
 
     public List<ItemStack> getDrops() {
-        List<ItemStack> drops = new java.util.ArrayList<>();
-        for (int slot = 0; slot < items.getSlots(); slot++) {
-            ItemStack stack = items.getStackInSlot(slot);
-            if (!stack.isEmpty()) {
-                drops.add(stack.copy());
-                items.setStackInSlot(slot, ItemStack.EMPTY);
-            }
+        return HbmInventoryMenuHelper.clearToDrops(items);
+    }
+
+    private static final class EmptyExternalItemHandler implements IItemHandler {
+        @SuppressWarnings("unused")
+        private final IItemHandlerModifiable items;
+
+        private EmptyExternalItemHandler(IItemHandlerModifiable items) {
+            this.items = items;
         }
-        return drops;
+
+        @Override
+        public int getSlots() {
+            return 0;
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            return stack;
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return false;
+        }
     }
 }

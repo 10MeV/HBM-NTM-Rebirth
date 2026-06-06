@@ -11,7 +11,10 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
+import com.hbm.ntm.item.ItemMachineUpgrade;
+import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.LiquefactorMenu;
+import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.recipe.LiquefactionRecipe;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -24,6 +27,7 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -33,12 +37,14 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity implements MenuProvider, HbmStandardFluidSender {
     private static final String TAG_INVENTORY = "Inventory";
@@ -49,6 +55,9 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     private static final int USAGE_BASE = 250;
     private static final int PROCESS_TIME_BASE = 100;
     private static final int TANK_CAPACITY = 24_000;
+    private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(
+            UpgradeType.SPEED, 3,
+            UpgradeType.POWER, 3);
     private static final List<FluidPort> FLUID_PORTS = List.of(
             FluidPort.of(0, 4, 0, Direction.UP),
             FluidPort.of(0, -1, 0, Direction.DOWN),
@@ -72,11 +81,14 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             if (slot == SLOT_INPUT) {
-                return level == null || findRecipe(level, stack) != null;
+                return level == null || findOutput(level, stack) != null;
             }
             if (slot == SLOT_BATTERY) {
                 return HbmBatteryTransfer.isHbmBattery(stack)
                         || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
+            }
+            if (slot == SLOT_UPGRADE_SPEED || slot == SLOT_UPGRADE_POWER) {
+                return stack.getItem() instanceof ItemMachineUpgrade;
             }
             return false;
         }
@@ -90,6 +102,8 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler =
+            LazyOptional.of(() -> new LiquefactorExternalItemHandler(items));
 
     private int progress;
     private int usage = USAGE_BASE;
@@ -111,9 +125,9 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, blockEntity);
         HbmEnergyUtil.chargeStorageFromItem(blockEntity.items.getStackInSlot(SLOT_BATTERY), blockEntity.energy, blockEntity.energy.getReceiverSpeed());
 
-        boolean changed = false;
+        boolean changed = blockEntity.updateUpgrades();
         if (blockEntity.canProcess(level)) {
-            blockEntity.energy.usePower(blockEntity.usage);
+            blockEntity.energy.setPower(blockEntity.energy.getPower() - blockEntity.usage);
             blockEntity.progress++;
             changed = true;
             if (blockEntity.progress >= blockEntity.processTime) {
@@ -171,11 +185,10 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         if (input.isEmpty()) {
             return false;
         }
-        LiquefactionRecipe recipe = findRecipe(level, input);
-        if (recipe == null) {
+        HbmFluidStack output = findOutput(level, input);
+        if (output == null) {
             return false;
         }
-        HbmFluidStack output = recipe.getOutputFluid();
         return tank.fill(output.type(), output.amount(), output.pressure(), true) == output.amount();
     }
 
@@ -278,7 +291,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : externalItemHandler.cast();
         }
         return super.getCapability(capability, side);
     }
@@ -287,20 +300,32 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     private void finishProcess(Level level) {
-        LiquefactionRecipe recipe = findRecipe(level, items.getStackInSlot(SLOT_INPUT));
-        if (recipe == null) {
+        HbmFluidStack output = findOutput(level, items.getStackInSlot(SLOT_INPUT));
+        if (output == null) {
             progress = 0;
             return;
         }
-        HbmFluidStack output = recipe.getOutputFluid();
         int filled = tank.fill(output.type(), output.amount(), output.pressure(), false);
         if (filled == output.amount()) {
             items.extractItem(SLOT_INPUT, 1, false);
         }
         progress = 0;
+    }
+
+    private boolean updateUpgrades() {
+        int oldUsage = usage;
+        int oldProcessTime = processTime;
+        LegacyMachineUpgradeManager.Levels levels =
+                LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_SPEED, SLOT_UPGRADE_POWER, VALID_UPGRADES);
+        int speed = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
+        int power = Math.min(levels.getLevel(UpgradeType.POWER), 3);
+        processTime = PROCESS_TIME_BASE - (PROCESS_TIME_BASE / 4) * speed;
+        usage = (USAGE_BASE + USAGE_BASE * speed) / (power + 1);
+        return oldUsage != usage || oldProcessTime != processTime;
     }
 
     @Nullable
@@ -310,5 +335,60 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         }
         SimpleContainer container = new SimpleContainer(stack);
         return level.getRecipeManager().getRecipeFor(ModRecipes.LIQUEFACTION.type().get(), container, level).orElse(null);
+    }
+
+    @Nullable
+    private static HbmFluidStack findOutput(Level level, ItemStack stack) {
+        LiquefactionRecipe recipe = findRecipe(level, stack);
+        if (recipe != null) {
+            return recipe.getOutputFluid();
+        }
+        FoodProperties food = stack.getFoodProperties(null);
+        if (food == null) {
+            return null;
+        }
+        int amount = (int) (food.getNutrition() * food.getSaturationModifier() * 20.0F);
+        return new HbmFluidStack(HbmFluids.SALIENT, amount);
+    }
+
+    private static final class LiquefactorExternalItemHandler implements IItemHandler {
+        private final IItemHandlerModifiable items;
+
+        private LiquefactorExternalItemHandler(IItemHandlerModifiable items) {
+            this.items = items;
+        }
+
+        @Override
+        public int getSlots() {
+            return 1;
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return slot == 0 ? items.getStackInSlot(SLOT_INPUT) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            if (slot != 0 || stack.isEmpty() || !items.isItemValid(SLOT_INPUT, stack)) {
+                return stack;
+            }
+            return items.insertItem(SLOT_INPUT, stack, simulate);
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return slot == 0 ? items.getSlotLimit(SLOT_INPUT) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return slot == 0 && items.isItemValid(SLOT_INPUT, stack);
+        }
     }
 }

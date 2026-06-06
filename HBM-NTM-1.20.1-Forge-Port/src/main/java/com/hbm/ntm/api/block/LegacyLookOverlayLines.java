@@ -1,6 +1,7 @@
 package com.hbm.ntm.api.block;
 
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidRepairMaterials.HbmRepairMaterial;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUser;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -140,6 +141,33 @@ public final class LegacyLookOverlayLines {
             line.append(Component.literal(" x" + stack.getCount()).withStyle(ChatFormatting.RESET));
         }
         return line;
+    }
+
+    public static Component repairMaterial(HbmRepairMaterial material) {
+        if (material == null) {
+            return Component.literal("- ERROR").withStyle(ChatFormatting.RED);
+        }
+        List<ItemStack> stacks = material.displayStacks();
+        if (!stacks.isEmpty()) {
+            return repairMaterial(stacks.get(0));
+        }
+        MutableComponent line = Component.literal("- ");
+        line.append(material.fallbackName().copy().withStyle(ChatFormatting.RED));
+        if (material.count() > 1) {
+            line.append(Component.literal(" x" + material.count()).withStyle(ChatFormatting.RESET));
+        }
+        return line;
+    }
+
+    public static List<Component> repairMaterials(List<HbmRepairMaterial> materials) {
+        List<Component> lines = new ArrayList<>();
+        lines.add(repairHeader());
+        if (materials != null) {
+            for (HbmRepairMaterial material : materials) {
+                lines.add(repairMaterial(material));
+            }
+        }
+        return lines;
     }
 
     public static Component warning(String message) {

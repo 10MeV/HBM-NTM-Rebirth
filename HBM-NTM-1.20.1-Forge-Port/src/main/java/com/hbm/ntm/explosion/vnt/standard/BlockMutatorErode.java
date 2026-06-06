@@ -41,12 +41,12 @@ public class BlockMutatorErode implements BlockMutator {
         RegistryObject<? extends Block> fromBlock = ModBlocks.legacyBlock(from);
         RegistryObject<? extends Block> toBlock = ModBlocks.legacyBlock(to);
         replacements.put(
-                Objects.requireNonNull(fromBlock, "Missing legacy block hbm:" + from).get(),
-                Objects.requireNonNull(toBlock, "Missing legacy block hbm:" + to).get());
+                Objects.requireNonNull(fromBlock, "Missing legacy block hbm_ntm_rebirth:" + from).get(),
+                Objects.requireNonNull(toBlock, "Missing legacy block hbm_ntm_rebirth:" + to).get());
     }
 
     private void addReplacement(String from, Block to) {
         RegistryObject<? extends Block> fromBlock = ModBlocks.legacyBlock(from);
-        replacements.put(Objects.requireNonNull(fromBlock, "Missing legacy block hbm:" + from).get(), to);
+        replacements.put(Objects.requireNonNull(fromBlock, "Missing legacy block hbm_ntm_rebirth:" + from).get(), to);
     }
 }

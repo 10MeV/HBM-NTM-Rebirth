@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
     public static final long DEFAULT_TIMEOUT_MS = 3_000L;
@@ -134,6 +135,22 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
         receiverEntries.clear();
         providerEntries.clear();
         fluidTracker = 0L;
+    }
+
+    public List<HbmFluidReceiver> getSubscribedReceivers() {
+        pruneExpired(System.currentTimeMillis());
+        return List.copyOf(receiverEntries.keySet());
+    }
+
+    public int damageSubscribedReceiversFromOverpressure() {
+        pruneExpired(System.currentTimeMillis());
+        int damaged = 0;
+        for (HbmFluidReceiver receiver : List.copyOf(receiverEntries.keySet())) {
+            if (receiver instanceof BlockEntity blockEntity && HbmFluidOverpressure.damageReceiver(blockEntity)) {
+                damaged++;
+            }
+        }
+        return damaged;
     }
 
     @Override

@@ -15,17 +15,17 @@ public final class HazardTooltipUtil {
 
         float radiation = HazardRegistry.getHazardLevel(stack, HazardType.RADIATION);
         if (radiation > 0.0F) {
-            tooltip.add(Component.translatable("tooltip.hbm.radiation.single", format(radiation))
+            tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.radiation.single", format(radiation))
                     .withStyle(colorForRadiation(radiation)));
             if (stack.getCount() > 1) {
-                tooltip.add(Component.translatable("tooltip.hbm.radiation.total", format(radiation * stack.getCount()))
+                tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.radiation.total", format(radiation * stack.getCount()))
                         .withStyle(ChatFormatting.RED));
             }
         }
 
         for (HazardEntry entry : HazardRegistry.getHazards(stack)) {
             if (entry.type() != HazardType.RADIATION) {
-                tooltip.add(Component.translatable("tooltip.hbm.hazard." + entry.type().name().toLowerCase(Locale.ROOT), format(entry.modifiedLevel(stack, null)))
+                tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.hazard." + entry.type().name().toLowerCase(Locale.ROOT), format(entry.modifiedLevel(stack, null)))
                         .withStyle(ChatFormatting.GOLD));
             }
         }
@@ -33,7 +33,7 @@ public final class HazardTooltipUtil {
         double resistance = HazmatRegistry.getResistance(stack);
         if (resistance > 0.0D) {
             double blocked = (1.0D - Math.pow(10.0D, -resistance)) * 100.0D;
-            tooltip.add(Component.translatable("tooltip.hbm.radiation.resistance", format(resistance), format(blocked))
+            tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.radiation.resistance", format(resistance), format(blocked))
                     .withStyle(ChatFormatting.GREEN));
         }
     }

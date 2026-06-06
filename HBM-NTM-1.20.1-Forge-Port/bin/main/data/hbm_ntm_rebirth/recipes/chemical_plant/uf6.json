@@ -1,0 +1,41 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 100,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:water"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_yellowcake"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:dusts/fluorite"
+      },
+      "legacy_ore": "dustFluorite"
+    }
+  ],
+  "internal_name": "chem.uf6",
+  "output_fluids": [
+    {
+      "amount": 1200,
+      "fluid": "hbm_ntm_rebirth:uf6"
+    }
+  ],
+  "output_items": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:sulfur"
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 65
+}

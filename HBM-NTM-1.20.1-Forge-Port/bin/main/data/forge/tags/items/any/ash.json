@@ -1,9 +1,9 @@
 {
   "values": [
-    "hbm:powder_ash_wood",
-    "hbm:powder_ash_coal",
-    "hbm:powder_ash_misc",
-    "hbm:powder_ash_fly",
-    "hbm:powder_ash_soot"
+    "hbm_ntm_rebirth:powder_ash_wood",
+    "hbm_ntm_rebirth:powder_ash_coal",
+    "hbm_ntm_rebirth:powder_ash_misc",
+    "hbm_ntm_rebirth:powder_ash_fly",
+    "hbm_ntm_rebirth:powder_ash_soot"
   ]
 }

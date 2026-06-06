@@ -1,0 +1,30 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 400,
+  "input_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:deuterium"
+    },
+    {
+      "amount": 250,
+      "fluid": "hbm_ntm_rebirth:reformgas"
+    },
+    {
+      "amount": 250,
+      "fluid": "hbm_ntm_rebirth:syngas"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.dhc",
+  "output_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:dhc"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 500,
+  "source_order": 69
+}

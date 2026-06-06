@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "auto_switch_group": "autoswitch.plates",
+  "duration": 60,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/saturnite"
+      }
+    }
+  ],
+  "internal_name": "ass.platesaturnite",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:plate_saturnite"
+    }
+  ],
+  "pools": [
+    "alt.plates"
+  ],
+  "power": 100,
+  "source_order": 12
+}

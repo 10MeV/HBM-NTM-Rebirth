@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:ore_asbestos",
-    "hbm:ore_gneiss_asbestos"
+    "hbm_ntm_rebirth:ore_asbestos",
+    "hbm_ntm_rebirth:ore_gneiss_asbestos"
   ]
 }

@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:lignite",
-    "hbm:coal_infernal"
+    "hbm_ntm_rebirth:lignite",
+    "hbm_ntm_rebirth:coal_infernal"
   ]
 }

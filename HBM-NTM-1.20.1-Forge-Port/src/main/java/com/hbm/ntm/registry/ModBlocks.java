@@ -68,6 +68,7 @@ import com.hbm.ntm.block.RemoteFluidMachineBlock;
 import com.hbm.ntm.block.OilDrillBlock;
 import com.hbm.ntm.block.RefineryBlock;
 import com.hbm.ntm.block.SolarBoilerBlock;
+import com.hbm.ntm.block.SolidifierBlock;
 import com.hbm.ntm.block.SteamEngineBlock;
 import com.hbm.ntm.block.SteamTurbineBlock;
 import com.hbm.ntm.block.SteamTurbineMultiblockBlock;
@@ -209,7 +210,7 @@ public final class ModBlocks {
             cokerDefinition(), RemoteFluidMachineBlock.Kind.COKER);
     public static final RegistryObject<Block> MACHINE_PYROOVEN = visibleMultiblockMachine("machine_pyrooven",
             pyroOvenDefinition());
-    public static final RegistryObject<Block> MACHINE_SOLIDIFIER = visibleMultiblockMachine("machine_solidifier",
+    public static final RegistryObject<Block> MACHINE_SOLIDIFIER = solidifierMachine("machine_solidifier",
             solidifierDefinition());
     public static final RegistryObject<Block> MACHINE_COMPRESSOR = compressorMachine("machine_compressor",
             compressorDefinition());
@@ -225,6 +226,11 @@ public final class ModBlocks {
             pumpjackDefinition());
     public static final RegistryObject<Block> MACHINE_FRACKING_TOWER = oilDrillMachine("machine_fracking_tower",
             frackingTowerDefinition());
+    public static final RegistryObject<Block> OIL_PIPE = hiddenBlock("oil_pipe", () -> new Block(BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .strength(5.0F, 10.0F)
+            .sound(SoundType.METAL)
+            .requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> MACHINE_CENTRIFUGE = visibleMultiblockMachine("machine_centrifuge",
             centrifugeDefinition());
     public static final RegistryObject<Block> MACHINE_GASCENT = visibleMultiblockMachine("machine_gascent",
@@ -940,8 +946,8 @@ public final class ModBlocks {
                         .requiresCorrectToolForDrops()),
                 block -> new LegacyStateBlockItem(block.get(), new Item.Properties(), LegacyRadAbsorberBlock.TIER, 4,
                         variant -> Component.translatable(variant == 0
-                                ? "block.hbm.rad_absorber"
-                                : "block.hbm.rad_absorber." + variant)));
+                                ? "block.hbm_ntm_rebirth.rad_absorber"
+                                : "block.hbm_ntm_rebirth.rad_absorber." + variant)));
     }
 
     private static RegistryObject<Block> dummyBlock(String name) {
@@ -1021,6 +1027,18 @@ public final class ModBlocks {
         return registerBlockWithItem(
                 name,
                 () -> new RefineryBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 30.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), definition),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> solidifierMachine(String name, LegacyMachineDefinition definition) {
+        return registerBlockWithItem(
+                name,
+                () -> new SolidifierBlock(BlockBehaviour.Properties.of()
                         .mapColor(MapColor.METAL)
                         .strength(5.0F, 30.0F)
                         .sound(SoundType.METAL)
@@ -2339,6 +2357,12 @@ public final class ModBlocks {
         return block;
     }
 
+    private static RegistryObject<Block> hiddenBlock(String name, Supplier<Block> blockSupplier) {
+        RegistryObject<Block> block = BLOCKS.register(name, blockSupplier);
+        BLOCKS_BY_LEGACY_NAME.put(name, block);
+        return block;
+    }
+
     private static RegistryObject<Block> sellafield(String name) {
         return registerBlockWithItem(
                 name,
@@ -2349,8 +2373,8 @@ public final class ModBlocks {
                         .requiresCorrectToolForDrops()),
                 block -> new LegacyStateBlockItem(block.get(), new Item.Properties(), LegacySellafieldBlock.LEVEL, 6,
                         variant -> Component.translatable(variant == 0
-                                ? "block.hbm.sellafield"
-                                : "block.hbm.sellafield." + variant)));
+                                ? "block.hbm_ntm_rebirth.sellafield"
+                                : "block.hbm_ntm_rebirth.sellafield." + variant)));
     }
 
     private static RegistryObject<Block> sellafieldSlaked(String name) {
@@ -2374,7 +2398,7 @@ public final class ModBlocks {
                 name,
                 blockFactory,
                 block -> new LegacyStateBlockItem(block.get(), new Item.Properties(), LegacySellafieldSlakedBlock.LEVEL, 16,
-                        variant -> Component.translatable("block.hbm." + name)));
+                        variant -> Component.translatable("block.hbm_ntm_rebirth." + name)));
     }
 
     private static BlockBehaviour.Properties sellafieldSlakedProperties() {

@@ -1,0 +1,50 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:cast_plates/copper"
+      },
+      "legacy_ore": "plateTripleCopper"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:pipes/steel"
+      },
+      "legacy_ore": "ntmpipeSteel"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:drill_titanium"
+      }
+    }
+  ],
+  "internal_name": "ass.derrick",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_well"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 81
+}

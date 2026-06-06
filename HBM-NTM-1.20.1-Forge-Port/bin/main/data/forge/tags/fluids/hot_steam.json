@@ -1,6 +1,6 @@
 {
   "values": [
-    "hbm:hotsteam",
-    "hbm:hotsteam_flowing"
+    "hbm_ntm_rebirth:hotsteam",
+    "hbm_ntm_rebirth:hotsteam_flowing"
   ]
 }

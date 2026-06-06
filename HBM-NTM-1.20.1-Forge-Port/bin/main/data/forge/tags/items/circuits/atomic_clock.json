@@ -1,5 +1,5 @@
 {
   "values": [
-    "hbm:circuit_atomic_clock"
+    "hbm_ntm_rebirth:circuit_atomic_clock"
   ]
 }
