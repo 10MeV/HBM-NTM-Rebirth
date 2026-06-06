@@ -26,6 +26,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -47,6 +48,11 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     protected HbmFluidBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, List<HbmFluidTank> tanks) {
         super(type, pos, state);
         this.tanks = List.copyOf(tanks);
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        return LegacyMachineRenderBounds.visibleMultiblockOr(this, super.getRenderBoundingBox());
     }
 
     public List<HbmFluidTank> getAllTanks() {

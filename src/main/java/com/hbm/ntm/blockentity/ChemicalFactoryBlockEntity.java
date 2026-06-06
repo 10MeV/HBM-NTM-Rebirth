@@ -3,7 +3,6 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayPorts;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
-import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -424,11 +423,8 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public AABB getRenderBoundingBox() {
-        BlockState state = getBlockState();
-        if (state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block) {
-            return block.definition().renderBoundingBox(state, worldPosition);
-        }
-        return new AABB(worldPosition.offset(-2, 0, -2), worldPosition.offset(3, 3, 3));
+        return LegacyMachineRenderBounds.visibleMultiblockOr(this,
+                new AABB(worldPosition.offset(-2, 0, -2), worldPosition.offset(3, 3, 3)));
     }
 
     @Override

@@ -3,7 +3,6 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayPorts;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
-import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
@@ -33,10 +32,6 @@ public class LegacyVisibleMachineBlockEntity extends BlockEntity implements Lega
 
     @Override
     public AABB getRenderBoundingBox() {
-        BlockState state = getBlockState();
-        if (state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block) {
-            return block.definition().renderBoundingBox(state, worldPosition);
-        }
-        return super.getRenderBoundingBox();
+        return LegacyMachineRenderBounds.visibleMultiblockOr(this, super.getRenderBoundingBox());
     }
 }
