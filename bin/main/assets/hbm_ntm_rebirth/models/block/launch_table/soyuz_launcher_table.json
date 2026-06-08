@@ -1,7 +1,0 @@
-{
-  "loader": "forge:obj",
-  "model": "hbm_ntm_rebirth:models/block/launch_table/soyuz_launcher_table.obj",
-  "flip_v": true,
-  "render_type": "minecraft:cutout",
-  "textures": { "particle": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_table", "default": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_table" }
-}

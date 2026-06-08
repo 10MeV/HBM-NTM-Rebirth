@@ -1,7 +1,0 @@
-{
-  "parent": "hbm_ntm_rebirth:block/template_conveyor",
-  "textures": {
-    "top": "hbm_ntm_rebirth:block/conveyor_triple",
-    "side": "hbm_ntm_rebirth:block/conveyor_side"
-  }
-}
