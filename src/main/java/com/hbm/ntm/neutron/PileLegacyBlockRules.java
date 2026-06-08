@@ -28,6 +28,9 @@ public final class PileLegacyBlockRules {
             BlockPos pos,
             BlockState state,
             BlockEntity blockEntity) {
+        if (state.getBlock() instanceof PileNeutronBlockBehavior behavior) {
+            return behavior.evaluatePileNeutronBlock(level, pos, state, blockEntity);
+        }
         if (isLegacyBlock(state, "block_boron")) {
             return PileNeutronBlockResult.halt();
         }

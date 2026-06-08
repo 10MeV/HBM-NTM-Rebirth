@@ -45,8 +45,8 @@ public final class RadiationHud {
         int barLength = 74;
         int width = 94;
         int height = 18;
-        int x = 16 + HbmClientConfig.GEIGER_OFFSET_HORIZONTAL.get();
-        int y = screenHeight - 20 - HbmClientConfig.GEIGER_OFFSET_VERTICAL.get();
+        int x = 16 + HbmClientConfig.geigerOffsetHorizontal();
+        int y = screenHeight - 20 - HbmClientConfig.geigerOffsetVertical();
         int bar = (int) Math.min(radiation / 1000.0F * barLength, barLength);
 
         graphics.blit(OVERLAY_MISC, x, y, 0, 0, width, height);

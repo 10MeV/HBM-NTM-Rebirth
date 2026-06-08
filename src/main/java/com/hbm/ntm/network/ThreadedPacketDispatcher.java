@@ -45,6 +45,10 @@ public final class ThreadedPacketDispatcher {
     private static final AtomicLong DISCARDED_MANUAL_CLEAR = new AtomicLong();
     private static final AtomicLong TOTAL_PREPARED = new AtomicLong();
     private static final AtomicLong TOTAL_PREPARE_FAILED = new AtomicLong();
+    private static final AtomicLong PREPARABLE_MESSAGES = new AtomicLong();
+    private static final AtomicLong NON_PREPARABLE_MESSAGES = new AtomicLong();
+    private static final AtomicLong PREPARED_SAME_INSTANCE = new AtomicLong();
+    private static final AtomicLong PREPARED_COPY_INSTANCE = new AtomicLong();
     private static final AtomicLong MANUAL_CLEARS = new AtomicLong();
     private static int lastFlushQueued;
     private static int lastFlushCompleted;
@@ -112,6 +116,20 @@ public final class ThreadedPacketDispatcher {
 
     public static synchronized void sendToAllAround(Object message, PacketDistributor.TargetPoint point) {
         if (!validateTarget(message, "threaded-near-point:null", point != null)) {
+            return;
+        }
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToAllAround(prepared, point));
+        }
+    }
+
+    public static synchronized void sendToAllAround(Object message, LegacyTargetPoint point) {
+        if (!validateTarget(message, "threaded-near-legacyTargetPoint:null", point != null)) {
+            return;
+        }
+        if (!point.hasModernDimension()) {
+            LegacyDimensionIdNetwork.rejectAllAround(message, point, true);
             return;
         }
         Object prepared = prepareMessage(message);
@@ -217,15 +235,26 @@ public final class ThreadedPacketDispatcher {
             return null;
         }
         try {
-            Object prepared = message instanceof HbmPreparablePacket preparable
-                    ? preparable.prepareForThreadedSend()
-                    : message;
+            boolean preparableMessage = message instanceof HbmPreparablePacket;
+            Object prepared;
+            if (preparableMessage) {
+                PREPARABLE_MESSAGES.incrementAndGet();
+                prepared = ((HbmPreparablePacket) message).prepareForThreadedSend();
+            } else {
+                NON_PREPARABLE_MESSAGES.incrementAndGet();
+                prepared = message;
+            }
             if (prepared == null) {
                 TOTAL_PREPARE_FAILED.incrementAndGet();
                 DISCARDED_PREPARE_NULL.incrementAndGet();
                 TOTAL_DISCARDED.incrementAndGet();
                 lastFailureMessage = "Threaded packet prepare returned null.";
                 return null;
+            }
+            if (prepared == message) {
+                PREPARED_SAME_INSTANCE.incrementAndGet();
+            } else {
+                PREPARED_COPY_INSTANCE.incrementAndGet();
             }
             if (!ModMessages.validateMessageForSend(prepared, "threaded-queue-prepared", "S2C")) {
                 DISCARDED_INVALID_MESSAGE.incrementAndGet();
@@ -335,15 +364,15 @@ public final class ThreadedPacketDispatcher {
     }
 
     public static long waitTimeoutMillis() {
-        return configuredInt(NetworkConfig.PACKET_THREADING_WAIT_TIMEOUT_MS, WAIT_TIMEOUT_MILLIS);
+        return NetworkConfig.packetThreadingWaitTimeoutMs(WAIT_TIMEOUT_MILLIS);
     }
 
     public static int maxPendingOperations() {
-        return configuredInt(NetworkConfig.PACKET_THREADING_MAX_PENDING, MAX_PENDING_OPERATIONS);
+        return NetworkConfig.packetThreadingMaxPending(MAX_PENDING_OPERATIONS);
     }
 
     public static int fallbackClearThreshold() {
-        return configuredInt(NetworkConfig.PACKET_THREADING_FALLBACK_CLEAR_THRESHOLD, MAX_CONSECUTIVE_CLEARS_BEFORE_FALLBACK);
+        return NetworkConfig.packetThreadingFallbackClearThreshold(MAX_CONSECUTIVE_CLEARS_BEFORE_FALLBACK);
     }
 
     public static String threadPrefix() {
@@ -351,11 +380,11 @@ public final class ThreadedPacketDispatcher {
     }
 
     public static boolean isConfiguredEnabled() {
-        return NetworkConfig.ENABLE_PACKET_THREADING == null || NetworkConfig.ENABLE_PACKET_THREADING.get();
+        return NetworkConfig.packetThreadingEnabled();
     }
 
     public static boolean isErrorBypassEnabled() {
-        return NetworkConfig.PACKET_THREADING_ERROR_BYPASS != null && NetworkConfig.PACKET_THREADING_ERROR_BYPASS.get();
+        return NetworkConfig.packetThreadingErrorBypass();
     }
 
     public static synchronized int clearPending(String reason) {
@@ -388,6 +417,10 @@ public final class ThreadedPacketDispatcher {
                 DISCARDED_MANUAL_CLEAR.get(),
                 TOTAL_PREPARED.get(),
                 TOTAL_PREPARE_FAILED.get(),
+                PREPARABLE_MESSAGES.get(),
+                NON_PREPARABLE_MESSAGES.get(),
+                PREPARED_SAME_INSTANCE.get(),
+                PREPARED_COPY_INSTANCE.get(),
                 MANUAL_CLEARS.get(),
                 PENDING.size(),
                 EXECUTOR.getPoolSize(),
@@ -440,6 +473,10 @@ public final class ThreadedPacketDispatcher {
         DISCARDED_MANUAL_CLEAR.set(0L);
         TOTAL_PREPARED.set(0L);
         TOTAL_PREPARE_FAILED.set(0L);
+        PREPARABLE_MESSAGES.set(0L);
+        NON_PREPARABLE_MESSAGES.set(0L);
+        PREPARED_SAME_INSTANCE.set(0L);
+        PREPARED_COPY_INSTANCE.set(0L);
         MANUAL_CLEARS.set(0L);
         lastFlushQueued = 0;
         lastFlushCompleted = 0;
@@ -508,10 +545,6 @@ public final class ThreadedPacketDispatcher {
         HbmNtm.LOGGER.warn("Discarded {} threaded packet operations. Reason: {}", discarded, reason, exception);
     }
 
-    private static int configuredInt(net.minecraftforge.common.ForgeConfigSpec.IntValue value, int fallback) {
-        return value == null ? fallback : value.get();
-    }
-
     private ThreadedPacketDispatcher() {
     }
 
@@ -538,6 +571,10 @@ public final class ThreadedPacketDispatcher {
             long discardedManualClear,
             long totalPrepared,
             long totalPrepareFailed,
+            long preparableMessages,
+            long nonPreparableMessages,
+            long preparedSameInstance,
+            long preparedCopyInstance,
             long manualClears,
             int pending,
             int threadPoolSize,
@@ -566,6 +603,10 @@ public final class ThreadedPacketDispatcher {
                     + discardedQueueClear
                     + discardedDisableClear
                     + discardedManualClear;
+        }
+
+        public long preparedInstanceTotal() {
+            return preparedSameInstance + preparedCopyInstance;
         }
     }
 

@@ -10,6 +10,7 @@ import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.TrinketBlockItem;
+import com.hbm.ntm.satellite.SoyuzRocketItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -128,6 +129,8 @@ public final class ModCreativeTabs {
             output.accept(item.get().getDefaultInstance());
         } else if (item.get() instanceof HbmFluidContainerItem container) {
             container.addCreativeStacks(output);
+        } else if (item.get() instanceof SoyuzRocketItem soyuz) {
+            SoyuzRocketItem.addCreativeStacks(output, soyuz);
         } else {
             acceptSingleStack(output, item.get());
         }

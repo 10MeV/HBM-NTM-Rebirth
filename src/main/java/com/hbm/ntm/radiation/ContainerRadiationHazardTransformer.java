@@ -2,11 +2,11 @@ package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmItemStackUtil;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -58,16 +58,10 @@ public class ContainerRadiationHazardTransformer implements HazardTransformer {
         if (!tag.contains("items", Tag.TAG_LIST)) {
             return 0.0F;
         }
-        ListTag list = tag.getList("items", Tag.TAG_COMPOUND);
+        NonNullList<ItemStack> items = HbmItemStackUtil.loadLegacyItems(tag, maxSlots);
         float radiation = 0.0F;
-        int entries = Math.min(list.size(), maxSlots);
-        for (int i = 0; i < entries; i++) {
-            CompoundTag slotTag = list.getCompound(i);
-            int slot = slotTag.getByte("slot") & 255;
-            if (slot >= maxSlots) {
-                continue;
-            }
-            radiation += HazardRegistry.getStackRadiation(ItemStack.of(slotTag));
+        for (ItemStack held : items) {
+            radiation += HazardRegistry.getStackRadiation(held);
         }
         return radiation;
     }
@@ -76,8 +70,8 @@ public class ContainerRadiationHazardTransformer implements HazardTransformer {
         if (!tag.contains("Items", Tag.TAG_LIST)) {
             return 0.0F;
         }
-        net.minecraft.core.NonNullList<ItemStack> items = net.minecraft.core.NonNullList.withSize(maxSlots, ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(tag, items);
+        NonNullList<ItemStack> items = NonNullList.withSize(maxSlots, ItemStack.EMPTY);
+        HbmItemStackUtil.loadSlottedItems(tag, "Items", "Slot", items);
         float radiation = 0.0F;
         for (ItemStack held : items) {
             radiation += HazardRegistry.getStackRadiation(held);

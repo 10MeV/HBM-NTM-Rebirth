@@ -79,7 +79,8 @@ public class ChemicalFactoryScreen extends AbstractContainerScreen<ChemicalFacto
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(224, 18, 16, 68, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 224, topPos + 18, 16, 68, menu.getPower(), menu.getMaxPower());
         } else {
             renderModuleTooltips(graphics, mouseX, mouseY);
         }

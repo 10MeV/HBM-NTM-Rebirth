@@ -32,15 +32,22 @@ public class CoolingTowerBlock extends LegacyVisibleMultiblockMachineBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide) {
-            return null;
-        }
         if (kind == Kind.SMALL && type == ModBlockEntities.SMALL_COOLING_TOWER.get()) {
+            if (level.isClientSide) {
+                return (tickLevel, tickPos, tickState, blockEntity) ->
+                        SmallCoolingTowerBlockEntity.clientTick(tickLevel, tickPos, tickState,
+                                (SmallCoolingTowerBlockEntity) blockEntity);
+            }
             return (tickLevel, tickPos, tickState, blockEntity) ->
                     SmallCoolingTowerBlockEntity.serverTick(tickLevel, tickPos, tickState,
                             (SmallCoolingTowerBlockEntity) blockEntity);
         }
         if (kind == Kind.LARGE && type == ModBlockEntities.LARGE_COOLING_TOWER.get()) {
+            if (level.isClientSide) {
+                return (tickLevel, tickPos, tickState, blockEntity) ->
+                        LargeCoolingTowerBlockEntity.clientTick(tickLevel, tickPos, tickState,
+                                (LargeCoolingTowerBlockEntity) blockEntity);
+            }
             return (tickLevel, tickPos, tickState, blockEntity) ->
                     LargeCoolingTowerBlockEntity.serverTick(tickLevel, tickPos, tickState,
                             (LargeCoolingTowerBlockEntity) blockEntity);

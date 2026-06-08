@@ -51,6 +51,10 @@
                    "hbm_ntm_rebirth:barrel_corroded",
                    "hbm_ntm_rebirth:barrel_steel",
                    "hbm_ntm_rebirth:barrel_tcalloy",
-                   "hbm_ntm_rebirth:barrel_antimatter"
+                   "hbm_ntm_rebirth:barrel_antimatter",
+                   "hbm_ntm_rebirth:machine_satlinker",
+                   "hbm_ntm_rebirth:sat_dock",
+                   "hbm_ntm_rebirth:soyuz_capsule",
+                   "hbm_ntm_rebirth:soyuz_launcher"
                ]
 }

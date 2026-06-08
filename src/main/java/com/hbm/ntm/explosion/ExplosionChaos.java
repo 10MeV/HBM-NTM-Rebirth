@@ -99,9 +99,8 @@ public final class ExplosionChaos {
             return;
         }
         for (LivingEntity entity : livingInRange(level, x, y, z, range)) {
-            if (ArmorUtil.hasAnyProtection(entity, HazardClass.GAS_LUNG, HazardClass.GAS_BLISTERING)) {
-                ArmorUtil.damageGasMaskFilter(entity, 1);
-            } else {
+            if (!ArmorUtil.hasAnyProtectionAndDamageFilter(entity, 1,
+                    HazardClass.GAS_LUNG, HazardClass.GAS_BLISTERING)) {
                 entity.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 5 * 20, 0));
                 entity.addEffect(new MobEffectInstance(MobEffects.POISON, 20 * 20, 2));
                 entity.addEffect(new MobEffectInstance(MobEffects.WITHER, 1 * 20, 1));
@@ -116,7 +115,7 @@ public final class ExplosionChaos {
             return;
         }
         for (LivingEntity entity : livingInRange(level, x, y, z, range)) {
-            hurtArmor(entity, 25);
+            ArmorUtil.damageSuitAll(entity, 25);
             EntityDamageUtil.attackEntityFromNt(entity, ModDamageSources.pc(level), 5.0F);
         }
     }
@@ -126,7 +125,7 @@ public final class ExplosionChaos {
             return;
         }
         for (LivingEntity entity : livingInRange(level, x, y, z, range)) {
-            hurtArmor(entity, 25);
+            ArmorUtil.damageSuitAll(entity, 25);
             if (ArmorUtil.checkForHazmat(entity)) {
                 continue;
             }
@@ -201,15 +200,6 @@ public final class ExplosionChaos {
         double rangeSquared = range * range;
         return level.getEntitiesOfClass(LivingEntity.class, bounds,
                 entity -> entity.distanceToSqr(x, y, z) <= rangeSquared);
-    }
-
-    private static void hurtArmor(LivingEntity entity, int amount) {
-        for (net.minecraft.world.item.ItemStack stack : entity.getArmorSlots()) {
-            if (!stack.isEmpty()) {
-                stack.hurtAndBreak(amount, entity, ignored -> {
-                });
-            }
-        }
     }
 
     private static void applyHalfSphere(Level level, int x, int y, int z, int radius, PosConsumer consumer) {

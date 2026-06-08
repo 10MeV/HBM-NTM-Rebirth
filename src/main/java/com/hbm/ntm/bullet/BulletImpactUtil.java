@@ -25,6 +25,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 public final class BulletImpactUtil {
     public static BlockImpactResult applyBlockImpactEffects(BulletConfig config, Level level, Vec3 position,
             @Nullable Entity source, @Nullable BlockPos hitBlock) {
@@ -39,7 +42,8 @@ public final class BulletImpactUtil {
 
         boolean discard = shouldDiscardAfterBlockImpact(config, hitBlock != null, inGround);
         if (level.isClientSide()) {
-            return new BlockImpactResult(discard, false, false, false, false, false, false, false, false, false);
+            return new BlockImpactResult(discard, false, false, false, false, false, false, false, false, false,
+                    Collections.emptyList());
         }
 
         boolean fire = applyIncendiaryBlocks(config, level, position);
@@ -50,9 +54,11 @@ public final class BulletImpactUtil {
         boolean rainbow = applyRainbow(config, level, position);
         boolean nuke = applyNuke(config, level, position);
         boolean specialBehavior = applyTaggedImpactEffects(config, level, position);
+        List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests =
+                BulletSpecialSpawnUtil.collectImpactSpawnRequests(config, level, source, position, null);
         BlockBreakResult blockBreak = applyBlockBreak(config, level, hitBlock);
         return new BlockImpactResult(discard, fire, emp, jolt, explosion, shrapnel, rainbow, nuke,
-                specialBehavior, blockBreak.destroyedBlock() || blockBreak.brokeGlass());
+                specialBehavior, blockBreak.destroyedBlock() || blockBreak.brokeGlass(), spawnRequests);
     }
 
     public static EntityImpactResult applyEntityImpactEffects(BulletConfig config, Entity target,
@@ -262,9 +268,9 @@ public final class BulletImpactUtil {
 
     public record BlockImpactResult(boolean discardProjectile, boolean placedFire, boolean emp, boolean jolt,
             boolean explosion, boolean shrapnel, boolean rainbow, boolean nuke, boolean specialBehavior,
-            boolean brokeOrDestroyedBlock) {
+            boolean brokeOrDestroyedBlock, List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests) {
         public static final BlockImpactResult NONE = new BlockImpactResult(false, false, false, false, false, false,
-                false, false, false, false);
+                false, false, false, false, Collections.emptyList());
     }
 
     public record EntityImpactResult(boolean discardProjectile, EntityHurtResult hurt, BlockImpactResult blockImpact) {

@@ -643,12 +643,12 @@ public final class HazardRegistry {
 
     private static boolean isDisabled(HazardType type) {
         return switch (type) {
-            case ASBESTOS -> RadiationConfig.DISABLE_ASBESTOS.get();
-            case BLINDING -> RadiationConfig.DISABLE_BLINDING.get();
-            case COAL -> RadiationConfig.DISABLE_COAL.get();
-            case EXPLOSIVE -> RadiationConfig.DISABLE_EXPLOSIVE.get();
-            case HOT -> RadiationConfig.DISABLE_HOT.get();
-            case HYDROACTIVE -> RadiationConfig.DISABLE_HYDROACTIVE.get();
+            case ASBESTOS -> RadiationConfig.asbestosHazardDisabled();
+            case BLINDING -> RadiationConfig.blindingHazardDisabled();
+            case COAL -> RadiationConfig.coalHazardDisabled();
+            case EXPLOSIVE -> RadiationConfig.explosiveHazardDisabled();
+            case HOT -> RadiationConfig.hotHazardDisabled();
+            case HYDROACTIVE -> RadiationConfig.hydroactiveHazardDisabled();
             default -> false;
         };
     }

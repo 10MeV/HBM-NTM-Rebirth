@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -9,6 +10,7 @@ import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
+import com.hbm.ntm.particle.ParticleUtil;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -69,6 +71,32 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
             tower.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+    }
+
+    protected static void tickSmallTowerClient(Level level, BlockPos pos, CoolingTowerBlockEntity tower) {
+        if (!shouldSpawnCoolingTowerParticles(level, tower, 2L)) {
+            return;
+        }
+        ParticleUtil.spawnCoolingTower(level, pos.getX() + 0.5D, pos.getY() + 18.0D, pos.getZ() + 0.5D,
+                1.0F, 0.5F, 4.0F, 250 + level.random.nextInt(250));
+    }
+
+    protected static void tickLargeTowerClient(Level level, BlockPos pos, CoolingTowerBlockEntity tower) {
+        if (!shouldSpawnCoolingTowerParticles(level, tower, 4L)) {
+            return;
+        }
+        ParticleUtil.spawnCoolingTower(level,
+                pos.getX() + 0.5D + level.random.nextDouble() * 3.0D - 1.5D,
+                pos.getY() + 1.0D,
+                pos.getZ() + 0.5D + level.random.nextDouble() * 3.0D - 1.5D,
+                0.5F, 1.0F, 10.0F, 750 + level.random.nextInt(250));
+    }
+
+    private static boolean shouldSpawnCoolingTowerParticles(Level level, CoolingTowerBlockEntity tower, long interval) {
+        return level.isClientSide
+                && HbmClientConfig.coolingTowerParticles()
+                && tower.waterTimer > 0
+                && level.getGameTime() % interval == 0L;
     }
 
     public HbmFluidTank getInputTank() {

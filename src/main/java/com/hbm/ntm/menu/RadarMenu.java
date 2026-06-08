@@ -124,14 +124,19 @@ public class RadarMenu extends AbstractContainerMenu {
                 return ItemStack.EMPTY;
             }
         } else if (stack.is(ModItems.RADAR_LINKER.get())) {
-            if (!moveItemStackTo(stack, RadarBlockEntity.SLOT_LINKER, RadarBlockEntity.SLOT_LINKER + 1, false)) {
+            if (!moveItemStackTo(stack, RadarBlockEntity.SLOT_LINKER, RadarBlockEntity.SLOT_LINKER + 1, false)
+                    && !moveItemStackTo(stack, 0, RadarBlockEntity.SLOT_LINKER, false)) {
+                return ItemStack.EMPTY;
+            }
+        } else if (stack.is(ModItems.SAT_RELAY.get())) {
+            if (!moveItemStackTo(stack, 0, RadarBlockEntity.SLOT_LINKER, false)) {
                 return ItemStack.EMPTY;
             }
         } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
             if (!moveItemStackTo(stack, RadarBlockEntity.SLOT_BATTERY, RadarBlockEntity.SLOT_BATTERY + 1, false)) {
                 return ItemStack.EMPTY;
             }
-        } else if (!moveItemStackTo(stack, 0, RadarBlockEntity.SLOT_LINKER, false)) {
+        } else {
             return ItemStack.EMPTY;
         }
 

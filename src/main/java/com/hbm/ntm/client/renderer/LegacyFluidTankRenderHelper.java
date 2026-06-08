@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.obj.LegacyDangerDiamondRenderer;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
@@ -23,8 +24,6 @@ import java.util.Locale;
 public final class LegacyFluidTankRenderHelper {
     private static final ResourceLocation TANK_FRAME_TEXTURE = ObjMachineModels.LEGACY_FLUIDTANK_FRAME_TEXTURE;
     private static final ResourceLocation TANK_INNER_TEXTURE = ObjMachineModels.LEGACY_FLUIDTANK_INNER_TEXTURE;
-    private static final ResourceLocation DANGER_DIAMOND_TEXTURE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/misc/danger_diamond.png");
     private static final ResourceLocation TANK_NONE_TEXTURE = tankTexture("NONE");
     private static final ResourceLocation TANK_DANGER_TEXTURE = tankTexture("DANGER");
 
@@ -180,44 +179,8 @@ public final class LegacyFluidTankRenderHelper {
             int packedLight, int packedOverlay) {
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
                 packedLight, packedOverlay).withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
-        diamondQuad(context, 144, 45, 5, 184, 0.0D, 0.0D, 0.5D, 0.5D);
-        numberQuad(context, type.getPoison(), 0.0D, 33.0D / 139.0D);
-        numberQuad(context, type.getFlammability(), 33.0D / 139.0D, 0.0D);
-        numberQuad(context, type.getReactivity(), 0.0D, -33.0D / 139.0D);
-        symbolQuad(context, type.getSymbol(), -33.0D / 139.0D, 0.0D);
-    }
-
-    private static void numberQuad(ObjRenderContext context, int value, double yOffset, double zOffset) {
-        if (value < 0 || value >= 6) {
-            return;
-        }
-        int x = value == 0 ? 125 : 5 + (value - 1) * 24;
-        double width = 10.0D / 139.0D;
-        double height = 14.0D / 139.0D;
-        atlasQuad(context, x + 20, 5, x, 33, 0.01D, yOffset, zOffset, width, height);
-    }
-
-    private static void symbolQuad(ObjRenderContext context, FluidSymbol symbol, double yOffset, double zOffset) {
-        SymbolUv uv = symbolUv(symbol);
-        if (uv == null) {
-            return;
-        }
-        double size = 59.0D / 2.0D / 139.0D;
-        atlasQuad(context, uv.x() + 59, uv.y(), uv.x(), uv.y() + 59, 0.01D, yOffset, zOffset, size, size);
-    }
-
-    private static void diamondQuad(ObjRenderContext context, int u0, int v0, int u1, int v1,
-            double x, double y, double z, double size) {
-        atlasQuad(context, u0, v0, u1, v1, x, y, z, size, size);
-    }
-
-    private static void atlasQuad(ObjRenderContext context, int u0, int v0, int u1, int v1,
-            double x, double y, double z, double width, double height) {
-        LegacyTexturedQuadRenderer.quad(DANGER_DIAMOND_TEXTURE, context, 1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spriteUnitVertex(x, y + height, z - width, u0 / 256.0D, v0 / 256.0D),
-                LegacyTexturedQuadRenderer.spriteUnitVertex(x, y + height, z + width, u1 / 256.0D, v0 / 256.0D),
-                LegacyTexturedQuadRenderer.spriteUnitVertex(x, y - height, z + width, u1 / 256.0D, v1 / 256.0D),
-                LegacyTexturedQuadRenderer.spriteUnitVertex(x, y - height, z - width, u0 / 256.0D, v1 / 256.0D));
+        LegacyDangerDiamondRenderer.render(context, type.getPoison(), type.getFlammability(),
+                type.getReactivity(), dangerSymbol(type.getSymbol()));
     }
 
     private static ResourceLocation tankTextureFor(FluidType type) {
@@ -250,19 +213,16 @@ public final class LegacyFluidTankRenderHelper {
                 "textures/models/tank/tank_" + name.toLowerCase(Locale.US) + ".png");
     }
 
-    private static SymbolUv symbolUv(FluidSymbol symbol) {
+    private static LegacyDangerDiamondRenderer.Symbol dangerSymbol(FluidSymbol symbol) {
         return switch (symbol) {
-            case RADIATION -> new SymbolUv(195, 2);
-            case NOWATER -> new SymbolUv(195, 63);
-            case ACID -> new SymbolUv(195, 124);
-            case ASPHYXIANT -> new SymbolUv(195, 185);
-            case CRYOGENIC -> new SymbolUv(134, 185);
-            case ANTIMATTER -> new SymbolUv(73, 185);
-            case OXIDIZER -> new SymbolUv(12, 185);
-            default -> null;
+            case RADIATION -> LegacyDangerDiamondRenderer.Symbol.RADIATION;
+            case NOWATER -> LegacyDangerDiamondRenderer.Symbol.NOWATER;
+            case ACID -> LegacyDangerDiamondRenderer.Symbol.ACID;
+            case ASPHYXIANT -> LegacyDangerDiamondRenderer.Symbol.ASPHYXIANT;
+            case CRYOGENIC -> LegacyDangerDiamondRenderer.Symbol.CRYOGENIC;
+            case ANTIMATTER -> LegacyDangerDiamondRenderer.Symbol.ANTIMATTER;
+            case OXIDIZER -> LegacyDangerDiamondRenderer.Symbol.OXIDIZER;
+            default -> LegacyDangerDiamondRenderer.Symbol.NONE;
         };
-    }
-
-    private record SymbolUv(int x, int y) {
     }
 }

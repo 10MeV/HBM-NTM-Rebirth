@@ -15,6 +15,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -34,6 +35,11 @@ public class RadarBlock extends HorizontalMachineBlock implements EntityBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new RadarBlockEntity(pos, state);
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
@@ -58,10 +64,14 @@ public class RadarBlock extends HorizontalMachineBlock implements EntityBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
-        return type == ModBlockEntities.MACHINE_RADAR.get() && !level.isClientSide
+        if (type != ModBlockEntities.MACHINE_RADAR.get()) {
+            return null;
+        }
+        return level.isClientSide
                 ? (tickLevel, tickPos, tickState, blockEntity) ->
-                RadarBlockEntity.serverTick(tickLevel, tickPos, tickState, (RadarBlockEntity) blockEntity)
-                : null;
+                RadarBlockEntity.clientTick(tickLevel, tickPos, tickState, (RadarBlockEntity) blockEntity)
+                : (tickLevel, tickPos, tickState, blockEntity) ->
+                RadarBlockEntity.serverTick(tickLevel, tickPos, tickState, (RadarBlockEntity) blockEntity);
     }
 
     @Override

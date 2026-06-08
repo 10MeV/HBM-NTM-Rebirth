@@ -3,6 +3,7 @@ package com.hbm.ntm.client;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
 import com.hbm.ntm.client.overlay.LegacyLookOverlayRenderer;
+import com.hbm.ntm.client.overlay.ToolAbilityHudRenderer;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.client.render.HbmRenderEffects;
@@ -89,6 +90,9 @@ public final class ClientForgeEvents {
         Player player = minecraft.player;
         if (event.getOverlay().id().equals(VanillaGuiOverlay.CROSSHAIR.id())) {
             LegacyLookOverlayRenderer.render(event);
+            if (ClientHbmPlayerProperties.shouldRenderHud()) {
+                ToolAbilityHudRenderer.render(event);
+            }
             return;
         }
         if (!event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
@@ -100,6 +104,7 @@ public final class ClientForgeEvents {
         if (RadiationHud.hasGeigerCounter(player)) {
             RadiationHud.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
         }
+        DashHud.render(event.getGuiGraphics(), event.getWindow().getGuiScaledHeight());
         ClientInformMessages.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
     }
 
@@ -209,7 +214,7 @@ public final class ClientForgeEvents {
 
         float farPlaneDistance = Minecraft.getInstance().options.renderDistance().get() * 16.0F;
         float fogDistance = farPlaneDistance
-                / (1.0F + soot * 5.0F / RadiationConfig.POLLUTION_SOOT_FOG_DIVISOR.get().floatValue());
+                / (1.0F + soot * 5.0F / RadiationConfig.pollutionSootFogDivisor());
         event.setNearPlaneDistance(0.0F);
         event.setFarPlaneDistance(fogDistance);
         event.setCanceled(true);
@@ -222,7 +227,7 @@ public final class ClientForgeEvents {
             return;
         }
 
-        float interpolation = Math.min(soot / RadiationConfig.POLLUTION_SOOT_FOG_DIVISOR.get().floatValue(), 1.0F);
+        float interpolation = Math.min(soot / RadiationConfig.pollutionSootFogDivisor(), 1.0F);
         float sootColor = 0.15F;
         event.setRed(Mth.lerp(interpolation, event.getRed(), sootColor));
         event.setGreen(Mth.lerp(interpolation, event.getGreen(), sootColor));
@@ -346,7 +351,7 @@ public final class ClientForgeEvents {
     }
 
     private static void updateSootFog() {
-        if (!RadiationConfig.ENABLE_POLLUTION.get() || !RadiationConfig.ENABLE_POLLUTION_SOOT_FOG.get()) {
+        if (!RadiationConfig.pollutionEnabled() || !RadiationConfig.pollutionSootFogEnabled()) {
             renderSoot = 0.0F;
             return;
         }
@@ -363,10 +368,10 @@ public final class ClientForgeEvents {
     }
 
     private static float visibleSoot() {
-        if (!RadiationConfig.ENABLE_POLLUTION.get() || !RadiationConfig.ENABLE_POLLUTION_SOOT_FOG.get()) {
+        if (!RadiationConfig.pollutionEnabled() || !RadiationConfig.pollutionSootFogEnabled()) {
             return 0.0F;
         }
-        return Math.max(0.0F, renderSoot - RadiationConfig.POLLUTION_SOOT_FOG_THRESHOLD.get().floatValue());
+        return Math.max(0.0F, renderSoot - RadiationConfig.pollutionSootFogThreshold());
     }
 
     private static void renderNukeFlash(RenderGuiOverlayEvent.Pre event) {

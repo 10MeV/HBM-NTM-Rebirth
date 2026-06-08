@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -55,7 +56,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
-        implements HbmPersistentBlockState, HbmStandardFluidTransceiver, MenuProvider {
+        implements HbmPersistentBlockState, HbmStandardFluidTransceiver, MenuProvider, LegacyUpgradeInfoProvider {
     private static final TagKey<Block> URANIUM_ORES =
             BlockTags.create(new ResourceLocation("forge", "ores/uranium"));
     private static final TagKey<Block> ASBESTOS_ORES =
@@ -342,7 +343,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put(TAG_INVENTORY, HbmInventoryMenuHelper.saveLegacyItems(items));
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         tag.putInt(TAG_INDICATOR, indicator);
         tag.putInt(TAG_SPEED_LEVEL, speedLevel);
         tag.putInt(TAG_ENERGY_LEVEL, energyLevel);
@@ -357,7 +358,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyItems(tag.getCompound(TAG_INVENTORY), items);
+        HbmInventoryMenuHelper.loadLegacyItemsCompound(tag, TAG_INVENTORY, items);
         indicator = tag.getInt(TAG_INDICATOR);
         speedLevel = tag.getInt(TAG_SPEED_LEVEL);
         energyLevel = tag.getInt(TAG_ENERGY_LEVEL);
@@ -523,6 +524,11 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         afterburnLevel = Math.min(levels.getLevel(UpgradeType.AFTERBURN), 3);
         return oldSpeed != speedLevel || oldEnergy != energyLevel || oldOver != overLevel
                 || oldAfterburn != afterburnLevel;
+    }
+
+    @Override
+    public Map<UpgradeType, Integer> getValidUpgrades() {
+        return VALID_UPGRADES;
     }
 
     private boolean runAfterburner() {

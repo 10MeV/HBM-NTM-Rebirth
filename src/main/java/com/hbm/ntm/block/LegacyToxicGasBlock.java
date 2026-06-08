@@ -37,16 +37,12 @@ public class LegacyToxicGasBlock extends LegacyGasBlock {
             case ASBESTOS -> RadiationUtil.applyAsbestos(living, 1, 0);
             case COAL -> RadiationUtil.applyCoalDust(living, 10, 0, 1);
             case MONOXIDE -> {
-                if (ArmorUtil.hasMonoxideGasProtection(living)) {
-                    ArmorUtil.damageGasMaskFilter(living, 1);
-                } else {
+                if (!ArmorUtil.hasMonoxideGasProtectionAndDamageFilter(living, 1)) {
                     EntityDamageUtil.attackEntityFromNt(living, ModDamageSources.monoxide(level), 1.0F);
                 }
             }
             case CHLORINE -> {
-                if (ArmorUtil.hasLungGasProtection(living)) {
-                    ArmorUtil.damageGasMaskFilter(living, 1);
-                } else {
+                if (!ArmorUtil.hasLungGasProtectionAndDamageFilter(living, 1)) {
                     living.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 5 * 20, 0));
                     living.addEffect(new MobEffectInstance(MobEffects.POISON, 20 * 20, 2));
                     living.addEffect(new MobEffectInstance(MobEffects.WITHER, 1 * 20, 1));

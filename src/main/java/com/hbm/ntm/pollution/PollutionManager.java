@@ -49,15 +49,22 @@ public final class PollutionManager {
     private static final Set<ResourceKey<Level>> LEGACY_ROOT_CHECKED = new HashSet<>();
 
     public static void incrementPollution(Level level, BlockPos pos, PollutionType type, float amount) {
-        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+        if (pos == null) {
             return;
         }
-        getData(serverLevel).add(PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), type,
-                amount * RadiationConfig.POLLUTION_MULT.get().floatValue());
+        incrementPollution(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), type, amount);
     }
 
     public static void incrementPollution(Level level, int x, int y, int z, PollutionType type, float amount) {
         incrementPollution(level, new BlockPos(x, y, z), type, amount);
+    }
+
+    public static void incrementPollution(Level level, PollutionGridPos pos, PollutionType type, float amount) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null || type == null
+                || amount == 0.0F) {
+            return;
+        }
+        getData(serverLevel).add(pos, type, amount * RadiationConfig.pollutionMultiplier());
     }
 
     public static void decrementPollution(Level level, BlockPos pos, PollutionType type, float amount) {
@@ -68,23 +75,41 @@ public final class PollutionManager {
         decrementPollution(level, new BlockPos(x, y, z), type, amount);
     }
 
+    public static void decrementPollution(Level level, PollutionGridPos pos, PollutionType type, float amount) {
+        incrementPollution(level, pos, type, -amount);
+    }
+
     public static void setPollution(Level level, BlockPos pos, PollutionType type, float amount) {
-        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+        if (pos == null) {
             return;
         }
-        getData(serverLevel).set(PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), type, amount);
+        setPollution(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), type, amount);
     }
 
     public static void setPollution(Level level, int x, int y, int z, PollutionType type, float amount) {
         setPollution(level, new BlockPos(x, y, z), type, amount);
     }
 
+    public static void setPollution(Level level, PollutionGridPos pos, PollutionType type, float amount) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null || type == null) {
+            return;
+        }
+        getData(serverLevel).set(pos, type, amount);
+    }
+
     public static float getPollution(Level level, BlockPos pos, PollutionType type) {
-        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+        if (pos == null) {
+            return 0.0F;
+        }
+        return getPollution(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), type);
+    }
+
+    public static float getPollution(Level level, PollutionGridPos pos, PollutionType type) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null || type == null) {
             return 0.0F;
         }
         PollutionSavedData data = getExistingData(serverLevel);
-        return data == null ? 0.0F : data.get(PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), type);
+        return data == null ? 0.0F : data.get(pos, type);
     }
 
     public static float getPollution(Level level, int x, int y, int z, PollutionType type) {
@@ -96,43 +121,91 @@ public final class PollutionManager {
         return sample == null ? new PollutionSample() : sample;
     }
 
+    public static PollutionSample getPollutionData(Level level, PollutionGridPos pos) {
+        PollutionSample sample = getPollutionDataOrNull(level, pos);
+        return sample == null ? new PollutionSample() : sample;
+    }
+
     public static PollutionSample getPollutionData(Level level, int x, int y, int z) {
         return getPollutionData(level, new BlockPos(x, y, z));
     }
 
     public static void setPollutionData(Level level, BlockPos pos, PollutionSample sample) {
-        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+        if (pos == null) {
             return;
         }
-        getData(serverLevel).set(PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), sample);
+        setPollutionData(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), sample);
     }
 
     public static void setPollutionData(Level level, int x, int y, int z, PollutionSample sample) {
         setPollutionData(level, new BlockPos(x, y, z), sample);
     }
 
-    public static void updatePollutionData(Level level, BlockPos pos, Consumer<PollutionSample> updater) {
-        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+    public static void setPollutionData(Level level, PollutionGridPos pos, PollutionSample sample) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null) {
             return;
         }
-        PollutionGridPos gridPos = PollutionGridPos.ofBlock(pos.getX(), pos.getZ());
+        getData(serverLevel).set(pos, sample);
+    }
+
+    public static void updatePollutionData(Level level, BlockPos pos, Consumer<PollutionSample> updater) {
+        if (pos == null) {
+            return;
+        }
+        updatePollutionData(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), updater);
+    }
+
+    public static void updatePollutionData(Level level, PollutionGridPos pos, Consumer<PollutionSample> updater) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null || updater == null) {
+            return;
+        }
         PollutionSavedData data = getData(serverLevel);
-        PollutionSample sample = data.get(gridPos);
+        PollutionSample sample = data.get(pos);
         updater.accept(sample);
-        data.set(gridPos, sample);
+        data.set(pos, sample);
     }
 
     public static void updatePollutionData(Level level, int x, int y, int z, Consumer<PollutionSample> updater) {
         updatePollutionData(level, new BlockPos(x, y, z), updater);
     }
 
+    public static Map<PollutionGridPos, PollutionSample> pollutionSnapshot(Level level) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+            return Map.of();
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        return data == null ? Map.of() : data.pollutionSnapshot();
+    }
+
+    public static void setPollutionData(Level level, Map<PollutionGridPos, PollutionSample> values) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        getData(serverLevel).replaceAll(values);
+    }
+
+    public static void addPollutionData(Level level, Map<PollutionGridPos, PollutionSample> amounts) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        getData(serverLevel).addClamped(amounts);
+    }
+
     @Nullable
     public static PollutionSample getPollutionDataOrNull(Level level, BlockPos pos) {
-        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+        if (pos == null) {
+            return null;
+        }
+        return getPollutionDataOrNull(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()));
+    }
+
+    @Nullable
+    public static PollutionSample getPollutionDataOrNull(Level level, PollutionGridPos pos) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null) {
             return null;
         }
         PollutionSavedData data = getExistingData(serverLevel);
-        return data == null ? null : data.getOrNull(PollutionGridPos.ofBlock(pos.getX(), pos.getZ()));
+        return data == null ? null : data.getOrNull(pos);
     }
 
     @Nullable
@@ -211,7 +284,7 @@ public final class PollutionManager {
         }
 
         float soot = getPollution(mob.level(), mob.blockPosition(), PollutionType.SOOT);
-        if (soot <= RadiationConfig.POLLUTION_BUFF_MOB_THRESHOLD.get().floatValue()) {
+        if (soot <= RadiationConfig.pollutionBuffMobThreshold()) {
             return;
         }
         if (mob.getAttribute(Attributes.MAX_HEALTH) != null
@@ -264,8 +337,8 @@ public final class PollutionManager {
 
             PollutionGridPos pos = PollutionGridPos.of(pollution.getKey());
             for (int i = 0; i < DESTRUCTION_COUNT; i++) {
-                int x = pos.minBlockX() + level.random.nextInt(64);
-                int z = pos.minBlockZ() + level.random.nextInt(64);
+                int x = pos.randomBlockX(level.random);
+                int z = pos.randomBlockZ(level.random);
                 if (!level.hasChunk(x >> 4, z >> 4)) {
                     continue;
                 }
@@ -313,9 +386,9 @@ public final class PollutionManager {
     }
 
     private static boolean isPollutionGridLoaded(ServerLevel level, PollutionGridPos pos) {
-        for (int dx = 0; dx < 4; dx++) {
-            for (int dz = 0; dz < 4; dz++) {
-                if (level.hasChunk((pos.x() << 2) + dx, (pos.z() << 2) + dz)) {
+        for (int chunkX = pos.minChunkX(); chunkX <= pos.maxChunkX(); chunkX++) {
+            for (int chunkZ = pos.minChunkZ(); chunkZ <= pos.maxChunkZ(); chunkZ++) {
+                if (level.hasChunk(chunkX, chunkZ)) {
                     return true;
                 }
             }
@@ -324,7 +397,7 @@ public final class PollutionManager {
     }
 
     private static boolean isEnabled() {
-        return RadiationConfig.ENABLE_POLLUTION.get();
+        return RadiationConfig.pollutionEnabled();
     }
 
     private static PollutionSavedData getData(ServerLevel level) {
@@ -338,8 +411,21 @@ public final class PollutionManager {
 
     @Nullable
     private static PollutionSavedData getExistingData(ServerLevel level) {
-        PollutionSavedData data = WorldSavedDataHelper.getExistingWithFallback(level, PollutionSavedData.DATA_NAME,
-                PollutionSavedData::load, PollutionSavedData.MODERN_COMPAT_DATA_NAME).orElse(null);
+        PollutionSavedData primary = WorldSavedDataHelper.getExisting(level, PollutionSavedData.DATA_NAME,
+                PollutionSavedData::load).orElse(null);
+        PollutionSavedData fallback = WorldSavedDataHelper.getExisting(level, PollutionSavedData.MODERN_COMPAT_DATA_NAME,
+                PollutionSavedData::load).orElse(null);
+
+        if (primary != null && !primary.isEmpty()) {
+            return primary;
+        }
+        if (fallback != null && !fallback.isEmpty()) {
+            fallback.setDirty();
+            level.getDataStorage().set(PollutionSavedData.DATA_NAME, fallback);
+            return fallback;
+        }
+
+        PollutionSavedData data = primary == null ? fallback : primary;
         PollutionSavedData legacyRootData = readLegacyRootData(level, data);
         return legacyRootData == null ? data : legacyRootData;
     }

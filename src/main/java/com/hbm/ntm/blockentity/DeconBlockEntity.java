@@ -1,6 +1,6 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.radiation.RadiationData;
+import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -26,7 +26,7 @@ public class DeconBlockEntity extends BlockEntity {
         List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class, area);
         for (LivingEntity entity : entities) {
             RadiationUtil.applyRadaway(entity, 0.5F);
-            RadiationData.setRadBuf(entity, 0.0F);
+            HbmLivingProperties.setRadBuf(entity, 0.0F);
         }
     }
 }

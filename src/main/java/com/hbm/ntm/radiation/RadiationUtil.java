@@ -2,7 +2,9 @@ package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.api.RadiationImmune;
 import com.hbm.ntm.api.item.HazardClass;
+import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.registry.ModEffects;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -13,6 +15,17 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 
 public final class RadiationUtil {
+    public static float getRads(LivingEntity entity) {
+        if (isRadImmune(entity)) {
+            return 0.0F;
+        }
+        return RadiationData.getRadiation(entity);
+    }
+
+    public static float getDigamma(LivingEntity entity) {
+        return RadiationData.getDigamma(entity);
+    }
+
     public static void contaminate(LivingEntity entity, float amount, boolean bypassResistance) {
         contaminate(entity, HazardType.RADIATION, bypassResistance ? ContaminationType.RAD_BYPASS : ContaminationType.CREATIVE, amount);
     }
@@ -157,13 +170,13 @@ public final class RadiationUtil {
         if (amount <= 0) {
             return false;
         }
+        if (RadiationConfig.asbestosHazardDisabled()) {
+            return false;
+        }
         if (playerExposureProtection && blocksNewPlayerOrCreative(entity)) {
             return false;
         }
-        if (ArmorUtil.hasProtection(entity, HazardClass.PARTICLE_FINE)) {
-            if (filterDamage > 0) {
-                ArmorUtil.damageGasMaskFilter(entity, filterDamage);
-            }
+        if (ArmorUtil.hasProtectionAndDamageFilter(entity, HazardClass.PARTICLE_FINE, filterDamage)) {
             return false;
         }
         RadiationData.incrementAsbestos(entity, amount);
@@ -183,13 +196,16 @@ public final class RadiationUtil {
         if (amount <= 0) {
             return false;
         }
+        if (RadiationConfig.coalHazardDisabled()) {
+            return false;
+        }
         if (playerExposureProtection && blocksNewPlayerOrCreative(entity)) {
             return false;
         }
-        if (ArmorUtil.hasProtection(entity, HazardClass.PARTICLE_COARSE)) {
-            if (filterDamage > 0 && entity.getRandom().nextInt(Math.max(filterDamageChance, 1)) == 0) {
-                ArmorUtil.damageGasMaskFilter(entity, filterDamage);
-            }
+        int actualFilterDamage = filterDamage > 0 && entity.getRandom().nextInt(Math.max(filterDamageChance, 1)) == 0
+                ? filterDamage
+                : 0;
+        if (ArmorUtil.hasProtectionAndDamageFilter(entity, HazardClass.PARTICLE_COARSE, actualFilterDamage)) {
             return false;
         }
         RadiationData.incrementBlackLung(entity, amount);
@@ -204,20 +220,79 @@ public final class RadiationUtil {
     }
 
     public static void printGeigerData(Player player) {
-        float playerRad = RadiationData.getRadiation(player);
+        float playerRad = getRads(player);
         float envRad = RadiationData.getRadBuf(player);
         float chunkRad = ChunkRadiationManager.getRadiation(player.level(), player.blockPosition());
+        float resistanceCoefficient = HazmatRegistry.getResistance(player);
         float resistance = (1.0F - RadiationResistance.calculateRadiationModifier(player)) * 100.0F;
+        ChatFormatting resistancePrefix = resistanceCoefficient > 0.0F ? ChatFormatting.GREEN : ChatFormatting.WHITE;
 
         player.displayClientMessage(Component.translatable("geiger.title"), false);
-        player.displayClientMessage(Component.translatable("geiger.chunkRad", round(chunkRad)), false);
-        player.displayClientMessage(Component.translatable("geiger.envRad", round(envRad)), false);
-        player.displayClientMessage(Component.translatable("geiger.playerRad", round(playerRad)), false);
-        player.displayClientMessage(Component.translatable("geiger.playerRes", round(resistance)), false);
+        player.displayClientMessage(Component.translatable("geiger.chunkRad",
+                Component.literal(String.valueOf(round(chunkRad))).withStyle(radiationPrefix(chunkRad))), false);
+        player.displayClientMessage(Component.translatable("geiger.envRad",
+                Component.literal(String.valueOf(round(envRad))).withStyle(radiationPrefix(envRad))), false);
+        player.displayClientMessage(Component.translatable("geiger.playerRad",
+                Component.literal(String.valueOf(round(playerRad))).withStyle(storedRadiationPrefix(playerRad))), false);
+        player.displayClientMessage(Component.translatable("geiger.playerRes",
+                Component.literal(String.valueOf(round2(resistance))).withStyle(resistancePrefix),
+                Component.literal(String.valueOf(round2(resistanceCoefficient))).withStyle(resistancePrefix)), false);
+    }
+
+    public static void printDosimeterData(Player player) {
+        float envRad = round(RadiationData.getRadBuf(player));
+        boolean limited = envRad > 3.6F;
+        float displayed = limited ? 3.6F : envRad;
+
+        player.displayClientMessage(Component.translatable("geiger.title.dosimeter"), false);
+        player.displayClientMessage(Component.translatable("geiger.envRad",
+                Component.literal((limited ? ">" : "") + displayed).withStyle(radiationPrefix(displayed))), false);
+    }
+
+    public static ChatFormatting radiationPrefix(double rads) {
+        if (rads == 0.0D) {
+            return ChatFormatting.GREEN;
+        }
+        if (rads < 1.0D) {
+            return ChatFormatting.YELLOW;
+        }
+        if (rads < 10.0D) {
+            return ChatFormatting.GOLD;
+        }
+        if (rads < 100.0D) {
+            return ChatFormatting.RED;
+        }
+        if (rads < 1000.0D) {
+            return ChatFormatting.DARK_RED;
+        }
+        return ChatFormatting.DARK_GRAY;
+    }
+
+    public static ChatFormatting getPreffixFromRad(double rads) {
+        return radiationPrefix(rads);
+    }
+
+    public static ChatFormatting storedRadiationPrefix(double rads) {
+        if (rads < 200.0D) {
+            return ChatFormatting.GREEN;
+        }
+        if (rads < 400.0D) {
+            return ChatFormatting.YELLOW;
+        }
+        if (rads < 600.0D) {
+            return ChatFormatting.GOLD;
+        }
+        if (rads < 800.0D) {
+            return ChatFormatting.RED;
+        }
+        if (rads < 1000.0D) {
+            return ChatFormatting.DARK_RED;
+        }
+        return ChatFormatting.DARK_GRAY;
     }
 
     public static void printDiagnosticData(Player player) {
-        float digamma = Math.round(RadiationData.getDigamma(player) * 100.0F) / 100.0F;
+        float digamma = Math.round(getDigamma(player) * 100.0F) / 100.0F;
         float healthInfluence = Math.round((1.0F - (float) Math.pow(0.5D, digamma)) * 10000.0F) / 100.0F;
 
         player.displayClientMessage(Component.translatable("digamma.title"), false);
@@ -232,6 +307,10 @@ public final class RadiationUtil {
 
     private static float round(float value) {
         return Math.round(value * 10.0F) / 10.0F;
+    }
+
+    private static float round2(float value) {
+        return Math.round(value * 100.0F) / 100.0F;
     }
 
     private RadiationUtil() {

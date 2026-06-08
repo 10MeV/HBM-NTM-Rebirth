@@ -43,8 +43,8 @@ public final class ClientInformMessages {
             case 2 -> width / 2 + 7;
             case 3 -> width / 2 - longest - 6;
             default -> 15;
-        } + HbmClientConfig.INFO_OFFSET_HORIZONTAL.get();
-        int y = (mode == 0 || mode == 1 ? 15 : height / 2 + 7) + HbmClientConfig.INFO_OFFSET_VERTICAL.get();
+        } + HbmClientConfig.infoOffsetHorizontal();
+        int y = (mode == 0 || mode == 1 ? 15 : height / 2 + 7) + HbmClientConfig.infoOffsetVertical();
 
         Iterator<Map.Entry<Integer, Notice>> iterator = NOTICES.entrySet().iterator();
         while (iterator.hasNext()) {

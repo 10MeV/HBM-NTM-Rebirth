@@ -49,7 +49,7 @@ public class RadioactiveWasteEarthBlock extends Block {
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         super.randomTick(state, level, pos, random);
-        if (mycelium && RadiationConfig.ENABLE_MYCELIUM_SPREAD.get()) {
+        if (mycelium && RadiationConfig.myceliumSpreadEnabled()) {
             for (BlockPos target : BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))) {
                 BlockPos above = target.above();
                 BlockState targetState = level.getBlockState(target);
@@ -72,7 +72,7 @@ public class RadioactiveWasteEarthBlock extends Block {
     }
 
     private static boolean shouldDecayToDirt(ServerLevel level, BlockPos pos) {
-        return RadiationConfig.CLEANUP_DEAD_DIRT.get()
+        return RadiationConfig.cleanupDeadDirtEnabled()
                 || (level.getRawBrightness(pos.above(), 0) < 4 && level.getBlockState(pos.above()).getLightBlock(level, pos.above()) > 2);
     }
 

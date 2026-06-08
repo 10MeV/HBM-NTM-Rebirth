@@ -1,6 +1,8 @@
 package com.hbm.ntm.world.saveddata;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -42,6 +44,31 @@ public class TomImpactSavedData extends SavedData {
     public static Optional<TomImpactSavedData> forLevel(Level level) {
         Optional<TomImpactSavedData> data = WorldSavedDataHelper.get(level, DATA_NAME, TomImpactSavedData::load,
                 TomImpactSavedData::new);
+        data.ifPresent(value -> lastCachedUnsafe = value);
+        return data;
+    }
+
+    public static Optional<TomImpactSavedData> getExisting(ServerLevel level) {
+        Optional<TomImpactSavedData> data = WorldSavedDataHelper.getExisting(level, DATA_NAME, TomImpactSavedData::load);
+        data.ifPresent(value -> lastCachedUnsafe = value);
+        return data;
+    }
+
+    public static Optional<TomImpactSavedData> getExisting(MinecraftServer server) {
+        Optional<TomImpactSavedData> data = WorldSavedDataHelper.getExisting(server, DATA_NAME, TomImpactSavedData::load);
+        data.ifPresent(value -> lastCachedUnsafe = value);
+        return data;
+    }
+
+    public static Optional<TomImpactSavedData> getExisting(MinecraftServer server, ResourceKey<Level> dimension) {
+        Optional<TomImpactSavedData> data = WorldSavedDataHelper.getExisting(server, dimension, DATA_NAME,
+                TomImpactSavedData::load);
+        data.ifPresent(value -> lastCachedUnsafe = value);
+        return data;
+    }
+
+    public static Optional<TomImpactSavedData> getExisting(Level level) {
+        Optional<TomImpactSavedData> data = WorldSavedDataHelper.getExisting(level, DATA_NAME, TomImpactSavedData::load);
         data.ifPresent(value -> lastCachedUnsafe = value);
         return data;
     }
@@ -120,6 +147,16 @@ public class TomImpactSavedData extends SavedData {
         return changed;
     }
 
+    public static ClimateTickResult tickExistingImpactClimate(ServerLevel level) {
+        Optional<TomImpactSavedData> existing = getExisting(level);
+        if (existing.isEmpty()) {
+            return ClimateTickResult.noData();
+        }
+        TomImpactSavedData data = existing.get();
+        boolean changed = data.tickImpactClimate();
+        return new ClimateTickResult(true, changed, data.snapshot());
+    }
+
     public Snapshot snapshot() {
         return new Snapshot(dust, fire, impact);
     }
@@ -176,5 +213,16 @@ public class TomImpactSavedData extends SavedData {
     }
 
     public record Snapshot(float dust, float fire, boolean impact) {
+        public static final Snapshot EMPTY = new Snapshot(0.0F, 0.0F, false);
+
+        public boolean hasClimate() {
+            return dust > 0.0F || fire > 0.0F;
+        }
+    }
+
+    public record ClimateTickResult(boolean hadData, boolean changed, Snapshot snapshot) {
+        public static ClimateTickResult noData() {
+            return new ClimateTickResult(false, false, Snapshot.EMPTY);
+        }
     }
 }

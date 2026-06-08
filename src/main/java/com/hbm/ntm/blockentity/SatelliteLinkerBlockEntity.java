@@ -111,17 +111,14 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, HbmInventoryMenuHelper.saveLegacyItems(items).getList(
-                HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, net.minecraft.nbt.Tag.TAG_COMPOUND));
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         if (tag.contains(TAG_INVENTORY)) {
-            CompoundTag inventoryTag = new CompoundTag();
-            inventoryTag.put(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, tag.getList(TAG_INVENTORY, net.minecraft.nbt.Tag.TAG_COMPOUND));
-            HbmInventoryMenuHelper.loadLegacyItems(inventoryTag, items);
+            HbmInventoryMenuHelper.loadLegacyItems(tag, TAG_INVENTORY, items);
         } else {
             HbmInventoryMenuHelper.loadLegacyItems(tag, items);
         }

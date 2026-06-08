@@ -53,15 +53,11 @@ public class OilDrillScreen extends AbstractContainerScreen<OilDrillMenu> {
             renderTankTooltip(graphics, mouseX, mouseY, 2, 40, 37, 6, 32);
         }
         if (isHovering(8, 17, 16, 34, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 8, topPos + 17, 16, 34, menu.getPower(), menu.getMaxPower());
         } else if (isHovering(156, 3, 8, 8, mouseX, mouseY)) {
-            List<Component> tooltip = List.of(
-                    Component.literal("Upgrades"),
-                    Component.literal("Speed"),
-                    Component.literal("Power Saving"),
-                    Component.literal("Overdrive"));
-            graphics.renderTooltip(font, tooltip.stream().map(Component::getVisualOrderText).toList(), mouseX, mouseY);
+            LegacyGuiElements.renderUpgradeInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 156, topPos + 3, 8, 8, menu.getBlockEntity());
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

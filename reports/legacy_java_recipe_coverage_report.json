@@ -527,60 +527,8 @@
           "source_order": 83
         },
         {
-          "internal_name": "ass.acidizer",
-          "source_order": 84
-        },
-        {
-          "internal_name": "ass.electrolyzer",
-          "source_order": 85
-        },
-        {
           "internal_name": "ass.rtg",
           "source_order": 86
-        },
-        {
-          "internal_name": "ass.flarestack",
-          "source_order": 90
-        },
-        {
-          "internal_name": "ass.crackingtower",
-          "source_order": 92
-        },
-        {
-          "internal_name": "ass.radiolysis",
-          "source_order": 93
-        },
-        {
-          "internal_name": "ass.coker",
-          "source_order": 94
-        },
-        {
-          "internal_name": "ass.vaccumrefinery",
-          "source_order": 95
-        },
-        {
-          "internal_name": "ass.reformer",
-          "source_order": 96
-        },
-        {
-          "internal_name": "ass.hydrotreater",
-          "source_order": 97
-        },
-        {
-          "internal_name": "ass.pyrooven",
-          "source_order": 98
-        },
-        {
-          "internal_name": "ass.liquefactor",
-          "source_order": 99
-        },
-        {
-          "internal_name": "ass.solidifier",
-          "source_order": 100
-        },
-        {
-          "internal_name": "ass.compressor",
-          "source_order": 101
         },
         {
           "internal_name": "ass.compactcompressor",
@@ -595,56 +543,8 @@
           "source_order": 104
         },
         {
-          "internal_name": "ass.silex",
-          "source_order": 105
-        },
-        {
           "internal_name": "ass.excavator",
           "source_order": 106
-        },
-        {
-          "internal_name": "ass.drillsteel",
-          "source_order": 107
-        },
-        {
-          "internal_name": "ass.drillsteeldiamond",
-          "source_order": 108
-        },
-        {
-          "internal_name": "ass.drilldura",
-          "source_order": 109
-        },
-        {
-          "internal_name": "ass.drillduradiamond",
-          "source_order": 110
-        },
-        {
-          "internal_name": "ass.drilldesh",
-          "source_order": 111
-        },
-        {
-          "internal_name": "ass.drilldeshdiamond",
-          "source_order": 112
-        },
-        {
-          "internal_name": "ass.drilltc",
-          "source_order": 113
-        },
-        {
-          "internal_name": "ass.drilltcdiamond",
-          "source_order": 114
-        },
-        {
-          "internal_name": "ass.drillferro",
-          "source_order": 115
-        },
-        {
-          "internal_name": "ass.drillferrodiamond",
-          "source_order": 116
-        },
-        {
-          "internal_name": "ass.slopper",
-          "source_order": 117
         },
         {
           "internal_name": "ass.mininglaser",
@@ -655,28 +555,12 @@
           "source_order": 119
         },
         {
-          "internal_name": "ass.radar",
-          "source_order": 120
-        },
-        {
-          "internal_name": "ass.radarlarge",
-          "source_order": 121
-        },
-        {
           "internal_name": "ass.forcefield",
           "source_order": 122
         },
         {
           "internal_name": "ass.strandcaster",
           "source_order": 123
-        },
-        {
-          "internal_name": "ass.assemfac",
-          "source_order": 124
-        },
-        {
-          "internal_name": "ass.chemfac",
-          "source_order": 125
         },
         {
           "internal_name": "ass.dieselgen",
@@ -687,36 +571,12 @@
           "source_order": 127
         },
         {
-          "internal_name": "ass.pistonsetsteel",
-          "source_order": 128
-        },
-        {
-          "internal_name": "ass.pistonsetdura",
-          "source_order": 129
-        },
-        {
-          "internal_name": "ass.pistonsetdesh",
-          "source_order": 130
-        },
-        {
           "internal_name": "ass.pistonsetstar",
           "source_order": 131
         },
         {
-          "internal_name": "ass.turbofan",
-          "source_order": 132
-        },
-        {
-          "internal_name": "ass.gasturbine",
-          "source_order": 133
-        },
-        {
           "internal_name": "ass.hephaestus",
           "source_order": 134
-        },
-        {
-          "internal_name": "ass.iturbine",
-          "source_order": 135
         },
         {
           "internal_name": "ass.leviturbine",
@@ -729,10 +589,6 @@
         {
           "internal_name": "ass.hpcondenser",
           "source_order": 138
-        },
-        {
-          "internal_name": "ass.bigasstank",
-          "source_order": 145
         },
         {
           "internal_name": "ass.orbus",
@@ -781,10 +637,6 @@
         {
           "internal_name": "ass.pachlorophyte",
           "source_order": 157
-        },
-        {
-          "internal_name": "ass.exposurechamber",
-          "source_order": 158
         },
         {
           "internal_name": "ass.breedingreactor",
@@ -1487,8 +1339,8 @@
           "source_order": 334
         }
       ],
-      "missing_count": 264,
-      "modern_count": 345,
+      "missing_count": 227,
+      "modern_count": 382,
       "present": [
         {
           "internal_name": "ass.plateiron",
@@ -1851,6 +1703,18 @@
           "source_order": 82
         },
         {
+          "internal_name": "ass.acidizer",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/acidizer",
+          "modern_source_order": 84,
+          "source_order": 84
+        },
+        {
+          "internal_name": "ass.electrolyzer",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/electrolyser",
+          "modern_source_order": 85,
+          "source_order": 85
+        },
+        {
           "internal_name": "ass.derrick",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/derrick",
           "modern_source_order": 87,
@@ -1869,10 +1733,208 @@
           "source_order": 89
         },
         {
+          "internal_name": "ass.flarestack",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/flare_stack",
+          "modern_source_order": 90,
+          "source_order": 90
+        },
+        {
           "internal_name": "ass.refinery",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/refinery",
           "modern_source_order": 91,
           "source_order": 91
+        },
+        {
+          "internal_name": "ass.crackingtower",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/catalytic_cracker",
+          "modern_source_order": 92,
+          "source_order": 92
+        },
+        {
+          "internal_name": "ass.radiolysis",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/radiolysis",
+          "modern_source_order": 93,
+          "source_order": 93
+        },
+        {
+          "internal_name": "ass.coker",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/coker",
+          "modern_source_order": 94,
+          "source_order": 94
+        },
+        {
+          "internal_name": "ass.vaccumrefinery",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/vacuum_refinery",
+          "modern_source_order": 95,
+          "source_order": 95
+        },
+        {
+          "internal_name": "ass.reformer",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/catalytic_reformer",
+          "modern_source_order": 96,
+          "source_order": 96
+        },
+        {
+          "internal_name": "ass.hydrotreater",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/hydrotreater",
+          "modern_source_order": 97,
+          "source_order": 97
+        },
+        {
+          "internal_name": "ass.pyrooven",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pyrooven",
+          "modern_source_order": 98,
+          "source_order": 98
+        },
+        {
+          "internal_name": "ass.liquefactor",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/liquefactor",
+          "modern_source_order": 99,
+          "source_order": 99
+        },
+        {
+          "internal_name": "ass.solidifier",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/solidifier",
+          "modern_source_order": 100,
+          "source_order": 100
+        },
+        {
+          "internal_name": "ass.compressor",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/compressor",
+          "modern_source_order": 101,
+          "source_order": 101
+        },
+        {
+          "internal_name": "ass.silex",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/silex",
+          "modern_source_order": 105,
+          "source_order": 105
+        },
+        {
+          "internal_name": "ass.drillsteel",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/drillbit_steel",
+          "modern_source_order": 107,
+          "source_order": 107
+        },
+        {
+          "internal_name": "ass.drillsteeldiamond",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/drillbit_steel_diamond",
+          "modern_source_order": 108,
+          "source_order": 108
+        },
+        {
+          "internal_name": "ass.drilldura",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/drillbit_hss",
+          "modern_source_order": 109,
+          "source_order": 109
+        },
+        {
+          "internal_name": "ass.drillduradiamond",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/drillbit_hss_diamond",
+          "modern_source_order": 110,
+          "source_order": 110
+        },
+        {
+          "internal_name": "ass.drilldesh",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/drillbit_desh",
+          "modern_source_order": 111,
+          "source_order": 111
+        },
+        {
+          "internal_name": "ass.drilldeshdiamond",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/drillbit_desh_diamond",
+          "modern_source_order": 112,
+          "source_order": 112
+        },
+        {
+          "internal_name": "ass.drilltc",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/drillbit_tcalloy",
+          "modern_source_order": 113,
+          "source_order": 113
+        },
+        {
+          "internal_name": "ass.drilltcdiamond",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/drillbit_tcalloy_diamond",
+          "modern_source_order": 114,
+          "source_order": 114
+        },
+        {
+          "internal_name": "ass.drillferro",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/drillbit_ferro",
+          "modern_source_order": 115,
+          "source_order": 115
+        },
+        {
+          "internal_name": "ass.drillferrodiamond",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/drillbit_ferro_diamond",
+          "modern_source_order": 116,
+          "source_order": 116
+        },
+        {
+          "internal_name": "ass.slopper",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/ore_slopper",
+          "modern_source_order": 117,
+          "source_order": 117
+        },
+        {
+          "internal_name": "ass.radar",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/radar",
+          "modern_source_order": 120,
+          "source_order": 120
+        },
+        {
+          "internal_name": "ass.radarlarge",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/radar_large",
+          "modern_source_order": 121,
+          "source_order": 121
+        },
+        {
+          "internal_name": "ass.assemfac",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/assembly_factory",
+          "modern_source_order": 124,
+          "source_order": 124
+        },
+        {
+          "internal_name": "ass.chemfac",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/chemical_factory",
+          "modern_source_order": 125,
+          "source_order": 125
+        },
+        {
+          "internal_name": "ass.pistonsetsteel",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/piston_set_steel",
+          "modern_source_order": 128,
+          "source_order": 128
+        },
+        {
+          "internal_name": "ass.pistonsetdura",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/piston_set_dura",
+          "modern_source_order": 129,
+          "source_order": 129
+        },
+        {
+          "internal_name": "ass.pistonsetdesh",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/piston_set_desh",
+          "modern_source_order": 130,
+          "source_order": 130
+        },
+        {
+          "internal_name": "ass.turbofan",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/turbofan",
+          "modern_source_order": 132,
+          "source_order": 132
+        },
+        {
+          "internal_name": "ass.gasturbine",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/gas_turbine",
+          "modern_source_order": 133,
+          "source_order": 133
+        },
+        {
+          "internal_name": "ass.iturbine",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/industrial_turbine",
+          "modern_source_order": 135,
+          "source_order": 135
         },
         {
           "internal_name": "ass.capacitorgold",
@@ -1911,13 +1973,25 @@
           "source_order": 144
         },
         {
+          "internal_name": "ass.bigasstank",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/big_ass_tank",
+          "modern_source_order": 145,
+          "source_order": 145
+        },
+        {
+          "internal_name": "ass.exposurechamber",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/exposure_chamber",
+          "modern_source_order": 158,
+          "source_order": 158
+        },
+        {
           "internal_name": "ass.emptypackage",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/emptypackage",
           "modern_source_order": 333,
           "source_order": 333
         }
       ],
-      "present_count": 71,
+      "present_count": 108,
       "status": "checked"
     }
   ],

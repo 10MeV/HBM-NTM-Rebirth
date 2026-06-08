@@ -31,6 +31,30 @@ public final class NetworkConfig {
         builder.pop();
     }
 
+    public static boolean packetThreadingEnabled() {
+        return ENABLE_PACKET_THREADING == null || ENABLE_PACKET_THREADING.get();
+    }
+
+    public static boolean packetThreadingErrorBypass() {
+        return PACKET_THREADING_ERROR_BYPASS != null && PACKET_THREADING_ERROR_BYPASS.get();
+    }
+
+    public static int packetThreadingWaitTimeoutMs(int fallback) {
+        return configuredInt(PACKET_THREADING_WAIT_TIMEOUT_MS, fallback);
+    }
+
+    public static int packetThreadingMaxPending(int fallback) {
+        return configuredInt(PACKET_THREADING_MAX_PENDING, fallback);
+    }
+
+    public static int packetThreadingFallbackClearThreshold(int fallback) {
+        return configuredInt(PACKET_THREADING_FALLBACK_CLEAR_THRESHOLD, fallback);
+    }
+
+    private static int configuredInt(ForgeConfigSpec.IntValue value, int fallback) {
+        return value == null ? fallback : value.get();
+    }
+
     private NetworkConfig() {
     }
 }

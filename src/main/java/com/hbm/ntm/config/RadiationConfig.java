@@ -27,6 +27,7 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.DoubleValue POLLUTION_BUFF_MOB_THRESHOLD;
     public static ForgeConfigSpec.DoubleValue POLLUTION_SOOT_FOG_THRESHOLD;
     public static ForgeConfigSpec.DoubleValue POLLUTION_SOOT_FOG_DIVISOR;
+    public static ForgeConfigSpec.DoubleValue POLLUTION_SMOKE_STACK_SOOT_MULT;
     public static ForgeConfigSpec.BooleanValue RAMPANT_GLYPHID_GUIDANCE;
 
     public static ForgeConfigSpec.BooleanValue DISABLE_ASBESTOS;
@@ -35,6 +36,7 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.BooleanValue DISABLE_EXPLOSIVE;
     public static ForgeConfigSpec.BooleanValue DISABLE_HOT;
     public static ForgeConfigSpec.BooleanValue DISABLE_HYDROACTIVE;
+    public static ForgeConfigSpec.BooleanValue DISABLE_FIBROSIS;
 
     static void define(ForgeConfigSpec.Builder builder) {
         builder.push("radiation");
@@ -113,6 +115,9 @@ public final class RadiationConfig {
         POLLUTION_SOOT_FOG_DIVISOR = builder
                 .comment("Legacy POL_07_sootFogDivisor: higher values require more soot for the same smog density.")
                 .defineInRange("sootFogDivisor", 120.0D, 0.0001D, Double.MAX_VALUE);
+        POLLUTION_SMOKE_STACK_SOOT_MULT = builder
+                .comment("Legacy POL_08_smokeStackSootMult: stored for old pollution config parity; legacy chimney tile entities use their own pollution multipliers.")
+                .defineInRange("smokeStackSootMult", 0.8D, 0.0D, Double.MAX_VALUE);
         RAMPANT_GLYPHID_GUIDANCE = builder
                 .comment("Legacy MobConfig 12.R05_rampantGlyphidGuidance: records a sleeping player's bed as the pollution/rampant target point.")
                 .define("rampantGlyphidGuidance", false);
@@ -125,7 +130,134 @@ public final class RadiationConfig {
         DISABLE_EXPLOSIVE = builder.define("disableExplosive", false);
         DISABLE_HOT = builder.define("disableHot", false);
         DISABLE_HYDROACTIVE = builder.define("disableHydroactive", false);
+        DISABLE_FIBROSIS = builder
+                .comment("Legacy HAZ_06_disableFibrosis mirror. No modern HazardType.FIBROSIS exists yet; wire this when the old fibrosis hazard is migrated.")
+                .define("disableFibrosis", false);
         builder.pop();
+    }
+
+    public static boolean pollutionEnabled() {
+        return ENABLE_POLLUTION.get();
+    }
+
+    public static boolean contaminationEnabled() {
+        return ENABLE_CONTAMINATION.get();
+    }
+
+    public static boolean chunkRadiationEnabled() {
+        return ENABLE_CHUNK_RADS.get();
+    }
+
+    public static int radiationFogThreshold() {
+        return FOG_RAD.get();
+    }
+
+    public static int radiationFogChance() {
+        return FOG_CHANCE.get();
+    }
+
+    public static float hellRadiation() {
+        return HELL_RAD.get().floatValue();
+    }
+
+    public static boolean worldRadiationEffectsEnabled() {
+        return WORLD_RAD_EFFECTS.get();
+    }
+
+    public static boolean cleanupDeadDirtEnabled() {
+        return CLEANUP_DEAD_DIRT.get();
+    }
+
+    public static boolean myceliumSpreadEnabled() {
+        return ENABLE_MYCELIUM_SPREAD.get();
+    }
+
+    public static boolean craterBiomeRadiationEnabled() {
+        return ENABLE_CRATER_BIOME_RADIATION.get();
+    }
+
+    public static float craterBiomeRadiation() {
+        return CRATER_BIOME_RAD.get().floatValue();
+    }
+
+    public static float craterBiomeInnerRadiation() {
+        return CRATER_BIOME_INNER_RAD.get().floatValue();
+    }
+
+    public static float craterBiomeOuterRadiation() {
+        return CRATER_BIOME_OUTER_RAD.get().floatValue();
+    }
+
+    public static float craterBiomeWaterMultiplier() {
+        return CRATER_BIOME_WATER_MULT.get().floatValue();
+    }
+
+    public static boolean pollutionLeadFromBlocksEnabled() {
+        return ENABLE_POLLUTION_LEAD_FROM_BLOCKS.get();
+    }
+
+    public static boolean pollutionLeadPoisoningEnabled() {
+        return ENABLE_POLLUTION_LEAD_POISONING.get();
+    }
+
+    public static boolean pollutionPoisonEnabled() {
+        return ENABLE_POLLUTION_POISON.get();
+    }
+
+    public static boolean pollutionSootFogEnabled() {
+        return ENABLE_POLLUTION_SOOT_FOG.get();
+    }
+
+    public static float pollutionMultiplier() {
+        return POLLUTION_MULT.get().floatValue();
+    }
+
+    public static float pollutionBuffMobThreshold() {
+        return POLLUTION_BUFF_MOB_THRESHOLD.get().floatValue();
+    }
+
+    public static float pollutionSootFogThreshold() {
+        return POLLUTION_SOOT_FOG_THRESHOLD.get().floatValue();
+    }
+
+    public static float pollutionSootFogDivisor() {
+        return POLLUTION_SOOT_FOG_DIVISOR.get().floatValue();
+    }
+
+    public static double pollutionSmokeStackSootMultiplier() {
+        return POLLUTION_SMOKE_STACK_SOOT_MULT.get();
+    }
+
+    public static boolean rampantGlyphidGuidanceEnabled() {
+        return RAMPANT_GLYPHID_GUIDANCE.get();
+    }
+
+    public static boolean asbestosHazardDisabled() {
+        return DISABLE_ASBESTOS.get();
+    }
+
+    public static boolean blindingHazardDisabled() {
+        return DISABLE_BLINDING.get();
+    }
+
+    public static boolean coalHazardDisabled() {
+        return DISABLE_COAL.get();
+    }
+
+    public static boolean explosiveHazardDisabled() {
+        return DISABLE_EXPLOSIVE.get();
+    }
+
+    public static boolean hotHazardDisabled() {
+        return DISABLE_HOT.get();
+    }
+
+    public static boolean hydroactiveHazardDisabled() {
+        return DISABLE_HYDROACTIVE.get();
+    }
+
+    public static boolean fibrosisHazardDisabled() {
+        return DISABLE_FIBROSIS.get();
     }
 
     private RadiationConfig() {

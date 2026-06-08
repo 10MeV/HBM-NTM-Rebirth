@@ -47,6 +47,37 @@ public final class LegacyMultiblockLayout {
         return ofLegacyXr(dimensions, facing).withProxyPredicate(proxyOffsets);
     }
 
+    public static LegacyMultiblockLayout ofLegacyXrChecked(int[] dimensions, Direction facing) {
+        return ofOffsets(List.of(BlockPos.ZERO))
+                .withLegacyXrFill(dimensions, facing)
+                .withLegacyXrCheckOnly(dimensions, facing, BlockPos.ZERO);
+    }
+
+    public static List<BlockPos> legacyXrFillOffsets(int[] dimensions, Direction facing) {
+        return legacyXrFillOffsets(dimensions, facing, BlockPos.ZERO);
+    }
+
+    public static List<BlockPos> legacyXrFillOffsets(int[] dimensions, Direction facing, BlockPos originOffset) {
+        Set<BlockPos> offsets = new LinkedHashSet<>();
+        for (BlockPos offset : MultiblockExtents.ofLegacyXr(dimensions, facing).offsets()) {
+            BlockPos shifted = originOffset.offset(offset);
+            if (!shifted.equals(BlockPos.ZERO)) {
+                offsets.add(shifted);
+            }
+        }
+        return List.copyOf(offsets);
+    }
+
+    public static List<BlockPos> legacyXrCheckOffsets(int[] dimensions, Direction facing) {
+        return legacyXrCheckOffsets(dimensions, facing, BlockPos.ZERO);
+    }
+
+    public static List<BlockPos> legacyXrCheckOffsets(int[] dimensions, Direction facing, BlockPos originOffset) {
+        Set<BlockPos> offsets = copyOffsets(legacyXrFillOffsets(dimensions, facing, originOffset));
+        offsets.add(originOffset.immutable());
+        return List.copyOf(offsets);
+    }
+
     public static LegacyMultiblockLayout ofExtents(MultiblockExtents extents) {
         List<BlockPos> offsets = new ArrayList<>();
         offsets.add(BlockPos.ZERO);
@@ -106,6 +137,21 @@ public final class LegacyMultiblockLayout {
                 mergeProxyModes(previousProxyModes, extraProxyModes));
     }
 
+    public LegacyMultiblockLayout withLegacyXrFill(int[] dimensions, Direction facing) {
+        return withLegacyXrFill(dimensions, facing, BlockPos.ZERO);
+    }
+
+    public LegacyMultiblockLayout withLegacyXrFill(int[] dimensions, Direction facing, BlockPos originOffset) {
+        return withExtraOffsets(legacyXrFillOffsets(dimensions, facing, originOffset));
+    }
+
+    public LegacyMultiblockLayout withLegacyXrProxyFill(int[] dimensions, Direction facing,
+            BlockPos originOffset, LegacyProxyMode mode) {
+        Set<BlockPos> offsets = copyOffsets(legacyXrFillOffsets(dimensions, facing, originOffset));
+        return withExtraOffsets(offsets,
+                (Function<BlockPos, LegacyProxyMode>) offset -> offsets.contains(offset) ? mode : LegacyProxyMode.none());
+    }
+
     public LegacyMultiblockLayout withLegacyExtraOffsets(Iterable<BlockPos> extraOffsets) {
         Set<BlockPos> legacyExtras = copyOffsets(legacyExtraOffsets);
         legacyExtras.addAll(copyOffsets(extraOffsets));
@@ -120,6 +166,10 @@ public final class LegacyMultiblockLayout {
         Set<BlockPos> merged = copyOffsets(checkOffsets());
         merged.addAll(copyOffsets(extraOffsets));
         return new LegacyMultiblockLayout(offsets, merged, legacyExtraOffsets, proxyModes);
+    }
+
+    public LegacyMultiblockLayout withLegacyXrCheckOnly(int[] dimensions, Direction facing, BlockPos originOffset) {
+        return withCheckOnlyOffsets(legacyXrCheckOffsets(dimensions, facing, originOffset));
     }
 
     public List<BlockPos> offsets() {

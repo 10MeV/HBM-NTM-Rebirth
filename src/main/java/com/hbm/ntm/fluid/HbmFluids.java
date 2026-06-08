@@ -313,7 +313,7 @@ public final class HbmFluids {
         HbmFluidTraitConfig.recaptureBuiltIns();
         HbmFluidTraitConfig.LoadReport report = HbmFluidTraitConfig.initialize(configDir);
         HbmFluidForgeMappings.bootstrap(configDir);
-        HbmFluidContainerRegistry.reloadExternalContainers();
+        HbmFluidContainerRegistry.reloadExternalContainers(configDir);
         return report;
     }
 

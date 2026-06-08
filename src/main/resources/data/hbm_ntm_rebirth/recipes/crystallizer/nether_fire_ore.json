@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 600,
+  "fluid": { "fluid": "PEROXIDE", "amount": 500 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:ore_nether_fire" } },
+  "output": { "item": "hbm_ntm_rebirth:crystal_phosphorus" },
+  "productivity": 0.05
+}

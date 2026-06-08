@@ -1,5 +1,8 @@
 package com.hbm.ntm.explosion;
 
+import com.hbm.ntm.bullet.BulletLaunchUtil;
+import com.hbm.ntm.bullet.LegacyBulletConfigs;
+import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -70,6 +73,11 @@ public final class CustomMissileExplosion {
                 ExplosionChaos.spawnPoisonCloud(level, x - motion.x, y - motion.y, z - motion.z, 750, 2.5D, 2);
                 return true;
             }
+            case TURBINE -> {
+                ExplosionLarge.explode(level, x, y, z, 10.0F, true, false, true, source);
+                spawnTurbineBlades(level, x - motion.x, y - motion.y, z - motion.z, (int) strength);
+                return true;
+            }
             default -> {
                 return false;
             }
@@ -82,5 +90,27 @@ public final class CustomMissileExplosion {
     }
 
     private CustomMissileExplosion() {
+    }
+
+    private static void spawnTurbineBlades(Level level, double x, double y, double z, int count) {
+        if (count <= 0) {
+            return;
+        }
+        Vec3 origin = new Vec3(x, y, z);
+        for (int i = 0; i < count; i++) {
+            double angle = 2.0D * Math.PI * i / count;
+            Vec3 motion = legacyRotateY(0.5D, 0.0D, 0.0D, angle);
+            Vec3 position = origin.add(0.0D, level.random.nextGaussian(), 0.0D);
+            BulletLaunchUtil.LaunchPlan base = BulletLaunchUtil.directedLaunchPlan(
+                    LegacyBulletConfigs.TURBINE, position, motion, 1.0F, 0.0F, level.random);
+            BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.withMotion(base, motion);
+            level.addFreshEntity(BulletProjectileEntity.fromLaunchPlan(level, plan, null));
+        }
+    }
+
+    private static Vec3 legacyRotateY(double x, double y, double z, double angle) {
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        return new Vec3(x * cos + z * sin, y, z * cos - x * sin);
     }
 }

@@ -56,8 +56,8 @@ public class RefineryScreen extends AbstractContainerScreen<RefineryMenu> {
         renderTankTooltip(graphics, mouseX, mouseY, 3, 126, 42, 16, 52);
         renderTankTooltip(graphics, mouseX, mouseY, 4, 146, 42, 16, 52);
         if (isHovering(186, 18, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 186, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

@@ -9,6 +9,9 @@ public enum PollutionType {
     FALLOUT;
 
     public static PollutionType byName(String name) {
+        if (name == null) {
+            return null;
+        }
         String normalized = name.toUpperCase(Locale.ROOT).replace("_", "");
         for (PollutionType type : values()) {
             if (type.name().replace("_", "").equals(normalized)) {

@@ -23,6 +23,15 @@ public class CompositeBlockMutator implements BlockMutator {
     }
 
     @Override
+    public boolean suppressDrops(ExplosionVnt explosion, BlockState state, BlockPos pos) {
+        boolean suppress = false;
+        for (BlockMutator mutator : mutators) {
+            suppress |= mutator.suppressDrops(explosion, state, pos);
+        }
+        return suppress;
+    }
+
+    @Override
     public void mutatePre(ExplosionVnt explosion, BlockState state, BlockPos pos) {
         for (BlockMutator mutator : mutators) {
             mutator.mutatePre(explosion, state, pos);

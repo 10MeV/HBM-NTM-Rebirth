@@ -3,14 +3,36 @@ package com.hbm.ntm.world;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public final class LegacyBlockPosUtil {
     public static BlockPos fromFloored(double x, double y, double z) {
         return new BlockPos(Mth.floor(x), Mth.floor(y), Mth.floor(z));
     }
 
+    public static BlockPos fromBlockEntity(BlockEntity blockEntity) {
+        return blockEntity.getBlockPos();
+    }
+
+    public static BlockPos copy(BlockPos pos) {
+        return new BlockPos(pos.getX(), pos.getY(), pos.getZ());
+    }
+
     public static boolean compare(BlockPos pos, int x, int y, int z) {
         return pos.getX() == x && pos.getY() == y && pos.getZ() == z;
+    }
+
+    public static BlockPos add(BlockPos pos, int x, int y, int z) {
+        return x == 0 && y == 0 && z == 0 ? pos : pos.offset(x, y, z);
+    }
+
+    public static BlockPos add(BlockPos pos, double x, double y, double z) {
+        return x == 0.0D && y == 0.0D && z == 0.0D ? pos
+                : fromFloored(pos.getX() + x, pos.getY() + y, pos.getZ() + z);
+    }
+
+    public static BlockPos add(BlockPos pos, BlockPos offset) {
+        return add(pos, offset.getX(), offset.getY(), offset.getZ());
     }
 
     public static BlockPos rotate(BlockPos pos, LegacyRotation rotation) {

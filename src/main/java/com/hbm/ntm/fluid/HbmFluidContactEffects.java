@@ -1,7 +1,6 @@
 package com.hbm.ntm.fluid;
 
 import com.hbm.ntm.HbmNtm;
-import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fluid.trait.PheromoneFluidTrait;
@@ -177,19 +176,8 @@ public final class HbmFluidContactEffects {
     }
 
     private static boolean isProtected(LivingEntity entity, ToxinFluidTrait.ToxinEntry entry, boolean apply) {
-        HazardClass hazardClass = entry.getHazardClass();
-        boolean hazardProtected = hazardClass == null || ArmorUtil.hasProtection(entity, hazardClass);
-        if (hazardProtected && hazardClass != null && apply && usesGasMaskFilter(hazardClass)) {
-            ArmorUtil.damageGasMaskFilter(entity, 1);
-        }
-        return hazardProtected && (!entry.requiresFullBodyProtection() || ArmorUtil.checkForHazmat(entity));
-    }
-
-    private static boolean usesGasMaskFilter(HazardClass hazardClass) {
-        return switch (hazardClass) {
-            case GAS_LUNG, GAS_MONOXIDE, GAS_INERT, PARTICLE_COARSE, PARTICLE_FINE, BACTERIA, GAS_BLISTERING, SAND -> true;
-            case LIGHT -> false;
-        };
+        return ArmorUtil.hasToxinProtection(entity, entry.getHazardClass(), entry.requiresFullBodyProtection(),
+                apply);
     }
 
     private static DamageSource resolveDamage(Level level, ResourceLocation damageType) {

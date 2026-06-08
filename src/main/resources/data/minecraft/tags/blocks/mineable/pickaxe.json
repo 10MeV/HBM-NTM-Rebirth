@@ -2,8 +2,26 @@
   "replace": false,
   "values": [
     "hbm_ntm_rebirth:stone_cracked",
+    "hbm_ntm_rebirth:stone_depth",
+    "hbm_ntm_rebirth:ore_depth_cinnebar",
+    "hbm_ntm_rebirth:ore_depth_zirconium",
+    "hbm_ntm_rebirth:ore_depth_borax",
+    "hbm_ntm_rebirth:cluster_depth_iron",
+    "hbm_ntm_rebirth:cluster_depth_titanium",
+    "hbm_ntm_rebirth:cluster_depth_tungsten",
+    "hbm_ntm_rebirth:depth_brick",
+    "hbm_ntm_rebirth:depth_tiles",
+    "hbm_ntm_rebirth:depth_nether_brick",
+    "hbm_ntm_rebirth:depth_nether_tiles",
+    "hbm_ntm_rebirth:depth_dnt",
+    "hbm_ntm_rebirth:stone_depth_nether",
+    "hbm_ntm_rebirth:ore_depth_nether_neodymium",
     "hbm_ntm_rebirth:machine_radar",
     "hbm_ntm_rebirth:machine_radar_large",
-    "hbm_ntm_rebirth:radar_screen"
+    "hbm_ntm_rebirth:radar_screen",
+    "hbm_ntm_rebirth:machine_satlinker",
+    "hbm_ntm_rebirth:sat_dock",
+    "hbm_ntm_rebirth:soyuz_capsule",
+    "hbm_ntm_rebirth:soyuz_launcher"
   ]
 }

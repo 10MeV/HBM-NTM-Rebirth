@@ -47,20 +47,20 @@ public final class RadiationData {
     private static final String TAG_CONTAMINATION_IGNORE_ARMOR = "ignoreArmor";
 
     public static float getRadiation(LivingEntity entity) {
-        if (!RadiationConfig.ENABLE_CONTAMINATION.get()) {
+        if (!RadiationConfig.contaminationEnabled()) {
             return 0.0F;
         }
         return getTag(entity).getFloat(TAG_RADIATION);
     }
 
     public static void setRadiation(LivingEntity entity, float radiation) {
-        if (RadiationConfig.ENABLE_CONTAMINATION.get()) {
+        if (RadiationConfig.contaminationEnabled()) {
             getTag(entity).putFloat(TAG_RADIATION, clampPlayerRadiation(radiation));
         }
     }
 
     public static void incrementRadiation(LivingEntity entity, float amount) {
-        if (!RadiationConfig.ENABLE_CONTAMINATION.get()) {
+        if (!RadiationConfig.contaminationEnabled()) {
             return;
         }
         setRadiation(entity, getRadiation(entity) + amount);
@@ -120,14 +120,14 @@ public final class RadiationData {
     }
 
     public static int getAsbestos(LivingEntity entity) {
-        if (RadiationConfig.DISABLE_ASBESTOS.get()) {
+        if (RadiationConfig.asbestosHazardDisabled()) {
             return 0;
         }
         return getTag(entity).getInt(TAG_ASBESTOS);
     }
 
     public static void setAsbestos(LivingEntity entity, int asbestos) {
-        if (RadiationConfig.DISABLE_ASBESTOS.get()) {
+        if (RadiationConfig.asbestosHazardDisabled()) {
             return;
         }
         int value = Math.max(0, asbestos);
@@ -140,7 +140,7 @@ public final class RadiationData {
     }
 
     public static void incrementAsbestos(LivingEntity entity, int amount) {
-        if (RadiationConfig.DISABLE_ASBESTOS.get()) {
+        if (RadiationConfig.asbestosHazardDisabled()) {
             return;
         }
         setAsbestos(entity, getAsbestos(entity) + amount);
@@ -164,14 +164,14 @@ public final class RadiationData {
     }
 
     public static int getBlackLung(LivingEntity entity) {
-        if (RadiationConfig.DISABLE_COAL.get()) {
+        if (RadiationConfig.coalHazardDisabled()) {
             return 0;
         }
         return getTag(entity).getInt(TAG_BLACK_LUNG);
     }
 
     public static void setBlackLung(LivingEntity entity, int blackLung) {
-        if (RadiationConfig.DISABLE_COAL.get()) {
+        if (RadiationConfig.coalHazardDisabled()) {
             return;
         }
         int value = Math.max(0, blackLung);
@@ -184,7 +184,7 @@ public final class RadiationData {
     }
 
     public static void incrementBlackLung(LivingEntity entity, int amount) {
-        if (RadiationConfig.DISABLE_COAL.get()) {
+        if (RadiationConfig.coalHazardDisabled()) {
             return;
         }
         setBlackLung(entity, getBlackLung(entity) + amount);

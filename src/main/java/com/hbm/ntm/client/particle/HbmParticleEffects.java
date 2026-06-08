@@ -65,7 +65,7 @@ public final class HbmParticleEffects {
             spawnWaterSplash(level, x, y, z);
         } else if (ParticleUtil.TYPE_CLOUD_FX_2.equals(type)) {
             level.addParticle(ParticleTypes.CLOUD, x, y, z, 0.0D, 0.1D, 0.0D);
-        } else if ("vanilla".equals(type)) {
+        } else if (ParticleUtil.TYPE_VANILLA.equals(type)) {
             spawnNamedVanilla(level, data.getString("mode"), x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"));
         } else if (ParticleUtil.TYPE_VANILLA_BURST.equals(type)) {
             spawnVanillaBurst(level, data, x, y, z);
@@ -894,9 +894,13 @@ public final class HbmParticleEffects {
         RandomSource random = level.random;
         int cloudCount = Math.max(1, getInt(data, "cloudCount", 15));
         int debrisCount = Math.max(0, getInt(data, "debrisCount", 10));
+        int debrisSize = Math.max(1, getInt(data, "debrisSize", 16));
         float cloudScale = Math.max(0.25F, getFloat(data, "cloudScale", 5.0F));
         float cloudSpeedMult = Math.max(0.1F, getFloat(data, "cloudSpeedMult", 1.0F));
         float waveScale = Math.max(4.0F, getFloat(data, "waveScale", 45.0F));
+        float debrisVelocity = Math.max(0.0F, getFloat(data, "debrisVelocity", 1.0F));
+        float debrisHorizontalDeviation = Math.max(0.0F, getFloat(data, "debrisHorizontalDeviation", 3.0F));
+        float debrisVerticalOffset = getFloat(data, "debrisVerticalOffset", -2.0F);
         float soundRange = Math.max(1.0F, getFloat(data, "soundRange", 200.0F));
 
         HbmDelayedSounds.playExplosionLarge(x, y, z, soundRange);
@@ -920,16 +924,15 @@ public final class HbmParticleEffects {
             }
         }
 
-        BlockState debrisState = nearbyBlockState(level, x, y, z);
         for (int i = 0; i < debrisCount; i++) {
-            double motionX = random.nextGaussian() * 0.25D;
-            double motionY = 0.35D + random.nextDouble() * 0.75D;
-            double motionZ = random.nextGaussian() * 0.25D;
-            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, debrisState),
-                    x + random.nextGaussian() * 1.5D,
-                    y + random.nextDouble() * 0.8D,
-                    z + random.nextGaussian() * 1.5D,
-                    motionX, motionY, motionZ);
+            double offsetX = random.nextGaussian() * debrisHorizontalDeviation;
+            double offsetZ = random.nextGaussian() * debrisHorizontalDeviation;
+            BlockState debrisState = nearbyBlockState(level, x + offsetX, y + debrisVerticalOffset, z + offsetZ);
+            Vec3 motion = legacyDebrisMotion(random, debrisVelocity);
+            Particle particle = LegacyDebrisParticle.create(level, x, y, z, motion.x(), motion.y(), motion.z(), debrisState, debrisSize);
+            if (particle != null) {
+                Minecraft.getInstance().particleEngine.add(particle);
+            }
         }
     }
 
@@ -992,8 +995,17 @@ public final class HbmParticleEffects {
             motionY *= modifier;
             motionZ *= modifier;
 
-            level.addParticle(ParticleTypes.POOF, (originX + x) * 0.5D, (originY + y) * 0.5D, (originZ + z) * 0.5D,
+            Particle explode = LargeExplodeParticle.explode(level,
+                    (originX + x) * 0.5D,
+                    (originY + y) * 0.5D,
+                    (originZ + z) * 0.5D,
                     motionX, motionY, motionZ);
+            if (explode != null) {
+                Minecraft.getInstance().particleEngine.add(explode);
+            } else {
+                level.addParticle(ParticleTypes.EXPLOSION, (originX + x) * 0.5D, (originY + y) * 0.5D, (originZ + z) * 0.5D,
+                        motionX, motionY, motionZ);
+            }
             level.addParticle(ParticleTypes.SMOKE, originX, originY, originZ, motionX, motionY, motionZ);
         }
     }
@@ -1254,6 +1266,33 @@ public final class HbmParticleEffects {
     }
 
     private static void spawnNamedVanilla(ClientLevel level, String mode, double x, double y, double z, double motionX, double motionY, double motionZ) {
+        if (ParticleUtil.VANILLA_EXPLODE.equals(mode)) {
+            Particle particle = LargeExplodeParticle.explode(level, x, y, z, motionX, motionY, motionZ);
+            if (particle != null) {
+                Minecraft.getInstance().particleEngine.add(particle);
+            } else {
+                level.addParticle(ParticleTypes.EXPLOSION, x, y, z, motionX, motionY, motionZ);
+            }
+            return;
+        }
+        if (ParticleUtil.VANILLA_LARGE_EXPLODE.equals(mode)) {
+            Particle particle = LargeExplodeParticle.largeVanilla(level, x, y, z, (float) motionX);
+            if (particle != null) {
+                Minecraft.getInstance().particleEngine.add(particle);
+            } else {
+                level.addParticle(ParticleTypes.EXPLOSION, x, y, z, motionX, motionY, motionZ);
+            }
+            return;
+        }
+        if (ParticleUtil.VANILLA_HUGE_EXPLOSION.equals(mode)) {
+            Particle particle = LargeExplodeParticle.hugeExplosionSeed(level, x, y, z);
+            if (particle != null) {
+                Minecraft.getInstance().particleEngine.add(particle);
+            } else {
+                level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, motionX, motionY, motionZ);
+            }
+            return;
+        }
         ParticleOptions particle = switch (mode) {
             case "flame" -> ParticleTypes.FLAME;
             case "smoke" -> ParticleTypes.SMOKE;
@@ -1354,6 +1393,16 @@ public final class HbmParticleEffects {
                     0.0D,
                     Math.sin(theta) * strength * multiplier);
         }
+    }
+
+    private static Vec3 legacyDebrisMotion(RandomSource random, float velocity) {
+        double angleZ = -Math.toRadians(45.0D + random.nextFloat() * 25.0D);
+        double angleY = random.nextDouble() * Math.PI * 2.0D;
+        double x = velocity * Math.cos(angleZ);
+        double y = velocity * Math.sin(angleZ);
+        double cosY = Math.cos(angleY);
+        double sinY = Math.sin(angleY);
+        return new Vec3(x * cosY, y, -x * sinY);
     }
 
     private static void spawnRadialDigamma(ClientLevel level, double x, double y, double z, int count) {

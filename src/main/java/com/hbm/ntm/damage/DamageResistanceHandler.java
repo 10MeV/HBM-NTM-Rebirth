@@ -34,6 +34,7 @@ public final class DamageResistanceHandler {
 
     private static final Map<Item, DamageResistanceStats> ITEM_STATS = new HashMap<>();
     private static final Map<ArmorSet, DamageResistanceStats> SET_STATS = new HashMap<>();
+    private static final Map<Item, List<ArmorSet>> ITEM_INFO_SETS = new HashMap<>();
     private static final Map<Class<? extends Entity>, DamageResistanceStats> ENTITY_STATS = new HashMap<>();
     private static final Map<String, DamageResistanceStats> ENTITY_SIMPLE_NAME_STATS = new HashMap<>();
     private static final Map<String, String> EXACT_ALIASES = createExactAliases();
@@ -45,6 +46,7 @@ public final class DamageResistanceHandler {
     public static void clear() {
         ITEM_STATS.clear();
         SET_STATS.clear();
+        ITEM_INFO_SETS.clear();
         ENTITY_STATS.clear();
         ENTITY_SIMPLE_NAME_STATS.clear();
         registerEntity(Creeper.class, new DamageResistanceStats().addCategory(CATEGORY_EXPLOSION, 2.0F, 0.25F));
@@ -79,7 +81,12 @@ public final class DamageResistanceHandler {
     }
 
     public static void registerSet(Item helmet, Item chest, Item legs, Item boots, DamageResistanceStats stats) {
-        SET_STATS.put(new ArmorSet(helmet, chest, legs, boots), stats);
+        ArmorSet set = new ArmorSet(helmet, chest, legs, boots);
+        SET_STATS.put(set, stats);
+        addSetInfo(helmet, set);
+        addSetInfo(chest, set);
+        addSetInfo(legs, set);
+        addSetInfo(boots, set);
     }
 
     public static void registerEntity(Class<? extends Entity> entityClass, DamageResistanceStats stats) {
@@ -216,6 +223,16 @@ public final class DamageResistanceHandler {
         expect(problems, "combine exact alias", "cmb".equals(exactTypeKey("combine_ball")));
         expect(problems, "subatomic exact alias", "subatomic".equals(exactTypeKey("subAtomic3")));
         expect(problems, "registry exact alias", "cmb".equals(exactTypeKey(ModDamageSources.COMBINE_BALL)));
+        DamageResistanceStats stats = new DamageResistanceStats()
+                .addExact("subAtomic4", 1.0F, 0.2F)
+                .addExact("on_fire", 2.0F, 0.3F)
+                .addCategory("laser", 3.0F, 0.4F)
+                .addCategory(DamageClass.ELECTRIC, 4.0F, 0.5F)
+                .setOther(5.0F, 0.6F);
+        expectResistance(problems, "stats exact normalizes subAtomic", stats.exactResistances().get("subatomic"), 1.0F, 0.2F);
+        expectResistance(problems, "stats exact normalizes on_fire", stats.exactResistances().get("onfire"), 2.0F, 0.3F);
+        expectResistance(problems, "stats category normalizes energy", stats.categoryResistances().get(CATEGORY_ENERGY), 4.0F, 0.5F);
+        expectResistance(problems, "stats other preserved", stats.otherResistance(), 5.0F, 0.6F);
         PierceState previous = capturePiercing();
         try {
             setup(7.0F, 0.3F);
@@ -234,6 +251,22 @@ public final class DamageResistanceHandler {
         expect(problems, "negative pierce doubles DR cap path", nearly(overPierce.effectiveDr(), 0.5F));
         DamageFormula fullAbsorb = reduceDamage(10.0F, 12.0F, 0.0F, 0.0F, 0.0F);
         expect(problems, "DT full absorb", nearly(fullAbsorb.finalDamage(), 0.0F));
+        DamageResistanceStats firstSet = new DamageResistanceStats().setOther(1.0F, 0.1F);
+        DamageResistanceStats secondSet = new DamageResistanceStats().setOther(2.0F, 0.2F);
+        Item shared = net.minecraft.world.item.Items.IRON_HELMET;
+        Item chest = net.minecraft.world.item.Items.IRON_CHESTPLATE;
+        Item legs = net.minecraft.world.item.Items.IRON_LEGGINGS;
+        Item boots = net.minecraft.world.item.Items.IRON_BOOTS;
+        Map<ArmorSet, DamageResistanceStats> auditSetStats = new HashMap<>();
+        Map<Item, List<ArmorSet>> auditItemInfoSets = new HashMap<>();
+        ArmorSet first = new ArmorSet(shared, chest, legs, boots);
+        ArmorSet second = new ArmorSet(shared, net.minecraft.world.item.Items.DIAMOND_CHESTPLATE, legs, boots);
+        auditSetStats.put(first, firstSet);
+        auditSetStats.put(second, secondSet);
+        addSetInfo(auditItemInfoSets, shared, first);
+        addSetInfo(auditItemInfoSets, shared, second);
+        expect(problems, "item set info keeps registration order",
+                setStatsForItem(shared, auditItemInfoSets, auditSetStats) == firstSet);
         return new CoreAudit(List.copyOf(problems));
     }
 
@@ -298,9 +331,19 @@ public final class DamageResistanceHandler {
     }
 
     public static DamageResistanceStats setStatsForItem(Item item) {
-        for (Map.Entry<ArmorSet, DamageResistanceStats> entry : SET_STATS.entrySet()) {
-            if (entry.getKey().contains(item)) {
-                return entry.getValue();
+        return setStatsForItem(item, ITEM_INFO_SETS, SET_STATS);
+    }
+
+    private static DamageResistanceStats setStatsForItem(Item item, Map<Item, List<ArmorSet>> itemInfoSets,
+            Map<ArmorSet, DamageResistanceStats> setStats) {
+        List<ArmorSet> sets = itemInfoSets.get(item);
+        if (sets == null) {
+            return null;
+        }
+        for (ArmorSet set : sets) {
+            DamageResistanceStats stats = setStats.get(set);
+            if (stats != null) {
+                return stats;
             }
         }
         return null;
@@ -436,6 +479,13 @@ public final class DamageResistanceHandler {
         }
     }
 
+    private static void expectResistance(List<String> problems, String label, @Nullable DamageResistance actual,
+            float threshold, float resistance) {
+        expect(problems, label, actual != null
+                && nearly(actual.threshold(), threshold)
+                && nearly(actual.resistance(), resistance));
+    }
+
     private static boolean nearly(float actual, float expected) {
         return Math.abs(actual - expected) < 0.0001F;
     }
@@ -450,6 +500,16 @@ public final class DamageResistanceHandler {
 
     private static String describeArmorSet(ArmorSet set) {
         return itemId(set.helmet()) + ", " + itemId(set.chest()) + ", " + itemId(set.legs()) + ", " + itemId(set.boots());
+    }
+
+    private static void addSetInfo(@Nullable Item item, ArmorSet set) {
+        addSetInfo(ITEM_INFO_SETS, item, set);
+    }
+
+    private static void addSetInfo(Map<Item, List<ArmorSet>> itemInfoSets, @Nullable Item item, ArmorSet set) {
+        if (item != null) {
+            itemInfoSets.computeIfAbsent(item, ignored -> new ArrayList<>()).add(set);
+        }
     }
 
     private static EntityStatsMatch entityStatsMatch(LivingEntity entity) {
@@ -513,9 +573,6 @@ public final class DamageResistanceHandler {
             return stack.isEmpty() ? null : stack.getItem();
         }
 
-        private boolean contains(Item item) {
-            return helmet == item || chest == item || legs == item || boots == item;
-        }
     }
 
     public record ResistanceBreakdown(String exactType, String category, boolean absolute, float rawDt, float rawDr,

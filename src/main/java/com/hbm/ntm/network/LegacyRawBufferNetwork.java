@@ -23,6 +23,13 @@ public final class LegacyRawBufferNetwork {
         recordBlocked(reason);
     }
 
+    public static void rejectAllAround(ByteBuf message, LegacyTargetPoint point) {
+        String reason = "sendToAllAround(ByteBuf, LegacyTargetPoint)"
+                + " bytes=" + readableBytes(message)
+                + " target=" + (point == null ? "null" : point.summary());
+        recordBlocked(reason);
+    }
+
     public static long blockedRawBufferSendCount() {
         return BLOCKED_RAW_BUFFER_SENDS.get();
     }

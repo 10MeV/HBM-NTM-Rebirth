@@ -22,6 +22,20 @@ public final class LegacyBeamRenderer {
                                  double x, double y, double z,
                                  WaveType wave, int outerColor, int innerColor,
                                  int start, int segments, float size, int layers, float thickness) {
+        solidBeam(poseStack, buffer, false, x, y, z, wave, outerColor, innerColor, start, segments, size, layers, thickness);
+    }
+
+    public static void solidBeamWithDepth(PoseStack poseStack, MultiBufferSource buffer,
+                                 double x, double y, double z,
+                                 WaveType wave, int outerColor, int innerColor,
+                                 int start, int segments, float size, int layers, float thickness) {
+        solidBeam(poseStack, buffer, true, x, y, z, wave, outerColor, innerColor, start, segments, size, layers, thickness);
+    }
+
+    public static void solidBeam(PoseStack poseStack, MultiBufferSource buffer, boolean depthWrite,
+                                 double x, double y, double z,
+                                 WaveType wave, int outerColor, int innerColor,
+                                 int start, int segments, float size, int layers, float thickness) {
         if (segments <= 0 || layers <= 0) {
             return;
         }
@@ -35,7 +49,9 @@ public final class LegacyBeamRenderer {
         Vector3d axisY = new Vector3d(skeleton).normalize();
         Vector3d axisX = perpendicular(axisY);
         Vector3d axisZ = new Vector3d(axisY).cross(axisX).normalize();
-        VertexConsumer consumer = LegacyUntexturedQuadRenderer.lightning(buffer);
+        VertexConsumer consumer = buffer.getBuffer(depthWrite
+                ? LegacyUntexturedQuadRenderer.additiveDepthWriteNoCullType()
+                : LegacyUntexturedQuadRenderer.additiveNoCullType());
         PoseStack.Pose pose = poseStack.last();
 
         RANDOM.setSeed(start);
@@ -65,7 +81,8 @@ public final class LegacyBeamRenderer {
         Vector3d axisY = new Vector3d(skeleton).normalize();
         Vector3d axisX = perpendicular(axisY);
         Vector3d axisZ = new Vector3d(axisY).cross(axisX).normalize();
-        VertexConsumer consumer = LegacyUntexturedQuadRenderer.solid(buffer);
+        VertexConsumer consumer = LegacyLineRenderer.consumer(buffer, LegacyLineRenderer.DEFAULT_LINE_WIDTH,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
         PoseStack.Pose pose = poseStack.last();
 
         RANDOM.setSeed(start);
@@ -153,21 +170,7 @@ public final class LegacyBeamRenderer {
     }
 
     private static void line(VertexConsumer consumer, PoseStack.Pose pose, Vector3d start, Vector3d end, int color) {
-        Vector3d direction = new Vector3d(end).sub(start);
-        if (direction.lengthSquared() <= 1.0E-10D) {
-            return;
-        }
-        direction.normalize();
-        Vector3d side = perpendicular(direction).mul(0.01D);
-        LegacyUntexturedQuadRenderer.quad(
-                consumer,
-                pose,
-                start.x - side.x, start.y - side.y, start.z - side.z,
-                start.x + side.x, start.y + side.y, start.z + side.z,
-                end.x + side.x, end.y + side.y, end.z + side.z,
-                end.x - side.x, end.y - side.y, end.z - side.z,
-                red(color), green(color), blue(color),
-                255, 255, 255, 255);
+        LegacyLineRenderer.line(consumer, pose, start.x, start.y, start.z, end.x, end.y, end.z, color, 255);
     }
 
     private static int interpolateColor(int outerColor, int innerColor, float inter) {

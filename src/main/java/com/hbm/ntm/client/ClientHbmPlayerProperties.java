@@ -12,6 +12,9 @@ public final class ClientHbmPlayerProperties {
     private static boolean hudEnabled = true;
     private static int reputation;
     private static boolean onLadder;
+    private static int dashCount;
+    private static int stamina;
+    private static int dashCooldown;
     private static boolean registered;
 
     public static boolean hasReceivedBook() {
@@ -54,6 +57,21 @@ public final class ClientHbmPlayerProperties {
         return onLadder;
     }
 
+    public static int getDashCount() {
+        registerListener();
+        return dashCount;
+    }
+
+    public static int getStamina() {
+        registerListener();
+        return stamina;
+    }
+
+    public static int getDashCooldown() {
+        registerListener();
+        return dashCooldown;
+    }
+
     public static boolean shouldRenderHud() {
         net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
         return minecraft.player != null && !minecraft.options.hideGui && isHudEnabled();
@@ -81,6 +99,9 @@ public final class ClientHbmPlayerProperties {
         hudEnabled = true;
         reputation = 0;
         onLadder = false;
+        dashCount = 0;
+        stamina = 0;
+        dashCooldown = 0;
         registered = false;
     }
 
@@ -96,6 +117,9 @@ public final class ClientHbmPlayerProperties {
                 || data.getBoolean(HbmPlayerProperties.KEY_ENABLE_HUD);
         reputation = data.getInt(HbmPlayerProperties.KEY_REPUTATION);
         onLadder = data.getBoolean(HbmPlayerProperties.KEY_IS_ON_LADDER);
+        dashCount = data.getInt(HbmPlayerProperties.KEY_DASH_COUNT);
+        stamina = data.getInt(HbmPlayerProperties.KEY_STAMINA);
+        dashCooldown = data.getInt(HbmPlayerProperties.KEY_DASH_COOLDOWN);
     }
 
     private ClientHbmPlayerProperties() {

@@ -30,7 +30,7 @@ public final class LegacyLookOverlayRenderer {
         if (minecraft.level == null || minecraft.player == null || minecraft.screen != null) {
             return;
         }
-        if (!HbmClientConfig.LEGACY_LOOK_OVERLAY.get()) {
+        if (!HbmClientConfig.legacyLookOverlay()) {
             return;
         }
         HitResult hitResult = minecraft.hitResult;
@@ -50,7 +50,7 @@ public final class LegacyLookOverlayRenderer {
     private static LegacyLookOverlay resolveOverlay(Minecraft minecraft, HitResult hitResult) {
         if (hitResult instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
             BlockState state = minecraft.level.getBlockState(blockHit.getBlockPos());
-            if (HbmClientConfig.SHOW_BLOCK_STATE_OVERLAY.get()) {
+            if (HbmClientConfig.showBlockStateOverlay()) {
                 return debugBlockStateOverlay(state);
             }
             LegacyLookOverlay overlay = resolveHeldItemOverlay(minecraft, blockHit);

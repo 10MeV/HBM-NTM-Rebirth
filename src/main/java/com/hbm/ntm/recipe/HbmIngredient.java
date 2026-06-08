@@ -3,6 +3,7 @@ package com.hbm.ntm.recipe;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -198,6 +200,29 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
 
     public boolean exceedsStackLimit() {
         return stackLimit().filter(limit -> count > limit).isPresent();
+    }
+
+    public List<ItemStack> remainingItems(ItemStack stack) {
+        if (!test(stack)) {
+            return List.of();
+        }
+        ItemStack consumed = stack.copy();
+        consumed.setCount(1);
+        ItemStack empty = HbmFluidContainerRegistry.getEmptyContainer(consumed);
+        if (empty.isEmpty()) {
+            return List.of();
+        }
+
+        List<ItemStack> remainders = new ArrayList<>();
+        int remaining = count;
+        int maxStackSize = Math.max(1, empty.getMaxStackSize());
+        while (remaining > 0) {
+            ItemStack copy = empty.copy();
+            copy.setCount(Math.min(remaining, maxStackSize));
+            remainders.add(copy);
+            remaining -= copy.getCount();
+        }
+        return remainders;
     }
 
     public Optional<Integer> stackLimit() {

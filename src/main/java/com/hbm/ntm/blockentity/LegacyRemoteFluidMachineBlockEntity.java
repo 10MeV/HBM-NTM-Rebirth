@@ -358,7 +358,7 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         if (items != null) {
-            tag.put(TAG_INVENTORY, HbmInventoryMenuHelper.saveLegacyItems(items));
+            HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         }
     }
 
@@ -366,7 +366,7 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     public void load(CompoundTag tag) {
         super.load(tag);
         if (items != null) {
-            HbmInventoryMenuHelper.loadLegacyItems(tag.getCompound(TAG_INVENTORY), items);
+            HbmInventoryMenuHelper.loadLegacyItemsCompound(tag, TAG_INVENTORY, items);
         }
     }
 

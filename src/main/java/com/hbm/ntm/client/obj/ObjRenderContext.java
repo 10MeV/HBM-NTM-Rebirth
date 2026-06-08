@@ -92,8 +92,33 @@ public record ObjRenderContext(
     }
 
     public ObjRenderContext fullBright() {
-        return new ObjRenderContext(poseStack, buffer, state, LightTexture.FULL_BRIGHT, packedOverlay, color,
+        return withPackedLight(LightTexture.FULL_BRIGHT);
+    }
+
+    public ObjRenderContext withPackedLight(int packedLight) {
+        return new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay, color,
                 alpha, hasColor, legacyShadow, renderMode, uScale, uFromV, vFromU, vScale, uOffset, vOffset, legacyTextureOffset);
+    }
+
+    public ObjRenderContext withLightmap(int blockLight, int skyLight) {
+        return withPackedLight(LightTexture.pack(clampLight(blockLight), clampLight(skyLight)));
+    }
+
+    public ObjRenderContext withLegacyLightmap(float lightmapX, float lightmapY) {
+        return withPackedLight(legacyLightmap(lightmapX, lightmapY));
+    }
+
+    public ObjRenderContext withPackedOverlay(int packedOverlay) {
+        return new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay, color,
+                alpha, hasColor, legacyShadow, renderMode, uScale, uFromV, vFromU, vScale, uOffset, vOffset, legacyTextureOffset);
+    }
+
+    public ObjRenderContext withoutOverlay() {
+        return withPackedOverlay(0);
+    }
+
+    public ObjRenderContext withLegacyBrightness(int brightness) {
+        return withPackedLight(brightness);
     }
 
     public ObjRenderContext withLegacyShadow() {
@@ -208,5 +233,17 @@ public record ObjRenderContext(
 
     private static int clampColor(float value) {
         return clampAlpha(Math.round(value * 255.0F));
+    }
+
+    private static int clampLight(int light) {
+        return Math.max(0, Math.min(15, light));
+    }
+
+    public static int legacyLightmap(float lightmapX, float lightmapY) {
+        return clampLightmapCoord(Math.round(lightmapY)) << 16 | clampLightmapCoord(Math.round(lightmapX));
+    }
+
+    private static int clampLightmapCoord(int value) {
+        return Math.max(0, Math.min(65535, value));
     }
 }

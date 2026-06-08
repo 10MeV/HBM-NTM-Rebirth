@@ -17,6 +17,149 @@
       }
     ]
   },
+  "block.engine": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.engine",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/engine",
+        "stream": false
+      }
+    ]
+  },
+  "block.large_turbine_running": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.turbine",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/large_turbine",
+        "stream": false
+      }
+    ]
+  },
+  "block.chungus_turbine_running": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.turbine",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/chungus_turbine",
+        "stream": false
+      }
+    ]
+  },
+  "block.fel": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.fel",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/fel",
+        "stream": false
+      }
+    ]
+  },
+  "block.electric_hum": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.electric_hum",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/electric_hum",
+        "stream": false
+      }
+    ]
+  },
+  "block.fusion_reactor_running": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.fusion_reactor",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/fusion_reactor_spin",
+        "stream": false
+      }
+    ]
+  },
+  "block.boiler_groan": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.boiler_groan",
+    "sounds": [
+      "hbm_ntm_rebirth:block/boiler_groan0",
+      "hbm_ntm_rebirth:block/boiler_groan1",
+      "hbm_ntm_rebirth:block/boiler_groan2"
+    ]
+  },
+  "block.centrifuge_operate": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.centrifuge",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/centrifuge_operate",
+        "stream": false
+      }
+    ]
+  },
+  "block.turbofan_operate": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.turbofan",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/turbofan_operate",
+        "stream": true
+      }
+    ]
+  },
+  "block.damage": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.damage",
+    "sounds": [
+      "hbm_ntm_rebirth:block/dam1",
+      "hbm_ntm_rebirth:block/dam2",
+      "hbm_ntm_rebirth:block/dam3",
+      "hbm_ntm_rebirth:block/dam4"
+    ]
+  },
+  "block.hephaestus_running": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.hephaestus",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/hephaestus_running",
+        "stream": false
+      }
+    ]
+  },
+  "block.steam_engine_operate": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.steam_engine",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/steam_engine_operate",
+        "stream": false
+      }
+    ]
+  },
+  "block.reactor_loop": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.reactor_loop",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/reactor_loop",
+        "stream": false
+      }
+    ]
+  },
+  "block.turbinegas_startup": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.turbinegas",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/turbinegas_startup",
+        "stream": false
+      }
+    ]
+  },
+  "block.turbinegas_running": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.turbinegas",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/turbinegas_running",
+        "stream": false
+      }
+    ]
+  },
+  "block.turbinegas_shutdown": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.turbinegas",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/turbinegas_shutdown",
+        "stream": true
+      }
+    ]
+  },
   "block.assembler_operate": {
     "subtitle": "subtitles.hbm_ntm_rebirth.block.assembler_operate",
     "sounds": [
@@ -106,6 +249,24 @@
     "sounds": [
       {
         "name": "hbm_ntm_rebirth:block/pyrooperate",
+        "stream": true
+      }
+    ]
+  },
+  "block.sonar_ping": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.sonar_ping",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/sonar_ping",
+        "stream": false
+      }
+    ]
+  },
+  "block.soyuz_ready": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.soyuz_ready",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/soyuz_ready",
         "stream": true
       }
     ]
@@ -203,6 +364,15 @@
       }
     ]
   },
+  "entity.slicer": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.entity.slicer",
+    "sounds": [
+      "hbm_ntm_rebirth:entity/slicer1",
+      "hbm_ntm_rebirth:entity/slicer2",
+      "hbm_ntm_rebirth:entity/slicer3",
+      "hbm_ntm_rebirth:entity/slicer4"
+    ]
+  },
   "entity.chopper_flying_loop": {
     "subtitle": "subtitles.hbm_ntm_rebirth.entity.chopper",
     "sounds": [
@@ -254,6 +424,24 @@
       {
         "name": "hbm_ntm_rebirth:entity/chopper_damage",
         "stream": true
+      }
+    ]
+  },
+  "entity.soyuz_takeoff": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.entity.soyuz_takeoff",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:entity/soyuz_takeoff",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.soyuzed": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.soyuzed",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/soyuzed",
+        "stream": false
       }
     ]
   },
@@ -342,6 +530,15 @@
       }
     ]
   },
+  "weapon.chainsaw": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.chainsaw",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/chainsaw",
+        "stream": false
+      }
+    ]
+  },
   "weapon.flamethrower_shoot": {
     "subtitle": "subtitles.hbm_ntm_rebirth.weapon.flamethrower",
     "sounds": [
@@ -356,6 +553,32 @@
     "sounds": [
       {
         "name": "hbm_ntm_rebirth:weapon/rocket_flame",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.cal_shoot": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.cal_shoot",
+    "sounds": [
+      "hbm_ntm_rebirth:weapon/cal1",
+      "hbm_ntm_rebirth:weapon/cal2",
+      "hbm_ntm_rebirth:weapon/cal3"
+    ]
+  },
+  "weapon.tesla_shoot": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.tesla_shoot",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/tesla_shoot",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.hk_shoot": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.hk_shoot",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/hk_shoot",
         "stream": false
       }
     ]

@@ -60,8 +60,9 @@ public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFlui
         EnergyRect energy = energyRect(menu.getProfile());
         if (energy != null && isHovering(energy.x(), energy.bottom() - energy.height(), energy.width(),
                 energy.height(), mouseX, mouseY)) {
-            graphics.renderTooltip(font,
-                    Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + energy.x(), topPos + energy.bottom() - energy.height(),
+                    energy.width(), energy.height(), menu.getPower(), menu.getMaxPower());
         }
         if (menu.getProfile() == LegacyGuiProfile.COKER) {
             if (isHovering(60, 45, 54, 7, mouseX, mouseY)) {

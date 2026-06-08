@@ -52,12 +52,20 @@ public final class LegacyNetworkDispatcher {
         ModMessages.sendToDimension(message, dimension);
     }
 
+    public void sendToDimension(Object message, int dimensionId) {
+        LegacyDimensionIdNetwork.rejectSendToDimension(message, dimensionId, false);
+    }
+
     public void sendToDimensionThreaded(Object message, ServerLevel level) {
         ThreadedPacketDispatcher.sendToDimension(message, level);
     }
 
     public void sendToDimensionThreaded(Object message, ResourceKey<Level> dimension) {
         ThreadedPacketDispatcher.sendToDimension(message, dimension);
+    }
+
+    public void sendToDimensionThreaded(Object message, int dimensionId) {
+        LegacyDimensionIdNetwork.rejectSendToDimension(message, dimensionId, true);
     }
 
     public void sendToAllAround(Object message, ServerLevel level, double x, double y, double z, double range) {
@@ -85,6 +93,22 @@ public final class LegacyNetworkDispatcher {
         ThreadedPacketDispatcher.sendToAllAround(message, dimension, x, y, z, range);
     }
 
+    public void sendToAllAround(Object message, int dimensionId, double x, double y, double z, double range) {
+        LegacyDimensionIdNetwork.rejectAllAround(message, dimensionId, x, y, z, range, false);
+    }
+
+    public void sendToAllAroundThreaded(Object message, int dimensionId, double x, double y, double z, double range) {
+        LegacyDimensionIdNetwork.rejectAllAround(message, dimensionId, x, y, z, range, true);
+    }
+
+    public void sendToAllAround(Object message, LegacyTargetPoint point) {
+        ModMessages.sendToAllAround(message, point);
+    }
+
+    public void sendToAllAroundThreaded(Object message, LegacyTargetPoint point) {
+        ThreadedPacketDispatcher.sendToAllAround(message, point);
+    }
+
     public void sendToAllAround(Object message, ResourceKey<Level> dimension, BlockPos pos, double range) {
         ModMessages.sendToAllAround(message, dimension, pos, range);
     }
@@ -109,6 +133,10 @@ public final class LegacyNetworkDispatcher {
         LegacyRawBufferNetwork.rejectAllAround(message, point);
     }
 
+    public void sendToAllAround(ByteBuf message, LegacyTargetPoint point) {
+        LegacyRawBufferNetwork.rejectAllAround(message, point);
+    }
+
     public void sendToAllAroundThreaded(Object message, PacketDistributor.TargetPoint point) {
         ThreadedPacketDispatcher.sendToAllAround(message, point);
     }
@@ -129,6 +157,15 @@ public final class LegacyNetworkDispatcher {
     public void createAllAroundThreadedPacket(Object message, ResourceKey<Level> dimension,
                                               double x, double y, double z, double range) {
         LegacyPacketThreading.createAllAroundThreadedPacket(message, dimension, x, y, z, range);
+    }
+
+    public void createAllAroundThreadedPacket(Object message, int dimensionId,
+                                              double x, double y, double z, double range) {
+        LegacyPacketThreading.createAllAroundThreadedPacket(message, dimensionId, x, y, z, range);
+    }
+
+    public void createAllAroundThreadedPacket(Object message, LegacyTargetPoint point) {
+        LegacyPacketThreading.createAllAroundThreadedPacket(message, point);
     }
 
     public void createAllAroundThreadedPacket(Object message, ResourceKey<Level> dimension,
@@ -204,6 +241,7 @@ public final class LegacyNetworkDispatcher {
     public static void resetLegacyCounters() {
         LEGACY_FLUSH_CALLS.set(0L);
         LegacyRawBufferNetwork.reset();
+        LegacyDimensionIdNetwork.reset();
     }
 
     public static String compatibilityNote() {
@@ -216,12 +254,41 @@ public final class LegacyNetworkDispatcher {
                 + " note=flushes threaded dispatcher only; Forge SimpleChannel has no manual flush";
     }
 
+    public static LegacyTargetPoint targetPoint(int dimensionId, double x, double y, double z, double range) {
+        return LegacyTargetPoint.legacy(dimensionId, x, y, z, range);
+    }
+
+    public static LegacyTargetPoint targetPoint(ResourceKey<Level> dimension,
+                                                double x, double y, double z, double range) {
+        return LegacyTargetPoint.modern(dimension, x, y, z, range);
+    }
+
+    public static LegacyTargetPoint targetPoint(ResourceKey<Level> dimension, BlockPos pos, double range) {
+        return LegacyTargetPoint.modern(dimension, pos, range);
+    }
+
+    public static LegacyTargetPoint targetPoint(ServerLevel level, double x, double y, double z, double range) {
+        return LegacyTargetPoint.from(level, x, y, z, range);
+    }
+
+    public static LegacyTargetPoint targetPoint(Level level, BlockPos pos, double range) {
+        return LegacyTargetPoint.from(level, pos, range);
+    }
+
+    public static LegacyTargetPoint targetPoint(Entity entity, double range) {
+        return LegacyTargetPoint.from(entity, range);
+    }
+
+    public static LegacyTargetPoint targetPoint(BlockEntity blockEntity, double range) {
+        return LegacyTargetPoint.from(blockEntity, range);
+    }
+
     public static int directSendHelperCount() {
-        return 16;
+        return 20;
     }
 
     public static int threadedSendHelperCount() {
-        return 14;
+        return 17;
     }
 
     public static int packetThreadingHelperCount() {

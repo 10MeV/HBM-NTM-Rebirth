@@ -74,6 +74,46 @@ public final class HbmEnergyNodespace {
                 core.reapTimer());
     }
 
+    public static ChunkDiagnostics getChunkDiagnostics(Level level, ChunkPos chunkPos) {
+        HbmNodespace.ChunkDiagnostics core = NODESPACE.getChunkDiagnostics(level, chunkPos);
+        int providerEntries = 0;
+        int receiverEntries = 0;
+        for (HbmPowerNet net : NODESPACE.getNetworks(level)) {
+            boolean touchesChunk = false;
+            for (HbmEnergyNode node : net.getLinks()) {
+                for (BlockPos nodePos : node.getPositions()) {
+                    if (new ChunkPos(nodePos).equals(chunkPos)) {
+                        touchesChunk = true;
+                        break;
+                    }
+                }
+                if (touchesChunk) {
+                    break;
+                }
+            }
+            if (!touchesChunk) {
+                continue;
+            }
+            HbmPowerNet.DebugSnapshot snapshot = net.createDebugSnapshot();
+            providerEntries += snapshot.providers();
+            receiverEntries += snapshot.receivers();
+        }
+
+        return new ChunkDiagnostics(
+                chunkPos,
+                level != null && chunkPos != null && level.hasChunk(chunkPos.x, chunkPos.z),
+                core.nodePositions(),
+                core.uniqueNodes(),
+                core.networks(),
+                core.invalidNetworks(),
+                core.linkRefs(),
+                core.dirtyNodes(),
+                core.expiredNodes(),
+                core.orphanNodes(),
+                providerEntries,
+                receiverEntries);
+    }
+
     public static ForceRebuildResult forceRebuild(Level level) {
         HbmNodespace.ForceRebuildResult result = NODESPACE.forceRebuild(level);
         return new ForceRebuildResult(result.nodes(), result.oldNetworks(), result.newNetworks(), result.reapTimer());
@@ -194,6 +234,21 @@ public final class HbmEnergyNodespace {
         private static Diagnostics empty() {
             return new Diagnostics(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         }
+    }
+
+    public record ChunkDiagnostics(
+            ChunkPos chunkPos,
+            boolean loaded,
+            int nodePositions,
+            int uniqueNodes,
+            int networks,
+            int invalidNetworks,
+            int linkRefs,
+            int dirtyNodes,
+            int expiredNodes,
+            int orphanNodes,
+            int providerEntries,
+            int receiverEntries) {
     }
 
     public record ForceRebuildResult(

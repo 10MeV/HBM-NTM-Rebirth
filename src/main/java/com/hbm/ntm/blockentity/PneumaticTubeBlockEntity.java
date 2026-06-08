@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.ntl.PneumaticConnector;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -13,11 +14,10 @@ import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNetwork;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNode;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNodespace;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticUtil;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidReceiver, PneumaticEndpoint {
+public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidReceiver, PneumaticEndpoint, PneumaticConnector {
     public static final int FILTER_SLOTS = 15;
     public static final int AIR_CAPACITY = 4_000;
     public static final int AIR_COST_PER_SEND = 50;
@@ -261,6 +261,11 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
     }
 
     @Override
+    public boolean canConnectPneumatic(Direction side) {
+        return side != null;
+    }
+
+    @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
         return canConnectFluid(HbmFluids.AIR, side) ? HbmFluidSideMode.INPUT : HbmFluidSideMode.NONE;
     }
@@ -281,16 +286,7 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         tag.putByte(TAG_RECEIVE_ORDER, receiveOrder);
         tag.putInt(TAG_SEND_COUNTER, sendCounter);
         tag.putInt(TAG_SOUND_DELAY, soundDelay);
-        ListTag list = new ListTag();
-        for (int slot = 0; slot < filter.length; slot++) {
-            if (!filter[slot].isEmpty()) {
-                CompoundTag stackTag = new CompoundTag();
-                stackTag.putByte(TAG_FILTER_SLOT, (byte) slot);
-                filter[slot].save(stackTag);
-                list.add(stackTag);
-            }
-        }
-        tag.put(TAG_FILTER, list);
+        HbmItemStackUtil.saveSlottedItemsToTag(tag, TAG_FILTER, TAG_FILTER_SLOT, filter);
     }
 
     @Override
@@ -306,15 +302,7 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         receiveOrder = tag.getByte(TAG_RECEIVE_ORDER);
         sendCounter = tag.getInt(TAG_SEND_COUNTER);
         soundDelay = tag.getInt(TAG_SOUND_DELAY);
-        Arrays.fill(filter, ItemStack.EMPTY);
-        ListTag list = tag.getList(TAG_FILTER, Tag.TAG_COMPOUND);
-        for (int i = 0; i < list.size(); i++) {
-            CompoundTag stackTag = list.getCompound(i);
-            int slot = stackTag.getByte(TAG_FILTER_SLOT) & 255;
-            if (slot >= 0 && slot < filter.length) {
-                filter[slot] = ItemStack.of(stackTag);
-            }
-        }
+        HbmItemStackUtil.loadSlottedItems(tag, TAG_FILTER, TAG_FILTER_SLOT, filter);
     }
 
     @Override
@@ -354,7 +342,8 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         }
         java.util.EnumSet<Direction> connections = java.util.EnumSet.noneOf(Direction.class);
         for (Direction direction : Direction.values()) {
-            if (level.getBlockEntity(worldPosition.relative(direction)) instanceof PneumaticTubeBlockEntity) {
+            if (level.getBlockEntity(worldPosition.relative(direction)) instanceof PneumaticConnector connector
+                    && connector.canConnectPneumatic(direction.getOpposite())) {
                 connections.add(direction);
             }
         }

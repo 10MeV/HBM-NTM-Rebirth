@@ -87,6 +87,14 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "pollution_detector");
             return;
         }
+        if (path.equals("missile_soyuz")) {
+            generatedItem(path, "soyuz_0");
+            return;
+        }
+        if (path.equals("missile_soyuz_lander")) {
+            generatedItem(path, "soyuz_lander");
+            return;
+        }
         if (path.equals("fluid_icon")) {
             layeredItem(path, "fluid_icon", "fluid_identifier_overlay");
             return;

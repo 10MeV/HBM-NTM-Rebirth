@@ -2,7 +2,9 @@ package com.hbm.ntm.client.particle;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.NoRenderParticle;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
@@ -19,6 +21,7 @@ public class LargeExplodeParticle extends TextureSheetParticle {
     private static final int SECONDARY_SPRITE_OFFSET = 16;
     private static final int SECONDARY_SPRITES = 8;
     private static final int LAST_SPRITE_INDEX = PRIMARY_SPRITES + SECONDARY_SPRITES - 1;
+    private static final int HUGE_SEED_LIFETIME = 8;
     private static SpriteSet sharedSprites;
 
     private final SpriteSet sprites;
@@ -62,6 +65,24 @@ public class LargeExplodeParticle extends TextureSheetParticle {
                 color, 0.9F * color, 0.5F * color, true, sharedSprites);
     }
 
+    public static LargeExplodeParticle largeVanilla(ClientLevel level, double x, double y, double z, float size) {
+        if (sharedSprites == null) {
+            return null;
+        }
+        return new LargeExplodeParticle(level, x, y, z, 0.0D, 0.0D, 0.0D, size,
+                1.0F, 1.0F, 1.0F, true, sharedSprites);
+    }
+
+    public static LargeExplodeParticle explode(ClientLevel level, double x, double y, double z,
+            double xSpeed, double ySpeed, double zSpeed) {
+        if (sharedSprites == null) {
+            return null;
+        }
+        float color = level.random.nextFloat() * 0.3F + 0.7F;
+        return new LargeExplodeParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, 1.0F,
+                color, color, color, false, sharedSprites);
+    }
+
     public static LargeExplodeParticle secondary(ClientLevel level, double x, double y, double z, float scale) {
         if (sharedSprites == null) {
             return null;
@@ -70,6 +91,13 @@ public class LargeExplodeParticle extends TextureSheetParticle {
         float gray = 0.5F * color;
         return new LargeExplodeParticle(level, x, y, z, 0.0D, 0.0D, 0.0D, scale,
                 gray, gray, gray, false, sharedSprites);
+    }
+
+    public static Particle hugeExplosionSeed(ClientLevel level, double x, double y, double z) {
+        if (sharedSprites == null) {
+            return null;
+        }
+        return new HugeExplosionSeed(level, x, y, z);
     }
 
     @Override
@@ -128,6 +156,33 @@ public class LargeExplodeParticle extends TextureSheetParticle {
         this.setSprite(this.sprites.get(SECONDARY_SPRITE_OFFSET + (7 - oldTextureIndex), LAST_SPRITE_INDEX));
     }
 
+    private static class HugeExplosionSeed extends NoRenderParticle {
+        private int timeSinceStart;
+
+        private HugeExplosionSeed(ClientLevel level, double x, double y, double z) {
+            super(level, x, y, z, 0.0D, 0.0D, 0.0D);
+            this.lifetime = HUGE_SEED_LIFETIME;
+        }
+
+        @Override
+        public void tick() {
+            for (int i = 0; i < 6; i++) {
+                Particle particle = largeVanilla(this.level,
+                        this.x + (this.random.nextDouble() - this.random.nextDouble()) * 4.0D,
+                        this.y + (this.random.nextDouble() - this.random.nextDouble()) * 4.0D,
+                        this.z + (this.random.nextDouble() - this.random.nextDouble()) * 4.0D,
+                        (float) this.timeSinceStart / (float) HUGE_SEED_LIFETIME);
+                if (particle != null) {
+                    Minecraft.getInstance().particleEngine.add(particle);
+                }
+            }
+            this.timeSinceStart++;
+            if (this.timeSinceStart == HUGE_SEED_LIFETIME) {
+                this.remove();
+            }
+        }
+    }
+
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;
 
@@ -139,8 +194,8 @@ public class LargeExplodeParticle extends TextureSheetParticle {
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z,
                 double xSpeed, double ySpeed, double zSpeed) {
-            return new LargeExplodeParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, 1.0F,
-                    1.0F, 0.9F, 0.5F, true, this.sprites);
+            return new LargeExplodeParticle(level, x, y, z, 0.0D, 0.0D, 0.0D, (float) xSpeed,
+                    1.0F, 1.0F, 1.0F, true, this.sprites);
         }
     }
 }

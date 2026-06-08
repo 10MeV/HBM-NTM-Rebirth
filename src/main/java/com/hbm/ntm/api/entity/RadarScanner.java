@@ -1,6 +1,6 @@
 package com.hbm.ntm.api.entity;
 
-import com.hbm.ntm.radiation.RadiationData;
+import com.hbm.ntm.player.HbmLivingProperties;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -128,7 +128,7 @@ public final class RadarScanner {
     }
 
     private static boolean isLegacyDigammaJammer(LivingEntity entity) {
-        return RadiationData.getDigamma(entity) > LEGACY_DIGAMMA_JAM_THRESHOLD;
+        return HbmLivingProperties.getDigamma(entity) > LEGACY_DIGAMMA_JAM_THRESHOLD;
     }
 
     private RadarScanner() {

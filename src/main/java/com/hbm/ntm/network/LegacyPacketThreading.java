@@ -53,6 +53,23 @@ public final class LegacyPacketThreading {
         ThreadedPacketDispatcher.sendToAllAround(message, dimension, x, y, z, range);
     }
 
+    public static void createAllAroundThreadedPacket(Object message, int dimensionId,
+                                                     double x, double y, double z, double range) {
+        LEGACY_ALL_AROUND_CALLS.incrementAndGet();
+        LEGACY_CURRENT_TICK_TOTAL.incrementAndGet();
+        LegacyDimensionIdNetwork.rejectPacketThreadingAllAround(message, dimensionId, x, y, z, range);
+    }
+
+    public static void createAllAroundThreadedPacket(Object message, LegacyTargetPoint point) {
+        LEGACY_ALL_AROUND_CALLS.incrementAndGet();
+        LEGACY_CURRENT_TICK_TOTAL.incrementAndGet();
+        if (point != null && point.hasModernDimension()) {
+            ThreadedPacketDispatcher.sendToAllAround(message, point.toModernTargetPoint());
+            return;
+        }
+        LegacyDimensionIdNetwork.rejectPacketThreadingAllAround(message, point);
+    }
+
     public static void createAllAroundThreadedPacket(Object message, ResourceKey<Level> dimension,
                                                      BlockPos pos, double range) {
         LEGACY_ALL_AROUND_CALLS.incrementAndGet();
@@ -120,17 +137,21 @@ public final class LegacyPacketThreading {
     }
 
     public static int legacyHelperCount() {
-        return 10;
+        return 12;
     }
 
     public static String compatibilitySummary() {
         LegacyCommandSnapshot commandSnapshot = legacyCommandSnapshot();
+        ThreadedPacketDispatcher.Snapshot dispatcherSnapshot = ThreadedPacketDispatcher.snapshot();
         return "legacyPacketThreading=PacketThreading facade"
                 + " helpers=" + legacyHelperCount()
                 + " allAroundCalls=" + legacyAllAroundCallCount()
                 + " sendToCalls=" + legacySendToCallCount()
                 + " waitCalls=" + legacyWaitCallCount()
                 + " clearCalls=" + legacyClearCallCount()
+                + " prepared=" + dispatcherSnapshot.totalPrepared()
+                + " preparable=" + dispatcherSnapshot.preparableMessages()
+                + " preparedCopies=" + dispatcherSnapshot.preparedCopyInstance()
                 + " currentTickTotal=" + commandSnapshot.currentTickTotal()
                 + " lastTickTotal=" + commandSnapshot.lastTickTotal()
                 + " remaining=" + commandSnapshot.remaining()

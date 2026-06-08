@@ -49,6 +49,12 @@ import com.hbm.ntm.blockentity.PyroOvenBlockEntity;
 import com.hbm.ntm.blockentity.RadarBlockEntity;
 import com.hbm.ntm.blockentity.RadarLargeBlockEntity;
 import com.hbm.ntm.blockentity.RadarScreenBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchControllerBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchCounterBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchLogicBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchReaderBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchReceiverBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchSenderBlockEntity;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.blockentity.RedCableGaugeBlockEntity;
 import com.hbm.ntm.blockentity.RefineryBlockEntity;
@@ -57,6 +63,8 @@ import com.hbm.ntm.blockentity.SatelliteLinkerBlockEntity;
 import com.hbm.ntm.blockentity.SolarBoilerBlockEntity;
 import com.hbm.ntm.blockentity.SolidifierBlockEntity;
 import com.hbm.ntm.blockentity.SmallCoolingTowerBlockEntity;
+import com.hbm.ntm.blockentity.SoyuzCapsuleBlockEntity;
+import com.hbm.ntm.blockentity.SoyuzLauncherBlockEntity;
 import com.hbm.ntm.blockentity.SteamTurbineBlockEntity;
 import com.hbm.ntm.blockentity.SteamEngineBlockEntity;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
@@ -114,6 +122,36 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<CableDiodeBlockEntity>> CABLE_DIODE =
             BLOCK_ENTITIES.register("cable_diode", () ->
                     BlockEntityType.Builder.of(CableDiodeBlockEntity::new, ModBlocks.CABLE_DIODE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadioTorchSenderBlockEntity>> RADIO_TORCH_SENDER =
+            BLOCK_ENTITIES.register("radio_torch_sender", () ->
+                    BlockEntityType.Builder.of(RadioTorchSenderBlockEntity::new,
+                            ModBlocks.RADIO_TORCH_SENDER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadioTorchReceiverBlockEntity>> RADIO_TORCH_RECEIVER =
+            BLOCK_ENTITIES.register("radio_torch_receiver", () ->
+                    BlockEntityType.Builder.of(RadioTorchReceiverBlockEntity::new,
+                            ModBlocks.RADIO_TORCH_RECEIVER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadioTorchCounterBlockEntity>> RADIO_TORCH_COUNTER =
+            BLOCK_ENTITIES.register("radio_torch_counter", () ->
+                    BlockEntityType.Builder.of(RadioTorchCounterBlockEntity::new,
+                            ModBlocks.RADIO_TORCH_COUNTER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadioTorchLogicBlockEntity>> RADIO_TORCH_LOGIC =
+            BLOCK_ENTITIES.register("radio_torch_logic", () ->
+                    BlockEntityType.Builder.of(RadioTorchLogicBlockEntity::new,
+                            ModBlocks.RADIO_TORCH_LOGIC.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadioTorchReaderBlockEntity>> RADIO_TORCH_READER =
+            BLOCK_ENTITIES.register("radio_torch_reader", () ->
+                    BlockEntityType.Builder.of(RadioTorchReaderBlockEntity::new,
+                            ModBlocks.RADIO_TORCH_READER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadioTorchControllerBlockEntity>> RADIO_TORCH_CONTROLLER =
+            BLOCK_ENTITIES.register("radio_torch_controller", () ->
+                    BlockEntityType.Builder.of(RadioTorchControllerBlockEntity::new,
+                            ModBlocks.RADIO_TORCH_CONTROLLER.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<FluidPipeBlockEntity>> FLUID_PIPE =
             BLOCK_ENTITIES.register("fluid_pipe", () ->
@@ -207,6 +245,16 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("sat_dock", () ->
                     BlockEntityType.Builder.of(SatelliteDockBlockEntity::new,
                             ModBlocks.SAT_DOCK.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<SoyuzCapsuleBlockEntity>> SOYUZ_CAPSULE =
+            BLOCK_ENTITIES.register("soyuz_capsule", () ->
+                    BlockEntityType.Builder.of(SoyuzCapsuleBlockEntity::new,
+                            ModBlocks.SOYUZ_CAPSULE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<SoyuzLauncherBlockEntity>> SOYUZ_LAUNCHER =
+            BLOCK_ENTITIES.register("soyuz_launcher", () ->
+                    BlockEntityType.Builder.of(SoyuzLauncherBlockEntity::new,
+                            ModBlocks.SOYUZ_LAUNCHER.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<MultiblockDummyBlockEntity>> MULTIBLOCK_DUMMY =
             BLOCK_ENTITIES.register("multiblock_dummy", () ->
@@ -338,6 +386,8 @@ public final class ModBlockEntities {
                             ModBlocks.MACHINE_SILEX.get(),
                             ModBlocks.MACHINE_EXPOSURE_CHAMBER.get(),
                             ModBlocks.MACHINE_CYCLOTRON.get(),
+                            ModBlocks.MACHINE_CRYSTALLIZER.get(),
+                            ModBlocks.MACHINE_ELECTROLYSER.get(),
                             ModBlocks.MACHINE_ARC_WELDER.get(),
                             ModBlocks.MACHINE_SOLDERING_STATION.get(),
                             ModBlocks.MACHINE_MIXER.get(),

@@ -1,11 +1,33 @@
 package com.hbm.ntm.ability;
 
-import com.hbm.ntm.radiation.HazardType;
+import com.hbm.ntm.block.TrinketVariant;
+import com.hbm.ntm.item.TrinketBlockItem;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.player.HbmLivingProperties;
+import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
+import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.registry.ModSounds;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.MagmaCube;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.monster.WitherSkeleton;
+import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraftforge.registries.RegistryObject;
 
 public final class WeaponAbilities {
     public static final IWeaponAbility NONE = new BaseWeaponAbility("", 0) {
@@ -100,18 +122,85 @@ public final class WeaponAbilities {
 
         @Override
         public void onHit(int level, WeaponHitContext context) {
+            if (!(context.level() instanceof ServerLevel serverLevel)
+                    || !(context.victim() instanceof LivingEntity living)
+                    || living.getHealth() > 0.0F) {
+                return;
+            }
+
+            RegistryObject<Item> nitra = ModItems.legacyItem("nitra_small");
+            if (nitra == null) {
+                return;
+            }
+
+            int count = Math.min((int) Math.ceil(living.getMaxHealth() / dividerAtLevel[level]), 250);
+            for (int i = 0; i < count; i++) {
+                drop(living, new ItemStack(nitra.get()));
+                serverLevel.addFreshEntity(new ExperienceOrb(serverLevel, living.getX(), living.getY(), living.getZ(), 1));
+            }
+
+            ParticleUtil.spawnGiblets(living, ParticleUtil.GIBLET_MEAT);
+            serverLevel.playSound(null, living.getX(), living.getY() + living.getBbHeight() * 0.5D, living.getZ(),
+                    ModSounds.WEAPON_CHAINSAW.get(), SoundSource.PLAYERS, 0.5F, 1.0F);
         }
     };
 
     public static final IWeaponAbility BEHEADER = new BaseWeaponAbility("weapon.ability.beheader", 8) {
         @Override
         public void onHit(int level, WeaponHitContext context) {
+            if (!(context.victim() instanceof LivingEntity living) || living.getHealth() > 0.0F) {
+                return;
+            }
+
+            if (living instanceof Skeleton) {
+                drop(living, new ItemStack(Items.SKELETON_SKULL));
+            } else if (living instanceof WitherSkeleton) {
+                if (living.level().random.nextInt(20) == 0) {
+                    drop(living, new ItemStack(Items.WITHER_SKELETON_SKULL));
+                } else {
+                    drop(living, new ItemStack(Items.COAL, 3));
+                }
+            } else if (living instanceof Zombie) {
+                drop(living, new ItemStack(Items.ZOMBIE_HEAD));
+            } else if (living instanceof Creeper) {
+                drop(living, new ItemStack(Items.CREEPER_HEAD));
+            } else if (living instanceof MagmaCube) {
+                drop(living, new ItemStack(Items.MAGMA_CREAM, 3));
+            } else if (living instanceof Slime) {
+                drop(living, new ItemStack(Items.SLIME_BALL, 3));
+            } else if (living instanceof Player player) {
+                ItemStack head = new ItemStack(Items.PLAYER_HEAD);
+                CompoundTag tag = new CompoundTag();
+                tag.putString("SkullOwner", player.getGameProfile().getName());
+                head.setTag(tag);
+                drop(living, head);
+            } else {
+                drop(living, new ItemStack(Items.ROTTEN_FLESH, 3));
+                drop(living, new ItemStack(Items.BONE, 2));
+            }
         }
     };
 
     public static final IWeaponAbility BOBBLE = new BaseWeaponAbility("weapon.ability.bobble", 9) {
         @Override
         public void onHit(int level, WeaponHitContext context) {
+            if (!(context.victim() instanceof Monster mob) || mob.getHealth() > 0.0F) {
+                return;
+            }
+
+            int chance = mob.getMaxHealth() > 20.0F ? 750 : 1000;
+            if (mob.level().random.nextInt(chance) != 0) {
+                return;
+            }
+
+            RegistryObject<? extends net.minecraft.world.level.block.Block> bobblehead = ModBlocks.legacyBlock("bobblehead");
+            if (bobblehead == null) {
+                return;
+            }
+
+            int variantCount = TrinketVariant.variantCount(TrinketVariant.Kind.BOBBLEHEAD);
+            int variant = mob.level().random.nextInt(variantCount - 1) + 1;
+            drop(mob, TrinketBlockItem.createStack(bobblehead.get().asItem(), variant));
         }
     };
 
@@ -163,6 +252,10 @@ public final class WeaponAbilities {
         public String getExtension(int level) {
             return " (" + durationAtLevel[level] + ")";
         }
+    }
+
+    private static void drop(LivingEntity living, ItemStack stack) {
+        living.spawnAtLocation(stack, 0.0F);
     }
 
     private WeaponAbilities() {

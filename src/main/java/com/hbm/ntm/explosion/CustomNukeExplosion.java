@@ -31,14 +31,16 @@ public final class CustomNukeExplosion {
 
         if (amat > 0.0F) {
             amat = adjustedAntimatter(tnt, nuke, hydro, amat);
-            WeaponExplosionUtil.spawnBalefire(level, x + 0.5D, y + 0.5D, z + 0.5D, (int) amat);
+            WeaponExplosionUtil.spawnBalefire(level, x + 0.5D, y + 0.5D, z + 0.5D, (int) amat,
+                    x + 0.5D, y + 5.0D, z + 0.5D);
             return;
         }
 
         if (hydro > 0.0F) {
             hydro = adjustedHydrogen(tnt, nuke, hydro);
             dirty *= 0.25F;
-            NuclearExplosionUtil.spawnNuclearWithFallout(level, (int) hydro, x + 0.5D, y + 0.5D, z + 0.5D, (int) dirty);
+            NuclearExplosionUtil.spawnNuclearWithFallout(level, (int) hydro, x + 0.5D, y + 0.5D, z + 0.5D,
+                    (int) dirty, x + 0.5D, y + 5.0D, z + 0.5D);
             return;
         }
 
@@ -50,7 +52,8 @@ public final class CustomNukeExplosion {
 
         if (tnt >= 75.0F) {
             tnt = Math.min(tnt, MAX_TNT);
-            NuclearExplosionUtil.spawnNuclearNoFallout(level, (int) tnt, x + 0.5D, y + 0.5D, z + 0.5D);
+            NuclearExplosionUtil.spawnNuclearNoFallout(level, (int) tnt, x + 0.5D, y + 0.5D, z + 0.5D,
+                    x + 0.5D, y + 5.0D, z + 0.5D);
         } else if (tnt > 0.0F) {
             ExplosionLarge.explode(level, x + 0.5D, y + 0.5D, z + 0.5D, tnt, true, true, true);
         }

@@ -45,7 +45,7 @@ public final class BulletDamageUtil {
                         false, true, 0.0D, 0.0F, 0.0F);
         boolean retriedIgnoringIFrames = false;
         EntityDamageUtil.DamageApplication applied = first;
-        if (!first.damaged()) {
+        if (first.shouldRetryIgnoringIFrames()) {
             retriedIgnoringIFrames = true;
             applied = EntityDamageUtil.attackEntityFromNtDetailed(target, damageSource, roll.finalDamage(),
                     true, true, 0.0D, 0.0F, 0.0F);
@@ -55,9 +55,10 @@ public final class BulletDamageUtil {
         if (headshotEffect) {
             spawnHeadshotEffects(level, target, rollRandom);
         }
+        boolean resetHomingTarget = BulletHomingStateUtil.shouldResetTargetAfterEntityHurt(config);
 
         return new EntityHitResult(discardProjectile, hurt, blockImpact, roll, applied,
-                retriedIgnoringIFrames, headshotEffect);
+                retriedIgnoringIFrames, headshotEffect, resetHomingTarget);
     }
 
     public static void spawnHeadshotEffects(Level level, Entity target, @Nullable RandomSource random) {
@@ -77,12 +78,12 @@ public final class BulletDamageUtil {
     public record EntityHitResult(boolean discardProjectile, BulletImpactUtil.EntityHurtResult hurt,
             BulletImpactUtil.BlockImpactResult blockImpact, BulletRuntimeUtil.DamageRoll damageRoll,
             EntityDamageUtil.DamageApplication damageApplication, boolean retriedIgnoringIFrames,
-            boolean headshotEffect) {
+            boolean headshotEffect, boolean resetHomingTarget) {
         public static final EntityHitResult NONE = new EntityHitResult(false,
                 BulletImpactUtil.EntityHurtResult.NONE, BulletImpactUtil.BlockImpactResult.NONE,
                 new BulletRuntimeUtil.DamageRoll(0.0F, 0.0F, false),
-                new EntityDamageUtil.DamageApplication(false, false, 0.0F, 0.0F, "skipped"),
-                false, false);
+                new EntityDamageUtil.DamageApplication(false, false, 0.0F, 0.0F, EntityDamageUtil.OUTCOME_SKIPPED),
+                false, false, false);
     }
 
     private BulletDamageUtil() {

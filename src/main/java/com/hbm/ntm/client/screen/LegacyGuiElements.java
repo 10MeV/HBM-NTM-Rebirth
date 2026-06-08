@@ -1,15 +1,20 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
+import com.hbm.ntm.util.HbmMathUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -28,6 +33,12 @@ import org.joml.Matrix4f;
 public final class LegacyGuiElements {
     private static final ResourceLocation GUI_UTILITY = new ResourceLocation(HbmNtm.MOD_ID,
             "textures/gui/gui_utility.png");
+    private static final List<UpgradeType> UPGRADE_INFO_ORDER = List.of(
+            UpgradeType.SPEED,
+            UpgradeType.EFFECT,
+            UpgradeType.POWER,
+            UpgradeType.AFTERBURN,
+            UpgradeType.OVERDRIVE);
 
     public static final int STANDARD_COLOR_BACKGROUND = -0xFEFFFF0;
     public static final int STANDARD_COLOR_LINE0 = 0x505000FF;
@@ -147,7 +158,40 @@ public final class LegacyGuiElements {
     public static void renderElectricityTooltip(GuiGraphics graphics, Font font, int mouseX, int mouseY, int x, int y,
             int width, int height, long power, long maxPower) {
         renderInfoTooltip(graphics, font, mouseX, mouseY, x, y, width, height,
-                Component.literal(power + "/" + maxPower + "HE"));
+                Component.literal(HbmMathUtil.getShortNumber(power) + "/" + HbmMathUtil.getShortNumber(maxPower)
+                        + "HE"));
+    }
+
+    public static List<Component> getUpgradeInfo(Object provider) {
+        if (provider instanceof LegacyUpgradeInfoProvider upgradeInfo) {
+            return getUpgradeInfo(upgradeInfo);
+        }
+        return List.of();
+    }
+
+    public static List<Component> getUpgradeInfo(LegacyUpgradeInfoProvider provider) {
+        if (provider == null) {
+            return List.of();
+        }
+        Map<UpgradeType, Integer> validUpgrades = provider.getValidUpgrades();
+        if (validUpgrades == null || validUpgrades.isEmpty()) {
+            return List.of();
+        }
+
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.translatableWithFallback("upgrade.gui.title", "Acceptable Upgrades:"));
+        for (UpgradeType type : UPGRADE_INFO_ORDER) {
+            Integer maxLevel = validUpgrades.get(type);
+            if (maxLevel != null && provider.canProvideInfo(type, 0, false)) {
+                lines.add(upgradeInfoLine(type, maxLevel));
+            }
+        }
+        return lines;
+    }
+
+    public static void renderUpgradeInfoTooltip(GuiGraphics graphics, Font font, int mouseX, int mouseY, int x, int y,
+            int width, int height, Object provider) {
+        renderInfoTooltip(graphics, font, mouseX, mouseY, x, y, width, height, getUpgradeInfo(provider));
     }
 
     public static void renderCustomInfoTooltip(GuiGraphics graphics, Font font, int mouseX, int mouseY, int x, int y,
@@ -283,6 +327,41 @@ public final class LegacyGuiElements {
             }
         }
         return null;
+    }
+
+    public static void drawCenteredLabel(GuiGraphics graphics, Font font, Component text, int centerX, int y,
+            int maxWidth, int color) {
+        drawCenteredLabel(graphics, font, text.getVisualOrderText(), centerX, y, maxWidth, color);
+    }
+
+    public static void drawCenteredLabel(GuiGraphics graphics, Font font, String text, int centerX, int y,
+            int maxWidth, int color) {
+        int width = font.width(text);
+        if (width <= maxWidth) {
+            graphics.drawString(font, text, centerX - width / 2, y, color, false);
+            return;
+        }
+        float scale = maxWidth / (float) width;
+        graphics.pose().pushPose();
+        graphics.pose().translate(centerX - width * scale / 2.0F, y, 0.0F);
+        graphics.pose().scale(scale, scale, 1.0F);
+        graphics.drawString(font, text, 0, 0, color, false);
+        graphics.pose().popPose();
+    }
+
+    public static void drawCenteredLabel(GuiGraphics graphics, Font font, FormattedCharSequence text, int centerX,
+            int y, int maxWidth, int color) {
+        int width = font.width(text);
+        if (width <= maxWidth) {
+            graphics.drawString(font, text, centerX - width / 2, y, color, false);
+            return;
+        }
+        float scale = maxWidth / (float) width;
+        graphics.pose().pushPose();
+        graphics.pose().translate(centerX - width * scale / 2.0F, y, 0.0F);
+        graphics.pose().scale(scale, scale, 1.0F);
+        graphics.drawString(font, text, 0, 0, color, false);
+        graphics.pose().popPose();
     }
 
     public static void renderStackText(GuiGraphics graphics, Font font, List<List<StackTextPart>> lines, int mouseX,
@@ -477,6 +556,21 @@ public final class LegacyGuiElements {
 
     private static int color(int red, int green, int blue) {
         return (red & 0xFF) << 16 | (green & 0xFF) << 8 | blue & 0xFF;
+    }
+
+    private static Component upgradeInfoLine(UpgradeType type, int maxLevel) {
+        return switch (type) {
+            case SPEED -> Component.translatableWithFallback("upgrade.gui.speed",
+                    " * Speed: Stacks to level %s", maxLevel);
+            case EFFECT -> Component.translatableWithFallback("upgrade.gui.effectiveness",
+                    " * Effectiveness: Stacks to level %s", maxLevel);
+            case POWER -> Component.translatableWithFallback("upgrade.gui.power",
+                    " * Power-Saving: Stacks to level %s", maxLevel);
+            case AFTERBURN -> Component.translatableWithFallback("upgrade.gui.afterburner",
+                    " * Afterburner: Stacks to level %s", maxLevel);
+            case OVERDRIVE -> Component.translatableWithFallback("upgrade.gui.overdrive",
+                    " * Overdrive: Stacks to level %s", maxLevel);
+        };
     }
 
     public record StackTextPart(Component text, ItemStack stack, boolean item) {

@@ -15,6 +15,7 @@ public final class ParticleUtil {
     public static final String TYPE_WATER_SPLASH = "waterSplash";
     public static final String TYPE_CLOUD_FX_2 = "cloudFX2";
     public static final String TYPE_SMOKE = "smoke";
+    public static final String TYPE_VANILLA = "vanilla";
     public static final String TYPE_VANILLA_EXT = "vanillaExt";
     public static final String TYPE_VANILLA_BURST = "vanillaburst";
     public static final String TYPE_LAUNCH_SMOKE = "launchSmoke";
@@ -90,7 +91,9 @@ public final class ParticleUtil {
     public static final String VANILLA_BLOCK_DUST = "blockdust";
     public static final String VANILLA_COLOR_DUST = "colordust";
     public static final String VANILLA_FIREWORKS = "fireworks";
+    public static final String VANILLA_EXPLODE = "explode";
     public static final String VANILLA_LARGE_EXPLODE = "largeexplode";
+    public static final String VANILLA_HUGE_EXPLOSION = "hugeexplosion";
     public static final String VANILLA_TOWN_AURA = "townaura";
     public static final String VANILLA_VOLCANO = "volcano";
     public static final String EXHAUST_SOYUZ = "soyuz";
@@ -506,6 +509,23 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
+    public static void spawnVanilla(Level level, double x, double y, double z, String mode, double motionX, double motionY, double motionZ) {
+        CompoundTag data = vanillaTag(mode, motionX, motionY, motionZ);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaExplode(Level level, double x, double y, double z, double motionX, double motionY, double motionZ) {
+        spawnVanilla(level, x, y, z, VANILLA_EXPLODE, motionX, motionY, motionZ);
+    }
+
+    public static void spawnVanillaLargeExplode(Level level, double x, double y, double z, float size) {
+        spawnVanilla(level, x, y, z, VANILLA_LARGE_EXPLODE, size, 0.0D, 0.0D);
+    }
+
+    public static void spawnVanillaHugeExplosion(Level level, double x, double y, double z) {
+        spawnVanilla(level, x, y, z, VANILLA_HUGE_EXPLOSION, 1.0D, 0.0D, 0.0D);
+    }
+
     public static void spawnVanillaExt(Level level, double x, double y, double z, String mode, double motionX, double motionY, double motionZ) {
         CompoundTag data = vanillaExtTag(mode, motionX, motionY, motionZ);
         spawnAux(level, x, y, z, data, 150.0D);
@@ -574,6 +594,13 @@ public final class ParticleUtil {
 
     public static void spawnExplosionLarge(Level level, double x, double y, double z, int cloudCount, float cloudScale, float cloudSpeedMult,
             float waveScale, int debrisCount) {
+        spawnExplosionLarge(level, x, y, z, cloudCount, cloudScale, cloudSpeedMult, waveScale, debrisCount,
+                16, 50, 1.0F, 3.0F, -2.0F, 200.0F);
+    }
+
+    public static void spawnExplosionLarge(Level level, double x, double y, double z, int cloudCount, float cloudScale, float cloudSpeedMult,
+            float waveScale, int debrisCount, int debrisSize, int debrisRetry, float debrisVelocity,
+            float debrisHorizontalDeviation, float debrisVerticalOffset, float soundRange) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_EXPLOSION_LARGE);
         data.putInt("cloudCount", cloudCount);
@@ -581,7 +608,13 @@ public final class ParticleUtil {
         data.putFloat("cloudSpeedMult", cloudSpeedMult);
         data.putFloat("waveScale", waveScale);
         data.putInt("debrisCount", debrisCount);
-        spawnAux(level, x, y, z, data, Math.max(300.0D, waveScale * 6.0D));
+        data.putInt("debrisSize", Math.max(1, debrisSize));
+        data.putInt("debrisRetry", Math.max(0, debrisRetry));
+        data.putFloat("debrisVelocity", debrisVelocity);
+        data.putFloat("debrisHorizontalDeviation", debrisHorizontalDeviation);
+        data.putFloat("debrisVerticalOffset", debrisVerticalOffset);
+        data.putFloat("soundRange", soundRange);
+        spawnAux(level, x, y, z, data, Math.max(Math.max(300.0D, waveScale * 6.0D), soundRange));
     }
 
     public static void spawnExplosionSmall(Level level, double x, double y, double z, int cloudCount, float cloudScale, float cloudSpeedMult) {
@@ -814,6 +847,16 @@ public final class ParticleUtil {
     private static CompoundTag vanillaExtTag(String mode, double motionX, double motionY, double motionZ) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_VANILLA_EXT);
+        data.putString("mode", mode);
+        data.putDouble("mX", motionX);
+        data.putDouble("mY", motionY);
+        data.putDouble("mZ", motionZ);
+        return data;
+    }
+
+    private static CompoundTag vanillaTag(String mode, double motionX, double motionY, double motionZ) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_VANILLA);
         data.putString("mode", mode);
         data.putDouble("mX", motionX);
         data.putDouble("mY", motionY);

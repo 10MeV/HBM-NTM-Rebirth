@@ -19,6 +19,7 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation BATTERY_SC = hbm("battery_sc");
     public static final ResourceLocation CIRCUIT = hbm("circuit");
     public static final ResourceLocation PLATE_CAST = hbm("plate_cast");
+    public static final ResourceLocation PLATE_WELDED = hbm("plate_welded");
     public static final ResourceLocation WIRE_FINE = hbm("wire_fine");
     public static final ResourceLocation WIRE_DENSE = hbm("wire_dense");
     public static final ResourceLocation PIPE = hbm("pipe");
@@ -36,6 +37,8 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation PAGE_OF = hbm("page_of_");
     public static final ResourceLocation CASING = hbm("casing");
     public static final ResourceLocation FUEL_ADDITIVE = hbm("fuel_additive");
+    public static final ResourceLocation DRILLBIT = hbm("drillbit");
+    public static final ResourceLocation PISTON_SET = hbm("piston_set");
 
     private static final Map<ResourceLocation, LinkedHashMap<Integer, RegistryObject<Item>>> ITEM_VARIANTS = new LinkedHashMap<>();
 
@@ -69,6 +72,9 @@ public final class LegacyMetaItemMappings {
                 39, requireLegacyItem("plate_cast_combine_steel"),
                 46, requireLegacyItem("plate_cast_bismuth_bronze"),
                 47, requireLegacyItem("plate_cast_arsenic_bronze")));
+        registerSparse(PLATE_WELDED, Map.of(
+                36, requireLegacyItem("plate_welded_tcalloy"),
+                43, requireLegacyItem("plate_welded_cdalloy")));
         registerSparse(WIRE_FINE, Map.of(
                 2_900, requireLegacyItem("wire_fine_copper"),
                 31, requireLegacyItem("wire_fine_mingrade"),
@@ -137,6 +143,8 @@ public final class LegacyMetaItemMappings {
         registerSparse(FUEL_ADDITIVE, Map.of(
                 0, requireLegacyItem("fuel_additive_antiknock"),
                 1, requireLegacyItem("fuel_additive_deicer")));
+        registerList(DRILLBIT, ModItems.DRILLBIT_ITEMS);
+        registerList(PISTON_SET, ModItems.PISTON_SET_ITEMS);
     }
 
     @SafeVarargs

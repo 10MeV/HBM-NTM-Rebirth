@@ -3,6 +3,8 @@ package com.hbm.ntm.satellite;
 import com.hbm.ntm.world.saveddata.WorldSavedDataHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -64,6 +66,22 @@ public class SatelliteSavedData extends SavedData {
 
     public static Optional<SatelliteSavedData> get(Level level) {
         return WorldSavedDataHelper.get(level, DATA_NAME, SatelliteSavedData::load, SatelliteSavedData::new);
+    }
+
+    public static Optional<SatelliteSavedData> getExisting(ServerLevel level) {
+        return WorldSavedDataHelper.getExisting(level, DATA_NAME, SatelliteSavedData::load);
+    }
+
+    public static Optional<SatelliteSavedData> getExisting(MinecraftServer server) {
+        return WorldSavedDataHelper.getExisting(server, DATA_NAME, SatelliteSavedData::load);
+    }
+
+    public static Optional<SatelliteSavedData> getExisting(MinecraftServer server, ResourceKey<Level> dimension) {
+        return WorldSavedDataHelper.getExisting(server, dimension, DATA_NAME, SatelliteSavedData::load);
+    }
+
+    public static Optional<SatelliteSavedData> getExisting(Level level) {
+        return WorldSavedDataHelper.getExisting(level, DATA_NAME, SatelliteSavedData::load);
     }
 
     public static SatelliteSavedData getData(ServerLevel level) {

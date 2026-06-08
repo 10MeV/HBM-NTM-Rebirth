@@ -54,6 +54,8 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.MACHINE_FRACKING_TOWER.get(), noDrop());
         dropSelf(ModBlocks.MACHINE_SATLINKER.get());
         dropSelf(ModBlocks.SAT_DOCK.get());
+        dropSelf(ModBlocks.SOYUZ_CAPSULE.get());
+        dropSelf(ModBlocks.SOYUZ_LAUNCHER.get());
         add(ModBlocks.OIL_PIPE.get(), noDrop());
         add(ModBlocks.CONVEYOR.get(), conveyorWandDrop("REGULAR"));
         add(ModBlocks.CONVEYOR_EXPRESS.get(), conveyorWandDrop("EXPRESS"));

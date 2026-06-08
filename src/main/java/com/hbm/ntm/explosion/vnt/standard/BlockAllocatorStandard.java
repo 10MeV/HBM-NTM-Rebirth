@@ -11,16 +11,23 @@ import net.minecraft.world.phys.Vec3;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class BlockAllocatorStandard implements BlockAllocator {
     private final int resolution;
+    private final Predicate<BlockState> forceInclude;
 
     public BlockAllocatorStandard() {
         this(16);
     }
 
     public BlockAllocatorStandard(int resolution) {
+        this(resolution, state -> false);
+    }
+
+    public BlockAllocatorStandard(int resolution, Predicate<BlockState> forceInclude) {
         this.resolution = Math.max(2, resolution);
+        this.forceInclude = forceInclude == null ? state -> false : forceInclude;
     }
 
     @Override
@@ -71,6 +78,8 @@ public class BlockAllocatorStandard implements BlockAllocator {
 
             if (powerRemaining > 0.0F && explosion.damageCalculator().shouldBlockExplode(
                     explosion.compat(), level, blockPos, state, powerRemaining)) {
+                affectedBlocks.add(blockPos.immutable());
+            } else if (forceInclude.test(state)) {
                 affectedBlocks.add(blockPos.immutable());
             }
 

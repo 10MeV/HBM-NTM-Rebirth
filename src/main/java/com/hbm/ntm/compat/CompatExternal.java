@@ -1,15 +1,20 @@
 package com.hbm.ntm.compat;
 
 import com.hbm.ntm.blockentity.HbmFluidBlockEntity;
+import com.hbm.ntm.api.fluid.HbmFluidContainerRegisterListener;
+import com.hbm.ntm.api.fluid.HbmFluidRegisterListener;
+import com.hbm.ntm.api.recipe.RecipeRegisterListener;
 import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmCompatFluidRegistry;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
@@ -82,6 +87,23 @@ public final class CompatExternal {
         return fluidBlockEntity.getAllTanks().stream()
                 .filter(tank -> tank.getTankType() != HbmFluids.NONE)
                 .toList();
+    }
+
+    public static void registerRecipeRegisterListener(RecipeRegisterListener listener) {
+        CompatRecipeRegistry.registerRecipeRegisterListener(listener);
+    }
+
+    public static void registerFluidRegisterListener(HbmFluidRegisterListener listener) {
+        HbmCompatFluidRegistry.registerFluidRegisterListener(listener);
+    }
+
+    public static void registerFluidContainerRegisterListener(HbmFluidContainerRegisterListener listener) {
+        HbmCompatFluidRegistry.registerFluidContainerRegisterListener(listener);
+    }
+
+    public static boolean registerFluidContainer(ItemStack fullContainer, ItemStack emptyContainer, FluidType type,
+            int content) {
+        return HbmCompatFluidRegistry.registerContainer(fullContainer, emptyContainer, type, content);
     }
 
     private CompatExternal() {

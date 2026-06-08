@@ -42,6 +42,10 @@ public final class HbmLivingProperties {
         RadiationData.incrementDigamma(entity, amount);
     }
 
+    public static void applyDigammaModifier(LivingEntity entity) {
+        RadiationData.applyDigammaModifier(entity);
+    }
+
     public static float getRadEnv(LivingEntity entity) {
         return RadiationData.getRadEnv(entity);
     }
@@ -56,6 +60,10 @@ public final class HbmLivingProperties {
 
     public static void setRadBuf(LivingEntity entity, float radiation) {
         RadiationData.setRadBuf(entity, radiation);
+    }
+
+    public static void flushEnvironmentBuffer(LivingEntity entity) {
+        RadiationData.flushEnvironmentBuffer(entity);
     }
 
     public static List<ContaminationEffect> getCont(LivingEntity entity) {
@@ -74,6 +82,26 @@ public final class HbmLivingProperties {
 
     public static int clearCont(LivingEntity entity) {
         return RadiationData.clearContamination(entity);
+    }
+
+    public static int getContaminationCount(LivingEntity entity) {
+        return RadiationData.getContaminationCount(entity);
+    }
+
+    public static boolean removeCont(LivingEntity entity, int index) {
+        return RadiationData.removeContamination(entity, index);
+    }
+
+    public static List<ContaminationEffect> tickContamination(LivingEntity entity) {
+        return RadiationData.tickContamination(entity).stream()
+                .map(HbmLivingProperties::fromData)
+                .toList();
+    }
+
+    public static List<ContaminationEffect> getContaminationEffectsForSync(LivingEntity entity) {
+        return RadiationData.getContaminationEffects(entity).stream()
+                .map(HbmLivingProperties::fromData)
+                .toList();
     }
 
     public static int getAsbestos(LivingEntity entity) {
@@ -252,6 +280,14 @@ public final class HbmLivingProperties {
 
         public float getRad() {
             return maxRad * ((float) time / (float) Math.max(1, maxTime));
+        }
+
+        public float currentRadiation() {
+            return getRad();
+        }
+
+        public boolean ignoresArmor() {
+            return ignoreArmor;
         }
 
         private CompoundTag toTag() {

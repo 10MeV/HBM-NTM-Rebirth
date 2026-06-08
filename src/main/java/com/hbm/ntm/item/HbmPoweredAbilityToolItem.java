@@ -3,8 +3,8 @@ package com.hbm.ntm.item;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.energy.HbmBatteryItemCapabilityProvider;
 import com.hbm.ntm.energy.HbmChargeableItem;
+import com.hbm.ntm.util.HbmTextUtil;
 import java.util.List;
-import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -191,43 +191,12 @@ public class HbmPoweredAbilityToolItem extends HbmAbilityToolItem implements Hbm
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal("Charge: " + shortNumber(getCharge(stack)) + " / "
-                + shortNumber(getMaxCharge(stack)) + "HE").withStyle(ChatFormatting.YELLOW));
+        tooltip.add(Component.literal("Charge: " + HbmTextUtil.shortNumber(getCharge(stack)) + " / "
+                + HbmTextUtil.shortNumber(getMaxCharge(stack)) + "HE").withStyle(ChatFormatting.YELLOW));
         super.appendHoverText(stack, level, tooltip, flag);
     }
 
     private long clampCharge(long charge) {
         return Math.max(0L, Math.min(charge, maxCharge));
-    }
-
-    private static String shortNumber(long value) {
-        double result;
-        String suffix;
-        double abs = Math.abs((double) value);
-        if (abs >= 1_000_000_000_000_000_000.0D) {
-            result = value / 1_000_000_000_000_000_000.0D;
-            suffix = "E";
-        } else if (abs >= 1_000_000_000_000_000.0D) {
-            result = value / 1_000_000_000_000_000.0D;
-            suffix = "P";
-        } else if (abs >= 1_000_000_000_000.0D) {
-            result = value / 1_000_000_000_000.0D;
-            suffix = "T";
-        } else if (abs >= 1_000_000_000.0D) {
-            result = value / 1_000_000_000.0D;
-            suffix = "G";
-        } else if (abs >= 1_000_000.0D) {
-            result = value / 1_000_000.0D;
-            suffix = "M";
-        } else if (abs >= 1_000.0D) {
-            result = value / 1_000.0D;
-            suffix = "k";
-        } else {
-            return Long.toString(value);
-        }
-
-        double rounded = result <= -100.0D ? Math.round(result * 10.0D) / 10.0D
-                : Math.round(result * 100.0D) / 100.0D;
-        return String.format(Locale.US, "%s%s", rounded, suffix);
     }
 }

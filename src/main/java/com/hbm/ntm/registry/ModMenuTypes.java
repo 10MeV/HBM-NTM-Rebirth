@@ -16,12 +16,16 @@ import com.hbm.ntm.menu.MachineBatterySocketMenu;
 import com.hbm.ntm.menu.NuclearDeviceMenu;
 import com.hbm.ntm.menu.OilDrillMenu;
 import com.hbm.ntm.menu.PyroOvenMenu;
+import com.hbm.ntm.menu.RadioTorchMenu;
 import com.hbm.ntm.menu.RadarMenu;
 import com.hbm.ntm.menu.RemoteFluidMachineMenu;
 import com.hbm.ntm.menu.RefineryMenu;
 import com.hbm.ntm.menu.SatelliteDockMenu;
 import com.hbm.ntm.menu.SatelliteLinkerMenu;
 import com.hbm.ntm.menu.SolidifierMenu;
+import com.hbm.ntm.menu.SoyuzCapsuleMenu;
+import com.hbm.ntm.menu.SoyuzLauncherMenu;
+import com.hbm.ntm.menu.ToolAbilityMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -95,6 +99,18 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<SatelliteDockMenu>> SATELLITE_DOCK =
             MENUS.register("satellite_dock", () -> IForgeMenuType.create(SatelliteDockMenu::new));
+
+    public static final RegistryObject<MenuType<SoyuzCapsuleMenu>> SOYUZ_CAPSULE =
+            MENUS.register("soyuz_capsule", () -> IForgeMenuType.create(SoyuzCapsuleMenu::new));
+
+    public static final RegistryObject<MenuType<SoyuzLauncherMenu>> SOYUZ_LAUNCHER =
+            MENUS.register("soyuz_launcher", () -> IForgeMenuType.create(SoyuzLauncherMenu::new));
+
+    public static final RegistryObject<MenuType<ToolAbilityMenu>> TOOL_ABILITY =
+            MENUS.register("tool_ability", () -> IForgeMenuType.create(ToolAbilityMenu::new));
+
+    public static final RegistryObject<MenuType<RadioTorchMenu>> RADIO_TORCH =
+            MENUS.register("radio_torch", () -> IForgeMenuType.create(RadioTorchMenu::new));
 
     public static void register(IEventBus modBus) {
         MENUS.register(modBus);

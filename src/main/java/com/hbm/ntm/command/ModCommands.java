@@ -7,13 +7,23 @@ import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.ROR;
 import com.hbm.ntm.api.redstoneoverradio.RORRemoteBridge;
+import com.hbm.ntm.api.redstoneoverradio.RTTYCounterState;
 import com.hbm.ntm.api.redstoneoverradio.RTTYLogicEvaluator;
+import com.hbm.ntm.api.redstoneoverradio.RTTYReaderState;
+import com.hbm.ntm.api.redstoneoverradio.RTTYSignalMapper;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeAnchorBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
+import com.hbm.ntm.blockentity.HbmEnergyAndFluidBlockEntity;
+import com.hbm.ntm.blockentity.HbmEnergyBlockEntity;
 import com.hbm.ntm.blockentity.HbmFluidBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchCounterBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchDeviceBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchLogicBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchReaderBlockEntity;
 import com.hbm.ntm.client.ClientBinaryData;
 import com.hbm.ntm.client.ClientBiomeSyncData;
 import com.hbm.ntm.client.ClientInformMessages;
@@ -23,7 +33,9 @@ import com.hbm.ntm.client.ClientPermaSyncData;
 import com.hbm.ntm.client.ClientPlayerSyncData;
 import com.hbm.ntm.client.ClientRadiationData;
 import com.hbm.ntm.client.ClientTileBinaryData;
+import com.hbm.ntm.compat.Compat;
 import com.hbm.ntm.compat.CompatEnergyControl;
+import com.hbm.ntm.compat.CompatRecipeRegistry;
 import com.hbm.ntm.damage.DamageResistanceConfig;
 import com.hbm.ntm.damage.DamageResistance;
 import com.hbm.ntm.damage.DamageResistanceHandler;
@@ -31,11 +43,13 @@ import com.hbm.ntm.damage.DamageResistanceStats;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergyDebug;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
+import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.event.CommonForgeEvents;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmCompatFluidRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
+import com.hbm.ntm.fluid.HbmFluidContainerConfig;
 import com.hbm.ntm.fluid.HbmFluidForgeAliasConfig;
 import com.hbm.ntm.fluid.HbmFluidForgeMappings;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
@@ -45,13 +59,16 @@ import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.itempool.HbmItemPoolRegistry;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.network.LegacyDimensionIdNetwork;
 import com.hbm.ntm.network.LegacyNetworkDispatcher;
 import com.hbm.ntm.network.LegacyPacketThreading;
 import com.hbm.ntm.network.LegacyRawBufferNetwork;
+import com.hbm.ntm.network.LegacyTargetPoint;
 import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
+import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionSavedData;
 import com.hbm.ntm.pollution.PollutionType;
@@ -69,8 +86,10 @@ import com.hbm.ntm.radiation.HazmatResistanceConfig;
 import com.hbm.ntm.radiation.LegacyFalloutConversions;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationConstants;
-import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationSavedData;
+import com.hbm.ntm.world.BlockMigrationHelper;
+import com.hbm.ntm.world.saveddata.TomImpactSavedData;
+import com.hbm.ntm.world.saveddata.WorldSavedDataDiagnostics;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.LegacySatelliteType;
 import com.hbm.ntm.satellite.Satellite;
@@ -91,6 +110,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
@@ -100,19 +120,24 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
@@ -219,7 +244,9 @@ public final class ModCommands {
                 .then(itemPoolCommand())
                 .then(machineCommand())
                 .then(fluidCommand())
+                .then(compatCommand())
                 .then(networkCommand())
+                .then(worldCommand())
                 .then(satelliteCommand()));
 
         dispatcher.register(legacyPacketThreadingCommand("ntmpackets"));
@@ -229,6 +256,85 @@ public final class ModCommands {
 
     private static LiteralArgumentBuilder<CommandSourceStack> satelliteCommand() {
         return satelliteCommand("satellite");
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> worldCommand() {
+        return Commands.literal("world")
+                .then(Commands.literal("saveddata")
+                        .then(Commands.literal("status")
+                                .executes(context -> worldSavedDataStatus(context.getSource())))
+                        .then(Commands.literal("dimension")
+                                .then(Commands.argument("dimension", DimensionArgument.dimension())
+                                        .executes(context -> worldSavedDataStatus(
+                                                context.getSource(),
+                                                DimensionArgument.getDimension(context, "dimension")))))
+                        .then(Commands.literal("all")
+                                .executes(context -> worldSavedDataAllStatus(context.getSource())))
+                        .then(Commands.literal("migrations")
+                                .then(Commands.literal("resetDiagnostics")
+                                        .executes(context -> resetWorldSavedDataMigrationDiagnostics(context.getSource())))));
+    }
+
+    private static int worldSavedDataStatus(CommandSourceStack source) {
+        return worldSavedDataStatus(source, source.getLevel());
+    }
+
+    private static int worldSavedDataStatus(CommandSourceStack source, ServerLevel level) {
+        WorldSavedDataDiagnostics.LevelStatus status = WorldSavedDataDiagnostics.inspect(level);
+        BlockMigrationHelper.MigrationDiagnostics migrations = BlockMigrationHelper.diagnostics();
+
+        source.sendSuccess(() -> Component.literal("World SavedData dimension=" + status.dimension()), false);
+        if (status.hasTomImpact()) {
+            TomImpactSavedData.Snapshot snapshot = status.tomImpact();
+            source.sendSuccess(() -> Component.literal("impactData present dust=" + round(snapshot.dust())
+                    + " fire=" + round(snapshot.fire())
+                    + " impact=" + snapshot.impact()
+                    + " climate=" + snapshot.hasClimate()), false);
+        } else {
+            source.sendSuccess(() -> Component.literal("impactData absent"), false);
+        }
+        source.sendSuccess(() -> Component.literal(status.hasAnnihilator()
+                ? "annihilator present pools=" + status.annihilatorPools()
+                + " entries=" + status.annihilatorEntries()
+                + " total=" + status.annihilatorTotalAmount()
+                : "annihilator absent"), false);
+        source.sendSuccess(() -> Component.literal(status.hasSatellites()
+                ? "satellites present entries=" + status.satelliteCount()
+                : "satellites absent"), false);
+        source.sendSuccess(() -> Component.literal("chunk migrations currentBuild=" + migrations.currentBuild()
+                + " loaded=" + migrations.loadedChunks()
+                + " fresh=" + migrations.freshChunks()
+                + " upToDate=" + migrations.upToDateChunks()
+                + " migrated=" + migrations.migratedChunks()
+                + " saved=" + migrations.savedChunks()), false);
+        return status.presentDataCount();
+    }
+
+    private static int worldSavedDataAllStatus(CommandSourceStack source) {
+        WorldSavedDataDiagnostics.ServerStatus status = WorldSavedDataDiagnostics.inspect(source.getServer());
+        source.sendSuccess(() -> Component.literal("World SavedData levels=" + status.levels().size()
+                + " levelsWithData=" + status.levelsWithDataCount()
+                + " presentData=" + status.presentDataCount()), false);
+        for (WorldSavedDataDiagnostics.LevelStatus level : status.levels()) {
+            source.sendSuccess(() -> Component.literal(level.summary()
+                    + " tomClimate=" + level.tomImpact().hasClimate()
+                    + " annihilatorPools=" + level.annihilatorPools()
+                    + " satellites=" + level.satelliteCount()), false);
+        }
+        BlockMigrationHelper.MigrationDiagnostics migrations = status.migrations();
+        source.sendSuccess(() -> Component.literal("chunk migrations currentBuild=" + migrations.currentBuild()
+                + " loaded=" + migrations.loadedChunks()
+                + " fresh=" + migrations.freshChunks()
+                + " upToDate=" + migrations.upToDateChunks()
+                + " migrated=" + migrations.migratedChunks()
+                + " saved=" + migrations.savedChunks()), false);
+        return status.presentDataCount();
+    }
+
+    private static int resetWorldSavedDataMigrationDiagnostics(CommandSourceStack source) {
+        BlockMigrationHelper.resetDiagnostics();
+        source.sendSuccess(() -> Component.literal("Reset world saveddata chunk migration diagnostics."), true);
+        return 1;
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> satelliteCommand(String name) {
@@ -381,6 +487,10 @@ public final class ModCommands {
                         .executes(context -> togglePacketThreading(context.getSource())))
                 .then(Commands.literal("config")
                         .executes(context -> getPacketThreadingConfig(context.getSource())))
+                .then(Commands.literal("prepare")
+                        .executes(context -> getPacketThreadingPrepareStats(context.getSource())))
+                .then(Commands.literal("precompile")
+                        .executes(context -> getPacketThreadingPrepareStats(context.getSource())))
                 .then(Commands.literal("clear")
                         .executes(context -> clearPacketThreading(context.getSource())))
                 .then(Commands.literal("forceLock")
@@ -428,9 +538,29 @@ public final class ModCommands {
                 .then(Commands.literal("network")
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                 .executes(context -> getEnergyNetwork(context.getSource(), BlockPosArgument.getLoadedBlockPos(context, "pos")))))
+                .then(Commands.literal("chunk")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .executes(context -> getEnergyChunk(
+                                        context.getSource(),
+                                        BlockPosArgument.getBlockPos(context, "pos")))))
                 .then(Commands.literal("info")
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                 .executes(context -> getEnergyInfo(context.getSource(), BlockPosArgument.getLoadedBlockPos(context, "pos")))))
+                .then(Commands.literal("port")
+                        .then(Commands.argument("machine", BlockPosArgument.blockPos())
+                                .then(Commands.argument("offset", BlockPosArgument.blockPos())
+                                        .then(Commands.argument("side", StringArgumentType.word())
+                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(directionNames(), builder))
+                                                .executes(context -> getEnergyPort(
+                                                        context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "machine"),
+                                                        BlockPosArgument.getBlockPos(context, "offset"),
+                                                        parseDirection(StringArgumentType.getString(context, "side"))))))))
+                .then(Commands.literal("ports")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .executes(context -> getEnergyPorts(
+                                        context.getSource(),
+                                        BlockPosArgument.getLoadedBlockPos(context, "pos")))))
                 .then(Commands.literal("ror")
                         .then(Commands.literal("functions")
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
@@ -488,6 +618,42 @@ public final class ModCommands {
                                                                 context.getSource(),
                                                                 BlockPosArgument.getLoadedBlockPos(context, "pos"),
                                                                 StringArgumentType.getString(context, "channel"))))))
+                                .then(rttyTorchCommand())
+                                .then(Commands.literal("map")
+                                        .then(Commands.literal("send")
+                                                .then(Commands.argument("input", IntegerArgumentType.integer(0, 15))
+                                                        .then(Commands.argument("custom", StringArgumentType.word())
+                                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{"false", "true"}, builder))
+                                                                .then(Commands.argument("mapped", StringArgumentType.greedyString())
+                                                                        .executes(context -> mapRttyRedstoneSignal(
+                                                                                context.getSource(),
+                                                                                IntegerArgumentType.getInteger(context, "input"),
+                                                                                parseBoolean(StringArgumentType.getString(context, "custom")),
+                                                                                StringArgumentType.getString(context, "mapped")))))))
+                                        .then(Commands.literal("receive")
+                                                .then(Commands.argument("signal", StringArgumentType.word())
+                                                        .then(Commands.argument("custom", StringArgumentType.word())
+                                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{"false", "true"}, builder))
+                                                                .then(Commands.argument("index", IntegerArgumentType.integer(0, 15))
+                                                                        .then(Commands.argument("mapped", StringArgumentType.greedyString())
+                                                                                .executes(context -> receiveRttyMappedSignal(
+                                                                                        context.getSource(),
+                                                                                        StringArgumentType.getString(context, "signal"),
+                                                                                        parseBoolean(StringArgumentType.getString(context, "custom")),
+                                                                                        IntegerArgumentType.getInteger(context, "index"),
+                                                                                        StringArgumentType.getString(context, "mapped")))))))))
+                                .then(Commands.literal("counter")
+                                        .then(Commands.argument("channel", StringArgumentType.string())
+                                                .then(Commands.argument("last", IntegerArgumentType.integer(0))
+                                                        .then(Commands.argument("count", IntegerArgumentType.integer(0))
+                                                                .then(Commands.argument("polling", StringArgumentType.word())
+                                                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{"false", "true"}, builder))
+                                                                        .executes(context -> evalRttyCounterSignal(
+                                                                                context.getSource(),
+                                                                                StringArgumentType.getString(context, "channel"),
+                                                                                IntegerArgumentType.getInteger(context, "last"),
+                                                                                IntegerArgumentType.getInteger(context, "count"),
+                                                                                parseBoolean(StringArgumentType.getString(context, "polling")))))))))
                                 .then(Commands.literal("logic")
                                         .then(Commands.literal("parse")
                                                 .then(Commands.argument("signal", StringArgumentType.word())
@@ -519,9 +685,102 @@ public final class ModCommands {
                 .then(Commands.literal("debug")
                         .then(Commands.literal("particles")
                                 .executes(context -> toggleEnergyDebugParticles(context.getSource()))
-                                .then(Commands.argument("enabled", StringArgumentType.word())
+                        .then(Commands.argument("enabled", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{"false", "true"}, builder))
+                                .executes(context -> setEnergyDebugParticles(context.getSource(), parseBoolean(StringArgumentType.getString(context, "enabled")))))));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> rttyTorchCommand() {
+        return Commands.literal("torch")
+                .then(Commands.literal("inspect")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .executes(context -> inspectRttyTorch(
+                                        context.getSource(),
+                                        BlockPosArgument.getLoadedBlockPos(context, "pos")))))
+                .then(Commands.literal("set")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .then(Commands.argument("key", StringArgumentType.word())
+                                        .suggests((context, builder) -> suggestRttyTorchKeys(
+                                                context.getSource(),
+                                                BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                builder))
+                                        .then(Commands.argument("value", StringArgumentType.greedyString())
+                                                .executes(context -> setRttyTorchKey(
+                                                        context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                        StringArgumentType.getString(context, "key"),
+                                                        StringArgumentType.getString(context, "value")))))))
+                .then(Commands.literal("channel")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .then(Commands.argument("channel", StringArgumentType.string())
+                                        .executes(context -> setRttyTorchChannel(
+                                                context.getSource(),
+                                                BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                StringArgumentType.getString(context, "channel"))))))
+                .then(Commands.literal("polling")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .then(Commands.argument("polling", StringArgumentType.word())
                                         .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{"false", "true"}, builder))
-                                        .executes(context -> setEnergyDebugParticles(context.getSource(), parseBoolean(StringArgumentType.getString(context, "enabled")))))));
+                                        .executes(context -> setRttyTorchPolling(
+                                                context.getSource(),
+                                                BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                parseBoolean(StringArgumentType.getString(context, "polling")))))))
+                .then(Commands.literal("custom")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .then(Commands.argument("custom", StringArgumentType.word())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{"false", "true"}, builder))
+                                        .executes(context -> setRttyTorchCustomMap(
+                                                context.getSource(),
+                                                BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                parseBoolean(StringArgumentType.getString(context, "custom")))))))
+                .then(Commands.literal("map")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .then(Commands.argument("index", IntegerArgumentType.integer(0, 15))
+                                        .then(Commands.argument("mapped", StringArgumentType.greedyString())
+                                                .executes(context -> setRttyTorchMapping(
+                                                        context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                        IntegerArgumentType.getInteger(context, "index"),
+                                                        StringArgumentType.getString(context, "mapped")))))))
+                .then(Commands.literal("logic")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .then(Commands.argument("index", IntegerArgumentType.integer(0, 15))
+                                        .then(Commands.argument("condition", IntegerArgumentType.integer(0, 9))
+                                                .then(Commands.argument("mapped", StringArgumentType.greedyString())
+                                                        .executes(context -> setRttyTorchLogicRule(
+                                                                context.getSource(),
+                                                                BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                                IntegerArgumentType.getInteger(context, "index"),
+                                                                IntegerArgumentType.getInteger(context, "condition"),
+                                                                StringArgumentType.getString(context, "mapped"))))))))
+                .then(Commands.literal("descending")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .then(Commands.argument("descending", StringArgumentType.word())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{"false", "true"}, builder))
+                                        .executes(context -> setRttyTorchDescending(
+                                                context.getSource(),
+                                                BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                parseBoolean(StringArgumentType.getString(context, "descending")))))))
+                .then(Commands.literal("reader")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .then(Commands.argument("slot", IntegerArgumentType.integer(0, RTTYReaderState.SLOT_COUNT - 1))
+                                        .then(Commands.argument("channel", StringArgumentType.string())
+                                                .then(Commands.argument("name", StringArgumentType.greedyString())
+                                                        .executes(context -> setRttyTorchReaderSlot(
+                                                                context.getSource(),
+                                                                BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                                IntegerArgumentType.getInteger(context, "slot"),
+                                                                StringArgumentType.getString(context, "channel"),
+                                                                StringArgumentType.getString(context, "name"))))))))
+                .then(Commands.literal("counter")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .then(Commands.argument("slot", IntegerArgumentType.integer(0, RTTYCounterState.SLOT_COUNT - 1))
+                                        .then(Commands.argument("channel", StringArgumentType.string())
+                                                .executes(context -> setRttyTorchCounterSlot(
+                                                        context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                        IntegerArgumentType.getInteger(context, "slot"),
+                                                        StringArgumentType.getString(context, "channel")))))));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> pollutionCommand() {
@@ -657,7 +916,19 @@ public final class ModCommands {
                                                 StringArgumentType.getString(context, "forge_fluid"))))))
                 .then(Commands.literal("containers")
                         .then(Commands.literal("status")
-                                .executes(context -> getFluidContainerRegistryStatus(context.getSource()))))
+                                .executes(context -> getFluidContainerRegistryStatus(context.getSource())))
+                        .then(Commands.literal("reload")
+                                .executes(context -> reloadFluidContainers(context.getSource())))
+                        .then(Commands.literal("list")
+                                .executes(context -> listFluidContainers(context.getSource(), null))
+                                .then(Commands.argument("fluid", StringArgumentType.word())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                HbmFluids.all().stream().map(FluidType::toPath), builder))
+                                        .executes(context -> listFluidContainers(
+                                                context.getSource(),
+                                                parseFluid(StringArgumentType.getString(context, "fluid"))))))
+                        .then(Commands.literal("held")
+                                .executes(context -> resolveHeldFluidContainer(context.getSource()))))
                 .then(Commands.literal("port")
                         .then(Commands.argument("machine", BlockPosArgument.blockPos())
                                 .then(Commands.argument("offset", BlockPosArgument.blockPos())
@@ -709,6 +980,33 @@ public final class ModCommands {
                                                         BlockPosArgument.getLoadedBlockPos(context, "pos")))))));
     }
 
+    private static LiteralArgumentBuilder<CommandSourceStack> compatCommand() {
+        return Commands.literal("compat")
+                .executes(context -> getCompatStatus(context.getSource()))
+                .then(Commands.literal("status")
+                        .executes(context -> getCompatStatus(context.getSource())))
+                .then(Commands.literal("mods")
+                        .executes(context -> getCompatModsStatus(context.getSource())))
+                .then(Commands.literal("recipes")
+                        .executes(context -> getCompatRecipeStatus(context.getSource())))
+                .then(Commands.literal("fluids")
+                        .executes(context -> getCompatFluidStatus(context.getSource())))
+                .then(Commands.literal("steam")
+                        .then(Commands.literal("level")
+                                .then(Commands.argument("level", IntegerArgumentType.integer(0, 3))
+                                        .executes(context -> getCompatSteamLevel(
+                                                context.getSource(),
+                                                IntegerArgumentType.getInteger(context, "level")))))
+                        .then(Commands.literal("fluid")
+                                .then(Commands.argument("fluid", StringArgumentType.word())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                HbmFluids.all().stream().map(FluidType::getName),
+                                                builder))
+                                        .executes(context -> getCompatSteamFluid(
+                                                context.getSource(),
+                                                StringArgumentType.getString(context, "fluid"))))));
+    }
+
     private static LiteralArgumentBuilder<CommandSourceStack> networkCommand() {
         return Commands.literal("network")
                 .then(Commands.literal("uninos")
@@ -738,6 +1036,10 @@ public final class ModCommands {
                                 .executes(context -> resetNetworkSendSafety(context.getSource())))
                         .then(Commands.literal("rawBuffer")
                                 .executes(context -> getNetworkRawBufferStatus(context.getSource())))
+                        .then(Commands.literal("dimensionId")
+                                .executes(context -> getNetworkDimensionIdStatus(context.getSource())))
+                        .then(Commands.literal("targetPoint")
+                                .executes(context -> getNetworkTargetPointStatus(context.getSource())))
                         .then(Commands.literal("mappings")
                                 .executes(context -> listNetworkProtocolMappings(context.getSource())))
                         .then(Commands.literal("legacy")
@@ -768,6 +1070,10 @@ public final class ModCommands {
                                 .executes(context -> getPacketThreadingStats(context.getSource())))
                         .then(Commands.literal("config")
                                 .executes(context -> getPacketThreadingConfig(context.getSource())))
+                        .then(Commands.literal("prepare")
+                                .executes(context -> getPacketThreadingPrepareStats(context.getSource())))
+                        .then(Commands.literal("precompile")
+                                .executes(context -> getPacketThreadingPrepareStats(context.getSource())))
                         .then(Commands.literal("threads")
                                 .executes(context -> listPacketThreadingThreads(context.getSource())))
                         .then(Commands.literal("toggle")
@@ -864,6 +1170,14 @@ public final class ModCommands {
                                         HbmItemPoolRegistry.knownPoolIds().stream().sorted(),
                                         builder))
                                 .executes(context -> queryItemPoolTable(
+                                        context.getSource(),
+                                        StringArgumentType.getString(context, "legacyPoolId")))))
+                .then(Commands.literal("roll")
+                        .then(Commands.argument("legacyPoolId", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                        HbmItemPoolRegistry.knownPoolIds().stream().sorted(),
+                                        builder))
+                                .executes(context -> rollItemPool(
                                         context.getSource(),
                                         StringArgumentType.getString(context, "legacyPoolId")))));
     }
@@ -1092,7 +1406,9 @@ public final class ModCommands {
         source.sendSuccess(() -> Component.literal("Hazmat resistance: " + report.summary()
                 + " config=" + String.valueOf(report.configFile())), false);
         source.sendSuccess(() -> Component.literal("Hazmat registry: resistanceEntries=" + snapshot.resistanceEntries()
-                + " protectionEntries=" + snapshot.protectionEntries()), false);
+                + " protectionEntries=" + snapshot.protectionEntries()
+                + " externalResistanceDefaults=" + snapshot.externalResistanceDefaults()
+                + " externalProtectionDefaults=" + snapshot.externalProtectionDefaults()), false);
         for (String warning : report.warnings()) {
             source.sendSuccess(() -> Component.literal("Hazmat warning: " + warning), false);
         }
@@ -1117,12 +1433,20 @@ public final class ModCommands {
                 + " entityStats=" + snapshot.entityStats()
                 + " (class=" + snapshot.entityClassStats()
                 + ", simpleName=" + snapshot.entitySimpleNameStats() + ")"), false);
+        source.sendSuccess(() -> Component.literal("Damage resistance config skips: items="
+                + report.skippedItems()
+                + " sets=" + report.skippedSets()
+                + " entities=" + report.skippedEntities()), false);
+        source.sendSuccess(() -> Component.literal("Damage resistance config warnings: "
+                + report.warnings().size()
+                + "/" + report.warningCount()
+                + (report.warningsTruncated() ? " shown" : "")), false);
         source.sendSuccess(() -> Component.literal("Damage resistance runtime: allowSpecialCancel="
                 + EntityDamageUtil.allowSpecialCancel()
                 + " currentPierceDT=" + round(DamageResistanceHandler.currentPierceDt())
                 + " currentPierceDR=" + round(DamageResistanceHandler.currentPierceDr() * 100.0F) + "%"), false);
         for (String warning : report.warnings()) {
-            source.sendSuccess(() -> Component.literal("Damage resistance warning: missing migrated " + warning), false);
+            source.sendSuccess(() -> Component.literal("Damage resistance warning: " + warning), false);
         }
         return report.itemStats() + report.setStats() + report.entityStats();
     }
@@ -1130,20 +1454,59 @@ public final class ModCommands {
     private static int reloadDamageResistanceConfig(CommandSourceStack source) {
         DamageResistanceConfig.LoadReport report = DamageResistanceConfig.initialize(FMLPaths.CONFIGDIR.get());
         source.sendSuccess(() -> Component.literal("Reloaded " + report.summary()), true);
+        if (report.warningsTruncated()) {
+            source.sendFailure(Component.literal("Damage resistance warnings truncated: showing "
+                    + report.warnings().size()
+                    + " of " + report.warningCount()));
+        }
         for (String warning : report.warnings()) {
-            source.sendFailure(Component.literal("Damage resistance warning: missing migrated " + warning));
+            source.sendFailure(Component.literal("Damage resistance warning: " + warning));
         }
         return report.itemStats() + report.setStats() + report.entityStats();
     }
 
     private static int selfTestDamageResistance(CommandSourceStack source) {
         DamageResistanceHandler.CoreAudit audit = DamageResistanceHandler.coreAudit();
-        if (audit.passed()) {
-            source.sendSuccess(() -> Component.literal("Damage resistance core self-test passed."), false);
+        EntityDamageUtil.ApplicationAudit applicationAudit = EntityDamageUtil.applicationAudit();
+        ModDamageSources.DamageAliasAudit aliasAudit = ModDamageSources.aliasAudit();
+        DamageResistanceConfig.ConfigAudit configAudit = DamageResistanceConfig.configAudit();
+        DamageResistanceConfig.DefaultAudit defaultAudit = DamageResistanceConfig.defaultAudit();
+        if (audit.passed() && applicationAudit.passed() && aliasAudit.passed() && configAudit.passed() && defaultAudit.passed()) {
+            source.sendSuccess(() -> Component.literal("Damage resistance self-test passed: core, application, damage aliases, config parser, and legacy defaults stable."), false);
+            source.sendSuccess(() -> Component.literal("Damage resistance damage alias audit: legacyTypes="
+                    + aliasAudit.legacyTypes()
+                    + " aliases=" + aliasAudit.aliases()), false);
+            source.sendSuccess(() -> Component.literal("Damage resistance config audit: skipped items="
+                    + configAudit.skippedItems()
+                    + " sets=" + configAudit.skippedSets()
+                    + " entities=" + configAudit.skippedEntities()
+                    + " warningCap=" + configAudit.storedWarnings() + "/" + configAudit.totalWarnings()), false);
+            source.sendSuccess(() -> Component.literal("Damage resistance default audit: items="
+                    + defaultAudit.itemEntries()
+                    + " sets=" + defaultAudit.setEntries()
+                    + " entities=" + defaultAudit.entityEntries()), false);
             return 1;
         }
-        source.sendFailure(Component.literal("Damage resistance core self-test failed: "
-                + String.join(", ", audit.problems())));
+        if (!audit.passed()) {
+            source.sendFailure(Component.literal("Damage resistance core self-test failed: "
+                    + String.join(", ", audit.problems())));
+        }
+        if (!applicationAudit.passed()) {
+            source.sendFailure(Component.literal("Damage resistance application self-test failed: "
+                    + String.join(", ", applicationAudit.problems())));
+        }
+        if (!aliasAudit.passed()) {
+            source.sendFailure(Component.literal("Damage resistance damage alias self-test failed: "
+                    + String.join(", ", aliasAudit.problems())));
+        }
+        if (!configAudit.passed()) {
+            source.sendFailure(Component.literal("Damage resistance config self-test failed: "
+                    + String.join(", ", configAudit.problems())));
+        }
+        if (!defaultAudit.passed()) {
+            source.sendFailure(Component.literal("Damage resistance default self-test failed: "
+                    + String.join(", ", defaultAudit.problems())));
+        }
         return 0;
     }
 
@@ -1285,6 +1648,7 @@ public final class ModCommands {
                     + " damage resistance probe: type=" + location
                     + " exact=" + breakdown.exactType()
                     + " category=" + breakdown.category()
+                    + " absolute=" + breakdown.absolute()
                     + " amount=" + round(amount)
                     + " DT=" + round(breakdown.rawDt())
                     + " DR=" + round(breakdown.rawDr() * 100.0F) + "%"
@@ -1292,6 +1656,7 @@ public final class ModCommands {
                     + " pierceDR=" + round(pierceDr * 100.0F) + "%"
                     + " effectiveDT=" + round(breakdown.effectiveDt())
                     + " effectiveDR=" + round(breakdown.effectiveDr() * 100.0F) + "%"
+                    + " fullyAbsorbed=" + breakdown.fullyAbsorbed(amount)
                     + " result=" + round(breakdown.finalDamage())), false);
             List<DamageResistanceHandler.ResistanceContribution> contributions =
                     DamageResistanceHandler.resistanceContributions(player, damageSource, amount, pierceDt, pierceDr);
@@ -1313,6 +1678,20 @@ public final class ModCommands {
     private static String itemId(ItemStack stack) {
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
         return id == null ? stack.getHoverName().getString() : id.toString();
+    }
+
+    private static String itemStackId(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return "empty";
+        }
+        String nbt = stack.hasTag() ? " +nbt" : "";
+        return stack.getCount() + "x " + itemId(stack) + nbt;
+    }
+
+    private static String itemStackSummary(List<ItemStack> stacks) {
+        return stacks.stream()
+                .map(stack -> stack.getCount() + "x " + itemId(stack))
+                .collect(Collectors.joining(", "));
     }
 
     private static String summarizeStats(@Nullable DamageResistanceStats stats) {
@@ -1437,6 +1816,78 @@ public final class ModCommands {
                 + " oldestReceiver=" + network.oldestReceiverAgeMs() + "ms"
                 + " lastTransfer=" + network.lastTransfer() + " HE"), false);
         return network.links();
+    }
+
+    private static int getEnergyChunk(CommandSourceStack source, BlockPos pos) {
+        ChunkPos chunkPos = new ChunkPos(pos);
+        HbmEnergyNodespace.ChunkDiagnostics diagnostics =
+                HbmEnergyNodespace.getChunkDiagnostics(source.getLevel(), chunkPos);
+        source.sendSuccess(() -> Component.literal("Energy chunk [" + chunkPos.x + ", " + chunkPos.z + "]"
+                + " from=" + pos.toShortString()
+                + ": loaded=" + diagnostics.loaded()
+                + " positions=" + diagnostics.nodePositions()
+                + " nodes=" + diagnostics.uniqueNodes()
+                + " networks=" + diagnostics.networks()
+                + " invalidNetworks=" + diagnostics.invalidNetworks()
+                + " linkRefs=" + diagnostics.linkRefs()
+                + " dirtyNodes=" + diagnostics.dirtyNodes()
+                + " expiredNodes=" + diagnostics.expiredNodes()
+                + " orphanNodes=" + diagnostics.orphanNodes()
+                + " providers=" + diagnostics.providerEntries()
+                + " receivers=" + diagnostics.receiverEntries()), false);
+        return diagnostics.uniqueNodes();
+    }
+
+    private static int getEnergyPort(CommandSourceStack source, BlockPos machinePos, BlockPos offset, Direction side) {
+        if (side == null) {
+            source.sendFailure(Component.literal("Unknown direction."));
+            return 0;
+        }
+        HbmEnergyUtil.EnergyPort port = new HbmEnergyUtil.EnergyPort(offset, side);
+        HbmEnergyUtil.PortSnapshot snapshot = HbmEnergyUtil.inspectPort(source.getLevel(), machinePos, port);
+        source.sendSuccess(() -> Component.literal("Energy port from " + machinePos.toShortString()
+                + " offset=" + offset.toShortString()
+                + " side=" + side.getName()
+                + " conductor=" + snapshot.conductorPos().toShortString()
+                + " conductorSide=" + snapshot.conductorSide().getName()
+                + " connectorPresent=" + snapshot.connectorPresent()
+                + " connectable=" + snapshot.connectable()
+                + " node=" + snapshot.nodePresent()
+                + " network=" + snapshot.networkPresent()
+                + " links=" + snapshot.links()
+                + " providers=" + snapshot.providers()
+                + " receivers=" + snapshot.receivers()
+                + " providerPower=" + snapshot.providerPower() + " HE"
+                + " providerRate=" + snapshot.providerRate() + " HE/t"
+                + " receiverDemand=" + snapshot.receiverDemand() + " HE"
+                + " receiverRate=" + snapshot.receiverRate() + " HE/t"
+                + " oldestProvider=" + snapshot.oldestProviderAgeMs() + "ms"
+                + " oldestReceiver=" + snapshot.oldestReceiverAgeMs() + "ms"
+                + " lastTransfer=" + snapshot.lastTransfer() + " HE"), false);
+        return snapshot.networkPresent() ? snapshot.links() : 0;
+    }
+
+    private static int getEnergyPorts(CommandSourceStack source, BlockPos pos) {
+        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        HbmEnergyUtil.PortSetSnapshot snapshot;
+        if (blockEntity instanceof HbmEnergyBlockEntity energyBlockEntity) {
+            snapshot = energyBlockEntity.inspectEnergyPorts();
+        } else if (blockEntity instanceof HbmEnergyAndFluidBlockEntity energyAndFluidBlockEntity) {
+            snapshot = energyAndFluidBlockEntity.inspectEnergyPorts();
+        } else {
+            source.sendFailure(Component.literal("No HBM energy port machine at " + pos.toShortString()));
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("Energy ports at " + pos.toShortString()
+                + ": total=" + snapshot.totalPorts()
+                + " connectable=" + snapshot.connectablePorts()
+                + " networked=" + snapshot.networkedPorts()
+                + " links=" + snapshot.links()
+                + " providers=" + snapshot.providers()
+                + " receivers=" + snapshot.receivers()
+                + " providerPower=" + snapshot.providerPower() + " HE"
+                + " receiverDemand=" + snapshot.receiverDemand() + " HE"), false);
+        return snapshot.networkedPorts();
     }
 
     private static int getEnergyInfo(CommandSourceStack source, BlockPos pos) {
@@ -1657,6 +2108,300 @@ public final class ModCommands {
         }
     }
 
+    private static int inspectRttyTorch(CommandSourceStack source, BlockPos pos) {
+        RadioTorchBlockEntity torch = getRttyTorch(source, pos);
+        if (torch == null) {
+            return 0;
+        }
+        List<Component> lines = torch.describeRadioConfiguration();
+        source.sendSuccess(() -> Component.literal("RTTY torch at " + pos.toShortString()
+                + " type=" + torch.getType()), false);
+        for (Component line : lines) {
+            source.sendSuccess(() -> line, false);
+        }
+        return Math.max(1, lines.size());
+    }
+
+    private static int setRttyTorchKey(CommandSourceStack source, BlockPos pos, String key, String value) {
+        RadioTorchBlockEntity torch = getRttyTorch(source, pos);
+        if (torch == null) {
+            return 0;
+        }
+        CompoundTag tag = createRttyControlTag(source, torch, key, value);
+        if (tag == null) {
+            return 0;
+        }
+        return applyRttyTorchConfiguration(source, pos, torch, tag, key + "=" + value);
+    }
+
+    private static int setRttyTorchChannel(CommandSourceStack source, BlockPos pos, String channel) {
+        RadioTorchBlockEntity torch = getRttyTorch(source, pos);
+        if (torch == null) {
+            return 0;
+        }
+        if (torch instanceof RadioTorchReaderBlockEntity || torch instanceof RadioTorchCounterBlockEntity) {
+            source.sendFailure(Component.literal("Use reader/counter slot commands for multi-channel RTTY torches"));
+            return 0;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putString("c", channel);
+        return applyRttyTorchConfiguration(source, pos, torch, tag, "channel=" + channel);
+    }
+
+    private static int setRttyTorchPolling(CommandSourceStack source, BlockPos pos, boolean polling) {
+        RadioTorchBlockEntity torch = getRttyTorch(source, pos);
+        if (torch == null) {
+            return 0;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean("p", polling);
+        return applyRttyTorchConfiguration(source, pos, torch, tag, "polling=" + polling);
+    }
+
+    private static int setRttyTorchCustomMap(CommandSourceStack source, BlockPos pos, boolean customMap) {
+        RadioTorchBlockEntity torch = getRttyTorch(source, pos);
+        if (!(torch instanceof RadioTorchDeviceBlockEntity)) {
+            source.sendFailure(Component.literal("Custom redstone mapping is only valid on sender/receiver RTTY torches"));
+            return 0;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean("m", customMap);
+        return applyRttyTorchConfiguration(source, pos, torch, tag, "customMap=" + customMap);
+    }
+
+    private static int setRttyTorchMapping(CommandSourceStack source, BlockPos pos, int index, String mapped) {
+        RadioTorchBlockEntity torch = getRttyTorch(source, pos);
+        if (!(torch instanceof RadioTorchDeviceBlockEntity || torch instanceof RadioTorchLogicBlockEntity)) {
+            source.sendFailure(Component.literal("Mapping entries are only valid on sender/receiver/logic RTTY torches"));
+            return 0;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putString("m" + index, mapped);
+        return applyRttyTorchConfiguration(source, pos, torch, tag, "m" + index + "=" + mapped);
+    }
+
+    private static int setRttyTorchLogicRule(CommandSourceStack source, BlockPos pos, int index, int condition,
+            String mapped) {
+        RadioTorchBlockEntity torch = getRttyTorch(source, pos);
+        if (!(torch instanceof RadioTorchLogicBlockEntity)) {
+            source.sendFailure(Component.literal("Logic rules are only valid on RTTY logic receivers"));
+            return 0;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putInt("c" + index, condition);
+        tag.putString("m" + index, mapped);
+        return applyRttyTorchConfiguration(source, pos, torch, tag,
+                "rule " + index + " condition=" + condition + " mapped=" + mapped);
+    }
+
+    private static int setRttyTorchDescending(CommandSourceStack source, BlockPos pos, boolean descending) {
+        RadioTorchBlockEntity torch = getRttyTorch(source, pos);
+        if (!(torch instanceof RadioTorchLogicBlockEntity)) {
+            source.sendFailure(Component.literal("Descending scan order is only valid on RTTY logic receivers"));
+            return 0;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean("d", descending);
+        return applyRttyTorchConfiguration(source, pos, torch, tag, "descending=" + descending);
+    }
+
+    private static int setRttyTorchReaderSlot(CommandSourceStack source, BlockPos pos, int slot, String channel,
+            String name) {
+        RadioTorchBlockEntity torch = getRttyTorch(source, pos);
+        if (!(torch instanceof RadioTorchReaderBlockEntity)) {
+            source.sendFailure(Component.literal("Reader slots are only valid on RTTY readers"));
+            return 0;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putString("c" + slot, channel);
+        tag.putString("n" + slot, name);
+        return applyRttyTorchConfiguration(source, pos, torch, tag,
+                "slot " + slot + " channel=" + channel + " name=" + name);
+    }
+
+    private static int setRttyTorchCounterSlot(CommandSourceStack source, BlockPos pos, int slot, String channel) {
+        RadioTorchBlockEntity torch = getRttyTorch(source, pos);
+        if (!(torch instanceof RadioTorchCounterBlockEntity)) {
+            source.sendFailure(Component.literal("Counter slots are only valid on RTTY counters"));
+            return 0;
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putString("c" + slot, channel);
+        return applyRttyTorchConfiguration(source, pos, torch, tag, "slot " + slot + " channel=" + channel);
+    }
+
+    private static CompletableFuture<Suggestions> suggestRttyTorchKeys(CommandSourceStack source, BlockPos pos,
+            SuggestionsBuilder builder) {
+        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        if (!(blockEntity instanceof RadioTorchBlockEntity torch)) {
+            return builder.buildFuture();
+        }
+        List<String> keys = new ArrayList<>();
+        keys.add("p");
+        if (torch instanceof RadioTorchDeviceBlockEntity) {
+            keys.add("c");
+            keys.add("m");
+            for (int i = 0; i < 16; i++) {
+                keys.add("m" + i);
+            }
+        } else if (torch instanceof RadioTorchLogicBlockEntity) {
+            keys.add("c");
+            keys.add("d");
+            for (int i = 0; i < 16; i++) {
+                keys.add("m" + i);
+                keys.add("c" + i);
+            }
+        } else if (torch instanceof RadioTorchReaderBlockEntity) {
+            for (int i = 0; i < RTTYReaderState.SLOT_COUNT; i++) {
+                keys.add("c" + i);
+                keys.add("n" + i);
+            }
+        } else if (torch instanceof RadioTorchCounterBlockEntity) {
+            for (int i = 0; i < RTTYCounterState.SLOT_COUNT; i++) {
+                keys.add("c" + i);
+            }
+        } else {
+            keys.add("c");
+        }
+        return SharedSuggestionProvider.suggest(keys, builder);
+    }
+
+    private static RadioTorchBlockEntity getRttyTorch(CommandSourceStack source, BlockPos pos) {
+        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        if (blockEntity instanceof RadioTorchBlockEntity torch) {
+            return torch;
+        }
+        source.sendFailure(Component.literal("No RTTY torch block entity at " + pos.toShortString()));
+        return null;
+    }
+
+    private static CompoundTag createRttyControlTag(CommandSourceStack source, RadioTorchBlockEntity torch,
+            String key, String value) {
+        CompoundTag tag = new CompoundTag();
+        if ("p".equals(key)) {
+            tag.putBoolean(key, parseBoolean(value));
+            return tag;
+        }
+        if ("m".equals(key) && torch instanceof RadioTorchDeviceBlockEntity) {
+            tag.putBoolean(key, parseBoolean(value));
+            return tag;
+        }
+        if ("d".equals(key) && torch instanceof RadioTorchLogicBlockEntity) {
+            tag.putBoolean(key, parseBoolean(value));
+            return tag;
+        }
+        if ("c".equals(key)
+                && !(torch instanceof RadioTorchReaderBlockEntity)
+                && !(torch instanceof RadioTorchCounterBlockEntity)) {
+            tag.putString(key, value);
+            return tag;
+        }
+        int index = indexedRttyKey(key, 'm', 15);
+        if (index >= 0 && (torch instanceof RadioTorchDeviceBlockEntity || torch instanceof RadioTorchLogicBlockEntity)) {
+            tag.putString(key, value);
+            return tag;
+        }
+        index = indexedRttyKey(key, 'c', torch instanceof RadioTorchReaderBlockEntity
+                ? RTTYReaderState.SLOT_COUNT - 1
+                : torch instanceof RadioTorchCounterBlockEntity
+                        ? RTTYCounterState.SLOT_COUNT - 1
+                        : 15);
+        if (index >= 0) {
+            if (torch instanceof RadioTorchLogicBlockEntity) {
+                tag.putInt(key, Mth.clamp(parseInt(value, 0), 0, 9));
+                return tag;
+            }
+            if (torch instanceof RadioTorchReaderBlockEntity || torch instanceof RadioTorchCounterBlockEntity) {
+                tag.putString(key, value);
+                return tag;
+            }
+        }
+        index = indexedRttyKey(key, 'n', RTTYReaderState.SLOT_COUNT - 1);
+        if (index >= 0 && torch instanceof RadioTorchReaderBlockEntity) {
+            tag.putString(key, value);
+            return tag;
+        }
+        source.sendFailure(Component.literal("Unsupported RTTY torch control key '" + key
+                + "' for " + torch.getType()));
+        return null;
+    }
+
+    private static int applyRttyTorchConfiguration(CommandSourceStack source, BlockPos pos, RadioTorchBlockEntity torch,
+            CompoundTag tag, String action) {
+        boolean changed = torch.applyRadioConfiguration(tag);
+        source.sendSuccess(() -> Component.literal("RTTY torch " + pos.toShortString()
+                + " " + action
+                + (changed ? " applied" : " unchanged")), true);
+        return changed ? 1 : 0;
+    }
+
+    private static int indexedRttyKey(String key, char prefix, int maxIndex) {
+        if (key.length() < 2 || key.charAt(0) != prefix) {
+            return -1;
+        }
+        int index = parseInt(key.substring(1), -1);
+        return index >= 0 && index <= maxIndex ? index : -1;
+    }
+
+    private static int parseInt(String value, int fallback) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ex) {
+            return fallback;
+        }
+    }
+
+    private static int mapRttyRedstoneSignal(CommandSourceStack source, int input, boolean custom, String mapped) {
+        String[] mapping = singleMappedSignal(input, mapped);
+        String signal = RTTYSignalMapper.redstoneToSignal(input, custom, mapping);
+        source.sendSuccess(() -> Component.literal("RTTY map send: input=" + input
+                + " custom=" + custom
+                + " mapped=" + mapped
+                + " signal=" + signal
+                + " willBroadcast=" + !signal.isEmpty()), false);
+        return signal.isEmpty() ? 0 : 1;
+    }
+
+    private static int receiveRttyMappedSignal(CommandSourceStack source, String signal, boolean custom, int index,
+            String mapped) {
+        String[] mapping = singleMappedSignal(index, mapped);
+        int redstone = RTTYSignalMapper.signalToRedstone(signal, custom, mapping);
+        source.sendSuccess(() -> Component.literal("RTTY map receive: signal=" + signal
+                + " custom=" + custom
+                + " index=" + index
+                + " mapped=" + mapped
+                + " redstone=" + redstone), false);
+        return redstone;
+    }
+
+    private static int evalRttyCounterSignal(CommandSourceStack source, String channel, int last, int count,
+            boolean polling) {
+        RTTYCounterState counter = new RTTYCounterState();
+        counter.setChannel(0, channel);
+        counter.setLastCount(0, last);
+        counter.setPolling(polling);
+        RTTYCounterState.CounterDecision decision = counter.evaluateCount(0, count);
+        if (decision.shouldBroadcast()) {
+            RTTYSystem.broadcast(source.getLevel(), decision.channel(), decision.count());
+        }
+        source.sendSuccess(() -> Component.literal("RTTY counter eval: channel=" + channel
+                + " last=" + last
+                + " count=" + count
+                + " polling=" + polling
+                + " changed=" + decision.countChanged()
+                + " queued=" + decision.shouldBroadcast()), true);
+        return decision.shouldBroadcast() ? 1 : 0;
+    }
+
+    private static String[] singleMappedSignal(int index, String mapped) {
+        String[] mapping = new String[RTTYSignalMapper.REDSTONE_LEVELS];
+        for (int i = 0; i < mapping.length; i++) {
+            mapping[i] = "";
+        }
+        mapping[index] = mapped;
+        return mapping;
+    }
+
     private static int parseRttyLogicSignal(CommandSourceStack source, String signal, int condition, String mapped) {
         boolean result = RTTYLogicEvaluator.parseSignal(signal, mapped, condition);
         source.sendSuccess(() -> Component.literal("RTTY logic parse: signal=" + signal
@@ -1830,6 +2575,92 @@ public final class ModCommands {
         return diagnostics.foreignFluids();
     }
 
+    private static int getCompatStatus(CommandSourceStack source) {
+        CompatRecipeRegistry.Diagnostics recipeDiagnostics = CompatRecipeRegistry.diagnostics();
+        HbmCompatFluidRegistry.Diagnostics fluidDiagnostics = HbmCompatFluidRegistry.diagnostics();
+        HbmFluidForgeMappings.Diagnostics forgeFluidDiagnostics = HbmFluidForgeMappings.diagnostics();
+        HbmFluidContainerRegistry.Diagnostics containerDiagnostics = HbmFluidContainerRegistry.diagnostics();
+        source.sendSuccess(() -> Component.literal("HBM compat integration status:"), false);
+        source.sendSuccess(() -> Component.literal(" - optional mods loaded: "
+                + Compat.optionalModSummary(compatOptionalModIds())), false);
+        source.sendSuccess(() -> Component.literal(" - " + recipeDiagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal(" - recipe JSON facades: "
+                + String.join(", ", CompatRecipeRegistry.supportedRecipeFacades())), false);
+        source.sendSuccess(() -> Component.literal(" - " + fluidDiagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal(" - " + forgeFluidDiagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal(" - " + containerDiagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal(" - computer/peripheral integrations: paused until explicitly requested."), false);
+        source.sendSuccess(() -> Component.literal(" - AE2 integration: deferred optional compatibility slice."), false);
+        return recipeDiagnostics.listeners()
+                + fluidDiagnostics.listeners()
+                + containerDiagnostics.listeners()
+                + forgeFluidDiagnostics.exportMappings()
+                + forgeFluidDiagnostics.importMappings();
+    }
+
+    private static int getCompatModsStatus(CommandSourceStack source) {
+        List<String> modIds = compatOptionalModIds();
+        source.sendSuccess(() -> Component.literal("HBM optional compat mods:"), false);
+        for (String modId : modIds) {
+            source.sendSuccess(() -> Component.literal(" - " + modId + ": " + Compat.isModLoaded(modId)), false);
+        }
+        source.sendSuccess(() -> Component.literal("Computer/peripheral integrations: paused until explicitly requested."), false);
+        source.sendSuccess(() -> Component.literal("AE2 integration: deferred optional compatibility slice."), false);
+        return Compat.loadedModIds(modIds).size();
+    }
+
+    private static int getCompatRecipeStatus(CommandSourceStack source) {
+        CompatRecipeRegistry.Diagnostics diagnostics = CompatRecipeRegistry.diagnostics();
+        source.sendSuccess(() -> Component.literal("Compat recipe registry: " + diagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal("Supported datapack JSON facades: "
+                + String.join(", ", CompatRecipeRegistry.supportedRecipeFacades())), false);
+        source.sendSuccess(() -> Component.literal("Deferred legacy recipe facades: "
+                + String.join(", ", CompatRecipeRegistry.deferredLegacyRecipeFacades())), false);
+        source.sendSuccess(() -> Component.literal("Runtime RecipeManager mutation: disabled; use datapack/datagen/reload-stage sinks."), false);
+        return diagnostics.listeners() + diagnostics.lastEmittedRecipes();
+    }
+
+    private static int getCompatFluidStatus(CommandSourceStack source) {
+        HbmCompatFluidRegistry.Diagnostics fluidDiagnostics = HbmCompatFluidRegistry.diagnostics();
+        HbmFluidForgeMappings.Diagnostics forgeFluidDiagnostics = HbmFluidForgeMappings.diagnostics();
+        HbmFluidContainerRegistry.Diagnostics containerDiagnostics = HbmFluidContainerRegistry.diagnostics();
+        source.sendSuccess(() -> Component.literal("Compat fluid registry: " + fluidDiagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal("Forge fluid mappings: " + forgeFluidDiagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal("Fluid container registry: " + containerDiagnostics.summary()), false);
+        return fluidDiagnostics.listeners()
+                + forgeFluidDiagnostics.exportMappings()
+                + forgeFluidDiagnostics.importMappings()
+                + containerDiagnostics.externalContainers();
+    }
+
+    private static int getCompatSteamLevel(CommandSourceStack source, int level) {
+        FluidType type = Compat.intToSteamType(level);
+        source.sendSuccess(() -> Component.literal("Steam compression level " + level + " -> " + type.getName()), false);
+        return level;
+    }
+
+    private static int getCompatSteamFluid(CommandSourceStack source, String fluidName) {
+        FluidType type = HbmFluids.fromName(fluidName);
+        if (type == HbmFluids.NONE) {
+            source.sendFailure(Component.literal("Unknown HBM fluid: " + fluidName));
+            return 0;
+        }
+        int level = Compat.steamTypeToInt(type);
+        source.sendSuccess(() -> Component.literal("HBM fluid " + type.getName() + " -> steam compression level " + level), false);
+        return level;
+    }
+
+    private static List<String> compatOptionalModIds() {
+        return List.of(
+                Compat.MOD_JEI,
+                Compat.MOD_AE2,
+                Compat.MOD_ENERGY_CONTROL,
+                Compat.MOD_GTCEU,
+                Compat.MOD_GREGTECH,
+                Compat.MOD_TCONSTRUCT,
+                Compat.MOD_RAILCRAFT);
+    }
+
     private static int getFluidForgeMappingStatus(CommandSourceStack source) {
         HbmFluidForgeAliasConfig.LoadReport report = HbmFluidForgeAliasConfig.loadReport();
         HbmFluidForgeMappings.Diagnostics diagnostics = HbmFluidForgeMappings.diagnostics();
@@ -1861,8 +2692,87 @@ public final class ModCommands {
 
     private static int getFluidContainerRegistryStatus(CommandSourceStack source) {
         HbmFluidContainerRegistry.Diagnostics diagnostics = HbmFluidContainerRegistry.diagnostics();
+        HbmFluidContainerConfig.LoadReport report = HbmFluidContainerConfig.loadReport();
         source.sendSuccess(() -> Component.literal("Fluid container registry: " + diagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal("Fluid container config: " + report.summary()), false);
+        for (String warning : report.warnings()) {
+            source.sendSuccess(() -> Component.literal(" - " + warning), false);
+        }
         return diagnostics.externalContainers();
+    }
+
+    private static int reloadFluidContainers(CommandSourceStack source) {
+        HbmFluidContainerRegistry.reloadExternalContainers(FMLPaths.CONFIGDIR.get());
+        HbmFluidContainerRegistry.Diagnostics diagnostics = HbmFluidContainerRegistry.diagnostics();
+        HbmFluidContainerConfig.LoadReport report = HbmFluidContainerConfig.loadReport();
+        source.sendSuccess(() -> Component.literal("Reloaded fluid containers: " + diagnostics.summary()), true);
+        source.sendSuccess(() -> Component.literal("Fluid container config: " + report.summary()), false);
+        for (String warning : report.warnings()) {
+            source.sendSuccess(() -> Component.literal(" - " + warning), false);
+        }
+        return diagnostics.externalContainers();
+    }
+
+    private static int listFluidContainers(CommandSourceStack source, @Nullable FluidType type) {
+        List<HbmFluidContainerRegistry.ContainerEntry> entries;
+        if (type == null) {
+            entries = HbmFluidContainerRegistry.getFixedContainersSnapshot();
+            source.sendSuccess(() -> Component.literal("Fixed fluid container entries: " + entries.size()
+                    + " (use /hbm fluid containers list <fluid> to include dynamic HBM container kinds)"), false);
+        } else if (type == HbmFluids.NONE) {
+            source.sendFailure(Component.literal("Unknown or empty HBM fluid type."));
+            return 0;
+        } else {
+            entries = HbmFluidContainerRegistry.getContainers(type);
+            source.sendSuccess(() -> Component.literal("Fluid container entries for " + type.getName() + ": " + entries.size()), false);
+        }
+        for (HbmFluidContainerRegistry.ContainerEntry entry : entries) {
+            source.sendSuccess(() -> Component.literal(" - " + formatFluidContainerEntry(entry)), false);
+        }
+        return entries.size();
+    }
+
+    private static int resolveHeldFluidContainer(CommandSourceStack source) throws CommandSyntaxException {
+        ItemStack stack = source.getPlayerOrException().getMainHandItem();
+        if (stack.isEmpty()) {
+            source.sendFailure(Component.literal("Hold a fluid container item."));
+            return 0;
+        }
+        FluidType type = HbmFluidContainerRegistry.getFluidType(stack);
+        int content = type == HbmFluids.NONE ? 0 : HbmFluidContainerRegistry.getFluidContent(stack, type);
+        ItemStack empty = HbmFluidContainerRegistry.getEmptyContainer(stack);
+        source.sendSuccess(() -> Component.literal("Held fluid container: item=" + itemStackId(stack)
+                + " fluid=" + type.getName()
+                + " content=" + content + " mB"
+                + " empty=" + itemStackId(empty)), false);
+        if (type != HbmFluids.NONE) {
+            HbmFluidContainerRegistry.ContainerEntry entry = HbmFluidContainerRegistry.getFixedContainersSnapshot().stream()
+                    .filter(candidate -> candidate.type() == type && candidate.matchesFull(stack))
+                    .findFirst()
+                    .orElse(null);
+            if (entry != null) {
+                source.sendSuccess(() -> Component.literal("Matched fixed entry: " + formatFluidContainerEntry(entry)), false);
+            }
+        }
+        int capabilityTanks = describeHeldFluidItemCapability(source, stack);
+        return type == HbmFluids.NONE ? capabilityTanks : Math.max(content, capabilityTanks);
+    }
+
+    private static int describeHeldFluidItemCapability(CommandSourceStack source, ItemStack stack) {
+        IFluidHandlerItem handler = stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).resolve().orElse(null);
+        if (handler == null) {
+            source.sendSuccess(() -> Component.literal("Forge fluid item capability: none"), false);
+            return 0;
+        }
+        int tanks = handler.getTanks();
+        source.sendSuccess(() -> Component.literal("Forge fluid item capability: tanks=" + tanks
+                + " container=" + itemStackId(handler.getContainer())), false);
+        for (int i = 0; i < tanks; i++) {
+            int tankIndex = i;
+            source.sendSuccess(() -> formatForgeTank(tankIndex, handler.getFluidInTank(tankIndex),
+                    handler.getTankCapacity(tankIndex)), false);
+        }
+        return tanks;
     }
 
     private static int getFluidPort(CommandSourceStack source, BlockPos machinePos, BlockPos offset, Direction side,
@@ -2318,6 +3228,18 @@ public final class ModCommands {
         return available ? 1 : 0;
     }
 
+    private static int rollItemPool(CommandSourceStack source, String legacyPoolId) {
+        Vec3 origin = source.getPosition();
+        List<ItemStack> stacks = HbmItemPoolRegistry.getStacks(source.getLevel(), legacyPoolId, origin);
+        if (stacks.isEmpty()) {
+            source.sendFailure(Component.literal("HBM item pool " + legacyPoolId + " produced no loot."));
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("HBM item pool " + legacyPoolId
+                + " rolled " + stacks.size() + " stack(s): " + itemStackSummary(stacks)), false);
+        return stacks.size();
+    }
+
     private static int getAssemblyInfo(CommandSourceStack source, BlockPos pos) {
         AssemblyMachineBlockEntity assembler = getAssemblyMachine(source, pos);
         if (assembler == null) {
@@ -2420,6 +3342,16 @@ public final class ModCommands {
                 + "}";
     }
 
+    private static String formatFluidContainerEntry(HbmFluidContainerRegistry.ContainerEntry entry) {
+        String kind = entry.kind() == null ? "fixed" : entry.kind().name().toLowerCase(Locale.US);
+        return "source=" + entry.source().name().toLowerCase(Locale.US)
+                + " kind=" + kind
+                + " fluid=" + entry.type().getName()
+                + " amount=" + entry.content() + " mB"
+                + " full=" + itemStackId(entry.fullContainer())
+                + " empty=" + itemStackId(entry.emptyContainer());
+    }
+
     private static Component formatHbmTank(int index, HbmFluidTank tank) {
         FluidType type = tank.getTankType();
         return Component.literal("  [" + index + "] fluid=")
@@ -2484,8 +3416,8 @@ public final class ModCommands {
     }
 
     private static int getPlayerRadiation(CommandSourceStack source, Player player) {
-        source.sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " radiation: " + round(RadiationData.getRadiation(player)) + " RAD"), false);
-        return Math.round(RadiationData.getRadiation(player));
+        source.sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " radiation: " + round(HbmLivingProperties.getRadiation(player)) + " RAD"), false);
+        return Math.round(HbmLivingProperties.getRadiation(player));
     }
 
     private static int getPlayerRadiation(CommandSourceStack source, Collection<ServerPlayer> players) {
@@ -2497,7 +3429,7 @@ public final class ModCommands {
 
     private static int setPlayerRadiation(CommandSourceStack source, Collection<ServerPlayer> players, float amount) {
         for (ServerPlayer player : players) {
-            RadiationData.setRadiation(player, amount);
+            HbmLivingProperties.setRadiation(player, amount);
         }
         syncPlayers(players);
         source.sendSuccess(() -> Component.literal("Set radiation for " + players.size() + " player(s)."), true);
@@ -2506,7 +3438,7 @@ public final class ModCommands {
 
     private static int addPlayerRadiation(CommandSourceStack source, Collection<ServerPlayer> players, float amount) {
         for (ServerPlayer player : players) {
-            RadiationData.incrementRadiation(player, amount);
+            HbmLivingProperties.incrementRadiation(player, amount);
         }
         syncPlayers(players);
         source.sendSuccess(() -> Component.literal("Updated radiation for " + players.size() + " player(s)."), true);
@@ -2514,8 +3446,8 @@ public final class ModCommands {
     }
 
     private static int getPlayerDigamma(CommandSourceStack source, Player player) {
-        source.sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " digamma: " + round(RadiationData.getDigamma(player))), false);
-        return Math.round(RadiationData.getDigamma(player));
+        source.sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " digamma: " + round(HbmLivingProperties.getDigamma(player))), false);
+        return Math.round(HbmLivingProperties.getDigamma(player));
     }
 
     private static int getPlayerDigamma(CommandSourceStack source, Collection<ServerPlayer> players) {
@@ -2527,7 +3459,7 @@ public final class ModCommands {
 
     private static int setPlayerDigamma(CommandSourceStack source, Collection<ServerPlayer> players, float amount) {
         for (ServerPlayer player : players) {
-            RadiationData.setDigamma(player, amount);
+            HbmLivingProperties.setDigamma(player, amount);
         }
         syncPlayers(players);
         source.sendSuccess(() -> Component.literal("Set digamma for " + players.size() + " player(s)."), true);
@@ -2536,7 +3468,7 @@ public final class ModCommands {
 
     private static int addPlayerDigamma(CommandSourceStack source, Collection<ServerPlayer> players, float amount) {
         for (ServerPlayer player : players) {
-            RadiationData.incrementDigamma(player, amount);
+            HbmLivingProperties.incrementDigamma(player, amount);
         }
         syncPlayers(players);
         source.sendSuccess(() -> Component.literal("Updated digamma for " + players.size() + " player(s)."), true);
@@ -2595,17 +3527,17 @@ public final class ModCommands {
     }
 
     private static int listContamination(CommandSourceStack source, ServerPlayer player) {
-        Collection<RadiationData.ContaminationEffect> effects = RadiationData.getContaminationEffects(player);
+        Collection<HbmLivingProperties.ContaminationEffect> effects = HbmLivingProperties.getCont(player);
         source.sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " contamination entries: " + effects.size()), false);
         int index = 0;
-        for (RadiationData.ContaminationEffect effect : effects) {
+        for (HbmLivingProperties.ContaminationEffect effect : effects) {
             int currentIndex = index++;
             source.sendSuccess(() -> Component.literal("#" + currentIndex
-                    + " maxRad=" + round(effect.maxRad())
-                    + " maxTime=" + effect.maxTime()
-                    + " time=" + effect.time()
+                    + " maxRad=" + round(effect.maxRad)
+                    + " maxTime=" + effect.maxTime
+                    + " time=" + effect.time
                     + " currentRad=" + round(effect.currentRadiation())
-                    + " ignoreArmor=" + effect.ignoreArmor()), false);
+                    + " ignoreArmor=" + effect.ignoreArmor), false);
         }
         return effects.size();
     }
@@ -2620,7 +3552,7 @@ public final class ModCommands {
 
     private static int addContamination(CommandSourceStack source, Collection<ServerPlayer> players, float maxRad, int maxTime, int time, boolean ignoreArmor) {
         for (ServerPlayer player : players) {
-            RadiationData.addContamination(player, maxRad, maxTime, time, ignoreArmor);
+            HbmLivingProperties.addCont(player, new HbmLivingProperties.ContaminationEffect(maxRad, maxTime, time, ignoreArmor));
         }
         syncPlayers(players);
         source.sendSuccess(() -> Component.literal("Added contamination entry for " + players.size() + " player(s)."), true);
@@ -2630,7 +3562,7 @@ public final class ModCommands {
     private static int removeContamination(CommandSourceStack source, Collection<ServerPlayer> players, int index) {
         int removed = 0;
         for (ServerPlayer player : players) {
-            if (RadiationData.removeContamination(player, index)) {
+            if (HbmLivingProperties.removeCont(player, index)) {
                 removed++;
             }
         }
@@ -2643,7 +3575,7 @@ public final class ModCommands {
     private static int clearContamination(CommandSourceStack source, Collection<ServerPlayer> players) {
         int removed = 0;
         for (ServerPlayer player : players) {
-            removed += RadiationData.clearContamination(player);
+            removed += HbmLivingProperties.clearCont(player);
         }
         syncPlayers(players);
         int removedCount = removed;
@@ -2709,6 +3641,10 @@ public final class ModCommands {
                         : " lastBlocked=\"" + snapshot.sendSafety().lastBlockedSend() + "\"")), false);
         source.sendSuccess(() -> Component.literal("Threading runtime: pending=" + snapshot.threaded().pending()
                 + " queued=" + snapshot.threaded().totalQueued()
+                + " prepared=" + snapshot.threaded().totalPrepared()
+                + " preparable=" + snapshot.threaded().preparableMessages()
+                + " plain=" + snapshot.threaded().nonPreparableMessages()
+                + " preparedCopies=" + snapshot.threaded().preparedCopyInstance()
                 + " sent=" + snapshot.threaded().totalSent()
                 + " failed=" + snapshot.threaded().totalFailed()
                 + " discarded=" + snapshot.threaded().totalDiscarded()
@@ -2718,12 +3654,17 @@ public final class ModCommands {
                 + snapshot.legacyFlushCalls()
                 + " waitCalls=" + snapshot.legacyWaitCalls()
                 + " rawBufferBlocked=" + snapshot.rawBufferBlockedSends()
+                + " dimensionIdBlocked=" + snapshot.dimensionIdBlockedSends()
                 + " lastTickTotal=" + snapshot.legacyPacketThreading().lastTickTotal()
                 + " remaining=" + snapshot.legacyPacketThreading().remaining()
                 + " helpers=" + snapshot.totalHelperCount()), false);
         if (!snapshot.lastRawBufferBlockedSend().isBlank()) {
             source.sendSuccess(() -> Component.literal("Last legacy raw buffer block: "
                     + snapshot.lastRawBufferBlockedSend()), false);
+        }
+        if (!snapshot.lastDimensionIdBlockedSend().isBlank()) {
+            source.sendSuccess(() -> Component.literal("Last legacy dimension id block: "
+                    + snapshot.lastDimensionIdBlockedSend()), false);
         }
         return snapshot.hasRuntimeWarnings() ? 0 : 1;
     }
@@ -2811,6 +3752,20 @@ public final class ModCommands {
         return (int) Math.min(Integer.MAX_VALUE, LegacyRawBufferNetwork.blockedRawBufferSendCount());
     }
 
+    private static int getNetworkDimensionIdStatus(CommandSourceStack source) {
+        source.sendSuccess(() -> Component.literal("HBM legacy dimension id network: "
+                + LegacyDimensionIdNetwork.summary()), false);
+        return (int) Math.min(Integer.MAX_VALUE, LegacyDimensionIdNetwork.blockedDimensionIdSendCount());
+    }
+
+    private static int getNetworkTargetPointStatus(CommandSourceStack source) {
+        source.sendSuccess(() -> Component.literal("HBM legacy target point network: "
+                + LegacyTargetPoint.compatibilitySummary()), false);
+        source.sendSuccess(() -> Component.literal("Legacy target point dimension audit: "
+                + LegacyDimensionIdNetwork.summary()), false);
+        return LegacyTargetPoint.modernFactoryCount() + LegacyTargetPoint.legacyFactoryCount();
+    }
+
     private static int queryLegacyNetworkPacket(CommandSourceStack source, String legacyName) {
         Optional<ModMessages.LegacyPacketRegistration> registration = ModMessages.legacyPacketRegistration(legacyName);
         List<ModMessages.LegacyPacketMapping> mappings = ModMessages.legacyPacketMappings(legacyName);
@@ -2862,6 +3817,10 @@ public final class ModCommands {
                 + LegacyPacketThreading.compatibilitySummary()), false);
         source.sendSuccess(() -> Component.literal("Legacy raw buffer: "
                 + LegacyRawBufferNetwork.summary()), false);
+        source.sendSuccess(() -> Component.literal("Legacy dimension id: "
+                + LegacyDimensionIdNetwork.summary()), false);
+        source.sendSuccess(() -> Component.literal("Legacy target point: "
+                + LegacyTargetPoint.compatibilitySummary()), false);
         source.sendSuccess(() -> Component.literal("Send safety: "
                 + ModMessages.sendSafetySummary()), false);
         source.sendSuccess(() -> Component.literal("Use ModMessages.wrapper() when migrating old PacketDispatcher.wrapper call sites; "
@@ -2928,6 +3887,10 @@ public final class ModCommands {
                 + " errorBypass=" + snapshot.errorBypass()
                 + " totalQueued=" + snapshot.totalQueued()
                 + " totalPrepared=" + snapshot.totalPrepared()
+                + " preparable=" + snapshot.preparableMessages()
+                + " plain=" + snapshot.nonPreparableMessages()
+                + " preparedSame=" + snapshot.preparedSameInstance()
+                + " preparedCopies=" + snapshot.preparedCopyInstance()
                 + " totalSent=" + snapshot.totalSent()
                 + " totalFailed=" + snapshot.totalFailed()
                 + " totalDiscarded=" + snapshot.totalDiscarded()
@@ -2985,6 +3948,25 @@ public final class ModCommands {
             source.sendSuccess(() -> Component.literal("Last packet threading issue: " + snapshot.lastFailureMessage()), false);
         }
         return snapshot.pending();
+    }
+
+    private static int getPacketThreadingPrepareStats(CommandSourceStack source) {
+        ThreadedPacketDispatcher.Snapshot snapshot = ThreadedPacketDispatcher.snapshot();
+        source.sendSuccess(() -> Component.literal("Packet threading prepare: totalPrepared="
+                + snapshot.totalPrepared()
+                + " prepareFailed=" + snapshot.totalPrepareFailed()
+                + " preparableMessages=" + snapshot.preparableMessages()
+                + " nonPreparableMessages=" + snapshot.nonPreparableMessages()
+                + " sameInstance=" + snapshot.preparedSameInstance()
+                + " copyInstance=" + snapshot.preparedCopyInstance()
+                + " preparedInstanceTotal=" + snapshot.preparedInstanceTotal()), false);
+        source.sendSuccess(() -> Component.literal("Legacy precompile compatibility: "
+                + "HbmPreparablePacket replaces ThreadedPacket/PrecompiledPacket; "
+                + "non-preparable registered S2C messages may still be threaded but are not pre-copied."), false);
+        if (!snapshot.lastFailureMessage().isBlank()) {
+            source.sendSuccess(() -> Component.literal("Last packet threading issue: " + snapshot.lastFailureMessage()), false);
+        }
+        return (int) Math.min(Integer.MAX_VALUE, snapshot.totalPrepared());
     }
 
     private static int getPacketThreadingConfig(CommandSourceStack source) {
@@ -3099,15 +4081,15 @@ public final class ModCommands {
     }
 
     private enum StatusField {
-        ASBESTOS("asbestos", player -> RadiationData.getAsbestos(player), (player, value) -> RadiationData.setAsbestos(player, value)),
-        BLACKLUNG("blacklung", player -> RadiationData.getBlackLung(player), (player, value) -> RadiationData.setBlackLung(player, value)),
-        BOMB_TIMER("bomb_timer", player -> RadiationData.getBombTimer(player), (player, value) -> RadiationData.setBombTimer(player, value)),
-        CONTAGION("contagion", player -> RadiationData.getContagion(player), (player, value) -> RadiationData.setContagion(player, value)),
-        OIL("oil", player -> RadiationData.getOil(player), (player, value) -> RadiationData.setOil(player, value)),
-        FIRE("fire", player -> RadiationData.getFire(player), (player, value) -> RadiationData.setFire(player, value)),
-        PHOSPHORUS("phosphorus", player -> RadiationData.getPhosphorus(player), (player, value) -> RadiationData.setPhosphorus(player, value)),
-        BALEFIRE("balefire", player -> RadiationData.getBalefire(player), (player, value) -> RadiationData.setBalefire(player, value)),
-        BLACK_FIRE("black_fire", player -> RadiationData.getBlackFire(player), (player, value) -> RadiationData.setBlackFire(player, value));
+        ASBESTOS("asbestos", player -> HbmLivingProperties.getAsbestos(player), (player, value) -> HbmLivingProperties.setAsbestos(player, value)),
+        BLACKLUNG("blacklung", player -> HbmLivingProperties.getBlackLung(player), (player, value) -> HbmLivingProperties.setBlackLung(player, value)),
+        BOMB_TIMER("bomb_timer", player -> HbmLivingProperties.getBombTimer(player), (player, value) -> HbmLivingProperties.setBombTimer(player, value)),
+        CONTAGION("contagion", player -> HbmLivingProperties.getContagion(player), (player, value) -> HbmLivingProperties.setContagion(player, value)),
+        OIL("oil", player -> HbmLivingProperties.getOil(player), (player, value) -> HbmLivingProperties.setOil(player, value)),
+        FIRE("fire", player -> HbmLivingProperties.getFire(player), (player, value) -> HbmLivingProperties.setFire(player, value)),
+        PHOSPHORUS("phosphorus", player -> HbmLivingProperties.getPhosphorus(player), (player, value) -> HbmLivingProperties.setPhosphorus(player, value)),
+        BALEFIRE("balefire", player -> HbmLivingProperties.getBalefire(player), (player, value) -> HbmLivingProperties.setBalefire(player, value)),
+        BLACK_FIRE("black_fire", player -> HbmLivingProperties.getBlackFire(player), (player, value) -> HbmLivingProperties.setBlackFire(player, value));
 
         private static final String[] NAMES = buildNames();
 

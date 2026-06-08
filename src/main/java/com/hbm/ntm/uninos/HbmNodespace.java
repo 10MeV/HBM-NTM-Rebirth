@@ -249,6 +249,62 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
                 nodeWorld.reapTimer);
     }
 
+    public ChunkDiagnostics getChunkDiagnostics(Level level, ChunkPos chunkPos) {
+        NodeWorld<K, N, T> nodeWorld = worlds.get(level.dimension());
+        if (nodeWorld == null || chunkPos == null) {
+            return ChunkDiagnostics.empty();
+        }
+
+        LinkedHashSet<N> uniqueNodes = new LinkedHashSet<>();
+        int nodePositions = 0;
+        for (Map.Entry<K, N> entry : nodeWorld.nodes.entrySet()) {
+            if (new ChunkPos(keyPosition.apply(entry.getKey())).equals(chunkPos)) {
+                nodePositions++;
+                uniqueNodes.add(entry.getValue());
+            }
+        }
+
+        int dirtyNodes = 0;
+        int expiredNodes = 0;
+        int orphanNodes = 0;
+        LinkedHashSet<T> networks = new LinkedHashSet<>();
+        for (N node : uniqueNodes) {
+            if (node.isRecentlyChanged()) {
+                dirtyNodes++;
+            }
+            if (node.isExpired()) {
+                expiredNodes++;
+            }
+            if (!node.hasValidNet()) {
+                orphanNodes++;
+                continue;
+            }
+            T net = castNet(node.getNet());
+            if (net != null) {
+                networks.add(net);
+            }
+        }
+
+        int invalidNetworks = 0;
+        int linkRefs = 0;
+        for (T net : networks) {
+            if (!net.isValid()) {
+                invalidNetworks++;
+            }
+            linkRefs += net.linkCount();
+        }
+
+        return new ChunkDiagnostics(
+                nodePositions,
+                uniqueNodes.size(),
+                networks.size(),
+                invalidNetworks,
+                linkRefs,
+                dirtyNodes,
+                expiredNodes,
+                orphanNodes);
+    }
+
     private void updateNetworks(NodeWorld<K, N, T> nodeWorld) {
         for (T net : nodeWorld.activeNetworks) {
             resetNetwork.accept(net);
@@ -410,6 +466,20 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
             int reapTimer) {
         private static Diagnostics empty() {
             return new Diagnostics(0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+    }
+
+    public record ChunkDiagnostics(
+            int nodePositions,
+            int uniqueNodes,
+            int networks,
+            int invalidNetworks,
+            int linkRefs,
+            int dirtyNodes,
+            int expiredNodes,
+            int orphanNodes) {
+        private static ChunkDiagnostics empty() {
+            return new ChunkDiagnostics(0, 0, 0, 0, 0, 0, 0, 0);
         }
     }
 

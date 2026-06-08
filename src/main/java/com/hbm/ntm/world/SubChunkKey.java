@@ -1,5 +1,7 @@
 package com.hbm.ntm.world;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 
 public class SubChunkKey {
@@ -17,7 +19,17 @@ public class SubChunkKey {
     }
 
     public static SubChunkKey ofBlock(int blockX, int blockY, int blockZ) {
-        return new SubChunkKey(blockX >> 4, blockZ >> 4, blockY >> 4);
+        return new SubChunkKey(SectionPos.blockToSectionCoord(blockX),
+                SectionPos.blockToSectionCoord(blockZ),
+                SectionPos.blockToSectionCoord(blockY));
+    }
+
+    public static SubChunkKey ofBlock(BlockPos pos) {
+        return ofBlock(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    public static SubChunkKey ofSection(SectionPos pos) {
+        return new SubChunkKey(pos.x(), pos.z(), pos.y());
     }
 
     public SubChunkKey update(int chunkX, int chunkZ, int sectionY) {
@@ -55,6 +67,48 @@ public class SubChunkKey {
         return ChunkPos.asLong(chunkX, chunkZ);
     }
 
+    public SectionPos sectionPos() {
+        return SectionPos.of(chunkX, sectionY, chunkZ);
+    }
+
+    public long sectionLong() {
+        return SectionPos.asLong(chunkX, sectionY, chunkZ);
+    }
+
+    public int getMinBlockX() {
+        return SectionPos.sectionToBlockCoord(chunkX);
+    }
+
+    public int getMinBlockY() {
+        return SectionPos.sectionToBlockCoord(sectionY);
+    }
+
+    public int getMinBlockZ() {
+        return SectionPos.sectionToBlockCoord(chunkZ);
+    }
+
+    public int getMaxBlockX() {
+        return getMinBlockX() + 15;
+    }
+
+    public int getMaxBlockY() {
+        return getMinBlockY() + 15;
+    }
+
+    public int getMaxBlockZ() {
+        return getMinBlockZ() + 15;
+    }
+
+    public boolean containsBlock(BlockPos pos) {
+        return containsBlock(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    public boolean containsBlock(int blockX, int blockY, int blockZ) {
+        return SectionPos.blockToSectionCoord(blockX) == chunkX
+                && SectionPos.blockToSectionCoord(blockY) == sectionY
+                && SectionPos.blockToSectionCoord(blockZ) == chunkZ;
+    }
+
     @Override
     public int hashCode() {
         return hash;
@@ -69,5 +123,10 @@ public class SubChunkKey {
             return false;
         }
         return sectionY == other.sectionY && chunkX == other.chunkX && chunkZ == other.chunkZ;
+    }
+
+    @Override
+    public String toString() {
+        return "SubChunkKey[" + chunkX + "," + sectionY + "," + chunkZ + "]";
     }
 }

@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.compat.CompatEnergyControl;
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -423,7 +424,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
                 pos.getX() + 2.0D, pos.getY() + 17.0D, pos.getZ() + 2.0D);
         for (Entity entity : level.getEntities(null, box)) {
             entity.setSecondsOnFire(5);
-            entity.hurt(level.damageSources().onFire(), 5.0F);
+            EntityDamageUtil.attackEntityFromNt(entity, level.damageSources().onFire(), 5.0F);
         }
     }
 

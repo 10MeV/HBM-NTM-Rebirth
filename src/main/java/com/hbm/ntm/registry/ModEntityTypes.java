@@ -17,6 +17,9 @@ import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
 import com.hbm.ntm.entity.missile.MinerRocketEntity;
+import com.hbm.ntm.entity.missile.SoyuzCapsuleEntity;
+import com.hbm.ntm.entity.missile.SoyuzEntity;
+import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.entity.projectile.FallingNukeEntity;
 import com.hbm.ntm.entity.projectile.RubbleEntity;
 import com.hbm.ntm.entity.projectile.ShrapnelEntity;
@@ -191,6 +194,22 @@ public final class ModEntityTypes {
                     .updateInterval(1)
                     .build("entity_miner_lander"));
 
+    public static final RegistryObject<EntityType<SoyuzEntity>> SOYUZ =
+            ENTITY_TYPES.register("entity_soyuz", () -> EntityType.Builder
+                    .<SoyuzEntity>of(SoyuzEntity::new, MobCategory.MISC)
+                    .sized(5.0F, 50.0F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .build("entity_soyuz"));
+
+    public static final RegistryObject<EntityType<SoyuzCapsuleEntity>> SOYUZ_CAPSULE =
+            ENTITY_TYPES.register("entity_soyuz_capsule", () -> EntityType.Builder
+                    .<SoyuzCapsuleEntity>of(SoyuzCapsuleEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 2.0F)
+                    .clientTrackingRange(256)
+                    .updateInterval(1)
+                    .build("entity_soyuz_capsule"));
+
     public static final RegistryObject<EntityType<ShrapnelEntity>> SHRAPNEL =
             ENTITY_TYPES.register("entity_shrapnel", () -> EntityType.Builder
                     .<ShrapnelEntity>of(ShrapnelEntity::new, MobCategory.MISC)
@@ -207,6 +226,14 @@ public final class ModEntityTypes {
                     .clientTrackingRange(128)
                     .updateInterval(1)
                     .build("entity_rubble"));
+
+    public static final RegistryObject<EntityType<BulletProjectileEntity>> BULLET_PROJECTILE =
+            ENTITY_TYPES.register("entity_bullet_base_nt", () -> EntityType.Builder
+                    .<BulletProjectileEntity>of(BulletProjectileEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F)
+                    .clientTrackingRange(128)
+                    .updateInterval(1)
+                    .build("entity_bullet_base_nt"));
 
     public static void register(IEventBus modBus) {
         ENTITY_TYPES.register(modBus);

@@ -89,6 +89,12 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
         return List.of();
     }
 
+    public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
+        return level == null
+                ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)
+                : HbmEnergyUtil.inspectPorts(level, worldPosition, getEnergyPorts());
+    }
+
     @Override
     public boolean canConnectEnergy(@Nullable Direction side) {
         return canAccessEnergy(side);

@@ -64,7 +64,9 @@ public class BlockProcessorStandard implements BlockProcessor {
             if (chance != null) {
                 dropChance = chance.mutateDropChance(explosion, state, pos, dropChance);
             }
-            if (state.canDropFromExplosion(level, pos, explosion.compat()) && level.random.nextFloat() < dropChance) {
+            boolean suppressDrops = mutator != null && mutator.suppressDrops(explosion, state, pos);
+            if (!suppressDrops && state.canDropFromExplosion(level, pos, explosion.compat())
+                    && level.random.nextFloat() < dropChance) {
                 BlockEntity blockEntity = state.hasBlockEntity() ? level.getBlockEntity(pos) : null;
                 ItemStack tool = ItemStack.EMPTY;
                 if (fortune != null) {

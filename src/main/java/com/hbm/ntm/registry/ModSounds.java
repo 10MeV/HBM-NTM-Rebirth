@@ -19,6 +19,22 @@ public final class ModSounds {
 
     public static final RegistryObject<SoundEvent> BLOCK_PRESS_OPERATE = register("block.press_operate");
     public static final RegistryObject<SoundEvent> BLOCK_MOTOR = register("block.motor");
+    public static final RegistryObject<SoundEvent> BLOCK_ENGINE = register("block.engine");
+    public static final RegistryObject<SoundEvent> BLOCK_LARGE_TURBINE_RUNNING = register("block.large_turbine_running");
+    public static final RegistryObject<SoundEvent> BLOCK_CHUNGUS_TURBINE_RUNNING = register("block.chungus_turbine_running");
+    public static final RegistryObject<SoundEvent> BLOCK_FEL = register("block.fel");
+    public static final RegistryObject<SoundEvent> BLOCK_ELECTRIC_HUM = register("block.electric_hum");
+    public static final RegistryObject<SoundEvent> BLOCK_FUSION_REACTOR_RUNNING = register("block.fusion_reactor_running");
+    public static final RegistryObject<SoundEvent> BLOCK_BOILER_GROAN = register("block.boiler_groan");
+    public static final RegistryObject<SoundEvent> BLOCK_CENTRIFUGE_OPERATE = register("block.centrifuge_operate");
+    public static final RegistryObject<SoundEvent> BLOCK_TURBOFAN_OPERATE = register("block.turbofan_operate");
+    public static final RegistryObject<SoundEvent> BLOCK_DAMAGE = register("block.damage");
+    public static final RegistryObject<SoundEvent> BLOCK_HEPHAESTUS_RUNNING = register("block.hephaestus_running");
+    public static final RegistryObject<SoundEvent> BLOCK_STEAM_ENGINE_OPERATE = register("block.steam_engine_operate");
+    public static final RegistryObject<SoundEvent> BLOCK_REACTOR_LOOP = register("block.reactor_loop");
+    public static final RegistryObject<SoundEvent> BLOCK_TURBINEGAS_STARTUP = register("block.turbinegas_startup");
+    public static final RegistryObject<SoundEvent> BLOCK_TURBINEGAS_RUNNING = register("block.turbinegas_running");
+    public static final RegistryObject<SoundEvent> BLOCK_TURBINEGAS_SHUTDOWN = register("block.turbinegas_shutdown");
     public static final RegistryObject<SoundEvent> BLOCK_ASSEMBLER_OPERATE = register("block.assembler_operate");
     public static final RegistryObject<SoundEvent> BLOCK_ASSEMBLER_STRIKE = register("block.assembler_strike");
     public static final RegistryObject<SoundEvent> BLOCK_ASSEMBLER_START = register("block.assembler_start");
@@ -31,6 +47,8 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> BLOCK_REACTOR_START = register("block.reactor_start");
     public static final RegistryObject<SoundEvent> BLOCK_BOILER = register("block.boiler");
     public static final RegistryObject<SoundEvent> BLOCK_PYRO_OPERATE = register("block.pyro_operate");
+    public static final RegistryObject<SoundEvent> BLOCK_SONAR_PING = register("block.sonar_ping");
+    public static final RegistryObject<SoundEvent> BLOCK_SOYUZ_READY = register("block.soyuz_ready");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_1 = register("tool.geiger1");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_2 = register("tool.geiger2");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_3 = register("tool.geiger3");
@@ -45,12 +63,15 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> PLAYER_COUGH = register("player.cough");
     public static final RegistryObject<SoundEvent> PLAYER_VOMIT = register("player.vomit");
     public static final RegistryObject<SoundEvent> ENTITY_UFO_BLAST = register("entity.ufo_blast");
+    public static final RegistryObject<SoundEvent> ENTITY_SLICER = register("entity.slicer");
     public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_FLYING_LOOP = register("entity.chopper_flying_loop");
     public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_CRASHING_LOOP = register("entity.chopper_crashing_loop");
     public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_MINE_LOOP = register("entity.chopper_mine_loop");
     public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_DROP = register("entity.chopper_drop");
     public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_CHARGE = register("entity.chopper_charge");
     public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_DAMAGE = register("entity.chopper_damage");
+    public static final RegistryObject<SoundEvent> ENTITY_SOYUZ_TAKEOFF = register("entity.soyuz_takeoff");
+    public static final RegistryObject<SoundEvent> ALARM_SOYUZED = register("alarm.soyuzed");
     public static final RegistryObject<SoundEvent> WEAPON_MUKE_EXPLOSION = register("weapon.muke_explosion");
     public static final RegistryObject<SoundEvent> WEAPON_NUCLEAR_EXPLOSION = register("weapon.nuclear_explosion");
     public static final RegistryObject<SoundEvent> WEAPON_FSTBMB_START = register("weapon.fstbmb_start");
@@ -61,8 +82,12 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_SMALL_FAR = register("weapon.explosion_small_far");
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_TINY = register("weapon.explosion_tiny");
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_MEDIUM = register("weapon.explosion_medium");
+    public static final RegistryObject<SoundEvent> WEAPON_CHAINSAW = register("weapon.chainsaw");
     public static final RegistryObject<SoundEvent> WEAPON_FLAMETHROWER_SHOOT = register("weapon.flamethrower_shoot");
     public static final RegistryObject<SoundEvent> WEAPON_ROCKET_FLAME = register("weapon.rocket_flame");
+    public static final RegistryObject<SoundEvent> WEAPON_CAL_SHOOT = register("weapon.cal_shoot");
+    public static final RegistryObject<SoundEvent> WEAPON_TESLA_SHOOT = register("weapon.tesla_shoot");
+    public static final RegistryObject<SoundEvent> WEAPON_HK_SHOOT = register("weapon.hk_shoot");
     public static final RegistryObject<SoundEvent> WEAPON_RICOCHET = register("weapon.ricochet");
     public static final RegistryObject<SoundEvent> WEAPON_GRENADE_BOUNCE = register("weapon.gbounce");
     public static final RegistryObject<SoundEvent> WEAPON_RELOAD_TUBE_FWOOMP = register("weapon.reload.tube_fwoomp");
@@ -71,6 +96,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> WEAPON_CASING_MEDIUM = register("weapon.casing.medium");
     public static final RegistryObject<SoundEvent> WEAPON_CASING_LARGE = register("weapon.casing.large");
     public static final Map<LegacySirenTrack, RegistryObject<SoundEvent>> ALARM_TRACKS = registerAlarmTracks();
+    public static final RegistryObject<SoundEvent> ALARM_HATCH = ALARM_TRACKS.get(LegacySirenTrack.HATCH);
 
     public static void register(IEventBus modBus) {
         SOUNDS.register(modBus);

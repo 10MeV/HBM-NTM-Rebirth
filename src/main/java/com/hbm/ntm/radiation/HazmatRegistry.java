@@ -6,11 +6,15 @@ import com.hbm.ntm.api.item.GasMask;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmShadyUtil;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 import java.util.EnumSet;
@@ -26,10 +30,13 @@ public final class HazmatRegistry {
 
     private static final Map<Item, Double> RESISTANCE = new IdentityHashMap<>();
     private static final Map<Item, EnumSet<HazardClass>> PROTECTION = new IdentityHashMap<>();
+    private static final Map<Item, Double> EXTERNAL_RESISTANCE_DEFAULTS = new IdentityHashMap<>();
+    private static final Map<Item, EnumSet<HazardClass>> EXTERNAL_PROTECTION_DEFAULTS = new IdentityHashMap<>();
     private static final int MAX_ARMOR_MOD_PROTECTION_DEPTH = 8;
 
     public static void registerDefaults() {
         clear();
+        replayExternalResistances();
 
         double iron = 0.0225D;
         double gold = 0.0225D;
@@ -62,8 +69,10 @@ public final class HazmatRegistry {
         registerLegacyArmorSet("alloy", alloy);
         registerLegacyArmorSet("cobalt", cobalt);
         registerLegacyArmorSet("hazmat", hazYellow);
-        registerLegacyArmorSet("hazmat_red", hazRed);
-        registerLegacyArmorSet("hazmat_grey", hazGray);
+        registerLegacyArmorSet("hazmat_helmet_red", "hazmat_plate_red", "hazmat_legs_red", "hazmat_boots_red",
+                hazRed);
+        registerLegacyArmorSet("hazmat_helmet_grey", "hazmat_plate_grey", "hazmat_legs_grey", "hazmat_boots_grey",
+                hazGray);
         registerLegacyArmorSet("hazmat_paa", paa);
         registerLegacyArmorSet("liquidator", liquidator);
         registerLegacyArmorSet("security", security);
@@ -79,12 +88,100 @@ public final class HazmatRegistry {
         registerLegacyPiece("gas_mask", 0.07D);
         registerLegacyPiece("gas_mask_m65", 0.095D);
 
+        registerLegacyFsbArmorSet("t51", 1.0D, ArmorUtil.FULL_NO_LIGHT);
+        registerLegacyFsbArmorSet("steamsuit", 1.3D, ArmorUtil.FULL_PACKAGE);
+        registerLegacyFsbArmorSet("ajr", 1.3D, ArmorUtil.FULL_PACKAGE);
+        registerLegacyFsbArmorSet("ajro", 1.3D, ArmorUtil.FULL_PACKAGE);
+        registerLegacyFsbArmorSet("rpa", 2.0D, ArmorUtil.FULL_PACKAGE);
+        registerLegacyFsbArmorSet("ncrpa", 1.7D, ArmorUtil.FULL_PACKAGE);
+        registerLegacyFsbArmorSet("bj", 1.0D);
+        registerLegacyFsbArmorSet("envsuit", 1.0D, ArmorUtil.FULL_PACKAGE);
+        registerLegacyFsbArmorSet("hev", 2.3D, ArmorUtil.FULL_PACKAGE);
+        registerLegacyFsbArmorSet("fau", 4.0D, ArmorUtil.FULL_PACKAGE);
+        registerLegacyFsbArmorSet("dns", 5.0D, ArmorUtil.FULL_PACKAGE);
+        registerLegacyFsbArmorSet("taurun", 0.125D, ArmorUtil.FULL_PACKAGE);
+        registerLegacyFsbArmorSet("trenchmaster", 1.0D, ArmorUtil.FULL_PACKAGE);
+
         registerDefaultProtection();
+        replayExternalProtections();
     }
 
     public static void registerHazmat(Item item, double resistance) {
+        if (item == null || item == Items.AIR) {
+            return;
+        }
         RESISTANCE.put(item, Math.max(0.0D, resistance));
         RadiationShieldingRegistry.register(item, (float) Math.max(0.0D, resistance));
+    }
+
+    public static boolean registerHazmat(ResourceLocation itemId, double resistance) {
+        Item item = resolveItem(itemId);
+        if (item == null) {
+            return false;
+        }
+        registerHazmat(item, resistance);
+        return true;
+    }
+
+    public static boolean registerHazmat(String itemId, double resistance) {
+        Item item = resolveItem(itemId);
+        if (item == null) {
+            return false;
+        }
+        registerHazmat(item, resistance);
+        return true;
+    }
+
+    public static void registerExternalHazmat(Item item, double resistance) {
+        if (item == null || item == Items.AIR) {
+            return;
+        }
+        EXTERNAL_RESISTANCE_DEFAULTS.put(item, Math.max(0.0D, resistance));
+        registerHazmat(item, resistance);
+    }
+
+    public static boolean registerExternalHazmat(ResourceLocation itemId, double resistance) {
+        Item item = resolveItem(itemId);
+        if (item == null) {
+            return false;
+        }
+        registerExternalHazmat(item, resistance);
+        return true;
+    }
+
+    public static boolean registerExternalHazmat(String itemId, double resistance) {
+        Item item = resolveItem(itemId);
+        if (item == null) {
+            return false;
+        }
+        registerExternalHazmat(item, resistance);
+        return true;
+    }
+
+    public static void registerExternalProtection(Item item, HazardClass... protections) {
+        if (item == null || item == Items.AIR) {
+            return;
+        }
+        EXTERNAL_PROTECTION_DEFAULTS.put(item, protectionSet(protections));
+        registerProtection(item, protections);
+    }
+
+    public static boolean registerExternalProtection(ResourceLocation itemId, HazardClass... protections) {
+        Item item = resolveItem(itemId);
+        if (item == null) {
+            return false;
+        }
+        registerExternalProtection(item, protections);
+        return true;
+    }
+
+    public static boolean registerExternalProtection(String itemId, HazardClass... protections) {
+        Item item = resolveItem(itemId);
+        if (item == null) {
+            return false;
+        }
+        registerExternalProtection(item, protections);
+        return true;
     }
 
     public static void clear() {
@@ -109,22 +206,53 @@ public final class HazmatRegistry {
         return Map.copyOf(RESISTANCE);
     }
 
+    public static Map<Item, EnumSet<HazardClass>> protectionSnapshot() {
+        Map<Item, EnumSet<HazardClass>> snapshot = new IdentityHashMap<>();
+        for (Map.Entry<Item, EnumSet<HazardClass>> entry : PROTECTION.entrySet()) {
+            snapshot.put(entry.getKey(), EnumSet.copyOf(entry.getValue()));
+        }
+        return Map.copyOf(snapshot);
+    }
+
     public static RegistrySnapshot registrySnapshot() {
-        return new RegistrySnapshot(RESISTANCE.size(), PROTECTION.size());
+        return new RegistrySnapshot(RESISTANCE.size(), PROTECTION.size(),
+                EXTERNAL_RESISTANCE_DEFAULTS.size(), EXTERNAL_PROTECTION_DEFAULTS.size());
     }
 
     public static void registerProtection(Item item, HazardClass... protections) {
-        if (protections.length == 0) {
+        if (item == null || item == Items.AIR) {
             return;
         }
-        EnumSet<HazardClass> registered = PROTECTION.computeIfAbsent(item, ignored -> EnumSet.noneOf(HazardClass.class));
-        for (HazardClass protection : protections) {
-            registered.add(protection);
+        PROTECTION.put(item, protectionSet(protections));
+    }
+
+    public static boolean registerProtection(ResourceLocation itemId, HazardClass... protections) {
+        Item item = resolveItem(itemId);
+        if (item == null) {
+            return false;
         }
+        registerProtection(item, protections);
+        return true;
+    }
+
+    public static boolean registerProtection(String itemId, HazardClass... protections) {
+        Item item = resolveItem(itemId);
+        if (item == null) {
+            return false;
+        }
+        registerProtection(item, protections);
+        return true;
     }
 
     public static double getResistance(ItemStack stack) {
         if (stack.isEmpty()) {
+            return 0.0D;
+        }
+        return RESISTANCE.getOrDefault(stack.getItem(), 0.0D) + getCladding(stack);
+    }
+
+    public static double getCladding(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
             return 0.0D;
         }
         double cladding = 0.0D;
@@ -143,11 +271,15 @@ public final class HazmatRegistry {
                 cladding = claddingItem.radiationResistance();
             }
         }
-        return RESISTANCE.getOrDefault(stack.getItem(), 0.0D) + cladding;
+        return cladding;
     }
 
     public static float getResistance(LivingEntity entity) {
         float resistance = 0.0F;
+        if (entity instanceof Player player
+                && HbmShadyUtil.PU_238.equals(player.getUUID().toString())) {
+            resistance += 0.4F;
+        }
         for (ItemStack stack : entity.getArmorSlots()) {
             resistance += (float) getResistance(stack);
         }
@@ -170,6 +302,43 @@ public final class HazmatRegistry {
 
     public static Set<HazardClass> getProtectionFromItem(ItemStack stack, LivingEntity entity) {
         return getProtectionFromItem(stack, entity, 0);
+    }
+
+    public static Set<HazardClass> getProtection(LivingEntity entity, EquipmentSlot slot) {
+        if (entity == null || slot == null) {
+            return EnumSet.noneOf(HazardClass.class);
+        }
+        return getProtectionFromItem(entity.getItemBySlot(slot), entity);
+    }
+
+    public static boolean hasProtection(LivingEntity entity, EquipmentSlot slot,
+                                        HazardClass hazardClass) {
+        return getProtection(entity, slot).contains(hazardClass);
+    }
+
+    public static boolean hasAllProtection(LivingEntity entity, EquipmentSlot slot,
+                                           HazardClass... hazardClasses) {
+        if (entity == null || slot == null || entity.getItemBySlot(slot).isEmpty()) {
+            return false;
+        }
+        Set<HazardClass> protections = getProtection(entity, slot);
+        for (HazardClass hazardClass : hazardClasses) {
+            if (!protections.contains(hazardClass)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean hasAnyProtection(LivingEntity entity, EquipmentSlot slot,
+                                           HazardClass... hazardClasses) {
+        Set<HazardClass> protections = getProtection(entity, slot);
+        for (HazardClass hazardClass : hazardClasses) {
+            if (protections.contains(hazardClass)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Set<HazardClass> getProtectionFromItem(ItemStack stack, LivingEntity entity, int depth) {
@@ -198,17 +367,85 @@ public final class HazmatRegistry {
     }
 
     public static float calculateRadiationModifier(LivingEntity entity) {
-        if (entity instanceof Player player && player.isCreative()) {
+        if (!(entity instanceof Player player)) {
+            return 1.0F;
+        }
+        if (player.isCreative()) {
             return 0.0F;
         }
         return (float) Math.pow(10.0F, -getResistance(entity));
     }
 
-    private static void registerArmorSet(Item helmet, Item chest, Item legs, Item boots, double material) {
+    public static void registerArmorSet(Item helmet, Item chest, Item legs, Item boots, double material) {
         registerHazmat(helmet, material * HELMET);
         registerHazmat(chest, material * CHEST);
         registerHazmat(legs, material * LEGS);
         registerHazmat(boots, material * BOOTS);
+    }
+
+    public static int registerArmorSet(ResourceLocation helmet, ResourceLocation chest, ResourceLocation legs,
+                                       ResourceLocation boots, double material) {
+        return registerArmorSetCount(resolveItem(helmet), resolveItem(chest), resolveItem(legs), resolveItem(boots),
+                material);
+    }
+
+    public static int registerArmorSet(String helmet, String chest, String legs, String boots, double material) {
+        return registerArmorSetCount(resolveItem(helmet), resolveItem(chest), resolveItem(legs), resolveItem(boots),
+                material);
+    }
+
+    private static int registerArmorSetCount(Item helmet, Item chest, Item legs, Item boots, double material) {
+        int count = 0;
+        if (helmet != null && helmet != Items.AIR) {
+            registerHazmat(helmet, material * HELMET);
+            count++;
+        }
+        if (chest != null && chest != Items.AIR) {
+            registerHazmat(chest, material * CHEST);
+            count++;
+        }
+        if (legs != null && legs != Items.AIR) {
+            registerHazmat(legs, material * LEGS);
+            count++;
+        }
+        if (boots != null && boots != Items.AIR) {
+            registerHazmat(boots, material * BOOTS);
+            count++;
+        }
+        return count;
+    }
+
+    public static int registerExternalArmorSet(Item helmet, Item chest, Item legs, Item boots, double material) {
+        int count = 0;
+        if (helmet != null && helmet != Items.AIR) {
+            registerExternalHazmat(helmet, material * HELMET);
+            count++;
+        }
+        if (chest != null && chest != Items.AIR) {
+            registerExternalHazmat(chest, material * CHEST);
+            count++;
+        }
+        if (legs != null && legs != Items.AIR) {
+            registerExternalHazmat(legs, material * LEGS);
+            count++;
+        }
+        if (boots != null && boots != Items.AIR) {
+            registerExternalHazmat(boots, material * BOOTS);
+            count++;
+        }
+        return count;
+    }
+
+    public static int registerExternalArmorSet(ResourceLocation helmet, ResourceLocation chest, ResourceLocation legs,
+                                               ResourceLocation boots, double material) {
+        return registerExternalArmorSet(resolveItem(helmet), resolveItem(chest), resolveItem(legs), resolveItem(boots),
+                material);
+    }
+
+    public static int registerExternalArmorSet(String helmet, String chest, String legs, String boots,
+                                               double material) {
+        return registerExternalArmorSet(resolveItem(helmet), resolveItem(chest), resolveItem(legs), resolveItem(boots),
+                material);
     }
 
     private static void registerLegacyArmorSet(String prefix, double material) {
@@ -216,6 +453,21 @@ public final class HazmatRegistry {
         registerLegacyPiece(prefix + "_plate", material * CHEST);
         registerLegacyPiece(prefix + "_legs", material * LEGS);
         registerLegacyPiece(prefix + "_boots", material * BOOTS);
+    }
+
+    private static void registerLegacyArmorSet(String helmet, String chest, String legs, String boots,
+                                               double material) {
+        registerLegacyPiece(helmet, material * HELMET);
+        registerLegacyPiece(chest, material * CHEST);
+        registerLegacyPiece(legs, material * LEGS);
+        registerLegacyPiece(boots, material * BOOTS);
+    }
+
+    private static void registerLegacyFsbArmorSet(String prefix, double material, HazardClass... helmetProtections) {
+        registerLegacyArmorSet(prefix, material);
+        if (helmetProtections.length > 0) {
+            registerLegacyProtection(prefix + "_helmet", helmetProtections);
+        }
     }
 
     private static void registerLegacyPiece(String name, double resistance) {
@@ -285,9 +537,65 @@ public final class HazmatRegistry {
         }
     }
 
+    private static EnumSet<HazardClass> protectionSet(HazardClass... protections) {
+        EnumSet<HazardClass> registered = EnumSet.noneOf(HazardClass.class);
+        for (HazardClass protection : protections) {
+            if (protection != null) {
+                registered.add(protection);
+            }
+        }
+        return registered;
+    }
+
+    public static Item resolveItem(String itemId) {
+        if (itemId == null || itemId.isBlank()) {
+            return null;
+        }
+        RegistryObject<Item> legacy = ModItems.legacyItem(itemId);
+        if (legacy != null && legacy.isPresent()) {
+            return legacy.get();
+        }
+        ResourceLocation parsed = ResourceLocation.tryParse(itemId);
+        if (parsed == null) {
+            return null;
+        }
+        Item direct = resolveItem(parsed);
+        if (direct != null) {
+            return direct;
+        }
+        if ("hbm".equals(parsed.getNamespace())) {
+            legacy = ModItems.legacyItem(parsed.getPath());
+            if (legacy != null && legacy.isPresent()) {
+                return legacy.get();
+            }
+        }
+        return null;
+    }
+
+    public static Item resolveItem(ResourceLocation itemId) {
+        if (itemId == null) {
+            return null;
+        }
+        Item item = ForgeRegistries.ITEMS.getValue(itemId);
+        return item == null || item == Items.AIR ? null : item;
+    }
+
+    private static void replayExternalResistances() {
+        for (Map.Entry<Item, Double> entry : EXTERNAL_RESISTANCE_DEFAULTS.entrySet()) {
+            registerHazmat(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private static void replayExternalProtections() {
+        for (Map.Entry<Item, EnumSet<HazardClass>> entry : EXTERNAL_PROTECTION_DEFAULTS.entrySet()) {
+            registerProtection(entry.getKey(), entry.getValue().toArray(HazardClass[]::new));
+        }
+    }
+
     private HazmatRegistry() {
     }
 
-    public record RegistrySnapshot(int resistanceEntries, int protectionEntries) {
+    public record RegistrySnapshot(int resistanceEntries, int protectionEntries, int externalResistanceDefaults,
+                                   int externalProtectionDefaults) {
     }
 }

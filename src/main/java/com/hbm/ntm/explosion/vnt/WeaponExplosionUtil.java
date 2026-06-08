@@ -180,11 +180,16 @@ public final class WeaponExplosionUtil {
     }
 
     public static void spawnBalefire(Level level, double x, double y, double z, int range) {
+        spawnBalefire(level, x, y, z, range, x, y, z);
+    }
+
+    public static void spawnBalefire(Level level, double x, double y, double z, int range,
+            double cloudX, double cloudY, double cloudZ) {
         if (level == null || level.isClientSide() || range <= 0) {
             return;
         }
         level.addFreshEntity(BalefireExplosionEntity.create(level, x, y, z, range));
-        NuclearExplosionUtil.spawnBalefireCloud(level, range, x, y, z);
+        NuclearExplosionUtil.spawnBalefireCloud(level, range, cloudX, cloudY, cloudZ);
     }
 
     private WeaponExplosionUtil() {

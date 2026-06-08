@@ -64,14 +64,10 @@ public final class ExplosionNukeGeneric {
 
             double linearDistance = Math.sqrt(distance);
             float damage = (float) (maxDamage * (radius - linearDistance) / radius);
-            boolean doKnockback = true;
-            if (entity instanceof LivingEntity && entity.isAlive()) {
-                doKnockback = EntityDamageUtil.attackEntityFromNt(entity,
-                        ModDamageSources.source(level, ModDamageSources.NUCLEAR_BLAST), damage, true, true,
-                        0.0D, 100.0F, 0.0F);
-            } else {
-                entity.hurt(ModDamageSources.source(level, ModDamageSources.NUCLEAR_BLAST), damage);
-            }
+            EntityDamageUtil.DamageApplication application = EntityDamageUtil.attackEntityFromNtDetailed(entity,
+                    ModDamageSources.source(level, ModDamageSources.NUCLEAR_BLAST), damage, true, true,
+                    0.0D, 100.0F, 0.0F);
+            boolean doKnockback = !(entity instanceof LivingEntity) || application.damaged();
             entity.setSecondsOnFire(5);
 
             Vec3 knockback = target.subtract(origin);
@@ -312,9 +308,11 @@ public final class ExplosionNukeGeneric {
             } else if (random == bound - 1) {
                 level.setBlock(pos, Blocks.EMERALD_ORE.defaultBlockState(), 3);
             }
-        } else if (state.is(BlockTags.LOGS)) {
+        } else if (state.is(BlockTags.LOGS) || state.is(BlockTags.LOGS_THAT_BURN)) {
             level.setBlock(pos, ModBlocks.WASTE_LOG.get().defaultBlockState(), 3);
         } else if (state.is(BlockTags.PLANKS)) {
+            level.setBlock(pos, ModBlocks.WASTE_PLANKS.get().defaultBlockState(), 3);
+        } else if (allowSchrabidium && isLegacyOpaqueWoodMaterial(state)) {
             level.setBlock(pos, ModBlocks.WASTE_PLANKS.get().defaultBlockState(), 3);
         } else if (state.is(Blocks.MUSHROOM_STEM)) {
             level.setBlock(pos, ModBlocks.WASTE_LOG.get().defaultBlockState(), 3);
@@ -352,15 +350,84 @@ public final class ExplosionNukeGeneric {
     private static boolean isSoliniumCleared(BlockState state) {
         return state.is(BlockTags.LEAVES)
                 || state.is(BlockTags.LOGS)
+                || state.is(BlockTags.LOGS_THAT_BURN)
                 || state.is(BlockTags.PLANKS)
+                || state.is(BlockTags.WOODEN_DOORS)
+                || state.is(BlockTags.WOODEN_TRAPDOORS)
+                || state.is(BlockTags.WOODEN_STAIRS)
+                || state.is(BlockTags.WOODEN_SLABS)
+                || state.is(BlockTags.WOODEN_FENCES)
+                || state.is(BlockTags.FENCE_GATES)
+                || state.is(BlockTags.WOODEN_BUTTONS)
+                || state.is(BlockTags.WOODEN_PRESSURE_PLATES)
+                || state.is(BlockTags.ALL_SIGNS)
+                || state.is(BlockTags.ALL_HANGING_SIGNS)
+                || state.is(ModBlocks.WASTE_LOG.get())
+                || state.is(ModBlocks.WASTE_PLANKS.get())
+                || state.is(Blocks.MUSHROOM_STEM)
+                || state.is(Blocks.BROWN_MUSHROOM_BLOCK)
+                || state.is(Blocks.RED_MUSHROOM_BLOCK)
                 || state.is(Blocks.CACTUS)
                 || state.is(Blocks.VINE)
+                || isLegacyCoralMaterial(state)
                 || state.is(Blocks.MELON)
                 || state.is(Blocks.PUMPKIN)
+                || state.is(Blocks.CARVED_PUMPKIN)
+                || state.is(Blocks.JACK_O_LANTERN)
                 || state.is(Blocks.SPONGE)
                 || state.is(Blocks.WET_SPONGE)
                 || state.getBlock() instanceof BushBlock
                 || state.canBeReplaced();
+    }
+
+    private static boolean isLegacyCoralMaterial(BlockState state) {
+        return state.is(Blocks.TUBE_CORAL)
+                || state.is(Blocks.BRAIN_CORAL)
+                || state.is(Blocks.BUBBLE_CORAL)
+                || state.is(Blocks.FIRE_CORAL)
+                || state.is(Blocks.HORN_CORAL)
+                || state.is(Blocks.DEAD_TUBE_CORAL)
+                || state.is(Blocks.DEAD_BRAIN_CORAL)
+                || state.is(Blocks.DEAD_BUBBLE_CORAL)
+                || state.is(Blocks.DEAD_FIRE_CORAL)
+                || state.is(Blocks.DEAD_HORN_CORAL)
+                || state.is(Blocks.TUBE_CORAL_BLOCK)
+                || state.is(Blocks.BRAIN_CORAL_BLOCK)
+                || state.is(Blocks.BUBBLE_CORAL_BLOCK)
+                || state.is(Blocks.FIRE_CORAL_BLOCK)
+                || state.is(Blocks.HORN_CORAL_BLOCK)
+                || state.is(Blocks.DEAD_TUBE_CORAL_BLOCK)
+                || state.is(Blocks.DEAD_BRAIN_CORAL_BLOCK)
+                || state.is(Blocks.DEAD_BUBBLE_CORAL_BLOCK)
+                || state.is(Blocks.DEAD_FIRE_CORAL_BLOCK)
+                || state.is(Blocks.DEAD_HORN_CORAL_BLOCK)
+                || state.is(Blocks.TUBE_CORAL_FAN)
+                || state.is(Blocks.BRAIN_CORAL_FAN)
+                || state.is(Blocks.BUBBLE_CORAL_FAN)
+                || state.is(Blocks.FIRE_CORAL_FAN)
+                || state.is(Blocks.HORN_CORAL_FAN)
+                || state.is(Blocks.DEAD_TUBE_CORAL_FAN)
+                || state.is(Blocks.DEAD_BRAIN_CORAL_FAN)
+                || state.is(Blocks.DEAD_BUBBLE_CORAL_FAN)
+                || state.is(Blocks.DEAD_FIRE_CORAL_FAN)
+                || state.is(Blocks.DEAD_HORN_CORAL_FAN)
+                || state.is(Blocks.TUBE_CORAL_WALL_FAN)
+                || state.is(Blocks.BRAIN_CORAL_WALL_FAN)
+                || state.is(Blocks.BUBBLE_CORAL_WALL_FAN)
+                || state.is(Blocks.FIRE_CORAL_WALL_FAN)
+                || state.is(Blocks.HORN_CORAL_WALL_FAN)
+                || state.is(Blocks.DEAD_TUBE_CORAL_WALL_FAN)
+                || state.is(Blocks.DEAD_BRAIN_CORAL_WALL_FAN)
+                || state.is(Blocks.DEAD_BUBBLE_CORAL_WALL_FAN)
+                || state.is(Blocks.DEAD_FIRE_CORAL_WALL_FAN)
+                || state.is(Blocks.DEAD_HORN_CORAL_WALL_FAN);
+    }
+
+    private static boolean isLegacyOpaqueWoodMaterial(BlockState state) {
+        return state.is(Blocks.BOOKSHELF)
+                || state.is(Blocks.CRAFTING_TABLE)
+                || state.is(Blocks.JUKEBOX)
+                || state.is(Blocks.NOTE_BLOCK);
     }
 
     private static boolean isLegacyGlass(BlockState state) {

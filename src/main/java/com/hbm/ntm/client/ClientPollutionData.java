@@ -1,17 +1,12 @@
 package com.hbm.ntm.client;
 
+import com.hbm.ntm.pollution.PollutionSavedData;
 import com.hbm.ntm.pollution.PollutionType;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.nbt.CompoundTag;
 
 public final class ClientPollutionData {
-    public static final String TAG_POLLUTION = "pollution";
-    public static final String TAG_SOOT = "soot";
-    public static final String TAG_POISON = "poison";
-    public static final String TAG_HEAVYMETAL = "heavymetal";
-    public static final String TAG_FALLOUT = "fallout";
-
     private static float soot;
     private static float poison;
     private static float heavyMetal;
@@ -19,12 +14,7 @@ public final class ClientPollutionData {
     private static final List<ClientPollutionDataListener> LISTENERS = new ArrayList<>();
 
     public static void updateFromPermaSync(CompoundTag data) {
-        CompoundTag pollution = data == null ? new CompoundTag() : data.getCompound(TAG_POLLUTION);
-        update(
-                pollution.getFloat(TAG_SOOT),
-                pollution.getFloat(TAG_POISON),
-                pollution.getFloat(TAG_HEAVYMETAL),
-                pollution.getFloat(TAG_FALLOUT));
+        update(PollutionSavedData.readPermaSyncData(data));
     }
 
     public static void update(float soot, float poison, float heavyMetal, float fallout) {
@@ -44,6 +34,14 @@ public final class ClientPollutionData {
                 valueOrZero(values, PollutionType.POISON),
                 valueOrZero(values, PollutionType.HEAVYMETAL),
                 valueOrZero(values, PollutionType.FALLOUT));
+    }
+
+    public static void update(PollutionSavedData.PollutionSample sample) {
+        update(
+                sample == null ? 0.0F : sample.get(PollutionType.SOOT),
+                sample == null ? 0.0F : sample.get(PollutionType.POISON),
+                sample == null ? 0.0F : sample.get(PollutionType.HEAVYMETAL),
+                sample == null ? 0.0F : sample.get(PollutionType.FALLOUT));
     }
 
     public static float get(PollutionType type) {
@@ -72,7 +70,8 @@ public final class ClientPollutionData {
     }
 
     public static float get(int ordinal) {
-        return get(PollutionType.values()[ordinal]);
+        PollutionType[] types = PollutionType.values();
+        return ordinal >= 0 && ordinal < types.length ? get(types[ordinal]) : 0.0F;
     }
 
     public static float[] toArray() {
@@ -82,6 +81,9 @@ public final class ClientPollutionData {
     }
 
     public static void copyInto(float[] target) {
+        if (target == null) {
+            return;
+        }
         for (PollutionType type : PollutionType.values()) {
             if (type.ordinal() < target.length) {
                 target[type.ordinal()] = get(type);
@@ -129,7 +131,8 @@ public final class ClientPollutionData {
         }
 
         public float get(int ordinal) {
-            return get(PollutionType.values()[ordinal]);
+            PollutionType[] types = PollutionType.values();
+            return ordinal >= 0 && ordinal < types.length ? get(types[ordinal]) : 0.0F;
         }
 
         public float[] toArray() {

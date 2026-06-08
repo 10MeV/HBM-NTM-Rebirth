@@ -50,8 +50,8 @@ public class SolidifierScreen extends AbstractContainerScreen<SolidifierMenu> {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
                     menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
         } else if (isHovering(134, 18, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 134, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
         } else if (isHovering(98, 36, 18, 36, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getUsage() + " HE/t"), mouseX, mouseY);
         }

@@ -28,10 +28,10 @@ public final class HbmFluidContainerRegistry {
     private static final Map<HbmFluidContainerRules.ContainerKind, RegistryObject<Item>> FULL_ITEMS =
             new IdentityHashMap<>();
     private static final List<ContainerEntry> DIRECT_ENTRIES = List.of(
-            direct(new ItemStack(Items.BUCKET), new ItemStack(Items.WATER_BUCKET), HbmFluids.WATER, 1000),
-            direct(new ItemStack(Items.BUCKET), new ItemStack(Items.LAVA_BUCKET), HbmFluids.LAVA, 1000),
-            direct(new ItemStack(Items.GLASS_BOTTLE), PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.WATER), HbmFluids.WATER, 250),
-            direct(new ItemStack(Items.GLASS_BOTTLE), new ItemStack(Items.EXPERIENCE_BOTTLE), HbmFluids.XPJUICE, 100));
+            direct(ContainerSource.BUILTIN_FIXED, new ItemStack(Items.BUCKET), new ItemStack(Items.WATER_BUCKET), HbmFluids.WATER, 1000),
+            direct(ContainerSource.BUILTIN_FIXED, new ItemStack(Items.BUCKET), new ItemStack(Items.LAVA_BUCKET), HbmFluids.LAVA, 1000),
+            direct(ContainerSource.BUILTIN_FIXED, new ItemStack(Items.GLASS_BOTTLE), PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.WATER), HbmFluids.WATER, 250),
+            direct(ContainerSource.BUILTIN_FIXED, new ItemStack(Items.GLASS_BOTTLE), new ItemStack(Items.EXPERIENCE_BOTTLE), HbmFluids.XPJUICE, 100));
     private static final List<ContainerEntry> EXTERNAL_ENTRIES = new CopyOnWriteArrayList<>();
     private static final List<HbmFluidContainerRegisterListener> LISTENERS = new CopyOnWriteArrayList<>();
     private static volatile int lastInvokedListeners;
@@ -73,6 +73,10 @@ public final class HbmFluidContainerRegistry {
             result.addAll(getContainers(type));
         }
         return Collections.unmodifiableList(result);
+    }
+
+    public static List<ContainerEntry> getFixedContainersSnapshot() {
+        return Collections.unmodifiableList(fixedEntries());
     }
 
     public static @Nullable ContainerEntry getContainer(FluidType type, ItemStack stack) {
@@ -167,17 +171,18 @@ public final class HbmFluidContainerRegistry {
             lastSkippedContainers++;
             return false;
         }
-        EXTERNAL_ENTRIES.add(direct(emptyContainer == null ? ItemStack.EMPTY : emptyContainer.copy(),
+        EXTERNAL_ENTRIES.add(direct(ContainerSource.EXTERNAL, emptyContainer == null ? ItemStack.EMPTY : emptyContainer.copy(),
                 fullContainer.copy(), type, content));
         lastRegisteredContainers++;
         return true;
     }
 
-    static void reloadExternalContainers() {
+    public static void reloadExternalContainers(java.nio.file.Path configDir) {
         EXTERNAL_ENTRIES.clear();
         lastInvokedListeners = 0;
         lastRegisteredContainers = 0;
         lastSkippedContainers = 0;
+        HbmFluidContainerConfig.initialize(configDir);
         for (HbmFluidContainerRegisterListener listener : LISTENERS) {
             try {
                 listener.onFluidContainersLoad();
@@ -189,17 +194,22 @@ public final class HbmFluidContainerRegistry {
         }
     }
 
+    public static void reloadExternalContainers() {
+        reloadExternalContainers(net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get());
+    }
+
     public static Diagnostics diagnostics() {
         return new Diagnostics(LISTENERS.size(), lastInvokedListeners, EXTERNAL_ENTRIES.size(),
                 lastRegisteredContainers, lastSkippedContainers);
     }
 
     private static ContainerEntry entry(HbmFluidContainerRules.ContainerKind kind, FluidType type) {
-        return new ContainerEntry(kind, emptyContainer(kind), fullContainer(kind, type), type, HbmFluidContainerRules.capacity(kind));
+        return new ContainerEntry(kind, ContainerSource.KIND_DYNAMIC, emptyContainer(kind), fullContainer(kind, type), type,
+                HbmFluidContainerRules.capacity(kind));
     }
 
-    private static ContainerEntry direct(ItemStack empty, ItemStack full, FluidType type, int content) {
-        return new ContainerEntry(null, empty, full, type, content);
+    private static ContainerEntry direct(ContainerSource source, ItemStack empty, ItemStack full, FluidType type, int content) {
+        return new ContainerEntry(null, source, empty, full, type, content);
     }
 
     private static List<ContainerEntry> directEntries() {
@@ -244,7 +254,7 @@ public final class HbmFluidContainerRegistry {
         if (empty == null || full == null || !empty.isPresent() || !full.isPresent()) {
             return;
         }
-        entries.add(direct(new ItemStack(empty.get()), new ItemStack(full.get()), type, content));
+        entries.add(direct(ContainerSource.LEGACY_DIRECT, new ItemStack(empty.get()), new ItemStack(full.get()), type, content));
     }
 
     private static void addLegacyDirect(List<ContainerEntry> entries, Item emptyItem, String fullLegacyName,
@@ -253,7 +263,7 @@ public final class HbmFluidContainerRegistry {
         if (full == null || !full.isPresent()) {
             return;
         }
-        entries.add(direct(new ItemStack(emptyItem), new ItemStack(full.get()), type, content));
+        entries.add(direct(ContainerSource.LEGACY_DIRECT, new ItemStack(emptyItem), new ItemStack(full.get()), type, content));
     }
 
     private static void addLegacyDirectBlock(List<ContainerEntry> entries, String emptyLegacyName, String fullLegacyName,
@@ -264,7 +274,7 @@ public final class HbmFluidContainerRegistry {
                 || !(full.get().asItem() instanceof BlockItem item)) {
             return;
         }
-        entries.add(direct(new ItemStack(empty.get()), new ItemStack(item), type, content));
+        entries.add(direct(ContainerSource.LEGACY_DIRECT, new ItemStack(empty.get()), new ItemStack(item), type, content));
     }
 
     private static void addLegacyConsumable(List<ContainerEntry> entries, String fullLegacyName, FluidType type, int content) {
@@ -272,7 +282,7 @@ public final class HbmFluidContainerRegistry {
         if (full == null || !full.isPresent()) {
             return;
         }
-        entries.add(direct(ItemStack.EMPTY, new ItemStack(full.get()), type, content));
+        entries.add(direct(ContainerSource.LEGACY_DIRECT, ItemStack.EMPTY, new ItemStack(full.get()), type, content));
     }
 
     private static void addLegacyConsumableBlock(List<ContainerEntry> entries, String fullLegacyName, FluidType type, int content) {
@@ -280,7 +290,7 @@ public final class HbmFluidContainerRegistry {
         if (block == null || !block.isPresent() || !(block.get().asItem() instanceof BlockItem item)) {
             return;
         }
-        entries.add(direct(ItemStack.EMPTY, new ItemStack(item), type, content));
+        entries.add(direct(ContainerSource.LEGACY_DIRECT, ItemStack.EMPTY, new ItemStack(item), type, content));
     }
 
     private static void register(HbmFluidContainerRules.ContainerKind kind, RegistryObject<Item> empty, RegistryObject<Item> full) {
@@ -290,6 +300,7 @@ public final class HbmFluidContainerRegistry {
 
     public record ContainerEntry(
             @Nullable HbmFluidContainerRules.ContainerKind kind,
+            ContainerSource source,
             ItemStack emptyContainer,
             ItemStack fullContainer,
             FluidType type,
@@ -331,6 +342,13 @@ public final class HbmFluidContainerRegistry {
         private String legacyOreDictionaryName(String prefix) {
             return prefix + content + type.getName().replace("_", "").toLowerCase(java.util.Locale.US);
         }
+    }
+
+    public enum ContainerSource {
+        BUILTIN_FIXED,
+        LEGACY_DIRECT,
+        EXTERNAL,
+        KIND_DYNAMIC
     }
 
     public record Diagnostics(int listeners, int lastInvokedListeners, int externalContainers,

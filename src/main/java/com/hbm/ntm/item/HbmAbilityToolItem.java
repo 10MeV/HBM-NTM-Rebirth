@@ -2,6 +2,7 @@ package com.hbm.ntm.item;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.hbm.ntm.api.item.DepthRockTool;
 import com.hbm.ntm.ability.AvailableAbilities;
 import com.hbm.ntm.ability.IBaseAbility;
 import com.hbm.ntm.ability.ToolAbilityConfiguration;
@@ -10,18 +11,23 @@ import com.hbm.ntm.ability.ToolHarvestAbilities;
 import com.hbm.ntm.ability.ToolHarvestContext;
 import com.hbm.ntm.ability.ToolPreset;
 import com.hbm.ntm.ability.WeaponHitContext;
+import com.hbm.ntm.menu.ToolAbilityMenu;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmKeybindReceiver;
 import com.hbm.ntm.network.ModMessages;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -32,18 +38,25 @@ import net.minecraft.world.item.DiggerItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.GrowingPlantHeadBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.ToolAction;
+import net.minecraftforge.common.ToolActions;
 import net.minecraftforge.event.level.BlockEvent;
+import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
-public class HbmAbilityToolItem extends DiggerItem implements HbmKeybindReceiver {
+public class HbmAbilityToolItem extends DiggerItem implements DepthRockTool, HbmKeybindReceiver {
     private static final int NOTICE_TOOL_ABILITY = 14;
     private static final int NOTICE_MILLIS = 2_000;
     private static final UUID MOVEMENT_SPEED_UUID = UUID.fromString("44a80d25-66e4-44ff-9f07-5da03ea6ce3e");
@@ -55,6 +68,8 @@ public class HbmAbilityToolItem extends DiggerItem implements HbmKeybindReceiver
     private final List<TagKey<Block>> effectiveMineableTags;
     private final float attackDamage;
     private final double movementModifier;
+    private boolean shears;
+    private boolean depthRockBreaker;
 
     public HbmAbilityToolItem(float attackDamageModifier, double movementModifier, Tier tier,
                               TagKey<Block> mineableBlocks, Properties properties) {
@@ -104,6 +119,16 @@ public class HbmAbilityToolItem extends DiggerItem implements HbmKeybindReceiver
 
     public HbmAbilityToolItem addAbility(IBaseAbility ability, int level) {
         availableAbilities.addAbility(ability, level);
+        return this;
+    }
+
+    public HbmAbilityToolItem setShears() {
+        this.shears = true;
+        return this;
+    }
+
+    public HbmAbilityToolItem setDepthRockBreaker() {
+        this.depthRockBreaker = true;
         return this;
     }
 
@@ -182,7 +207,8 @@ public class HbmAbilityToolItem extends DiggerItem implements HbmKeybindReceiver
     protected boolean harvestBlock(ServerLevel level, BlockPos pos, ServerPlayer player, BlockPos origin,
                                    ItemStack toolStack, ToolPreset preset, boolean postBreakEvent) {
         BlockState state = level.getBlockState(pos);
-        if (state.isAir() || !canHarvestBlock(toolStack, state) || state.getDestroySpeed(level, pos) < 0.0F) {
+        if (state.isAir() || !canHarvestBlock(toolStack, state)
+                || state.getDestroySpeed(level, pos) < 0.0F && !canBreakDepthRock(toolStack, level, player, state, pos)) {
             return false;
         }
 
@@ -221,6 +247,7 @@ public class HbmAbilityToolItem extends DiggerItem implements HbmKeybindReceiver
     public boolean isCorrectToolForDrops(ItemStack stack, BlockState state) {
         return canOperate(stack)
                 && (getConfiguration(stack).getActivePreset().harvestAbility == ToolHarvestAbilities.SILK
+                || isShearsCorrectToolForDrops(state)
                 || super.isCorrectToolForDrops(stack, state)
                 || isSecondaryEffectiveFor(state) && !state.requiresCorrectToolForDrops());
     }
@@ -230,7 +257,36 @@ public class HbmAbilityToolItem extends DiggerItem implements HbmKeybindReceiver
         if (!canOperate(stack)) {
             return 1.0F;
         }
+        if (shears) {
+            float shearSpeed = getShearsDestroySpeed(state);
+            if (shearSpeed > 0.0F) {
+                return shearSpeed;
+            }
+        }
         return isEffectiveFor(state) ? toolTier.getSpeed() : super.getDestroySpeed(stack, state);
+    }
+
+    @Override
+    public InteractionResult useOn(UseOnContext context) {
+        if (shears) {
+            Level level = context.getLevel();
+            BlockPos pos = context.getClickedPos();
+            BlockState state = level.getBlockState(pos);
+            Block block = state.getBlock();
+            if (block instanceof GrowingPlantHeadBlock growingPlantHeadBlock && !growingPlantHeadBlock.isMaxAge(state)) {
+                Player player = context.getPlayer();
+                ItemStack stack = context.getItemInHand();
+                level.playSound(player, pos, SoundEvents.GROWING_PLANT_CROP, SoundSource.BLOCKS, 1.0F, 1.0F);
+                BlockState grownState = growingPlantHeadBlock.getMaxAgeState(state);
+                level.setBlockAndUpdate(pos, grownState);
+                level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, grownState));
+                if (player != null) {
+                    hurtAbilityTool(stack, player);
+                }
+                return InteractionResult.sidedSuccess(level.isClientSide);
+            }
+        }
+        return super.useOn(context);
     }
 
     @Override
@@ -265,16 +321,42 @@ public class HbmAbilityToolItem extends DiggerItem implements HbmKeybindReceiver
                                 TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
         availableAbilities.addInformation(tooltip);
+        if (depthRockBreaker) {
+            tooltip.add(net.minecraft.network.chat.Component.translatable("tooltip.hbm_ntm_rebirth.depth_rock_breaker")
+                    .withStyle(net.minecraft.ChatFormatting.RED));
+        }
+    }
+
+    @Override
+    public boolean canPerformAction(ItemStack stack, ToolAction toolAction) {
+        return shears && ToolActions.DEFAULT_SHEARS_ACTIONS.contains(toolAction)
+                || super.canPerformAction(stack, toolAction);
+    }
+
+    @Override
+    public boolean canBreakRock(Level level, Player player, ItemStack tool, BlockState state, BlockPos pos) {
+        return canOperate(tool) && depthRockBreaker;
     }
 
     @Override
     public boolean canHandleKeybind(ServerPlayer player, ItemStack stack, HbmKeybind keybind) {
-        return keybind == HbmKeybind.ABILITY_CYCLE;
+        return keybind == HbmKeybind.ABILITY_CYCLE || keybind == HbmKeybind.ABILITY_ALT;
     }
 
     @Override
     public void handleKeybind(ServerPlayer player, ItemStack stack, HbmKeybind keybind, boolean pressed) {
-        if (keybind != HbmKeybind.ABILITY_CYCLE || !pressed || !canOperate(stack)) {
+        if (!pressed || !canOperate(stack)) {
+            return;
+        }
+        if (keybind == HbmKeybind.ABILITY_ALT) {
+            NetworkHooks.openScreen(player,
+                    new SimpleMenuProvider((containerId, inventory, menuPlayer) ->
+                            new ToolAbilityMenu(containerId, inventory, InteractionHand.MAIN_HAND),
+                            Component.translatable("container.hbm_ntm_rebirth.tool_ability")),
+                    buffer -> buffer.writeEnum(InteractionHand.MAIN_HAND));
+            return;
+        }
+        if (keybind != HbmKeybind.ABILITY_CYCLE) {
             return;
         }
 
@@ -333,5 +415,29 @@ public class HbmAbilityToolItem extends DiggerItem implements HbmKeybindReceiver
 
     private boolean isSecondaryEffectiveFor(BlockState state) {
         return effectiveMineableTags.size() > 1 && effectiveMineableTags.stream().skip(1).anyMatch(state::is);
+    }
+
+    private boolean canBreakDepthRock(ItemStack stack, Level level, Player player, BlockState state, BlockPos pos) {
+        return state.getBlock() instanceof com.hbm.ntm.block.LegacyDepthBlock
+                && canBreakRock(level, player, stack, state, pos);
+    }
+
+    private boolean isShearsCorrectToolForDrops(BlockState state) {
+        return shears && (state.is(Blocks.COBWEB)
+                || state.is(Blocks.REDSTONE_WIRE)
+                || state.is(Blocks.TRIPWIRE));
+    }
+
+    private float getShearsDestroySpeed(BlockState state) {
+        if (state.is(Blocks.COBWEB) || state.is(BlockTags.LEAVES)) {
+            return 15.0F;
+        }
+        if (state.is(BlockTags.WOOL)) {
+            return 5.0F;
+        }
+        if (state.is(Blocks.VINE) || state.is(Blocks.GLOW_LICHEN)) {
+            return 2.0F;
+        }
+        return 0.0F;
     }
 }

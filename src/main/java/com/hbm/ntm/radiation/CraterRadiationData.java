@@ -70,7 +70,7 @@ public class CraterRadiationData extends SavedData {
     }
 
     public static float getAmbientRadiation(LivingEntity entity) {
-        if (!RadiationConfig.ENABLE_CRATER_BIOME_RADIATION.get() || !(entity.level() instanceof ServerLevel level)) {
+        if (!RadiationConfig.craterBiomeRadiationEnabled() || !(entity.level() instanceof ServerLevel level)) {
             return 0.0F;
         }
         CraterZone zone = get(level).getZone(entity.blockPosition());
@@ -78,13 +78,13 @@ public class CraterRadiationData extends SavedData {
             zone = zoneFromBiome(level.getBiome(entity.blockPosition()));
         }
         float radiation = switch (zone) {
-            case OUTER -> RadiationConfig.CRATER_BIOME_OUTER_RAD.get().floatValue();
-            case CRATER -> RadiationConfig.CRATER_BIOME_RAD.get().floatValue();
-            case INNER -> RadiationConfig.CRATER_BIOME_INNER_RAD.get().floatValue();
+            case OUTER -> RadiationConfig.craterBiomeOuterRadiation();
+            case CRATER -> RadiationConfig.craterBiomeRadiation();
+            case INNER -> RadiationConfig.craterBiomeInnerRadiation();
             case NONE -> 0.0F;
         };
         if (radiation > 0.0F && entity.isInWaterOrRain()) {
-            radiation *= RadiationConfig.CRATER_BIOME_WATER_MULT.get().floatValue();
+            radiation *= RadiationConfig.craterBiomeWaterMultiplier();
         }
         return Math.max(0.0F, radiation);
     }

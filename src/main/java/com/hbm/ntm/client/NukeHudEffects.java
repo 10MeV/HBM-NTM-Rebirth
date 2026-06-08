@@ -29,11 +29,11 @@ public final class NukeHudEffects {
     }
 
     public static boolean hasFlash() {
-        return HbmClientConfig.NUKE_HUD_FLASH.get() && remainingFlash() > 0L;
+        return HbmClientConfig.nukeHudFlash() && remainingFlash() > 0L;
     }
 
     public static boolean hasShake() {
-        return HbmClientConfig.NUKE_HUD_SHAKE.get() && remainingShake() > 0L;
+        return HbmClientConfig.nukeHudShake() && remainingShake() > 0L;
     }
 
     public static void renderFlash(GuiGraphics graphics, int width, int height) {

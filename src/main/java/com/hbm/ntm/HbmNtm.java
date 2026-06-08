@@ -9,6 +9,7 @@ import com.hbm.ntm.datagen.HbmDataGenerators;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoading;
 import com.hbm.ntm.fluid.HbmCompatFluidRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
+import com.hbm.ntm.fluid.HbmFluidContainerConfig;
 import com.hbm.ntm.fluid.HbmFluidForgeAliasConfig;
 import com.hbm.ntm.fluid.HbmFluidForgeMappings;
 import com.hbm.ntm.fluid.HbmFluidTypeConfig;
@@ -87,6 +88,8 @@ public class HbmNtm {
             LOGGER.info("Loaded {}.", HbmCompatFluidRegistry.diagnostics().summary());
             LOGGER.info("Loaded {}.", CompatRecipeRegistry.diagnostics().summary());
             LOGGER.info("Loaded {}.", HbmFluidContainerRegistry.diagnostics().summary());
+            LOGGER.info("Loaded {}.", HbmFluidContainerConfig.loadReport().summary());
+            HbmFluidContainerConfig.loadReport().warnings().forEach(warning -> LOGGER.warn("Fluid container config: {}", warning));
             LOGGER.info("Loaded {}.", HbmFluidForgeAliasConfig.loadReport().summary());
             HbmFluidForgeAliasConfig.loadReport().warnings().forEach(warning -> LOGGER.warn("Forge fluid alias config: {}", warning));
             LOGGER.info("Loaded {}.", HbmFluidForgeMappings.diagnostics().summary());

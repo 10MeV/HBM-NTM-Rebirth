@@ -261,7 +261,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putBoolean(TAG_EXPLODED, exploded);
         tag.putBoolean(TAG_ON_FIRE, onFire);
         tag.putBoolean(TAG_IS_ON, isOn);
-        tag.put(TAG_INVENTORY, HbmInventoryMenuHelper.saveLegacyItems(items));
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         getAllTanks().get(0).writeToNbt(tag, "input");
         getAllTanks().get(1).writeToNbt(tag, "heavy");
         getAllTanks().get(2).writeToNbt(tag, "naphtha");
@@ -276,7 +276,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         exploded = tag.getBoolean(TAG_EXPLODED);
         onFire = tag.getBoolean(TAG_ON_FIRE);
         isOn = tag.getBoolean(TAG_IS_ON);
-        HbmInventoryMenuHelper.loadLegacyItems(tag.getCompound(TAG_INVENTORY), items);
+        HbmInventoryMenuHelper.loadLegacyItemsCompound(tag, TAG_INVENTORY, items);
         getAllTanks().get(0).readFromNbt(tag, "input");
         getAllTanks().get(1).readFromNbt(tag, "heavy");
         getAllTanks().get(2).readFromNbt(tag, "naphtha");

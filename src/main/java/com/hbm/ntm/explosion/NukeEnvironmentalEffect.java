@@ -61,7 +61,7 @@ public final class NukeEnvironmentalEffect {
             chance = 20;
         } else if (input.is(Blocks.MYCELIUM)) {
             replacement = ModBlocks.WASTE_MYCELIUM.get().defaultBlockState();
-        } else if (input.is(BlockTags.LOGS)) {
+        } else if (input.is(BlockTags.LOGS) || input.is(BlockTags.LOGS_THAT_BURN)) {
             replacement = ModBlocks.WASTE_LOG.get().defaultBlockState();
         } else if (input.is(BlockTags.PLANKS)) {
             replacement = ModBlocks.WASTE_PLANKS.get().defaultBlockState();

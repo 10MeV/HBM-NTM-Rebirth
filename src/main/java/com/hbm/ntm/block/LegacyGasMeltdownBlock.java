@@ -50,9 +50,7 @@ public class LegacyGasMeltdownBlock extends LegacyGasBlock {
 
         RadiationUtil.contaminate(living, HazardType.RADIATION, ContaminationType.CREATIVE, 0.5F);
         RadiationUtil.addRadiationPoisoning(living, 60 * 20, 2);
-        if (ArmorUtil.hasFineParticleProtection(living)) {
-            ArmorUtil.damageGasMaskFilter(living, 1);
-        } else {
+        if (!ArmorUtil.hasFineParticleProtectionAndDamageFilter(living, 1)) {
             RadiationUtil.applyAsbestos(living, 5, 1);
         }
     }

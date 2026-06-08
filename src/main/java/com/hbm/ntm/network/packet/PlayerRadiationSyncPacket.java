@@ -4,7 +4,7 @@ import com.hbm.ntm.client.ClientRadiationData;
 import com.hbm.ntm.client.ClientRadiationData.ContaminationEffectData;
 import com.hbm.ntm.client.ClientRadiationData.PlayerRadiationSyncData;
 import com.hbm.ntm.network.HbmPreparablePacket;
-import com.hbm.ntm.radiation.RadiationData;
+import com.hbm.ntm.player.HbmLivingProperties;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 
 public record PlayerRadiationSyncPacket(float radiation, float digamma, float environment, float chunkRadiation, float resistance,
         int asbestos, int blackLung, int bombTimer, int contagion, int oil, int fire, int phosphorus, int balefire, int blackFire,
-        List<RadiationData.ContaminationEffect> contaminationEffects) implements HbmPreparablePacket {
+        List<HbmLivingProperties.ContaminationEffect> contaminationEffects) implements HbmPreparablePacket {
     public PlayerRadiationSyncPacket {
         contaminationEffects = List.copyOf(contaminationEffects);
     }
@@ -37,9 +37,9 @@ public record PlayerRadiationSyncPacket(float radiation, float digamma, float en
         int balefire = buffer.readVarInt();
         int blackFire = buffer.readVarInt();
         int contaminationCount = buffer.readVarInt();
-        List<RadiationData.ContaminationEffect> contaminationEffects = new ArrayList<>(contaminationCount);
+        List<HbmLivingProperties.ContaminationEffect> contaminationEffects = new ArrayList<>(contaminationCount);
         for (int i = 0; i < contaminationCount; i++) {
-            contaminationEffects.add(new RadiationData.ContaminationEffect(
+            contaminationEffects.add(new HbmLivingProperties.ContaminationEffect(
                     buffer.readFloat(),
                     buffer.readVarInt(),
                     buffer.readVarInt(),
@@ -65,11 +65,11 @@ public record PlayerRadiationSyncPacket(float radiation, float digamma, float en
         buffer.writeVarInt(packet.balefire);
         buffer.writeVarInt(packet.blackFire);
         buffer.writeVarInt(packet.contaminationEffects.size());
-        for (RadiationData.ContaminationEffect effect : packet.contaminationEffects) {
-            buffer.writeFloat(effect.maxRad());
-            buffer.writeVarInt(effect.maxTime());
-            buffer.writeVarInt(effect.time());
-            buffer.writeBoolean(effect.ignoreArmor());
+        for (HbmLivingProperties.ContaminationEffect effect : packet.contaminationEffects) {
+            buffer.writeFloat(effect.maxRad);
+            buffer.writeVarInt(effect.maxTime);
+            buffer.writeVarInt(effect.time);
+            buffer.writeBoolean(effect.ignoresArmor());
         }
     }
 
@@ -80,7 +80,7 @@ public record PlayerRadiationSyncPacket(float radiation, float digamma, float en
                         packet.asbestos, packet.blackLung, packet.bombTimer, packet.contagion, packet.oil,
                         packet.fire, packet.phosphorus, packet.balefire, packet.blackFire,
                         packet.contaminationEffects.stream()
-                                .map(effect -> new ContaminationEffectData(effect.maxRad(), effect.maxTime(), effect.time(), effect.ignoreArmor()))
+                                .map(effect -> new ContaminationEffectData(effect.maxRad, effect.maxTime, effect.time, effect.ignoresArmor()))
                                 .toList()))));
         context.setPacketHandled(true);
     }

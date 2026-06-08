@@ -1,7 +1,7 @@
 package com.hbm.ntm.item;
 
+import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.RadiationUtil;
-import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -28,7 +28,7 @@ public class GeigerCounterItem extends Item {
             return;
         }
 
-        float rate = RadiationData.getRadBuf(living);
+        float rate = HbmLivingProperties.getRadBuf(living);
         if (rate > 1.0E-5F) {
             List<Integer> candidates = new ArrayList<>();
             if (rate < 1.0F) candidates.add(0);

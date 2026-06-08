@@ -1,6 +1,7 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.api.block.Toolable;
+import com.hbm.ntm.api.ntl.PneumaticConnector;
 import com.hbm.ntm.blockentity.PneumaticTubeBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -144,7 +145,8 @@ public class PneumaticTubeBlock extends BaseEntityBlock implements Toolable {
                 && (tube.getInsertionDirection() == direction || tube.getEjectionDirection() == direction)) {
             return true;
         }
-        return level.getBlockEntity(pos.relative(direction)) instanceof PneumaticTubeBlockEntity;
+        return level.getBlockEntity(pos.relative(direction)) instanceof PneumaticConnector connector
+                && connector.canConnectPneumatic(direction.getOpposite());
     }
 
     private static VoxelShape arm(Direction direction) {

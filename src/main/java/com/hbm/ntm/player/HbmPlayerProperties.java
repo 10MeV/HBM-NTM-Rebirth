@@ -3,6 +3,7 @@ package com.hbm.ntm.player;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.armor.ArmorModItems;
+import com.hbm.ntm.api.item.ArmorDashProvider;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.registry.ModSounds;
@@ -41,6 +42,9 @@ public final class HbmPlayerProperties {
     public static final String KEY_ENABLE_HUD = "enableHUD";
     public static final String KEY_REPUTATION = "reputation";
     public static final String KEY_IS_ON_LADDER = "isOnLadder";
+    public static final String KEY_DASH_COUNT = "dashCount";
+    public static final String KEY_STAMINA = "stamina";
+    public static final String KEY_DASH_COOLDOWN = "dashCooldown";
     public static final int DASH_COOLDOWN_LENGTH = 5;
     public static final int PLINK_COOLDOWN_LENGTH = 10;
     public static final float SHIELD_CAP = 100.0F;
@@ -301,6 +305,7 @@ public final class HbmPlayerProperties {
         rechargeShield(player);
         handleDashing(player);
         handleFauxLadder(player);
+        syncRuntimeIfChanged(player, data);
     }
 
     public static void plink(Player player, SoundEvent sound, float volume, float pitch) {
@@ -396,8 +401,8 @@ public final class HbmPlayerProperties {
                 continue;
             }
             for (ItemStack mod : ArmorModHandler.pryMods(armor)) {
-                if (mod.getItem() instanceof ArmorModItems.BottledCloud cloud) {
-                    dashCount += cloud.getDashes();
+                if (mod.getItem() instanceof ArmorDashProvider dashProvider) {
+                    dashCount += dashProvider.getDashes();
                 }
             }
         }
@@ -475,6 +480,9 @@ public final class HbmPlayerProperties {
         data.putBoolean(KEY_ENABLE_HUD, isHudEnabled(player));
         data.putInt(KEY_REPUTATION, getReputation(player));
         data.putBoolean(KEY_IS_ON_LADDER, isOnLadder(player));
+        data.putInt(KEY_DASH_COUNT, getDashCount(player));
+        data.putInt(KEY_STAMINA, getStamina(player));
+        data.putInt(KEY_DASH_COOLDOWN, getDashCooldown(player));
         return data;
     }
 
@@ -562,6 +570,21 @@ public final class HbmPlayerProperties {
         }
     }
 
+    private static void syncRuntimeIfChanged(Player player, RuntimeData data) {
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        if (data.lastSyncedDashCount == data.totalDashCount
+                && data.lastSyncedStamina == data.stamina
+                && data.lastSyncedDashCooldown == data.dashCooldown) {
+            return;
+        }
+        data.lastSyncedDashCount = data.totalDashCount;
+        data.lastSyncedStamina = data.stamina;
+        data.lastSyncedDashCooldown = data.dashCooldown;
+        sync(serverPlayer);
+    }
+
     private static CompoundTag getTag(Player player) {
         if (player == null) {
             return new CompoundTag();
@@ -606,6 +629,9 @@ public final class HbmPlayerProperties {
         private int plinkCooldown;
         private int lastDamage;
         private int grenadeDeployment;
+        private int lastSyncedDashCount = -1;
+        private int lastSyncedStamina = -1;
+        private int lastSyncedDashCooldown = -1;
     }
 
     private HbmPlayerProperties() {

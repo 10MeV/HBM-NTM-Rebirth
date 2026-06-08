@@ -297,7 +297,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put(TAG_INVENTORY, HbmInventoryMenuHelper.saveLegacyItems(items));
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         tag.putFloat(TAG_PROGRESS, progress);
         tag.putBoolean(TAG_PROGRESSING, progressing);
         tag.putBoolean(TAG_VENTING, venting);
@@ -314,7 +314,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyItems(tag.getCompound(TAG_INVENTORY), items);
+        HbmInventoryMenuHelper.loadLegacyItemsCompound(tag, TAG_INVENTORY, items);
         progress = tag.getFloat(TAG_PROGRESS);
         progressing = tag.getBoolean(TAG_PROGRESSING);
         venting = tag.getBoolean(TAG_VENTING);
@@ -528,7 +528,10 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
                 return false;
             }
         }
-        return recipe.outputItem().isEmpty() || canFitOutput(recipe.outputItem().get().representativeStack());
+        List<ItemStack> outputs = new ArrayList<>();
+        recipe.outputItem().map(HbmItemOutput::representativeStack).ifPresent(outputs::add);
+        recipe.inputItem().ifPresent(input -> outputs.addAll(input.remainingItems(items.getStackInSlot(SLOT_INPUT))));
+        return canFitOutputs(outputs);
     }
 
     private boolean canAcceptOutputFluid(HbmFluidStack output) {
@@ -547,9 +550,13 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void finishRecipe(PyroOvenRecipe recipe) {
+        List<ItemStack> inputRemainders = recipe.inputItem()
+                .map(input -> input.remainingItems(items.getStackInSlot(SLOT_INPUT)))
+                .orElseGet(List::of);
         recipe.outputItem().map(output -> output.collapse(level.random)).ifPresent(this::addOutput);
         recipe.outputFluid().ifPresent(this::addOutputFluid);
         recipe.inputItem().ifPresent(input -> items.extractItem(SLOT_INPUT, input.count(), false));
+        inputRemainders.forEach(this::addOutput);
         recipe.inputFluid().ifPresent(input -> inputTank.drain(input.amount(), false));
         onFluidContentsChanged();
     }
@@ -564,14 +571,25 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
         outputTank.setFill(outputTank.getFill() + output.amount());
     }
 
-    private boolean canFitOutput(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return true;
+    private boolean canFitOutputs(List<ItemStack> outputs) {
+        ItemStack simulated = items.getStackInSlot(SLOT_OUTPUT).copy();
+        for (ItemStack output : outputs) {
+            if (output.isEmpty()) {
+                continue;
+            }
+            if (simulated.isEmpty()) {
+                simulated = output.copy();
+                if (simulated.getCount() > Math.min(simulated.getMaxStackSize(), items.getSlotLimit(SLOT_OUTPUT))) {
+                    return false;
+                }
+            } else if (ItemHandlerHelper.canItemStacksStack(simulated, output)
+                    && simulated.getCount() + output.getCount() <= Math.min(simulated.getMaxStackSize(), items.getSlotLimit(SLOT_OUTPUT))) {
+                simulated.grow(output.getCount());
+            } else {
+                return false;
+            }
         }
-        ItemStack existing = items.getStackInSlot(SLOT_OUTPUT);
-        return existing.isEmpty()
-                || ItemHandlerHelper.canItemStacksStack(existing, stack)
-                && existing.getCount() + stack.getCount() <= Math.min(existing.getMaxStackSize(), items.getSlotLimit(SLOT_OUTPUT));
+        return true;
     }
 
     private void addOutput(ItemStack stack) {

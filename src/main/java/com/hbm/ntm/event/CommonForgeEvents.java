@@ -25,7 +25,6 @@ import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.player.HbmPlayerProperties;
-import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.neutron.NeutronHandler;
 import com.hbm.ntm.neutron.NeutronNodeWorld;
 import com.hbm.ntm.particle.ParticleUtil;
@@ -35,12 +34,11 @@ import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.CraterRadiationData;
-import com.hbm.ntm.radiation.HazardEntry;
+import com.hbm.ntm.radiation.HazardExposureUtil;
 import com.hbm.ntm.radiation.HazardRegistry;
 import com.hbm.ntm.radiation.HazmatRegistry;
 import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.ModDamageSources;
-import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlocks;
@@ -48,6 +46,7 @@ import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.uninos.HbmUninosNodespaces;
+import com.hbm.ntm.util.HbmCraftingAdvancementUtil;
 import com.hbm.ntm.world.BlockMigrationHelper;
 import com.hbm.ntm.world.saveddata.TomImpactSavedData;
 import net.minecraft.core.BlockPos;
@@ -160,6 +159,9 @@ public final class CommonForgeEvents {
         }
         if (event.phase == TickEvent.Phase.START) {
             RTTYSystem.updateBroadcastQueue(event.getServer());
+            for (ServerLevel level : event.getServer().getAllLevels()) {
+                TomImpactSavedData.tickExistingImpactClimate(level);
+            }
             return;
         }
         if (event.phase != TickEvent.Phase.END) {
@@ -187,7 +189,14 @@ public final class CommonForgeEvents {
 
         Player player = event.player;
         HbmPlayerProperties.tickRuntime(player);
-        applyInventoryRadiation(player);
+        HazardExposureUtil.updatePlayerInventory(player);
+    }
+
+    @SubscribeEvent
+    public static void onItemCrafted(PlayerEvent.ItemCraftedEvent event) {
+        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+            HbmCraftingAdvancementUtil.fireCraftingAdvancement(serverPlayer, event.getCrafting());
+        }
     }
 
     @SubscribeEvent
@@ -226,10 +235,10 @@ public final class CommonForgeEvents {
 
     private static void handleLeadPollutionOnBlockBreak(BlockEvent.BreakEvent event, ServerLevel level) {
         Player player = event.getPlayer();
-        if (!RadiationConfig.ENABLE_POLLUTION.get()
-                || !RadiationConfig.ENABLE_POLLUTION_LEAD_FROM_BLOCKS.get()
+        if (!RadiationConfig.pollutionEnabled()
+                || !RadiationConfig.pollutionLeadFromBlocksEnabled()
                 || player == null
-                || ArmorUtil.hasProtection(player, HazardClass.PARTICLE_FINE)) {
+                || ArmorUtil.hasPollutionLeadProtection(player)) {
             return;
         }
 
@@ -250,7 +259,7 @@ public final class CommonForgeEvents {
         }
 
         if (entity.tickCount % 20 == 0) {
-            RadiationData.flushEnvironmentBuffer(entity);
+            HbmLivingProperties.flushEnvironmentBuffer(entity);
         }
 
         handleBombTimer(entity);
@@ -258,6 +267,9 @@ public final class CommonForgeEvents {
         handleLegacyRadiationEffects(entity);
         handleDigammaEffects(entity);
         handleLegacyLongTermEffects(entity);
+        if (!(entity instanceof Player)) {
+            HazardExposureUtil.updateLivingInventory(entity);
+        }
 
         if (entity.tickCount % 20 == 0 && entity instanceof ServerPlayer serverPlayer) {
             syncRadiation(serverPlayer);
@@ -266,12 +278,12 @@ public final class CommonForgeEvents {
     }
 
     private static void handleBombTimer(LivingEntity entity) {
-        int timer = RadiationData.getBombTimer(entity);
+        int timer = HbmLivingProperties.getBombTimer(entity);
         if (timer <= 0) {
             return;
         }
 
-        RadiationData.setBombTimer(entity, timer - 1);
+        HbmLivingProperties.setBombTimer(entity, timer - 1);
         if (timer == 1) {
             ExplosionNukeSmall.explode(entity.level(), entity.getX(), entity.getY(), entity.getZ(),
                     ExplosionNukeSmall.PARAMS_MEDIUM);
@@ -339,7 +351,7 @@ public final class CommonForgeEvents {
 
     @SubscribeEvent
     public static void onPlayerSleepInBed(PlayerSleepInBedEvent event) {
-        if (!RadiationConfig.RAMPANT_GLYPHID_GUIDANCE.get() || event.getEntity().level().isClientSide) {
+        if (!RadiationConfig.rampantGlyphidGuidanceEnabled() || event.getEntity().level().isClientSide) {
             return;
         }
         event.getOptionalPos().ifPresent(pos -> PollutionManager.setRampantTarget(event.getEntity().level(), pos));
@@ -355,64 +367,6 @@ public final class CommonForgeEvents {
             itemEntity.getPersistentData().putLong(HAZARD_ENTITY_TICK_KEY, level.getGameTime());
         }
         applyDroppedItemHazards(itemEntity);
-    }
-
-    private static void applyInventoryRadiation(Player player) {
-        applyInventoryHazards(player, HazardType.ASBESTOS);
-        applyInventoryHazards(player, HazardType.COAL);
-        applyInventoryHazards(player, HazardType.HOT);
-        applyInventoryHazards(player, HazardType.BLINDING);
-        applyInventoryHazards(player, HazardType.HYDROACTIVE);
-        applyInventoryHazards(player, HazardType.EXPLOSIVE);
-        applyInventoryRadiologicalHazards(player);
-    }
-
-    private static void applyInventoryHazards(Player player, HazardType type) {
-        for (ItemStack stack : player.getInventory().items) {
-            applyInventoryHazard(player, stack, type);
-        }
-        for (ItemStack stack : player.getInventory().armor) {
-            applyInventoryHazard(player, stack, type);
-        }
-        for (ItemStack stack : player.getInventory().offhand) {
-            applyInventoryHazard(player, stack, type);
-        }
-    }
-
-    private static void applyInventoryRadiologicalHazards(Player player) {
-        float radiation = 0.0F;
-        float digamma = 0.0F;
-        for (ItemStack stack : player.getInventory().items) {
-            radiation += getInventoryRadiologicalHazard(player, stack, HazardType.RADIATION);
-            digamma += getInventoryRadiologicalHazard(player, stack, HazardType.DIGAMMA);
-        }
-        for (ItemStack stack : player.getInventory().armor) {
-            radiation += getInventoryRadiologicalHazard(player, stack, HazardType.RADIATION);
-            digamma += getInventoryRadiologicalHazard(player, stack, HazardType.DIGAMMA);
-        }
-        for (ItemStack stack : player.getInventory().offhand) {
-            radiation += getInventoryRadiologicalHazard(player, stack, HazardType.RADIATION);
-            digamma += getInventoryRadiologicalHazard(player, stack, HazardType.DIGAMMA);
-        }
-        if (radiation > 0.0F) {
-            RadiationUtil.contaminate(player, HazardType.RADIATION, ContaminationType.CREATIVE, radiation);
-        }
-        if (digamma > 0.0F) {
-            RadiationUtil.applyDigammaData(player, digamma);
-        }
-    }
-
-    private static float getInventoryRadiologicalHazard(Player player, ItemStack stack, HazardType type) {
-        if (stack.isEmpty()) {
-            return 0.0F;
-        }
-        float total = 0.0F;
-        for (HazardEntry entry : HazardRegistry.getHazards(stack)) {
-            if (entry.type() == type) {
-                total += entry.modifiedLevel(stack, player) * stack.getCount() / 20.0F;
-            }
-        }
-        return total;
     }
 
     @SubscribeEvent
@@ -507,56 +461,6 @@ public final class CommonForgeEvents {
         level.addFreshEntity(vortex);
     }
 
-    private static void applyInventoryHazard(Player player, ItemStack stack, HazardType type) {
-        if (stack.isEmpty()) {
-            return;
-        }
-        float level = 0.0F;
-        for (HazardEntry entry : HazardRegistry.getHazards(stack)) {
-            if (entry.type() == type) {
-                level += entry.modifiedLevel(stack, player);
-            }
-        }
-        applyInventoryHazard(player, stack, type, level);
-    }
-
-    private static void applyInventoryHazard(Player player, ItemStack stack, HazardType type, float level) {
-        if (level <= 0.0F) {
-            return;
-        }
-        switch (type) {
-            case ASBESTOS -> RadiationUtil.applyAsbestos(player, (int) Math.min(level, 10.0F), (int) level);
-            case COAL -> RadiationUtil.applyCoalDust(player, (int) Math.min(level * stack.getCount(), 10.0F),
-                    (int) level, Math.max(65 - stack.getCount(), 1));
-            case HOT -> {
-                if (!player.isInWaterOrRain()) {
-                    player.setSecondsOnFire((int) Math.ceil(level));
-                }
-            }
-            case BLINDING -> {
-                if (!ArmorUtil.hasProtection(player, HazardClass.LIGHT)) {
-                    player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, (int) Math.ceil(level), 0));
-                }
-            }
-            case HYDROACTIVE -> {
-                if (player.isInWaterOrRain() && player.level() instanceof ServerLevel levelAccessor) {
-                    stack.shrink(stack.getCount());
-                    WeaponExplosionUtil.explodeStandard(levelAccessor, player.getX(), player.getEyeY(), player.getZ(),
-                            level, player, true, false);
-                }
-            }
-            case EXPLOSIVE -> {
-                if (player.isOnFire() && player.level() instanceof ServerLevel levelAccessor) {
-                    stack.shrink(stack.getCount());
-                    WeaponExplosionUtil.explodeStandard(levelAccessor, player.getX(), player.getEyeY(), player.getZ(),
-                            level, player, true, true);
-                }
-            }
-            default -> {
-            }
-        }
-    }
-
     public static void syncRadiationNow(ServerPlayer player) {
         syncRadiation(player);
     }
@@ -567,41 +471,36 @@ public final class CommonForgeEvents {
 
     private static void syncRadiation(ServerPlayer player) {
         ModMessages.sendToPlayer(new PlayerRadiationSyncPacket(
-                RadiationData.getRadiation(player),
-                RadiationData.getDigamma(player),
-                RadiationData.getRadBuf(player),
+                HbmLivingProperties.getRadiation(player),
+                HbmLivingProperties.getDigamma(player),
+                HbmLivingProperties.getRadBuf(player),
                 ChunkRadiationManager.getRadiation(player.level(), player.blockPosition()),
                 HazmatRegistry.getResistance(player),
-                RadiationData.getAsbestos(player),
-                RadiationData.getBlackLung(player),
-                RadiationData.getBombTimer(player),
-                RadiationData.getContagion(player),
-                RadiationData.getOil(player),
-                RadiationData.getFire(player),
-                RadiationData.getPhosphorus(player),
-                RadiationData.getBalefire(player),
-                RadiationData.getBlackFire(player),
-                RadiationData.getContaminationEffects(player)), player);
+                HbmLivingProperties.getAsbestos(player),
+                HbmLivingProperties.getBlackLung(player),
+                HbmLivingProperties.getBombTimer(player),
+                HbmLivingProperties.getContagion(player),
+                HbmLivingProperties.getOil(player),
+                HbmLivingProperties.getFire(player),
+                HbmLivingProperties.getPhosphorus(player),
+                HbmLivingProperties.getBalefire(player),
+                HbmLivingProperties.getBlackFire(player),
+                HbmLivingProperties.getContaminationEffectsForSync(player)), player);
     }
 
     private static void syncPollution(ServerPlayer player) {
         PollutionSavedData.PollutionSample sample = PollutionManager.getPollutionData(player.level(), player.blockPosition());
         CompoundTag data = new CompoundTag();
-        CompoundTag pollution = new CompoundTag();
-        pollution.putFloat("soot", sample.get(PollutionType.SOOT));
-        pollution.putFloat("poison", sample.get(PollutionType.POISON));
-        pollution.putFloat("heavymetal", sample.get(PollutionType.HEAVYMETAL));
-        pollution.putFloat("fallout", sample.get(PollutionType.FALLOUT));
-        data.put("pollution", pollution);
+        PollutionSavedData.appendPermaSyncData(data, sample);
         TomImpactSavedData.appendPermaSyncData(player.serverLevel(), data);
         ModMessages.syncPermaData(player, data);
     }
 
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
-        RadiationData.copyForRespawn(event.getOriginal(), event.getEntity());
+        HbmLivingProperties.copyForRespawn(event.getOriginal(), event.getEntity());
         HbmPlayerProperties.copyForRespawn(event.getOriginal(), event.getEntity());
-        RadiationData.applyDigammaModifier(event.getEntity());
+        HbmLivingProperties.applyDigammaModifier(event.getEntity());
         if (event.getOriginal() instanceof ServerPlayer oldPlayer) {
             HbmServerKeybinds.clear(oldPlayer);
             HbmPlayerProperties.clearRuntime(oldPlayer);
@@ -664,6 +563,13 @@ public final class CommonForgeEvents {
     }
 
     @SubscribeEvent
+    public static void onLevelLoad(LevelEvent.Load event) {
+        if (!event.getLevel().isClientSide()) {
+            TomImpactSavedData.resetLastCached();
+        }
+    }
+
+    @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (!event.getLevel().isClientSide() && event.getLevel() instanceof Level level) {
             ChunkRadiationManager.unloadLevel(level);
@@ -688,7 +594,7 @@ public final class CommonForgeEvents {
 
         float radiation = ChunkRadiationManager.getRadiation(entity.level(), entity.blockPosition());
         if (entity.level().dimension() == Level.NETHER) {
-            float hellRadiation = RadiationConfig.HELL_RAD.get().floatValue();
+            float hellRadiation = RadiationConfig.hellRadiation();
             if (hellRadiation > 0.0F && radiation < hellRadiation) {
                 radiation = hellRadiation;
             }
@@ -705,7 +611,7 @@ public final class CommonForgeEvents {
 
         handleLegacyRadiationTransformations(entity);
 
-        float radiation = RadiationData.getRadiation(entity);
+        float radiation = HbmLivingProperties.getRadiation(entity);
         if (radiation < 200.0F) {
             return;
         }
@@ -713,12 +619,12 @@ public final class CommonForgeEvents {
             return;
         }
         if (radiation > 2500.0F) {
-            RadiationData.setRadiation(entity, 2500.0F);
+            HbmLivingProperties.setRadiation(entity, 2500.0F);
         }
 
         if (radiation >= 1000.0F) {
             entity.hurt(ModDamageSources.radiation(entity.level()), 1000.0F);
-            RadiationData.setRadiation(entity, 0.0F);
+            HbmLivingProperties.setRadiation(entity, 0.0F);
             if (entity.isAlive()) {
                 entity.setHealth(0.0F);
             }
@@ -749,7 +655,7 @@ public final class CommonForgeEvents {
     }
 
     private static void handleLegacyRadiationTransformations(LivingEntity entity) {
-        float radiation = RadiationData.getRadiation(entity);
+        float radiation = HbmLivingProperties.getRadiation(entity);
         if (radiation >= 200.0F && entity.getClass().equals(Creeper.class)) {
             entity.hurt(ModDamageSources.radiation(entity.level()), 100.0F);
         } else if (radiation >= 50.0F && entity instanceof Cow cow && !(entity instanceof MushroomCow) && cow.level() instanceof ServerLevel level) {
@@ -796,8 +702,8 @@ public final class CommonForgeEvents {
     }
 
     private static void handleDigammaEffects(LivingEntity entity) {
-        RadiationData.applyDigammaModifier(entity);
-        float digamma = RadiationData.getDigamma(entity);
+        HbmLivingProperties.applyDigammaModifier(entity);
+        float digamma = HbmLivingProperties.getDigamma(entity);
         if (digamma < 0.01F) {
             return;
         }
@@ -824,9 +730,9 @@ public final class CommonForgeEvents {
     }
 
     private static void handleContaminationEffects(LivingEntity entity) {
-        for (RadiationData.ContaminationEffect effect : RadiationData.tickContamination(entity)) {
+        for (HbmLivingProperties.ContaminationEffect effect : HbmLivingProperties.tickContamination(entity)) {
             RadiationUtil.contaminate(entity, HazardType.RADIATION,
-                    effect.ignoreArmor() ? ContaminationType.RAD_BYPASS : ContaminationType.CREATIVE,
+                    effect.ignoresArmor() ? ContaminationType.RAD_BYPASS : ContaminationType.CREATIVE,
                     effect.currentRadiation());
         }
     }
@@ -836,7 +742,7 @@ public final class CommonForgeEvents {
             return;
         }
 
-        int contagion = RadiationData.getContagion(entity);
+        int contagion = HbmLivingProperties.getContagion(entity);
         int hour = 60 * 60 * 20;
         int minute = 60 * 20;
 
@@ -848,14 +754,14 @@ public final class CommonForgeEvents {
             return;
         }
 
-        RadiationData.setContagion(entity, contagion - 1);
+        HbmLivingProperties.setContagion(entity, contagion - 1);
 
         if (contagion < (2 * hour + 55 * minute) && contagion % 20 == 0 && entity.level() instanceof ServerLevel level) {
             double range = entity.isInWaterOrRain() ? 16.0D : 2.0D;
             AABB box = entity.getBoundingBox().inflate(range);
             for (Entity nearby : level.getEntities(entity, box)) {
-                if (nearby instanceof LivingEntity living && RadiationData.getContagion(living) <= 0 && !ArmorUtil.checkForMkuProtection(living)) {
-                    RadiationData.setContagion(living, 3 * hour);
+                if (nearby instanceof LivingEntity living && HbmLivingProperties.getContagion(living) <= 0 && !ArmorUtil.checkForMkuProtection(living)) {
+                    HbmLivingProperties.setContagion(living, 3 * hour);
                 } else if (nearby instanceof ItemEntity itemEntity) {
                     tagContagious(itemEntity.getItem());
                 }
@@ -892,7 +798,7 @@ public final class CommonForgeEvents {
         if (contagion > 0) {
             tagContagious(stack);
         } else if (isTaggedContagious(stack) && !ArmorUtil.checkForMkuProtection(player)) {
-            RadiationData.setContagion(player, 3 * hour);
+            HbmLivingProperties.setContagion(player, 3 * hour);
         }
     }
 
@@ -915,20 +821,20 @@ public final class CommonForgeEvents {
 
     private static void handleLungDisease(LivingEntity entity) {
         if (entity instanceof Player player && player.isCreative()) {
-            RadiationData.setBlackLung(entity, 0);
-            RadiationData.setAsbestos(entity, 0);
+            HbmLivingProperties.setBlackLung(entity, 0);
+            HbmLivingProperties.setAsbestos(entity, 0);
             return;
         }
 
-        int blackLungRaw = RadiationData.getBlackLung(entity);
+        int blackLungRaw = HbmLivingProperties.getBlackLung(entity);
         int maxBlackLung = 2 * 60 * 60 * 20;
         int maxAsbestos = 60 * 60 * 20;
         if (blackLungRaw > 0 && blackLungRaw < maxBlackLung * 0.5D) {
-            RadiationData.setBlackLung(entity, blackLungRaw - 1);
+            HbmLivingProperties.setBlackLung(entity, blackLungRaw - 1);
         }
 
-        double blackLung = Math.min(RadiationData.getBlackLung(entity), maxBlackLung);
-        double asbestos = Math.min(RadiationData.getAsbestos(entity), maxAsbestos);
+        double blackLung = Math.min(HbmLivingProperties.getBlackLung(entity), maxBlackLung);
+        double asbestos = Math.min(HbmLivingProperties.getAsbestos(entity), maxAsbestos);
         double soot = getSootLungLoad(entity);
         boolean coughs = blackLung / maxBlackLung > 0.25D || asbestos / maxAsbestos > 0.25D || soot > 30.0D;
         if (!coughs) {
@@ -965,22 +871,22 @@ public final class CommonForgeEvents {
     }
 
     private static double getSootLungLoad(LivingEntity entity) {
-        if (!(entity instanceof Player) || !RadiationConfig.ENABLE_POLLUTION.get()
-                || ArmorUtil.hasProtection(entity, HazardClass.PARTICLE_COARSE)) {
+        if (!(entity instanceof Player) || !RadiationConfig.pollutionEnabled()
+                || ArmorUtil.hasSootLungProtection(entity)) {
             return 0.0D;
         }
         return PollutionManager.getPollution(entity.level(), entity.blockPosition(), PollutionType.SOOT);
     }
 
     private static void handlePollution(LivingEntity entity) {
-        if (!RadiationConfig.ENABLE_POLLUTION.get()
+        if (!RadiationConfig.pollutionEnabled()
                 || entity.tickCount % 60 != 0) {
             return;
         }
 
         BlockPos pos = BlockPos.containing(entity.getX(), entity.getY() + entity.getEyeHeight(), entity.getZ());
-        if (RadiationConfig.ENABLE_POLLUTION_POISON.get()
-                && !ArmorUtil.hasProtection(entity, HazardClass.GAS_BLISTERING)) {
+        if (RadiationConfig.pollutionPoisonEnabled()
+                && !ArmorUtil.hasPollutionPoisonProtection(entity)) {
             float poison = PollutionManager.getPollution(entity.level(), pos, PollutionType.POISON);
             if (poison > 10.0F) {
                 if (poison < 25.0F) {
@@ -993,8 +899,8 @@ public final class CommonForgeEvents {
             }
         }
 
-        if (RadiationConfig.ENABLE_POLLUTION_LEAD_POISONING.get()
-                && !ArmorUtil.hasProtection(entity, HazardClass.PARTICLE_FINE)) {
+        if (RadiationConfig.pollutionLeadPoisoningEnabled()
+                && !ArmorUtil.hasPollutionLeadProtection(entity)) {
             float metal = PollutionManager.getPollution(entity.level(), pos, PollutionType.HEAVYMETAL);
             if (metal > 25.0F) {
                 int amplifier = metal < 50.0F ? 0 : 2;
@@ -1004,16 +910,16 @@ public final class CommonForgeEvents {
     }
 
     private static void handleOil(LivingEntity entity) {
-        int oil = RadiationData.getOil(entity);
+        int oil = HbmLivingProperties.getOil(entity);
         if (oil <= 0) {
             return;
         }
         if (entity.isOnFire() && entity.level() instanceof ServerLevel level) {
-            RadiationData.setOil(entity, 0);
+            HbmLivingProperties.setOil(entity, 0);
             WeaponExplosionUtil.explodeStandard(level, entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ(), 3.0F, entity, true, true);
             return;
         }
-        RadiationData.setOil(entity, oil - 1);
+        HbmLivingProperties.setOil(entity, oil - 1);
         if (entity.tickCount % 5 == 0 && entity.level() instanceof ServerLevel level) {
             ParticleUtil.spawnSweat(entity, Blocks.COAL_BLOCK, 1);
         }
@@ -1021,11 +927,11 @@ public final class CommonForgeEvents {
 
     private static void handleTemperatureEffects(LivingEntity entity) {
         if (entity.fireImmune()) {
-            RadiationData.setFire(entity, 0);
-            RadiationData.setPhosphorus(entity, 0);
+            HbmLivingProperties.setFire(entity, 0);
+            HbmLivingProperties.setPhosphorus(entity, 0);
         }
         if (entity.isInWaterOrRain()) {
-            RadiationData.setFire(entity, 0);
+            HbmLivingProperties.setFire(entity, 0);
         }
 
         handleTemperatureEffect(entity, TemperatureEffect.FIRE);
@@ -1079,20 +985,20 @@ public final class CommonForgeEvents {
 
     private enum TemperatureEffect {
         FIRE(Blocks.FIRE, 2.0F, false) {
-            @Override int get(LivingEntity entity) { return RadiationData.getFire(entity); }
-            @Override void set(LivingEntity entity, int value) { RadiationData.setFire(entity, value); }
+            @Override int get(LivingEntity entity) { return HbmLivingProperties.getFire(entity); }
+            @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setFire(entity, value); }
         },
         PHOSPHORUS(Blocks.FIRE, 5.0F, false) {
-            @Override int get(LivingEntity entity) { return RadiationData.getPhosphorus(entity); }
-            @Override void set(LivingEntity entity, int value) { RadiationData.setPhosphorus(entity, value); }
+            @Override int get(LivingEntity entity) { return HbmLivingProperties.getPhosphorus(entity); }
+            @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setPhosphorus(entity, value); }
         },
         BALEFIRE(Blocks.SOUL_FIRE, 5.0F, true) {
-            @Override int get(LivingEntity entity) { return RadiationData.getBalefire(entity); }
-            @Override void set(LivingEntity entity, int value) { RadiationData.setBalefire(entity, value); }
+            @Override int get(LivingEntity entity) { return HbmLivingProperties.getBalefire(entity); }
+            @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setBalefire(entity, value); }
         },
         BLACK_FIRE(Blocks.BLACKSTONE, 10.0F, true) {
-            @Override int get(LivingEntity entity) { return RadiationData.getBlackFire(entity); }
-            @Override void set(LivingEntity entity, int value) { RadiationData.setBlackFire(entity, value); }
+            @Override int get(LivingEntity entity) { return HbmLivingProperties.getBlackFire(entity); }
+            @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setBlackFire(entity, value); }
         };
 
         private final net.minecraft.world.level.block.Block particle;

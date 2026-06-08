@@ -13,6 +13,7 @@ import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.block.PoweredRedCableBlock;
 import com.hbm.ntm.block.RedCableGaugeBlock;
+import com.hbm.ntm.block.SteelScaffoldBlock;
 import com.hbm.ntm.block.conveyor.ConveyorBlock;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.Direction;
@@ -115,6 +116,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "machine_satlinker_side",
                 "machine_satlinker_side");
         visibleMachineWithItemRenderer(ModBlocks.SAT_DOCK, "utility/sat_dock");
+        soyuzCapsuleWithItem();
+        visibleMachineWithItemRenderer(ModBlocks.SOYUZ_LAUNCHER, "launch_table/soyuz_launcher_table");
         existingModelBlockOnly(ModBlocks.MACHINE_ASSEMBLY_MACHINE, "machine_assembly_machine");
         customBlockItem(ModBlocks.MACHINE_ASSEMBLY_MACHINE);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CHEMICAL_PLANT, "machines/chemical_plant");
@@ -147,6 +150,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SILEX, "machines/silex");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_EXPOSURE_CHAMBER, "machines/exposure_chamber");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CYCLOTRON, "machines/cyclotron");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CRYSTALLIZER, "machines/acidizer");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_ELECTROLYSER, "machines/electrolyser");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ARC_WELDER, "machines/arc_welder");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SOLDERING_STATION, "machines/soldering_station");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_MIXER, "machines/mixer");
@@ -177,6 +182,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem("stone_cracked", "stone_cracked");
         radAbsorberWithItem();
         simpleCubeWithItem(ModBlocks.DUMMY_BLOCK, "block_steel");
+        steelScaffoldWithItem();
         wasteLogWithItem();
         simpleCubeWithItem(ModBlocks.WASTE_PLANKS, "waste_planks");
         leavesLayerWithItem();
@@ -246,6 +252,19 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
     }
 
+    private void generatedBlockItem(RegistryObject<Block> block, String texturePath) {
+        itemModels().getBuilder(block.getId().getPath())
+                .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
+                .texture("layer0", new ResourceLocation(HbmNtm.MOD_ID, texturePath));
+    }
+
+    private void soyuzCapsuleWithItem() {
+        ModelFile model = models().cubeAll("soyuz_capsule",
+                new ResourceLocation(HbmNtm.MOD_ID, "block/soyuz/capsule/soyuz_lander"));
+        simpleBlock(ModBlocks.SOYUZ_CAPSULE.get(), model);
+        generatedBlockItem(ModBlocks.SOYUZ_CAPSULE, "item/soyuz_lander");
+    }
+
     private void fluidBarrelWithItem(RegistryObject<Block> block, String textureName) {
         String blockName = block.getId().getPath();
         ModelFile model = models().getBuilder(blockName)
@@ -263,6 +282,31 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     private void existingModelBlockOnly(RegistryObject<Block> block, String modelName) {
         ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
         horizontalBlock(block.get(), model);
+    }
+
+    private void steelScaffoldWithItem() {
+        ModelFile model = models().getBuilder("steel_scaffold")
+                .customLoader(net.minecraftforge.client.model.generators.loaders.ObjModelBuilder::begin)
+                .modelLocation(new ResourceLocation(HbmNtm.MOD_ID, "models/block/legacy_blocks/scaffold.obj"))
+                .flipV(true)
+                .end()
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/scaffold_steel"))
+                .texture("default", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/scaffold_steel"))
+                .texture("texture0", new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/scaffold_steel"));
+        getVariantBuilder(ModBlocks.STEEL_SCAFFOLD.get())
+                .forAllStates(state -> scaffoldModel(state.getValue(SteelScaffoldBlock.AXIS), model));
+        simpleBlockItem(ModBlocks.STEEL_SCAFFOLD.get(), model);
+    }
+
+    private ConfiguredModel[] scaffoldModel(Direction.Axis axis, ModelFile model) {
+        ConfiguredModel.Builder<?> builder = ConfiguredModel.builder().modelFile(model);
+        switch (axis) {
+            case Y -> builder.rotationX(90);
+            case Z -> builder.rotationY(90);
+            case X -> {
+            }
+        }
+        return builder.build();
     }
 
     private void difurnaceWithItem(RegistryObject<Block> block) {
@@ -447,15 +491,14 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     }
 
     private void cableDiodeWithItem() {
-        ModelFile model = models().cubeAll(ModBlocks.CABLE_DIODE.getId().getPath(),
-                new ResourceLocation(HbmNtm.MOD_ID, "block/cable_diode"));
+        ModelFile model = models().getBuilder(ModBlocks.CABLE_DIODE.getId().getPath())
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/cable_diode"));
         getVariantBuilder(ModBlocks.CABLE_DIODE.get())
                 .forAllStates(state -> ConfiguredModel.builder()
                         .modelFile(model)
-                        .rotationX(rotationX(state.getValue(CableDiodeBlock.FACING)))
-                        .rotationY(rotationY(state.getValue(CableDiodeBlock.FACING)))
                         .build());
-        simpleBlockItem(ModBlocks.CABLE_DIODE.get(), model);
+        itemModels().getBuilder(ModBlocks.CABLE_DIODE.getId().getPath())
+                .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
     }
 
     private static int rotationX(Direction direction) {

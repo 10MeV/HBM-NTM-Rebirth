@@ -73,7 +73,8 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
         if (isHovering(7, 125, 18, 18, mouseX, mouseY)) {
             LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(), mouseX, mouseY);
         } else if (isHovering(152, 18, 16, 61, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 152, topPos + 18, 16, 61, menu.getPower(), menu.getMaxPower());
         } else {
             renderTankTooltip(graphics, mouseX, mouseY);
         }

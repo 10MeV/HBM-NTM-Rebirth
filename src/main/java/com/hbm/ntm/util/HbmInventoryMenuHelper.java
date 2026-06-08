@@ -344,34 +344,12 @@ public final class HbmInventoryMenuHelper {
 
     public static ItemStack moveMachineStack(java.util.List<Slot> slots, StackMover mover, int index, int machineSlotCount,
             int playerInventoryStart, int playerSlotEnd, int... machineInsertionRanges) {
-        if (index < 0 || index >= slots.size()) {
-            return ItemStack.EMPTY;
-        }
-        Slot slot = slots.get(index);
-        if (slot == null || !slot.hasItem()) {
-            return ItemStack.EMPTY;
-        }
-
-        ItemStack stack = slot.getItem();
-        ItemStack result = stack.copy();
-        if (index < machineSlotCount) {
-            if (!mover.move(stack, playerInventoryStart, playerSlotEnd, true)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (!moveToAnyRange(slots, stack, machineInsertionRanges)) {
-            return ItemStack.EMPTY;
-        }
-
-        if (stack.isEmpty()) {
-            slot.set(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
-        return result;
+        return HbmInventoryUtil.moveMachineStack(slots, mover::move, index, machineSlotCount,
+                playerInventoryStart, playerSlotEnd, machineInsertionRanges);
     }
 
     public static boolean moveStackToAnyRange(java.util.List<Slot> slots, ItemStack stack, int... ranges) {
-        return moveToAnyRange(slots, stack, ranges);
+        return HbmInventoryUtil.moveStackToAnyRange(slots, stack, ranges);
     }
 
     public static boolean isBatteryLike(ItemStack stack) {
@@ -383,81 +361,64 @@ public final class HbmInventoryMenuHelper {
         return HbmItemStackUtil.saveLegacyItems(items);
     }
 
+    public static void saveLegacyItemsToTag(CompoundTag target, ItemStackHandler items) {
+        HbmItemStackUtil.saveLegacyItemsToTag(target, items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, String key, ItemStackHandler items) {
+        HbmItemStackUtil.saveLegacyItemsToTag(target, key, items);
+    }
+
+    public static void saveLegacyItemsCompoundToTag(CompoundTag target, String key, ItemStackHandler items) {
+        HbmItemStackUtil.saveLegacyItemsCompoundToTag(target, key, items);
+    }
+
     public static CompoundTag saveLegacyItems(NonNullList<ItemStack> items) {
         return HbmItemStackUtil.saveLegacyItems(items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.saveLegacyItemsToTag(target, items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, String key, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.saveLegacyItemsToTag(target, key, items);
+    }
+
+    public static void saveLegacyItemsCompoundToTag(CompoundTag target, String key, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.saveLegacyItemsCompoundToTag(target, key, items);
     }
 
     public static void loadLegacyItems(CompoundTag tag, ItemStackHandler items) {
         HbmItemStackUtil.loadLegacyItems(tag, items);
     }
 
+    public static void loadLegacyItems(CompoundTag tag, String key, ItemStackHandler items) {
+        HbmItemStackUtil.loadLegacyItems(tag, key, items);
+    }
+
+    public static void loadLegacyItemsCompound(CompoundTag tag, String key, ItemStackHandler items) {
+        HbmItemStackUtil.loadLegacyItemsCompound(tag, key, items);
+    }
+
     public static NonNullList<ItemStack> loadLegacyItems(CompoundTag tag, int slotCount) {
         return HbmItemStackUtil.loadLegacyItems(tag, slotCount);
     }
 
+    public static void loadLegacyItems(CompoundTag tag, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.loadLegacyItems(tag, items);
+    }
+
+    public static void loadLegacyItems(CompoundTag tag, String key, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.loadLegacyItems(tag, key, items);
+    }
+
+    public static void loadLegacyItemsCompound(CompoundTag tag, String key, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.loadLegacyItemsCompound(tag, key, items);
+    }
+
     public static java.util.List<ItemStack> clearToDrops(ItemStackHandler items) {
         return HbmItemStackUtil.clearToDrops(items);
-    }
-
-    private static boolean moveToAnyRange(java.util.List<Slot> slots, ItemStack stack, int... ranges) {
-        if (ranges == null || ranges.length % 2 != 0) {
-            return false;
-        }
-        boolean moved = false;
-        for (int i = 0; i < ranges.length; i += 2) {
-            moved |= legacyMergeItemStack(slots, stack, ranges[i], ranges[i + 1], false);
-            if (stack.isEmpty()) {
-                break;
-            }
-        }
-        return moved;
-    }
-
-    private static boolean legacyMergeItemStack(java.util.List<Slot> slots, ItemStack stack, int start, int end,
-            boolean reverse) {
-        boolean moved = false;
-        if (stack.isStackable()) {
-            int index = reverse ? end - 1 : start;
-            while (!stack.isEmpty() && inRange(index, start, end, reverse)) {
-                Slot slot = slots.get(index);
-                ItemStack current = slot.getItem();
-                if (!current.isEmpty() && ItemStack.isSameItemSameTags(stack, current)) {
-                    int max = Math.min(slot.getMaxStackSize(stack), stack.getMaxStackSize());
-                    int transfer = Math.min(stack.getCount(), max - current.getCount());
-                    if (transfer > 0 && slot.mayPlace(stack.copyWithCount(transfer))) {
-                        stack.shrink(transfer);
-                        current.grow(transfer);
-                        slot.setByPlayer(current);
-                        slot.setChanged();
-                        moved = true;
-                    }
-                }
-                index += reverse ? -1 : 1;
-            }
-        }
-
-        if (!stack.isEmpty()) {
-            int index = reverse ? end - 1 : start;
-            while (!stack.isEmpty() && inRange(index, start, end, reverse)) {
-                Slot slot = slots.get(index);
-                ItemStack current = slot.getItem();
-                if (current.isEmpty()) {
-                    int transfer = Math.min(stack.getCount(),
-                            Math.min(slot.getMaxStackSize(stack), stack.getMaxStackSize()));
-                    if (transfer > 0 && slot.mayPlace(stack.copyWithCount(transfer))) {
-                        slot.setByPlayer(stack.split(transfer));
-                        slot.setChanged();
-                        moved = true;
-                    }
-                }
-                index += reverse ? -1 : 1;
-            }
-        }
-        return moved;
-    }
-
-    private static boolean inRange(int index, int start, int end, boolean reverse) {
-        return reverse ? index >= start : index < end;
     }
 
     @FunctionalInterface

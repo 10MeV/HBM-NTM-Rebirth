@@ -97,7 +97,7 @@ public final class ExplosionThermo {
             replacement = ModBlocks.FROZEN_GRASS.get().defaultBlockState();
         } else if (state.is(Blocks.DIRT)) {
             replacement = ModBlocks.FROZEN_DIRT.get().defaultBlockState();
-        } else if (state.is(BlockTags.LOGS) || isLegacy(state, "waste_log")) {
+        } else if (state.is(BlockTags.LOGS) || state.is(BlockTags.LOGS_THAT_BURN) || isLegacy(state, "waste_log")) {
             replacement = ModBlocks.FROZEN_LOG.get().defaultBlockState();
         } else if (state.is(BlockTags.PLANKS) || isLegacy(state, "waste_planks")) {
             replacement = ModBlocks.FROZEN_PLANKS.get().defaultBlockState();
@@ -225,7 +225,7 @@ public final class ExplosionThermo {
         if (intense && state.is(Blocks.NETHERRACK)) {
             return Blocks.LAVA.defaultBlockState();
         }
-        if (state.is(BlockTags.LOGS) || isLegacy(state, "frozen_log")) {
+        if (state.is(BlockTags.LOGS) || state.is(BlockTags.LOGS_THAT_BURN) || isLegacy(state, "frozen_log")) {
             return ModBlocks.WASTE_LOG.get().defaultBlockState();
         }
         if (state.is(BlockTags.PLANKS) || isLegacy(state, "frozen_planks")) {

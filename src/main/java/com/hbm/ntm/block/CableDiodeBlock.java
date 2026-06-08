@@ -72,7 +72,7 @@ public class CableDiodeBlock extends BaseEntityBlock implements com.hbm.ntm.ener
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return RenderShape.INVISIBLE;
     }
 
     @Override

@@ -25,8 +25,12 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         ModBlocks.HIDDEN_MACHINE_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.HIDDEN_MACHINE_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
+        ModBlocks.SATELLITE_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
+        ModBlocks.SATELLITE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.DUMMY_BLOCK.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.DUMMY_BLOCK.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_SCAFFOLD.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_SCAFFOLD.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
                 ModBlocks.RAD_LAVA_BLOCK.get(), ModBlocks.SELLAFIELD.get(), ModBlocks.SELLAFIELD_SLAKED.get(),
                 ModBlocks.SELLAFIELD_BEDROCK.get(), ModBlocks.ORE_SELLAFIELD_DIAMOND.get(),
@@ -43,7 +47,11 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 ModBlocks.WASTE_TRINITITE_RED.get(), ModBlocks.FROZEN_GRASS.get(), ModBlocks.FROZEN_DIRT.get(),
                 ModBlocks.TEKTITE.get(), ModBlocks.ORE_TEKTITE_OSMIRIDIUM.get());
         addLegacyMineable(BlockTags.MINEABLE_WITH_SHOVEL, "dirt_dead", "dirt_oily", "sand_dirty", "sand_dirty_red");
-        addLegacyMineable(BlockTags.MINEABLE_WITH_PICKAXE, "stone_cracked");
+        addLegacyMineable(BlockTags.MINEABLE_WITH_PICKAXE, "stone_cracked",
+                "stone_depth", "ore_depth_cinnebar", "ore_depth_zirconium", "ore_depth_borax",
+                "cluster_depth_iron", "cluster_depth_titanium", "cluster_depth_tungsten",
+                "depth_brick", "depth_tiles", "depth_nether_brick", "depth_nether_tiles", "depth_dnt",
+                "stone_depth_nether", "ore_depth_nether_neodymium");
         tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.FROZEN_LOG.get(), ModBlocks.FROZEN_PLANKS.get());
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));

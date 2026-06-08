@@ -11,6 +11,7 @@ public final class HbmNetworkActions {
     public static final ResourceLocation SATELLITE_LASER = hbm("satellite_laser");
     public static final ResourceLocation SATELLITE_PANEL = hbm("satellite_panel");
     public static final ResourceLocation NBT_ITEM_CONTROL = hbm("nbt_item_control");
+    public static final ResourceLocation TOOL_ABILITY_CONFIG = hbm("tool_ability_config");
     public static final ResourceLocation VAULT_DOOR = hbm("vault_door");
     public static final ResourceLocation SIREN = hbm("siren");
     public static final ResourceLocation FORCE_FIELD = hbm("force_field");

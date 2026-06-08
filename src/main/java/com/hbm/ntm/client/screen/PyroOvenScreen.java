@@ -53,8 +53,8 @@ public class PyroOvenScreen extends AbstractContainerScreen<PyroOvenMenu> {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTank(),
                     menu.getOutputTankTooltip(hasShiftDown()), mouseX, mouseY);
         } else if (isHovering(152, 18, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 152, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
         } else if (isHovering(108, 76, 8, 8, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getUsage() + " HE/t"), mouseX, mouseY);
         }

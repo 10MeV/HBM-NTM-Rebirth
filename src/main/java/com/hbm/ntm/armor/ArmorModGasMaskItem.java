@@ -3,13 +3,16 @@ package com.hbm.ntm.armor;
 import com.hbm.ntm.api.item.GasMask;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.ArmorUtil;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class ArmorModGasMaskItem extends ArmorModItem implements GasMask {
@@ -46,6 +49,13 @@ public class ArmorModGasMaskItem extends ArmorModItem implements GasMask {
     @Override
     public void damageFilter(ItemStack stack, LivingEntity entity, int damage) {
         ArmorUtil.damageGasMaskFilter(stack, damage);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        ArmorUtil.addGasMaskTooltip(stack, null, tooltip, flag);
+        ArmorUtil.addGasMaskBlacklistTooltip(stack, null, tooltip);
     }
 
     @Override

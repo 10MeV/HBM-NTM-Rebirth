@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 600,
+  "fluid": { "fluid": "PEROXIDE", "amount": 500 },
+  "input": { "ingredient": { "item": "minecraft:redstone_block" } },
+  "output": { "item": "hbm_ntm_rebirth:nugget_mercury" },
+  "productivity": 0.25
+}

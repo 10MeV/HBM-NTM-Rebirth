@@ -12,6 +12,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -57,6 +58,30 @@ public final class ArmorModEvents {
             for (ItemStack mod : ArmorModHandler.pryMods(armor)) {
                 if (mod.getItem() instanceof ArmorModItem armorMod) {
                     armorMod.onArmorModHurt(event, armor, mod);
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onLivingDeath(LivingDeathEvent event) {
+        LivingEntity entity = event.getEntity();
+        if (entity.level().isClientSide) {
+            return;
+        }
+        for (ItemStack armor : entity.getArmorSlots()) {
+            if (!ArmorModHandler.hasMods(armor)) {
+                continue;
+            }
+            ItemStack mod = ArmorModHandler.pryMod(armor, ArmorModHandler.extra);
+            if (mod.getItem() instanceof ArmorModItems.Revive revive) {
+                revive.handleDeath(event, armor, mod);
+                return;
+            }
+            if (mod.getItem() instanceof ArmorModItems.Shackles shackles) {
+                shackles.handleDeath(event, armor, mod);
+                if (event.isCanceled()) {
+                    return;
                 }
             }
         }

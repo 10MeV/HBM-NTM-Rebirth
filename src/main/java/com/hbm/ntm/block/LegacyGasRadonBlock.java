@@ -1,8 +1,8 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.HazardType;
-import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModEffects;
@@ -39,11 +39,10 @@ public class LegacyGasRadonBlock extends LegacyGasBlock {
             living.removeEffect(ModEffects.RADAWAY.get());
             living.removeEffect(ModEffects.RADX.get());
             RadiationUtil.contaminate(living, HazardType.RADIATION, ContaminationType.RAD_BYPASS, 0.5F);
-            RadiationData.incrementAsbestos(living, 10);
+            HbmLivingProperties.incrementAsbestos(living, 10);
             return;
         }
-        if (ArmorUtil.hasFineParticleProtection(living)) {
-            ArmorUtil.damageGasMaskFilter(living, 1);
+        if (ArmorUtil.hasFineParticleProtectionAndDamageFilter(living, 1)) {
             return;
         }
         if (kind == Kind.DENSE) {

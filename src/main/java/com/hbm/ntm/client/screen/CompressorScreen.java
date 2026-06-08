@@ -63,8 +63,8 @@ public class CompressorScreen extends AbstractContainerScreen<CompressorMenu> {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(),
                     menu.getOutputTankTooltip(hasShiftDown()), mouseX, mouseY);
         } else if (isHovering(152, 18, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font,
-                    Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 152, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
         } else {
             for (int pressure = 0; pressure < 5; pressure++) {
                 if (isHovering(43 + pressure * 11, 46, 8, 14, mouseX, mouseY)) {

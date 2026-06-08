@@ -58,10 +58,14 @@ public class RadarLargeBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
-        return type == ModBlockEntities.MACHINE_RADAR_LARGE.get() && !level.isClientSide
+        if (type != ModBlockEntities.MACHINE_RADAR_LARGE.get()) {
+            return null;
+        }
+        return level.isClientSide
                 ? (tickLevel, tickPos, tickState, blockEntity) ->
-                RadarBlockEntity.serverTick(tickLevel, tickPos, tickState, (RadarLargeBlockEntity) blockEntity)
-                : null;
+                RadarBlockEntity.clientTick(tickLevel, tickPos, tickState, (RadarLargeBlockEntity) blockEntity)
+                : (tickLevel, tickPos, tickState, blockEntity) ->
+                RadarBlockEntity.serverTick(tickLevel, tickPos, tickState, (RadarLargeBlockEntity) blockEntity);
     }
 
     @Override

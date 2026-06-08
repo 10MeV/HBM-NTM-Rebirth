@@ -204,8 +204,11 @@ public final class ModMessages {
                 + " directHelpers=" + LegacyNetworkDispatcher.directSendHelperCount()
                 + " threadedHelpers=" + LegacyNetworkDispatcher.threadedSendHelperCount()
                 + " packetThreadingHelpers=" + LegacyNetworkDispatcher.packetThreadingHelperCount()
+                + " targetPointFactories=" + LegacyTargetPoint.modernFactoryCount()
+                + "/" + LegacyTargetPoint.legacyFactoryCount()
                 + " flushCalls=" + LegacyNetworkDispatcher.legacyFlushCallCount()
                 + " rawBufferBlocked=" + LegacyRawBufferNetwork.blockedRawBufferSendCount()
+                + " dimensionIdBlocked=" + LegacyDimensionIdNetwork.blockedDimensionIdSendCount()
                 + " packetThreadingWaitCalls=" + LegacyPacketThreading.legacyWaitCallCount()
                 + " note=" + LegacyNetworkDispatcher.compatibilityNote();
     }
@@ -321,6 +324,8 @@ public final class ModMessages {
                 LegacyPacketThreading.legacyWaitCallCount(),
                 LegacyRawBufferNetwork.blockedRawBufferSendCount(),
                 LegacyRawBufferNetwork.lastBlockedRawBufferSend(),
+                LegacyDimensionIdNetwork.blockedDimensionIdSendCount(),
+                LegacyDimensionIdNetwork.lastBlockedDimensionIdSend(),
                 LegacyNetworkDispatcher.directSendHelperCount(),
                 LegacyNetworkDispatcher.threadedSendHelperCount(),
                 LegacyNetworkDispatcher.packetThreadingHelperCount());
@@ -336,9 +341,12 @@ public final class ModMessages {
                 + " auditProblems=" + snapshot.auditProblems()
                 + " blockedSends=" + snapshot.sendSafety().totalBlockedSends()
                 + " threadedPending=" + snapshot.threaded().pending()
+                + " threadedPrepared=" + snapshot.threaded().totalPrepared()
+                + " threadedPreparedCopies=" + snapshot.threaded().preparedCopyInstance()
                 + " threadedDiscarded=" + snapshot.threaded().totalDiscarded()
                 + " threadedFallback=" + snapshot.threaded().fallbackToMainThread()
                 + " rawBufferBlocked=" + snapshot.rawBufferBlockedSends()
+                + " dimensionIdBlocked=" + snapshot.dimensionIdBlockedSends()
                 + " legacyWaitCalls=" + snapshot.legacyWaitCalls()
                 + " legacyLastTickTotal=" + snapshot.legacyPacketThreading().lastTickTotal()
                 + " helperSurface=" + snapshot.totalHelperCount();
@@ -766,6 +774,17 @@ public final class ModMessages {
             return;
         }
         CHANNEL.send(PacketDistributor.NEAR.with(() -> point), message);
+    }
+
+    public static void sendToAllAround(Object message, LegacyTargetPoint point) {
+        if (!validateTarget(point != null, message, "near-legacyTargetPoint:null")) {
+            return;
+        }
+        if (point.hasModernDimension()) {
+            sendToAllAround(message, point.toModernTargetPoint());
+            return;
+        }
+        LegacyDimensionIdNetwork.rejectAllAround(message, point, false);
     }
 
     public static void sendToAll(Object message) {
@@ -1657,6 +1676,8 @@ public final class ModMessages {
             long legacyWaitCalls,
             long rawBufferBlockedSends,
             String lastRawBufferBlockedSend,
+            long dimensionIdBlockedSends,
+            String lastDimensionIdBlockedSend,
             int directHelperCount,
             int threadedHelperCount,
             int packetThreadingHelperCount) {
@@ -1672,6 +1693,7 @@ public final class ModMessages {
                     || threaded.totalDiscarded() > 0L
                     || threaded.fallbackToMainThread()
                     || rawBufferBlockedSends > 0L
+                    || dimensionIdBlockedSends > 0L
                     || legacyPacketThreading.triggered();
         }
     }

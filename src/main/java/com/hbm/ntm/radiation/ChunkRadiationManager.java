@@ -25,14 +25,14 @@ public final class ChunkRadiationManager {
     public static final String LEGACY_CHUNK_NBT_KEY = "hfr_simple_radiation";
 
     public static float getRadiation(Level level, BlockPos pos) {
-        if (!RadiationConfig.ENABLE_CHUNK_RADS.get() || !(level instanceof ServerLevel serverLevel)) {
+        if (!RadiationConfig.chunkRadiationEnabled() || !(level instanceof ServerLevel serverLevel)) {
             return 0.0F;
         }
         return getData(serverLevel).get(new ChunkPos(pos));
     }
 
     public static void setRadiation(Level level, BlockPos pos, float radiation) {
-        if (RadiationConfig.ENABLE_CHUNK_RADS.get() && level instanceof ServerLevel serverLevel) {
+        if (RadiationConfig.chunkRadiationEnabled() && level instanceof ServerLevel serverLevel) {
             getData(serverLevel).set(new ChunkPos(pos), radiation);
         }
     }
@@ -66,13 +66,13 @@ public final class ChunkRadiationManager {
     }
 
     public static void loadLegacyChunkRadiation(ServerLevel level, ChunkPos chunkPos, float radiation) {
-        if (RadiationConfig.ENABLE_CHUNK_RADS.get()) {
+        if (RadiationConfig.chunkRadiationEnabled()) {
             getData(level).loadChunk(chunkPos, radiation);
         }
     }
 
     public static float getChunkRadiation(ServerLevel level, ChunkPos chunkPos) {
-        return RadiationConfig.ENABLE_CHUNK_RADS.get() ? getData(level).get(chunkPos) : 0.0F;
+        return RadiationConfig.chunkRadiationEnabled() ? getData(level).get(chunkPos) : 0.0F;
     }
 
     public static void spawnDebugRadiationFog(ServerLevel level, BlockPos pos) {
@@ -80,20 +80,20 @@ public final class ChunkRadiationManager {
     }
 
     public static void tick(ServerLevel level) {
-        if (!RadiationConfig.ENABLE_CHUNK_RADS.get()) {
+        if (!RadiationConfig.chunkRadiationEnabled()) {
             return;
         }
 
         ResourceKey<Level> dimension = level.dimension();
         int timer = DIFFUSION_TIMERS.getOrDefault(dimension, 0) + 1;
         if (timer >= 20) {
-            List<ChunkPos> fogCandidates = getData(level).updateDiffusion(level, RadiationConfig.FOG_RAD.get());
+            List<ChunkPos> fogCandidates = getData(level).updateDiffusion(level, RadiationConfig.radiationFogThreshold());
             spawnRadiationFog(level, fogCandidates);
             timer = 0;
         }
         DIFFUSION_TIMERS.put(dimension, timer);
 
-        if (RadiationConfig.WORLD_RAD_EFFECTS.get()) {
+        if (RadiationConfig.worldRadiationEffectsEnabled()) {
             handleWorldEffects(level);
         }
     }
@@ -149,7 +149,7 @@ public final class ChunkRadiationManager {
             return;
         }
 
-        int chance = RadiationConfig.FOG_CHANCE.get();
+        int chance = RadiationConfig.radiationFogChance();
         for (ChunkPos chunkPos : candidates) {
             if (level.random.nextInt(chance) != 0 || !level.hasChunk(chunkPos.x, chunkPos.z)) {
                 continue;

@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "tag": "forge:ores/redstone" } },
+  "outputs": [
+    { "item": "minecraft:redstone", "count": 3 },
+    { "item": "minecraft:redstone", "count": 3 },
+    { "item": "hbm_ntm_rebirth:nugget_mercury" },
+    { "item": "minecraft:gravel" }
+  ]
+}

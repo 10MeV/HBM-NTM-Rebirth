@@ -128,7 +128,7 @@ public final class RBMKNeutronHandler {
 
         public Iterable<BlockPos> getReaSimNodes() {
             List<BlockPos> nodes = new ArrayList<>();
-            int range = settings.reasimRange();
+            int range = settings.fluxRange();
             BlockPos origin = getPos();
             for (int x = -range; x <= range; x++) {
                 for (int z = -range; z <= range; z++) {
@@ -144,6 +144,12 @@ public final class RBMKNeutronHandler {
         public List<BlockPos> collectStaleNodePositions(NeutronNodeWorld.StreamWorld streamWorld) {
             List<BlockPos> stale = new ArrayList<>();
             if (getBlockEntity() instanceof RBMKRodColumn rod && (!rod.hasFuelRod() || rod.lastFluxQuantity() == 0.0D)) {
+                if (rod instanceof RBMKReaSimRodColumn) {
+                    for (BlockPos pos : getReaSimNodes()) {
+                        stale.add(pos);
+                    }
+                    return stale;
+                }
                 for (Direction direction : Direction.Plane.HORIZONTAL) {
                     RBMKNeutronStream stream = new RBMKNeutronStream(this, new Vec3(direction.getStepX(), 0.0D, direction.getStepZ()));
                     for (NeutronNode node : stream.getNodes(streamWorld, false)) {
@@ -236,7 +242,7 @@ public final class RBMKNeutronHandler {
                     if (hits == settings.columnHeight()) {
                         return;
                     }
-                    leakFromFlux(level, targetPos, hits);
+                    leakFromFlux(level, getOrigin().getPos(), hits);
                     if (hits > 0) {
                         setFluxQuantity(getFluxQuantity() * (1.0D - (double) hits / settings.columnHeight()));
                     }

@@ -32,6 +32,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
     private static final int BATTERY_LEAD = 1;
     private static final int BATTERY_LITHIUM = 2;
     private static final int WIRE_FINE_COPPER = 2_900;
+    private static final int WIRE_DENSE_GOLD = 7_900;
     private static final int CASING_SMALL = 0;
     private static final int CASING_SMALL_STEEL = 2;
     private static final int CASING_SHOTSHELL = 4;
@@ -71,6 +72,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_ADVANCED, 6, 12, 1)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_METEORITE_TREASURE), pool(
+                entry(ModItems.COBALT_PICKAXE, 1, 1, 10),
                 entry(ModItems.legacyItem("ingot_zirconium"), 1, 16, 10),
                 entry(ModItems.legacyItem("ingot_niobium"), 1, 16, 10),
                 entry(ModItems.COBALT_INGOT, 1, 16, 10),
@@ -78,7 +80,8 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 4, 8, 10),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CHIP, 2, 4, 10),
                 entry(ModItems.SERUM, 1, 1, 5),
-                entry(ModItems.HEART_PIECE, 1, 1, 5)));
+                entry(ModItems.HEART_PIECE, 1, 1, 5),
+                entry(ModItems.SCRUMPY, 1, 1, 5)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_GENERIC), pool(
                 entry(Items.BREAD, 1, 5, 8),
@@ -119,6 +122,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(legacyItem("nugget_ra226"), 3, 6, 5),
                 entry(ModItems.THORIUM_POWDER, 1, 1, 1),
                 entry(legacyItem("powder_neptunium"), 1, 1, 1),
+                entry(legacyItem("powder_strontium"), 1, 1, 1),
                 entry(legacyItem("powder_cobalt"), 1, 1, 1),
                 entry(legacyItem("pellet_rtg"), 1, 1, 3),
                 entry(ModBlocks.YELLOW_BARREL, 1, 3, 3)));
@@ -132,6 +136,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.COPPER_COIL, 2, 16, 5),
                 entry(legacyItem("wire_fine_mingrade"), 8, 32, 5),
                 entry(legacyItem("powder_niobium"), 1, 1, 1),
+                meta(LegacyMetaItemMappings.WIRE_DENSE, WIRE_DENSE_GOLD, 1, 3, 5),
                 entry(ModBlocks.legacyBlock("block_tungsten"), 3, 8, 5),
                 entry(ModBlocks.RED_CABLE, 8, 16, 5)));
 
@@ -170,6 +175,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.MOTOR, 1, 2, 4),
                 entry(ModItems.COPPER_COIL, 1, 3, 4),
                 entry(legacyItem("wire_fine_mingrade"), 1, 8, 5),
+                entry(legacyItem("blade_titanium"), 1, 8, 1),
                 meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LEAD, 1, 1, 3),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 1, 2, 4),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_PCB, 1, 3, 5),
@@ -202,6 +208,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(Items.BOOK, 1, 3, 90),
                 entry(Items.MAP, 1, 1, 50),
                 entry(Items.WRITABLE_BOOK, 1, 1, 30),
+                entry(ModItems.INK, 1, 1, 1),
                 entry(ModItems.SCREWDRIVER, 1, 1, 10)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SOLID_FUEL), pool(
@@ -218,6 +225,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.MORNING_GLORY, 1, 1, 1),
                 entry(legacyItem("filter_coal"), 1, 1, 5),
                 entry(legacyItem("cell_empty"), 1, 1, 5),
+                entry(ModItems.MERCURY_DROP, 1, 1, 3),
                 entry(legacyItem("powder_cobalt"), 1, 1, 1),
                 entry(legacyItem("ingot_boron"), 1, 1, 1)));
 
@@ -225,6 +233,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(Items.PAPER, 1, 6, 7),
                 entry(Items.CLOCK, 1, 1, 3),
                 entry(Items.BOOK, 1, 5, 10),
+                entry(ModItems.ARMOR_POLISH, 1, 1, 3),
                 entry(Items.EXPERIENCE_BOTTLE, 1, 3, 1)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_METEOR_SAFE), pool(
@@ -266,6 +275,8 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(Items.IRON_INGOT, 1, 3, 10),
                 entry(ModItems.STEEL_INGOT, 1, 2, 10),
                 entry(ModItems.ALUMINIUM_INGOT, 1, 2, 10),
+                entry(ModItems.STEEL_PICKAXE, 1, 1, 5),
+                entry(ModItems.STEEL_SHOVEL, 1, 1, 5),
                 entry(Items.EXPERIENCE_BOTTLE, 1, 3, 5)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_BONES), pool(
@@ -288,6 +299,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.LEAD_PLATE, 1, 1, 15),
                 entry(legacyItem("fallout"), 1, 2, 15),
                 entry(ModItems.TUNGSTEN_COIL, 1, 2, 15),
+                entry(legacyItem("ingot_asbestos"), 1, 1, 15),
                 entry(ModItems.MOTOR, 1, 1, 5)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_MECHANICAL), pool(
@@ -309,6 +321,22 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SUPPLIES), pool(
                 entry(ModItems.GEIGER_COUNTER, 1, 1, 2),
                 entry(ModItems.RADAWAY, 1, 5, 10)));
+
+        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_RED_PEDESTAL), pool(
+                entry(ModItems.ARMOR_POLISH, 1, 1, 10),
+                entry(ModItems.BANDAID, 1, 1, 10),
+                entry(ModItems.SERUM, 1, 1, 10),
+                entry(ModItems.QUARTZ_PLUTONIUM, 1, 1, 10),
+                entry(ModItems.MORNING_GLORY, 1, 1, 10),
+                entry(ModItems.SPIDER_MILK, 1, 1, 10),
+                entry(ModItems.INK, 1, 1, 10),
+                entry(ModItems.HEART_CONTAINER, 1, 1, 10),
+                entry(ModItems.BLACK_DIAMOND, 1, 1, 10),
+                entry(ModItems.SCRUMPY, 1, 1, 10),
+                entry(ModItems.WILD_P, 1, 1, 5),
+                entry(ModItems.CARD_AOS, 1, 1, 5),
+                entry(ModItems.CARD_QOS, 1, 1, 5),
+                entry(ModItems.STARMETAL_SWORD, 1, 1, 5)));
     }
 
     private static LootTable.Builder pool(LootPoolSingletonContainer.Builder<?>... entries) {

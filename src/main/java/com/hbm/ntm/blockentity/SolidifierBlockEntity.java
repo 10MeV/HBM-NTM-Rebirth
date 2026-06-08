@@ -217,7 +217,7 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put(TAG_INVENTORY, HbmInventoryMenuHelper.saveLegacyItems(items));
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         tag.putInt(TAG_PROGRESS, progress);
         tag.putInt(TAG_USAGE, usage);
         tag.putInt(TAG_PROCESS_TIME, processTime);
@@ -226,7 +226,7 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyItems(tag.getCompound(TAG_INVENTORY), items);
+        HbmInventoryMenuHelper.loadLegacyItemsCompound(tag, TAG_INVENTORY, items);
         progress = tag.getInt(TAG_PROGRESS);
         usage = tag.contains(TAG_USAGE) ? tag.getInt(TAG_USAGE) : USAGE_BASE;
         processTime = tag.contains(TAG_PROCESS_TIME) ? tag.getInt(TAG_PROCESS_TIME) : PROCESS_TIME_BASE;

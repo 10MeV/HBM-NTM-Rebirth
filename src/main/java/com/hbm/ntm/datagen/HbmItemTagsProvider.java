@@ -348,6 +348,8 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_lead", "Lead");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_copper", "Copper");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_copper", "Copper");
+        addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_aluminium", "Aluminum");
+        addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_aluminium", "Aluminum");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_dura_steel", "DuraSteel");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_dura_steel", "DuraSteel");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_bismuth_bronze", "BismuthBronze");
@@ -361,9 +363,12 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("plateSextuple", "welded_plates", "plate_welded_steel", "Steel");
         addLegacyMaterialAliases("plateSextuple", "welded_plates", "plate_welded_copper", "Copper");
         addLegacyMaterialAliases("plateSextuple", "welded_plates", "plate_welded_zirconium", "Zirconium");
+        addLegacyMaterialAliases("plateSextuple", "welded_plates", "plate_welded_tcalloy", "TcAlloy");
+        addLegacyMaterialAliases("plateSextuple", "welded_plates", "plate_welded_cdalloy", "CdAlloy");
         addLegacyForgeTag("ingots/any_bismoid_bronze", "ingot_bismuth_bronze", "ingot_arsenic_bronze");
         addLegacyForgeTag("cast_plates/any_bismoid_bronze", "plate_cast_bismuth_bronze", "plate_cast_arsenic_bronze");
         addLegacyForgeTag("ingots/any_resistant_alloy", "ingot_tcalloy", "ingot_cdalloy");
+        addLegacyForgeTag("welded_plates/any_resistant_alloy", "plate_welded_tcalloy", "plate_welded_cdalloy");
         addLegacyForgeTag("welded_plates/zirconium", "plate_welded_zirconium");
         addLegacyForgeTag("plates/welded_copper", "plate_welded_copper");
         addLegacyForgeTag("plates/welded_zirconium", "plate_welded_zirconium");

@@ -20,6 +20,10 @@ public class SmallCoolingTowerBlockEntity extends CoolingTowerBlockEntity {
         tickTower(level, pos, state, tower);
     }
 
+    public static void clientTick(Level level, BlockPos pos, BlockState state, SmallCoolingTowerBlockEntity tower) {
+        tickSmallTowerClient(level, pos, tower);
+    }
+
     @Override
     protected Iterable<FluidPort> ports() {
         return PORTS;

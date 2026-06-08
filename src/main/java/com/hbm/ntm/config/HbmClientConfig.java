@@ -10,6 +10,8 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.IntValue INFO_OFFSET_HORIZONTAL;
     public static final ForgeConfigSpec.IntValue INFO_OFFSET_VERTICAL;
     public static final ForgeConfigSpec.IntValue INFO_POSITION;
+    public static final ForgeConfigSpec.IntValue TOOL_HUD_INDICATOR_X;
+    public static final ForgeConfigSpec.IntValue TOOL_HUD_INDICATOR_Y;
     public static final ForgeConfigSpec.BooleanValue NUKE_HUD_FLASH;
     public static final ForgeConfigSpec.BooleanValue NUKE_HUD_SHAKE;
     public static final ForgeConfigSpec.BooleanValue LEGACY_LOOK_OVERLAY;
@@ -19,6 +21,7 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.DoubleValue NUKE_WARP_SHOCKWAVE_INTENSITY;
     public static final ForgeConfigSpec.IntValue NUKE_WARP_SHOCKWAVE_MESH_SEGMENTS;
     public static final ForgeConfigSpec.BooleanValue DEBUG_NUKE_WARP_SHOCKWAVE_WIREFRAME;
+    public static final ForgeConfigSpec.BooleanValue COOLING_TOWER_PARTICLES;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -39,6 +42,12 @@ public final class HbmClientConfig {
         INFO_POSITION = builder
                 .comment("Legacy ClientConfig.INFO_POSITION: 0=upper left, 1=upper right, 2=right of crosshair, 3=left of crosshair.")
                 .defineInRange("infoPosition", 0, 0, 3);
+        TOOL_HUD_INDICATOR_X = builder
+                .comment("Legacy ClientConfig.TOOL_HUD_INDICATOR_X: shifts the active tool area ability HUD icon horizontally.")
+                .defineInRange("toolHudIndicatorX", 0, -10000, 10000);
+        TOOL_HUD_INDICATOR_Y = builder
+                .comment("Legacy ClientConfig.TOOL_HUD_INDICATOR_Y: shifts the active tool area ability HUD icon vertically.")
+                .defineInRange("toolHudIndicatorY", 0, -10000, 10000);
         NUKE_HUD_FLASH = builder
                 .comment("Legacy ClientConfig.NUKE_HUD_FLASH: enables the white nuclear explosion HUD flash.")
                 .define("nukeHudFlash", true);
@@ -72,6 +81,9 @@ public final class HbmClientConfig {
         DEBUG_NUKE_WARP_SHOCKWAVE_WIREFRAME = builder
                 .comment("Debug only: renders a visible wireframe over the nuclear warp shockwave to verify the API/render pass is firing.")
                 .define("debugNukeWarpShockwaveWireframe", false);
+        COOLING_TOWER_PARTICLES = builder
+                .comment("Legacy ClientConfig.COOLING_TOWER_PARTICLES: enables steam plume particles for active cooling towers.")
+                .define("coolingTowerParticles", true);
         builder.pop();
 
         SPEC = builder.build();
@@ -84,6 +96,50 @@ public final class HbmClientConfig {
 
     public static int infoPosition() {
         return INFO_POSITION == null ? 0 : Math.max(0, Math.min(3, INFO_POSITION.get()));
+    }
+
+    public static int geigerOffsetHorizontal() {
+        return GEIGER_OFFSET_HORIZONTAL == null ? 0 : GEIGER_OFFSET_HORIZONTAL.get();
+    }
+
+    public static int geigerOffsetVertical() {
+        return GEIGER_OFFSET_VERTICAL == null ? 0 : GEIGER_OFFSET_VERTICAL.get();
+    }
+
+    public static int infoOffsetHorizontal() {
+        return INFO_OFFSET_HORIZONTAL == null ? 0 : INFO_OFFSET_HORIZONTAL.get();
+    }
+
+    public static int infoOffsetVertical() {
+        return INFO_OFFSET_VERTICAL == null ? 0 : INFO_OFFSET_VERTICAL.get();
+    }
+
+    public static int toolHudIndicatorX() {
+        return TOOL_HUD_INDICATOR_X == null ? 0 : TOOL_HUD_INDICATOR_X.get();
+    }
+
+    public static int toolHudIndicatorY() {
+        return TOOL_HUD_INDICATOR_Y == null ? 0 : TOOL_HUD_INDICATOR_Y.get();
+    }
+
+    public static boolean coolingTowerParticles() {
+        return COOLING_TOWER_PARTICLES == null || COOLING_TOWER_PARTICLES.get();
+    }
+
+    public static boolean nukeHudFlash() {
+        return NUKE_HUD_FLASH == null || NUKE_HUD_FLASH.get();
+    }
+
+    public static boolean nukeHudShake() {
+        return NUKE_HUD_SHAKE == null || NUKE_HUD_SHAKE.get();
+    }
+
+    public static boolean legacyLookOverlay() {
+        return LEGACY_LOOK_OVERLAY == null || LEGACY_LOOK_OVERLAY.get();
+    }
+
+    public static boolean showBlockStateOverlay() {
+        return SHOW_BLOCK_STATE_OVERLAY != null && SHOW_BLOCK_STATE_OVERLAY.get();
     }
 
     private HbmClientConfig() {

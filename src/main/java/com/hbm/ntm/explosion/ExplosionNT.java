@@ -91,9 +91,12 @@ public class ExplosionNT {
     }
 
     public void explode() {
+        BlockMutatorErode erodeMutator = attributes.contains(ExAttrib.ERRODE) ? new BlockMutatorErode() : null;
         ExplosionVnt explosion = new ExplosionVnt(level, x, y, z, size, source, false, Explosion.BlockInteraction.DESTROY_WITH_DECAY)
-                .setBlockAllocator(new BlockAllocatorStandard(resolution))
-                .setBlockProcessor(createBlockProcessor())
+                .setBlockAllocator(erodeMutator == null
+                        ? new BlockAllocatorStandard(resolution)
+                        : new BlockAllocatorStandard(resolution, erodeMutator::canErode))
+                .setBlockProcessor(createBlockProcessor(erodeMutator))
                 .setEffects(new ExplosionEffectStandard(!attributes.contains(ExAttrib.NOSOUND), !attributes.contains(ExAttrib.NOPARTICLE)));
 
         if (!attributes.contains(ExAttrib.NOHURT)) {
@@ -104,7 +107,7 @@ public class ExplosionNT {
         explosion.explode();
     }
 
-    private BlockProcessorStandard createBlockProcessor() {
+    private BlockProcessorStandard createBlockProcessor(@Nullable BlockMutatorErode erodeMutator) {
         BlockProcessorStandard processor = new BlockProcessorStandard();
         if (attributes.contains(ExAttrib.NODROP)) {
             processor.setNoDrop();
@@ -115,8 +118,8 @@ public class ExplosionNT {
         CompositeBlockMutator mutators = new CompositeBlockMutator();
         boolean allMod = attributes.contains(ExAttrib.ALLMOD);
         boolean placeAllSurfaceEffects = allMod || attributes.contains(ExAttrib.DIGAMMA);
-        if (attributes.contains(ExAttrib.ERRODE)) {
-            mutators.add(new BlockMutatorErode(allMod));
+        if (erodeMutator != null) {
+            mutators.add(erodeMutator);
         }
         if (attributes.contains(ExAttrib.FIRE)) {
             mutators.add(new BlockMutatorFire(placeAllSurfaceEffects));

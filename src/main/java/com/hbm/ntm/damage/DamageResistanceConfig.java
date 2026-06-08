@@ -5,10 +5,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -28,7 +30,7 @@ public final class DamageResistanceConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String CONFIG_FILE = "hbmArmor.json";
     private static final String TEMPLATE_FILE = "_hbmArmor.json";
-    private static volatile LoadReport report = new LoadReport(false, 0, 0, 0, 0, 0, List.of());
+    private static volatile LoadReport report = new LoadReport(false, 0, 0, 0, 0, 0, 0, 0, List.of());
 
     public static LoadReport initialize(Path configDir) {
         DamageResistanceHandler.clear();
@@ -42,20 +44,20 @@ public final class DamageResistanceConfig {
             if (Files.notExists(config)) {
                 writeTemplate(template);
                 return remember(new LoadReport(false, defaultStats.itemStats, defaultStats.setStats, defaultStats.entityStats,
-                        defaultStats.skippedItems, defaultStats.skippedSets, defaultStats.missingIds));
+                        defaultStats.skippedItems, defaultStats.skippedSets, defaultStats.skippedEntities, defaultStats.warningCount, defaultStats.warnings));
             }
             try (Reader reader = Files.newBufferedReader(config)) {
                 JsonObject json = GSON.fromJson(reader, JsonObject.class);
                 ConfigStats stats = readConfig(json);
                 return remember(new LoadReport(true, stats.itemStats, stats.setStats, stats.entityStats,
-                        stats.skippedItems, stats.skippedSets, stats.missingIds));
+                        stats.skippedItems, stats.skippedSets, stats.skippedEntities, stats.warningCount, stats.warnings));
             }
         } catch (IOException | RuntimeException ex) {
             HbmNtm.LOGGER.warn("Failed to load HBM damage resistance config, using defaults.", ex);
             DamageResistanceHandler.clear();
             ConfigStats fallbackStats = registerDefaults(false);
             return remember(new LoadReport(false, fallbackStats.itemStats, fallbackStats.setStats, fallbackStats.entityStats,
-                    fallbackStats.skippedItems, fallbackStats.skippedSets, fallbackStats.missingIds));
+                    fallbackStats.skippedItems, fallbackStats.skippedSets, fallbackStats.skippedEntities, fallbackStats.warningCount, fallbackStats.warnings));
         }
     }
 
@@ -69,25 +71,56 @@ public final class DamageResistanceConfig {
     }
 
     private static ConfigStats readConfig(JsonObject json) {
-        DamageResistanceHandler.clear();
+        return readConfig(json, true);
+    }
+
+    private static ConfigStats readConfig(JsonObject json, boolean apply) {
+        if (apply) {
+            DamageResistanceHandler.clear();
+        }
         ConfigStats stats = new ConfigStats();
 
         JsonArray itemStats = array(json, "itemStats");
-        for (JsonElement element : itemStats) {
+        for (int index = 0; index < itemStats.size(); index++) {
+            JsonElement element = itemStats.get(index);
+            if (!isArray(element, 2)) {
+                stats.skippedItems++;
+                stats.addWarning("invalid itemStats entry #" + index);
+                continue;
+            }
             JsonArray entry = element.getAsJsonArray();
-            String itemId = entry.get(0).getAsString();
+            String itemId = stringValue(entry.get(0));
+            if (itemId == null) {
+                stats.skippedItems++;
+                stats.addWarning("invalid itemStats id #" + index);
+                continue;
+            }
             Item item = item(itemId);
             if (item == null) {
                 stats.skippedItems++;
-                stats.addMissing("item " + itemId);
+                stats.addWarning("missing migrated item " + itemId);
                 continue;
             }
-            DamageResistanceHandler.registerItem(item, deserialize(entry.get(1).getAsJsonObject()));
+            DamageResistanceStats resistance = deserialize(entry.get(1), stats, "itemStats " + itemId);
+            if (resistance == null) {
+                stats.skippedItems++;
+                stats.addWarning("invalid itemStats resistance for " + itemId);
+                continue;
+            }
+            if (apply) {
+                DamageResistanceHandler.registerItem(item, resistance);
+            }
             stats.itemStats++;
         }
 
         JsonArray setStats = array(json, "setStats");
-        for (JsonElement element : setStats) {
+        for (int index = 0; index < setStats.size(); index++) {
+            JsonElement element = setStats.get(index);
+            if (!isArray(element, 5)) {
+                stats.skippedSets++;
+                stats.addWarning("invalid setStats entry #" + index);
+                continue;
+            }
             JsonArray entry = element.getAsJsonArray();
             Item helmet = itemOrNull(entry.get(0));
             Item chest = itemOrNull(entry.get(1));
@@ -95,20 +128,46 @@ public final class DamageResistanceConfig {
             Item boots = itemOrNull(entry.get(3));
             if (helmet == null || chest == null || legs == null || boots == null) {
                 stats.skippedSets++;
-                stats.addMissingSet(entry);
+                stats.addMissingSet(entry, index);
                 continue;
             }
-            DamageResistanceHandler.registerSet(helmet, chest, legs, boots, deserialize(entry.get(4).getAsJsonObject()));
+            DamageResistanceStats resistance = deserialize(entry.get(4), stats, "setStats #" + index);
+            if (resistance == null) {
+                stats.skippedSets++;
+                stats.addWarning("invalid setStats resistance #" + index);
+                continue;
+            }
+            if (apply) {
+                DamageResistanceHandler.registerSet(helmet, chest, legs, boots, resistance);
+            }
             stats.setStats++;
         }
 
         JsonArray entityStats = array(json, "entityStats");
-        for (JsonElement element : entityStats) {
+        for (int index = 0; index < entityStats.size(); index++) {
+            JsonElement element = entityStats.get(index);
+            if (!isArray(element, 2)) {
+                stats.skippedEntities++;
+                stats.addWarning("invalid entityStats entry #" + index);
+                continue;
+            }
             JsonArray entry = element.getAsJsonArray();
-            String className = entry.get(0).getAsString();
-            DamageResistanceStats resistance = deserialize(entry.get(1).getAsJsonObject());
-            Class<? extends net.minecraft.world.entity.Entity> entityClass = entityClass(className);
-            if (className.endsWith(".EntityCreeper") || className.equals(Creeper.class.getName())) {
+            String className = stringValue(entry.get(0));
+            if (className == null) {
+                stats.skippedEntities++;
+                stats.addWarning("invalid entityStats class #" + index);
+                continue;
+            }
+            DamageResistanceStats resistance = deserialize(entry.get(1), stats, "entityStats " + className);
+            if (resistance == null) {
+                stats.skippedEntities++;
+                stats.addWarning("invalid entityStats resistance for " + className);
+                continue;
+            }
+            Class<? extends Entity> entityClass = entityClass(className);
+            if (!apply) {
+                // Parse-only audits should not mutate the live entity resistance registry.
+            } else if (className.endsWith(".EntityCreeper") || className.equals(Creeper.class.getName())) {
                 DamageResistanceHandler.registerEntity(Creeper.class, resistance);
             } else if (entityClass != null) {
                 DamageResistanceHandler.registerEntity(entityClass, resistance);
@@ -118,10 +177,142 @@ public final class DamageResistanceConfig {
             stats.entityStats++;
         }
 
-        if (stats.entityStats == 0) {
+        if (apply && stats.entityStats == 0) {
             DamageResistanceHandler.registerEntity(Creeper.class, new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_EXPLOSION, 2.0F, 0.25F));
         }
         return stats;
+    }
+
+    public static ConfigAudit configAudit() {
+        ConfigStats stats = new ConfigStats();
+        List<String> problems = new ArrayList<>();
+
+        JsonObject resistance = new JsonObject();
+        JsonArray exact = new JsonArray();
+        JsonArray validExact = new JsonArray();
+        validExact.add("fall");
+        validExact.add(1.0F);
+        validExact.add(0.25F);
+        exact.add(validExact);
+        JsonArray badExact = new JsonArray();
+        badExact.add("laser");
+        badExact.add("not a number");
+        badExact.add(0.75F);
+        exact.add(badExact);
+        resistance.add("exact", exact);
+
+        JsonArray category = new JsonArray();
+        JsonArray badCategory = new JsonArray();
+        badCategory.add("");
+        badCategory.add(1.0F);
+        badCategory.add(0.2F);
+        category.add(badCategory);
+        resistance.add("category", category);
+
+        JsonArray other = new JsonArray();
+        other.add(1.0F);
+        other.add("Infinity");
+        resistance.add("other", other);
+
+        DamageResistanceStats parsed = deserialize(resistance, stats, "configAudit");
+        expect(problems, "valid exact resistance parsed", parsed != null && parsed.exactResistances().containsKey("fall"));
+        expect(problems, "bad exact value warned", stats.warnings.stream().anyMatch(warning -> warning.contains("invalid exact resistance values")));
+        expect(problems, "bad category value warned", stats.warnings.stream().anyMatch(warning -> warning.contains("invalid category resistance values")));
+        expect(problems, "bad other value warned", stats.warnings.stream().anyMatch(warning -> warning.contains("invalid other resistance values")));
+
+        JsonObject root = new JsonObject();
+        JsonArray itemStats = new JsonArray();
+        itemStats.add("bad item entry");
+        JsonArray badItemId = new JsonArray();
+        badItemId.add("");
+        badItemId.add(new JsonObject());
+        itemStats.add(badItemId);
+        root.add("itemStats", itemStats);
+
+        JsonArray setStats = new JsonArray();
+        JsonArray shortSet = new JsonArray();
+        shortSet.add("hbm_ntm_rebirth:missing_helmet");
+        setStats.add(shortSet);
+        root.add("setStats", setStats);
+
+        JsonArray entityStats = new JsonArray();
+        JsonArray badEntityClass = new JsonArray();
+        badEntityClass.add("");
+        badEntityClass.add(new JsonObject());
+        entityStats.add(badEntityClass);
+        JsonArray simpleNameEntity = new JsonArray();
+        simpleNameEntity.add("com.hbm.entity.mob.EntityCreeperNuclear");
+        simpleNameEntity.add(new JsonObject());
+        entityStats.add(simpleNameEntity);
+        root.add("entityStats", entityStats);
+
+        DamageResistanceHandler.RegistrySnapshot snapshotBefore = DamageResistanceHandler.registrySnapshot();
+        ConfigStats parseOnly = readConfig(root, false);
+        DamageResistanceHandler.RegistrySnapshot snapshotAfter = DamageResistanceHandler.registrySnapshot();
+        expect(problems, "parse-only item skips", parseOnly.skippedItems == 2);
+        expect(problems, "parse-only set skips", parseOnly.skippedSets == 1);
+        expect(problems, "parse-only entity skip", parseOnly.skippedEntities == 1);
+        expect(problems, "legacy simple entity parsed", parseOnly.entityStats == 1);
+        expect(problems, "parse-only leaves registry unchanged", snapshotBefore.equals(snapshotAfter));
+
+        ConfigStats capped = new ConfigStats();
+        for (int i = 0; i < ConfigStats.MAX_WARNINGS + 3; i++) {
+            capped.addWarning("warning " + i);
+        }
+        expect(problems, "warning cap stores first warnings", capped.warnings.size() == ConfigStats.MAX_WARNINGS);
+        expect(problems, "warning cap counts all warnings", capped.warningCount == ConfigStats.MAX_WARNINGS + 3);
+
+        return new ConfigAudit(List.copyOf(problems), parseOnly.skippedItems, parseOnly.skippedSets,
+                parseOnly.skippedEntities, capped.warningCount, capped.warnings.size());
+    }
+
+    public static DefaultAudit defaultAudit() {
+        List<String> problems = new ArrayList<>();
+        JsonObject defaults = new JsonObject();
+        registerDefaults(true, defaults);
+        JsonArray itemStats = array(defaults, "itemStats");
+        JsonArray setStats = array(defaults, "setStats");
+        JsonArray entityStats = array(defaults, "entityStats");
+
+        expect(problems, "legacy default item count", itemStats.size() == 2);
+        expect(problems, "legacy default armor set count", setStats.size() == 34);
+        expect(problems, "legacy default entity count", entityStats.size() == 2);
+        expect(problems, "jackt physical stats",
+                hasCategory(statsForItem(itemStats, "jackt"), DamageResistanceHandler.CATEGORY_PHYSICAL, 1.0F, 0.20F));
+        expect(problems, "jackt2 physical stats",
+                hasCategory(statsForItem(itemStats, "jackt2"), DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.25F));
+        expect(problems, "steel set physical stats",
+                hasCategory(statsForSet(setStats, "steel_helmet", "steel_plate", "steel_legs", "steel_boots"),
+                        DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.1F));
+        expect(problems, "titanium set physical stats",
+                hasCategory(statsForSet(setStats, "titanium_helmet", "titanium_plate", "titanium_legs", "titanium_boots"),
+                        DamageResistanceHandler.CATEGORY_PHYSICAL, 3.0F, 0.1F));
+        expect(problems, "rpa energy stats",
+                hasCategory(statsForSet(setStats, "rpa_helmet", "rpa_plate", "rpa_legs", "rpa_boots"),
+                        DamageResistanceHandler.CATEGORY_ENERGY, 25.0F, 0.75F));
+        expect(problems, "rpa fall immunity",
+                hasExact(statsForSet(setStats, "rpa_helmet", "rpa_plate", "rpa_legs", "rpa_boots"),
+                        DamageTypes.FALL.location().getPath(), 0.0F, 1.0F));
+        expect(problems, "hev onfire immunity",
+                hasExact(statsForSet(setStats, "hev_helmet", "hev_plate", "hev_legs", "hev_boots"),
+                        DamageTypes.ON_FIRE.location().getPath(), 0.0F, 1.0F));
+        expect(problems, "fau laser resistance",
+                hasExact(statsForSet(setStats, "fau_helmet", "fau_plate", "fau_legs", "fau_boots"),
+                        DamageClass.LASER.name(), 25.0F, 0.95F));
+        expect(problems, "euphemium other immunity",
+                hasOther(statsForSet(setStats, "euphemium_helmet", "euphemium_plate", "euphemium_legs", "euphemium_boots"),
+                        1_000_000.0F, 1.0F));
+        expect(problems, "asbestos fire resistance",
+                hasCategory(statsForSet(setStats, "asbestos_helmet", "asbestos_plate", "asbestos_legs", "asbestos_boots"),
+                        DamageResistanceHandler.CATEGORY_FIRE, 10.0F, 0.9F));
+        expect(problems, "creeper explosion resistance",
+                hasCategory(statsForEntity(entityStats, Creeper.class.getName()),
+                        DamageResistanceHandler.CATEGORY_EXPLOSION, 2.0F, 0.25F));
+        expect(problems, "legacy nuclear creeper explosion resistance",
+                hasCategory(statsForEntity(entityStats, "com.hbm.entity.mob.EntityCreeperNuclear"),
+                        DamageResistanceHandler.CATEGORY_EXPLOSION, 5.0F, 0.35F));
+
+        return new DefaultAudit(List.copyOf(problems), itemStats.size(), setStats.size(), entityStats.size());
     }
 
     private static void writeTemplate(Path template) throws IOException {
@@ -264,38 +455,203 @@ public final class DamageResistanceConfig {
         return array;
     }
 
-    private static DamageResistanceStats deserialize(JsonObject json) {
+    private static DamageResistanceStats deserialize(JsonElement statsElement, ConfigStats configStats, String context) {
+        if (statsElement == null || !statsElement.isJsonObject()) {
+            return null;
+        }
+        JsonObject json = statsElement.getAsJsonObject();
         DamageResistanceStats stats = new DamageResistanceStats();
-        for (JsonElement element : array(json, "exact")) {
-            JsonArray array = element.getAsJsonArray();
-            stats.addExact(array.get(0).getAsString(), array.get(1).getAsFloat(), array.get(2).getAsFloat());
+        int index = 0;
+        for (JsonElement exactElement : array(json, "exact")) {
+            if (!isArray(exactElement, 3)) {
+                configStats.addWarning("invalid exact resistance in " + context + " #" + index);
+                index++;
+                continue;
+            }
+            JsonArray array = exactElement.getAsJsonArray();
+            String key = stringValue(array.get(0));
+            Float threshold = floatValue(array.get(1));
+            Float resistance = floatValue(array.get(2));
+            if (key == null || threshold == null || resistance == null) {
+                configStats.addWarning("invalid exact resistance values in " + context + " #" + index);
+            } else {
+                stats.addExact(key, threshold, resistance);
+            }
+            index++;
         }
-        for (JsonElement element : array(json, "category")) {
-            JsonArray array = element.getAsJsonArray();
-            stats.addCategory(array.get(0).getAsString(), array.get(1).getAsFloat(), array.get(2).getAsFloat());
+        index = 0;
+        for (JsonElement categoryElement : array(json, "category")) {
+            if (!isArray(categoryElement, 3)) {
+                configStats.addWarning("invalid category resistance in " + context + " #" + index);
+                index++;
+                continue;
+            }
+            JsonArray array = categoryElement.getAsJsonArray();
+            String key = stringValue(array.get(0));
+            Float threshold = floatValue(array.get(1));
+            Float resistance = floatValue(array.get(2));
+            if (key == null || threshold == null || resistance == null) {
+                configStats.addWarning("invalid category resistance values in " + context + " #" + index);
+            } else {
+                stats.addCategory(key, threshold, resistance);
+            }
+            index++;
         }
-        if (json.has("other")) {
+        if (json.has("other") && isArray(json.get("other"), 2)) {
             JsonArray other = json.getAsJsonArray("other");
-            stats.setOther(other.get(0).getAsFloat(), other.get(1).getAsFloat());
+            Float threshold = floatValue(other.get(0));
+            Float resistance = floatValue(other.get(1));
+            if (threshold == null || resistance == null) {
+                configStats.addWarning("invalid other resistance values in " + context);
+            } else {
+                stats.setOther(threshold, resistance);
+            }
         }
         return stats;
+    }
+
+    private static JsonObject statsForItem(JsonArray itemStats, String itemName) {
+        String id = HbmNtm.MOD_ID + ":" + itemName;
+        for (JsonElement element : itemStats) {
+            if (!isArray(element, 2)) {
+                continue;
+            }
+            JsonArray entry = element.getAsJsonArray();
+            if (id.equals(stringValue(entry.get(0))) && entry.get(1).isJsonObject()) {
+                return entry.get(1).getAsJsonObject();
+            }
+        }
+        return null;
+    }
+
+    private static JsonObject statsForSet(JsonArray setStats, String helmet, String chest, String legs, String boots) {
+        String helmetId = HbmNtm.MOD_ID + ":" + helmet;
+        String chestId = HbmNtm.MOD_ID + ":" + chest;
+        String legsId = HbmNtm.MOD_ID + ":" + legs;
+        String bootsId = HbmNtm.MOD_ID + ":" + boots;
+        for (JsonElement element : setStats) {
+            if (!isArray(element, 5)) {
+                continue;
+            }
+            JsonArray entry = element.getAsJsonArray();
+            if (helmetId.equals(stringValue(entry.get(0)))
+                    && chestId.equals(stringValue(entry.get(1)))
+                    && legsId.equals(stringValue(entry.get(2)))
+                    && bootsId.equals(stringValue(entry.get(3)))
+                    && entry.get(4).isJsonObject()) {
+                return entry.get(4).getAsJsonObject();
+            }
+        }
+        return null;
+    }
+
+    private static JsonObject statsForEntity(JsonArray entityStats, String className) {
+        for (JsonElement element : entityStats) {
+            if (!isArray(element, 2)) {
+                continue;
+            }
+            JsonArray entry = element.getAsJsonArray();
+            if (className.equals(stringValue(entry.get(0))) && entry.get(1).isJsonObject()) {
+                return entry.get(1).getAsJsonObject();
+            }
+        }
+        return null;
+    }
+
+    private static boolean hasExact(JsonObject stats, String key, float threshold, float resistance) {
+        return hasResistance(stats, "exact", DamageResistanceHandler.exactTypeKey(key), threshold, resistance);
+    }
+
+    private static boolean hasCategory(JsonObject stats, String key, float threshold, float resistance) {
+        return hasResistance(stats, "category", DamageResistanceHandler.categoryKey(key), threshold, resistance);
+    }
+
+    private static boolean hasOther(JsonObject stats, float threshold, float resistance) {
+        if (stats == null || !isArray(stats.get("other"), 2)) {
+            return false;
+        }
+        JsonArray other = stats.getAsJsonArray("other");
+        Float actualThreshold = floatValue(other.get(0));
+        Float actualResistance = floatValue(other.get(1));
+        return actualThreshold != null && actualResistance != null
+                && nearly(actualThreshold, threshold)
+                && nearly(actualResistance, resistance);
+    }
+
+    private static boolean hasResistance(JsonObject stats, String arrayKey, String key, float threshold, float resistance) {
+        if (stats == null) {
+            return false;
+        }
+        for (JsonElement element : array(stats, arrayKey)) {
+            if (!isArray(element, 3)) {
+                continue;
+            }
+            JsonArray entry = element.getAsJsonArray();
+            String actualKey = stringValue(entry.get(0));
+            Float actualThreshold = floatValue(entry.get(1));
+            Float actualResistance = floatValue(entry.get(2));
+            if (actualKey != null
+                    && actualThreshold != null
+                    && actualResistance != null
+                    && actualKey.equals(key)
+                    && nearly(actualThreshold, threshold)
+                    && nearly(actualResistance, resistance)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static JsonArray array(JsonObject json, String key) {
         return json != null && json.has(key) && json.get(key).isJsonArray() ? json.getAsJsonArray(key) : new JsonArray();
     }
 
+    private static boolean isArray(JsonElement element, int minSize) {
+        return element != null && element.isJsonArray() && element.getAsJsonArray().size() >= minSize;
+    }
+
     private static Item itemOrNull(JsonElement element) {
-        return element == null || element.isJsonNull() ? null : item(element.getAsString());
+        return element == null || element.isJsonNull() ? null : item(stringValue(element));
+    }
+
+    private static String stringValue(JsonElement element) {
+        if (element == null || element.isJsonNull() || !element.isJsonPrimitive()) {
+            return null;
+        }
+        try {
+            String value = element.getAsString();
+            return value == null || value.isBlank() ? null : value;
+        } catch (ClassCastException | IllegalStateException | JsonParseException ignored) {
+            return null;
+        }
+    }
+
+    private static Float floatValue(JsonElement element) {
+        if (element == null || element.isJsonNull() || !element.isJsonPrimitive()) {
+            return null;
+        }
+        try {
+            float value = element.getAsFloat();
+            return Float.isFinite(value) ? value : null;
+        } catch (NumberFormatException | ClassCastException | IllegalStateException | JsonParseException ignored) {
+            return null;
+        }
     }
 
     private static Item item(String id) {
-        String path = id.contains(":") ? new ResourceLocation(id).getPath() : id;
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+        ResourceLocation parsed = ResourceLocation.tryParse(id);
+        String path = parsed == null ? id : parsed.getPath();
         RegistryObject<Item> legacy = ModItems.legacyItem(path);
         if (legacy != null && legacy.isPresent()) {
             return legacy.get();
         }
-        ResourceLocation location = id.contains(":") ? new ResourceLocation(id) : new ResourceLocation(HbmNtm.MOD_ID, id);
+        ResourceLocation location = parsed == null ? ResourceLocation.tryParse(HbmNtm.MOD_ID + ":" + id) : parsed;
+        if (location == null) {
+            return null;
+        }
         Item item = ForgeRegistries.ITEMS.getValue(location);
         return item == null || item == net.minecraft.world.item.Items.AIR ? null : item;
     }
@@ -306,60 +662,91 @@ public final class DamageResistanceConfig {
     }
 
     @SuppressWarnings("unchecked")
-    private static Class<? extends net.minecraft.world.entity.Entity> entityClass(String className) {
+    private static Class<? extends Entity> entityClass(String className) {
         try {
             Class<?> type = Class.forName(className);
-            if (net.minecraft.world.entity.Entity.class.isAssignableFrom(type)) {
-                return (Class<? extends net.minecraft.world.entity.Entity>) type;
+            if (Entity.class.isAssignableFrom(type)) {
+                return (Class<? extends Entity>) type;
             }
         } catch (ClassNotFoundException ignored) {
         }
         return null;
     }
 
-    public record LoadReport(boolean externalConfig, int itemStats, int setStats, int entityStats, int skippedItems,
-                             int skippedSets, List<String> missingIds) {
+    public record LoadReport(boolean externalConfig, int itemStats, int setStats, int entityStats,
+                             int skippedItems, int skippedSets, int skippedEntities, int warningCount,
+                             List<String> warnings) {
         public String summary() {
             return externalConfig
                     ? "damage resistance config: " + itemStats + " item entries, " + setStats + " armor sets, " + entityStats + " entity entries"
-                    + skippedSuffix()
-                    : "damage resistance defaults loaded; template written if missing" + skippedSuffix();
-        }
-
-        public List<String> warnings() {
-            return missingIds;
+                    + skippedSuffix() + warningSuffix()
+                    : "damage resistance defaults loaded; template written if missing" + skippedSuffix() + warningSuffix();
         }
 
         private String skippedSuffix() {
-            int skipped = skippedItems() + skippedSets();
-            return skipped <= 0 ? "" : ", skipped " + skipped + " entries for missing migrated items";
+            int skipped = skippedItems() + skippedSets() + skippedEntities();
+            return skipped <= 0 ? "" : ", skipped " + skipped + " invalid or missing entries";
+        }
+
+        public boolean warningsTruncated() {
+            return warningCount() > warnings().size();
+        }
+
+        private String warningSuffix() {
+            return warningCount() <= 0 ? "" : ", warnings " + warnings().size() + "/" + warningCount();
+        }
+    }
+
+    public record ConfigAudit(List<String> problems, int skippedItems, int skippedSets, int skippedEntities,
+                              int totalWarnings, int storedWarnings) {
+        public boolean passed() {
+            return problems.isEmpty();
+        }
+    }
+
+    public record DefaultAudit(List<String> problems, int itemEntries, int setEntries, int entityEntries) {
+        public boolean passed() {
+            return problems.isEmpty();
         }
     }
 
     private static final class ConfigStats {
-        private static final int MAX_MISSING_IDS = 20;
+        private static final int MAX_WARNINGS = 20;
 
         private int itemStats;
         private int setStats;
         private int entityStats;
         private int skippedItems;
         private int skippedSets;
-        private final List<String> missingIds = new ArrayList<>();
+        private int skippedEntities;
+        private int warningCount;
+        private final List<String> warnings = new ArrayList<>();
 
-        private void addMissing(String id) {
-            if (missingIds.size() < MAX_MISSING_IDS) {
-                missingIds.add(id);
+        private void addWarning(String warning) {
+            warningCount++;
+            if (warnings.size() < MAX_WARNINGS) {
+                warnings.add(warning);
             }
         }
 
-        private void addMissingSet(JsonArray entry) {
+        private void addMissingSet(JsonArray entry, int index) {
             for (int i = 0; i < 4; i++) {
-                String id = entry.get(i).getAsString();
+                String id = stringValue(entry.get(i));
                 if (item(id) == null) {
-                    addMissing("set component " + id);
+                    addWarning("missing migrated set component " + (id == null ? "<invalid>" : id) + " in setStats #" + index);
                 }
             }
         }
+    }
+
+    private static void expect(List<String> problems, String label, boolean ok) {
+        if (!ok) {
+            problems.add(label);
+        }
+    }
+
+    private static boolean nearly(float actual, float expected) {
+        return Math.abs(actual - expected) < 0.0001F;
     }
 
     private DamageResistanceConfig() {

@@ -21,17 +21,27 @@ public final class NuclearExplosionUtil {
     }
 
     public static boolean spawnNuclearNoFallout(Level level, int radius, double x, double y, double z) {
+        return spawnNuclearNoFallout(level, radius, x, y, z, x, y, z);
+    }
+
+    public static boolean spawnNuclearNoFallout(Level level, int radius, double x, double y, double z,
+            double cloudX, double cloudY, double cloudZ) {
         boolean spawned = add(level, NukeExplosionMk5Entity.statFacNoRad(level, radius, x, y, z));
         if (spawned) {
-            add(level, NukeTorexEntity.createStandard(level, x, y, z, radius));
+            add(level, NukeTorexEntity.createStandard(level, cloudX, cloudY, cloudZ, radius));
         }
         return spawned;
     }
 
     public static boolean spawnNuclearWithFallout(Level level, int radius, double x, double y, double z, int fallout) {
+        return spawnNuclearWithFallout(level, radius, x, y, z, fallout, x, y, z);
+    }
+
+    public static boolean spawnNuclearWithFallout(Level level, int radius, double x, double y, double z, int fallout,
+            double cloudX, double cloudY, double cloudZ) {
         boolean spawned = add(level, NukeExplosionMk5Entity.statFac(level, radius, x, y, z).moreFallout(fallout));
         if (spawned) {
-            add(level, NukeTorexEntity.createStandard(level, x, y, z, radius));
+            add(level, NukeTorexEntity.createStandard(level, cloudX, cloudY, cloudZ, radius));
         }
         return spawned;
     }

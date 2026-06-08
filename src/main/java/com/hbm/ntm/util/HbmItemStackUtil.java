@@ -14,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -126,11 +127,7 @@ public final class HbmItemStackUtil {
         if (container == null || container.isEmpty()) {
             return;
         }
-        NonNullList<ItemStack> items = NonNullList.withSize(stacks.length, ItemStack.EMPTY);
-        for (int slot = 0; slot < stacks.length; slot++) {
-            items.set(slot, carefulCopy(stacks[slot]));
-        }
-        container.getOrCreateTag().put(LEGACY_ITEMS_TAG, saveLegacyItems(items).getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND));
+        putLegacyItems(container, saveLegacyItems(stacks).getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND), false);
     }
 
     public static void addStacksToNBT(ItemStack container, ItemStack... stacks) {
@@ -138,7 +135,23 @@ public final class HbmItemStackUtil {
     }
 
     public static void addStacksToNbt(ItemStack container, List<ItemStack> stacks) {
-        addStacksToNbt(container, stacks.toArray(ItemStack[]::new));
+        addStacksToNbt(container, stacks == null ? new ItemStack[0] : stacks.toArray(ItemStack[]::new));
+    }
+
+    public static void setStacksToNbt(ItemStack container, ItemStack[] stacks, boolean removeWhenEmpty) {
+        if (container == null || container.isEmpty()) {
+            return;
+        }
+        ListTag list = saveLegacyItems(stacks).getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND);
+        putLegacyItems(container, list, removeWhenEmpty);
+    }
+
+    public static void setStacksToNbt(ItemStack container, NonNullList<ItemStack> stacks, boolean removeWhenEmpty) {
+        if (container == null || container.isEmpty()) {
+            return;
+        }
+        ListTag list = saveLegacyItems(stacks).getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND);
+        putLegacyItems(container, list, removeWhenEmpty);
     }
 
     public static boolean hasLegacyItemsTag(ItemStack container) {
@@ -180,6 +193,13 @@ public final class HbmItemStackUtil {
     }
 
     public static CompoundTag saveLegacyItems(ItemStackHandler items) {
+        return saveLegacyItems((IItemHandler) items);
+    }
+
+    public static CompoundTag saveLegacyItems(IItemHandler items) {
+        if (items == null) {
+            return saveLegacyItems((ItemStack[]) null);
+        }
         NonNullList<ItemStack> stacks = NonNullList.withSize(items.getSlots(), ItemStack.EMPTY);
         for (int slot = 0; slot < items.getSlots(); slot++) {
             stacks.set(slot, items.getStackInSlot(slot));
@@ -187,47 +207,313 @@ public final class HbmItemStackUtil {
         return saveLegacyItems(stacks);
     }
 
-    public static CompoundTag saveLegacyItems(NonNullList<ItemStack> items) {
+    public static CompoundTag saveLegacyItems(Container items) {
+        if (items == null) {
+            return saveLegacyItems((ItemStack[]) null);
+        }
+        NonNullList<ItemStack> stacks = NonNullList.withSize(items.getContainerSize(), ItemStack.EMPTY);
+        for (int slot = 0; slot < items.getContainerSize(); slot++) {
+            stacks.set(slot, items.getItem(slot));
+        }
+        return saveLegacyItems(stacks);
+    }
+
+    public static CompoundTag saveLegacyItems(ItemStack[] items) {
         CompoundTag tag = new CompoundTag();
+        tag.put(LEGACY_ITEMS_TAG, saveSlottedItems(items, LEGACY_SLOT_TAG));
+        return tag;
+    }
+
+    public static CompoundTag saveLegacyItems(NonNullList<ItemStack> items) {
+        if (items == null) {
+            return saveLegacyItems((ItemStack[]) null);
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.put(LEGACY_ITEMS_TAG, saveSlottedItems(items, LEGACY_SLOT_TAG));
+        return tag;
+    }
+
+    public static ListTag saveSlottedItems(ItemStack[] items, String slotKey) {
         ListTag list = new ListTag();
-        for (int slot = 0; slot < items.size(); slot++) {
-            ItemStack stack = items.get(slot);
-            if (!stack.isEmpty()) {
+        if (items == null) {
+            return list;
+        }
+        String key = validSlotKey(slotKey);
+        for (int slot = 0; slot < items.length; slot++) {
+            ItemStack stack = items[slot];
+            if (stack != null && !stack.isEmpty()) {
                 CompoundTag stackTag = new CompoundTag();
-                stackTag.putByte(LEGACY_SLOT_TAG, (byte) slot);
+                stackTag.putByte(key, (byte) slot);
                 stack.save(stackTag);
                 list.add(stackTag);
             }
         }
-        tag.put(LEGACY_ITEMS_TAG, list);
-        return tag;
+        return list;
+    }
+
+    public static ListTag saveSlottedItems(NonNullList<ItemStack> items, String slotKey) {
+        if (items == null) {
+            return new ListTag();
+        }
+        ListTag list = new ListTag();
+        String key = validSlotKey(slotKey);
+        for (int slot = 0; slot < items.size(); slot++) {
+            ItemStack stack = items.get(slot);
+            if (!stack.isEmpty()) {
+                CompoundTag stackTag = new CompoundTag();
+                stackTag.putByte(key, (byte) slot);
+                stack.save(stackTag);
+                list.add(stackTag);
+            }
+        }
+        return list;
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey, ItemStack[] items) {
+        if (target == null || listKey == null || listKey.isBlank()) {
+            return;
+        }
+        target.put(listKey, saveSlottedItems(items, slotKey));
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey,
+            NonNullList<ItemStack> items) {
+        if (target == null || listKey == null || listKey.isBlank()) {
+            return;
+        }
+        target.put(listKey, saveSlottedItems(items, slotKey));
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, ItemStackHandler items) {
+        saveLegacyItemsToTag(target, LEGACY_ITEMS_TAG, (IItemHandler) items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, IItemHandler items) {
+        saveLegacyItemsToTag(target, LEGACY_ITEMS_TAG, items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, String key, IItemHandler items) {
+        if (target == null || key == null || key.isBlank()) {
+            return;
+        }
+        target.put(key, saveLegacyItems(items).getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND));
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, Container items) {
+        saveLegacyItemsToTag(target, LEGACY_ITEMS_TAG, items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, String key, Container items) {
+        if (target == null || key == null || key.isBlank()) {
+            return;
+        }
+        target.put(key, saveLegacyItems(items).getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND));
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, ItemStack[] items) {
+        saveLegacyItemsToTag(target, LEGACY_ITEMS_TAG, items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, String key, ItemStack[] items) {
+        if (target == null || key == null || key.isBlank()) {
+            return;
+        }
+        target.put(key, saveLegacyItems(items).getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND));
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, NonNullList<ItemStack> items) {
+        saveLegacyItemsToTag(target, LEGACY_ITEMS_TAG, items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, String key, NonNullList<ItemStack> items) {
+        if (target == null || key == null || key.isBlank()) {
+            return;
+        }
+        target.put(key, saveLegacyItems(items).getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND));
+    }
+
+    public static void saveLegacyItemsCompoundToTag(CompoundTag target, String key, ItemStackHandler items) {
+        saveLegacyItemsCompoundToTag(target, key, (IItemHandler) items);
+    }
+
+    public static void saveLegacyItemsCompoundToTag(CompoundTag target, String key, IItemHandler items) {
+        if (target == null || key == null || key.isBlank()) {
+            return;
+        }
+        target.put(key, saveLegacyItems(items));
+    }
+
+    public static void saveLegacyItemsCompoundToTag(CompoundTag target, String key, Container items) {
+        if (target == null || key == null || key.isBlank()) {
+            return;
+        }
+        target.put(key, saveLegacyItems(items));
+    }
+
+    public static void saveLegacyItemsCompoundToTag(CompoundTag target, String key, ItemStack[] items) {
+        if (target == null || key == null || key.isBlank()) {
+            return;
+        }
+        target.put(key, saveLegacyItems(items));
+    }
+
+    public static void saveLegacyItemsCompoundToTag(CompoundTag target, String key, NonNullList<ItemStack> items) {
+        if (target == null || key == null || key.isBlank()) {
+            return;
+        }
+        target.put(key, saveLegacyItems(items));
     }
 
     public static void loadLegacyItems(CompoundTag tag, ItemStackHandler items) {
+        if (items == null) {
+            return;
+        }
         NonNullList<ItemStack> stacks = loadLegacyItems(tag, items.getSlots());
         for (int slot = 0; slot < stacks.size(); slot++) {
             items.setStackInSlot(slot, stacks.get(slot));
         }
     }
 
+    public static void loadLegacyItems(CompoundTag tag, String key, ItemStackHandler items) {
+        loadLegacyItems(wrapLegacyItemsList(tag, key), items);
+    }
+
+    public static void loadLegacyItemsCompound(CompoundTag tag, String key, ItemStackHandler items) {
+        loadLegacyItems(getCompoundOrNull(tag, key), items);
+    }
+
+    public static void loadLegacyItems(CompoundTag tag, ItemStack[] items) {
+        if (items == null) {
+            return;
+        }
+        loadSlottedItems(tag, LEGACY_ITEMS_TAG, LEGACY_SLOT_TAG, items);
+    }
+
+    public static void loadLegacyItems(CompoundTag tag, String key, ItemStack[] items) {
+        loadLegacyItems(wrapLegacyItemsList(tag, key), items);
+    }
+
+    public static void loadLegacyItemsCompound(CompoundTag tag, String key, ItemStack[] items) {
+        loadLegacyItems(getCompoundOrNull(tag, key), items);
+    }
+
+    public static void loadLegacyItems(CompoundTag tag, Container items) {
+        if (items == null) {
+            return;
+        }
+        NonNullList<ItemStack> stacks = loadLegacyItems(tag, items.getContainerSize());
+        for (int slot = 0; slot < stacks.size(); slot++) {
+            items.setItem(slot, stacks.get(slot));
+        }
+        items.setChanged();
+    }
+
+    public static void loadLegacyItems(CompoundTag tag, String key, Container items) {
+        loadLegacyItems(wrapLegacyItemsList(tag, key), items);
+    }
+
+    public static void loadLegacyItemsCompound(CompoundTag tag, String key, Container items) {
+        loadLegacyItems(getCompoundOrNull(tag, key), items);
+    }
+
+    public static void loadLegacyItems(CompoundTag tag, NonNullList<ItemStack> items) {
+        if (items == null) {
+            return;
+        }
+        loadSlottedItems(tag, LEGACY_ITEMS_TAG, LEGACY_SLOT_TAG, items);
+    }
+
+    public static void loadLegacyItems(CompoundTag tag, String key, NonNullList<ItemStack> items) {
+        loadLegacyItems(wrapLegacyItemsList(tag, key), items);
+    }
+
+    public static void loadLegacyItemsCompound(CompoundTag tag, String key, NonNullList<ItemStack> items) {
+        loadLegacyItems(getCompoundOrNull(tag, key), items);
+    }
+
     public static NonNullList<ItemStack> loadLegacyItems(CompoundTag tag, int slotCount) {
         NonNullList<ItemStack> items = NonNullList.withSize(Math.max(0, slotCount), ItemStack.EMPTY);
-        if (tag == null || slotCount <= 0 || !tag.contains(LEGACY_ITEMS_TAG, Tag.TAG_LIST)) {
-            return items;
+        loadSlottedItems(tag, LEGACY_ITEMS_TAG, LEGACY_SLOT_TAG, items);
+        return items;
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey, ItemStack[] target) {
+        if (target == null) {
+            return;
         }
-        ListTag list = tag.getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND);
+        for (int slot = 0; slot < target.length; slot++) {
+            target[slot] = ItemStack.EMPTY;
+        }
+        if (tag == null || listKey == null || listKey.isBlank() || !tag.contains(listKey, Tag.TAG_LIST)) {
+            return;
+        }
+        loadSlottedItems(tag.getList(listKey, Tag.TAG_COMPOUND), slotKey, target);
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey,
+            NonNullList<ItemStack> target) {
+        if (target == null) {
+            return;
+        }
+        for (int slot = 0; slot < target.size(); slot++) {
+            target.set(slot, ItemStack.EMPTY);
+        }
+        if (tag == null || listKey == null || listKey.isBlank() || !tag.contains(listKey, Tag.TAG_LIST)) {
+            return;
+        }
+        loadSlottedItems(tag.getList(listKey, Tag.TAG_COMPOUND), slotKey, target);
+    }
+
+    public static void loadSlottedItems(ListTag list, String slotKey, ItemStack[] target) {
+        if (list == null || target == null) {
+            return;
+        }
+        String key = validSlotKey(slotKey);
         for (int index = 0; index < list.size(); index++) {
             CompoundTag stackTag = list.getCompound(index);
-            int slot = stackTag.getByte(LEGACY_SLOT_TAG) & 255;
-            if (slot >= 0 && slot < slotCount) {
-                items.set(slot, ItemStack.of(stackTag));
+            int slot = stackTag.getByte(key) & 255;
+            if (slot >= 0 && slot < target.length) {
+                target[slot] = ItemStack.of(stackTag);
             }
         }
-        return items;
+    }
+
+    public static void loadSlottedItems(ListTag list, String slotKey, NonNullList<ItemStack> target) {
+        if (list == null || target == null) {
+            return;
+        }
+        String key = validSlotKey(slotKey);
+        for (int index = 0; index < list.size(); index++) {
+            CompoundTag stackTag = list.getCompound(index);
+            int slot = stackTag.getByte(key) & 255;
+            if (slot >= 0 && slot < target.size()) {
+                target.set(slot, ItemStack.of(stackTag));
+            }
+        }
+    }
+
+    private static CompoundTag wrapLegacyItemsList(CompoundTag tag, String key) {
+        if (tag == null || key == null || key.isBlank() || !tag.contains(key, Tag.TAG_LIST)) {
+            return null;
+        }
+        CompoundTag wrapper = new CompoundTag();
+        wrapper.put(LEGACY_ITEMS_TAG, tag.getList(key, Tag.TAG_COMPOUND));
+        return wrapper;
+    }
+
+    private static CompoundTag getCompoundOrNull(CompoundTag tag, String key) {
+        return tag == null || key == null || key.isBlank() ? null : tag.getCompound(key);
+    }
+
+    private static String validSlotKey(String slotKey) {
+        return slotKey == null || slotKey.isBlank() ? LEGACY_SLOT_TAG : slotKey;
     }
 
     public static List<ItemStack> clearToDrops(ItemStackHandler items) {
         List<ItemStack> drops = new ArrayList<>();
+        if (items == null) {
+            return drops;
+        }
         for (int slot = 0; slot < items.getSlots(); slot++) {
             ItemStack stack = items.getStackInSlot(slot);
             if (!stack.isEmpty()) {
@@ -235,6 +521,52 @@ public final class HbmItemStackUtil {
                 items.setStackInSlot(slot, ItemStack.EMPTY);
             }
         }
+        return drops;
+    }
+
+    public static List<ItemStack> clearToDrops(ItemStack[] items) {
+        List<ItemStack> drops = new ArrayList<>();
+        if (items == null) {
+            return drops;
+        }
+        for (int slot = 0; slot < items.length; slot++) {
+            ItemStack stack = items[slot];
+            if (stack != null && !stack.isEmpty()) {
+                drops.add(stack.copy());
+                items[slot] = ItemStack.EMPTY;
+            }
+        }
+        return drops;
+    }
+
+    public static List<ItemStack> clearToDrops(NonNullList<ItemStack> items) {
+        List<ItemStack> drops = new ArrayList<>();
+        if (items == null) {
+            return drops;
+        }
+        for (int slot = 0; slot < items.size(); slot++) {
+            ItemStack stack = items.get(slot);
+            if (!stack.isEmpty()) {
+                drops.add(stack.copy());
+                items.set(slot, ItemStack.EMPTY);
+            }
+        }
+        return drops;
+    }
+
+    public static List<ItemStack> clearToDrops(Container items) {
+        List<ItemStack> drops = new ArrayList<>();
+        if (items == null) {
+            return drops;
+        }
+        for (int slot = 0; slot < items.getContainerSize(); slot++) {
+            ItemStack stack = items.getItem(slot);
+            if (!stack.isEmpty()) {
+                drops.add(stack.copy());
+                items.setItem(slot, ItemStack.EMPTY);
+            }
+        }
+        items.setChanged();
         return drops;
     }
 
@@ -255,6 +587,26 @@ public final class HbmItemStackUtil {
         RandomSource roll = random == null ? level.random : random;
         for (ItemStack stack : items) {
             spillStack(level, pos, stack, roll);
+        }
+    }
+
+    public static void spillItems(Level level, BlockPos pos, ItemStack[] items, RandomSource random) {
+        if (level == null || pos == null || items == null || level.isClientSide) {
+            return;
+        }
+        RandomSource roll = random == null ? level.random : random;
+        for (ItemStack stack : items) {
+            spillStack(level, pos, stack, roll);
+        }
+    }
+
+    public static void spillItems(Level level, BlockPos pos, Container items, RandomSource random) {
+        if (level == null || pos == null || items == null || level.isClientSide) {
+            return;
+        }
+        RandomSource roll = random == null ? level.random : random;
+        for (int slot = 0; slot < items.getContainerSize(); slot++) {
+            spillStack(level, pos, items.getItem(slot), roll);
         }
     }
 
@@ -312,6 +664,10 @@ public final class HbmItemStackUtil {
                 .toList();
     }
 
+    public static List<String> getOreDictNames(ItemStack stack) {
+        return getTagNames(stack);
+    }
+
     public static List<ResourceLocation> getTagIds(ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
             return List.of();
@@ -339,6 +695,10 @@ public final class HbmItemStackUtil {
         }
     }
 
+    public static void addNBTFromString(ItemStack stack, String nbt) {
+        addNbtFromString(stack, nbt);
+    }
+
     public static boolean isInAnyTag(ItemStack stack, Collection<TagKey<Item>> tags) {
         if (stack == null || stack.isEmpty() || tags == null || tags.isEmpty()) {
             return false;
@@ -349,6 +709,18 @@ public final class HbmItemStackUtil {
             }
         }
         return false;
+    }
+
+    private static void putLegacyItems(ItemStack container, ListTag list, boolean removeWhenEmpty) {
+        CompoundTag tag = container.getOrCreateTag();
+        if (removeWhenEmpty && list.isEmpty()) {
+            tag.remove(LEGACY_ITEMS_TAG);
+            if (tag.isEmpty()) {
+                container.setTag(null);
+            }
+        } else {
+            tag.put(LEGACY_ITEMS_TAG, list);
+        }
     }
 
     public record ChanceStack(ItemStack stack, float chance) {

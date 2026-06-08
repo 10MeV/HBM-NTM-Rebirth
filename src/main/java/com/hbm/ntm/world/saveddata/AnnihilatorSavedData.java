@@ -6,7 +6,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -62,6 +64,22 @@ public class AnnihilatorSavedData extends SavedData {
 
     public static Optional<AnnihilatorSavedData> forLevel(Level level) {
         return WorldSavedDataHelper.get(level, DATA_NAME, AnnihilatorSavedData::load, AnnihilatorSavedData::new);
+    }
+
+    public static Optional<AnnihilatorSavedData> getExisting(ServerLevel level) {
+        return WorldSavedDataHelper.getExisting(level, DATA_NAME, AnnihilatorSavedData::load);
+    }
+
+    public static Optional<AnnihilatorSavedData> getExisting(MinecraftServer server) {
+        return WorldSavedDataHelper.getExisting(server, DATA_NAME, AnnihilatorSavedData::load);
+    }
+
+    public static Optional<AnnihilatorSavedData> getExisting(MinecraftServer server, ResourceKey<Level> dimension) {
+        return WorldSavedDataHelper.getExisting(server, dimension, DATA_NAME, AnnihilatorSavedData::load);
+    }
+
+    public static Optional<AnnihilatorSavedData> getExisting(Level level) {
+        return WorldSavedDataHelper.getExisting(level, DATA_NAME, AnnihilatorSavedData::load);
     }
 
     public static AnnihilatorSavedData getData(ServerLevel level) {
@@ -185,6 +203,20 @@ public class AnnihilatorSavedData extends SavedData {
 
     public int poolCount() {
         return pools.size();
+    }
+
+    public int poolEntryCount() {
+        return pools.values().stream().mapToInt(AnnihilatorPool::size).sum();
+    }
+
+    public BigInteger totalAmount() {
+        return pools.values().stream()
+                .map(AnnihilatorPool::totalAmount)
+                .reduce(BigInteger.ZERO, BigInteger::add);
+    }
+
+    public boolean isEmpty() {
+        return pools.isEmpty();
     }
 
     public void markDirty() {

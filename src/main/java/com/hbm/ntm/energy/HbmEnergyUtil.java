@@ -319,6 +319,68 @@ public final class HbmEnergyUtil {
         return touched;
     }
 
+    public static PortSetSnapshot inspectPorts(Level level, BlockPos origin, Iterable<EnergyPort> ports) {
+        int total = 0;
+        int connectable = 0;
+        int withNetwork = 0;
+        int links = 0;
+        int providers = 0;
+        int receivers = 0;
+        long providerPower = 0L;
+        long receiverDemand = 0L;
+        if (ports != null) {
+            for (EnergyPort port : ports) {
+                PortSnapshot snapshot = inspectPort(level, origin, port);
+                total++;
+                if (snapshot.connectable()) {
+                    connectable++;
+                }
+                if (snapshot.networkPresent()) {
+                    withNetwork++;
+                    links += snapshot.links();
+                    providers += snapshot.providers();
+                    receivers += snapshot.receivers();
+                    providerPower += snapshot.providerPower();
+                    receiverDemand += snapshot.receiverDemand();
+                }
+            }
+        }
+        return new PortSetSnapshot(total, connectable, withNetwork, links, providers, receivers,
+                providerPower, receiverDemand);
+    }
+
+    public static PortSnapshot inspectPort(Level level, BlockPos origin, EnergyPort port) {
+        if (level == null || origin == null || port == null) {
+            return PortSnapshot.missing(BlockPos.ZERO, Direction.NORTH);
+        }
+        BlockPos conductorPos = port.conductorPos(origin);
+        Direction conductorSide = port.conductorSide();
+        BlockEntity conductor = level.getBlockEntity(conductorPos);
+        boolean connectorPresent = conductor instanceof HbmEnergyConnector;
+        boolean connectable = connectorPresent
+                && ((HbmEnergyConnector) conductor).canConnectEnergy(conductorSide);
+        if (!connectable) {
+            return new PortSnapshot(conductorPos, conductorSide,
+                    connectorPresent, false, false, false,
+                    0, 0, 0, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
+        }
+        HbmEnergyNode node = HbmEnergyNodespace.getNode(level, conductorPos);
+        HbmPowerNet powerNet = node == null ? null : node.getPowerNet();
+        boolean networkPresent = powerNet != null && powerNet.isValid();
+        if (!networkPresent) {
+            return new PortSnapshot(conductorPos, conductorSide,
+                    true, true, node != null, false,
+                    0, 0, 0, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
+        }
+        HbmPowerNet.DebugSnapshot snapshot = powerNet.createDebugSnapshot();
+        return new PortSnapshot(conductorPos, conductorSide,
+                true, true, true, true,
+                snapshot.links(), snapshot.providers(), snapshot.receivers(),
+                snapshot.providerPower(), snapshot.providerRate(),
+                snapshot.receiverDemand(), snapshot.receiverRate(),
+                snapshot.lastTransfer(), snapshot.oldestProviderAgeMs(), snapshot.oldestReceiverAgeMs());
+    }
+
     public static int subscribeReceiverToAllNeighborNetworks(Level level, BlockPos pos, HbmEnergyReceiver receiver) {
         int subscribed = 0;
         for (Direction side : Direction.values()) {
@@ -472,5 +534,40 @@ public final class HbmEnergyUtil {
             provider.usePower(accepted);
         }
         return accepted;
+    }
+
+    public record PortSnapshot(
+            BlockPos conductorPos,
+            Direction conductorSide,
+            boolean connectorPresent,
+            boolean connectable,
+            boolean nodePresent,
+            boolean networkPresent,
+            int links,
+            int providers,
+            int receivers,
+            long providerPower,
+            long providerRate,
+            long receiverDemand,
+            long receiverRate,
+            long lastTransfer,
+            long oldestProviderAgeMs,
+            long oldestReceiverAgeMs) {
+        private static PortSnapshot missing(BlockPos conductorPos, Direction conductorSide) {
+            return new PortSnapshot(conductorPos, conductorSide,
+                    false, false, false, false,
+                    0, 0, 0, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
+        }
+    }
+
+    public record PortSetSnapshot(
+            int totalPorts,
+            int connectablePorts,
+            int networkedPorts,
+            int links,
+            int providers,
+            int receivers,
+            long providerPower,
+            long receiverDemand) {
     }
 }

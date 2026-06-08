@@ -1,9 +1,7 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.registry.ModItems;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -18,8 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ToolboxItem extends Item {
-    private static final String TAG_ITEMS = "items";
-    private static final String TAG_SLOT = "slot";
     private static final int HOTBAR_SIZE = 9;
     private static final int TOOLBOX_ROWS = 3;
     private static final int TOOLBOX_ROW_SIZE = 8;
@@ -80,7 +76,7 @@ public class ToolboxItem extends Item {
                     : "You can't toolbox a toolbox... (x" + extraToolboxes + ")"), true);
         }
 
-        ItemStack[] stacks = readStacksFromNBT(box, TOOLBOX_SIZE);
+        ItemStack[] stacks = HbmItemStackUtil.readStacksFromNBT(box, TOOLBOX_SIZE);
         ItemStack[] endingStacks = emptyStacks(TOOLBOX_SIZE);
 
         List<Integer> activeRows = getActiveRows(stacks);
@@ -124,7 +120,7 @@ public class ToolboxItem extends Item {
             player.getInventory().setItem(i, endingHotbar[i]);
         }
 
-        writeStacksToNBT(box, endingStacks);
+        HbmItemStackUtil.setStacksToNbt(box, endingStacks, true);
     }
 
     private static boolean isToolbox(ItemStack stack) {
@@ -142,45 +138,6 @@ public class ToolboxItem extends Item {
             }
         }
         return activeRows;
-    }
-
-    private static ItemStack[] readStacksFromNBT(ItemStack stack, int count) {
-        ItemStack[] stacks = emptyStacks(count);
-        CompoundTag tag = stack.getTag();
-        if (tag == null || !tag.contains(TAG_ITEMS, Tag.TAG_LIST)) {
-            return stacks;
-        }
-        ListTag list = tag.getList(TAG_ITEMS, Tag.TAG_COMPOUND);
-        for (int i = 0; i < list.size(); i++) {
-            CompoundTag slotTag = list.getCompound(i);
-            int slot = slotTag.getByte(TAG_SLOT) & 255;
-            if (slot >= 0 && slot < stacks.length) {
-                stacks[slot] = ItemStack.of(slotTag);
-            }
-        }
-        return stacks;
-    }
-
-    private static void writeStacksToNBT(ItemStack stack, ItemStack[] stacks) {
-        CompoundTag tag = stack.getOrCreateTag();
-        ListTag list = new ListTag();
-        for (int i = 0; i < stacks.length; i++) {
-            ItemStack stored = stacks[i];
-            if (!stored.isEmpty()) {
-                CompoundTag slotTag = new CompoundTag();
-                slotTag.putByte(TAG_SLOT, (byte) i);
-                stored.save(slotTag);
-                list.add(slotTag);
-            }
-        }
-        if (list.isEmpty()) {
-            tag.remove(TAG_ITEMS);
-        } else {
-            tag.put(TAG_ITEMS, list);
-        }
-        if (tag.isEmpty()) {
-            stack.setTag(null);
-        }
     }
 
     private static ItemStack[] emptyStacks(int size) {

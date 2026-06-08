@@ -261,7 +261,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     }
 
     private static CraterRadiationData.CraterZone craterZoneForFalloutPercent(double percent, int scale) {
-        if (!RadiationConfig.ENABLE_CRATER_BIOME_RADIATION.get()) {
+        if (!RadiationConfig.craterBiomeRadiationEnabled()) {
             return CraterRadiationData.CraterZone.NONE;
         }
         if (scale >= 150 && percent < 15.0D) {

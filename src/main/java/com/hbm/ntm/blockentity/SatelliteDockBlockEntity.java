@@ -251,9 +251,7 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        CompoundTag inventory = HbmInventoryMenuHelper.saveLegacyItems(items);
-        tag.put(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG,
-                inventory.getList(HbmInventoryMenuHelper.LEGACY_ITEMS_TAG, net.minecraft.nbt.Tag.TAG_COMPOUND));
+        HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
     }
 
     @Override

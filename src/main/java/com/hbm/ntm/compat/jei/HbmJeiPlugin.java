@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.LiquefactionRecipe;
 import com.hbm.ntm.recipe.ModRecipes;
+import com.hbm.ntm.recipe.PressRecipe;
 import com.hbm.ntm.recipe.PyroOvenRecipe;
 import com.hbm.ntm.registry.ModBlocks;
 import mezz.jei.api.IModPlugin;
@@ -27,6 +28,12 @@ public final class HbmJeiPlugin implements IModPlugin {
             RecipeType.create(HbmNtm.MOD_ID, "assembly_machine", GenericMachineRecipe.class);
     public static final RecipeType<GenericMachineRecipe> CHEMICAL_PLANT =
             RecipeType.create(HbmNtm.MOD_ID, "chemical_plant", GenericMachineRecipe.class);
+    public static final RecipeType<GenericMachineRecipe> PUREX =
+            RecipeType.create(HbmNtm.MOD_ID, "purex", GenericMachineRecipe.class);
+    public static final RecipeType<GenericMachineRecipe> PRECASS =
+            RecipeType.create(HbmNtm.MOD_ID, "precass", GenericMachineRecipe.class);
+    public static final RecipeType<PressRecipe> PRESS =
+            RecipeType.create(HbmNtm.MOD_ID, "press", PressRecipe.class);
     public static final RecipeType<HbmOilRecipe> REFINERY =
             RecipeType.create(HbmNtm.MOD_ID, "refinery", HbmOilRecipe.class);
     public static final RecipeType<HbmOilRecipe> CATALYTIC_CRACKER =
@@ -43,8 +50,8 @@ public final class HbmJeiPlugin implements IModPlugin {
             RecipeType.create(HbmNtm.MOD_ID, "coker", HbmOilRecipe.class);
     public static final RecipeType<HbmOilRecipe> SOLIDIFIER =
             RecipeType.create(HbmNtm.MOD_ID, "solidifier", HbmOilRecipe.class);
-    public static final RecipeType<HbmOilRecipe> LIQUEFACTOR =
-            RecipeType.create(HbmNtm.MOD_ID, "liquefactor", HbmOilRecipe.class);
+    public static final RecipeType<LiquefactionRecipe> LIQUEFACTION =
+            RecipeType.create(HbmNtm.MOD_ID, "liquefaction", LiquefactionRecipe.class);
     public static final RecipeType<PyroOvenRecipe> PYRO_OVEN =
             RecipeType.create(HbmNtm.MOD_ID, "pyro_oven", PyroOvenRecipe.class);
 
@@ -61,6 +68,11 @@ public final class HbmJeiPlugin implements IModPlugin {
                         ModBlocks.MACHINE_ASSEMBLY_MACHINE.get(), guiHelper),
                 new HbmMachineRecipeCategory(CHEMICAL_PLANT, GenericMachineRecipe.Machine.CHEMICAL_PLANT,
                         ModBlocks.MACHINE_CHEMICAL_PLANT.get(), guiHelper),
+                new HbmMachineRecipeCategory(PUREX, GenericMachineRecipe.Machine.PUREX,
+                        ModBlocks.MACHINE_PUREX.get(), guiHelper),
+                new HbmMachineRecipeCategory(PRECASS, GenericMachineRecipe.Machine.PRECASS,
+                        ModBlocks.MACHINE_ASSEMBLY_MACHINE.get(), guiHelper),
+                new PressRecipeCategory(PRESS, ModBlocks.MACHINE_PRESS.get(), guiHelper),
                 new HbmOilRecipeCategory(REFINERY,
                         Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_refinery", "Refinery"),
                         ModBlocks.MACHINE_REFINERY.get(), guiHelper),
@@ -85,9 +97,7 @@ public final class HbmJeiPlugin implements IModPlugin {
                 new HbmOilRecipeCategory(SOLIDIFIER,
                         Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_solidifier", "Solidifier"),
                         ModBlocks.MACHINE_SOLIDIFIER.get(), guiHelper),
-                new HbmOilRecipeCategory(LIQUEFACTOR,
-                        Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_liquefactor", "Liquefactor"),
-                        ModBlocks.MACHINE_LIQUEFACTOR.get(), guiHelper),
+                new LiquefactionRecipeCategory(LIQUEFACTION, ModBlocks.MACHINE_LIQUEFACTOR.get(), guiHelper),
                 new PyroOvenRecipeCategory(PYRO_OVEN, ModBlocks.MACHINE_PYROOVEN.get(), guiHelper));
     }
 
@@ -96,6 +106,9 @@ public final class HbmJeiPlugin implements IModPlugin {
         RecipeManager recipeManager = Minecraft.getInstance().level.getRecipeManager();
         registration.addRecipes(ASSEMBLY_MACHINE, sorted(recipeManager.getAllRecipesFor(ModRecipes.ASSEMBLY_MACHINE.type().get())));
         registration.addRecipes(CHEMICAL_PLANT, sorted(recipeManager.getAllRecipesFor(ModRecipes.CHEMICAL_PLANT.type().get())));
+        registration.addRecipes(PUREX, sorted(recipeManager.getAllRecipesFor(ModRecipes.PUREX.type().get())));
+        registration.addRecipes(PRECASS, sorted(recipeManager.getAllRecipesFor(ModRecipes.PRECASS.type().get())));
+        registration.addRecipes(PRESS, recipeManager.getAllRecipesFor(ModRecipes.PRESS.type().get()));
         registration.addRecipes(REFINERY, HbmOilRecipe.refineryRecipes());
         registration.addRecipes(CATALYTIC_CRACKER, HbmOilRecipe.crackingRecipes());
         registration.addRecipes(CATALYTIC_REFORMER, HbmOilRecipe.reformingRecipes());
@@ -104,10 +117,7 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipes(HYDROTREATER, HbmOilRecipe.hydrotreatingRecipes());
         registration.addRecipes(COKER, HbmOilRecipe.cokingRecipes());
         registration.addRecipes(SOLIDIFIER, HbmOilRecipe.solidificationRecipes());
-        registration.addRecipes(LIQUEFACTOR, recipeManager.getAllRecipesFor(ModRecipes.LIQUEFACTION.type().get())
-                .stream()
-                .map(HbmOilRecipe::liquefaction)
-                .toList());
+        registration.addRecipes(LIQUEFACTION, recipeManager.getAllRecipesFor(ModRecipes.LIQUEFACTION.type().get()));
         registration.addRecipes(PYRO_OVEN, recipeManager.getAllRecipesFor(ModRecipes.PYRO_OVEN.type().get()));
     }
 
@@ -117,6 +127,10 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ASSEMBLY_FACTORY.get()), ASSEMBLY_MACHINE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_CHEMICAL_PLANT.get()), CHEMICAL_PLANT);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_CHEMICAL_FACTORY.get()), CHEMICAL_PLANT);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_PUREX.get()), PUREX);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get()), PRECASS);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ASSEMBLY_FACTORY.get()), PRECASS);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_PRESS.get()), PRESS);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_REFINERY.get()), REFINERY);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_CATALYTIC_CRACKER.get()), CATALYTIC_CRACKER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_CATALYTIC_REFORMER.get()), CATALYTIC_REFORMER);
@@ -125,7 +139,7 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_HYDROTREATER.get()), HYDROTREATER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_COKER.get()), COKER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_SOLIDIFIER.get()), SOLIDIFIER);
-        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_LIQUEFACTOR.get()), LIQUEFACTOR);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_LIQUEFACTOR.get()), LIQUEFACTION);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_PYROOVEN.get()), PYRO_OVEN);
     }
 

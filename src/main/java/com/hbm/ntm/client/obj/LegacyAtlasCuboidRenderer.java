@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.obj;
 
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.Direction;
 
 public final class LegacyAtlasCuboidRenderer {
     private static final double SMALL_BLOCK_PIXEL = 1.0D / 16.0D;
@@ -26,6 +27,11 @@ public final class LegacyAtlasCuboidRenderer {
         bottomFace(bottom, context, minX, minY, minZ, maxX, maxZ);
     }
 
+    public static void cuboid(TextureAtlasSprite sprite, ObjRenderContext context,
+            double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        cuboid(sprite, sprite, sprite, sprite, sprite, sprite, context, minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
     public static void croppedCuboid(TextureAtlasSprite top, TextureAtlasSprite bottom,
             TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
             ObjRenderContext context, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
@@ -35,6 +41,38 @@ public final class LegacyAtlasCuboidRenderer {
         croppedWestFace(west, context, minX, minY, minZ, maxY, maxZ);
         croppedTopFace(top, context, minX, minZ, maxX, maxY, maxZ);
         croppedBottomFace(bottom, context, minX, minY, minZ, maxX, maxZ);
+    }
+
+    public static void croppedCuboid(TextureAtlasSprite sprite, ObjRenderContext context,
+            double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        croppedCuboid(sprite, sprite, sprite, sprite, sprite, sprite, context, minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    public static void centeredCube(TextureAtlasSprite sprite, ObjRenderContext context, double radius) {
+        croppedCuboid(sprite, context,
+                0.5D - radius, 0.5D - radius, 0.5D - radius,
+                0.5D + radius, 0.5D + radius, 0.5D + radius);
+    }
+
+    public static void directionalSlab(TextureAtlasSprite sprite, ObjRenderContext context,
+            Direction direction, double thickness) {
+        double minX = 0.0D;
+        double minY = 0.0D;
+        double minZ = 0.0D;
+        double maxX = 1.0D;
+        double maxY = 1.0D;
+        double maxZ = 1.0D;
+
+        switch (direction) {
+            case DOWN -> maxY = thickness;
+            case UP -> minY = 1.0D - thickness;
+            case NORTH -> maxZ = thickness;
+            case SOUTH -> minZ = 1.0D - thickness;
+            case WEST -> maxX = thickness;
+            case EAST -> minX = 1.0D - thickness;
+        }
+
+        croppedCuboid(sprite, context, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     public static void cross(TextureAtlasSprite sprite, ObjRenderContext context,

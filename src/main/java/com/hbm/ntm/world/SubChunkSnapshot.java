@@ -1,5 +1,6 @@
 package com.hbm.ntm.world;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -8,6 +9,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,9 @@ public class SubChunkSnapshot {
     }
 
     public static SubChunkSnapshot getSnapshot(Level level, SubChunkKey key, boolean allowGeneration) {
+        if (level == null || key == null) {
+            return EMPTY;
+        }
         if (!allowGeneration && !level.hasChunk(key.getChunkXPos(), key.getChunkZPos())) {
             return EMPTY;
         }
@@ -92,12 +97,45 @@ public class SubChunkSnapshot {
         return getBlockState(x, y, z).getBlock();
     }
 
+    public BlockState getBlockState(BlockPos worldPos) {
+        return getBlockState(worldPos.getX() & 15, worldPos.getY() & 15, worldPos.getZ() & 15);
+    }
+
+    public Block getBlock(BlockPos worldPos) {
+        return getBlockState(worldPos).getBlock();
+    }
+
     public boolean isEmpty() {
         return this == EMPTY || data == null;
     }
 
     public int paletteSize() {
         return palette.length;
+    }
+
+    public List<BlockState> paletteSnapshot() {
+        return List.copyOf(Arrays.asList(palette));
+    }
+
+    public short[] dataCopy() {
+        return data == null ? new short[0] : Arrays.copyOf(data, data.length);
+    }
+
+    public int nonAirBlockCount() {
+        if (this == EMPTY || data == null) {
+            return 0;
+        }
+        int count = 0;
+        for (short index : data) {
+            if (index != 0) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public boolean containsNonAir() {
+        return nonAirBlockCount() > 0;
     }
 
     private static int index(int x, int y, int z) {

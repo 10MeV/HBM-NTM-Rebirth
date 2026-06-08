@@ -84,6 +84,12 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
         return List.of();
     }
 
+    public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
+        return level == null
+                ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)
+                : HbmEnergyUtil.inspectPorts(level, worldPosition, getEnergyPorts());
+    }
+
     protected boolean canAccessEnergy(@Nullable Direction side) {
         return getEnergySideMode(side) != HbmEnergySideMode.NONE;
     }

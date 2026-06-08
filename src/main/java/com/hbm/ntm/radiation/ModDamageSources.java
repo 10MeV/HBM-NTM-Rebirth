@@ -10,6 +10,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -292,6 +293,56 @@ public final class ModDamageSources {
         return source.is(SUBATOMIC) || normalizeAlias(source.getMsgId()).startsWith("subatomic");
     }
 
+    public static DamageAliasAudit aliasAudit() {
+        List<String> problems = new ArrayList<>();
+        for (LegacyDamageType legacy : LEGACY_DAMAGE_TYPES) {
+            expectResolve(problems, legacy.location().getPath(), legacy.key());
+            expectResolve(problems, legacy.location().toString(), legacy.key());
+            for (String alias : legacyAliases(legacy.key())) {
+                if (alias.endsWith("..5")) {
+                    continue;
+                }
+                expectResolve(problems, alias, legacy.key());
+            }
+        }
+
+        expectResolve(problems, "nuclearBlast", NUCLEAR_BLAST);
+        expectResolve(problems, "mudPoisoning", MUD_POISONING);
+        expectResolve(problems, "tauBlast", TAU_BLAST);
+        expectResolve(problems, "blackLung", BLACK_LUNG);
+        expectResolve(problems, "amsCore", AMS_CORE);
+        expectResolve(problems, "electrified", ELECTRICITY);
+        expectResolve(problems, "s_emp", ELECTRICITY);
+        expectResolve(problems, "revolverBullet", REVOLVER_BULLET);
+        expectResolve(problems, "s_bullet", REVOLVER_BULLET);
+        expectResolve(problems, "chopperBullet", CHOPPER_BULLET);
+        expectResolve(problems, "s_emplacer", CHOPPER_BULLET);
+        expectResolve(problems, "cmb", COMBINE_BALL);
+        expectResolve(problems, "s_combineball", COMBINE_BALL);
+        for (int i = 1; i <= 5; i++) {
+            expectResolve(problems, "subAtomic" + i, SUBATOMIC);
+        }
+        expectResolve(problems, "onFire", minecraft("on_fire"));
+        expectResolve(problems, "inFire", minecraft("in_fire"));
+        expectResolve(problems, "hotFloor", minecraft("hot_floor"));
+        expectResolve(problems, "frozen", minecraft("freeze"));
+        expectResolve(problems, "playerAttack", minecraft("player_attack"));
+        expectResolve(problems, "mobAttack", minecraft("mob_attack"));
+
+        expectLegacy(problems, NUCLEAR_BLAST, false, true, false, false, false, false);
+        expectLegacy(problems, DIGAMMA, false, false, false, true, true, true);
+        expectLegacy(problems, BLACKHOLE, false, false, false, true, true, false);
+        expectLegacy(problems, ELECTRIC, false, false, false, false, false, false);
+        expectLegacy(problems, ELECTRICITY, false, false, false, true, true, false);
+        expectLegacy(problems, SHRAPNEL, true, false, false, false, false, false);
+        expectLegacy(problems, TAU, true, false, false, true, false, false);
+        expectLegacy(problems, SUBATOMIC, true, false, false, true, false, false);
+        expectLegacy(problems, PLASMA, false, false, true, false, false, false);
+        expectLegacy(problems, FLAMETHROWER, false, false, true, false, false, false);
+
+        return new DamageAliasAudit(List.copyOf(problems), LEGACY_DAMAGE_TYPES.size(), LEGACY_DAMAGE_KEYS.size());
+    }
+
     private static ResourceKey<DamageType> key(String name) {
         return ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, name));
     }
@@ -401,10 +452,47 @@ public final class ModDamageSources {
         return ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("minecraft", name));
     }
 
+    private static void expectResolve(List<String> problems, String alias, ResourceKey<DamageType> expected) {
+        Optional<ResourceKey<DamageType>> actual = legacyKey(alias);
+        if (actual.isEmpty() || !actual.get().equals(expected)) {
+            problems.add("alias " + alias + " -> " + actual.map(key -> key.location().toString()).orElse("<missing>")
+                    + ", expected " + expected.location());
+        }
+    }
+
+    private static void expectLegacy(List<String> problems, ResourceKey<DamageType> key, boolean projectile,
+            boolean explosion, boolean fire, boolean bypassesArmor, boolean absolute, boolean creativeAllowed) {
+        LegacyDamageType actual = null;
+        for (LegacyDamageType legacy : LEGACY_DAMAGE_TYPES) {
+            if (legacy.key().equals(key)) {
+                actual = legacy;
+                break;
+            }
+        }
+        if (actual == null) {
+            problems.add("missing legacy metadata for " + key.location());
+            return;
+        }
+        if (actual.projectile() != projectile
+                || actual.explosion() != explosion
+                || actual.fire() != fire
+                || actual.bypassesArmor() != bypassesArmor
+                || actual.absolute() != absolute
+                || actual.creativeAllowed() != creativeAllowed) {
+            problems.add("legacy metadata mismatch for " + key.location());
+        }
+    }
+
     public record LegacyDamageType(ResourceKey<DamageType> key, boolean projectile, boolean explosion, boolean fire,
                                    boolean bypassesArmor, boolean absolute, boolean creativeAllowed) {
         public ResourceLocation location() {
             return key.location();
+        }
+    }
+
+    public record DamageAliasAudit(List<String> problems, int legacyTypes, int aliases) {
+        public boolean passed() {
+            return problems.isEmpty();
         }
     }
 

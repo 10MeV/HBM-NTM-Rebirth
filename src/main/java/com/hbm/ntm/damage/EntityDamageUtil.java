@@ -7,7 +7,17 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class EntityDamageUtil {
+    public static final String OUTCOME_DAMAGED = "damaged";
+    public static final String OUTCOME_FULLY_ABSORBED = "fully_absorbed";
+    public static final String OUTCOME_CANCELED = "canceled";
+    public static final String OUTCOME_NON_POSITIVE_AMOUNT = "non_positive_amount";
+    public static final String OUTCOME_PVP_DENIED = "pvp_denied";
+    public static final String OUTCOME_SKIPPED = "skipped";
+
     private static final ThreadLocal<Boolean> ALLOW_SPECIAL_CANCEL = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
     public static boolean attackEntityFromNt(Entity entity, DamageSource source, float amount) {
@@ -41,16 +51,17 @@ public final class EntityDamageUtil {
     public static DamageApplication attackEntityFromNtDetailed(Entity entity, DamageSource source, float amount,
             boolean ignoreIFrame, boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt, float pierceDr) {
         if (amount <= 0.0F) {
-            return DamageApplication.skipped(0.0F, 0.0F, "non_positive_amount");
+            return DamageApplication.skipped(amount, 0.0F, OUTCOME_NON_POSITIVE_AMOUNT);
         }
         if (!(entity instanceof LivingEntity)) {
             boolean damaged = entity.hurt(source, amount);
-            return new DamageApplication(damaged, false, amount, damaged ? amount : 0.0F, damaged ? "damaged" : "canceled");
+            return new DamageApplication(damaged, false, amount, damaged ? amount : 0.0F,
+                    outcome(damaged, false));
         }
 
         LivingEntity living = (LivingEntity) entity;
         if (!canDamagePlayer(living, source)) {
-            return DamageApplication.skipped(amount, 0.0F, "pvp_denied");
+            return DamageApplication.skipped(amount, 0.0F, OUTCOME_PVP_DENIED);
         }
 
         int invulnerableTime = living.invulnerableTime;
@@ -75,8 +86,9 @@ public final class EntityDamageUtil {
                 living.setDeltaMovement(previousMovement);
                 applyKnockback(living, source.getEntity(), knockbackMultiplier);
             }
-            return new DamageApplication(result, breakdown.fullyAbsorbed(amount), amount,
-                    result ? breakdown.finalDamage() : 0.0F, result ? "damaged" : "canceled");
+            boolean fullyAbsorbed = breakdown.fullyAbsorbed(amount);
+            return new DamageApplication(result, fullyAbsorbed, amount,
+                    result ? breakdown.finalDamage() : 0.0F, outcome(result, fullyAbsorbed));
         } finally {
             ALLOW_SPECIAL_CANCEL.set(previousAllowSpecialCancel);
             if (ignoreIFrame) {
@@ -94,11 +106,56 @@ public final class EntityDamageUtil {
         return ALLOW_SPECIAL_CANCEL.get();
     }
 
+    public static ApplicationAudit applicationAudit() {
+        List<String> problems = new ArrayList<>();
+        expect(problems, "damaged outcome wins", OUTCOME_DAMAGED.equals(outcome(true, true)));
+        expect(problems, "absorbed outcome", OUTCOME_FULLY_ABSORBED.equals(outcome(false, true)));
+        expect(problems, "canceled outcome", OUTCOME_CANCELED.equals(outcome(false, false)));
+        DamageApplication skipped = DamageApplication.skipped(-1.0F, 0.0F, OUTCOME_NON_POSITIVE_AMOUNT);
+        expect(problems, "skipped keeps requested amount", nearly(skipped.requestedAmount(), -1.0F));
+        expect(problems, "skipped final amount zero", nearly(skipped.finalAmount(), 0.0F));
+        expect(problems, "skipped not damaged", !skipped.damaged() && !skipped.fullyAbsorbed());
+        expect(problems, "skipped should not retry i-frame", !skipped.shouldRetryIgnoringIFrames());
+        expect(problems, "absorbed should not retry i-frame",
+                !new DamageApplication(false, true, 5.0F, 0.0F, OUTCOME_FULLY_ABSORBED).shouldRetryIgnoringIFrames());
+        expect(problems, "canceled may retry i-frame",
+                new DamageApplication(false, false, 5.0F, 0.0F, OUTCOME_CANCELED).shouldRetryIgnoringIFrames());
+        expect(problems, "damaged should not retry i-frame",
+                !new DamageApplication(true, false, 5.0F, 3.0F, OUTCOME_DAMAGED).shouldRetryIgnoringIFrames());
+
+        boolean previousAllowSpecialCancel = ALLOW_SPECIAL_CANCEL.get();
+        try {
+            ALLOW_SPECIAL_CANCEL.set(false);
+            expect(problems, "allow special cancel false state", !allowSpecialCancel());
+        } finally {
+            ALLOW_SPECIAL_CANCEL.set(previousAllowSpecialCancel);
+        }
+        expect(problems, "allow special cancel restored", allowSpecialCancel() == previousAllowSpecialCancel);
+        return new ApplicationAudit(List.copyOf(problems));
+    }
+
     public record DamageApplication(boolean damaged, boolean fullyAbsorbed, float requestedAmount, float finalAmount,
                                     String outcome) {
+        public boolean shouldRetryIgnoringIFrames() {
+            return !damaged && !fullyAbsorbed && OUTCOME_CANCELED.equals(outcome);
+        }
+
         private static DamageApplication skipped(float requestedAmount, float finalAmount, String outcome) {
             return new DamageApplication(false, false, requestedAmount, finalAmount, outcome);
         }
+    }
+
+    public record ApplicationAudit(List<String> problems) {
+        public boolean passed() {
+            return problems.isEmpty();
+        }
+    }
+
+    private static String outcome(boolean damaged, boolean fullyAbsorbed) {
+        if (damaged) {
+            return OUTCOME_DAMAGED;
+        }
+        return fullyAbsorbed ? OUTCOME_FULLY_ABSORBED : OUTCOME_CANCELED;
     }
 
     private static boolean canDamagePlayer(LivingEntity target, DamageSource source) {
@@ -132,6 +189,16 @@ public final class EntityDamageUtil {
         }
         target.setDeltaMovement(movement);
         target.hurtMarked = true;
+    }
+
+    private static void expect(List<String> problems, String label, boolean ok) {
+        if (!ok) {
+            problems.add(label);
+        }
+    }
+
+    private static boolean nearly(float actual, float expected) {
+        return Math.abs(actual - expected) < 0.0001F;
     }
 
     private EntityDamageUtil() {
