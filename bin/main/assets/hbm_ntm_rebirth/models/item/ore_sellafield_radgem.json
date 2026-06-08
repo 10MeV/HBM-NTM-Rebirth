@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/ore_sellafield_radgem" }
+{
+  "parent": "hbm_ntm_rebirth:block/ore_sellafield_radgem"
+}

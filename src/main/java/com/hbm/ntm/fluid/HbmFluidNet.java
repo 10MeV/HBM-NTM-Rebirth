@@ -3,6 +3,7 @@ package com.hbm.ntm.fluid;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmNodeNet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -21,6 +22,10 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
     private final FluidType type;
     private final long timeoutMs;
     private long fluidTracker;
+    private final long[] lastAttemptedByPressure = new long[HbmFluidUser.HIGHEST_VALID_PRESSURE + 1];
+    private final long[] lastTransferredByPressure = new long[HbmFluidUser.HIGHEST_VALID_PRESSURE + 1];
+    private final long[] lastProviderUseByPressure = new long[HbmFluidUser.HIGHEST_VALID_PRESSURE + 1];
+    private final long[] lastUnaccountedByPressure = new long[HbmFluidUser.HIGHEST_VALID_PRESSURE + 1];
 
     public HbmFluidNet(FluidType type) {
         this(type, DEFAULT_TIMEOUT_MS);
@@ -37,6 +42,10 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
 
     public void resetTrackers() {
         fluidTracker = 0L;
+        Arrays.fill(lastAttemptedByPressure, 0L);
+        Arrays.fill(lastTransferredByPressure, 0L);
+        Arrays.fill(lastProviderUseByPressure, 0L);
+        Arrays.fill(lastUnaccountedByPressure, 0L);
     }
 
     public long getFluidTracker() {
@@ -100,6 +109,10 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
                 receiverDemand,
                 receiverRate,
                 fluidTracker,
+                lastAttemptedByPressure.clone(),
+                lastTransferredByPressure.clone(),
+                lastProviderUseByPressure.clone(),
+                lastUnaccountedByPressure.clone(),
                 receiversByPriority);
     }
 
@@ -193,11 +206,16 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
             if (available <= 0L || receivers.totalDemand[pressure] <= 0L) {
                 continue;
             }
-            long used = distributePressure(receivers, pressure, Math.min(available, receivers.totalDemand[pressure]));
+            long attempted = Math.min(available, receivers.totalDemand[pressure]);
+            lastAttemptedByPressure[pressure] = attempted;
+            long used = distributePressure(receivers, pressure, attempted);
             if (used <= 0L) {
                 continue;
             }
-            removeFromProviders(providers.providers[pressure], available, used, pressure);
+            ProviderRemovalStats removal = removeFromProviders(providers.providers[pressure], available, used, pressure);
+            lastTransferredByPressure[pressure] = used;
+            lastProviderUseByPressure[pressure] = removal.requestedUse();
+            lastUnaccountedByPressure[pressure] = removal.unaccounted();
             transferred += used;
         }
 
@@ -306,12 +324,14 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
         return used;
     }
 
-    private void removeFromProviders(List<Entry<HbmFluidProvider>> providers, long available, long used, int pressure) {
+    private ProviderRemovalStats removeFromProviders(List<Entry<HbmFluidProvider>> providers, long available, long used, int pressure) {
         long leftover = used;
+        long requestedUse = 0L;
         for (Entry<HbmFluidProvider> entry : providers) {
             double weight = available > 0L ? (double) entry.amount / (double) available : 0D;
             long toUse = (long) Math.max(used * weight, 0D);
             entry.value.useUpFluid(type, pressure, toUse);
+            requestedUse += toUse;
             leftover -= toUse;
         }
 
@@ -321,11 +341,13 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
             HbmFluidProvider provider = providers.get(RANDOM.nextInt(providers.size())).value;
             long toUse = Math.min(leftover, provider.getFluidAvailable(type, pressure));
             provider.useUpFluid(type, pressure, toUse);
+            requestedUse += toUse;
             leftover -= toUse;
             if (toUse <= 0L) {
                 break;
             }
         }
+        return new ProviderRemovalStats(requestedUse, Math.max(0L, leftover));
     }
 
     private void pruneExpired(long timestamp) {
@@ -375,7 +397,14 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
             long[] receiverDemand,
             long[] receiverRate,
             long lastTransfer,
+            long[] lastAttemptedByPressure,
+            long[] lastTransferredByPressure,
+            long[] lastProviderUseByPressure,
+            long[] lastUnaccountedByPressure,
             Map<HbmEnergyReceiver.ConnectionPriority, Integer> receiversByPriority) {
+    }
+
+    private record ProviderRemovalStats(long requestedUse, long unaccounted) {
     }
 
     @SuppressWarnings("unchecked")

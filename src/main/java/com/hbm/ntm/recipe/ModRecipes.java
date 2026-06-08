@@ -30,6 +30,7 @@ public final class ModRecipes {
     public static final RecipeHolder<GenericMachineRecipe> PRECASS =
             register("precass", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.PRECASS));
     public static final RecipeHolder<LiquefactionRecipe> LIQUEFACTION = register("liquefaction", LiquefactionRecipe.Serializer::new);
+    public static final RecipeHolder<PyroOvenRecipe> PYRO_OVEN = register("pyro_oven", PyroOvenRecipe.Serializer::new);
 
     public static void register(IEventBus modBus) {
         RECIPE_TYPES.register(modBus);

@@ -49,6 +49,34 @@ public final class HbmFluidNodespace {
         return NODESPACE.getNetworkCount(level);
     }
 
+    public static Diagnostics getDiagnostics(Level level) {
+        HbmNodespace.Diagnostics core = NODESPACE.getDiagnostics(level);
+        int providerEntries = 0;
+        int receiverEntries = 0;
+        for (HbmFluidNet net : NODESPACE.getNetworks(level)) {
+            HbmFluidNet.DebugSnapshot snapshot = net.createDebugSnapshot();
+            providerEntries += snapshot.providers();
+            receiverEntries += snapshot.receivers();
+        }
+        return new Diagnostics(
+                core.nodePositions(),
+                core.uniqueNodes(),
+                core.networks(),
+                core.invalidNetworks(),
+                core.linkRefs(),
+                core.dirtyNodes(),
+                core.expiredNodes(),
+                core.orphanNodes(),
+                providerEntries,
+                receiverEntries,
+                core.reapTimer());
+    }
+
+    public static ForceRebuildResult forceRebuild(Level level) {
+        HbmNodespace.ForceRebuildResult result = NODESPACE.forceRebuild(level);
+        return new ForceRebuildResult(result.nodes(), result.oldNetworks(), result.newNetworks(), result.reapTimer());
+    }
+
     public static int getNetworkLinkCount(Level level, BlockPos pos, FluidType type) {
         HbmFluidNet fluidNet = getFluidNet(level, pos, type);
         return fluidNet == null ? 0 : fluidNet.linkCount();
@@ -149,6 +177,27 @@ public final class HbmFluidNodespace {
         private static NetworkDebugSnapshot present(BlockPos pos, FluidType type, String connections, boolean recentlyChanged, HbmFluidNet.DebugSnapshot network) {
             return new NetworkDebugSnapshot(pos, type.getName(), true, connections, recentlyChanged, true, network);
         }
+    }
+
+    public record Diagnostics(
+            int nodePositions,
+            int uniqueNodes,
+            int networks,
+            int invalidNetworks,
+            int linkRefs,
+            int dirtyNodes,
+            int expiredNodes,
+            int orphanNodes,
+            int providerEntries,
+            int receiverEntries,
+            int reapTimer) {
+    }
+
+    public record ForceRebuildResult(
+            int nodes,
+            int oldNetworks,
+            int newNetworks,
+            int reapTimer) {
     }
 
     private record NodeKey(BlockPos pos, FluidType type) {

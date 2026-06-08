@@ -39,9 +39,6 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         && block != ModBlocks.MACHINE_WELL
                         && block != ModBlocks.MACHINE_PUMPJACK
                         && block != ModBlocks.MACHINE_FRACKING_TOWER)
-                .filter(block -> block != ModBlocks.MACHINE_CATALYTIC_REFORMER
-                        && block != ModBlocks.MACHINE_VACUUM_DISTILL
-                        && block != ModBlocks.MACHINE_HYDROTREATER)
                 .forEach(block -> dropSelf(block.get()));
         add(ModBlocks.MACHINE_FLUIDTANK.get(), noDrop());
         add(ModBlocks.MACHINE_BAT9000.get(), noDrop());
@@ -55,10 +52,9 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.MACHINE_WELL.get(), noDrop());
         add(ModBlocks.MACHINE_PUMPJACK.get(), noDrop());
         add(ModBlocks.MACHINE_FRACKING_TOWER.get(), noDrop());
+        dropSelf(ModBlocks.MACHINE_SATLINKER.get());
+        dropSelf(ModBlocks.SAT_DOCK.get());
         add(ModBlocks.OIL_PIPE.get(), noDrop());
-        add(ModBlocks.MACHINE_CATALYTIC_REFORMER.get(), noDrop());
-        add(ModBlocks.MACHINE_VACUUM_DISTILL.get(), noDrop());
-        add(ModBlocks.MACHINE_HYDROTREATER.get(), noDrop());
         add(ModBlocks.CONVEYOR.get(), conveyorWandDrop("REGULAR"));
         add(ModBlocks.CONVEYOR_EXPRESS.get(), conveyorWandDrop("EXPRESS"));
         add(ModBlocks.CONVEYOR_DOUBLE.get(), conveyorWandDrop("DOUBLE"));

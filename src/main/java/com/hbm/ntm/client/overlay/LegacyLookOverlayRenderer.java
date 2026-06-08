@@ -10,14 +10,19 @@ import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class LegacyLookOverlayRenderer {
     public static void render(RenderGuiOverlayEvent.Post event) {
@@ -44,9 +49,13 @@ public final class LegacyLookOverlayRenderer {
 
     private static LegacyLookOverlay resolveOverlay(Minecraft minecraft, HitResult hitResult) {
         if (hitResult instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
+            BlockState state = minecraft.level.getBlockState(blockHit.getBlockPos());
+            if (HbmClientConfig.SHOW_BLOCK_STATE_OVERLAY.get()) {
+                return debugBlockStateOverlay(state);
+            }
             LegacyLookOverlay overlay = resolveHeldItemOverlay(minecraft, blockHit);
             if (overlay == null) {
-                overlay = resolveBlockOverlay(minecraft, blockHit);
+                overlay = resolveBlockOverlay(minecraft, blockHit, state);
             }
             if (overlay == null) {
                 overlay = resolveBlockEntityOverlay(minecraft, blockHit);
@@ -59,6 +68,14 @@ public final class LegacyLookOverlayRenderer {
         return null;
     }
 
+    private static LegacyLookOverlay debugBlockStateOverlay(BlockState state) {
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.literal(String.valueOf(ForgeRegistries.BLOCKS.getKey(state.getBlock()))));
+        state.getValues().forEach((property, value) ->
+                lines.add(Component.literal(property.getName() + ": " + value)));
+        return LegacyLookOverlay.withTitle(Component.literal("DEBUG"), 0xFFFF00, 0x404000, lines);
+    }
+
     private static LegacyLookOverlay resolveHeldItemOverlay(Minecraft minecraft, BlockHitResult hit) {
         ItemStack stack = minecraft.player.getMainHandItem();
         if (!stack.isEmpty() && stack.getItem() instanceof LegacyLookOverlayItemProvider provider) {
@@ -67,8 +84,7 @@ public final class LegacyLookOverlayRenderer {
         return null;
     }
 
-    private static LegacyLookOverlay resolveBlockOverlay(Minecraft minecraft, BlockHitResult hit) {
-        BlockState state = minecraft.level.getBlockState(hit.getBlockPos());
+    private static LegacyLookOverlay resolveBlockOverlay(Minecraft minecraft, BlockHitResult hit, BlockState state) {
         if (state.getBlock() instanceof LegacyLookOverlayBlockProvider provider) {
             return provider.getLookOverlay(minecraft.level, minecraft.player, hit.getBlockPos(), state);
         }

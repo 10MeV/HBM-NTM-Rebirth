@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid.trait;
 
+import com.google.gson.JsonObject;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -31,6 +32,12 @@ public class CombustibleFluidTrait extends FluidTrait {
             info.add(Component.literal("Fuel grade: ").withStyle(ChatFormatting.GOLD)
                     .append(Component.literal(grade.displayName()).withStyle(ChatFormatting.RED)));
         }
+    }
+
+    @Override
+    public void writeJson(JsonObject object) {
+        object.addProperty("energy", combustionEnergyPerBucket);
+        object.addProperty("grade", grade.name());
     }
 
     public enum FuelGrade {

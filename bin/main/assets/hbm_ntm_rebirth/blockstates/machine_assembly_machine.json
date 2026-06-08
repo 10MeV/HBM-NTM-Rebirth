@@ -1,8 +1,19 @@
 {
   "variants": {
-    "facing=north": { "model": "hbm_ntm_rebirth:block/machine_assembly_machine" },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/machine_assembly_machine", "y": 90 },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/machine_assembly_machine", "y": 180 },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/machine_assembly_machine", "y": 270 }
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/machine_assembly_machine",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/machine_assembly_machine"
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/machine_assembly_machine",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/machine_assembly_machine",
+      "y": 270
+    }
   }
 }

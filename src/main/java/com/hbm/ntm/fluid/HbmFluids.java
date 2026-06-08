@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid;
 
+import com.google.gson.JsonObject;
 import com.hbm.ntm.fluid.trait.FluidTrait;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait.FuelGrade;
@@ -41,6 +42,9 @@ import static com.hbm.ntm.fluid.trait.SimpleFluidTraits.VISCOUS;
 public final class HbmFluids {
     private static final Map<Integer, FluidType> BY_ID = new LinkedHashMap<>();
     private static final Map<String, FluidType> BY_NAME = new LinkedHashMap<>();
+    private static final Map<String, FluidType> CUSTOM_BY_NAME = new LinkedHashMap<>();
+    private static final Map<String, FluidType> FOREIGN_BY_NAME = new LinkedHashMap<>();
+    private static final Map<String, FluidType> FLUID_MIGRATION = new LinkedHashMap<>();
     private static int nextId;
 
     public static final FluidType NONE = register("NONE", 0x888888, 0, 0, 0, FluidSymbol.NONE);
@@ -218,8 +222,103 @@ public final class HbmFluids {
         return type;
     }
 
+    static boolean hasRegisteredName(String name) {
+        return BY_NAME.containsKey(normalize(name));
+    }
+
+    static boolean hasRegisteredId(int id) {
+        return BY_ID.containsKey(id);
+    }
+
+    static FluidType registerCustom(String name, int id, int color, int poison, int flammability, int reactivity,
+            FluidSymbol symbol, String textureName, int tint, String displayName) {
+        FluidType type = FLUID_MIGRATION.remove(normalize(name));
+        if (type == null) {
+            type = new FluidType(id, name, color, poison, flammability, reactivity, symbol, textureName, tint,
+                    displayName, true);
+        } else {
+            type.setupExternal(id, name, color, poison, flammability, reactivity, symbol, textureName, tint,
+                    displayName, true);
+        }
+        BY_ID.put(type.getId(), type);
+        BY_NAME.put(normalize(type.getName()), type);
+        CUSTOM_BY_NAME.put(normalize(type.getName()), type);
+        nextId = Math.max(nextId, id + 1);
+        return type;
+    }
+
+    static FluidType registerForeign(String name, int id, int color, int poison, int flammability, int reactivity,
+            FluidSymbol symbol, String textureName) {
+        if (name == null || name.isBlank() || id < 0 || hasRegisteredName(name) || hasRegisteredId(id)) {
+            return NONE;
+        }
+        FluidType type = FLUID_MIGRATION.remove(normalize(name));
+        if (type == null) {
+            type = new FluidType(id, name, color, poison, flammability, reactivity, symbol, textureName,
+                    0xFFFFFF, null, true);
+        } else {
+            type.setupExternal(id, name, color, poison, flammability, reactivity, symbol, textureName,
+                    0xFFFFFF, null, true);
+        }
+        BY_ID.put(type.getId(), type);
+        BY_NAME.put(normalize(type.getName()), type);
+        FOREIGN_BY_NAME.put(normalize(type.getName()), type);
+        nextId = Math.max(nextId, id + 1);
+        return type;
+    }
+
+    static void removeCustomFluids() {
+        for (FluidType type : CUSTOM_BY_NAME.values()) {
+            FLUID_MIGRATION.put(normalize(type.getName()), type);
+            FluidType byId = BY_ID.get(type.getId());
+            if (byId == type) {
+                BY_ID.remove(type.getId());
+            }
+            FluidType byName = BY_NAME.get(normalize(type.getName()));
+            if (byName == type) {
+                BY_NAME.remove(normalize(type.getName()));
+            }
+        }
+        CUSTOM_BY_NAME.clear();
+    }
+
+    static void removeForeignFluids() {
+        for (FluidType type : FOREIGN_BY_NAME.values()) {
+            FLUID_MIGRATION.put(normalize(type.getName()), type);
+            HbmFluidForgeMappings.unregister(type);
+            FluidType byId = BY_ID.get(type.getId());
+            if (byId == type) {
+                BY_ID.remove(type.getId());
+            }
+            FluidType byName = BY_NAME.get(normalize(type.getName()));
+            if (byName == type) {
+                BY_NAME.remove(normalize(type.getName()));
+            }
+        }
+        FOREIGN_BY_NAME.clear();
+    }
+
+    public static Collection<FluidType> customFluids() {
+        return Collections.unmodifiableCollection(CUSTOM_BY_NAME.values());
+    }
+
+    public static Collection<FluidType> foreignFluids() {
+        return Collections.unmodifiableCollection(FOREIGN_BY_NAME.values());
+    }
+
+    public static HbmFluidTraitConfig.LoadReport bootstrap(java.nio.file.Path configDir) {
+        HbmFluidTraitConfig.resetToCapturedBuiltIns();
+        HbmFluidTypeConfig.initialize(configDir);
+        HbmCompatFluidRegistry.reloadForeignFluids();
+        HbmFluidTraitConfig.recaptureBuiltIns();
+        HbmFluidTraitConfig.LoadReport report = HbmFluidTraitConfig.initialize(configDir);
+        HbmFluidForgeMappings.bootstrap(configDir);
+        HbmFluidContainerRegistry.reloadExternalContainers();
+        return report;
+    }
+
     public static void bootstrap() {
-        HbmFluidForgeMappings.bootstrap();
+        bootstrap(net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get());
     }
 
     public static FluidType fromId(int id) {
@@ -253,10 +352,31 @@ public final class HbmFluids {
         return Collections.unmodifiableList(result);
     }
 
+    public static JsonObject fluidDefinitionsJson() {
+        JsonObject root = new JsonObject();
+        for (FluidType type : BY_ID.values()) {
+            root.add(type.getName(), type.toJson());
+        }
+        return root;
+    }
+
+    public static JsonObject fluidTraitsJson() {
+        JsonObject root = new JsonObject();
+        for (FluidType type : BY_ID.values()) {
+            JsonObject traits = new JsonObject();
+            for (Map.Entry<String, JsonObject> entry : type.getTraitJson().entrySet()) {
+                traits.add(entry.getKey(), entry.getValue());
+            }
+            root.add(type.getName(), traits);
+        }
+        return root;
+    }
+
     private static void registerLegacyBehaviorTraits() {
         addLegacyContainerTraits();
         addCorrosionAndSpecialTraits();
         addLegacyToxinTraits();
+        addLegacyIntrinsicPollutionTraits();
         addLegacyFuelTraits();
         addThermalTraits();
     }
@@ -348,7 +468,7 @@ public final class HbmFluids {
         SAS3.addTraits(new com.hbm.ntm.fluid.trait.VentRadiationFluidTrait(1.0F), new CorrosiveFluidTrait(30));
         SCHRABIDIC.addTraits(new com.hbm.ntm.fluid.trait.VentRadiationFluidTrait(1.0F), new CorrosiveFluidTrait(75), new PoisonFluidTrait(true, 2));
         PEROXIDE.addTraits(new CorrosiveFluidTrait(40));
-        WATZ.addTraits(new com.hbm.ntm.fluid.trait.VentRadiationFluidTrait(0.1F), new CorrosiveFluidTrait(60), pollutingOil().release(PollutionKind.POISON, poisonExtreme()));
+        WATZ.addTraits(new com.hbm.ntm.fluid.trait.VentRadiationFluidTrait(0.1F), new CorrosiveFluidTrait(60), new PollutingFluidTrait().release(PollutionKind.POISON, poisonExtreme()));
         BALEFIRE.addTraits(new CorrosiveFluidTrait(50));
         MERCURY.addTraits(new PoisonFluidTrait(false, 2));
         PAIN.addTraits(new CorrosiveFluidTrait(30), new PoisonFluidTrait(true, 2));
@@ -399,6 +519,15 @@ public final class HbmFluids {
         REDMUD.addTraits(new ToxinFluidTrait()
                 .addEntry(new ToxinFluidTrait.EffectApplication(HazardClass.GAS_BLISTERING, false)
                         .addEffect(mc("wither"), 30 * 20, 2, false)));
+    }
+
+    private static void addLegacyIntrinsicPollutionTraits() {
+        HOTOIL.addTraits(pollutingOil());
+        BITUMEN.addTraits(pollutingOil());
+        LUBRICANT.addTraits(pollutingOil());
+        HOTCRACKOIL.addTraits(pollutingOil());
+        HOTOIL_DS.addTraits(pollutingOil());
+        HOTCRACKOIL_DS.addTraits(pollutingOil());
     }
 
     private static void addLegacyFuelTraits() {
@@ -455,7 +584,7 @@ public final class HbmFluids {
         registerCalculatedFuel(HEAVYOIL_VACUUM, baseline / 0.4D * flammabilityLow * demandLow * complexityVacuum, 1.25D, FuelGrade.LOW, pollutingOil());
         registerCalculatedFuel(REFORMATE, baseline / 0.25D * flammabilityNormal * demandHigh * complexityVacuum, 2.5D, FuelGrade.HIGH, pollutingFuel());
         registerCalculatedFuel(LIGHTOIL_VACUUM, baseline / 0.20D * flammabilityNormal * demandHigh * complexityVacuum, 1.5D, FuelGrade.MEDIUM, pollutingFuel());
-        registerCalculatedFuel(SOURGAS, baseline / 0.15D * flammabilityLow * demandVeryLow * complexityVacuum, 0.0D, null, pollutingGas());
+        registerCalculatedFuel(SOURGAS, baseline / 0.15D * flammabilityLow * demandVeryLow * complexityVacuum, 0.0D, null, pollutingSourGas());
         registerCalculatedFuel(XYLENE, baseline / 0.15D * flammabilityNormal * demandMedium * complexityVacuum * complexityFraction, 2.5D, FuelGrade.HIGH, pollutingFuel());
         registerCalculatedFuel(HEATINGOIL_VACUUM, baseline / 0.24D * flammabilityNormal * demandLow * complexityVacuum * complexityFraction, 1.25D, FuelGrade.LOW, pollutingOil());
         registerCalculatedFuel(DIESEL_REFORM, heatEnergy(DIESEL) * complexityReform, 2.5D, FuelGrade.HIGH, pollutingFuel());
@@ -595,7 +724,11 @@ public final class HbmFluids {
     }
 
     private static PollutingFluidTrait pollutingGas() {
-        return new PollutingFluidTrait().burn(PollutionKind.SOOT, sootGas());
+        return new PollutingFluidTrait().burn(PollutionKind.SOOT, sootGas()).release(PollutionKind.POISON, poisonOil());
+    }
+
+    private static PollutingFluidTrait pollutingSourGas() {
+        return new PollutingFluidTrait().burn(PollutionKind.SOOT, sootGas()).release(PollutionKind.POISON, poisonExtreme());
     }
 
     private static PollutingFluidTrait pollutingLiquidGas() {

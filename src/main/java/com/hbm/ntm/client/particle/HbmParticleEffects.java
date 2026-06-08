@@ -1278,6 +1278,12 @@ public final class HbmParticleEffects {
             return createExSmoke(level, x, y, z, 0.0D, 0.0D, 0.0D, 7.5F, 100 + level.random.nextInt(40),
                     data.getFloat("r") + rng, data.getFloat("g") + rng, data.getFloat("b") + rng);
         }
+        if ("smoke".equals(mode) && data.contains("overrideAge") && HbmSmokeParticle.exSmokeSprites() != null) {
+            Particle particle = new HbmSmokeParticle(level, x, y, z, motionX, motionY, motionZ,
+                    HbmSmokeParticle.exSmokeSprites(), 1.0F, Math.max(1, data.getInt("overrideAge")), true);
+            particle.setParticleSpeed(motionX, motionY, motionZ);
+            return particle;
+        }
         if ("blockdust".equals(mode)) {
             Particle particle = new TerrainParticle(level, x, y, z, motionX, motionY + 0.2D, motionZ,
                     LegacyBlockStateMappings.fromParticleData(data));

@@ -1,3 +1,7 @@
 {
-  "parent": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "hbm_ntm_rebirth:item/duct",
+    "layer1": "hbm_ntm_rebirth:item/duct_overlay"
+  }
 }

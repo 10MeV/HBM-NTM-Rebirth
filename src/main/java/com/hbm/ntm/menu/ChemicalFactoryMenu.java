@@ -45,10 +45,8 @@ public class ChemicalFactoryMenu extends AbstractContainerMenu {
         this.blockEntity = blockEntity;
 
         addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalFactoryBlockEntity.SLOT_BATTERY, 224, 88));
-        for (int i = 0; i < 3; i++) {
-            addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalFactoryBlockEntity.SLOT_UPGRADE_START + i,
-                    206 + i * 18, 125));
-        }
+        HbmInventoryMenuHelper.addUpgradeSlots(this::addSlot, blockEntity.getItems(),
+                ChemicalFactoryBlockEntity.SLOT_UPGRADE_START, 206, 125, 1, 3);
         for (int module = 0; module < 4; module++) {
             int y = 20 + module * 22;
             addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalFactoryBlockEntity.blueprintSlot(module), 93, y));

@@ -1,1 +1,7 @@
-{ "variants": { "": { "model": "hbm_ntm_rebirth:block/glass_trinitite" } } }
+{
+  "variants": {
+    "": {
+      "model": "hbm_ntm_rebirth:block/glass_trinitite"
+    }
+  }
+}

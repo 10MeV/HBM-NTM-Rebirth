@@ -59,16 +59,17 @@ public final class LegacyFluidTankRenderHelper {
                 .withUvScroll(animation / 80.0F, animation / 120.0F);
 
         double off = 5.9375D;
+        double scaleFactor = 0.5D;
         ResourceLocation texture = type == null ? HbmFluids.NONE.getTexture() : type.getTexture();
         LegacyTexturedQuadRenderer.quad(texture, context, 1.0F, 0.0F, 0.0F,
                 LegacyTexturedQuadRenderer.vertex(-off, 1.75D, -0.25D, 0.0D, 1.0D, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(-off, 1.75D + height, -0.25D, 0.0D, -height * 2.0D, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(-off, 1.75D + height, 0.25D, 1.0D, -height * 2.0D, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(-off, 1.75D, 0.25D, 1.0D, 1.0D, 0xFFFFFF, 192));
+                LegacyTexturedQuadRenderer.vertex(-off, 1.75D + height, -0.25D, 0.0D, -height * 2.0D * scaleFactor, 0xFFFFFF, 192),
+                LegacyTexturedQuadRenderer.vertex(-off, 1.75D + height, 0.25D, scaleFactor, -height * 2.0D * scaleFactor, 0xFFFFFF, 192),
+                LegacyTexturedQuadRenderer.vertex(-off, 1.75D, 0.25D, scaleFactor, 1.0D, 0xFFFFFF, 192));
         LegacyTexturedQuadRenderer.quad(texture, context, -1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.vertex(off, 1.75D, -0.25D, 1.0D, 1.0D, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(off, 1.75D + height, -0.25D, 1.0D, -height * 2.0D, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(off, 1.75D + height, 0.25D, 0.0D, -height * 2.0D, 0xFFFFFF, 192),
+                LegacyTexturedQuadRenderer.vertex(off, 1.75D, -0.25D, scaleFactor, 1.0D, 0xFFFFFF, 192),
+                LegacyTexturedQuadRenderer.vertex(off, 1.75D + height, -0.25D, scaleFactor, -height * 2.0D * scaleFactor, 0xFFFFFF, 192),
+                LegacyTexturedQuadRenderer.vertex(off, 1.75D + height, 0.25D, 0.0D, -height * 2.0D * scaleFactor, 0xFFFFFF, 192),
                 LegacyTexturedQuadRenderer.vertex(off, 1.75D, 0.25D, 0.0D, 1.0D, 0xFFFFFF, 192));
     }
 

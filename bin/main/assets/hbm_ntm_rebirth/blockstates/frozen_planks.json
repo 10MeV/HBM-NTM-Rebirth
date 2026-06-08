@@ -1,1 +1,7 @@
-{ "variants": { "": { "model": "hbm_ntm_rebirth:block/frozen_planks" } } }
+{
+  "variants": {
+    "": {
+      "model": "hbm_ntm_rebirth:block/frozen_planks"
+    }
+  }
+}

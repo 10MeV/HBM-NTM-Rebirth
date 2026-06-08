@@ -5,6 +5,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
+import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.fluid.HbmFluidNet;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -22,10 +23,12 @@ import java.util.List;
 public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
         implements RORValueProvider, RORInteractive {
     private static final String TAG_COUNTER = "counter";
+    private final RORDispatcher ror;
     private long counter;
 
     public FluidCounterValveBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.FLUID_COUNTER_VALVE.get(), pos, state);
+        this.ror = createRorDispatcher();
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FluidCounterValveBlockEntity counterValve) {
@@ -89,36 +92,35 @@ public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
 
     @Override
     public String[] getFunctionInfo() {
-        return new String[] {
-                RORInfo.PREFIX_VALUE + "value",
-                RORInfo.PREFIX_VALUE + "state",
-                RORInfo.PREFIX_FUNCTION + "reset",
-                RORInfo.PREFIX_FUNCTION + "setState" + RORInteractive.NAME_SEPARATOR + "state"
-        };
+        return ror.getFunctionInfo();
     }
 
     @Override
     public String provideRORValue(String name) {
-        if ((RORInfo.PREFIX_VALUE + "value").equals(name)) {
-            return Long.toString(counter);
-        }
-        if ((RORInfo.PREFIX_VALUE + "state").equals(name)) {
-            return isOpen() ? "1" : "0";
-        }
-        return null;
+        return ror.provideValue(name);
     }
 
     @Override
     public String runRORFunction(String name, String[] params) {
-        if ((RORInfo.PREFIX_FUNCTION + "reset").equals(name)) {
-            resetCounter();
-            return null;
-        }
-        if ((RORInfo.PREFIX_FUNCTION + "setState").equals(name) && params.length > 0) {
-            if (level != null && getBlockState().getBlock() instanceof FluidValveBlock valve) {
-                int state = RORInteractive.parseInt(params[0], 0, 1);
-                valve.setOpen(level, worldPosition, getBlockState(), state == 1, true);
-            }
+        return ror.runFunction(name, params);
+    }
+
+    private RORDispatcher createRorDispatcher() {
+        return RORDispatcher.builder()
+                .value("value", () -> Long.toString(counter))
+                .value("state", () -> isOpen() ? "1" : "0")
+                .function("reset", params -> {
+                    resetCounter();
+                    return null;
+                })
+                .function("setState", this::runRorSetState, "state")
+                .build();
+    }
+
+    private String runRorSetState(String[] params) {
+        if (params.length > 0 && level != null && getBlockState().getBlock() instanceof FluidValveBlock valve) {
+            int state = RORInteractive.parseInt(params[0], 0, 1);
+            valve.setOpen(level, worldPosition, getBlockState(), state == 1, true);
         }
         return null;
     }

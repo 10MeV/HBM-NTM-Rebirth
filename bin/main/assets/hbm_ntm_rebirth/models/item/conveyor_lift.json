@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/conveyor_lift" }
+{
+  "parent": "hbm_ntm_rebirth:block/conveyor_lift"
+}

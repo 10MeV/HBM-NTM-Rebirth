@@ -125,7 +125,6 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         compressor.setupOutputTank();
         HbmEnergyUtil.chargeStorageFromItem(compressor.items.getStackInSlot(SLOT_BATTERY),
                 compressor.energy, compressor.energy.getReceiverSpeed());
-        compressor.refreshEnergyPorts();
         compressor.refreshFluidPorts();
         changed |= compressor.processRecipe();
 
@@ -223,17 +222,12 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean setInputTypeFromIdentifierSlot() {
-        ItemStack stack = items.getStackInSlot(SLOT_IDENTIFIER);
-        if (!(stack.getItem() instanceof IFluidIdentifierItem identifier)) {
-            return false;
+        boolean changed = HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
+                inputTank, level, worldPosition);
+        if (changed) {
+            setupOutputTank();
         }
-        FluidType type = identifier.getIdentifiedFluid(level, worldPosition, stack);
-        if (type == null || inputTank.getTankType() == type) {
-            return false;
-        }
-        inputTank.setTankType(type);
-        setupOutputTank();
-        return true;
+        return changed;
     }
 
     private boolean processRecipe() {
@@ -290,12 +284,6 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     private void refreshFluidPorts() {
         HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, getFluidPorts(),
                 List.of(inputTank), List.of(outputTank), this);
-    }
-
-    private void refreshEnergyPorts() {
-        if (level != null && !level.isClientSide) {
-            com.hbm.ntm.energy.HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, getEnergyPorts(), energy);
-        }
     }
 
     @Override

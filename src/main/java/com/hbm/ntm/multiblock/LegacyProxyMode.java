@@ -3,6 +3,8 @@ package com.hbm.ntm.multiblock;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
+import java.util.Objects;
+
 /**
  * Capability switches for 1.7.10 TileEntityProxyCombo-style dummy blocks.
  */
@@ -160,5 +162,28 @@ public final class LegacyProxyMode {
             return ALL;
         }
         return new LegacyProxyMode(true, inventory, power, conductor, fluid, heat, moltenMetal, false);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof LegacyProxyMode other)) {
+            return false;
+        }
+        return proxy == other.proxy
+                && inventory == other.inventory
+                && power == other.power
+                && conductor == other.conductor
+                && fluid == other.fluid
+                && heat == other.heat
+                && moltenMetal == other.moltenMetal
+                && allCapabilities == other.allCapabilities;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(proxy, inventory, power, conductor, fluid, heat, moltenMetal, allCapabilities);
     }
 }

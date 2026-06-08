@@ -51,7 +51,8 @@ public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFlui
         super.render(graphics, mouseX, mouseY, partialTick);
         for (TankRect rect : tankRects(menu.getProfile())) {
             if (isHovering(rect.x(), rect.bottom() - TANK_HEIGHT, TANK_WIDTH, TANK_HEIGHT, mouseX, mouseY)) {
-                graphics.renderTooltip(font, split(menu.getTankTooltip(rect.index(), hasShiftDown())), mouseX, mouseY);
+                LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTank(rect.index()),
+                        menu.getTankTooltip(rect.index(), hasShiftDown()), mouseX, mouseY);
                 renderTooltip(graphics, mouseX, mouseY);
                 return;
             }

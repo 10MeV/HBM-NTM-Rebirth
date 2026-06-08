@@ -181,9 +181,7 @@ public final class MultiblockHelper {
             BlockPos pos = corePos.offset(offset);
             level.setBlock(pos, dummyState, Block.UPDATE_ALL);
             if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
-                dummy.setCorePos(corePos);
-                dummy.setProxyMode(proxyModes.apply(offset));
-                dummy.setLegacyExtra(legacyExtraOffsets.test(offset));
+                configureDummy(dummy, corePos, proxyModes.apply(offset), legacyExtraOffsets.test(offset));
             }
         }
         return true;
@@ -192,6 +190,90 @@ public final class MultiblockHelper {
     public static boolean fillLayout(Level level, BlockPos corePos, LegacyMultiblockLayout layout) {
         return fillOffsetsWithProxyModes(level, corePos, layout.offsets(), layout::proxyMode,
                 layout::isLegacyExtraOffset);
+    }
+
+    public static boolean isLayoutComplete(BlockGetter level, BlockPos corePos, LegacyMultiblockLayout layout) {
+        for (BlockPos offset : layout.checkOffsets()) {
+            if (!isExpectedLayoutSpace(level, corePos, layout, offset)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isCoreLayoutComplete(BlockGetter level, BlockPos corePos) {
+        CoreLookup core = findCoreAt(level, corePos);
+        LegacyMultiblockLayout layout = layoutFor(level, core);
+        return core != null && layout != null && isLayoutComplete(level, core.pos(), layout);
+    }
+
+    @Nullable
+    public static CoreLayoutLookup findCoreLayout(BlockGetter level, @Nullable BlockPos pos) {
+        CoreLookup core = findCore(level, pos);
+        if (core == null) {
+            return null;
+        }
+        return new CoreLayoutLookup(core.pos(), core.state(), layoutFor(level, core));
+    }
+
+    public static BlockPos resolveCorePos(BlockGetter level, BlockPos pos) {
+        CoreLookup core = findCore(level, pos);
+        return core == null ? pos : core.pos();
+    }
+
+    public static BlockState resolveCoreState(BlockGetter level, BlockPos pos) {
+        CoreLookup core = findCore(level, pos);
+        return core == null ? level.getBlockState(pos) : core.state();
+    }
+
+    public static boolean canRepairLayout(Level level, BlockPos corePos, LegacyMultiblockLayout layout) {
+        for (BlockPos offset : layout.checkOffsets()) {
+            if (offset.equals(BlockPos.ZERO)) {
+                if (findCoreAt(level, corePos) == null) {
+                    return false;
+                }
+                continue;
+            }
+            if (isExpectedLayoutSpace(level, corePos, layout, offset)) {
+                continue;
+            }
+            BlockPos pos = corePos.offset(offset);
+            if (layout.containsOffset(offset)) {
+                if (!canReplaceForRepair(level, corePos, pos)) {
+                    return false;
+                }
+            } else if (!canKeepCheckOnlySpace(level, pos)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean repairLayout(Level level, BlockPos corePos, LegacyMultiblockLayout layout) {
+        if (level.isClientSide || !canRepairLayout(level, corePos, layout)) {
+            return false;
+        }
+        for (BlockPos offset : layout.offsets()) {
+            if (offset.equals(BlockPos.ZERO) || isExpectedLayoutBlock(level, corePos, layout, offset)) {
+                continue;
+            }
+            BlockPos pos = corePos.offset(offset);
+            if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
+                configureDummy(dummy, corePos, layout.proxyMode(offset), layout.isLegacyExtraOffset(offset));
+                continue;
+            }
+            level.setBlock(pos, ModBlocks.DUMMY_BLOCK.get().defaultBlockState(), Block.UPDATE_ALL);
+            if (level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
+                configureDummy(dummy, corePos, layout.proxyMode(offset), layout.isLegacyExtraOffset(offset));
+            }
+        }
+        return true;
+    }
+
+    public static boolean repairCoreLayout(Level level, BlockPos corePos) {
+        CoreLookup core = findCoreAt(level, corePos);
+        LegacyMultiblockLayout layout = layoutFor(level, core);
+        return core != null && layout != null && repairLayout(level, core.pos(), layout);
     }
 
     public static boolean removeAll(Level level, BlockPos corePos, MultiblockExtents extents) {
@@ -212,7 +294,7 @@ public final class MultiblockHelper {
                     continue;
                 }
                 BlockPos pos = corePos.offset(offset);
-                if (level.getBlockState(pos).getBlock() instanceof DummyBlock) {
+                if (isOwnedDummy(level, corePos, pos)) {
                     level.removeBlock(pos, false);
                 }
             }
@@ -226,6 +308,13 @@ public final class MultiblockHelper {
         dummy.setLegacyExtra(true);
         dummy.setProxyMode(proxyMode);
         return true;
+    }
+
+    public static boolean makeLegacyExtra(Level level, BlockPos corePos, BlockPos pos, LegacyProxyMode proxyMode) {
+        if (!isOwnedDummy(level, corePos, pos)) {
+            return false;
+        }
+        return makeLegacyExtra(level, pos, proxyMode);
     }
 
     public static boolean removeLegacyExtra(Level level, BlockPos pos) {
@@ -244,8 +333,24 @@ public final class MultiblockHelper {
         return true;
     }
 
+    public static boolean removeLegacyExtra(Level level, BlockPos corePos, BlockPos pos) {
+        return removeLegacyExtra(level, corePos, pos, LegacyProxyMode.none());
+    }
+
+    public static boolean removeLegacyExtra(Level level, BlockPos corePos, BlockPos pos,
+            LegacyProxyMode restoredProxyMode) {
+        if (!isOwnedDummy(level, corePos, pos)) {
+            return false;
+        }
+        return removeLegacyExtra(level, pos, restoredProxyMode);
+    }
+
     public static boolean isLegacyExtra(Level level, BlockPos pos) {
         return level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy && dummy.isLegacyExtra();
+    }
+
+    public static boolean isLegacyExtra(Level level, BlockPos corePos, BlockPos pos) {
+        return isOwnedDummy(level, corePos, pos) && isLegacyExtra(level, pos);
     }
 
     @Nullable
@@ -315,6 +420,69 @@ public final class MultiblockHelper {
                 || (level.hasChunkAt(pos) && level.getBlockState(pos).canBeReplaced());
     }
 
+    @Nullable
+    private static LegacyMultiblockLayout layoutFor(BlockGetter level, @Nullable CoreLookup core) {
+        if (core == null || !(core.state().getBlock() instanceof MultiblockCoreBlock coreBlock)) {
+            return null;
+        }
+        return coreBlock.getMultiblockLayout(core.state(), level, core.pos());
+    }
+
+    private static boolean isExpectedLayoutBlock(BlockGetter level, BlockPos corePos, LegacyMultiblockLayout layout,
+            BlockPos offset) {
+        if (offset.equals(BlockPos.ZERO)) {
+            return findCoreAt(level, corePos) != null;
+        }
+        BlockPos pos = corePos.offset(offset);
+        if (!(level.getBlockState(pos).getBlock() instanceof DummyBlock)
+                || !(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy)) {
+            return false;
+        }
+        return corePos.equals(dummy.getCorePos())
+                && layout.proxyMode(offset).equals(dummy.getProxyMode())
+                && layout.isLegacyExtraOffset(offset) == dummy.isLegacyExtra();
+    }
+
+    private static boolean isExpectedLayoutSpace(BlockGetter level, BlockPos corePos, LegacyMultiblockLayout layout,
+            BlockPos offset) {
+        return layout.containsOffset(offset)
+                ? isExpectedLayoutBlock(level, corePos, layout, offset)
+                : canKeepCheckOnlySpace(level, corePos.offset(offset));
+    }
+
+    private static boolean canReplaceForRepair(Level level, BlockPos corePos, BlockPos pos) {
+        if (!level.hasChunkAt(pos)) {
+            return false;
+        }
+        BlockState state = level.getBlockState(pos);
+        if (state.canBeReplaced()) {
+            return true;
+        }
+        if (!(state.getBlock() instanceof DummyBlock)
+                || !(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy)) {
+            return false;
+        }
+        return corePos.equals(dummy.getCorePos());
+    }
+
+    private static boolean canKeepCheckOnlySpace(BlockGetter level, BlockPos pos) {
+        if (level instanceof Level worldLevel && !worldLevel.hasChunkAt(pos)) {
+            return false;
+        }
+        return level.getBlockState(pos).canBeReplaced();
+    }
+
+    private static boolean isOwnedDummy(Level level, BlockPos corePos, BlockPos pos) {
+        return level.getBlockState(pos).getBlock() instanceof DummyBlock
+                && level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy
+                && corePos.equals(dummy.getCorePos());
+    }
+
+    private static void configureDummy(MultiblockDummyBlockEntity dummy, BlockPos corePos, LegacyProxyMode proxyMode,
+            boolean legacyExtra) {
+        dummy.configure(corePos, proxyMode, legacyExtra);
+    }
+
     public static boolean withClearing(Level level, BlockPos corePos, Runnable action) {
         ClearingKey key = new ClearingKey(level, corePos.immutable());
         Set<ClearingKey> active = CLEARING.get();
@@ -343,6 +511,16 @@ public final class MultiblockHelper {
     }
 
     public record CoreLookup(BlockPos pos, BlockState state) {
+    }
+
+    public record CoreLayoutLookup(BlockPos pos, BlockState state, @Nullable LegacyMultiblockLayout layout) {
+        public boolean hasLayout() {
+            return layout != null;
+        }
+
+        public boolean isComplete(BlockGetter level) {
+            return layout != null && MultiblockHelper.isLayoutComplete(level, pos, layout);
+        }
     }
 
     private MultiblockHelper() {

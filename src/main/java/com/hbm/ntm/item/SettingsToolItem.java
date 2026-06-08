@@ -1,6 +1,7 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.fluid.HbmFluidSettingsCopy;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.network.ModMessages;
@@ -149,6 +150,6 @@ public class SettingsToolItem extends Item {
     }
 
     private static String getSettingsSourceId(Level level, net.minecraft.core.BlockPos pos) {
-        return level.getBlockState(pos).getBlock().getDescriptionId();
+        return MultiblockHelper.resolveCoreState(level, pos).getBlock().getDescriptionId();
     }
 }

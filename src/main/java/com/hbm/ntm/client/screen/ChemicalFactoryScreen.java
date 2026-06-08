@@ -102,24 +102,28 @@ public class ChemicalFactoryScreen extends AbstractContainerScreen<ChemicalFacto
         for (int module = 0; module < 4; module++) {
             int y = module * 22;
             if (isHovering(74, 19 + y, 18, 18, mouseX, mouseY)) {
-                graphics.renderTooltip(font, splitTooltip(recipeTooltip(module)), mouseX, mouseY);
+                LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(module), mouseX, mouseY);
                 return;
             }
             for (int tank = 0; tank < 3; tank++) {
                 if (isHovering(60 + tank * 5, 20 + y, 3, 16, mouseX, mouseY)) {
-                    graphics.renderTooltip(font, splitTooltip(menu.getInputTankTooltip(module, tank, hasShiftDown())), mouseX, mouseY);
+                    LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(module, tank),
+                            menu.getInputTankTooltip(module, tank, hasShiftDown()), mouseX, mouseY);
                     return;
                 }
                 if (isHovering(189 + tank * 5, 20 + y, 3, 16, mouseX, mouseY)) {
-                    graphics.renderTooltip(font, splitTooltip(menu.getOutputTankTooltip(module, tank, hasShiftDown())), mouseX, mouseY);
+                    LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(module, tank),
+                            menu.getOutputTankTooltip(module, tank, hasShiftDown()), mouseX, mouseY);
                     return;
                 }
             }
         }
         if (isHovering(224, 125, 7, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, splitTooltip(menu.getWaterTankTooltip(hasShiftDown())), mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getWaterTankData(),
+                    menu.getWaterTankTooltip(hasShiftDown()), mouseX, mouseY);
         } else if (isHovering(233, 125, 7, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, splitTooltip(menu.getSpentSteamTankTooltip(hasShiftDown())), mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getSpentSteamTankData(),
+                    menu.getSpentSteamTankTooltip(hasShiftDown()), mouseX, mouseY);
         }
     }
 

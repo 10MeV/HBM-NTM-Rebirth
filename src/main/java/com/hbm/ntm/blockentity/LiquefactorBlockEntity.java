@@ -1,9 +1,10 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.energy.HbmBatteryTransfer;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -80,12 +81,8 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            if (slot == SLOT_INPUT) {
-                return level == null || findOutput(level, stack) != null;
-            }
-            if (slot == SLOT_BATTERY) {
-                return HbmBatteryTransfer.isHbmBattery(stack)
-                        || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
+            if (slot == SLOT_INPUT || slot == SLOT_BATTERY) {
+                return true;
             }
             if (slot == SLOT_UPGRADE_SPEED || slot == SLOT_UPGRADE_POWER) {
                 return stack.getItem() instanceof ItemMachineUpgrade;
@@ -103,7 +100,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> externalItemHandler =
-            LazyOptional.of(() -> new LiquefactorExternalItemHandler(items));
+            LazyOptional.of(() -> new LiquefactorExternalItemHandler(this, items));
 
     private int progress;
     private int usage = USAGE_BASE;
@@ -169,6 +166,13 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         return usage;
     }
 
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        super.provideExtraInfo(data);
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, progress > 0);
+        data.putDouble(CompatEnergyControl.D_CONSUMPTION_HE, usage);
+    }
+
     public int getProgressWidth(int maxWidth) {
         return processTime <= 0 ? 0 : progress * maxWidth / processTime;
     }
@@ -226,6 +230,17 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return FLUID_PORTS;
+    }
+
+    @Override
+    protected Iterable<EnergyPort> getEnergyPorts() {
+        return List.of(
+                EnergyPort.of(0, 4, 0, Direction.UP),
+                EnergyPort.of(0, -1, 0, Direction.DOWN),
+                EnergyPort.of(2, 1, 0, Direction.EAST),
+                EnergyPort.of(-2, 1, 0, Direction.WEST),
+                EnergyPort.of(0, 1, 2, Direction.SOUTH),
+                EnergyPort.of(0, 1, -2, Direction.NORTH));
     }
 
     @Override
@@ -352,9 +367,11 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     }
 
     private static final class LiquefactorExternalItemHandler implements IItemHandler {
+        private final LiquefactorBlockEntity owner;
         private final IItemHandlerModifiable items;
 
-        private LiquefactorExternalItemHandler(IItemHandlerModifiable items) {
+        private LiquefactorExternalItemHandler(LiquefactorBlockEntity owner, IItemHandlerModifiable items) {
+            this.owner = owner;
             this.items = items;
         }
 
@@ -370,7 +387,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
 
         @Override
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            if (slot != 0 || stack.isEmpty() || !items.isItemValid(SLOT_INPUT, stack)) {
+            if (slot != 0 || stack.isEmpty() || !owner.isValidAutomatedInput(stack)) {
                 return stack;
             }
             return items.insertItem(SLOT_INPUT, stack, simulate);
@@ -388,7 +405,11 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return slot == 0 && items.isItemValid(SLOT_INPUT, stack);
+            return slot == 0 && owner.isValidAutomatedInput(stack);
         }
+    }
+
+    private boolean isValidAutomatedInput(ItemStack stack) {
+        return !stack.isEmpty() && (level == null || findOutput(level, stack) != null);
     }
 }

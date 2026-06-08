@@ -6,6 +6,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
@@ -13,13 +14,13 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
-import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.OilDrillMenu;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.world.OilSpot;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +31,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -52,14 +56,20 @@ import org.jetbrains.annotations.Nullable;
 
 public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         implements HbmPersistentBlockState, HbmStandardFluidTransceiver, MenuProvider {
+    private static final TagKey<Block> URANIUM_ORES =
+            BlockTags.create(new ResourceLocation("forge", "ores/uranium"));
+    private static final TagKey<Block> ASBESTOS_ORES =
+            BlockTags.create(new ResourceLocation("forge", "ores/asbestos"));
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_INDICATOR = "indicator";
     private static final String TAG_SPEED_LEVEL = "speedLevel";
     private static final String TAG_ENERGY_LEVEL = "energyLevel";
     private static final String TAG_OVER_LEVEL = "overLevel";
+    private static final String TAG_AFTERBURN_LEVEL = "afterburnLevel";
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(
             UpgradeType.SPEED, 3,
             UpgradeType.POWER, 3,
+            UpgradeType.AFTERBURN, 3,
             UpgradeType.OVERDRIVE, 3);
 
     public static final int SLOT_BATTERY = 0;
@@ -90,10 +100,8 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
-                case SLOT_OIL_CONTAINER, SLOT_GAS_CONTAINER -> true;
-                case SLOT_UPGRADE_START, SLOT_UPGRADE_START + 1, SLOT_UPGRADE_END ->
-                        stack.getItem() instanceof ItemMachineUpgrade;
+                case SLOT_BATTERY, SLOT_OIL_CONTAINER, SLOT_GAS_CONTAINER,
+                     SLOT_UPGRADE_START, SLOT_UPGRADE_START + 1, SLOT_UPGRADE_END -> true;
                 default -> false;
             };
         }
@@ -111,6 +119,10 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     private int speedLevel;
     private int energyLevel;
     private int overLevel = 1;
+    private int afterburnLevel;
+    private float pumpjackRotation;
+    private float previousPumpjackRotation;
+    private float pumpjackSpeed;
 
     public OilDrillBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, Kind.fromState(state));
@@ -146,6 +158,13 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
     }
 
+    public static void clientTick(Level level, BlockPos pos, BlockState state, OilDrillBlockEntity drill) {
+        if (!level.isClientSide) {
+            return;
+        }
+        drill.tickClient();
+    }
+
     public ItemStackHandler getItems() {
         return items;
     }
@@ -173,6 +192,22 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public int getOverLevel() {
         return overLevel;
+    }
+
+    public int getAfterburnLevel() {
+        return afterburnLevel;
+    }
+
+    public float getPumpjackRotation() {
+        return pumpjackRotation;
+    }
+
+    public float getPreviousPumpjackRotation() {
+        return previousPumpjackRotation;
+    }
+
+    public float getPumpjackSpeed() {
+        return pumpjackSpeed;
     }
 
     public int getPowerReqEff() {
@@ -253,6 +288,24 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected Iterable<EnergyPort> getEnergyPorts() {
+        if (kind == Kind.PUMPJACK) {
+            Direction dir = facing();
+            Direction rot = rotatedFacing();
+            return List.of(
+                    new EnergyPort(offset(rot, 2).offset(offset(dir, 2)), dir),
+                    new EnergyPort(offset(rot, 2).offset(offset(dir.getOpposite(), 2)), dir.getOpposite()),
+                    new EnergyPort(offset(rot, 4).offset(offset(dir.getOpposite(), 2)), dir),
+                    new EnergyPort(offset(rot, 4).offset(offset(dir, 2)), dir.getOpposite()));
+        }
+        return List.of(
+                EnergyPort.of(1, 0, 0, Direction.EAST),
+                EnergyPort.of(-1, 0, 0, Direction.WEST),
+                EnergyPort.of(0, 0, 1, Direction.SOUTH),
+                EnergyPort.of(0, 0, -1, Direction.NORTH));
+    }
+
+    @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.INPUT;
     }
@@ -294,6 +347,8 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putInt(TAG_SPEED_LEVEL, speedLevel);
         tag.putInt(TAG_ENERGY_LEVEL, energyLevel);
         tag.putInt(TAG_OVER_LEVEL, overLevel);
+        tag.putInt(TAG_AFTERBURN_LEVEL, afterburnLevel);
+        tag.putFloat("pumpjackSpeed", pumpjackSpeed);
         for (int i = 0; i < getAllTanks().size(); i++) {
             getAllTanks().get(i).writeToNbt(tag, "t" + i);
         }
@@ -307,6 +362,8 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         speedLevel = tag.getInt(TAG_SPEED_LEVEL);
         energyLevel = tag.getInt(TAG_ENERGY_LEVEL);
         overLevel = Math.max(1, tag.contains(TAG_OVER_LEVEL) ? tag.getInt(TAG_OVER_LEVEL) : 1);
+        afterburnLevel = tag.getInt(TAG_AFTERBURN_LEVEL);
+        pumpjackSpeed = tag.getFloat("pumpjackSpeed");
         for (int i = 0; i < getAllTanks().size(); i++) {
             getAllTanks().get(i).readFromNbt(tag, "t" + i);
         }
@@ -325,7 +382,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void writePersistentState(CompoundTag persistent) {
-        boolean empty = getPower() == 0L && indicator == 0;
+        boolean empty = getPower() == 0L;
         for (HbmFluidTank tank : getAllTanks()) {
             if (tank.getFill() > 0) {
                 empty = false;
@@ -335,16 +392,26 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
             return;
         }
         persistent.putLong("power", getPower());
-        persistent.putInt(TAG_INDICATOR, indicator);
         for (int i = 0; i < getAllTanks().size(); i++) {
             getAllTanks().get(i).writeToNbt(persistent, "t" + i);
+        }
+    }
+
+    private void tickClient() {
+        previousPumpjackRotation = pumpjackRotation;
+        if (indicator == INDICATOR_OK) {
+            pumpjackRotation += pumpjackSpeed;
+        }
+        if (pumpjackRotation >= 360.0F) {
+            previousPumpjackRotation -= 360.0F;
+            pumpjackRotation -= 360.0F;
         }
     }
 
     @Override
     public void readPersistentState(CompoundTag persistent) {
         energy.setPower(persistent.getLong("power"));
-        indicator = persistent.getInt(TAG_INDICATOR);
+        indicator = INDICATOR_OK;
         for (int i = 0; i < getAllTanks().size(); i++) {
             getAllTanks().get(i).readFromNbt(persistent, "t" + i);
         }
@@ -406,6 +473,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     private boolean tickOilDrill(Level level, BlockPos pos) {
         boolean changed = updateUpgrades();
         long oldPower = energy.getPower();
+        changed |= runAfterburner();
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
         changed |= oldPower != energy.getPower();
         changed |= HbmFluidItemTransfer.processTransfers(items, fluidTransfers());
@@ -429,6 +497,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
             indicator = INDICATOR_BLOCKED;
             changed = true;
         }
+        changed |= updatePumpjackSpeed();
         return changed;
     }
 
@@ -445,12 +514,34 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oldSpeed = speedLevel;
         int oldEnergy = energyLevel;
         int oldOver = overLevel;
+        int oldAfterburn = afterburnLevel;
         LegacyMachineUpgradeManager.Levels levels =
                 LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
         speedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
         energyLevel = Math.min(levels.getLevel(UpgradeType.POWER), 3);
         overLevel = Math.min(levels.getLevel(UpgradeType.OVERDRIVE), 3) + 1;
-        return oldSpeed != speedLevel || oldEnergy != energyLevel || oldOver != overLevel;
+        afterburnLevel = Math.min(levels.getLevel(UpgradeType.AFTERBURN), 3);
+        return oldSpeed != speedLevel || oldEnergy != energyLevel || oldOver != overLevel
+                || oldAfterburn != afterburnLevel;
+    }
+
+    private boolean runAfterburner() {
+        int toBurn = Math.min(gasTank.getFill(), afterburnLevel * 10);
+        if (toBurn <= 0) {
+            return false;
+        }
+        gasTank.setFill(gasTank.getFill() - toBurn);
+        energy.setPower(Math.min(energy.getMaxPower(), energy.getPower() + toBurn * 5L));
+        onFluidContentsChanged();
+        return true;
+    }
+
+    private boolean updatePumpjackSpeed() {
+        float oldPumpjackSpeed = pumpjackSpeed;
+        pumpjackSpeed = kind == Kind.PUMPJACK && indicator == INDICATOR_OK
+                ? 5.0F + 2.0F * speedLevel + (overLevel - 1.0F) * 10.0F
+                : 0.0F;
+        return oldPumpjackSpeed != pumpjackSpeed;
     }
 
     private boolean advanceDrill(Level level, BlockPos pos) {
@@ -477,9 +568,40 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         BlockState state = level.getBlockState(sample);
         if (!state.isAir() && state.getBlock().getExplosionResistance() < 1000.0F
                 && state.getDestroySpeed(level, sample) >= 0.0F) {
+            onDrill(level, state);
             level.setBlock(sample, ModBlocks.OIL_PIPE.get().defaultBlockState(), Block.UPDATE_ALL);
         } else {
             indicator = INDICATOR_BLOCKED;
+        }
+    }
+
+    private void onDrill(Level level, BlockState drilledState) {
+        if (drilledState.is(URANIUM_ORES)) {
+            releaseDrillGas(level, ModBlocks.GAS_RADON_DENSE.get());
+        }
+        if (drilledState.is(ASBESTOS_ORES)) {
+            releaseDrillGas(level, ModBlocks.GAS_ASBESTOS.get());
+        }
+    }
+
+    private void releaseDrillGas(Level level, Block gasBlock) {
+        if (kind == Kind.WELL) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    placeGasIfReplaceable(level, worldPosition.offset(dx, 10, dz), gasBlock);
+                }
+            }
+        } else if (kind == Kind.PUMPJACK) {
+            for (Direction direction : List.of(Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST)) {
+                placeGasIfReplaceable(level, worldPosition.relative(direction), gasBlock);
+            }
+        }
+    }
+
+    private static void placeGasIfReplaceable(Level level, BlockPos pos, Block gasBlock) {
+        BlockState target = level.getBlockState(pos);
+        if (target.isAir() || target.canBeReplaced()) {
+            level.setBlock(pos, gasBlock.defaultBlockState(), Block.UPDATE_ALL);
         }
     }
 
@@ -571,6 +693,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (frackingTank != null) {
             frackingTank.setFill(Math.max(0, frackingTank.getFill() - Kind.FRACKING_TOWER.solutionRequired));
         }
+        OilSpot.generateOilSpot(level, worldPosition, Kind.FRACKING_TOWER.destructionRange, 10);
         playSuckEffects(level, pos);
     }
 

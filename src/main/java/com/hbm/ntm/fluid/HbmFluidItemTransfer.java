@@ -1,8 +1,11 @@
 package com.hbm.ntm.fluid;
 
 import com.hbm.ntm.api.fluid.IFillableItem;
+import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -14,6 +17,48 @@ import java.util.Random;
 
 public final class HbmFluidItemTransfer {
     private static final Random RANDOM = new Random();
+
+    public static boolean setTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot,
+            HbmFluidTank tank, Level level, BlockPos pos) {
+        return setTankTypeFromIdentifierSlot(items, inputSlot, inputSlot, tank, level, pos, 0, false);
+    }
+
+    public static boolean setTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot,
+            HbmFluidTank tank, Level level, BlockPos pos) {
+        return setTankTypeFromIdentifierSlot(items, inputSlot, outputSlot, tank, level, pos, 0, false);
+    }
+
+    public static boolean setTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot,
+            HbmFluidTank tank, Level level, BlockPos pos, int pressure, boolean forcePressure) {
+        return setTankTypeFromIdentifierSlot(items, inputSlot, inputSlot, tank, level, pos, pressure, forcePressure);
+    }
+
+    public static boolean setTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot,
+            HbmFluidTank tank, Level level, BlockPos pos, int pressure, boolean forcePressure) {
+        if (!isValidSlot(items, inputSlot) || !isValidSlot(items, outputSlot) || tank == null) {
+            return false;
+        }
+        ItemStack input = items.getStackInSlot(inputSlot);
+        if (input.isEmpty() || !(input.getItem() instanceof IFluidIdentifierItem identifier)) {
+            return false;
+        }
+        if (inputSlot != outputSlot && !items.getStackInSlot(outputSlot).isEmpty()) {
+            return false;
+        }
+        FluidType selected = identifier.getIdentifiedFluid(level, pos == null ? BlockPos.ZERO : pos, input);
+        if (selected == null || tank.getTankType() == selected) {
+            return false;
+        }
+        tank.setTankType(selected);
+        if (forcePressure) {
+            tank.withPressure(pressure);
+        }
+        if (inputSlot != outputSlot) {
+            items.setStackInSlot(outputSlot, input.copy());
+            items.setStackInSlot(inputSlot, ItemStack.EMPTY);
+        }
+        return true;
+    }
 
     public static boolean loadTankFromSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank) {
         return loadTankFromSlot(items, inputSlot, outputSlot, tank, Integer.MAX_VALUE, false);
@@ -30,7 +75,7 @@ public final class HbmFluidItemTransfer {
         if (input.getItem() instanceof HbmInfiniteFluidItem infinite) {
             return drainInfiniteItemToTank(infinite, tank, simulate);
         }
-        if (tank.getPressure() != 0) {
+        if (!HbmForgeFluidInterop.isStandardPressure(tank.getPressure())) {
             return false;
         }
         if (usesDiscreteContainerSlots(input, inputSlot, outputSlot)) {
@@ -64,7 +109,7 @@ public final class HbmFluidItemTransfer {
         if (input.getItem() instanceof HbmInfiniteFluidItem infinite) {
             return fillTankToInfiniteItem(infinite, tank, simulate);
         }
-        if (tank.getPressure() != 0) {
+        if (!HbmForgeFluidInterop.isStandardPressure(tank.getPressure())) {
             return false;
         }
         if (usesDiscreteContainerSlots(input, inputSlot, outputSlot)) {
@@ -89,7 +134,8 @@ public final class HbmFluidItemTransfer {
 
     private static TransferResult fillItemFromTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate,
             boolean useStandardContainers) {
-        if (stack.isEmpty() || tank == null || tank.isEmpty() || tank.getPressure() != 0 || maxAmount <= 0) {
+        if (stack.isEmpty() || tank == null || tank.isEmpty()
+                || !HbmForgeFluidInterop.isStandardPressure(tank.getPressure()) || maxAmount <= 0) {
             return TransferResult.empty(stack);
         }
         int amount = Math.min(maxAmount, tank.getFill());
@@ -121,7 +167,8 @@ public final class HbmFluidItemTransfer {
 
     private static TransferResult drainItemToTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate,
             boolean useStandardContainers) {
-        if (stack.isEmpty() || tank == null || tank.getPressure() != 0 || maxAmount <= 0) {
+        if (stack.isEmpty() || tank == null || !HbmForgeFluidInterop.isStandardPressure(tank.getPressure())
+                || maxAmount <= 0) {
             return TransferResult.empty(stack);
         }
         ItemStack working = stack.copy();
@@ -309,7 +356,7 @@ public final class HbmFluidItemTransfer {
     }
 
     private static TransferResult fillStandardContainerFromTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {
-        if (tank.getPressure() != 0) {
+        if (!HbmForgeFluidInterop.isStandardPressure(tank.getPressure())) {
             return TransferResult.empty(stack);
         }
         HbmFluidContainerRegistry.ContainerEntry entry = HbmFluidContainerRegistry.getContainer(tank.getTankType(), stack);

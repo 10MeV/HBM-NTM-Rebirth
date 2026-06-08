@@ -1,5 +1,7 @@
 package com.hbm.ntm.fluid.trait;
 
+import com.google.gson.JsonObject;
+
 public class ContainerFluidTrait extends FluidTrait {
     private Integer canisterColor;
     private Integer gasTankBottleColor;
@@ -42,5 +44,16 @@ public class ContainerFluidTrait extends FluidTrait {
 
     public int getGasTankLabelColorOr(int fallback) {
         return gasTankLabelColor == null ? fallback : gasTankLabelColor;
+    }
+
+    @Override
+    public void writeJson(JsonObject object) {
+        if (canisterColor != null) {
+            object.addProperty("canisterColor", canisterColor);
+        }
+        if (gasTankBottleColor != null && gasTankLabelColor != null) {
+            object.addProperty("gasTankBottleColor", gasTankBottleColor);
+            object.addProperty("gasTankLabelColor", gasTankLabelColor);
+        }
     }
 }

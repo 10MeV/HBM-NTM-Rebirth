@@ -9,9 +9,9 @@ import com.hbm.ntm.fluid.trait.PoisonFluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
 import com.hbm.ntm.fluid.trait.ToxinFluidTrait;
 import com.hbm.ntm.fluid.trait.VentRadiationFluidTrait;
+import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
-import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +86,7 @@ public final class HbmFluidContactEffects {
         }
         report.oilTicks = Math.max(report.oilTicks, 200);
         if (apply) {
-            RadiationData.setOil(living, Math.max(RadiationData.getOil(living), 200));
+            HbmLivingProperties.ensureOil(living, 200);
         }
     }
 

@@ -1,5 +1,7 @@
 package com.hbm.ntm.fluid;
 
+import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.api.fluid.HbmFluidContainerRegisterListener;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.registry.ModBlocks;
@@ -9,6 +11,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -29,6 +32,11 @@ public final class HbmFluidContainerRegistry {
             direct(new ItemStack(Items.BUCKET), new ItemStack(Items.LAVA_BUCKET), HbmFluids.LAVA, 1000),
             direct(new ItemStack(Items.GLASS_BOTTLE), PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.WATER), HbmFluids.WATER, 250),
             direct(new ItemStack(Items.GLASS_BOTTLE), new ItemStack(Items.EXPERIENCE_BOTTLE), HbmFluids.XPJUICE, 100));
+    private static final List<ContainerEntry> EXTERNAL_ENTRIES = new CopyOnWriteArrayList<>();
+    private static final List<HbmFluidContainerRegisterListener> LISTENERS = new CopyOnWriteArrayList<>();
+    private static volatile int lastInvokedListeners;
+    private static volatile int lastRegisteredContainers;
+    private static volatile int lastSkippedContainers;
 
     static {
         register(HbmFluidContainerRules.ContainerKind.CANISTER, ModItems.CANISTER_EMPTY, ModItems.CANISTER_FULL);
@@ -46,7 +54,7 @@ public final class HbmFluidContainerRegistry {
             return List.of();
         }
         List<ContainerEntry> result = new ArrayList<>();
-        for (ContainerEntry entry : directEntries()) {
+        for (ContainerEntry entry : fixedEntries()) {
             if (entry.type() == type) {
                 result.add(entry);
             }
@@ -86,7 +94,7 @@ public final class HbmFluidContainerRegistry {
         if (stack.getItem() instanceof HbmFluidContainerItem container && !(container instanceof HbmInfiniteFluidItem)) {
             return container.getFirstFluidType(stack) == type ? container.getFill(stack) : 0;
         }
-        for (ContainerEntry entry : directEntries()) {
+        for (ContainerEntry entry : fixedEntries()) {
             if (entry.type() == type && entry.matchesFull(stack)) {
                 return entry.content();
             }
@@ -102,7 +110,7 @@ public final class HbmFluidContainerRegistry {
             FluidType type = container.getFirstFluidType(stack);
             return container.getFill(stack) > 0 ? type : HbmFluids.NONE;
         }
-        for (ContainerEntry entry : directEntries()) {
+        for (ContainerEntry entry : fixedEntries()) {
             if (entry.matchesFull(stack)) {
                 return entry.type();
             }
@@ -120,7 +128,7 @@ public final class HbmFluidContainerRegistry {
             return ItemStack.EMPTY;
         }
         if (!(stack.getItem() instanceof HbmFluidContainerItem container) || container instanceof HbmInfiniteFluidItem) {
-            for (ContainerEntry entry : directEntries()) {
+            for (ContainerEntry entry : fixedEntries()) {
                 if (entry.matchesFull(stack)) {
                     return entry.copyEmptyContainer();
                 }
@@ -144,6 +152,46 @@ public final class HbmFluidContainerRegistry {
             return ItemStack.EMPTY;
         }
         return container.createFilledStack(type, HbmFluidContainerRules.capacity(kind), 0);
+    }
+
+    public static void registerFluidContainerRegisterListener(HbmFluidContainerRegisterListener listener) {
+        if (listener != null && !LISTENERS.contains(listener)) {
+            LISTENERS.add(listener);
+        }
+    }
+
+    public static boolean registerContainer(ItemStack fullContainer, ItemStack emptyContainer, FluidType type, int content) {
+        if (fullContainer == null || fullContainer.isEmpty()
+                || type == null || type == HbmFluids.NONE
+                || content <= 0) {
+            lastSkippedContainers++;
+            return false;
+        }
+        EXTERNAL_ENTRIES.add(direct(emptyContainer == null ? ItemStack.EMPTY : emptyContainer.copy(),
+                fullContainer.copy(), type, content));
+        lastRegisteredContainers++;
+        return true;
+    }
+
+    static void reloadExternalContainers() {
+        EXTERNAL_ENTRIES.clear();
+        lastInvokedListeners = 0;
+        lastRegisteredContainers = 0;
+        lastSkippedContainers = 0;
+        for (HbmFluidContainerRegisterListener listener : LISTENERS) {
+            try {
+                listener.onFluidContainersLoad();
+                lastInvokedListeners++;
+            } catch (RuntimeException ex) {
+                lastSkippedContainers++;
+                HbmNtm.LOGGER.warn("HBM fluid container register listener failed.", ex);
+            }
+        }
+    }
+
+    public static Diagnostics diagnostics() {
+        return new Diagnostics(LISTENERS.size(), lastInvokedListeners, EXTERNAL_ENTRIES.size(),
+                lastRegisteredContainers, lastSkippedContainers);
     }
 
     private static ContainerEntry entry(HbmFluidContainerRules.ContainerKind kind, FluidType type) {
@@ -180,6 +228,12 @@ public final class HbmFluidContainerRegistry {
         addLegacyConsumable(entries, "ingot_mercury", HbmFluids.MERCURY, 125);
         addLegacyConsumableBlock(entries, "ore_oil", HbmFluids.OIL, 250);
         addLegacyConsumableBlock(entries, "ore_gneiss_gas", HbmFluids.PETROLEUM, 250);
+        return entries;
+    }
+
+    private static List<ContainerEntry> fixedEntries() {
+        List<ContainerEntry> entries = directEntries();
+        entries.addAll(EXTERNAL_ENTRIES);
         return entries;
     }
 
@@ -276,6 +330,15 @@ public final class HbmFluidContainerRegistry {
 
         private String legacyOreDictionaryName(String prefix) {
             return prefix + content + type.getName().replace("_", "").toLowerCase(java.util.Locale.US);
+        }
+    }
+
+    public record Diagnostics(int listeners, int lastInvokedListeners, int externalContainers,
+            int lastRegisteredContainers, int lastSkippedContainers) {
+        public String summary() {
+            return "fluid containers listeners=" + listeners + " lastInvoked=" + lastInvokedListeners
+                    + " externalContainers=" + externalContainers + " lastRegistered=" + lastRegisteredContainers
+                    + " lastSkipped=" + lastSkippedContainers;
         }
     }
 

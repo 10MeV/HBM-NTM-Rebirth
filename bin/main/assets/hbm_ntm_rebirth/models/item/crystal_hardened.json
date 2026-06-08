@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/crystal_hardened" }
+{
+  "parent": "hbm_ntm_rebirth:block/crystal_hardened"
+}

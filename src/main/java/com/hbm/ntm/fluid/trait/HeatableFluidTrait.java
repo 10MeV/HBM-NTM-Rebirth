@@ -1,5 +1,7 @@
 package com.hbm.ntm.fluid.trait;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.hbm.ntm.fluid.FluidType;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,6 +48,26 @@ public class HeatableFluidTrait extends FluidTrait {
             double efficiency = getEfficiency(type);
             if (efficiency > 0.0D) {
                 info.add(FluidTooltipUtil.efficiency(type.displayName(), efficiency));
+            }
+        }
+    }
+
+    @Override
+    public void writeJson(JsonObject object) {
+        JsonArray stepsJson = new JsonArray();
+        for (HeatingStep step : steps) {
+            JsonObject stepJson = new JsonObject();
+            stepJson.addProperty("typeProduced", step.producedType().getName());
+            stepJson.addProperty("amountReq", step.amountRequired());
+            stepJson.addProperty("amountProd", step.amountProduced());
+            stepJson.addProperty("heatReq", step.heatRequired());
+            stepsJson.add(stepJson);
+        }
+        object.add("steps", stepsJson);
+        for (HeatingType type : HeatingType.values()) {
+            double efficiency = getEfficiency(type);
+            if (efficiency > 0.0D) {
+                object.addProperty(type.name(), efficiency);
             }
         }
     }

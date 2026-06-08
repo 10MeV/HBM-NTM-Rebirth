@@ -52,10 +52,8 @@ public class AssemblyRecipeSelectorScreen extends Screen {
     protected void init() {
         leftPos = (width - IMAGE_WIDTH) / 2;
         topPos = (height - IMAGE_HEIGHT) / 2;
-        search = new EditBox(font, leftPos + 28, topPos + 111, 102, 12, Component.empty());
-        search.setBordered(false);
-        search.setTextColor(0xFFFFFF);
-        search.setMaxLength(32);
+        search = LegacyGuiElements.createLegacyTextField(font, leftPos + 28, topPos + 111, 102, 12, 32, "",
+                0xFFFFFF);
         addRenderableWidget(search);
     }
 
@@ -136,11 +134,7 @@ public class AssemblyRecipeSelectorScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (delta > 0) {
-            page = Math.max(0, page - 1);
-        } else if (delta < 0) {
-            page = Math.min(maxPage(), page + 1);
-        }
+        page = LegacyGuiElements.applyLegacyPageScroll(page, maxPage(), delta);
         return true;
     }
 
@@ -196,9 +190,10 @@ public class AssemblyRecipeSelectorScreen extends Screen {
     private void renderHover(GuiGraphics graphics, int mouseX, int mouseY) {
         int index = hoveredRecipeIndex(mouseX, mouseY);
         if (index >= 0 && index < visibleRecipes.size()) {
-            graphics.renderTooltip(font, splitTooltip(recipeTooltip(visibleRecipes.get(index))), mouseX, mouseY);
+            LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(visibleRecipes.get(index)), mouseX,
+                    mouseY);
         } else if (isInside(mouseX, mouseY, 151, 71, 18, 18) && selectedRecipe() != null) {
-            graphics.renderTooltip(font, splitTooltip(recipeTooltip(selectedRecipe())), mouseX, mouseY);
+            LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(selectedRecipe()), mouseX, mouseY);
         } else if (isInside(mouseX, mouseY, 152, 90, 16, 16)) {
             graphics.renderTooltip(font, Component.literal("Close"), mouseX, mouseY);
         } else if (isInside(mouseX, mouseY, 134, 108, 16, 16)) {

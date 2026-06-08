@@ -8,7 +8,6 @@ import com.hbm.ntm.explosion.vnt.interfaces.EntityRangeMutator;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.enchantment.ProtectionEnchantment;
 import net.minecraft.world.level.Explosion;
@@ -40,17 +39,13 @@ public class EntityProcessorStandard implements EntityProcessor {
         ForgeEventFactory.onExplosionDetonate(level, explosion.compat(), entities, diameter);
 
         for (Entity entity : entities) {
-            if (entity.ignoreExplosion()) {
-                continue;
-            }
-
             double distanceScaled = Math.sqrt(entity.distanceToSqr(position)) / diameter;
             if (distanceScaled > 1.0D) {
                 continue;
             }
 
             double deltaX = entity.getX() - position.x;
-            double deltaY = (entity instanceof PrimedTnt ? entity.getY() : entity.getEyeY()) - position.y;
+            double deltaY = entity.getEyeY() - position.y;
             double deltaZ = entity.getZ() - position.z;
             double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
             if (distance == 0.0D) {

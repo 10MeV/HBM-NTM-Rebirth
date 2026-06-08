@@ -213,6 +213,13 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.starmetal_shovel", "Starmetal Shovel");
         add("item.hbm_ntm_rebirth.centri_stick", "Centrifugal Stick");
         add("item.hbm_ntm_rebirth.smashing_hammer", "Smashing Hammer");
+        add("item.hbm_ntm_rebirth.elec_sword", "Stunstick");
+        add("item.hbm_ntm_rebirth.elec_pickaxe", "Impact Drill");
+        add("item.hbm_ntm_rebirth.elec_axe", "Electric Chainsaw");
+        add("item.hbm_ntm_rebirth.elec_shovel", "Spiral Drill");
+        add("item.hbm_ntm_rebirth.drax", "Terra Drill (LEGACY)");
+        add("item.hbm_ntm_rebirth.drax_mk2", "Hardened Terra Drill (LEGACY)");
+        add("item.hbm_ntm_rebirth.drax_mk3", "Schrabidic Terra Drill (LEGACY)");
         add("item.hbm_ntm_rebirth.bismuth_pickaxe", "Bismuth Pickaxe");
         add("item.hbm_ntm_rebirth.bismuth_axe", "Bismuth Axe");
         add("item.hbm_ntm_rebirth.volcanic_pickaxe", "Volcanic Pickaxe");
@@ -448,6 +455,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_radar_large", "Large Radar");
         add("block.hbm_ntm_rebirth.radar_screen", "Radar Screen");
         add("block.hbm_ntm_rebirth.machine_satlinker", "Satellite ID Manager");
+        add("block.hbm_ntm_rebirth.sat_dock", "Cargo Landing Pad");
         add("item.hbm_ntm_rebirth.radar_linker", "Radar Linker");
         add("radar.detectMissiles", "Detect Missiles");
         add("radar.detectShells", "Detect Shells");
@@ -517,6 +525,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.hbm_ntm_rebirth.sat_linker.copy.1", "frequency and paste it to the second slot.");
         add("container.hbm_ntm_rebirth.sat_linker.randomize.0", "The third slot will randomize the");
         add("container.hbm_ntm_rebirth.sat_linker.randomize.1", "satellite/chip's frequency.");
+        add("container.satDock", "Cargo Landing Pad");
+        add("container.hbm_ntm_rebirth.sat_dock", "Cargo Landing Pad");
+        add("container.hbm_ntm_rebirth.sat_dock.info.0", "Requires linked miner sat chip.");
+        add("container.hbm_ntm_rebirth.sat_dock.info.1", "Cargo ship will land periodically to");
+        add("container.hbm_ntm_rebirth.sat_dock.info.2", "deliver resources.");
         add("container.hbm_ntm_rebirth.battery.red_low", "Low redstone mode");
         add("container.hbm_ntm_rebirth.battery.red_high", "High redstone mode");
         add("container.hbm_ntm_rebirth.battery.mode.input", "Input");
@@ -815,6 +828,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         if (id.startsWith("upgrade_")) {
             return true;
         }
+        if (id.endsWith("_sword") || id.endsWith("_pickaxe") || id.endsWith("_axe") || id.endsWith("_shovel")) {
+            return true;
+        }
         return switch (id) {
             case "battery_potato",
                  "battery_creative",
@@ -850,6 +866,10 @@ public class HbmLanguageProvider extends LanguageProvider {
                  "screwdriver",
                  "hand_drill",
                  "defuser",
+                 "centri_stick",
+                 "smashing_hammer",
+                 "mese_gavel",
+                 "settings_tool",
                  "pellet_antimatter",
                  "catalytic_converter",
                  "fuel_additive_antiknock",

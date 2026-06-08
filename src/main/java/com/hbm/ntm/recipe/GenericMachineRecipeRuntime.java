@@ -3,6 +3,8 @@ package com.hbm.ntm.recipe;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.energy.HbmEnergyStorage;
+import com.hbm.ntm.pollution.PollutionManager;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.util.RandomSource;
@@ -95,6 +97,14 @@ public final class GenericMachineRecipeRuntime {
             double progress, ItemStack blueprint, HbmEnergyStorage energy, ItemStackHandler items, int[] inputSlots,
             int[] outputSlots, List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks,
             ProcessingFactors factors, boolean extraCondition, int defaultTankCapacity) {
+        return update(level, machine, selectedRecipe, progress, blueprint, energy, items, inputSlots, outputSlots,
+                inputTanks, outputTanks, factors, extraCondition, defaultTankCapacity, null);
+    }
+
+    public static ProcessingResult update(Level level, GenericMachineRecipe.Machine machine, String selectedRecipe,
+            double progress, ItemStack blueprint, HbmEnergyStorage energy, ItemStackHandler items, int[] inputSlots,
+            int[] outputSlots, List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks,
+            ProcessingFactors factors, boolean extraCondition, int defaultTankCapacity, @Nullable BlockPos pollutionPos) {
         GenericMachineRecipe recipe = findByInternalName(level, machine, selectedRecipe);
         if (recipe != null && !GenericMachineRecipeSelector.isAllowedByBlueprint(recipe, blueprint)) {
             return new ProcessingResult(NULL_RECIPE, 0.0D, false, true, null, false);
@@ -121,6 +131,7 @@ public final class GenericMachineRecipeRuntime {
         }
 
         energy.setPower(energy.getPower() - requiredPower(recipe, factors.powerMultiplier()));
+        applyTickPollution(level, pollutionPos, recipe);
         double nextProgress = progress + Math.min(factors.speedMultiplier() / Math.max(recipe.getDuration(), 1), 1.0D);
         boolean completed = false;
         if (nextProgress >= 1.0D) {
@@ -136,6 +147,23 @@ public final class GenericMachineRecipeRuntime {
         }
 
         return new ProcessingResult(recipe.getInternalName(), nextProgress, true, true, recipe, completed);
+    }
+
+    private static void applyTickPollution(Level level, @Nullable BlockPos pos, GenericMachineRecipe recipe) {
+        if (pos == null || level.getGameTime() % 20 != 0) {
+            return;
+        }
+        recipe.getExtraData().pollution().ifPresent(pollution -> {
+            float amount = pollution.amount();
+            if (!Float.isFinite(amount) || amount == 0.0F) {
+                return;
+            }
+            if (amount > 0.0F) {
+                PollutionManager.incrementPollution(level, pos, pollution.type(), amount);
+            } else if (PollutionManager.getPollution(level, pos, pollution.type()) >= -amount) {
+                PollutionManager.decrementPollution(level, pos, pollution.type(), -amount);
+            }
+        });
     }
 
     public static void setupTanks(@Nullable GenericMachineRecipe recipe, List<HbmFluidTank> inputTanks,

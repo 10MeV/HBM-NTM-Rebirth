@@ -27,7 +27,6 @@ import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.ForgeEventFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
@@ -73,7 +72,7 @@ public class ExplosionVnt {
     }
 
     public void explode() {
-        if (level.isClientSide() || !(level instanceof ServerLevel serverLevel) || ForgeEventFactory.onExplosionStart(level, compat)) {
+        if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
             return;
         }
 

@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/frozen_dirt" }
+{
+  "parent": "hbm_ntm_rebirth:block/frozen_dirt"
+}

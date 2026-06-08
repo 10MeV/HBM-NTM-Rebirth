@@ -9,7 +9,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.enchantment.ProtectionEnchantment;
 import net.minecraft.world.level.Explosion;
@@ -55,17 +54,12 @@ public class EntityProcessorCross implements EntityProcessor {
         Map<Entity, Double> scaledDistanceByEntity = new HashMap<>();
 
         for (Entity entity : entities) {
-            if (entity.ignoreExplosion()) {
-                continue;
-            }
             double distanceScaled = boxDistance(entity.getBoundingBox(), position) / diameter;
             if (distanceScaled > 1.0D) {
                 continue;
             }
 
-            Vec3 delta = new Vec3(entity.getX() - position.x,
-                    (entity instanceof PrimedTnt ? entity.getY() : entity.getEyeY()) - position.y,
-                    entity.getZ() - position.z);
+            Vec3 delta = new Vec3(entity.getX() - position.x, entity.getEyeY() - position.y, entity.getZ() - position.z);
             double distance = delta.length();
             if (distance == 0.0D) {
                 continue;

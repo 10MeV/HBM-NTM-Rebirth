@@ -1,4 +1,6 @@
 {
   "parent": "minecraft:item/generated",
-  "textures": { "layer0": "hbm_ntm_rebirth:item/powder_tektite" }
+  "textures": {
+    "layer0": "hbm_ntm_rebirth:item/powder_tektite"
+  }
 }

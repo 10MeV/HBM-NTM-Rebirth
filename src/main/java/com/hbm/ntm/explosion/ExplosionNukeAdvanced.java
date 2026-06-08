@@ -104,9 +104,8 @@ public class ExplosionNukeAdvanced {
 
         distance = (int) Math.sqrt(distance);
         for (int y = distance; y > -distance * explosionCoefficient; y--) {
-            int worldY = posY + y;
-            int protection = ExplosionNukeGeneric.destruction(level, posX + x, worldY, posZ + z);
-            if (worldY < 8) {
+            int protection = ExplosionNukeGeneric.destruction(level, posX + x, posY + y, posZ + z);
+            if (y < 8) {
                 y -= protection;
             }
         }

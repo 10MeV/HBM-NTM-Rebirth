@@ -5,6 +5,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
+import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
@@ -88,6 +89,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
             return super.insertItem(slot, stack, simulate);
         }
     };
+    private final RORDispatcher ror;
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> topItemHandler = LazyOptional.of(() -> new BatterySidedItemHandler(items, SLOTS_TOP));
     private final LazyOptional<IItemHandler> bottomItemHandler = LazyOptional.of(() -> new BatterySidedItemHandler(items, SLOTS_BOTTOM));
@@ -108,6 +110,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     private MachineBatteryBlockEntity(BlockPos pos, BlockState state, BatteryEnergyStorage energy) {
         super(ModBlockEntities.MACHINE_BATTERY.get(), pos, state, energy);
         this.batteryEnergy = energy;
+        this.ror = createRorDispatcher();
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, MachineBatteryBlockEntity blockEntity) {
@@ -122,10 +125,11 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         blockEntity.handleModeTransition(currentMode);
         boolean inventoryChanged = false;
 
-        inventoryChanged |= HbmBatteryTransfer.chargeItemFromStorage(
+        long chargeItemDelta = HbmBatteryTransfer.chargeItemFromStorage(
                 blockEntity.items.getStackInSlot(SLOT_CHARGE),
                 blockEntity.energy,
-                blockEntity.energy.getMaxPower()) > 0L;
+                blockEntity.energy.getMaxPower());
+        inventoryChanged |= chargeItemDelta != 0L;
 
         switch (currentMode) {
             case MODE_INPUT -> {
@@ -140,10 +144,11 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
             }
         }
 
-        inventoryChanged |= HbmBatteryTransfer.chargeStorageFromItem(
+        long chargeStorageDelta = HbmBatteryTransfer.chargeStorageFromItem(
                 blockEntity.items.getStackInSlot(SLOT_DISCHARGE),
                 blockEntity.energy,
-                blockEntity.energy.getMaxPower()) > 0L;
+                blockEntity.energy.getMaxPower());
+        inventoryChanged |= chargeStorageDelta != 0L;
 
         blockEntity.updatePowerLog(previousPower);
 
@@ -331,35 +336,36 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
 
     @Override
     public String[] getFunctionInfo() {
-        return new String[]{
-                RORInfo.PREFIX_VALUE + "fill",
-                RORInfo.PREFIX_VALUE + "fillpercent",
-                RORInfo.PREFIX_VALUE + "delta",
-                RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "mode (0-3)",
-                RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)",
-                RORInfo.PREFIX_FUNCTION + "setredmode" + RORInteractive.NAME_SEPARATOR + "mode (0-3)",
-                RORInfo.PREFIX_FUNCTION + "setredmode" + RORInteractive.NAME_SEPARATOR + "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)",
-                RORInfo.PREFIX_FUNCTION + "setpriority" + RORInteractive.NAME_SEPARATOR + "priority (0-2)"
-        };
+        return ror.getFunctionInfo();
     }
 
     @Override
     public String provideRORValue(String name) {
-        if ((RORInfo.PREFIX_VALUE + "fill").equals(name)) {
-            return Long.toString(getPower());
-        }
-        if ((RORInfo.PREFIX_VALUE + "fillpercent").equals(name)) {
-            return Long.toString(getPowerBarHeight(100));
-        }
-        if ((RORInfo.PREFIX_VALUE + "delta").equals(name)) {
-            return Long.toString(delta);
-        }
-        return null;
+        return ror.provideValue(name);
     }
 
     @Override
     public String runRORFunction(String name, String[] params) {
-        if ((RORInfo.PREFIX_FUNCTION + "setmode").equals(name) && params.length > 0) {
+        return ror.runFunction(name, params);
+    }
+
+    private RORDispatcher createRorDispatcher() {
+        return RORDispatcher.builder()
+                .value("fill", () -> Long.toString(getPower()))
+                .value("fillpercent", () -> Long.toString(getPowerBarHeight(100)))
+                .value("delta", () -> Long.toString(delta))
+                .function("setmode", this::runRorSetMode,
+                        "mode (0-3)",
+                        "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)")
+                .function("setredmode", this::runRorSetRedMode,
+                        "mode (0-3)",
+                        "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)")
+                .function("setpriority", this::runRorSetPriority, "priority (0-2)")
+                .build();
+    }
+
+    private String runRorSetMode(String[] params) {
+        if (params.length > 0) {
             short mode = (short) RORInteractive.parseInt(params[0], MODE_INPUT, MODE_NONE);
             if (mode != redLow) {
                 redLow = mode;
@@ -367,9 +373,12 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
                 redLow = (short) RORInteractive.parseInt(params[1], MODE_INPUT, MODE_NONE);
             }
             setChanged();
-            return null;
         }
-        if ((RORInfo.PREFIX_FUNCTION + "setredmode").equals(name) && params.length > 0) {
+        return null;
+    }
+
+    private String runRorSetRedMode(String[] params) {
+        if (params.length > 0) {
             short mode = (short) RORInteractive.parseInt(params[0], MODE_INPUT, MODE_NONE);
             if (mode != redHigh) {
                 redHigh = mode;
@@ -377,12 +386,14 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
                 redHigh = (short) RORInteractive.parseInt(params[1], MODE_INPUT, MODE_NONE);
             }
             setChanged();
-            return null;
         }
-        if ((RORInfo.PREFIX_FUNCTION + "setpriority").equals(name) && params.length > 0) {
+        return null;
+    }
+
+    private String runRorSetPriority(String[] params) {
+        if (params.length > 0) {
             setPriorityByLegacyOrdinal(RORInteractive.parseInt(params[0], 0, 2) + 1);
             setChanged();
-            return null;
         }
         return null;
     }

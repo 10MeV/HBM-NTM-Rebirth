@@ -5,6 +5,7 @@ import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmExtinguishType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
@@ -21,6 +22,9 @@ import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.RefineryRecipe;
 import com.hbm.ntm.menu.RefineryMenu;
+import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.pollution.PollutionManager;
+import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.registry.ModItems;
@@ -33,6 +37,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -42,6 +47,7 @@ import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -197,6 +203,19 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
                 FluidPort.of(-1, 0, 2, Direction.SOUTH),
                 FluidPort.of(1, 0, -2, Direction.NORTH),
                 FluidPort.of(-1, 0, -2, Direction.NORTH));
+    }
+
+    @Override
+    protected Iterable<EnergyPort> getEnergyPorts() {
+        return List.of(
+                EnergyPort.of(2, 0, 1, Direction.EAST),
+                EnergyPort.of(2, 0, -1, Direction.EAST),
+                EnergyPort.of(-2, 0, 1, Direction.WEST),
+                EnergyPort.of(-2, 0, -1, Direction.WEST),
+                EnergyPort.of(1, 0, 2, Direction.SOUTH),
+                EnergyPort.of(-1, 0, 2, Direction.SOUTH),
+                EnergyPort.of(1, 0, -2, Direction.NORTH),
+                EnergyPort.of(-1, 0, -2, Direction.NORTH));
     }
 
     @Override
@@ -427,7 +446,29 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
                 changed = true;
             }
         }
+        if (changed && level != null) {
+            burnResidualArea();
+            if (level.getGameTime() % 20L == 0L) {
+                PollutionManager.incrementPollution(level, worldPosition, PollutionType.SOOT,
+                        PollutionManager.SOOT_PER_SECOND * 70.0F);
+            }
+        }
         return changed;
+    }
+
+    private void burnResidualArea() {
+        AABB area = new AABB(worldPosition.getX() - 1.5D, worldPosition.getY(), worldPosition.getZ() - 1.5D,
+                worldPosition.getX() + 2.5D, worldPosition.getY() + 8.0D, worldPosition.getZ() + 2.5D);
+        for (Entity entity : level.getEntities(null, area)) {
+            entity.setSecondsOnFire(5);
+        }
+        ParticleUtil.spawnGasFlame(level,
+                worldPosition.getX() + level.random.nextDouble(),
+                worldPosition.getY() + 1.5D + level.random.nextDouble() * 3.0D,
+                worldPosition.getZ() + level.random.nextDouble(),
+                level.random.nextGaussian() * 0.05D,
+                0.1D,
+                level.random.nextGaussian() * 0.05D);
     }
 
     private boolean tickRefinery() {
@@ -457,16 +498,8 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean setInputTypeFromIdentifier() {
-        ItemStack stack = items.getStackInSlot(SLOT_IDENTIFIER);
-        if (!(stack.getItem() instanceof IFluidIdentifierItem identifier)) {
-            return false;
-        }
-        FluidType selected = identifier.getPrimaryType(stack);
-        if (selected == null || selected == HbmFluids.NONE || inputTank().getTankType() == selected) {
-            return false;
-        }
-        inputTank().conform(new HbmFluidStack(selected, 0));
-        return true;
+        return HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
+                inputTank(), level, worldPosition);
     }
 
     private boolean refine() {
@@ -484,9 +517,6 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
                 return changed;
             }
         }
-        if (sulfur + 1 >= MAX_SULFUR && !canFitSolid(recipe.solidStack())) {
-            return changed;
-        }
         inputTank().setFill(inputTank().getFill() - INPUT_PER_OPERATION);
         energy.setPower(energy.getPower() - POWER_PER_OPERATION);
         for (int i = 0; i < outputs.length; i++) {
@@ -498,6 +528,10 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
             sulfur = 0;
         }
         isOn = true;
+        if (level != null && level.getGameTime() % 20L == 0L) {
+            PollutionManager.incrementPollution(level, worldPosition, PollutionType.SOOT,
+                    PollutionManager.SOOT_PER_SECOND * 5.0F);
+        }
         onFluidContentsChanged();
         return true;
     }
@@ -527,16 +561,6 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
                 && tank.getFill() + output.amount() <= tank.getMaxFill();
     }
 
-    private boolean canFitSolid(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return true;
-        }
-        ItemStack existing = items.getStackInSlot(SLOT_SOLID_OUTPUT);
-        return existing.isEmpty()
-                || ItemHandlerHelper.canItemStacksStack(existing, stack)
-                && existing.getCount() + stack.getCount() <= Math.min(existing.getMaxStackSize(), items.getSlotLimit(SLOT_SOLID_OUTPUT));
-    }
-
     private void addSolid(ItemStack stack) {
         if (stack.isEmpty()) {
             return;
@@ -544,6 +568,10 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         ItemStack existing = items.getStackInSlot(SLOT_SOLID_OUTPUT);
         if (existing.isEmpty()) {
             items.setStackInSlot(SLOT_SOLID_OUTPUT, stack.copy());
+            return;
+        }
+        if (!ItemHandlerHelper.canItemStacksStack(existing, stack)
+                || existing.getCount() + stack.getCount() > Math.min(existing.getMaxStackSize(), items.getSlotLimit(SLOT_SOLID_OUTPUT))) {
             return;
         }
         ItemStack merged = existing.copy();

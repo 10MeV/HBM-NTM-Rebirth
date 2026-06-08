@@ -13,7 +13,7 @@
       "ingredient": {
         "item": "hbm_ntm_rebirth:item_expensive_circuit"
       },
-      "legacy_id": "hbm_ntm_rebirth:item_expensive",
+      "legacy_id": "hbm:item_expensive",
       "legacy_meta": 2
     },
     {
@@ -21,7 +21,7 @@
       "ingredient": {
         "item": "hbm_ntm_rebirth:circuit_controller"
       },
-      "legacy_id": "hbm_ntm_rebirth:circuit",
+      "legacy_id": "hbm:circuit",
       "legacy_meta": 13
     },
     {
@@ -29,7 +29,7 @@
       "ingredient": {
         "item": "hbm_ntm_rebirth:circuit_capacitor_board"
       },
-      "legacy_id": "hbm_ntm_rebirth:circuit",
+      "legacy_id": "hbm:circuit",
       "legacy_meta": 10
     },
     {
@@ -48,5 +48,5 @@
   ],
   "pools": [],
   "power": 16000,
-  "source_order": 23
+  "source_order": 22
 }

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.hbm.ntm.config.HbmClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
@@ -49,6 +50,7 @@ public final class LegacyBusAnimationLoader {
                 double[] rotMode = rotModes.getOrDefault(modelName, new double[] { 0.0D, 1.0D, 2.0D });
                 animation.addBus(modelName, loadSequence(model.getValue().getAsJsonObject(), offset, rotMode));
             }
+            animation.setTimeMult(HbmClientConfig.legacyGunAnimationTimeMultiplier());
             animations.put(root.getKey(), animation);
         }
 

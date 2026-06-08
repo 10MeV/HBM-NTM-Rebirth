@@ -1,9 +1,11 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -82,9 +84,8 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isBatteryLike(stack);
+                case SLOT_OUTPUT, SLOT_BATTERY, SLOT_IDENTIFIER -> true;
                 case SLOT_UPGRADE_SPEED, SLOT_UPGRADE_POWER -> stack.getItem() instanceof ItemMachineUpgrade;
-                case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
                 default -> false;
             };
         }
@@ -130,6 +131,11 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
         return tank;
     }
 
+    @Override
+    public HbmFluidTank getTankToPasteFluidSettings() {
+        return tank;
+    }
+
     public int getProgress() {
         return progress;
     }
@@ -140,6 +146,13 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public int getUsage() {
         return usage;
+    }
+
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        super.provideExtraInfo(data);
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, progress > 0);
+        data.putDouble(CompatEnergyControl.D_CONSUMPTION_HE, usage);
     }
 
     public List<ItemStack> getDrops() {
@@ -179,6 +192,17 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return FLUID_PORTS;
+    }
+
+    @Override
+    protected Iterable<EnergyPort> getEnergyPorts() {
+        return List.of(
+                EnergyPort.of(0, 4, 0, Direction.UP),
+                EnergyPort.of(0, -1, 0, Direction.DOWN),
+                EnergyPort.of(2, 1, 0, Direction.EAST),
+                EnergyPort.of(-2, 1, 0, Direction.WEST),
+                EnergyPort.of(0, 1, 2, Direction.SOUTH),
+                EnergyPort.of(0, 1, -2, Direction.NORTH));
     }
 
     @Override

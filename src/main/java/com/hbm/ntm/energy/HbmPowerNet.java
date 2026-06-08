@@ -246,15 +246,17 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
                 continue;
             }
 
+            long priorityUsed = 0L;
             for (Entry<HbmEnergyReceiver> entry : receivers) {
                 double weight = (double) entry.amount / (double) priorityDemand;
                 long weightedTransfer = (long) Math.max(toTransfer * weight, 0D);
                 long toSend = clampToReceiverDemand ? Math.min(weightedTransfer, entry.amount) : weightedTransfer;
                 long accepted = toSend - entry.value.transferPower(toSend);
                 energyUsed += accepted;
+                priorityUsed += accepted;
             }
 
-            toTransfer -= energyUsed;
+            toTransfer -= priorityUsed;
         }
         return energyUsed;
     }

@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid.trait;
 
+import com.google.gson.JsonObject;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -51,6 +52,21 @@ public class PollutingFluidTrait extends FluidTrait {
                         .withStyle(ChatFormatting.RED));
             }
         }
+    }
+
+    @Override
+    public void writeJson(JsonObject object) {
+        JsonObject release = new JsonObject();
+        for (Entry<PollutionKind, Float> entry : releasePollution.entrySet()) {
+            release.addProperty(entry.getKey().legacyName(), entry.getValue());
+        }
+        object.add("release", release);
+
+        JsonObject burn = new JsonObject();
+        for (Entry<PollutionKind, Float> entry : burnPollution.entrySet()) {
+            burn.addProperty(entry.getKey().legacyName(), entry.getValue());
+        }
+        object.add("burn", burn);
     }
 
     public enum PollutionKind {

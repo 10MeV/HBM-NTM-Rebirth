@@ -1,0 +1,180 @@
+package com.hbm.ntm.world.saveddata;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+
+import java.util.Optional;
+
+public class TomImpactSavedData extends SavedData {
+    public static final String DATA_NAME = "impactData";
+    public static final String KEY = DATA_NAME;
+    public static final String key = DATA_NAME;
+    public static final String TAG_PERMA_SYNC = "tomImpact";
+    public static final String TAG_DUST = "dust";
+    public static final String TAG_FIRE = "fire";
+    public static final String TAG_IMPACT = "impact";
+    public static final float DUST_SETTLE_PER_TICK = 1.0F / 14_400_000.0F;
+    public static final float FIRE_COOL_PER_TICK = 1.0F / 24_000.0F;
+
+    private static TomImpactSavedData lastCachedUnsafe;
+
+    private float dust;
+    private float fire;
+    private boolean impact;
+
+    public static TomImpactSavedData load(CompoundTag tag) {
+        TomImpactSavedData data = new TomImpactSavedData();
+        data.dust = tag.getFloat(TAG_DUST);
+        data.fire = tag.getFloat(TAG_FIRE);
+        data.impact = tag.getBoolean(TAG_IMPACT);
+        return data;
+    }
+
+    public static TomImpactSavedData forLevel(ServerLevel level) {
+        TomImpactSavedData data = WorldSavedDataHelper.get(level, DATA_NAME, TomImpactSavedData::load,
+                TomImpactSavedData::new);
+        lastCachedUnsafe = data;
+        return data;
+    }
+
+    public static Optional<TomImpactSavedData> forLevel(Level level) {
+        Optional<TomImpactSavedData> data = WorldSavedDataHelper.get(level, DATA_NAME, TomImpactSavedData::load,
+                TomImpactSavedData::new);
+        data.ifPresent(value -> lastCachedUnsafe = value);
+        return data;
+    }
+
+    public static TomImpactSavedData getData(ServerLevel level) {
+        return forLevel(level);
+    }
+
+    public static Optional<TomImpactSavedData> getData(Level level) {
+        return forLevel(level);
+    }
+
+    public static TomImpactSavedData getLastCachedOrNull() {
+        return lastCachedUnsafe;
+    }
+
+    public static void resetLastCached() {
+        lastCachedUnsafe = null;
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag) {
+        tag.putFloat(TAG_DUST, dust);
+        tag.putFloat(TAG_FIRE, fire);
+        tag.putBoolean(TAG_IMPACT, impact);
+        return tag;
+    }
+
+    public float dust() {
+        return dust;
+    }
+
+    public void setDust(float dust) {
+        if (Float.compare(this.dust, dust) != 0) {
+            this.dust = dust;
+            setDirty();
+        }
+    }
+
+    public float fire() {
+        return fire;
+    }
+
+    public void setFire(float fire) {
+        if (Float.compare(this.fire, fire) != 0) {
+            this.fire = fire;
+            setDirty();
+        }
+    }
+
+    public boolean impact() {
+        return impact;
+    }
+
+    public void setImpact(boolean impact) {
+        if (this.impact != impact) {
+            this.impact = impact;
+            setDirty();
+        }
+    }
+
+    public boolean tickImpactClimate() {
+        float oldDust = dust;
+        float oldFire = fire;
+        if (dust > 0.0F && fire == 0.0F) {
+            dust = Math.max(0.0F, dust - DUST_SETTLE_PER_TICK);
+        }
+        if (fire > 0.0F) {
+            fire = Math.max(0.0F, fire - FIRE_COOL_PER_TICK);
+            dust = Math.min(1.0F, dust + FIRE_COOL_PER_TICK);
+        }
+        boolean changed = Float.compare(oldDust, dust) != 0 || Float.compare(oldFire, fire) != 0;
+        if (changed) {
+            setDirty();
+        }
+        return changed;
+    }
+
+    public Snapshot snapshot() {
+        return new Snapshot(dust, fire, impact);
+    }
+
+    public void applySnapshot(Snapshot snapshot) {
+        if (snapshot == null) {
+            return;
+        }
+        boolean changed = Float.compare(dust, snapshot.dust) != 0
+                || Float.compare(fire, snapshot.fire) != 0
+                || impact != snapshot.impact;
+        dust = snapshot.dust;
+        fire = snapshot.fire;
+        impact = snapshot.impact;
+        if (changed) {
+            setDirty();
+        }
+    }
+
+    public CompoundTag writeSnapshotTag() {
+        return writeSnapshotTag(snapshot());
+    }
+
+    public void appendPermaSyncData(CompoundTag data) {
+        data.put(TAG_PERMA_SYNC, writeSnapshotTag());
+    }
+
+    public static void appendPermaSyncData(ServerLevel level, CompoundTag data) {
+        forLevel(level).appendPermaSyncData(data);
+    }
+
+    public static CompoundTag writeSnapshotTag(Snapshot snapshot) {
+        CompoundTag tag = new CompoundTag();
+        if (snapshot != null) {
+            tag.putFloat(TAG_DUST, snapshot.dust);
+            tag.putFloat(TAG_FIRE, snapshot.fire);
+            tag.putBoolean(TAG_IMPACT, snapshot.impact);
+        }
+        return tag;
+    }
+
+    public static Snapshot readSnapshotTag(CompoundTag tag) {
+        CompoundTag source = tag == null ? new CompoundTag() : tag;
+        return new Snapshot(source.getFloat(TAG_DUST), source.getFloat(TAG_FIRE), source.getBoolean(TAG_IMPACT));
+    }
+
+    public static Snapshot readPermaSyncData(CompoundTag data) {
+        CompoundTag source = data == null ? new CompoundTag() : data.getCompound(TAG_PERMA_SYNC);
+        return readSnapshotTag(source);
+    }
+
+    public void markDirty() {
+        setDirty();
+    }
+
+    public record Snapshot(float dust, float fire, boolean impact) {
+    }
+}

@@ -114,6 +114,6 @@ public class RefineryScreen extends AbstractContainerScreen<RefineryMenu> {
             return;
         }
         List<Component> tooltip = menu.getTankTooltip(index, hasShiftDown());
-        graphics.renderTooltip(font, tooltip.stream().map(Component::getVisualOrderText).toList(), mouseX, mouseY);
+        LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTank(index), tooltip, mouseX, mouseY);
     }
 }

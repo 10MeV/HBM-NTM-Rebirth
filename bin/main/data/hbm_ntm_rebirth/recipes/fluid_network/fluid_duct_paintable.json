@@ -2,8 +2,12 @@
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
   "key": {
-    "A": { "item": "hbm_ntm_rebirth:plate_aluminium" },
-    "S": { "item": "hbm_ntm_rebirth:ingot_steel" }
+    "A": {
+      "item": "hbm_ntm_rebirth:plate_aluminium"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:ingot_steel"
+    }
   },
   "pattern": [
     "SAS",

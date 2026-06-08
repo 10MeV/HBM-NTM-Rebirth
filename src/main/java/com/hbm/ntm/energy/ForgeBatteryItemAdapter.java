@@ -5,9 +5,9 @@ import net.minecraftforge.energy.IEnergyStorage;
 
 public class ForgeBatteryItemAdapter implements IEnergyStorage {
     private final ItemStack stack;
-    private final HbmBatteryItem battery;
+    private final HbmChargeableItem battery;
 
-    public ForgeBatteryItemAdapter(ItemStack stack, HbmBatteryItem battery) {
+    public ForgeBatteryItemAdapter(ItemStack stack, HbmChargeableItem battery) {
         this.stack = stack;
         this.battery = battery;
     }

@@ -19,6 +19,7 @@ public final class RadiationConstants {
     public static final float TC99 = 2.75F;
     public static final float CO60 = 30.0F;
     public static final float SR90 = 15.0F;
+    public static final float CS137 = 20.0F;
     public static final float AU198 = 500.0F;
     public static final float PB209 = 10_000.0F;
     public static final float RA226 = 7.5F;

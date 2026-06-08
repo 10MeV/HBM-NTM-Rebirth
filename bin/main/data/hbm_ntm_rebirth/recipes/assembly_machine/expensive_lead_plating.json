@@ -13,7 +13,7 @@
       "ingredient": {
         "item": "hbm_ntm_rebirth:item_expensive_steel_plating"
       },
-      "legacy_id": "hbm_ntm_rebirth:item_expensive",
+      "legacy_id": "hbm:item_expensive",
       "legacy_meta": 0
     },
     {
@@ -47,5 +47,5 @@
   ],
   "pools": [],
   "power": 4000,
-  "source_order": 21
+  "source_order": 20
 }

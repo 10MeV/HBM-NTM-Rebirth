@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid.trait;
 
+import com.google.gson.JsonObject;
 import com.hbm.ntm.fluid.FluidType;
 import java.util.EnumMap;
 import java.util.List;
@@ -54,6 +55,20 @@ public class CoolableFluidTrait extends FluidTrait {
             double efficiency = getEfficiency(type);
             if (efficiency > 0.0D) {
                 info.add(FluidTooltipUtil.efficiency(type.displayName(), efficiency));
+            }
+        }
+    }
+
+    @Override
+    public void writeJson(JsonObject object) {
+        object.addProperty("coolsTo", coolsTo.getName());
+        object.addProperty("amountReq", amountRequired);
+        object.addProperty("amountProd", amountProduced);
+        object.addProperty("heatEnergy", heatEnergy);
+        for (CoolingType type : CoolingType.values()) {
+            double efficiency = getEfficiency(type);
+            if (efficiency > 0.0D) {
+                object.addProperty(type.name(), efficiency);
             }
         }
     }

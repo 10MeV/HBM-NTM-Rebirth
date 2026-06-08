@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid;
 
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -32,7 +33,7 @@ public final class HbmFluidSettingsCopy {
         if (level == null || pos == null) {
             return Optional.empty();
         }
-        BlockEntity blockEntity = level.getBlockEntity(pos);
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(level, pos);
         return blockEntity instanceof HbmFluidCopiable copiable ? Optional.of(copiable) : Optional.empty();
     }
 

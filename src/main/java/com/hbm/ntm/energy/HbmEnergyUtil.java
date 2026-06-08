@@ -65,8 +65,8 @@ public final class HbmEnergyUtil {
             long available = Math.min(provider.getPower(), maxTransfer);
             long remaining = HbmBatteryTransfer.chargeItemsFromPower(stack, available, provider.getMaxPower());
             long used = available - remaining;
-            if (used > 0L) {
-                provider.usePower(used);
+            if (used != 0L) {
+                provider.setPower(provider.getPower() - used);
             }
             return used;
         }
@@ -91,8 +91,8 @@ public final class HbmEnergyUtil {
             long cappedMaxPower = Math.min(receiver.getMaxPower(), before + maxTransfer);
             long after = HbmBatteryTransfer.chargePowerFromItem(stack, before, cappedMaxPower);
             long accepted = after - before;
-            if (accepted > 0L) {
-                receiver.transferPower(accepted);
+            if (accepted != 0L) {
+                receiver.setPower(after);
             }
             return accepted;
         }

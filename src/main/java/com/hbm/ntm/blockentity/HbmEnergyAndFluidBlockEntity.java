@@ -1,6 +1,11 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.tile.InfoProviderEC;
+import com.hbm.ntm.compat.CompatEnergyControl;
+import com.hbm.ntm.energy.HbmEnergyConnector;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyHandler;
+import com.hbm.ntm.energy.HbmLoadedEnergy;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -21,7 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockEntity {
+public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockEntity
+        implements HbmEnergyConnector, HbmEnergyHandler, HbmLoadedEnergy, InfoProviderEC {
     private static final String TAG_ENERGY = "Energy";
 
     protected final HbmEnergyStorage energy;
@@ -40,14 +46,34 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
 
     public static <T extends HbmEnergyAndFluidBlockEntity> void serverTick(Level level, BlockPos pos, BlockState state, T blockEntity) {
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, blockEntity);
+        if (!level.isClientSide) {
+            blockEntity.refreshEnergyPortSubscriptions();
+        }
     }
 
+    @Override
     public long getPower() {
         return energy.getPower();
     }
 
+    @Override
+    public void setPower(long power) {
+        energy.setPower(power);
+    }
+
+    @Override
     public long getMaxPower() {
         return energy.getMaxPower();
+    }
+
+    @Override
+    public boolean isEnergyLoaded() {
+        return level != null && !isRemoved();
+    }
+
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        CompatEnergyControl.getEnergyData(this, data);
     }
 
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
@@ -56,6 +82,43 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
 
     protected Iterable<EnergyPort> getEnergyPorts() {
         return List.of();
+    }
+
+    protected boolean canAccessEnergy(@Nullable Direction side) {
+        return getEnergySideMode(side) != HbmEnergySideMode.NONE;
+    }
+
+    protected boolean canReceiveEnergy(@Nullable Direction side) {
+        return getEnergySideMode(side).canReceive();
+    }
+
+    protected boolean canExtractEnergy(@Nullable Direction side) {
+        return getEnergySideMode(side).canExtract();
+    }
+
+    @Override
+    public boolean canConnectEnergy(@Nullable Direction side) {
+        return canAccessEnergy(side);
+    }
+
+    protected boolean shouldSubscribeAsEnergyReceiver() {
+        return getMaxPower() > 0L && canReceiveEnergy(null);
+    }
+
+    protected boolean shouldSubscribeAsEnergyProvider() {
+        return canExtractEnergy(null);
+    }
+
+    protected void refreshEnergyPortSubscriptions() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        if (shouldSubscribeAsEnergyReceiver()) {
+            HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, getEnergyPorts(), energy);
+        }
+        if (shouldSubscribeAsEnergyProvider()) {
+            HbmEnergyUtil.subscribeProviderToPorts(level, worldPosition, getEnergyPorts(), energy);
+        }
     }
 
     protected int tryProvideEnergyToPorts() {

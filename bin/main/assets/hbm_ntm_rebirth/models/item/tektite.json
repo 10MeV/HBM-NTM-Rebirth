@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/tektite" }
+{
+  "parent": "hbm_ntm_rebirth:block/tektite"
+}

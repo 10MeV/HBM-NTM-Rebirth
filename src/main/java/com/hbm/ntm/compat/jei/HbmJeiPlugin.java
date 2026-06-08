@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.LiquefactionRecipe;
 import com.hbm.ntm.recipe.ModRecipes;
+import com.hbm.ntm.recipe.PyroOvenRecipe;
 import com.hbm.ntm.registry.ModBlocks;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -44,6 +45,8 @@ public final class HbmJeiPlugin implements IModPlugin {
             RecipeType.create(HbmNtm.MOD_ID, "solidifier", HbmOilRecipe.class);
     public static final RecipeType<HbmOilRecipe> LIQUEFACTOR =
             RecipeType.create(HbmNtm.MOD_ID, "liquefactor", HbmOilRecipe.class);
+    public static final RecipeType<PyroOvenRecipe> PYRO_OVEN =
+            RecipeType.create(HbmNtm.MOD_ID, "pyro_oven", PyroOvenRecipe.class);
 
     @Override
     public ResourceLocation getPluginUid() {
@@ -84,7 +87,8 @@ public final class HbmJeiPlugin implements IModPlugin {
                         ModBlocks.MACHINE_SOLIDIFIER.get(), guiHelper),
                 new HbmOilRecipeCategory(LIQUEFACTOR,
                         Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_liquefactor", "Liquefactor"),
-                        ModBlocks.MACHINE_LIQUEFACTOR.get(), guiHelper));
+                        ModBlocks.MACHINE_LIQUEFACTOR.get(), guiHelper),
+                new PyroOvenRecipeCategory(PYRO_OVEN, ModBlocks.MACHINE_PYROOVEN.get(), guiHelper));
     }
 
     @Override
@@ -104,6 +108,7 @@ public final class HbmJeiPlugin implements IModPlugin {
                 .stream()
                 .map(HbmOilRecipe::liquefaction)
                 .toList());
+        registration.addRecipes(PYRO_OVEN, recipeManager.getAllRecipesFor(ModRecipes.PYRO_OVEN.type().get()));
     }
 
     @Override
@@ -121,6 +126,7 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_COKER.get()), COKER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_SOLIDIFIER.get()), SOLIDIFIER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_LIQUEFACTOR.get()), LIQUEFACTOR);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_PYROOVEN.get()), PYRO_OVEN);
     }
 
     private static List<GenericMachineRecipe> sorted(List<GenericMachineRecipe> recipes) {

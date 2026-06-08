@@ -1,6 +1,388 @@
 {
   "variants": {
-    "down=false,east=false,north=false,open=false,south=false,up=false,west=false": { "model": "hbm_ntm_rebirth:block/fluid_switch_off" },
-    "down=false,east=false,north=false,open=true,south=false,up=false,west=false": { "model": "hbm_ntm_rebirth:block/fluid_switch_on" }
+    "down=false,east=false,north=false,open=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=false,open=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=false,open=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=false,open=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=false,open=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=false,open=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=false,open=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=false,open=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=false,open=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=false,open=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=false,open=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=false,open=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=false,open=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=false,open=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=false,open=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=false,open=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=true,open=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=true,open=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=true,open=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=true,open=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=true,open=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=true,open=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=true,open=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=true,open=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=false,north=true,open=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=true,open=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=true,open=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=true,open=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=true,open=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=true,open=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=true,open=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=false,north=true,open=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=false,open=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=false,open=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=false,open=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=false,open=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=false,open=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=false,open=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=false,open=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=false,open=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=false,open=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=false,open=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=false,open=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=false,open=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=false,open=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=false,open=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=false,open=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=false,open=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=true,open=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=true,open=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=true,open=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=true,open=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=true,open=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=true,open=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=true,open=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=true,open=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=false,east=true,north=true,open=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=true,open=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=true,open=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=true,open=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=true,open=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=true,open=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=true,open=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=false,east=true,north=true,open=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=false,open=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=false,open=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=false,open=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=false,open=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=false,open=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=false,open=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=false,open=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=false,open=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=false,open=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=false,open=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=false,open=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=false,open=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=false,open=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=false,open=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=false,open=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=false,open=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=true,open=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=true,open=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=true,open=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=true,open=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=true,open=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=true,open=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=true,open=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=true,open=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=false,north=true,open=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=true,open=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=true,open=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=true,open=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=true,open=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=true,open=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=true,open=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=false,north=true,open=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=false,open=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=false,open=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=false,open=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=false,open=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=false,open=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=false,open=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=false,open=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=false,open=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=false,open=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=false,open=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=false,open=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=false,open=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=false,open=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=false,open=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=false,open=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=false,open=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=true,open=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=true,open=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=true,open=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=true,open=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=true,open=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=true,open=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=true,open=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=true,open=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_off"
+    },
+    "down=true,east=true,north=true,open=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=true,open=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=true,open=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=true,open=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=true,open=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=true,open=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=true,open=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    },
+    "down=true,east=true,north=true,open=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_switch_on"
+    }
   }
 }

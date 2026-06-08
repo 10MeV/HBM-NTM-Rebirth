@@ -181,6 +181,58 @@ public final class HbmFluidUtil {
         return touched;
     }
 
+    public static PortSetSnapshot inspectPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type) {
+        int total = 0;
+        int connectable = 0;
+        int withNetwork = 0;
+        int links = 0;
+        int providers = 0;
+        int receivers = 0;
+        if (ports != null) {
+            for (FluidPort port : ports) {
+                PortSnapshot snapshot = inspectPort(level, origin, port, type);
+                total++;
+                if (snapshot.connectable()) {
+                    connectable++;
+                }
+                if (snapshot.networkPresent()) {
+                    withNetwork++;
+                    links += snapshot.links();
+                    providers += snapshot.providers();
+                    receivers += snapshot.receivers();
+                }
+            }
+        }
+        return new PortSetSnapshot(total, connectable, withNetwork, links, providers, receivers);
+    }
+
+    public static PortSnapshot inspectPort(Level level, BlockPos origin, FluidPort port, FluidType type) {
+        FluidType normalizedType = type == null ? HbmFluids.NONE : type;
+        if (level == null || origin == null || port == null || normalizedType == HbmFluids.NONE) {
+            return PortSnapshot.missing(BlockPos.ZERO, Direction.NORTH, normalizedType);
+        }
+        BlockPos connectorPos = port.connectorPos(origin);
+        Direction connectorSide = port.connectorSide();
+        BlockEntity connector = level.getBlockEntity(connectorPos);
+        boolean connectorPresent = connector instanceof HbmFluidConnector;
+        boolean connectable = connectorPresent
+                && ((HbmFluidConnector) connector).canConnectFluid(normalizedType, connectorSide);
+        if (!connectable) {
+            return new PortSnapshot(connectorPos, connectorSide, normalizedType.getName(),
+                    connectorPresent, false, false, false, 0, 0, 0);
+        }
+        HbmFluidNode node = HbmFluidNodespace.getNode(level, connectorPos, normalizedType);
+        HbmFluidNet fluidNet = node == null ? null : node.getFluidNet();
+        boolean networkPresent = fluidNet != null && fluidNet.isValid();
+        if (!networkPresent) {
+            return new PortSnapshot(connectorPos, connectorSide, normalizedType.getName(),
+                    true, true, node != null, false, 0, 0, 0);
+        }
+        HbmFluidNet.DebugSnapshot snapshot = fluidNet.createDebugSnapshot();
+        return new PortSnapshot(connectorPos, connectorSide, normalizedType.getName(),
+                true, true, true, true, snapshot.links(), snapshot.providers(), snapshot.receivers());
+    }
+
     public static HbmFluidNet getConnectableFluidNet(Level level, BlockPos connectorPos, Direction connectorSide,
             FluidType type) {
         if (level == null || connectorPos == null || connectorSide == null || type == null || type == HbmFluids.NONE) {
@@ -228,7 +280,8 @@ public final class HbmFluidUtil {
 
     private static long provideDirectlyToForgeHandler(Level level, BlockEntity target, Direction targetSide,
             FluidType type, int pressure, HbmFluidProvider provider) {
-        if (target == null || pressure != 0 || !HbmFluidForgeMappings.canExport(type)) {
+        if (target == null || !HbmForgeFluidInterop.isStandardPressure(pressure)
+                || !HbmFluidForgeMappings.canExport(type)) {
             return 0L;
         }
         int amount = (int) Math.min(Integer.MAX_VALUE, Math.min(
@@ -248,5 +301,32 @@ public final class HbmFluidUtil {
             provider.useUpFluid(type, pressure, accepted);
         }
         return accepted;
+    }
+
+    public record PortSnapshot(
+            BlockPos connectorPos,
+            Direction connectorSide,
+            String fluid,
+            boolean connectorPresent,
+            boolean connectable,
+            boolean nodePresent,
+            boolean networkPresent,
+            int links,
+            int providers,
+            int receivers) {
+        private static PortSnapshot missing(BlockPos connectorPos, Direction connectorSide, FluidType type) {
+            FluidType normalizedType = type == null ? HbmFluids.NONE : type;
+            return new PortSnapshot(connectorPos, connectorSide, normalizedType.getName(),
+                    false, false, false, false, 0, 0, 0);
+        }
+    }
+
+    public record PortSetSnapshot(
+            int totalPorts,
+            int connectablePorts,
+            int networkedPorts,
+            int links,
+            int providers,
+            int receivers) {
     }
 }

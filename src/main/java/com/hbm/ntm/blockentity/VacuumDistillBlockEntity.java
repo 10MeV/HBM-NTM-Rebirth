@@ -1,8 +1,6 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
-import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -18,7 +16,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.ItemStackHandler;
 
 public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
@@ -94,10 +91,8 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
     @Override
     protected boolean isItemValid(int slot, ItemStack stack) {
         return switch (slot) {
-            case SLOT_BATTERY -> stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
-            case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
-            case SLOT_OUTPUT_HEAVY_CONTAINER, SLOT_OUTPUT_REFORMATE_CONTAINER, SLOT_OUTPUT_LIGHT_CONTAINER,
-                 SLOT_OUTPUT_GAS_CONTAINER -> true;
+            case SLOT_BATTERY, SLOT_OUTPUT_HEAVY_CONTAINER, SLOT_OUTPUT_REFORMATE_CONTAINER,
+                 SLOT_OUTPUT_LIGHT_CONTAINER, SLOT_OUTPUT_GAS_CONTAINER, SLOT_IDENTIFIER -> true;
             default -> false;
         };
     }
@@ -122,20 +117,8 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
 
     private boolean setInputTypeFromIdentifier() {
         ItemStackHandler items = getItems();
-        if (items == null) {
-            return false;
-        }
-        ItemStack stack = items.getStackInSlot(SLOT_IDENTIFIER);
-        if (!(stack.getItem() instanceof IFluidIdentifierItem identifier)) {
-            return false;
-        }
-        FluidType selected = identifier.getPrimaryType(stack);
-        if (selected == null || selected == HbmFluids.NONE || inputTank.getTankType() == selected) {
-            return false;
-        }
-        inputTank.conform(new com.hbm.ntm.fluid.HbmFluidStack(selected, 0, 2));
-        inputTank.withPressure(2);
-        return true;
+        return items != null && HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
+                inputTank, level, worldPosition, 2, true);
     }
 
     private boolean processFluidContainers() {

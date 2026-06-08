@@ -494,7 +494,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
             ProcessingResult result = GenericMachineRecipeRuntime.update(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE,
                     selectedRecipes[i], progress[i], items.getStackInSlot(blueprintSlot(i)), energy, items,
                     inputSlots(i), new int[] {outputSlot(i)}, List.of(inputTanks[i]), List.of(outputTanks[i]),
-                    upgradeFactors(), canCool(), TANK_CAPACITY);
+                    upgradeFactors(), canCool(), TANK_CAPACITY, worldPosition);
             selectedRecipes[i] = result.selectedRecipe();
             progress[i] = result.progress();
             didProcess[i] = result.didProcess();

@@ -82,12 +82,9 @@ public final class HazardRegistry {
 
     private static void registerTransformers() {
         TRANSFORMERS.add(new NbtRadiationHazardTransformer());
-        if (!(RadiationConfig.ENABLE_LESS_BULLSHIT_MODE.get() && RadiationConfig.LBSM_SAFE_CRATES.get())) {
-            TRANSFORMERS.add(new ContainerRadiationHazardTransformer());
-        }
-        if (!(RadiationConfig.ENABLE_LESS_BULLSHIT_MODE.get() && RadiationConfig.LBSM_SAFE_ME_DRIVES.get())) {
-            TRANSFORMERS.add(new MeRadiationHazardTransformer());
-        }
+        // LBSM hazard bypasses are intentionally not modernized; keep legacy standard-mode behavior.
+        TRANSFORMERS.add(new ContainerRadiationHazardTransformer());
+        TRANSFORMERS.add(new MeRadiationHazardTransformer());
     }
 
     private static void registerVanillaHazards() {
@@ -335,8 +332,16 @@ public final class HazardRegistry {
         registerByName("nuclear_waste_vitrified", HazardType.RADIATION, RadiationConstants.WASTE_VITRIFIED * RadiationConstants.INGOT);
         registerByName("nuclear_waste_vitrified_tiny", HazardType.RADIATION, RadiationConstants.WASTE_VITRIFIED * RadiationConstants.NUGGET);
         registerByName("gem_rad", HazardType.RADIATION, 25.0F);
+        registerByName("powder_neptunium", HazardType.RADIATION, RadiationConstants.NP237 * RadiationConstants.POWDER_MULTIPLIER);
         registerByName("powder_yellowcake", HazardType.RADIATION, RadiationConstants.YELLOWCAKE * RadiationConstants.POWDER_MULTIPLIER);
         registerByName("fallout", HazardType.RADIATION, RadiationConstants.FALLOUT * RadiationConstants.POWDER_MULTIPLIER);
+        registerByName("powder_strontium",
+                new HazardEntry(HazardType.HYDROACTIVE, 1.0F),
+                new HazardEntry(HazardType.HOT, 1.0F));
+        registerByName("powder_cs137",
+                new HazardEntry(HazardType.RADIATION, RadiationConstants.CS137),
+                new HazardEntry(HazardType.HYDROACTIVE, 3.0F),
+                new HazardEntry(HazardType.HOT, 3.0F));
         registerByName("powder_caesium",
                 new HazardEntry(HazardType.HYDROACTIVE, 1.0F),
                 new HazardEntry(HazardType.HOT, 3.0F));

@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:pyro_oven",
+  "input_fluid": {
+    "fluid": "STEAM",
+    "amount": 250
+  },
+  "input_item": {
+    "ingredient": {
+      "tag": "forge:gems/any_coke"
+    },
+    "count": 1
+  },
+  "output_fluid": {
+    "fluid": "SYNGAS",
+    "amount": 1000
+  },
+  "duration": 100
+}

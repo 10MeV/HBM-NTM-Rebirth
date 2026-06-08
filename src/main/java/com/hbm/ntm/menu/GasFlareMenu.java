@@ -1,9 +1,7 @@
 package com.hbm.ntm.menu;
 
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.GasFlareBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
-import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -17,9 +15,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.SlotItemHandler;
 
 public class GasFlareMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = 6;
@@ -42,23 +37,12 @@ public class GasFlareMenu extends AbstractContainerMenu {
     public GasFlareMenu(int containerId, Inventory playerInventory, GasFlareBlockEntity blockEntity) {
         super(ModMenuTypes.GAS_FLARE.get(), containerId);
         this.blockEntity = blockEntity;
-        ItemStackHandler items = blockEntity.getItems();
-        addSlot(new SlotItemHandler(items, GasFlareBlockEntity.SLOT_ENERGY_OUTPUT, 143, 71) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
-            }
-        });
-        addSlot(new SlotItemHandler(items, GasFlareBlockEntity.SLOT_FLUID_INPUT, 17, 17));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, GasFlareBlockEntity.SLOT_FLUID_OUTPUT, 17, 53));
-        addSlot(new SlotItemHandler(items, GasFlareBlockEntity.SLOT_IDENTIFIER, 35, 71) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof IFluidIdentifierItem;
-            }
-        });
-        addSlot(upgradeSlot(items, GasFlareBlockEntity.SLOT_UPGRADE_SPEED, 80, 71));
-        addSlot(upgradeSlot(items, GasFlareBlockEntity.SLOT_UPGRADE_EFFECT, 98, 71));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), GasFlareBlockEntity.SLOT_ENERGY_OUTPUT, 143, 71));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), GasFlareBlockEntity.SLOT_FLUID_INPUT, 17, 17));
+        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), GasFlareBlockEntity.SLOT_FLUID_OUTPUT, 17, 53));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), GasFlareBlockEntity.SLOT_IDENTIFIER, 35, 71));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), GasFlareBlockEntity.SLOT_UPGRADE_SPEED, 80, 71));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), GasFlareBlockEntity.SLOT_UPGRADE_EFFECT, 98, 71));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 121, 179);
         addDataSlots();
     }
@@ -166,15 +150,6 @@ public class GasFlareMenu extends AbstractContainerMenu {
             }
         });
         tank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getTank());
-    }
-
-    private static SlotItemHandler upgradeSlot(ItemStackHandler items, int slot, int x, int y) {
-        return new SlotItemHandler(items, slot, x, y) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof ItemMachineUpgrade;
-            }
-        };
     }
 
     private static GasFlareBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

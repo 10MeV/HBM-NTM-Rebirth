@@ -7,6 +7,7 @@ import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.render.LegacyMultiblockHighlightRenderer;
+import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.damage.DamageResistanceTooltipUtil;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.client.renderer.NukeTorexRenderer;
@@ -35,6 +36,7 @@ import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.event.RenderHighlightEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -53,6 +55,7 @@ import java.util.Map;
 public final class ClientForgeEvents {
     private static boolean hadLevel;
     private static boolean pushedNukeHudShake;
+    private static float renderSoot;
     private static final Map<Integer, Long> VANISHED_ENTITIES = new HashMap<>();
 
     @SubscribeEvent
@@ -181,6 +184,7 @@ public final class ClientForgeEvents {
         HbmRenderEffects.tick();
         HbmOverheadMarkers.tick();
         HbmBlackHoleEffects.tick();
+        updateSootFog();
         pruneNetworkTransfers();
         pruneVanishedEntities();
 
@@ -194,6 +198,35 @@ public final class ClientForgeEvents {
         }
         hadLevel = true;
         spawnRadiationAura(minecraft);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onRenderFog(ViewportEvent.RenderFog event) {
+        float soot = visibleSoot();
+        if (soot <= 0.0F) {
+            return;
+        }
+
+        float farPlaneDistance = Minecraft.getInstance().options.renderDistance().get() * 16.0F;
+        float fogDistance = farPlaneDistance
+                / (1.0F + soot * 5.0F / RadiationConfig.POLLUTION_SOOT_FOG_DIVISOR.get().floatValue());
+        event.setNearPlaneDistance(0.0F);
+        event.setFarPlaneDistance(fogDistance);
+        event.setCanceled(true);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onFogColor(ViewportEvent.ComputeFogColor event) {
+        float soot = visibleSoot();
+        if (soot <= 0.0F) {
+            return;
+        }
+
+        float interpolation = Math.min(soot / RadiationConfig.POLLUTION_SOOT_FOG_DIVISOR.get().floatValue(), 1.0F);
+        float sootColor = 0.15F;
+        event.setRed(Mth.lerp(interpolation, event.getRed(), sootColor));
+        event.setGreen(Mth.lerp(interpolation, event.getGreen(), sootColor));
+        event.setBlue(Mth.lerp(interpolation, event.getBlue(), sootColor));
     }
 
     private static void spawnRadiationAura(Minecraft minecraft) {
@@ -292,6 +325,8 @@ public final class ClientForgeEvents {
         ClientTileBinaryData.clearAll();
         ClientBiomeSyncData.clearAll();
         ClientPermaSyncData.clearAll();
+        ClientPollutionData.clearAll();
+        ClientTomImpactData.clearAll();
         ClientPlayerSyncData.clearAll();
         ClientHbmPlayerProperties.clearAll();
         ClientRadiationData.clearAll();
@@ -307,6 +342,31 @@ public final class ClientForgeEvents {
         EntitySyncPacket.clearClientResyncRequests();
         LegacyHbmAnimations.clearAll();
         VANISHED_ENTITIES.clear();
+        renderSoot = 0.0F;
+    }
+
+    private static void updateSootFog() {
+        if (!RadiationConfig.ENABLE_POLLUTION.get() || !RadiationConfig.ENABLE_POLLUTION_SOOT_FOG.get()) {
+            renderSoot = 0.0F;
+            return;
+        }
+
+        float target = ClientPollutionData.getSoot();
+        float step = 0.05F;
+        if (Math.abs(renderSoot - target) < step) {
+            renderSoot = target;
+        } else if (renderSoot < target) {
+            renderSoot += step;
+        } else {
+            renderSoot -= step;
+        }
+    }
+
+    private static float visibleSoot() {
+        if (!RadiationConfig.ENABLE_POLLUTION.get() || !RadiationConfig.ENABLE_POLLUTION_SOOT_FOG.get()) {
+            return 0.0F;
+        }
+        return Math.max(0.0F, renderSoot - RadiationConfig.POLLUTION_SOOT_FOG_THRESHOLD.get().floatValue());
     }
 
     private static void renderNukeFlash(RenderGuiOverlayEvent.Pre event) {

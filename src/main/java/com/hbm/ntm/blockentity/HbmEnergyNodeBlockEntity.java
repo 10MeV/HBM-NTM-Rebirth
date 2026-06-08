@@ -40,11 +40,19 @@ public abstract class HbmEnergyNodeBlockEntity extends BlockEntity implements Hb
         if (level == null || level.isClientSide) {
             return;
         }
+        if (!shouldCreateEnergyNode()) {
+            removeEnergyNode();
+            return;
+        }
         if (energyNode != null) {
             HbmEnergyNodespace.destroyNode(level, worldPosition);
             energyNode = null;
         }
         energyNode = HbmEnergyNodespace.createNode(level, createEnergyNode());
+    }
+
+    protected boolean shouldCreateEnergyNode() {
+        return true;
     }
 
     @Override

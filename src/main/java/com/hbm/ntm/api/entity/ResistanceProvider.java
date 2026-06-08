@@ -6,7 +6,10 @@ import net.minecraft.world.damagesource.DamageSource;
  * Modern counterpart of the legacy IResistanceProvider contract.
  */
 public interface ResistanceProvider {
-    float[] getCurrentDtDr(DamageSource damage, float amount, float pierceDt, float pierceDr);
+    default float[] getCurrentDtDr(DamageSource damage, float amount, float pierceDt, float pierceDr) {
+        return new float[] { 0.0F, 0.0F };
+    }
 
-    void onDamageDealt(DamageSource damage, float amount);
+    default void onDamageDealt(DamageSource damage, float amount) {
+    }
 }

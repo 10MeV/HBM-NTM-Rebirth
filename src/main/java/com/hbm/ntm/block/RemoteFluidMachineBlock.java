@@ -68,7 +68,8 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
             BlockHitResult hit) {
         if (level.getBlockEntity(pos) instanceof LegacyRemoteFluidMachineBlockEntity machine) {
             ItemStack held = player.getItemInHand(hand);
-            if (machine.canSetInputTypeWithIdentifier()
+            if (!player.isShiftKeyDown()
+                    && machine.canSetInputTypeWithIdentifier()
                     && held.getItem() instanceof IFluidIdentifierItem identifier) {
                 if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
                     if (machine instanceof FractionTowerBlockEntity fractionTower && !fractionTower.isBottomSegment()) {
@@ -102,6 +103,15 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        if (kind == Kind.VACUUM_DISTILL && type == ModBlockEntities.VACUUM_DISTILL.get()) {
+            return level.isClientSide
+                    ? (tickLevel, tickPos, tickState, blockEntity) ->
+                    VacuumDistillBlockEntity.clientTick(tickLevel, tickPos, tickState,
+                            (VacuumDistillBlockEntity) blockEntity)
+                    : (tickLevel, tickPos, tickState, blockEntity) ->
+                    VacuumDistillBlockEntity.serverTick(tickLevel, tickPos, tickState,
+                            (VacuumDistillBlockEntity) blockEntity);
+        }
         if (level.isClientSide) {
             return null;
         }
@@ -114,15 +124,6 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
             return (tickLevel, tickPos, tickState, blockEntity) ->
                     CatalyticReformerBlockEntity.serverTick(tickLevel, tickPos, tickState,
                             (CatalyticReformerBlockEntity) blockEntity);
-        }
-        if (kind == Kind.VACUUM_DISTILL && type == ModBlockEntities.VACUUM_DISTILL.get()) {
-            return level.isClientSide
-                    ? (tickLevel, tickPos, tickState, blockEntity) ->
-                    VacuumDistillBlockEntity.clientTick(tickLevel, tickPos, tickState,
-                            (VacuumDistillBlockEntity) blockEntity)
-                    : (tickLevel, tickPos, tickState, blockEntity) ->
-                    VacuumDistillBlockEntity.serverTick(tickLevel, tickPos, tickState,
-                            (VacuumDistillBlockEntity) blockEntity);
         }
         if (kind == Kind.FRACTION_TOWER && type == ModBlockEntities.FRACTION_TOWER.get()) {
             return (tickLevel, tickPos, tickState, blockEntity) ->
@@ -203,11 +204,11 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
         COKER;
 
         public boolean hasPersistentBlockDrop() {
-            return this == CATALYTIC_REFORMER || this == VACUUM_DISTILL || this == HYDROTREATER;
+            return false;
         }
 
         public boolean hasPersistentTooltip() {
-            return this == CATALYTIC_REFORMER || this == HYDROTREATER;
+            return false;
         }
 
         public int persistentTankCount() {

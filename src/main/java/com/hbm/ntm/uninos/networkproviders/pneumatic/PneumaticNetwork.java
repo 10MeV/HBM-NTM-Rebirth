@@ -100,6 +100,9 @@ public class PneumaticNetwork extends HbmNodeNet<PneumaticNode> {
     public void destroy() {
         super.destroy();
         receivers.clear();
+        for (PneumaticStackCache accessor : accessors) {
+            accessor.dissolveCache();
+        }
         accessors.clear();
         storages.clear();
         lastTransfer = 0;
@@ -115,6 +118,9 @@ public class PneumaticNetwork extends HbmNodeNet<PneumaticNode> {
         Map<PneumaticReceiver, Long> oldReceivers = new LinkedHashMap<>(pneumaticNetwork.receivers);
         LinkedHashSet<PneumaticStackCache> oldAccessors = new LinkedHashSet<>(pneumaticNetwork.accessors);
         LinkedHashSet<PneumaticSlotMonitorProvider> oldStorages = new LinkedHashSet<>(pneumaticNetwork.storages);
+        pneumaticNetwork.receivers.clear();
+        pneumaticNetwork.accessors.clear();
+        pneumaticNetwork.storages.clear();
         super.joinNetwork(network);
         receivers.putAll(oldReceivers);
         accessors.addAll(oldAccessors);

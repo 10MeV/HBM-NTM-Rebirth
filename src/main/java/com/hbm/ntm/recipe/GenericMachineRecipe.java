@@ -253,6 +253,10 @@ public class GenericMachineRecipe implements Recipe<Container> {
             appendSearch(builder, Long.toString(fusion.outputTemp()));
             appendSearch(builder, Double.toString(fusion.outputFlux()));
         });
+        extraData.pollution().ifPresent(pollution -> {
+            appendSearch(builder, pollution.type().id());
+            appendSearch(builder, Float.toString(pollution.amount()));
+        });
         for (HbmIngredient input : itemInputs) {
             appendSearch(builder, input.legacyOreName());
             input.displayStacks().forEach(stack -> appendSearch(builder, stack.getHoverName().getString()));
@@ -292,6 +296,10 @@ public class GenericMachineRecipe implements Recipe<Container> {
                     .append(Component.literal(": " + Math.floor(fusion.outputFlux() * 10.0D) / 10.0D + " flux/t"))
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
         });
+        extraData.pollution().ifPresent(pollution -> lines.add(
+                Component.translatableWithFallback("gui.recipe.pollution", "Pollution")
+                        .append(Component.literal(": " + pollution.type().id() + " " + pollution.amount()))
+                        .withStyle(ChatFormatting.DARK_GRAY)));
     }
 
     @Nullable

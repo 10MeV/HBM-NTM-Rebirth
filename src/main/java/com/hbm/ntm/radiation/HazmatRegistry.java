@@ -1,5 +1,9 @@
 package com.hbm.ntm.radiation;
 
+import com.hbm.ntm.armor.ArmorModHandler;
+import com.hbm.ntm.armor.ArmorModItems;
+import com.hbm.ntm.api.item.GasMask;
+import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.world.entity.LivingEntity;
@@ -9,8 +13,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public final class HazmatRegistry {
     public static final double HELMET = 0.2D;
@@ -19,8 +25,12 @@ public final class HazmatRegistry {
     public static final double BOOTS = 0.1D;
 
     private static final Map<Item, Double> RESISTANCE = new IdentityHashMap<>();
+    private static final Map<Item, EnumSet<HazardClass>> PROTECTION = new IdentityHashMap<>();
+    private static final int MAX_ARMOR_MOD_PROTECTION_DEPTH = 8;
 
     public static void registerDefaults() {
+        clear();
+
         double iron = 0.0225D;
         double gold = 0.0225D;
         double diamond = 0.07D;
@@ -68,11 +78,49 @@ public final class HazmatRegistry {
         registerLegacyPiece("jackt2", 0.1D);
         registerLegacyPiece("gas_mask", 0.07D);
         registerLegacyPiece("gas_mask_m65", 0.095D);
+
+        registerDefaultProtection();
     }
 
     public static void registerHazmat(Item item, double resistance) {
         RESISTANCE.put(item, Math.max(0.0D, resistance));
         RadiationShieldingRegistry.register(item, (float) Math.max(0.0D, resistance));
+    }
+
+    public static void clear() {
+        RESISTANCE.clear();
+        PROTECTION.clear();
+        RadiationShieldingRegistry.clear();
+    }
+
+    public static void clearResistances() {
+        RESISTANCE.clear();
+        RadiationShieldingRegistry.clear();
+    }
+
+    public static void replaceResistances(Map<Item, Double> resistances) {
+        clearResistances();
+        for (Map.Entry<Item, Double> entry : resistances.entrySet()) {
+            registerHazmat(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public static Map<Item, Double> resistanceSnapshot() {
+        return Map.copyOf(RESISTANCE);
+    }
+
+    public static RegistrySnapshot registrySnapshot() {
+        return new RegistrySnapshot(RESISTANCE.size(), PROTECTION.size());
+    }
+
+    public static void registerProtection(Item item, HazardClass... protections) {
+        if (protections.length == 0) {
+            return;
+        }
+        EnumSet<HazardClass> registered = PROTECTION.computeIfAbsent(item, ignored -> EnumSet.noneOf(HazardClass.class));
+        for (HazardClass protection : protections) {
+            registered.add(protection);
+        }
     }
 
     public static double getResistance(ItemStack stack) {
@@ -89,6 +137,12 @@ public final class HazmatRegistry {
                 cladding = stack.getTag().getFloat("cladding");
             }
         }
+        if (cladding == 0.0D && ArmorModHandler.hasMods(stack)) {
+            ItemStack claddingMod = ArmorModHandler.pryMod(stack, ArmorModHandler.cladding);
+            if (claddingMod.getItem() instanceof ArmorModItems.Cladding claddingItem) {
+                cladding = claddingItem.radiationResistance();
+            }
+        }
         return RESISTANCE.getOrDefault(stack.getItem(), 0.0D) + cladding;
     }
 
@@ -101,6 +155,46 @@ public final class HazmatRegistry {
             resistance += 0.2F;
         }
         return resistance;
+    }
+
+    public static Set<HazardClass> getProtection(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return EnumSet.noneOf(HazardClass.class);
+        }
+        EnumSet<HazardClass> protections = PROTECTION.get(stack.getItem());
+        if (protections == null) {
+            return EnumSet.noneOf(HazardClass.class);
+        }
+        return EnumSet.copyOf(protections);
+    }
+
+    public static Set<HazardClass> getProtectionFromItem(ItemStack stack, LivingEntity entity) {
+        return getProtectionFromItem(stack, entity, 0);
+    }
+
+    private static Set<HazardClass> getProtectionFromItem(ItemStack stack, LivingEntity entity, int depth) {
+        Set<HazardClass> protections = getProtection(stack);
+        if (stack == null || stack.isEmpty()) {
+            return protections;
+        }
+        if (stack.getItem() instanceof GasMask mask) {
+            ItemStack filter = mask.getFilter(stack, entity);
+            if (filter != null && !filter.isEmpty() && mask.isFilterApplicable(stack, entity, filter)) {
+                Set<HazardClass> filterProtection = getProtection(filter);
+                for (HazardClass blacklisted : mask.getBlacklist(stack, entity)) {
+                    filterProtection.remove(blacklisted);
+                }
+                protections.addAll(filterProtection);
+            }
+        }
+        if (depth < MAX_ARMOR_MOD_PROTECTION_DEPTH && ArmorModHandler.hasMods(stack)) {
+            for (ItemStack mod : ArmorModHandler.pryMods(stack)) {
+                if (!mod.isEmpty()) {
+                    protections.addAll(getProtectionFromItem(mod, entity, depth + 1));
+                }
+            }
+        }
+        return protections;
     }
 
     public static float calculateRadiationModifier(LivingEntity entity) {
@@ -131,6 +225,69 @@ public final class HazmatRegistry {
         }
     }
 
+    private static void registerDefaultProtection() {
+        registerLegacyProtection("gas_mask_filter",
+                HazardClass.PARTICLE_COARSE,
+                HazardClass.PARTICLE_FINE,
+                HazardClass.GAS_LUNG,
+                HazardClass.GAS_BLISTERING,
+                HazardClass.BACTERIA);
+        registerLegacyProtection("gas_mask_filter_mono",
+                HazardClass.PARTICLE_COARSE,
+                HazardClass.GAS_MONOXIDE);
+        registerLegacyProtection("gas_mask_filter_combo",
+                HazardClass.PARTICLE_COARSE,
+                HazardClass.PARTICLE_FINE,
+                HazardClass.GAS_LUNG,
+                HazardClass.GAS_BLISTERING,
+                HazardClass.BACTERIA,
+                HazardClass.GAS_MONOXIDE);
+        registerLegacyProtection("gas_mask_filter_rag", HazardClass.PARTICLE_COARSE);
+        registerLegacyProtection("gas_mask_filter_piss", HazardClass.PARTICLE_COARSE, HazardClass.GAS_LUNG);
+
+        registerLegacyProtection("gas_mask", HazardClass.SAND, HazardClass.LIGHT);
+        registerLegacyProtection("gas_mask_m65", HazardClass.SAND);
+        registerLegacyProtection("mask_rag", HazardClass.PARTICLE_COARSE);
+        registerLegacyProtection("mask_piss", HazardClass.PARTICLE_COARSE, HazardClass.GAS_LUNG);
+        registerLegacyProtection("goggles", HazardClass.LIGHT, HazardClass.SAND);
+        registerLegacyProtection("ashglasses", HazardClass.LIGHT, HazardClass.SAND);
+        registerLegacyProtection("attachment_mask", HazardClass.SAND);
+        registerLegacyProtection("asbestos_helmet", HazardClass.SAND, HazardClass.LIGHT);
+        registerLegacyProtection("hazmat_helmet", HazardClass.SAND);
+        registerLegacyProtection("hazmat_helmet_red", HazardClass.SAND);
+        registerLegacyProtection("hazmat_helmet_grey", HazardClass.SAND);
+        registerLegacyProtection("hazmat_paa_helmet", HazardClass.LIGHT, HazardClass.SAND);
+        registerLegacyProtection("liquidator_helmet", HazardClass.LIGHT, HazardClass.SAND);
+        registerLegacyProtection("schrabidium_helmet",
+                HazardClass.PARTICLE_COARSE,
+                HazardClass.PARTICLE_FINE,
+                HazardClass.GAS_LUNG,
+                HazardClass.BACTERIA,
+                HazardClass.GAS_BLISTERING,
+                HazardClass.GAS_MONOXIDE,
+                HazardClass.LIGHT,
+                HazardClass.SAND);
+        registerLegacyProtection("euphemium_helmet",
+                HazardClass.PARTICLE_COARSE,
+                HazardClass.PARTICLE_FINE,
+                HazardClass.GAS_LUNG,
+                HazardClass.BACTERIA,
+                HazardClass.GAS_BLISTERING,
+                HazardClass.GAS_MONOXIDE,
+                HazardClass.LIGHT,
+                HazardClass.SAND);
+    }
+
+    private static void registerLegacyProtection(String name, HazardClass... protections) {
+        RegistryObject<Item> item = ModItems.legacyItem(name);
+        if (item != null) {
+            registerProtection(item.get(), protections);
+        }
+    }
+
     private HazmatRegistry() {
+    }
+
+    public record RegistrySnapshot(int resistanceEntries, int protectionEntries) {
     }
 }

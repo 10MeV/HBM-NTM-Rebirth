@@ -55,7 +55,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         }
 
         int strength = radius * 2;
-        NukeExplosionMk5Entity entity = new NukeExplosionMk5Entity(level, strength, Math.max(1, (int) Math.ceil(100000.0D / strength)),
+        NukeExplosionMk5Entity entity = new NukeExplosionMk5Entity(level, strength, Math.max(1, 100000 / strength),
                 strength / 2);
         entity.setPos(x, y, z);
         return entity;

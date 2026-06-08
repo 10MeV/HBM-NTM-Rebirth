@@ -51,7 +51,8 @@ public class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(71, 17, 34, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, menu.getTankTooltip(hasShiftDown()).stream().map(Component::getVisualOrderText).toList(), mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
+                    menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
         } else if (isHovering(151, 34, 18, 18, mouseX, mouseY)) {
             graphics.renderTooltip(font, modeTooltip().stream().map(Component::getVisualOrderText).toList(), mouseX, mouseY);
         }

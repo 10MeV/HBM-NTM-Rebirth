@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.multiblock.LegacyMultiblock;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.multiblock.LegacyMultiblockPlaceable;
 import com.hbm.ntm.multiblock.MultiblockCoreBlock;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 @SuppressWarnings("deprecation")
-public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock implements MultiblockCoreBlock, LegacyMultiblockPlaceable {
+public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock implements MultiblockCoreBlock, LegacyMultiblockPlaceable, LegacyMultiblock {
     protected LegacyOffsetMultiblockBlock(Properties properties) {
         super(properties, false);
     }
@@ -38,8 +39,8 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
     }
 
     @Override
-    public boolean ownsMultiblockDummy(BlockState state, BlockGetter level, BlockPos corePos, BlockPos dummyPos) {
-        return getLayout(state).containsOffset(dummyPos.subtract(corePos));
+    public LegacyMultiblockLayout getMultiblockLayout(BlockState state, BlockGetter level, BlockPos corePos) {
+        return getLayout(state);
     }
 
     @Override

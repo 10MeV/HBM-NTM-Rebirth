@@ -1,7 +1,7 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.radiation.HazardType;
-import com.hbm.ntm.radiation.RadiationData;
+import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.RadiationUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -144,7 +144,7 @@ public class BalefireBlock extends FireBlock {
     public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
         entity.setSecondsOnFire(10);
         if (entity instanceof LivingEntity living) {
-            RadiationData.setBalefire(living, Math.max(RadiationData.getBalefire(living), 100));
+            HbmLivingProperties.ensureBalefire(living, 100);
             RadiationUtil.contaminate(living, HazardType.RADIATION, RadiationUtil.ContaminationType.CREATIVE, 5.0F);
         }
     }

@@ -114,6 +114,9 @@ public class FractionTowerBlockEntity extends LegacyRemoteFluidMachineBlockEntit
             return false;
         }
 
+        boolean typeChanged = tower.inputTank.getTankType() != inputTank.getTankType()
+                || tower.leftOutputTank.getTankType() != leftOutputTank.getTankType()
+                || tower.rightOutputTank.getTankType() != rightOutputTank.getTankType();
         tower.inputTank.setTankType(inputTank.getTankType());
         tower.leftOutputTank.setTankType(leftOutputTank.getTankType());
         tower.rightOutputTank.setTankType(rightOutputTank.getTankType());
@@ -122,7 +125,10 @@ public class FractionTowerBlockEntity extends LegacyRemoteFluidMachineBlockEntit
         int leftDown = Math.min(tower.leftOutputTank.getFill(), leftOutputTank.getMaxFill() - leftOutputTank.getFill());
         int rightDown = Math.min(tower.rightOutputTank.getFill(), rightOutputTank.getMaxFill() - rightOutputTank.getFill());
         if (inputUp <= 0 && leftDown <= 0 && rightDown <= 0) {
-            return false;
+            if (typeChanged) {
+                tower.onFluidContentsChanged();
+            }
+            return typeChanged;
         }
 
         inputTank.setFill(inputTank.getFill() - inputUp);

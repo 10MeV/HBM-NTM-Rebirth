@@ -55,8 +55,8 @@ public class CompressorMenu extends AbstractContainerMenu {
                 return stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
             }
         });
-        addSlot(new SlotItemHandler(blockEntity.getItems(), CompressorBlockEntity.SLOT_UPGRADE_SPEED, 52, 72));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), CompressorBlockEntity.SLOT_UPGRADE_POWER, 70, 72));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), CompressorBlockEntity.SLOT_UPGRADE_SPEED, 52, 72));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), CompressorBlockEntity.SLOT_UPGRADE_POWER, 70, 72));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 122, 180);
         addDataSlots();
     }
@@ -123,7 +123,8 @@ public class CompressorMenu extends AbstractContainerMenu {
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                 MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, HOTBAR_END,
                 CompressorBlockEntity.SLOT_IDENTIFIER, CompressorBlockEntity.SLOT_IDENTIFIER + 1,
-                CompressorBlockEntity.SLOT_BATTERY, CompressorBlockEntity.SLOT_BATTERY + 1);
+                CompressorBlockEntity.SLOT_BATTERY, CompressorBlockEntity.SLOT_BATTERY + 1,
+                CompressorBlockEntity.SLOT_UPGRADE_SPEED, CompressorBlockEntity.SLOT_UPGRADE_POWER + 1);
     }
 
     private void addDataSlots() {

@@ -105,11 +105,15 @@ public final class DamageResistanceConfig {
         JsonArray entityStats = array(json, "entityStats");
         for (JsonElement element : entityStats) {
             JsonArray entry = element.getAsJsonArray();
+            String className = entry.get(0).getAsString();
             DamageResistanceStats resistance = deserialize(entry.get(1).getAsJsonObject());
-            if (entry.get(0).getAsString().endsWith(".EntityCreeper") || entry.get(0).getAsString().equals(Creeper.class.getName())) {
+            Class<? extends net.minecraft.world.entity.Entity> entityClass = entityClass(className);
+            if (className.endsWith(".EntityCreeper") || className.equals(Creeper.class.getName())) {
                 DamageResistanceHandler.registerEntity(Creeper.class, resistance);
+            } else if (entityClass != null) {
+                DamageResistanceHandler.registerEntity(entityClass, resistance);
             } else {
-                DamageResistanceHandler.registerEntitySimpleName(simpleName(entry.get(0).getAsString()), resistance);
+                DamageResistanceHandler.registerEntitySimpleName(simpleName(className), resistance);
             }
             stats.entityStats++;
         }
@@ -148,8 +152,8 @@ public final class DamageResistanceConfig {
         addItem(itemStats, "jackt", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 1.0F, 0.20F));
         addItem(itemStats, "jackt2", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.25F));
 
-        addSet(setStats, "steel_helmet", "steel_plate", "steel_legs", "steel_boots", new DamageResistanceStats());
-        addSet(setStats, "titanium_helmet", "titanium_plate", "titanium_legs", "titanium_boots", new DamageResistanceStats());
+        addSet(setStats, "steel_helmet", "steel_plate", "steel_legs", "steel_boots", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.1F));
+        addSet(setStats, "titanium_helmet", "titanium_plate", "titanium_legs", "titanium_boots", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 3.0F, 0.1F));
         addSet(setStats, "alloy_helmet", "alloy_plate", "alloy_legs", "alloy_boots", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.1F));
         addSet(setStats, "cobalt_helmet", "cobalt_plate", "cobalt_legs", "cobalt_boots", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.1F));
         addSet(setStats, "starmetal_helmet", "starmetal_plate", "starmetal_legs", "starmetal_boots", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 3.0F, 0.25F).setOther(1.0F, 0.1F));
@@ -299,6 +303,18 @@ public final class DamageResistanceConfig {
     private static String simpleName(String className) {
         int index = className.lastIndexOf('.');
         return index < 0 ? className : className.substring(index + 1);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Class<? extends net.minecraft.world.entity.Entity> entityClass(String className) {
+        try {
+            Class<?> type = Class.forName(className);
+            if (net.minecraft.world.entity.Entity.class.isAssignableFrom(type)) {
+                return (Class<? extends net.minecraft.world.entity.Entity>) type;
+            }
+        } catch (ClassNotFoundException ignored) {
+        }
+        return null;
     }
 
     public record LoadReport(boolean externalConfig, int itemStats, int setStats, int entityStats, int skippedItems,

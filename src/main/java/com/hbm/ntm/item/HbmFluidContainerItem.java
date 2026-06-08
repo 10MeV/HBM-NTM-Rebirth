@@ -5,6 +5,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerItemCapabilityProvider;
 import com.hbm.ntm.fluid.HbmFluidContainerRules;
+import com.hbm.ntm.fluid.HbmForgeFluidInterop;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.ContainerFluidTrait;
@@ -20,7 +21,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import org.jetbrains.annotations.Nullable;
 
-public class HbmFluidContainerItem extends Item implements IFillableItem {
+public class HbmFluidContainerItem extends Item implements IFillableItem, HbmForgeFluidInterop.HbmFluidContainerItemAccess {
     private static final String TAG_FLUID = "hbm_fluid";
     private static final String TAG_AMOUNT = "hbm_fluid_amount";
     private static final String TAG_PRESSURE = "hbm_fluid_pressure";

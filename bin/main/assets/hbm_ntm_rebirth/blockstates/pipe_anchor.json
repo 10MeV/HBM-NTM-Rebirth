@@ -1,10 +1,1668 @@
 {
   "variants": {
-    "facing=down": { "model": "hbm_ntm_rebirth:block/network/pipe_anchor", "x": 180 },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/network/pipe_anchor", "x": 90, "y": 270 },
-    "facing=north": { "model": "hbm_ntm_rebirth:block/network/pipe_anchor", "x": 90, "y": 180 },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/network/pipe_anchor", "x": 90 },
-    "facing=up": { "model": "hbm_ntm_rebirth:block/network/pipe_anchor" },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/network/pipe_anchor", "x": 90, "y": 90 }
+    "down=false,east=false,facing=down,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=down,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=false,facing=east,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=east,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=false,facing=north,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=north,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=false,facing=south,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=south,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=false,facing=up,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=up,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=false,facing=west,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=false,facing=west,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=down,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=down,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=false,east=true,facing=east,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=east,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=false,east=true,facing=north,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=north,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=false,east=true,facing=south,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=south,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=false,east=true,facing=up,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=up,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=false,east=true,facing=west,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=false,east=true,facing=west,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=down,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=down,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=false,facing=east,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=east,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=false,facing=north,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=north,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=false,facing=south,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=south,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=false,facing=up,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=up,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=false,facing=west,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=false,facing=west,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=down,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=down,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 180
+    },
+    "down=true,east=true,facing=east,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=east,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 270
+    },
+    "down=true,east=true,facing=north,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=north,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 180
+    },
+    "down=true,east=true,facing=south,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=south,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90
+    },
+    "down=true,east=true,facing=up,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=up,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    },
+    "down=true,east=true,facing=west,north=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    },
+    "down=true,east=true,facing=west,north=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/network/pipe_anchor",
+      "x": 90,
+      "y": 90
+    }
   }
 }

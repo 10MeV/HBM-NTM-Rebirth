@@ -52,6 +52,12 @@ public final class LegacyTexturedQuadRenderer {
         emitQuad(consumer, context.poseStack().last(), context, normalX, normalY, normalZ, vertices);
     }
 
+    public static void quadWithComputedNormal(ResourceLocation texture, ObjRenderContext context,
+            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
+        Vector3f normal = computedNormal(v0, v1, v2);
+        quad(texture, context, normal.x(), normal.y(), normal.z(), v0, v1, v2, v3);
+    }
+
     public static void spriteQuad(TextureAtlasSprite sprite, ObjRenderContext context,
             Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
         spriteQuad(sprite, context, 0.0F, 1.0F, 0.0F, v0, v1, v2, v3);
@@ -98,6 +104,12 @@ public final class LegacyTexturedQuadRenderer {
         emitSpriteQuad(consumer, context.poseStack().last(), context, sprite, normalX, normalY, normalZ, unitUv, vertices);
     }
 
+    public static void spriteQuadWithComputedNormal(TextureAtlasSprite sprite, ObjRenderContext context,
+            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
+        Vector3f normal = computedNormal(v0, v1, v2);
+        spriteQuad(sprite, context, normal.x(), normal.y(), normal.z(), v0, v1, v2, v3);
+    }
+
     public static void doubleSidedQuad(ResourceLocation texture, ObjRenderContext context,
             Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
         doubleSidedQuad(texture, context, 0.0F, 1.0F, 0.0F, v0, v1, v2, v3);
@@ -109,10 +121,22 @@ public final class LegacyTexturedQuadRenderer {
         quad(texture, context, -normalX, -normalY, -normalZ, v3, v2, v1, v0);
     }
 
+    public static void doubleSidedQuadWithComputedNormal(ResourceLocation texture, ObjRenderContext context,
+            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
+        Vector3f normal = computedNormal(v0, v1, v2);
+        doubleSidedQuad(texture, context, normal.x(), normal.y(), normal.z(), v0, v1, v2, v3);
+    }
+
     public static void doubleSidedSpriteQuad(TextureAtlasSprite sprite, ObjRenderContext context,
             float normalX, float normalY, float normalZ, Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
         spriteQuad(sprite, context, normalX, normalY, normalZ, v0, v1, v2, v3);
         spriteQuad(sprite, context, -normalX, -normalY, -normalZ, v3, v2, v1, v0);
+    }
+
+    public static void doubleSidedSpriteQuadWithComputedNormal(TextureAtlasSprite sprite, ObjRenderContext context,
+            Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
+        Vector3f normal = computedNormal(v0, v1, v2);
+        doubleSidedSpriteQuad(sprite, context, normal.x(), normal.y(), normal.z(), v0, v1, v2, v3);
     }
 
     public static void quad(VertexConsumer consumer, PoseStack.Pose pose, ObjRenderContext context,
@@ -253,6 +277,19 @@ public final class LegacyTexturedQuadRenderer {
             return new Vector3f(0.0F, 1.0F, 0.0F);
         }
         return normal.normalize();
+    }
+
+    public static Vector3f computedNormal(Vertex v0, Vertex v1, Vertex v2) {
+        float edgeAX = (float) (v1.x() - v0.x());
+        float edgeAY = (float) (v1.y() - v0.y());
+        float edgeAZ = (float) (v1.z() - v0.z());
+        float edgeBX = (float) (v2.x() - v0.x());
+        float edgeBY = (float) (v2.y() - v0.y());
+        float edgeBZ = (float) (v2.z() - v0.z());
+        return normal(
+                edgeAY * edgeBZ - edgeAZ * edgeBY,
+                edgeAZ * edgeBX - edgeAX * edgeBZ,
+                edgeAX * edgeBY - edgeAY * edgeBX);
     }
 
     public record Vertex(double x, double y, double z, float u, float v, int color, int alpha) {

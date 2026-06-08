@@ -2,18 +2,21 @@ package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.api.item.GasMask;
 import com.hbm.ntm.api.item.HazardClass;
+import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.registry.ModEffects;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 
 public final class ArmorUtil {
+    public static final String FILTER_KEY = "hfrFilter";
+
     private static final Set<String> FARADAY_KEYWORDS = Set.of(
             "chainmail", "iron", "gold", "netherite", "steel", "titanium", "alloy",
             "lead", "copper", "hazmat", "rubber", "schrabidium", "silver",
@@ -24,31 +27,6 @@ public final class ArmorUtil {
             "fau", "dns");
     private static final Set<String> DIGAMMA2_KEYWORDS = Set.of(
             "robe", "robes");
-    private static final Set<HazardClass> STANDARD_FILTER = EnumSet.of(
-            HazardClass.PARTICLE_COARSE,
-            HazardClass.PARTICLE_FINE,
-            HazardClass.GAS_LUNG,
-            HazardClass.GAS_BLISTERING,
-            HazardClass.BACTERIA);
-    private static final Set<HazardClass> MONOXIDE_FILTER = EnumSet.of(
-            HazardClass.PARTICLE_COARSE,
-            HazardClass.GAS_MONOXIDE);
-    private static final Set<HazardClass> COMBO_FILTER = EnumSet.of(
-            HazardClass.PARTICLE_COARSE,
-            HazardClass.PARTICLE_FINE,
-            HazardClass.GAS_LUNG,
-            HazardClass.GAS_BLISTERING,
-            HazardClass.BACTERIA,
-            HazardClass.GAS_MONOXIDE);
-    private static final Set<HazardClass> FULL_PACKAGE = EnumSet.of(
-            HazardClass.PARTICLE_COARSE,
-            HazardClass.PARTICLE_FINE,
-            HazardClass.GAS_LUNG,
-            HazardClass.BACTERIA,
-            HazardClass.GAS_BLISTERING,
-            HazardClass.GAS_MONOXIDE,
-            HazardClass.LIGHT,
-            HazardClass.SAND);
 
     public static boolean checkForHazmat(LivingEntity entity) {
         if (entity.hasEffect(ModEffects.MUTATION.get())) {
@@ -82,11 +60,11 @@ public final class ArmorUtil {
     }
 
     public static boolean hasProtection(LivingEntity entity, HazardClass hazardClass) {
-        return getProtectionFromItem(getHelmet(entity), entity).contains(hazardClass);
+        return HazmatRegistry.getProtectionFromItem(getHelmet(entity), entity).contains(hazardClass);
     }
 
     public static boolean hasAllProtection(LivingEntity entity, HazardClass... hazardClasses) {
-        Set<HazardClass> protections = getProtectionFromItem(getHelmet(entity), entity);
+        Set<HazardClass> protections = HazmatRegistry.getProtectionFromItem(getHelmet(entity), entity);
         for (HazardClass hazardClass : hazardClasses) {
             if (!protections.contains(hazardClass)) {
                 return false;
@@ -96,7 +74,7 @@ public final class ArmorUtil {
     }
 
     public static boolean hasAnyProtection(LivingEntity entity, HazardClass... hazardClasses) {
-        Set<HazardClass> protections = getProtectionFromItem(getHelmet(entity), entity);
+        Set<HazardClass> protections = HazmatRegistry.getProtectionFromItem(getHelmet(entity), entity);
         for (HazardClass hazardClass : hazardClasses) {
             if (protections.contains(hazardClass)) {
                 return true;
@@ -107,8 +85,72 @@ public final class ArmorUtil {
 
     public static void damageGasMaskFilter(LivingEntity entity, int damage) {
         ItemStack helmet = getHelmet(entity);
-        if (!helmet.isEmpty() && helmet.getItem() instanceof GasMask mask) {
-            mask.damageFilter(helmet, entity, Math.max(0, damage));
+        if (helmet.isEmpty()) {
+            return;
+        }
+        ItemStack maskStack = helmet;
+        boolean attachedMask = false;
+        if (!(maskStack.getItem() instanceof GasMask) && ArmorModHandler.hasMods(helmet)) {
+            ItemStack mod = ArmorModHandler.pryMod(helmet, ArmorModHandler.helmet_only);
+            if (!mod.isEmpty() && mod.getItem() instanceof GasMask) {
+                maskStack = mod;
+                attachedMask = true;
+            }
+        }
+        if (maskStack.getItem() instanceof GasMask mask) {
+            mask.damageFilter(maskStack, entity, Math.max(0, damage));
+            if (attachedMask) {
+                ArmorModHandler.applyMod(helmet, maskStack);
+            }
+        }
+    }
+
+    public static ItemStack getGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
+        ItemStack filter = getGasMaskFilter(mask);
+        if (filter.isEmpty() && ArmorModHandler.hasMods(mask)) {
+            ItemStack mod = ArmorModHandler.pryMod(mask, ArmorModHandler.helmet_only);
+            if (!mod.isEmpty() && mod.getItem() instanceof GasMask gasMask) {
+                filter = gasMask.getFilter(mod, entity);
+            }
+        }
+        return filter;
+    }
+
+    public static ItemStack getGasMaskFilter(ItemStack mask) {
+        if (mask == null || mask.isEmpty() || !mask.hasTag()) {
+            return ItemStack.EMPTY;
+        }
+        CompoundTag tag = mask.getTag();
+        if (tag == null || !tag.contains(FILTER_KEY, Tag.TAG_COMPOUND)) {
+            return ItemStack.EMPTY;
+        }
+        return ItemStack.of(tag.getCompound(FILTER_KEY));
+    }
+
+    public static void installGasMaskFilter(ItemStack mask, ItemStack filter) {
+        if (mask == null || mask.isEmpty() || filter == null || filter.isEmpty()) {
+            return;
+        }
+        mask.getOrCreateTag().put(FILTER_KEY, filter.copyWithCount(1).save(new CompoundTag()));
+    }
+
+    public static void removeFilter(ItemStack mask) {
+        if (mask == null || mask.isEmpty() || !mask.hasTag()) {
+            return;
+        }
+        mask.getOrCreateTag().remove(FILTER_KEY);
+    }
+
+    public static void damageGasMaskFilter(ItemStack mask, int damage) {
+        ItemStack filter = getGasMaskFilter(mask);
+        if (filter.isEmpty() || !filter.isDamageableItem()) {
+            return;
+        }
+        filter.setDamageValue(filter.getDamageValue() + Math.max(0, damage));
+        if (filter.getDamageValue() > filter.getMaxDamage()) {
+            removeFilter(mask);
+        } else {
+            installGasMaskFilter(mask, filter);
         }
     }
 
@@ -166,84 +208,6 @@ public final class ArmorUtil {
 
     private static ItemStack getHelmet(LivingEntity entity) {
         return entity.getItemBySlot(EquipmentSlot.HEAD);
-    }
-
-    private static Set<HazardClass> getProtectionFromItem(ItemStack stack, LivingEntity entity) {
-        Set<HazardClass> protections = EnumSet.noneOf(HazardClass.class);
-        if (stack.isEmpty()) {
-            return protections;
-        }
-
-        protections.addAll(getLegacyDirectProtection(stack));
-        if (stack.getItem() instanceof GasMask mask) {
-            ItemStack filter = mask.getFilter(stack, entity);
-            if (!filter.isEmpty() && mask.isFilterApplicable(stack, entity, filter)) {
-                Set<HazardClass> filterProtection = getLegacyDirectProtection(filter);
-                for (HazardClass blacklisted : mask.getBlacklist(stack, entity)) {
-                    filterProtection.remove(blacklisted);
-                }
-                protections.addAll(filterProtection);
-            }
-        }
-        return protections;
-    }
-
-    private static Set<HazardClass> getLegacyDirectProtection(ItemStack stack) {
-        Set<HazardClass> protections = EnumSet.noneOf(HazardClass.class);
-        String key = getItemKey(stack);
-
-        if (key.contains("gas_mask_filter_combo")) {
-            protections.addAll(COMBO_FILTER);
-        } else if (key.contains("gas_mask_filter_mono")) {
-            protections.addAll(MONOXIDE_FILTER);
-        } else if (key.contains("gas_mask_filter_rag")) {
-            protections.add(HazardClass.PARTICLE_COARSE);
-        } else if (key.contains("gas_mask_filter_piss")) {
-            protections.add(HazardClass.PARTICLE_COARSE);
-            protections.add(HazardClass.GAS_LUNG);
-        } else if (key.contains("gas_mask_filter")) {
-            protections.addAll(STANDARD_FILTER);
-        }
-
-        if (key.contains("gas_mask_m65")) {
-            protections.add(HazardClass.SAND);
-        } else if (key.contains("gas_mask") && !key.contains("gas_mask_filter")) {
-            protections.add(HazardClass.SAND);
-            protections.add(HazardClass.LIGHT);
-        }
-
-        if (key.contains("mask_rag")) {
-            protections.add(HazardClass.PARTICLE_COARSE);
-        } else if (key.contains("mask_piss")) {
-            protections.add(HazardClass.PARTICLE_COARSE);
-            protections.add(HazardClass.GAS_LUNG);
-        }
-
-        if (key.contains("goggles") || key.contains("ashglasses")
-                || key.contains("asbestos_helmet")) {
-            protections.add(HazardClass.LIGHT);
-            protections.add(HazardClass.SAND);
-        } else if (key.contains("attachment_mask")
-                || key.contains("hazmat_helmet")
-                || key.contains("hazmat_helmet_red")
-                || key.contains("hazmat_helmet_grey")) {
-            protections.add(HazardClass.SAND);
-        } else if (key.contains("hazmat_paa_helmet")
-                || key.contains("liquidator_helmet")) {
-            protections.add(HazardClass.LIGHT);
-            protections.add(HazardClass.SAND);
-        }
-
-        if (key.contains("schrabidium_helmet") || key.contains("euphemium_helmet")) {
-            protections.addAll(FULL_PACKAGE);
-        }
-
-        return protections;
-    }
-
-    private static String getItemKey(ItemStack stack) {
-        return (BuiltInRegistries.ITEM.getKey(stack.getItem()) + " " + stack.getItem().getDescriptionId())
-                .toLowerCase(Locale.US);
     }
 
     private static boolean isWearingFullKeywordSet(Player player, Set<String> keywords) {

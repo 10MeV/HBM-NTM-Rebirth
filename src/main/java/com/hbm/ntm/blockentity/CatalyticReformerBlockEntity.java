@@ -1,8 +1,6 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
-import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -18,7 +16,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.ItemStackHandler;
 
 public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
@@ -80,10 +77,8 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
     @Override
     protected boolean isItemValid(int slot, ItemStack stack) {
         return switch (slot) {
-            case SLOT_BATTERY -> stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
-            case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
-            case SLOT_CATALYST -> stack.is(ModItems.CATALYTIC_CONVERTER.get());
-            case SLOT_INPUT_CONTAINER, SLOT_OUTPUT_1_CONTAINER, SLOT_OUTPUT_2_CONTAINER, SLOT_OUTPUT_3_CONTAINER -> true;
+            case SLOT_BATTERY, SLOT_INPUT_CONTAINER, SLOT_OUTPUT_1_CONTAINER, SLOT_OUTPUT_2_CONTAINER,
+                 SLOT_OUTPUT_3_CONTAINER, SLOT_IDENTIFIER, SLOT_CATALYST -> true;
             default -> false;
         };
     }
@@ -124,19 +119,8 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
 
     private boolean setInputTypeFromIdentifier() {
         ItemStackHandler items = getItems();
-        if (items == null) {
-            return false;
-        }
-        ItemStack stack = items.getStackInSlot(SLOT_IDENTIFIER);
-        if (!(stack.getItem() instanceof IFluidIdentifierItem identifier)) {
-            return false;
-        }
-        FluidType selected = identifier.getPrimaryType(stack);
-        if (selected == null || selected == HbmFluids.NONE || inputTank.getTankType() == selected) {
-            return false;
-        }
-        inputTank.conform(new com.hbm.ntm.fluid.HbmFluidStack(selected, 0));
-        return true;
+        return items != null && HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
+                inputTank, level, worldPosition);
     }
 
     private boolean processFluidContainers() {

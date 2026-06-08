@@ -1,5 +1,7 @@
 {
   "variants": {
-    "": { "model": "hbm_ntm_rebirth:block/gas_radon" }
+    "": {
+      "model": "hbm_ntm_rebirth:block/gas_radon"
+    }
   }
 }

@@ -1,6 +1,12 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.api.block.Toolable;
+import com.hbm.ntm.armor.ArmorModGasMaskItem;
+import com.hbm.ntm.armor.ArmorModItems;
+import com.hbm.ntm.ability.ToolAreaAbilities;
+import com.hbm.ntm.ability.ToolHarvestAbilities;
+import com.hbm.ntm.ability.WeaponAbilities;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.hbm.ntm.energy.HbmCreativeBatteryItem;
@@ -17,20 +23,34 @@ import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidIconItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.GeigerCounterItem;
+import com.hbm.ntm.item.GasMaskFilterItem;
+import com.hbm.ntm.item.HbmAbilitySwordItem;
+import com.hbm.ntm.item.HbmAbilityToolItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
+import com.hbm.ntm.item.HbmPoweredAbilitySwordItem;
+import com.hbm.ntm.item.HbmPoweredAbilityToolItem;
+import com.hbm.ntm.item.HbmToolTiers;
 import com.hbm.ntm.item.ItemBlueprints;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.item.ItemPressStamp;
+import com.hbm.ntm.item.LegacyToolItem;
 import com.hbm.ntm.item.OreByproductItem;
+import com.hbm.ntm.item.PollutionDetectorItem;
 import com.hbm.ntm.item.RadawayItem;
+import com.hbm.ntm.item.RadarLinkerItem;
 import com.hbm.ntm.item.SettingsToolItem;
 import com.hbm.ntm.item.SingularityItem;
 import com.hbm.ntm.item.ToolboxItem;
 import com.hbm.ntm.fluid.HbmFluidContainerRules;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.satellite.LegacySatelliteType;
+import com.hbm.ntm.satellite.SatelliteChipItem;
+import com.hbm.ntm.satellite.SatelliteDesignatorItem;
+import com.hbm.ntm.satellite.SatelliteInterfaceItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Rarity;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -39,6 +59,7 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public final class ModItems {
@@ -103,6 +124,9 @@ public final class ModItems {
     public static final RegistryObject<Item> UPGRADE_OVERDRIVE_1 = machineUpgrade("upgrade_overdrive_1", UpgradeType.OVERDRIVE, 1);
     public static final RegistryObject<Item> UPGRADE_OVERDRIVE_2 = machineUpgrade("upgrade_overdrive_2", UpgradeType.OVERDRIVE, 2);
     public static final RegistryObject<Item> UPGRADE_OVERDRIVE_3 = machineUpgrade("upgrade_overdrive_3", UpgradeType.OVERDRIVE, 3);
+    public static final RegistryObject<Item> UPGRADE_AFTERBURN_1 = machineUpgrade("upgrade_afterburn_1", UpgradeType.AFTERBURN, 1);
+    public static final RegistryObject<Item> UPGRADE_AFTERBURN_2 = machineUpgrade("upgrade_afterburn_2", UpgradeType.AFTERBURN, 2);
+    public static final RegistryObject<Item> UPGRADE_AFTERBURN_3 = machineUpgrade("upgrade_afterburn_3", UpgradeType.AFTERBURN, 3);
     public static final RegistryObject<Item> TEMPLATE_FOLDER = registerLegacy("template_folder",
             () -> new Item(new Item.Properties()));
 
@@ -127,6 +151,8 @@ public final class ModItems {
             () -> new GeigerCounterItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> DIGAMMA_DIAGNOSTIC = ITEMS.register("digamma_diagnostic",
             () -> new DigammaDiagnosticItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> POLLUTION_DETECTOR = registerLegacy("pollution_detector",
+            () -> new PollutionDetectorItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> RADAWAY = ITEMS.register("radaway",
             () -> new RadawayItem(new Item.Properties().stacksTo(16), 140, 0));
     public static final RegistryObject<Item> RADAWAY_STRONG = ITEMS.register("radaway_strong",
@@ -135,13 +161,283 @@ public final class ModItems {
             () -> new RadawayItem(new Item.Properties().stacksTo(16), 500, 0));
     public static final RegistryObject<Item> RADX = ITEMS.register("radx",
             () -> new EffectPillItem(new Item.Properties().stacksTo(16), ModEffects.RADX, 3 * 60 * 20, 0, null, true));
+    public static final RegistryObject<Item> GAS_MASK_FILTER = registerLegacy("gas_mask_filter",
+            () -> new GasMaskFilterItem(new Item.Properties()));
+    public static final RegistryObject<Item> GAS_MASK_FILTER_MONO = registerLegacy("gas_mask_filter_mono",
+            () -> new GasMaskFilterItem(new Item.Properties()));
+    public static final RegistryObject<Item> GAS_MASK_FILTER_COMBO = registerLegacy("gas_mask_filter_combo",
+            () -> new GasMaskFilterItem(new Item.Properties()));
+    public static final RegistryObject<Item> GAS_MASK_FILTER_RAG = registerLegacy("gas_mask_filter_rag",
+            () -> new GasMaskFilterItem(new Item.Properties()));
+    public static final RegistryObject<Item> GAS_MASK_FILTER_PISS = registerLegacy("gas_mask_filter_piss",
+            () -> new GasMaskFilterItem(new Item.Properties()));
+    public static final RegistryObject<Item> ATTACHMENT_MASK = registerLegacy("attachment_mask",
+            () -> new ArmorModGasMaskItem(new Item.Properties(), false));
+    public static final RegistryObject<Item> ATTACHMENT_MASK_MONO = registerLegacy("attachment_mask_mono",
+            () -> new ArmorModGasMaskItem(new Item.Properties(), true));
+    public static final RegistryObject<Item> PADS_RUBBER = registerLegacy("pads_rubber",
+            () -> new ArmorModItems.Pads(new Item.Properties(), 0.5F, false));
+    public static final RegistryObject<Item> PADS_SLIME = registerLegacy("pads_slime",
+            () -> new ArmorModItems.Pads(new Item.Properties(), 0.25F, false));
+    public static final RegistryObject<Item> PADS_STATIC = registerLegacy("pads_static",
+            () -> new ArmorModItems.Pads(new Item.Properties(), 0.75F, true));
+    public static final RegistryObject<Item> CLADDING_PAINT = registerLegacy("cladding_paint",
+            () -> new ArmorModItems.Cladding(new Item.Properties(), 0.025D));
+    public static final RegistryObject<Item> CLADDING_RUBBER = registerLegacy("cladding_rubber",
+            () -> new ArmorModItems.Cladding(new Item.Properties(), 0.005D));
+    public static final RegistryObject<Item> CLADDING_LEAD = registerLegacy("cladding_lead",
+            () -> new ArmorModItems.Cladding(new Item.Properties(), 0.1D));
+    public static final RegistryObject<Item> CLADDING_DESH = registerLegacy("cladding_desh",
+            () -> new ArmorModItems.Cladding(new Item.Properties(), 0.2D));
+    public static final RegistryObject<Item> CLADDING_GHIORSIUM = registerLegacy("cladding_ghiorsium",
+            () -> new ArmorModItems.Cladding(new Item.Properties(), 0.5D));
+    public static final RegistryObject<Item> CLADDING_IRON = registerLegacy("cladding_iron",
+            () -> new ArmorModItems.IronCladding(new Item.Properties()));
+    public static final RegistryObject<Item> CLADDING_OBSIDIAN = registerLegacy("cladding_obsidian",
+            () -> new ArmorModItems.ObsidianCladding(new Item.Properties()));
+    public static final RegistryObject<Item> INSERT_KEVLAR = registerLegacy("insert_kevlar",
+            () -> new ArmorModItems.Insert(new Item.Properties(), 1500, 1.0F, 0.9F, 1.0F, 1.0F, false, false));
+    public static final RegistryObject<Item> INSERT_SAPI = registerLegacy("insert_sapi",
+            () -> new ArmorModItems.Insert(new Item.Properties(), 1750, 1.0F, 0.85F, 1.0F, 1.0F, false, false));
+    public static final RegistryObject<Item> INSERT_ESAPI = registerLegacy("insert_esapi",
+            () -> new ArmorModItems.Insert(new Item.Properties(), 2000, 0.95F, 0.8F, 1.0F, 1.0F, false, false));
+    public static final RegistryObject<Item> INSERT_XSAPI = registerLegacy("insert_xsapi",
+            () -> new ArmorModItems.Insert(new Item.Properties(), 2500, 0.9F, 0.75F, 1.0F, 1.0F, false, false));
+    public static final RegistryObject<Item> INSERT_STEEL = registerLegacy("insert_steel",
+            () -> new ArmorModItems.Insert(new Item.Properties(), 1000, 1.0F, 0.95F, 0.75F, 0.95F, false, false));
+    public static final RegistryObject<Item> INSERT_DU = registerLegacy("insert_du",
+            () -> new ArmorModItems.Insert(new Item.Properties(), 1500, 0.9F, 0.85F, 0.5F, 0.9F, false, false));
+    public static final RegistryObject<Item> INSERT_POLONIUM = registerLegacy("insert_polonium",
+            () -> new ArmorModItems.Insert(new Item.Properties(), 500, 0.9F, 1.0F, 0.95F, 0.9F, true, false));
+    public static final RegistryObject<Item> INSERT_GHIORSIUM = registerLegacy("insert_ghiorsium",
+            () -> new ArmorModItems.Insert(new Item.Properties(), 2000, 0.8F, 0.75F, 0.35F, 0.9F, false, false));
+    public static final RegistryObject<Item> INSERT_ERA = registerLegacy("insert_era",
+            () -> new ArmorModItems.Insert(new Item.Properties(), 25, 0.5F, 1.0F, 0.25F, 1.0F, false, true));
+    public static final RegistryObject<Item> INSERT_YHARONITE = registerLegacy("insert_yharonite",
+            () -> new ArmorModItems.Insert(new Item.Properties(), 9999, 0.01F, 1.0F, 1.0F, 1.0F, false, false));
+    public static final RegistryObject<Item> INSERT_DOXIUM = registerLegacy("insert_doxium",
+            () -> new ArmorModItems.Insert(new Item.Properties(), 9999, 5.0F, 1.0F, 1.0F, 1.0F, false, false));
+    public static final RegistryObject<Item> SERVO_SET = registerLegacy("servo_set",
+            () -> new ArmorModItems.Servos(new Item.Properties(), false));
+    public static final RegistryObject<Item> SERVO_SET_DESH = registerLegacy("servo_set_desh",
+            () -> new ArmorModItems.Servos(new Item.Properties(), true));
+    public static final RegistryObject<Item> HEART_PIECE = registerLegacy("heart_piece",
+            () -> new ArmorModItems.Health(new Item.Properties(), 5.0F, false));
+    public static final RegistryObject<Item> HEART_CONTAINER = registerLegacy("heart_container",
+            () -> new ArmorModItems.Health(new Item.Properties(), 20.0F, false));
+    public static final RegistryObject<Item> HEART_BOOSTER = registerLegacy("heart_booster",
+            () -> new ArmorModItems.Health(new Item.Properties(), 40.0F, false));
+    public static final RegistryObject<Item> HEART_FAB = registerLegacy("heart_fab",
+            () -> new ArmorModItems.Health(new Item.Properties(), 60.0F, false));
+    public static final RegistryObject<Item> BLACK_DIAMOND = registerLegacy("black_diamond",
+            () -> new ArmorModItems.Health(new Item.Properties(), 40.0F, true));
+    public static final RegistryObject<Item> WD40 = registerLegacy("wd40",
+            () -> new ArmorModItems.Wd40(new Item.Properties()));
+    public static final RegistryObject<Item> BOTTLED_CLOUD = registerLegacy("bottled_cloud",
+            () -> new ArmorModItems.BottledCloud(new Item.Properties()));
+    public static final RegistryObject<Item> AUSTRALIUM_III = registerLegacy("australium_iii",
+            () -> new ArmorModItems.Shield(new Item.Properties(), 25.0F));
+    public static final RegistryObject<Item> ARMOR_POLISH = registerLegacy("armor_polish",
+            () -> new ArmorModItems.Polish(new Item.Properties()));
+    public static final RegistryObject<Item> BANDAID = registerLegacy("bandaid",
+            () -> new ArmorModItems.Bandaid(new Item.Properties()));
+    public static final RegistryObject<Item> SERUM = registerLegacy("serum",
+            () -> new ArmorModItems.Serum(new Item.Properties()));
+    public static final RegistryObject<Item> QUARTZ_PLUTONIUM = registerLegacy("quartz_plutonium",
+            () -> new ArmorModItems.Quartz(new Item.Properties()));
+    public static final RegistryObject<Item> MORNING_GLORY = registerLegacy("morning_glory",
+            () -> new ArmorModItems.MorningGlory(new Item.Properties()));
+    public static final RegistryObject<Item> LODESTONE = registerLegacy("lodestone",
+            () -> new ArmorModItems.Lodestone(new Item.Properties(), 5));
+    public static final RegistryObject<Item> HORSESHOE_MAGNET = registerLegacy("horseshoe_magnet",
+            () -> new ArmorModItems.Lodestone(new Item.Properties(), 8));
+    public static final RegistryObject<Item> INDUSTRIAL_MAGNET = registerLegacy("industrial_magnet",
+            () -> new ArmorModItems.Lodestone(new Item.Properties(), 12));
+    public static final RegistryObject<Item> BATHWATER = registerLegacy("bathwater",
+            () -> new ArmorModItems.Bathwater(new Item.Properties(), false));
+    public static final RegistryObject<Item> BATHWATER_MK2 = registerLegacy("bathwater_mk2",
+            () -> new ArmorModItems.Bathwater(new Item.Properties(), true));
+    public static final RegistryObject<Item> SPIDER_MILK = registerLegacy("spider_milk",
+            () -> new ArmorModItems.Milk(new Item.Properties()));
+    public static final RegistryObject<Item> INK = registerLegacy("ink",
+            () -> new ArmorModItems.Ink(new Item.Properties()));
+    public static final RegistryObject<Item> INJECTOR_5HTP = registerLegacy("injector_5htp",
+            () -> new ArmorModItems.AutoInjector(new Item.Properties()));
+    public static final RegistryObject<Item> MEDAL_LIQUIDATOR = registerLegacy("medal_liquidator",
+            () -> new ArmorModItems.Medal(new Item.Properties()));
     public static final RegistryObject<Item> CONTAINMENT_BOX = simpleStackOneItem("containment_box");
     public static final RegistryObject<Item> PLASTIC_BAG = simpleStackOneItem("plastic_bag");
     public static final RegistryObject<Item> TOOLBOX = registerLegacy("toolbox", () -> new ToolboxItem(new Item.Properties()));
     public static final RegistryObject<Item> SETTINGS_TOOL = registerLegacy("settings_tool",
             () -> new SettingsToolItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SCREWDRIVER = registerLegacy("screwdriver",
+            () -> new LegacyToolItem(new Item.Properties().stacksTo(1).durability(100), Toolable.ToolType.SCREWDRIVER));
+    public static final RegistryObject<Item> HAND_DRILL = registerLegacy("hand_drill",
+            () -> new LegacyToolItem(new Item.Properties().stacksTo(1).durability(100), Toolable.ToolType.HAND_DRILL));
+    public static final RegistryObject<Item> DEFUSER = registerLegacy("defuser",
+            () -> new LegacyToolItem(new Item.Properties().stacksTo(1).durability(100), Toolable.ToolType.DEFUSER));
     public static final RegistryObject<Item> CONVEYOR_WAND = registerLegacy("conveyor_wand",
             () -> new ConveyorWandItem(new Item.Properties().stacksTo(64)));
+    public static final RegistryObject<Item> SCHRABIDIUM_SWORD = abilitySword("schrabidium_sword", HbmToolTiers.SCHRABIDIUM, 75.0F, 0.0D, true,
+            item -> item.addAbility(WeaponAbilities.RADIATION, 1)
+                    .addAbility(WeaponAbilities.VAMPIRE, 0));
+    public static final RegistryObject<Item> SCHRABIDIUM_PICKAXE = abilityPickaxe("schrabidium_pickaxe", 20.0F, 0.0D, HbmToolTiers.SCHRABIDIUM, true,
+            item -> schrabidiumToolAbilities(item));
+    public static final RegistryObject<Item> SCHRABIDIUM_AXE = abilityAxe("schrabidium_axe", 25.0F, 0.0D, HbmToolTiers.SCHRABIDIUM, true,
+            item -> schrabidiumToolAbilities(item)
+                    .addAbility(WeaponAbilities.BEHEADER, 0));
+    public static final RegistryObject<Item> SCHRABIDIUM_SHOVEL = abilityShovel("schrabidium_shovel", 15.0F, 0.0D, HbmToolTiers.SCHRABIDIUM, true,
+            item -> schrabidiumToolAbilities(item));
+    public static final RegistryObject<Item> TITANIUM_SWORD = abilitySword("titanium_sword", HbmToolTiers.TITANIUM, 6.5F, 0.0D, false, item -> { });
+    public static final RegistryObject<Item> TITANIUM_PICKAXE = abilityPickaxe("titanium_pickaxe", 4.5F, 0.0D, HbmToolTiers.TITANIUM, false, item -> { });
+    public static final RegistryObject<Item> TITANIUM_AXE = abilityAxe("titanium_axe", 5.5F, 0.0D, HbmToolTiers.TITANIUM, false,
+            item -> item.addAbility(WeaponAbilities.BEHEADER, 0));
+    public static final RegistryObject<Item> TITANIUM_SHOVEL = abilityShovel("titanium_shovel", 3.5F, 0.0D, HbmToolTiers.TITANIUM, false, item -> { });
+    public static final RegistryObject<Item> STEEL_SWORD = abilitySword("steel_sword", HbmToolTiers.STEEL, 6.0F, 0.0D, false,
+            item -> item.addAbility(WeaponAbilities.STUN, 0));
+    public static final RegistryObject<Item> STEEL_PICKAXE = abilityPickaxe("steel_pickaxe", 4.0F, 0.0D, HbmToolTiers.STEEL, false,
+            item -> item.addAbility(ToolAreaAbilities.RECURSION, 0));
+    public static final RegistryObject<Item> STEEL_AXE = abilityAxe("steel_axe", 5.0F, 0.0D, HbmToolTiers.STEEL, false,
+            item -> item.addAbility(ToolAreaAbilities.RECURSION, 0)
+                    .addAbility(WeaponAbilities.BEHEADER, 0));
+    public static final RegistryObject<Item> STEEL_SHOVEL = abilityShovel("steel_shovel", 3.0F, 0.0D, HbmToolTiers.STEEL, false,
+            item -> item.addAbility(ToolAreaAbilities.RECURSION, 0));
+    public static final RegistryObject<Item> ALLOY_SWORD = abilitySword("alloy_sword", HbmToolTiers.ALLOY, 8.0F, 0.0D, false,
+            item -> item.addAbility(WeaponAbilities.STUN, 0));
+    public static final RegistryObject<Item> ALLOY_PICKAXE = abilityPickaxe("alloy_pickaxe", 5.0F, 0.0D, HbmToolTiers.ALLOY, false,
+            item -> item.addAbility(ToolAreaAbilities.RECURSION, 0));
+    public static final RegistryObject<Item> ALLOY_AXE = abilityAxe("alloy_axe", 7.0F, 0.0D, HbmToolTiers.ALLOY, false,
+            item -> item.addAbility(ToolAreaAbilities.RECURSION, 0)
+                    .addAbility(WeaponAbilities.BEHEADER, 0));
+    public static final RegistryObject<Item> ALLOY_SHOVEL = abilityShovel("alloy_shovel", 4.0F, 0.0D, HbmToolTiers.ALLOY, false,
+            item -> item.addAbility(ToolAreaAbilities.RECURSION, 0));
+    public static final RegistryObject<Item> CMB_SWORD = abilitySword("cmb_sword", HbmToolTiers.CMB, 35.0F, 0.0D, false,
+            item -> item.addAbility(WeaponAbilities.STUN, 0)
+                    .addAbility(WeaponAbilities.VAMPIRE, 0));
+    public static final RegistryObject<Item> CMB_PICKAXE = abilityPickaxe("cmb_pickaxe", 10.0F, 0.0D, HbmToolTiers.CMB, false,
+            item -> item.addAbility(ToolAreaAbilities.RECURSION, 2)
+                    .addAbility(ToolHarvestAbilities.SMELTER, 0)
+                    .addAbility(ToolHarvestAbilities.SILK, 0)
+                    .addAbility(ToolHarvestAbilities.LUCK, 2));
+    public static final RegistryObject<Item> CMB_AXE = abilityAxe("cmb_axe", 30.0F, 0.0D, HbmToolTiers.CMB, false,
+            item -> item.addAbility(ToolAreaAbilities.RECURSION, 2)
+                    .addAbility(ToolHarvestAbilities.SMELTER, 0)
+                    .addAbility(ToolHarvestAbilities.SILK, 0)
+                    .addAbility(ToolHarvestAbilities.LUCK, 2)
+                    .addAbility(WeaponAbilities.BEHEADER, 0));
+    public static final RegistryObject<Item> CMB_SHOVEL = abilityShovel("cmb_shovel", 8.0F, 0.0D, HbmToolTiers.CMB, false,
+            item -> item.addAbility(ToolAreaAbilities.RECURSION, 2)
+                    .addAbility(ToolHarvestAbilities.SMELTER, 0)
+                    .addAbility(ToolHarvestAbilities.SILK, 0)
+                    .addAbility(ToolHarvestAbilities.LUCK, 2));
+    public static final RegistryObject<Item> DESH_SWORD = abilitySword("desh_sword", HbmToolTiers.DESH, 12.5F, -0.05D, false,
+            item -> item.addAbility(WeaponAbilities.STUN, 0));
+    public static final RegistryObject<Item> DESH_PICKAXE = abilityPickaxe("desh_pickaxe", 5.0F, -0.05D, HbmToolTiers.DESH, false,
+            item -> deshToolAbilities(item));
+    public static final RegistryObject<Item> DESH_AXE = abilityAxe("desh_axe", 7.5F, -0.05D, HbmToolTiers.DESH, false,
+            item -> deshToolAbilities(item)
+                    .addAbility(WeaponAbilities.BEHEADER, 0));
+    public static final RegistryObject<Item> DESH_SHOVEL = abilityShovel("desh_shovel", 4.0F, -0.05D, HbmToolTiers.DESH, false,
+            item -> deshToolAbilities(item));
+    public static final RegistryObject<Item> COBALT_SWORD = abilitySword("cobalt_sword", HbmToolTiers.COBALT, 12.0F, 0.0D, false, item -> { });
+    public static final RegistryObject<Item> COBALT_PICKAXE = abilityPickaxe("cobalt_pickaxe", 4.0F, 0.0D, HbmToolTiers.COBALT, false,
+            item -> cobaltToolAbilities(item));
+    public static final RegistryObject<Item> COBALT_AXE = abilityAxe("cobalt_axe", 6.0F, 0.0D, HbmToolTiers.COBALT, false,
+            item -> cobaltToolAbilities(item)
+                    .addAbility(WeaponAbilities.BEHEADER, 0));
+    public static final RegistryObject<Item> COBALT_SHOVEL = abilityShovel("cobalt_shovel", 3.5F, 0.0D, HbmToolTiers.COBALT, false,
+            item -> cobaltToolAbilities(item));
+    public static final RegistryObject<Item> COBALT_DECORATED_SWORD = abilitySword("cobalt_decorated_sword", HbmToolTiers.COBALT_DECORATED,
+            15.0F, 0.0D, false, item -> item.addAbility(WeaponAbilities.BOBBLE, 0));
+    public static final RegistryObject<Item> COBALT_DECORATED_PICKAXE = abilityPickaxe("cobalt_decorated_pickaxe", 6.0F, 0.0D,
+            HbmToolTiers.COBALT_DECORATED, false, item -> cobaltDecoratedToolAbilities(item));
+    public static final RegistryObject<Item> COBALT_DECORATED_AXE = abilityAxe("cobalt_decorated_axe", 8.0F, 0.0D,
+            HbmToolTiers.COBALT_DECORATED, false, item -> cobaltDecoratedToolAbilities(item)
+                    .addAbility(WeaponAbilities.BEHEADER, 0));
+    public static final RegistryObject<Item> COBALT_DECORATED_SHOVEL = abilityShovel("cobalt_decorated_shovel", 5.0F, 0.0D,
+            HbmToolTiers.COBALT_DECORATED, false, item -> cobaltDecoratedToolAbilities(item));
+    public static final RegistryObject<Item> STARMETAL_SWORD = abilitySword("starmetal_sword", HbmToolTiers.STARMETAL, 25.0F, 0.0D, false,
+            item -> item.addAbility(WeaponAbilities.BEHEADER, 0)
+                    .addAbility(WeaponAbilities.STUN, 1)
+                    .addAbility(WeaponAbilities.BOBBLE, 0));
+    public static final RegistryObject<Item> STARMETAL_PICKAXE = abilityPickaxe("starmetal_pickaxe", 8.0F, 0.0D, HbmToolTiers.STARMETAL, false,
+            item -> starmetalToolAbilities(item)
+                    .addAbility(WeaponAbilities.STUN, 1));
+    public static final RegistryObject<Item> STARMETAL_AXE = abilityAxe("starmetal_axe", 12.0F, 0.0D, HbmToolTiers.STARMETAL, false,
+            item -> starmetalToolAbilities(item)
+                    .addAbility(WeaponAbilities.BEHEADER, 0)
+                    .addAbility(WeaponAbilities.STUN, 1));
+    public static final RegistryObject<Item> STARMETAL_SHOVEL = abilityShovel("starmetal_shovel", 7.0F, 0.0D, HbmToolTiers.STARMETAL, false,
+            item -> starmetalToolAbilities(item)
+                    .addAbility(WeaponAbilities.STUN, 1));
+    public static final RegistryObject<Item> CENTRI_STICK = abilityMiner("centri_stick", 3.0F, 0.0D, HbmToolTiers.ELEC, false, 50,
+            item -> item.addAbility(ToolHarvestAbilities.CENTRIFUGE, 0));
+    public static final RegistryObject<Item> SMASHING_HAMMER = abilityMiner("smashing_hammer", 12.0F, -0.1D, HbmToolTiers.STEEL, false, 2_500,
+            item -> item.addAbility(ToolHarvestAbilities.SHREDDER, 0));
+    public static final RegistryObject<Item> ELEC_SWORD = poweredAbilitySword("elec_sword", HbmToolTiers.ELEC, 12.5F, 0.0D,
+            500_000L, 1_000L, 100L, item -> item.addAbility(WeaponAbilities.STUN, 2));
+    public static final RegistryObject<Item> ELEC_PICKAXE = poweredAbilityPickaxe("elec_pickaxe", 6.0F, 0.0D, HbmToolTiers.ELEC,
+            500_000L, 1_000L, 100L, item -> electricToolAbilities(item));
+    public static final RegistryObject<Item> ELEC_AXE = poweredAbilityAxe("elec_axe", 10.0F, 0.0D, HbmToolTiers.ELEC,
+            500_000L, 1_000L, 100L, item -> electricToolAbilities(item)
+                    .addAbility(WeaponAbilities.CHAINSAW, 0)
+                    .addAbility(WeaponAbilities.BEHEADER, 0));
+    public static final RegistryObject<Item> ELEC_SHOVEL = poweredAbilityShovel("elec_shovel", 5.0F, 0.0D, HbmToolTiers.ELEC,
+            500_000L, 1_000L, 100L, item -> electricToolAbilities(item));
+    public static final RegistryObject<Item> DRX = poweredAbilityMiner("drax", 10.0F, -0.05D, HbmToolTiers.ELEC,
+            500_000_000L, 100_000L, 5_000L, item -> item.addAbility(ToolHarvestAbilities.SMELTER, 0)
+                    .addAbility(ToolHarvestAbilities.SHREDDER, 0)
+                    .addAbility(ToolHarvestAbilities.LUCK, 1)
+                    .addAbility(ToolAreaAbilities.HAMMER, 1)
+                    .addAbility(ToolAreaAbilities.HAMMER_FLAT, 1)
+                    .addAbility(ToolAreaAbilities.RECURSION, 2));
+    public static final RegistryObject<Item> DRX_MK2 = poweredAbilityMiner("drax_mk2", 15.0F, -0.05D, HbmToolTiers.ELEC,
+            1_000_000_000L, 250_000L, 7_500L, item -> item.addAbility(ToolHarvestAbilities.SMELTER, 0)
+                    .addAbility(ToolHarvestAbilities.SHREDDER, 0)
+                    .addAbility(ToolHarvestAbilities.CENTRIFUGE, 0)
+                    .addAbility(ToolHarvestAbilities.LUCK, 2)
+                    .addAbility(ToolAreaAbilities.HAMMER, 2)
+                    .addAbility(ToolAreaAbilities.HAMMER_FLAT, 2)
+                    .addAbility(ToolAreaAbilities.RECURSION, 4));
+    public static final RegistryObject<Item> DRX_MK3 = poweredAbilityMiner("drax_mk3", 20.0F, -0.05D, HbmToolTiers.ELEC,
+            2_500_000_000L, 500_000L, 10_000L, item -> item.addAbility(ToolHarvestAbilities.SMELTER, 0)
+                    .addAbility(ToolHarvestAbilities.SHREDDER, 0)
+                    .addAbility(ToolHarvestAbilities.CENTRIFUGE, 0)
+                    .addAbility(ToolHarvestAbilities.CRYSTALLIZER, 0)
+                    .addAbility(ToolHarvestAbilities.SILK, 0)
+                    .addAbility(ToolHarvestAbilities.LUCK, 3)
+                    .addAbility(ToolAreaAbilities.HAMMER, 3)
+                    .addAbility(ToolAreaAbilities.HAMMER_FLAT, 3)
+                    .addAbility(ToolAreaAbilities.RECURSION, 5));
+    public static final RegistryObject<Item> BISMUTH_PICKAXE = abilityMiner("bismuth_pickaxe", 15.0F, 0.0D, HbmToolTiers.BISMUTH, false,
+            item -> bismuthToolAbilities(item, 2, 0, true));
+    public static final RegistryObject<Item> BISMUTH_AXE = abilityAxe("bismuth_axe", 25.0F, 0.0D, HbmToolTiers.BISMUTH, false,
+            item -> bismuthToolAbilities(item, 3, 1, true));
+    public static final RegistryObject<Item> VOLCANIC_PICKAXE = abilityMiner("volcanic_pickaxe", 15.0F, 0.0D, HbmToolTiers.VOLCANIC, false,
+            item -> volcanicToolAbilities(item, 0, 0, true));
+    public static final RegistryObject<Item> VOLCANIC_AXE = abilityAxe("volcanic_axe", 25.0F, 0.0D, HbmToolTiers.VOLCANIC, false,
+            item -> volcanicToolAbilities(item, 1, 1, true));
+    public static final RegistryObject<Item> CHLOROPHYTE_PICKAXE = abilityMiner("chlorophyte_pickaxe", 20.0F, 0.0D, HbmToolTiers.CHLOROPHYTE, false,
+            item -> chlorophyteToolAbilities(item, 3, 2, true)
+                    .addAbility(ToolHarvestAbilities.CENTRIFUGE, 0)
+                    .addAbility(ToolHarvestAbilities.MERCURY, 0));
+    public static final RegistryObject<Item> CHLOROPHYTE_AXE = abilityAxe("chlorophyte_axe", 50.0F, 0.0D, HbmToolTiers.CHLOROPHYTE, false,
+            item -> chlorophyteToolAbilities(item, 4, 3, true));
+    public static final RegistryObject<Item> MESE_PICKAXE = abilityMiner("mese_pickaxe", 35.0F, 0.0D, HbmToolTiers.MESE, false,
+            item -> meseToolAbilities(item, 3, 0)
+                    .addAbility(ToolHarvestAbilities.CRYSTALLIZER, 0));
+    public static final RegistryObject<Item> MESE_AXE = abilityAxe("mese_axe", 75.0F, 0.0D, HbmToolTiers.MESE, false,
+            item -> meseToolAbilities(item, 4, 1));
+    public static final RegistryObject<Item> DNT_SWORD = abilitySword("dnt_sword", HbmToolTiers.MESE, 12.0F, 0.0D, false, item -> { });
+    public static final RegistryObject<Item> DWARVEN_PICKAXE = abilityMiner("dwarven_pickaxe", 5.0F, -0.1D, HbmToolTiers.DWARVEN, false, 250,
+            item -> item.addAbility(ToolAreaAbilities.HAMMER, 0)
+                    .addAbility(ToolAreaAbilities.HAMMER_FLAT, 0));
+    public static final RegistryObject<Item> MESE_GAVEL = abilitySword("mese_gavel", HbmToolTiers.MESE_GAVEL, 250.0F, 1.5D, false,
+            item -> item.addAbility(WeaponAbilities.PHOSPHORUS, 0)
+                    .addAbility(WeaponAbilities.RADIATION, 2)
+                    .addAbility(WeaponAbilities.STUN, 3)
+                    .addAbility(WeaponAbilities.VAMPIRE, 4)
+                    .addAbility(WeaponAbilities.BEHEADER, 0));
     public static final RegistryObject<Item> CANISTER_EMPTY = registerLegacy("canister_empty",
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> CANISTER_FULL = registerLegacy("canister_full",
@@ -196,6 +492,8 @@ public final class ModItems {
             () -> new FluidPipeBlockItem(ModBlocks.FLUID_DUCT_NEO.get(), new Item.Properties()));
     public static final RegistryObject<Item> DETONATOR = registerLegacy("detonator",
             () -> new DetonatorItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> RADAR_LINKER = registerLegacy("radar_linker",
+            () -> new RadarLinkerItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> SINGULARITY = registerLegacy("singularity",
             () -> new SingularityItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> SINGULARITY_COUNTER_RESONANT = registerLegacy("singularity_counter_resonant",
@@ -353,6 +651,57 @@ public final class ModItems {
             Stream.concat(STAMP_BOOK_ITEMS.stream(), PAGE_OF_ITEMS.stream()),
             Stream.of(TEMPLATE_FOLDER, FLUID_ICON)).toList();
 
+    public static final RegistryObject<Item> SAT_HEAD_MAPPER = part("sat_head_mapper");
+    public static final RegistryObject<Item> SAT_HEAD_SCANNER = part("sat_head_scanner");
+    public static final RegistryObject<Item> SAT_HEAD_RADAR = part("sat_head_radar");
+    public static final RegistryObject<Item> SAT_HEAD_LASER = part("sat_head_laser");
+    public static final RegistryObject<Item> SAT_HEAD_RESONATOR = part("sat_head_resonator");
+
+    public static final RegistryObject<Item> SAT_MAPPER = satelliteItem("sat_mapper", LegacySatelliteType.MAPPER, "satchip.mapper");
+    public static final RegistryObject<Item> SAT_SCANNER = satelliteItem("sat_scanner", LegacySatelliteType.SCANNER, "satchip.scanner");
+    public static final RegistryObject<Item> SAT_RADAR = satelliteItem("sat_radar", LegacySatelliteType.RADAR, "satchip.radar");
+    public static final RegistryObject<Item> SAT_LASER = satelliteItem("sat_laser", LegacySatelliteType.LASER, "satchip.laser");
+    public static final RegistryObject<Item> SAT_FOEQ = satelliteItem("sat_foeq", LegacySatelliteType.RELAY, "satchip.foeq");
+    public static final RegistryObject<Item> SAT_RESONATOR = satelliteItem("sat_resonator", LegacySatelliteType.RESONATOR, "satchip.resonator");
+    public static final RegistryObject<Item> SAT_MINER = satelliteItem("sat_miner", LegacySatelliteType.MINER, "satchip.miner");
+    public static final RegistryObject<Item> SAT_LUNAR_MINER = satelliteItem("sat_lunar_miner", LegacySatelliteType.LUNAR_MINER, "satchip.lunar_miner");
+    public static final RegistryObject<Item> SAT_GERALD = satelliteItem("sat_gerald", LegacySatelliteType.HORIZONS, "satchip.gerald.desc");
+    public static final RegistryObject<Item> SAT_CHIP = registerLegacy("sat_chip",
+            () -> new SatelliteChipItem(new Item.Properties()));
+    public static final RegistryObject<Item> SAT_INTERFACE = registerLegacy("sat_interface",
+            () -> new SatelliteInterfaceItem(new Item.Properties(), SatelliteInterfaceItem.Mode.PANEL));
+    public static final RegistryObject<Item> SAT_COORD = registerLegacy("sat_coord",
+            () -> new SatelliteInterfaceItem(new Item.Properties(), SatelliteInterfaceItem.Mode.COORD));
+    public static final RegistryObject<Item> SAT_DESIGNATOR = registerLegacy("sat_designator",
+            () -> new SatelliteDesignatorItem(new Item.Properties()));
+    public static final RegistryObject<Item> SAT_RELAY = registerLegacy("sat_relay",
+            () -> new SatelliteChipItem(new Item.Properties()));
+
+    public static final List<RegistryObject<Item>> SATELLITE_PART_ITEMS = List.of(
+            SAT_HEAD_MAPPER,
+            SAT_HEAD_SCANNER,
+            SAT_HEAD_RADAR,
+            SAT_HEAD_LASER,
+            SAT_HEAD_RESONATOR
+    );
+
+    public static final List<RegistryObject<Item>> SATELLITE_TAB_ITEMS = List.of(
+            SAT_MAPPER,
+            SAT_SCANNER,
+            SAT_RADAR,
+            SAT_LASER,
+            SAT_FOEQ,
+            SAT_RESONATOR,
+            SAT_MINER,
+            SAT_LUNAR_MINER,
+            SAT_GERALD,
+            SAT_CHIP,
+            SAT_INTERFACE,
+            SAT_COORD,
+            SAT_DESIGNATOR,
+            SAT_RELAY
+    );
+
     public static final List<RegistryObject<Item>> EXTRA_PARTS_TAB_ITEMS = Stream.concat(Stream.concat(Stream.concat(CIRCUIT_ITEMS.stream(), EXPENSIVE_MODE_ITEMS.stream()), ORE_BYPRODUCT_ITEMS.stream()), simpleParts(
             "ingot_pu_mix",
             "ingot_am241",
@@ -413,12 +762,15 @@ public final class ModItems {
             "powder_lithium",
             "powder_beryllium",
             "powder_cobalt",
+            "powder_neptunium",
             "powder_sodium",
             "powder_schrabidium",
             "powder_gold",
             "powder_niobium",
             "powder_asbestos",
             "powder_ferrouranium",
+            "powder_strontium",
+            "powder_cs137",
             "powder_quartz",
             "powder_lapis",
             "powder_diamond",
@@ -446,6 +798,7 @@ public final class ModItems {
             "plate_welded_copper",
             "plate_welded_zirconium",
             "wire_gold",
+            "wire_fine_copper",
             "wire_fine_mingrade",
             "wire_fine_tungsten",
             "wire_dense_gold",
@@ -756,7 +1109,75 @@ public final class ModItems {
             UPGRADE_POWER_3,
             UPGRADE_OVERDRIVE_1,
             UPGRADE_OVERDRIVE_2,
-            UPGRADE_OVERDRIVE_3
+            UPGRADE_OVERDRIVE_3,
+            UPGRADE_AFTERBURN_1,
+            UPGRADE_AFTERBURN_2,
+            UPGRADE_AFTERBURN_3
+    );
+
+    private static final List<RegistryObject<Item>> LEGACY_TOOL_ITEMS = List.of(
+            SCREWDRIVER,
+            HAND_DRILL,
+            DEFUSER
+    );
+
+    private static final List<RegistryObject<Item>> ABILITY_TOOL_ITEMS = List.of(
+            SCHRABIDIUM_SWORD,
+            SCHRABIDIUM_PICKAXE,
+            SCHRABIDIUM_AXE,
+            SCHRABIDIUM_SHOVEL,
+            TITANIUM_SWORD,
+            TITANIUM_PICKAXE,
+            TITANIUM_AXE,
+            TITANIUM_SHOVEL,
+            STEEL_SWORD,
+            STEEL_PICKAXE,
+            STEEL_AXE,
+            STEEL_SHOVEL,
+            ALLOY_SWORD,
+            ALLOY_PICKAXE,
+            ALLOY_AXE,
+            ALLOY_SHOVEL,
+            CMB_SWORD,
+            CMB_PICKAXE,
+            CMB_AXE,
+            CMB_SHOVEL,
+            DESH_SWORD,
+            DESH_PICKAXE,
+            DESH_AXE,
+            DESH_SHOVEL,
+            COBALT_SWORD,
+            COBALT_PICKAXE,
+            COBALT_AXE,
+            COBALT_SHOVEL,
+            COBALT_DECORATED_SWORD,
+            COBALT_DECORATED_PICKAXE,
+            COBALT_DECORATED_AXE,
+            COBALT_DECORATED_SHOVEL,
+            STARMETAL_SWORD,
+            STARMETAL_PICKAXE,
+            STARMETAL_AXE,
+            STARMETAL_SHOVEL,
+            CENTRI_STICK,
+            SMASHING_HAMMER,
+            ELEC_SWORD,
+            ELEC_PICKAXE,
+            ELEC_AXE,
+            ELEC_SHOVEL,
+            DRX,
+            DRX_MK2,
+            DRX_MK3,
+            BISMUTH_PICKAXE,
+            BISMUTH_AXE,
+            VOLCANIC_PICKAXE,
+            VOLCANIC_AXE,
+            CHLOROPHYTE_PICKAXE,
+            CHLOROPHYTE_AXE,
+            MESE_PICKAXE,
+            MESE_AXE,
+            DNT_SWORD,
+            DWARVEN_PICKAXE,
+            MESE_GAVEL
     );
 
     public static final List<RegistryObject<Item>> CONTROL_TAB_ITEMS = Stream.<List<RegistryObject<Item>>>of(simpleParts(
@@ -787,7 +1208,7 @@ public final class ModItems {
             "pellet_rtg_polonium",
             "pellet_rtg_americium",
             "pellet_rtg_gold"
-    ), MACHINE_UPGRADE_ITEMS, List.<RegistryObject<Item>>of(CATALYTIC_CONVERTER), SINGULARITY_FAMILY_ITEMS, CONTROL_BATTERY_ITEMS)
+    ), MACHINE_UPGRADE_ITEMS, LEGACY_TOOL_ITEMS, ABILITY_TOOL_ITEMS, List.<RegistryObject<Item>>of(CATALYTIC_CONVERTER), SINGULARITY_FAMILY_ITEMS, CONTROL_BATTERY_ITEMS)
             .flatMap(List::stream)
             .toList();
 
@@ -843,15 +1264,69 @@ public final class ModItems {
             STAMP_44,
             STAMP_9,
             STAMP_50
-    ), EXTRA_PARTS_TAB_ITEMS.stream()).toList();
+    ), Stream.concat(SATELLITE_PART_ITEMS.stream(), EXTRA_PARTS_TAB_ITEMS.stream())).toList();
 
     public static final List<RegistryObject<Item>> CONSUMABLE_TAB_ITEMS = Stream.of(
             GEIGER_COUNTER,
             DIGAMMA_DIAGNOSTIC,
+            POLLUTION_DETECTOR,
             RADAWAY,
             RADAWAY_STRONG,
             RADAWAY_FLUSH,
             RADX,
+            GAS_MASK_FILTER,
+            GAS_MASK_FILTER_MONO,
+            GAS_MASK_FILTER_COMBO,
+            GAS_MASK_FILTER_RAG,
+            GAS_MASK_FILTER_PISS,
+            ATTACHMENT_MASK,
+            ATTACHMENT_MASK_MONO,
+            PADS_RUBBER,
+            PADS_SLIME,
+            PADS_STATIC,
+            CLADDING_PAINT,
+            CLADDING_RUBBER,
+            CLADDING_LEAD,
+            CLADDING_DESH,
+            CLADDING_GHIORSIUM,
+            CLADDING_IRON,
+            CLADDING_OBSIDIAN,
+            INSERT_KEVLAR,
+            INSERT_SAPI,
+            INSERT_ESAPI,
+            INSERT_XSAPI,
+            INSERT_STEEL,
+            INSERT_DU,
+            INSERT_POLONIUM,
+            INSERT_GHIORSIUM,
+            INSERT_ERA,
+            INSERT_YHARONITE,
+            INSERT_DOXIUM,
+            SERVO_SET,
+            SERVO_SET_DESH,
+            RADAR_LINKER,
+            HEART_PIECE,
+            HEART_CONTAINER,
+            HEART_BOOSTER,
+            HEART_FAB,
+            BLACK_DIAMOND,
+            WD40,
+            BOTTLED_CLOUD,
+            AUSTRALIUM_III,
+            ARMOR_POLISH,
+            BANDAID,
+            SERUM,
+            QUARTZ_PLUTONIUM,
+            MORNING_GLORY,
+            LODESTONE,
+            HORSESHOE_MAGNET,
+            INDUSTRIAL_MAGNET,
+            BATHWATER,
+            BATHWATER_MK2,
+            SPIDER_MILK,
+            INK,
+            INJECTOR_5HTP,
+            MEDAL_LIQUIDATOR,
             CONTAINMENT_BOX,
             PLASTIC_BAG,
             TOOLBOX,
@@ -931,6 +1406,232 @@ public final class ModItems {
         return item;
     }
 
+    private static RegistryObject<Item> abilitySword(String name, HbmToolTiers tier, float damage, double movement,
+                                                     boolean rare, Consumer<HbmAbilitySwordItem> abilities) {
+        return registerLegacy(name, () -> {
+            HbmAbilitySwordItem item = new HbmAbilitySwordItem(tier, damage, movement, toolProperties(tier, rare));
+            abilities.accept(item);
+            return item;
+        });
+    }
+
+    private static RegistryObject<Item> abilityPickaxe(String name, float damage, double movement, HbmToolTiers tier,
+                                                       boolean rare, Consumer<HbmAbilityToolItem> abilities) {
+        return registerLegacy(name, () -> {
+            HbmAbilityToolItem item = HbmAbilityToolItem.pickaxe(damage, movement, tier, toolProperties(tier, rare));
+            abilities.accept(item);
+            return item;
+        });
+    }
+
+    private static RegistryObject<Item> abilityAxe(String name, float damage, double movement, HbmToolTiers tier,
+                                                   boolean rare, Consumer<HbmAbilityToolItem> abilities) {
+        return registerLegacy(name, () -> {
+            HbmAbilityToolItem item = HbmAbilityToolItem.axe(damage, movement, tier, toolProperties(tier, rare));
+            abilities.accept(item);
+            return item;
+        });
+    }
+
+    private static RegistryObject<Item> abilityShovel(String name, float damage, double movement, HbmToolTiers tier,
+                                                      boolean rare, Consumer<HbmAbilityToolItem> abilities) {
+        return registerLegacy(name, () -> {
+            HbmAbilityToolItem item = HbmAbilityToolItem.shovel(damage, movement, tier, toolProperties(tier, rare));
+            abilities.accept(item);
+            return item;
+        });
+    }
+
+    private static RegistryObject<Item> abilityMiner(String name, float damage, double movement, HbmToolTiers tier,
+                                                     boolean rare, Consumer<HbmAbilityToolItem> abilities) {
+        return abilityMiner(name, damage, movement, tier, rare, -1, abilities);
+    }
+
+    private static RegistryObject<Item> abilityMiner(String name, float damage, double movement, HbmToolTiers tier,
+                                                     boolean rare, int durability, Consumer<HbmAbilityToolItem> abilities) {
+        return registerLegacy(name, () -> {
+            HbmAbilityToolItem item = HbmAbilityToolItem.miner(damage, movement, tier, toolProperties(tier, rare, durability));
+            abilities.accept(item);
+            return item;
+        });
+    }
+
+    private static RegistryObject<Item> poweredAbilitySword(String name, HbmToolTiers tier, float damage, double movement,
+                                                            long maxCharge, long chargeRate, long consumption,
+                                                            Consumer<HbmPoweredAbilitySwordItem> abilities) {
+        return registerLegacy(name, () -> {
+            HbmPoweredAbilitySwordItem item = new HbmPoweredAbilitySwordItem(tier, damage, movement,
+                    toolProperties(tier, false), maxCharge, chargeRate, consumption);
+            abilities.accept(item);
+            return item;
+        });
+    }
+
+    private static RegistryObject<Item> poweredAbilityPickaxe(String name, float damage, double movement, HbmToolTiers tier,
+                                                              long maxCharge, long chargeRate, long consumption,
+                                                              Consumer<HbmPoweredAbilityToolItem> abilities) {
+        return registerLegacy(name, () -> {
+            HbmPoweredAbilityToolItem item = HbmPoweredAbilityToolItem.pickaxe(damage, movement, tier,
+                    toolProperties(tier, false), maxCharge, chargeRate, consumption);
+            abilities.accept(item);
+            return item;
+        });
+    }
+
+    private static RegistryObject<Item> poweredAbilityAxe(String name, float damage, double movement, HbmToolTiers tier,
+                                                          long maxCharge, long chargeRate, long consumption,
+                                                          Consumer<HbmPoweredAbilityToolItem> abilities) {
+        return registerLegacy(name, () -> {
+            HbmPoweredAbilityToolItem item = HbmPoweredAbilityToolItem.axe(damage, movement, tier,
+                    toolProperties(tier, false), maxCharge, chargeRate, consumption);
+            abilities.accept(item);
+            return item;
+        });
+    }
+
+    private static RegistryObject<Item> poweredAbilityShovel(String name, float damage, double movement, HbmToolTiers tier,
+                                                             long maxCharge, long chargeRate, long consumption,
+                                                             Consumer<HbmPoweredAbilityToolItem> abilities) {
+        return registerLegacy(name, () -> {
+            HbmPoweredAbilityToolItem item = HbmPoweredAbilityToolItem.shovel(damage, movement, tier,
+                    toolProperties(tier, false), maxCharge, chargeRate, consumption);
+            abilities.accept(item);
+            return item;
+        });
+    }
+
+    private static RegistryObject<Item> poweredAbilityMiner(String name, float damage, double movement, HbmToolTiers tier,
+                                                            long maxCharge, long chargeRate, long consumption,
+                                                            Consumer<HbmPoweredAbilityToolItem> abilities) {
+        return registerLegacy(name, () -> {
+            HbmPoweredAbilityToolItem item = HbmPoweredAbilityToolItem.miner(damage, movement, tier,
+                    toolProperties(tier, false), maxCharge, chargeRate, consumption);
+            abilities.accept(item);
+            return item;
+        });
+    }
+
+    private static Item.Properties toolProperties(HbmToolTiers tier, boolean rare) {
+        return toolProperties(tier, rare, -1);
+    }
+
+    private static Item.Properties toolProperties(HbmToolTiers tier, boolean rare, int durability) {
+        Item.Properties properties = new Item.Properties().stacksTo(1);
+        if (durability > 0) {
+            properties.durability(durability);
+        } else if (tier.getUses() > 0) {
+            properties.durability(tier.getUses());
+        }
+        if (rare) {
+            properties.rarity(Rarity.RARE);
+        }
+        return properties;
+    }
+
+    private static HbmAbilityToolItem schrabidiumToolAbilities(HbmAbilityToolItem item) {
+        return item.addAbility(WeaponAbilities.RADIATION, 0)
+                .addAbility(ToolAreaAbilities.HAMMER, 1)
+                .addAbility(ToolAreaAbilities.HAMMER_FLAT, 1)
+                .addAbility(ToolAreaAbilities.RECURSION, 6)
+                .addAbility(ToolHarvestAbilities.SILK, 0)
+                .addAbility(ToolHarvestAbilities.LUCK, 4)
+                .addAbility(ToolHarvestAbilities.SMELTER, 0)
+                .addAbility(ToolHarvestAbilities.SHREDDER, 0);
+    }
+
+    private static HbmAbilityToolItem deshToolAbilities(HbmAbilityToolItem item) {
+        return item.addAbility(ToolAreaAbilities.HAMMER, 0)
+                .addAbility(ToolAreaAbilities.HAMMER_FLAT, 0)
+                .addAbility(ToolAreaAbilities.RECURSION, 0)
+                .addAbility(ToolHarvestAbilities.SILK, 0)
+                .addAbility(ToolHarvestAbilities.LUCK, 1);
+    }
+
+    private static HbmAbilityToolItem cobaltToolAbilities(HbmAbilityToolItem item) {
+        return item.addAbility(ToolAreaAbilities.RECURSION, 1)
+                .addAbility(ToolHarvestAbilities.SILK, 0)
+                .addAbility(ToolHarvestAbilities.LUCK, 0);
+    }
+
+    private static HbmAbilityToolItem cobaltDecoratedToolAbilities(HbmAbilityToolItem item) {
+        return item.addAbility(ToolAreaAbilities.RECURSION, 1)
+                .addAbility(ToolAreaAbilities.HAMMER, 0)
+                .addAbility(ToolAreaAbilities.HAMMER_FLAT, 0)
+                .addAbility(ToolHarvestAbilities.SILK, 0)
+                .addAbility(ToolHarvestAbilities.LUCK, 2);
+    }
+
+    private static HbmAbilityToolItem starmetalToolAbilities(HbmAbilityToolItem item) {
+        return item.addAbility(ToolAreaAbilities.RECURSION, 3)
+                .addAbility(ToolAreaAbilities.HAMMER, 1)
+                .addAbility(ToolAreaAbilities.HAMMER_FLAT, 1)
+                .addAbility(ToolHarvestAbilities.SILK, 0)
+                .addAbility(ToolHarvestAbilities.LUCK, 4);
+    }
+
+    private static HbmAbilityToolItem electricToolAbilities(HbmAbilityToolItem item) {
+        return item.addAbility(ToolAreaAbilities.HAMMER, 0)
+                .addAbility(ToolAreaAbilities.HAMMER_FLAT, 0)
+                .addAbility(ToolAreaAbilities.RECURSION, 2)
+                .addAbility(ToolHarvestAbilities.SILK, 0)
+                .addAbility(ToolHarvestAbilities.LUCK, 1);
+    }
+
+    private static HbmAbilityToolItem bismuthToolAbilities(HbmAbilityToolItem item, int stunLevel, int vampireLevel, boolean beheader) {
+        item.addAbility(ToolAreaAbilities.HAMMER, 1)
+                .addAbility(ToolAreaAbilities.HAMMER_FLAT, 1)
+                .addAbility(ToolAreaAbilities.RECURSION, 1)
+                .addAbility(ToolHarvestAbilities.SHREDDER, 0)
+                .addAbility(ToolHarvestAbilities.LUCK, 1)
+                .addAbility(ToolHarvestAbilities.SILK, 0)
+                .addAbility(WeaponAbilities.STUN, stunLevel)
+                .addAbility(WeaponAbilities.VAMPIRE, vampireLevel);
+        if (beheader) {
+            item.addAbility(WeaponAbilities.BEHEADER, 0);
+        }
+        return item;
+    }
+
+    private static HbmAbilityToolItem volcanicToolAbilities(HbmAbilityToolItem item, int fireLevel, int vampireLevel, boolean beheader) {
+        item.addAbility(ToolAreaAbilities.HAMMER, 1)
+                .addAbility(ToolAreaAbilities.HAMMER_FLAT, 1)
+                .addAbility(ToolAreaAbilities.RECURSION, 1)
+                .addAbility(ToolHarvestAbilities.SMELTER, 0)
+                .addAbility(ToolHarvestAbilities.LUCK, 2)
+                .addAbility(ToolHarvestAbilities.SILK, 0)
+                .addAbility(WeaponAbilities.FIRE, fireLevel)
+                .addAbility(WeaponAbilities.VAMPIRE, vampireLevel);
+        if (beheader) {
+            item.addAbility(WeaponAbilities.BEHEADER, 0);
+        }
+        return item;
+    }
+
+    private static HbmAbilityToolItem chlorophyteToolAbilities(HbmAbilityToolItem item, int stunLevel, int vampireLevel, boolean beheader) {
+        item.addAbility(ToolAreaAbilities.HAMMER, 1)
+                .addAbility(ToolAreaAbilities.HAMMER_FLAT, 1)
+                .addAbility(ToolAreaAbilities.RECURSION, 1)
+                .addAbility(ToolHarvestAbilities.LUCK, 3)
+                .addAbility(WeaponAbilities.STUN, stunLevel)
+                .addAbility(WeaponAbilities.VAMPIRE, vampireLevel);
+        if (beheader) {
+            item.addAbility(WeaponAbilities.BEHEADER, 0);
+        }
+        return item;
+    }
+
+    private static HbmAbilityToolItem meseToolAbilities(HbmAbilityToolItem item, int stunLevel, int phosphorusLevel) {
+        return item.addAbility(ToolAreaAbilities.HAMMER, 2)
+                .addAbility(ToolAreaAbilities.HAMMER_FLAT, 2)
+                .addAbility(ToolAreaAbilities.RECURSION, 2)
+                .addAbility(ToolHarvestAbilities.SILK, 0)
+                .addAbility(ToolHarvestAbilities.LUCK, 5)
+                .addAbility(ToolAreaAbilities.EXPLOSION, 3)
+                .addAbility(WeaponAbilities.STUN, stunLevel)
+                .addAbility(WeaponAbilities.PHOSPHORUS, phosphorusLevel)
+                .addAbility(WeaponAbilities.BEHEADER, 0);
+    }
+
     private static RegistryObject<Item> batteryPack(String name, int legacyMeta, long dischargeRate, boolean capacitor) {
         long maxCharge = capacitor ? dischargeRate * 20L * 30L : dischargeRate * 20L * 60L * 15L;
         long chargeRate = capacitor ? dischargeRate : dischargeRate * 10L;
@@ -946,6 +1647,10 @@ public final class ModItems {
 
     private static RegistryObject<Item> machineUpgrade(String name, UpgradeType type, int tier) {
         return registerLegacy(name, () -> new ItemMachineUpgrade(new Item.Properties(), type, tier));
+    }
+
+    private static RegistryObject<Item> satelliteItem(String name, LegacySatelliteType type, String descriptionKey) {
+        return registerLegacy(name, () -> new SatelliteChipItem(new Item.Properties(), type, descriptionKey));
     }
 
     private static RegistryObject<Item> batteryPack(String name, int legacyMeta, long dischargeRate, long duration) {

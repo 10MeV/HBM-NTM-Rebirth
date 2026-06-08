@@ -1,0 +1,11 @@
+package com.hbm.ntm.bullet;
+
+public enum BulletBehaviorTag {
+    CHLOROPHYTE_HOMING,
+    PENETRATION_HOMING_RESET,
+    MASKMAN_ORB_BOLT_VOLLEY,
+    MASKMAN_TRACER_METEOR,
+    MASKMAN_METEOR_FLAME_PARTICLES,
+    UFO_HOMING,
+    UFO_BLAST
+}

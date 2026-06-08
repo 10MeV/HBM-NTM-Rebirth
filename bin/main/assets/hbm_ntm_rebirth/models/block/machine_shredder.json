@@ -1,12 +1,12 @@
 {
   "parent": "minecraft:block/cube",
   "textures": {
-    "particle": "hbm_ntm_rebirth:block/machine_shredder_front_alt",
     "down": "hbm_ntm_rebirth:block/machine_shredder_bottom_alt",
-    "up": "hbm_ntm_rebirth:block/machine_shredder_top_alt",
-    "north": "hbm_ntm_rebirth:block/machine_shredder_front_alt",
     "east": "hbm_ntm_rebirth:block/machine_shredder_side_alt",
+    "north": "hbm_ntm_rebirth:block/machine_shredder_front_alt",
+    "particle": "hbm_ntm_rebirth:block/machine_shredder_front_alt",
     "south": "hbm_ntm_rebirth:block/machine_shredder_front_alt",
+    "up": "hbm_ntm_rebirth:block/machine_shredder_top_alt",
     "west": "hbm_ntm_rebirth:block/machine_shredder_side_alt"
   }
 }

@@ -5,6 +5,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.saveddata.SavedData;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -15,7 +16,8 @@ import java.util.Locale;
 import java.util.Map;
 
 public class PollutionSavedData extends SavedData {
-    public static final String DATA_NAME = "hbm_pollution";
+    public static final String DATA_NAME = "hbmpollution";
+    public static final String MODERN_COMPAT_DATA_NAME = "hbm_pollution";
     private static final String TAG_ENTRIES = "entries";
     private static final String TAG_CHUNK_X = "chunkX";
     private static final String TAG_CHUNK_Z = "chunkZ";
@@ -29,19 +31,23 @@ public class PollutionSavedData extends SavedData {
             CompoundTag entry = entries.getCompound(i);
             PollutionGridPos pos = new PollutionGridPos(entry.getInt(TAG_CHUNK_X), entry.getInt(TAG_CHUNK_Z));
             PollutionSample sample = PollutionSample.fromTag(entry);
-            if (sample.hasAnyPollution()) {
+            if (sample.hasAnyStoredValue()) {
                 data.pollution.put(pos.toLong(), sample);
             }
         }
         return data;
     }
 
+    public static boolean hasLegacyRootEntries(CompoundTag tag) {
+        return tag.contains(TAG_ENTRIES, Tag.TAG_LIST);
+    }
+
     @Override
     public CompoundTag save(CompoundTag tag) {
         ListTag entries = new ListTag();
         for (Map.Entry<Long, PollutionSample> entry : pollution.entrySet()) {
-            PollutionSample sample = entry.getValue().copyClamped();
-            if (!sample.hasAnyPollution()) {
+            PollutionSample sample = entry.getValue().copy();
+            if (!sample.hasAnyStoredValue()) {
                 continue;
             }
             PollutionGridPos pos = PollutionGridPos.of(entry.getKey());
@@ -60,6 +66,12 @@ public class PollutionSavedData extends SavedData {
         return sample == null ? new PollutionSample() : sample.copy();
     }
 
+    @Nullable
+    public PollutionSample getOrNull(PollutionGridPos pos) {
+        PollutionSample sample = pollution.get(pos.toLong());
+        return sample == null ? null : sample.copy();
+    }
+
     public float get(PollutionGridPos pos, PollutionType type) {
         PollutionSample sample = pollution.get(pos.toLong());
         return sample == null ? 0.0F : sample.get(type);
@@ -68,7 +80,17 @@ public class PollutionSavedData extends SavedData {
     public void set(PollutionGridPos pos, PollutionType type, float value) {
         PollutionSample sample = pollution.computeIfAbsent(pos.toLong(), key -> new PollutionSample());
         sample.set(type, value);
-        if (!sample.hasAnyPollution()) {
+        if (!sample.hasAnyStoredValue()) {
+            pollution.remove(pos.toLong());
+        }
+        setDirty();
+    }
+
+    public void set(PollutionGridPos pos, PollutionSample value) {
+        PollutionSample sample = value.copy();
+        if (sample.hasAnyStoredValue()) {
+            pollution.put(pos.toLong(), sample);
+        } else {
             pollution.remove(pos.toLong());
         }
         setDirty();
@@ -76,7 +98,18 @@ public class PollutionSavedData extends SavedData {
 
     public void add(PollutionGridPos pos, PollutionType type, float amount) {
         PollutionSample sample = pollution.computeIfAbsent(pos.toLong(), key -> new PollutionSample());
-        sample.add(type, amount);
+        sample.addClamped(type, amount);
+        if (!sample.hasAnyPollution()) {
+            pollution.remove(pos.toLong());
+        }
+        setDirty();
+    }
+
+    public void addClamped(PollutionGridPos pos, PollutionSample amounts) {
+        PollutionSample sample = pollution.computeIfAbsent(pos.toLong(), key -> new PollutionSample());
+        for (PollutionType type : PollutionType.values()) {
+            sample.addClamped(type, amounts.get(type));
+        }
         if (!sample.hasAnyPollution()) {
             pollution.remove(pos.toLong());
         }
@@ -136,7 +169,7 @@ public class PollutionSavedData extends SavedData {
 
         pollution.clear();
         for (Map.Entry<Long, PollutionSample> entry : next.entrySet()) {
-            PollutionSample sample = entry.getValue().copyClamped();
+            PollutionSample sample = entry.getValue().copy();
             if (sample.hasAnyPollution()) {
                 pollution.put(entry.getKey(), sample);
             }
@@ -206,6 +239,10 @@ public class PollutionSavedData extends SavedData {
                 totals, loadedTotals);
     }
 
+    public boolean isEmpty() {
+        return pollution.isEmpty();
+    }
+
     @FunctionalInterface
     public interface PollutionGridPredicate {
         boolean isLoaded(PollutionGridPos pos);
@@ -248,6 +285,12 @@ public class PollutionSavedData extends SavedData {
             return sample;
         }
 
+        public static PollutionSample fromArray(float[] values) {
+            PollutionSample sample = new PollutionSample();
+            System.arraycopy(values, 0, sample.values, 0, Math.min(values.length, sample.values.length));
+            return sample;
+        }
+
         public void toTag(CompoundTag tag) {
             for (PollutionType type : PollutionType.values()) {
                 tag.putFloat(type.name().toLowerCase(Locale.ROOT), get(type));
@@ -258,12 +301,46 @@ public class PollutionSavedData extends SavedData {
             return values[type.ordinal()];
         }
 
+        public float get(int ordinal) {
+            return values[ordinal];
+        }
+
         public void set(PollutionType type, float value) {
-            values[type.ordinal()] = clamp(value);
+            values[type.ordinal()] = value;
+        }
+
+        public void set(int ordinal, float value) {
+            values[ordinal] = value;
         }
 
         public void add(PollutionType type, float amount) {
             set(type, get(type) + amount);
+        }
+
+        public void add(int ordinal, float amount) {
+            set(ordinal, get(ordinal) + amount);
+        }
+
+        public void addClamped(PollutionType type, float amount) {
+            set(type, clamp(get(type) + amount));
+        }
+
+        public void addClamped(int ordinal, float amount) {
+            set(ordinal, clamp(get(ordinal) + amount));
+        }
+
+        public float[] toArray() {
+            float[] copy = new float[values.length];
+            copyInto(copy);
+            return copy;
+        }
+
+        public void copyInto(float[] target) {
+            System.arraycopy(values, 0, target, 0, Math.min(values.length, target.length));
+        }
+
+        public int size() {
+            return values.length;
         }
 
         public PollutionSample copy() {
@@ -275,7 +352,7 @@ public class PollutionSavedData extends SavedData {
         public PollutionSample copyClamped() {
             PollutionSample copy = new PollutionSample();
             for (PollutionType type : PollutionType.values()) {
-                copy.set(type, get(type));
+                copy.set(type, clamp(get(type)));
             }
             return copy;
         }
@@ -283,6 +360,15 @@ public class PollutionSavedData extends SavedData {
         public boolean hasAnyPollution() {
             for (float value : values) {
                 if (value > 0.0F) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public boolean hasAnyStoredValue() {
+            for (float value : values) {
+                if (value != 0.0F) {
                     return true;
                 }
             }

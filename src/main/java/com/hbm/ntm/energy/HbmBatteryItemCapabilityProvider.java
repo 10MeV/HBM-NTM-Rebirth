@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public class HbmBatteryItemCapabilityProvider implements ICapabilityProvider {
     private final LazyOptional<IEnergyStorage> energy;
 
-    public HbmBatteryItemCapabilityProvider(ItemStack stack, HbmBatteryItem battery) {
+    public HbmBatteryItemCapabilityProvider(ItemStack stack, HbmChargeableItem battery) {
         this.energy = LazyOptional.of(() -> new ForgeBatteryItemAdapter(stack, battery));
     }
 

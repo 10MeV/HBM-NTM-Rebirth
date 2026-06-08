@@ -1,5 +1,7 @@
 {
   "variants": {
-    "": { "model": "hbm_ntm_rebirth:block/chlorine_gas" }
+    "": {
+      "model": "hbm_ntm_rebirth:block/chlorine_gas"
+    }
   }
 }

@@ -1,9 +1,14 @@
 package com.hbm.ntm.command;
 
+import com.google.gson.JsonObject;
 import com.hbm.ntm.api.tile.InfoProviderEC;
 import com.hbm.ntm.api.redstoneoverradio.RORFunctionException;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
+import com.hbm.ntm.api.redstoneoverradio.ROR;
+import com.hbm.ntm.api.redstoneoverradio.RORRemoteBridge;
+import com.hbm.ntm.api.redstoneoverradio.RTTYLogicEvaluator;
+import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.blockentity.FluidPipeAnchorBlockEntity;
@@ -29,11 +34,20 @@ import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.event.CommonForgeEvents;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmCompatFluidRegistry;
+import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
+import com.hbm.ntm.fluid.HbmFluidForgeAliasConfig;
 import com.hbm.ntm.fluid.HbmFluidForgeMappings;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
+import com.hbm.ntm.fluid.HbmFluidTypeConfig;
+import com.hbm.ntm.fluid.HbmFluidTraitConfig;
+import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.itempool.HbmItemPoolRegistry;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.LegacyNetworkDispatcher;
+import com.hbm.ntm.network.LegacyPacketThreading;
+import com.hbm.ntm.network.LegacyRawBufferNetwork;
 import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
@@ -50,21 +64,30 @@ import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.CraterRadiationData;
+import com.hbm.ntm.radiation.HazmatRegistry;
+import com.hbm.ntm.radiation.HazmatResistanceConfig;
 import com.hbm.ntm.radiation.LegacyFalloutConversions;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationConstants;
 import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationSavedData;
+import com.hbm.ntm.satellite.ISatelliteChip;
+import com.hbm.ntm.satellite.LegacySatelliteType;
+import com.hbm.ntm.satellite.Satellite;
+import com.hbm.ntm.satellite.SatelliteSavedData;
 import com.hbm.ntm.uninos.HbmNodespace;
 import com.hbm.ntm.uninos.HbmUninosDiagnostics;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNodespace;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -95,11 +118,14 @@ import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
@@ -143,6 +169,11 @@ public final class ModCommands {
                                         .executes(context -> getFalloutTableStatus(context.getSource())))
                                 .then(Commands.literal("reload")
                                         .executes(context -> reloadFalloutTable(context.getSource()))))
+                        .then(Commands.literal("hazmat")
+                                .then(Commands.literal("status")
+                                        .executes(context -> getHazmatResistanceStatus(context.getSource())))
+                                .then(Commands.literal("reload")
+                                        .executes(context -> reloadHazmatResistanceConfig(context.getSource()))))
                         .then(Commands.literal("fog")
                                 .executes(context -> spawnRadiationFog(context.getSource(), BlockPos.containing(context.getSource().getPosition())))
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
@@ -185,12 +216,157 @@ public final class ModCommands {
                 .then(pollutionCommand())
                 .then(damageCommand())
                 .then(recipeCommand())
+                .then(itemPoolCommand())
                 .then(machineCommand())
                 .then(fluidCommand())
-                .then(networkCommand()));
+                .then(networkCommand())
+                .then(satelliteCommand()));
 
         dispatcher.register(legacyPacketThreadingCommand("ntmpackets"));
         dispatcher.register(legacyPacketThreadingCommand("ntmpacket"));
+        dispatcher.register(satelliteCommand("ntmsatellites"));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> satelliteCommand() {
+        return satelliteCommand("satellite");
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> satelliteCommand(String name) {
+        return Commands.literal(name)
+                .requires(source -> source.hasPermission(2))
+                .then(Commands.literal("orbit")
+                        .executes(context -> orbitHeldSatellite(context.getSource()))
+                        .then(Commands.argument("type", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(LegacySatelliteType.names(), builder))
+                                .then(Commands.argument("frequency", IntegerArgumentType.integer())
+                                        .executes(context -> orbitSatellite(
+                                                context.getSource(),
+                                                StringArgumentType.getString(context, "type"),
+                                                IntegerArgumentType.getInteger(context, "frequency"))))))
+                .then(Commands.literal("descend")
+                        .then(Commands.argument("frequency", IntegerArgumentType.integer())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                        SatelliteSavedData.get(context.getSource().getLevel()).entriesSnapshot().stream()
+                                                .map(entry -> String.valueOf(entry.getKey())),
+                                        builder))
+                                .executes(context -> descendSatellite(
+                                        context.getSource(),
+                                        IntegerArgumentType.getInteger(context, "frequency")))))
+                .then(Commands.literal("list")
+                        .executes(context -> listSatellites(context.getSource())))
+                .then(Commands.literal("stats")
+                        .executes(context -> satelliteStats(context.getSource())))
+                .then(Commands.literal("chip")
+                        .then(Commands.literal("get")
+                                .executes(context -> getHeldSatelliteChipFrequency(context.getSource())))
+                        .then(Commands.literal("set")
+                                .then(Commands.argument("frequency", IntegerArgumentType.integer())
+                                        .executes(context -> setHeldSatelliteChipFrequency(
+                                                context.getSource(),
+                                                IntegerArgumentType.getInteger(context, "frequency"))))));
+    }
+
+    private static int orbitHeldSatellite(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        ItemStack stack = player.getMainHandItem();
+        int legacyId = Satellite.getLegacyIdFromItem(stack.getItem());
+        if (legacyId < 0 || Satellite.getTypeFromItem(stack.getItem()).isEmpty()) {
+            source.sendFailure(Component.literal("Hold a launchable satellite item to orbit it."));
+            return 0;
+        }
+        int frequency = ISatelliteChip.getFrequencyFromStack(stack);
+        boolean orbited = Satellite.orbit(source.getLevel(), legacyId, frequency,
+                player.getX(), player.getY(), player.getZ());
+        if (!orbited) {
+            source.sendFailure(Component.literal("Could not create satellite from held item."));
+            return 0;
+        }
+        LegacySatelliteType type = Satellite.getTypeFromItem(stack.getItem()).orElse(null);
+        String name = type == null ? String.valueOf(legacyId) : type.legacyName();
+        if (!player.isCreative()) {
+            stack.shrink(1);
+        }
+        source.sendSuccess(() -> Component.literal("Orbited held satellite " + name
+                + " on frequency " + frequency + "."), true);
+        return frequency;
+    }
+
+    private static int orbitSatellite(CommandSourceStack source, String typeName, int frequency) {
+        LegacySatelliteType type = LegacySatelliteType.byName(typeName);
+        if (type == null) {
+            source.sendFailure(Component.literal("Unknown satellite type '" + typeName + "'. Valid: "
+                    + String.join(", ", LegacySatelliteType.names())));
+            return 0;
+        }
+
+        boolean orbited = Satellite.orbit(source.getLevel(), type.legacyId(), frequency,
+                source.getPosition().x(), source.getPosition().y(), source.getPosition().z());
+        if (!orbited) {
+            source.sendFailure(Component.literal("Could not create satellite type '" + type.legacyName() + "'."));
+            return 0;
+        }
+
+        source.sendSuccess(() -> Component.literal("Orbited satellite " + type.legacyName()
+                + " on frequency " + frequency + "."), true);
+        return frequency;
+    }
+
+    private static int descendSatellite(CommandSourceStack source, int frequency) {
+        SatelliteSavedData data = SatelliteSavedData.get(source.getLevel());
+        if (!data.removeSatellite(frequency)) {
+            source.sendFailure(Component.literal("No satellite is using frequency " + frequency + "."));
+            return 0;
+        }
+
+        source.sendSuccess(() -> Component.literal("Descended satellite on frequency " + frequency + "."), true);
+        return frequency;
+    }
+
+    private static int listSatellites(CommandSourceStack source) {
+        SatelliteSavedData data = SatelliteSavedData.get(source.getLevel());
+        if (data.isEmpty()) {
+            source.sendFailure(Component.literal("No active satellites."));
+            return 0;
+        }
+
+        for (Map.Entry<Integer, Satellite> entry : data.entriesSnapshot()) {
+            Satellite satellite = entry.getValue();
+            source.sendSuccess(() -> Component.literal(entry.getKey() + " - " + satellite.legacyName()
+                    + " (legacyId=" + satellite.legacyId() + ", interface="
+                    + satellite.satelliteInterface().name().toLowerCase(Locale.ROOT) + ")"), false);
+        }
+        return data.size();
+    }
+
+    private static int satelliteStats(CommandSourceStack source) {
+        SatelliteSavedData data = SatelliteSavedData.get(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Satellite data: entries=" + data.size()
+                + " savedData=" + SatelliteSavedData.DATA_NAME), false);
+        return data.size();
+    }
+
+    private static int getHeldSatelliteChipFrequency(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ItemStack stack = source.getPlayerOrException().getMainHandItem();
+        if (!(stack.getItem() instanceof ISatelliteChip)) {
+            source.sendFailure(Component.literal("Hold a satellite chip item."));
+            return 0;
+        }
+        int frequency = ISatelliteChip.getFrequencyFromStack(stack);
+        source.sendSuccess(() -> Component.literal("Held satellite frequency: " + frequency), false);
+        return frequency;
+    }
+
+    private static int setHeldSatelliteChipFrequency(CommandSourceStack source, int frequency) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof ISatelliteChip)) {
+            source.sendFailure(Component.literal("Hold a satellite chip item."));
+            return 0;
+        }
+        ISatelliteChip.setFrequencyOnStack(stack, frequency);
+        player.getInventory().setChanged();
+        source.sendSuccess(() -> Component.literal("Set held satellite frequency to " + frequency + "."), true);
+        return frequency;
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> legacyPacketThreadingCommand(String name) {
@@ -206,7 +382,11 @@ public final class ModCommands {
                 .then(Commands.literal("config")
                         .executes(context -> getPacketThreadingConfig(context.getSource())))
                 .then(Commands.literal("clear")
-                        .executes(context -> clearPacketThreading(context.getSource())));
+                        .executes(context -> clearPacketThreading(context.getSource())))
+                .then(Commands.literal("forceLock")
+                        .executes(context -> rejectLegacyPacketThreadingLock(context.getSource(), "forceLock")))
+                .then(Commands.literal("forceUnlock")
+                        .executes(context -> rejectLegacyPacketThreadingLock(context.getSource(), "forceUnlock")));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> statusCommand() {
@@ -258,11 +438,8 @@ public final class ModCommands {
                         .then(Commands.literal("value")
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                         .then(Commands.argument("name", StringArgumentType.greedyString())
-                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{
-                                                        RORInfo.PREFIX_VALUE + "fill",
-                                                        RORInfo.PREFIX_VALUE + "fillpercent",
-                                                        RORInfo.PREFIX_VALUE + "delta"
-                                                }, builder))
+                                                .suggests((context, builder) -> suggestRorValues(context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "pos"), builder))
                                                 .executes(context -> getRorValue(
                                                         context.getSource(),
                                                         BlockPosArgument.getLoadedBlockPos(context, "pos"),
@@ -270,15 +447,75 @@ public final class ModCommands {
                         .then(Commands.literal("run")
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                         .then(Commands.argument("command", StringArgumentType.greedyString())
-                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{
-                                                        RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "0",
-                                                        RORInfo.PREFIX_FUNCTION + "setredmode" + RORInteractive.NAME_SEPARATOR + "2",
-                                                        RORInfo.PREFIX_FUNCTION + "setpriority" + RORInteractive.NAME_SEPARATOR + "1"
-                                                }, builder))
+                                                .suggests((context, builder) -> suggestRorFunctionExamples(context.getSource(),
+                                                        BlockPosArgument.getLoadedBlockPos(context, "pos"), builder))
                                                 .executes(context -> runRorFunction(
                                                         context.getSource(),
                                                         BlockPosArgument.getLoadedBlockPos(context, "pos"),
-                                                        StringArgumentType.getString(context, "command")))))))
+                                                        StringArgumentType.getString(context, "command"))))))
+                        .then(Commands.literal("signal")
+                                .then(Commands.literal("broadcast")
+                                        .then(Commands.argument("channel", StringArgumentType.string())
+                                                .then(Commands.argument("signal", StringArgumentType.greedyString())
+                                                        .executes(context -> broadcastRttySignal(
+                                                                context.getSource(),
+                                                                StringArgumentType.getString(context, "channel"),
+                                                                StringArgumentType.getString(context, "signal"))))))
+                                .then(Commands.literal("listen")
+                                        .then(Commands.argument("channel", StringArgumentType.string())
+                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                        RTTYSystem.channels(context.getSource().getLevel()), builder))
+                                                .executes(context -> listenRttySignal(
+                                                        context.getSource(),
+                                                        StringArgumentType.getString(context, "channel")))))
+                                .then(Commands.literal("read")
+                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                .then(Commands.argument("channel", StringArgumentType.string())
+                                                        .then(Commands.argument("name", StringArgumentType.greedyString())
+                                                                .suggests((context, builder) -> suggestRorValues(context.getSource(),
+                                                                        BlockPosArgument.getLoadedBlockPos(context, "pos"), builder))
+                                                                .executes(context -> readAndBroadcastRorValue(
+                                                                        context.getSource(),
+                                                                        BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                                        StringArgumentType.getString(context, "channel"),
+                                                                        StringArgumentType.getString(context, "name")))))))
+                                .then(Commands.literal("run")
+                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                .then(Commands.argument("channel", StringArgumentType.string())
+                                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                                RTTYSystem.channels(context.getSource().getLevel()), builder))
+                                                        .executes(context -> runRorCommandFromSignal(
+                                                                context.getSource(),
+                                                                BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                                StringArgumentType.getString(context, "channel"))))))
+                                .then(Commands.literal("logic")
+                                        .then(Commands.literal("parse")
+                                                .then(Commands.argument("signal", StringArgumentType.word())
+                                                        .then(Commands.argument("condition", IntegerArgumentType.integer(0, 9))
+                                                                .then(Commands.argument("mapped", StringArgumentType.word())
+                                                                        .executes(context -> parseRttyLogicSignal(
+                                                                                context.getSource(),
+                                                                                StringArgumentType.getString(context, "signal"),
+                                                                                IntegerArgumentType.getInteger(context, "condition"),
+                                                                                StringArgumentType.getString(context, "mapped")))))))
+                                        .then(Commands.literal("eval")
+                                                .then(Commands.argument("signal", StringArgumentType.word())
+                                                        .then(Commands.argument("descending", StringArgumentType.word())
+                                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(new String[]{"false", "true"}, builder))
+                                                                .then(Commands.argument("index", IntegerArgumentType.integer(0, 15))
+                                                                        .then(Commands.argument("condition", IntegerArgumentType.integer(0, 9))
+                                                                                .then(Commands.argument("mapped", StringArgumentType.word())
+                                                                                        .executes(context -> evalRttyLogicSignal(
+                                                                                                context.getSource(),
+                                                                                                StringArgumentType.getString(context, "signal"),
+                                                                                                parseBoolean(StringArgumentType.getString(context, "descending")),
+                                                                                                IntegerArgumentType.getInteger(context, "index"),
+                                                                                                IntegerArgumentType.getInteger(context, "condition"),
+                                                                                                StringArgumentType.getString(context, "mapped"))))))))))
+                                .then(Commands.literal("stats")
+                                        .executes(context -> getRttyStats(context.getSource())))
+                                .then(Commands.literal("clear")
+                                        .executes(context -> clearRttySignals(context.getSource())))))
                 .then(Commands.literal("debug")
                         .then(Commands.literal("particles")
                                 .executes(context -> toggleEnergyDebugParticles(context.getSource()))
@@ -294,14 +531,14 @@ public final class ModCommands {
                 .then(Commands.literal("set")
                         .then(Commands.argument("type", StringArgumentType.word())
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggest(pollutionTypeNames(), builder))
-                                .then(Commands.argument("amount", FloatArgumentType.floatArg(0.0F, PollutionManager.MAX_POLLUTION))
+                                .then(Commands.argument("amount", FloatArgumentType.floatArg())
                                         .executes(context -> setPollution(context.getSource(),
                                                 StringArgumentType.getString(context, "type"),
                                                 FloatArgumentType.getFloat(context, "amount"))))))
                 .then(Commands.literal("add")
                         .then(Commands.argument("type", StringArgumentType.word())
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggest(pollutionTypeNames(), builder))
-                                .then(Commands.argument("amount", FloatArgumentType.floatArg(-PollutionManager.MAX_POLLUTION, PollutionManager.MAX_POLLUTION))
+                                .then(Commands.argument("amount", FloatArgumentType.floatArg())
                                         .executes(context -> addPollution(context.getSource(),
                                                 StringArgumentType.getString(context, "type"),
                                                 FloatArgumentType.getFloat(context, "amount"))))))
@@ -318,6 +555,8 @@ public final class ModCommands {
                 .then(Commands.literal("resistance")
                         .then(Commands.literal("status")
                                 .executes(context -> getDamageResistanceStatus(context.getSource())))
+                        .then(Commands.literal("selfTest")
+                                .executes(context -> selfTestDamageResistance(context.getSource())))
                         .then(Commands.literal("reload")
                                 .executes(context -> reloadDamageResistanceConfig(context.getSource())))
                         .then(Commands.literal("damageTypes")
@@ -369,7 +608,9 @@ public final class ModCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> fluidCommand() {
         return Commands.literal("fluid")
                 .then(Commands.literal("nodespace")
-                        .executes(context -> getFluidNodespace(context.getSource())))
+                        .executes(context -> getFluidNodespace(context.getSource()))
+                        .then(Commands.literal("rebuild")
+                                .executes(context -> rebuildFluidNodespace(context.getSource()))))
                 .then(Commands.literal("info")
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                 .executes(context -> getFluidInfo(
@@ -379,6 +620,58 @@ public final class ModCommands {
                         .then(fluidNetworkArgument()))
                 .then(Commands.literal("network")
                         .then(fluidNetworkArgument()))
+                .then(Commands.literal("traits")
+                        .then(Commands.literal("status")
+                                .executes(context -> getFluidTraitConfigStatus(context.getSource())))
+                        .then(Commands.literal("reload")
+                                .executes(context -> reloadFluidTraitConfig(context.getSource())))
+                        .then(Commands.argument("fluid", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                        HbmFluids.all().stream().map(FluidType::toPath), builder))
+                                .executes(context -> getFluidTraits(
+                                        context.getSource(),
+                                        parseFluid(StringArgumentType.getString(context, "fluid"))))))
+                .then(Commands.literal("types")
+                        .then(Commands.literal("status")
+                                .executes(context -> getFluidTypeConfigStatus(context.getSource())))
+                        .then(Commands.literal("reload")
+                                .executes(context -> reloadFluidTypes(context.getSource())))
+                        .then(Commands.argument("fluid", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                        HbmFluids.all().stream().map(FluidType::toPath), builder))
+                                .executes(context -> getFluidDefinition(
+                                        context.getSource(),
+                                        parseFluid(StringArgumentType.getString(context, "fluid"))))))
+                .then(Commands.literal("compat")
+                        .then(Commands.literal("status")
+                                .executes(context -> getFluidCompatStatus(context.getSource()))))
+                .then(Commands.literal("forge")
+                        .then(Commands.literal("status")
+                                .executes(context -> getFluidForgeMappingStatus(context.getSource())))
+                        .then(Commands.literal("resolve")
+                                .then(Commands.argument("forge_fluid", StringArgumentType.word())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                ForgeRegistries.FLUIDS.getKeys().stream().map(ResourceLocation::toString), builder))
+                                        .executes(context -> resolveForgeFluidMapping(
+                                                context.getSource(),
+                                                StringArgumentType.getString(context, "forge_fluid"))))))
+                .then(Commands.literal("containers")
+                        .then(Commands.literal("status")
+                                .executes(context -> getFluidContainerRegistryStatus(context.getSource()))))
+                .then(Commands.literal("port")
+                        .then(Commands.argument("machine", BlockPosArgument.blockPos())
+                                .then(Commands.argument("offset", BlockPosArgument.blockPos())
+                                        .then(Commands.argument("side", StringArgumentType.word())
+                                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(directionNames(), builder))
+                                                .then(Commands.argument("fluid", StringArgumentType.word())
+                                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                                HbmFluids.all().stream().map(FluidType::toPath), builder))
+                                                        .executes(context -> getFluidPort(
+                                                                context.getSource(),
+                                                                BlockPosArgument.getLoadedBlockPos(context, "machine"),
+                                                                BlockPosArgument.getBlockPos(context, "offset"),
+                                                                parseDirection(StringArgumentType.getString(context, "side")),
+                                                                parseFluid(StringArgumentType.getString(context, "fluid")))))))))
                 .then(Commands.literal("pipe")
                         .then(Commands.literal("set")
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
@@ -431,10 +724,20 @@ public final class ModCommands {
                                 .executes(context -> getNetworkProtocolSummary(context.getSource())))
                         .then(Commands.literal("progress")
                                 .executes(context -> getNetworkProtocolProgress(context.getSource())))
+                        .then(Commands.literal("diagnostics")
+                                .executes(context -> getNetworkProtocolDiagnostics(context.getSource())))
+                        .then(Commands.literal("resetRuntime")
+                                .executes(context -> resetNetworkProtocolRuntime(context.getSource())))
                         .then(Commands.literal("packets")
                                 .executes(context -> listNetworkProtocolPackets(context.getSource())))
                         .then(Commands.literal("audit")
                                 .executes(context -> auditNetworkProtocol(context.getSource())))
+                        .then(Commands.literal("safety")
+                                .executes(context -> getNetworkSendSafety(context.getSource())))
+                        .then(Commands.literal("resetSafety")
+                                .executes(context -> resetNetworkSendSafety(context.getSource())))
+                        .then(Commands.literal("rawBuffer")
+                                .executes(context -> getNetworkRawBufferStatus(context.getSource())))
                         .then(Commands.literal("mappings")
                                 .executes(context -> listNetworkProtocolMappings(context.getSource())))
                         .then(Commands.literal("legacy")
@@ -546,6 +849,23 @@ public final class ModCommands {
                         .executes(context -> listLegacyGenericRecipeHandlers(context.getSource())))
                 .then(Commands.literal("legacySerializableHandlers")
                         .executes(context -> listLegacySerializableRecipeHandlers(context.getSource())));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> itemPoolCommand() {
+        return Commands.literal("itempool")
+                .executes(context -> getItemPoolSummary(context.getSource()))
+                .then(Commands.literal("summary")
+                        .executes(context -> getItemPoolSummary(context.getSource())))
+                .then(Commands.literal("missing")
+                        .executes(context -> listMissingItemPoolTables(context.getSource())))
+                .then(Commands.literal("table")
+                        .then(Commands.argument("legacyPoolId", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                        HbmItemPoolRegistry.knownPoolIds().stream().sorted(),
+                                        builder))
+                                .executes(context -> queryItemPoolTable(
+                                        context.getSource(),
+                                        StringArgumentType.getString(context, "legacyPoolId")))));
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> fluidNetworkArgument() {
@@ -766,6 +1086,28 @@ public final class ModCommands {
         return report.entryCount();
     }
 
+    private static int getHazmatResistanceStatus(CommandSourceStack source) {
+        HazmatResistanceConfig.LoadReport report = HazmatResistanceConfig.loadReport();
+        HazmatRegistry.RegistrySnapshot snapshot = HazmatRegistry.registrySnapshot();
+        source.sendSuccess(() -> Component.literal("Hazmat resistance: " + report.summary()
+                + " config=" + String.valueOf(report.configFile())), false);
+        source.sendSuccess(() -> Component.literal("Hazmat registry: resistanceEntries=" + snapshot.resistanceEntries()
+                + " protectionEntries=" + snapshot.protectionEntries()), false);
+        for (String warning : report.warnings()) {
+            source.sendSuccess(() -> Component.literal("Hazmat warning: " + warning), false);
+        }
+        return snapshot.resistanceEntries();
+    }
+
+    private static int reloadHazmatResistanceConfig(CommandSourceStack source) {
+        HazmatResistanceConfig.LoadReport report = HazmatResistanceConfig.initialize(FMLPaths.CONFIGDIR.get());
+        source.sendSuccess(() -> Component.literal("Reloaded " + report.summary()), true);
+        for (String warning : report.warnings()) {
+            source.sendFailure(Component.literal("Hazmat warning: " + warning));
+        }
+        return report.resistanceEntries();
+    }
+
     private static int getDamageResistanceStatus(CommandSourceStack source) {
         DamageResistanceConfig.LoadReport report = DamageResistanceConfig.loadReport();
         DamageResistanceHandler.RegistrySnapshot snapshot = DamageResistanceHandler.registrySnapshot();
@@ -792,6 +1134,17 @@ public final class ModCommands {
             source.sendFailure(Component.literal("Damage resistance warning: missing migrated " + warning));
         }
         return report.itemStats() + report.setStats() + report.entityStats();
+    }
+
+    private static int selfTestDamageResistance(CommandSourceStack source) {
+        DamageResistanceHandler.CoreAudit audit = DamageResistanceHandler.coreAudit();
+        if (audit.passed()) {
+            source.sendSuccess(() -> Component.literal("Damage resistance core self-test passed."), false);
+            return 1;
+        }
+        source.sendFailure(Component.literal("Damage resistance core self-test failed: "
+                + String.join(", ", audit.problems())));
+        return 0;
     }
 
     private static int auditDamageResistanceDamageTypes(CommandSourceStack source) {
@@ -1167,8 +1520,7 @@ public final class ModCommands {
         }
         try {
             String name = RORInteractive.getCommand(command);
-            String[] params = RORInteractive.getParams(command);
-            String result = interactive.runRORFunction(name, params);
+            String result = ROR.run(interactive, command);
             source.sendSuccess(() -> Component.literal("ROR function " + name + " at " + pos.toShortString()
                     + (result == null ? ": ok" : ": " + result)), true);
             return 1;
@@ -1178,11 +1530,199 @@ public final class ModCommands {
         }
     }
 
+    private static CompletableFuture<Suggestions> suggestRorValues(CommandSourceStack source, BlockPos pos, SuggestionsBuilder builder) {
+        return suggestRorEntries(source, pos, builder, RORInfo.PREFIX_VALUE, false);
+    }
+
+    private static CompletableFuture<Suggestions> suggestRorFunctionExamples(CommandSourceStack source, BlockPos pos, SuggestionsBuilder builder) {
+        return suggestRorEntries(source, pos, builder, RORInfo.PREFIX_FUNCTION, true);
+    }
+
+    private static CompletableFuture<Suggestions> suggestRorEntries(CommandSourceStack source, BlockPos pos,
+            SuggestionsBuilder builder, String prefix, boolean commandExamples) {
+        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        if (!(blockEntity instanceof RORInfo info)) {
+            return builder.buildFuture();
+        }
+        List<String> suggestions = new ArrayList<>();
+        for (String entry : info.getFunctionInfo()) {
+            if (entry == null || !entry.startsWith(prefix)) {
+                continue;
+            }
+            String suggestion = commandExamples ? rorCommandExample(entry) : entry;
+            if (!suggestion.isBlank() && !suggestions.contains(suggestion)) {
+                suggestions.add(suggestion);
+            }
+        }
+        return SharedSuggestionProvider.suggest(suggestions, builder);
+    }
+
+    private static String rorCommandExample(String entry) {
+        int separator = entry.indexOf(RORInteractive.NAME_SEPARATOR);
+        if (separator < 0) {
+            return entry;
+        }
+        String command = entry.substring(0, separator + 1);
+        String[] params = entry.substring(separator + 1).split(RORInteractive.PARAM_SEPARATOR);
+        List<String> examples = new ArrayList<>();
+        for (String param : params) {
+            examples.add(rorParameterExample(param));
+        }
+        return command + String.join(RORInteractive.PARAM_SEPARATOR, examples);
+    }
+
+    private static String rorParameterExample(String parameterInfo) {
+        String normalized = parameterInfo.trim().toLowerCase(Locale.ROOT);
+        if (normalized.startsWith("state")) {
+            return "1";
+        }
+        if (normalized.startsWith("mode")) {
+            return "0";
+        }
+        if (normalized.startsWith("priority")) {
+            return "1";
+        }
+        if (normalized.startsWith("fallback")) {
+            return "0";
+        }
+        return "0";
+    }
+
+    private static int broadcastRttySignal(CommandSourceStack source, String channel, String signal) {
+        RTTYSystem.broadcast(source.getLevel(), channel, signal);
+        source.sendSuccess(() -> Component.literal("Queued RTTY signal on " + channel
+                + " in " + source.getLevel().dimension().location()
+                + ": " + signal), true);
+        return 1;
+    }
+
+    private static int listenRttySignal(CommandSourceStack source, String channel) {
+        RTTYSystem.RTTYChannel rttyChannel = RTTYSystem.listen(source.getLevel(), channel);
+        if (rttyChannel == null) {
+            source.sendFailure(Component.literal("No RTTY signal on " + channel
+                    + " in " + source.getLevel().dimension().location()));
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("RTTY signal on " + channel
+                + " in " + source.getLevel().dimension().location()
+                + ": signal=" + rttyChannel.signalString()
+                + " timeStamp=" + rttyChannel.timeStamp()), false);
+        return 1;
+    }
+
+    private static int readAndBroadcastRorValue(CommandSourceStack source, BlockPos pos, String channel, String name) {
+        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        if (!(blockEntity instanceof RORValueProvider provider)) {
+            source.sendFailure(Component.literal("No HBM ROR value provider at " + pos.toShortString()));
+            return 0;
+        }
+        String valueName = name.startsWith(RORInfo.PREFIX_VALUE)
+                ? name.substring(RORInfo.PREFIX_VALUE.length())
+                : name;
+        String value = RORRemoteBridge.readValue(provider, valueName);
+        if (value == null) {
+            source.sendFailure(Component.literal("No ROR value '" + name + "' at " + pos.toShortString()));
+            return 0;
+        }
+        RTTYSystem.broadcast(source.getLevel(), channel, value);
+        source.sendSuccess(() -> Component.literal("Queued ROR value " + ROR.value(valueName)
+                + " from " + pos.toShortString()
+                + " on RTTY channel " + channel
+                + ": " + value), true);
+        return 1;
+    }
+
+    private static int runRorCommandFromSignal(CommandSourceStack source, BlockPos pos, String channel) {
+        BlockEntity blockEntity = source.getLevel().getBlockEntity(pos);
+        if (!(blockEntity instanceof RORInteractive interactive)) {
+            source.sendFailure(Component.literal("No HBM ROR interactive component at " + pos.toShortString()));
+            return 0;
+        }
+        RTTYSystem.RTTYChannel rttyChannel = RTTYSystem.listen(source.getLevel(), channel);
+        if (rttyChannel == null) {
+            source.sendFailure(Component.literal("No RTTY signal on " + channel));
+            return 0;
+        }
+        String command = rttyChannel.signalString();
+        try {
+            String result = RORRemoteBridge.runCommand(interactive, command);
+            source.sendSuccess(() -> Component.literal("Ran RTTY command from " + channel
+                    + " on " + pos.toShortString()
+                    + ": " + command
+                    + (result == null ? " -> ok" : " -> " + result)), true);
+            return 1;
+        } catch (RORFunctionException ex) {
+            source.sendFailure(Component.literal(ex.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int parseRttyLogicSignal(CommandSourceStack source, String signal, int condition, String mapped) {
+        boolean result = RTTYLogicEvaluator.parseSignal(signal, mapped, condition);
+        source.sendSuccess(() -> Component.literal("RTTY logic parse: signal=" + signal
+                + " condition=" + condition
+                + " mapped=" + mapped
+                + " result=" + result), false);
+        return result ? 1 : 0;
+    }
+
+    private static int evalRttyLogicSignal(CommandSourceStack source, String signal, boolean descending, int index,
+            int condition, String mapped) {
+        String[] mapping = new String[16];
+        int[] conditions = new int[16];
+        for (int i = 0; i < mapping.length; i++) {
+            mapping[i] = "";
+        }
+        mapping[index] = mapped;
+        conditions[index] = condition;
+        int result = RTTYLogicEvaluator.evaluate(signal, mapping, conditions, descending);
+        source.sendSuccess(() -> Component.literal("RTTY logic eval: signal=" + signal
+                + " descending=" + descending
+                + " index=" + index
+                + " condition=" + condition
+                + " mapped=" + mapped
+                + " resultRedstone=" + result), false);
+        return result;
+    }
+
+    private static int getRttyStats(CommandSourceStack source) {
+        RTTYSystem.Diagnostics diagnostics = RTTYSystem.diagnostics(source.getLevel());
+        List<String> channels = RTTYSystem.channels(source.getLevel());
+        source.sendSuccess(() -> Component.literal("RTTY system: " + diagnostics.summary()
+                + " channels=" + String.join(", ", channels)), false);
+        return diagnostics.levelBroadcastChannels();
+    }
+
+    private static int clearRttySignals(CommandSourceStack source) {
+        RTTYSystem.clear(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Cleared RTTY channels for "
+                + source.getLevel().dimension().location()), true);
+        return 1;
+    }
+
     private static int getFluidNodespace(CommandSourceStack source) {
-        int nodes = HbmFluidNodespace.getNodeCount(source.getLevel());
-        int networks = HbmFluidNodespace.getNetworkCount(source.getLevel());
-        source.sendSuccess(() -> Component.literal("Fluid nodespace: nodes=" + nodes + " networks=" + networks), false);
-        return nodes;
+        HbmFluidNodespace.Diagnostics diagnostics = HbmFluidNodespace.getDiagnostics(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Fluid nodespace: positions=" + diagnostics.nodePositions()
+                + " nodes=" + diagnostics.uniqueNodes()
+                + " networks=" + diagnostics.networks()
+                + " invalidNetworks=" + diagnostics.invalidNetworks()
+                + " linkRefs=" + diagnostics.linkRefs()
+                + " dirtyNodes=" + diagnostics.dirtyNodes()
+                + " expiredNodes=" + diagnostics.expiredNodes()
+                + " orphanNodes=" + diagnostics.orphanNodes()
+                + " providers=" + diagnostics.providerEntries()
+                + " receivers=" + diagnostics.receiverEntries()
+                + " reapTimer=" + diagnostics.reapTimer()), false);
+        return diagnostics.uniqueNodes();
+    }
+
+    private static int rebuildFluidNodespace(CommandSourceStack source) {
+        HbmFluidNodespace.ForceRebuildResult result = HbmFluidNodespace.forceRebuild(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Fluid nodespace rebuilt: nodes=" + result.nodes()
+                + " oldNetworks=" + result.oldNetworks()
+                + " newNetworks=" + result.newNetworks()
+                + " reapTimer=" + result.reapTimer()), true);
+        return result.newNetworks();
     }
 
     private static int getFluidNetwork(CommandSourceStack source, BlockPos pos, FluidType type) {
@@ -1219,8 +1759,138 @@ public final class ModCommands {
                 + " receiverDemand=" + formatPressureArray(network.receiverDemand()) + " mB"
                 + " receiverRate=" + formatPressureArray(network.receiverRate()) + " mB/t"
                 + " receiverPriorities=" + network.receiversByPriority()
-                + " lastTransfer=" + network.lastTransfer() + " mB"), false);
+                + " lastTransfer=" + network.lastTransfer() + " mB"
+                + " lastAttempted=" + formatPressureArray(network.lastAttemptedByPressure()) + " mB"
+                + " lastTransferred=" + formatPressureArray(network.lastTransferredByPressure()) + " mB"
+                + " lastProviderUse=" + formatPressureArray(network.lastProviderUseByPressure()) + " mB"
+                + " lastUnaccounted=" + formatPressureArray(network.lastUnaccountedByPressure()) + " mB"), false);
         return network.links();
+    }
+
+    private static int getFluidTraits(CommandSourceStack source, FluidType type) {
+        JsonObject traits = new JsonObject();
+        for (var entry : type.getTraitJson().entrySet()) {
+            traits.add(entry.getKey(), entry.getValue());
+        }
+        source.sendSuccess(() -> Component.literal("Fluid traits for " + type.getName() + ": " + traits), false);
+        return traits.size();
+    }
+
+    private static int getFluidTraitConfigStatus(CommandSourceStack source) {
+        HbmFluidTraitConfig.LoadReport report = HbmFluidTraitConfig.loadReport();
+        source.sendSuccess(() -> Component.literal("Fluid trait config: " + report.summary()), false);
+        for (String warning : report.warnings()) {
+            source.sendSuccess(() -> Component.literal(" - " + warning), false);
+        }
+        return report.traits();
+    }
+
+    private static int reloadFluidTraitConfig(CommandSourceStack source) {
+        HbmFluidTraitConfig.LoadReport report = HbmFluids.bootstrap(FMLPaths.CONFIGDIR.get());
+        source.sendSuccess(() -> Component.literal("Reloaded " + report.summary()), true);
+        for (String warning : report.warnings()) {
+            source.sendSuccess(() -> Component.literal(" - " + warning), false);
+        }
+        return report.traits();
+    }
+
+    private static int getFluidDefinition(CommandSourceStack source, FluidType type) {
+        JsonObject definition = type.toJson();
+        source.sendSuccess(() -> Component.literal("Fluid definition for " + type.getName() + ": " + definition), false);
+        return type.getId();
+    }
+
+    private static int getFluidTypeConfigStatus(CommandSourceStack source) {
+        HbmFluidTypeConfig.LoadReport report = HbmFluidTypeConfig.loadReport();
+        source.sendSuccess(() -> Component.literal("Fluid type config: " + report.summary()), false);
+        for (String warning : report.warnings()) {
+            source.sendSuccess(() -> Component.literal(" - " + warning), false);
+        }
+        source.sendSuccess(() -> Component.literal("Custom HBM fluids currently loaded: " + HbmFluids.customFluids().size()), false);
+        return report.customFluids();
+    }
+
+    private static int reloadFluidTypes(CommandSourceStack source) {
+        HbmFluidTraitConfig.LoadReport traitReport = HbmFluids.bootstrap(FMLPaths.CONFIGDIR.get());
+        HbmFluidTypeConfig.LoadReport typeReport = HbmFluidTypeConfig.loadReport();
+        source.sendSuccess(() -> Component.literal("Reloaded " + typeReport.summary()), true);
+        for (String warning : typeReport.warnings()) {
+            source.sendSuccess(() -> Component.literal(" - " + warning), false);
+        }
+        source.sendSuccess(() -> Component.literal("Reloaded " + traitReport.summary()), false);
+        for (String warning : traitReport.warnings()) {
+            source.sendSuccess(() -> Component.literal(" - " + warning), false);
+        }
+        return typeReport.customFluids();
+    }
+
+    private static int getFluidCompatStatus(CommandSourceStack source) {
+        HbmCompatFluidRegistry.Diagnostics diagnostics = HbmCompatFluidRegistry.diagnostics();
+        source.sendSuccess(() -> Component.literal("Fluid compat registry: " + diagnostics.summary()), false);
+        return diagnostics.foreignFluids();
+    }
+
+    private static int getFluidForgeMappingStatus(CommandSourceStack source) {
+        HbmFluidForgeAliasConfig.LoadReport report = HbmFluidForgeAliasConfig.loadReport();
+        HbmFluidForgeMappings.Diagnostics diagnostics = HbmFluidForgeMappings.diagnostics();
+        source.sendSuccess(() -> Component.literal("Fluid Forge mapping config: " + report.summary()), false);
+        for (String warning : report.warnings()) {
+            source.sendSuccess(() -> Component.literal(" - " + warning), false);
+        }
+        source.sendSuccess(() -> Component.literal("Fluid Forge mappings: " + diagnostics.summary()), false);
+        return diagnostics.tagAliases();
+    }
+
+    private static int resolveForgeFluidMapping(CommandSourceStack source, String forgeFluidName) {
+        ResourceLocation id = ResourceLocation.tryParse(forgeFluidName);
+        if (id == null) {
+            source.sendFailure(Component.literal("Invalid Forge fluid id: " + forgeFluidName));
+            return 0;
+        }
+        var forgeFluid = ForgeRegistries.FLUIDS.getValue(id);
+        if (forgeFluid == null) {
+            source.sendFailure(Component.literal("Unknown Forge fluid: " + id));
+            return 0;
+        }
+        FluidType type = HbmFluidForgeMappings.fromForge(forgeFluid);
+        source.sendSuccess(() -> Component.literal("Forge fluid " + id
+                + " -> HBM " + type.getName()
+                + " exportable=" + HbmFluidForgeMappings.canExport(type)), false);
+        return type == HbmFluids.NONE ? 0 : 1;
+    }
+
+    private static int getFluidContainerRegistryStatus(CommandSourceStack source) {
+        HbmFluidContainerRegistry.Diagnostics diagnostics = HbmFluidContainerRegistry.diagnostics();
+        source.sendSuccess(() -> Component.literal("Fluid container registry: " + diagnostics.summary()), false);
+        return diagnostics.externalContainers();
+    }
+
+    private static int getFluidPort(CommandSourceStack source, BlockPos machinePos, BlockPos offset, Direction side,
+            FluidType type) {
+        if (type == HbmFluids.NONE) {
+            source.sendFailure(Component.literal("Unknown or empty HBM fluid type."));
+            return 0;
+        }
+        if (side == null) {
+            source.sendFailure(Component.literal("Unknown direction."));
+            return 0;
+        }
+        HbmFluidUtil.FluidPort port = new HbmFluidUtil.FluidPort(offset, side);
+        HbmFluidUtil.PortSnapshot snapshot = HbmFluidUtil.inspectPort(source.getLevel(), machinePos, port, type);
+        source.sendSuccess(() -> Component.literal("Fluid port from " + machinePos.toShortString()
+                + " offset=" + offset.toShortString()
+                + " side=" + side.getName()
+                + " connector=" + snapshot.connectorPos().toShortString()
+                + " connectorSide=" + snapshot.connectorSide().getName()
+                + " fluid=" + snapshot.fluid()
+                + " connectorPresent=" + snapshot.connectorPresent()
+                + " connectable=" + snapshot.connectable()
+                + " node=" + snapshot.nodePresent()
+                + " network=" + snapshot.networkPresent()
+                + " links=" + snapshot.links()
+                + " providers=" + snapshot.providers()
+                + " receivers=" + snapshot.receivers()), false);
+        return snapshot.networkPresent() ? snapshot.links() : 0;
     }
 
     private static int getFluidInfo(CommandSourceStack source, BlockPos pos) {
@@ -1603,6 +2273,51 @@ public final class ModCommands {
         return coverage.genericSupported();
     }
 
+    private static int getItemPoolSummary(CommandSourceStack source) {
+        Map<String, ResourceLocation> knownTables = HbmItemPoolRegistry.knownTables();
+        List<HbmItemPoolRegistry.MissingTable> missing = HbmItemPoolRegistry.missingKnownTables(source.getLevel());
+        int available = knownTables.size() - missing.size();
+        source.sendSuccess(() -> Component.literal("HBM item pools: known=" + knownTables.size()
+                + ", availableTables=" + available
+                + ", missingTables=" + missing.size()), missing.size() > 0);
+        return missing.isEmpty() ? 1 : missing.size();
+    }
+
+    private static int listMissingItemPoolTables(CommandSourceStack source) {
+        List<HbmItemPoolRegistry.MissingTable> missing = HbmItemPoolRegistry.missingKnownTables(source.getLevel());
+        if (missing.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("All known HBM item pool loot tables are available."), false);
+            return 1;
+        }
+
+        source.sendSuccess(() -> Component.literal("Missing HBM item pool loot tables: " + missing.size()), true);
+        int shown = 0;
+        for (HbmItemPoolRegistry.MissingTable table : missing.stream()
+                .sorted((left, right) -> left.legacyPoolId().compareTo(right.legacyPoolId()))
+                .limit(64)
+                .toList()) {
+            shown++;
+            source.sendSuccess(() -> Component.literal(" - " + table.legacyPoolId()
+                    + " -> " + table.tableId()), false);
+        }
+        int remaining = missing.size() - shown;
+        if (remaining > 0) {
+            source.sendSuccess(() -> Component.literal(" - ... " + remaining + " more"), false);
+        }
+        return missing.size();
+    }
+
+    private static int queryItemPoolTable(CommandSourceStack source, String legacyPoolId) {
+        ResourceLocation tableId = HbmItemPoolRegistry.lootTableId(legacyPoolId);
+        boolean known = HbmItemPoolRegistry.knownPoolIds().contains(legacyPoolId);
+        boolean available = HbmItemPoolRegistry.hasTable(source.getLevel(), tableId);
+        source.sendSuccess(() -> Component.literal("HBM item pool " + legacyPoolId
+                + " -> " + tableId
+                + " known=" + known
+                + " available=" + available), false);
+        return available ? 1 : 0;
+    }
+
     private static int getAssemblyInfo(CommandSourceStack source, BlockPos pos) {
         AssemblyMachineBlockEntity assembler = getAssemblyMachine(source, pos);
         if (assembler == null) {
@@ -1949,7 +2664,9 @@ public final class ModCommands {
                 + " legacyMapped=" + ModMessages.mappedLegacyPacketCount()
                 + " legacyUnmapped=" + ModMessages.unmappedLegacyPacketRegistrations().size()
                 + " legacyMappings=" + ModMessages.legacyPacketMappingCount()
-                + " blockedSends=" + ModMessages.blockedUnregisteredSendCount()), false);
+                + " blockedUnregisteredSends=" + ModMessages.blockedUnregisteredSendCount()
+                + " blockedWrongDirectionSends=" + ModMessages.blockedWrongDirectionSendCount()
+                + " blockedInvalidTargetSends=" + ModMessages.blockedInvalidTargetSendCount()), false);
         if (!registrations.isEmpty()) {
             ModMessages.PacketRegistration first = registrations.get(0);
             ModMessages.PacketRegistration last = registrations.get(registrations.size() - 1);
@@ -1970,6 +2687,52 @@ public final class ModCommands {
         source.sendSuccess(() -> Component.literal("Coverage means old PacketDispatcher packets have modern carrier paths; "
                 + "foundation is conservative and excludes unfinished receiver/business logic."), false);
         return ModMessages.libraryFoundationProgressPercent();
+    }
+
+    private static int getNetworkProtocolDiagnostics(CommandSourceStack source) {
+        ModMessages.NetworkRuntimeSnapshot snapshot = ModMessages.networkRuntimeSnapshot();
+        source.sendSuccess(() -> Component.literal("HBM network runtime: "
+                + ModMessages.networkRuntimeSummary()), false);
+        source.sendSuccess(() -> Component.literal("Protocol audit: problems=" + snapshot.auditProblems()
+                + " missingModern=" + snapshot.auditMissingModern()
+                + " unknownLegacy=" + snapshot.auditUnknownLegacy()
+                + " directionMismatch=" + snapshot.auditDirectionMismatch()
+                + " duplicateEntries=" + snapshot.auditDuplicateEntries()
+                + " unmappedLegacy=" + snapshot.unmappedLegacyPacketCount()), false);
+        source.sendSuccess(() -> Component.literal("Send safety: blocked="
+                + snapshot.sendSafety().totalBlockedSends()
+                + " unregistered=" + snapshot.sendSafety().blockedUnregisteredSends()
+                + " wrongDirection=" + snapshot.sendSafety().blockedWrongDirectionSends()
+                + " invalidTarget=" + snapshot.sendSafety().blockedInvalidTargetSends()
+                + (snapshot.sendSafety().lastBlockedSend().isBlank()
+                        ? ""
+                        : " lastBlocked=\"" + snapshot.sendSafety().lastBlockedSend() + "\"")), false);
+        source.sendSuccess(() -> Component.literal("Threading runtime: pending=" + snapshot.threaded().pending()
+                + " queued=" + snapshot.threaded().totalQueued()
+                + " sent=" + snapshot.threaded().totalSent()
+                + " failed=" + snapshot.threaded().totalFailed()
+                + " discarded=" + snapshot.threaded().totalDiscarded()
+                + " fallback=" + snapshot.threaded().fallbackToMainThread()
+                + " enabled=" + snapshot.threaded().enabled()), false);
+        source.sendSuccess(() -> Component.literal("Legacy facade runtime: flushCalls="
+                + snapshot.legacyFlushCalls()
+                + " waitCalls=" + snapshot.legacyWaitCalls()
+                + " rawBufferBlocked=" + snapshot.rawBufferBlockedSends()
+                + " lastTickTotal=" + snapshot.legacyPacketThreading().lastTickTotal()
+                + " remaining=" + snapshot.legacyPacketThreading().remaining()
+                + " helpers=" + snapshot.totalHelperCount()), false);
+        if (!snapshot.lastRawBufferBlockedSend().isBlank()) {
+            source.sendSuccess(() -> Component.literal("Last legacy raw buffer block: "
+                    + snapshot.lastRawBufferBlockedSend()), false);
+        }
+        return snapshot.hasRuntimeWarnings() ? 0 : 1;
+    }
+
+    private static int resetNetworkProtocolRuntime(CommandSourceStack source) {
+        ModMessages.resetNetworkRuntimeDiagnostics();
+        source.sendSuccess(() -> Component.literal("Reset HBM network runtime diagnostics: "
+                + ModMessages.networkRuntimeSummary()), true);
+        return 1;
     }
 
     private static int listNetworkProtocolPackets(CommandSourceStack source) {
@@ -2024,6 +2787,30 @@ public final class ModCommands {
         return audit.hasProblems() ? 0 : 1;
     }
 
+    private static int getNetworkSendSafety(CommandSourceStack source) {
+        ModMessages.SendSafetySnapshot snapshot = ModMessages.sendSafetySnapshot();
+        source.sendSuccess(() -> Component.literal("HBM network send safety: registeredTypes="
+                + snapshot.registeredTypes()
+                + " blockedTotal=" + snapshot.totalBlockedSends()
+                + " blockedUnregistered=" + snapshot.blockedUnregisteredSends()
+                + " blockedWrongDirection=" + snapshot.blockedWrongDirectionSends()
+                + " blockedInvalidTarget=" + snapshot.blockedInvalidTargetSends()
+                + (snapshot.lastBlockedSend().isBlank() ? "" : " lastBlocked=\"" + snapshot.lastBlockedSend() + "\"")), false);
+        return (int) Math.min(Integer.MAX_VALUE, snapshot.totalBlockedSends());
+    }
+
+    private static int resetNetworkSendSafety(CommandSourceStack source) {
+        ModMessages.resetSendSafetyCounters();
+        source.sendSuccess(() -> Component.literal("Reset HBM network send safety counters."), true);
+        return 1;
+    }
+
+    private static int getNetworkRawBufferStatus(CommandSourceStack source) {
+        source.sendSuccess(() -> Component.literal("HBM legacy raw buffer network: "
+                + LegacyRawBufferNetwork.summary()), false);
+        return (int) Math.min(Integer.MAX_VALUE, LegacyRawBufferNetwork.blockedRawBufferSendCount());
+    }
+
     private static int queryLegacyNetworkPacket(CommandSourceStack source, String legacyName) {
         Optional<ModMessages.LegacyPacketRegistration> registration = ModMessages.legacyPacketRegistration(legacyName);
         List<ModMessages.LegacyPacketMapping> mappings = ModMessages.legacyPacketMappings(legacyName);
@@ -2069,11 +2856,19 @@ public final class ModCommands {
     private static int getNetworkLegacyWrapper(CommandSourceStack source) {
         source.sendSuccess(() -> Component.literal("HBM legacy network wrapper: "
                 + ModMessages.legacyWrapperSummary()), false);
+        source.sendSuccess(() -> Component.literal("Legacy flush: "
+                + LegacyNetworkDispatcher.flushCompatibilitySummary()), false);
+        source.sendSuccess(() -> Component.literal("Legacy packet threading: "
+                + LegacyPacketThreading.compatibilitySummary()), false);
+        source.sendSuccess(() -> Component.literal("Legacy raw buffer: "
+                + LegacyRawBufferNetwork.summary()), false);
         source.sendSuccess(() -> Component.literal("Send safety: "
                 + ModMessages.sendSafetySummary()), false);
         source.sendSuccess(() -> Component.literal("Use ModMessages.wrapper() when migrating old PacketDispatcher.wrapper call sites; "
-                + "use explicit ModMessages helpers for new code."), false);
-        return LegacyNetworkDispatcher.directSendHelperCount() + LegacyNetworkDispatcher.threadedSendHelperCount();
+                + "use LegacyPacketThreading for old PacketThreading call sites."), false);
+        return LegacyNetworkDispatcher.directSendHelperCount()
+                + LegacyNetworkDispatcher.threadedSendHelperCount()
+                + LegacyNetworkDispatcher.packetThreadingHelperCount();
     }
 
     private static int listLegacyNetworkProtocolPackets(CommandSourceStack source) {
@@ -2138,6 +2933,15 @@ public final class ModCommands {
                 + " totalDiscarded=" + snapshot.totalDiscarded()
                 + " prepareFailed=" + snapshot.totalPrepareFailed()
                 + " manualClears=" + snapshot.manualClears()), false);
+        source.sendSuccess(() -> Component.literal("Packet threading discard reasons: invalidTarget="
+                + snapshot.discardedInvalidTarget()
+                + " invalidMessage=" + snapshot.discardedInvalidMessage()
+                + " prepareNull=" + snapshot.discardedPrepareNull()
+                + " prepareException=" + snapshot.discardedPrepareException()
+                + " queueClear=" + snapshot.discardedQueueClear()
+                + " disableClear=" + snapshot.discardedDisableClear()
+                + " manualClear=" + snapshot.discardedManualClear()
+                + " reasonedTotal=" + snapshot.reasonedDiscardTotal()), false);
         source.sendSuccess(() -> Component.literal("Last flush: queued=" + snapshot.lastFlushQueued()
                 + " completed=" + snapshot.lastFlushCompleted()
                 + " discarded=" + snapshot.lastFlushDiscarded()
@@ -2150,6 +2954,10 @@ public final class ModCommands {
                 + " active=" + snapshot.activeThreadCount()
                 + " queued=" + snapshot.executorQueueSize()
                 + " completed=" + snapshot.completedTaskCount()), false);
+        source.sendSuccess(() -> Component.literal("Legacy PacketThreading facade: "
+                + LegacyPacketThreading.compatibilitySummary()), false);
+        source.sendSuccess(() -> Component.literal("Legacy ntmpackets info: "
+                + LegacyPacketThreading.legacyCommandInfoSummary()), false);
         source.sendSuccess(() -> Component.literal("Tile binary control uploads: pending="
                 + ServerTileBinaryControlTransfers.pendingTransfers()), false);
         source.sendSuccess(() -> Component.literal("Client resync cooldowns: tile="
@@ -2230,8 +3038,16 @@ public final class ModCommands {
 
     private static int resetPacketThreading(CommandSourceStack source) {
         ThreadedPacketDispatcher.resetState();
+        LegacyPacketThreading.resetLegacyCounters();
+        LegacyNetworkDispatcher.resetLegacyCounters();
         source.sendSuccess(() -> Component.literal("Reset packet threading dispatcher state."), true);
         return 1;
+    }
+
+    private static int rejectLegacyPacketThreadingLock(CommandSourceStack source, String command) {
+        source.sendFailure(Component.literal("Legacy /ntmpackets " + command
+                + " is intentionally unsupported in the modern dispatcher; use clear/reset/toggle instead."));
+        return 0;
     }
 
     private static boolean parseBoolean(String value) {
@@ -2240,6 +3056,19 @@ public final class ModCommands {
 
     private static FluidType parseFluid(String value) {
         return HbmFluids.fromName(value);
+    }
+
+    private static Direction parseDirection(String value) {
+        for (Direction direction : Direction.values()) {
+            if (direction.getName().equalsIgnoreCase(value)) {
+                return direction;
+            }
+        }
+        return null;
+    }
+
+    private static String[] directionNames() {
+        return Arrays.stream(Direction.values()).map(Direction::getName).toArray(String[]::new);
     }
 
     private static String formatPressureArray(long[] values) {

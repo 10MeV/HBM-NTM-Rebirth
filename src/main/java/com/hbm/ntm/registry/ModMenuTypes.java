@@ -15,8 +15,12 @@ import com.hbm.ntm.menu.MachineBatteryMenu;
 import com.hbm.ntm.menu.MachineBatterySocketMenu;
 import com.hbm.ntm.menu.NuclearDeviceMenu;
 import com.hbm.ntm.menu.OilDrillMenu;
+import com.hbm.ntm.menu.PyroOvenMenu;
+import com.hbm.ntm.menu.RadarMenu;
 import com.hbm.ntm.menu.RemoteFluidMachineMenu;
 import com.hbm.ntm.menu.RefineryMenu;
+import com.hbm.ntm.menu.SatelliteDockMenu;
+import com.hbm.ntm.menu.SatelliteLinkerMenu;
 import com.hbm.ntm.menu.SolidifierMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
@@ -62,6 +66,9 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<GasFlareMenu>> GAS_FLARE =
             MENUS.register("gas_flare", () -> IForgeMenuType.create(GasFlareMenu::new));
 
+    public static final RegistryObject<MenuType<PyroOvenMenu>> PYRO_OVEN =
+            MENUS.register("pyro_oven", () -> IForgeMenuType.create(PyroOvenMenu::new));
+
     public static final RegistryObject<MenuType<FluidTankMenu>> FLUID_TANK =
             MENUS.register("fluid_tank", () -> IForgeMenuType.create(FluidTankMenu::new));
 
@@ -79,6 +86,15 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<CustomNukeMenu>> CUSTOM_NUKE =
             MENUS.register("custom_nuke", () -> IForgeMenuType.create(CustomNukeMenu::new));
+
+    public static final RegistryObject<MenuType<RadarMenu>> RADAR =
+            MENUS.register("radar", () -> IForgeMenuType.create(RadarMenu::new));
+
+    public static final RegistryObject<MenuType<SatelliteLinkerMenu>> SATELLITE_LINKER =
+            MENUS.register("satellite_linker", () -> IForgeMenuType.create(SatelliteLinkerMenu::new));
+
+    public static final RegistryObject<MenuType<SatelliteDockMenu>> SATELLITE_DOCK =
+            MENUS.register("satellite_dock", () -> IForgeMenuType.create(SatelliteDockMenu::new));
 
     public static void register(IEventBus modBus) {
         MENUS.register(modBus);

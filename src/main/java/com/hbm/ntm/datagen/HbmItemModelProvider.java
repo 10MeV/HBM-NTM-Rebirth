@@ -3,6 +3,8 @@ package com.hbm.ntm.datagen;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
+import com.hbm.ntm.item.HbmAbilitySwordItem;
+import com.hbm.ntm.item.HbmAbilityToolItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import net.minecraft.data.PackOutput;
@@ -12,6 +14,7 @@ import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.Nullable;
 
 public class HbmItemModelProvider extends ItemModelProvider {
     public HbmItemModelProvider(PackOutput output, String modId, ExistingFileHelper existingFileHelper) {
@@ -24,6 +27,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
         ModItems.CONTROL_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.CONTROL_FLUID_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.NUKE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
+        ModItems.SATELLITE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.HIDDEN_RECIPE_ITEMS.forEach(item -> itemModel(item.get()));
         itemModel(ModItems.CONVEYOR_WAND.get());
@@ -79,6 +83,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "blueprints");
             return;
         }
+        if (path.equals("pollution_detector")) {
+            generatedItem(path, "pollution_detector");
+            return;
+        }
         if (path.equals("fluid_icon")) {
             layeredItem(path, "fluid_icon", "fluid_identifier_overlay");
             return;
@@ -117,6 +125,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.equals("wire_fine_mingrade")) {
             generatedItem(path, "wire_red_copper");
+            return;
+        }
+        if (path.equals("wire_fine_copper")) {
+            generatedItem(path, "wire_copper");
             return;
         }
         if (path.equals("wire_fine_tungsten")) {
@@ -254,6 +266,15 @@ public class HbmItemModelProvider extends ItemModelProvider {
                     .parent(new ModelFile.UncheckedModelFile(modLoc("block/network/pipe_anchor")));
             return;
         }
+        String abilityTexture = abilityTexture(path);
+        if (abilityTexture != null) {
+            handheldItem(path, abilityTexture);
+            return;
+        }
+        if (item instanceof HbmAbilityToolItem || item instanceof HbmAbilitySwordItem) {
+            handheldItem(path, path);
+            return;
+        }
         basicItem(item);
     }
 
@@ -295,6 +316,12 @@ public class HbmItemModelProvider extends ItemModelProvider {
                 .texture("layer0", modLoc("item/" + texturePath));
     }
 
+    private void handheldItem(String itemPath, String texturePath) {
+        getBuilder(itemPath)
+                .parent(new ModelFile.UncheckedModelFile("minecraft:item/handheld"))
+                .texture("layer0", modLoc("item/" + texturePath));
+    }
+
     private static String circuitTexture(String itemPath) {
         return "circuit." + itemPath.substring("circuit_".length());
     }
@@ -305,6 +332,17 @@ public class HbmItemModelProvider extends ItemModelProvider {
             case "part_generic_hde" -> "heavy_duty_element";
             case "part_generic_glass_polarized" -> "glass_polarized";
             default -> itemPath.substring("part_generic_".length());
+        };
+    }
+
+    @Nullable
+    private static String abilityTexture(String itemPath) {
+        return switch (itemPath) {
+            case "elec_sword" -> "elec_sword_anim";
+            case "elec_pickaxe" -> "elec_drill_anim";
+            case "elec_axe" -> "elec_chainsaw_anim";
+            case "elec_shovel" -> "elec_shovel_anim";
+            default -> null;
         };
     }
 }

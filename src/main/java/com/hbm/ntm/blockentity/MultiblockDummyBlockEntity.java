@@ -4,6 +4,7 @@ import com.hbm.ntm.energy.HbmEnergyConnector;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnector;
 import com.hbm.ntm.fluid.HbmFluidForgeMappings;
+import com.hbm.ntm.fluid.HbmForgeFluidInterop;
 import com.hbm.ntm.fluid.HbmFluidReceiver;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -81,6 +82,16 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
 
     public void setCorePos(BlockPos corePos) {
         this.corePos = corePos.immutable();
+        setChanged();
+        if (level != null) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    public void configure(BlockPos corePos, LegacyProxyMode proxyMode, boolean legacyExtra) {
+        this.corePos = corePos.immutable();
+        this.proxyMode = proxyMode == null ? LegacyProxyMode.none() : proxyMode;
+        this.legacyExtra = legacyExtra;
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
@@ -189,7 +200,8 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         if (target instanceof HbmFluidReceiver receiver && target != this) {
             return receiver.transferFluid(type, pressure, amount);
         }
-        if (pressure != 0 || !HbmFluidForgeMappings.canExport(type) || target == null) {
+        if (!HbmForgeFluidInterop.isStandardPressure(pressure) || !HbmFluidForgeMappings.canExport(type)
+                || target == null) {
             return amount;
         }
         int forgeAmount = (int) Math.min(Integer.MAX_VALUE, amount);
@@ -216,7 +228,8 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         if (target instanceof HbmFluidReceiver receiver && target != this) {
             return receiver.getDemand(type, pressure);
         }
-        if (pressure != 0 || !HbmFluidForgeMappings.canExport(type) || target == null) {
+        if (!HbmForgeFluidInterop.isStandardPressure(pressure) || !HbmFluidForgeMappings.canExport(type)
+                || target == null) {
             return 0L;
         }
         FluidStack sample = HbmFluidForgeMappings.toForge(type, Integer.MAX_VALUE);

@@ -41,12 +41,12 @@ public final class HbmBatteryTransfer {
         if (provider == null) {
             return 0L;
         }
-        long remaining = chargeItemsFromPower(stack, provider.getPower(), maxPower);
-        long used = provider.getPower() - remaining;
-        if (used > 0L) {
-            provider.usePower(used);
+        long before = provider.getPower();
+        long after = chargeItemsFromPower(stack, before, maxPower);
+        if (after != before) {
+            provider.setPower(after);
         }
-        return used;
+        return before - after;
     }
 
     public static long chargeStorageFromItem(ItemStack stack, HbmEnergyReceiver receiver, long maxPower) {
@@ -55,11 +55,10 @@ public final class HbmBatteryTransfer {
         }
         long before = receiver.getPower();
         long after = chargePowerFromItem(stack, before, maxPower);
-        long accepted = after - before;
-        if (accepted > 0L) {
-            receiver.transferPower(accepted);
+        if (after != before) {
+            receiver.setPower(after);
         }
-        return accepted;
+        return after - before;
     }
 
     public static long chargeItemsFromPower(ItemStack stack, long power, long maxPower) {
@@ -79,11 +78,10 @@ public final class HbmBatteryTransfer {
         long batMax = battery.getMaxCharge(stack);
         long batCharge = battery.getCharge(stack);
         long batRate = battery.getChargeRate(stack);
-        long toCharge = Math.min(Math.min(power, batRate), batMax - batCharge);
+        long toCharge = Math.min(Math.min(power, batRate), Math.max(0L, batMax - batCharge));
 
-        if (toCharge > 0L) {
-            power -= battery.chargeBattery(stack, toCharge);
-        }
+        power -= toCharge;
+        battery.chargeBattery(stack, toCharge);
         return power;
     }
 
@@ -97,11 +95,10 @@ public final class HbmBatteryTransfer {
 
         long batCharge = battery.getCharge(stack);
         long batRate = battery.getDischargeRate(stack);
-        long toDischarge = Math.min(Math.min(maxPower - power, batRate), batCharge);
+        long toDischarge = Math.min(Math.min(Math.max(0L, maxPower - power), batRate), Math.max(0L, batCharge));
 
-        if (toDischarge > 0L) {
-            power += battery.dischargeBattery(stack, toDischarge);
-        }
+        battery.dischargeBattery(stack, toDischarge);
+        power += toDischarge;
         return power;
     }
 }

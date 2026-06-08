@@ -71,7 +71,7 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(7, 125, 18, 18, mouseX, mouseY)) {
-            graphics.renderTooltip(font, splitTooltip(recipeTooltip()), mouseX, mouseY);
+            LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(), mouseX, mouseY);
         } else if (isHovering(152, 18, 16, 61, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);
         } else {
@@ -92,11 +92,13 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
     private void renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
         for (int i = 0; i < 3; i++) {
             if (isHovering(8 + i * 18, 18, 16, 34, mouseX, mouseY)) {
-                graphics.renderTooltip(font, splitTooltip(menu.getInputTankTooltip(i, hasShiftDown())), mouseX, mouseY);
+                LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(i),
+                        menu.getInputTankTooltip(i, hasShiftDown()), mouseX, mouseY);
                 return;
             }
             if (isHovering(80 + i * 18, 18, 16, 34, mouseX, mouseY)) {
-                graphics.renderTooltip(font, splitTooltip(menu.getOutputTankTooltip(i, hasShiftDown())), mouseX, mouseY);
+                LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(i),
+                        menu.getOutputTankTooltip(i, hasShiftDown()), mouseX, mouseY);
                 return;
             }
         }

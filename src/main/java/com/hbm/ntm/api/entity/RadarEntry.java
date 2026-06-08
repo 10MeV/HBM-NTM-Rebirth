@@ -16,6 +16,17 @@ public record RadarEntry(String name, int blipLevel, BlockPos pos, ResourceLocat
                 redstone);
     }
 
+    public static RadarEntry of(LegacyRadarDetectable detectable, Entity entity) {
+        LegacyRadarDetectable.RadarTargetType type = detectable.getTargetType();
+        return new RadarEntry(
+                type.radarName(),
+                type.ordinal(),
+                entity.blockPosition(),
+                entity.level().dimension().location(),
+                entity.getId(),
+                entity.getDeltaMovement().y < 0.0D);
+    }
+
     public static RadarEntry of(Player player) {
         return new RadarEntry(
                 player.getDisplayName().getString(),

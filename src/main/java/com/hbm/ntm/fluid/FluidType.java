@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid;
 
+import com.google.gson.JsonObject;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.trait.ContainerFluidTrait;
 import com.hbm.ntm.fluid.trait.FluidTrait;
@@ -21,29 +22,44 @@ import net.minecraft.world.level.Level;
 public final class FluidType {
     public static final int ROOM_TEMPERATURE = 20;
 
-    private final int id;
-    private final String name;
-    private final ResourceLocation texture;
-    private final int color;
-    private final int guiTint;
-    private final int poison;
-    private final int flammability;
-    private final int reactivity;
-    private final FluidSymbol symbol;
+    private int id;
+    private String name;
+    private ResourceLocation texture;
+    private int color;
+    private int guiTint;
+    private String displayNameOverride;
+    private int poison;
+    private int flammability;
+    private int reactivity;
+    private FluidSymbol symbol;
     private final Map<Class<? extends FluidTrait>, FluidTrait> traits = new LinkedHashMap<>();
     private int temperature = ROOM_TEMPERATURE;
     private boolean renderTankWithTint;
 
     FluidType(int id, String name, int color, int poison, int flammability, int reactivity, FluidSymbol symbol) {
+        this(id, name, color, poison, flammability, reactivity, symbol, null, 0xFFFFFF, null, false);
+    }
+
+    FluidType(int id, String name, int color, int poison, int flammability, int reactivity, FluidSymbol symbol,
+            String textureName, int guiTint, String displayNameOverride, boolean renderTankWithTint) {
+        setupExternal(id, name, color, poison, flammability, reactivity, symbol, textureName, guiTint,
+                displayNameOverride, renderTankWithTint);
+    }
+
+    FluidType setupExternal(int id, String name, int color, int poison, int flammability, int reactivity,
+            FluidSymbol symbol, String textureName, int guiTint, String displayNameOverride, boolean renderTankWithTint) {
         this.id = id;
         this.name = name.toUpperCase(Locale.US);
         this.color = color;
-        this.guiTint = 0xFFFFFF;
+        this.guiTint = guiTint;
+        this.displayNameOverride = displayNameOverride;
         this.poison = poison;
         this.flammability = flammability;
         this.reactivity = reactivity;
         this.symbol = symbol;
-        this.texture = new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/fluids/" + toPath() + ".png");
+        this.texture = texture(textureName == null || textureName.isBlank() ? toPath() : textureName);
+        this.renderTankWithTint = renderTankWithTint;
+        return this;
     }
 
     public FluidType setTemperature(int temperature) {
@@ -71,6 +87,21 @@ public final class FluidType {
         return Collections.unmodifiableCollection(traits.values());
     }
 
+    public void setTraits(Collection<? extends FluidTrait> traits) {
+        this.traits.clear();
+        for (FluidTrait trait : traits) {
+            this.traits.put(trait.getClass(), trait);
+        }
+    }
+
+    public Map<String, JsonObject> getTraitJson() {
+        Map<String, JsonObject> result = new LinkedHashMap<>();
+        for (FluidTrait trait : traits.values()) {
+            result.put(trait.getLegacyName(), trait.toJson());
+        }
+        return Collections.unmodifiableMap(result);
+    }
+
     public int getId() {
         return id;
     }
@@ -88,6 +119,9 @@ public final class FluidType {
     }
 
     public Component getDisplayName() {
+        if (displayNameOverride != null && !displayNameOverride.isBlank()) {
+            return Component.literal(displayNameOverride);
+        }
         return Component.translatableWithFallback(getTranslationKey(), prettyName(name));
     }
 
@@ -138,6 +172,31 @@ public final class FluidType {
 
     public ResourceLocation getTexture() {
         return texture;
+    }
+
+    public JsonObject toJson() {
+        JsonObject object = new JsonObject();
+        object.addProperty("id", id);
+        object.addProperty("name", name);
+        object.addProperty("color", color);
+        object.addProperty("tint", guiTint);
+        object.addProperty("p", poison);
+        object.addProperty("f", flammability);
+        object.addProperty("r", reactivity);
+        object.addProperty("symbol", symbol.name());
+        object.addProperty("texture", texture.toString());
+        if (displayNameOverride != null) {
+            object.addProperty("displayName", displayNameOverride);
+        }
+        object.addProperty("temperature", temperature);
+        object.addProperty("renderTankWithTint", renderTankWithTint);
+
+        JsonObject traitsJson = new JsonObject();
+        for (FluidTrait trait : traits.values()) {
+            traitsJson.add(trait.getLegacyName(), trait.toJson());
+        }
+        object.add("traits", traitsJson);
+        return object;
     }
 
     public void appendInfo(List<Component> info, boolean showHidden) {
@@ -229,5 +288,17 @@ public final class FluidType {
             }
         }
         return builder.toString();
+    }
+
+    private static ResourceLocation texture(String name) {
+        ResourceLocation parsed = ResourceLocation.tryParse(name);
+        if (parsed != null && name.contains(":")) {
+            return parsed;
+        }
+        String path = name.endsWith(".png") ? name.substring(0, name.length() - 4) : name;
+        if (!path.startsWith("textures/")) {
+            path = "textures/gui/fluids/" + path + ".png";
+        }
+        return new ResourceLocation(HbmNtm.MOD_ID, path);
     }
 }

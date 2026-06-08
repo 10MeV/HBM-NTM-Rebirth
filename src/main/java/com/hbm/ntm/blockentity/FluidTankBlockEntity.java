@@ -3,8 +3,9 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
+import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
+import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmExtinguishType;
@@ -27,6 +28,7 @@ import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import java.util.List;
@@ -47,6 +49,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -84,6 +87,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
             FluidPort.of(1, 0, -2, Direction.NORTH));
 
     private final HbmFluidTank tank;
+    private final RORDispatcher ror;
     private final ItemStackHandler items = new ItemStackHandler(6) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -110,6 +114,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     protected FluidTankBlockEntity(BlockPos pos, BlockState state, BlockEntityType<?> type, HbmFluidTank tank) {
         super(type, pos, state, List.of(tank));
         this.tank = tank;
+        this.ror = createRorDispatcher();
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FluidTankBlockEntity blockEntity) {
@@ -128,6 +133,10 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
             changed |= blockEntity.checkHazards();
         } else {
             changed |= blockEntity.leakDamagedTank(level, pos);
+        }
+
+        if (blockEntity.getType() == ModBlockEntities.FLUID_TANK.get()) {
+            blockEntity.markPlayersOnFauxLadder(level, pos, state);
         }
 
         int comparator = blockEntity.getComparatorPower();
@@ -153,23 +162,27 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     protected boolean setTankTypeFromIdentifierSlot() {
-        ItemStack input = items.getStackInSlot(SLOT_TYPE_INPUT);
-        if (input.isEmpty() || !(input.getItem() instanceof IFluidIdentifierItem identifier)) {
-            return false;
+        boolean changed = HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_TYPE_INPUT,
+                SLOT_TYPE_OUTPUT, tank, level, worldPosition);
+        if (changed) {
+            onFluidContentsChanged();
         }
-        ItemStack output = items.getStackInSlot(SLOT_TYPE_OUTPUT);
-        if (!output.isEmpty()) {
-            return false;
+        return changed;
+    }
+
+    protected void markPlayersOnFauxLadder(Level level, BlockPos pos, BlockState state) {
+        Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
+                ? state.getValue(HorizontalMachineBlock.FACING)
+                : Direction.SOUTH;
+        Direction side = facing.getClockWise();
+        AABB ladderBox = new AABB(pos.getX(), pos.getY(), pos.getZ(),
+                pos.getX() + 1.0D, pos.getY() + 2.875D, pos.getZ() + 1.0D)
+                .move(facing.getStepX() * 0.5D - side.getStepX() * 2.25D,
+                        0.0D,
+                        facing.getStepZ() * 0.5D - side.getStepZ() * 2.25D);
+        for (Player player : level.getEntitiesOfClass(Player.class, ladderBox)) {
+            HbmPlayerProperties.setOnLadder(player, true);
         }
-        FluidType newType = identifier.getIdentifiedFluid(level, worldPosition, input);
-        if (newType == null || newType == tank.getTankType()) {
-            return false;
-        }
-        tank.setTankType(newType);
-        items.setStackInSlot(SLOT_TYPE_OUTPUT, input.copy());
-        items.setStackInSlot(SLOT_TYPE_INPUT, ItemStack.EMPTY);
-        onFluidContentsChanged();
-        return true;
     }
 
     protected boolean checkHazards() {
@@ -401,40 +414,38 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public String[] getFunctionInfo() {
-        return new String[] {
-                RORInfo.PREFIX_VALUE + "type",
-                RORInfo.PREFIX_VALUE + "fill",
-                RORInfo.PREFIX_VALUE + "fillpercent",
-                RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "mode (0-3)",
-                RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "mode"
-                        + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)"
-        };
+        return ror.getFunctionInfo();
     }
 
     @Override
     public String provideRORValue(String name) {
-        if ((RORInfo.PREFIX_VALUE + "type").equals(name)) {
-            return tank.getTankType().getName();
-        }
-        if ((RORInfo.PREFIX_VALUE + "fill").equals(name)) {
-            return Integer.toString(tank.getFill());
-        }
-        if ((RORInfo.PREFIX_VALUE + "fillpercent").equals(name)) {
-            return Integer.toString(tank.getFill() * 100 / Math.max(tank.getMaxFill(), 1));
-        }
-        return null;
+        return ror.provideValue(name);
     }
 
     @Override
     public String runRORFunction(String name, String[] params) {
-        if ((RORInfo.PREFIX_FUNCTION + "setmode").equals(name) && params.length > 0) {
-            int mode = RORInteractive.parseInt(params[0], MODE_INPUT, MODE_NONE);
-            if (mode != this.mode) {
-                setMode(mode);
+        return ror.runFunction(name, params);
+    }
+
+    private RORDispatcher createRorDispatcher() {
+        return RORDispatcher.builder()
+                .value("type", () -> tank.getTankType().getName())
+                .value("fill", () -> Integer.toString(tank.getFill()))
+                .value("fillpercent", () -> Integer.toString(tank.getFill() * 100 / Math.max(tank.getMaxFill(), 1)))
+                .function("setmode", this::runRorSetMode,
+                        "mode (0-3)",
+                        "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)")
+                .build();
+    }
+
+    private String runRorSetMode(String[] params) {
+        if (params.length > 0) {
+            int nextMode = RORInteractive.parseInt(params[0], MODE_INPUT, MODE_NONE);
+            if (nextMode != mode) {
+                setMode(nextMode);
             } else if (params.length > 1) {
                 setMode(RORInteractive.parseInt(params[1], MODE_INPUT, MODE_NONE));
             }
-            return null;
         }
         return null;
     }

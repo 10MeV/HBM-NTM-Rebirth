@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid.trait;
 
+import com.google.gson.JsonObject;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -24,5 +25,11 @@ public class PoisonFluidTrait extends FluidTrait {
     @Override
     public void addHiddenInfo(List<Component> info) {
         info.add(Component.literal("[Toxic Fumes]").withStyle(ChatFormatting.GREEN));
+    }
+
+    @Override
+    public void writeJson(JsonObject object) {
+        object.addProperty("level", level);
+        object.addProperty("withering", withering);
     }
 }

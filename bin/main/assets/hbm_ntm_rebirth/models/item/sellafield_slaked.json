@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/sellafield_slaked" }
+{
+  "parent": "hbm_ntm_rebirth:block/sellafield_slaked"
+}

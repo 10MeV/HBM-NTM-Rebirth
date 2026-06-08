@@ -3,7 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
-import com.hbm.ntm.api.redstoneoverradio.RORInfo;
+import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.energy.HbmEnergyNode;
 import com.hbm.ntm.energy.HbmPowerNet;
@@ -23,6 +23,7 @@ public class RedCableGaugeBlockEntity extends HbmEnergyNodeBlockEntity
     private static final String TAG_DELTA_TICK = "deltaTick";
     private static final String TAG_DELTA_SECOND = "deltaSecond";
     private static final String TAG_DELTA_LAST_SECOND = "deltaLastSecond";
+    private final RORDispatcher ror;
 
     private long deltaTick;
     private long deltaSecond;
@@ -30,6 +31,10 @@ public class RedCableGaugeBlockEntity extends HbmEnergyNodeBlockEntity
 
     public RedCableGaugeBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.RED_CABLE_GAUGE.get(), pos, state);
+        this.ror = RORDispatcher.builder()
+                .value("deltatick", () -> Long.toString(deltaTick))
+                .value("deltasecond", () -> Long.toString(deltaLastSecond))
+                .build();
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RedCableGaugeBlockEntity gauge) {
@@ -96,20 +101,11 @@ public class RedCableGaugeBlockEntity extends HbmEnergyNodeBlockEntity
 
     @Override
     public String[] getFunctionInfo() {
-        return new String[] {
-                RORInfo.PREFIX_VALUE + "deltatick",
-                RORInfo.PREFIX_VALUE + "deltasecond"
-        };
+        return ror.getFunctionInfo();
     }
 
     @Override
     public String provideRORValue(String name) {
-        if ((RORInfo.PREFIX_VALUE + "deltatick").equals(name)) {
-            return Long.toString(deltaTick);
-        }
-        if ((RORInfo.PREFIX_VALUE + "deltasecond").equals(name)) {
-            return Long.toString(deltaLastSecond);
-        }
-        return null;
+        return ror.provideValue(name);
     }
 }

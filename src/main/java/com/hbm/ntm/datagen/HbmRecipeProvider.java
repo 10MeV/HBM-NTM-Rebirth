@@ -3,6 +3,7 @@ package com.hbm.ntm.datagen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.item.FluidIconItem;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.recipe.HbmIngredient;
@@ -110,6 +111,8 @@ public final class HbmRecipeProvider extends RecipeProvider {
         selfChargingConversion(consumer, legacySelfChargingBattery(7), "battery_sc_au198", item("billet_au198"));
         selfChargingConversion(consumer, legacySelfChargingBattery(8), "battery_sc_pb209", item("billet_pb209"));
         selfChargingConversion(consumer, legacySelfChargingBattery(9), "battery_sc_am241", item("billet_am241"));
+        energyNetworkRecipes(consumer);
+        legacyToolRecipes(consumer);
 
         chemicalPlantSourceRecipes(consumer);
         chemicalBatteryRecipes(consumer);
@@ -118,6 +121,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         fluidContainerRecipes(consumer);
         fluidNetworkRecipes(consumer);
         liquefactionRecipes(consumer);
+        pyroOvenRecipes(consumer);
         pressRecipes(consumer);
     }
 
@@ -127,6 +131,47 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .requires(isotopeBillet, 2)
                 .unlockedBy("has_empty_self_charging_battery", has(ModItems.BATTERY_SC_EMPTY.get()))
                 .save(consumer, id("energy/" + recipeName));
+    }
+
+    private static void energyNetworkRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.CABLE_DIODE.get())
+                .pattern(" Q ")
+                .pattern("CAC")
+                .pattern(" Q ")
+                .define('Q', item("nugget_silicon"))
+                .define('C', ModBlocks.RED_CABLE.get())
+                .define('A', ModItems.ALUMINIUM_INGOT.get())
+                .unlockedBy("has_red_cable", has(ModBlocks.RED_CABLE.get()))
+                .save(consumer, id("energy/cable_diode"));
+    }
+
+    private static void legacyToolRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.DEFUSER.get())
+                .pattern(" PS")
+                .pattern("P P")
+                .pattern(" P ")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('S', ModItems.STEEL_PLATE.get())
+                .unlockedBy("has_any_plastic", has(forgeTag("ingots/any_plastic")))
+                .save(consumer, id("tools/defuser"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.SCREWDRIVER.get())
+                .pattern("  I")
+                .pattern(" I ")
+                .pattern("S  ")
+                .define('S', ModItems.STEEL_INGOT.get())
+                .define('I', Items.IRON_INGOT)
+                .unlockedBy("has_steel_ingot", has(ModItems.STEEL_INGOT.get()))
+                .save(consumer, id("tools/screwdriver"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.HAND_DRILL.get())
+                .pattern(" D")
+                .pattern("S ")
+                .pattern(" S")
+                .define('D', item("ingot_dura_steel"))
+                .define('S', Items.STICK)
+                .unlockedBy("has_dura_steel", has(item("ingot_dura_steel")))
+                .save(consumer, id("tools/hand_drill"));
     }
 
     private static void chemicalPlantSourceRecipes(Consumer<FinishedRecipe> consumer) {
@@ -309,7 +354,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("sand", 8)
                 .inputFluid(HbmFluids.WATER, 2_000)
                 .outputItem(new ItemStack(block("concrete_smooth"), 16))
-                .sourceOrder(21)
+                .sourceOrder(23)
                 .save(consumer, id("chemical_plant/concrete"));
 
         GenericMachineRecipeBuilder.chemical("chem.concreteasbestos", 100, 100)
@@ -318,7 +363,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("sand", 8)
                 .inputFluid(HbmFluids.WATER, 2_000)
                 .outputItem(new ItemStack(block("concrete_asbestos"), 16))
-                .sourceOrder(22)
+                .sourceOrder(24)
                 .save(consumer, id("chemical_plant/concreteasbestos"));
 
         GenericMachineRecipeBuilder.chemical("chem.ducrete", 150, 100)
@@ -327,7 +372,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("sand", 8)
                 .inputFluid(HbmFluids.WATER, 2_000)
                 .outputItem(new ItemStack(block("ducrete_smooth"), 8))
-                .sourceOrder(23)
+                .sourceOrder(25)
                 .save(consumer, id("chemical_plant/ducrete"));
 
         GenericMachineRecipeBuilder.chemical("chem.liquidconk", 100, 100)
@@ -336,7 +381,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("sand", 8)
                 .inputFluid(HbmFluids.WATER, 2_000)
                 .outputFluid(HbmFluids.CONCRETE, 16_000)
-                .sourceOrder(24)
+                .sourceOrder(26)
                 .save(consumer, id("chemical_plant/liquidconk"));
 
         GenericMachineRecipeBuilder.chemical("chem.asphalt", 100, 100)
@@ -344,7 +389,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("sand", 6)
                 .inputFluid(HbmFluids.BITUMEN, 1_000)
                 .outputItem(new ItemStack(block("asphalt"), 16))
-                .sourceOrder(25)
+                .sourceOrder(27)
                 .save(consumer, id("chemical_plant/asphalt"));
 
         GenericMachineRecipeBuilder.chemical("chem.polymer", 100, 100)
@@ -352,28 +397,28 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("dustFluorite", 1)
                 .inputFluid(HbmFluids.PETROLEUM, 1_000)
                 .outputItem(new ItemStack(item("ingot_polymer"), 4))
-                .sourceOrder(33)
+                .sourceOrder(35)
                 .save(consumer, id("chemical_plant/polymer"));
 
         GenericMachineRecipeBuilder.chemical("chem.bakelite", 100, 100)
                 .inputFluid(HbmFluids.AROMATICS, 500)
                 .inputFluid(HbmFluids.PETROLEUM, 500)
                 .outputItem(item("ingot_bakelite"))
-                .sourceOrder(34)
+                .sourceOrder(36)
                 .save(consumer, id("chemical_plant/bakelite"));
 
         GenericMachineRecipeBuilder.chemical("chem.rubber", 100, 200)
                 .inputLegacyOre("dustSulfur", 1)
                 .inputFluid(HbmFluids.UNSATURATEDS, 500)
                 .outputItem(new ItemStack(item("ingot_rubber"), 2))
-                .sourceOrder(35)
+                .sourceOrder(37)
                 .save(consumer, id("chemical_plant/rubber"));
 
         GenericMachineRecipeBuilder.chemical("chem.hardplastic", 100, 1_000)
                 .inputFluid(HbmFluids.XYLENE, 500)
                 .inputFluid(HbmFluids.PHOSGENE, 500)
                 .outputItem(item("ingot_pc"))
-                .sourceOrder(36)
+                .sourceOrder(38)
                 .save(consumer, id("chemical_plant/hardplastic"));
 
         GenericMachineRecipeBuilder.chemical("chem.pvc", 100, 1_000)
@@ -381,7 +426,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.UNSATURATEDS, 250)
                 .inputFluid(HbmFluids.CHLORINE, 250)
                 .outputItem(new ItemStack(item("ingot_pvc"), 2))
-                .sourceOrder(37)
+                .sourceOrder(39)
                 .save(consumer, id("chemical_plant/pvc"));
 
         GenericMachineRecipeBuilder.chemical("chem.kevlar", 60, 300)
@@ -389,7 +434,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.NITRIC_ACID, 100)
                 .inputFluid(HbmFluids.CHLORINE, 100)
                 .outputItem(new ItemStack(item("plate_kevlar"), 4))
-                .sourceOrder(38)
+                .sourceOrder(40)
                 .save(consumer, id("chemical_plant/kevlar"));
 
         GenericMachineRecipeBuilder.chemical("chem.biosolidfuel", 40, 100)
@@ -397,7 +442,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(item("solid_fuel"))
                 .pool(LegacyBlueprintPools.PREFIX_ALT + ".biosolidfuel")
                 .customLocalization()
-                .sourceOrder(43)
+                .sourceOrder(45)
                 .save(consumer, id("chemical_plant/biosolidfuel"));
 
         GenericMachineRecipeBuilder.chemical("chem.biooilsolidfuel", 40, 100)
@@ -406,13 +451,13 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(item("solid_fuel"))
                 .pool(LegacyBlueprintPools.PREFIX_ALT + ".biosolidfuel")
                 .customLocalization()
-                .sourceOrder(44)
+                .sourceOrder(46)
                 .save(consumer, id("chemical_plant/biooilsolidfuel"));
 
         GenericMachineRecipeBuilder.chemical("chem.peroxide", 50, 100)
                 .inputFluid(HbmFluids.WATER, 1_000)
                 .outputFluid(HbmFluids.PEROXIDE, 1_000)
-                .sourceOrder(47)
+                .sourceOrder(49)
                 .save(consumer, id("chemical_plant/peroxide"));
 
         GenericMachineRecipeBuilder.chemical("chem.sulfuricacid", 50, 100)
@@ -420,14 +465,14 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.PEROXIDE, 1_000)
                 .inputFluid(HbmFluids.WATER, 1_000)
                 .outputFluid(HbmFluids.SULFURIC_ACID, 2_000)
-                .sourceOrder(48)
+                .sourceOrder(50)
                 .save(consumer, id("chemical_plant/sulfuricacid"));
 
         GenericMachineRecipeBuilder.chemical("chem.nitricacid", 50, 100)
                 .inputLegacyOre("dustSaltpeter", 1)
                 .inputFluid(HbmFluids.SULFURIC_ACID, 500)
                 .outputFluid(HbmFluids.NITRIC_ACID, 1_000)
-                .sourceOrder(49)
+                .sourceOrder(51)
                 .save(consumer, id("chemical_plant/nitricacid"));
 
         GenericMachineRecipeBuilder.chemical("chem.birkeland", 200, 5_000)
@@ -436,7 +481,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputFluid(HbmFluids.NITRIC_ACID, 1_000)
                 .pool(LegacyBlueprintPools.PREFIX_ALT + ".birkeland")
                 .customLocalization()
-                .sourceOrder(50)
+                .sourceOrder(52)
                 .save(consumer, id("chemical_plant/birkeland"));
 
         GenericMachineRecipeBuilder.chemical("chem.schrabidic", 60, 5_000)
@@ -444,28 +489,28 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.SAS3, 2_000)
                 .inputFluid(HbmFluids.PEROXIDE, 2_000)
                 .outputFluid(HbmFluids.SCHRABIDIC, 2_000)
-                .sourceOrder(51)
+                .sourceOrder(53)
                 .save(consumer, id("chemical_plant/schrabidic"));
 
         GenericMachineRecipeBuilder.chemical("chem.schrabidate", 150, 5_000)
                 .inputLegacyOre("dustIron", 1)
                 .inputFluid(HbmFluids.SCHRABIDIC, 250)
                 .outputItem(item("powder_schrabidate"))
-                .sourceOrder(52)
+                .sourceOrder(54)
                 .save(consumer, id("chemical_plant/schrabidate"));
 
         GenericMachineRecipeBuilder.chemical("chem.epearl", 100, 300)
                 .inputLegacyOre("dustDiamond", 1)
                 .inputFluid(HbmFluids.XPJUICE, 500)
                 .outputFluid(HbmFluids.ENDERJUICE, 100)
-                .sourceOrder(40)
+                .sourceOrder(42)
                 .save(consumer, id("chemical_plant/epearl"));
 
         GenericMachineRecipeBuilder.chemical("chem.rustysteel", 40, 100)
                 .inputItem(block("deco_steel"), 8)
                 .inputFluid(HbmFluids.WATER, 1_000)
                 .outputItem(new ItemStack(block("deco_rusty_steel"), 8))
-                .sourceOrder(42)
+                .sourceOrder(44)
                 .save(consumer, id("chemical_plant/rustysteel"));
 
         GenericMachineRecipeBuilder.chemical("chem.coltanpain", 120, 100)
@@ -474,7 +519,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.GAS, 1_000)
                 .inputFluid(HbmFluids.OXYGEN, 500)
                 .outputFluid(HbmFluids.PAIN, 1_000)
-                .sourceOrder(54)
+                .sourceOrder(56)
                 .save(consumer, id("chemical_plant/coltanpain"));
 
         GenericMachineRecipeBuilder.chemical("chem.rocketfuel", 200, 100)
@@ -482,7 +527,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.PETROLEUM, 200)
                 .inputFluid(HbmFluids.NITRIC_ACID, 100)
                 .outputItem(new ItemStack(item("rocket_fuel"), 4))
-                .sourceOrder(57)
+                .sourceOrder(59)
                 .save(consumer, id("chemical_plant/rocketfuel"));
 
         GenericMachineRecipeBuilder.chemical("chem.napalm", 40, 100)
@@ -490,7 +535,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.GASOLINE, 100)
                 .inputFluid(HbmFluids.AROMATICS, 50)
                 .outputItem(ModItems.CANISTER_NAPALM.get())
-                .sourceOrder(58)
+                .sourceOrder(64)
                 .save(consumer, id("chemical_plant/napalm"));
 
         GenericMachineRecipeBuilder.chemical("chem.yellowcake", 250, 500)
@@ -498,7 +543,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("dustSulfur", 2)
                 .inputFluid(HbmFluids.PEROXIDE, 500)
                 .outputItem(item("powder_yellowcake"))
-                .sourceOrder(64)
+                .sourceOrder(67)
                 .save(consumer, id("chemical_plant/yellowcake"));
 
         GenericMachineRecipeBuilder.chemical("chem.uf6", 100, 500)
@@ -507,7 +552,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.WATER, 1_000)
                 .outputItem(new ItemStack(item("sulfur"), 2))
                 .outputFluid(HbmFluids.UF6, 1_200)
-                .sourceOrder(65)
+                .sourceOrder(68)
                 .save(consumer, id("chemical_plant/uf6"));
 
         GenericMachineRecipeBuilder.chemical("chem.puf6", 200, 500)
@@ -515,7 +560,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("dustFluorite", 3)
                 .inputFluid(HbmFluids.WATER, 1_000)
                 .outputFluid(HbmFluids.PUF6, 900)
-                .sourceOrder(66)
+                .sourceOrder(69)
                 .save(consumer, id("chemical_plant/puf6"));
 
         GenericMachineRecipeBuilder.chemical("chem.sas3", 200, 5_000)
@@ -523,7 +568,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("dustSulfur", 2)
                 .inputFluid(HbmFluids.PEROXIDE, 2_000)
                 .outputFluid(HbmFluids.SAS3, 1_000)
-                .sourceOrder(67)
+                .sourceOrder(70)
                 .save(consumer, id("chemical_plant/sas3"));
 
         GenericMachineRecipeBuilder.chemical("chem.dhc", 400, 500)
@@ -531,7 +576,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.REFORMGAS, 250)
                 .inputFluid(HbmFluids.SYNGAS, 250)
                 .outputFluid(HbmFluids.DHC, 500)
-                .sourceOrder(69)
+                .sourceOrder(72)
                 .save(consumer, id("chemical_plant/dhc"));
 
         GenericMachineRecipeBuilder.chemical("chem.osmiridiumdeath", 240, 1_000)
@@ -540,7 +585,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("nugget_bismuth"), 4)
                 .inputFluid(HbmFluids.PEROXIDE, 1_000, 5)
                 .outputFluid(HbmFluids.DEATH, 1_000)
-                .sourceOrder(70)
+                .sourceOrder(73)
                 .save(consumer, id("chemical_plant/osmiridiumdeath"));
     }
 
@@ -550,7 +595,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(ModItems.LEAD_INGOT.get(), 4)
                 .inputFluid(HbmFluids.SULFURIC_ACID, 8_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 1)
-                .sourceOrder(26)
+                .sourceOrder(28)
                 .save(consumer, id("chemical_plant/batterylead"));
 
         GenericMachineRecipeBuilder.chemical("chem.batterylithium", 100, 1_000)
@@ -559,7 +604,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputTag(forgeTag("ingots/any_plastic"), 4)
                 .inputFluid(HbmFluids.OXYGEN, 2_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2)
-                .sourceOrder(27)
+                .sourceOrder(29)
                 .save(consumer, id("chemical_plant/batterylithium"));
 
         GenericMachineRecipeBuilder.chemical("chem.batterysodium", 100, 10_000)
@@ -567,7 +612,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputTag(forgeTag("dusts/iron"), 24)
                 .inputTag(forgeTag("ingots/any_hardplastic"), 12)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 3)
-                .sourceOrder(28)
+                .sourceOrder(30)
                 .save(consumer, id("chemical_plant/batterysodium"));
 
         GenericMachineRecipeBuilder.chemical("chem.batteryschrabidium", 100, 25_000)
@@ -575,7 +620,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputTag(forgeTag("cast_plates/any_bismoid_bronze"), 8)
                 .inputFluid(HbmFluids.HELIUM4, 8_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 4)
-                .sourceOrder(29)
+                .sourceOrder(31)
                 .save(consumer, id("chemical_plant/batteryschrabidium"));
 
         GenericMachineRecipeBuilder.chemical("chem.batteryquantum", 100, 100_000)
@@ -585,7 +630,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.PERFLUOROMETHYL_COLD, 8_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 5)
                 .outputFluid(HbmFluids.PERFLUOROMETHYL, 8_000)
-                .sourceOrder(30)
+                .sourceOrder(32)
                 .save(consumer, id("chemical_plant/batteryquantum"));
     }
 
@@ -602,21 +647,21 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(ModItems.STEEL_PLATE.get(), 8)
                 .inputTag(forgeTag("dense_wires/gold"), 16)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 7)
-                .sourceOrder(134)
+                .sourceOrder(139)
                 .save(consumer, id("assembly_machine/capacitorgold"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitorniobium", 100, 1_000)
                 .inputTag(forgeTag("ingots/any_plastic"), 12)
                 .inputTag(forgeTag("dense_wires/niobium"), 24)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 8)
-                .sourceOrder(135)
+                .sourceOrder(140)
                 .save(consumer, id("assembly_machine/capacitorniobium"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitortantalum", 100, 10_000)
                 .inputTag(forgeTag("ingots/any_hardplastic"), 16)
                 .inputTag(forgeTag("ingots/tantalum"), 24)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 9)
-                .sourceOrder(136)
+                .sourceOrder(141)
                 .save(consumer, id("assembly_machine/capacitortantalum"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitorbismuth", 100, 25_000)
@@ -624,7 +669,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputTag(forgeTag("ingots/bismuth"), 24)
                 .inputTag(forgeTag("circuits/chip_quantum"), 1)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 10)
-                .sourceOrder(137)
+                .sourceOrder(142)
                 .save(consumer, id("assembly_machine/capacitorbismuth"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitorspark", 100, 100_000)
@@ -635,20 +680,20 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.PERFLUOROMETHYL_COLD, 8_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 11)
                 .outputFluid(HbmFluids.PERFLUOROMETHYL, 8_000)
-                .sourceOrder(138)
+                .sourceOrder(143)
                 .save(consumer, id("assembly_machine/capacitorspark"));
 
-        assemblyPlateRecipe(consumer, "ass.plateschrab", "schrabidium", "ingots/schrabidium", "plate_schrabidium", 8);
-        assemblyPlateRecipe(consumer, "ass.platecmb", "combine_steel", "ingots/combine_steel", "plate_combine_steel", 9);
-        assemblyPlateRecipe(consumer, "ass.plateweaponsteel", "weaponsteel", "ingots/weapon_steel", "plate_weaponsteel", 11);
-        assemblyPlateRecipe(consumer, "ass.platesaturnite", "saturnite", "ingots/saturnite", "plate_saturnite", 12);
-        assemblyPlateRecipe(consumer, "ass.platedura", "dura_steel", "ingots/dura_steel", "plate_dura_steel", 13);
-        assemblyPlateRecipe(consumer, "ass.plategunmetal", "gunmetal", "ingots/gun_metal", "plate_gunmetal", 10);
+        assemblyPlateRecipe(consumer, "ass.plateschrab", "schrabidium", "ingots/schrabidium", "plate_schrabidium", 7);
+        assemblyPlateRecipe(consumer, "ass.platecmb", "combine_steel", "ingots/combine_steel", "plate_combine_steel", 8);
+        assemblyPlateRecipe(consumer, "ass.plateweaponsteel", "weaponsteel", "ingots/weapon_steel", "plate_weaponsteel", 10);
+        assemblyPlateRecipe(consumer, "ass.platesaturnite", "saturnite", "ingots/saturnite", "plate_saturnite", 11);
+        assemblyPlateRecipe(consumer, "ass.platedura", "dura_steel", "ingots/dura_steel", "plate_dura_steel", 12);
+        assemblyPlateRecipe(consumer, "ass.plategunmetal", "gunmetal", "ingots/gun_metal", "plate_gunmetal", 9);
 
         GenericMachineRecipeBuilder.assembly("ass.dalekanium", 200, 100)
                 .inputItem(block("block_meteor"), 1)
                 .outputItem(item("plate_dalekanium"))
-                .sourceOrder(15)
+                .sourceOrder(14)
                 .save(consumer, id("assembly_machine/dalekanium"));
 
         GenericMachineRecipeBuilder.assembly("ass.platemixed", 50, 100)
@@ -656,7 +701,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("neutron_reflector"), 1)
                 .inputLegacyOre("plateSaturnite", 1)
                 .outputItem(new ItemStack(item("plate_mixed"), 4))
-                .sourceOrder(14)
+                .sourceOrder(13)
                 .save(consumer, id("assembly_machine/plate_mixed"));
 
         GenericMachineRecipeBuilder.assembly("ass.platedesh", 200, 100)
@@ -664,7 +709,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("dustAnyPlastic", 2)
                 .inputLegacyOre("ingotDuraSteel", 1)
                 .outputItem(new ItemStack(item("plate_desh"), 4))
-                .sourceOrder(16)
+                .sourceOrder(15)
                 .save(consumer, id("assembly_machine/plate_desh"));
 
         GenericMachineRecipeBuilder.assembly("ass.platebismuth", 200, 100)
@@ -672,7 +717,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("billetU238", 2)
                 .inputLegacyOre("dustNiobium", 1)
                 .outputItem(item("plate_bismuth"))
-                .sourceOrder(17)
+                .sourceOrder(16)
                 .save(consumer, id("assembly_machine/plate_bismuth"));
 
         GenericMachineRecipeBuilder.assembly("ass.exsteelplating", 200, 400)
@@ -680,7 +725,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateTitanium", 4)
                 .inputLegacyOre("boltSteel", 16)
                 .outputLegacyMeta(LegacyMetaItemMappings.ITEM_EXPENSIVE, 0)
-                .sourceOrder(18)
+                .sourceOrder(17)
                 .save(consumer, id("assembly_machine/expensive_steel_plating"));
 
         GenericMachineRecipeBuilder.assembly("ass.exheavyframe", 600, 800)
@@ -690,7 +735,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("ingotWorkersAlloy", 1)
                 .inputLegacyOre("boltDuraSteel", 32)
                 .outputLegacyMeta(LegacyMetaItemMappings.ITEM_EXPENSIVE, 1)
-                .sourceOrder(19)
+                .sourceOrder(18)
                 .save(consumer, id("assembly_machine/expensive_heavy_frame"));
 
         GenericMachineRecipeBuilder.assembly("ass.excircuit", 400, 4_000)
@@ -699,7 +744,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("ingotRubber", 4)
                 .inputFluid(HbmFluids.SULFURIC_ACID, 1_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.ITEM_EXPENSIVE, 2)
-                .sourceOrder(20)
+                .sourceOrder(19)
                 .save(consumer, id("assembly_machine/expensive_circuit"));
 
         GenericMachineRecipeBuilder.assembly("ass.exleadplating", 400, 4_000)
@@ -709,7 +754,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("boltTungsten", 32)
                 .inputFluid(HbmFluids.LUBRICANT, 1_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.ITEM_EXPENSIVE, 3)
-                .sourceOrder(21)
+                .sourceOrder(20)
                 .save(consumer, id("assembly_machine/expensive_lead_plating"));
 
         GenericMachineRecipeBuilder.assembly("ass.exferroplating", 1_200, 10_000)
@@ -718,7 +763,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("ingotAnyResistantAlloy", 4)
                 .inputFluid(HbmFluids.UNSATURATEDS, 1_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.ITEM_EXPENSIVE, 4)
-                .sourceOrder(22)
+                .sourceOrder(21)
                 .save(consumer, id("assembly_machine/expensive_ferro_plating"));
 
         GenericMachineRecipeBuilder.assembly("ass.excomputer", 1_200, 16_000)
@@ -728,7 +773,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(block("glass_quartz"), 8)
                 .inputFluid(HbmFluids.PERFLUOROMETHYL, 2_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.ITEM_EXPENSIVE, 5)
-                .sourceOrder(23)
+                .sourceOrder(22)
                 .save(consumer, id("assembly_machine/expensive_computer"));
 
         GenericMachineRecipeBuilder.assembly("ass.bronzetubes", 3_000, 250_000)
@@ -739,7 +784,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.PERFLUOROMETHYL_COLD, 4_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.ITEM_EXPENSIVE, 6)
                 .outputFluid(HbmFluids.PERFLUOROMETHYL, 4_000)
-                .sourceOrder(24)
+                .sourceOrder(23)
                 .save(consumer, id("assembly_machine/expensive_bronze_tubes"));
 
         GenericMachineRecipeBuilder.assembly("ass.explastic", 600, 20_000)
@@ -748,28 +793,28 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("ingotRubber", 8)
                 .inputFluid(HbmFluids.SOLVENT, 1_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.ITEM_EXPENSIVE, 7)
-                .sourceOrder(25)
+                .sourceOrder(24)
                 .save(consumer, id("assembly_machine/expensive_plastic"));
 
         GenericMachineRecipeBuilder.assembly("ass.exgold", 600, 10_000)
                 .inputLegacyOre("dustGold", 64)
                 .inputLegacyOre("dustGold", 64)
                 .outputLegacyMeta(LegacyMetaItemMappings.ITEM_EXPENSIVE, 8)
-                .sourceOrder(26)
+                .sourceOrder(25)
                 .save(consumer, id("assembly_machine/expensive_gold_dust"));
 
         GenericMachineRecipeBuilder.assembly("ass.hazcloth", 50, 100)
                 .inputLegacyOre("dustLead", 4)
                 .inputItem(Items.STRING, 8)
                 .outputItem(new ItemStack(item("hazmat_cloth"), 4))
-                .sourceOrder(27)
+                .sourceOrder(26)
                 .save(consumer, id("assembly_machine/hazmat_cloth"));
 
         GenericMachineRecipeBuilder.assembly("ass.firecloth", 50, 100)
                 .inputLegacyOre("ingotAsbestos", 1)
                 .inputItem(Items.STRING, 8)
                 .outputItem(new ItemStack(item("asbestos_cloth"), 4))
-                .sourceOrder(28)
+                .sourceOrder(27)
                 .save(consumer, id("assembly_machine/asbestos_cloth"));
 
         GenericMachineRecipeBuilder.assembly("ass.filtercoal", 50, 100)
@@ -777,15 +822,80 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(Items.STRING, 2)
                 .inputItem(Items.PAPER, 1)
                 .outputItem(item("filter_coal"))
-                .sourceOrder(29)
+                .sourceOrder(28)
                 .save(consumer, id("assembly_machine/filter_coal"));
+
+        GenericMachineRecipeBuilder.assembly("ass.chip", 50, 250)
+                .inputItem(item("plate_polymer"), 1)
+                .inputTag(forgeTag("circuits/silicon"), 1)
+                .inputLegacyOre("wireFineGold", 1)
+                .outputItem(item("circuit_chip"))
+                .sourceOrder(29)
+                .save(consumer, id("assembly_machine/chip"));
+
+        GenericMachineRecipeBuilder.assembly("ass.chipBismoid", 100, 1_500)
+                .inputItem(item("plate_polymer"), 2)
+                .inputTag(forgeTag("circuits/silicon"), 2)
+                .inputLegacyOre("nuggetAnyBismoid", 1)
+                .inputLegacyOre("wireFineGold", 2)
+                .outputItem(item("circuit_chip_bismoid"))
+                .sourceOrder(30)
+                .save(consumer, id("assembly_machine/chip_bismoid"));
+
+        GenericMachineRecipeBuilder.assembly("ass.chipQuantum", 200, 15_000)
+                .inputTag(forgeTag("ingots/any_hardplastic"), 2)
+                .inputTag(forgeTag("dense_wires/bscco"), 1)
+                .inputItem(item("pellet_charged"), 1)
+                .inputLegacyOre("wireFineGold", 8)
+                .outputItem(item("circuit_chip_quantum"))
+                .sourceOrder(31)
+                .save(consumer, id("assembly_machine/chip_quantum"));
+
+        GenericMachineRecipeBuilder.assembly("ass.atomicClock", 300, 1_000)
+                .inputTag(forgeTag("ingots/any_plastic"), 2)
+                .inputTag(forgeTag("circuits/chip"), 3)
+                .inputLegacyOre("dustStrontium", 1)
+                .outputItem(item("circuit_atomic_clock"))
+                .sourceOrder(32)
+                .save(consumer, id("assembly_machine/atomic_clock"));
+
+        GenericMachineRecipeBuilder.assembly("ass.analogAlt", 200, 250)
+                .inputTag(forgeTag("circuits/pcb"), 4)
+                .inputTag(forgeTag("ingots/any_plastic"), 4)
+                .inputLegacyOre("wireFineTungsten", 8)
+                .inputLegacyOre("ingotNiobium", 1)
+                .outputItem(item("circuit_analog"))
+                .pool(LegacyBlueprintPools.PREFIX_ALT + ".circuit")
+                .customLocalization()
+                .sourceOrder(33)
+                .save(consumer, id("assembly_machine/analog_alt"));
+
+        GenericMachineRecipeBuilder.assembly("ass.factorioChip", 300, 20_000)
+                .inputLegacyOre("ingotRubber", 2)
+                .inputLegacyOre("plateIron", 4)
+                .inputLegacyOre("wireFineCopper", 8)
+                .outputItem(item("circuit_basic"))
+                .pool(LegacyBlueprintPools.PREFIX_ALT + ".circuit")
+                .customLocalization()
+                .sourceOrder(34)
+                .save(consumer, id("assembly_machine/factorio_chip"));
+
+        GenericMachineRecipeBuilder.assembly("ass.atomicClockAlt", 300, 20_000)
+                .inputTag(forgeTag("ingots/any_plastic"), 4)
+                .inputTag(forgeTag("circuits/chip"), 3)
+                .inputLegacyOre("dustCs137", 1)
+                .outputItem(new ItemStack(item("circuit_atomic_clock"), 4))
+                .pool(LegacyBlueprintPools.PREFIX_ALT + ".circuit")
+                .customLocalization()
+                .sourceOrder(35)
+                .save(consumer, id("assembly_machine/atomic_clock_alt"));
 
         GenericMachineRecipeBuilder.assembly("ass.centrifugetower", 100, 100)
                 .inputLegacyOre("plateDuraSteel", 4)
                 .inputLegacyOre("plateTitanium", 4)
                 .inputItem(item("motor"), 1)
                 .outputItem(item("centrifuge_element"))
-                .sourceOrder(30)
+                .sourceOrder(36)
                 .save(consumer, id("assembly_machine/centrifuge_tower"));
 
         GenericMachineRecipeBuilder.assembly("ass.reactorcore", 100, 100)
@@ -794,7 +904,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateDuraSteel", 8)
                 .inputLegacyOre("ingotAsbestos", 4)
                 .outputItem(item("reactor_core"))
-                .sourceOrder(31)
+                .sourceOrder(37)
                 .save(consumer, id("assembly_machine/reactor_core"));
 
         GenericMachineRecipeBuilder.assembly("ass.thermoelement", 60, 100)
@@ -802,7 +912,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("wireFineMingrade", 2)
                 .inputLegacyOre("dustNetherQuartz", 2)
                 .outputItem(item("thermo_element"))
-                .sourceOrder(32)
+                .sourceOrder(38)
                 .save(consumer, id("assembly_machine/thermo_element"));
 
         GenericMachineRecipeBuilder.assembly("ass.thermoelementsilicon", 60, 100)
@@ -810,7 +920,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("wireFineGold", 2)
                 .inputLegacyOre("billetSilicon", 1)
                 .outputItem(item("thermo_element"))
-                .sourceOrder(33)
+                .sourceOrder(39)
                 .save(consumer, id("assembly_machine/thermo_element_silicon"));
 
         GenericMachineRecipeBuilder.assembly("ass.rtgunit", 100, 100)
@@ -818,21 +928,21 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateCopper", 4)
                 .inputItem(item("thermo_element"), 2)
                 .outputItem(item("rtg_unit"))
-                .sourceOrder(34)
+                .sourceOrder(40)
                 .save(consumer, id("assembly_machine/rtg_unit"));
 
         GenericMachineRecipeBuilder.assembly("ass.magnetron", 40, 100)
                 .inputLegacyOre("plateCopper", 3)
                 .inputLegacyOre("wireFineTungsten", 4)
                 .outputItem(item("magnetron"))
-                .sourceOrder(35)
+                .sourceOrder(41)
                 .save(consumer, id("assembly_machine/magnetron"));
 
         GenericMachineRecipeBuilder.assembly("ass.titaniumdrill", 100, 100)
                 .inputLegacyOre("plateCastDuraSteel", 1)
                 .inputLegacyOre("plateTitanium", 8)
                 .outputItem(item("drill_titanium"))
-                .sourceOrder(36)
+                .sourceOrder(42)
                 .save(consumer, id("assembly_machine/titanium_drill"));
 
         GenericMachineRecipeBuilder.assembly("ass.entanglementkit", 200, 100)
@@ -841,7 +951,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("wireDenseGold", 16)
                 .inputFluid(HbmFluids.XENON, 8_000)
                 .outputItem(item("entanglement_kit"))
-                .sourceOrder(37)
+                .sourceOrder(43)
                 .save(consumer, id("assembly_machine/entanglement_kit"));
 
         GenericMachineRecipeBuilder.assembly("ass.protoreactor", 200, 100)
@@ -850,44 +960,44 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("rod_quad_empty"), 10)
                 .inputLegacyOre("dyeBrown", 3)
                 .outputItem(item("dysfunctional_reactor"))
-                .sourceOrder(38)
+                .sourceOrder(44)
                 .save(consumer, id("assembly_machine/proto_reactor"));
 
         GenericMachineRecipeBuilder.assembly("ass.partlith", 40, 100)
                 .inputLegacyOre("dustLithium", 1)
                 .outputItem(new ItemStack(item("part_lithium"), 8))
-                .sourceOrder(39)
+                .sourceOrder(45)
                 .save(consumer, id("assembly_machine/part_lithium"));
 
         GenericMachineRecipeBuilder.assembly("ass.partberyl", 40, 100)
                 .inputLegacyOre("dustBeryllium", 1)
                 .outputItem(new ItemStack(item("part_beryllium"), 8))
-                .sourceOrder(40)
+                .sourceOrder(46)
                 .save(consumer, id("assembly_machine/part_beryllium"));
 
         GenericMachineRecipeBuilder.assembly("ass.partcoal", 40, 100)
                 .inputLegacyOre("dustCoal", 1)
                 .outputItem(new ItemStack(item("part_carbon"), 8))
-                .sourceOrder(41)
+                .sourceOrder(47)
                 .save(consumer, id("assembly_machine/part_carbon"));
 
         GenericMachineRecipeBuilder.assembly("ass.partcop", 40, 100)
                 .inputLegacyOre("dustCopper", 1)
                 .outputItem(new ItemStack(item("part_copper"), 8))
-                .sourceOrder(42)
+                .sourceOrder(48)
                 .save(consumer, id("assembly_machine/part_copper"));
 
         GenericMachineRecipeBuilder.assembly("ass.partplut", 40, 100)
                 .inputLegacyOre("dustPlutonium", 1)
                 .outputItem(new ItemStack(item("part_plutonium"), 8))
-                .sourceOrder(43)
+                .sourceOrder(49)
                 .save(consumer, id("assembly_machine/part_plutonium"));
 
         GenericMachineRecipeBuilder.assembly("ass.cmbtile", 100, 100)
                 .inputLegacyOre("anyConcrete", 4)
                 .inputLegacyOre("plateCMBSteel", 4)
                 .outputItem(new ItemStack(block("cmb_brick"), 8))
-                .sourceOrder(44)
+                .sourceOrder(50)
                 .save(consumer, id("assembly_machine/cmb_tile"));
 
         GenericMachineRecipeBuilder.assembly("ass.cmbbrick", 100, 100)
@@ -895,7 +1005,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(block("ducrete"), 4)
                 .inputItem(block("cmb_brick"), 8)
                 .outputItem(new ItemStack(block("cmb_brick_reinforced"), 8))
-                .sourceOrder(45)
+                .sourceOrder(51)
                 .save(consumer, id("assembly_machine/cmb_brick"));
 
         GenericMachineRecipeBuilder.assembly("ass.yellowbarrel", 400, 400)
@@ -903,7 +1013,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateLead", 2)
                 .inputItem(item("nuclear_waste"), 10)
                 .outputItem(block("yellow_barrel"))
-                .sourceOrder(48)
+                .sourceOrder(54)
                 .save(consumer, id("assembly_machine/yellow_barrel"));
 
         GenericMachineRecipeBuilder.assembly("ass.vitrifiedbarrel", 400, 400)
@@ -911,7 +1021,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateLead", 2)
                 .inputItem(item("nuclear_waste_vitrified"), 10)
                 .outputItem(block("vitrified_barrel"))
-                .sourceOrder(49)
+                .sourceOrder(55)
                 .save(consumer, id("assembly_machine/vitrified_barrel"));
     }
 
@@ -932,7 +1042,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateCopper", 4)
                 .inputItem(ModItems.MOTOR.get(), 2)
                 .outputItem(ModBlocks.MACHINE_SHREDDER.get())
-                .sourceOrder(70)
+                .sourceOrder(76)
                 .save(consumer, id("assembly_machine/shredder"));
 
         GenericMachineRecipeBuilder.assembly("ass.assembler", 200, 100)
@@ -941,7 +1051,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(ModItems.MOTOR.get(), 2)
                 .inputItem(legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 7), 1)
                 .outputItem(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get())
-                .sourceOrder(71)
+                .sourceOrder(77)
                 .save(consumer, id("assembly_machine/assembler"));
 
         GenericMachineRecipeBuilder.assembly("ass.chemplant", 200, 100)
@@ -952,7 +1062,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(ModItems.TUNGSTEN_COIL.get(), 2)
                 .inputItem(legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 7), 1)
                 .outputItem(ModBlocks.MACHINE_CHEMICAL_PLANT.get())
-                .sourceOrder(72)
+                .sourceOrder(78)
                 .save(consumer, id("assembly_machine/chemplant"));
 
         GenericMachineRecipeBuilder.assembly("ass.purex", 300, 100)
@@ -962,7 +1072,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("motor_desh"), 1)
                 .inputItem(legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 8), 4)
                 .outputItem(ModBlocks.MACHINE_PUREX.get())
-                .sourceOrder(73)
+                .sourceOrder(79)
                 .save(consumer, id("assembly_machine/purex"));
 
         GenericMachineRecipeBuilder.assembly("ass.centrifuge", 200, 100)
@@ -972,7 +1082,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateCopper", 4)
                 .inputItem(legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 7), 1)
                 .outputItem(ModBlocks.MACHINE_CENTRIFUGE.get())
-                .sourceOrder(75)
+                .sourceOrder(81)
                 .save(consumer, id("assembly_machine/centrifuge"));
 
         GenericMachineRecipeBuilder.assembly("ass.gascent", 400, 100)
@@ -982,7 +1092,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateSteel", 8)
                 .inputItem(legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 9), 1)
                 .outputItem(ModBlocks.MACHINE_GASCENT.get())
-                .sourceOrder(76)
+                .sourceOrder(82)
                 .save(consumer, id("assembly_machine/gascent"));
 
         GenericMachineRecipeBuilder.assembly("ass.derrick", 200, 100)
@@ -992,7 +1102,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(ModItems.MOTOR.get(), 1)
                 .inputItem(item("drill_titanium"), 1)
                 .outputItem(ModBlocks.MACHINE_WELL.get())
-                .sourceOrder(81)
+                .sourceOrder(87)
                 .save(consumer, id("assembly_machine/derrick"));
 
         GenericMachineRecipeBuilder.assembly("ass.pumpjack", 400, 100)
@@ -1002,7 +1112,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("motor_desh"), 1)
                 .inputItem(item("drill_titanium"), 1)
                 .outputItem(ModBlocks.MACHINE_PUMPJACK.get())
-                .sourceOrder(82)
+                .sourceOrder(88)
                 .save(consumer, id("assembly_machine/pumpjack"));
 
         GenericMachineRecipeBuilder.assembly("ass.fracker", 600, 100)
@@ -1014,7 +1124,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("plate_desh"), 24)
                 .inputItem(legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 1), 16)
                 .outputItem(ModBlocks.MACHINE_FRACKING_TOWER.get())
-                .sourceOrder(83)
+                .sourceOrder(89)
                 .save(consumer, id("assembly_machine/fracker"));
 
         GenericMachineRecipeBuilder.assembly("ass.refinery", 200, 100)
@@ -1025,8 +1135,15 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("plate_polymer"), 8)
                 .inputItem(legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 7), 3)
                 .outputItem(ModBlocks.MACHINE_REFINERY.get())
-                .sourceOrder(85)
+                .sourceOrder(91)
                 .save(consumer, id("assembly_machine/refinery"));
+
+        GenericMachineRecipeBuilder.assembly("ass.tank", 200, 100)
+                .inputLegacyOre("plateSteel", 8)
+                .inputLegacyOre("shellSteel", 4)
+                .outputItem(ModBlocks.MACHINE_FLUIDTANK.get())
+                .sourceOrder(144)
+                .save(consumer, id("assembly_machine/tank"));
     }
 
     private static void fluidContainerRecipes(Consumer<FinishedRecipe> consumer) {
@@ -1123,7 +1240,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(ModItems.PLASTIC_BAG.get(), 1)
                 .inputItem(ModItems.PLASTIC_BAG.get(), 1)
                 .outputItem(ModItems.FLUID_PACK_EMPTY.get())
-                .sourceOrder(327)
+                .sourceOrder(333)
                 .save(consumer, id("assembly_machine/emptypackage"));
 
         HbmFluids.all().stream()
@@ -1294,6 +1411,85 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("liquefaction/pufferfish"));
         LiquefactionRecipeBuilder.liquefaction(Blocks.SUNFLOWER, HbmFluids.SUNFLOWEROIL, 100)
                 .save(consumer, id("liquefaction/sunflower"));
+    }
+
+    private static void pyroOvenRecipes(Consumer<FinishedRecipe> consumer) {
+        pyroSolidFuel(consumer, HbmFluids.SMEAR);
+        pyroSolidFuel(consumer, HbmFluids.HEATINGOIL);
+        pyroSolidFuel(consumer, HbmFluids.HEATINGOIL_VACUUM);
+        pyroSolidFuel(consumer, HbmFluids.RECLAIMED);
+        pyroSolidFuel(consumer, HbmFluids.PETROIL);
+        pyroSolidFuel(consumer, HbmFluids.NAPHTHA);
+        pyroSolidFuel(consumer, HbmFluids.NAPHTHA_CRACK);
+        pyroSolidFuel(consumer, HbmFluids.DIESEL);
+        pyroSolidFuel(consumer, HbmFluids.DIESEL_REFORM);
+        pyroSolidFuel(consumer, HbmFluids.DIESEL_CRACK);
+        pyroSolidFuel(consumer, HbmFluids.DIESEL_CRACK_REFORM);
+        pyroSolidFuel(consumer, HbmFluids.LIGHTOIL);
+        pyroSolidFuel(consumer, HbmFluids.LIGHTOIL_CRACK);
+        pyroSolidFuel(consumer, HbmFluids.LIGHTOIL_VACUUM);
+        pyroSolidFuel(consumer, HbmFluids.KEROSENE);
+        pyroSolidFuel(consumer, HbmFluids.KEROSENE_REFORM);
+        pyroSolidFuel(consumer, HbmFluids.SOURGAS);
+        pyroSolidFuel(consumer, HbmFluids.REFORMGAS);
+        pyroSolidFuel(consumer, HbmFluids.SYNGAS);
+        pyroSolidFuel(consumer, HbmFluids.PETROLEUM);
+        pyroSolidFuel(consumer, HbmFluids.LPG);
+        pyroSolidFuel(consumer, HbmFluids.BIOFUEL);
+        pyroSolidFuel(consumer, HbmFluids.AROMATICS);
+        pyroSolidFuel(consumer, HbmFluids.UNSATURATEDS);
+        pyroSolidFuel(consumer, HbmFluids.REFORMATE);
+        pyroSolidFuel(consumer, HbmFluids.XYLENE);
+        pyroSolidFuel(consumer, HbmFluids.BALEFIRE, 24_000_000L, item("solid_fuel_bf"));
+
+        PyroOvenRecipeBuilder.pyro(100)
+                .inputFluid(HbmFluids.STEAM, 250)
+                .inputTag(forgeTag("gems/any_coke"), 1)
+                .outputFluid(HbmFluids.SYNGAS, 1_000)
+                .save(consumer, id("pyro_oven/syngas_from_coke"));
+        PyroOvenRecipeBuilder.pyro(40)
+                .inputTag(forgeTag("any/tar"), 4)
+                .outputFluid(HbmFluids.CARBONDIOXIDE, 1_000)
+                .outputItem(item("powder_ash_soot"))
+                .save(consumer, id("pyro_oven/soot_from_tar"));
+        PyroOvenRecipeBuilder.pyro(300)
+                .inputFluid(HbmFluids.SYNGAS, 2_000)
+                .inputTag(forgeTag("dusts/tungsten"), 1)
+                .outputFluid(HbmFluids.SPENTSTEAM, 1_000)
+                .outputItem(item("ingot_tungsten_carbide"))
+                .save(consumer, id("pyro_oven/tungsten_carbide_from_syngas"));
+    }
+
+    private static void pyroSolidFuel(Consumer<FinishedRecipe> consumer, FluidType fluid) {
+        pyroSolidFuel(consumer, fluid, 1_440_000L, item("solid_fuel"));
+    }
+
+    private static void pyroSolidFuel(Consumer<FinishedRecipe> consumer, FluidType fluid, long tuPerFuel,
+            ItemLike fuel) {
+        int amount = pyroAutoAmount(fluid, tuPerFuel);
+        if (amount <= 0) {
+            return;
+        }
+        PyroOvenRecipeBuilder.pyro(60)
+                .inputFluid(fluid, amount)
+                .outputItem(fuel)
+                .save(consumer, id("pyro_oven/solid_fuel_from_" + fluid.toPath()));
+    }
+
+    private static int pyroAutoAmount(FluidType fluid, long tuPerFuel) {
+        FlammableFluidTrait trait = fluid.getTrait(FlammableFluidTrait.class);
+        if (trait == null || trait.getHeatEnergyPerBucket() <= 0L) {
+            return 0;
+        }
+        int amount = (int) (tuPerFuel * 1_000L * 0.5D / trait.getHeatEnergyPerBucket());
+        if (amount > 10_000) {
+            amount -= amount % 1_000;
+        } else if (amount > 1_000) {
+            amount -= amount % 100;
+        } else if (amount > 100) {
+            amount -= amount % 10;
+        }
+        return Math.max(amount, 1);
     }
 
     private static void pressRecipes(Consumer<FinishedRecipe> consumer) {
@@ -1586,6 +1782,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         private GenericMachineRecipeBuilder plasmaForgeExtra(long ignitionTemp) {
             this.extraData = new GenericMachineRecipeExtraData(
                     Optional.of(new GenericMachineRecipeExtraData.PlasmaForge(ignitionTemp)),
+                    Optional.empty(),
                     Optional.empty());
             return this;
         }
@@ -1595,7 +1792,8 @@ public final class HbmRecipeProvider extends RecipeProvider {
             this.extraData = new GenericMachineRecipeExtraData(
                     Optional.empty(),
                     Optional.of(new GenericMachineRecipeExtraData.Fusion(ignitionTemp, outputTemp,
-                            outputFlux, r, g, b)));
+                            outputFlux, r, g, b)),
+                    Optional.empty());
             return this;
         }
 
@@ -1779,6 +1977,113 @@ public final class HbmRecipeProvider extends RecipeProvider {
                     return null;
                 }
             });
+        }
+
+        private static JsonObject itemStackJson(ItemStack stack) {
+            JsonObject object = new JsonObject();
+            object.addProperty("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+            if (stack.getCount() > 1) {
+                object.addProperty("count", stack.getCount());
+            }
+            if (stack.hasTag() && !stack.getTag().isEmpty()) {
+                object.addProperty("nbt", stack.getTag().toString());
+            }
+            return object;
+        }
+    }
+
+    private static final class PyroOvenRecipeBuilder {
+        private final int duration;
+        private JsonObject inputItem;
+        private JsonObject inputFluid;
+        private JsonObject outputItem;
+        private JsonObject outputFluid;
+
+        private PyroOvenRecipeBuilder(int duration) {
+            this.duration = Math.max(1, duration);
+        }
+
+        private static PyroOvenRecipeBuilder pyro(int duration) {
+            return new PyroOvenRecipeBuilder(duration);
+        }
+
+        private PyroOvenRecipeBuilder inputTag(TagKey<Item> tag, int count) {
+            JsonObject object = new JsonObject();
+            object.add("ingredient", Ingredient.of(tag).toJson());
+            object.addProperty("count", Math.max(1, count));
+            inputItem = object;
+            return this;
+        }
+
+        private PyroOvenRecipeBuilder inputFluid(FluidType fluid, int amount) {
+            inputFluid = fluidStack(fluid, amount);
+            return this;
+        }
+
+        private PyroOvenRecipeBuilder outputItem(ItemLike item) {
+            outputItem = itemStackJson(new ItemStack(item));
+            return this;
+        }
+
+        private PyroOvenRecipeBuilder outputFluid(FluidType fluid, int amount) {
+            outputFluid = fluidStack(fluid, amount);
+            return this;
+        }
+
+        private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId) {
+            if (inputItem == null && inputFluid == null) {
+                throw new IllegalStateException("HBM pyro oven recipe has no inputs: " + recipeId);
+            }
+            if (outputItem == null && outputFluid == null) {
+                throw new IllegalStateException("HBM pyro oven recipe has no outputs: " + recipeId);
+            }
+            consumer.accept(new FinishedRecipe() {
+                @Override
+                public void serializeRecipeData(JsonObject json) {
+                    if (inputFluid != null) {
+                        json.add("input_fluid", inputFluid);
+                    }
+                    if (inputItem != null) {
+                        json.add("input_item", inputItem);
+                    }
+                    if (outputFluid != null) {
+                        json.add("output_fluid", outputFluid);
+                    }
+                    if (outputItem != null) {
+                        json.add("output_item", outputItem);
+                    }
+                    json.addProperty("duration", duration);
+                }
+
+                @Override
+                public ResourceLocation getId() {
+                    return recipeId;
+                }
+
+                @Override
+                public RecipeSerializer<?> getType() {
+                    return BuiltInRegistries.RECIPE_SERIALIZER.get(id("pyro_oven"));
+                }
+
+                @Nullable
+                @Override
+                public JsonObject serializeAdvancement() {
+                    return null;
+                }
+
+                @Nullable
+                @Override
+                public ResourceLocation getAdvancementId() {
+                    return null;
+                }
+            });
+        }
+
+        private static JsonObject fluidStack(FluidType fluid, int amount) {
+            JsonObject object = new JsonObject();
+            object.addProperty("fluid", fluid.getName());
+            object.addProperty("amount", amount);
+            return object;
         }
 
         private static JsonObject itemStackJson(ItemStack stack) {

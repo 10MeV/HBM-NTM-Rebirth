@@ -3,6 +3,7 @@ package com.hbm.ntm.energy;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -12,8 +13,9 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 
-public class HbmBatteryItem extends Item {
+public class HbmBatteryItem extends Item implements HbmChargeableItem {
     public static final String DEFAULT_CHARGE_TAG = "charge";
 
     private final long maxCharge;
@@ -48,41 +50,42 @@ public class HbmBatteryItem extends Item {
     }
 
     public long getCharge(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return 0L;
+        }
+        if (stack.hasTag()) {
+            return clampCharge(stack, stack.getTag().getLong(getChargeTagName(stack)));
+        }
         CompoundTag tag = stack.getOrCreateTag();
         String chargeTag = getChargeTagName(stack);
-        if (!tag.contains(chargeTag)) {
-            long defaultCharge = getDefaultCharge(stack);
-            tag.putLong(chargeTag, defaultCharge);
-            return defaultCharge;
-        }
-        return tag.getLong(chargeTag);
+        long defaultCharge = getDefaultCharge(stack);
+        long clampedDefault = clampCharge(stack, defaultCharge);
+        tag.putLong(chargeTag, clampedDefault);
+        return clampedDefault;
     }
 
     public void setCharge(ItemStack stack, long charge) {
-        stack.getOrCreateTag().putLong(getChargeTagName(stack), Math.max(0L, Math.min(charge, getMaxCharge(stack))));
+        if (!stack.isEmpty()) {
+            stack.getOrCreateTag().putLong(getChargeTagName(stack), clampCharge(stack, charge));
+        }
     }
 
     public long chargeBattery(ItemStack stack, long amount) {
         if (amount <= 0L) {
             return 0L;
         }
-        long charge = getCharge(stack);
-        long accepted = Math.min(amount, Math.max(0L, getMaxCharge(stack) - charge));
-        if (accepted > 0L) {
-            setCharge(stack, charge + accepted);
-        }
-        return accepted;
+        long before = getCharge(stack);
+        setCharge(stack, before + amount);
+        return getCharge(stack) - before;
     }
 
     public long dischargeBattery(ItemStack stack, long amount) {
         if (amount <= 0L) {
             return 0L;
         }
-        long extracted = Math.min(amount, getCharge(stack));
-        if (extracted > 0L) {
-            setCharge(stack, getCharge(stack) - extracted);
-        }
-        return extracted;
+        long before = getCharge(stack);
+        setCharge(stack, before - amount);
+        return before - getCharge(stack);
     }
 
     public ItemStack getEmptyBattery(ItemStack stack) {
@@ -120,7 +123,7 @@ public class HbmBatteryItem extends Item {
 
     @Override
     public boolean isBarVisible(ItemStack stack) {
-        return getMaxCharge(stack) > 0L && getCharge(stack) < getMaxCharge(stack);
+        return getMaxCharge(stack) > 0L;
     }
 
     @Override
@@ -128,21 +131,56 @@ public class HbmBatteryItem extends Item {
         if (getMaxCharge(stack) <= 0L) {
             return 0;
         }
-        return Math.round(13.0F * getCharge(stack) / (float) getMaxCharge(stack));
+        double fraction = Math.max(0.0D, Math.min(1.0D, (double) getCharge(stack) / (double) getMaxCharge(stack)));
+        return Math.round(13.0F * (float) fraction);
     }
 
     @Override
     public int getBarColor(ItemStack stack) {
-        return 0x4DFFE0;
+        double fraction = getMaxCharge(stack) <= 0L ? 0.0D
+                : Math.max(0.0D, Math.min(1.0D, (double) getCharge(stack) / (double) getMaxCharge(stack)));
+        return Mth.hsvToRgb((float) fraction / 3.0F, 1.0F, 1.0F);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("desc.item.battery.charge", getCharge(stack), getMaxCharge(stack))
-                .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("desc.item.battery.chargeRate", getChargeRate(stack))
-                .withStyle(ChatFormatting.DARK_GRAY));
-        tooltip.add(Component.translatable("desc.item.battery.dischargeRate", getDischargeRate(stack))
-                .withStyle(ChatFormatting.DARK_GRAY));
+        long charge = stack.hasTag() ? getCharge(stack) : getMaxCharge(stack);
+        tooltip.add(Component.literal("Energy stored: " + shortNumber(charge) + "/" + shortNumber(getMaxCharge(stack)) + "HE"));
+        tooltip.add(Component.literal("Charge rate: " + shortNumber(getChargeRate(stack)) + "HE/t"));
+        tooltip.add(Component.literal("Discharge rate: " + shortNumber(getDischargeRate(stack)) + "HE/t"));
+    }
+
+    protected long clampCharge(ItemStack stack, long charge) {
+        return Math.max(0L, Math.min(charge, getMaxCharge(stack)));
+    }
+
+    private static String shortNumber(long value) {
+        double result;
+        String suffix;
+        double abs = Math.abs((double) value);
+        if (abs >= 1_000_000_000_000_000_000.0D) {
+            result = value / 1_000_000_000_000_000_000.0D;
+            suffix = "E";
+        } else if (abs >= 1_000_000_000_000_000.0D) {
+            result = value / 1_000_000_000_000_000.0D;
+            suffix = "P";
+        } else if (abs >= 1_000_000_000_000.0D) {
+            result = value / 1_000_000_000_000.0D;
+            suffix = "T";
+        } else if (abs >= 1_000_000_000.0D) {
+            result = value / 1_000_000_000.0D;
+            suffix = "G";
+        } else if (abs >= 1_000_000.0D) {
+            result = value / 1_000_000.0D;
+            suffix = "M";
+        } else if (abs >= 1_000.0D) {
+            result = value / 1_000.0D;
+            suffix = "k";
+        } else {
+            return Long.toString(value);
+        }
+
+        double rounded = result <= -100.0D ? Math.round(result * 10.0D) / 10.0D : Math.round(result * 100.0D) / 100.0D;
+        return String.format(Locale.US, "%s%s", rounded, suffix);
     }
 }

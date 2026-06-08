@@ -1,9 +1,12 @@
 package com.hbm.ntm.multiblock;
 
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
+import com.hbm.ntm.api.multiblock.DummyPart;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -30,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 @SuppressWarnings("deprecation")
-public class DummyBlock extends Block implements EntityBlock {
+public class DummyBlock extends Block implements EntityBlock, DummyPart {
     private static final VoxelShape SHAPE = Shapes.block();
 
     public DummyBlock(Properties properties) {
@@ -57,6 +60,9 @@ public class DummyBlock extends Block implements EntityBlock {
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (player.getItemInHand(hand).is(ModItems.RADAR_LINKER.get())) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && !player.isShiftKeyDown()
                 && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
@@ -110,6 +116,25 @@ public class DummyBlock extends Block implements EntityBlock {
     @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.INVISIBLE;
+    }
+
+    @Override
+    public boolean isSignalSource(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core == null || !core.state().isSignalSource()) {
+            return 0;
+        }
+        return core.state().getSignal(level, core.pos(), direction);
+    }
+
+    @Override
+    public int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return getSignal(state, level, pos, direction);
     }
 
     @Override

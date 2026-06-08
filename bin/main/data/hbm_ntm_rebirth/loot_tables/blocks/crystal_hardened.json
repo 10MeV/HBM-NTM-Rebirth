@@ -1,1 +1,21 @@
-{ "type": "minecraft:block", "pools": [ { "rolls": 1, "conditions": [ { "condition": "minecraft:survives_explosion" } ], "entries": [ { "type": "minecraft:item", "name": "hbm_ntm_rebirth:crystal_hardened" } ] } ] }
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:crystal_hardened"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "hbm_ntm_rebirth:blocks/crystal_hardened"
+}

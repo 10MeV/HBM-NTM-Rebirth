@@ -19,12 +19,12 @@ public class BlockMutatorDigamma implements BlockMutator {
             return;
         }
 
-        BlockState replacement = ashState();
         if (circuit && shouldPlaceCircuitDebris(explosion, pos)) {
-            replacement = ModBlocks.PRIBRIS_DIGAMMA.get().defaultBlockState();
+            explosion.level().setBlock(pos, ModBlocks.PRIBRIS_DIGAMMA.get().defaultBlockState(), 3);
+            return;
         }
 
-        explosion.level().setBlock(pos, replacement, 3);
+        explosion.level().setBlock(pos, ashState(), 3);
 
         BlockPos above = pos.above();
         BlockState fire = ModBlocks.FIRE_DIGAMMA.get().defaultBlockState();

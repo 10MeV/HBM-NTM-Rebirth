@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/ore_sellafield_schrabidium" }
+{
+  "parent": "hbm_ntm_rebirth:block/ore_sellafield_schrabidium"
+}

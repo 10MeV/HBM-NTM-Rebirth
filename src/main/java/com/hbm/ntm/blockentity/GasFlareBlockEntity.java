@@ -1,6 +1,6 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
+import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -18,13 +18,13 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
-import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.GasFlareMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.Map;
 import java.util.List;
@@ -34,6 +34,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
@@ -92,10 +94,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_ENERGY_OUTPUT -> stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
-                case SLOT_FLUID_INPUT -> true;
-                case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
-                case SLOT_UPGRADE_SPEED, SLOT_UPGRADE_EFFECT -> stack.getItem() instanceof ItemMachineUpgrade;
+                case SLOT_ENERGY_OUTPUT, SLOT_FLUID_INPUT, SLOT_IDENTIFIER, SLOT_UPGRADE_SPEED, SLOT_UPGRADE_EFFECT -> true;
                 default -> false;
             };
         }
@@ -176,10 +175,10 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (blockEntity.burn && flammable != null) {
             if (level.random.nextBoolean()) {
                 ParticleUtil.spawnVanillaExt(level, pos.getX() + 1.5D, pos.getY() + 10.75D, pos.getZ() + 1.5D,
-                        ParticleUtil.VANILLA_SMOKE, 0.0D, 0.0D, 0.0D);
+                        ParticleUtil.VANILLA_SMOKE, 0.0D, 0.0D, 0.0D, 50, true);
             } else {
                 ParticleUtil.spawnVanillaExt(level, pos.getX() + 1.125D, pos.getY() + 11.75D, pos.getZ() - 0.5D,
-                        ParticleUtil.VANILLA_SMOKE, 0.0D, 0.0D, 0.0D);
+                        ParticleUtil.VANILLA_SMOKE, 0.0D, 0.0D, 0.0D, 50, true);
             }
         }
     }
@@ -214,6 +213,14 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public int getEffectLevel() {
         return effectLevel;
+    }
+
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        super.provideExtraInfo(data);
+        data.putBoolean(CompatEnergyControl.B_ACTIVE, fluidUsed > 0);
+        data.putDouble(CompatEnergyControl.D_CONSUMPTION_MB, fluidUsed);
+        data.putDouble(CompatEnergyControl.D_OUTPUT_HE, lastOutput);
     }
 
     public long getPower() {
@@ -370,6 +377,10 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             }
             tank.release(level, pos, eject, FluidReleaseType.SPILL, false);
             fluidUsed = eject;
+            if (level.getGameTime() % 7L == 0L) {
+                level.playSound(null, pos.getX(), pos.getY() + 11.0D, pos.getZ(), SoundEvents.FIRE_EXTINGUISH,
+                        SoundSource.BLOCKS, 1.5F, 0.5F);
+            }
             return true;
         }
 
@@ -392,6 +403,10 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         ParticleUtil.spawnGasFlame(level, pos.getX() + 0.5D, pos.getY() + 11.75D, pos.getZ() + 0.5D,
                 level.random.nextGaussian() * 0.15D, 0.2D, level.random.nextGaussian() * 0.15D);
         burnEntities(level, pos);
+        if (level.getGameTime() % 3L == 0L) {
+            level.playSound(null, pos.getX(), pos.getY() + 11.0D, pos.getZ(),
+                    ModSounds.WEAPON_FLAMETHROWER_SHOOT.get(), SoundSource.BLOCKS, 1.5F, 0.75F);
+        }
         return true;
     }
 
@@ -423,17 +438,12 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean setTankTypeFromIdentifierSlot() {
-        ItemStack input = items.getStackInSlot(SLOT_IDENTIFIER);
-        if (input.isEmpty() || !(input.getItem() instanceof IFluidIdentifierItem identifier)) {
-            return false;
+        boolean changed = HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
+                tank, level, worldPosition);
+        if (changed) {
+            onFluidContentsChanged();
         }
-        FluidType newType = identifier.getIdentifiedFluid(level, worldPosition, input);
-        if (newType == null || newType == tank.getTankType()) {
-            return false;
-        }
-        tank.setTankType(newType);
-        onFluidContentsChanged();
-        return true;
+        return changed;
     }
 
     @Override

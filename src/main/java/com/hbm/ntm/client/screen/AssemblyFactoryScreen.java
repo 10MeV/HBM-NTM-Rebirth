@@ -103,22 +103,26 @@ public class AssemblyFactoryScreen extends AbstractContainerScreen<AssemblyFacto
             int ox = (module % 2) * 109;
             int oy = (module / 2) * 56;
             if (isHovering(6 + ox, 53 + oy, 18, 18, mouseX, mouseY)) {
-                graphics.renderTooltip(font, splitTooltip(recipeTooltip(module)), mouseX, mouseY);
+                LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(module), mouseX, mouseY);
                 return;
             }
             if (isHovering(105 + ox, 20 + oy, 5, 32, mouseX, mouseY)) {
-                graphics.renderTooltip(font, splitTooltip(menu.getInputTankTooltip(module, hasShiftDown())), mouseX, mouseY);
+                LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(module),
+                        menu.getInputTankTooltip(module, hasShiftDown()), mouseX, mouseY);
                 return;
             }
             if (isHovering(105 + ox, 54 + oy, 5, 16, mouseX, mouseY)) {
-                graphics.renderTooltip(font, splitTooltip(menu.getOutputTankTooltip(module, hasShiftDown())), mouseX, mouseY);
+                LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(module),
+                        menu.getOutputTankTooltip(module, hasShiftDown()), mouseX, mouseY);
                 return;
             }
         }
         if (isHovering(232, 149, 7, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, splitTooltip(menu.getWaterTankTooltip(hasShiftDown())), mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getWaterTankData(),
+                    menu.getWaterTankTooltip(hasShiftDown()), mouseX, mouseY);
         } else if (isHovering(241, 149, 7, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, splitTooltip(menu.getSpentSteamTankTooltip(hasShiftDown())), mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getSpentSteamTankData(),
+                    menu.getSpentSteamTankTooltip(hasShiftDown()), mouseX, mouseY);
         }
     }
 

@@ -3,6 +3,7 @@ package com.hbm.ntm.network;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.config.NetworkConfig;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -35,6 +36,13 @@ public final class ThreadedPacketDispatcher {
     private static final AtomicLong TOTAL_SENT = new AtomicLong();
     private static final AtomicLong TOTAL_FAILED = new AtomicLong();
     private static final AtomicLong TOTAL_DISCARDED = new AtomicLong();
+    private static final AtomicLong DISCARDED_INVALID_TARGET = new AtomicLong();
+    private static final AtomicLong DISCARDED_INVALID_MESSAGE = new AtomicLong();
+    private static final AtomicLong DISCARDED_PREPARE_NULL = new AtomicLong();
+    private static final AtomicLong DISCARDED_PREPARE_EXCEPTION = new AtomicLong();
+    private static final AtomicLong DISCARDED_QUEUE_CLEAR = new AtomicLong();
+    private static final AtomicLong DISCARDED_DISABLE_CLEAR = new AtomicLong();
+    private static final AtomicLong DISCARDED_MANUAL_CLEAR = new AtomicLong();
     private static final AtomicLong TOTAL_PREPARED = new AtomicLong();
     private static final AtomicLong TOTAL_PREPARE_FAILED = new AtomicLong();
     private static final AtomicLong MANUAL_CLEARS = new AtomicLong();
@@ -49,13 +57,53 @@ public final class ThreadedPacketDispatcher {
     private static volatile String lastFailureMessage = "";
 
     public static synchronized void sendToAllAround(Object message, ServerLevel level, double x, double y, double z, double range) {
+        if (!validateTarget(message, "threaded-near-level:null", level != null)) {
+            return;
+        }
         Object prepared = prepareMessage(message);
         if (prepared != null) {
             enqueue(() -> ModMessages.sendToAllAround(prepared, level, x, y, z, range));
         }
     }
 
+    public static synchronized void sendToAllAround(Object message, ServerLevel level, BlockPos pos, double range) {
+        if (!validateTarget(message, "threaded-near-level:null", level != null)
+                || !validateTarget(message, "threaded-near-pos:null", pos != null)) {
+            return;
+        }
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToAllAround(prepared, level, pos, range));
+        }
+    }
+
+    public static synchronized void sendToAllAround(Object message, ResourceKey<Level> dimension,
+                                                    double x, double y, double z, double range) {
+        if (!validateTarget(message, "threaded-near-dimensionKey:null", dimension != null)) {
+            return;
+        }
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToAllAround(prepared, dimension, x, y, z, range));
+        }
+    }
+
+    public static synchronized void sendToAllAround(Object message, ResourceKey<Level> dimension,
+                                                    BlockPos pos, double range) {
+        if (!validateTarget(message, "threaded-near-dimensionKey:null", dimension != null)
+                || !validateTarget(message, "threaded-near-pos:null", pos != null)) {
+            return;
+        }
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToAllAround(prepared, dimension, pos, range));
+        }
+    }
+
     public static synchronized void sendToAllAround(Object message, Entity entity, double range) {
+        if (!validateTarget(message, "threaded-near-entity:null", entity != null)) {
+            return;
+        }
         Object prepared = prepareMessage(message);
         if (prepared != null) {
             enqueue(() -> ModMessages.sendToAllAround(prepared, entity, range));
@@ -63,6 +111,9 @@ public final class ThreadedPacketDispatcher {
     }
 
     public static synchronized void sendToAllAround(Object message, PacketDistributor.TargetPoint point) {
+        if (!validateTarget(message, "threaded-near-point:null", point != null)) {
+            return;
+        }
         Object prepared = prepareMessage(message);
         if (prepared != null) {
             enqueue(() -> ModMessages.sendToAllAround(prepared, point));
@@ -70,6 +121,9 @@ public final class ThreadedPacketDispatcher {
     }
 
     public static synchronized void sendToPlayer(Object message, ServerPlayer player) {
+        if (!validateTarget(message, "threaded-player:null", player != null)) {
+            return;
+        }
         Object prepared = prepareMessage(message);
         if (prepared != null) {
             enqueue(() -> ModMessages.sendToPlayer(prepared, player));
@@ -77,6 +131,9 @@ public final class ThreadedPacketDispatcher {
     }
 
     public static synchronized void sendToEntityTrackers(Object message, Entity entity) {
+        if (!validateTarget(message, "threaded-entityTrackers:null", entity != null)) {
+            return;
+        }
         Object prepared = prepareMessage(message);
         if (prepared != null) {
             enqueue(() -> ModMessages.sendToEntityTrackers(prepared, entity));
@@ -84,6 +141,9 @@ public final class ThreadedPacketDispatcher {
     }
 
     public static synchronized void sendToEntityAndSelf(Object message, Entity entity) {
+        if (!validateTarget(message, "threaded-entityAndSelf:null", entity != null)) {
+            return;
+        }
         Object prepared = prepareMessage(message);
         if (prepared != null) {
             enqueue(() -> ModMessages.sendToEntityAndSelf(prepared, entity));
@@ -91,9 +151,22 @@ public final class ThreadedPacketDispatcher {
     }
 
     public static synchronized void sendToDimension(Object message, ServerLevel level) {
+        if (!validateTarget(message, "threaded-dimension:null", level != null)) {
+            return;
+        }
         Object prepared = prepareMessage(message);
         if (prepared != null) {
             enqueue(() -> ModMessages.sendToDimension(prepared, level));
+        }
+    }
+
+    public static synchronized void sendToDimension(Object message, ResourceKey<Level> dimension) {
+        if (!validateTarget(message, "threaded-dimensionKey:null", dimension != null)) {
+            return;
+        }
+        Object prepared = prepareMessage(message);
+        if (prepared != null) {
+            enqueue(() -> ModMessages.sendToDimension(prepared, dimension));
         }
     }
 
@@ -105,6 +178,9 @@ public final class ThreadedPacketDispatcher {
     }
 
     public static synchronized void sendToTrackingChunk(Object message, BlockEntity blockEntity) {
+        if (!validateTarget(message, "threaded-trackingChunk:blockEntity:null", blockEntity != null)) {
+            return;
+        }
         Object prepared = prepareMessage(message);
         if (prepared != null) {
             enqueue(() -> ModMessages.sendToTrackingChunk(prepared, blockEntity));
@@ -112,14 +188,30 @@ public final class ThreadedPacketDispatcher {
     }
 
     public static synchronized void sendToTrackingChunk(Object message, Level level, BlockPos pos) {
+        if (!validateTarget(message, "threaded-trackingChunk:level:null", level != null)
+                || !validateTarget(message, "threaded-trackingChunk:pos:null", pos != null)
+                || !validateTarget(message, "threaded-trackingChunk:clientLevel", !level.isClientSide)) {
+            return;
+        }
         Object prepared = prepareMessage(message);
         if (prepared != null) {
             enqueue(() -> ModMessages.sendToTrackingChunk(prepared, level, pos));
         }
     }
 
+    private static boolean validateTarget(Object message, String target, boolean valid) {
+        if (ModMessages.validateTargetForSend(message, target, valid)) {
+            return true;
+        }
+        DISCARDED_INVALID_TARGET.incrementAndGet();
+        TOTAL_DISCARDED.incrementAndGet();
+        lastFailureMessage = "Invalid threaded packet target: " + target;
+        return false;
+    }
+
     private static Object prepareMessage(Object message) {
-        if (!ModMessages.validateMessageForSend(message, "threaded-queue")) {
+        if (!ModMessages.validateMessageForSend(message, "threaded-queue", "S2C")) {
+            DISCARDED_INVALID_MESSAGE.incrementAndGet();
             TOTAL_DISCARDED.incrementAndGet();
             lastFailureMessage = "Unregistered threaded packet message.";
             return null;
@@ -130,11 +222,13 @@ public final class ThreadedPacketDispatcher {
                     : message;
             if (prepared == null) {
                 TOTAL_PREPARE_FAILED.incrementAndGet();
+                DISCARDED_PREPARE_NULL.incrementAndGet();
                 TOTAL_DISCARDED.incrementAndGet();
                 lastFailureMessage = "Threaded packet prepare returned null.";
                 return null;
             }
-            if (!ModMessages.validateMessageForSend(prepared, "threaded-queue-prepared")) {
+            if (!ModMessages.validateMessageForSend(prepared, "threaded-queue-prepared", "S2C")) {
+                DISCARDED_INVALID_MESSAGE.incrementAndGet();
                 TOTAL_DISCARDED.incrementAndGet();
                 lastFailureMessage = "Unregistered prepared threaded packet message.";
                 return null;
@@ -143,6 +237,7 @@ public final class ThreadedPacketDispatcher {
             return prepared;
         } catch (Exception exception) {
             TOTAL_PREPARE_FAILED.incrementAndGet();
+            DISCARDED_PREPARE_EXCEPTION.incrementAndGet();
             TOTAL_DISCARDED.incrementAndGet();
             lastFailureMessage = exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage();
             HbmNtm.LOGGER.warn("Threaded packet preparation failed.", exception);
@@ -204,6 +299,7 @@ public final class ThreadedPacketDispatcher {
         } else if (discarded == 0) {
             consecutiveClears = 0;
         }
+        DISCARDED_QUEUE_CLEAR.addAndGet(discarded);
         TOTAL_DISCARDED.addAndGet(discarded);
         lastFlushQueued = tasks.size();
         lastFlushCompleted = completed;
@@ -225,6 +321,7 @@ public final class ThreadedPacketDispatcher {
         if (!enabled) {
             int discarded = clearPendingOperations();
             if (discarded > 0) {
+                DISCARDED_DISABLE_CLEAR.addAndGet(discarded);
                 TOTAL_DISCARDED.addAndGet(discarded);
                 lastFlushDiscarded = discarded;
                 lastFailureMessage = "Packet threading disabled with pending operations.";
@@ -264,6 +361,7 @@ public final class ThreadedPacketDispatcher {
     public static synchronized int clearPending(String reason) {
         int discarded = clearPendingOperations();
         MANUAL_CLEARS.incrementAndGet();
+        DISCARDED_MANUAL_CLEAR.addAndGet(discarded);
         TOTAL_DISCARDED.addAndGet(discarded);
         lastFlushDiscarded = discarded;
         if (discarded > 0) {
@@ -281,6 +379,13 @@ public final class ThreadedPacketDispatcher {
                 TOTAL_SENT.get(),
                 TOTAL_FAILED.get(),
                 TOTAL_DISCARDED.get(),
+                DISCARDED_INVALID_TARGET.get(),
+                DISCARDED_INVALID_MESSAGE.get(),
+                DISCARDED_PREPARE_NULL.get(),
+                DISCARDED_PREPARE_EXCEPTION.get(),
+                DISCARDED_QUEUE_CLEAR.get(),
+                DISCARDED_DISABLE_CLEAR.get(),
+                DISCARDED_MANUAL_CLEAR.get(),
                 TOTAL_PREPARED.get(),
                 TOTAL_PREPARE_FAILED.get(),
                 MANUAL_CLEARS.get(),
@@ -326,6 +431,13 @@ public final class ThreadedPacketDispatcher {
         TOTAL_SENT.set(0L);
         TOTAL_FAILED.set(0L);
         TOTAL_DISCARDED.set(0L);
+        DISCARDED_INVALID_TARGET.set(0L);
+        DISCARDED_INVALID_MESSAGE.set(0L);
+        DISCARDED_PREPARE_NULL.set(0L);
+        DISCARDED_PREPARE_EXCEPTION.set(0L);
+        DISCARDED_QUEUE_CLEAR.set(0L);
+        DISCARDED_DISABLE_CLEAR.set(0L);
+        DISCARDED_MANUAL_CLEAR.set(0L);
         TOTAL_PREPARED.set(0L);
         TOTAL_PREPARE_FAILED.set(0L);
         MANUAL_CLEARS.set(0L);
@@ -378,6 +490,7 @@ public final class ThreadedPacketDispatcher {
 
     private static void discardPending(String reason) {
         int discarded = clearPendingOperations();
+        DISCARDED_QUEUE_CLEAR.addAndGet(discarded);
         TOTAL_DISCARDED.addAndGet(discarded);
         lastFlushDiscarded = discarded;
         registerClear(reason, discarded, null);
@@ -416,6 +529,13 @@ public final class ThreadedPacketDispatcher {
             long totalSent,
             long totalFailed,
             long totalDiscarded,
+            long discardedInvalidTarget,
+            long discardedInvalidMessage,
+            long discardedPrepareNull,
+            long discardedPrepareException,
+            long discardedQueueClear,
+            long discardedDisableClear,
+            long discardedManualClear,
             long totalPrepared,
             long totalPrepareFailed,
             long manualClears,
@@ -437,6 +557,16 @@ public final class ThreadedPacketDispatcher {
             boolean configuredEnabled,
             boolean enabled,
             String lastFailureMessage) {
+
+        public long reasonedDiscardTotal() {
+            return discardedInvalidTarget
+                    + discardedInvalidMessage
+                    + discardedPrepareNull
+                    + discardedPrepareException
+                    + discardedQueueClear
+                    + discardedDisableClear
+                    + discardedManualClear;
+        }
     }
 
     public record ThreadSnapshot(String name, long id, String state, String lockOwner) {

@@ -29,8 +29,10 @@ public final class HbmCommonConfig {
 
         NetworkConfig.define(builder);
         RadiationConfig.define(builder);
+        ServerConfig.define(builder);
         BombConfig.define(builder);
         WeaponConfig.define(builder);
+        ToolConfig.define(builder);
 
         SPEC = builder.build();
     }

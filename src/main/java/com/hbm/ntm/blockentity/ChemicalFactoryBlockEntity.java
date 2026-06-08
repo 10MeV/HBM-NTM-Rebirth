@@ -506,7 +506,7 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
             ProcessingResult result = GenericMachineRecipeRuntime.update(level, GenericMachineRecipe.Machine.CHEMICAL_PLANT,
                     selectedRecipes[i], progress[i], items.getStackInSlot(blueprintSlot(i)), energy, items,
                     inputSlots(i), outputSlots(i), moduleInputTanks(i), moduleOutputTanks(i),
-                    upgradeFactors(), canCool(), RECIPE_TANK_CAPACITY);
+                    upgradeFactors(), canCool(), RECIPE_TANK_CAPACITY, worldPosition);
             selectedRecipes[i] = result.selectedRecipe();
             progress[i] = result.progress();
             didProcess[i] = result.didProcess();

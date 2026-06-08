@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/crystal_virus" }
+{
+  "parent": "hbm_ntm_rebirth:block/crystal_virus"
+}

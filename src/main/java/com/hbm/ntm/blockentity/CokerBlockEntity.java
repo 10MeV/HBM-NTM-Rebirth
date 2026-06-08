@@ -2,16 +2,18 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.CokerRecipe;
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.pollution.PollutionManager;
+import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -81,6 +83,7 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
         boolean oldWasOn = wasOn;
         wasOn = false;
         CokerRecipe recipe = LegacyOilFluidRecipes.getCoking(inputTank.getTankType());
+        changed |= setupRecipeTank(recipe);
         if (canProcess(recipe)) {
             int burn = heat / 100;
             if (burn > 0) {
@@ -92,6 +95,10 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
                     progress -= PROCESS_TIME;
                     finishProcess(recipe);
                 }
+            }
+            if (wasOn && level.getGameTime() % 5L == 0L) {
+                PollutionManager.incrementPollution(level, pos, PollutionType.SOOT,
+                        PollutionManager.SOOT_PER_SECOND * 5.0F);
             }
         }
 
@@ -107,7 +114,7 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
 
     @Override
     protected boolean isItemValid(int slot, ItemStack stack) {
-        return slot == SLOT_IDENTIFIER && stack.getItem() instanceof IFluidIdentifierItem;
+        return slot == SLOT_IDENTIFIER;
     }
 
     @Override
@@ -189,19 +196,8 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
 
     private boolean setInputTypeFromIdentifier() {
         ItemStackHandler items = getItems();
-        if (items == null) {
-            return false;
-        }
-        ItemStack stack = items.getStackInSlot(SLOT_IDENTIFIER);
-        if (!(stack.getItem() instanceof IFluidIdentifierItem identifier)) {
-            return false;
-        }
-        FluidType selected = identifier.getPrimaryType(stack);
-        if (selected == null || selected == HbmFluids.NONE || inputTank.getTankType() == selected) {
-            return false;
-        }
-        inputTank.conform(new HbmFluidStack(selected, 0));
-        return true;
+        return items != null && HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
+                inputTank, level, worldPosition);
     }
 
     private boolean tryPullHeat(Level level, BlockPos pos) {
@@ -233,9 +229,6 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
             return false;
         }
         HbmFluidStack byproduct = recipe.byproduct();
-        if (byproduct != null) {
-            configureTank(outputTank, byproduct.type());
-        }
         if (inputTank.getFill() < recipe.inputAmount()) {
             return false;
         }
@@ -244,6 +237,16 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
             return false;
         }
         return canFitOutput(recipe.outputStack());
+    }
+
+    private boolean setupRecipeTank(@Nullable CokerRecipe recipe) {
+        if (recipe == null || recipe.byproduct() == null) {
+            return false;
+        }
+        FluidType target = recipe.byproduct().type();
+        boolean changed = outputTank.getTankType() != target;
+        configureTank(outputTank, target);
+        return changed;
     }
 
     private void finishProcess(CokerRecipe recipe) {

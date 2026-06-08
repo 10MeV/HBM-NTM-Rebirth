@@ -1,5 +1,7 @@
 package com.hbm.ntm.fluid.trait;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.hbm.ntm.api.item.HazardClass;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +29,36 @@ public class ToxinFluidTrait extends FluidTrait {
         for (ToxinEntry entry : entries) {
             entry.addInfo(info);
         }
+    }
+
+    @Override
+    public void writeJson(JsonObject object) {
+        JsonArray entriesJson = new JsonArray();
+        for (ToxinEntry entry : entries) {
+            JsonObject entryJson = new JsonObject();
+            if (entry instanceof DirectDamage damage) {
+                entryJson.addProperty("type", "directdamage");
+                entryJson.addProperty("amount", damage.getAmount());
+                entryJson.addProperty("source", damage.getDamageType().toString());
+                entryJson.addProperty("delay", damage.getDelayTicks());
+                writeProtectionJson(entryJson, damage);
+            } else if (entry instanceof EffectApplication effectApplication) {
+                entryJson.addProperty("type", "effects");
+                JsonArray effectsJson = new JsonArray();
+                for (EffectSpec effect : effectApplication.getEffects()) {
+                    JsonArray effectJson = new JsonArray();
+                    effectJson.add(effect.effect().toString());
+                    effectJson.add(effect.durationTicks());
+                    effectJson.add(effect.amplifier());
+                    effectJson.add(effect.ambient());
+                    effectsJson.add(effectJson);
+                }
+                entryJson.add("effects", effectsJson);
+                writeProtectionJson(entryJson, effectApplication);
+            }
+            entriesJson.add(entryJson);
+        }
+        object.add("entries", entriesJson);
     }
 
     public abstract static class ToxinEntry {
@@ -122,6 +154,11 @@ public class ToxinFluidTrait extends FluidTrait {
     }
 
     public record EffectSpec(ResourceLocation effect, int durationTicks, int amplifier, boolean ambient) {
+    }
+
+    private static void writeProtectionJson(JsonObject object, ToxinEntry entry) {
+        object.addProperty("hazmat", entry.requiresFullBodyProtection());
+        object.addProperty("masktype", entry.getHazardClass() == null ? "NONE" : entry.getHazardClass().name());
     }
 
     private static String formatDuration(int ticks) {

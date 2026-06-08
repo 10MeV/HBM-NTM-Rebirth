@@ -90,6 +90,16 @@ public final class ModCreativeTabs {
                     })
                     .build());
 
+    public static final RegistryObject<CreativeModeTab> MISSILES = CREATIVE_TABS.register("missiles",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.hbm_ntm_rebirth.missiles"))
+                    .icon(() -> ModItems.SAT_MAPPER.get().getDefaultInstance())
+                    .displayItems((parameters, output) -> {
+                        ModItems.SATELLITE_TAB_ITEMS.forEach(item -> acceptItem(output, item));
+                        ModBlocks.SATELLITE_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));
+                    })
+                    .build());
+
     public static void register(IEventBus modBus) {
         CREATIVE_TABS.register(modBus);
     }

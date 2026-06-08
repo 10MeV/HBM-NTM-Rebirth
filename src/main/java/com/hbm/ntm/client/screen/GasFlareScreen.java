@@ -65,7 +65,8 @@ public class GasFlareScreen extends AbstractContainerScreen<GasFlareMenu> {
                     Component.literal("Ignition"),
                     Component.literal(menu.doesBurn() ? "Burn" : "Vent"))), mouseX, mouseY);
         } else if (isHovering(35, 17, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, split(menu.getTankTooltip(hasShiftDown())), mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
+                    menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
         } else if (isHovering(143, 17, 16, 52, mouseX, mouseY)) {
             graphics.renderTooltip(font,
                     Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);

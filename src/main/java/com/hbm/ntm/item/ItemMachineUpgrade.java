@@ -24,6 +24,7 @@ public class ItemMachineUpgrade extends Item {
         SPEED,
         EFFECT,
         POWER,
-        OVERDRIVE
+        OVERDRIVE,
+        AFTERBURN
     }
 }

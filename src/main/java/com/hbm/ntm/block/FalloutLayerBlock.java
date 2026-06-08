@@ -1,6 +1,6 @@
 package com.hbm.ntm.block;
 
-import com.hbm.ntm.radiation.RadiationData;
+import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
@@ -80,7 +80,7 @@ public class FalloutLayerBlock extends Block {
     public void attack(BlockState state, Level level, BlockPos pos, Player player) {
         super.attack(state, level, pos, player);
         if (!level.isClientSide && !player.isCreative()) {
-            RadiationData.addContamination(player, 1.0F, 200, 200, false);
+            HbmLivingProperties.addCont(player, 1.0F, 200, false);
         }
     }
 

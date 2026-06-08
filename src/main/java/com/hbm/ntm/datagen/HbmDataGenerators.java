@@ -32,7 +32,10 @@ public final class HbmDataGenerators {
         generator.addProvider(event.includeServer(), (DataProvider.Factory<LootTableProvider>) lootOutput -> new LootTableProvider(
                 lootOutput,
                 Collections.emptySet(),
-                List.of(new LootTableProvider.SubProviderEntry(HbmBlockLootProvider::new, LootContextParamSets.BLOCK))
+                List.of(
+                        new LootTableProvider.SubProviderEntry(HbmBlockLootProvider::new, LootContextParamSets.BLOCK),
+                        new LootTableProvider.SubProviderEntry(HbmItemPoolLootProvider::new, LootContextParamSets.CHEST)
+                )
         ));
     }
 

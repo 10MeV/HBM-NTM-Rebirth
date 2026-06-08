@@ -50,9 +50,14 @@ public class HbmBatteryPackItem extends HbmBatteryItem {
     }
 
     @Override
+    public boolean isBarVisible(ItemStack stack) {
+        return getMaxCharge(stack) > 0L && getCharge(stack) < getMaxCharge(stack);
+    }
+
+    @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         long maxCharge = getMaxCharge(stack);
-        long charge = stack.hasTag() ? stack.getTag().getLong(getChargeTagName(stack)) : maxCharge;
+        long charge = stack.hasTag() ? getCharge(stack) : maxCharge;
         long chargeRate = getChargeRate(stack);
         long dischargeRate = getDischargeRate(stack);
         double percent = maxCharge <= 0L ? 0.0D : charge * 1000L / maxCharge / 10.0D;

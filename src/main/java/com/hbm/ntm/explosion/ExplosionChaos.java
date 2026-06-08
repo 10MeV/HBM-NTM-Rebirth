@@ -144,6 +144,7 @@ public final class ExplosionChaos {
         }
         applyHalfSphere(level, x, y, z, radius, pos -> {
             BlockState state = level.getBlockState(pos);
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             if (state.isAir()) {
                 return;
             }
@@ -151,7 +152,6 @@ public final class ExplosionChaos {
             if (level.isOutsideBuildHeight(target)) {
                 return;
             }
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             level.setBlock(target, state, 3);
         });
     }
@@ -172,7 +172,10 @@ public final class ExplosionChaos {
             } else if (entity instanceof LivingEntity living && !(living instanceof Player)) {
                 living.setCustomName(net.minecraft.network.chat.Component.literal(RANDOM.nextBoolean() ? "Dinnerbone" : "Grumm"));
             }
-            if (entity.distanceToSqr(x, y, z) < range * range) {
+            double dx = entity.getX() - x;
+            double dy = entity.getY() + entity.getEyeHeight() - y;
+            double dz = entity.getZ() - z;
+            if (Math.sqrt(dx * dx + dy * dy + dz * dz) < range) {
                 entity.teleportTo(entity.getX() + offsetX, entity.getY() + offsetY, entity.getZ() + offsetZ);
             }
         }

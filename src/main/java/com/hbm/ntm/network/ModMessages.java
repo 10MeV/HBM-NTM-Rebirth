@@ -44,6 +44,7 @@ import com.hbm.ntm.network.packet.TypedMenuActionPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -85,6 +86,8 @@ public final class ModMessages {
     private static final List<PacketRegistration> PACKET_REGISTRATIONS = new ArrayList<>();
     private static final Map<Class<?>, PacketRegistration> PACKET_REGISTRATIONS_BY_TYPE = new HashMap<>();
     private static final AtomicLong BLOCKED_UNREGISTERED_SENDS = new AtomicLong();
+    private static final AtomicLong BLOCKED_WRONG_DIRECTION_SENDS = new AtomicLong();
+    private static final AtomicLong BLOCKED_INVALID_TARGET_SENDS = new AtomicLong();
     private static volatile String lastBlockedSend = "";
     private static final List<LegacyPacketRegistration> LEGACY_REGISTERED_PACKETS = List.of(
             new LegacyPacketRegistration(0, "TESirenPacket", "S2C"),
@@ -200,6 +203,10 @@ public final class ModMessages {
         return "legacyWrapper=PacketDispatcher.wrapper facade"
                 + " directHelpers=" + LegacyNetworkDispatcher.directSendHelperCount()
                 + " threadedHelpers=" + LegacyNetworkDispatcher.threadedSendHelperCount()
+                + " packetThreadingHelpers=" + LegacyNetworkDispatcher.packetThreadingHelperCount()
+                + " flushCalls=" + LegacyNetworkDispatcher.legacyFlushCallCount()
+                + " rawBufferBlocked=" + LegacyRawBufferNetwork.blockedRawBufferSendCount()
+                + " packetThreadingWaitCalls=" + LegacyPacketThreading.legacyWaitCallCount()
                 + " note=" + LegacyNetworkDispatcher.compatibilityNote();
     }
 
@@ -253,6 +260,14 @@ public final class ModMessages {
         return BLOCKED_UNREGISTERED_SENDS.get();
     }
 
+    public static long blockedWrongDirectionSendCount() {
+        return BLOCKED_WRONG_DIRECTION_SENDS.get();
+    }
+
+    public static long blockedInvalidTargetSendCount() {
+        return BLOCKED_INVALID_TARGET_SENDS.get();
+    }
+
     public static String lastBlockedSend() {
         return lastBlockedSend;
     }
@@ -260,7 +275,80 @@ public final class ModMessages {
     public static String sendSafetySummary() {
         return "registeredTypes=" + PACKET_REGISTRATIONS_BY_TYPE.size()
                 + " blockedUnregisteredSends=" + BLOCKED_UNREGISTERED_SENDS.get()
+                + " blockedWrongDirectionSends=" + BLOCKED_WRONG_DIRECTION_SENDS.get()
+                + " blockedInvalidTargetSends=" + BLOCKED_INVALID_TARGET_SENDS.get()
                 + (lastBlockedSend.isBlank() ? "" : " lastBlocked=\"" + lastBlockedSend + "\"");
+    }
+
+    public static SendSafetySnapshot sendSafetySnapshot() {
+        return new SendSafetySnapshot(
+                PACKET_REGISTRATIONS_BY_TYPE.size(),
+                BLOCKED_UNREGISTERED_SENDS.get(),
+                BLOCKED_WRONG_DIRECTION_SENDS.get(),
+                BLOCKED_INVALID_TARGET_SENDS.get(),
+                lastBlockedSend);
+    }
+
+    public static void resetSendSafetyCounters() {
+        BLOCKED_UNREGISTERED_SENDS.set(0L);
+        BLOCKED_WRONG_DIRECTION_SENDS.set(0L);
+        BLOCKED_INVALID_TARGET_SENDS.set(0L);
+        lastBlockedSend = "";
+    }
+
+    public static NetworkRuntimeSnapshot networkRuntimeSnapshot() {
+        ProtocolAudit audit = protocolAudit();
+        return new NetworkRuntimeSnapshot(
+                PROTOCOL_VERSION,
+                LIBRARY_FOUNDATION_PROGRESS_PERCENT,
+                legacyPacketCoveragePercent(),
+                registeredPacketCount(),
+                legacyPacketRegistrationCount(),
+                mappedLegacyPacketCount(),
+                unmappedLegacyPacketRegistrations().size(),
+                legacyPacketMappingCount(),
+                audit.hasProblems(),
+                audit.mappingsToUnregisteredModernPackets().size(),
+                audit.mappingsFromUnknownLegacyPackets().size(),
+                audit.mappingsWithDirectionMismatch().size(),
+                audit.duplicateLegacyIds().size()
+                        + audit.duplicateLegacyNames().size()
+                        + audit.duplicateModernRegistrations().size(),
+                sendSafetySnapshot(),
+                ThreadedPacketDispatcher.snapshot(),
+                LegacyPacketThreading.legacyCommandSnapshot(),
+                LegacyNetworkDispatcher.legacyFlushCallCount(),
+                LegacyPacketThreading.legacyWaitCallCount(),
+                LegacyRawBufferNetwork.blockedRawBufferSendCount(),
+                LegacyRawBufferNetwork.lastBlockedRawBufferSend(),
+                LegacyNetworkDispatcher.directSendHelperCount(),
+                LegacyNetworkDispatcher.threadedSendHelperCount(),
+                LegacyNetworkDispatcher.packetThreadingHelperCount());
+    }
+
+    public static String networkRuntimeSummary() {
+        NetworkRuntimeSnapshot snapshot = networkRuntimeSnapshot();
+        return "protocol=" + snapshot.protocolVersion()
+                + " foundation=" + snapshot.foundationProgressPercent() + "%"
+                + " legacyCoverage=" + snapshot.legacyPacketCoveragePercent() + "%"
+                + " packets=" + snapshot.registeredPacketCount()
+                + " legacyMapped=" + snapshot.mappedLegacyPacketCount() + "/" + snapshot.legacyPacketRegistrationCount()
+                + " auditProblems=" + snapshot.auditProblems()
+                + " blockedSends=" + snapshot.sendSafety().totalBlockedSends()
+                + " threadedPending=" + snapshot.threaded().pending()
+                + " threadedDiscarded=" + snapshot.threaded().totalDiscarded()
+                + " threadedFallback=" + snapshot.threaded().fallbackToMainThread()
+                + " rawBufferBlocked=" + snapshot.rawBufferBlockedSends()
+                + " legacyWaitCalls=" + snapshot.legacyWaitCalls()
+                + " legacyLastTickTotal=" + snapshot.legacyPacketThreading().lastTickTotal()
+                + " helperSurface=" + snapshot.totalHelperCount();
+    }
+
+    public static void resetNetworkRuntimeDiagnostics() {
+        resetSendSafetyCounters();
+        ThreadedPacketDispatcher.resetState();
+        LegacyPacketThreading.resetLegacyCounters();
+        LegacyNetworkDispatcher.resetLegacyCounters();
     }
 
     public static List<LegacyPacketMapping> legacyPacketMappings() {
@@ -575,38 +663,60 @@ public final class ModMessages {
     }
 
     public static void sendToServer(Object message) {
-        if (!validateMessageForSend(message, "server")) {
+        if (!validateMessageForSend(message, "server", "C2S")) {
             return;
         }
         CHANNEL.sendToServer(message);
     }
 
     public static void sendToPlayer(Object message, ServerPlayer player) {
-        if (!validateMessageForSend(message, player == null ? "player:null" : "player:" + player.getGameProfile().getName())) {
+        if (!validateTarget(player != null, message, "player:null")) {
+            return;
+        }
+        if (!validateMessageForSend(message, player == null ? "player:null" : "player:" + player.getGameProfile().getName(), "S2C")) {
             return;
         }
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
     }
 
     public static void sendToEntityTrackers(Object message, Entity entity) {
-        if (!validateMessageForSend(message, entity == null ? "entityTrackers:null" : "entityTrackers:" + entity.getId())) {
+        if (!validateTarget(entity != null, message, "entityTrackers:null")) {
+            return;
+        }
+        if (!validateMessageForSend(message, entity == null ? "entityTrackers:null" : "entityTrackers:" + entity.getId(), "S2C")) {
             return;
         }
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), message);
     }
 
     public static void sendToEntityAndSelf(Object message, Entity entity) {
-        if (!validateMessageForSend(message, entity == null ? "entityAndSelf:null" : "entityAndSelf:" + entity.getId())) {
+        if (!validateTarget(entity != null, message, "entityAndSelf:null")) {
+            return;
+        }
+        if (!validateMessageForSend(message, entity == null ? "entityAndSelf:null" : "entityAndSelf:" + entity.getId(), "S2C")) {
             return;
         }
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), message);
     }
 
     public static void sendToDimension(Object message, ServerLevel level) {
-        if (!validateMessageForSend(message, level == null ? "dimension:null" : "dimension:" + level.dimension().location())) {
+        if (!validateTarget(level != null, message, "dimension:null")) {
+            return;
+        }
+        if (!validateMessageForSend(message, level == null ? "dimension:null" : "dimension:" + level.dimension().location(), "S2C")) {
             return;
         }
         CHANNEL.send(PacketDistributor.DIMENSION.with(level::dimension), message);
+    }
+
+    public static void sendToDimension(Object message, ResourceKey<Level> dimension) {
+        if (!validateTarget(dimension != null, message, "dimensionKey:null")) {
+            return;
+        }
+        if (!validateMessageForSend(message, dimension == null ? "dimensionKey:null" : "dimensionKey:" + dimension.location(), "S2C")) {
+            return;
+        }
+        CHANNEL.send(PacketDistributor.DIMENSION.with(() -> dimension), message);
     }
 
     public static void sendToTracking(Object message, ServerLevel level, double x, double y, double z, double range) {
@@ -614,32 +724,70 @@ public final class ModMessages {
     }
 
     public static void sendToAllAround(Object message, ServerLevel level, double x, double y, double z, double range) {
+        if (!validateTarget(level != null, message, "near-level:null")) {
+            return;
+        }
         sendToAllAround(message, new PacketDistributor.TargetPoint(x, y, z, range, level.dimension()));
     }
 
+    public static void sendToAllAround(Object message, ServerLevel level, BlockPos pos, double range) {
+        if (!validateTarget(pos != null, message, "near-pos:null")) {
+            return;
+        }
+        sendToAllAround(message, level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, range);
+    }
+
+    public static void sendToAllAround(Object message, ResourceKey<Level> dimension, double x, double y, double z, double range) {
+        if (!validateTarget(dimension != null, message, "near-dimensionKey:null")) {
+            return;
+        }
+        sendToAllAround(message, new PacketDistributor.TargetPoint(x, y, z, range, dimension));
+    }
+
+    public static void sendToAllAround(Object message, ResourceKey<Level> dimension, BlockPos pos, double range) {
+        if (!validateTarget(pos != null, message, "near-pos:null")) {
+            return;
+        }
+        sendToAllAround(message, dimension, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, range);
+    }
+
     public static void sendToAllAround(Object message, Entity entity, double range) {
+        if (!validateTarget(entity != null, message, "near-entity:null")) {
+            return;
+        }
         sendToAllAround(message, new PacketDistributor.TargetPoint(entity.getX(), entity.getY(), entity.getZ(), range, entity.level().dimension()));
     }
 
     public static void sendToAllAround(Object message, PacketDistributor.TargetPoint point) {
-        if (!validateMessageForSend(message, "near")) {
+        if (!validateTarget(point != null, message, "near-point:null")) {
+            return;
+        }
+        if (!validateMessageForSend(message, "near", "S2C")) {
             return;
         }
         CHANNEL.send(PacketDistributor.NEAR.with(() -> point), message);
     }
 
     public static void sendToAll(Object message) {
-        if (!validateMessageForSend(message, "all")) {
+        if (!validateMessageForSend(message, "all", "S2C")) {
             return;
         }
         CHANNEL.send(PacketDistributor.ALL.noArg(), message);
     }
 
     public static void sendToTrackingChunk(Object message, BlockEntity blockEntity) {
+        if (!validateTarget(blockEntity != null, message, "trackingChunk:blockEntity:null")) {
+            return;
+        }
         sendToTrackingChunk(message, blockEntity.getLevel(), blockEntity.getBlockPos());
     }
 
     public static void sendToTrackingChunk(Object message, Level level, BlockPos pos) {
+        if (!validateTarget(level != null, message, "trackingChunk:level:null")
+                || !validateTarget(pos != null, message, "trackingChunk:pos:null")
+                || !validateTarget(!level.isClientSide, message, "trackingChunk:clientLevel")) {
+            return;
+        }
         if (level instanceof ServerLevel serverLevel) {
             serverLevel.getChunkSource().chunkMap.getPlayers(new ChunkPos(pos), false)
                     .forEach(player -> sendToPlayer(message, player));
@@ -1398,29 +1546,64 @@ public final class ModMessages {
         PACKET_REGISTRATIONS_BY_TYPE.put(type, registration);
     }
 
-    private static boolean canSendMessage(Object message, String target) {
+    private static boolean canSendMessage(Object message, String target, String expectedDirection) {
         if (message == null) {
-            recordBlockedSend("null message to " + target);
+            recordBlockedUnregisteredSend("null message to " + target);
             return false;
         }
-        if (!isRegisteredMessage(message)) {
-            recordBlockedSend(message.getClass().getName() + " to " + target);
+        Optional<PacketRegistration> registration = packetRegistration(message.getClass());
+        if (registration.isEmpty()) {
+            recordBlockedUnregisteredSend(message.getClass().getName() + " to " + target);
+            return false;
+        }
+        if (expectedDirection != null && !expectedDirection.equals(registration.get().direction())) {
+            recordBlockedWrongDirectionSend(message.getClass().getName() + " to " + target
+                    + " expected=" + expectedDirection + " actual=" + registration.get().direction());
             return false;
         }
         return true;
     }
 
-    private static void recordBlockedSend(String message) {
+    private static void recordBlockedUnregisteredSend(String message) {
         BLOCKED_UNREGISTERED_SENDS.incrementAndGet();
         lastBlockedSend = message;
     }
 
-    public static boolean validateMessageForSend(Object message, String target) {
-        if (canSendMessage(message, target)) {
+    private static void recordBlockedWrongDirectionSend(String message) {
+        BLOCKED_WRONG_DIRECTION_SENDS.incrementAndGet();
+        lastBlockedSend = message;
+    }
+
+    private static void recordBlockedInvalidTargetSend(String message) {
+        BLOCKED_INVALID_TARGET_SENDS.incrementAndGet();
+        lastBlockedSend = message;
+    }
+
+    private static boolean validateTarget(boolean valid, Object message, String target) {
+        if (valid) {
             return true;
         }
         String type = message == null ? "null" : message.getClass().getName();
-        HbmNtm.LOGGER.warn("Blocked unregistered HBM network message {} to {}.", type, target);
+        recordBlockedInvalidTargetSend(type + " to " + target);
+        HbmNtm.LOGGER.warn("Blocked HBM network message {} due to invalid target {}.", type, target);
+        return false;
+    }
+
+    public static boolean validateTargetForSend(Object message, String target, boolean valid) {
+        return validateTarget(valid, message, target);
+    }
+
+    public static boolean validateMessageForSend(Object message, String target) {
+        return validateMessageForSend(message, target, null);
+    }
+
+    public static boolean validateMessageForSend(Object message, String target, String expectedDirection) {
+        if (canSendMessage(message, target, expectedDirection)) {
+            return true;
+        }
+        String type = message == null ? "null" : message.getClass().getName();
+        HbmNtm.LOGGER.warn("Blocked invalid HBM network message {} to {} expectedDirection={}.",
+                type, target, expectedDirection == null ? "any" : expectedDirection);
         return false;
     }
 
@@ -1440,6 +1623,57 @@ public final class ModMessages {
     }
 
     public record LegacyPacketRegistration(int legacyId, String legacyName, String direction) {
+    }
+
+    public record SendSafetySnapshot(
+            int registeredTypes,
+            long blockedUnregisteredSends,
+            long blockedWrongDirectionSends,
+            long blockedInvalidTargetSends,
+            String lastBlockedSend) {
+        public long totalBlockedSends() {
+            return blockedUnregisteredSends + blockedWrongDirectionSends + blockedInvalidTargetSends;
+        }
+    }
+
+    public record NetworkRuntimeSnapshot(
+            String protocolVersion,
+            int foundationProgressPercent,
+            int legacyPacketCoveragePercent,
+            int registeredPacketCount,
+            int legacyPacketRegistrationCount,
+            long mappedLegacyPacketCount,
+            int unmappedLegacyPacketCount,
+            int legacyPacketMappingCount,
+            boolean auditProblems,
+            int auditMissingModern,
+            int auditUnknownLegacy,
+            int auditDirectionMismatch,
+            int auditDuplicateEntries,
+            SendSafetySnapshot sendSafety,
+            ThreadedPacketDispatcher.Snapshot threaded,
+            LegacyPacketThreading.LegacyCommandSnapshot legacyPacketThreading,
+            long legacyFlushCalls,
+            long legacyWaitCalls,
+            long rawBufferBlockedSends,
+            String lastRawBufferBlockedSend,
+            int directHelperCount,
+            int threadedHelperCount,
+            int packetThreadingHelperCount) {
+
+        public int totalHelperCount() {
+            return directHelperCount + threadedHelperCount + packetThreadingHelperCount;
+        }
+
+        public boolean hasRuntimeWarnings() {
+            return auditProblems
+                    || sendSafety.totalBlockedSends() > 0L
+                    || threaded.totalFailed() > 0L
+                    || threaded.totalDiscarded() > 0L
+                    || threaded.fallbackToMainThread()
+                    || rawBufferBlockedSends > 0L
+                    || legacyPacketThreading.triggered();
+        }
     }
 
     public record ProtocolAudit(

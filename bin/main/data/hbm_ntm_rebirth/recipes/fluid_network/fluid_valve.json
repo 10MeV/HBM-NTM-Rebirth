@@ -2,8 +2,12 @@
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
   "key": {
-    "S": { "item": "minecraft:lever" },
-    "W": { "item": "hbm_ntm_rebirth:fluid_duct_paintable" }
+    "S": {
+      "item": "minecraft:lever"
+    },
+    "W": {
+      "item": "hbm_ntm_rebirth:fluid_duct_paintable"
+    }
   },
   "pattern": [
     "S",

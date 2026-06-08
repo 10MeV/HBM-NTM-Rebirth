@@ -2,9 +2,16 @@ package com.hbm.ntm;
 
 import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.config.HbmClientConfig;
+import com.hbm.ntm.bullet.BulletConfigSyncRegistry;
+import com.hbm.ntm.compat.CompatRecipeRegistry;
 import com.hbm.ntm.damage.DamageResistanceConfig;
 import com.hbm.ntm.datagen.HbmDataGenerators;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoading;
+import com.hbm.ntm.fluid.HbmCompatFluidRegistry;
+import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
+import com.hbm.ntm.fluid.HbmFluidForgeAliasConfig;
+import com.hbm.ntm.fluid.HbmFluidForgeMappings;
+import com.hbm.ntm.fluid.HbmFluidTypeConfig;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
@@ -18,7 +25,7 @@ import com.hbm.ntm.registry.ModParticleTypes;
 import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
-import com.hbm.ntm.radiation.HazmatRegistry;
+import com.hbm.ntm.radiation.HazmatResistanceConfig;
 import com.hbm.ntm.radiation.ItemRadiationRegistry;
 import com.hbm.ntm.radiation.LegacyFalloutConversions;
 import com.hbm.ntm.recipe.ModRecipes;
@@ -63,7 +70,9 @@ public class HbmNtm {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            HazmatRegistry.registerDefaults();
+            HazmatResistanceConfig.LoadReport hazmatReport = HazmatResistanceConfig.initialize(FMLPaths.CONFIGDIR.get());
+            LOGGER.info("Loaded {}.", hazmatReport.summary());
+            hazmatReport.warnings().forEach(warning -> LOGGER.warn("Hazmat resistance config: {}", warning));
             ItemRadiationRegistry.registerDefaults();
             DamageResistanceConfig.LoadReport damageReport = DamageResistanceConfig.initialize(FMLPaths.CONFIGDIR.get());
             LOGGER.info("Loaded {}.", damageReport.summary());
@@ -71,7 +80,20 @@ public class HbmNtm {
             LegacyFalloutConversions.LoadReport falloutReport = LegacyFalloutConversions.initialize(FMLPaths.CONFIGDIR.get());
             LOGGER.info("Loaded {}.", falloutReport.summary());
             falloutReport.warnings().forEach(warning -> LOGGER.warn("Fallout conversion config: {}", warning));
-            HbmFluids.bootstrap();
+            var fluidTraitReport = HbmFluids.bootstrap(FMLPaths.CONFIGDIR.get());
+            var fluidTypeReport = HbmFluidTypeConfig.loadReport();
+            LOGGER.info("Loaded {}.", fluidTypeReport.summary());
+            fluidTypeReport.warnings().forEach(warning -> LOGGER.warn("Fluid type config: {}", warning));
+            LOGGER.info("Loaded {}.", HbmCompatFluidRegistry.diagnostics().summary());
+            LOGGER.info("Loaded {}.", CompatRecipeRegistry.diagnostics().summary());
+            LOGGER.info("Loaded {}.", HbmFluidContainerRegistry.diagnostics().summary());
+            LOGGER.info("Loaded {}.", HbmFluidForgeAliasConfig.loadReport().summary());
+            HbmFluidForgeAliasConfig.loadReport().warnings().forEach(warning -> LOGGER.warn("Forge fluid alias config: {}", warning));
+            LOGGER.info("Loaded {}.", HbmFluidForgeMappings.diagnostics().summary());
+            LOGGER.info("Loaded {}.", fluidTraitReport.summary());
+            fluidTraitReport.warnings().forEach(warning -> LOGGER.warn("Fluid trait config: {}", warning));
+            BulletConfigSyncRegistry.bootstrap();
+            LOGGER.info("Loaded {} legacy synced bullet configs.", BulletConfigSyncRegistry.syncedConfigs().size());
             ExplosionChunkLoading.registerValidationCallback();
             ModMessages.register();
             ModMessages.logProtocolAudit();

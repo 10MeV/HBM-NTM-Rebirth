@@ -9,16 +9,25 @@ import com.hbm.ntm.explosion.ExplosionHurtUtil;
 import com.hbm.ntm.explosion.ExplosionNukeAdvanced;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.explosion.ExplosionSolinium;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
+import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
+
 public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
     public static final int EXT_FLEIJA = 0;
     public static final int EXT_SOLINIUM = 1;
+    private static final Map<ATEntry, Long> ANTI_TELEPORT_ENTRIES = new HashMap<>();
 
     private int age;
     private int destructionRange;
@@ -67,11 +76,22 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
     }
 
     public static NukeExplosionMk3Entity createSolinium(Level level, double x, double y, double z, int range) {
-        return createFleija(level, x, y, z, range).makeSol();
+        return statFacFleija(level, x, y, z, range).makeSol();
     }
 
     public static NukeExplosionMk3Entity statFacFleija(Level level, double x, double y, double z, int range) {
-        return createFleija(level, x, y, z, range);
+        NukeExplosionMk3Entity entity = createFleija(level, x, y, z, range);
+        if (isFleijaInterrupted(level, x, y, z)) {
+            entity.discard();
+        }
+        return entity;
+    }
+
+    public static void registerAntiTeleportEntry(Level level, int x, int y, int z, int ticks) {
+        if (level == null || ticks <= 0) {
+            return;
+        }
+        ANTI_TELEPORT_ENTRIES.put(new ATEntry(level.dimension(), x, y, z), level.getGameTime() + ticks);
     }
 
     public NukeExplosionMk3Entity makeSol() {
@@ -239,5 +259,72 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
 
     private static boolean extendedLoggingEnabled() {
         return HbmCommonConfig.ENABLE_EXTENDED_LOGGING != null && HbmCommonConfig.ENABLE_EXTENDED_LOGGING.get();
+    }
+
+    private static boolean isFleijaInterrupted(Level level, double x, double y, double z) {
+        if (level == null || level.isClientSide()) {
+            return false;
+        }
+
+        long gameTime = level.getGameTime();
+        Iterator<Map.Entry<ATEntry, Long>> iterator = ANTI_TELEPORT_ENTRIES.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<ATEntry, Long> next = iterator.next();
+            if (next.getValue() < gameTime) {
+                iterator.remove();
+                continue;
+            }
+
+            ATEntry entry = next.getKey();
+            if (!entry.dimension.equals(level.dimension())) {
+                continue;
+            }
+
+            double dx = x - entry.x;
+            double dy = y - entry.y;
+            double dz = z - entry.z;
+            if (Math.sqrt(dx * dx + dy * dy + dz * dz) < 300.0D) {
+                playInterruptionEffect(level, x, y, z);
+                playInterruptionEffect(level, entry.x + 0.5D, entry.y + 0.5D, entry.z + 0.5D);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void playInterruptionEffect(Level level, double x, double y, double z) {
+        level.playSound(null, x, y, z, ModSounds.ENTITY_UFO_BLAST.get(), SoundSource.BLOCKS,
+                15.0F, 0.7F + level.random.nextFloat() * 0.2F);
+        ParticleUtil.spawnPlasmaBlast(level, x, y, z, 0.0F, 0.75F, 1.0F, 0.0F, 0.0F, 7.5F);
+    }
+
+    public static final class ATEntry {
+        private final ResourceKey<Level> dimension;
+        private final int x;
+        private final int y;
+        private final int z;
+
+        public ATEntry(ResourceKey<Level> dimension, int x, int y, int z) {
+            this.dimension = Objects.requireNonNull(dimension);
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof ATEntry other)) {
+                return false;
+            }
+            return x == other.x && y == other.y && z == other.z && dimension.equals(other.dimension);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dimension, x, y, z);
+        }
     }
 }

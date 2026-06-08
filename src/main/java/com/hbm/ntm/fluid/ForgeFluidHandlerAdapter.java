@@ -54,6 +54,9 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
             return FluidStack.EMPTY;
         }
         HbmFluidTank hbmTank = tanks.get(tank);
+        if (!HbmForgeFluidInterop.canExposeToForge(hbmTank)) {
+            return FluidStack.EMPTY;
+        }
         return HbmFluidForgeMappings.toForge(hbmTank.getTankType(), hbmTank.getFill());
     }
 
@@ -68,6 +71,9 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
             return false;
         }
         HbmFluidTank hbmTank = tanks.get(tank);
+        if (!HbmForgeFluidInterop.canFillFromForge(hbmTank, inputPressure)) {
+            return false;
+        }
         if (!inputTanks.contains(hbmTank)) {
             return false;
         }
@@ -88,6 +94,9 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
         int filled = 0;
         boolean simulate = action.simulate();
         for (HbmFluidTank tank : inputTanks) {
+            if (!HbmForgeFluidInterop.canFillFromForge(tank, inputPressure)) {
+                continue;
+            }
             if (remaining <= 0) {
                 break;
             }
@@ -121,7 +130,7 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
         }
         for (HbmFluidTank tank : outputTanks) {
             FluidType type = tank.getTankType();
-            if (tank.getFill() <= 0 || !HbmFluidForgeMappings.canExport(type)) {
+            if (!HbmForgeFluidInterop.canExposeToForge(tank)) {
                 continue;
             }
             int drained = tank.drain(maxDrain, action.simulate());
@@ -140,7 +149,7 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
             if (remaining <= 0) {
                 break;
             }
-            if (tank.getTankType() != type || tank.getFill() <= 0 || !HbmFluidForgeMappings.canExport(type)) {
+            if (tank.getTankType() != type || !HbmForgeFluidInterop.canExposeToForge(tank)) {
                 continue;
             }
             int taken = tank.drain(remaining, simulate);

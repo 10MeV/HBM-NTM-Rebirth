@@ -207,6 +207,13 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.starmetal_shovel", "\u661f\u91d1\u94f2");
         add("item.hbm_ntm_rebirth.centri_stick", "\u79bb\u5fc3\u68d2");
         add("item.hbm_ntm_rebirth.smashing_hammer", "\u7c89\u788e\u9524");
+        add("item.hbm_ntm_rebirth.elec_sword", "\u7535\u68cd");
+        add("item.hbm_ntm_rebirth.elec_pickaxe", "\u51b2\u51fb\u94bb");
+        add("item.hbm_ntm_rebirth.elec_axe", "\u7535\u952f");
+        add("item.hbm_ntm_rebirth.elec_shovel", "\u87ba\u65cb\u94bb");
+        add("item.hbm_ntm_rebirth.drax", "\u91c7\u6398\u94bb\uff08\u9057\u7559\uff09");
+        add("item.hbm_ntm_rebirth.drax_mk2", "\u5f3a\u5316\u578b\u91c7\u6398\u94bb\uff08\u9057\u7559\uff09");
+        add("item.hbm_ntm_rebirth.drax_mk3", "Sa326\u91c7\u6398\u94bb\uff08\u9057\u7559\uff09");
         add("item.hbm_ntm_rebirth.bismuth_pickaxe", "\u94cb\u9550");
         add("item.hbm_ntm_rebirth.bismuth_axe", "\u94cb\u65a7");
         add("item.hbm_ntm_rebirth.volcanic_pickaxe", "\u706b\u5c71\u9550");
@@ -440,6 +447,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_radar_large", "\u5927\u578b\u96f7\u8fbe");
         add("block.hbm_ntm_rebirth.radar_screen", "\u96f7\u8fbe\u5c4f\u5e55");
         add("block.hbm_ntm_rebirth.machine_satlinker", "\u536b\u661fID\u7ba1\u7406\u5668");
+        add("block.hbm_ntm_rebirth.sat_dock", "\u5378\u8d27\u5e73\u53f0");
         add("item.hbm_ntm_rebirth.radar_linker", "\u96f7\u8fbe\u8fde\u63a5\u5668");
         add("radar.detectMissiles", "\u63a2\u6d4b\u5bfc\u5f39");
         add("radar.detectShells", "\u63a2\u6d4b\u70ae\u5f39");
@@ -506,6 +514,11 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("container.hbm_ntm_rebirth.sat_linker.copy.1", "\u9891\u7387\u5e76\u7c98\u8d34\u5230\u7b2c\u4e8c\u4e2a\u69fd\u4f4d\u3002");
         add("container.hbm_ntm_rebirth.sat_linker.randomize.0", "\u7b2c\u4e09\u4e2a\u69fd\u4f4d\u4f1a\u968f\u673a\u5316");
         add("container.hbm_ntm_rebirth.sat_linker.randomize.1", "\u536b\u661f/\u82af\u7247\u7684\u9891\u7387\u3002");
+        add("container.satDock", "\u5378\u8d27\u5e73\u53f0");
+        add("container.hbm_ntm_rebirth.sat_dock", "\u5378\u8d27\u5e73\u53f0");
+        add("container.hbm_ntm_rebirth.sat_dock.info.0", "\u9700\u8981\u5df2\u94fe\u63a5\u7684\u77ff\u4e1a\u536b\u661f\u82af\u7247\u3002");
+        add("container.hbm_ntm_rebirth.sat_dock.info.1", "\u8d27\u8fd0\u98de\u8239\u4f1a\u5b9a\u671f\u964d\u843d\uff0c");
+        add("container.hbm_ntm_rebirth.sat_dock.info.2", "\u5e76\u6295\u9012\u8d44\u6e90\u3002");
         add("container.hbm_ntm_rebirth.battery", "\u84c4\u7535\u6c60");
         add("container.batterySocket", "\u7535\u6c60\u63d2\u5ea7");
         add("container.hbm_ntm_rebirth.battery.red_low", "\u4f4e\u7ea2\u77f3\u6a21\u5f0f");
@@ -771,6 +784,9 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         if (id.startsWith("upgrade_")) {
             return true;
         }
+        if (id.endsWith("_sword") || id.endsWith("_pickaxe") || id.endsWith("_axe") || id.endsWith("_shovel")) {
+            return true;
+        }
         return switch (id) {
             case "battery_potato",
                  "battery_creative",
@@ -806,6 +822,10 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
                  "screwdriver",
                  "hand_drill",
                  "defuser",
+                 "centri_stick",
+                 "smashing_hammer",
+                 "mese_gavel",
+                 "settings_tool",
                  "pellet_antimatter",
                  "catalytic_converter",
                  "fuel_additive_antiknock",

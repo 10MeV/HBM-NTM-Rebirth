@@ -1,6 +1,7 @@
 package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.world.saveddata.WorldSavedDataHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
@@ -180,7 +181,7 @@ public class CraterRadiationData extends SavedData {
     }
 
     private static CraterRadiationData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(CraterRadiationData::load, CraterRadiationData::new, DATA_NAME);
+        return WorldSavedDataHelper.get(level, DATA_NAME, CraterRadiationData::load, CraterRadiationData::new);
     }
 
     private static long cellKey(int x, int z) {

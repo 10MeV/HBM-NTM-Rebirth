@@ -2,10 +2,12 @@ package com.hbm.ntm.util;
 
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.energy.HbmBatteryItem;
+import com.hbm.ntm.item.ItemMachineUpgrade;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
@@ -20,8 +22,8 @@ import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
 public final class HbmInventoryMenuHelper {
-    public static final String LEGACY_ITEMS_TAG = "items";
-    public static final String LEGACY_SLOT_TAG = "slot";
+    public static final String LEGACY_ITEMS_TAG = HbmItemStackUtil.LEGACY_ITEMS_TAG;
+    public static final String LEGACY_SLOT_TAG = HbmItemStackUtil.LEGACY_SLOT_TAG;
 
     private HbmInventoryMenuHelper() {
     }
@@ -31,6 +33,124 @@ public final class HbmInventoryMenuHelper {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
+            }
+        };
+    }
+
+    public static SlotItemHandler craftingOutputSlot(Player player, IItemHandler items, int slot, int x, int y) {
+        return outputSlot(player, items, slot, x, y, null);
+    }
+
+    public static SlotItemHandler smeltingOutputSlot(Player player, IItemHandler items, int slot, int x, int y,
+            OutputExperienceGetter experienceGetter) {
+        return outputSlot(player, items, slot, x, y, experienceGetter);
+    }
+
+    private static SlotItemHandler outputSlot(Player player, IItemHandler items, int slot, int x, int y,
+            OutputExperienceGetter experienceGetter) {
+        return new SlotItemHandler(items, slot, x, y) {
+            private int removeCount;
+
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return false;
+            }
+
+            @Override
+            public ItemStack remove(int amount) {
+                if (hasItem()) {
+                    removeCount += Math.min(amount, getItem().getCount());
+                }
+                return super.remove(amount);
+            }
+
+            @Override
+            protected void onQuickCraft(ItemStack stack, int amount) {
+                removeCount += amount;
+                super.onQuickCraft(stack, amount);
+            }
+
+            @Override
+            protected void checkTakeAchievements(ItemStack stack) {
+                stack.onCraftedBy(player.level(), player, removeCount);
+                if (experienceGetter != null && player.level() instanceof ServerLevel serverLevel) {
+                    awardOutputExperience(player, serverLevel, stack, removeCount, experienceGetter);
+                }
+                removeCount = 0;
+            }
+
+            @Override
+            public void onTake(Player player, ItemStack stack) {
+                checkTakeAchievements(stack);
+                super.onTake(player, stack);
+            }
+        };
+    }
+
+    public static SlotItemHandler takeOnlySlot(IItemHandler items, int slot, int x, int y) {
+        return outputSlot(items, slot, x, y);
+    }
+
+    public static SlotItemHandler validatedSlot(IItemHandler items, int slot, int x, int y) {
+        return new SlotItemHandler(items, slot, x, y);
+    }
+
+    public static SlotItemHandler upgradeSlot(IItemHandler items, int slot, int x, int y) {
+        return new SlotItemHandler(items, slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return stack.getItem() instanceof ItemMachineUpgrade;
+            }
+        };
+    }
+
+    public static SlotItemHandler patternSlot(IItemHandler items, int slot, int x, int y) {
+        return patternSlot(items, slot, x, y, false, true);
+    }
+
+    public static SlotItemHandler patternSlot(IItemHandler items, int slot, int x, int y, boolean allowStackSize) {
+        return patternSlot(items, slot, x, y, allowStackSize, true);
+    }
+
+    public static SlotItemHandler hiddenPatternSlot(IItemHandler items, int slot, int x, int y) {
+        return patternSlot(items, slot, x, y, false, false);
+    }
+
+    public static SlotItemHandler patternSlot(IItemHandler items, int slot, int x, int y, boolean allowStackSize,
+            boolean canHover) {
+        return new SlotItemHandler(items, slot, x, y) {
+            @Override
+            public boolean mayPickup(Player player) {
+                return false;
+            }
+
+            @Override
+            public int getMaxStackSize() {
+                return 1;
+            }
+
+            @Override
+            public int getMaxStackSize(ItemStack stack) {
+                return 1;
+            }
+
+            @Override
+            public void set(ItemStack stack) {
+                super.set(copyPatternStack(stack, allowStackSize));
+            }
+
+            @Override
+            public boolean isActive() {
+                return canHover;
+            }
+        };
+    }
+
+    public static SlotItemHandler legacyMachineSlot(IItemHandler items, int slot, int x, int y) {
+        return new SlotItemHandler(items, slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return true;
             }
         };
     }
@@ -74,6 +194,92 @@ public final class HbmInventoryMenuHelper {
         addHotbar(sink, inventory, x, hotbarY);
     }
 
+    public static void addSlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows, int columns) {
+        addSlots(sink, items, from, x, y, rows, columns, 18);
+    }
+
+    public static void addSlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows, int columns,
+            int slotSize) {
+        addSlotGrid(sink, items, from, x, y, rows, columns, slotSize, HbmInventoryMenuHelper::validatedSlot);
+    }
+
+    public static void addOutputSlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows,
+            int columns) {
+        addOutputSlots(sink, items, from, x, y, rows, columns, 18);
+    }
+
+    public static void addOutputSlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows,
+            int columns, int slotSize) {
+        addSlotGrid(sink, items, from, x, y, rows, columns, slotSize, HbmInventoryMenuHelper::outputSlot);
+    }
+
+    public static void addCraftingOutputSlots(SlotSink sink, Player player, IItemHandler items, int from, int x, int y,
+            int rows, int columns) {
+        addCraftingOutputSlots(sink, player, items, from, x, y, rows, columns, 18);
+    }
+
+    public static void addCraftingOutputSlots(SlotSink sink, Player player, IItemHandler items, int from, int x, int y,
+            int rows, int columns, int slotSize) {
+        addSlotGrid(sink, items, from, x, y, rows, columns, slotSize,
+                (handler, slot, slotX, slotY) -> craftingOutputSlot(player, handler, slot, slotX, slotY));
+    }
+
+    public static void addSmeltingOutputSlots(SlotSink sink, Player player, IItemHandler items, int from, int x, int y,
+            int rows, int columns, OutputExperienceGetter experienceGetter) {
+        addSmeltingOutputSlots(sink, player, items, from, x, y, rows, columns, 18, experienceGetter);
+    }
+
+    public static void addSmeltingOutputSlots(SlotSink sink, Player player, IItemHandler items, int from, int x, int y,
+            int rows, int columns, int slotSize, OutputExperienceGetter experienceGetter) {
+        addSlotGrid(sink, items, from, x, y, rows, columns, slotSize,
+                (handler, slot, slotX, slotY) -> smeltingOutputSlot(player, handler, slot, slotX, slotY,
+                        experienceGetter));
+    }
+
+    public static void addTakeOnlySlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows,
+            int columns) {
+        addTakeOnlySlots(sink, items, from, x, y, rows, columns, 18);
+    }
+
+    public static void addTakeOnlySlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows,
+            int columns, int slotSize) {
+        addSlotGrid(sink, items, from, x, y, rows, columns, slotSize, HbmInventoryMenuHelper::takeOnlySlot);
+    }
+
+    public static void addUpgradeSlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows,
+            int columns) {
+        addUpgradeSlots(sink, items, from, x, y, rows, columns, 18);
+    }
+
+    public static void addUpgradeSlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows,
+            int columns, int slotSize) {
+        addSlotGrid(sink, items, from, x, y, rows, columns, slotSize, HbmInventoryMenuHelper::upgradeSlot);
+    }
+
+    public static void addPatternSlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows,
+            int columns) {
+        addPatternSlots(sink, items, from, x, y, rows, columns, 18, false);
+    }
+
+    public static void addPatternSlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows,
+            int columns, int slotSize, boolean allowStackSize) {
+        addSlotGrid(sink, items, from, x, y, rows, columns, slotSize,
+                (handler, slot, slotX, slotY) -> patternSlot(handler, slot, slotX, slotY, allowStackSize));
+    }
+
+    public static void addSlotGrid(SlotSink sink, IItemHandler items, int from, int x, int y, int rows, int columns,
+            int slotSize, SlotFactory factory) {
+        if (rows <= 0 || columns <= 0 || slotSize <= 0) {
+            return;
+        }
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
+                int slot = from + column + row * columns;
+                sink.add(factory.create(items, slot, x + column * slotSize, y + row * slotSize));
+            }
+        }
+    }
+
     public static boolean stillValidBlockEntity(Player player, BlockEntity blockEntity, double maxDistanceSqr) {
         return !blockEntity.isRemoved() && player.distanceToSqr(
                 blockEntity.getBlockPos().getX() + 0.5D,
@@ -108,6 +314,32 @@ public final class HbmInventoryMenuHelper {
             return value - max;
         }
         return 0.0D;
+    }
+
+    private static ItemStack copyPatternStack(ItemStack stack, boolean allowStackSize) {
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack copy = stack.copy();
+        if (!allowStackSize) {
+            copy.setCount(1);
+        }
+        return copy;
+    }
+
+    private static void awardOutputExperience(Player player, ServerLevel level, ItemStack stack, int removeCount,
+            OutputExperienceGetter experienceGetter) {
+        if (removeCount <= 0) {
+            return;
+        }
+        double totalExperience = removeCount * Math.max(0.0D, experienceGetter.get(stack));
+        int award = Mth.floor(totalExperience);
+        if (award < Mth.ceil(totalExperience) && player.getRandom().nextDouble() < totalExperience - award) {
+            award++;
+        }
+        if (award > 0) {
+            ExperienceOrb.award(level, player.position(), award);
+        }
     }
 
     public static ItemStack moveMachineStack(java.util.List<Slot> slots, StackMover mover, int index, int machineSlotCount,
@@ -148,62 +380,23 @@ public final class HbmInventoryMenuHelper {
     }
 
     public static CompoundTag saveLegacyItems(ItemStackHandler items) {
-        NonNullList<ItemStack> stacks = NonNullList.withSize(items.getSlots(), ItemStack.EMPTY);
-        for (int slot = 0; slot < items.getSlots(); slot++) {
-            stacks.set(slot, items.getStackInSlot(slot));
-        }
-        return saveLegacyItems(stacks);
+        return HbmItemStackUtil.saveLegacyItems(items);
     }
 
     public static CompoundTag saveLegacyItems(NonNullList<ItemStack> items) {
-        CompoundTag tag = new CompoundTag();
-        ListTag list = new ListTag();
-        for (int slot = 0; slot < items.size(); slot++) {
-            ItemStack stack = items.get(slot);
-            if (!stack.isEmpty()) {
-                CompoundTag stackTag = new CompoundTag();
-                stackTag.putByte(LEGACY_SLOT_TAG, (byte) slot);
-                stack.save(stackTag);
-                list.add(stackTag);
-            }
-        }
-        tag.put(LEGACY_ITEMS_TAG, list);
-        return tag;
+        return HbmItemStackUtil.saveLegacyItems(items);
     }
 
     public static void loadLegacyItems(CompoundTag tag, ItemStackHandler items) {
-        NonNullList<ItemStack> stacks = loadLegacyItems(tag, items.getSlots());
-        for (int slot = 0; slot < stacks.size(); slot++) {
-            items.setStackInSlot(slot, stacks.get(slot));
-        }
+        HbmItemStackUtil.loadLegacyItems(tag, items);
     }
 
     public static NonNullList<ItemStack> loadLegacyItems(CompoundTag tag, int slotCount) {
-        NonNullList<ItemStack> items = NonNullList.withSize(slotCount, ItemStack.EMPTY);
-        if (tag == null || slotCount <= 0 || !tag.contains(LEGACY_ITEMS_TAG, Tag.TAG_LIST)) {
-            return items;
-        }
-        ListTag list = tag.getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND);
-        for (int i = 0; i < list.size(); i++) {
-            CompoundTag stackTag = list.getCompound(i);
-            int slot = stackTag.getByte(LEGACY_SLOT_TAG) & 255;
-            if (slot >= 0 && slot < slotCount) {
-                items.set(slot, ItemStack.of(stackTag));
-            }
-        }
-        return items;
+        return HbmItemStackUtil.loadLegacyItems(tag, slotCount);
     }
 
     public static java.util.List<ItemStack> clearToDrops(ItemStackHandler items) {
-        java.util.List<ItemStack> drops = new java.util.ArrayList<>();
-        for (int slot = 0; slot < items.getSlots(); slot++) {
-            ItemStack stack = items.getStackInSlot(slot);
-            if (!stack.isEmpty()) {
-                drops.add(stack.copy());
-                items.setStackInSlot(slot, ItemStack.EMPTY);
-            }
-        }
-        return drops;
+        return HbmItemStackUtil.clearToDrops(items);
     }
 
     private static boolean moveToAnyRange(java.util.List<Slot> slots, ItemStack stack, int... ranges) {
@@ -270,6 +463,16 @@ public final class HbmInventoryMenuHelper {
     @FunctionalInterface
     public interface SlotSink {
         void add(Slot slot);
+    }
+
+    @FunctionalInterface
+    public interface SlotFactory {
+        Slot create(IItemHandler items, int slot, int x, int y);
+    }
+
+    @FunctionalInterface
+    public interface OutputExperienceGetter {
+        double get(ItemStack stack);
     }
 
     @FunctionalInterface

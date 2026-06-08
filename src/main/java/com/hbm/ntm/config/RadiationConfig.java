@@ -19,8 +19,15 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.DoubleValue CRATER_BIOME_OUTER_RAD;
     public static ForgeConfigSpec.DoubleValue CRATER_BIOME_WATER_MULT;
     public static ForgeConfigSpec.BooleanValue ENABLE_POLLUTION;
+    public static ForgeConfigSpec.BooleanValue ENABLE_POLLUTION_LEAD_FROM_BLOCKS;
+    public static ForgeConfigSpec.BooleanValue ENABLE_POLLUTION_LEAD_POISONING;
+    public static ForgeConfigSpec.BooleanValue ENABLE_POLLUTION_POISON;
+    public static ForgeConfigSpec.BooleanValue ENABLE_POLLUTION_SOOT_FOG;
     public static ForgeConfigSpec.DoubleValue POLLUTION_MULT;
     public static ForgeConfigSpec.DoubleValue POLLUTION_BUFF_MOB_THRESHOLD;
+    public static ForgeConfigSpec.DoubleValue POLLUTION_SOOT_FOG_THRESHOLD;
+    public static ForgeConfigSpec.DoubleValue POLLUTION_SOOT_FOG_DIVISOR;
+    public static ForgeConfigSpec.BooleanValue RAMPANT_GLYPHID_GUIDANCE;
 
     public static ForgeConfigSpec.BooleanValue DISABLE_ASBESTOS;
     public static ForgeConfigSpec.BooleanValue DISABLE_BLINDING;
@@ -28,10 +35,6 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.BooleanValue DISABLE_EXPLOSIVE;
     public static ForgeConfigSpec.BooleanValue DISABLE_HOT;
     public static ForgeConfigSpec.BooleanValue DISABLE_HYDROACTIVE;
-    public static ForgeConfigSpec.BooleanValue ENABLE_LESS_BULLSHIT_MODE;
-    public static ForgeConfigSpec.BooleanValue LBSM_SAFE_CRATES;
-    public static ForgeConfigSpec.BooleanValue LBSM_SAFE_ME_DRIVES;
-    public static ForgeConfigSpec.BooleanValue ENABLE_MKU;
 
     static void define(ForgeConfigSpec.Builder builder) {
         builder.push("radiation");
@@ -86,12 +89,33 @@ public final class RadiationConfig {
         ENABLE_POLLUTION = builder
                 .comment("Legacy POL_00_enablePollution: toggles soot, poison, heavy metal, and fallout pollution.")
                 .define("enablePollution", true);
+        ENABLE_POLLUTION_LEAD_FROM_BLOCKS = builder
+                .comment("Legacy POL_01_enableLeadFromBlocks: breaking blocks in heavy metal polluted areas applies lead poisoning.")
+                .define("enableLeadFromBlocks", true);
+        ENABLE_POLLUTION_LEAD_POISONING = builder
+                .comment("Legacy POL_02_enableLeadPoisoning: standing in heavy metal polluted areas applies lead poisoning.")
+                .define("enableLeadPoisoning", true);
+        ENABLE_POLLUTION_POISON = builder
+                .comment("Legacy POL_04_enablePoison: standing in poisoned areas applies poison or wither.")
+                .define("enablePoison", true);
+        ENABLE_POLLUTION_SOOT_FOG = builder
+                .comment("Legacy POL_03_enableSootFog: whether smog should be visible.")
+                .define("enableSootFog", true);
         POLLUTION_MULT = builder
                 .comment("Legacy MobConfig 12.R08_pollutionMult: multiplier applied to emitted pollution amounts.")
                 .defineInRange("pollutionMult", 1.0D, 0.0D, Double.MAX_VALUE);
         POLLUTION_BUFF_MOB_THRESHOLD = builder
                 .comment("Legacy POL_05_buffMobThreshold: soot required to buff naturally spawning hostile mobs.")
                 .defineInRange("buffMobThreshold", 15.0D, 0.0D, Double.MAX_VALUE);
+        POLLUTION_SOOT_FOG_THRESHOLD = builder
+                .comment("Legacy POL_06_sootFogThreshold: soot required for smog to become visible.")
+                .defineInRange("sootFogThreshold", 35.0D, 0.0D, Double.MAX_VALUE);
+        POLLUTION_SOOT_FOG_DIVISOR = builder
+                .comment("Legacy POL_07_sootFogDivisor: higher values require more soot for the same smog density.")
+                .defineInRange("sootFogDivisor", 120.0D, 0.0001D, Double.MAX_VALUE);
+        RAMPANT_GLYPHID_GUIDANCE = builder
+                .comment("Legacy MobConfig 12.R05_rampantGlyphidGuidance: records a sleeping player's bed as the pollution/rampant target point.")
+                .define("rampantGlyphidGuidance", false);
         builder.pop();
 
         builder.push("hazards");
@@ -101,18 +125,6 @@ public final class RadiationConfig {
         DISABLE_EXPLOSIVE = builder.define("disableExplosive", false);
         DISABLE_HOT = builder.define("disableHot", false);
         DISABLE_HYDROACTIVE = builder.define("disableHydroactive", false);
-        ENABLE_LESS_BULLSHIT_MODE = builder
-                .comment("Legacy enableLessBullshitMode. Currently used for hazard compatibility gates migrated before the full LBSM config.")
-                .define("enableLessBullshitMode", false);
-        LBSM_SAFE_CRATES = builder
-                .comment("Legacy LBSM_safeCrates: when Less Bullshit Mode is enabled, prevents crate-like item containers from becoming radioactive.")
-                .define("lbsmSafeCrates", true);
-        LBSM_SAFE_ME_DRIVES = builder
-                .comment("Legacy LBSM_safeMEDrives: when Less Bullshit Mode is enabled, prevents ME Drives and Portable Cells from becoming radioactive.")
-                .define("lbsmSafeMeDrives", true);
-        ENABLE_MKU = builder
-                .comment("Legacy ServerConfig.ENABLE_MKU: toggles MKU contagion ticking and infection behavior.")
-                .define("enableMku", true);
         builder.pop();
     }
 

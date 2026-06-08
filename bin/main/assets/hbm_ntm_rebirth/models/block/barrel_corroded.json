@@ -1,11 +1,10 @@
 {
+  "flip_v": true,
   "loader": "forge:obj",
   "model": "hbm_ntm_rebirth:models/block/legacy_blocks/barrel.obj",
-  "flip_v": true,
-  "render_type": "minecraft:cutout",
   "textures": {
-    "particle": "hbm_ntm_rebirth:block/legacy_blocks/barrel_corroded",
     "default": "hbm_ntm_rebirth:block/legacy_blocks/barrel_corroded",
+    "particle": "hbm_ntm_rebirth:block/legacy_blocks/barrel_corroded",
     "texture0": "hbm_ntm_rebirth:block/legacy_blocks/barrel_corroded"
   }
 }

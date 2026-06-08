@@ -13,7 +13,7 @@
       "ingredient": {
         "item": "hbm_ntm_rebirth:item_expensive_lead_plating"
       },
-      "legacy_id": "hbm_ntm_rebirth:item_expensive",
+      "legacy_id": "hbm:item_expensive",
       "legacy_meta": 3
     },
     {
@@ -40,5 +40,5 @@
   ],
   "pools": [],
   "power": 10000,
-  "source_order": 22
+  "source_order": 21
 }

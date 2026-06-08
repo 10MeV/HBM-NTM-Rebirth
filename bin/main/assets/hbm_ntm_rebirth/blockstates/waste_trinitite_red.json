@@ -1,1 +1,7 @@
-{ "variants": { "": { "model": "hbm_ntm_rebirth:block/waste_trinitite_red" } } }
+{
+  "variants": {
+    "": {
+      "model": "hbm_ntm_rebirth:block/waste_trinitite_red"
+    }
+  }
+}

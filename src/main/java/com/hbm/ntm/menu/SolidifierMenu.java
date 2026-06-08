@@ -1,9 +1,7 @@
 package com.hbm.ntm.menu;
 
-import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.blockentity.SolidifierBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
-import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -18,7 +16,6 @@ import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.SlotItemHandler;
 
 public class SolidifierMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = SolidifierBlockEntity.ITEM_COUNT;
@@ -41,21 +38,11 @@ public class SolidifierMenu extends AbstractContainerMenu {
         super(ModMenuTypes.SOLIDIFIER.get(), containerId);
         this.blockEntity = blockEntity;
         ItemStackHandler items = blockEntity.getItems();
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, SolidifierBlockEntity.SLOT_OUTPUT, 71, 45));
-        addSlot(new SlotItemHandler(items, SolidifierBlockEntity.SLOT_BATTERY, 134, 72) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return HbmInventoryMenuHelper.isBatteryLike(stack);
-            }
-        });
-        addSlot(upgradeSlot(items, SolidifierBlockEntity.SLOT_UPGRADE_SPEED, 98, 36));
-        addSlot(upgradeSlot(items, SolidifierBlockEntity.SLOT_UPGRADE_POWER, 98, 54));
-        addSlot(new SlotItemHandler(items, SolidifierBlockEntity.SLOT_IDENTIFIER, 71, 72) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof IFluidIdentifierItem;
-            }
-        });
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, SolidifierBlockEntity.SLOT_OUTPUT, 71, 45));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, SolidifierBlockEntity.SLOT_BATTERY, 134, 72));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(items, SolidifierBlockEntity.SLOT_UPGRADE_SPEED, 98, 36));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(items, SolidifierBlockEntity.SLOT_UPGRADE_POWER, 98, 54));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, SolidifierBlockEntity.SLOT_IDENTIFIER, 71, 72));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 122, 180);
         addDataSlots();
     }
@@ -101,9 +88,7 @@ public class SolidifierMenu extends AbstractContainerMenu {
     public ItemStack quickMoveStack(Player player, int index) {
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                 MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                SolidifierBlockEntity.SLOT_BATTERY, SolidifierBlockEntity.SLOT_BATTERY + 1,
-                SolidifierBlockEntity.SLOT_UPGRADE_SPEED, SolidifierBlockEntity.SLOT_UPGRADE_POWER + 1,
-                SolidifierBlockEntity.SLOT_IDENTIFIER, SolidifierBlockEntity.SLOT_IDENTIFIER + 1);
+                0, 4);
     }
 
     private void addDataSlots() {
@@ -143,15 +128,6 @@ public class SolidifierMenu extends AbstractContainerMenu {
             }
         });
         tank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getTank());
-    }
-
-    private static SlotItemHandler upgradeSlot(ItemStackHandler items, int slot, int x, int y) {
-        return new SlotItemHandler(items, slot, x, y) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof ItemMachineUpgrade;
-            }
-        };
     }
 
     private static SolidifierBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

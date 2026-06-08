@@ -21,7 +21,7 @@
     "subtitle": "subtitles.hbm_ntm_rebirth.block.assembler_operate",
     "sounds": [
       {
-        "name": "hbm_ntm_rebirth:block/assemblerOperate",
+        "name": "hbm_ntm_rebirth:block/assembleroperate",
         "stream": true
       }
     ]
@@ -29,33 +29,33 @@
   "block.assembler_strike": {
     "subtitle": "subtitles.hbm_ntm_rebirth.block.assembler_strike",
     "sounds": [
-      "hbm_ntm_rebirth:block/assemblerStrike1",
-      "hbm_ntm_rebirth:block/assemblerStrike2"
+      "hbm_ntm_rebirth:block/assemblerstrike1",
+      "hbm_ntm_rebirth:block/assemblerstrike2"
     ]
   },
   "block.assembler_start": {
     "subtitle": "subtitles.hbm_ntm_rebirth.block.assembler_start",
     "sounds": [
-      "hbm_ntm_rebirth:block/assemblerStart"
+      "hbm_ntm_rebirth:block/assemblerstart"
     ]
   },
   "block.assembler_stop": {
     "subtitle": "subtitles.hbm_ntm_rebirth.block.assembler_stop",
     "sounds": [
-      "hbm_ntm_rebirth:block/assemblerStop"
+      "hbm_ntm_rebirth:block/assemblerstop"
     ]
   },
   "block.assembler_cut": {
     "subtitle": "subtitles.hbm_ntm_rebirth.block.assembler_cut",
     "sounds": [
-      "hbm_ntm_rebirth:block/assemblerCut"
+      "hbm_ntm_rebirth:block/assemblercut"
     ]
   },
   "block.chemplant_operate": {
     "subtitle": "subtitles.hbm_ntm_rebirth.block.chemplant_operate",
     "sounds": [
       {
-        "name": "hbm_ntm_rebirth:block/chemplantOperate",
+        "name": "hbm_ntm_rebirth:block/chemplantoperate",
         "stream": true
       }
     ]
@@ -63,7 +63,7 @@
   "block.chemical_plant": {
     "subtitle": "subtitles.hbm_ntm_rebirth.block.chemical_plant",
     "sounds": [
-      "hbm_ntm_rebirth:block/chemicalPlant"
+      "hbm_ntm_rebirth:block/chemicalplant"
     ]
   },
   "block.pipe_placed": {
@@ -87,7 +87,7 @@
     "subtitle": "subtitles.hbm_ntm_rebirth.block.reactor_start",
     "sounds": [
       {
-        "name": "hbm_ntm_rebirth:block/reactorStart",
+        "name": "hbm_ntm_rebirth:block/reactorstart",
         "stream": false
       }
     ]
@@ -98,6 +98,15 @@
       {
         "name": "hbm_ntm_rebirth:block/boiler",
         "stream": false
+      }
+    ]
+  },
+  "block.pyro_operate": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.pyro_operate",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:block/pyrooperate",
+        "stream": true
       }
     ]
   },
@@ -153,6 +162,21 @@
     "subtitle": "subtitles.hbm_ntm_rebirth.tool.radaway",
     "sounds": [
       "hbm_ntm_rebirth:tool/radaway"
+    ]
+  },
+  "tool.gasmask_screw": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.tool.gasmask_screw",
+    "sounds": [
+      "hbm_ntm_rebirth:tool/gasmask_screw"
+    ]
+  },
+  "item.syringe": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.item.syringe",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:tool/stim",
+        "stream": false
+      }
     ]
   },
   "player.cough": {
@@ -316,6 +340,42 @@
         "name": "hbm_ntm_rebirth:weapon/explosion_medium",
         "stream": false
       }
+    ]
+  },
+  "weapon.flamethrower_shoot": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.flamethrower",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/flamethrowershoot",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.rocket_flame": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.rocket_flame",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:weapon/rocket_flame",
+        "stream": false
+      }
+    ]
+  },
+  "weapon.ricochet": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.ricochet",
+    "sounds": [
+      "hbm_ntm_rebirth:weapon/ric1",
+      "hbm_ntm_rebirth:weapon/ric2",
+      "hbm_ntm_rebirth:weapon/ric3",
+      "hbm_ntm_rebirth:weapon/ric4",
+      "hbm_ntm_rebirth:weapon/ric5"
+    ]
+  },
+  "weapon.gbounce": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.gbounce",
+    "sounds": [
+      "hbm_ntm_rebirth:weapon/gbounce1",
+      "hbm_ntm_rebirth:weapon/gbounce2",
+      "hbm_ntm_rebirth:weapon/gbounce3"
     ]
   },
   "weapon.reload.tube_fwoomp": {

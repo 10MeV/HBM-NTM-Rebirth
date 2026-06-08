@@ -69,13 +69,15 @@ public class AssemblyMachineScreen extends AbstractContainerScreen<AssemblyMachi
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(7, 125, 18, 18, mouseX, mouseY)) {
-            graphics.renderTooltip(font, splitTooltip(recipeTooltip()), mouseX, mouseY);
+            LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(), mouseX, mouseY);
         } else if (isHovering(152, 18, 16, 61, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"), mouseX, mouseY);
         } else if (isHovering(8, 99, 52, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, splitTooltip(menu.getInputTankTooltip(hasShiftDown())), mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(),
+                    menu.getInputTankTooltip(hasShiftDown()), mouseX, mouseY);
         } else if (isHovering(80, 99, 52, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, splitTooltip(menu.getOutputTankTooltip(hasShiftDown())), mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(),
+                    menu.getOutputTankTooltip(hasShiftDown()), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

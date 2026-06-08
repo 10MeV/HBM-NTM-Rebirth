@@ -70,6 +70,9 @@ public final class LegacyMetaItemMappings {
                 46, requireLegacyItem("plate_cast_bismuth_bronze"),
                 47, requireLegacyItem("plate_cast_arsenic_bronze")));
         registerSparse(WIRE_FINE, Map.of(
+                2_900, requireLegacyItem("wire_fine_copper"),
+                31, requireLegacyItem("wire_fine_mingrade"),
+                7_400, requireLegacyItem("wire_fine_tungsten"),
                 7_900, requireLegacyItem("wire_gold")));
         registerSparse(WIRE_DENSE, Map.of(
                 4_100, requireLegacyItem("wire_dense_niobium"),

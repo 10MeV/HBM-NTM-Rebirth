@@ -1,1 +1,7 @@
-{ "variants": { "": { "model": "hbm_ntm_rebirth:block/tektite" } } }
+{
+  "variants": {
+    "": {
+      "model": "hbm_ntm_rebirth:block/tektite"
+    }
+  }
+}

@@ -2,26 +2,30 @@ package com.hbm.ntm.recipe;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.hbm.ntm.pollution.PollutionType;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.Optional;
 
 public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
-                                            Optional<Fusion> fusion) {
+                                            Optional<Fusion> fusion,
+                                            Optional<Pollution> pollution) {
     public static final GenericMachineRecipeExtraData EMPTY =
-            new GenericMachineRecipeExtraData(Optional.empty(), Optional.empty());
+            new GenericMachineRecipeExtraData(Optional.empty(), Optional.empty(), Optional.empty());
 
     public GenericMachineRecipeExtraData {
         plasmaForge = plasmaForge == null ? Optional.empty() : plasmaForge;
         fusion = fusion == null ? Optional.empty() : fusion;
+        pollution = pollution == null ? Optional.empty() : pollution;
     }
 
     public static GenericMachineRecipeExtraData fromJson(JsonObject json) {
         Optional<PlasmaForge> plasma = readPlasmaForge(json);
         Optional<Fusion> fusion = readFusion(json);
-        return plasma.isEmpty() && fusion.isEmpty()
+        Optional<Pollution> pollution = readPollution(json);
+        return plasma.isEmpty() && fusion.isEmpty() && pollution.isEmpty()
                 ? EMPTY
-                : new GenericMachineRecipeExtraData(plasma, fusion);
+                : new GenericMachineRecipeExtraData(plasma, fusion, pollution);
     }
 
     public JsonObject toJson() {
@@ -40,6 +44,10 @@ public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
             json.addProperty("g", fusionData.g());
             json.addProperty("b", fusionData.b());
         });
+        pollution.ifPresent(pollutionData -> {
+            json.addProperty("pollutionType", pollutionData.type().name());
+            json.addProperty("pollutionAmount", pollutionData.amount());
+        });
     }
 
     public void toNetwork(FriendlyByteBuf buffer) {
@@ -54,6 +62,11 @@ public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
             buffer.writeFloat(fusionData.g());
             buffer.writeFloat(fusionData.b());
         });
+        buffer.writeBoolean(pollution.isPresent());
+        pollution.ifPresent(pollutionData -> {
+            buffer.writeEnum(pollutionData.type());
+            buffer.writeFloat(pollutionData.amount());
+        });
     }
 
     public static GenericMachineRecipeExtraData fromNetwork(FriendlyByteBuf buffer) {
@@ -64,9 +77,12 @@ public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
                 ? Optional.of(new Fusion(buffer.readVarLong(), buffer.readVarLong(), buffer.readDouble(),
                         buffer.readFloat(), buffer.readFloat(), buffer.readFloat()))
                 : Optional.empty();
-        return plasma.isEmpty() && fusion.isEmpty()
+        Optional<Pollution> pollution = buffer.readBoolean()
+                ? Optional.of(new Pollution(buffer.readEnum(PollutionType.class), buffer.readFloat()))
+                : Optional.empty();
+        return plasma.isEmpty() && fusion.isEmpty() && pollution.isEmpty()
                 ? EMPTY
-                : new GenericMachineRecipeExtraData(plasma, fusion);
+                : new GenericMachineRecipeExtraData(plasma, fusion, pollution);
     }
 
     private static Optional<PlasmaForge> readPlasmaForge(JsonObject json) {
@@ -83,12 +99,12 @@ public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
         if (!hasFusionFields(json)) {
             return Optional.empty();
         }
-        require(json, "ignitionTemp");
-        require(json, "outputTemp");
-        require(json, "outputFlux");
-        require(json, "r");
-        require(json, "g");
-        require(json, "b");
+        requireFusion(json, "ignitionTemp");
+        requireFusion(json, "outputTemp");
+        requireFusion(json, "outputFlux");
+        requireFusion(json, "r");
+        requireFusion(json, "g");
+        requireFusion(json, "b");
         return Optional.of(new Fusion(
                 json.get("ignitionTemp").getAsLong(),
                 json.get("outputTemp").getAsLong(),
@@ -96,6 +112,24 @@ public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
                 json.get("r").getAsFloat(),
                 json.get("g").getAsFloat(),
                 json.get("b").getAsFloat()));
+    }
+
+    private static Optional<Pollution> readPollution(JsonObject json) {
+        if (!json.has("pollutionType") && !json.has("pollutionAmount")) {
+            return Optional.empty();
+        }
+        requirePollution(json, "pollutionType");
+        requirePollution(json, "pollutionAmount");
+        float amount = json.get("pollutionAmount").getAsFloat();
+        if (amount == 0.0F) {
+            return Optional.empty();
+        }
+        PollutionType type = PollutionType.byName(json.get("pollutionType").getAsString());
+        if (type == null) {
+            throw new JsonSyntaxException("Invalid HBM recipe pollutionType: "
+                    + json.get("pollutionType").getAsString());
+        }
+        return Optional.of(new Pollution(type, amount));
     }
 
     private static boolean hasFusionFields(JsonObject json) {
@@ -106,9 +140,15 @@ public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
                 || json.has("b");
     }
 
-    private static void require(JsonObject json, String key) {
+    private static void requireFusion(JsonObject json, String key) {
         if (!json.has(key)) {
             throw new JsonSyntaxException("Missing HBM fusion recipe extra field: " + key);
+        }
+    }
+
+    private static void requirePollution(JsonObject json, String key) {
+        if (!json.has(key)) {
+            throw new JsonSyntaxException("Missing HBM recipe pollution extra field: " + key);
         }
     }
 
@@ -116,5 +156,8 @@ public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
     }
 
     public record Fusion(long ignitionTemp, long outputTemp, double outputFlux, float r, float g, float b) {
+    }
+
+    public record Pollution(PollutionType type, float amount) {
     }
 }

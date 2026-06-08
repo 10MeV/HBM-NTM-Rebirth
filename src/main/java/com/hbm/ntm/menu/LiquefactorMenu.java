@@ -2,7 +2,6 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.LiquefactorBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
-import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -15,7 +14,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.items.SlotItemHandler;
 
 import java.util.List;
 
@@ -41,10 +39,10 @@ public class LiquefactorMenu extends AbstractContainerMenu {
         super(ModMenuTypes.LIQUEFACTOR.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), LiquefactorBlockEntity.SLOT_INPUT, 35, 54));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), LiquefactorBlockEntity.SLOT_BATTERY, 134, 72));
-        addSlot(upgradeSlot(LiquefactorBlockEntity.SLOT_UPGRADE_SPEED, 98, 36));
-        addSlot(upgradeSlot(LiquefactorBlockEntity.SLOT_UPGRADE_POWER, 98, 54));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), LiquefactorBlockEntity.SLOT_INPUT, 35, 54));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), LiquefactorBlockEntity.SLOT_BATTERY, 134, 72));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), LiquefactorBlockEntity.SLOT_UPGRADE_SPEED, 98, 36));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), LiquefactorBlockEntity.SLOT_UPGRADE_POWER, 98, 54));
         addPlayerInventory(playerInventory);
         addDataSlots();
     }
@@ -106,20 +104,11 @@ public class LiquefactorMenu extends AbstractContainerMenu {
     public ItemStack quickMoveStack(Player player, int index) {
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index, MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START,
                 HOTBAR_END,
-                0, MACHINE_SLOT_COUNT);
+                0, 3);
     }
 
     private void addPlayerInventory(Inventory inventory) {
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 122, 180);
-    }
-
-    private SlotItemHandler upgradeSlot(int slot, int x, int y) {
-        return new SlotItemHandler(blockEntity.getItems(), slot, x, y) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof ItemMachineUpgrade;
-            }
-        };
     }
 
     private void addDataSlots() {

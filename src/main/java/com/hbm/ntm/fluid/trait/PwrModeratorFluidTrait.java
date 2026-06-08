@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid.trait;
 
+import com.google.gson.JsonObject;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -25,5 +26,10 @@ public class PwrModeratorFluidTrait extends FluidTrait {
         int percent = (int) (multiplier * 100.0D - 100.0D);
         info.add(Component.literal("Core flux " + (percent >= 0 ? "+" : "") + percent + "%")
                 .withStyle(ChatFormatting.BLUE));
+    }
+
+    @Override
+    public void writeJson(JsonObject object) {
+        object.addProperty("multiplier", multiplier);
     }
 }

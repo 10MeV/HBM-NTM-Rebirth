@@ -13,7 +13,7 @@
       "ingredient": {
         "item": "hbm_ntm_rebirth:circuit_basic"
       },
-      "legacy_id": "hbm_ntm_rebirth:circuit",
+      "legacy_id": "hbm:circuit",
       "legacy_meta": 8
     },
     {
@@ -21,7 +21,7 @@
       "ingredient": {
         "item": "hbm_ntm_rebirth:circuit_capacitor"
       },
-      "legacy_id": "hbm_ntm_rebirth:circuit",
+      "legacy_id": "hbm:circuit",
       "legacy_meta": 1
     },
     {
@@ -41,5 +41,5 @@
   ],
   "pools": [],
   "power": 4000,
-  "source_order": 20
+  "source_order": 19
 }

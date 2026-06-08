@@ -1,1 +1,7 @@
-{ "variants": { "": { "model": "hbm_ntm_rebirth:block/ore_tektite_osmiridium" } } }
+{
+  "variants": {
+    "": {
+      "model": "hbm_ntm_rebirth:block/ore_tektite_osmiridium"
+    }
+  }
+}

@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/glyphid_spawner" }
+{
+  "parent": "hbm_ntm_rebirth:block/glyphid_spawner"
+}

@@ -7,6 +7,7 @@ import com.hbm.ntm.blockentity.Bat9000BlockEntity;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.blockentity.BigAssTankBlockEntity;
 import com.hbm.ntm.blockentity.BoilerBlockEntity;
+import com.hbm.ntm.blockentity.CableDiodeBlockEntity;
 import com.hbm.ntm.blockentity.CatalyticCrackerBlockEntity;
 import com.hbm.ntm.blockentity.CatalyticReformerBlockEntity;
 import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
@@ -43,9 +44,16 @@ import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
 import com.hbm.ntm.blockentity.OilDrillBlockEntity;
 import com.hbm.ntm.blockentity.PneumaticTubeBlockEntity;
+import com.hbm.ntm.blockentity.PoweredRedCableBlockEntity;
+import com.hbm.ntm.blockentity.PyroOvenBlockEntity;
+import com.hbm.ntm.blockentity.RadarBlockEntity;
+import com.hbm.ntm.blockentity.RadarLargeBlockEntity;
+import com.hbm.ntm.blockentity.RadarScreenBlockEntity;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.blockentity.RedCableGaugeBlockEntity;
 import com.hbm.ntm.blockentity.RefineryBlockEntity;
+import com.hbm.ntm.blockentity.SatelliteDockBlockEntity;
+import com.hbm.ntm.blockentity.SatelliteLinkerBlockEntity;
 import com.hbm.ntm.blockentity.SolarBoilerBlockEntity;
 import com.hbm.ntm.blockentity.SolidifierBlockEntity;
 import com.hbm.ntm.blockentity.SmallCoolingTowerBlockEntity;
@@ -92,6 +100,20 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("red_cable_gauge", () ->
                     BlockEntityType.Builder.of(RedCableGaugeBlockEntity::new,
                             ModBlocks.RED_CABLE_GAUGE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<PoweredRedCableBlockEntity>> CABLE_SWITCH =
+            BLOCK_ENTITIES.register("cable_switch", () ->
+                    BlockEntityType.Builder.of(PoweredRedCableBlockEntity::switchEntity,
+                            ModBlocks.CABLE_SWITCH.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<PoweredRedCableBlockEntity>> CABLE_DETECTOR =
+            BLOCK_ENTITIES.register("cable_detector", () ->
+                    BlockEntityType.Builder.of(PoweredRedCableBlockEntity::detectorEntity,
+                            ModBlocks.CABLE_DETECTOR.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<CableDiodeBlockEntity>> CABLE_DIODE =
+            BLOCK_ENTITIES.register("cable_diode", () ->
+                    BlockEntityType.Builder.of(CableDiodeBlockEntity::new, ModBlocks.CABLE_DIODE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<FluidPipeBlockEntity>> FLUID_PIPE =
             BLOCK_ENTITIES.register("fluid_pipe", () ->
@@ -161,6 +183,30 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<MachineBatterySocketBlockEntity>> MACHINE_BATTERY_SOCKET =
             BLOCK_ENTITIES.register("machine_battery_socket", () ->
                     BlockEntityType.Builder.of(MachineBatterySocketBlockEntity::new, ModBlocks.MACHINE_BATTERY_SOCKET.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadarBlockEntity>> MACHINE_RADAR =
+            BLOCK_ENTITIES.register("machine_radar", () ->
+                    BlockEntityType.Builder.of(RadarBlockEntity::new, ModBlocks.MACHINE_RADAR.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadarLargeBlockEntity>> MACHINE_RADAR_LARGE =
+            BLOCK_ENTITIES.register("machine_radar_large", () ->
+                    BlockEntityType.Builder.of(RadarLargeBlockEntity::new,
+                            ModBlocks.MACHINE_RADAR_LARGE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadarScreenBlockEntity>> MACHINE_RADAR_SCREEN =
+            BLOCK_ENTITIES.register("radar_screen", () ->
+                    BlockEntityType.Builder.of(RadarScreenBlockEntity::new,
+                            ModBlocks.MACHINE_RADAR_SCREEN.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<SatelliteLinkerBlockEntity>> MACHINE_SATLINKER =
+            BLOCK_ENTITIES.register("machine_satlinker", () ->
+                    BlockEntityType.Builder.of(SatelliteLinkerBlockEntity::new,
+                            ModBlocks.MACHINE_SATLINKER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<SatelliteDockBlockEntity>> SAT_DOCK =
+            BLOCK_ENTITIES.register("sat_dock", () ->
+                    BlockEntityType.Builder.of(SatelliteDockBlockEntity::new,
+                            ModBlocks.SAT_DOCK.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<MultiblockDummyBlockEntity>> MULTIBLOCK_DUMMY =
             BLOCK_ENTITIES.register("multiblock_dummy", () ->
@@ -249,6 +295,11 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(SolidifierBlockEntity::new,
                             ModBlocks.MACHINE_SOLIDIFIER.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<PyroOvenBlockEntity>> PYRO_OVEN =
+            BLOCK_ENTITIES.register("pyro_oven", () ->
+                    BlockEntityType.Builder.of(PyroOvenBlockEntity::new,
+                            ModBlocks.MACHINE_PYROOVEN.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<CompressorBlockEntity>> COMPRESSOR =
             BLOCK_ENTITIES.register("compressor", () ->
                     BlockEntityType.Builder.of(CompressorBlockEntity::new,
@@ -278,7 +329,6 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("legacy_visible_machine", () ->
                     BlockEntityType.Builder.of(
                             LegacyVisibleMachineBlockEntity::new,
-                            ModBlocks.MACHINE_PYROOVEN.get(),
                             ModBlocks.MACHINE_CENTRIFUGE.get(),
                             ModBlocks.MACHINE_GASCENT.get(),
                             ModBlocks.MACHINE_ORE_SLOPPER.get(),

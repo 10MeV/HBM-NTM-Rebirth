@@ -2,8 +2,12 @@
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
   "key": {
-    "S": { "tag": "forge:circuits/chip" },
-    "W": { "item": "hbm_ntm_rebirth:fluid_switch" }
+    "S": {
+      "tag": "forge:circuits/chip"
+    },
+    "W": {
+      "item": "hbm_ntm_rebirth:fluid_switch"
+    }
   },
   "pattern": [
     "S",

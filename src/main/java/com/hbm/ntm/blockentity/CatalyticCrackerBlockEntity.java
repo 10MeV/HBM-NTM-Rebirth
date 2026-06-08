@@ -4,6 +4,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
+import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -61,6 +62,16 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
             changed |= crack(recipe);
         }
         return changed;
+    }
+
+    @Override
+    protected void refreshFluidPorts() {
+        HbmFluidPortMachine.refreshReceiverPorts(level, worldPosition, getFluidPorts(),
+                List.of(inputTank, steamTank), this);
+        if (level != null && level.getGameTime() % 10L == 0L) {
+            HbmFluidPortMachine.refreshProviderPorts(level, worldPosition, getFluidPorts(),
+                    List.of(leftOutputTank, rightOutputTank, spentSteamTank), this);
+        }
     }
 
     @Override

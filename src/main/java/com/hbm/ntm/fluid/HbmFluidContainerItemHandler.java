@@ -30,6 +30,9 @@ public class HbmFluidContainerItemHandler implements IFluidHandlerItem {
         if (tank != 0) {
             return FluidStack.EMPTY;
         }
+        if (!HbmForgeFluidInterop.canExposeItemToForge(item, container)) {
+            return FluidStack.EMPTY;
+        }
         FluidType type = item.getFirstFluidType(container);
         return HbmFluidForgeMappings.toForge(type, item.getFill(container));
     }
@@ -44,6 +47,9 @@ public class HbmFluidContainerItemHandler implements IFluidHandlerItem {
         if (tank != 0 || stack.isEmpty()) {
             return false;
         }
+        if (!HbmForgeFluidInterop.canExposeItemToForge(item, container)) {
+            return false;
+        }
         FluidType type = HbmFluidForgeMappings.fromForge(stack);
         return type != HbmFluids.NONE && item.acceptsFluid(type, container);
     }
@@ -51,6 +57,9 @@ public class HbmFluidContainerItemHandler implements IFluidHandlerItem {
     @Override
     public int fill(FluidStack resource, FluidAction action) {
         if (container.getCount() != 1 || resource.isEmpty()) {
+            return 0;
+        }
+        if (!HbmForgeFluidInterop.canExposeItemToForge(item, container)) {
             return 0;
         }
         FluidType type = HbmFluidForgeMappings.fromForge(resource);
@@ -71,6 +80,9 @@ public class HbmFluidContainerItemHandler implements IFluidHandlerItem {
         if (container.getCount() != 1 || resource.isEmpty()) {
             return FluidStack.EMPTY;
         }
+        if (!HbmForgeFluidInterop.canExposeItemToForge(item, container)) {
+            return FluidStack.EMPTY;
+        }
         FluidType type = HbmFluidForgeMappings.fromForge(resource);
         if (type == HbmFluids.NONE || item.getFirstFluidType(container) != type) {
             return FluidStack.EMPTY;
@@ -81,6 +93,9 @@ public class HbmFluidContainerItemHandler implements IFluidHandlerItem {
     @Override
     public @NotNull FluidStack drain(int maxDrain, FluidAction action) {
         if (container.getCount() != 1 || maxDrain <= 0) {
+            return FluidStack.EMPTY;
+        }
+        if (!HbmForgeFluidInterop.canExposeItemToForge(item, container)) {
             return FluidStack.EMPTY;
         }
         FluidType type = item.getFirstFluidType(container);

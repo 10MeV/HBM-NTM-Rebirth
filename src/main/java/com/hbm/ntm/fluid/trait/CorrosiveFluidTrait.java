@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid.trait;
 
+import com.google.gson.JsonObject;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -26,5 +27,10 @@ public class CorrosiveFluidTrait extends FluidTrait {
         } else {
             info.add(Component.literal("[Corrosive]").withStyle(ChatFormatting.YELLOW));
         }
+    }
+
+    @Override
+    public void writeJson(JsonObject object) {
+        object.addProperty("rating", rating);
     }
 }

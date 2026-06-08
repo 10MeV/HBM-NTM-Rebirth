@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid.trait;
 
+import com.google.gson.JsonObject;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -23,5 +24,10 @@ public class FlammableFluidTrait extends FluidTrait {
                     .append(Component.literal(FluidTooltipUtil.shortNumber(heatEnergyPerBucket) + "TU ").withStyle(ChatFormatting.RED))
                     .append(Component.literal("per bucket").withStyle(ChatFormatting.YELLOW)));
         }
+    }
+
+    @Override
+    public void writeJson(JsonObject object) {
+        object.addProperty("energy", heatEnergyPerBucket);
     }
 }

@@ -1,6 +1,8 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -88,7 +90,6 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
             return;
         }
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, blockEntity);
-        blockEntity.refreshEnergyPorts();
         boolean changed = blockEntity.tickLegacyMachine(level, pos, state);
         blockEntity.refreshFluidPorts();
         if (changed || level.getGameTime() % 20L == 0L) {
@@ -137,6 +138,16 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     }
 
     @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
+        List<Component> lines = new ArrayList<>();
+        if (getMaxPower() > 0L) {
+            lines.add(LegacyLookOverlayLines.energyStored(getPower(), getMaxPower()));
+        }
+        lines.addAll(LegacyLookOverlayLines.allCompactFluidUserTanks(this));
+        return LegacyLookOverlay.forBlock(this, lines);
+    }
+
+    @Override
     public Component getDisplayName() {
         return getBlockState().getBlock().getName();
     }
@@ -150,12 +161,6 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     protected void refreshFluidPorts() {
         HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, getFluidPorts(),
                 receivingTanks, sendingTanks, this);
-    }
-
-    protected void refreshEnergyPorts() {
-        if (level != null && !level.isClientSide && getMaxPower() > 0L) {
-            HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, getEnergyPorts(), energy);
-        }
     }
 
     @Override

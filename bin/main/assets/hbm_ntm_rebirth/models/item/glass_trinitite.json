@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/glass_trinitite" }
+{
+  "parent": "hbm_ntm_rebirth:block/glass_trinitite"
+}

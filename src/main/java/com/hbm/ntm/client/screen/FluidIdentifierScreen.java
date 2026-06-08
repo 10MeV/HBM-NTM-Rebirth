@@ -44,10 +44,8 @@ public class FluidIdentifierScreen extends Screen {
     protected void init() {
         leftPos = (width - IMAGE_WIDTH) / 2;
         topPos = (height - IMAGE_HEIGHT) / 2;
-        search = new EditBox(font, leftPos + 46, topPos + 11, 86, 12, Component.empty());
-        search.setBordered(false);
-        search.setTextColor(0xFFFFFF);
-        search.setMaxLength(32);
+        search = LegacyGuiElements.createLegacyTextField(font, leftPos + 46, topPos + 11, 86, 12, 32, "",
+                0xFFFFFF);
         addRenderableWidget(search);
         setInitialFocus(search);
         refreshHeldTypes();

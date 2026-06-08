@@ -11,10 +11,12 @@ import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
+import com.hbm.ntm.entity.logic.DeathBlastEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
+import com.hbm.ntm.entity.missile.MinerRocketEntity;
 import com.hbm.ntm.entity.projectile.FallingNukeEntity;
 import com.hbm.ntm.entity.projectile.RubbleEntity;
 import com.hbm.ntm.entity.projectile.ShrapnelEntity;
@@ -163,6 +165,16 @@ public final class ModEntityTypes {
                     .noSummon()
                     .build("entity_balefire"));
 
+    public static final RegistryObject<EntityType<DeathBlastEntity>> DEATH_BLAST =
+            ENTITY_TYPES.register("entity_laser_blast", () -> EntityType.Builder
+                    .<DeathBlastEntity>of(DeathBlastEntity::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F)
+                    .clientTrackingRange(256)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_laser_blast"));
+
     public static final RegistryObject<EntityType<FallingNukeEntity>> FALLING_NUKE =
             ENTITY_TYPES.register("entity_falling_nuke", () -> EntityType.Builder
                     .<FallingNukeEntity>of(FallingNukeEntity::new, MobCategory.MISC)
@@ -170,6 +182,14 @@ public final class ModEntityTypes {
                     .clientTrackingRange(256)
                     .updateInterval(1)
                     .build("entity_falling_nuke"));
+
+    public static final RegistryObject<EntityType<MinerRocketEntity>> MINER_ROCKET =
+            ENTITY_TYPES.register("entity_miner_lander", () -> EntityType.Builder
+                    .<MinerRocketEntity>of(MinerRocketEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 3.0F)
+                    .clientTrackingRange(256)
+                    .updateInterval(1)
+                    .build("entity_miner_lander"));
 
     public static final RegistryObject<EntityType<ShrapnelEntity>> SHRAPNEL =
             ENTITY_TYPES.register("entity_shrapnel", () -> EntityType.Builder

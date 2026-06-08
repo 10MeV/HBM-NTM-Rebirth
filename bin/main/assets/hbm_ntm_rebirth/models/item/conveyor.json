@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/conveyor" }
+{
+  "parent": "hbm_ntm_rebirth:block/conveyor"
+}

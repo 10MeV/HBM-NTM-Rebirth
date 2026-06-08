@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:pyro_oven",
+  "input_item": {
+    "ingredient": {
+      "tag": "forge:any/tar"
+    },
+    "count": 4
+  },
+  "output_fluid": {
+    "fluid": "CARBONDIOXIDE",
+    "amount": 1000
+  },
+  "output_item": {
+    "item": "hbm_ntm_rebirth:powder_ash_soot"
+  },
+  "duration": 40
+}

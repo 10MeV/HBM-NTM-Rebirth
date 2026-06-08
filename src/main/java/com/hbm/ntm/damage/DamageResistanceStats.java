@@ -21,6 +21,13 @@ public class DamageResistanceStats {
         if (exact != null) {
             return new ResistanceMatch("exact", exactKey, exact);
         }
+        String registryKey = DamageResistanceHandler.registryTypeKey(source);
+        if (registryKey != null && !registryKey.equals(exactKey)) {
+            exact = exactResistances.get(registryKey);
+            if (exact != null) {
+                return new ResistanceMatch("exact", registryKey, exact);
+            }
+        }
         String categoryKey = DamageResistanceHandler.typeToCategory(source);
         DamageResistance category = categoryResistances.get(categoryKey);
         if (category != null) {

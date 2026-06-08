@@ -4,12 +4,18 @@
     {
       "bonus_rolls": 0.0,
       "conditions": [
-        { "condition": "minecraft:survives_explosion" }
+        {
+          "condition": "minecraft:survives_explosion"
+        }
       ],
       "entries": [
-        { "type": "minecraft:item", "name": "hbm_ntm_rebirth:fluid_duct_exhaust" }
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:fluid_duct_exhaust"
+        }
       ],
       "rolls": 1.0
     }
-  ]
+  ],
+  "random_sequence": "hbm_ntm_rebirth:blocks/fluid_duct_exhaust"
 }

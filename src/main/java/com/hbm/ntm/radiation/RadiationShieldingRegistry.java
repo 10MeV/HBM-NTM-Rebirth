@@ -13,6 +13,10 @@ public final class RadiationShieldingRegistry {
         RESISTANCE.put(item, Math.max(0.0F, resistance));
     }
 
+    public static void clear() {
+        RESISTANCE.clear();
+    }
+
     public static float getResistance(ItemStack stack) {
         if (stack.isEmpty()) {
             return 0.0F;

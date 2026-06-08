@@ -47,9 +47,8 @@ public class SolidifierScreen extends AbstractContainerScreen<SolidifierMenu> {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(35, 36, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font,
-                    menu.getTankTooltip(hasShiftDown()).stream().map(Component::getVisualOrderText).toList(),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
+                    menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
         } else if (isHovering(134, 18, 16, 52, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"),
                     mouseX, mouseY);

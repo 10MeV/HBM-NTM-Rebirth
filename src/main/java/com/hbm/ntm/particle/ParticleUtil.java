@@ -511,6 +511,18 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
+    public static void spawnVanillaExt(Level level, double x, double y, double z, String mode,
+            double motionX, double motionY, double motionZ, int overrideAge, boolean noClip) {
+        CompoundTag data = vanillaExtTag(mode, motionX, motionY, motionZ);
+        if (overrideAge > 0) {
+            data.putInt("overrideAge", overrideAge);
+        }
+        if (noClip) {
+            data.putBoolean("noclip", true);
+        }
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
     public static void spawnVanillaExtLargeExplode(Level level, double x, double y, double z, float size, int count) {
         CompoundTag data = vanillaExtTag(VANILLA_LARGE_EXPLODE, 0.0D, 0.0D, 0.0D);
         data.putFloat("size", size);

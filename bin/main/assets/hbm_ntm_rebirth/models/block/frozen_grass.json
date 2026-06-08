@@ -2,11 +2,11 @@
   "parent": "minecraft:block/cube",
   "textures": {
     "down": "hbm_ntm_rebirth:block/frozen_dirt",
-    "up": "hbm_ntm_rebirth:block/frozen_grass_top",
-    "north": "hbm_ntm_rebirth:block/frozen_grass_side",
-    "south": "hbm_ntm_rebirth:block/frozen_grass_side",
     "east": "hbm_ntm_rebirth:block/frozen_grass_side",
-    "west": "hbm_ntm_rebirth:block/frozen_grass_side",
-    "particle": "hbm_ntm_rebirth:block/frozen_grass_side"
+    "north": "hbm_ntm_rebirth:block/frozen_grass_side",
+    "particle": "hbm_ntm_rebirth:block/frozen_grass_side",
+    "south": "hbm_ntm_rebirth:block/frozen_grass_side",
+    "up": "hbm_ntm_rebirth:block/frozen_grass_top",
+    "west": "hbm_ntm_rebirth:block/frozen_grass_side"
   }
 }

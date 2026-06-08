@@ -42,6 +42,8 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         tag(BlockTags.MINEABLE_WITH_SHOVEL).add(ModBlocks.ASH_DIGAMMA.get(), ModBlocks.WASTE_TRINITITE.get(),
                 ModBlocks.WASTE_TRINITITE_RED.get(), ModBlocks.FROZEN_GRASS.get(), ModBlocks.FROZEN_DIRT.get(),
                 ModBlocks.TEKTITE.get(), ModBlocks.ORE_TEKTITE_OSMIRIDIUM.get());
+        addLegacyMineable(BlockTags.MINEABLE_WITH_SHOVEL, "dirt_dead", "dirt_oily", "sand_dirty", "sand_dirty_red");
+        addLegacyMineable(BlockTags.MINEABLE_WITH_PICKAXE, "stone_cracked");
         tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.FROZEN_LOG.get(), ModBlocks.FROZEN_PLANKS.get());
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
@@ -81,6 +83,15 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
             RegistryObject<? extends Block> block = ModBlocks.legacyBlock(blockName);
             if (block != null) {
                 tag(tag).add(block.get());
+            }
+        }
+    }
+
+    private void addLegacyMineable(TagKey<Block> tagKey, String... blockNames) {
+        for (String blockName : blockNames) {
+            RegistryObject<? extends Block> block = ModBlocks.legacyBlock(blockName);
+            if (block != null) {
+                tag(tagKey).add(block.get());
             }
         }
     }

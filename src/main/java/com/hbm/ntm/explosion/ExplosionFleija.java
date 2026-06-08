@@ -104,7 +104,7 @@ public class ExplosionFleija {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int y = maxY; y > minY; y--) {
             int worldY = posY + y;
-            if (worldY <= 0) {
+            if (level.isOutsideBuildHeight(worldY)) {
                 continue;
             }
 

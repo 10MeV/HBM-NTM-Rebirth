@@ -45,10 +45,8 @@ public class AssemblyFactoryMenu extends AbstractContainerMenu {
         this.blockEntity = blockEntity;
 
         addSlot(new SlotItemHandler(blockEntity.getItems(), AssemblyFactoryBlockEntity.SLOT_BATTERY, 234, 112));
-        for (int i = 0; i < 3; i++) {
-            addSlot(new SlotItemHandler(blockEntity.getItems(), AssemblyFactoryBlockEntity.SLOT_UPGRADE_START + i,
-                    214 + i * 18, 149));
-        }
+        HbmInventoryMenuHelper.addUpgradeSlots(this::addSlot, blockEntity.getItems(),
+                AssemblyFactoryBlockEntity.SLOT_UPGRADE_START, 214, 149, 1, 3);
         for (int module = 0; module < 4; module++) {
             int ox = (module % 2) * 109;
             int oy = (module / 2) * 56;

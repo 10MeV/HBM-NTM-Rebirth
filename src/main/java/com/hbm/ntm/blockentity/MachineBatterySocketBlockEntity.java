@@ -5,6 +5,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
+import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.block.MachineBatterySocketBlock;
 import com.hbm.ntm.compat.CompatEnergyControl;
@@ -93,6 +94,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
             return super.insertItem(slot, stack, simulate);
         }
     };
+    private final RORDispatcher ror;
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> sidedItemHandler = LazyOptional.of(() -> new SocketSidedItemHandler(items));
     private final SocketEnergyStorage socketEnergy;
@@ -116,6 +118,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         this.socketEnergy = energy;
         this.socketEnergy.bind(this::getBatteryStack);
         this.socketEnergy.bindSelfChargingMultiplier(() -> scPowerMult);
+        this.ror = createRorDispatcher();
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, MachineBatterySocketBlockEntity blockEntity) {
@@ -225,35 +228,40 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
 
     @Override
     public String[] getFunctionInfo() {
-        return new String[]{
-                RORInfo.PREFIX_VALUE + "fill",
-                RORInfo.PREFIX_VALUE + "fillpercent",
-                RORInfo.PREFIX_VALUE + "delta",
-                RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "mode (0-3)",
-                RORInfo.PREFIX_FUNCTION + "setmode" + RORInteractive.NAME_SEPARATOR + "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)",
-                RORInfo.PREFIX_FUNCTION + "setredmode" + RORInteractive.NAME_SEPARATOR + "mode (0-3)",
-                RORInfo.PREFIX_FUNCTION + "setredmode" + RORInteractive.NAME_SEPARATOR + "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)",
-                RORInfo.PREFIX_FUNCTION + "setpriority" + RORInteractive.NAME_SEPARATOR + "priority (0-2)"
-        };
+        return ror.getFunctionInfo();
     }
 
     @Override
     public String provideRORValue(String name) {
-        if ((RORInfo.PREFIX_VALUE + "fill").equals(name)) {
-            return Long.toString(getPower());
-        }
-        if ((RORInfo.PREFIX_VALUE + "fillpercent").equals(name)) {
-            return Long.toString(getPower() * 100L / Math.max(getMaxPower(), 1L));
-        }
-        if ((RORInfo.PREFIX_VALUE + "delta").equals(name)) {
-            return Long.toString(delta);
-        }
-        return null;
+        return ror.provideValue(name);
     }
 
     @Override
     public String runRORFunction(String name, String[] params) {
-        if ((RORInfo.PREFIX_FUNCTION + "setmode").equals(name) && params.length > 0) {
+        return ror.runFunction(name, params);
+    }
+
+    private RORDispatcher createRorDispatcher() {
+        return RORDispatcher.builder()
+                .value("fill", () -> Long.toString(getPower()))
+                .value("fillpercent", () -> {
+                    long maxPower = Math.max(getMaxPower(), 1L);
+                    long percent = (long) Math.floor((double) getPower() / (double) maxPower * 100.0D);
+                    return Long.toString(Math.max(0L, Math.min(100L, percent)));
+                })
+                .value("delta", () -> Long.toString(delta))
+                .function("setmode", this::runRorSetMode,
+                        "mode (0-3)",
+                        "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)")
+                .function("setredmode", this::runRorSetRedMode,
+                        "mode (0-3)",
+                        "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)")
+                .function("setpriority", this::runRorSetPriority, "priority (0-2)")
+                .build();
+    }
+
+    private String runRorSetMode(String[] params) {
+        if (params.length > 0) {
             short mode = (short) RORInteractive.parseInt(params[0], MODE_INPUT, MODE_NONE);
             if (mode != redLow) {
                 redLow = mode;
@@ -261,9 +269,12 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
                 redLow = (short) RORInteractive.parseInt(params[1], MODE_INPUT, MODE_NONE);
             }
             setChangedAndSync();
-            return null;
         }
-        if ((RORInfo.PREFIX_FUNCTION + "setredmode").equals(name) && params.length > 0) {
+        return null;
+    }
+
+    private String runRorSetRedMode(String[] params) {
+        if (params.length > 0) {
             short mode = (short) RORInteractive.parseInt(params[0], MODE_INPUT, MODE_NONE);
             if (mode != redHigh) {
                 redHigh = mode;
@@ -271,12 +282,14 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
                 redHigh = (short) RORInteractive.parseInt(params[1], MODE_INPUT, MODE_NONE);
             }
             setChangedAndSync();
-            return null;
         }
-        if ((RORInfo.PREFIX_FUNCTION + "setpriority").equals(name) && params.length > 0) {
+        return null;
+    }
+
+    private String runRorSetPriority(String[] params) {
+        if (params.length > 0) {
             setPriorityByLegacyOrdinal(RORInteractive.parseInt(params[0], 0, 2) + 1);
             setChangedAndSync();
-            return null;
         }
         return null;
     }

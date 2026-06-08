@@ -54,7 +54,7 @@ public final class HbmEnergyDischargeEffects {
         return new Vec3(
                 socketPos.getX() + 0.5D - facing.getStepX() * 0.5D + side.getStepX() * 0.5D,
                 socketPos.getY() + 1.0D,
-                socketPos.getZ() + 0.5D - facing.getStepZ() * 0.5D + side.getStepZ() * 0.5D);
+                socketPos.getZ() + 0.5D - facing.getStepZ() * 0.5D + side.getStepX() * 0.5D);
     }
 
     private static void dischargeArc(ServerLevel level, Vec3 origin, LivingEntity target, Vec3 targetPoint) {

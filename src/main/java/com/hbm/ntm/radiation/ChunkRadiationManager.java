@@ -3,6 +3,7 @@ package com.hbm.ntm.radiation;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModParticleTypes;
+import com.hbm.ntm.world.saveddata.WorldSavedDataHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -180,10 +181,8 @@ public final class ChunkRadiationManager {
     }
 
     private static RadiationSavedData getData(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(
-                RadiationSavedData::load,
-                RadiationSavedData::new,
-                RadiationSavedData.DATA_NAME);
+        return WorldSavedDataHelper.get(level, RadiationSavedData.DATA_NAME, RadiationSavedData::load,
+                RadiationSavedData::new);
     }
 
     private ChunkRadiationManager() {

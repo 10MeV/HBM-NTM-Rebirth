@@ -2,9 +2,15 @@
   "type": "minecraft:crafting_shapeless",
   "category": "redstone",
   "ingredients": [
-    { "item": "hbm_ntm_rebirth:fluid_duct_paintable" },
-    { "item": "hbm_ntm_rebirth:ingot_steel" },
-    { "tag": "forge:circuits/basic" }
+    {
+      "item": "hbm_ntm_rebirth:fluid_duct_paintable"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ingot_steel"
+    },
+    {
+      "tag": "forge:circuits/basic"
+    }
   ],
   "result": {
     "item": "hbm_ntm_rebirth:fluid_duct_gauge"

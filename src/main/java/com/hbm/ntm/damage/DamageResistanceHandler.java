@@ -3,9 +3,11 @@ package com.hbm.ntm.damage;
 import com.hbm.ntm.api.entity.ResistanceProvider;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.radiation.ModDamageSources;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -28,8 +30,7 @@ public final class DamageResistanceHandler {
     public static final String CATEGORY_PHYSICAL = "PHYS";
     public static final String CATEGORY_ENERGY = "EN";
 
-    private static float currentPierceDt;
-    private static float currentPierceDr;
+    private static final ThreadLocal<PierceState> CURRENT_PIERCING = ThreadLocal.withInitial(() -> PierceState.NONE);
 
     private static final Map<Item, DamageResistanceStats> ITEM_STATS = new HashMap<>();
     private static final Map<ArmorSet, DamageResistanceStats> SET_STATS = new HashMap<>();
@@ -50,30 +51,27 @@ public final class DamageResistanceHandler {
     }
 
     public static void setup(float pierceDt, float pierceDr) {
-        currentPierceDt = pierceDt;
-        currentPierceDr = pierceDr;
+        CURRENT_PIERCING.set(new PierceState(pierceDt, pierceDr));
     }
 
     public static void reset() {
-        currentPierceDt = 0.0F;
-        currentPierceDr = 0.0F;
+        CURRENT_PIERCING.set(PierceState.NONE);
     }
 
     public static PierceState capturePiercing() {
-        return new PierceState(currentPierceDt, currentPierceDr);
+        return CURRENT_PIERCING.get();
     }
 
     public static void restorePiercing(PierceState state) {
-        currentPierceDt = state.pierceDt();
-        currentPierceDr = state.pierceDr();
+        CURRENT_PIERCING.set(state == null ? PierceState.NONE : state);
     }
 
     public static float currentPierceDt() {
-        return currentPierceDt;
+        return CURRENT_PIERCING.get().pierceDt();
     }
 
     public static float currentPierceDr() {
-        return currentPierceDr;
+        return CURRENT_PIERCING.get().pierceDr();
     }
 
     public static void registerItem(Item item, DamageResistanceStats stats) {
@@ -93,7 +91,8 @@ public final class DamageResistanceHandler {
     }
 
     public static float calculateDamage(LivingEntity entity, DamageSource source, float amount) {
-        return calculateDamage(entity, source, amount, currentPierceDt, currentPierceDr);
+        PierceState piercing = CURRENT_PIERCING.get();
+        return calculateDamage(entity, source, amount, piercing.pierceDt(), piercing.pierceDr());
     }
 
     public static float calculateDamage(LivingEntity entity, DamageSource source, float amount, float pierceDt, float pierceDr) {
@@ -101,7 +100,8 @@ public final class DamageResistanceHandler {
     }
 
     public static float[] getDtDr(LivingEntity entity, DamageSource source, float amount) {
-        return getDtDr(entity, source, amount, currentPierceDt, currentPierceDr);
+        PierceState piercing = CURRENT_PIERCING.get();
+        return getDtDr(entity, source, amount, piercing.pierceDt(), piercing.pierceDr());
     }
 
     public static float[] getDtDr(LivingEntity entity, DamageSource source, float amount, float pierceDt, float pierceDr) {
@@ -110,7 +110,8 @@ public final class DamageResistanceHandler {
     }
 
     public static List<ResistanceContribution> resistanceContributions(LivingEntity entity, DamageSource source, float amount) {
-        return resistanceContributions(entity, source, amount, currentPierceDt, currentPierceDr);
+        PierceState piercing = CURRENT_PIERCING.get();
+        return resistanceContributions(entity, source, amount, piercing.pierceDt(), piercing.pierceDr());
     }
 
     public static List<ResistanceContribution> resistanceContributions(LivingEntity entity, DamageSource source, float amount,
@@ -181,7 +182,8 @@ public final class DamageResistanceHandler {
     }
 
     public static ResistanceBreakdown breakdown(LivingEntity entity, DamageSource source, float amount) {
-        return breakdown(entity, source, amount, currentPierceDt, currentPierceDr);
+        PierceState piercing = CURRENT_PIERCING.get();
+        return breakdown(entity, source, amount, piercing.pierceDt(), piercing.pierceDr());
     }
 
     public static ResistanceBreakdown breakdown(LivingEntity entity, DamageSource source, float amount, float pierceDt, float pierceDr) {
@@ -194,10 +196,45 @@ public final class DamageResistanceHandler {
         float[] vals = getDtDr(entity, source, amount, pierceDt, pierceDr);
         float rawDt = vals[0];
         float rawDr = vals[1];
+        DamageFormula formula = reduceDamage(amount, rawDt, rawDr, pierceDt, pierceDr);
+        return new ResistanceBreakdown(exactType, category, false, rawDt, rawDr,
+                formula.effectiveDt(), formula.effectiveDr(), formula.finalDamage());
+    }
+
+    public static DamageFormula reduceDamage(float amount, float rawDt, float rawDr, float pierceDt, float pierceDr) {
         float effectiveDt = Math.max(0.0F, rawDt - pierceDt);
         float effectiveDr = Mth.clamp(rawDr * Mth.clamp(1.0F - pierceDr, 0.0F, 2.0F), 0.0F, 1.0F);
         float finalDamage = effectiveDt >= amount ? 0.0F : Math.max(0.0F, (amount - effectiveDt) * (1.0F - effectiveDr));
-        return new ResistanceBreakdown(exactType, category, false, rawDt, rawDr, effectiveDt, effectiveDr, finalDamage);
+        return new DamageFormula(effectiveDt, effectiveDr, finalDamage);
+    }
+
+    public static CoreAudit coreAudit() {
+        List<String> problems = new ArrayList<>();
+        expect(problems, "physical category", CATEGORY_PHYSICAL.equals(categoryKey(DamageClass.PHYSICAL)));
+        expect(problems, "explosive category", CATEGORY_EXPLOSION.equals(categoryKey(DamageClass.EXPLOSIVE)));
+        expect(problems, "energy category", CATEGORY_ENERGY.equals(categoryKey(DamageClass.LASER)));
+        expect(problems, "combine exact alias", "cmb".equals(exactTypeKey("combine_ball")));
+        expect(problems, "subatomic exact alias", "subatomic".equals(exactTypeKey("subAtomic3")));
+        expect(problems, "registry exact alias", "cmb".equals(exactTypeKey(ModDamageSources.COMBINE_BALL)));
+        PierceState previous = capturePiercing();
+        try {
+            setup(7.0F, 0.3F);
+            expect(problems, "thread local pierce DT", nearly(currentPierceDt(), 7.0F));
+            expect(problems, "thread local pierce DR", nearly(currentPierceDr(), 0.3F));
+            reset();
+            expect(problems, "thread local pierce reset", nearly(currentPierceDt(), 0.0F) && nearly(currentPierceDr(), 0.0F));
+        } finally {
+            restorePiercing(previous);
+        }
+        DamageFormula formula = reduceDamage(10.0F, 3.0F, 0.5F, 1.0F, 0.2F);
+        expect(problems, "pierce formula DT", nearly(formula.effectiveDt(), 2.0F));
+        expect(problems, "pierce formula DR", nearly(formula.effectiveDr(), 0.4F));
+        expect(problems, "pierce formula final", nearly(formula.finalDamage(), 4.8F));
+        DamageFormula overPierce = reduceDamage(10.0F, 3.0F, 0.25F, 0.0F, -1.0F);
+        expect(problems, "negative pierce doubles DR cap path", nearly(overPierce.effectiveDr(), 0.5F));
+        DamageFormula fullAbsorb = reduceDamage(10.0F, 12.0F, 0.0F, 0.0F, 0.0F);
+        expect(problems, "DT full absorb", nearly(fullAbsorb.finalDamage(), 0.0F));
+        return new CoreAudit(List.copyOf(problems));
     }
 
     public static String typeToCategory(DamageSource source) {
@@ -299,6 +336,17 @@ public final class DamageResistanceHandler {
         return exactTypeKey(source.getMsgId());
     }
 
+    public static String exactTypeKey(ResourceKey<DamageType> type) {
+        return exactTypeKey(type.location().getPath());
+    }
+
+    @Nullable
+    public static String registryTypeKey(DamageSource source) {
+        return source.typeHolder().unwrapKey()
+                .map(DamageResistanceHandler::exactTypeKey)
+                .orElse(null);
+    }
+
     public static String exactTypeKey(String type) {
         String normalized = normalizeExactType(type);
         return EXACT_ALIASES.getOrDefault(normalized, normalized);
@@ -309,7 +357,7 @@ public final class DamageResistanceHandler {
     }
 
     public static boolean isUnblockableForLegacyResistance(DamageSource source) {
-        return source.is(DamageTypeTags.BYPASSES_ARMOR) || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
+        return source.is(DamageTypeTags.BYPASSES_ARMOR);
     }
 
     private static boolean isEnergy(DamageSource source) {
@@ -382,6 +430,16 @@ public final class DamageResistanceHandler {
         aliases.put(normalizeExactType(key), normalizeExactType(canonical));
     }
 
+    private static void expect(List<String> problems, String label, boolean ok) {
+        if (!ok) {
+            problems.add(label);
+        }
+    }
+
+    private static boolean nearly(float actual, float expected) {
+        return Math.abs(actual - expected) < 0.0001F;
+    }
+
     private static String itemId(@Nullable Item item) {
         if (item == null) {
             return "empty";
@@ -403,12 +461,35 @@ public final class DamageResistanceHandler {
         if (simple != null) {
             return new EntityStatsMatch("simpleName", entity.getClass().getSimpleName(), simple);
         }
+        EntityStatsMatch best = null;
+        int bestDistance = Integer.MAX_VALUE;
         for (Map.Entry<Class<? extends Entity>, DamageResistanceStats> entry : ENTITY_STATS.entrySet()) {
             if (entry.getKey().isAssignableFrom(entity.getClass())) {
-                return new EntityStatsMatch("assignable", entry.getKey().getName(), entry.getValue());
+                int distance = inheritanceDistance(entity.getClass(), entry.getKey());
+                if (distance < bestDistance
+                        || (distance == bestDistance && best != null && entry.getKey().getName().compareTo(best.id()) < 0)) {
+                    bestDistance = distance;
+                    best = new EntityStatsMatch("assignable", entry.getKey().getName(), entry.getValue());
+                }
             }
         }
-        return null;
+        return best;
+    }
+
+    private static int inheritanceDistance(Class<?> actual, Class<?> registered) {
+        if (actual.equals(registered)) {
+            return 0;
+        }
+        int distance = 0;
+        Class<?> current = actual;
+        while (current != null) {
+            if (current.equals(registered)) {
+                return distance;
+            }
+            current = current.getSuperclass();
+            distance++;
+        }
+        return registered.isInterface() && registered.isAssignableFrom(actual) ? distance + 100 : Integer.MAX_VALUE;
     }
 
     private record ArmorSet(Item helmet, Item chest, Item legs, Item boots) {
@@ -444,6 +525,15 @@ public final class DamageResistanceHandler {
         }
     }
 
+    public record DamageFormula(float effectiveDt, float effectiveDr, float finalDamage) {
+    }
+
+    public record CoreAudit(List<String> problems) {
+        public boolean passed() {
+            return problems.isEmpty();
+        }
+    }
+
     public record RegistrySnapshot(int itemStats, int setStats, int entityClassStats, int entitySimpleNameStats) {
         public int entityStats() {
             return entityClassStats + entitySimpleNameStats;
@@ -462,6 +552,7 @@ public final class DamageResistanceHandler {
     }
 
     public record PierceState(float pierceDt, float pierceDr) {
+        public static final PierceState NONE = new PierceState(0.0F, 0.0F);
     }
 
     private record EntityStatsMatch(String kind, String id, DamageResistanceStats stats) {

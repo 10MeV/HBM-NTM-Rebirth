@@ -1,12 +1,388 @@
 {
-  "multipart": [
-    {
-      "when": { "overlay": "true" },
-      "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay" }
+  "variants": {
+    "down=false,east=false,north=false,overlay=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
     },
-    {
-      "when": { "overlay": "false" },
-      "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust" }
+    "down=false,east=false,north=false,overlay=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=false,overlay=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=false,overlay=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=false,overlay=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=false,overlay=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=false,overlay=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=false,overlay=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=false,overlay=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=false,overlay=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=false,overlay=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=false,overlay=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=false,overlay=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=false,overlay=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=false,overlay=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=false,overlay=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=true,overlay=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=true,overlay=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=true,overlay=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=true,overlay=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=true,overlay=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=true,overlay=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=true,overlay=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=true,overlay=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=false,north=true,overlay=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=true,overlay=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=true,overlay=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=true,overlay=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=true,overlay=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=true,overlay=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=true,overlay=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=false,north=true,overlay=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=false,overlay=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=false,overlay=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=false,overlay=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=false,overlay=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=false,overlay=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=false,overlay=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=false,overlay=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=false,overlay=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=false,overlay=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=false,overlay=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=false,overlay=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=false,overlay=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=false,overlay=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=false,overlay=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=false,overlay=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=false,overlay=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=true,overlay=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=true,overlay=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=true,overlay=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=true,overlay=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=true,overlay=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=true,overlay=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=true,overlay=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=true,overlay=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=false,east=true,north=true,overlay=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=true,overlay=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=true,overlay=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=true,overlay=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=true,overlay=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=true,overlay=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=true,overlay=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=false,east=true,north=true,overlay=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=false,overlay=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=false,overlay=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=false,overlay=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=false,overlay=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=false,overlay=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=false,overlay=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=false,overlay=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=false,overlay=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=false,overlay=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=false,overlay=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=false,overlay=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=false,overlay=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=false,overlay=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=false,overlay=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=false,overlay=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=false,overlay=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=true,overlay=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=true,overlay=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=true,overlay=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=true,overlay=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=true,overlay=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=true,overlay=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=true,overlay=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=true,overlay=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=false,north=true,overlay=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=true,overlay=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=true,overlay=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=true,overlay=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=true,overlay=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=true,overlay=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=true,overlay=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=false,north=true,overlay=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=false,overlay=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=false,overlay=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=false,overlay=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=false,overlay=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=false,overlay=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=false,overlay=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=false,overlay=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=false,overlay=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=false,overlay=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=false,overlay=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=false,overlay=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=false,overlay=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=false,overlay=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=false,overlay=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=false,overlay=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=false,overlay=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=true,overlay=false,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=true,overlay=false,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=true,overlay=false,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=true,overlay=false,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=true,overlay=false,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=true,overlay=false,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=true,overlay=false,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=true,overlay=false,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+    },
+    "down=true,east=true,north=true,overlay=true,south=false,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=true,overlay=true,south=false,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=true,overlay=true,south=false,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=true,overlay=true,south=false,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=true,overlay=true,south=true,up=false,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=true,overlay=true,south=true,up=false,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=true,overlay=true,south=true,up=true,west=false": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
+    },
+    "down=true,east=true,north=true,overlay=true,south=true,up=true,west=true": {
+      "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust_overlay"
     }
-  ]
+  }
 }

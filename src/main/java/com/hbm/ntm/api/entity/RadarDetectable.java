@@ -20,7 +20,7 @@ public interface RadarDetectable {
 
     int getBlipLevel();
 
-    boolean canBeSeenBy(Object radar);
+    boolean canBeSeenBy(RadarContext radar);
 
     boolean paramsApplicable(RadarScanParams params);
 

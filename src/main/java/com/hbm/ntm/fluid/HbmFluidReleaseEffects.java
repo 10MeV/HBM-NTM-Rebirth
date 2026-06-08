@@ -3,6 +3,8 @@ package com.hbm.ntm.fluid;
 import com.hbm.ntm.fluid.trait.PollutingFluidTrait;
 import com.hbm.ntm.fluid.trait.PollutingFluidTrait.PollutionKind;
 import com.hbm.ntm.fluid.trait.VentRadiationFluidTrait;
+import com.hbm.ntm.pollution.PollutionManager;
+import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -47,12 +49,25 @@ public final class HbmFluidReleaseEffects {
                         ? pollutingTrait.getBurnPollution()
                         : pollutingTrait.getReleasePollution();
                 for (Map.Entry<PollutionKind, Float> entry : source.entrySet()) {
-                    pollution.merge(entry.getKey(), entry.getValue() * amount, Float::sum);
+                    float pollutionAmount = entry.getValue() * amount;
+                    pollution.merge(entry.getKey(), pollutionAmount, Float::sum);
+                    if (apply && pollutionAmount > 0.0F && level != null && pos != null) {
+                        PollutionManager.incrementPollution(level, pos, toPollutionType(entry.getKey()), pollutionAmount);
+                    }
                 }
             }
         }
 
         return new ReleaseReport(type, amount, release, radiation, pollution);
+    }
+
+    private static PollutionType toPollutionType(PollutionKind kind) {
+        return switch (kind) {
+            case SOOT -> PollutionType.SOOT;
+            case POISON -> PollutionType.POISON;
+            case HEAVY_METAL -> PollutionType.HEAVYMETAL;
+            case FALLOUT -> PollutionType.FALLOUT;
+        };
     }
 
     private HbmFluidReleaseEffects() {

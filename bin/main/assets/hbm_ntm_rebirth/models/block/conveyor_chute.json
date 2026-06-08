@@ -1,7 +1,6 @@
 {
-  "parent": "block/cube_all",
+  "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "hbm_ntm_rebirth:block/conveyor",
-    "particle": "hbm_ntm_rebirth:block/conveyor"
+    "all": "hbm_ntm_rebirth:block/conveyor"
   }
 }

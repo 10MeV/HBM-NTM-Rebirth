@@ -1,7 +1,5 @@
 package com.hbm.ntm.explosion;
 
-import com.hbm.ntm.config.BombConfig;
-import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.radiation.ModDamageSources;
@@ -32,6 +30,8 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.Objects;
 
 public final class ExplosionNukeGeneric {
+    private static final int STANDARD_SCHRAB_ORE_CHANCE = 100;
+
     public static void empBlast(Level level, int x, int y, int z, int bombStartStrength) {
         if (level == null || level.isClientSide() || bombStartStrength <= 0) {
             return;
@@ -330,12 +330,8 @@ public final class ExplosionNukeGeneric {
     }
 
     private static int schrabOreChance() {
-        if (RadiationConfig.ENABLE_LESS_BULLSHIT_MODE != null
-                && RadiationConfig.ENABLE_LESS_BULLSHIT_MODE.get()
-                && BombConfig.LBSM_SCHRAB_ORE_RATE != null) {
-            return Math.max(1, BombConfig.LBSM_SCHRAB_ORE_RATE.get());
-        }
-        return 100;
+        // LBSM schrab ore rate is intentionally not modernized; datapacks own gameplay reshaping.
+        return STANDARD_SCHRAB_ORE_CHANCE;
     }
 
     private static boolean isObstructed(Level level, Vec3 origin, Vec3 target) {
@@ -348,9 +344,9 @@ public final class ExplosionNukeGeneric {
             return true;
         }
         if (entity instanceof Player player) {
-            return player.isCreative() || player.isSpectator();
+            return player.isCreative();
         }
-        return !(entity instanceof LivingEntity) && !entity.isAttackable();
+        return false;
     }
 
     private static boolean isSoliniumCleared(BlockState state) {

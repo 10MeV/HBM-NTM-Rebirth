@@ -24,7 +24,13 @@ public final class HbmFluidForgeMappings {
     }
 
     public static void bootstrap() {
+        bootstrap(net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get());
+    }
+
+    public static void bootstrap(java.nio.file.Path configDir) {
         ModFluids.registerMappings();
+        resetTagAliases();
+        HbmFluidForgeAliasConfig.initialize(configDir);
     }
 
     public static void register(FluidType hbmType, Fluid forgeFluid) {
@@ -35,16 +41,26 @@ public final class HbmFluidForgeMappings {
         FROM_FORGE.put(forgeFluid, hbmType);
     }
 
+    public static void registerImportAlias(Fluid forgeFluid, FluidType hbmType) {
+        if (hbmType == null || hbmType == HbmFluids.NONE || forgeFluid == null || forgeFluid == Fluids.EMPTY) {
+            return;
+        }
+        FROM_FORGE.put(forgeFluid, hbmType);
+    }
+
+    public static void unregister(FluidType hbmType) {
+        Fluid forgeFluid = TO_FORGE.remove(hbmType);
+        if (forgeFluid != null && FROM_FORGE.get(forgeFluid) == hbmType) {
+            FROM_FORGE.remove(forgeFluid);
+        }
+    }
+
     public static void registerTagAlias(ResourceLocation tagId, FluidType hbmType) {
         if (tagId == null || hbmType == null || hbmType == HbmFluids.NONE) {
             return;
         }
         TagKey<Fluid> tag = TagKey.create(Registries.FLUID, tagId);
-        for (TagAlias alias : TAG_ALIASES) {
-            if (alias.tag().equals(tag) && alias.hbmType() == hbmType) {
-                return;
-            }
-        }
+        TAG_ALIASES.removeIf(alias -> alias.tag().equals(tag));
         TAG_ALIASES.add(new TagAlias(tag, hbmType));
     }
 
@@ -83,6 +99,15 @@ public final class HbmFluidForgeMappings {
         return TO_FORGE.containsKey(type);
     }
 
+    public static Diagnostics diagnostics() {
+        return new Diagnostics(TO_FORGE.size(), FROM_FORGE.size(), TAG_ALIASES.size());
+    }
+
+    private static void resetTagAliases() {
+        TAG_ALIASES.clear();
+        registerDefaultTagAliases();
+    }
+
     private static void registerDefaultTagAliases() {
         tagAlias("water", HbmFluids.WATER);
         tagAlias("lava", HbmFluids.LAVA);
@@ -116,6 +141,13 @@ public final class HbmFluidForgeMappings {
     }
 
     private record TagAlias(TagKey<Fluid> tag, FluidType hbmType) {
+    }
+
+    public record Diagnostics(int exportMappings, int importMappings, int tagAliases) {
+        public String summary() {
+            return "Forge fluid mappings export=" + exportMappings + " import=" + importMappings
+                    + " tagAliases=" + tagAliases;
+        }
     }
 
     private HbmFluidForgeMappings() {

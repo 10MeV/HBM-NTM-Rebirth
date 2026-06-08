@@ -1,6 +1,5 @@
 {
   "textures": {
     "particle": "hbm_ntm_rebirth:block/legacy_blocks/cable_neo"
-  },
-  "elements": []
+  }
 }

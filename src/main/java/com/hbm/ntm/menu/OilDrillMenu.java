@@ -18,7 +18,6 @@ import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.SlotItemHandler;
 
 public class OilDrillMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = OilDrillBlockEntity.ITEM_COUNT;
@@ -39,19 +38,14 @@ public class OilDrillMenu extends AbstractContainerMenu {
         super(ModMenuTypes.OIL_DRILL.get(), containerId);
         this.blockEntity = blockEntity;
         ItemStackHandler items = blockEntity.getItems();
-        addSlot(new SlotItemHandler(items, OilDrillBlockEntity.SLOT_BATTERY, 8, 53) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return HbmInventoryMenuHelper.isBatteryLike(stack);
-            }
-        });
-        addSlot(new SlotItemHandler(items, OilDrillBlockEntity.SLOT_OIL_CONTAINER, 80, 17));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_BATTERY, 8, 53));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_OIL_CONTAINER, 80, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(items, OilDrillBlockEntity.SLOT_OIL_CONTAINER_OUTPUT, 80, 53));
-        addSlot(new SlotItemHandler(items, OilDrillBlockEntity.SLOT_GAS_CONTAINER, 125, 17));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_GAS_CONTAINER, 125, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(items, OilDrillBlockEntity.SLOT_GAS_CONTAINER_OUTPUT, 125, 53));
-        addSlot(upgradeSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_START, 152, 17));
-        addSlot(upgradeSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_START + 1, 152, 35));
-        addSlot(upgradeSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_END, 152, 53));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_START, 152, 17));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_START + 1, 152, 35));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_END, 152, 53));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
         addDataSlots();
     }
@@ -96,11 +90,36 @@ public class OilDrillMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                OilDrillBlockEntity.SLOT_UPGRADE_START, OilDrillBlockEntity.SLOT_UPGRADE_END + 1,
-                OilDrillBlockEntity.SLOT_BATTERY, OilDrillBlockEntity.SLOT_OIL_CONTAINER_OUTPUT,
-                OilDrillBlockEntity.SLOT_GAS_CONTAINER, OilDrillBlockEntity.SLOT_GAS_CONTAINER_OUTPUT);
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        var slot = slots.get(index);
+        if (slot == null || !slot.hasItem()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack stack = slot.getItem();
+        ItemStack result = stack.copy();
+        boolean moved;
+        if (index < MACHINE_SLOT_COUNT) {
+            moved = moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true);
+        } else if (stack.getItem() instanceof ItemMachineUpgrade) {
+            moved = moveItemStackTo(stack, OilDrillBlockEntity.SLOT_UPGRADE_START,
+                    OilDrillBlockEntity.SLOT_UPGRADE_END + 1, true);
+        } else {
+            moved = HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    OilDrillBlockEntity.SLOT_BATTERY, OilDrillBlockEntity.SLOT_OIL_CONTAINER_OUTPUT,
+                    OilDrillBlockEntity.SLOT_GAS_CONTAINER, OilDrillBlockEntity.SLOT_GAS_CONTAINER_OUTPUT);
+        }
+        if (!moved) {
+            return ItemStack.EMPTY;
+        }
+        if (stack.isEmpty()) {
+            slot.set(ItemStack.EMPTY);
+        } else {
+            slot.setChanged();
+        }
+        return result;
     }
 
     private void addDataSlots() {
@@ -118,15 +137,6 @@ public class OilDrillMenu extends AbstractContainerMenu {
             }
         });
         blockEntity.getAllTanks().forEach(tank -> tanks.add(HbmFluidGuiHelper.watchTank(this::addDataSlot, tank)));
-    }
-
-    private static SlotItemHandler upgradeSlot(ItemStackHandler items, int slot, int x, int y) {
-        return new SlotItemHandler(items, slot, x, y) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof ItemMachineUpgrade;
-            }
-        };
     }
 
     private static OilDrillBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

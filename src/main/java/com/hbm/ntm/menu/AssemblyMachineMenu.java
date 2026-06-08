@@ -43,8 +43,8 @@ public class AssemblyMachineMenu extends AbstractContainerMenu {
 
         addSlot(new SlotItemHandler(blockEntity.getItems(), AssemblyMachineBlockEntity.SLOT_BATTERY, 152, 81));
         addSlot(new SlotItemHandler(blockEntity.getItems(), AssemblyMachineBlockEntity.SLOT_BLUEPRINT, 35, 126));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), AssemblyMachineBlockEntity.SLOT_UPGRADE_START, 152, 108));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), AssemblyMachineBlockEntity.SLOT_UPGRADE_END, 152, 126));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), AssemblyMachineBlockEntity.SLOT_UPGRADE_START, 152, 108));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), AssemblyMachineBlockEntity.SLOT_UPGRADE_END, 152, 126));
         for (int row = 0; row < 4; row++) {
             for (int column = 0; column < 3; column++) {
                 int slot = AssemblyMachineBlockEntity.SLOT_INPUT_START + column + row * 3;

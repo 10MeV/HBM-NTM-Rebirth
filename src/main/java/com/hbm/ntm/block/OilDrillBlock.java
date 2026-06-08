@@ -71,11 +71,17 @@ public class OilDrillBlock extends LegacyVisibleMultiblockMachineBlock {
         if (type != ModBlockEntities.OIL_DRILL.get()) {
             return null;
         }
-        return (tickLevel, tickPos, tickState, blockEntity) -> {
-            if (blockEntity instanceof OilDrillBlockEntity drill) {
-                OilDrillBlockEntity.serverTick(tickLevel, tickPos, tickState, drill);
-            }
-        };
+        return level.isClientSide
+                ? (tickLevel, tickPos, tickState, blockEntity) -> {
+                    if (blockEntity instanceof OilDrillBlockEntity drill) {
+                        OilDrillBlockEntity.clientTick(tickLevel, tickPos, tickState, drill);
+                    }
+                }
+                : (tickLevel, tickPos, tickState, blockEntity) -> {
+                    if (blockEntity instanceof OilDrillBlockEntity drill) {
+                        OilDrillBlockEntity.serverTick(tickLevel, tickPos, tickState, drill);
+                    }
+                };
     }
 
     @Override

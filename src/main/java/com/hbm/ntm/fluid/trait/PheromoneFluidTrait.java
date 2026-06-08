@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid.trait;
 
+import com.google.gson.JsonObject;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -22,5 +23,10 @@ public class PheromoneFluidTrait extends FluidTrait {
         } else {
             info.add(Component.literal("[Modified Pheromones]").withStyle(ChatFormatting.BLUE));
         }
+    }
+
+    @Override
+    public void writeJson(JsonObject object) {
+        object.addProperty("type", type);
     }
 }

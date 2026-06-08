@@ -1,1 +1,3 @@
-{ "parent": "hbm_ntm_rebirth:block/frozen_grass" }
+{
+  "parent": "hbm_ntm_rebirth:block/frozen_grass"
+}

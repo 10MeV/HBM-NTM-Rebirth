@@ -1,1 +1,7 @@
-{ "variants": { "": { "model": "hbm_ntm_rebirth:block/mud_block" } } }
+{
+  "variants": {
+    "": {
+      "model": "hbm_ntm_rebirth:block/mud_block"
+    }
+  }
+}

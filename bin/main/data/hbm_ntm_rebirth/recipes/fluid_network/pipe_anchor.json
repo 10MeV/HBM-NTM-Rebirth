@@ -2,8 +2,12 @@
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
   "key": {
-    "P": { "item": "hbm_ntm_rebirth:pipes_steel" },
-    "S": { "item": "hbm_ntm_rebirth:ingot_steel" }
+    "P": {
+      "item": "hbm_ntm_rebirth:pipes_steel"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:ingot_steel"
+    }
   },
   "pattern": [
     "P",

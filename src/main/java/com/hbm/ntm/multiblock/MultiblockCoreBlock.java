@@ -6,12 +6,22 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Marker for blocks that own dummy blocks placed by {@link MultiblockHelper}.
  */
 public interface MultiblockCoreBlock {
+    @Nullable
+    default LegacyMultiblockLayout getMultiblockLayout(BlockState state, BlockGetter level, BlockPos corePos) {
+        return null;
+    }
+
     default boolean ownsMultiblockDummy(BlockState state, BlockGetter level, BlockPos corePos, BlockPos dummyPos) {
+        LegacyMultiblockLayout layout = getMultiblockLayout(state, level, corePos);
+        if (layout != null) {
+            return layout.containsOffset(dummyPos.subtract(corePos));
+        }
         return true;
     }
 

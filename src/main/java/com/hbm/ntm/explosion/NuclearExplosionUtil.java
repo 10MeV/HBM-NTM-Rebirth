@@ -195,7 +195,7 @@ public final class NuclearExplosionUtil {
     }
 
     private static boolean add(Level level, Entity entity) {
-        if (level == null || level.isClientSide() || entity == null) {
+        if (level == null || level.isClientSide() || entity == null || entity.isRemoved()) {
             return false;
         }
         return level.addFreshEntity(entity);

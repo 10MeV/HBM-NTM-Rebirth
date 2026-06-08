@@ -1,15 +1,12 @@
 package com.hbm.ntm.compat;
 
-import com.hbm.ntm.api.tile.InfoProviderEC;
 import com.hbm.ntm.api.tile.HeatSource;
-import com.hbm.ntm.blockentity.HbmFluidBlockEntity;
+import com.hbm.ntm.api.tile.InfoProviderEC;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
-import com.hbm.ntm.multiblock.MultiblockHelper;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -73,20 +70,23 @@ public final class CompatEnergyControl {
         if (needed <= 0.0D || stack.isEmpty() || !(stack.getItem() instanceof HbmBatteryItem battery)) {
             return 0.0D;
         }
-        long requested = Math.min(battery.getDischargeRate(stack), Math.min(battery.getCharge(stack), (long) Math.min(needed, Long.MAX_VALUE)));
+        long requested = Math.min(battery.getDischargeRate(stack),
+                Math.min(battery.getCharge(stack), (long) Math.min(needed, Long.MAX_VALUE)));
         return battery.dischargeBattery(stack, requested);
     }
 
     public static void getEnergyData(BlockEntity blockEntity, CompoundTag data) {
         data.putString(KEY_EUTYPE, "HE");
-        if (blockEntity instanceof HbmEnergyHandler handler) {
+        BlockEntity resolved = findTileEntity(blockEntity);
+        if (resolved instanceof HbmEnergyHandler handler) {
             data.putLong(L_ENERGY_HE, handler.getPower());
             data.putLong(L_CAPACITY_HE, handler.getMaxPower());
         }
     }
 
     public static void getExtraData(BlockEntity blockEntity, CompoundTag data) {
-        if (blockEntity instanceof InfoProviderEC provider) {
+        BlockEntity resolved = findTileEntity(blockEntity);
+        if (resolved instanceof InfoProviderEC provider) {
             provider.provideExtraInfo(data);
         }
     }
@@ -96,35 +96,73 @@ public final class CompatEnergyControl {
         return resolved instanceof HeatSource heatSource ? heatSource.getHeatStored() : -1;
     }
 
+    /**
+     * Returns legacy EnergyControl tank rows: [fluidName, fill, capacity].
+     */
     public static List<Object[]> getAllTanks(BlockEntity blockEntity) {
-        BlockEntity resolved = findTileEntity(blockEntity);
-        if (!(resolved instanceof HbmFluidBlockEntity fluidBlockEntity)) {
-            return null;
-        }
-        List<Object[]> list = new ArrayList<>();
-        for (HbmFluidTank tank : fluidBlockEntity.getAllTanks()) {
-            FluidType type = tank.getTankType();
-            if (type == HbmFluids.NONE || tank.getFill() <= 0) {
-                continue;
-            }
-            list.add(toFluidInfo(tank));
-        }
+        List<Object[]> list = CompatExternal.getAllTanks(blockEntity).stream()
+                .filter(tank -> tank.getTankType() != HbmFluids.NONE)
+                .filter(tank -> tank.getFill() > 0)
+                .map(CompatEnergyControl::toFluidInfo)
+                .toList();
         return list.isEmpty() ? null : list;
     }
 
+    /**
+     * Returns all EnergyControl tank rows, including empty tanks.
+     */
+    public static List<Object[]> getAllTanks(BlockEntity blockEntity, boolean includeEmpty) {
+        if (!includeEmpty) {
+            return getAllTanks(blockEntity);
+        }
+        List<Object[]> list = CompatExternal.getAllTanks(blockEntity).stream()
+                .filter(tank -> tank.getTankType() != HbmFluids.NONE)
+                .map(CompatEnergyControl::toFluidInfo)
+                .toList();
+        return list.isEmpty() ? null : list;
+    }
+
+    /**
+     * Returns legacy CompatExternal fluid rows: [fluidName, fluidId, color, fill, capacity].
+     */
+    public static List<Object[]> getExternalFluidInfo(BlockEntity blockEntity, boolean includeEmpty) {
+        List<Object[]> list = CompatExternal.getFluidInfoFromTile(blockEntity).stream()
+                .filter(row -> includeEmpty || (row.length >= 4 && row[3] instanceof Integer fill && fill > 0))
+                .toList();
+        return list.isEmpty() ? null : list;
+    }
+
+    public static boolean hasEnergy(BlockEntity blockEntity) {
+        return findTileEntity(blockEntity) instanceof HbmEnergyHandler;
+    }
+
+    public static boolean hasTanks(BlockEntity blockEntity) {
+        return !CompatExternal.getAllTanks(blockEntity).isEmpty();
+    }
+
+    public static long getBufferedPower(BlockEntity blockEntity) {
+        return CompatExternal.getBufferedPowerFromTile(blockEntity);
+    }
+
+    public static long getMaxPower(BlockEntity blockEntity) {
+        return CompatExternal.getMaxPowerFromTile(blockEntity);
+    }
+
+    public static int getEnergyPriority(BlockEntity blockEntity) {
+        return CompatExternal.getEnergyPriorityFromTile(blockEntity);
+    }
+
     private static Object[] toFluidInfo(HbmFluidTank tank) {
-        return new Object[]{tank.getTankType().getName(), tank.getFill(), tank.getMaxFill()};
+        FluidType type = tank.getTankType();
+        return new Object[]{type.getName(), tank.getFill(), tank.getMaxFill()};
     }
 
     public static BlockEntity findTileEntity(BlockEntity blockEntity) {
-        if (blockEntity == null) {
-            return null;
-        }
-        return MultiblockHelper.resolveCoreBlockEntity(blockEntity);
+        return CompatExternal.getCoreFromTile(blockEntity);
     }
 
     public static BlockEntity findTileEntity(Level level, BlockPos pos) {
-        return level == null || pos == null ? null : MultiblockHelper.resolveCoreBlockEntity(level, pos);
+        return CompatExternal.getCoreFromPos(level, pos);
     }
 
     public static ResourceLocation getFluidTexture(String name) {

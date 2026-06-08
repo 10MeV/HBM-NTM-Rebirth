@@ -1,6 +1,7 @@
 package com.hbm.ntm.datagen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.block.CableDiodeBlock;
 import com.hbm.ntm.block.FluidDuctGaugeBlock;
 import com.hbm.ntm.block.FluidDuctPaintableBlock;
 import com.hbm.ntm.block.FluidPipeAnchorBlock;
@@ -10,6 +11,7 @@ import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
+import com.hbm.ntm.block.PoweredRedCableBlock;
 import com.hbm.ntm.block.RedCableGaugeBlock;
 import com.hbm.ntm.block.conveyor.ConveyorBlock;
 import com.hbm.ntm.registry.ModBlocks;
@@ -68,6 +70,9 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "decon_side");
         redCableWithItem();
         redCableGaugeWithItem();
+        poweredRedCableWithItem(ModBlocks.CABLE_SWITCH, "cable_switch_off", "cable_switch_on");
+        poweredRedCableWithItem(ModBlocks.CABLE_DETECTOR, "cable_detector_off", "cable_detector_on");
+        cableDiodeWithItem();
         fluidPipeWithItem();
         fluidDuctBoxWithItem(ModBlocks.FLUID_DUCT_BOX, "boxduct_silver");
         fluidDuctGaugeWithItem();
@@ -99,6 +104,17 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "battery_side_alt",
                 "battery_side_alt");
         existingModelWithCustomItem(ModBlocks.MACHINE_BATTERY_SOCKET, "machines/battery_socket_socket");
+        existingModelWithCustomItem(ModBlocks.MACHINE_RADAR, "machines/radar");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADAR_LARGE, "machines/radar_large");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADAR_SCREEN, "machines/radar_screen");
+        simpleSidedCubeWithItem(ModBlocks.MACHINE_SATLINKER,
+                "machine_satlinker_side",
+                "machine_satlinker_top",
+                "machine_satlinker_side",
+                "machine_satlinker_side",
+                "machine_satlinker_side",
+                "machine_satlinker_side");
+        visibleMachineWithItemRenderer(ModBlocks.SAT_DOCK, "utility/sat_dock");
         existingModelBlockOnly(ModBlocks.MACHINE_ASSEMBLY_MACHINE, "machine_assembly_machine");
         customBlockItem(ModBlocks.MACHINE_ASSEMBLY_MACHINE);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CHEMICAL_PLANT, "machines/chemical_plant");
@@ -154,6 +170,11 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.GAS_ASBESTOS, "gas_asbestos");
         simpleCubeWithItem(ModBlocks.GAS_COAL, "gas_coal");
         simpleCubeWithItem(ModBlocks.CHLORINE_GAS, "chlorine_gas");
+        simpleCubeWithItem("dirt_dead", "dirt_dead");
+        simpleCubeWithItem("dirt_oily", "dirt_oily");
+        simpleCubeWithItem("sand_dirty", "sand_dirty");
+        simpleCubeWithItem("sand_dirty_red", "sand_dirty_red");
+        simpleCubeWithItem("stone_cracked", "stone_cracked");
         radAbsorberWithItem();
         simpleCubeWithItem(ModBlocks.DUMMY_BLOCK, "block_steel");
         wasteLogWithItem();
@@ -411,6 +432,47 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                     .end();
         }
         simpleBlockItem(ModBlocks.RED_CABLE_GAUGE.get(), models[Direction.NORTH.ordinal()]);
+    }
+
+    private void poweredRedCableWithItem(RegistryObject<Block> block, String offTexture, String onTexture) {
+        ModelFile off = models().cubeAll(block.getId().getPath() + "_off",
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + offTexture));
+        ModelFile on = models().cubeAll(block.getId().getPath() + "_on",
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + onTexture));
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(state.getValue(PoweredRedCableBlock.ACTIVE) ? on : off)
+                        .build());
+        simpleBlockItem(block.get(), off);
+    }
+
+    private void cableDiodeWithItem() {
+        ModelFile model = models().cubeAll(ModBlocks.CABLE_DIODE.getId().getPath(),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/cable_diode"));
+        getVariantBuilder(ModBlocks.CABLE_DIODE.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .rotationX(rotationX(state.getValue(CableDiodeBlock.FACING)))
+                        .rotationY(rotationY(state.getValue(CableDiodeBlock.FACING)))
+                        .build());
+        simpleBlockItem(ModBlocks.CABLE_DIODE.get(), model);
+    }
+
+    private static int rotationX(Direction direction) {
+        return switch (direction) {
+            case DOWN -> 180;
+            case NORTH, SOUTH, EAST, WEST -> 90;
+            case UP -> 0;
+        };
+    }
+
+    private static int rotationY(Direction direction) {
+        return switch (direction) {
+            case NORTH -> 180;
+            case SOUTH, UP, DOWN -> 0;
+            case WEST -> 90;
+            case EAST -> 270;
+        };
     }
 
     private void fluidPipeWithItem() {

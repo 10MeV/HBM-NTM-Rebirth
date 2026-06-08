@@ -1,5 +1,6 @@
 package com.hbm.ntm.energy;
 
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 
 public class HbmCreativeBatteryItem extends HbmBatteryItem {
@@ -28,6 +29,11 @@ public class HbmCreativeBatteryItem extends HbmBatteryItem {
     @Override
     public long dischargeBattery(ItemStack stack, long amount) {
         return Math.max(0L, Math.min(amount, getDischargeRate(stack)));
+    }
+
+    @Override
+    public void addCreativeStacks(CreativeModeTab.Output output, ItemStack stack) {
+        output.accept(stack);
     }
 
     @Override

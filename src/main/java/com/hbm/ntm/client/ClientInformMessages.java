@@ -1,5 +1,6 @@
 package com.hbm.ntm.client;
 
+import com.hbm.ntm.config.HbmClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -31,7 +32,19 @@ public final class ClientInformMessages {
 
         long now = System.currentTimeMillis();
         Font font = Minecraft.getInstance().font;
-        int y = height - 72;
+        int longest = 0;
+        for (Notice notice : NOTICES.values()) {
+            longest = Math.max(longest, font.width(notice.message));
+        }
+
+        int mode = HbmClientConfig.infoPosition();
+        int x = switch (mode) {
+            case 1 -> width - longest - 15;
+            case 2 -> width / 2 + 7;
+            case 3 -> width / 2 - longest - 6;
+            default -> 15;
+        } + HbmClientConfig.INFO_OFFSET_HORIZONTAL.get();
+        int y = (mode == 0 || mode == 1 ? 15 : height / 2 + 7) + HbmClientConfig.INFO_OFFSET_VERTICAL.get();
 
         Iterator<Map.Entry<Integer, Notice>> iterator = NOTICES.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -41,9 +54,8 @@ public final class ClientInformMessages {
                 continue;
             }
 
-            int x = (width - font.width(notice.message)) / 2;
             graphics.drawString(font, notice.message, x, y, 0xFFFFFF, true);
-            y -= 10;
+            y += 10;
         }
     }
 

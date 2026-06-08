@@ -80,344 +80,344 @@
       "present": [
         {
           "internal_name": "chem.hydrogen",
-          "modern_id": "hbm:chemical_plant/hydrogen",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/hydrogen",
           "modern_source_order": 0,
           "source_order": 0
         },
         {
           "internal_name": "chem.hydrogencoke",
-          "modern_id": "hbm:chemical_plant/hydrogencoke",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/hydrogencoke",
           "modern_source_order": 1,
           "source_order": 1
         },
         {
           "internal_name": "chem.oxygen",
-          "modern_id": "hbm:chemical_plant/oxygen",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/oxygen",
           "modern_source_order": 2,
           "source_order": 2
         },
         {
           "internal_name": "chem.xenon",
-          "modern_id": "hbm:chemical_plant/xenon",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/xenon",
           "modern_source_order": 3,
           "source_order": 3
         },
         {
           "internal_name": "chem.xenonoxy",
-          "modern_id": "hbm:chemical_plant/xenonoxy",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/xenonoxy",
           "modern_source_order": 4,
           "source_order": 4
         },
         {
           "internal_name": "chem.co2",
-          "modern_id": "hbm:chemical_plant/co2",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/co2",
           "modern_source_order": 6,
           "source_order": 6
         },
         {
           "internal_name": "chem.perfluoromethyl",
-          "modern_id": "hbm:chemical_plant/perfluoromethyl",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/perfluoromethyl",
           "modern_source_order": 7,
           "source_order": 7
         },
         {
           "internal_name": "chem.cccentrifuge",
-          "modern_id": "hbm:chemical_plant/cccentrifuge",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/cccentrifuge",
           "modern_source_order": 8,
           "source_order": 8
         },
         {
           "internal_name": "chem.ethanol",
-          "modern_id": "hbm:chemical_plant/ethanol",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/ethanol",
           "modern_source_order": 9,
           "source_order": 9
         },
         {
           "internal_name": "chem.biogas",
-          "modern_id": "hbm:chemical_plant/biogas",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/biogas",
           "modern_source_order": 10,
           "source_order": 10
         },
         {
           "internal_name": "chem.biofuel",
-          "modern_id": "hbm:chemical_plant/biofuel",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/biofuel",
           "modern_source_order": 11,
           "source_order": 11
         },
         {
           "internal_name": "chem.reoil",
-          "modern_id": "hbm:chemical_plant/reoil",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/reoil",
           "modern_source_order": 12,
           "source_order": 12
         },
         {
           "internal_name": "chem.gasoline",
-          "modern_id": "hbm:chemical_plant/gasoline",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/gasoline",
           "modern_source_order": 13,
           "source_order": 13
         },
         {
           "internal_name": "chem.coallube",
-          "modern_id": "hbm:chemical_plant/coallube",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/coallube",
           "modern_source_order": 14,
           "source_order": 14
         },
         {
           "internal_name": "chem.heavylube",
-          "modern_id": "hbm:chemical_plant/heavylube",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/heavylube",
           "modern_source_order": 15,
           "source_order": 15
         },
         {
           "internal_name": "chem.tarsand",
-          "modern_id": "hbm:chemical_plant/tarsand",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/tarsand",
           "modern_source_order": 16,
           "source_order": 16
         },
         {
           "internal_name": "chem.tel",
-          "modern_id": "hbm:chemical_plant/tel",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/tel",
           "modern_source_order": 17,
           "source_order": 17
         },
         {
           "internal_name": "chem.deicer",
-          "modern_id": "hbm:chemical_plant/deicer",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/deicer",
           "modern_source_order": 18,
           "source_order": 18
         },
         {
           "internal_name": "chem.cobble",
-          "modern_id": "hbm:chemical_plant/cobble",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/cobble",
           "modern_source_order": 19,
           "source_order": 19
         },
         {
           "internal_name": "chem.stone",
-          "modern_id": "hbm:chemical_plant/stone",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/stone",
           "modern_source_order": 20,
           "source_order": 20
         },
         {
           "internal_name": "chem.obsidian",
-          "modern_id": "hbm:chemical_plant/obsidian",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/obsidian",
           "modern_source_order": 21,
           "source_order": 21
         },
         {
           "internal_name": "chem.aggregate",
-          "modern_id": "hbm:chemical_plant/aggregate",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/aggregate",
           "modern_source_order": 22,
           "source_order": 22
         },
         {
           "internal_name": "chem.concrete",
-          "modern_id": "hbm:chemical_plant/concrete",
-          "modern_source_order": 21,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/concrete",
+          "modern_source_order": 23,
           "source_order": 23
         },
         {
           "internal_name": "chem.concreteasbestos",
-          "modern_id": "hbm:chemical_plant/concreteasbestos",
-          "modern_source_order": 22,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/concreteasbestos",
+          "modern_source_order": 24,
           "source_order": 24
         },
         {
           "internal_name": "chem.ducrete",
-          "modern_id": "hbm:chemical_plant/ducrete",
-          "modern_source_order": 23,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/ducrete",
+          "modern_source_order": 25,
           "source_order": 25
         },
         {
           "internal_name": "chem.liquidconk",
-          "modern_id": "hbm:chemical_plant/liquidconk",
-          "modern_source_order": 24,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/liquidconk",
+          "modern_source_order": 26,
           "source_order": 26
         },
         {
           "internal_name": "chem.asphalt",
-          "modern_id": "hbm:chemical_plant/asphalt",
-          "modern_source_order": 25,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/asphalt",
+          "modern_source_order": 27,
           "source_order": 27
         },
         {
           "internal_name": "chem.batterylead",
-          "modern_id": "hbm:chemical_plant/batterylead",
-          "modern_source_order": 26,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/batterylead",
+          "modern_source_order": 28,
           "source_order": 28
         },
         {
           "internal_name": "chem.batterylithium",
-          "modern_id": "hbm:chemical_plant/batterylithium",
-          "modern_source_order": 27,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/batterylithium",
+          "modern_source_order": 29,
           "source_order": 29
         },
         {
           "internal_name": "chem.batterysodium",
-          "modern_id": "hbm:chemical_plant/batterysodium",
-          "modern_source_order": 28,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/batterysodium",
+          "modern_source_order": 30,
           "source_order": 30
         },
         {
           "internal_name": "chem.batteryschrabidium",
-          "modern_id": "hbm:chemical_plant/batteryschrabidium",
-          "modern_source_order": 29,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/batteryschrabidium",
+          "modern_source_order": 31,
           "source_order": 31
         },
         {
           "internal_name": "chem.batteryquantum",
-          "modern_id": "hbm:chemical_plant/batteryquantum",
-          "modern_source_order": 30,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/batteryquantum",
+          "modern_source_order": 32,
           "source_order": 32
         },
         {
           "internal_name": "chem.polymer",
-          "modern_id": "hbm:chemical_plant/polymer",
-          "modern_source_order": 33,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/polymer",
+          "modern_source_order": 35,
           "source_order": 35
         },
         {
           "internal_name": "chem.bakelite",
-          "modern_id": "hbm:chemical_plant/bakelite",
-          "modern_source_order": 34,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/bakelite",
+          "modern_source_order": 36,
           "source_order": 36
         },
         {
           "internal_name": "chem.rubber",
-          "modern_id": "hbm:chemical_plant/rubber",
-          "modern_source_order": 35,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/rubber",
+          "modern_source_order": 37,
           "source_order": 37
         },
         {
           "internal_name": "chem.hardplastic",
-          "modern_id": "hbm:chemical_plant/hardplastic",
-          "modern_source_order": 36,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/hardplastic",
+          "modern_source_order": 38,
           "source_order": 38
         },
         {
           "internal_name": "chem.pvc",
-          "modern_id": "hbm:chemical_plant/pvc",
-          "modern_source_order": 37,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/pvc",
+          "modern_source_order": 39,
           "source_order": 39
         },
         {
           "internal_name": "chem.kevlar",
-          "modern_id": "hbm:chemical_plant/kevlar",
-          "modern_source_order": 38,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/kevlar",
+          "modern_source_order": 40,
           "source_order": 40
         },
         {
           "internal_name": "chem.epearl",
-          "modern_id": "hbm:chemical_plant/epearl",
-          "modern_source_order": 40,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/epearl",
+          "modern_source_order": 42,
           "source_order": 42
         },
         {
           "internal_name": "chem.rustysteel",
-          "modern_id": "hbm:chemical_plant/rustysteel",
-          "modern_source_order": 42,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/rustysteel",
+          "modern_source_order": 44,
           "source_order": 44
         },
         {
           "internal_name": "chem.biosolidfuel",
-          "modern_id": "hbm:chemical_plant/biosolidfuel",
-          "modern_source_order": 43,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/biosolidfuel",
+          "modern_source_order": 45,
           "source_order": 45
         },
         {
           "internal_name": "chem.biooilsolidfuel",
-          "modern_id": "hbm:chemical_plant/biooilsolidfuel",
-          "modern_source_order": 44,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/biooilsolidfuel",
+          "modern_source_order": 46,
           "source_order": 46
         },
         {
           "internal_name": "chem.peroxide",
-          "modern_id": "hbm:chemical_plant/peroxide",
-          "modern_source_order": 47,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/peroxide",
+          "modern_source_order": 49,
           "source_order": 49
         },
         {
           "internal_name": "chem.sulfuricacid",
-          "modern_id": "hbm:chemical_plant/sulfuricacid",
-          "modern_source_order": 48,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/sulfuricacid",
+          "modern_source_order": 50,
           "source_order": 50
         },
         {
           "internal_name": "chem.nitricacid",
-          "modern_id": "hbm:chemical_plant/nitricacid",
-          "modern_source_order": 49,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/nitricacid",
+          "modern_source_order": 51,
           "source_order": 51
         },
         {
           "internal_name": "chem.birkeland",
-          "modern_id": "hbm:chemical_plant/birkeland",
-          "modern_source_order": 50,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/birkeland",
+          "modern_source_order": 52,
           "source_order": 52
         },
         {
           "internal_name": "chem.schrabidic",
-          "modern_id": "hbm:chemical_plant/schrabidic",
-          "modern_source_order": 51,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/schrabidic",
+          "modern_source_order": 53,
           "source_order": 53
         },
         {
           "internal_name": "chem.schrabidate",
-          "modern_id": "hbm:chemical_plant/schrabidate",
-          "modern_source_order": 52,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/schrabidate",
+          "modern_source_order": 54,
           "source_order": 54
         },
         {
           "internal_name": "chem.coltanpain",
-          "modern_id": "hbm:chemical_plant/coltanpain",
-          "modern_source_order": 54,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/coltanpain",
+          "modern_source_order": 56,
           "source_order": 56
         },
         {
           "internal_name": "chem.rocketfuel",
-          "modern_id": "hbm:chemical_plant/rocketfuel",
-          "modern_source_order": 57,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/rocketfuel",
+          "modern_source_order": 59,
           "source_order": 59
         },
         {
           "internal_name": "chem.napalm",
-          "modern_id": "hbm:chemical_plant/napalm",
-          "modern_source_order": 58,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/napalm",
+          "modern_source_order": 64,
           "source_order": 64
         },
         {
           "internal_name": "chem.yellowcake",
-          "modern_id": "hbm:chemical_plant/yellowcake",
-          "modern_source_order": 64,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/yellowcake",
+          "modern_source_order": 67,
           "source_order": 67
         },
         {
           "internal_name": "chem.uf6",
-          "modern_id": "hbm:chemical_plant/uf6",
-          "modern_source_order": 65,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/uf6",
+          "modern_source_order": 68,
           "source_order": 68
         },
         {
           "internal_name": "chem.puf6",
-          "modern_id": "hbm:chemical_plant/puf6",
-          "modern_source_order": 66,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/puf6",
+          "modern_source_order": 69,
           "source_order": 69
         },
         {
           "internal_name": "chem.sas3",
-          "modern_id": "hbm:chemical_plant/sas3",
-          "modern_source_order": 67,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/sas3",
+          "modern_source_order": 70,
           "source_order": 70
         },
         {
           "internal_name": "chem.dhc",
-          "modern_id": "hbm:chemical_plant/dhc",
-          "modern_source_order": 69,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/dhc",
+          "modern_source_order": 72,
           "source_order": 72
         },
         {
           "internal_name": "chem.osmiridiumdeath",
-          "modern_id": "hbm:chemical_plant/osmiridiumdeath",
-          "modern_source_order": 70,
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/osmiridiumdeath",
+          "modern_source_order": 73,
           "source_order": 73
         }
       ],
@@ -430,34 +430,6 @@
       "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/AssemblyMachineRecipes.java",
       "machine": "assembly_machine",
       "missing": [
-        {
-          "internal_name": "ass.chip",
-          "source_order": 29
-        },
-        {
-          "internal_name": "ass.chipBismoid",
-          "source_order": 30
-        },
-        {
-          "internal_name": "ass.chipQuantum",
-          "source_order": 31
-        },
-        {
-          "internal_name": "ass.atomicClock",
-          "source_order": 32
-        },
-        {
-          "internal_name": "ass.analogAlt",
-          "source_order": 33
-        },
-        {
-          "internal_name": "ass.factorioChip",
-          "source_order": 34
-        },
-        {
-          "internal_name": "ass.atomicClockAlt",
-          "source_order": 35
-        },
         {
           "internal_name": "ass.sealframe",
           "source_order": 52
@@ -757,10 +729,6 @@
         {
           "internal_name": "ass.hpcondenser",
           "source_order": 138
-        },
-        {
-          "internal_name": "ass.tank",
-          "source_order": 144
         },
         {
           "internal_name": "ass.bigasstank",
@@ -1519,389 +1487,437 @@
           "source_order": 334
         }
       ],
-      "missing_count": 272,
-      "modern_count": 337,
+      "missing_count": 264,
+      "modern_count": 345,
       "present": [
         {
           "internal_name": "ass.plateiron",
-          "modern_id": "hbm:assembly_machine/plate_iron",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_iron",
           "modern_source_order": 0,
           "source_order": 0
         },
         {
           "internal_name": "ass.plategold",
-          "modern_id": "hbm:assembly_machine/plate_gold",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_gold",
           "modern_source_order": 1,
           "source_order": 1
         },
         {
           "internal_name": "ass.platetitanium",
-          "modern_id": "hbm:assembly_machine/plate_titanium",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_titanium",
           "modern_source_order": 2,
           "source_order": 2
         },
         {
           "internal_name": "ass.platealu",
-          "modern_id": "hbm:assembly_machine/plate_aluminium",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_aluminium",
           "modern_source_order": 3,
           "source_order": 3
         },
         {
           "internal_name": "ass.platesteel",
-          "modern_id": "hbm:assembly_machine/plate_steel",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_steel",
           "modern_source_order": 4,
           "source_order": 4
         },
         {
           "internal_name": "ass.platelead",
-          "modern_id": "hbm:assembly_machine/plate_lead",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_lead",
           "modern_source_order": 5,
           "source_order": 5
         },
         {
           "internal_name": "ass.platecopper",
-          "modern_id": "hbm:assembly_machine/plate_copper",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_copper",
           "modern_source_order": 6,
           "source_order": 6
         },
         {
           "internal_name": "ass.plateschrab",
-          "modern_id": "hbm:assembly_machine/plate_schrabidium",
-          "modern_source_order": 8,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_schrabidium",
+          "modern_source_order": 7,
           "source_order": 7
         },
         {
           "internal_name": "ass.platecmb",
-          "modern_id": "hbm:assembly_machine/plate_combine_steel",
-          "modern_source_order": 9,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_combine_steel",
+          "modern_source_order": 8,
           "source_order": 8
         },
         {
           "internal_name": "ass.plategunmetal",
-          "modern_id": "hbm:assembly_machine/plate_gunmetal",
-          "modern_source_order": 10,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_gunmetal",
+          "modern_source_order": 9,
           "source_order": 9
         },
         {
           "internal_name": "ass.plateweaponsteel",
-          "modern_id": "hbm:assembly_machine/plate_weaponsteel",
-          "modern_source_order": 11,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_weaponsteel",
+          "modern_source_order": 10,
           "source_order": 10
         },
         {
           "internal_name": "ass.platesaturnite",
-          "modern_id": "hbm:assembly_machine/plate_saturnite",
-          "modern_source_order": 12,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_saturnite",
+          "modern_source_order": 11,
           "source_order": 11
         },
         {
           "internal_name": "ass.platedura",
-          "modern_id": "hbm:assembly_machine/plate_dura_steel",
-          "modern_source_order": 13,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_dura_steel",
+          "modern_source_order": 12,
           "source_order": 12
         },
         {
           "internal_name": "ass.platemixed",
-          "modern_id": "hbm:assembly_machine/plate_mixed",
-          "modern_source_order": 14,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_mixed",
+          "modern_source_order": 13,
           "source_order": 13
         },
         {
           "internal_name": "ass.dalekanium",
-          "modern_id": "hbm:assembly_machine/dalekanium",
-          "modern_source_order": 15,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/dalekanium",
+          "modern_source_order": 14,
           "source_order": 14
         },
         {
           "internal_name": "ass.platedesh",
-          "modern_id": "hbm:assembly_machine/plate_desh",
-          "modern_source_order": 16,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_desh",
+          "modern_source_order": 15,
           "source_order": 15
         },
         {
           "internal_name": "ass.platebismuth",
-          "modern_id": "hbm:assembly_machine/plate_bismuth",
-          "modern_source_order": 17,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/plate_bismuth",
+          "modern_source_order": 16,
           "source_order": 16
         },
         {
           "internal_name": "ass.exsteelplating",
-          "modern_id": "hbm:assembly_machine/expensive_steel_plating",
-          "modern_source_order": 18,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/expensive_steel_plating",
+          "modern_source_order": 17,
           "source_order": 17
         },
         {
           "internal_name": "ass.exheavyframe",
-          "modern_id": "hbm:assembly_machine/expensive_heavy_frame",
-          "modern_source_order": 19,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/expensive_heavy_frame",
+          "modern_source_order": 18,
           "source_order": 18
         },
         {
           "internal_name": "ass.excircuit",
-          "modern_id": "hbm:assembly_machine/expensive_circuit",
-          "modern_source_order": 20,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/expensive_circuit",
+          "modern_source_order": 19,
           "source_order": 19
         },
         {
           "internal_name": "ass.exleadplating",
-          "modern_id": "hbm:assembly_machine/expensive_lead_plating",
-          "modern_source_order": 21,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/expensive_lead_plating",
+          "modern_source_order": 20,
           "source_order": 20
         },
         {
           "internal_name": "ass.exferroplating",
-          "modern_id": "hbm:assembly_machine/expensive_ferro_plating",
-          "modern_source_order": 22,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/expensive_ferro_plating",
+          "modern_source_order": 21,
           "source_order": 21
         },
         {
           "internal_name": "ass.excomputer",
-          "modern_id": "hbm:assembly_machine/expensive_computer",
-          "modern_source_order": 23,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/expensive_computer",
+          "modern_source_order": 22,
           "source_order": 22
         },
         {
           "internal_name": "ass.bronzetubes",
-          "modern_id": "hbm:assembly_machine/expensive_bronze_tubes",
-          "modern_source_order": 24,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/expensive_bronze_tubes",
+          "modern_source_order": 23,
           "source_order": 23
         },
         {
           "internal_name": "ass.explastic",
-          "modern_id": "hbm:assembly_machine/expensive_plastic",
-          "modern_source_order": 25,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/expensive_plastic",
+          "modern_source_order": 24,
           "source_order": 24
         },
         {
           "internal_name": "ass.exgold",
-          "modern_id": "hbm:assembly_machine/expensive_gold_dust",
-          "modern_source_order": 26,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/expensive_gold_dust",
+          "modern_source_order": 25,
           "source_order": 25
         },
         {
           "internal_name": "ass.hazcloth",
-          "modern_id": "hbm:assembly_machine/hazmat_cloth",
-          "modern_source_order": 27,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/hazmat_cloth",
+          "modern_source_order": 26,
           "source_order": 26
         },
         {
           "internal_name": "ass.firecloth",
-          "modern_id": "hbm:assembly_machine/asbestos_cloth",
-          "modern_source_order": 28,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/asbestos_cloth",
+          "modern_source_order": 27,
           "source_order": 27
         },
         {
           "internal_name": "ass.filtercoal",
-          "modern_id": "hbm:assembly_machine/filter_coal",
-          "modern_source_order": 29,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/filter_coal",
+          "modern_source_order": 28,
           "source_order": 28
         },
         {
-          "internal_name": "ass.centrifugetower",
-          "modern_id": "hbm:assembly_machine/centrifuge_tower",
+          "internal_name": "ass.chip",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/chip",
+          "modern_source_order": 29,
+          "source_order": 29
+        },
+        {
+          "internal_name": "ass.chipBismoid",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/chip_bismoid",
           "modern_source_order": 30,
+          "source_order": 30
+        },
+        {
+          "internal_name": "ass.chipQuantum",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/chip_quantum",
+          "modern_source_order": 31,
+          "source_order": 31
+        },
+        {
+          "internal_name": "ass.atomicClock",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/atomic_clock",
+          "modern_source_order": 32,
+          "source_order": 32
+        },
+        {
+          "internal_name": "ass.analogAlt",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/analog_alt",
+          "modern_source_order": 33,
+          "source_order": 33
+        },
+        {
+          "internal_name": "ass.factorioChip",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/factorio_chip",
+          "modern_source_order": 34,
+          "source_order": 34
+        },
+        {
+          "internal_name": "ass.atomicClockAlt",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/atomic_clock_alt",
+          "modern_source_order": 35,
+          "source_order": 35
+        },
+        {
+          "internal_name": "ass.centrifugetower",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/centrifuge_tower",
+          "modern_source_order": 36,
           "source_order": 36
         },
         {
           "internal_name": "ass.reactorcore",
-          "modern_id": "hbm:assembly_machine/reactor_core",
-          "modern_source_order": 31,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/reactor_core",
+          "modern_source_order": 37,
           "source_order": 37
         },
         {
           "internal_name": "ass.thermoelement",
-          "modern_id": "hbm:assembly_machine/thermo_element",
-          "modern_source_order": 32,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/thermo_element",
+          "modern_source_order": 38,
           "source_order": 38
         },
         {
           "internal_name": "ass.thermoelementsilicon",
-          "modern_id": "hbm:assembly_machine/thermo_element_silicon",
-          "modern_source_order": 33,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/thermo_element_silicon",
+          "modern_source_order": 39,
           "source_order": 39
         },
         {
           "internal_name": "ass.rtgunit",
-          "modern_id": "hbm:assembly_machine/rtg_unit",
-          "modern_source_order": 34,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/rtg_unit",
+          "modern_source_order": 40,
           "source_order": 40
         },
         {
           "internal_name": "ass.magnetron",
-          "modern_id": "hbm:assembly_machine/magnetron",
-          "modern_source_order": 35,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/magnetron",
+          "modern_source_order": 41,
           "source_order": 41
         },
         {
           "internal_name": "ass.titaniumdrill",
-          "modern_id": "hbm:assembly_machine/titanium_drill",
-          "modern_source_order": 36,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/titanium_drill",
+          "modern_source_order": 42,
           "source_order": 42
         },
         {
           "internal_name": "ass.entanglementkit",
-          "modern_id": "hbm:assembly_machine/entanglement_kit",
-          "modern_source_order": 37,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/entanglement_kit",
+          "modern_source_order": 43,
           "source_order": 43
         },
         {
           "internal_name": "ass.protoreactor",
-          "modern_id": "hbm:assembly_machine/proto_reactor",
-          "modern_source_order": 38,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/proto_reactor",
+          "modern_source_order": 44,
           "source_order": 44
         },
         {
           "internal_name": "ass.partlith",
-          "modern_id": "hbm:assembly_machine/part_lithium",
-          "modern_source_order": 39,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/part_lithium",
+          "modern_source_order": 45,
           "source_order": 45
         },
         {
           "internal_name": "ass.partberyl",
-          "modern_id": "hbm:assembly_machine/part_beryllium",
-          "modern_source_order": 40,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/part_beryllium",
+          "modern_source_order": 46,
           "source_order": 46
         },
         {
           "internal_name": "ass.partcoal",
-          "modern_id": "hbm:assembly_machine/part_carbon",
-          "modern_source_order": 41,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/part_carbon",
+          "modern_source_order": 47,
           "source_order": 47
         },
         {
           "internal_name": "ass.partcop",
-          "modern_id": "hbm:assembly_machine/part_copper",
-          "modern_source_order": 42,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/part_copper",
+          "modern_source_order": 48,
           "source_order": 48
         },
         {
           "internal_name": "ass.partplut",
-          "modern_id": "hbm:assembly_machine/part_plutonium",
-          "modern_source_order": 43,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/part_plutonium",
+          "modern_source_order": 49,
           "source_order": 49
         },
         {
           "internal_name": "ass.cmbtile",
-          "modern_id": "hbm:assembly_machine/cmb_tile",
-          "modern_source_order": 44,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/cmb_tile",
+          "modern_source_order": 50,
           "source_order": 50
         },
         {
           "internal_name": "ass.cmbbrick",
-          "modern_id": "hbm:assembly_machine/cmb_brick",
-          "modern_source_order": 45,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/cmb_brick",
+          "modern_source_order": 51,
           "source_order": 51
         },
         {
           "internal_name": "ass.yellowbarrel",
-          "modern_id": "hbm:assembly_machine/yellow_barrel",
-          "modern_source_order": 48,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/yellow_barrel",
+          "modern_source_order": 54,
           "source_order": 54
         },
         {
           "internal_name": "ass.vitrifiedbarrel",
-          "modern_id": "hbm:assembly_machine/vitrified_barrel",
-          "modern_source_order": 49,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/vitrified_barrel",
+          "modern_source_order": 55,
           "source_order": 55
         },
         {
           "internal_name": "ass.shredder",
-          "modern_id": "hbm:assembly_machine/shredder",
-          "modern_source_order": 70,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/shredder",
+          "modern_source_order": 76,
           "source_order": 76
         },
         {
           "internal_name": "ass.assembler",
-          "modern_id": "hbm:assembly_machine/assembler",
-          "modern_source_order": 71,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/assembler",
+          "modern_source_order": 77,
           "source_order": 77
         },
         {
           "internal_name": "ass.chemplant",
-          "modern_id": "hbm:assembly_machine/chemplant",
-          "modern_source_order": 72,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/chemplant",
+          "modern_source_order": 78,
           "source_order": 78
         },
         {
           "internal_name": "ass.purex",
-          "modern_id": "hbm:assembly_machine/purex",
-          "modern_source_order": 73,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/purex",
+          "modern_source_order": 79,
           "source_order": 79
         },
         {
           "internal_name": "ass.centrifuge",
-          "modern_id": "hbm:assembly_machine/centrifuge",
-          "modern_source_order": 75,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/centrifuge",
+          "modern_source_order": 81,
           "source_order": 81
         },
         {
           "internal_name": "ass.gascent",
-          "modern_id": "hbm:assembly_machine/gascent",
-          "modern_source_order": 76,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/gascent",
+          "modern_source_order": 82,
           "source_order": 82
         },
         {
           "internal_name": "ass.derrick",
-          "modern_id": "hbm:assembly_machine/derrick",
-          "modern_source_order": 81,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/derrick",
+          "modern_source_order": 87,
           "source_order": 87
         },
         {
           "internal_name": "ass.pumpjack",
-          "modern_id": "hbm:assembly_machine/pumpjack",
-          "modern_source_order": 82,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/pumpjack",
+          "modern_source_order": 88,
           "source_order": 88
         },
         {
           "internal_name": "ass.fracker",
-          "modern_id": "hbm:assembly_machine/fracker",
-          "modern_source_order": 83,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fracker",
+          "modern_source_order": 89,
           "source_order": 89
         },
         {
           "internal_name": "ass.refinery",
-          "modern_id": "hbm:assembly_machine/refinery",
-          "modern_source_order": 85,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/refinery",
+          "modern_source_order": 91,
           "source_order": 91
         },
         {
           "internal_name": "ass.capacitorgold",
-          "modern_id": "hbm:assembly_machine/capacitorgold",
-          "modern_source_order": 134,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/capacitorgold",
+          "modern_source_order": 139,
           "source_order": 139
         },
         {
           "internal_name": "ass.capacitorniobium",
-          "modern_id": "hbm:assembly_machine/capacitorniobium",
-          "modern_source_order": 135,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/capacitorniobium",
+          "modern_source_order": 140,
           "source_order": 140
         },
         {
           "internal_name": "ass.capacitortantalum",
-          "modern_id": "hbm:assembly_machine/capacitortantalum",
-          "modern_source_order": 136,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/capacitortantalum",
+          "modern_source_order": 141,
           "source_order": 141
         },
         {
           "internal_name": "ass.capacitorbismuth",
-          "modern_id": "hbm:assembly_machine/capacitorbismuth",
-          "modern_source_order": 137,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/capacitorbismuth",
+          "modern_source_order": 142,
           "source_order": 142
         },
         {
           "internal_name": "ass.capacitorspark",
-          "modern_id": "hbm:assembly_machine/capacitorspark",
-          "modern_source_order": 138,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/capacitorspark",
+          "modern_source_order": 143,
           "source_order": 143
         },
         {
+          "internal_name": "ass.tank",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/tank",
+          "modern_source_order": 144,
+          "source_order": 144
+        },
+        {
           "internal_name": "ass.emptypackage",
-          "modern_id": "hbm:assembly_machine/emptypackage",
-          "modern_source_order": 327,
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/emptypackage",
+          "modern_source_order": 333,
           "source_order": 333
         }
       ],
-      "present_count": 63,
+      "present_count": 71,
       "status": "checked"
     }
   ],

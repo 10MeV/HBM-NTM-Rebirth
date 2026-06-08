@@ -43,8 +43,8 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
 
         addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_BATTERY, 152, 81));
         addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_BLUEPRINT, 35, 126));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_UPGRADE_START, 152, 108));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_UPGRADE_END, 152, 126));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_UPGRADE_START, 152, 108));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_UPGRADE_END, 152, 126));
 
         for (int i = 0; i < 3; i++) {
             addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_START + i,
