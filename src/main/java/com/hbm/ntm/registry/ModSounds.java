@@ -30,6 +30,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> BLOCK_DEBRIS = register("block.debris");
     public static final RegistryObject<SoundEvent> BLOCK_REACTOR_START = register("block.reactor_start");
     public static final RegistryObject<SoundEvent> BLOCK_BOILER = register("block.boiler");
+    public static final RegistryObject<SoundEvent> BLOCK_PYRO_OPERATE = register("block.pyro_operate");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_1 = register("tool.geiger1");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_2 = register("tool.geiger2");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_3 = register("tool.geiger3");
@@ -39,6 +40,8 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> TOOL_TECH_BOOP = register("tool.tech_boop");
     public static final RegistryObject<SoundEvent> TOOL_TECH_BLEEP = register("tool.tech_bleep");
     public static final RegistryObject<SoundEvent> TOOL_RADAWAY = register("tool.radaway");
+    public static final RegistryObject<SoundEvent> TOOL_GASMASK_SCREW = register("tool.gasmask_screw");
+    public static final RegistryObject<SoundEvent> TOOL_SYRINGE = register("item.syringe");
     public static final RegistryObject<SoundEvent> PLAYER_COUGH = register("player.cough");
     public static final RegistryObject<SoundEvent> PLAYER_VOMIT = register("player.vomit");
     public static final RegistryObject<SoundEvent> ENTITY_UFO_BLAST = register("entity.ufo_blast");
@@ -58,6 +61,10 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_SMALL_FAR = register("weapon.explosion_small_far");
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_TINY = register("weapon.explosion_tiny");
     public static final RegistryObject<SoundEvent> WEAPON_EXPLOSION_MEDIUM = register("weapon.explosion_medium");
+    public static final RegistryObject<SoundEvent> WEAPON_FLAMETHROWER_SHOOT = register("weapon.flamethrower_shoot");
+    public static final RegistryObject<SoundEvent> WEAPON_ROCKET_FLAME = register("weapon.rocket_flame");
+    public static final RegistryObject<SoundEvent> WEAPON_RICOCHET = register("weapon.ricochet");
+    public static final RegistryObject<SoundEvent> WEAPON_GRENADE_BOUNCE = register("weapon.gbounce");
     public static final RegistryObject<SoundEvent> WEAPON_RELOAD_TUBE_FWOOMP = register("weapon.reload.tube_fwoomp");
     public static final RegistryObject<SoundEvent> WEAPON_CASING_SHELL = register("weapon.casing.shell");
     public static final RegistryObject<SoundEvent> WEAPON_CASING_SMALL = register("weapon.casing.small");

@@ -16,6 +16,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("itemGroup.hbm_ntm_rebirth.consumables", "HBM Consumables");
         add("itemGroup.hbm_ntm_rebirth.control", "HBM Control");
         add("itemGroup.hbm_ntm_rebirth.nukes", "HBM Nukes");
+        add("itemGroup.hbm_ntm_rebirth.missiles", "HBM Missiles and Satellites");
+        addAbilityTranslations();
         add("item.hbm_ntm_rebirth.ingot_uranium", "Uranium Ingot");
         add("item.hbm_ntm_rebirth.ingot_u233", "Uranium-233 Ingot");
         add("item.hbm_ntm_rebirth.ingot_u235", "Uranium-235 Ingot");
@@ -70,6 +72,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.upgrade_overdrive_1", "Overdrive Upgrade I");
         add("item.hbm_ntm_rebirth.upgrade_overdrive_2", "Overdrive Upgrade II");
         add("item.hbm_ntm_rebirth.upgrade_overdrive_3", "Overdrive Upgrade III");
+        add("item.hbm_ntm_rebirth.upgrade_afterburn_1", "Afterburner Upgrade I");
+        add("item.hbm_ntm_rebirth.upgrade_afterburn_2", "Afterburner Upgrade II");
+        add("item.hbm_ntm_rebirth.upgrade_afterburn_3", "Afterburner Upgrade III");
         add("item.hbm_ntm_rebirth.template_folder", "Machine Template Folder");
         add("item.hbm_ntm_rebirth.template_folder.desc", "Machine Templates: Paper + Dye$Press Stamps: Flat Stamp$Siren Tracks: Insulator + Steel Plate");
         add("item.hbm_ntm_rebirth.stamp_iron_plate", "Plate Stamp (Iron)");
@@ -98,11 +103,68 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.page_of_page8", "Page 8");
         add("item.hbm_ntm_rebirth.geiger_counter", "Geiger Counter");
         add("item.hbm_ntm_rebirth.digamma_diagnostic", "Digamma Diagnostic");
+        add("item.hbm_ntm_rebirth.pollution_detector", "Pollution Detector");
         add("item.hbm_ntm_rebirth.radaway", "RadAway");
         add("item.hbm_ntm_rebirth.radaway_strong", "RadAway Strong");
         add("item.hbm_ntm_rebirth.radaway_flush", "RadAway Flush");
         add("item.hbm_ntm_rebirth.radx", "Rad-X");
         add("item.hbm_ntm_rebirth.radx.desc", "Increases radiation resistance by 0.2 (37%) for 3 minutes");
+        add("item.hbm_ntm_rebirth.gas_mask_filter", "Gas Mask Filter");
+        add("item.hbm_ntm_rebirth.gas_mask_filter_mono", "Catalytic Mask Filter");
+        add("item.hbm_ntm_rebirth.gas_mask_filter_combo", "Gas Mask Combo Filter");
+        add("item.hbm_ntm_rebirth.gas_mask_filter_rag", "Makeshift Gas Mask Filter");
+        add("item.hbm_ntm_rebirth.gas_mask_filter_piss", "Advanced Makeshift Gas Mask Filter");
+        add("item.hbm_ntm_rebirth.attachment_mask", "Gas Mask Attachable");
+        add("item.hbm_ntm_rebirth.attachment_mask_mono", "Half Mask Attachable");
+        addArmorModTranslations();
+        add("item.hbm_ntm_rebirth.pads_rubber", "Rubber Pads");
+        add("item.hbm_ntm_rebirth.pads_slime", "Slime Pads");
+        add("item.hbm_ntm_rebirth.pads_static", "Static Pads");
+        add("item.hbm_ntm_rebirth.cladding_paint", "Lead Paint");
+        add("item.hbm_ntm_rebirth.cladding_rubber", "Rubber Cladding");
+        add("item.hbm_ntm_rebirth.cladding_lead", "Lead Cladding");
+        add("item.hbm_ntm_rebirth.cladding_desh", "Desh Cladding");
+        add("item.hbm_ntm_rebirth.cladding_ghiorsium", "Ghiorsium Cladding");
+        add("item.hbm_ntm_rebirth.cladding_iron", "Iron Cladding");
+        add("item.hbm_ntm_rebirth.cladding_obsidian", "Obsidian Skin");
+        add("item.hbm_ntm_rebirth.insert_kevlar", "Kevlar Insert");
+        add("item.hbm_ntm_rebirth.insert_sapi", "SAPI Insert");
+        add("item.hbm_ntm_rebirth.insert_esapi", "ESAPI Insert");
+        add("item.hbm_ntm_rebirth.insert_xsapi", "XSAPI Insert");
+        add("item.hbm_ntm_rebirth.insert_steel", "Heavy Steel Insert");
+        add("item.hbm_ntm_rebirth.insert_du", "DU Insert");
+        add("item.hbm_ntm_rebirth.insert_polonium", "Polonium Insert");
+        add("item.hbm_ntm_rebirth.insert_ghiorsium", "Ghiorsium Insert");
+        add("item.hbm_ntm_rebirth.insert_era", "Explosive Reactive Armor Insert");
+        add("item.hbm_ntm_rebirth.insert_yharonite", "Yharonite Insert");
+        add("item.hbm_ntm_rebirth.insert_doxium", "Astolfium-Doped Doxium Insert");
+        add("item.hbm_ntm_rebirth.servo_set", "Servo Set");
+        add("item.hbm_ntm_rebirth.servo_set_desh", "Desh Servo Set");
+        add("item.hbm_ntm_rebirth.heart_piece", "Heart Piece");
+        add("item.hbm_ntm_rebirth.heart_container", "Heart Container");
+        add("item.hbm_ntm_rebirth.heart_booster", "Heart Booster");
+        add("item.hbm_ntm_rebirth.heart_fab", "Heart of Darkness");
+        add("item.hbm_ntm_rebirth.black_diamond", "Black Diamond");
+        add("item.hbm_ntm_rebirth.wd40", "VT-40");
+        add("item.hbm_ntm_rebirth.bottled_cloud", "Cloud in a Bottle");
+        add("item.hbm_ntm_rebirth.australium_iii", "Mark III Life Extender");
+        add("item.hbm_ntm_rebirth.armor_polish", "ShiningArmor\u2122 Armor Polish");
+        add("item.hbm_ntm_rebirth.bandaid", "Velvet Band-Aid");
+        add("item.hbm_ntm_rebirth.serum", "Serum");
+        add("item.hbm_ntm_rebirth.quartz_plutonium", "Plutonic Quartz");
+        add("item.hbm_ntm_rebirth.morning_glory", "Morning Glory");
+        add("item.hbm_ntm_rebirth.lodestone", "Lodestone");
+        add("item.hbm_ntm_rebirth.horseshoe_magnet", "Horseshoe Magnet");
+        add("item.hbm_ntm_rebirth.industrial_magnet", "Industrial Magnet");
+        add("item.hbm_ntm_rebirth.bathwater", "Toxic Soapy Water");
+        add("item.hbm_ntm_rebirth.bathwater_mk2", "Toxic Soapy Water (Horse Scented)");
+        add("item.hbm_ntm_rebirth.spider_milk", "Bottle of Spider Milk");
+        add("item.hbm_ntm_rebirth.ink", "\u6797 Ink");
+        add("item.hbm_ntm_rebirth.injector_5htp", "5-HTP Autoinjector");
+        add("item.hbm_ntm_rebirth.medal_liquidator", "Liquidator Medal");
+        add("subtitles.hbm_ntm_rebirth.tool.gasmask_screw", "Gas mask filter installed");
+        add("subtitles.hbm_ntm_rebirth.item.syringe", "Syringe injects");
+        addSatelliteTranslations();
         add("info.asbestos", "My lungs are burning.");
         add("info.coaldust", "It's hard to breathe here.");
         add("item.hbm_ntm_rebirth.containment_box", "Lead-Lined Box");
@@ -110,6 +172,58 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.toolbox", "Toolbox");
         add("item.hbm_ntm_rebirth.toolbox.desc.swap", "Click with the toolbox to swap hotbars in/out of the toolbox.");
         add("item.hbm_ntm_rebirth.toolbox.desc.open", "Shift-click with the toolbox to open the toolbox.");
+        add("item.hbm_ntm_rebirth.screwdriver", "Screwdriver");
+        add("item.hbm_ntm_rebirth.hand_drill", "Hand Drill");
+        add("item.hbm_ntm_rebirth.defuser", "Bomb Defuser");
+        add("item.hbm_ntm_rebirth.schrabidium_sword", "Schrabidium Sword");
+        add("item.hbm_ntm_rebirth.schrabidium_pickaxe", "Schrabidium Pickaxe");
+        add("item.hbm_ntm_rebirth.schrabidium_axe", "Schrabidium Axe");
+        add("item.hbm_ntm_rebirth.schrabidium_shovel", "Schrabidium Shovel");
+        add("item.hbm_ntm_rebirth.titanium_sword", "Titanium Sword");
+        add("item.hbm_ntm_rebirth.titanium_pickaxe", "Titanium Pickaxe");
+        add("item.hbm_ntm_rebirth.titanium_axe", "Titanium Axe");
+        add("item.hbm_ntm_rebirth.titanium_shovel", "Titanium Shovel");
+        add("item.hbm_ntm_rebirth.steel_sword", "Steel Sword");
+        add("item.hbm_ntm_rebirth.steel_pickaxe", "Steel Pickaxe");
+        add("item.hbm_ntm_rebirth.steel_axe", "Steel Axe");
+        add("item.hbm_ntm_rebirth.steel_shovel", "Steel Shovel");
+        add("item.hbm_ntm_rebirth.alloy_sword", "Alloy Sword");
+        add("item.hbm_ntm_rebirth.alloy_pickaxe", "Alloy Pickaxe");
+        add("item.hbm_ntm_rebirth.alloy_axe", "Alloy Axe");
+        add("item.hbm_ntm_rebirth.alloy_shovel", "Alloy Shovel");
+        add("item.hbm_ntm_rebirth.cmb_sword", "CMB Sword");
+        add("item.hbm_ntm_rebirth.cmb_pickaxe", "CMB Pickaxe");
+        add("item.hbm_ntm_rebirth.cmb_axe", "CMB Axe");
+        add("item.hbm_ntm_rebirth.cmb_shovel", "CMB Shovel");
+        add("item.hbm_ntm_rebirth.desh_sword", "Desh Sword");
+        add("item.hbm_ntm_rebirth.desh_pickaxe", "Desh Pickaxe");
+        add("item.hbm_ntm_rebirth.desh_axe", "Desh Axe");
+        add("item.hbm_ntm_rebirth.desh_shovel", "Desh Shovel");
+        add("item.hbm_ntm_rebirth.cobalt_sword", "Cobalt Sword");
+        add("item.hbm_ntm_rebirth.cobalt_pickaxe", "Cobalt Pickaxe");
+        add("item.hbm_ntm_rebirth.cobalt_axe", "Cobalt Axe");
+        add("item.hbm_ntm_rebirth.cobalt_shovel", "Cobalt Shovel");
+        add("item.hbm_ntm_rebirth.cobalt_decorated_sword", "Decorated Cobalt Sword");
+        add("item.hbm_ntm_rebirth.cobalt_decorated_pickaxe", "Decorated Cobalt Pickaxe");
+        add("item.hbm_ntm_rebirth.cobalt_decorated_axe", "Decorated Cobalt Axe");
+        add("item.hbm_ntm_rebirth.cobalt_decorated_shovel", "Decorated Cobalt Shovel");
+        add("item.hbm_ntm_rebirth.starmetal_sword", "Starmetal Sword");
+        add("item.hbm_ntm_rebirth.starmetal_pickaxe", "Starmetal Pickaxe");
+        add("item.hbm_ntm_rebirth.starmetal_axe", "Starmetal Axe");
+        add("item.hbm_ntm_rebirth.starmetal_shovel", "Starmetal Shovel");
+        add("item.hbm_ntm_rebirth.centri_stick", "Centrifugal Stick");
+        add("item.hbm_ntm_rebirth.smashing_hammer", "Smashing Hammer");
+        add("item.hbm_ntm_rebirth.bismuth_pickaxe", "Bismuth Pickaxe");
+        add("item.hbm_ntm_rebirth.bismuth_axe", "Bismuth Axe");
+        add("item.hbm_ntm_rebirth.volcanic_pickaxe", "Volcanic Pickaxe");
+        add("item.hbm_ntm_rebirth.volcanic_axe", "Volcanic Axe");
+        add("item.hbm_ntm_rebirth.chlorophyte_pickaxe", "Chlorophyte Pickaxe");
+        add("item.hbm_ntm_rebirth.chlorophyte_axe", "Chlorophyte Axe");
+        add("item.hbm_ntm_rebirth.mese_pickaxe", "Mese Pickaxe");
+        add("item.hbm_ntm_rebirth.mese_axe", "Mese Axe");
+        add("item.hbm_ntm_rebirth.dnt_sword", "DNT Sword");
+        add("item.hbm_ntm_rebirth.dwarven_pickaxe", "Dwarven Pickaxe");
+        add("item.hbm_ntm_rebirth.mese_gavel", "Mese Gavel");
         add("item.hbm_ntm_rebirth.settings_tool", "Settings Tool");
         add("item.hbm_ntm_rebirth.settings_tool.desc1", "Can copy the settings (filters, fluid ID, etc) of machines");
         add("item.hbm_ntm_rebirth.settings_tool.desc2", "Shift right-click to copy, right click to paste");
@@ -193,6 +307,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("effect.hbm_ntm_rebirth.taint", "Taint");
         add("effect.hbm_ntm_rebirth.mutation", "Tainted Heart");
         add("effect.hbm_ntm_rebirth.stability", "Stability");
+        add("effect.hbm_ntm_rebirth.lead", "Lead Poisoning");
         add("geiger.title", "Geiger Counter");
         add("geiger.chunkRad", "Chunk radiation: %s RAD/s");
         add("geiger.envRad", "Environmental dose: %s RAD/s");
@@ -250,6 +365,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("subtitles.hbm_ntm_rebirth.entity.ufo_blast", "Energy discharge");
         add("subtitles.hbm_ntm_rebirth.entity.chopper", "Chopper drones");
         add("subtitles.hbm_ntm_rebirth.alarm.siren", "Siren blares");
+        add("subtitles.hbm_ntm_rebirth.weapon.ricochet", "Bullet ricochets");
+        add("subtitles.hbm_ntm_rebirth.weapon.gbounce", "Grenade bounces");
         add("item.hbm_ntm_rebirth.detonator", "Detonator");
         add("item.hbm_ntm_rebirth.singularity", "Singularity");
         add("item.hbm_ntm_rebirth.singularity_counter_resonant", "Contained Counter-Resonant Singularity");
@@ -300,6 +417,13 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.decon", "Decontaminator");
         add("block.hbm_ntm_rebirth.red_cable", "Red Copper Cable");
         add("block.hbm_ntm_rebirth.red_cable_gauge", "Power Gauge");
+        add("block.hbm_ntm_rebirth.cable_switch", "Red Copper Cable Switch");
+        add("block.hbm_ntm_rebirth.cable_detector", "Red Copper Cable Detector");
+        add("block.hbm_ntm_rebirth.cable_diode", "Red Copper Diode");
+        add("block.hbm_ntm_rebirth.cable_diode.desc1", "Limits throughput and restricts flow direction");
+        add("block.hbm_ntm_rebirth.cable_diode.desc2", "Use screwdriver to increase throughput");
+        add("block.hbm_ntm_rebirth.cable_diode.desc3", "Use hand drill to decrease throughput");
+        add("block.hbm_ntm_rebirth.cable_diode.desc4", "Use defuser to change network priority");
         add("block.hbm_ntm_rebirth.fluid_duct_neo", "Fluid Duct");
         add("item.hbm_ntm_rebirth.fluid_duct", "Fluid Duct:");
         add("block.hbm_ntm_rebirth.fluid_duct_box", "Universal Fluid Duct (Boxduct)");
@@ -320,6 +444,19 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.conveyor_chute", "Conveyor Chute");
         add("block.hbm_ntm_rebirth.machine_battery", "Energy Storage Block (LEGACY)");
         add("block.hbm_ntm_rebirth.machine_battery_socket", "Battery Socket");
+        add("block.hbm_ntm_rebirth.machine_radar", "Radar");
+        add("block.hbm_ntm_rebirth.machine_radar_large", "Large Radar");
+        add("block.hbm_ntm_rebirth.radar_screen", "Radar Screen");
+        add("block.hbm_ntm_rebirth.machine_satlinker", "Satellite ID Manager");
+        add("item.hbm_ntm_rebirth.radar_linker", "Radar Linker");
+        add("radar.detectMissiles", "Detect Missiles");
+        add("radar.detectShells", "Detect Shells");
+        add("radar.detectPlayers", "Detect Players");
+        add("radar.smartMode", "Smart Mode$Redstone output ignores ascending missiles");
+        add("radar.redMode", "Redstone Mode$On: Redstone output based on range$Off: Redstone output based on tier");
+        add("radar.showMap", "Show Map");
+        add("container.hbm_ntm_rebirth.radar.enabled", "Enabled");
+        add("container.hbm_ntm_rebirth.radar.disabled", "Disabled");
         add("block.hbm_ntm_rebirth.machine_assembly_machine", "Assembly Machine");
         add("block.hbm_ntm_rebirth.machine_chemical_plant", "Chemical Plant");
         add("block.hbm_ntm_rebirth.machine_liquefactor", "Industrial Liquefaction Machine");
@@ -374,6 +511,12 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.machineLiquefactor", "Liquefactor");
         add("container.hbm_ntm_rebirth.battery", "Energy Storage Block");
         add("container.batterySocket", "Battery Socket");
+        add("container.satLinker", "SatLink Device");
+        add("container.hbm_ntm_rebirth.sat_linker", "SatLink Device");
+        add("container.hbm_ntm_rebirth.sat_linker.copy.0", "The first slot will copy the satellite/chip's");
+        add("container.hbm_ntm_rebirth.sat_linker.copy.1", "frequency and paste it to the second slot.");
+        add("container.hbm_ntm_rebirth.sat_linker.randomize.0", "The third slot will randomize the");
+        add("container.hbm_ntm_rebirth.sat_linker.randomize.1", "satellite/chip's frequency.");
         add("container.hbm_ntm_rebirth.battery.red_low", "Low redstone mode");
         add("container.hbm_ntm_rebirth.battery.red_high", "High redstone mode");
         add("container.hbm_ntm_rebirth.battery.mode.input", "Input");
@@ -416,6 +559,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.gas_asbestos", "Asbestos Dust");
         add("block.hbm_ntm_rebirth.gas_coal", "Coal Dust");
         add("block.hbm_ntm_rebirth.chlorine_gas", "Chlorine Gas");
+        add("block.hbm_ntm_rebirth.dirt_dead", "Dead Dirt");
+        add("block.hbm_ntm_rebirth.dirt_oily", "Oily Dirt");
+        add("block.hbm_ntm_rebirth.sand_dirty", "Oily Sand");
+        add("block.hbm_ntm_rebirth.sand_dirty_red", "Red Oily Sand");
+        add("block.hbm_ntm_rebirth.stone_cracked", "Cracked Stone");
         add("death.attack.monoxide", "%1$s suffocated from carbon monoxide");
         add("death.attack.taint", "%1$s was consumed by taint");
         add("death.attack.electric", "%1$s was electrocuted");
@@ -488,6 +636,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.custom_fall.desc", "Makes bomb drop upon activation");
         add("subtitles.hbm_ntm_rebirth.weapon.fstbmb", "Balefire bomb signal");
         add("subtitles.hbm_ntm_rebirth.weapon.nuclear_explosion", "Nuclear explosion");
+        add("subtitles.hbm_ntm_rebirth.weapon.rocket_flame", "Rocket flame");
         add("block.hbm_ntm_rebirth.yellow_barrel", "Radioactive Barrel");
         add("block.hbm_ntm_rebirth.vitrified_barrel", "Vitrified Nuclear Waste Drum");
         add("item.hbm_ntm_rebirth.powder_tektite", "Tektite Powder");
@@ -613,6 +762,41 @@ public class HbmLanguageProvider extends LanguageProvider {
         });
     }
 
+    private void addSatelliteTranslations() {
+        add("item.hbm_ntm_rebirth.sat_chip", "Satellite ID-Chip");
+        add("item.hbm_ntm_rebirth.sat_coord", "Satellite Designator");
+        add("item.hbm_ntm_rebirth.sat_designator", "Satellite Laser Designator");
+        add("item.hbm_ntm_rebirth.sat_relay", "Satellite Radar Relay");
+        add("item.hbm_ntm_rebirth.sat_foeq", "PEAF - Mk.I FOEQ Duna Probe with experimental Nuclear Propulsion");
+        add("item.hbm_ntm_rebirth.sat_gerald", "Gerald The Construction Android");
+        add("item.hbm_ntm_rebirth.sat_head_laser", "Death Ray");
+        add("item.hbm_ntm_rebirth.sat_head_mapper", "High-Gain Optical Camera");
+        add("item.hbm_ntm_rebirth.sat_head_radar", "Radar Dish");
+        add("item.hbm_ntm_rebirth.sat_head_resonator", "Xenium Resonator");
+        add("item.hbm_ntm_rebirth.sat_head_scanner", "M700 Survey Scanner");
+        add("item.hbm_ntm_rebirth.sat_interface", "Satellite Control Interface");
+        add("item.hbm_ntm_rebirth.sat_laser", "Orbital Death Ray");
+        add("item.hbm_ntm_rebirth.sat_lunar_miner", "Lunar Mining Ship");
+        add("item.hbm_ntm_rebirth.sat_mapper", "Surface Mapping Satellite");
+        add("item.hbm_ntm_rebirth.sat_miner", "Asteroid Mining Ship");
+        add("item.hbm_ntm_rebirth.sat_radar", "Radar Survey Satellite");
+        add("item.hbm_ntm_rebirth.sat_resonator", "Xenium Resonator Satellite");
+        add("item.hbm_ntm_rebirth.sat_scanner", "Satellite with Depth-Resource Scanning Module");
+        add("satchip.frequency", "Satellite Frequency");
+        add("satchip.foeq", "Smells faintly of mint and plutonium.");
+        add("satchip.gerald.desc", "The tape says not to ask where he came from.");
+        add("satchip.laser", "Allows targeted orbital laser strikes.");
+        add("satchip.mapper", "Provides surface map data.");
+        add("satchip.miner", "Returns asteroid mining cargo.");
+        add("satchip.lunar_miner", "Returns lunar mining cargo.");
+        add("satchip.radar", "Provides radar survey data.");
+        add("satchip.resonator", "Allows coordinate-based teleportation.");
+        add("satchip.scanner", "Provides depth-resource scanning data.");
+        add("satchip.no_satellite", "No satellite found on this frequency.");
+        add("satchip.interface.ready", "%s online on frequency %s.");
+        add("satchip.coord.ready", "%s coordinate link ready on frequency %s.");
+    }
+
     private static boolean hasExplicitNukeName(String id) {
         return switch (id) {
             case "detonator",
@@ -663,6 +847,9 @@ public class HbmLanguageProvider extends LanguageProvider {
                  "black_hole",
                  "particle_digamma",
                  "blueprints",
+                 "screwdriver",
+                 "hand_drill",
+                 "defuser",
                  "pellet_antimatter",
                  "catalytic_converter",
                  "fuel_additive_antiknock",
@@ -758,6 +945,54 @@ public class HbmLanguageProvider extends LanguageProvider {
                  "powder_limestone" -> true;
             default -> false;
         };
+    }
+
+    private void addAbilityTranslations() {
+        add("tool.ability.recursion", "Vein Miner");
+        add("tool.ability.hammer", "Hammer");
+        add("tool.ability.hammer_flat", "Flat Hammer");
+        add("tool.ability.explosion", "Explosion");
+        add("tool.ability.silktouch", "Silk Touch");
+        add("tool.ability.luck", "Luck");
+        add("tool.ability.smelter", "Smelter");
+        add("tool.ability.shredder", "Shredder");
+        add("tool.ability.centrifuge", "Centrifuge");
+        add("tool.ability.crystallizer", "Crystallizer");
+        add("tool.ability.mercury", "Mercury Touch");
+        add("weapon.ability.radiation", "Radiation");
+        add("weapon.ability.vampire", "Vampire");
+        add("weapon.ability.stun", "Stun");
+        add("weapon.ability.phosphorus", "Phosphorus");
+        add("weapon.ability.fire", "Fire");
+        add("weapon.ability.chainsaw", "Chainsaw");
+        add("weapon.ability.beheader", "Beheader");
+        add("weapon.ability.bobble", "Bobblehead");
+        add("tooltip.hbm_ntm_rebirth.abilities", "Abilities:");
+        add("tooltip.hbm_ntm_rebirth.abilities.cycle", "Right click to cycle through presets!");
+        add("tooltip.hbm_ntm_rebirth.abilities.reset", "Sneak-click to go to first preset!");
+        add("tooltip.hbm_ntm_rebirth.abilities.customize", "Alt-click to open customization GUI!");
+        add("tooltip.hbm_ntm_rebirth.weapon_modifiers", "Weapon modifiers:");
+        add("chat.hbm_ntm_rebirth.tool_ability.deactivated", "[Tool ability deactivated]");
+        add("chat.hbm_ntm_rebirth.tool_ability.enabled", "[Enabled");
+    }
+
+    private void addArmorModTranslations() {
+        add("armorMod.all", "All");
+        add("armorMod.applicableTo", "Applicable To:");
+        add("armorMod.boots", "Boots");
+        add("armorMod.chestplates", "Chestplates");
+        add("armorMod.helmets", "Helmets");
+        add("armorMod.leggings", "Leggings");
+        add("armorMod.slot", "Slot:");
+        add("armorMod.type.battery", "Battery");
+        add("armorMod.type.boots", "Boots");
+        add("armorMod.type.chestplate", "Chestplate");
+        add("armorMod.type.cladding", "Cladding");
+        add("armorMod.type.helmet", "Helmet");
+        add("armorMod.type.insert", "Insert");
+        add("armorMod.type.leggings", "Leggings");
+        add("armorMod.type.servo", "Servos");
+        add("armorMod.type.special", "Special");
     }
 
     private static String title(String id) {
