@@ -285,6 +285,15 @@ public final class ModDamageSources {
         return LEGACY_DAMAGE_ALIASES.getOrDefault(key, List.of());
     }
 
+    public static Optional<LegacyDamageType> legacyDamageType(ResourceKey<DamageType> key) {
+        for (LegacyDamageType legacy : LEGACY_DAMAGE_TYPES) {
+            if (legacy.key().equals(key)) {
+                return Optional.of(legacy);
+            }
+        }
+        return Optional.empty();
+    }
+
     public static boolean isTau(DamageSource source) {
         return source.is(TAU);
     }
@@ -339,6 +348,34 @@ public final class ModDamageSources {
         expectLegacy(problems, SUBATOMIC, true, false, false, true, false, false);
         expectLegacy(problems, PLASMA, false, false, true, false, false, false);
         expectLegacy(problems, FLAMETHROWER, false, false, true, false, false, false);
+        expect(problems, "tau expected tags", legacyDamageType(TAU)
+                .map(LegacyDamageType::expectedTagLabels)
+                .filter(tags -> tags.equals(List.of("projectile", "bypassesArmor")))
+                .isPresent());
+        expect(problems, "digamma expected tags", legacyDamageType(DIGAMMA)
+                .map(LegacyDamageType::expectedTagLabels)
+                .filter(tags -> tags.equals(List.of("bypassesArmor", "absolute", "effects", "creativeAllowed")))
+                .isPresent());
+        expect(problems, "electric has no expected tags", legacyDamageType(ELECTRIC)
+                .map(LegacyDamageType::expectedTagLabels)
+                .filter(List::isEmpty)
+                .isPresent());
+        expect(problems, "blackhole expected modern effects tag", legacyDamageType(BLACKHOLE)
+                .map(LegacyDamageType::expectedTagLabels)
+                .filter(tags -> tags.equals(List.of("bypassesArmor", "absolute", "effects")))
+                .isPresent());
+        expect(problems, "combine ball legacy message id", legacyDamageType(COMBINE_BALL)
+                .map(LegacyDamageType::expectedMessageId)
+                .filter("cmb"::equals)
+                .isPresent());
+        expect(problems, "subatomic legacy message id", legacyDamageType(SUBATOMIC)
+                .map(LegacyDamageType::expectedMessageId)
+                .filter("subAtomic"::equals)
+                .isPresent());
+        expect(problems, "nuclear blast legacy message id", legacyDamageType(NUCLEAR_BLAST)
+                .map(LegacyDamageType::expectedMessageId)
+                .filter("nuclearBlast"::equals)
+                .isPresent());
 
         return new DamageAliasAudit(List.copyOf(problems), LEGACY_DAMAGE_TYPES.size(), LEGACY_DAMAGE_KEYS.size());
     }
@@ -460,6 +497,12 @@ public final class ModDamageSources {
         }
     }
 
+    private static void expect(List<String> problems, String label, boolean ok) {
+        if (!ok) {
+            problems.add(label);
+        }
+    }
+
     private static void expectLegacy(List<String> problems, ResourceKey<DamageType> key, boolean projectile,
             boolean explosion, boolean fire, boolean bypassesArmor, boolean absolute, boolean creativeAllowed) {
         LegacyDamageType actual = null;
@@ -487,6 +530,54 @@ public final class ModDamageSources {
                                    boolean bypassesArmor, boolean absolute, boolean creativeAllowed) {
         public ResourceLocation location() {
             return key.location();
+        }
+
+        public List<String> expectedTagLabels() {
+            List<String> labels = new ArrayList<>(7);
+            if (projectile) {
+                labels.add("projectile");
+            }
+            if (explosion) {
+                labels.add("explosion");
+            }
+            if (fire) {
+                labels.add("fire");
+            }
+            if (bypassesArmor) {
+                labels.add("bypassesArmor");
+            }
+            if (absolute) {
+                labels.add("absolute");
+            }
+            if (bypassesEffects()) {
+                labels.add("effects");
+            }
+            if (creativeAllowed) {
+                labels.add("creativeAllowed");
+            }
+            return List.copyOf(labels);
+        }
+
+        public boolean bypassesEffects() {
+            return absolute;
+        }
+
+        public String expectedMessageId() {
+            return switch (location().getPath()) {
+                case "acid_player" -> "acidPlayer";
+                case "ams_core" -> "amsCore";
+                case "black_lung" -> "blacklung";
+                case "chopper_bullet" -> "chopperBullet";
+                case "combine_ball" -> "cmb";
+                case "euthanized_self" -> "euthanizedSelf";
+                case "euthanized_self2" -> "euthanizedSelf2";
+                case "mud_poisoning" -> "mudPoisoning";
+                case "nuclear_blast" -> "nuclearBlast";
+                case "revolver_bullet" -> "revolverBullet";
+                case "subatomic" -> "subAtomic";
+                case "tau_blast" -> "tauBlast";
+                default -> location().getPath();
+            };
         }
     }
 

@@ -3,6 +3,7 @@ package com.hbm.ntm.menu;
 import com.hbm.ntm.block.NuclearDeviceBlock;
 import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -93,27 +94,8 @@ public class NuclearDeviceMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack result = ItemStack.EMPTY;
-        Slot slot = slots.get(index);
-        if (slot != null && slot.hasItem()) {
-            ItemStack stack = slot.getItem();
-            result = stack.copy();
-
-            if (index < playerInventoryStart) {
-                if (!moveItemStackTo(stack, playerInventoryStart, hotbarEnd, true)) {
-                    return ItemStack.EMPTY;
-                }
-            } else {
-                return ItemStack.EMPTY;
-            }
-
-            if (stack.isEmpty()) {
-                slot.set(ItemStack.EMPTY);
-            } else {
-                slot.setChanged();
-            }
-        }
-        return result;
+        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index, playerInventoryStart,
+                playerInventoryStart, hotbarEnd);
     }
 
     private void addPlayerInventory(Inventory inventory) {

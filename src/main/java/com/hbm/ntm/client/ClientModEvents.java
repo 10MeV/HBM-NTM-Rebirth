@@ -65,6 +65,8 @@ import com.hbm.ntm.client.renderer.OilDrillRenderer;
 import com.hbm.ntm.client.renderer.PyroOvenRenderer;
 import com.hbm.ntm.client.renderer.RadarRenderer;
 import com.hbm.ntm.client.renderer.RadarScreenRenderer;
+import com.hbm.ntm.client.renderer.RadioAutocalRenderer;
+import com.hbm.ntm.client.renderer.RadioTelexRenderer;
 import com.hbm.ntm.client.renderer.RadioTorchRenderer;
 import com.hbm.ntm.client.renderer.RedCableRenderer;
 import com.hbm.ntm.client.renderer.RubbleRenderer;
@@ -74,6 +76,7 @@ import com.hbm.ntm.client.renderer.SoyuzCapsuleRenderer;
 import com.hbm.ntm.client.renderer.SoyuzLauncherRenderer;
 import com.hbm.ntm.client.renderer.SoyuzRenderer;
 import com.hbm.ntm.client.renderer.TrinketBlockEntityRenderer;
+import com.hbm.ntm.client.screen.ArmorTableScreen;
 import com.hbm.ntm.client.screen.BasicMachineScreen;
 import com.hbm.ntm.client.screen.AssemblyFactoryScreen;
 import com.hbm.ntm.client.screen.AssemblyMachineScreen;
@@ -89,6 +92,8 @@ import com.hbm.ntm.client.screen.MachineBatterySocketScreen;
 import com.hbm.ntm.client.screen.NuclearDeviceScreen;
 import com.hbm.ntm.client.screen.OilDrillScreen;
 import com.hbm.ntm.client.screen.PyroOvenScreen;
+import com.hbm.ntm.client.screen.RadioAutocalScreen;
+import com.hbm.ntm.client.screen.RadioTelexScreen;
 import com.hbm.ntm.client.screen.RadioTorchScreen;
 import com.hbm.ntm.client.screen.RadarScreen;
 import com.hbm.ntm.client.screen.RefineryScreen;
@@ -156,6 +161,7 @@ public final class ClientModEvents {
     public static void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             MenuScreens.register(ModMenuTypes.BASIC_MACHINE.get(), BasicMachineScreen::new);
+            MenuScreens.register(ModMenuTypes.ARMOR_TABLE.get(), ArmorTableScreen::new);
             MenuScreens.register(ModMenuTypes.ASSEMBLY_MACHINE.get(), AssemblyMachineScreen::new);
             MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT.get(), ChemicalPlantScreen::new);
             MenuScreens.register(ModMenuTypes.ASSEMBLY_FACTORY.get(), AssemblyFactoryScreen::new);
@@ -180,6 +186,8 @@ public final class ClientModEvents {
             MenuScreens.register(ModMenuTypes.SOYUZ_LAUNCHER.get(), SoyuzLauncherScreen::new);
             MenuScreens.register(ModMenuTypes.TOOL_ABILITY.get(), ToolAbilityScreen::new);
             MenuScreens.register(ModMenuTypes.RADIO_TORCH.get(), RadioTorchScreen::new);
+            MenuScreens.register(ModMenuTypes.RADIO_AUTOCAL.get(), RadioAutocalScreen::new);
+            MenuScreens.register(ModMenuTypes.RADIO_TELEX.get(), RadioTelexScreen::new);
         });
     }
 
@@ -194,6 +202,8 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.RADIO_TORCH_READER.get(), RadioTorchRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.RADIO_TORCH_CONTROLLER.get(), RadioTorchRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.RADIO_TORCH_COUNTER.get(), RadioTorchRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.RADIO_AUTOCAL.get(), RadioAutocalRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.RADIO_TELEX.get(), RadioTelexRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FLUID_PIPE.get(), FluidPipeRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FLUID_PIPE_ANCHOR.get(), FluidPipeAnchorRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.MACHINE_BATTERY_SOCKET.get(), MachineBatterySocketRenderer::new);

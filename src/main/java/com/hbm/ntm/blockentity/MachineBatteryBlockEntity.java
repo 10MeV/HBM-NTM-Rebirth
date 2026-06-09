@@ -3,10 +3,12 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
+import com.hbm.ntm.api.tile.ControlReceiver;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
@@ -16,6 +18,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.menu.MachineBatteryMenu;
 import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -39,12 +42,12 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.IntSupplier;
 
 public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, HbmTileSyncable,
-        RORValueProvider, RORInteractive, LegacyLookOverlayProvider {
+        RORValueProvider, RORInteractive, LegacyLookOverlayProvider, ControlReceiver, CopiableSettings {
     private static final String TAG_INVENTORY = "Inventory";
     private static final long MAX_POWER = 1_000_000L;
     private static final long MAX_RECEIVE = MAX_POWER / 200L;
@@ -78,7 +81,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return (slot == SLOT_DISCHARGE || slot == SLOT_CHARGE) && HbmBatteryTransfer.isHbmBattery(stack);
+            return slot == SLOT_DISCHARGE || slot == SLOT_CHARGE;
         }
 
         @Override
@@ -110,6 +113,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     private MachineBatteryBlockEntity(BlockPos pos, BlockState state, BatteryEnergyStorage energy) {
         super(ModBlockEntities.MACHINE_BATTERY.get(), pos, state, energy);
         this.batteryEnergy = energy;
+        this.batteryEnergy.bindModeSupplier(this::getCurrentMode);
         this.ror = createRorDispatcher();
     }
 
@@ -254,15 +258,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     }
 
     public List<ItemStack> getDrops() {
-        List<ItemStack> drops = new ArrayList<>();
-        for (int slot = 0; slot < items.getSlots(); slot++) {
-            ItemStack stack = items.getStackInSlot(slot);
-            if (!stack.isEmpty()) {
-                drops.add(stack.copy());
-                items.setStackInSlot(slot, ItemStack.EMPTY);
-            }
-        }
-        return drops;
+        return HbmInventoryMenuHelper.clearToDrops(items);
     }
 
     public long getDelta() {
@@ -311,6 +307,14 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
             default -> HbmEnergyReceiver.ConnectionPriority.LOW;
         });
         setChanged();
+    }
+
+    private void markSettingsChanged() {
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
+        }
     }
 
     private void setPriorityByLegacyOrdinal(int ordinal) {
@@ -403,9 +407,67 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
             case CONTROL_RED_LOW -> cycleRedLowMode();
             case CONTROL_RED_HIGH -> cycleRedHighMode();
             case CONTROL_PRIORITY -> cyclePriority();
-            default -> {
-            }
+            default -> receiveControl(player, tag);
         }
+    }
+
+    @Override
+    public boolean hasPermission(Player player) {
+        return player != null && !isRemoved();
+    }
+
+    @Override
+    public void receiveControl(CompoundTag data) {
+        boolean changed = false;
+        if (data.contains("low")) {
+            redLow = cycleMode(redLow);
+            changed = true;
+        }
+        if (data.contains("high")) {
+            redHigh = cycleMode(redHigh);
+            changed = true;
+        }
+        if (data.contains("priority")) {
+            batteryEnergy.setPriority(switch (batteryEnergy.getPriority()) {
+                case LOW -> HbmEnergyReceiver.ConnectionPriority.NORMAL;
+                case NORMAL -> HbmEnergyReceiver.ConnectionPriority.HIGH;
+                default -> HbmEnergyReceiver.ConnectionPriority.LOW;
+            });
+            changed = true;
+        }
+        if (changed) {
+            markSettingsChanged();
+        }
+    }
+
+    @Override
+    public void receiveControl(Player player, CompoundTag data) {
+        if (hasPermission(player)) {
+            receiveControl(data);
+        }
+    }
+
+    @Override
+    public CompoundTag getSettings(Level level, BlockPos pos) {
+        CompoundTag data = new CompoundTag();
+        data.putShort(TAG_RED_LOW, redLow);
+        data.putShort(TAG_RED_HIGH, redHigh);
+        data.putByte(TAG_PRIORITY, (byte) batteryEnergy.getPriority().ordinal());
+        return data;
+    }
+
+    @Override
+    public void pasteSettings(CompoundTag tag, int index, Level level, Player player, BlockPos pos) {
+        if (tag.contains(TAG_RED_LOW)) {
+            redLow = clampMode(tag.getShort(TAG_RED_LOW));
+        }
+        if (tag.contains(TAG_RED_HIGH)) {
+            redHigh = clampMode(tag.getShort(TAG_RED_HIGH));
+        }
+        if (tag.contains(TAG_PRIORITY)) {
+            batteryEnergy.setPriority(readLegacyPriority(tag));
+        }
+        markSettingsChanged();
     }
 
     public static CompoundTag controlTag(int control) {
@@ -443,7 +505,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put(TAG_INVENTORY, items.serializeNBT());
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         tag.putShort(TAG_RED_LOW, redLow);
         tag.putShort(TAG_RED_HIGH, redHigh);
         tag.putBoolean(TAG_LAST_REDSTONE, lastRedstone);
@@ -457,7 +519,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        items.deserializeNBT(tag.getCompound(TAG_INVENTORY));
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         if (tag.contains("power")) {
             energy.setPower(tag.getLong("power"));
         }
@@ -575,9 +637,26 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
 
     private static final class BatteryEnergyStorage extends HbmEnergyStorage {
         private HbmEnergyReceiver.ConnectionPriority priority = HbmEnergyReceiver.ConnectionPriority.LOW;
+        private IntSupplier modeSupplier = () -> MODE_NONE;
 
         private BatteryEnergyStorage(long maxPower, long maxReceive, long maxExtract) {
             super(maxPower, maxReceive, maxExtract);
+        }
+
+        private void bindModeSupplier(IntSupplier modeSupplier) {
+            this.modeSupplier = modeSupplier == null ? () -> MODE_NONE : modeSupplier;
+        }
+
+        @Override
+        public long getReceiverSpeed() {
+            int mode = modeSupplier.getAsInt();
+            return mode == MODE_INPUT || mode == MODE_BUFFER ? super.getReceiverSpeed() : 0L;
+        }
+
+        @Override
+        public long getProviderSpeed() {
+            int mode = modeSupplier.getAsInt();
+            return mode == MODE_OUTPUT || mode == MODE_BUFFER ? super.getProviderSpeed() : 0L;
         }
 
         @Override

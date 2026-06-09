@@ -2,7 +2,7 @@ package com.hbm.ntm.compat;
 
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.api.tile.InfoProviderEC;
-import com.hbm.ntm.energy.HbmBatteryItem;
+import com.hbm.ntm.energy.HbmChargeableItem;
 import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -63,11 +63,11 @@ public final class CompatEnergyControl {
     public static final String B_ACTIVE = "active";
 
     public static boolean isElectricItem(ItemStack stack) {
-        return !stack.isEmpty() && stack.getItem() instanceof HbmBatteryItem;
+        return !stack.isEmpty() && stack.getItem() instanceof HbmChargeableItem;
     }
 
     public static double dischargeItem(ItemStack stack, double needed) {
-        if (needed <= 0.0D || stack.isEmpty() || !(stack.getItem() instanceof HbmBatteryItem battery)) {
+        if (needed <= 0.0D || stack.isEmpty() || !(stack.getItem() instanceof HbmChargeableItem battery)) {
             return 0.0D;
         }
         long requested = Math.min(battery.getDischargeRate(stack),

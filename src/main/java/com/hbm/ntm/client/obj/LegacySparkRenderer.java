@@ -5,14 +5,26 @@ import java.util.List;
 import java.util.Random;
 
 public final class LegacySparkRenderer {
+    public static final float SETUP_LINE_WIDTH = 3.0F;
+    public static final float OUTER_LINE_WIDTH = 5.0F;
+    public static final float INNER_LINE_WIDTH = 2.0F;
+
     public static void renderSpark(ObjRenderContext context, int seed, double x, double y, double z,
             float length, int min, int max, int colorOuter, int colorInner) {
-        for (SparkSegment segment : sparkSegments(seed, x, y, z, length, min, max)) {
-            LegacyLineRenderer.line(context, 5.0F, segment.x0(), segment.y0(), segment.z0(),
-                    segment.x1(), segment.y1(), segment.z1(), colorOuter, 255);
-            LegacyLineRenderer.line(context, 2.0F, segment.x0(), segment.y0(), segment.z0(),
-                    segment.x1(), segment.y1(), segment.z1(), colorInner, 255);
+        SparkRenderPlan plan = sparkPlan(seed, x, y, z, length, min, max, colorOuter, colorInner);
+        for (SparkSegment segment : plan.segments()) {
+            LegacyLineRenderer.line(context, plan.outerLineWidth(), segment.x0(), segment.y0(), segment.z0(),
+                    segment.x1(), segment.y1(), segment.z1(), plan.outerColor(), 255);
+            LegacyLineRenderer.line(context, plan.innerLineWidth(), segment.x0(), segment.y0(), segment.z0(),
+                    segment.x1(), segment.y1(), segment.z1(), plan.innerColor(), 255);
         }
+    }
+
+    public static SparkRenderPlan sparkPlan(int seed, double x, double y, double z,
+            float length, int min, int max, int colorOuter, int colorInner) {
+        return new SparkRenderPlan(sparkSegments(seed, x, y, z, length, min, max),
+                SETUP_LINE_WIDTH, OUTER_LINE_WIDTH, INNER_LINE_WIDTH, colorOuter, colorInner,
+                new SparkStatePlan(false, false));
     }
 
     public static List<SparkSegment> sparkSegments(int seed, double x, double y, double z,
@@ -51,6 +63,19 @@ public final class LegacySparkRenderer {
     }
 
     public record SparkSegment(double x0, double y0, double z0, double x1, double y1, double z1) {
+    }
+
+    public record SparkRenderPlan(
+            List<SparkSegment> segments,
+            float setupLineWidth,
+            float outerLineWidth,
+            float innerLineWidth,
+            int outerColor,
+            int innerColor,
+            SparkStatePlan state) {
+    }
+
+    public record SparkStatePlan(boolean textureEnabled, boolean lightingEnabled) {
     }
 
     private LegacySparkRenderer() {

@@ -21,7 +21,17 @@ public interface HbmLegacyBufPacketReceiver extends HbmTileBinarySyncProvider, H
         }
     }
 
-    void serializeLegacyBufPacket(FriendlyByteBuf data);
+    default void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        serialize(data);
+    }
 
-    void deserializeLegacyBufPacket(FriendlyByteBuf data);
+    default void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        deserialize(data);
+    }
+
+    default void serialize(FriendlyByteBuf data) {
+    }
+
+    default void deserialize(FriendlyByteBuf data) {
+    }
 }

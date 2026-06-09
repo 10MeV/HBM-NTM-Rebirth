@@ -5,8 +5,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class ObjMissilePartModels {
@@ -289,21 +291,35 @@ public final class ObjMissilePartModels {
     public static void renderMissile(LegacyMissilePart thruster, LegacyMissilePart fins, LegacyMissilePart fuselage,
             LegacyMissilePart warhead, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        if (thruster != null) {
-            thruster.render(poseStack, buffer, packedLight, packedOverlay);
-            poseStack.translate(0.0D, thruster.height(), 0.0D);
-        }
-        if (fuselage != null) {
-            if (fins != null) {
-                fins.render(poseStack, buffer, packedLight, packedOverlay);
+        for (MissileRenderStep step : missileSteps(thruster, fins, fuselage, warhead)) {
+            step.part().render(poseStack, buffer, packedLight, packedOverlay);
+            if (step.translateAfterY() != 0.0D) {
+                poseStack.translate(0.0D, step.translateAfterY(), 0.0D);
             }
-            fuselage.render(poseStack, buffer, packedLight, packedOverlay);
-            poseStack.translate(0.0D, fuselage.height(), 0.0D);
-        }
-        if (warhead != null) {
-            warhead.render(poseStack, buffer, packedLight, packedOverlay);
         }
         poseStack.popPose();
+    }
+
+    public static List<MissileRenderStep> missileSteps(LegacyMissilePart thruster, LegacyMissilePart fins,
+            LegacyMissilePart fuselage, LegacyMissilePart warhead) {
+        List<MissileRenderStep> steps = new ArrayList<>(4);
+        if (isKind(thruster, PartKind.THRUSTER)) {
+            steps.add(new MissileRenderStep(thruster, thruster.height()));
+        }
+        if (isKind(fuselage, PartKind.FUSELAGE)) {
+            if (isKind(fins, PartKind.FINS)) {
+                steps.add(new MissileRenderStep(fins, 0.0D));
+            }
+            steps.add(new MissileRenderStep(fuselage, fuselage.height()));
+        }
+        if (isKind(warhead, PartKind.WARHEAD)) {
+            steps.add(new MissileRenderStep(warhead, 0.0D));
+        }
+        return Collections.unmodifiableList(steps);
+    }
+
+    public static boolean isKind(LegacyMissilePart part, PartKind kind) {
+        return part != null && part.kind() == kind;
     }
 
     private static void register(Map<String, LegacyMissilePart> parts, String legacyItemName, PartKind kind,
@@ -369,5 +385,8 @@ public final class ObjMissilePartModels {
         public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
             model.renderAll(texture, poseStack, buffer, packedLight, packedOverlay);
         }
+    }
+
+    public record MissileRenderStep(LegacyMissilePart part, double translateAfterY) {
     }
 }

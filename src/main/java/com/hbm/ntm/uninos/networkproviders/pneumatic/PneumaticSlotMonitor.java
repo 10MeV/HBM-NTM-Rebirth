@@ -28,11 +28,35 @@ public class PneumaticSlotMonitor {
         return stackSize;
     }
 
+    public @Nullable Item getItem() {
+        return item;
+    }
+
+    public int getDamage() {
+        return damage;
+    }
+
+    public @Nullable CompoundTag getTag() {
+        return tag == null ? null : tag.copy();
+    }
+
     public @Nullable ItemStack toZeroStack() {
         if (item == null) {
             return null;
         }
         ItemStack stack = new ItemStack(item, 0);
+        stack.setDamageValue(damage);
+        if (tag != null) {
+            stack.setTag(tag.copy());
+        }
+        return stack;
+    }
+
+    public ItemStack toDisplayStack() {
+        if (item == null) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack stack = new ItemStack(item, 1);
         stack.setDamageValue(damage);
         if (tag != null) {
             stack.setTag(tag.copy());

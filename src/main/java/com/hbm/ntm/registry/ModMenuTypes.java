@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.menu.ArmorTableMenu;
 import com.hbm.ntm.menu.AssemblyFactoryMenu;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
 import com.hbm.ntm.menu.BasicMachineMenu;
@@ -16,6 +17,8 @@ import com.hbm.ntm.menu.MachineBatterySocketMenu;
 import com.hbm.ntm.menu.NuclearDeviceMenu;
 import com.hbm.ntm.menu.OilDrillMenu;
 import com.hbm.ntm.menu.PyroOvenMenu;
+import com.hbm.ntm.menu.RadioAutocalMenu;
+import com.hbm.ntm.menu.RadioTelexMenu;
 import com.hbm.ntm.menu.RadioTorchMenu;
 import com.hbm.ntm.menu.RadarMenu;
 import com.hbm.ntm.menu.RemoteFluidMachineMenu;
@@ -39,6 +42,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<BasicMachineMenu>> BASIC_MACHINE =
             MENUS.register("basic_machine", () -> IForgeMenuType.create(BasicMachineMenu::new));
+
+    public static final RegistryObject<MenuType<ArmorTableMenu>> ARMOR_TABLE =
+            MENUS.register("armor_table", () -> IForgeMenuType.create(ArmorTableMenu::new));
 
     public static final RegistryObject<MenuType<AssemblyMachineMenu>> ASSEMBLY_MACHINE =
             MENUS.register("assembly_machine", () -> IForgeMenuType.create(AssemblyMachineMenu::new));
@@ -111,6 +117,12 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<RadioTorchMenu>> RADIO_TORCH =
             MENUS.register("radio_torch", () -> IForgeMenuType.create(RadioTorchMenu::new));
+
+    public static final RegistryObject<MenuType<RadioAutocalMenu>> RADIO_AUTOCAL =
+            MENUS.register("radio_autocal", () -> IForgeMenuType.create(RadioAutocalMenu::new));
+
+    public static final RegistryObject<MenuType<RadioTelexMenu>> RADIO_TELEX =
+            MENUS.register("radio_telex", () -> IForgeMenuType.create(RadioTelexMenu::new));
 
     public static void register(IEventBus modBus) {
         MENUS.register(modBus);

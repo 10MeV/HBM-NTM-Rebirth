@@ -1,5 +1,7 @@
 package com.hbm.ntm.fluid;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
@@ -15,7 +17,6 @@ import com.hbm.ntm.radiation.RadiationUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
@@ -197,7 +198,7 @@ public final class HbmFluidContactEffects {
         if (effectId.equals(HBM_DEATH_EFFECT)) {
             return Optional.empty();
         }
-        return Optional.ofNullable(BuiltInRegistries.MOB_EFFECT.get(effectId));
+        return HbmRegistryUtil.mobEffect(effectId);
     }
 
     private static int scaleDuration(int durationTicks, float intensity) {
@@ -229,7 +230,7 @@ public final class HbmFluidContactEffects {
         }
 
         private void addEffect(MobEffect effect, int durationTicks, int amplifier) {
-            effects.add(new EffectApplication(BuiltInRegistries.MOB_EFFECT.getKey(effect), durationTicks, amplifier));
+            effects.add(new EffectApplication(HbmRegistryUtil.mobEffectKey(effect), durationTicks, amplifier));
         }
 
         public FluidType getFluid() {

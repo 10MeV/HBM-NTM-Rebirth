@@ -10,6 +10,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -376,6 +377,10 @@ public final class HbmInventoryMenuHelper {
                 playerInventoryStart, playerSlotEnd, machineInsertionRanges);
     }
 
+    public static void finishQuickMove(Slot slot, ItemStack stack) {
+        HbmInventoryUtil.finishQuickMove(slot, stack);
+    }
+
     public static boolean moveStackToAnyRange(java.util.List<Slot> slots, ItemStack stack, int... ranges) {
         return HbmInventoryUtil.moveStackToAnyRange(slots, stack, ranges);
     }
@@ -383,6 +388,19 @@ public final class HbmInventoryMenuHelper {
     public static boolean legacyMergeItemStack(java.util.List<Slot> slots, ItemStack stack, int start, int end,
             boolean reverse) {
         return HbmInventoryUtil.mergeItemStack(slots, stack, start, end, reverse);
+    }
+
+    public static boolean shouldBlockOpenItemContainerClick(int slotId, int button, ClickType clickType,
+            Inventory inventory, int contentSlotCount) {
+        int selectedHotbarSlot = inventory.selected;
+        if (clickType == ClickType.SWAP && button == selectedHotbarSlot) {
+            return true;
+        }
+        return slotId == openItemHotbarSlotIndex(contentSlotCount, selectedHotbarSlot);
+    }
+
+    public static int openItemHotbarSlotIndex(int contentSlotCount, int hotbarSlot) {
+        return contentSlotCount + 27 + hotbarSlot;
     }
 
     public static boolean isBatteryLike(ItemStack stack) {
@@ -432,6 +450,14 @@ public final class HbmInventoryMenuHelper {
 
     public static void loadLegacyItemsCompound(CompoundTag tag, String key, ItemStackHandler items) {
         HbmItemStackUtil.loadLegacyItemsCompound(tag, key, items);
+    }
+
+    public static void loadLegacyOrForgeItems(CompoundTag tag, ItemStackHandler items) {
+        HbmItemStackUtil.loadLegacyOrForgeItems(tag, items);
+    }
+
+    public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, ItemStackHandler items) {
+        HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, key, items);
     }
 
     public static NonNullList<ItemStack> loadLegacyItems(CompoundTag tag, int slotCount) {

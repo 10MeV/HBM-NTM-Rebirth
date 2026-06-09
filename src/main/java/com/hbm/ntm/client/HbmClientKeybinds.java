@@ -3,7 +3,6 @@ package com.hbm.ntm.client;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.ModMessages;
-import com.hbm.ntm.network.packet.KeybindPacket;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -58,7 +57,7 @@ public final class HbmClientKeybinds {
             boolean previous = STATES.getOrDefault(keybind, false);
             if (pressed != previous) {
                 STATES.put(keybind, pressed);
-                ModMessages.sendToServer(new KeybindPacket(keybind, pressed));
+                ModMessages.sendKeybind(keybind, pressed);
             }
         }
     }
@@ -66,7 +65,7 @@ public final class HbmClientKeybinds {
     private static void clearPressedStates() {
         for (Map.Entry<HbmKeybind, Boolean> entry : STATES.entrySet()) {
             if (entry.getValue()) {
-                ModMessages.sendToServer(new KeybindPacket(entry.getKey(), false));
+                ModMessages.sendKeybind(entry.getKey(), false);
             }
         }
         STATES.clear();

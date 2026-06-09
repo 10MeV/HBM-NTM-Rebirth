@@ -21,13 +21,11 @@ public final class PyroOvenRecipeCategory implements IRecipeCategory<PyroOvenRec
     private static final int HEIGHT = 72;
 
     private final RecipeType<PyroOvenRecipe> type;
-    private final IDrawableStatic background;
     private final IDrawable icon;
     private final IDrawableStatic arrow;
 
     PyroOvenRecipeCategory(RecipeType<PyroOvenRecipe> type, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
-        this.background = guiHelper.createBlankDrawable(WIDTH, HEIGHT);
         this.icon = guiHelper.createDrawableItemLike(catalyst);
         this.arrow = guiHelper.getRecipeArrow();
     }
@@ -40,11 +38,6 @@ public final class PyroOvenRecipeCategory implements IRecipeCategory<PyroOvenRec
     @Override
     public Component getTitle() {
         return Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_pyrooven", "Pyrolysis Oven");
-    }
-
-    @Override
-    public IDrawable getBackground() {
-        return background;
     }
 
     @Override

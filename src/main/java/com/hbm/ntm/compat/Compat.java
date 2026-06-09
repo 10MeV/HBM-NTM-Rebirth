@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.radiation.RadiationConstants;
 import com.hbm.ntm.radiation.HazmatRegistry;
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +18,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +57,63 @@ public final class Compat {
             HazardClass.LIGHT,
             HazardClass.SAND
     };
+    private static final float REIKA_GEN_S = 10_000.0F;
+    private static final float REIKA_GEN_H = 2_000.0F;
+    private static final float REIKA_GEN_10D = 100.0F;
+    private static final float REIKA_GEN_1Y = 50.0F;
+    private static final float REIKA_GEN_10Y = 30.0F;
+    private static final float REIKA_GEN_100Y = 10.0F;
+    private static final float REIKA_GEN_10K = 6.25F;
+    private static final float REIKA_GEN_100K = 5.0F;
+    private static final float REIKA_GEN_1M = 2.5F;
+    private static final float REIKA_GEN_10M = 1.5F;
+    private static final float REIKA_GEN_100M = 1.0F;
+
+    public enum ReikaIsotope {
+        C14(REIKA_GEN_10K),
+        U235(RadiationConstants.U235),
+        U238(RadiationConstants.U238),
+        Pu239(RadiationConstants.PU239),
+        Pu244(REIKA_GEN_100M),
+        Th232(RadiationConstants.TH232),
+        Rn222(REIKA_GEN_10D),
+        Ra226(RadiationConstants.RA226),
+        Sr90(REIKA_GEN_10Y),
+        Po210(RadiationConstants.PO210),
+        Cs134(REIKA_GEN_1Y),
+        Xe135(RadiationConstants.XE135),
+        Zr93(REIKA_GEN_1M),
+        Mo99(REIKA_GEN_10D),
+        Cs137(RadiationConstants.CS137),
+        Tc99(RadiationConstants.TC99),
+        I131(150.0F),
+        Pm147(REIKA_GEN_1Y),
+        I129(REIKA_GEN_10M),
+        Sm151(REIKA_GEN_100Y),
+        Ru106(REIKA_GEN_1Y),
+        Kr85(REIKA_GEN_10Y),
+        Pd107(REIKA_GEN_10M),
+        Se79(REIKA_GEN_100K),
+        Gd155(REIKA_GEN_1Y),
+        Sb125(REIKA_GEN_1Y),
+        Sn126(REIKA_GEN_100K),
+        Xe136(0.0F),
+        I135(REIKA_GEN_H),
+        Xe131(REIKA_GEN_10D),
+        Ru103(REIKA_GEN_S),
+        Pm149(REIKA_GEN_10D),
+        Rh105(REIKA_GEN_H);
+
+        private final float rads;
+
+        ReikaIsotope(float rads) {
+            this.rads = rads;
+        }
+
+        public float getRad() {
+            return rads;
+        }
+    }
 
     public static boolean isModLoaded(String modId) {
         return modId != null && !modId.isBlank() && ModList.get().isLoaded(modId);
@@ -106,6 +165,33 @@ public final class Compat {
         return item == null || item == Items.AIR ? null : item;
     }
 
+    public static ItemStack tryLoadItemStack(String id) {
+        return tryLoadItemStack(id, 1);
+    }
+
+    public static ItemStack tryLoadItemStack(String id, int count) {
+        Item item = tryLoadItem(id);
+        return item == null ? ItemStack.EMPTY : new ItemStack(item, Math.max(1, count));
+    }
+
+    public static ItemStack tryLoadItemStack(String namespace, String path) {
+        return tryLoadItemStack(namespace, path, 1);
+    }
+
+    public static ItemStack tryLoadItemStack(String namespace, String path, int count) {
+        Item item = tryLoadItem(namespace, path);
+        return item == null ? ItemStack.EMPTY : new ItemStack(item, Math.max(1, count));
+    }
+
+    public static ItemStack tryLoadItemStack(ResourceLocation id) {
+        return tryLoadItemStack(id, 1);
+    }
+
+    public static ItemStack tryLoadItemStack(ResourceLocation id, int count) {
+        Item item = tryLoadItem(id);
+        return item == null ? ItemStack.EMPTY : new ItemStack(item, Math.max(1, count));
+    }
+
     @Nullable
     public static Block tryLoadBlock(String id) {
         if (id == null || id.isBlank()) {
@@ -127,6 +213,33 @@ public final class Compat {
         }
         Block block = ForgeRegistries.BLOCKS.getValue(id);
         return block == null || block == Blocks.AIR ? null : block;
+    }
+
+    public static ItemStack tryLoadBlockStack(String id) {
+        return tryLoadBlockStack(id, 1);
+    }
+
+    public static ItemStack tryLoadBlockStack(String id, int count) {
+        Block block = tryLoadBlock(id);
+        return block == null ? ItemStack.EMPTY : new ItemStack(block, Math.max(1, count));
+    }
+
+    public static ItemStack tryLoadBlockStack(String namespace, String path) {
+        return tryLoadBlockStack(namespace, path, 1);
+    }
+
+    public static ItemStack tryLoadBlockStack(String namespace, String path, int count) {
+        Block block = tryLoadBlock(namespace, path);
+        return block == null ? ItemStack.EMPTY : new ItemStack(block, Math.max(1, count));
+    }
+
+    public static ItemStack tryLoadBlockStack(ResourceLocation id) {
+        return tryLoadBlockStack(id, 1);
+    }
+
+    public static ItemStack tryLoadBlockStack(ResourceLocation id, int count) {
+        Block block = tryLoadBlock(id);
+        return block == null ? ItemStack.EMPTY : new ItemStack(block, Math.max(1, count));
     }
 
     public static ItemStack getPreferredItemOutput(List<ItemStack> candidates) {
@@ -162,6 +275,89 @@ public final class Compat {
             return null;
         }
         return level.getBlockEntity(pos);
+    }
+
+    @Nullable
+    public static BlockEntity getTileStandard(Level level, int x, int y, int z) {
+        return getTileStandard(level, new BlockPos(x, y, z));
+    }
+
+    @Nullable
+    public static ResourceLocation itemId(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return null;
+        }
+        return ForgeRegistries.ITEMS.getKey(stack.getItem());
+    }
+
+    @Nullable
+    public static String itemNamespace(ItemStack stack) {
+        ResourceLocation id = itemId(stack);
+        return id == null ? null : id.getNamespace();
+    }
+
+    public static boolean isItemFromMod(ItemStack stack, String modId) {
+        String namespace = itemNamespace(stack);
+        return namespace != null && modId != null && namespace.equals(modId);
+    }
+
+    @Nullable
+    public static ResourceLocation blockId(Block block) {
+        if (block == null || block == Blocks.AIR) {
+            return null;
+        }
+        return ForgeRegistries.BLOCKS.getKey(block);
+    }
+
+    @Nullable
+    public static ResourceLocation blockId(BlockState state) {
+        return state == null ? null : blockId(state.getBlock());
+    }
+
+    @Nullable
+    public static String blockNamespace(Block block) {
+        ResourceLocation id = blockId(block);
+        return id == null ? null : id.getNamespace();
+    }
+
+    @Nullable
+    public static String blockNamespace(BlockState state) {
+        ResourceLocation id = blockId(state);
+        return id == null ? null : id.getNamespace();
+    }
+
+    public static boolean isBlockFromMod(Block block, String modId) {
+        String namespace = blockNamespace(block);
+        return namespace != null && modId != null && namespace.equals(modId);
+    }
+
+    public static boolean isBlockFromMod(BlockState state, String modId) {
+        String namespace = blockNamespace(state);
+        return namespace != null && modId != null && namespace.equals(modId);
+    }
+
+    @Nullable
+    public static ReikaIsotope reikaIsotope(String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        for (ReikaIsotope isotope : ReikaIsotope.values()) {
+            if (isotope.name().equalsIgnoreCase(name)) {
+                return isotope;
+            }
+        }
+        return null;
+    }
+
+    public static float reikaIsotopeRad(String name, float fallback) {
+        ReikaIsotope isotope = reikaIsotope(name);
+        return isotope == null ? fallback : isotope.getRad();
+    }
+
+    public static List<String> reikaIsotopeNames() {
+        return Arrays.stream(ReikaIsotope.values())
+                .map(Enum::name)
+                .toList();
     }
 
     public static int steamTypeToInt(FluidType type) {

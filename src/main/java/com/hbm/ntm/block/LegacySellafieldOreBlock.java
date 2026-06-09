@@ -41,6 +41,7 @@ public class LegacySellafieldOreBlock extends LegacySellafieldSlakedBlock {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
         return asItem().getDefaultInstance();
     }

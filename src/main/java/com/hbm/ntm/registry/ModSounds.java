@@ -59,6 +59,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> TOOL_TECH_BLEEP = register("tool.tech_bleep");
     public static final RegistryObject<SoundEvent> TOOL_RADAWAY = register("tool.radaway");
     public static final RegistryObject<SoundEvent> TOOL_GASMASK_SCREW = register("tool.gasmask_screw");
+    public static final RegistryObject<SoundEvent> TOOL_PIN_BREAK = register("tool.pin_break");
     public static final RegistryObject<SoundEvent> TOOL_SYRINGE = register("item.syringe");
     public static final RegistryObject<SoundEvent> STEP_METAL = register("step.metal");
     public static final RegistryObject<SoundEvent> STEP_IRON_JUMP = register("step.iron_jump");
@@ -99,6 +100,10 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> TURRET_SENTRY_LOCKON = register("turret.sentry_lockon");
     public static final RegistryObject<SoundEvent> TURRET_MORTAR_WHISTLE = register("turret.mortar_whistle");
     public static final RegistryObject<SoundEvent> ALARM_SOYUZED = register("alarm.soyuzed");
+    public static final RegistryObject<SoundEvent> ALARM_TRAIN_HORN = register("alarm.train_horn");
+    public static final RegistryObject<SoundEvent> ALARM_GAMBIT = register("alarm.gambit");
+    public static final RegistryObject<SoundEvent> ALARM_CHIME = register("alarm.chime");
+    public static final RegistryObject<SoundEvent> ALARM_SINGER = register("alarm.singer");
     public static final RegistryObject<SoundEvent> WEAPON_MUKE_EXPLOSION = register("weapon.muke_explosion");
     public static final RegistryObject<SoundEvent> WEAPON_NUCLEAR_EXPLOSION = register("weapon.nuclear_explosion");
     public static final RegistryObject<SoundEvent> WEAPON_FSTBMB_START = register("weapon.fstbmb_start");

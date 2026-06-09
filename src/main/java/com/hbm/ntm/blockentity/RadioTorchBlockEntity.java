@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.RadioTorchBlock;
+import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.menu.RadioTorchMenu;
 import com.hbm.ntm.network.HbmTileSyncable;
 import net.minecraft.core.BlockPos;
@@ -95,5 +96,15 @@ public abstract class RadioTorchBlockEntity extends BlockEntity
                 level.updateNeighbourForOutputSignal(worldPosition, state.getBlock());
             }
         }
+    }
+
+    protected void selfDestruct() {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+        BlockPos pos = worldPosition;
+        level.destroyBlock(pos, false);
+        WeaponExplosionUtil.smooth(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D,
+                5.0F, null, 50.0F, 1.0D, false, 5.0F, 0.5F).explode();
     }
 }

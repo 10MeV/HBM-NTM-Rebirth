@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "key": {
+    "C": {
+      "tag": "forge:circuits/vacuum_tube"
+    },
+    "F": {
+      "item": "hbm_ntm_rebirth:filter_coal"
+    },
+    "S": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "SFS",
+    "SCS",
+    " S "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:pollution_detector"
+  },
+  "show_notification": true
+}

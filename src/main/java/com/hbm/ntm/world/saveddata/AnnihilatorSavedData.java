@@ -1,8 +1,9 @@
 package com.hbm.ntm.world.saveddata;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -166,7 +167,7 @@ public class AnnihilatorSavedData extends SavedData {
         if (stack == null || stack.isEmpty()) {
             return PoolPushResult.empty(alwaysPayOut);
         }
-        IncrementResult result = increment(pool, PoolKey.itemMeta(BuiltInRegistries.ITEM.getKey(stack.getItem()),
+        IncrementResult result = increment(pool, PoolKey.itemMeta(HbmRegistryUtil.itemKey(stack.getItem()),
                 legacyMeta), stack.getCount());
         return new PoolPushResult(result, false, "payout_deferred", alwaysPayOut);
     }
@@ -396,7 +397,7 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public static PoolKey item(Item item) {
-            return item(BuiltInRegistries.ITEM.getKey(item));
+            return item(HbmRegistryUtil.itemKey(item));
         }
 
         public static PoolKey item(ResourceLocation item) {
@@ -409,7 +410,7 @@ public class AnnihilatorSavedData extends SavedData {
 
         public static PoolKey itemMeta(ItemStack stack, int meta) {
             Objects.requireNonNull(stack, "stack");
-            return itemMeta(BuiltInRegistries.ITEM.getKey(stack.getItem()), meta);
+            return itemMeta(HbmRegistryUtil.itemKey(stack.getItem()), meta);
         }
 
         public static PoolKey fromItemStack(ItemStack stack) {

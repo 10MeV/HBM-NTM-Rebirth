@@ -19,6 +19,7 @@ import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.recipe.LiquefactionRecipe;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -43,7 +44,6 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -197,15 +197,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     }
 
     public List<ItemStack> getDrops() {
-        List<ItemStack> drops = new ArrayList<>();
-        for (int slot = 0; slot < items.getSlots(); slot++) {
-            ItemStack stack = items.getStackInSlot(slot);
-            if (!stack.isEmpty()) {
-                drops.add(stack.copy());
-                items.setStackInSlot(slot, ItemStack.EMPTY);
-            }
-        }
-        return drops;
+        return HbmInventoryMenuHelper.clearToDrops(items);
     }
 
     @Override
@@ -266,7 +258,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put(TAG_INVENTORY, items.serializeNBT());
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         tag.putInt(TAG_PROGRESS, progress);
         tag.putInt(TAG_USAGE, usage);
         tag.putInt(TAG_PROCESS_TIME, processTime);
@@ -275,7 +267,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        items.deserializeNBT(tag.getCompound(TAG_INVENTORY));
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         progress = tag.getInt(TAG_PROGRESS);
         usage = tag.contains(TAG_USAGE) ? tag.getInt(TAG_USAGE) : USAGE_BASE;
         processTime = tag.contains(TAG_PROCESS_TIME) ? tag.getInt(TAG_PROCESS_TIME) : PROCESS_TIME_BASE;

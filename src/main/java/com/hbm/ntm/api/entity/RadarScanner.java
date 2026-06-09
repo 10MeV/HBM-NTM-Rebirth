@@ -15,6 +15,15 @@ import java.util.function.Predicate;
 
 public final class RadarScanner {
     public static final double LEGACY_DIGAMMA_JAM_THRESHOLD = 0.001D;
+    private static final List<Class<?>> candidateTypes = new ArrayList<>();
+    private static final List<RadarConverter> converters = new ArrayList<>();
+    private static final List<Entity> matchingEntities = new ArrayList<>();
+    private static boolean matchingEntitiesInitialized;
+
+    static {
+        registerLegacyCandidateTypes();
+        registerLegacyConverters();
+    }
 
     public static RadarScanResult scan(RadarContext context) {
         return scan(context, RadarScanner::isLegacyDigammaJammer);
@@ -27,10 +36,11 @@ public final class RadarScanner {
 
         Predicate<LivingEntity> jammer = jammerPredicate != null ? jammerPredicate : living -> false;
         List<RadarEntry> entries = new ArrayList<>();
-        ServerLevel level = context.level();
 
-        for (Entity entity : level.getEntities((Entity) null, scanBounds(context),
-                candidate -> isRadarCandidate(candidate, context.params()))) {
+        for (Entity entity : candidateEntities(context)) {
+            if (entity.isRemoved()) {
+                continue;
+            }
             if (!isWithinLegacyRadarVolume(entity, context)) {
                 continue;
             }
@@ -45,6 +55,47 @@ public final class RadarScanner {
         }
 
         return new RadarScanResult(entries, false);
+    }
+
+    public static void registerCandidateType(Class<?> type) {
+        if (type != null && !candidateTypes.contains(type)) {
+            candidateTypes.add(type);
+        }
+    }
+
+    public static List<Class<?>> candidateTypesSnapshot() {
+        return List.copyOf(candidateTypes);
+    }
+
+    public static void registerConverter(RadarConverter converter) {
+        if (converter != null && !converters.contains(converter)) {
+            converters.add(converter);
+        }
+    }
+
+    public static List<RadarConverter> convertersSnapshot() {
+        return List.copyOf(converters);
+    }
+
+    public static void updateSystem(Iterable<ServerLevel> levels) {
+        matchingEntities.clear();
+        if (levels == null) {
+            matchingEntitiesInitialized = false;
+            return;
+        }
+
+        for (ServerLevel level : levels) {
+            for (Entity entity : level.getAllEntities()) {
+                if (!entity.isRemoved() && isRadarCandidateClass(entity)) {
+                    matchingEntities.add(entity);
+                }
+            }
+        }
+        matchingEntitiesInitialized = true;
+    }
+
+    public static List<Entity> matchingEntitiesSnapshot() {
+        return List.copyOf(matchingEntities);
     }
 
     public static AABB scanBounds(RadarContext context) {
@@ -101,38 +152,84 @@ public final class RadarScanner {
         return proximityMode ? proximityRedstone(entries, origin, range) : tierRedstone(entries);
     }
 
-    private static boolean isRadarCandidate(Entity entity, RadarDetectable.RadarScanParams params) {
-        return entity instanceof RadarDetectable
-                || entity instanceof LegacyRadarDetectable legacy
-                && params.scanMissiles()
-                && legacy.canBeDetectedByLegacyRadar()
-                || entity instanceof Player && params.scanPlayers();
+    @SuppressWarnings("deprecation")
+    private static Iterable<Entity> candidateEntities(RadarContext context) {
+        if (matchingEntitiesInitialized) {
+            return matchingEntities;
+        }
+        return context.level().getEntities((Entity) null, scanBounds(context), RadarScanner::isRadarCandidateClass);
+    }
+
+    @SuppressWarnings("deprecation")
+    private static boolean isRadarCandidateClass(Entity entity) {
+        for (Class<?> type : candidateTypes) {
+            if (type.isInstance(entity)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static RadarEntry entryFor(Entity entity, RadarContext context) {
-        RadarDetectable.RadarScanParams params = context.params();
-
-        if (entity instanceof RadarDetectable detectable
-                && detectable.canBeSeenBy(context)
-                && detectable.paramsApplicable(params)) {
-            return RadarEntry.of(detectable, entity, detectable.suppliesRedstone(params));
+        ConversionContext conversion = new ConversionContext(entity, context, context.params());
+        for (RadarConverter converter : converters) {
+            RadarEntry entry = converter.convert(conversion);
+            if (entry != null) {
+                return entry;
+            }
         }
-
-        if (entity instanceof LegacyRadarDetectable legacy
-                && params.scanMissiles()
-                && legacy.canBeDetectedByLegacyRadar()) {
-            return RadarEntry.of(legacy, entity);
-        }
-
-        if (entity instanceof Player player && params.scanPlayers()) {
-            return RadarEntry.of(player);
-        }
-
         return null;
     }
 
     private static boolean isLegacyDigammaJammer(LivingEntity entity) {
         return HbmLivingProperties.getDigamma(entity) > LEGACY_DIGAMMA_JAM_THRESHOLD;
+    }
+
+    private static void registerLegacyCandidateTypes() {
+        registerCandidateType(RadarDetectable.class);
+        registerCandidateType(LegacyRadarDetectable.class);
+        registerCandidateType(Player.class);
+    }
+
+    @SuppressWarnings("deprecation")
+    private static void registerLegacyConverters() {
+        registerConverter(conversion -> {
+            Entity entity = conversion.entity();
+            RadarDetectable.RadarScanParams params = conversion.params();
+            RadarContext radar = conversion.radar();
+            if (entity instanceof RadarDetectable detectable
+                    && detectable.canBeSeenBy(radar)
+                    && detectable.paramsApplicable(params)) {
+                return RadarEntry.of(detectable, entity, detectable.suppliesRedstone(params));
+            }
+            return null;
+        });
+        registerConverter(conversion -> {
+            Entity entity = conversion.entity();
+            RadarDetectable.RadarScanParams params = conversion.params();
+            if (entity instanceof LegacyRadarDetectable legacy
+                    && params.scanMissiles()
+                    && legacy.canBeDetectedByLegacyRadar()) {
+                return RadarEntry.of(legacy, entity);
+            }
+            return null;
+        });
+        registerConverter(conversion -> {
+            Entity entity = conversion.entity();
+            RadarDetectable.RadarScanParams params = conversion.params();
+            if (entity instanceof Player player && params.scanPlayers()) {
+                return RadarEntry.of(player);
+            }
+            return null;
+        });
+    }
+
+    public record ConversionContext(Entity entity, RadarContext radar, RadarDetectable.RadarScanParams params) {
+    }
+
+    @FunctionalInterface
+    public interface RadarConverter {
+        RadarEntry convert(ConversionContext context);
     }
 
     private RadarScanner() {

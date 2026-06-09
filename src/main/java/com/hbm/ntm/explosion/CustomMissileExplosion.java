@@ -2,6 +2,7 @@ package com.hbm.ntm.explosion;
 
 import com.hbm.ntm.bullet.BulletLaunchUtil;
 import com.hbm.ntm.bullet.LegacyBulletConfigs;
+import com.hbm.ntm.compat.CompatCustomWarheadRegistry;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import net.minecraft.world.entity.Entity;
@@ -79,7 +80,7 @@ public final class CustomMissileExplosion {
                 return true;
             }
             default -> {
-                return false;
+                return CompatCustomWarheadRegistry.tryImpact(level, x, y, z, motion, strength, type, source);
             }
         }
     }

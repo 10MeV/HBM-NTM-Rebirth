@@ -4,14 +4,33 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 
 public final class LegacyAtlasCuboidRenderer {
-    private static final double SMALL_BLOCK_PIXEL = 1.0D / 16.0D;
-    private static final double SMALL_BLOCK_MIN = 11.0D * SMALL_BLOCK_PIXEL / 2.0D;
-    private static final double SMALL_BLOCK_MAX = 1.0D - SMALL_BLOCK_MIN;
+    public static final double SMALL_BLOCK_PIXEL = 1.0D / 16.0D;
+    public static final double SMALL_BLOCK_MIN = 11.0D * SMALL_BLOCK_PIXEL / 2.0D;
+    public static final double SMALL_BLOCK_MAX = 1.0D - SMALL_BLOCK_MIN;
+    public static final int SMALL_BLOCK_GHOST_ALPHA = 191;
+    public static final SmallBlockStatePlan SMALL_BLOCK_GHOST_STATE =
+            new SmallBlockStatePlan(true, true, false, false, false, SMALL_BLOCK_GHOST_ALPHA);
 
     public static void smallBlock(TextureAtlasSprite top, TextureAtlasSprite bottom,
             TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
             ObjRenderContext context, double x, double y, double z) {
-        cuboid(top, bottom, north, south, east, west, context,
+        CuboidBounds bounds = smallBlockBounds(x, y, z);
+        cuboid(top, bottom, north, south, east, west, context, bounds);
+    }
+
+    public static void smallBlockGhost(TextureAtlasSprite top, TextureAtlasSprite bottom,
+            TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
+            ObjRenderContext context, double x, double y, double z) {
+        smallBlock(top, bottom, north, south, east, west,
+                smallBlockGhostContext(context), x, y, z);
+    }
+
+    public static ObjRenderContext smallBlockGhostContext(ObjRenderContext context) {
+        return context.withTranslucencyNoDepthWrite().withAlpha(SMALL_BLOCK_GHOST_ALPHA);
+    }
+
+    public static CuboidBounds smallBlockBounds(double x, double y, double z) {
+        return new CuboidBounds(
                 x + SMALL_BLOCK_MIN, y + SMALL_BLOCK_MIN, z + SMALL_BLOCK_MIN,
                 x + SMALL_BLOCK_MAX, y + SMALL_BLOCK_MAX, z + SMALL_BLOCK_MAX);
     }
@@ -25,6 +44,16 @@ public final class LegacyAtlasCuboidRenderer {
         westFace(west, context, minX, minY, minZ, maxY, maxZ);
         topFace(top, context, minX, minZ, maxX, maxY, maxZ);
         bottomFace(bottom, context, minX, minY, minZ, maxX, maxZ);
+    }
+
+    public static void cuboid(TextureAtlasSprite top, TextureAtlasSprite bottom,
+            TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
+            ObjRenderContext context, CuboidBounds bounds) {
+        if (bounds == null) {
+            return;
+        }
+        cuboid(top, bottom, north, south, east, west, context,
+                bounds.minX(), bounds.minY(), bounds.minZ(), bounds.maxX(), bounds.maxY(), bounds.maxZ());
     }
 
     public static void cuboid(TextureAtlasSprite sprite, ObjRenderContext context,
@@ -48,8 +77,19 @@ public final class LegacyAtlasCuboidRenderer {
         croppedCuboid(sprite, sprite, sprite, sprite, sprite, sprite, context, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
+    public static void croppedCuboid(TextureAtlasSprite sprite, ObjRenderContext context, CuboidBounds bounds) {
+        if (bounds == null) {
+            return;
+        }
+        croppedCuboid(sprite, context, bounds.minX(), bounds.minY(), bounds.minZ(), bounds.maxX(), bounds.maxY(), bounds.maxZ());
+    }
+
     public static void centeredCube(TextureAtlasSprite sprite, ObjRenderContext context, double radius) {
-        croppedCuboid(sprite, context,
+        croppedCuboid(sprite, context, centeredCubeBounds(radius));
+    }
+
+    public static CuboidBounds centeredCubeBounds(double radius) {
+        return new CuboidBounds(
                 0.5D - radius, 0.5D - radius, 0.5D - radius,
                 0.5D + radius, 0.5D + radius, 0.5D + radius);
     }
@@ -72,7 +112,7 @@ public final class LegacyAtlasCuboidRenderer {
             case EAST -> minX = 1.0D - thickness;
         }
 
-        croppedCuboid(sprite, context, minX, minY, minZ, maxX, maxY, maxZ);
+        croppedCuboid(sprite, context, new CuboidBounds(minX, minY, minZ, maxX, maxY, maxZ));
     }
 
     public static void cross(TextureAtlasSprite sprite, ObjRenderContext context,
@@ -248,6 +288,18 @@ public final class LegacyAtlasCuboidRenderer {
             return fallback;
         }
         return (1.0D - value) * 16.0D;
+    }
+
+    public record CuboidBounds(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+    }
+
+    public record SmallBlockStatePlan(
+            boolean blendEnabled,
+            boolean cullEnabled,
+            boolean alphaTestEnabled,
+            boolean depthWriteEnabled,
+            boolean lightingEnabledAfterDraw,
+            int alpha) {
     }
 
     private LegacyAtlasCuboidRenderer() {

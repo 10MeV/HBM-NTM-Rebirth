@@ -42,6 +42,8 @@ import com.hbm.ntm.network.packet.TileControlPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.network.packet.TileSyncRequestPacket;
 import com.hbm.ntm.network.packet.TypedMenuActionPacket;
+import com.hbm.ntm.player.HbmExtendedProperties;
+import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.player.HbmPlayerProperties;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -56,6 +58,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -65,13 +68,17 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.Map;
 import java.util.UUID;
@@ -86,11 +93,14 @@ public final class ModMessages {
     private static final String PROTOCOL_VERSION = "1";
     private static final String LEGACY_CHANNEL_NAME = "hbm";
     private static final ResourceLocation CHANNEL_NAME = new ResourceLocation(HbmNtm.MOD_ID, "main");
+    public static final ResourceLocation LEGACY_SERIALIZABLE_RECIPE_CHANNEL =
+            new ResourceLocation(HbmNtm.MOD_ID, "legacy_serializable_recipes");
     private static final int EXPECTED_LEGACY_PACKET_COUNT = 27;
     private static final int EXPECTED_FIRST_LEGACY_PACKET_ID = 0;
     private static final String EXPECTED_FIRST_LEGACY_PACKET_NAME = "TESirenPacket";
     private static final int EXPECTED_LAST_LEGACY_PACKET_ID = 26;
     private static final String EXPECTED_LAST_LEGACY_PACKET_NAME = "MuzzleFlashPacket";
+    private static final int LEGACY_PLAYER_INFORM_DEFAULT_MILLIS = 1_000;
     private static final int LIBRARY_FOUNDATION_PROGRESS_PERCENT = 99;
     private static int packetId;
     private static final AtomicBoolean REGISTERED = new AtomicBoolean();
@@ -189,6 +199,8 @@ public final class ModMessages {
                     "generic non-recipe-manager client binary data fallback"),
             new LegacyPacketMapping("SerializableRecipePacket", "ClientBinaryDataChunkPacket", "S2C",
                     "large generic client binary data fallback"),
+            new LegacyPacketMapping("SerializableRecipePacket", "ClientBinaryDataReadyPacket", "S2C",
+                    "legacy reinit=true completion signal after all recipe files are received"),
             new LegacyPacketMapping("ExplosionKnockbackPacket", "ExplosionKnockbackPacket", "S2C",
                     "client motion impulse for explosion effects"),
             new LegacyPacketMapping("ExplosionVanillaNewTechnologyCompressedAffectedBlockPositionDataForClientEffectsAndParticleHandlingPacket",
@@ -1226,9 +1238,83 @@ public final class ModMessages {
         sendToPlayer(new ClientInformPacket(message, id, millis), player);
     }
 
+    public static void informPlayerThreaded(ServerPlayer player, Component message, int id, int millis) {
+        ThreadedPacketDispatcher.sendToPlayer(new ClientInformPacket(message, id, millis), player);
+    }
+
+    public static void informPlayer(ServerPlayer player, Component message, int id) {
+        informPlayer(player, message, id, LEGACY_PLAYER_INFORM_DEFAULT_MILLIS);
+    }
+
+    public static void informPlayerThreaded(ServerPlayer player, Component message, int id) {
+        informPlayerThreaded(player, message, id, LEGACY_PLAYER_INFORM_DEFAULT_MILLIS);
+    }
+
+    public static void informPlayer(ServerPlayer player, String message, int id, int millis) {
+        informPlayer(player, Component.literal(message == null ? "" : message), id, millis);
+    }
+
+    public static void informPlayerThreaded(ServerPlayer player, String message, int id, int millis) {
+        informPlayerThreaded(player, Component.literal(message == null ? "" : message), id, millis);
+    }
+
+    public static void informPlayer(ServerPlayer player, String message, int id) {
+        informPlayer(player, message, id, LEGACY_PLAYER_INFORM_DEFAULT_MILLIS);
+    }
+
+    public static void informPlayerThreaded(ServerPlayer player, String message, int id) {
+        informPlayerThreaded(player, message, id, LEGACY_PLAYER_INFORM_DEFAULT_MILLIS);
+    }
+
+    public static void sendPlayerInform(ServerPlayer player, Component message, int id, int millis) {
+        informPlayer(player, message, id, millis);
+    }
+
+    public static void sendPlayerInformThreaded(ServerPlayer player, Component message, int id, int millis) {
+        informPlayerThreaded(player, message, id, millis);
+    }
+
+    public static void sendPlayerInform(ServerPlayer player, Component message, int id) {
+        informPlayer(player, message, id);
+    }
+
+    public static void sendPlayerInformThreaded(ServerPlayer player, Component message, int id) {
+        informPlayerThreaded(player, message, id);
+    }
+
+    public static void sendPlayerInform(ServerPlayer player, String message, int id, int millis) {
+        informPlayer(player, message, id, millis);
+    }
+
+    public static void sendPlayerInformThreaded(ServerPlayer player, String message, int id, int millis) {
+        informPlayerThreaded(player, message, id, millis);
+    }
+
+    public static void sendPlayerInform(ServerPlayer player, String message, int id) {
+        informPlayer(player, message, id);
+    }
+
+    public static void sendPlayerInformThreaded(ServerPlayer player, String message, int id) {
+        informPlayerThreaded(player, message, id);
+    }
+
     public static void sendAuxParticle(ServerLevel level, double x, double y, double z, net.minecraft.nbt.CompoundTag data,
                                        double range) {
         sendToAllAround(new AuxParticlePacket(auxParticlePayload(data, x, y, z)), level, x, y, z, range);
+    }
+
+    public static void sendAuxParticleNT(ServerLevel level, double x, double y, double z,
+                                         net.minecraft.nbt.CompoundTag data, double range) {
+        sendAuxParticle(level, x, y, z, data, range);
+    }
+
+    public static void sendAuxParticle(ServerLevel level, Vec3 pos, net.minecraft.nbt.CompoundTag data, double range) {
+        Vec3 safePos = pos == null ? Vec3.ZERO : pos;
+        sendAuxParticle(level, safePos.x, safePos.y, safePos.z, data, range);
+    }
+
+    public static void sendAuxParticleNT(ServerLevel level, Vec3 pos, net.minecraft.nbt.CompoundTag data, double range) {
+        sendAuxParticle(level, pos, data, range);
     }
 
     public static void sendAuxParticleThreaded(ServerLevel level, double x, double y, double z,
@@ -1237,9 +1323,30 @@ public final class ModMessages {
                 level, x, y, z, range);
     }
 
+    public static void sendAuxParticleNTThreaded(ServerLevel level, double x, double y, double z,
+                                                 net.minecraft.nbt.CompoundTag data, double range) {
+        sendAuxParticleThreaded(level, x, y, z, data, range);
+    }
+
+    public static void sendAuxParticleThreaded(ServerLevel level, Vec3 pos, net.minecraft.nbt.CompoundTag data,
+                                               double range) {
+        Vec3 safePos = pos == null ? Vec3.ZERO : pos;
+        sendAuxParticleThreaded(level, safePos.x, safePos.y, safePos.z, data, range);
+    }
+
+    public static void sendAuxParticleNTThreaded(ServerLevel level, Vec3 pos, net.minecraft.nbt.CompoundTag data,
+                                                 double range) {
+        sendAuxParticleThreaded(level, pos, data, range);
+    }
+
     public static void sendAuxParticle(ServerPlayer player, double x, double y, double z,
                                        net.minecraft.nbt.CompoundTag data) {
         sendToPlayer(new AuxParticlePacket(auxParticlePayload(data, x, y, z)), player);
+    }
+
+    public static void sendAuxParticleNT(ServerPlayer player, double x, double y, double z,
+                                         net.minecraft.nbt.CompoundTag data) {
+        sendAuxParticle(player, x, y, z, data);
     }
 
     public static void sendAuxParticleThreaded(ServerPlayer player, double x, double y, double z,
@@ -1247,8 +1354,17 @@ public final class ModMessages {
         ThreadedPacketDispatcher.sendToPlayer(new AuxParticlePacket(auxParticlePayload(data, x, y, z)), player);
     }
 
+    public static void sendAuxParticleNTThreaded(ServerPlayer player, double x, double y, double z,
+                                                 net.minecraft.nbt.CompoundTag data) {
+        sendAuxParticleThreaded(player, x, y, z, data);
+    }
+
     public static AuxParticlePacket auxParticlePacket(double x, double y, double z, net.minecraft.nbt.CompoundTag data) {
         return new AuxParticlePacket(auxParticlePayload(data, x, y, z));
+    }
+
+    public static AuxParticlePacket auxParticlePacketNT(double x, double y, double z, net.minecraft.nbt.CompoundTag data) {
+        return auxParticlePacket(x, y, z, data);
     }
 
     public static void sendItemAnimation(ServerPlayer player, int slot, int rail, String itemKey,
@@ -1256,26 +1372,136 @@ public final class ModMessages {
         sendToPlayer(new ItemAnimationPacket(slot, rail, itemKey, animationFile, animationName, holdLastFrame), player);
     }
 
+    public static void sendItemAnimationThreaded(ServerPlayer player, int slot, int rail, String itemKey,
+                                                 ResourceLocation animationFile, String animationName,
+                                                 boolean holdLastFrame) {
+        ThreadedPacketDispatcher.sendToPlayer(
+                new ItemAnimationPacket(slot, rail, itemKey, animationFile, animationName, holdLastFrame), player);
+    }
+
     public static void sendLegacyItemAnimation(ServerPlayer player, int animationType, int receiverIndex, int itemIndex) {
         sendToPlayer(new LegacyItemAnimationPacket((short) animationType, receiverIndex, itemIndex), player);
+    }
+
+    public static void sendLegacyItemAnimationThreaded(ServerPlayer player, int animationType, int receiverIndex,
+                                                       int itemIndex) {
+        ThreadedPacketDispatcher.sendToPlayer(
+                new LegacyItemAnimationPacket((short) animationType, receiverIndex, itemIndex), player);
+    }
+
+    public static void sendLegacyItemAnimation(ServerPlayer player, int animationType, int receiverIndex) {
+        sendLegacyItemAnimation(player, animationType, receiverIndex, 0);
+    }
+
+    public static void sendLegacyItemAnimationThreaded(ServerPlayer player, int animationType, int receiverIndex) {
+        sendLegacyItemAnimationThreaded(player, animationType, receiverIndex, 0);
+    }
+
+    public static void sendLegacyItemAnimation(ServerPlayer player, int animationType) {
+        sendLegacyItemAnimation(player, animationType, 0, 0);
+    }
+
+    public static void sendLegacyItemAnimationThreaded(ServerPlayer player, int animationType) {
+        sendLegacyItemAnimationThreaded(player, animationType, 0, 0);
+    }
+
+    public static void sendHbmAnimation(ServerPlayer player, int animationType, int receiverIndex, int itemIndex) {
+        sendLegacyItemAnimation(player, animationType, receiverIndex, itemIndex);
+    }
+
+    public static void sendHbmAnimationThreaded(ServerPlayer player, int animationType, int receiverIndex,
+                                                int itemIndex) {
+        sendLegacyItemAnimationThreaded(player, animationType, receiverIndex, itemIndex);
+    }
+
+    public static void sendHbmAnimation(ServerPlayer player, int animationType, int receiverIndex) {
+        sendLegacyItemAnimation(player, animationType, receiverIndex);
+    }
+
+    public static void sendHbmAnimationThreaded(ServerPlayer player, int animationType, int receiverIndex) {
+        sendLegacyItemAnimationThreaded(player, animationType, receiverIndex);
+    }
+
+    public static void sendHbmAnimation(ServerPlayer player, int animationType) {
+        sendLegacyItemAnimation(player, animationType);
+    }
+
+    public static void sendHbmAnimationThreaded(ServerPlayer player, int animationType) {
+        sendLegacyItemAnimationThreaded(player, animationType);
     }
 
     public static void sendMuzzleFlash(Entity entity) {
         sendToEntityTrackers(new MuzzleFlashPacket(entity.getId()), entity);
     }
 
+    public static void sendMuzzleFlash(ServerLevel level, Entity entity, double range) {
+        if (entity != null) {
+            sendToAllAround(new MuzzleFlashPacket(entity.getId()), level, entity.getX(), entity.getY(), entity.getZ(), range);
+        }
+    }
+
+    public static void sendMuzzleFlashThreaded(ServerLevel level, Entity entity, double range) {
+        if (entity != null) {
+            ThreadedPacketDispatcher.sendToAllAround(new MuzzleFlashPacket(entity.getId()),
+                    level, entity.getX(), entity.getY(), entity.getZ(), range);
+        }
+    }
+
+    public static void sendKeybind(HbmKeybind keybind, boolean pressed) {
+        sendToServer(keybindPacket(keybind, pressed));
+    }
+
+    public static KeybindPacket keybindPacket(HbmKeybind keybind, boolean pressed) {
+        return new KeybindPacket(keybind, pressed);
+    }
+
+    public static KeybindPacket keybindPacket(int legacyOrdinal, boolean pressed) {
+        HbmKeybind[] keybinds = HbmKeybind.values();
+        HbmKeybind keybind = legacyOrdinal >= 0 && legacyOrdinal < keybinds.length ? keybinds[legacyOrdinal] : null;
+        return keybindPacket(keybind, pressed);
+    }
+
+    public static void sendKeybind(int legacyOrdinal, boolean pressed) {
+        sendToServer(keybindPacket(legacyOrdinal, pressed));
+    }
+
     public static void sendItemControl(InteractionHand hand, net.minecraft.nbt.CompoundTag tag) {
-        sendToServer(new ItemControlPacket(hand, tag));
+        sendToServer(itemControlPacket(hand, tag));
+    }
+
+    public static ItemControlPacket itemControlPacket(InteractionHand hand, net.minecraft.nbt.CompoundTag tag) {
+        return new ItemControlPacket(hand, tag);
+    }
+
+    public static void sendItemControl(net.minecraft.nbt.CompoundTag tag) {
+        sendItemControl(InteractionHand.MAIN_HAND, tag);
     }
 
     public static void sendNbtItemControl(InteractionHand hand, net.minecraft.nbt.CompoundTag tag) {
+        sendToServer(nbtItemControlPacket(hand, tag));
+    }
+
+    public static ItemControlPacket nbtItemControlPacket(InteractionHand hand, net.minecraft.nbt.CompoundTag tag) {
         net.minecraft.nbt.CompoundTag data = tag == null ? new net.minecraft.nbt.CompoundTag() : tag.copy();
         data.putString("legacyPacket", HbmNetworkActions.NBT_ITEM_CONTROL.toString());
-        sendItemControl(hand, data);
+        return itemControlPacket(hand, data);
+    }
+
+    public static ItemControlPacket nbtItemControlPacket(net.minecraft.nbt.CompoundTag tag) {
+        return nbtItemControlPacket(InteractionHand.MAIN_HAND, tag);
+    }
+
+    public static void sendNbtItemControl(net.minecraft.nbt.CompoundTag tag) {
+        sendNbtItemControl(InteractionHand.MAIN_HAND, tag);
     }
 
     public static void sendItemAction(InteractionHand hand, ResourceLocation actionType, net.minecraft.nbt.CompoundTag data) {
-        sendToServer(new ItemActionPacket(hand, actionType, data));
+        sendToServer(itemActionPacket(hand, actionType, data));
+    }
+
+    public static ItemActionPacket itemActionPacket(InteractionHand hand, ResourceLocation actionType,
+                                                    net.minecraft.nbt.CompoundTag data) {
+        return new ItemActionPacket(hand, actionType, data);
     }
 
     public static void sendItemAction(InteractionHand hand, ResourceLocation actionType) {
@@ -1283,66 +1509,279 @@ public final class ModMessages {
     }
 
     public static void sendDesignatorAction(InteractionHand hand, int operator, int value, int reference) {
+        sendToServer(itemDesignatorPacket(hand, operator, value, reference));
+    }
+
+    public static ItemActionPacket itemDesignatorPacket(InteractionHand hand, int operator, int value, int reference) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putInt("operator", operator);
         data.putInt("value", value);
         data.putInt("reference", reference);
-        sendItemAction(hand, HbmNetworkActions.DESIGNATOR, data);
+        return itemActionPacket(hand, HbmNetworkActions.DESIGNATOR, data);
+    }
+
+    public static ItemActionPacket itemDesignatorPacket(int operator, int value, int reference) {
+        return itemDesignatorPacket(InteractionHand.MAIN_HAND, operator, value, reference);
+    }
+
+    public static void sendDesignatorAction(int operator, int value, int reference) {
+        sendDesignatorAction(InteractionHand.MAIN_HAND, operator, value, reference);
+    }
+
+    public static void sendItemDesignatorPacket(InteractionHand hand, int operator, int value, int reference) {
+        sendDesignatorAction(hand, operator, value, reference);
+    }
+
+    public static void sendItemDesignatorPacket(int operator, int value, int reference) {
+        sendDesignatorAction(operator, value, reference);
     }
 
     public static void sendBobmazonOffer(InteractionHand hand, int offerIndex) {
+        sendToServer(itemBobmazonPacket(hand, offerIndex));
+    }
+
+    public static ItemActionPacket itemBobmazonPacket(InteractionHand hand, int offerIndex) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putInt("offer", offerIndex);
-        sendItemAction(hand, HbmNetworkActions.BOBMAZON_OFFER, data);
+        return itemActionPacket(hand, HbmNetworkActions.BOBMAZON_OFFER, data);
+    }
+
+    public static ItemActionPacket itemBobmazonPacket(int offerIndex) {
+        return itemBobmazonPacket(InteractionHand.MAIN_HAND, offerIndex);
+    }
+
+    public static void sendBobmazonOffer(int offerIndex) {
+        sendBobmazonOffer(InteractionHand.MAIN_HAND, offerIndex);
+    }
+
+    public static void sendItemBobmazonPacket(InteractionHand hand, int offerIndex) {
+        sendBobmazonOffer(hand, offerIndex);
+    }
+
+    public static void sendItemBobmazonPacket(int offerIndex) {
+        sendBobmazonOffer(offerIndex);
     }
 
     public static void sendSatelliteCoordinateAction(InteractionHand hand, BlockPos pos, int frequency) {
+        sendToServer(satCoordPacket(hand, pos, frequency));
+    }
+
+    public static CoordinateActionPacket coordinateActionPacket(InteractionHand hand, BlockPos pos, int action,
+                                                               int value, int frequency,
+                                                               net.minecraft.nbt.CompoundTag data) {
+        return new CoordinateActionPacket(hand, pos, action, value, frequency, data);
+    }
+
+    public static CoordinateActionPacket satCoordPacket(InteractionHand hand, BlockPos pos, int frequency) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putString("actionType", HbmNetworkActions.SATELLITE_COORDINATE.toString());
-        sendCoordinateAction(hand, pos, 0, 0, frequency, data);
+        return coordinateActionPacket(hand, pos, 0, 0, frequency, data);
+    }
+
+    public static CoordinateActionPacket satCoordPacket(InteractionHand hand, int x, int y, int z, int frequency) {
+        return satCoordPacket(hand, new BlockPos(x, y, z), frequency);
+    }
+
+    public static CoordinateActionPacket satCoordPacket(int x, int y, int z, int frequency) {
+        return satCoordPacket(InteractionHand.MAIN_HAND, x, y, z, frequency);
+    }
+
+    public static void sendSatelliteCoordinateAction(BlockPos pos, int frequency) {
+        sendSatelliteCoordinateAction(InteractionHand.MAIN_HAND, pos, frequency);
     }
 
     public static void sendSatelliteLaserAction(InteractionHand hand, int x, int z, int frequency) {
+        sendToServer(satLaserPacket(hand, x, z, frequency));
+    }
+
+    public static CoordinateActionPacket satLaserPacket(InteractionHand hand, int x, int z, int frequency) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putBoolean("laser", true);
         data.putString("actionType", HbmNetworkActions.SATELLITE_LASER.toString());
-        sendCoordinateAction(hand, new BlockPos(x, 0, z), 1, 0, frequency, data);
+        return coordinateActionPacket(hand, new BlockPos(x, 0, z), 1, 0, frequency, data);
+    }
+
+    public static CoordinateActionPacket satLaserPacket(int x, int z, int frequency) {
+        return satLaserPacket(InteractionHand.MAIN_HAND, x, z, frequency);
+    }
+
+    public static void sendSatelliteLaserAction(int x, int z, int frequency) {
+        sendSatelliteLaserAction(InteractionHand.MAIN_HAND, x, z, frequency);
     }
 
     public static void sendSatCoord(InteractionHand hand, int x, int y, int z, int frequency) {
         sendSatelliteCoordinateAction(hand, new BlockPos(x, y, z), frequency);
     }
 
+    public static void sendSatCoord(int x, int y, int z, int frequency) {
+        sendSatCoord(InteractionHand.MAIN_HAND, x, y, z, frequency);
+    }
+
     public static void sendSatLaser(InteractionHand hand, int x, int z, int frequency) {
         sendSatelliteLaserAction(hand, x, z, frequency);
     }
 
+    public static void sendSatLaser(int x, int z, int frequency) {
+        sendSatLaser(InteractionHand.MAIN_HAND, x, z, frequency);
+    }
+
     public static void syncHeldItemNbt(ServerPlayer player, InteractionHand hand, ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
         ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(stack.getItem());
         if (itemId != null) {
             sendToPlayer(new HeldItemNbtPacket(hand, itemId, stack.getDamageValue(), stack.getOrCreateTag().copy()), player);
         }
     }
 
+    public static void syncHeldItemNbtThreaded(ServerPlayer player, InteractionHand hand, ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        if (itemId != null) {
+            ThreadedPacketDispatcher.sendToPlayer(
+                    new HeldItemNbtPacket(hand, itemId, stack.getDamageValue(), stack.getOrCreateTag().copy()), player);
+        }
+    }
+
+    public static void syncHeldItemNbt(ServerPlayer player, ItemStack stack) {
+        syncHeldItemNbt(player, InteractionHand.MAIN_HAND, stack);
+    }
+
+    public static void syncHeldItemNbtThreaded(ServerPlayer player, ItemStack stack) {
+        syncHeldItemNbtThreaded(player, InteractionHand.MAIN_HAND, stack);
+    }
+
+    public static void syncHeldItemNbt(ServerPlayer player, InteractionHand hand) {
+        if (player != null) {
+            syncHeldItemNbt(player, hand, player.getItemInHand(hand));
+        }
+    }
+
+    public static void syncHeldItemNbt(ServerPlayer player) {
+        syncHeldItemNbt(player, InteractionHand.MAIN_HAND);
+    }
+
+    public static void syncHeldItemNbtThreaded(ServerPlayer player, InteractionHand hand) {
+        if (player != null) {
+            syncHeldItemNbtThreaded(player, hand, player.getItemInHand(hand));
+        }
+    }
+
+    public static void syncHeldItemNbtThreaded(ServerPlayer player) {
+        syncHeldItemNbtThreaded(player, InteractionHand.MAIN_HAND);
+    }
+
+    public static void sendHeldItemNbt(ServerPlayer player, ItemStack stack) {
+        syncHeldItemNbt(player, stack);
+    }
+
+    public static void sendHeldItemNbt(ServerPlayer player, InteractionHand hand, ItemStack stack) {
+        syncHeldItemNbt(player, hand, stack);
+    }
+
+    public static void sendHeldItemNbt(ServerPlayer player, InteractionHand hand) {
+        syncHeldItemNbt(player, hand);
+    }
+
+    public static void sendHeldItemNbt(ServerPlayer player) {
+        syncHeldItemNbt(player);
+    }
+
+    public static void sendHeldItemNbtThreaded(ServerPlayer player, ItemStack stack) {
+        syncHeldItemNbtThreaded(player, stack);
+    }
+
+    public static void sendHeldItemNbtThreaded(ServerPlayer player, InteractionHand hand, ItemStack stack) {
+        syncHeldItemNbtThreaded(player, hand, stack);
+    }
+
+    public static void sendHeldItemNbtThreaded(ServerPlayer player, InteractionHand hand) {
+        syncHeldItemNbtThreaded(player, hand);
+    }
+
+    public static void sendHeldItemNbtThreaded(ServerPlayer player) {
+        syncHeldItemNbtThreaded(player);
+    }
+
     public static void sendLegacyButton(BlockPos pos, int value, int id) {
-        sendToServer(new LegacyButtonPacket(pos, value, id));
+        sendToServer(auxButtonPacket(pos, value, id));
+    }
+
+    public static LegacyButtonPacket auxButtonPacket(BlockPos pos, int value, int id) {
+        return new LegacyButtonPacket(pos, value, id);
+    }
+
+    public static LegacyButtonPacket auxButtonPacket(int x, int y, int z, int value, int id) {
+        return auxButtonPacket(new BlockPos(x, y, z), value, id);
+    }
+
+    public static LegacyButtonPacket legacyButtonPacket(BlockPos pos, int value, int id) {
+        return auxButtonPacket(pos, value, id);
+    }
+
+    public static LegacyButtonPacket legacyButtonPacket(int x, int y, int z, int value, int id) {
+        return auxButtonPacket(x, y, z, value, id);
+    }
+
+    public static void sendLegacyButton(int x, int y, int z, int value, int id) {
+        sendLegacyButton(new BlockPos(x, y, z), value, id);
     }
 
     public static void sendAuxButton(BlockPos pos, int value, int id) {
         sendLegacyButton(pos, value, id);
     }
 
+    public static void sendAuxButton(int x, int y, int z, int value, int id) {
+        sendLegacyButton(x, y, z, value, id);
+    }
+
     public static void sendTileControl(BlockPos pos, net.minecraft.nbt.CompoundTag data) {
-        sendToServer(new TileControlPacket(pos, data));
+        sendToServer(nbtControlPacket(pos, data));
+    }
+
+    public static TileControlPacket nbtControlPacket(BlockPos pos, net.minecraft.nbt.CompoundTag data) {
+        return new TileControlPacket(pos, data);
+    }
+
+    public static TileControlPacket nbtControlPacket(int x, int y, int z, net.minecraft.nbt.CompoundTag data) {
+        return nbtControlPacket(new BlockPos(x, y, z), data);
+    }
+
+    public static TileControlPacket nbtControlPacket(net.minecraft.nbt.CompoundTag data, int x, int y, int z) {
+        return nbtControlPacket(x, y, z, data);
+    }
+
+    public static TileControlPacket tileControlPacket(BlockPos pos, net.minecraft.nbt.CompoundTag data) {
+        return nbtControlPacket(pos, data);
+    }
+
+    public static void sendTileControl(int x, int y, int z, net.minecraft.nbt.CompoundTag data) {
+        sendTileControl(new BlockPos(x, y, z), data);
     }
 
     public static void sendNbtControl(BlockPos pos, net.minecraft.nbt.CompoundTag data) {
         sendTileControl(pos, data);
     }
 
+    public static void sendNbtControl(int x, int y, int z, net.minecraft.nbt.CompoundTag data) {
+        sendTileControl(x, y, z, data);
+    }
+
+    public static void sendNbtControl(net.minecraft.nbt.CompoundTag data, int x, int y, int z) {
+        sendTileControl(x, y, z, data);
+    }
+
     public static void sendTypedTileAction(BlockPos pos, ResourceLocation actionType, int value,
                                            net.minecraft.nbt.CompoundTag data) {
-        sendToServer(new ServerTileActionPacket(pos, actionType, value, data));
+        sendToServer(typedTileActionPacket(pos, actionType, value, data));
+    }
+
+    public static ServerTileActionPacket typedTileActionPacket(BlockPos pos, ResourceLocation actionType, int value,
+                                                               net.minecraft.nbt.CompoundTag data) {
+        return new ServerTileActionPacket(pos, actionType, value, data);
     }
 
     public static void sendTypedTileAction(BlockPos pos, ResourceLocation actionType) {
@@ -1392,17 +1831,50 @@ public final class ModMessages {
         sendToPlayer(new PermaSyncPacket(data), player);
     }
 
+    public static void syncPermaData(ServerPlayer player) {
+        syncPermaData(player, HbmPermaSyncData.writeForPlayer(player));
+    }
+
+    public static void sendPermaSync(ServerPlayer player, net.minecraft.nbt.CompoundTag data) {
+        syncPermaData(player, data);
+    }
+
+    public static void sendPermaSync(ServerPlayer player) {
+        syncPermaData(player);
+    }
+
     public static void syncPermaDataThreaded(ServerPlayer player, net.minecraft.nbt.CompoundTag data) {
         ThreadedPacketDispatcher.sendToPlayer(new PermaSyncPacket(data), player);
+    }
+
+    public static void syncPermaDataThreaded(ServerPlayer player) {
+        syncPermaDataThreaded(player, HbmPermaSyncData.writeForPlayer(player));
+    }
+
+    public static void sendPermaSyncThreaded(ServerPlayer player, net.minecraft.nbt.CompoundTag data) {
+        syncPermaDataThreaded(player, data);
+    }
+
+    public static void sendPermaSyncThreaded(ServerPlayer player) {
+        syncPermaDataThreaded(player);
     }
 
     public static void sendExplosionKnockback(ServerPlayer player, Vec3 motion) {
         sendToPlayer(new ExplosionKnockbackPacket(motion), player);
     }
 
+    public static void sendExplosionKnockback(ServerPlayer player, double x, double y, double z) {
+        sendExplosionKnockback(player, new Vec3(x, y, z));
+    }
+
     public static void sendCoordinateAction(InteractionHand hand, BlockPos pos, int action, int value, int frequency,
                                             net.minecraft.nbt.CompoundTag data) {
-        sendToServer(new CoordinateActionPacket(hand, pos, action, value, frequency, data));
+        sendToServer(coordinateActionPacket(hand, pos, action, value, frequency, data));
+    }
+
+    public static void sendCoordinateAction(BlockPos pos, int action, int value, int frequency,
+                                            net.minecraft.nbt.CompoundTag data) {
+        sendCoordinateAction(InteractionHand.MAIN_HAND, pos, action, value, frequency, data);
     }
 
     public static void syncClientBinaryData(ServerPlayer player, ResourceLocation channel, String name, byte[] payload) {
@@ -1462,6 +1934,19 @@ public final class ModMessages {
         }
     }
 
+    public static void syncClientBinaryDataBatchThreaded(ServerPlayer player, ResourceLocation channel,
+                                                         Map<String, byte[]> payloads, boolean clearFirst,
+                                                         boolean markReady) {
+        if (clearFirst) {
+            clearClientBinaryDataThreaded(player, channel);
+        }
+        Map<String, byte[]> safePayloads = payloads == null ? Map.of() : payloads;
+        safePayloads.forEach((name, payload) -> syncClientBinaryDataThreaded(player, channel, name, payload));
+        if (markReady) {
+            markClientBinaryDataReadyThreaded(player, channel);
+        }
+    }
+
     public static void clearClientBinaryData(ServerPlayer player, ResourceLocation channel) {
         sendToPlayer(new ClientBinaryDataPacket(channel, "", new byte[0], true), player);
     }
@@ -1474,13 +1959,103 @@ public final class ModMessages {
         sendToPlayer(new ClientBinaryDataReadyPacket(channel), player);
     }
 
+    public static void markClientBinaryDataReadyThreaded(ServerPlayer player, ResourceLocation channel) {
+        ThreadedPacketDispatcher.sendToPlayer(new ClientBinaryDataReadyPacket(channel), player);
+    }
+
+    public static void sendSerializableRecipe(ServerPlayer player, String filename, byte[] fileBytes) {
+        syncClientBinaryData(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL, filename, fileBytes);
+    }
+
+    public static void sendSerializableRecipeThreaded(ServerPlayer player, String filename, byte[] fileBytes) {
+        syncClientBinaryDataThreaded(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL, filename, fileBytes);
+    }
+
+    public static void sendSerializableRecipe(ServerPlayer player, File recipeFile) {
+        readSerializableRecipeFile(recipeFile)
+                .ifPresent(recipe -> sendSerializableRecipe(player, recipe.filename(), recipe.fileBytes()));
+    }
+
+    public static void sendSerializableRecipeThreaded(ServerPlayer player, File recipeFile) {
+        readSerializableRecipeFile(recipeFile)
+                .ifPresent(recipe -> sendSerializableRecipeThreaded(player, recipe.filename(), recipe.fileBytes()));
+    }
+
+    public static void sendSerializableRecipes(ServerPlayer player, Map<String, byte[]> recipeFiles) {
+        syncClientBinaryDataBatch(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL, recipeFiles, true, true);
+    }
+
+    public static void sendSerializableRecipesThreaded(ServerPlayer player, Map<String, byte[]> recipeFiles) {
+        syncClientBinaryDataBatchThreaded(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL, recipeFiles, true, true);
+    }
+
+    public static void sendSerializableRecipeFiles(ServerPlayer player, Iterable<File> recipeFiles) {
+        sendSerializableRecipes(player, readSerializableRecipeFiles(recipeFiles));
+    }
+
+    public static void sendSerializableRecipeFilesThreaded(ServerPlayer player, Iterable<File> recipeFiles) {
+        sendSerializableRecipesThreaded(player, readSerializableRecipeFiles(recipeFiles));
+    }
+
+    public static void clearSerializableRecipes(ServerPlayer player) {
+        clearClientBinaryData(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL);
+    }
+
+    public static void clearSerializableRecipesThreaded(ServerPlayer player) {
+        clearClientBinaryDataThreaded(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL);
+    }
+
+    public static void sendSerializableRecipeReinit(ServerPlayer player) {
+        markClientBinaryDataReady(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL);
+    }
+
+    public static void sendSerializableRecipeReinitThreaded(ServerPlayer player) {
+        markClientBinaryDataReadyThreaded(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL);
+    }
+
+    private static Optional<LegacySerializableRecipeFile> readSerializableRecipeFile(File recipeFile) {
+        if (recipeFile == null || !recipeFile.isFile()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(new LegacySerializableRecipeFile(recipeFile.getName(), Files.readAllBytes(recipeFile.toPath())));
+        } catch (IOException exception) {
+            HbmNtm.LOGGER.warn("Unable to read legacy serializable recipe file '{}'.", recipeFile, exception);
+            return Optional.empty();
+        }
+    }
+
+    private static Map<String, byte[]> readSerializableRecipeFiles(Iterable<File> recipeFiles) {
+        if (recipeFiles == null) {
+            return Map.of();
+        }
+        Map<String, byte[]> recipes = new LinkedHashMap<>();
+        for (File recipeFile : recipeFiles) {
+            readSerializableRecipeFile(recipeFile)
+                    .ifPresent(recipe -> recipes.put(recipe.filename(), recipe.fileBytes()));
+        }
+        return recipes;
+    }
+
     public static void sendClientTileEvent(BlockEntity blockEntity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
         sendToTrackingChunk(new ClientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
+    }
+
+    public static void sendClientTileEvent(Level level, BlockPos pos, ResourceLocation eventType,
+                                           net.minecraft.nbt.CompoundTag data) {
+        sendToTrackingChunk(new ClientTileEventPacket(pos, eventType, data), level, pos);
     }
 
     public static void sendClientTileEventThreaded(BlockEntity blockEntity, ResourceLocation eventType,
                                                    net.minecraft.nbt.CompoundTag data) {
         ThreadedPacketDispatcher.sendToTrackingChunk(new ClientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
+    }
+
+    public static void sendClientTileEventThreaded(Level level, BlockPos pos, ResourceLocation eventType,
+                                                   net.minecraft.nbt.CompoundTag data) {
+        if (level instanceof ServerLevel serverLevel) {
+            ThreadedPacketDispatcher.sendToTrackingChunk(new ClientTileEventPacket(pos, eventType, data), serverLevel, pos);
+        }
     }
 
     public static void syncTileBinaryToTracking(HbmTileBinarySyncProvider provider, BlockEntity blockEntity) {
@@ -1622,6 +2197,41 @@ public final class ModMessages {
         return syncTileBinaryAroundThreadedIfChanged(provider, blockEntity, channel, range, syncState);
     }
 
+    public static boolean networkPackNT(BlockEntity blockEntity, double range, HbmTileBinarySyncState syncState) {
+        if (blockEntity instanceof HbmTileBinarySyncProvider provider) {
+            return networkPackNT(provider, blockEntity, range, syncState);
+        }
+        return false;
+    }
+
+    public static boolean networkPackNT(BlockEntity blockEntity, int range, HbmTileBinarySyncState syncState) {
+        return networkPackNT(blockEntity, (double) range, syncState);
+    }
+
+    public static void sendBufPacket(BlockEntity blockEntity) {
+        if (blockEntity instanceof HbmLegacyBufPacketReceiver receiver) {
+            syncTileBinaryToTracking(receiver, blockEntity, receiver.getClientTileBinarySyncChannel());
+        }
+    }
+
+    public static void sendBufPacket(BlockEntity blockEntity, double range) {
+        if (blockEntity instanceof HbmLegacyBufPacketReceiver receiver) {
+            syncTileBinaryAround(receiver, blockEntity, receiver.getClientTileBinarySyncChannel(), range);
+        }
+    }
+
+    public static void sendBufPacketThreaded(BlockEntity blockEntity, double range) {
+        if (blockEntity instanceof HbmLegacyBufPacketReceiver receiver) {
+            syncTileBinaryAroundThreaded(receiver, blockEntity, receiver.getClientTileBinarySyncChannel(), range);
+        }
+    }
+
+    public static void sendBufPacket(ServerPlayer player, BlockEntity blockEntity) {
+        if (blockEntity instanceof HbmLegacyBufPacketReceiver receiver) {
+            syncTileBinaryToPlayer(receiver, blockEntity, player, receiver.getClientTileBinarySyncChannel());
+        }
+    }
+
     public static void syncMissileMultipart(BlockEntity blockEntity, MissileMultipartSnapshot multipart) {
         sendToTrackingChunk(new ClientMissileMultipartPacket(blockEntity.getBlockPos(), multipart), blockEntity);
     }
@@ -1653,11 +2263,37 @@ public final class ModMessages {
         sendClientTileEvent(blockEntity, HbmNetworkActions.VAULT_DOOR, data);
     }
 
+    public static void sendVaultDoorEvent(Level level, BlockPos pos, boolean opening, int state,
+                                          boolean resetClientTime, int type) {
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putBoolean("opening", opening);
+        data.putInt("state", state);
+        data.putBoolean("resetClientTime", resetClientTime);
+        data.putInt("type", type);
+        sendClientTileEvent(level, pos, HbmNetworkActions.VAULT_DOOR, data);
+    }
+
+    public static void sendVaultDoorEvent(Level level, int x, int y, int z, boolean opening, int state,
+                                          boolean resetClientTime, int type) {
+        sendVaultDoorEvent(level, new BlockPos(x, y, z), opening, state, resetClientTime, type);
+    }
+
     public static void sendSirenEvent(BlockEntity blockEntity, int trackId, boolean active) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putInt("trackId", trackId);
         data.putBoolean("active", active);
         sendClientTileEvent(blockEntity, HbmNetworkActions.SIREN, data);
+    }
+
+    public static void sendSirenEvent(Level level, BlockPos pos, int trackId, boolean active) {
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putInt("trackId", trackId);
+        data.putBoolean("active", active);
+        sendClientTileEvent(level, pos, HbmNetworkActions.SIREN, data);
+    }
+
+    public static void sendSirenEvent(Level level, int x, int y, int z, int trackId, boolean active) {
+        sendSirenEvent(level, new BlockPos(x, y, z), trackId, active);
     }
 
     public static void syncForceFieldState(BlockEntity blockEntity, float radius, int health, int maxHealth,
@@ -1673,9 +2309,37 @@ public final class ModMessages {
         sendToTrackingChunk(new TileSyncPacket(blockEntity.getBlockPos(), data), blockEntity);
     }
 
+    public static void syncForceFieldState(Level level, BlockPos pos, float radius, int health, int maxHealth,
+                                           int power, boolean active, int color, int cooldown) {
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putFloat("radius", radius);
+        data.putInt("health", health);
+        data.putInt("maxHealth", maxHealth);
+        data.putInt("power", power);
+        data.putBoolean("active", active);
+        data.putInt("color", color);
+        data.putInt("cooldown", cooldown);
+        sendToTrackingChunk(new TileSyncPacket(pos, data), level, pos);
+    }
+
+    public static void syncForceFieldState(Level level, int x, int y, int z, float radius, int health, int maxHealth,
+                                           int power, boolean active, int color, int cooldown) {
+        syncForceFieldState(level, new BlockPos(x, y, z), radius, health, maxHealth, power, active, color, cooldown);
+    }
+
     public static void sendForceFieldState(BlockEntity blockEntity, float radius, int health, int maxHealth,
                                            int power, boolean active, int color, int cooldown) {
         syncForceFieldState(blockEntity, radius, health, maxHealth, power, active, color, cooldown);
+    }
+
+    public static void sendForceFieldState(Level level, BlockPos pos, float radius, int health, int maxHealth,
+                                           int power, boolean active, int color, int cooldown) {
+        syncForceFieldState(level, pos, radius, health, maxHealth, power, active, color, cooldown);
+    }
+
+    public static void sendForceFieldState(Level level, int x, int y, int z, float radius, int health, int maxHealth,
+                                           int power, boolean active, int color, int cooldown) {
+        syncForceFieldState(level, x, y, z, radius, health, maxHealth, power, active, color, cooldown);
     }
 
     public static void sendClientTileBinaryData(BlockEntity blockEntity, ResourceLocation channel,
@@ -1769,6 +2433,80 @@ public final class ModMessages {
         syncClientPanelData(player, HbmNetworkActions.SATELLITE_PANEL, legacyType, data);
     }
 
+    public static void syncSatellitePanelDataThreaded(ServerPlayer player, int legacyType,
+                                                      net.minecraft.nbt.CompoundTag data) {
+        syncClientPanelDataThreaded(player, HbmNetworkActions.SATELLITE_PANEL, legacyType, data);
+    }
+
+    public static void sendSatPanel(ServerPlayer player, int legacyType, net.minecraft.nbt.CompoundTag data) {
+        syncSatellitePanelData(player, legacyType, data);
+    }
+
+    public static void sendSatPanelThreaded(ServerPlayer player, int legacyType, net.minecraft.nbt.CompoundTag data) {
+        syncSatellitePanelDataThreaded(player, legacyType, data);
+    }
+
+    public static void sendSatellitePanel(ServerPlayer player, int legacyType, net.minecraft.nbt.CompoundTag data) {
+        syncSatellitePanelData(player, legacyType, data);
+    }
+
+    public static void sendSatellitePanelThreaded(ServerPlayer player, int legacyType,
+                                                  net.minecraft.nbt.CompoundTag data) {
+        syncSatellitePanelDataThreaded(player, legacyType, data);
+    }
+
+    public static void sendPlayerRadiation(ServerPlayer player, HbmLivingProperties.SyncData data) {
+        sendToPlayer(new PlayerRadiationSyncPacket(data), player);
+    }
+
+    public static void sendPlayerRadiationThreaded(ServerPlayer player, HbmLivingProperties.SyncData data) {
+        ThreadedPacketDispatcher.sendToPlayer(new PlayerRadiationSyncPacket(data), player);
+    }
+
+    public static void syncPlayerRadiation(ServerPlayer player, float chunkRadiation, float resistance) {
+        if (player == null) {
+            return;
+        }
+        sendPlayerRadiation(player, HbmLivingProperties.writeSyncedData(player, chunkRadiation, resistance));
+    }
+
+    public static void syncPlayerRadiationThreaded(ServerPlayer player, float chunkRadiation, float resistance) {
+        if (player == null) {
+            return;
+        }
+        sendPlayerRadiationThreaded(player, HbmLivingProperties.writeSyncedData(player, chunkRadiation, resistance));
+    }
+
+    public static void sendExtProperties(ServerPlayer player, HbmExtendedProperties.SyncData data) {
+        sendToPlayer(new ExtPropertiesSyncPacket(data), player);
+    }
+
+    public static void sendExtPropertiesThreaded(ServerPlayer player, HbmExtendedProperties.SyncData data) {
+        ThreadedPacketDispatcher.sendToPlayer(new ExtPropertiesSyncPacket(data), player);
+    }
+
+    public static void syncExtendedProperties(ServerPlayer player, float chunkRadiation, float resistance) {
+        if (player == null) {
+            return;
+        }
+        sendExtProperties(player, HbmExtendedProperties.writeSyncedData(player, chunkRadiation, resistance));
+    }
+
+    public static void syncExtendedPropertiesThreaded(ServerPlayer player, float chunkRadiation, float resistance) {
+        if (player == null) {
+            return;
+        }
+        sendExtPropertiesThreaded(player, HbmExtendedProperties.writeSyncedData(player, chunkRadiation, resistance));
+    }
+
+    public static void sendExtPropPacket(ServerPlayer player, float chunkRadiation, float resistance) {
+        syncExtendedProperties(player, chunkRadiation, resistance);
+    }
+
+    public static void sendExtPropPacketThreaded(ServerPlayer player, float chunkRadiation, float resistance) {
+        syncExtendedPropertiesThreaded(player, chunkRadiation, resistance);
+    }
+
     public static void syncPlayerProperties(ServerPlayer player, ResourceLocation dataType, net.minecraft.nbt.CompoundTag data) {
         sendToPlayer(new PlayerPropertiesPacket(dataType, data), player);
     }
@@ -1793,11 +2531,28 @@ public final class ModMessages {
     }
 
     public static void sendMenuAction(int action, int value, net.minecraft.nbt.CompoundTag data) {
-        sendToServer(new MenuActionPacket(action, value, data));
+        sendToServer(menuActionPacket(action, value, data));
+    }
+
+    public static MenuActionPacket menuActionPacket(int action, int value, net.minecraft.nbt.CompoundTag data) {
+        return new MenuActionPacket(action, value, data);
+    }
+
+    public static void sendMenuAction(int action, int value) {
+        sendMenuAction(action, value, new net.minecraft.nbt.CompoundTag());
+    }
+
+    public static void sendMenuAction(int action) {
+        sendMenuAction(action, 0, new net.minecraft.nbt.CompoundTag());
     }
 
     public static void sendTypedMenuAction(ResourceLocation actionType, int value, net.minecraft.nbt.CompoundTag data) {
-        sendToServer(new TypedMenuActionPacket(actionType, value, data));
+        sendToServer(typedMenuActionPacket(actionType, value, data));
+    }
+
+    public static TypedMenuActionPacket typedMenuActionPacket(ResourceLocation actionType, int value,
+                                                              net.minecraft.nbt.CompoundTag data) {
+        return new TypedMenuActionPacket(actionType, value, data);
     }
 
     public static void sendTypedMenuAction(ResourceLocation actionType, int value) {
@@ -1809,13 +2564,21 @@ public final class ModMessages {
     }
 
     public static void sendAnvilCraftAction(int recipeIndex, int mode) {
+        sendToServer(anvilCraftPacket(recipeIndex, mode));
+    }
+
+    public static TypedMenuActionPacket anvilCraftPacket(int recipeIndex, int mode) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putInt("recipeIndex", recipeIndex);
         data.putInt("mode", mode);
-        sendTypedMenuAction(HbmNetworkActions.ANVIL_CRAFT, recipeIndex, data);
+        return typedMenuActionPacket(HbmNetworkActions.ANVIL_CRAFT, recipeIndex, data);
     }
 
     public static void sendAnvilCraft(int recipeIndex, int mode) {
+        sendAnvilCraftAction(recipeIndex, mode);
+    }
+
+    public static void sendAnvilCraftPacket(int recipeIndex, int mode) {
         sendAnvilCraftAction(recipeIndex, mode);
     }
 
@@ -1823,18 +2586,67 @@ public final class ModMessages {
         sendToPlayer(ClientBiomeSyncPacket.single(blockX, blockZ, biome), player);
     }
 
+    public static void syncClientBiome(ServerLevel level, int blockX, int blockZ, short biome, double range) {
+        sendToAllAround(ClientBiomeSyncPacket.single(blockX, blockZ, biome),
+                level, blockX, legacyBiomeSyncY(level), blockZ, range);
+    }
+
     public static void syncClientBiomeChunk(ServerPlayer player, int chunkX, int chunkZ, short[] biomeArray) {
         sendToPlayer(ClientBiomeSyncPacket.chunk(chunkX, chunkZ, biomeArray), player);
     }
 
+    public static void syncClientBiomeChunk(ServerLevel level, int chunkX, int chunkZ, short[] biomeArray, double range) {
+        int centerX = (chunkX << 4) + 8;
+        int centerZ = (chunkZ << 4) + 8;
+        sendToAllAround(ClientBiomeSyncPacket.chunk(chunkX, chunkZ, biomeArray),
+                level, centerX, legacyBiomeSyncY(level), centerZ, range);
+    }
+
+    public static void sendParticleBurst(ServerLevel level, BlockPos pos, BlockState state, double range) {
+        if (pos == null || state == null) {
+            return;
+        }
+        sendToAllAround(new ParticleBurstPacket(pos, state), level,
+                pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, range);
+    }
+
+    public static void sendParticleBurst(ServerLevel level, int x, int y, int z, BlockState state, double range) {
+        sendParticleBurst(level, new BlockPos(x, y, z), state, range);
+    }
+
+    public static void sendParticleBurstThreaded(ServerLevel level, BlockPos pos, BlockState state, double range) {
+        if (pos == null || state == null) {
+            return;
+        }
+        ThreadedPacketDispatcher.sendToAllAround(new ParticleBurstPacket(pos, state),
+                level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, range);
+    }
+
+    public static void sendParticleBurstThreaded(ServerLevel level, int x, int y, int z, BlockState state, double range) {
+        sendParticleBurstThreaded(level, new BlockPos(x, y, z), state, range);
+    }
+
     public static void sendCompressedExplosionEffect(ServerLevel level, Vec3 center, float size, List<BlockPos> affectedBlocks, double range) {
-        sendToAllAround(new CompressedExplosionEffectPacket(center, size, affectedBlocks), level, center.x, center.y, center.z, range);
+        Vec3 safeCenter = center == null ? Vec3.ZERO : center;
+        sendToAllAround(new CompressedExplosionEffectPacket(safeCenter, size, affectedBlocks),
+                level, safeCenter.x, safeCenter.y, safeCenter.z, range);
+    }
+
+    public static void sendCompressedExplosionEffect(ServerLevel level, double x, double y, double z, float size,
+                                                     List<BlockPos> affectedBlocks, double range) {
+        sendCompressedExplosionEffect(level, new Vec3(x, y, z), size, affectedBlocks, range);
     }
 
     public static void sendCompressedExplosionEffectThreaded(ServerLevel level, Vec3 center, float size,
                                                              List<BlockPos> affectedBlocks, double range) {
-        ThreadedPacketDispatcher.sendToAllAround(new CompressedExplosionEffectPacket(center, size, affectedBlocks),
-                level, center.x, center.y, center.z, range);
+        Vec3 safeCenter = center == null ? Vec3.ZERO : center;
+        ThreadedPacketDispatcher.sendToAllAround(new CompressedExplosionEffectPacket(safeCenter, size, affectedBlocks),
+                level, safeCenter.x, safeCenter.y, safeCenter.z, range);
+    }
+
+    public static void sendCompressedExplosionEffectThreaded(ServerLevel level, double x, double y, double z,
+                                                             float size, List<BlockPos> affectedBlocks, double range) {
+        sendCompressedExplosionEffectThreaded(level, new Vec3(x, y, z), size, affectedBlocks, range);
     }
 
     private static void sendClientTileBinaryDataAround(ServerLevel level, BlockPos pos, ResourceLocation channel,
@@ -1889,6 +2701,10 @@ public final class ModMessages {
             return false;
         }
         return syncState == null || syncState.shouldSend(payload, level.getGameTime());
+    }
+
+    private static double legacyBiomeSyncY(ServerLevel level) {
+        return (level.getMinBuildHeight() + level.getMaxBuildHeight()) * 0.5D;
     }
 
     private static <MSG> void registerServerToClient(
@@ -2096,6 +2912,13 @@ public final class ModMessages {
     }
 
     public record LegacyPacketRegistration(int legacyId, String legacyName, String direction) {
+    }
+
+    private record LegacySerializableRecipeFile(String filename, byte[] fileBytes) {
+        private LegacySerializableRecipeFile {
+            filename = filename == null ? "" : filename;
+            fileBytes = fileBytes == null ? new byte[0] : Arrays.copyOf(fileBytes, fileBytes.length);
+        }
     }
 
     public record NetworkChannelSnapshot(

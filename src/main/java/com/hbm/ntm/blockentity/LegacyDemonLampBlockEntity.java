@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmBlockStateUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.entity.LivingEntity;
@@ -36,7 +37,6 @@ public class LegacyDemonLampBlockEntity extends BlockEntity {
         radiate(level, pos);
     }
 
-    @SuppressWarnings("deprecation")
     private static void radiate(Level level, BlockPos pos) {
         Vec3 center = Vec3.atCenterOf(pos);
         AABB box = new AABB(center, center).inflate(RANGE);
@@ -55,7 +55,7 @@ public class LegacyDemonLampBlockEntity extends BlockEntity {
             float resistance = 0.0F;
             for (int i = 1; i < length; i++) {
                 BlockPos sample = BlockPos.containing(center.add(normal.scale(i)));
-                resistance += level.getBlockState(sample).getBlock().getExplosionResistance();
+                resistance += HbmBlockStateUtil.explosionResistance(level.getBlockState(sample), level, sample);
             }
             if (resistance < 1.0F) {
                 resistance = 1.0F;

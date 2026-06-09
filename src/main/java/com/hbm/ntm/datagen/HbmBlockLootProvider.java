@@ -83,6 +83,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.GAS_ASBESTOS.get(), noDrop());
         add(ModBlocks.GAS_COAL.get(), noDrop());
         add(ModBlocks.CHLORINE_GAS.get(), noDrop());
+        add(ModBlocks.TOXIC_BLOCK.get(), noDrop());
         add(ModBlocks.DUMMY_BLOCK.get(), noDrop());
         add(ModBlocks.GLASS_BORON.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_BORON.get()));
         add(ModBlocks.GLASS_QUARTZ.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_QUARTZ.get()));

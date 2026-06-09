@@ -5,6 +5,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.List;
+
 public final class ObjSoyuzModels {
     public static final LegacyWavefrontModel SOYUZ = new LegacyWavefrontModel(
             model("soyuz"),
@@ -37,26 +39,12 @@ public final class ObjSoyuzModels {
 
     public static void renderMain(SoyuzTextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        SOYUZ.renderOnly(textures.engineBlock(), poseStack, buffer, packedLight, packedOverlay, "EngineBlock");
-        SOYUZ.renderOnly(textures.bottomStage(), poseStack, buffer, packedLight, packedOverlay, "BottomStage");
-        SOYUZ.renderOnly(textures.topStage(), poseStack, buffer, packedLight, packedOverlay, "TopStage");
-        SOYUZ.renderOnly(textures.payload(), poseStack, buffer, packedLight, packedOverlay, "Payload");
-        SOYUZ.renderOnly(MEMENTO, poseStack, buffer, packedLight, packedOverlay, "Memento");
-        SOYUZ.renderOnly(textures.payloadBlocks(), poseStack, buffer, packedLight, packedOverlay, "PayloadBlocks");
-        SOYUZ.renderOnly(textures.les(), poseStack, buffer, packedLight, packedOverlay, "LES");
-        SOYUZ.renderOnly(textures.lesThrusters(), poseStack, buffer, packedLight, packedOverlay, "LESThrusters");
-        SOYUZ.renderOnly(textures.mainEngines(), poseStack, buffer, packedLight, packedOverlay, "MainEngines");
-        SOYUZ.renderOnly(textures.sideEngines(), poseStack, buffer, packedLight, packedOverlay, "SideEngines");
+        renderSoyuzParts(mainPartPlan(textures), poseStack, buffer, packedLight, packedOverlay);
     }
 
     public static void renderBoosters(SoyuzTextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        SOYUZ.renderOnly(textures.booster(), poseStack, buffer, packedLight, packedOverlay,
-                "Booster.000", "Booster.001", "Booster.002", "Booster.003");
-        SOYUZ.renderOnly(textures.mainEngines(), poseStack, buffer, packedLight, packedOverlay,
-                "BoosterEngines.000", "BoosterEngines.001", "BoosterEngines.002", "BoosterEngines.003");
-        SOYUZ.renderOnly(textures.boosterSide(), poseStack, buffer, packedLight, packedOverlay,
-                "BoosterSide.000", "BoosterSide.001", "BoosterSide.002", "BoosterSide.003");
+        renderSoyuzParts(boosterPartPlan(textures), poseStack, buffer, packedLight, packedOverlay);
     }
 
     public static void renderLanderCapsule(boolean rusted, PoseStack poseStack, MultiBufferSource buffer,
@@ -69,10 +57,61 @@ public final class ObjSoyuzModels {
     }
 
     public static void renderModule(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        MODULE.renderPart("Dome", MODULE_DOME_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-        MODULE.renderPart("Capsule", MODULE_LANDER_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-        MODULE.renderPart("Propulsion", MODULE_PROPULSION_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
-        MODULE.renderPart("Solar", MODULE_SOLAR_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+        for (SoyuzPartPlan plan : modulePartPlan()) {
+            MODULE.renderOnly(plan.texture(), poseStack, buffer, packedLight, packedOverlay,
+                    plan.parts().toArray(String[]::new));
+        }
+    }
+
+    public static SoyuzTextureSet textureSetForSkin(int skin) {
+        return switch (skin) {
+            case 1 -> LUNA_TEXTURES;
+            case 2 -> AUTHENTIC_TEXTURES;
+            default -> SOYUZ_TEXTURES;
+        };
+    }
+
+    public static List<SoyuzPartPlan> mainPartPlan(SoyuzTextureSet textures) {
+        return List.of(
+                part(textures.engineBlock(), "EngineBlock"),
+                part(textures.bottomStage(), "BottomStage"),
+                part(textures.topStage(), "TopStage"),
+                part(textures.payload(), "Payload"),
+                part(MEMENTO, "Memento"),
+                part(textures.payloadBlocks(), "PayloadBlocks"),
+                part(textures.les(), "LES"),
+                part(textures.lesThrusters(), "LESThrusters"),
+                part(textures.mainEngines(), "MainEngines"),
+                part(textures.sideEngines(), "SideEngines"));
+    }
+
+    public static List<SoyuzPartPlan> boosterPartPlan(SoyuzTextureSet textures) {
+        return List.of(
+                part(textures.booster(), "Booster.000", "Booster.001", "Booster.002", "Booster.003"),
+                part(textures.mainEngines(), "BoosterEngines.000", "BoosterEngines.001", "BoosterEngines.002",
+                        "BoosterEngines.003"),
+                part(textures.boosterSide(), "BoosterSide.000", "BoosterSide.001", "BoosterSide.002",
+                        "BoosterSide.003"));
+    }
+
+    public static List<SoyuzPartPlan> modulePartPlan() {
+        return List.of(
+                part(MODULE_DOME_TEXTURE, "Dome"),
+                part(MODULE_LANDER_TEXTURE, "Capsule"),
+                part(MODULE_PROPULSION_TEXTURE, "Propulsion"),
+                part(MODULE_SOLAR_TEXTURE, "Solar"));
+    }
+
+    private static void renderSoyuzParts(List<SoyuzPartPlan> plans, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        for (SoyuzPartPlan plan : plans) {
+            SOYUZ.renderOnly(plan.texture(), poseStack, buffer, packedLight, packedOverlay,
+                    plan.parts().toArray(String[]::new));
+        }
+    }
+
+    private static SoyuzPartPlan part(ResourceLocation texture, String... parts) {
+        return new SoyuzPartPlan(texture, List.of(parts));
     }
 
     private static SoyuzTextureSet textureSet(String folder) {
@@ -113,5 +152,8 @@ public final class ObjSoyuzModels {
             ResourceLocation sideEngines,
             ResourceLocation booster,
             ResourceLocation boosterSide) {
+    }
+
+    public record SoyuzPartPlan(ResourceLocation texture, List<String> parts) {
     }
 }

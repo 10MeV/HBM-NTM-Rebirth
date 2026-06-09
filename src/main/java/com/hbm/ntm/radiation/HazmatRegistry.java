@@ -1,5 +1,6 @@
 package com.hbm.ntm.radiation;
 
+import com.google.gson.Gson;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.armor.ArmorModItems;
 import com.hbm.ntm.api.item.GasMask;
@@ -37,6 +38,7 @@ public final class HazmatRegistry {
     @Deprecated public static double legs = LEGS;
     @Deprecated public static double boots = BOOTS;
     @Deprecated public static final List<Pair<Item, Double>> external = new ExternalResistanceList();
+    @Deprecated public static final Gson gson = new Gson();
 
     private static final Map<Item, Double> RESISTANCE = new IdentityHashMap<>();
     private static final Map<Item, EnumSet<HazardClass>> PROTECTION = new IdentityHashMap<>();
@@ -217,6 +219,10 @@ public final class HazmatRegistry {
         RadiationShieldingRegistry.clear();
     }
 
+    public static void clearProtections() {
+        PROTECTION.clear();
+    }
+
     public static void replaceResistances(Map<Item, Double> resistances) {
         clearResistances();
         for (Map.Entry<Item, Double> entry : resistances.entrySet()) {
@@ -239,6 +245,13 @@ public final class HazmatRegistry {
     public static RegistrySnapshot registrySnapshot() {
         return new RegistrySnapshot(RESISTANCE.size(), PROTECTION.size(),
                 EXTERNAL_RESISTANCE_DEFAULTS.size(), EXTERNAL_PROTECTION_DEFAULTS.size());
+    }
+
+    public static EnumSet<HazardClass> removeProtection(Item item) {
+        if (item == null || item == Items.AIR) {
+            return null;
+        }
+        return PROTECTION.remove(item);
     }
 
     public static void registerProtection(Item item, HazardClass... protections) {

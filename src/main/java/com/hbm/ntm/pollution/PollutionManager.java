@@ -6,6 +6,8 @@ import com.hbm.ntm.pollution.PollutionSavedData.PollutionSample;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.LegacyRadiationWorldUtil;
 import com.hbm.ntm.registry.ModEffects;
+import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmMobEquipmentUtil;
 import com.hbm.ntm.world.saveddata.WorldSavedDataHelper;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
@@ -20,6 +22,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -480,25 +483,19 @@ public final class PollutionManager {
             return;
         }
 
-        List<ServerLevel> snapshot = new ArrayList<>();
-        for (ServerLevel level : levels) {
-            snapshot.add(level);
-        }
-
-        for (ServerLevel level : snapshot) {
-            handleWorldDestruction(level);
-        }
-
         diffusionTimer++;
-        if (diffusionTimer < DIFFUSION_INTERVAL_TICKS) {
-            return;
+        boolean updateDiffusion = diffusionTimer >= DIFFUSION_INTERVAL_TICKS;
+        if (updateDiffusion) {
+            diffusionTimer = 0;
         }
-        diffusionTimer = 0;
 
-        for (ServerLevel level : snapshot) {
-            PollutionSavedData data = getExistingData(level);
-            if (data != null) {
-                data.updateDiffusion();
+        for (ServerLevel level : levels) {
+            handleWorldDestruction(level);
+            if (updateDiffusion) {
+                PollutionSavedData data = getExistingData(level);
+                if (data != null) {
+                    data.updateDiffusion();
+                }
             }
         }
     }
@@ -512,6 +509,18 @@ public final class PollutionManager {
         }
 
         float soot = getPollution(mob.level(), mob.blockPosition(), PollutionType.SOOT);
+        if (RadiationConfig.mobGearEnabled()
+                && mob instanceof Zombie zombie
+                && !zombie.isBaby()
+                && soot > 2.0F
+                && mob.getRandom().nextFloat() < 0.005F) {
+            HbmMobEquipmentUtil.equipFullSet(zombie,
+                    ModItems.HAZMAT_HELMET.get(),
+                    ModItems.HAZMAT_PLATE.get(),
+                    ModItems.HAZMAT_LEGS.get(),
+                    ModItems.HAZMAT_BOOTS.get());
+            return;
+        }
         if (soot <= RadiationConfig.pollutionBuffMobThreshold()) {
             return;
         }
@@ -561,7 +570,7 @@ public final class PollutionManager {
         if (!(entity instanceof Player) || !isEnabled() || ArmorUtil.hasSootLungProtection(entity)) {
             return 0.0D;
         }
-        return getPollution(entity.level(), entity.blockPosition(), PollutionType.SOOT);
+        return getPollutionAtEntityEyes(entity, PollutionType.SOOT);
     }
 
     private static void applyPoisonEffect(LivingEntity entity, PollutionSample sample) {

@@ -78,6 +78,7 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
+        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         model.renderPart("Radar", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
 

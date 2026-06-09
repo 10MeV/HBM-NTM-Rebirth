@@ -314,7 +314,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyItemsCompound(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         progress = tag.getFloat(TAG_PROGRESS);
         progressing = tag.getBoolean(TAG_PROGRESSING);
         venting = tag.getBoolean(TAG_VENTING);

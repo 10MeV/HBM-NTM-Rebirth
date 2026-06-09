@@ -38,6 +38,8 @@ public record SednaBulletConfig(
         boolean blackPowder,
         boolean renderRotations,
         String spentCasingName,
+        String rendererName,
+        String beamRendererName,
         Set<SednaBehaviorTag> behaviors) {
 
     public SednaBulletConfig {
@@ -50,6 +52,8 @@ public record SednaBulletConfig(
         projectileType = projectileType == null ? ProjectileType.BULLET : projectileType;
         damageClass = damageClass == null ? DamageClass.PHYSICAL : damageClass;
         spentCasingName = spentCasingName == null ? "" : spentCasingName;
+        rendererName = rendererName == null ? "" : rendererName;
+        beamRendererName = beamRendererName == null ? "" : beamRendererName;
         if (behaviors == null || behaviors.isEmpty()) {
             behaviors = Collections.emptySet();
         } else {
@@ -113,6 +117,8 @@ public record SednaBulletConfig(
         private boolean blackPowder = false;
         private boolean renderRotations = true;
         private String spentCasingName = "";
+        private String rendererName = "";
+        private String beamRendererName = "";
         private final EnumSet<SednaBehaviorTag> behaviors = EnumSet.of(
                 SednaBehaviorTag.STANDARD_RICOCHET, SednaBehaviorTag.STANDARD_ENTITY_HIT);
 
@@ -152,6 +158,8 @@ public record SednaBulletConfig(
             this.blackPowder = config.blackPowder;
             this.renderRotations = config.renderRotations;
             this.spentCasingName = config.spentCasingName;
+            this.rendererName = config.rendererName;
+            this.beamRendererName = config.beamRendererName;
             this.behaviors.clear();
             this.behaviors.addAll(config.behaviors);
         }
@@ -314,6 +322,16 @@ public record SednaBulletConfig(
             return this;
         }
 
+        public Builder renderer(String rendererName) {
+            this.rendererName = rendererName;
+            return this;
+        }
+
+        public Builder beamRenderer(String beamRendererName) {
+            this.beamRendererName = beamRendererName;
+            return this;
+        }
+
         public Builder behavior(SednaBehaviorTag behavior) {
             this.behaviors.add(behavior);
             return this;
@@ -330,7 +348,8 @@ public record SednaBulletConfig(
                     damageMultiplier, armorThresholdNegation, armorPiercingPercent, knockbackMultiplier,
                     headshotMultiplier, damageClass, ricochetAngle, maxRicochetCount,
                     damageFalloffByPenetration, gravity, expires, impactsEntities, penetrates, spectral,
-                    selfDamageDelay, blackPowder, renderRotations, spentCasingName, behaviors);
+                    selfDamageDelay, blackPowder, renderRotations, spentCasingName, rendererName, beamRendererName,
+                    behaviors);
         }
     }
 }

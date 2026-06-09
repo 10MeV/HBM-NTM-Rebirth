@@ -51,6 +51,7 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
+        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         model.renderPart("Base", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         if (chemicalFactory.shouldRenderFrame()) {

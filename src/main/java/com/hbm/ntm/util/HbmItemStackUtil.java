@@ -1,9 +1,10 @@
 package com.hbm.ntm.util;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -80,6 +81,17 @@ public final class HbmItemStackUtil {
         NonNullList<ItemStack> copy = NonNullList.withSize(stacks.size(), ItemStack.EMPTY);
         for (int slot = 0; slot < stacks.size(); slot++) {
             copy.set(slot, carefulCopy(stacks.get(slot)));
+        }
+        return copy;
+    }
+
+    public static ItemStack[] carefulCopyArray(IItemHandler items) {
+        if (items == null) {
+            return new ItemStack[0];
+        }
+        ItemStack[] copy = new ItemStack[items.getSlots()];
+        for (int slot = 0; slot < items.getSlots(); slot++) {
+            copy[slot] = carefulCopy(items.getStackInSlot(slot));
         }
         return copy;
     }
@@ -382,6 +394,36 @@ public final class HbmItemStackUtil {
         loadLegacyItems(getCompoundOrNull(tag, key), items);
     }
 
+    public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, ItemStackHandler items) {
+        loadLegacyOrForgeItems(getCompoundOrNull(tag, key), items);
+    }
+
+    public static void loadLegacyOrForgeItems(CompoundTag tag, ItemStackHandler items) {
+        if (items == null) {
+            return;
+        }
+        if (tag != null && tag.contains(LEGACY_ITEMS_TAG, Tag.TAG_LIST)) {
+            loadLegacyItems(tag, items);
+        } else {
+            loadSlottedItems(tag, "Items", "Slot", items);
+        }
+    }
+
+    public static void loadLegacyOrForgeItems(CompoundTag tag, ItemStack[] items) {
+        if (items == null) {
+            return;
+        }
+        if (tag != null && tag.contains(LEGACY_ITEMS_TAG, Tag.TAG_LIST)) {
+            loadLegacyItems(tag, items);
+        } else {
+            loadSlottedItems(tag, "Items", "Slot", items);
+        }
+    }
+
+    public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, ItemStack[] items) {
+        loadLegacyOrForgeItems(getCompoundOrNull(tag, key), items);
+    }
+
     public static void loadLegacyItems(CompoundTag tag, ItemStack[] items) {
         if (items == null) {
             return;
@@ -431,6 +473,21 @@ public final class HbmItemStackUtil {
         loadLegacyItems(getCompoundOrNull(tag, key), items);
     }
 
+    public static void loadLegacyOrForgeItems(CompoundTag tag, NonNullList<ItemStack> items) {
+        if (items == null) {
+            return;
+        }
+        if (tag != null && tag.contains(LEGACY_ITEMS_TAG, Tag.TAG_LIST)) {
+            loadLegacyItems(tag, items);
+        } else {
+            loadSlottedItems(tag, "Items", "Slot", items);
+        }
+    }
+
+    public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, NonNullList<ItemStack> items) {
+        loadLegacyOrForgeItems(getCompoundOrNull(tag, key), items);
+    }
+
     public static NonNullList<ItemStack> loadLegacyItems(CompoundTag tag, int slotCount) {
         NonNullList<ItemStack> items = NonNullList.withSize(Math.max(0, slotCount), ItemStack.EMPTY);
         loadSlottedItems(tag, LEGACY_ITEMS_TAG, LEGACY_SLOT_TAG, items);
@@ -448,6 +505,17 @@ public final class HbmItemStackUtil {
             return;
         }
         loadSlottedItems(tag.getList(listKey, Tag.TAG_COMPOUND), slotKey, target);
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey, ItemStackHandler target) {
+        if (target == null) {
+            return;
+        }
+        NonNullList<ItemStack> stacks = NonNullList.withSize(target.getSlots(), ItemStack.EMPTY);
+        loadSlottedItems(tag, listKey, slotKey, stacks);
+        for (int slot = 0; slot < stacks.size(); slot++) {
+            target.setStackInSlot(slot, stacks.get(slot));
+        }
     }
 
     public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey,
@@ -681,7 +749,7 @@ public final class HbmItemStackUtil {
         if (stack == null || stack.isEmpty()) {
             return null;
         }
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        ResourceLocation id = HbmRegistryUtil.itemKey(stack.getItem());
         return id == null ? null : id.getNamespace();
     }
 

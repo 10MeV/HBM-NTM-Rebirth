@@ -1,5 +1,6 @@
 package com.hbm.ntm.energy;
 
+import com.hbm.ntm.world.DirPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
@@ -61,7 +62,7 @@ public final class HbmEnergyUtil {
         if (stack.isEmpty() || provider == null || maxTransfer <= 0L || provider.getPower() <= 0L) {
             return 0L;
         }
-        if (stack.getItem() instanceof HbmBatteryItem) {
+        if (stack.getItem() instanceof HbmChargeableItem) {
             long available = Math.min(provider.getPower(), maxTransfer);
             long remaining = HbmBatteryTransfer.chargeItemsFromPower(stack, available, provider.getMaxPower());
             long used = available - remaining;
@@ -86,7 +87,7 @@ public final class HbmEnergyUtil {
         if (stack.isEmpty() || receiver == null || maxTransfer <= 0L) {
             return 0L;
         }
-        if (stack.getItem() instanceof HbmBatteryItem) {
+        if (stack.getItem() instanceof HbmChargeableItem) {
             long before = receiver.getPower();
             long cappedMaxPower = Math.min(receiver.getMaxPower(), before + maxTransfer);
             long after = HbmBatteryTransfer.chargePowerFromItem(stack, before, cappedMaxPower);
@@ -180,6 +181,15 @@ public final class HbmEnergyUtil {
         return subscribed;
     }
 
+    public static boolean subscribeProviderToPort(Level level, DirPos port, HbmEnergyProvider provider) {
+        if (level == null || port == null || port.getDir() == null || provider == null) {
+            return false;
+        }
+        boolean subscribed = subscribeProviderToNetwork(level, port, port.getDir().getOpposite(), provider);
+        HbmEnergyDebug.spawnRemoteProviderSubscription(level, port, port.getDir(), subscribed);
+        return subscribed;
+    }
+
     public static boolean subscribeReceiverToPort(Level level, BlockPos origin, EnergyPort port, HbmEnergyReceiver receiver) {
         if (level == null || origin == null || port == null || receiver == null) {
             return false;
@@ -187,6 +197,15 @@ public final class HbmEnergyUtil {
         BlockPos conductorPos = port.conductorPos(origin);
         boolean subscribed = subscribeReceiverToNetwork(level, conductorPos, port.conductorSide(), receiver);
         HbmEnergyDebug.spawnRemoteReceiverSubscription(level, conductorPos, port.direction(), subscribed);
+        return subscribed;
+    }
+
+    public static boolean subscribeReceiverToPort(Level level, DirPos port, HbmEnergyReceiver receiver) {
+        if (level == null || port == null || port.getDir() == null || receiver == null) {
+            return false;
+        }
+        boolean subscribed = subscribeReceiverToNetwork(level, port, port.getDir().getOpposite(), receiver);
+        HbmEnergyDebug.spawnRemoteReceiverSubscription(level, port, port.getDir(), subscribed);
         return subscribed;
     }
 
@@ -255,11 +274,25 @@ public final class HbmEnergyUtil {
         return unsubscribeProviderFromNetwork(level, port.conductorPos(origin), port.conductorSide(), provider);
     }
 
+    public static boolean unsubscribeProviderFromPort(Level level, DirPos port, HbmEnergyProvider provider) {
+        if (level == null || port == null || provider == null) {
+            return false;
+        }
+        return unsubscribeProviderFromNetwork(level, port, provider);
+    }
+
     public static boolean unsubscribeReceiverFromPort(Level level, BlockPos origin, EnergyPort port, HbmEnergyReceiver receiver) {
         if (level == null || origin == null || port == null || receiver == null) {
             return false;
         }
         return unsubscribeReceiverFromNetwork(level, port.conductorPos(origin), port.conductorSide(), receiver);
+    }
+
+    public static boolean unsubscribeReceiverFromPort(Level level, DirPos port, HbmEnergyReceiver receiver) {
+        if (level == null || port == null || receiver == null) {
+            return false;
+        }
+        return unsubscribeReceiverFromNetwork(level, port, receiver);
     }
 
     public static boolean unsubscribeProviderFromNetwork(Level level, BlockPos conductorPos, Direction conductorSide, HbmEnergyProvider provider) {
@@ -271,8 +304,26 @@ public final class HbmEnergyUtil {
         return true;
     }
 
+    public static boolean unsubscribeProviderFromNetwork(Level level, BlockPos conductorPos, HbmEnergyProvider provider) {
+        HbmPowerNet powerNet = getPowerNet(level, conductorPos);
+        if (provider == null || powerNet == null || !powerNet.isProvider(provider)) {
+            return false;
+        }
+        powerNet.removeProvider(provider);
+        return true;
+    }
+
     public static boolean unsubscribeReceiverFromNetwork(Level level, BlockPos conductorPos, Direction conductorSide, HbmEnergyReceiver receiver) {
         HbmPowerNet powerNet = getConnectablePowerNet(level, conductorPos, conductorSide);
+        if (receiver == null || powerNet == null || !powerNet.isSubscribed(receiver)) {
+            return false;
+        }
+        powerNet.removeReceiver(receiver);
+        return true;
+    }
+
+    public static boolean unsubscribeReceiverFromNetwork(Level level, BlockPos conductorPos, HbmEnergyReceiver receiver) {
+        HbmPowerNet powerNet = getPowerNet(level, conductorPos);
         if (receiver == null || powerNet == null || !powerNet.isSubscribed(receiver)) {
             return false;
         }
@@ -317,6 +368,48 @@ public final class HbmEnergyUtil {
             }
         }
         return touched;
+    }
+
+    public static boolean tryProvideToPort(Level level, DirPos port, HbmEnergyProvider provider) {
+        if (level == null || port == null || port.getDir() == null || provider == null) {
+            return false;
+        }
+        boolean subscribed = subscribeProviderToPort(level, port, provider);
+        long transferred = provideDirectlyToPort(level, port, provider);
+        return subscribed || transferred > 0L;
+    }
+
+    public static long pushForgeEnergyToPort(Level level, BlockPos origin, EnergyPort port,
+            HbmEnergyProvider provider, long maxTransfer) {
+        if (level == null || origin == null || port == null || provider == null || maxTransfer <= 0L) {
+            return 0L;
+        }
+        BlockPos targetPos = port.conductorPos(origin);
+        BlockEntity target = level.getBlockEntity(targetPos);
+        if (target == null) {
+            return 0L;
+        }
+        long transferred = target.getCapability(ForgeCapabilities.ENERGY, port.conductorSide())
+                .map(targetEnergy -> insertFromProvider(provider, targetEnergy, maxTransfer))
+                .orElse(0L);
+        HbmEnergyDebug.spawnRemoteProviderSubscription(level, targetPos, port.direction(), transferred > 0L);
+        return transferred;
+    }
+
+    public static long pushForgeEnergyToPorts(Level level, BlockPos origin, Iterable<EnergyPort> ports,
+            HbmEnergyProvider provider, long maxTransfer) {
+        if (ports == null || maxTransfer <= 0L) {
+            return 0L;
+        }
+        long transferred = 0L;
+        for (EnergyPort port : ports) {
+            long remaining = maxTransfer - transferred;
+            if (remaining <= 0L) {
+                break;
+            }
+            transferred += pushForgeEnergyToPort(level, origin, port, provider, remaining);
+        }
+        return transferred;
     }
 
     public static PortSetSnapshot inspectPorts(Level level, BlockPos origin, Iterable<EnergyPort> ports) {
@@ -424,6 +517,15 @@ public final class HbmEnergyUtil {
         return powerNet != null && powerNet.isValid() ? powerNet : null;
     }
 
+    public static HbmPowerNet getPowerNet(Level level, BlockPos conductorPos) {
+        if (level == null || conductorPos == null) {
+            return null;
+        }
+        HbmEnergyNode node = HbmEnergyNodespace.getNode(level, conductorPos);
+        HbmPowerNet powerNet = node == null ? null : node.getPowerNet();
+        return powerNet != null && powerNet.isValid() ? powerNet : null;
+    }
+
     public static long pullFromAllNeighbors(Level level, BlockPos pos, HbmEnergyReceiver receiver, long maxTransferPerSide) {
         long transferred = 0L;
         for (Direction side : Direction.values()) {
@@ -503,14 +605,25 @@ public final class HbmEnergyUtil {
             HbmEnergyDebug.spawnRemoteProviderSubscription(level, targetPos, port.direction(), transferred > 0L);
             return transferred;
         }
-        if (target == null) {
+        return 0L;
+    }
+
+    private static long provideDirectlyToPort(Level level, DirPos port, HbmEnergyProvider provider) {
+        if (level == null || port == null || port.getDir() == null || provider == null) {
             return 0L;
         }
-        long transferred = target.getCapability(ForgeCapabilities.ENERGY, targetSide)
-                .map(targetEnergy -> insertFromProvider(provider, targetEnergy, provider.getProviderSpeed()))
-                .orElse(0L);
-        HbmEnergyDebug.spawnRemoteProviderSubscription(level, targetPos, port.direction(), transferred > 0L);
-        return transferred;
+        Direction targetSide = port.getDir().getOpposite();
+        BlockEntity target = level.getBlockEntity(port);
+        if (target instanceof HbmEnergyReceiver receiver
+                && target instanceof HbmEnergyConnector connector
+                && receiver != provider
+                && receiver.allowDirectProvision()
+                && connector.canConnectEnergy(targetSide)) {
+            long transferred = movePower(provider, receiver, Math.min(provider.getProviderSpeed(), receiver.getReceiverSpeed()));
+            HbmEnergyDebug.spawnRemoteProviderSubscription(level, port, port.getDir(), transferred > 0L);
+            return transferred;
+        }
+        return 0L;
     }
 
     private static long extractIntoReceiver(IEnergyStorage itemEnergy, HbmEnergyReceiver receiver, long maxTransfer) {

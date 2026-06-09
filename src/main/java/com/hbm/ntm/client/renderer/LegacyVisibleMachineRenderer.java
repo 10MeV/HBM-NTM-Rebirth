@@ -49,6 +49,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
+        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         if (definition.renderAll()) {
             model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);

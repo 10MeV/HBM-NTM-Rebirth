@@ -11,8 +11,126 @@ import java.util.Optional;
 public final class RBMKFuelRodColumnPlanner {
     public static final double BREAK_MELTDOWN_HULL_HEAT = 1500.0D;
     public static final String HAND_LOAD_SOUND = "hbm:item.upgradePlug";
+    public static final String ROR_PREFIX_VALUE = "VAL:";
 
     private RBMKFuelRodColumnPlanner() {
+    }
+
+    public static FuelRodPacketLayout packetLayout(boolean hasRod) {
+        List<PacketField> fields = new ArrayList<>();
+        fields.add(new PacketField("lastFluxQuantity", PacketFieldType.DOUBLE, PacketFieldCondition.ALWAYS));
+        fields.add(new PacketField("lastFluxRatio", PacketFieldType.DOUBLE, PacketFieldCondition.ALWAYS));
+        fields.add(new PacketField("hasRod", PacketFieldType.BOOLEAN, PacketFieldCondition.ALWAYS));
+        fields.add(new PacketField("rodColor", PacketFieldType.INT, PacketFieldCondition.ALWAYS));
+        fields.add(new PacketField("fuelYield", PacketFieldType.STRING, PacketFieldCondition.IF_HAS_ROD));
+        fields.add(new PacketField("fuelXenon", PacketFieldType.STRING, PacketFieldCondition.IF_HAS_ROD));
+        fields.add(new PacketField("fuelHeat", PacketFieldType.STRING, PacketFieldCondition.IF_HAS_ROD));
+        return new FuelRodPacketLayout(hasRod, List.copyOf(fields));
+    }
+
+    public static FuelRodNbtLayout nbtLayout(boolean diagnosticMode) {
+        if (diagnosticMode) {
+            return new FuelRodNbtLayout(true, new String[] {"fluxSlow", "fluxFast", "hasRod"},
+                    "fluxSlow/fluxFast are derived from current buffered fluxQuantity and fluxFastRatio");
+        }
+        return new FuelRodNbtLayout(false, new String[] {"fluxQuantity", "fluxMod", "hasRod"},
+                "normal save writes lastFluxQuantity and lastFluxRatio");
+    }
+
+    public static FluxNbtReadPlan planFluxNbtRead(boolean hasLegacySplitFlux, double fluxFast, double fluxSlow,
+            double fluxQuantity, double fluxMod, boolean hasRod) {
+        if (hasLegacySplitFlux) {
+            double quantity = fluxFast + fluxSlow;
+            double ratio = quantity > 0.0D ? fluxFast / quantity : 0.0D;
+            return new FluxNbtReadPlan(quantity, ratio, hasRod, true);
+        }
+        return new FluxNbtReadPlan(fluxQuantity, fluxMod, hasRod, false);
+    }
+
+    public static FuelRodPacketSnapshot packetSnapshot(RBMKRodFluxState fluxState, RBMKFuelRodSpec spec,
+            RBMKFuelRodState state) {
+        boolean hasRod = fluxState != null && fluxState.hasRod() && spec != null && state != null;
+        return new FuelRodPacketSnapshot(
+                fluxState == null ? 0.0D : fluxState.lastFluxQuantity(),
+                fluxState == null ? 0.0D : fluxState.lastFluxRatio(),
+                hasRod,
+                fluxState == null ? 0 : fluxState.rodColor(),
+                hasRod ? fuelDiagnostics(spec, state) : FuelDiagnostics.EMPTY);
+    }
+
+    public static DiagnosticNbtPlan diagnosticNbtPlan(RBMKRodFluxState fluxState, FuelDiagnostics diagnostics) {
+        FuelDiagnostics safeDiagnostics = diagnostics == null ? FuelDiagnostics.EMPTY : diagnostics;
+        boolean hasFuelText = !safeDiagnostics.fuelYield().isEmpty()
+                && !safeDiagnostics.fuelXenon().isEmpty()
+                && !safeDiagnostics.fuelHeat().isEmpty();
+        return new DiagnosticNbtPlan(
+                fluxState == null ? 0.0D : fluxState.fluxQuantity() * (1.0D - fluxState.fluxFastRatio()),
+                fluxState == null ? 0.0D : fluxState.fluxQuantity() * fluxState.fluxFastRatio(),
+                fluxState != null && fluxState.hasRod(),
+                hasFuelText,
+                "f_yield",
+                "f_xenon",
+                "f_heat",
+                safeDiagnostics);
+    }
+
+    public static EnergyControlInfo energyControlInfo(RBMKFuelRodSpec spec, RBMKFuelRodState state) {
+        if (spec == null || state == null) {
+            return EnergyControlInfo.empty();
+        }
+        return new EnergyControlInfo(
+                true,
+                (1.0D - state.enrichment(spec)) * 100.0D,
+                state.xenon(),
+                state.hullHeat(),
+                state.coreHeat(),
+                spec.meltingPoint());
+    }
+
+    public static String[] redstoneRadioFunctionInfo() {
+        return new String[] {
+                ROR_PREFIX_VALUE + "columnheat",
+                ROR_PREFIX_VALUE + "rodheat",
+                ROR_PREFIX_VALUE + "depletion",
+                ROR_PREFIX_VALUE + "xenon",
+                ROR_PREFIX_VALUE + "fastflux",
+                ROR_PREFIX_VALUE + "slowflux",
+                ROR_PREFIX_VALUE + "flux"
+        };
+    }
+
+    public static RedstoneRadioValuePlan redstoneRadioValue(String name, RBMKThermalState thermalState,
+            RBMKRodFluxState fluxState, RBMKFuelRodSpec spec, RBMKFuelRodState state) {
+        RedstoneRadioValues values = redstoneRadioValues(thermalState, fluxState, spec, state);
+        String safeName = name == null ? "" : name;
+        if ((ROR_PREFIX_VALUE + "columnheat").equals(safeName)) {
+            return RedstoneRadioValuePlan.value(values.columnHeat());
+        }
+        if ((ROR_PREFIX_VALUE + "rodheat").equals(safeName)) {
+            return spec == null || state == null
+                    ? RedstoneRadioValuePlan.missing()
+                    : RedstoneRadioValuePlan.value(values.rodHullHeat());
+        }
+        if ((ROR_PREFIX_VALUE + "depletion").equals(safeName)) {
+            return spec == null || state == null
+                    ? RedstoneRadioValuePlan.missing()
+                    : RedstoneRadioValuePlan.value(values.depletion());
+        }
+        if ((ROR_PREFIX_VALUE + "xenon").equals(safeName)) {
+            return spec == null || state == null
+                    ? RedstoneRadioValuePlan.missing()
+                    : RedstoneRadioValuePlan.value(values.xenon());
+        }
+        if ((ROR_PREFIX_VALUE + "fastflux").equals(safeName)) {
+            return RedstoneRadioValuePlan.value(values.fastFlux());
+        }
+        if ((ROR_PREFIX_VALUE + "slowflux").equals(safeName)) {
+            return RedstoneRadioValuePlan.value(values.slowFlux());
+        }
+        if ((ROR_PREFIX_VALUE + "flux").equals(safeName)) {
+            return RedstoneRadioValuePlan.value(values.totalFlux());
+        }
+        return RedstoneRadioValuePlan.missing();
     }
 
     public static LoadPlan planHandLoad(String legacyRodId, boolean slotEmpty, boolean creativeMode) {
@@ -224,6 +342,75 @@ public final class RBMKFuelRodColumnPlanner {
 
     private static boolean hasKnownRod(String legacyRodId, RBMKFuelRodState fuelState) {
         return fuelState != null && RBMKFuelRodRegistry.find(legacyRodId).isPresent();
+    }
+
+    public enum PacketFieldType {
+        DOUBLE,
+        BOOLEAN,
+        INT,
+        STRING
+    }
+
+    public enum PacketFieldCondition {
+        ALWAYS,
+        IF_HAS_ROD
+    }
+
+    public record PacketField(String name, PacketFieldType type, PacketFieldCondition condition) {
+    }
+
+    public record FuelRodPacketLayout(boolean hasRod, List<PacketField> fields) {
+    }
+
+    public record FuelRodNbtLayout(boolean diagnosticMode, String[] keys, String note) {
+    }
+
+    public record FluxNbtReadPlan(
+            double fluxQuantity,
+            double fluxFastRatio,
+            boolean hasRod,
+            boolean readLegacySplitFlux) {
+    }
+
+    public record FuelRodPacketSnapshot(
+            double lastFluxQuantity,
+            double lastFluxRatio,
+            boolean hasRod,
+            int rodColor,
+            FuelDiagnostics diagnostics) {
+    }
+
+    public record DiagnosticNbtPlan(
+            double fluxSlow,
+            double fluxFast,
+            boolean hasRod,
+            boolean writeFuelText,
+            String fuelYieldKey,
+            String fuelXenonKey,
+            String fuelHeatKey,
+            FuelDiagnostics diagnostics) {
+    }
+
+    public record EnergyControlInfo(
+            boolean present,
+            double depletionPercent,
+            double xenonPercent,
+            double skinC,
+            double coreC,
+            double meltC) {
+        public static EnergyControlInfo empty() {
+            return new EnergyControlInfo(false, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+    }
+
+    public record RedstoneRadioValuePlan(boolean present, String value) {
+        public static RedstoneRadioValuePlan value(int value) {
+            return new RedstoneRadioValuePlan(true, Integer.toString(value));
+        }
+
+        public static RedstoneRadioValuePlan missing() {
+            return new RedstoneRadioValuePlan(false, "");
+        }
     }
 
     public enum LoadFailure {

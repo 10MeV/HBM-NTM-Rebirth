@@ -2,7 +2,6 @@ package com.hbm.ntm.player;
 
 import com.hbm.ntm.config.ServerConfig;
 import com.hbm.ntm.network.ModMessages;
-import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.radiation.RadiationData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -129,7 +128,11 @@ public final class HbmLivingProperties {
     }
 
     public static void sync(ServerPlayer player, float chunkRadiation, float resistance) {
-        ModMessages.sendToPlayer(new PlayerRadiationSyncPacket(writeSyncedData(player, chunkRadiation, resistance)), player);
+        ModMessages.syncPlayerRadiation(player, chunkRadiation, resistance);
+    }
+
+    public static void syncThreaded(ServerPlayer player, float chunkRadiation, float resistance) {
+        ModMessages.syncPlayerRadiationThreaded(player, chunkRadiation, resistance);
     }
 
     public static SyncData emptySyncedData() {

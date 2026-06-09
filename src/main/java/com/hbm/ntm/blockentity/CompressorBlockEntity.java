@@ -21,6 +21,7 @@ import com.hbm.ntm.menu.CompressorMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -158,7 +159,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public List<ItemStack> getDrops() {
-        return com.hbm.ntm.util.HbmInventoryMenuHelper.clearToDrops(items);
+        return HbmInventoryMenuHelper.clearToDrops(items);
     }
 
     public int getProgress() {
@@ -384,7 +385,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put(TAG_INVENTORY, items.serializeNBT());
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         tag.putLong(TAG_LEGACY_POWER, energy.getPower());
         tag.putInt(TAG_PROGRESS, progress);
         tag.putInt(TAG_INPUT_PRESSURE, inputTank.getPressure());
@@ -393,7 +394,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        items.deserializeNBT(tag.getCompound(TAG_INVENTORY));
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         if (tag.contains(TAG_LEGACY_POWER)) {
             energy.setPower(tag.getLong(TAG_LEGACY_POWER));
         }

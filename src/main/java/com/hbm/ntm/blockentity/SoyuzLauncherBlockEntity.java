@@ -110,6 +110,9 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     private boolean starting;
     private int countdown = MAX_COUNTDOWN;
     private Object audioLoop;
+    private List<BlockPos> launcherPorts;
+    private List<FluidPort> networkFluidPorts;
+    private List<EnergyPort> energyPorts;
 
     public SoyuzLauncherBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SOYUZ_LAUNCHER.get(), pos, state,
@@ -124,7 +127,9 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (level.isClientSide) {
             return;
         }
-        HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, launcher);
+        if (level.getGameTime() % 20L == 0L) {
+            HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, launcher);
+        }
         boolean changed = launcher.tickMachine(level, pos, state);
         if (changed) {
             launcher.setChanged();
@@ -409,12 +414,18 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected Iterable<FluidPort> getNetworkFluidPorts(FluidType type) {
-        return launcherPorts().stream().map(pos -> new FluidPort(pos, Direction.UP)).toList();
+        if (networkFluidPorts == null) {
+            networkFluidPorts = launcherPorts().stream().map(pos -> new FluidPort(pos, Direction.UP)).toList();
+        }
+        return networkFluidPorts;
     }
 
     @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
-        return launcherPorts().stream().map(pos -> new EnergyPort(pos, Direction.UP)).toList();
+        if (energyPorts == null) {
+            energyPorts = launcherPorts().stream().map(pos -> new EnergyPort(pos, Direction.UP)).toList();
+        }
+        return energyPorts;
     }
 
     @Override
@@ -484,7 +495,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyItems(tag, items);
+        HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
         keroseneTank().readFromNbt(tag, "fuel");
         oxygenTank().readFromNbt(tag, "oxidizer");
         keroseneTank().setTankType(HbmFluids.KEROSENE);
@@ -523,6 +534,9 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private List<BlockPos> launcherPorts() {
+        if (launcherPorts != null) {
+            return launcherPorts;
+        }
         Direction facing = facing();
         Direction side = LegacyMultiblockOffsets.legacyUpSide(facing);
         List<BlockPos> ports = new ArrayList<>();
@@ -530,7 +544,8 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
             ports.add(LegacyMultiblockOffsets.relative(facing, side, 7, i, 0));
             ports.add(LegacyMultiblockOffsets.relative(facing, side, 7, i, -1));
         }
-        return ports;
+        launcherPorts = List.copyOf(ports);
+        return launcherPorts;
     }
 
     private Direction facing() {

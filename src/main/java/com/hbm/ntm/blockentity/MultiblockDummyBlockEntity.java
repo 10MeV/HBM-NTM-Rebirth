@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.hbm.ntm.energy.HbmEnergyConnector;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnector;
@@ -66,7 +68,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
             level.removeBlock(pos, false);
             return;
         }
-        if (!level.hasChunkAt(blockEntity.corePos)) {
+        if (!HbmRegistryUtil.hasChunkAt(level, blockEntity.corePos)) {
             return;
         }
         MultiblockHelper.CoreLookup core = MultiblockHelper.findCoreAt(level, blockEntity.corePos);
@@ -321,7 +323,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
 
     @Nullable
     private MultiblockHelper.CoreLookup validCore() {
-        if (level == null || corePos == null || corePos.equals(worldPosition) || !level.hasChunkAt(corePos)) {
+        if (level == null || corePos == null || corePos.equals(worldPosition) || !HbmRegistryUtil.hasChunkAt(level, corePos)) {
             return null;
         }
         MultiblockHelper.CoreLookup core = MultiblockHelper.findCoreAt(level, corePos);

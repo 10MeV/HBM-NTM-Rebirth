@@ -3,14 +3,16 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
+import com.hbm.ntm.api.tile.ControlReceiver;
 import com.hbm.ntm.block.MachineBatterySocketBlock;
 import com.hbm.ntm.compat.CompatEnergyControl;
-import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
+import com.hbm.ntm.energy.HbmChargeableItem;
 import com.hbm.ntm.energy.HbmEnergyNode;
 import com.hbm.ntm.energy.HbmEnergyDischargeEffects;
 import com.hbm.ntm.energy.HbmEnergyProvider;
@@ -21,6 +23,7 @@ import com.hbm.ntm.energy.HbmNetworkNode;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import com.hbm.ntm.menu.MachineBatterySocketMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -49,10 +52,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, RORValueProvider,
-        RORInteractive, LegacyLookOverlayProvider {
+        RORInteractive, LegacyLookOverlayProvider, ControlReceiver, CopiableSettings {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_RED_LOW = "redLow";
     private static final String TAG_RED_HIGH = "redHigh";
@@ -117,6 +121,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         super(ModBlockEntities.MACHINE_BATTERY_SOCKET.get(), pos, state, energy);
         this.socketEnergy = energy;
         this.socketEnergy.bind(this::getBatteryStack);
+        this.socketEnergy.bindModeSupplier(this::getCurrentMode);
         this.socketEnergy.bindSelfChargingMultiplier(() -> scPowerMult);
         this.ror = createRorDispatcher();
     }
@@ -199,7 +204,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
 
     public Object[] getPackInfo() {
         ItemStack stack = getBatteryStack();
-        if (!(stack.getItem() instanceof HbmBatteryItem battery)) {
+        if (!(stack.getItem() instanceof HbmChargeableItem battery)) {
             return new Object[]{"", 0L, 0L};
         }
         return new Object[]{stack.getDescriptionId(), battery.getChargeRate(stack), battery.getDischargeRate(stack)};
@@ -244,11 +249,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
     private RORDispatcher createRorDispatcher() {
         return RORDispatcher.builder()
                 .value("fill", () -> Long.toString(getPower()))
-                .value("fillpercent", () -> {
-                    long maxPower = Math.max(getMaxPower(), 1L);
-                    long percent = (long) Math.floor((double) getPower() / (double) maxPower * 100.0D);
-                    return Long.toString(Math.max(0L, Math.min(100L, percent)));
-                })
+                .value("fillpercent", () -> Long.toString(getPower() * 100L / Math.max(getMaxPower(), 1L)))
                 .value("delta", () -> Long.toString(delta))
                 .function("setmode", this::runRorSetMode,
                         "mode (0-3)",
@@ -338,6 +339,13 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
     private void setPriorityByLegacyOrdinal(int ordinal) {
         HbmEnergyReceiver.ConnectionPriority[] values = HbmEnergyReceiver.ConnectionPriority.values();
         socketEnergy.setPriority(ordinal >= 0 && ordinal < values.length ? values[ordinal] : HbmEnergyReceiver.ConnectionPriority.LOW);
+    }
+
+    private void markSettingsChanged() {
+        setChangedAndSync();
+        if (level != null && !level.isClientSide) {
+            level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
+        }
     }
 
     @Override
@@ -487,9 +495,67 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
             case CONTROL_RED_LOW -> cycleRedLowMode();
             case CONTROL_RED_HIGH -> cycleRedHighMode();
             case CONTROL_PRIORITY -> cyclePriority();
-            default -> {
-            }
+            default -> receiveControl(player, tag);
         }
+    }
+
+    @Override
+    public boolean hasPermission(Player player) {
+        return player != null && !isRemoved();
+    }
+
+    @Override
+    public void receiveControl(CompoundTag data) {
+        boolean changed = false;
+        if (data.contains("low")) {
+            redLow = cycleMode(redLow);
+            changed = true;
+        }
+        if (data.contains("high")) {
+            redHigh = cycleMode(redHigh);
+            changed = true;
+        }
+        if (data.contains("priority")) {
+            socketEnergy.setPriority(switch (socketEnergy.getPriority()) {
+                case LOW -> HbmEnergyReceiver.ConnectionPriority.NORMAL;
+                case NORMAL -> HbmEnergyReceiver.ConnectionPriority.HIGH;
+                default -> HbmEnergyReceiver.ConnectionPriority.LOW;
+            });
+            changed = true;
+        }
+        if (changed) {
+            markSettingsChanged();
+        }
+    }
+
+    @Override
+    public void receiveControl(Player player, CompoundTag data) {
+        if (hasPermission(player)) {
+            receiveControl(data);
+        }
+    }
+
+    @Override
+    public CompoundTag getSettings(Level level, BlockPos pos) {
+        CompoundTag data = new CompoundTag();
+        data.putShort(TAG_RED_LOW, redLow);
+        data.putShort(TAG_RED_HIGH, redHigh);
+        data.putByte(TAG_PRIORITY, (byte) socketEnergy.getPriority().ordinal());
+        return data;
+    }
+
+    @Override
+    public void pasteSettings(CompoundTag tag, int index, Level level, Player player, BlockPos pos) {
+        if (tag.contains(TAG_RED_LOW)) {
+            redLow = clampMode(tag.getShort(TAG_RED_LOW));
+        }
+        if (tag.contains(TAG_RED_HIGH)) {
+            redHigh = clampMode(tag.getShort(TAG_RED_HIGH));
+        }
+        if (tag.contains(TAG_PRIORITY)) {
+            socketEnergy.setPriority(readLegacyPriority(tag));
+        }
+        markSettingsChanged();
     }
 
     @Override
@@ -512,7 +578,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        items.deserializeNBT(tag.getCompound(TAG_INVENTORY));
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         redLow = clampMode(tag.getShort(TAG_RED_LOW));
         redHigh = clampMode(tag.getShort(TAG_RED_HIGH));
         lastRedstone = tag.getBoolean(TAG_LAST_REDSTONE);
@@ -568,7 +634,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
     }
 
     private void saveSocketData(CompoundTag tag) {
-        tag.put(TAG_INVENTORY, items.serializeNBT());
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         tag.putShort(TAG_RED_LOW, redLow);
         tag.putShort(TAG_RED_HIGH, redHigh);
         tag.putBoolean(TAG_LAST_REDSTONE, lastRedstone);
@@ -680,6 +746,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
     private static final class SocketEnergyStorage extends HbmEnergyStorage {
         private Supplier<ItemStack> batterySupplier = () -> ItemStack.EMPTY;
         private HbmEnergyReceiver.ConnectionPriority priority = HbmEnergyReceiver.ConnectionPriority.LOW;
+        private IntSupplier modeSupplier = () -> MODE_NONE;
         private Supplier<Double> selfChargingMultiplierSupplier = () -> 1.0D;
 
         private SocketEnergyStorage() {
@@ -690,6 +757,10 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
             this.batterySupplier = batterySupplier == null ? () -> ItemStack.EMPTY : batterySupplier;
         }
 
+        private void bindModeSupplier(IntSupplier modeSupplier) {
+            this.modeSupplier = modeSupplier == null ? () -> MODE_NONE : modeSupplier;
+        }
+
         private void bindSelfChargingMultiplier(Supplier<Double> selfChargingMultiplierSupplier) {
             this.selfChargingMultiplierSupplier = selfChargingMultiplierSupplier == null ? () -> 1.0D : selfChargingMultiplierSupplier;
         }
@@ -697,7 +768,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         @Override
         public long getPower() {
             ItemStack stack = batterySupplier.get();
-            if (!(stack.getItem() instanceof HbmBatteryItem battery)) {
+            if (!(stack.getItem() instanceof HbmChargeableItem battery)) {
                 return 0L;
             }
             long power = battery.getCharge(stack);
@@ -710,7 +781,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         @Override
         public void setPower(long power) {
             ItemStack stack = batterySupplier.get();
-            if (stack.getItem() instanceof HbmBatteryItem battery) {
+            if (stack.getItem() instanceof HbmChargeableItem battery) {
                 battery.setCharge(stack, power);
             }
         }
@@ -718,19 +789,27 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         @Override
         public long getMaxPower() {
             ItemStack stack = batterySupplier.get();
-            return stack.getItem() instanceof HbmBatteryItem battery ? battery.getMaxCharge(stack) : 0L;
+            return stack.getItem() instanceof HbmChargeableItem battery ? battery.getMaxCharge(stack) : 0L;
         }
 
         @Override
         public long getReceiverSpeed() {
+            int mode = modeSupplier.getAsInt();
+            if (mode != MODE_INPUT && mode != MODE_BUFFER) {
+                return 0L;
+            }
             ItemStack stack = batterySupplier.get();
-            return stack.getItem() instanceof HbmBatteryItem battery ? battery.getChargeRate(stack) : 0L;
+            return stack.getItem() instanceof HbmChargeableItem battery ? battery.getChargeRate(stack) : 0L;
         }
 
         @Override
         public long getProviderSpeed() {
+            int mode = modeSupplier.getAsInt();
+            if (mode != MODE_OUTPUT && mode != MODE_BUFFER) {
+                return 0L;
+            }
             ItemStack stack = batterySupplier.get();
-            return stack.getItem() instanceof HbmBatteryItem battery ? battery.getDischargeRate(stack) : 0L;
+            return stack.getItem() instanceof HbmChargeableItem battery ? battery.getDischargeRate(stack) : 0L;
         }
 
         @Override

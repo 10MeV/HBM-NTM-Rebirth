@@ -1,5 +1,7 @@
 /.gradle/
+/.gradle-codex-build*/
 /.gradle-codex-verify/
+/.gradle-codex-verify-project/
 /build/
 /bin/
 /run/

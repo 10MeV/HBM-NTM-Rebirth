@@ -1,10 +1,11 @@
 package com.hbm.ntm.recipe;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.FriendlyByteBuf;
@@ -247,7 +248,7 @@ public final class HbmItemOutput {
     private static ItemStack readItemStack(JsonObject object, String name) {
         String itemName = GsonHelper.getAsString(object, "item");
         ResourceLocation itemId = new ResourceLocation(itemName);
-        Item item = BuiltInRegistries.ITEM.getOptional(itemId)
+        Item item = HbmRegistryUtil.item(itemId)
                 .orElseThrow(() -> new JsonSyntaxException("Unknown item '" + itemName + "' in " + name));
         int count = GsonHelper.getAsInt(object, "count", 1);
         if (count < 1) {
@@ -268,7 +269,7 @@ public final class HbmItemOutput {
 
     private static JsonObject itemStackJson(ItemStack stack) {
         JsonObject object = new JsonObject();
-        object.addProperty("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        object.addProperty("item", HbmRegistryUtil.itemKey(stack.getItem()).toString());
         if (stack.getCount() > 1) {
             object.addProperty("count", stack.getCount());
         }

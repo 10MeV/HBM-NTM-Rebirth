@@ -1,0 +1,8 @@
+{
+  "parent": "hbm_ntm_rebirth:block/barrel_steel",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/legacy_blocks/barrel_red",
+    "default": "hbm_ntm_rebirth:block/legacy_blocks/barrel_red",
+    "texture0": "hbm_ntm_rebirth:block/legacy_blocks/barrel_red"
+  }
+}

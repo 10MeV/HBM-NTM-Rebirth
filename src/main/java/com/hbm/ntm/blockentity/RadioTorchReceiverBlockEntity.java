@@ -23,7 +23,11 @@ public class RadioTorchReceiverBlockEntity extends RadioTorchDeviceBlockEntity {
         }
         RTTYSystem.RTTYChannel channel = RTTYSystem.listen(level, torch.radio.channel());
         RTTYDeviceState.RedstoneReceiveResult result = torch.radio.receiveRedstoneSignal(channel, level.getGameTime());
-        if (!result.received() || result.selfDestruct()) {
+        if (!result.received()) {
+            return;
+        }
+        if (result.selfDestruct()) {
+            torch.selfDestruct();
             return;
         }
         if (torch.radio.applyLastState(result.redstoneLevel())) {

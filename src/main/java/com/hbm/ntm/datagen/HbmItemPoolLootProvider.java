@@ -51,10 +51,12 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(Items.GOLD_INGOT, 3, 14, 1),
                 entry(ModItems.COBALT_INGOT, 4, 12, 1),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CHIP, 3, 6, 1),
+                entry(ModItems.GAS_MASK_M65, 1, 1, 1),
                 entry(Items.DIAMOND, 1, 2, 1)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VAULT_STANDARD), pool(
                 entry(legacyItem("ingot_desh"), 2, 6, 1),
+                entry(legacyItem("powder_desh_mix"), 1, 5, 1),
                 entry(Items.DIAMOND, 3, 6, 1),
                 entry(legacyItem("powder_yellowcake"), 16, 24, 1),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 12, 16, 1),
@@ -92,7 +94,9 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 1, 1, 5),
                 meta(LegacyMetaItemMappings.CASING, CASING_SMALL, 4, 10, 3),
                 meta(LegacyMetaItemMappings.CASING, CASING_SHOTSHELL, 4, 10, 3),
-                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_REDSTONE, 1, 1, 1)));
+                entry(legacyItem("cordite"), 4, 6, 5),
+                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_REDSTONE, 1, 1, 1),
+                entry(ModItems.GAS_MASK_FILTER, 1, 1, 3)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_ANTENNA), pool(
                 entry(ModItems.STEEL_INGOT, 1, 2, 7),
@@ -101,20 +105,24 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(legacyItem("wire_fine_mingrade"), 2, 3, 7),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 1, 1, 4),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CAPACITOR, 1, 1, 2),
-                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_REDSTONE, 1, 1, 1)));
+                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_REDSTONE, 1, 1, 1),
+                entry(ModBlocks.STEEL_SCAFFOLD, 1, 3, 8),
+                entry(ModItems.GAS_MASK_FILTER, 1, 1, 2)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_EXPENSIVE), pool(
                 entry(ModItems.CHLORINE_PINWHEEL, 1, 1, 1),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 1, 1, 4),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_ANALOG, 1, 1, 3),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CHIP, 1, 1, 2),
-                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LITHIUM, 1, 1, 1)));
+                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LITHIUM, 1, 1, 1),
+                entry(ModItems.GAS_MASK_FILTER, 1, 1, 4)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_NUKE_TRASH), pool(
                 entry(legacyItem("nugget_u238"), 3, 12, 5),
                 entry(legacyItem("nugget_pu240"), 3, 8, 5),
                 entry(legacyItem("nugget_neptunium"), 1, 4, 3),
-                entry(ModBlocks.YELLOW_BARREL, 1, 1, 2)));
+                entry(ModBlocks.YELLOW_BARREL, 1, 1, 2),
+                entry(ModItems.GAS_MASK_FILTER, 1, 1, 5)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_NUKE_MISC), pool(
                 entry(legacyItem("nugget_u235"), 3, 12, 5),
@@ -125,16 +133,20 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(legacyItem("powder_strontium"), 1, 1, 1),
                 entry(legacyItem("powder_cobalt"), 1, 1, 1),
                 entry(legacyItem("pellet_rtg"), 1, 1, 3),
-                entry(ModBlocks.YELLOW_BARREL, 1, 3, 3)));
+                entry(ModBlocks.YELLOW_BARREL, 1, 3, 3),
+                entry(ModItems.GAS_MASK_FILTER, 1, 1, 5)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VERTIBIRD), pool(
                 entry(legacyItem("billet_uranium_fuel"), 1, 1, 2),
-                entry(legacyItem("ingot_uranium_fuel"), 1, 1, 2)));
+                entry(legacyItem("ingot_uranium_fuel"), 1, 1, 2),
+                entry(ModItems.GAS_MASK_M65, 1, 1, 5),
+                entry(ModItems.GAS_MASK_FILTER, 1, 1, 5)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SPACESHIP), pool(
                 meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LEAD, 1, 1, 2),
                 entry(ModItems.COPPER_COIL, 2, 16, 5),
                 entry(legacyItem("wire_fine_mingrade"), 8, 32, 5),
+                entry(legacyItem("cell_tritium"), 1, 8, 5),
                 entry(legacyItem("powder_niobium"), 1, 1, 1),
                 meta(LegacyMetaItemMappings.WIRE_DENSE, WIRE_DENSE_GOLD, 1, 3, 5),
                 entry(ModBlocks.legacyBlock("block_tungsten"), 3, 8, 5),
@@ -147,6 +159,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.URANIUM_POWDER, 2, 2, 5),
                 entry(ModItems.PLUTONIUM_POWDER, 1, 1, 5),
                 entry(ModItems.THORIUM_POWDER, 2, 2, 7),
+                entry(legacyItem("powder_desh_mix"), 3, 3, 5),
                 entry(legacyItem("powder_diamond"), 2, 2, 7),
                 entry(Items.REDSTONE, 5, 5, 15),
                 entry(ModItems.COPPER_POWDER, 5, 5, 15),
@@ -197,7 +210,10 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.SCREWDRIVER, 1, 1, 2)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SILO), pool(
-                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LEAD, 1, 1, 3)));
+                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LEAD, 1, 1, 3),
+                entry(ModItems.DESIGNATOR, 1, 1, 5),
+                entry(legacyItem("thruster_small"), 1, 1, 5),
+                entry(legacyItem("thruster_medium"), 1, 1, 4)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_OFFICE_TRASH), pool(
                 entry(Items.PAPER, 1, 12, 10),
@@ -214,6 +230,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SOLID_FUEL), pool(
                 entry(legacyItem("solid_fuel"), 1, 5, 1),
                 entry(legacyItem("solid_fuel_presto"), 1, 2, 2),
+                entry(legacyItem("ball_dynamite"), 1, 4, 2),
                 meta(LegacyMetaItemMappings.COKE, COKE_PETROLEUM, 1, 3, 1),
                 entry(Items.REDSTONE, 1, 3, 1),
                 entry(legacyItem("niter"), 1, 3, 1)));
@@ -234,6 +251,10 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(Items.CLOCK, 1, 1, 3),
                 entry(Items.BOOK, 1, 5, 10),
                 entry(ModItems.ARMOR_POLISH, 1, 1, 3),
+                entry(ModItems.GAS_MASK_M65, 1, 1, 2),
+                entry(ModItems.GAS_MASK_MONO, 1, 1, 2),
+                entry(ModItems.GOGGLES, 1, 1, 2),
+                entry(ModItems.GAS_MASK_FILTER, 1, 1, 4),
                 entry(Items.EXPERIENCE_BOTTLE, 1, 3, 1)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_METEOR_SAFE), pool(
@@ -275,6 +296,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(Items.IRON_INGOT, 1, 3, 10),
                 entry(ModItems.STEEL_INGOT, 1, 2, 10),
                 entry(ModItems.ALUMINIUM_INGOT, 1, 2, 10),
+                entry(ModItems.GAS_MASK_M65, 1, 1, 10),
                 entry(ModItems.STEEL_PICKAXE, 1, 1, 5),
                 entry(ModItems.STEEL_SHOVEL, 1, 1, 5),
                 entry(Items.EXPERIENCE_BOTTLE, 1, 3, 5)));
@@ -323,6 +345,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.RADAWAY, 1, 5, 10)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_RED_PEDESTAL), pool(
+                entry(ModItems.BALLISTIC_GAUNTLET, 1, 1, 10),
                 entry(ModItems.ARMOR_POLISH, 1, 1, 10),
                 entry(ModItems.BANDAID, 1, 1, 10),
                 entry(ModItems.SERUM, 1, 1, 10),

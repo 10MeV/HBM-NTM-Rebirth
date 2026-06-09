@@ -50,6 +50,9 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+        Vec3 translation = definition.modelTranslation(state);
+        poseStack.translate(translation.x, translation.y, translation.z);
+        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         if (drill.getKind() == OilDrillBlockEntity.Kind.PUMPJACK) {
             renderPumpjack(drill, partialTick, poseStack, buffer, modelLight, packedOverlay, definition, model);

@@ -10,6 +10,7 @@ import com.hbm.ntm.radiation.CraterRadiationData;
 import com.hbm.ntm.radiation.LegacyFalloutConversions;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEntityTypes;
+import com.hbm.ntm.util.HbmBlockStateUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -247,7 +248,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     }
 
     private static boolean isLegacyFalloutCollapsible(float hardness) {
-        return hardness >= 0.0F && hardness <= Blocks.STONE_BRICKS.getExplosionResistance();
+        return hardness >= 0.0F && hardness <= HbmBlockStateUtil.explosionResistance(Blocks.STONE_BRICKS.defaultBlockState());
     }
 
     private boolean applyCraterRadiationMarker(int x, int z, double percent) {

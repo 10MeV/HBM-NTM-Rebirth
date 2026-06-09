@@ -31,6 +31,7 @@ import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -221,8 +222,24 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         if (leaking <= 0) {
             return false;
         }
-        tank.release(level, pos, leaking, onFire ? FluidReleaseType.BURN : FluidReleaseType.SPILL, false);
+        FluidReleaseType release = getDamagedTankPollutionRelease(type);
+        if (release != FluidReleaseType.VOID) {
+            tank.release(level, pos, leaking, release, false);
+        } else {
+            tank.drain(leaking, false);
+        }
         return true;
+    }
+
+    private FluidReleaseType getDamagedTankPollutionRelease(FluidType type) {
+        if (onFire && type.hasTrait(FlammableFluidTrait.class)) {
+            return FluidReleaseType.BURN;
+        }
+        if (type.hasTrait(SimpleFluidTraits.Gaseous.class)
+                || type.hasTrait(SimpleFluidTraits.GaseousAtRoomTemperature.class)) {
+            return FluidReleaseType.SPILL;
+        }
+        return FluidReleaseType.VOID;
     }
 
     public void explodeTank() {
@@ -579,7 +596,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put("Inventory", items.serializeNBT());
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "Inventory", items);
         tag.putInt("mode", mode);
         tag.putBoolean("exploded", exploded);
         tag.putBoolean("onFire", onFire);
@@ -590,7 +607,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        items.deserializeNBT(tag.getCompound("Inventory"));
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "Inventory", items);
         mode = Math.max(MODE_INPUT, Math.min(MODE_NONE, tag.getInt("mode")));
         exploded = tag.getBoolean("exploded");
         onFire = tag.getBoolean("onFire");
@@ -659,15 +676,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     public List<ItemStack> getDrops() {
-        List<ItemStack> drops = new java.util.ArrayList<>();
-        for (int slot = 0; slot < items.getSlots(); slot++) {
-            ItemStack stack = items.getStackInSlot(slot);
-            if (!stack.isEmpty()) {
-                drops.add(stack.copy());
-                items.setStackInSlot(slot, ItemStack.EMPTY);
-            }
-        }
-        return drops;
+        return HbmInventoryMenuHelper.clearToDrops(items);
     }
 
     protected void copyInventoryFrom(FluidTankBlockEntity other) {

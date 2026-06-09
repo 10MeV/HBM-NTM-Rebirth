@@ -331,6 +331,12 @@
       "hbm_ntm_rebirth:tool/gasmask_screw"
     ]
   },
+  "tool.pin_break": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.tool.pin_break",
+    "sounds": [
+      "hbm_ntm_rebirth:tool/pin_break"
+    ]
+  },
   "item.syringe": {
     "subtitle": "subtitles.hbm_ntm_rebirth.item.syringe",
     "sounds": [
@@ -1850,6 +1856,42 @@
         "name": "hbm_ntm_rebirth:alarm/razortrain_horn",
         "stream": false
       }
+    ]
+  },
+  "alarm.train_horn": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.train_horn",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/train_horn",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.gambit": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.gambit",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/gambit",
+        "stream": true
+      }
+    ]
+  },
+  "alarm.chime": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.chime",
+    "sounds": [
+      {
+        "name": "hbm_ntm_rebirth:alarm/chime",
+        "stream": false
+      }
+    ]
+  },
+  "alarm.singer": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.alarm.singer",
+    "sounds": [
+      "hbm_ntm_rebirth:alarm/singer1",
+      "hbm_ntm_rebirth:alarm/singer2",
+      "hbm_ntm_rebirth:alarm/singer3",
+      "hbm_ntm_rebirth:alarm/singer4"
     ]
   }
 }

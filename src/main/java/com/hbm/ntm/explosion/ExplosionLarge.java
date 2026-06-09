@@ -4,6 +4,7 @@ import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.entity.projectile.RubbleEntity;
 import com.hbm.ntm.entity.projectile.ShrapnelEntity;
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.util.HbmBlockStateUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -257,9 +258,8 @@ public final class ExplosionLarge {
         }
     }
 
-    @SuppressWarnings("deprecation")
     private static boolean hasHighExplosionResistance(BlockState state) {
-        return state.getBlock().getExplosionResistance() > 70.0F;
+        return HbmBlockStateUtil.explosionResistance(state) > 70.0F;
     }
 
     public static int cloudFunction(int strength) {

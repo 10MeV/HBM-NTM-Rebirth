@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "S": {
+      "item": "hbm_ntm_rebirth:radio_torch_sender"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:crt_display"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:radio_torch_receiver"
+    },
+    "W": {
+      "tag": "minecraft:planks"
+    },
+    "#": {
+      "tag": "forge:circuits/analog"
+    }
+  },
+  "pattern": [
+    "SCR",
+    "W#W",
+    "WWW"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:radio_telex",
+    "count": 2
+  },
+  "show_notification": true
+}

@@ -51,6 +51,7 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
+        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         ObjModelLibrary.MACHINE_RADAR_SCREEN_LEGACY.renderAll(definition.textureLocation(),
                 poseStack, buffer, modelLight, packedOverlay);

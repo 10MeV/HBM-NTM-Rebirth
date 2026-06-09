@@ -58,7 +58,16 @@ public final class RBMKPassiveColumnPlanner {
                 accessibleStorageSlots(),
                 true,
                 true,
+                false,
                 STORAGE_COMPACTION_INTERVAL);
+    }
+
+    public static StorageInventoryRule storageInventoryRule(boolean itemIsRbmkRod) {
+        return new StorageInventoryRule(
+                itemIsRbmkRod,
+                true,
+                accessibleStorageSlots(),
+                "ItemRBMKRod");
     }
 
     public static StorageTickPlan planStorageTick(long gameTime, List<Boolean> occupiedSlots) {
@@ -75,10 +84,41 @@ public final class RBMKPassiveColumnPlanner {
         return new StorageLoadState(canLoad, STORAGE_LOAD_SLOT);
     }
 
+    public static StorageLoadTransferPlan planStorageLoadTransfer(List<Boolean> occupiedSlots, boolean stackPresent) {
+        List<Boolean> slots = normalizeSlots(occupiedSlots);
+        boolean accepted = stackPresent && !slots.get(STORAGE_LOAD_SLOT);
+        List<Boolean> after = new ArrayList<>(slots);
+        if (accepted) {
+            after.set(STORAGE_LOAD_SLOT, true);
+        }
+        return new StorageLoadTransferPlan(
+                accepted,
+                STORAGE_LOAD_SLOT,
+                true,
+                false,
+                slots,
+                List.copyOf(after));
+    }
+
     public static StorageUnloadState planStorageUnload(List<Boolean> occupiedSlots) {
         List<Boolean> slots = normalizeSlots(occupiedSlots);
         boolean canUnload = slots.get(STORAGE_UNLOAD_SLOT);
         return new StorageUnloadState(canUnload, STORAGE_UNLOAD_SLOT);
+    }
+
+    public static StorageUnloadTransferPlan planStorageUnloadTransfer(List<Boolean> occupiedSlots) {
+        List<Boolean> slots = normalizeSlots(occupiedSlots);
+        boolean accepted = slots.get(STORAGE_UNLOAD_SLOT);
+        List<Boolean> after = new ArrayList<>(slots);
+        if (accepted) {
+            after.set(STORAGE_UNLOAD_SLOT, false);
+        }
+        return new StorageUnloadTransferPlan(
+                accepted,
+                STORAGE_UNLOAD_SLOT,
+                true,
+                slots,
+                List.copyOf(after));
     }
 
     private static RBMKColumnLifecyclePlanner.DebrisRange debris(
@@ -133,7 +173,15 @@ public final class RBMKPassiveColumnPlanner {
             List<Integer> accessibleSlots,
             boolean acceptsFuelRodItems,
             boolean canExtractAnyStoredRod,
+            boolean loadPathChecksItemType,
             int compactionInterval) {
+    }
+
+    public record StorageInventoryRule(
+            boolean validForSlot,
+            boolean canExtract,
+            List<Integer> accessibleSlots,
+            String acceptedLegacyItemClass) {
     }
 
     public record StorageTickPlan(
@@ -145,5 +193,22 @@ public final class RBMKPassiveColumnPlanner {
     }
 
     public record StorageUnloadState(boolean canUnload, int sourceSlot) {
+    }
+
+    public record StorageLoadTransferPlan(
+            boolean accepted,
+            int targetSlot,
+            boolean copyInputStack,
+            boolean checksItemType,
+            List<Boolean> before,
+            List<Boolean> after) {
+    }
+
+    public record StorageUnloadTransferPlan(
+            boolean accepted,
+            int sourceSlot,
+            boolean clearSourceSlot,
+            List<Boolean> before,
+            List<Boolean> after) {
     }
 }

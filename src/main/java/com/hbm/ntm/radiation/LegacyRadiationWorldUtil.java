@@ -1,8 +1,9 @@
 package com.hbm.ntm.radiation;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.Level;
@@ -66,7 +67,7 @@ public final class LegacyRadiationWorldUtil {
             return true;
         }
 
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        ResourceLocation id = HbmRegistryUtil.blockKey(state.getBlock());
         String path = id.getPath();
         return hasPathToken(path, "wood")
                 || hasPathToken(path, "log")

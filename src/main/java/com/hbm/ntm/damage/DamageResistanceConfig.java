@@ -122,11 +122,11 @@ public final class DamageResistanceConfig {
                 continue;
             }
             JsonArray entry = element.getAsJsonArray();
-            Item helmet = itemOrNull(entry.get(0));
-            Item chest = itemOrNull(entry.get(1));
-            Item legs = itemOrNull(entry.get(2));
-            Item boots = itemOrNull(entry.get(3));
-            if (helmet == null || chest == null || legs == null || boots == null) {
+            SetComponent helmet = setComponent(entry.get(0));
+            SetComponent chest = setComponent(entry.get(1));
+            SetComponent legs = setComponent(entry.get(2));
+            SetComponent boots = setComponent(entry.get(3));
+            if (!helmet.valid() || !chest.valid() || !legs.valid() || !boots.valid()) {
                 stats.skippedSets++;
                 stats.addMissingSet(entry, index);
                 continue;
@@ -138,7 +138,7 @@ public final class DamageResistanceConfig {
                 continue;
             }
             if (apply) {
-                DamageResistanceHandler.registerSet(helmet, chest, legs, boots, resistance);
+                DamageResistanceHandler.registerSet(helmet.item(), chest.item(), legs.item(), boots.item(), resistance);
             }
             stats.setStats++;
         }
@@ -233,6 +233,18 @@ public final class DamageResistanceConfig {
         JsonArray shortSet = new JsonArray();
         shortSet.add("hbm_ntm_rebirth:missing_helmet");
         setStats.add(shortSet);
+        JsonArray partialSet = new JsonArray();
+        partialSet.add("minecraft:iron_helmet");
+        partialSet.add(com.google.gson.JsonNull.INSTANCE);
+        partialSet.add("minecraft:iron_leggings");
+        partialSet.add("minecraft:iron_boots");
+        JsonObject partialSetResistance = new JsonObject();
+        JsonArray partialOther = new JsonArray();
+        partialOther.add(3.0F);
+        partialOther.add(0.3F);
+        partialSetResistance.add("other", partialOther);
+        partialSet.add(partialSetResistance);
+        setStats.add(partialSet);
         root.add("setStats", setStats);
 
         JsonArray entityStats = new JsonArray();
@@ -251,6 +263,7 @@ public final class DamageResistanceConfig {
         DamageResistanceHandler.RegistrySnapshot snapshotAfter = DamageResistanceHandler.registrySnapshot();
         expect(problems, "parse-only item skips", parseOnly.skippedItems == 2);
         expect(problems, "parse-only set skips", parseOnly.skippedSets == 1);
+        expect(problems, "legacy partial set parsed", parseOnly.setStats == 1);
         expect(problems, "parse-only entity skip", parseOnly.skippedEntities == 1);
         expect(problems, "legacy simple entity parsed", parseOnly.entityStats == 1);
         expect(problems, "parse-only leaves registry unchanged", snapshotBefore.equals(snapshotAfter));
@@ -610,8 +623,16 @@ public final class DamageResistanceConfig {
         return element != null && element.isJsonArray() && element.getAsJsonArray().size() >= minSize;
     }
 
-    private static Item itemOrNull(JsonElement element) {
-        return element == null || element.isJsonNull() ? null : item(stringValue(element));
+    private static SetComponent setComponent(JsonElement element) {
+        if (element == null || element.isJsonNull()) {
+            return new SetComponent(true, null);
+        }
+        String id = stringValue(element);
+        if (id == null) {
+            return new SetComponent(false, null);
+        }
+        Item item = item(id);
+        return new SetComponent(item != null, item);
     }
 
     private static String stringValue(JsonElement element) {
@@ -710,6 +731,9 @@ public final class DamageResistanceConfig {
         }
     }
 
+    private record SetComponent(boolean valid, Item item) {
+    }
+
     private static final class ConfigStats {
         private static final int MAX_WARNINGS = 20;
 
@@ -731,6 +755,10 @@ public final class DamageResistanceConfig {
 
         private void addMissingSet(JsonArray entry, int index) {
             for (int i = 0; i < 4; i++) {
+                JsonElement element = entry.get(i);
+                if (element == null || element.isJsonNull()) {
+                    continue;
+                }
                 String id = stringValue(entry.get(i));
                 if (item(id) == null) {
                     addWarning("missing migrated set component " + (id == null ? "<invalid>" : id) + " in setStats #" + index);

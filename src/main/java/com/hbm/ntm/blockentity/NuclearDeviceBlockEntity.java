@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.block.NuclearDeviceBlock;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -110,11 +111,7 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
     }
 
     public ItemStack[] getDrops() {
-        ItemStack[] drops = new ItemStack[items.getSlots()];
-        for (int i = 0; i < items.getSlots(); i++) {
-            drops[i] = items.getStackInSlot(i).copy();
-        }
-        return drops;
+        return HbmItemStackUtil.carefulCopyArray(items);
     }
 
     public void clearSlots() {
@@ -282,14 +279,14 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put(TAG_INVENTORY, items.serializeNBT());
+        HbmItemStackUtil.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         if (tag.contains(TAG_INVENTORY)) {
-            items.deserializeNBT(tag.getCompound(TAG_INVENTORY));
+            HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         }
     }
 

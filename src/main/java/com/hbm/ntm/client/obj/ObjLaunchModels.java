@@ -1,8 +1,13 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+
+import java.util.List;
 
 public final class ObjLaunchModels {
     public static final ObjModelPart LAUNCH_TABLE_BASE = part("launch_table_base");
@@ -87,6 +92,51 @@ public final class ObjLaunchModels {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/launch_table/" + name + ".png");
     }
 
+    public static List<SoyuzLauncherPartPlan> soyuzLauncherPlan(float rotation) {
+        return List.of(
+                fixed(SOYUZ_LAUNCHER_LEGS_LEGACY, SOYUZ_LAUNCHER_LEG_TEXTURE),
+                fixed(SOYUZ_LAUNCHER_TABLE_LEGACY, SOYUZ_LAUNCHER_TABLE_TEXTURE),
+                fixed(SOYUZ_LAUNCHER_TOWER_BASE_LEGACY, SOYUZ_LAUNCHER_TOWER_BASE_TEXTURE),
+                moving(SOYUZ_LAUNCHER_TOWER_LEGACY, SOYUZ_LAUNCHER_TOWER_TEXTURE, 5.5D, 5.5D, rotation, false),
+                fixed(SOYUZ_LAUNCHER_SUPPORT_BASE_LEGACY, SOYUZ_LAUNCHER_SUPPORT_BASE_TEXTURE),
+                moving(SOYUZ_LAUNCHER_SUPPORT_LEGACY, SOYUZ_LAUNCHER_SUPPORT_TEXTURE, 5.5D, -6.5D, rotation, true));
+    }
+
+    public static void renderSoyuzLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        for (SoyuzLauncherPartPlan plan : soyuzLauncherPlan(rotation)) {
+            poseStack.pushPose();
+            if (plan.rotates()) {
+                poseStack.translate(0.0D, plan.pivotY(), plan.pivotZ());
+                poseStack.mulPose((plan.negativeXAxis() ? Axis.XN : Axis.XP).rotationDegrees(plan.rotationDegrees()));
+                poseStack.translate(0.0D, -plan.pivotY(), -plan.pivotZ());
+            }
+            plan.model().renderAll(plan.texture(), poseStack, buffer, packedLight, packedOverlay);
+            poseStack.popPose();
+        }
+    }
+
+    private static SoyuzLauncherPartPlan fixed(LegacyWavefrontModel model, ResourceLocation texture) {
+        return new SoyuzLauncherPartPlan(model, texture, 0.0D, 0.0D, 0.0F, false);
+    }
+
+    private static SoyuzLauncherPartPlan moving(LegacyWavefrontModel model, ResourceLocation texture, double pivotY,
+            double pivotZ, float rotationDegrees, boolean negativeXAxis) {
+        return new SoyuzLauncherPartPlan(model, texture, pivotY, pivotZ, rotationDegrees, negativeXAxis);
+    }
+
     private ObjLaunchModels() {
+    }
+
+    public record SoyuzLauncherPartPlan(
+            LegacyWavefrontModel model,
+            ResourceLocation texture,
+            double pivotY,
+            double pivotZ,
+            float rotationDegrees,
+            boolean negativeXAxis) {
+        public boolean rotates() {
+            return rotationDegrees != 0.0F || pivotY != 0.0D || pivotZ != 0.0D;
+        }
     }
 }

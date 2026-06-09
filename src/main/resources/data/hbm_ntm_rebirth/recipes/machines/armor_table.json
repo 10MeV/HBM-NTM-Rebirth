@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "decorations",
+  "key": {
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_steel"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:ingot_tungsten"
+    },
+    "C": {
+      "item": "minecraft:crafting_table"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:block_steel"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "TCT",
+    "TST"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_armor_table"
+  },
+  "show_notification": true
+}

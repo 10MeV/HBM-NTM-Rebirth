@@ -21,8 +21,17 @@ public final class LegacyOverheadRenderer {
     public static final double LABEL_MAX_DISTANCE = 16.0D;
     public static final double LOOK_APPEND_THRESHOLD = 0.15D;
     public static final double THERMAL_MAX_DISTANCE_SQ = 4096.0D;
+    public static final int DEFAULT_TAG_DISTANCE = 64;
     public static final float TAG_SCALE = 0.016666668F * 1.6F;
     public static final int TAG_BACKGROUND = 0x40000000;
+    public static final int DEFAULT_TAG_COLOR = 0xFFFFFF;
+    public static final int DEFAULT_TAG_SEE_THROUGH_COLOR = 0x20FFFFFF;
+    public static final int DEADMAU5_LABEL_Y_OFFSET = -10;
+    public static final int TAG_BACKGROUND_TOP = -1;
+    public static final int TAG_BACKGROUND_BOTTOM = 8;
+    public static final double ACTION_PREVIEW_LIGHT_LEVEL = 15.0D;
+    public static final int ACTION_PREVIEW_SUCCESS_COLOR = 0x00FFFF;
+    public static final int ACTION_PREVIEW_FAILURE_COLOR = 0xFF0000;
     public static final int THERMAL_SKIP_COLOR = -1;
     public static final int THERMAL_MONSTER_COLOR = 0xFF0000;
     public static final int THERMAL_PLAYER_COLOR = 0xFF00FF;
@@ -41,6 +50,16 @@ public final class LegacyOverheadRenderer {
 
     public static Vec3 markerCenter(BlockPos pos) {
         return new Vec3(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+    }
+
+    public static Vec3 markerCenter(BlockPos pos, MarkerBounds bounds) {
+        if (bounds == null) {
+            return markerCenter(pos);
+        }
+        return new Vec3(
+                pos.getX() + (bounds.maxX() - bounds.minX()) / 2.0D,
+                pos.getY() + (bounds.maxY() - bounds.minY()) / 2.0D,
+                pos.getZ() + (bounds.maxZ() - bounds.minZ()) / 2.0D);
     }
 
     public static Vec3 labelPosition(Vec3 cameraToMarker) {
@@ -68,8 +87,21 @@ public final class LegacyOverheadRenderer {
         return result;
     }
 
+    public static MarkerLabelPlan markerLabelPlan(String label, Vec3 look, Vec3 cameraToMarker, int color) {
+        Vec3 position = labelPosition(cameraToMarker);
+        String text = markerLabel(label, look, cameraToMarker);
+        return new MarkerLabelPlan(position, text, color & 0xFFFFFF, color & 0xFFFFFF, text != null && !text.isEmpty());
+    }
+
     public static void markerBox(VertexConsumer consumer, PoseStack.Pose pose, BlockPos pos, int color) {
         markerBox(consumer, pose, pos, 0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D, color, 255);
+    }
+
+    public static void markerBox(VertexConsumer consumer, PoseStack.Pose pose, BlockPos pos,
+            MarkerBounds bounds, int color, int alpha) {
+        MarkerBounds safeBounds = bounds == null ? MarkerBounds.UNIT : bounds;
+        markerBox(consumer, pose, pos, safeBounds.minX(), safeBounds.minY(), safeBounds.minZ(),
+                safeBounds.maxX(), safeBounds.maxY(), safeBounds.maxZ(), color, alpha);
     }
 
     public static void markerBox(VertexConsumer consumer, PoseStack.Pose pose, BlockPos pos,
@@ -78,6 +110,36 @@ public final class LegacyOverheadRenderer {
                 pos.getX() + minX, pos.getY() + minY, pos.getZ() + minZ,
                 pos.getX() + maxX, pos.getY() + maxY, pos.getZ() + maxZ,
                 color & 0xFFFFFF, alpha);
+    }
+
+    public static boolean shouldRenderTag(boolean guiEnabled, boolean sameAsCameraPlayer, boolean invisibleToPlayer,
+            boolean ridden) {
+        return guiEnabled && !sameAsCameraPlayer && !invisibleToPlayer && !ridden;
+    }
+
+    public static TagDrawPlan tagDrawPlan(String name, int textWidth, float entityHeight, boolean sleeping,
+            double distanceSquared, int distance, boolean disableDepthTest, int color, int seeThroughColor) {
+        int safeDistance = Math.max(0, distance);
+        boolean visible = distanceSquared <= (double) safeDistance * (double) safeDistance;
+        int yOffset = "deadmau5".equals(name) ? DEADMAU5_LABEL_Y_OFFSET : 0;
+        int center = textWidth / 2;
+        float offset = entityHeight + 0.75F + (sleeping ? -1.5F : 0.0F);
+        return new TagDrawPlan(visible, offset, safeDistance, disableDepthTest, yOffset, -center,
+                color, seeThroughColor, TAG_BACKGROUND,
+                new TagBackgroundRect(-center - 1, TAG_BACKGROUND_TOP + yOffset,
+                        center + 1, TAG_BACKGROUND_BOTTOM + yOffset),
+                TAG_SCALE);
+    }
+
+    public static OverheadLineStatePlan lineStatePlan() {
+        return new OverheadLineStatePlan(false, false, false, true, true, false, false,
+                770, 771);
+    }
+
+    public static ActionPreviewPlan actionPreviewPlan(int offsetX, int offsetY, int offsetZ, boolean success) {
+        return new ActionPreviewPlan(offsetX, offsetY, offsetZ, success,
+                success ? ACTION_PREVIEW_SUCCESS_COLOR : ACTION_PREVIEW_FAILURE_COLOR,
+                true, ACTION_PREVIEW_LIGHT_LEVEL, true, false);
     }
 
     public static boolean shouldRenderThermalEntity(Entity entity, Entity observer) {
@@ -151,6 +213,54 @@ public final class LegacyOverheadRenderer {
         font.drawInBatch(label, x, 0.0F, opaqueColor, false,
                 poseStack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
         poseStack.popPose();
+    }
+
+    public record MarkerBounds(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        public static final MarkerBounds UNIT = new MarkerBounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+    }
+
+    public record MarkerLabelPlan(Vec3 position, String label, int color, int seeThroughColor, boolean visible) {
+    }
+
+    public record TagDrawPlan(
+            boolean visible,
+            float verticalOffset,
+            int distance,
+            boolean disableDepthTest,
+            int yOffset,
+            int textX,
+            int color,
+            int seeThroughColor,
+            int backgroundColor,
+            TagBackgroundRect background,
+            float scale) {
+    }
+
+    public record TagBackgroundRect(int minX, int minY, int maxX, int maxY) {
+    }
+
+    public record OverheadLineStatePlan(
+            boolean colorMaterialEnabled,
+            boolean textureEnabled,
+            boolean lightingEnabled,
+            boolean pointSmoothEnabled,
+            boolean blendEnabled,
+            boolean depthTestEnabled,
+            boolean depthWriteEnabled,
+            int blendSrc,
+            int blendDst) {
+    }
+
+    public record ActionPreviewPlan(
+            int offsetX,
+            int offsetY,
+            int offsetZ,
+            boolean success,
+            int color,
+            boolean ambientOcclusion,
+            double lightLevel,
+            boolean smoothShade,
+            boolean blendEnabled) {
     }
 
     private LegacyOverheadRenderer() {

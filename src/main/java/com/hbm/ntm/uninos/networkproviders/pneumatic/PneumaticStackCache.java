@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class PneumaticStackCache {
     private final BlockPos pos;
@@ -32,8 +33,8 @@ public class PneumaticStackCache {
     }
 
     public void addToCache(PneumaticSlotMonitor monitor) {
-        StackIdentity identity = StackIdentity.of(monitor.toZeroStack());
-        CacheSlot cache = cacheSlots.computeIfAbsent(identity, ignored -> new CacheSlot(monitor.toZeroStack()));
+        StackIdentity identity = StackIdentity.of(monitor);
+        CacheSlot cache = cacheSlots.computeIfAbsent(identity, ignored -> new CacheSlot(monitor));
         cache.addMonitor(monitor);
     }
 
@@ -50,15 +51,9 @@ public class PneumaticStackCache {
         private long stackSize;
         private final LinkedHashSet<PneumaticSlotMonitor> monitors = new LinkedHashSet<>();
 
-        private CacheSlot(@Nullable ItemStack stack) {
-            if (stack == null || stack.isEmpty()) {
-                this.displayStack = ItemStack.EMPTY;
-                this.stackSize = 0L;
-            } else {
-                this.displayStack = stack.copy();
-                this.displayStack.setCount(1);
-                this.stackSize = stack.getCount();
-            }
+        private CacheSlot(PneumaticSlotMonitor monitor) {
+            this.displayStack = monitor.toDisplayStack();
+            this.stackSize = 0L;
         }
 
         public @Nullable ItemStack getDisplayStack() {
@@ -67,6 +62,10 @@ public class PneumaticStackCache {
 
         public long getStackSize() {
             return stackSize;
+        }
+
+        public Set<PneumaticSlotMonitor> getMonitors() {
+            return Set.copyOf(monitors);
         }
 
         public void addMonitor(PneumaticSlotMonitor monitor) {
@@ -96,10 +95,24 @@ public class PneumaticStackCache {
         public PneumaticStackCache getStackCache() {
             return PneumaticStackCache.this;
         }
+
+        public void recount() {
+            stackSize = 0L;
+            for (PneumaticSlotMonitor monitor : monitors) {
+                stackSize += monitor.getStackSize();
+            }
+        }
     }
 
     public record StackIdentity(Item item, int damage, @Nullable CompoundTag tag) {
-        private static StackIdentity of(@Nullable ItemStack stack) {
+        public static StackIdentity of(PneumaticSlotMonitor monitor) {
+            if (monitor == null || monitor.getItem() == null) {
+                return new StackIdentity(ItemStack.EMPTY.getItem(), 0, null);
+            }
+            return new StackIdentity(monitor.getItem(), monitor.getDamage(), monitor.getTag());
+        }
+
+        public static StackIdentity of(@Nullable ItemStack stack) {
             if (stack == null || stack.isEmpty()) {
                 return new StackIdentity(ItemStack.EMPTY.getItem(), 0, null);
             }

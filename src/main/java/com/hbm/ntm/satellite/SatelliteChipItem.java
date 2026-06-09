@@ -8,20 +8,23 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class SatelliteChipItem extends Item implements ISatelliteChip {
     private final LegacySatelliteType satelliteType;
-    private final String descriptionKey;
+    private final List<String> descriptionKeys;
 
     public SatelliteChipItem(Properties properties) {
-        this(properties, null, null);
+        this(properties, null);
     }
 
-    public SatelliteChipItem(Properties properties, LegacySatelliteType satelliteType, String descriptionKey) {
+    public SatelliteChipItem(Properties properties, LegacySatelliteType satelliteType, String... descriptionKeys) {
         super(properties.stacksTo(1));
         this.satelliteType = satelliteType;
-        this.descriptionKey = descriptionKey;
+        this.descriptionKeys = descriptionKeys == null
+                ? List.of()
+                : Arrays.stream(descriptionKeys).filter(key -> key != null && !key.isBlank()).toList();
     }
 
     public LegacySatelliteType satelliteType() {
@@ -37,7 +40,7 @@ public class SatelliteChipItem extends Item implements ISatelliteChip {
         tooltip.add(Component.translatable("satchip.frequency")
                 .append(": " + getFrequency(stack))
                 .withStyle(ChatFormatting.GRAY));
-        if (descriptionKey != null && !descriptionKey.isBlank()) {
+        for (String descriptionKey : descriptionKeys) {
             tooltip.add(Component.translatable(descriptionKey).withStyle(ChatFormatting.AQUA));
         }
         super.appendHoverText(stack, level, tooltip, flag);

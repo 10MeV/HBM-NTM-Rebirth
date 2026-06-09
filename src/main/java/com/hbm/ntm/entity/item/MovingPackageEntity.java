@@ -5,10 +5,10 @@ import com.hbm.ntm.api.conveyor.IEnterableBlock;
 import com.hbm.ntm.network.HbmEntitySyncable;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.registry.ModEntityTypes;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -131,27 +131,12 @@ public class MovingPackageEntity extends MovingConveyorObjectEntity implements I
 
     private void readContents(CompoundTag tag) {
         contents = new ItemStack[tag.getInt(TAG_COUNT)];
-        ListTag list = tag.getList(TAG_CONTENTS, 10);
-        for (int i = 0; i < list.size(); i++) {
-            CompoundTag stackTag = list.getCompound(i);
-            int slot = stackTag.getByte(TAG_SLOT) & 255;
-            if (slot >= 0 && slot < contents.length) {
-                contents[slot] = ItemStack.of(stackTag);
-            }
-        }
+        HbmItemStackUtil.loadSlottedItems(tag, TAG_CONTENTS, TAG_SLOT, contents);
         contents = copyStacks(contents);
     }
 
     private void writeContents(CompoundTag tag) {
-        ListTag list = new ListTag();
-        for (int i = 0; i < contents.length; i++) {
-            if (!contents[i].isEmpty()) {
-                CompoundTag stackTag = contents[i].save(new CompoundTag());
-                stackTag.putByte(TAG_SLOT, (byte) i);
-                list.add(stackTag);
-            }
-        }
-        tag.put(TAG_CONTENTS, list);
+        HbmItemStackUtil.saveSlottedItemsToTag(tag, TAG_CONTENTS, TAG_SLOT, contents);
         tag.putInt(TAG_COUNT, contents.length);
     }
 
@@ -172,11 +157,6 @@ public class MovingPackageEntity extends MovingConveyorObjectEntity implements I
         if (stacks == null) {
             return new ItemStack[0];
         }
-
-        ItemStack[] copy = new ItemStack[stacks.length];
-        for (int i = 0; i < stacks.length; i++) {
-            copy[i] = stacks[i] == null ? ItemStack.EMPTY : stacks[i].copy();
-        }
-        return copy;
+        return HbmItemStackUtil.carefulCopyArray(stacks);
     }
 }

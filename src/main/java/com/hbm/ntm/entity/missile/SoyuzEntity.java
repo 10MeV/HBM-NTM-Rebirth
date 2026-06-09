@@ -178,7 +178,7 @@ public class SoyuzEntity extends Entity {
         targetX = tag.getInt("targetX");
         targetZ = tag.getInt("targetZ");
         mode = tag.getInt("mode");
-        HbmItemStackUtil.loadLegacyItems(tag, payload);
+        HbmItemStackUtil.loadLegacyOrForgeItems(tag, payload);
     }
 
     @Override

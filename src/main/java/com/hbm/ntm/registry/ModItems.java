@@ -26,9 +26,12 @@ import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidIconItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.GeigerCounterItem;
+import com.hbm.ntm.item.GasMaskArmorItem;
 import com.hbm.ntm.item.GasMaskFilterItem;
 import com.hbm.ntm.item.HbmAbilitySwordItem;
 import com.hbm.ntm.item.HbmAbilityToolItem;
+import com.hbm.ntm.item.HazmatArmorItem;
+import com.hbm.ntm.item.HbmArmorMaterials;
 import com.hbm.ntm.item.HbmFueledAbilityToolItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
@@ -47,6 +50,7 @@ import com.hbm.ntm.item.PollutionDetectorItem;
 import com.hbm.ntm.item.RadawayItem;
 import com.hbm.ntm.item.RadarLinkerItem;
 import com.hbm.ntm.item.PistonSetItem;
+import com.hbm.ntm.item.RTTYPagerItem;
 import com.hbm.ntm.item.SettingsToolItem;
 import com.hbm.ntm.item.SingularityItem;
 import com.hbm.ntm.item.ToolboxItem;
@@ -58,6 +62,8 @@ import com.hbm.ntm.satellite.SatelliteDesignatorItem;
 import com.hbm.ntm.satellite.SatelliteInterfaceItem;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.item.Rarity;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -186,6 +192,240 @@ public final class ModItems {
             () -> new ArmorModGasMaskItem(new Item.Properties(), false));
     public static final RegistryObject<Item> ATTACHMENT_MASK_MONO = registerLegacy("attachment_mask_mono",
             () -> new ArmorModGasMaskItem(new Item.Properties(), true));
+    public static final RegistryObject<Item> GOGGLES = ironHeadArmor("goggles");
+    public static final RegistryObject<Item> ASHGLASSES = ironHeadArmor("ashglasses");
+    public static final RegistryObject<Item> GAS_MASK = gasMaskArmor("gas_mask", false);
+    public static final RegistryObject<Item> GAS_MASK_M65 = gasMaskArmor("gas_mask_m65", false);
+    public static final RegistryObject<Item> GAS_MASK_MONO = gasMaskArmor("gas_mask_mono", true);
+    public static final RegistryObject<Item> GAS_MASK_OLDE = gasMaskArmor("gas_mask_olde", false);
+    public static final RegistryObject<Item> MASK_RAG = ragsHeadArmor("mask_rag");
+    public static final RegistryObject<Item> MASK_PISS = ragsHeadArmor("mask_piss");
+    public static final RegistryObject<Item> STEEL_HELMET = armor("steel_helmet", HbmArmorMaterials.STEEL,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> STEEL_CHESTPLATE = armor("steel_plate", HbmArmorMaterials.STEEL,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> STEEL_LEGS = armor("steel_legs", HbmArmorMaterials.STEEL,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> STEEL_BOOTS = armor("steel_boots", HbmArmorMaterials.STEEL,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> TITANIUM_HELMET = armor("titanium_helmet", HbmArmorMaterials.TITANIUM,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> TITANIUM_CHESTPLATE = armor("titanium_plate", HbmArmorMaterials.TITANIUM,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> TITANIUM_LEGS = armor("titanium_legs", HbmArmorMaterials.TITANIUM,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> TITANIUM_BOOTS = armor("titanium_boots", HbmArmorMaterials.TITANIUM,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> ALLOY_HELMET = armor("alloy_helmet", HbmArmorMaterials.ALLOY,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> ALLOY_PLATE = armor("alloy_plate", HbmArmorMaterials.ALLOY,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> ALLOY_LEGS = armor("alloy_legs", HbmArmorMaterials.ALLOY,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> ALLOY_BOOTS = armor("alloy_boots", HbmArmorMaterials.ALLOY,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> COBALT_HELMET = armor("cobalt_helmet", HbmArmorMaterials.COBALT,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> COBALT_PLATE = armor("cobalt_plate", HbmArmorMaterials.COBALT,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> COBALT_LEGS = armor("cobalt_legs", HbmArmorMaterials.COBALT,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> COBALT_BOOTS = armor("cobalt_boots", HbmArmorMaterials.COBALT,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> HAZMAT_HELMET = hazmatArmor("hazmat_helmet",
+            HbmArmorMaterials.HAZMAT, ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> HAZMAT_PLATE = hazmatArmor("hazmat_plate",
+            HbmArmorMaterials.HAZMAT, ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> HAZMAT_LEGS = hazmatArmor("hazmat_legs",
+            HbmArmorMaterials.HAZMAT, ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> HAZMAT_BOOTS = hazmatArmor("hazmat_boots",
+            HbmArmorMaterials.HAZMAT, ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> HAZMAT_HELMET_RED = hazmatArmor("hazmat_helmet_red",
+            HbmArmorMaterials.HAZMAT_RED, ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> HAZMAT_PLATE_RED = hazmatArmor("hazmat_plate_red",
+            HbmArmorMaterials.HAZMAT_RED, ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> HAZMAT_LEGS_RED = hazmatArmor("hazmat_legs_red",
+            HbmArmorMaterials.HAZMAT_RED, ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> HAZMAT_BOOTS_RED = hazmatArmor("hazmat_boots_red",
+            HbmArmorMaterials.HAZMAT_RED, ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> HAZMAT_HELMET_GREY = hazmatArmor("hazmat_helmet_grey",
+            HbmArmorMaterials.HAZMAT_GREY, ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> HAZMAT_PLATE_GREY = hazmatArmor("hazmat_plate_grey",
+            HbmArmorMaterials.HAZMAT_GREY, ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> HAZMAT_LEGS_GREY = hazmatArmor("hazmat_legs_grey",
+            HbmArmorMaterials.HAZMAT_GREY, ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> HAZMAT_BOOTS_GREY = hazmatArmor("hazmat_boots_grey",
+            HbmArmorMaterials.HAZMAT_GREY, ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> ASBESTOS_HELMET = asbestosArmor("asbestos_helmet", ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> ASBESTOS_PLATE = asbestosArmor("asbestos_plate", ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> ASBESTOS_LEGS = asbestosArmor("asbestos_legs", ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> ASBESTOS_BOOTS = asbestosArmor("asbestos_boots", ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> CMB_HELMET = armor("cmb_helmet", HbmArmorMaterials.CMB,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> CMB_PLATE = armor("cmb_plate", HbmArmorMaterials.CMB,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> CMB_LEGS = armor("cmb_legs", HbmArmorMaterials.CMB,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> CMB_BOOTS = armor("cmb_boots", HbmArmorMaterials.CMB,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> PAA_PLATE = armor("paa_plate", HbmArmorMaterials.PAA,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> PAA_LEGS = armor("paa_legs", HbmArmorMaterials.PAA,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> PAA_BOOTS = armor("paa_boots", HbmArmorMaterials.PAA,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> SECURITY_HELMET = armor("security_helmet", HbmArmorMaterials.SECURITY,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> SECURITY_PLATE = armor("security_plate", HbmArmorMaterials.SECURITY,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> SECURITY_LEGS = armor("security_legs", HbmArmorMaterials.SECURITY,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> SECURITY_BOOTS = armor("security_boots", HbmArmorMaterials.SECURITY,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> STARMETAL_HELMET = armor("starmetal_helmet", HbmArmorMaterials.STARMETAL,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> STARMETAL_PLATE = armor("starmetal_plate", HbmArmorMaterials.STARMETAL,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> STARMETAL_LEGS = armor("starmetal_legs", HbmArmorMaterials.STARMETAL,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> STARMETAL_BOOTS = armor("starmetal_boots", HbmArmorMaterials.STARMETAL,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> HAZMAT_PAA_HELMET = fullHoodGasMaskArmor("hazmat_paa_helmet",
+            HbmArmorMaterials.HAZMAT_PAA);
+    public static final RegistryObject<Item> HAZMAT_PAA_PLATE = armor("hazmat_paa_plate",
+            HbmArmorMaterials.HAZMAT_PAA, ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> HAZMAT_PAA_LEGS = armor("hazmat_paa_legs",
+            HbmArmorMaterials.HAZMAT_PAA, ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> HAZMAT_PAA_BOOTS = armor("hazmat_paa_boots",
+            HbmArmorMaterials.HAZMAT_PAA, ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> LIQUIDATOR_HELMET = fullHoodGasMaskArmor("liquidator_helmet",
+            HbmArmorMaterials.LIQUIDATOR);
+    public static final RegistryObject<Item> LIQUIDATOR_PLATE = armor("liquidator_plate",
+            HbmArmorMaterials.LIQUIDATOR, ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> LIQUIDATOR_LEGS = armor("liquidator_legs",
+            HbmArmorMaterials.LIQUIDATOR, ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> LIQUIDATOR_BOOTS = armor("liquidator_boots",
+            HbmArmorMaterials.LIQUIDATOR, ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> SCHRABIDIUM_HELMET = armor("schrabidium_helmet",
+            HbmArmorMaterials.SCHRABIDIUM, ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> SCHRABIDIUM_PLATE = armor("schrabidium_plate",
+            HbmArmorMaterials.SCHRABIDIUM, ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> SCHRABIDIUM_LEGS = armor("schrabidium_legs",
+            HbmArmorMaterials.SCHRABIDIUM, ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> SCHRABIDIUM_BOOTS = armor("schrabidium_boots",
+            HbmArmorMaterials.SCHRABIDIUM, ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> EUPHEMIUM_HELMET = armor("euphemium_helmet",
+            HbmArmorMaterials.EUPHEMIUM, ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> EUPHEMIUM_PLATE = armor("euphemium_plate",
+            HbmArmorMaterials.EUPHEMIUM, ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> EUPHEMIUM_LEGS = armor("euphemium_legs",
+            HbmArmorMaterials.EUPHEMIUM, ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> EUPHEMIUM_BOOTS = armor("euphemium_boots",
+            HbmArmorMaterials.EUPHEMIUM, ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> T51_HELMET = armor("t51_helmet", HbmArmorMaterials.T51,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> T51_PLATE = armor("t51_plate", HbmArmorMaterials.T51,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> T51_LEGS = armor("t51_legs", HbmArmorMaterials.T51,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> T51_BOOTS = armor("t51_boots", HbmArmorMaterials.T51,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> STEAMSUIT_HELMET = armor("steamsuit_helmet",
+            HbmArmorMaterials.DESH_POWERED, ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> STEAMSUIT_PLATE = armor("steamsuit_plate",
+            HbmArmorMaterials.DESH_POWERED, ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> STEAMSUIT_LEGS = armor("steamsuit_legs",
+            HbmArmorMaterials.DESH_POWERED, ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> STEAMSUIT_BOOTS = armor("steamsuit_boots",
+            HbmArmorMaterials.DESH_POWERED, ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> AJR_HELMET = armor("ajr_helmet", HbmArmorMaterials.AJR,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> AJR_PLATE = armor("ajr_plate", HbmArmorMaterials.AJR,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> AJR_LEGS = armor("ajr_legs", HbmArmorMaterials.AJR,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> AJR_BOOTS = armor("ajr_boots", HbmArmorMaterials.AJR,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> AJRO_HELMET = armor("ajro_helmet", HbmArmorMaterials.AJR,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> AJRO_PLATE = armor("ajro_plate", HbmArmorMaterials.AJR,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> AJRO_LEGS = armor("ajro_legs", HbmArmorMaterials.AJR,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> AJRO_BOOTS = armor("ajro_boots", HbmArmorMaterials.AJR,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> RPA_HELMET = armor("rpa_helmet", HbmArmorMaterials.AJR,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> RPA_PLATE = armor("rpa_plate", HbmArmorMaterials.AJR,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> RPA_LEGS = armor("rpa_legs", HbmArmorMaterials.AJR,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> RPA_BOOTS = armor("rpa_boots", HbmArmorMaterials.AJR,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> NCRPA_HELMET = armor("ncrpa_helmet", HbmArmorMaterials.AJR,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> NCRPA_PLATE = armor("ncrpa_plate", HbmArmorMaterials.AJR,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> NCRPA_LEGS = armor("ncrpa_legs", HbmArmorMaterials.AJR,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> NCRPA_BOOTS = armor("ncrpa_boots", HbmArmorMaterials.AJR,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> BJ_HELMET = armor("bj_helmet", HbmArmorMaterials.BJ,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> BJ_PLATE = armor("bj_plate", HbmArmorMaterials.BJ,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> BJ_LEGS = armor("bj_legs", HbmArmorMaterials.BJ,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> BJ_BOOTS = armor("bj_boots", HbmArmorMaterials.BJ,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> ENVSUIT_HELMET = armor("envsuit_helmet", HbmArmorMaterials.ENV,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> ENVSUIT_PLATE = armor("envsuit_plate", HbmArmorMaterials.ENV,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> ENVSUIT_LEGS = armor("envsuit_legs", HbmArmorMaterials.ENV,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> ENVSUIT_BOOTS = armor("envsuit_boots", HbmArmorMaterials.ENV,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> HEV_HELMET = armor("hev_helmet", HbmArmorMaterials.HEV,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> HEV_PLATE = armor("hev_plate", HbmArmorMaterials.HEV,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> HEV_LEGS = armor("hev_legs", HbmArmorMaterials.HEV,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> HEV_BOOTS = armor("hev_boots", HbmArmorMaterials.HEV,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> FAU_HELMET = armor("fau_helmet", HbmArmorMaterials.FAU,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> FAU_PLATE = armor("fau_plate", HbmArmorMaterials.FAU,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> FAU_LEGS = armor("fau_legs", HbmArmorMaterials.FAU,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> FAU_BOOTS = armor("fau_boots", HbmArmorMaterials.FAU,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> DNS_HELMET = armor("dns_helmet", HbmArmorMaterials.DNS,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> DNS_PLATE = armor("dns_plate", HbmArmorMaterials.DNS,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> DNS_LEGS = armor("dns_legs", HbmArmorMaterials.DNS,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> DNS_BOOTS = armor("dns_boots", HbmArmorMaterials.DNS,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> TAURUN_HELMET = armor("taurun_helmet", HbmArmorMaterials.TAURUN,
+            ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> TAURUN_PLATE = armor("taurun_plate", HbmArmorMaterials.TAURUN,
+            ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> TAURUN_LEGS = armor("taurun_legs", HbmArmorMaterials.TAURUN,
+            ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> TAURUN_BOOTS = armor("taurun_boots", HbmArmorMaterials.TAURUN,
+            ArmorItem.Type.BOOTS);
+    public static final RegistryObject<Item> TRENCHMASTER_HELMET = armor("trenchmaster_helmet",
+            HbmArmorMaterials.TRENCHMASTER, ArmorItem.Type.HELMET);
+    public static final RegistryObject<Item> TRENCHMASTER_PLATE = armor("trenchmaster_plate",
+            HbmArmorMaterials.TRENCHMASTER, ArmorItem.Type.CHESTPLATE);
+    public static final RegistryObject<Item> TRENCHMASTER_LEGS = armor("trenchmaster_legs",
+            HbmArmorMaterials.TRENCHMASTER, ArmorItem.Type.LEGGINGS);
+    public static final RegistryObject<Item> TRENCHMASTER_BOOTS = armor("trenchmaster_boots",
+            HbmArmorMaterials.TRENCHMASTER, ArmorItem.Type.BOOTS);
     public static final RegistryObject<Item> PADS_RUBBER = registerLegacy("pads_rubber",
             () -> new ArmorModItems.Pads(new Item.Properties(), 0.5F, false));
     public static final RegistryObject<Item> PADS_SLIME = registerLegacy("pads_slime",
@@ -246,6 +486,18 @@ public final class ModItems {
             () -> new ArmorModItems.Wd40(new Item.Properties()));
     public static final RegistryObject<Item> BOTTLED_CLOUD = registerLegacy("bottled_cloud",
             () -> new ArmorModItems.BottledCloud(new Item.Properties()));
+    public static final RegistryObject<Item> JETPACK_FLY = registerLegacy("jetpack_fly",
+            () -> new ArmorModItems.Jetpack(new Item.Properties(), ArmorModItems.Jetpack.Type.REGULAR,
+                    HbmFluids.KEROSENE, 12_000));
+    public static final RegistryObject<Item> JETPACK_BREAK = registerLegacy("jetpack_break",
+            () -> new ArmorModItems.Jetpack(new Item.Properties(), ArmorModItems.Jetpack.Type.HOVER,
+                    HbmFluids.KEROSENE, 12_000));
+    public static final RegistryObject<Item> JETPACK_VECTOR = registerLegacy("jetpack_vector",
+            () -> new ArmorModItems.Jetpack(new Item.Properties(), ArmorModItems.Jetpack.Type.VECTORED,
+                    HbmFluids.KEROSENE, 16_000));
+    public static final RegistryObject<Item> JETPACK_BOOST = registerLegacy("jetpack_boost",
+            () -> new ArmorModItems.Jetpack(new Item.Properties(), ArmorModItems.Jetpack.Type.BOOST,
+                    HbmFluids.BALEFIRE, 32_000));
     public static final RegistryObject<Item> AUSTRALIUM_III = registerLegacy("australium_iii",
             () -> new ArmorModItems.Shield(new Item.Properties(), 25.0F));
     public static final RegistryObject<Item> ARMOR_POLISH = registerLegacy("armor_polish",
@@ -276,6 +528,14 @@ public final class ModItems {
             () -> new ArmorModItems.AutoInjector(new Item.Properties()));
     public static final RegistryObject<Item> INJECTOR_KNIFE = registerLegacy("injector_knife",
             () -> new ArmorModItems.InjectorKnife(new Item.Properties()));
+    public static final RegistryObject<Item> DEFUSER_GOLD = registerLegacy("defuser_gold",
+            () -> new ArmorModItems.Defuser(new Item.Properties()));
+    public static final RegistryObject<Item> NEUTRINO_LENS = registerLegacy("neutrino_lens",
+            () -> new ArmorModItems.NeutrinoLens(new Item.Properties()));
+    public static final RegistryObject<Item> NIGHT_VISION = registerLegacy("night_vision",
+            () -> new ArmorModItems.NightVision(new Item.Properties()));
+    public static final RegistryObject<Item> BACK_TESLA = registerLegacy("back_tesla",
+            () -> new ArmorModItems.BackTesla(new Item.Properties()));
     public static final RegistryObject<Item> MEDAL_LIQUIDATOR = registerLegacy("medal_liquidator",
             () -> new ArmorModItems.Medal(new Item.Properties()));
     public static final RegistryObject<Item> BALLISTIC_GAUNTLET = registerLegacy("ballistic_gauntlet",
@@ -575,6 +835,8 @@ public final class ModItems {
             () -> new FluidIdentifierItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> FLUID_DUCT = registerLegacy("fluid_duct",
             () -> new FluidPipeBlockItem(ModBlocks.FLUID_DUCT_NEO.get(), new Item.Properties()));
+    public static final RegistryObject<Item> RTTY_PAGER = registerLegacy("rtty_pager",
+            () -> new RTTYPagerItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> DETONATOR = registerLegacy("detonator",
             () -> new DetonatorItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> RADAR_LINKER = registerLegacy("radar_linker",
@@ -757,7 +1019,8 @@ public final class ModItems {
     public static final RegistryObject<Item> SAT_RESONATOR = satelliteItem("sat_resonator", LegacySatelliteType.RESONATOR, "satchip.resonator");
     public static final RegistryObject<Item> SAT_MINER = satelliteItem("sat_miner", LegacySatelliteType.MINER, "satchip.miner");
     public static final RegistryObject<Item> SAT_LUNAR_MINER = satelliteItem("sat_lunar_miner", LegacySatelliteType.LUNAR_MINER, "satchip.lunar_miner");
-    public static final RegistryObject<Item> SAT_GERALD = satelliteItem("sat_gerald", LegacySatelliteType.HORIZONS, "satchip.gerald.desc");
+    public static final RegistryObject<Item> SAT_GERALD = satelliteItem("sat_gerald", LegacySatelliteType.HORIZONS,
+            "satchip.gerald.desc.0", "satchip.gerald.desc.1", "satchip.gerald.desc.2");
     public static final RegistryObject<Item> SAT_CHIP = registerLegacy("sat_chip",
             () -> new SatelliteChipItem(new Item.Properties()));
     public static final RegistryObject<Item> SAT_INTERFACE = registerLegacy("sat_interface",
@@ -820,6 +1083,9 @@ public final class ModItems {
             "niter",
             "nitra",
             "nitra_small",
+            "cordite",
+            "ballistite",
+            "ball_dynamite",
             "ingot_uranium_fuel",
             "ingot_plutonium_fuel",
             "ingot_neptunium_fuel",
@@ -870,7 +1136,18 @@ public final class ModItems {
             "powder_asbestos",
             "powder_ferrouranium",
             "powder_strontium",
+            "powder_polonium",
+            "powder_co60",
+            "powder_sr90",
+            "powder_sr90_tiny",
+            "powder_i131",
+            "powder_i131_tiny",
+            "powder_xe135",
+            "powder_xe135_tiny",
             "powder_cs137",
+            "powder_cs137_tiny",
+            "powder_au198",
+            "powder_at209",
             "powder_quartz",
             "powder_lapis",
             "powder_diamond",
@@ -929,13 +1206,20 @@ public final class ModItems {
             "plate_dineutronium",
             "plate_desh",
             "ingot_desh",
+            "ingot_meteorite",
             "ingot_solinium",
             "nugget_solinium",
             "photo_panel",
             "sat_base",
             "thruster_nuclear",
+            "thruster_small",
+            "thruster_medium",
+            "ducttape",
+            "crystal_diamond",
             "safety_fuse",
             "hazmat_cloth",
+            "hazmat_cloth_red",
+            "hazmat_cloth_grey",
             "asbestos_cloth",
             "filter_coal",
             "motor_desh",
@@ -996,6 +1280,8 @@ public final class ModItems {
             "billet_po210be",
             "billet_ra226be",
             "billet_pu238be",
+            "billet_balefire_gold",
+            "billet_flashlead",
             "billet_beryllium",
             "billet_bismuth",
             "billet_silicon",
@@ -1026,6 +1312,7 @@ public final class ModItems {
             "powder_coltan_ore",
             "powder_cement",
             "powder_paleogenite",
+            "powder_balefire",
             "ingot_mud",
             "ingot_cft",
             "fallout",
@@ -1161,7 +1448,10 @@ public final class ModItems {
 
     public static final List<RegistryObject<Item>> NUKE_TAB_ITEMS = Stream.concat(Stream.concat(simpleParts(
             "early_explosive_lenses",
-            "explosive_lenses"
+            "explosive_lenses",
+            "stick_tnt",
+            "stick_semtex",
+            "stick_c4"
     ).stream(), simpleStackOneItems(
             "gadget_wireing",
             "boy_propellant",
@@ -1185,6 +1475,8 @@ public final class ModItems {
             "solinium_core",
             "n2_charge"
     ).stream()), Stream.of(
+            simpleStackSizeItem("egg_balefire_shard", 16),
+            simpleStackOneItem("egg_balefire"),
             DETONATOR,
             CUSTOM_TNT,
             CUSTOM_NUKE,
@@ -1341,6 +1633,16 @@ public final class ModItems {
             "pile_rod_boron",
             "pile_rod_lithium",
             "pile_rod_detector",
+            "rod_zirnox_empty",
+            "cell_tritium",
+            "cell_balefire",
+            "debris_graphite",
+            "debris_metal",
+            "debris_fuel",
+            "debris_concrete",
+            "debris_exchanger",
+            "debris_shrapnel",
+            "debris_element",
             "pellet_rtg_strontium",
             "pellet_rtg_cobalt",
             "pellet_rtg_actinium",
@@ -1360,7 +1662,18 @@ public final class ModItems {
             "pellet_rtg",
             "pellet_rtg_polonium",
             "pellet_rtg_americium",
-            "pellet_rtg_gold"
+            "pellet_rtg_gold",
+            "rod_zirnox_tritium",
+            "rod_zirnox_natural_uranium_fuel_depleted",
+            "rod_zirnox_uranium_fuel_depleted",
+            "rod_zirnox_thorium_fuel_depleted",
+            "rod_zirnox_mox_fuel_depleted",
+            "rod_zirnox_plutonium_fuel_depleted",
+            "rod_zirnox_u233_fuel_depleted",
+            "rod_zirnox_u235_fuel_depleted",
+            "rod_zirnox_les_fuel_depleted",
+            "rod_zirnox_zfb_mox_depleted",
+            "crystal_xen"
     ), MACHINE_UPGRADE_ITEMS, LEGACY_TOOL_ITEMS, DRILLBIT_ITEMS, PISTON_SET_ITEMS, ARC_ELECTRODE_ITEMS, PA_COIL_ITEMS, ABILITY_TOOL_ITEMS, List.<RegistryObject<Item>>of(CATALYTIC_CONVERTER), SINGULARITY_FAMILY_ITEMS, CONTROL_BATTERY_ITEMS)
             .flatMap(List::stream)
             .toList();
@@ -1436,6 +1749,129 @@ public final class ModItems {
             GAS_MASK_FILTER_PISS,
             ATTACHMENT_MASK,
             ATTACHMENT_MASK_MONO,
+            GOGGLES,
+            ASHGLASSES,
+            GAS_MASK,
+            GAS_MASK_M65,
+            GAS_MASK_MONO,
+            GAS_MASK_OLDE,
+            MASK_RAG,
+            MASK_PISS,
+            STEEL_HELMET,
+            STEEL_CHESTPLATE,
+            STEEL_LEGS,
+            STEEL_BOOTS,
+            TITANIUM_HELMET,
+            TITANIUM_CHESTPLATE,
+            TITANIUM_LEGS,
+            TITANIUM_BOOTS,
+            ALLOY_HELMET,
+            ALLOY_PLATE,
+            ALLOY_LEGS,
+            ALLOY_BOOTS,
+            COBALT_HELMET,
+            COBALT_PLATE,
+            COBALT_LEGS,
+            COBALT_BOOTS,
+            HAZMAT_HELMET,
+            HAZMAT_PLATE,
+            HAZMAT_LEGS,
+            HAZMAT_BOOTS,
+            HAZMAT_HELMET_RED,
+            HAZMAT_PLATE_RED,
+            HAZMAT_LEGS_RED,
+            HAZMAT_BOOTS_RED,
+            HAZMAT_HELMET_GREY,
+            HAZMAT_PLATE_GREY,
+            HAZMAT_LEGS_GREY,
+            HAZMAT_BOOTS_GREY,
+            ASBESTOS_HELMET,
+            ASBESTOS_PLATE,
+            ASBESTOS_LEGS,
+            ASBESTOS_BOOTS,
+            CMB_HELMET,
+            CMB_PLATE,
+            CMB_LEGS,
+            CMB_BOOTS,
+            PAA_PLATE,
+            PAA_LEGS,
+            PAA_BOOTS,
+            SECURITY_HELMET,
+            SECURITY_PLATE,
+            SECURITY_LEGS,
+            SECURITY_BOOTS,
+            STARMETAL_HELMET,
+            STARMETAL_PLATE,
+            STARMETAL_LEGS,
+            STARMETAL_BOOTS,
+            HAZMAT_PAA_HELMET,
+            HAZMAT_PAA_PLATE,
+            HAZMAT_PAA_LEGS,
+            HAZMAT_PAA_BOOTS,
+            LIQUIDATOR_HELMET,
+            LIQUIDATOR_PLATE,
+            LIQUIDATOR_LEGS,
+            LIQUIDATOR_BOOTS,
+            SCHRABIDIUM_HELMET,
+            SCHRABIDIUM_PLATE,
+            SCHRABIDIUM_LEGS,
+            SCHRABIDIUM_BOOTS,
+            EUPHEMIUM_HELMET,
+            EUPHEMIUM_PLATE,
+            EUPHEMIUM_LEGS,
+            EUPHEMIUM_BOOTS,
+            T51_HELMET,
+            T51_PLATE,
+            T51_LEGS,
+            T51_BOOTS,
+            STEAMSUIT_HELMET,
+            STEAMSUIT_PLATE,
+            STEAMSUIT_LEGS,
+            STEAMSUIT_BOOTS,
+            AJR_HELMET,
+            AJR_PLATE,
+            AJR_LEGS,
+            AJR_BOOTS,
+            AJRO_HELMET,
+            AJRO_PLATE,
+            AJRO_LEGS,
+            AJRO_BOOTS,
+            RPA_HELMET,
+            RPA_PLATE,
+            RPA_LEGS,
+            RPA_BOOTS,
+            NCRPA_HELMET,
+            NCRPA_PLATE,
+            NCRPA_LEGS,
+            NCRPA_BOOTS,
+            BJ_HELMET,
+            BJ_PLATE,
+            BJ_LEGS,
+            BJ_BOOTS,
+            ENVSUIT_HELMET,
+            ENVSUIT_PLATE,
+            ENVSUIT_LEGS,
+            ENVSUIT_BOOTS,
+            HEV_HELMET,
+            HEV_PLATE,
+            HEV_LEGS,
+            HEV_BOOTS,
+            FAU_HELMET,
+            FAU_PLATE,
+            FAU_LEGS,
+            FAU_BOOTS,
+            DNS_HELMET,
+            DNS_PLATE,
+            DNS_LEGS,
+            DNS_BOOTS,
+            TAURUN_HELMET,
+            TAURUN_PLATE,
+            TAURUN_LEGS,
+            TAURUN_BOOTS,
+            TRENCHMASTER_HELMET,
+            TRENCHMASTER_PLATE,
+            TRENCHMASTER_LEGS,
+            TRENCHMASTER_BOOTS,
             PADS_RUBBER,
             PADS_SLIME,
             PADS_STATIC,
@@ -1459,6 +1895,7 @@ public final class ModItems {
             INSERT_DOXIUM,
             SERVO_SET,
             SERVO_SET_DESH,
+            RTTY_PAGER,
             RADAR_LINKER,
             HEART_PIECE,
             HEART_CONTAINER,
@@ -1467,6 +1904,10 @@ public final class ModItems {
             BLACK_DIAMOND,
             WD40,
             BOTTLED_CLOUD,
+            JETPACK_FLY,
+            JETPACK_BREAK,
+            JETPACK_VECTOR,
+            JETPACK_BOOST,
             AUSTRALIUM_III,
             ARMOR_POLISH,
             BANDAID,
@@ -1482,6 +1923,10 @@ public final class ModItems {
             INK,
             INJECTOR_5HTP,
             INJECTOR_KNIFE,
+            DEFUSER_GOLD,
+            NEUTRINO_LENS,
+            NIGHT_VISION,
+            BACK_TESLA,
             MEDAL_LIQUIDATOR,
             BALLISTIC_GAUNTLET,
             PROTECTION_CHARM,
@@ -1587,6 +2032,34 @@ public final class ModItems {
         RegistryObject<Item> item = ITEMS.register(name, supplier);
         ITEMS_BY_LEGACY_NAME.put(name, item);
         return item;
+    }
+
+    private static RegistryObject<Item> hazmatArmor(String name, HbmArmorMaterials material, ArmorItem.Type type) {
+        return registerLegacy(name, () -> new HazmatArmorItem(material, type, new Item.Properties()));
+    }
+
+    private static RegistryObject<Item> asbestosArmor(String name, ArmorItem.Type type) {
+        return registerLegacy(name, () -> new ArmorItem(HbmArmorMaterials.ASBESTOS, type, new Item.Properties()));
+    }
+
+    private static RegistryObject<Item> armor(String name, HbmArmorMaterials material, ArmorItem.Type type) {
+        return registerLegacy(name, () -> new ArmorItem(material, type, new Item.Properties()));
+    }
+
+    private static RegistryObject<Item> fullHoodGasMaskArmor(String name, HbmArmorMaterials material) {
+        return registerLegacy(name, () -> new GasMaskArmorItem(material, new Item.Properties(), List.of()));
+    }
+
+    private static RegistryObject<Item> gasMaskArmor(String name, boolean mono) {
+        return registerLegacy(name, () -> new GasMaskArmorItem(ArmorMaterials.IRON, new Item.Properties(), mono));
+    }
+
+    private static RegistryObject<Item> ironHeadArmor(String name) {
+        return registerLegacy(name, () -> new ArmorItem(ArmorMaterials.IRON, ArmorItem.Type.HELMET, new Item.Properties()));
+    }
+
+    private static RegistryObject<Item> ragsHeadArmor(String name) {
+        return registerLegacy(name, () -> new ArmorItem(HbmArmorMaterials.RAGS, ArmorItem.Type.HELMET, new Item.Properties()));
     }
 
     private static RegistryObject<Item> abilitySword(String name, HbmToolTiers tier, float damage, double movement,
@@ -1844,8 +2317,8 @@ public final class ModItems {
         return registerLegacy(name, () -> new ItemMachineUpgrade(new Item.Properties(), type, tier));
     }
 
-    private static RegistryObject<Item> satelliteItem(String name, LegacySatelliteType type, String descriptionKey) {
-        return registerLegacy(name, () -> new SatelliteChipItem(new Item.Properties(), type, descriptionKey));
+    private static RegistryObject<Item> satelliteItem(String name, LegacySatelliteType type, String... descriptionKeys) {
+        return registerLegacy(name, () -> new SatelliteChipItem(new Item.Properties(), type, descriptionKeys));
     }
 
     private static RegistryObject<Item> batteryPack(String name, int legacyMeta, long dischargeRate, long duration) {
@@ -1889,7 +2362,11 @@ public final class ModItems {
     }
 
     private static RegistryObject<Item> simpleStackOneItem(String name) {
-        RegistryObject<Item> item = ITEMS.register(name, () -> new Item(new Item.Properties().stacksTo(1)));
+        return simpleStackSizeItem(name, 1);
+    }
+
+    private static RegistryObject<Item> simpleStackSizeItem(String name, int maxStackSize) {
+        RegistryObject<Item> item = ITEMS.register(name, () -> new Item(new Item.Properties().stacksTo(maxStackSize)));
         ITEMS_BY_LEGACY_NAME.put(name, item);
         return item;
     }

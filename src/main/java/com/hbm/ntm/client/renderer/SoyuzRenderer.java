@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.ObjSoyuzModels;
-import com.hbm.ntm.client.obj.ObjSoyuzModels.SoyuzTextureSet;
 import com.hbm.ntm.entity.missile.SoyuzEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -20,21 +19,14 @@ public class SoyuzRenderer extends EntityRenderer<SoyuzEntity> {
     public void render(SoyuzEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        ObjSoyuzModels.renderSoyuz(textureSet(entity.skin()), poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        ObjSoyuzModels.renderSoyuz(ObjSoyuzModels.textureSetForSkin(entity.skin()), poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
     }
 
     @Override
     public ResourceLocation getTextureLocation(SoyuzEntity entity) {
-        return textureSet(entity.skin()).engineBlock();
-    }
-
-    private static SoyuzTextureSet textureSet(int skin) {
-        return switch (skin) {
-            case 1 -> ObjSoyuzModels.LUNA_TEXTURES;
-            case 2 -> ObjSoyuzModels.AUTHENTIC_TEXTURES;
-            default -> ObjSoyuzModels.SOYUZ_TEXTURES;
-        };
+        return ObjSoyuzModels.textureSetForSkin(entity.skin()).engineBlock();
     }
 }

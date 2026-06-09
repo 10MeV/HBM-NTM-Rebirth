@@ -5,6 +5,7 @@ import com.hbm.ntm.menu.BasicMachineMenu;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.PressRecipe;
 import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.hbm.ntm.item.ItemPressStamp;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider {
@@ -224,21 +224,13 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     }
 
     public List<ItemStack> getDrops() {
-        List<ItemStack> drops = new ArrayList<>();
-        for (int slot = 0; slot < items.getSlots(); slot++) {
-            ItemStack stack = items.getStackInSlot(slot);
-            if (!stack.isEmpty()) {
-                drops.add(stack.copy());
-                items.setStackInSlot(slot, ItemStack.EMPTY);
-            }
-        }
-        return drops;
+        return HbmInventoryMenuHelper.clearToDrops(items);
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put(TAG_INVENTORY, items.serializeNBT());
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         tag.putLong(TAG_TICKS_EXISTED, ticksExisted);
         tag.putInt(TAG_BURN_TIME, burnTime);
         tag.putInt(TAG_SPEED, speed);
@@ -250,7 +242,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        items.deserializeNBT(tag.getCompound(TAG_INVENTORY));
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         ticksExisted = tag.getLong(TAG_TICKS_EXISTED);
         burnTime = tag.getInt(TAG_BURN_TIME);
         speed = tag.getInt(TAG_SPEED);

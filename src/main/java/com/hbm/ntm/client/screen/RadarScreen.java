@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.api.entity.RadarEntry;
+import com.hbm.ntm.api.entity.RadarControl;
 import com.hbm.ntm.api.entity.RadarMap;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.RadarBlockEntity;
@@ -29,13 +30,13 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
             new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/machine/gui_radar_link.png");
     private static final ResourceLocation RADAR_TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/machine/gui_radar_nt.png");
-    private static final int[] CONTROLS = {
-            RadarBlockEntity.CONTROL_SCAN_MISSILES,
-            RadarBlockEntity.CONTROL_SCAN_SHELLS,
-            RadarBlockEntity.CONTROL_SCAN_PLAYERS,
-            RadarBlockEntity.CONTROL_SMART_MODE,
-            RadarBlockEntity.CONTROL_RED_MODE,
-            RadarBlockEntity.CONTROL_SHOW_MAP
+    private static final RadarControl[] CONTROLS = {
+            RadarControl.SCAN_MISSILES,
+            RadarControl.SCAN_SHELLS,
+            RadarControl.SCAN_PLAYERS,
+            RadarControl.SMART_MODE,
+            RadarControl.REDSTONE_MODE,
+            RadarControl.SHOW_MAP
     };
     private static final String[] TOOLTIP_KEYS = {
             "radar.detectMissiles",
@@ -127,7 +128,7 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
                 return true;
             }
             if (isHovering(-10, 178, 8, 8, mouseX, mouseY)) {
-                sendButton(RadarBlockEntity.CONTROL_CLEAR_MAP);
+                sendButton(RadarControl.CLEAR_MAP);
                 return true;
             }
             return true;
@@ -338,7 +339,7 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
         return 52 + index * 12;
     }
 
-    private void sendButton(int button) {
+    private void sendButton(RadarControl button) {
         ModMessages.sendToServer(new TileControlPacket(menu.getBlockEntity().getBlockPos(),
                 RadarBlockEntity.controlTag(button)));
     }

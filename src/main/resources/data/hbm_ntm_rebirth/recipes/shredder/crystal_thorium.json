@@ -1,5 +1,12 @@
-{
-  "type": "hbm_ntm_rebirth:shredder",
-  "input": { "ingredient": { "item": "hbm_ntm_rebirth:crystal_thorium" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_thorium", "count": 3 }
+﻿{
+    "type":  "hbm_ntm_rebirth:shredder",
+    "input":  {
+                  "ingredient":  {
+                                     "tag":  "forge:crystals/thorium"
+                                 }
+              },
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:powder_thorium",
+                   "count":  3
+               }
 }

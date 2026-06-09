@@ -30,7 +30,7 @@ public class RubbleRenderer extends EntityRenderer<RubbleEntity> {
         poseStack.mulPose(Axis.YP.rotationDegrees((entity.tickCount + partialTick) * 10.0F));
         poseStack.mulPose(Axis.ZP.rotationDegrees((entity.tickCount + partialTick) * 10.0F));
         poseStack.translate(-0.5D, -0.5D, -0.5D);
-        blockRenderer.renderSingleBlock(entity.blockState(), poseStack, buffer, packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY);
+        HbmClientRenderUtil.renderSingleBlock(blockRenderer, entity.blockState(), poseStack, buffer, packedLight);
         poseStack.popPose();
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
     }

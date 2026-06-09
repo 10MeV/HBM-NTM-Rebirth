@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "R": {
+      "item": "hbm_ntm_rebirth:radio_torch_receiver"
+    },
+    "C": {
+      "tag": "forge:circuits/basic"
+    },
+    "S": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "R",
+    "C",
+    "S"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:rtty_pager"
+  },
+  "show_notification": true
+}

@@ -5,6 +5,7 @@ import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.util.HbmBlockStateUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
@@ -167,9 +168,8 @@ public final class ExplosionNukeGeneric {
         return (int) (resistance / 300.0F);
     }
 
-    @SuppressWarnings("deprecation")
     private static float explosionResistance(BlockState state) {
-        return state.getBlock().getExplosionResistance();
+        return HbmBlockStateUtil.explosionResistance(state);
     }
 
     private static boolean isLegacyEmpty(BlockState state) {

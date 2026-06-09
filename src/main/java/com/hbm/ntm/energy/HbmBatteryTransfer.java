@@ -18,7 +18,7 @@ public final class HbmBatteryTransfer {
     }
 
     public static boolean isHbmBattery(ItemStack stack) {
-        return !stack.isEmpty() && stack.getItem() instanceof HbmBatteryItem;
+        return !stack.isEmpty() && stack.getItem() instanceof HbmChargeableItem;
     }
 
     public static boolean isCreativeBattery(ItemStack stack) {
@@ -27,13 +27,13 @@ public final class HbmBatteryTransfer {
 
     public static boolean isEmptyBattery(ItemStack stack) {
         return !stack.isEmpty()
-                && stack.getItem() instanceof HbmBatteryItem battery
+                && stack.getItem() instanceof HbmChargeableItem battery
                 && battery.getCharge(stack) <= 0L;
     }
 
     public static boolean isFullBattery(ItemStack stack) {
         return !stack.isEmpty()
-                && stack.getItem() instanceof HbmBatteryItem battery
+                && stack.getItem() instanceof HbmChargeableItem battery
                 && battery.getCharge(stack) >= battery.getMaxCharge(stack);
     }
 
@@ -71,17 +71,17 @@ public final class HbmBatteryTransfer {
         if (isCreativeBattery(stack)) {
             return 0L;
         }
-        if (stack.isEmpty() || !(stack.getItem() instanceof HbmBatteryItem battery)) {
+        if (stack.isEmpty() || !(stack.getItem() instanceof HbmChargeableItem battery)) {
             return power;
         }
 
         long batMax = battery.getMaxCharge(stack);
         long batCharge = battery.getCharge(stack);
         long batRate = battery.getChargeRate(stack);
-        long toCharge = Math.min(Math.min(power, batRate), Math.max(0L, batMax - batCharge));
+        long toCharge = Math.min(Math.min(power, batRate), batMax - batCharge);
 
         power -= toCharge;
-        battery.chargeBattery(stack, toCharge);
+        chargeBatteryLegacy(battery, stack, toCharge);
         return power;
     }
 
@@ -89,16 +89,32 @@ public final class HbmBatteryTransfer {
         if (isCreativeBattery(stack)) {
             return maxPower;
         }
-        if (stack.isEmpty() || !(stack.getItem() instanceof HbmBatteryItem battery)) {
+        if (stack.isEmpty() || !(stack.getItem() instanceof HbmChargeableItem battery)) {
             return power;
         }
 
         long batCharge = battery.getCharge(stack);
         long batRate = battery.getDischargeRate(stack);
-        long toDischarge = Math.min(Math.min(Math.max(0L, maxPower - power), batRate), Math.max(0L, batCharge));
+        long toDischarge = Math.min(Math.min(maxPower - power, batRate), batCharge);
 
-        battery.dischargeBattery(stack, toDischarge);
+        dischargeBatteryLegacy(battery, stack, toDischarge);
         power += toDischarge;
         return power;
+    }
+
+    private static void chargeBatteryLegacy(HbmChargeableItem battery, ItemStack stack, long amount) {
+        if (amount >= 0L) {
+            battery.chargeBattery(stack, amount);
+        } else {
+            battery.dischargeBattery(stack, -amount);
+        }
+    }
+
+    private static void dischargeBatteryLegacy(HbmChargeableItem battery, ItemStack stack, long amount) {
+        if (amount >= 0L) {
+            battery.dischargeBattery(stack, amount);
+        } else {
+            battery.chargeBattery(stack, -amount);
+        }
     }
 }

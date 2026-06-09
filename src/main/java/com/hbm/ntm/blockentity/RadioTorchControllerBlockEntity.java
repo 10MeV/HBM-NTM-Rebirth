@@ -42,7 +42,11 @@ public class RadioTorchControllerBlockEntity extends RadioTorchBlockEntity {
         RTTYSystem.RTTYChannel channel = RTTYSystem.listen(level, torch.radio.channel());
         RTTYControllerState.ControllerRunResult result =
                 torch.radio.runFromChannel(interactive, channel, level.getGameTime());
-        if (result.ran() || result.selfDestruct() || result.exceptionMessage() != null) {
+        if (result.selfDestruct()) {
+            torch.selfDestruct();
+            return;
+        }
+        if (result.ran() || result.exceptionMessage() != null) {
             torch.setChangedAndSync(false);
         }
     }

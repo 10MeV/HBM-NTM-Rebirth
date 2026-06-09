@@ -1,12 +1,15 @@
 package com.hbm.ntm.item;
 
+import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.fluid.HbmFluidSettingsCopy;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.network.ModMessages;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -22,13 +25,17 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 public class SettingsToolItem extends Item {
     private static final String TAG_COPY_INDEX = "copyIndex";
+    private static final String TAG_COPY_KIND = "copyKind";
     private static final String TAG_DISPLAY_INFO = "displayInfo";
     private static final String TAG_INPUT_DELAY = "inputDelay";
     private static final String TAG_TILE_NAME = "tileName";
+    private static final String COPY_KIND_GENERIC = "copiable";
+    private static final String COPY_KIND_FLUID = "fluid";
     private static final int INFORM_ID_BASE = 897;
     private static final int INFORM_MILLIS = 4000;
 
@@ -41,31 +48,20 @@ public class SettingsToolItem extends Item {
         Level level = context.getLevel();
         ItemStack stack = context.getItemInHand();
         Player player = context.getPlayer();
-        if (player == null || !HbmFluidSettingsCopy.copiableAt(level, context.getClickedPos()).isPresent()) {
+        BlockPos clickedPos = context.getClickedPos();
+        boolean fluidCopiable = HbmFluidSettingsCopy.copiableAt(level, clickedPos).isPresent();
+        boolean genericCopiable = copiableAt(level, clickedPos).isPresent();
+        if (player == null || (!fluidCopiable && !genericCopiable)) {
             return InteractionResult.PASS;
         }
 
         if (player.isShiftKeyDown()) {
             if (!level.isClientSide) {
-                HbmFluidSettingsCopy.copy(level, context.getClickedPos()).ifPresentOrElse(settings -> {
-                    settings.putString(TAG_TILE_NAME, getSettingsSourceId(level, context.getClickedPos()));
-                    settings.putInt(TAG_COPY_INDEX, 0);
-                    settings.putInt(TAG_INPUT_DELAY, 0);
-                    settings.put(TAG_DISPLAY_INFO, makeDisplayInfo(HbmFluidSettingsCopy.displayInfo(level, context.getClickedPos())));
-                    stack.setTag(settings);
-                    if (player instanceof ServerPlayer serverPlayer) {
-                        ModMessages.informPlayer(serverPlayer,
-                                Component.translatable("item.hbm_ntm_rebirth.settings_tool.copied",
-                                        Component.translatable(settings.getString(TAG_TILE_NAME))),
-                                INFORM_ID_BASE - 1, 3000);
-                    }
-                }, () -> {
-                    if (player instanceof ServerPlayer serverPlayer) {
-                        ModMessages.informPlayer(serverPlayer,
-                                Component.translatable("item.hbm_ntm_rebirth.settings_tool.copy_failed").withStyle(ChatFormatting.RED),
-                                INFORM_ID_BASE - 1, 3000);
-                    }
-                });
+                if (fluidCopiable) {
+                    copyFluidSettings(level, clickedPos, stack, player);
+                } else {
+                    copyGenericSettings(level, clickedPos, stack, player);
+                }
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
@@ -76,9 +72,9 @@ public class SettingsToolItem extends Item {
         }
         if (!level.isClientSide) {
             int index = tag.getInt(TAG_COPY_INDEX);
-            boolean recursive = player instanceof ServerPlayer serverPlayer
-                    && HbmServerKeybinds.isPressed(serverPlayer, HbmKeybind.TOOL_CTRL);
-            boolean pasted = HbmFluidSettingsCopy.paste(level, context.getClickedPos(), tag, index, player, recursive);
+            boolean pasted = COPY_KIND_GENERIC.equals(tag.getString(TAG_COPY_KIND))
+                    ? pasteGenericSettings(level, clickedPos, tag, index, player)
+                    : pasteFluidSettings(level, clickedPos, tag, index, player);
             if (player instanceof ServerPlayer serverPlayer) {
                 ModMessages.informPlayer(serverPlayer,
                         Component.translatable(pasted
@@ -149,7 +145,72 @@ public class SettingsToolItem extends Item {
         return tag;
     }
 
-    private static String getSettingsSourceId(Level level, net.minecraft.core.BlockPos pos) {
+    private static void copyFluidSettings(Level level, BlockPos pos, ItemStack stack, Player player) {
+        HbmFluidSettingsCopy.copy(level, pos).ifPresentOrElse(settings -> {
+            settings.putString(TAG_COPY_KIND, COPY_KIND_FLUID);
+            settings.putString(TAG_TILE_NAME, getSettingsSourceId(level, pos));
+            settings.putInt(TAG_COPY_INDEX, 0);
+            settings.putInt(TAG_INPUT_DELAY, 0);
+            settings.put(TAG_DISPLAY_INFO, makeDisplayInfo(HbmFluidSettingsCopy.displayInfo(level, pos)));
+            stack.setTag(settings);
+            informCopied(player, Component.translatable(settings.getString(TAG_TILE_NAME)));
+        }, () -> informCopyFailed(player));
+    }
+
+    private static void copyGenericSettings(Level level, BlockPos pos, ItemStack stack, Player player) {
+        copiableAt(level, pos).ifPresentOrElse(copiable -> {
+            BlockPos corePos = MultiblockHelper.resolveCorePos(level, pos);
+            CompoundTag settings = copiable.getSettings(level, corePos);
+            settings.putString(TAG_COPY_KIND, COPY_KIND_GENERIC);
+            settings.putString(TAG_TILE_NAME, copiable.getSettingsSourceDisplay(level, corePos).getString());
+            settings.putInt(TAG_COPY_INDEX, 0);
+            settings.putInt(TAG_INPUT_DELAY, 0);
+            settings.put(TAG_DISPLAY_INFO, makeDisplayInfo(copiable.infoForDisplay(level, corePos)));
+            stack.setTag(settings);
+            informCopied(player, copiable.getSettingsSourceDisplay(level, corePos));
+        }, () -> informCopyFailed(player));
+    }
+
+    private static boolean pasteFluidSettings(Level level, BlockPos pos, CompoundTag tag, int index, Player player) {
+        boolean recursive = player instanceof ServerPlayer serverPlayer
+                && HbmServerKeybinds.isPressed(serverPlayer, HbmKeybind.TOOL_CTRL);
+        return HbmFluidSettingsCopy.paste(level, pos, tag, index, player, recursive);
+    }
+
+    private static boolean pasteGenericSettings(Level level, BlockPos pos, CompoundTag tag, int index, Player player) {
+        return copiableAt(level, pos)
+                .map(copiable -> {
+                    copiable.pasteSettings(tag, index, level, player, MultiblockHelper.resolveCorePos(level, pos));
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    private static Optional<CopiableSettings> copiableAt(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return Optional.empty();
+        }
+        BlockEntity blockEntity = MultiblockHelper.resolveCoreBlockEntity(level, pos);
+        return blockEntity instanceof CopiableSettings copiable ? Optional.of(copiable) : Optional.empty();
+    }
+
+    private static void informCopied(Player player, Component sourceName) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            ModMessages.informPlayer(serverPlayer,
+                    Component.translatable("item.hbm_ntm_rebirth.settings_tool.copied", sourceName),
+                    INFORM_ID_BASE - 1, 3000);
+        }
+    }
+
+    private static void informCopyFailed(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            ModMessages.informPlayer(serverPlayer,
+                    Component.translatable("item.hbm_ntm_rebirth.settings_tool.copy_failed").withStyle(ChatFormatting.RED),
+                    INFORM_ID_BASE - 1, 3000);
+        }
+    }
+
+    private static String getSettingsSourceId(Level level, BlockPos pos) {
         return MultiblockHelper.resolveCoreState(level, pos).getBlock().getDescriptionId();
     }
 }

@@ -114,11 +114,7 @@ public class OilDrillMenu extends AbstractContainerMenu {
         if (!moved) {
             return ItemStack.EMPTY;
         }
-        if (stack.isEmpty()) {
-            slot.set(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
+        HbmInventoryMenuHelper.finishQuickMove(slot, stack);
         return result;
     }
 

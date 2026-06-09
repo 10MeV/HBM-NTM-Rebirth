@@ -28,6 +28,7 @@
     "hbm_ntm_rebirth:enervation",
     "hbm_ntm_rebirth:electricity",
     "hbm_ntm_rebirth:exhaust",
+    "hbm_ntm_rebirth:spikes",
     "hbm_ntm_rebirth:lunar",
     "hbm_ntm_rebirth:monoxide",
     "hbm_ntm_rebirth:vacuum",
@@ -35,6 +36,7 @@
     "hbm_ntm_rebirth:microwave",
     "hbm_ntm_rebirth:nitan",
     "hbm_ntm_rebirth:tau",
-    "hbm_ntm_rebirth:combine_ball"
+    "hbm_ntm_rebirth:combine_ball",
+    "hbm_ntm_rebirth:subatomic"
   ]
 }

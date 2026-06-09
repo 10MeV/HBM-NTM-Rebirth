@@ -1,16 +1,22 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.RadioTorchBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchCounterBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class RadioTorchMenu extends AbstractContainerMenu {
+    private static final int COUNTER_FILTER_SLOT_COUNT = RadioTorchCounterBlockEntity.FILTER_SLOT_COUNT;
+
     private final RadioTorchBlockEntity blockEntity;
 
     public RadioTorchMenu(int containerId, Inventory inventory, FriendlyByteBuf data) {
@@ -20,6 +26,12 @@ public class RadioTorchMenu extends AbstractContainerMenu {
     public RadioTorchMenu(int containerId, Inventory inventory, RadioTorchBlockEntity blockEntity) {
         super(ModMenuTypes.RADIO_TORCH.get(), containerId);
         this.blockEntity = blockEntity;
+        if (blockEntity instanceof RadioTorchCounterBlockEntity counter) {
+            for (int i = 0; i < COUNTER_FILTER_SLOT_COUNT; i++) {
+                addSlot(HbmInventoryMenuHelper.patternSlot(counter.getFilterItems(), i, 138, 18 + 44 * i));
+            }
+            HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 12, 156, 214);
+        }
     }
 
     public RadioTorchBlockEntity getBlockEntity() {
@@ -37,6 +49,23 @@ public class RadioTorchMenu extends AbstractContainerMenu {
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         return ItemStack.EMPTY;
+    }
+
+    @Override
+    public void clicked(int slotId, int button, ClickType clickType, Player player) {
+        if (blockEntity instanceof RadioTorchCounterBlockEntity counter
+                && clickType == ClickType.PICKUP
+                && button == 1
+                && slotId >= 0
+                && slotId < COUNTER_FILTER_SLOT_COUNT) {
+            Slot slot = slots.get(slotId);
+            if (slot.hasItem()) {
+                counter.nextFilterMode(slotId);
+                broadcastChanges();
+                return;
+            }
+        }
+        super.clicked(slotId, button, clickType, player);
     }
 
     private static RadioTorchBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

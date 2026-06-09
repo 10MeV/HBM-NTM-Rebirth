@@ -1,5 +1,7 @@
 package com.hbm.ntm.datagen;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -19,7 +21,6 @@ import com.hbm.ntm.recipe.HbmFluidContainerIngredient;
 import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.data.recipes.RecipeCategory;
@@ -116,11 +117,14 @@ public final class HbmRecipeProvider extends RecipeProvider {
         legacyToolRecipes(consumer);
         legacyPartRecipes(consumer);
         legacyStructuralRecipes(consumer);
+        legacyArmorTableRecipe(consumer);
+        legacyHazmatRecipes(consumer);
 
         chemicalPlantSourceRecipes(consumer);
         chemicalBatteryRecipes(consumer);
         assemblyCapacitorRecipes(consumer);
         assemblyMachineBodyRecipes(consumer);
+        satelliteRecipes(consumer);
         fluidContainerRecipes(consumer);
         fluidNetworkRecipes(consumer);
         liquefactionRecipes(consumer);
@@ -142,7 +146,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         if (serializerId == null) {
             throw new IllegalStateException("HBM compat recipe has invalid serializer type: " + recipeId);
         }
-        RecipeSerializer<?> serializer = BuiltInRegistries.RECIPE_SERIALIZER.getOptional(serializerId)
+        RecipeSerializer<?> serializer = HbmRegistryUtil.recipeSerializer(serializerId)
                 .orElseThrow(() -> new IllegalStateException("Unknown HBM compat recipe serializer "
                         + serializerId + " for " + recipeId));
         JsonObject payload = recipeJson.deepCopy();
@@ -200,6 +204,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void legacyToolRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.POLLUTION_DETECTOR.get())
+                .pattern("SFS")
+                .pattern("SCS")
+                .pattern(" S ")
+                .define('S', forgeTag("plates/steel"))
+                .define('F', item("filter_coal"))
+                .define('C', forgeTag("circuits/vacuum_tube"))
+                .unlockedBy("has_filter_coal", has(item("filter_coal")))
+                .save(consumer, id("tools/pollution_detector"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.DEFUSER.get())
                 .pattern(" PS")
                 .pattern("P P")
@@ -226,6 +240,84 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('S', Items.STICK)
                 .unlockedBy("has_dura_steel", has(item("ingot_dura_steel")))
                 .save(consumer, id("tools/hand_drill"));
+    }
+
+    private static void legacyHazmatRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike hazmatCloth = item("hazmat_cloth");
+        ItemLike redHazmatCloth = item("hazmat_cloth_red");
+        ItemLike greyHazmatCloth = item("hazmat_cloth_grey");
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, redHazmatCloth)
+                .pattern("C")
+                .pattern("R")
+                .pattern("C")
+                .define('C', hazmatCloth)
+                .define('R', Items.REDSTONE)
+                .unlockedBy("has_hazmat_cloth", has(hazmatCloth))
+                .save(consumer, id("parts/hazmat_cloth_red"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, greyHazmatCloth)
+                .pattern(" P ")
+                .pattern("ICI")
+                .pattern(" L ")
+                .define('C', redHazmatCloth)
+                .define('P', forgeTag("plates/iron"))
+                .define('L', forgeTag("plates/lead"))
+                .define('I', forgeTag("ingots/any_rubber"))
+                .unlockedBy("has_hazmat_cloth_red", has(redHazmatCloth))
+                .save(consumer, id("parts/hazmat_cloth_grey"));
+
+        hazmatArmorSetRecipes(consumer, "hazmat", hazmatCloth,
+                ModItems.HAZMAT_HELMET.get(), ModItems.HAZMAT_PLATE.get(),
+                ModItems.HAZMAT_LEGS.get(), ModItems.HAZMAT_BOOTS.get(), false);
+        hazmatArmorSetRecipes(consumer, "hazmat_red", redHazmatCloth,
+                ModItems.HAZMAT_HELMET_RED.get(), ModItems.HAZMAT_PLATE_RED.get(),
+                ModItems.HAZMAT_LEGS_RED.get(), ModItems.HAZMAT_BOOTS_RED.get(), true);
+        hazmatArmorSetRecipes(consumer, "hazmat_grey", greyHazmatCloth,
+                ModItems.HAZMAT_HELMET_GREY.get(), ModItems.HAZMAT_PLATE_GREY.get(),
+                ModItems.HAZMAT_LEGS_GREY.get(), ModItems.HAZMAT_BOOTS_GREY.get(), true);
+    }
+
+    private static void hazmatArmorSetRecipes(Consumer<FinishedRecipe> consumer, String recipePrefix,
+            ItemLike cloth, ItemLike helmet, ItemLike chestplate, ItemLike leggings, ItemLike boots,
+            boolean reinforcedHelmet) {
+        ShapedRecipeBuilder helmetRecipe = ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, helmet)
+                .pattern("EEE")
+                .pattern("EIE")
+                .define('E', cloth)
+                .define('I', forgeTag("glass_panes"))
+                .unlockedBy("has_" + recipePrefix + "_cloth", has(cloth));
+        if (reinforcedHelmet) {
+            helmetRecipe.pattern("EFE")
+                    .define('F', forgeTag("plates/iron"));
+        } else {
+            helmetRecipe.pattern(" P ")
+                    .define('P', forgeTag("plates/iron"));
+        }
+        helmetRecipe.save(consumer, id("armor/" + recipePrefix + "_helmet"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, chestplate)
+                .pattern("E E")
+                .pattern("EEE")
+                .pattern("EEE")
+                .define('E', cloth)
+                .unlockedBy("has_" + recipePrefix + "_cloth", has(cloth))
+                .save(consumer, id("armor/" + recipePrefix + "_plate"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, leggings)
+                .pattern("EEE")
+                .pattern("E E")
+                .pattern("E E")
+                .define('E', cloth)
+                .unlockedBy("has_" + recipePrefix + "_cloth", has(cloth))
+                .save(consumer, id("armor/" + recipePrefix + "_legs"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, boots)
+                .pattern("E E")
+                .pattern("E E")
+                .define('E', cloth)
+                .unlockedBy("has_" + recipePrefix + "_cloth", has(cloth))
+                .save(consumer, id("armor/" + recipePrefix + "_boots"));
     }
 
     private static void legacyPartRecipes(Consumer<FinishedRecipe> consumer) {
@@ -1701,6 +1793,171 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("assembly_machine/radar_large"));
     }
 
+    private static void satelliteRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike advancedCircuit = legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 9);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.MACHINE_SATLINKER.get())
+                .pattern("PSP")
+                .pattern("SCS")
+                .pattern("PSP")
+                .define('P', forgeTag("plates/steel"))
+                .define('S', forgeTag("ingots/saturnite"))
+                .define('C', ModItems.SAT_CHIP.get())
+                .unlockedBy("has_sat_chip", has(ModItems.SAT_CHIP.get()))
+                .save(consumer, id("satellite/machine_satlinker"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.SAT_CHIP.get())
+                .pattern("WWW")
+                .pattern("CIC")
+                .pattern("WWW")
+                .define('W', forgeTag("wires/mingrade"))
+                .define('C', advancedCircuit)
+                .define('I', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_advanced_circuit", has(advancedCircuit))
+                .save(consumer, id("satellite/sat_chip"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.SAT_INTERFACE.get())
+                .pattern("ISI")
+                .pattern("PCP")
+                .pattern("PAP")
+                .define('I', forgeTag("ingots/steel"))
+                .define('S', forgeTag("ingots/saturnite"))
+                .define('P', item("plate_polymer"))
+                .define('C', ModItems.SAT_CHIP.get())
+                .define('A', advancedCircuit)
+                .unlockedBy("has_sat_chip", has(ModItems.SAT_CHIP.get()))
+                .save(consumer, id("satellite/sat_interface"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.SAT_COORD.get())
+                .pattern("SII")
+                .pattern("SCA")
+                .pattern("SPP")
+                .define('I', forgeTag("ingots/steel"))
+                .define('S', forgeTag("ingots/saturnite"))
+                .define('P', item("plate_polymer"))
+                .define('C', ModItems.SAT_CHIP.get())
+                .define('A', advancedCircuit)
+                .unlockedBy("has_sat_chip", has(ModItems.SAT_CHIP.get()))
+                .save(consumer, id("satellite/sat_coord"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.SAT_DESIGNATOR.get())
+                .pattern("RRD")
+                .pattern("PIC")
+                .pattern("  P")
+                .define('R', Items.REDSTONE)
+                .define('D', ModItems.SAT_CHIP.get())
+                .define('P', forgeTag("plates/gold"))
+                .define('I', forgeTag("ingots/gold"))
+                .define('C', advancedCircuit)
+                .unlockedBy("has_sat_chip", has(ModItems.SAT_CHIP.get()))
+                .save(consumer, id("satellite/sat_designator"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, ModItems.SAT_RELAY.get())
+                .requires(ModItems.SAT_CHIP.get())
+                .requires(item("ducttape"))
+                .requires(ModItems.RADAR_LINKER.get())
+                .unlockedBy("has_sat_chip", has(ModItems.SAT_CHIP.get()))
+                .save(consumer, id("satellite/sat_relay"));
+
+        GenericMachineRecipeBuilder.assembly("ass.satellitebase", 600, 100)
+                .inputLegacyOre("ingotRubber", 12)
+                .inputLegacyOre("shellTitanium", 3)
+                .inputItem(item("thruster_medium"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.PART_GENERIC, 3, 8)
+                .inputItem(item("plate_desh"), 4)
+                .inputItem(fluidContainerStack(ModItems.FLUID_BARREL_FULL.get(), 1, HbmFluids.KEROSENE, 16_000, 0))
+                .inputItem(item("photo_panel"), 24)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 12)
+                .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2, 1)
+                .outputItem(item("sat_base"))
+                .save(consumer, id("assembly_machine/satellite_base"));
+
+        GenericMachineRecipeBuilder.assembly("ass.satellitemapper", 600, 100)
+                .inputLegacyOre("shellSteel", 3)
+                .inputItem(item("plate_desh"), 4)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 4)
+                .inputItem(block("glass_quartz"), 8)
+                .outputItem(item("sat_head_mapper"))
+                .save(consumer, id("assembly_machine/satellite_mapper"));
+
+        GenericMachineRecipeBuilder.assembly("ass.satellitescanner", 600, 100)
+                .inputLegacyOre("shellSteel", 3)
+                .inputLegacyOre("plateCastTitanium", 8)
+                .inputItem(item("plate_desh"), 4)
+                .inputItem(item("magnetron"), 8)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 8)
+                .outputItem(item("sat_head_scanner"))
+                .save(consumer, id("assembly_machine/satellite_scanner"));
+
+        GenericMachineRecipeBuilder.assembly("ass.satelliteradar", 600, 100)
+                .inputLegacyOre("shellSteel", 3)
+                .inputLegacyOre("plateCastTitanium", 12)
+                .inputItem(item("magnetron"), 12)
+                .inputItem(ModItems.GOLD_COIL.get(), 16)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 4)
+                .outputItem(item("sat_head_radar"))
+                .save(consumer, id("assembly_machine/satellite_radar"));
+
+        GenericMachineRecipeBuilder.assembly("ass.satellitelaser", 600, 100)
+                .inputLegacyOre("shellSteel", 6)
+                .inputLegacyOre("plateCastCopper", 24)
+                .inputLegacyOre("ingotAnyHardplastic", 16)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 14, 8)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 10, 16)
+                .inputItem(item("crystal_diamond"), 8)
+                .inputItem(block("glass_quartz"), 8)
+                .outputItem(item("sat_head_laser"))
+                .save(consumer, id("assembly_machine/satellite_laser"));
+
+        GenericMachineRecipeBuilder.assembly("ass.satelliteresonator", 600, 100)
+                .inputLegacyOre("plateCastSteel", 6)
+                .inputLegacyOre("ingotSaturnite", 12)
+                .inputLegacyOre("ingotAnyPlastic", 48)
+                .inputItem(item("crystal_xen"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 16)
+                .outputItem(item("sat_head_resonator"))
+                .save(consumer, id("assembly_machine/satellite_resonator"));
+
+        GenericMachineRecipeBuilder.assembly("ass.satelliterelay", 600, 100)
+                .inputLegacyOre("shellTitanium", 3)
+                .inputItem(item("plate_desh"), 8)
+                .inputItem(fluidContainerStack(ModItems.FLUID_BARREL_FULL.get(), 1, HbmFluids.HYDROGEN, 16_000, 0))
+                .inputItem(item("photo_panel"), 16)
+                .inputItem(item("thruster_nuclear"), 1)
+                .inputItem(item("ingot_uranium_fuel"), 6)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 24)
+                .inputItem(item("magnetron"), 3)
+                .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2, 1)
+                .outputItem(ModItems.SAT_FOEQ.get())
+                .save(consumer, id("assembly_machine/satellite_relay"));
+
+        GenericMachineRecipeBuilder.assembly("ass.satelliteasteroidminer", 600, 100)
+                .inputLegacyOre("plateSaturnite", 24)
+                .inputItem(item("motor_desh"), 2)
+                .inputItem(item("drill_titanium"), 2)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 12)
+                .inputItem(fluidContainerStack(ModItems.FLUID_BARREL_FULL.get(), 1, HbmFluids.KEROSENE, 16_000, 0))
+                .inputItem(item("thruster_small"), 1)
+                .inputItem(item("photo_panel"), 12)
+                .inputItem(item("centrifuge_element"), 4)
+                .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2, 1)
+                .outputItem(ModItems.SAT_MINER.get())
+                .save(consumer, id("assembly_machine/satellite_asteroid_miner"));
+
+        GenericMachineRecipeBuilder.assembly("ass.satellitelunarminer", 600, 100)
+                .inputItem(item("ingot_meteorite"), 4)
+                .inputItem(item("plate_desh"), 4)
+                .inputItem(ModItems.MOTOR.get(), 2)
+                .inputItem(item("drill_titanium"), 2)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 8)
+                .inputItem(fluidContainerStack(ModItems.FLUID_BARREL_FULL.get(), 1, HbmFluids.KEROSENE, 16_000, 0))
+                .inputItem(item("thruster_small"), 1)
+                .inputItem(item("photo_panel"), 12)
+                .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2, 1)
+                .outputItem(ModItems.SAT_LUNAR_MINER.get())
+                .save(consumer, id("assembly_machine/satellite_lunar_miner"));
+    }
+
     private static void fluidContainerRecipes(Consumer<FinishedRecipe> consumer) {
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.CANISTER_EMPTY.get(), 2)
                 .pattern("S ")
@@ -2138,6 +2395,19 @@ public final class HbmRecipeProvider extends RecipeProvider {
         return block.get();
     }
 
+    private static void legacyArmorTableRecipe(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, ModBlocks.MACHINE_ARMOR_TABLE.get())
+                .pattern("PPP")
+                .pattern("TCT")
+                .pattern("TST")
+                .define('P', ModItems.STEEL_PLATE.get())
+                .define('T', ModItems.TUNGSTEN_INGOT.get())
+                .define('C', Blocks.CRAFTING_TABLE)
+                .define('S', block("block_steel"))
+                .unlockedBy("has_steel_plate", has(ModItems.STEEL_PLATE.get()))
+                .save(consumer, id("machines/armor_table"));
+    }
+
     private static ItemLike legacyBatteryPack(int legacyMeta) {
         return LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BATTERY_PACK, legacyMeta).get();
     }
@@ -2390,7 +2660,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
                 @Override
                 public RecipeSerializer<?> getType() {
-                    return BuiltInRegistries.RECIPE_SERIALIZER.get(serializerId);
+                    return HbmRegistryUtil.recipeSerializer(serializerId).orElseThrow();
                 }
 
                 @Nullable
@@ -2447,7 +2717,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
         private static JsonObject itemStackJson(ItemStack stack) {
             JsonObject object = new JsonObject();
-            object.addProperty("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+            object.addProperty("item", HbmRegistryUtil.itemKey(stack.getItem()).toString());
             if (stack.getCount() > 1) {
                 object.addProperty("count", stack.getCount());
             }
@@ -2517,7 +2787,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
                 @Override
                 public RecipeSerializer<?> getType() {
-                    return BuiltInRegistries.RECIPE_SERIALIZER.get(id("press"));
+                    return HbmRegistryUtil.recipeSerializer(id("press")).orElseThrow();
                 }
 
                 @Nullable
@@ -2536,7 +2806,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
         private static JsonObject itemStackJson(ItemStack stack) {
             JsonObject object = new JsonObject();
-            object.addProperty("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+            object.addProperty("item", HbmRegistryUtil.itemKey(stack.getItem()).toString());
             if (stack.getCount() > 1) {
                 object.addProperty("count", stack.getCount());
             }
@@ -2617,7 +2887,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
                 @Override
                 public RecipeSerializer<?> getType() {
-                    return BuiltInRegistries.RECIPE_SERIALIZER.get(id("pyro_oven"));
+                    return HbmRegistryUtil.recipeSerializer(id("pyro_oven")).orElseThrow();
                 }
 
                 @Nullable
@@ -2643,7 +2913,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
         private static JsonObject itemStackJson(ItemStack stack) {
             JsonObject object = new JsonObject();
-            object.addProperty("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+            object.addProperty("item", HbmRegistryUtil.itemKey(stack.getItem()).toString());
             if (stack.getCount() > 1) {
                 object.addProperty("count", stack.getCount());
             }
@@ -2692,7 +2962,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
                 @Override
                 public RecipeSerializer<?> getType() {
-                    return BuiltInRegistries.RECIPE_SERIALIZER.get(id("liquefaction"));
+                    return HbmRegistryUtil.recipeSerializer(id("liquefaction")).orElseThrow();
                 }
 
                 @Nullable

@@ -100,10 +100,7 @@ public class RadarMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return !blockEntity.isRemoved() && player.distanceToSqr(
-                blockEntity.getBlockPos().getX() + 0.5D,
-                blockEntity.getBlockPos().getY() + 0.5D,
-                blockEntity.getBlockPos().getZ() + 0.5D) <= 64.0D;
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
     }
 
     @Override
@@ -140,11 +137,7 @@ public class RadarMenu extends AbstractContainerMenu {
             return ItemStack.EMPTY;
         }
 
-        if (stack.isEmpty()) {
-            slot.set(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
+        HbmInventoryMenuHelper.finishQuickMove(slot, stack);
         return result;
     }
 

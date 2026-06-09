@@ -133,6 +133,12 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
                 : HbmEnergyUtil.tryProvideToPorts(level, worldPosition, getEnergyPorts(), energy);
     }
 
+    protected long pushForgeEnergyToPorts(long maxTransfer) {
+        return level == null || level.isClientSide
+                ? 0L
+                : HbmEnergyUtil.pushForgeEnergyToPorts(level, worldPosition, getEnergyPorts(), energy, maxTransfer);
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);

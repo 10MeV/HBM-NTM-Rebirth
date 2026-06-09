@@ -210,6 +210,12 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
                 : HbmEnergyUtil.tryProvideToPorts(level, worldPosition, getEnergyPorts(), energy);
     }
 
+    protected long pushForgeEnergyToPorts(long maxTransfer) {
+        return level == null || level.isClientSide
+                ? 0L
+                : HbmEnergyUtil.pushForgeEnergyToPorts(level, worldPosition, getEnergyPorts(), energy, maxTransfer);
+    }
+
     protected boolean unsubscribeEnergyProviderFromSide(Direction side) {
         return level != null
                 && !level.isClientSide

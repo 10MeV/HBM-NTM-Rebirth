@@ -19,9 +19,14 @@
     "hbm_ntm_rebirth:machine_radar",
     "hbm_ntm_rebirth:machine_radar_large",
     "hbm_ntm_rebirth:radar_screen",
+    "hbm_ntm_rebirth:machine_armor_table",
     "hbm_ntm_rebirth:machine_satlinker",
     "hbm_ntm_rebirth:sat_dock",
     "hbm_ntm_rebirth:soyuz_capsule",
-    "hbm_ntm_rebirth:soyuz_launcher"
+    "hbm_ntm_rebirth:soyuz_launcher",
+    "hbm_ntm_rebirth:radio_autocal",
+    "hbm_ntm_rebirth:red_barrel",
+    "hbm_ntm_rebirth:pink_barrel",
+    "hbm_ntm_rebirth:lox_barrel"
   ]
 }

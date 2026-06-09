@@ -1,5 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.bullet.BulletStyle;
 import com.hbm.ntm.bullet.BulletTauTrailUtil;
@@ -26,7 +28,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -253,7 +254,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
 
     private static void renderBlade(BulletProjectileEntity entity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
-        ItemStack stack = new ItemStack(BuiltInRegistries.ITEM.get(BLADE_TITANIUM));
+        ItemStack stack = new ItemStack(HbmRegistryUtil.item(BLADE_TITANIUM).orElseThrow());
         if (stack.is(Items.AIR)) {
             return;
         }

@@ -237,6 +237,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("ingot", "ingots", "ingot_dura_steel", "DuraSteel");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_combine_steel", "CMBSteel");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_saturnite", "Saturnite");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_meteorite", "Meteorite");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_cft", "CFT");
 
         addLegacyMaterialAliases("dust", "dusts", "powder_uranium", "Uranium");
@@ -264,7 +265,18 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("dust", "dusts", "powder_asbestos", "Asbestos");
         addLegacyMaterialAliases("dust", "dusts", "powder_ferrouranium", "Ferrouranium");
         addLegacyMaterialAliases("dust", "dusts", "powder_strontium", "Strontium");
+        addLegacyMaterialAliases("dust", "dusts", "powder_polonium", "Polonium210", "Po210", "Polonium");
+        addLegacyMaterialAliases("dust", "dusts", "powder_co60", "Cobalt60", "Co60");
+        addLegacyMaterialAliases("dust", "dusts", "powder_sr90", "Strontium90", "Sr90");
+        addLegacyMaterialAliases("dustTiny", "tiny_dusts", "powder_sr90_tiny", "Strontium90", "Sr90");
+        addLegacyMaterialAliases("dust", "dusts", "powder_i131", "Iodine131", "I131");
+        addLegacyMaterialAliases("dustTiny", "tiny_dusts", "powder_i131_tiny", "Iodine131", "I131");
+        addLegacyMaterialAliases("dust", "dusts", "powder_xe135", "Xenon135", "Xe135");
+        addLegacyMaterialAliases("dustTiny", "tiny_dusts", "powder_xe135_tiny", "Xenon135", "Xe135");
         addLegacyMaterialAliases("dust", "dusts", "powder_cs137", "Caesium137", "Cs137");
+        addLegacyMaterialAliases("dustTiny", "tiny_dusts", "powder_cs137_tiny", "Caesium137", "Cs137");
+        addLegacyMaterialAliases("dust", "dusts", "powder_au198", "Gold198", "Au198");
+        addLegacyMaterialAliases("dust", "dusts", "powder_at209", "Astatine209", "At209");
         addLegacyMaterialAliases("dust", "dusts", "powder_caesium", "Caesium");
         addLegacyMaterialAliases("dust", "dusts", "powder_coltan_ore", "Coltan");
         addLegacyMaterialAliases("dust", "dusts", "powder_coal", "Coal");

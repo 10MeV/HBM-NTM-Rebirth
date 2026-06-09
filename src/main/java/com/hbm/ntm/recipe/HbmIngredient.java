@@ -1,11 +1,12 @@
 package com.hbm.ntm.recipe;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
@@ -161,7 +162,7 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
                     : "legacy item " + legacyId + " meta " + legacyMeta;
         }
         if (hasExactStack()) {
-            return BuiltInRegistries.ITEM.getKey(exactStack.getItem()).toString();
+            return HbmRegistryUtil.itemKey(exactStack.getItem()).toString();
         }
         String tagId = ingredientTagId();
         if (tagId != null) {
@@ -184,7 +185,7 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
                     : "legacy_meta:" + legacyId + ":" + legacyMeta;
         }
         if (hasExactStack()) {
-            return "item:" + BuiltInRegistries.ITEM.getKey(exactStack.getItem());
+            return "item:" + HbmRegistryUtil.itemKey(exactStack.getItem());
         }
         String tagId = ingredientTagId();
         if (tagId != null) {
@@ -328,7 +329,7 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
     private static ItemStack readItemStack(JsonObject object, String name) {
         String itemName = object.get("item").getAsString();
         ResourceLocation itemId = new ResourceLocation(itemName);
-        Item item = BuiltInRegistries.ITEM.getOptional(itemId)
+        Item item = HbmRegistryUtil.item(itemId)
                 .orElseThrow(() -> new JsonSyntaxException("Unknown item '" + itemName + "' in " + name));
         int count = object.has("count") ? object.get("count").getAsInt() : 1;
         if (count < 1) {
@@ -356,7 +357,7 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
 
     private static JsonObject itemStackJson(ItemStack stack) {
         JsonObject object = new JsonObject();
-        object.addProperty("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        object.addProperty("item", HbmRegistryUtil.itemKey(stack.getItem()).toString());
         if (stack.getCount() > 1) {
             object.addProperty("count", stack.getCount());
         }

@@ -21,6 +21,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,8 +55,13 @@ public class RadioTorchScreen extends AbstractContainerScreen<RadioTorchMenu> {
 
     public RadioTorchScreen(RadioTorchMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        imageWidth = 256;
-        imageHeight = 204;
+        if (menu.getBlockEntity() instanceof RadioTorchCounterBlockEntity) {
+            imageWidth = 218;
+            imageHeight = 238;
+        } else {
+            imageWidth = 256;
+            imageHeight = 204;
+        }
         titleLabelY = 6;
         inventoryLabelY = 1000;
     }
@@ -103,6 +109,7 @@ public class RadioTorchScreen extends AbstractContainerScreen<RadioTorchMenu> {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
+        renderCounterFilterTooltip(graphics, mouseX, mouseY);
     }
 
     private void initDevice(RadioTorchDeviceBlockEntity device) {
@@ -165,14 +172,20 @@ public class RadioTorchScreen extends AbstractContainerScreen<RadioTorchMenu> {
     private void initCounter(RadioTorchCounterBlockEntity counter) {
         polling = counter.counterState().polling();
         pollingButton = addRenderableWidget(Button.builder(pollingLabel(), button -> togglePolling())
-                .bounds(leftPos + 160, topPos + 16, 42, 18)
+                .bounds(leftPos + 193, topPos + 8, 18, 18)
                 .build());
         for (int i = 0; i < RTTYCounterState.SLOT_COUNT; i++) {
-            counterChannelFields.add(addTextBox(25, 47 + i * 24, 86, 14, 10, counter.counterState().channel(i)));
+            counterChannelFields.add(addTextBox(29, 21 + i * 44, 86, 14, 10, counter.counterState().channel(i)));
         }
     }
 
     private void addSaveButton() {
+        if (menu.getBlockEntity() instanceof RadioTorchCounterBlockEntity) {
+            addRenderableWidget(Button.builder(Component.literal("S"), button -> save())
+                    .bounds(leftPos + 193, topPos + 30, 18, 18)
+                    .build());
+            return;
+        }
         addRenderableWidget(Button.builder(Component.literal("Save"), button -> save())
                 .bounds(leftPos + 206, topPos + 16, 42, 18)
                 .build());
@@ -267,6 +280,21 @@ public class RadioTorchScreen extends AbstractContainerScreen<RadioTorchMenu> {
             return CONTROLLER_TEXTURE;
         }
         return COUNTER_TEXTURE;
+    }
+
+    private void renderCounterFilterTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        RadioTorchBlockEntity torch = menu.getBlockEntity();
+        if (!(torch instanceof RadioTorchCounterBlockEntity counter) || !menu.getCarried().isEmpty()) {
+            return;
+        }
+        Slot slot = hoveredSlot;
+        int menuSlot = slot == null ? -1 : menu.slots.indexOf(slot);
+        if (menuSlot < 0 || menuSlot >= RadioTorchCounterBlockEntity.FILTER_SLOT_COUNT || !slot.hasItem()) {
+            return;
+        }
+        graphics.renderComponentTooltip(font, List.of(
+                Component.literal("Right click to change"),
+                Component.literal(counter.filterModeLabel(menuSlot))), mouseX, mouseY);
     }
 
     private Component pollingLabel() {

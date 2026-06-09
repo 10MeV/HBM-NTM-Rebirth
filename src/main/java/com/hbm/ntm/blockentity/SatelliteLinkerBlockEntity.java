@@ -9,6 +9,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.MenuProvider;
@@ -117,10 +118,12 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        if (tag.contains(TAG_INVENTORY)) {
+        if (tag.contains(TAG_INVENTORY, Tag.TAG_COMPOUND)) {
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        } else if (tag.contains(TAG_INVENTORY, Tag.TAG_LIST)) {
             HbmInventoryMenuHelper.loadLegacyItems(tag, TAG_INVENTORY, items);
         } else {
-            HbmInventoryMenuHelper.loadLegacyItems(tag, items);
+            HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
         }
     }
 

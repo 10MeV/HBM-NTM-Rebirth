@@ -27,7 +27,6 @@ public final class HbmMachineRecipeCategory implements IRecipeCategory<GenericMa
 
     private final RecipeType<GenericMachineRecipe> type;
     private final GenericMachineRecipe.Machine machine;
-    private final IDrawableStatic background;
     private final IDrawable icon;
     private final IDrawableStatic arrow;
 
@@ -35,7 +34,6 @@ public final class HbmMachineRecipeCategory implements IRecipeCategory<GenericMa
             ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
         this.machine = machine;
-        this.background = guiHelper.createBlankDrawable(WIDTH, HEIGHT);
         this.icon = guiHelper.createDrawableItemLike(catalyst);
         this.arrow = guiHelper.getRecipeArrow();
     }
@@ -53,11 +51,6 @@ public final class HbmMachineRecipeCategory implements IRecipeCategory<GenericMa
             case PUREX -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_purex", "PUREX");
             case PRECASS -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_assembly_machine", "Precision Assembler");
         };
-    }
-
-    @Override
-    public IDrawable getBackground() {
-        return background;
     }
 
     @Override

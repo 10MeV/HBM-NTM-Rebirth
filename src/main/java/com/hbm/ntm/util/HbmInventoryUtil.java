@@ -1204,12 +1204,19 @@ public final class HbmInventoryUtil {
             return ItemStack.EMPTY;
         }
 
+        finishQuickMove(slot, stack);
+        return result;
+    }
+
+    public static void finishQuickMove(Slot slot, ItemStack stack) {
+        if (slot == null || stack == null) {
+            return;
+        }
         if (stack.isEmpty()) {
             slot.set(ItemStack.EMPTY);
         } else {
             slot.setChanged();
         }
-        return result;
     }
 
     public static boolean moveStackToAnyRange(List<Slot> slots, ItemStack stack, int... ranges) {

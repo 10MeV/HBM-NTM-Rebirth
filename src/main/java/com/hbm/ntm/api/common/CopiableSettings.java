@@ -1,7 +1,8 @@
 package com.hbm.ntm.api.common;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -17,7 +18,7 @@ public interface CopiableSettings {
 
     default String getSettingsSourceId(Level level, BlockPos pos) {
         Block block = level.getBlockState(pos).getBlock();
-        return BuiltInRegistries.BLOCK.getKey(block).toString();
+        return HbmRegistryUtil.blockKey(block).toString();
     }
 
     default Component getSettingsSourceDisplay(Level level, BlockPos pos) {

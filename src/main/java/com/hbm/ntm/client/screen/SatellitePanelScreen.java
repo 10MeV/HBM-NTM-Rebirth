@@ -1,8 +1,11 @@
 package com.hbm.ntm.client.screen;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.ClientSatelliteData;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SatelliteInterfaceItem;
@@ -13,7 +16,6 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -102,7 +104,7 @@ public class SatellitePanelScreen extends Screen {
                 && snapshot.satellite().interfaceActions().contains(Satellite.InterfaceAction.CAN_CLICK)
                 && isInsideMap((int) mouseX, (int) mouseY)) {
             ModMessages.sendSatLaser(hand, worldX((int) mouseX), worldZ((int) mouseY), currentFrequency());
-            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.TOOL_TECH_BLEEP.get(), 1.0F));
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -147,7 +149,7 @@ public class SatellitePanelScreen extends Screen {
             int z = centerZ + scanPos - 100;
             int y = minecraft.level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
             BlockPos pos = new BlockPos(x, y, z);
-            if (minecraft.level.hasChunkAt(pos)) {
+            if (HbmRegistryUtil.hasChunkAt(minecraft.level, pos)) {
                 BlockState state = minecraft.level.getBlockState(pos);
                 map[i + 100][scanPos] = state.getMapColor(minecraft.level, pos).col;
             }
@@ -165,7 +167,7 @@ public class SatellitePanelScreen extends Screen {
             int z = centerZ + scanPos - 100;
             for (int y = minecraft.level.getMaxBuildHeight() - 1; y >= minecraft.level.getMinBuildHeight(); y--) {
                 BlockPos pos = new BlockPos(x, y, z);
-                if (!minecraft.level.hasChunkAt(pos)) {
+                if (!HbmRegistryUtil.hasChunkAt(minecraft.level, pos)) {
                     continue;
                 }
                 int color = oreColor(minecraft.level.getBlockState(pos));

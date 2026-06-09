@@ -20,14 +20,12 @@ public final class HbmOilRecipeCategory implements IRecipeCategory<HbmOilRecipe>
 
     private final RecipeType<HbmOilRecipe> type;
     private final Component title;
-    private final IDrawableStatic background;
     private final IDrawable icon;
     private final IDrawableStatic arrow;
 
     HbmOilRecipeCategory(RecipeType<HbmOilRecipe> type, Component title, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
         this.title = title;
-        this.background = guiHelper.createBlankDrawable(WIDTH, HEIGHT);
         this.icon = guiHelper.createDrawableItemLike(catalyst);
         this.arrow = guiHelper.getRecipeArrow();
     }
@@ -40,11 +38,6 @@ public final class HbmOilRecipeCategory implements IRecipeCategory<HbmOilRecipe>
     @Override
     public Component getTitle() {
         return title;
-    }
-
-    @Override
-    public IDrawable getBackground() {
-        return background;
     }
 
     @Override

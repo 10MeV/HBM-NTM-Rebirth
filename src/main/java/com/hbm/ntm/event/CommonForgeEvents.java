@@ -5,6 +5,7 @@ import com.hbm.ntm.command.ModCommands;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.config.ServerConfig;
 import com.hbm.ntm.config.WeaponConfig;
+import com.hbm.ntm.api.entity.RadarScanner;
 import com.hbm.ntm.api.entity.ResistanceProvider;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
 import com.hbm.ntm.damage.DamageResistanceHandler;
@@ -28,13 +29,11 @@ import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.neutron.NeutronHandler;
 import com.hbm.ntm.neutron.NeutronNodeWorld;
 import com.hbm.ntm.particle.ParticleUtil;
-import com.hbm.ntm.pollution.PollutionSavedData;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.CraterRadiationData;
 import com.hbm.ntm.radiation.HazardExposureUtil;
-import com.hbm.ntm.radiation.HazardRegistry;
 import com.hbm.ntm.radiation.HazmatRegistry;
 import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.ModDamageSources;
@@ -49,7 +48,6 @@ import com.hbm.ntm.world.BlockMigrationHelper;
 import com.hbm.ntm.world.saveddata.TomImpactSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -99,7 +97,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 @Mod.EventBusSubscriber(modid = HbmNtm.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -157,6 +154,7 @@ public final class CommonForgeEvents {
         }
         if (event.phase == TickEvent.Phase.START) {
             RTTYSystem.updateBroadcastQueue(event.getServer());
+            RadarScanner.updateSystem(event.getServer().getAllLevels());
             for (ServerLevel level : event.getServer().getAllLevels()) {
                 TomImpactSavedData.tickExistingImpactClimate(level);
             }
@@ -365,12 +363,11 @@ public final class CommonForgeEvents {
         if (level.getGameTime() % ServerConfig.droppedItemHazardTickRate() != 0L) {
             return;
         }
-        Set<Integer> tickSnapshot = new HashSet<>(tracked);
-        Set<Integer> staleEntities = new HashSet<>();
-        for (Integer entityId : tickSnapshot) {
+        for (Iterator<Integer> iterator = tracked.iterator(); iterator.hasNext();) {
+            Integer entityId = iterator.next();
             Entity trackedEntity = level.getEntity(entityId);
             if (!(trackedEntity instanceof ItemEntity itemEntity) || itemEntity.isRemoved()) {
-                staleEntities.add(entityId);
+                iterator.remove();
                 continue;
             }
             long lastTick = itemEntity.getPersistentData().getLong(HAZARD_ENTITY_TICK_KEY);
@@ -380,7 +377,6 @@ public final class CommonForgeEvents {
             itemEntity.getPersistentData().putLong(HAZARD_ENTITY_TICK_KEY, level.getGameTime());
             applyDroppedItemHazards(itemEntity);
         }
-        tracked.removeAll(staleEntities);
         if (tracked.isEmpty()) {
             TRACKED_ITEM_ENTITIES.remove(level.dimension());
         }
@@ -391,17 +387,7 @@ public final class CommonForgeEvents {
         if (stack.isEmpty() || itemEntity.isRemoved()) {
             return;
         }
-        float hydroactive = HazardRegistry.getHazardLevel(stack, HazardType.HYDROACTIVE);
-        if (hydroactive > 0.0F && itemEntity.isInWaterOrRain() && itemEntity.level() instanceof ServerLevel level) {
-            itemEntity.discard();
-            WeaponExplosionUtil.explodeStandard(level, itemEntity.getX(), itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(), hydroactive, itemEntity, true, false);
-            return;
-        }
-
-        float explosive = HazardRegistry.getHazardLevel(stack, HazardType.EXPLOSIVE);
-        if (explosive > 0.0F && itemEntity.isOnFire() && itemEntity.level() instanceof ServerLevel level) {
-            itemEntity.discard();
-            WeaponExplosionUtil.explodeStandard(level, itemEntity.getX(), itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(), explosive, itemEntity, true, true);
+        if (HazardExposureUtil.updateDroppedItem(itemEntity)) {
             return;
         }
 
@@ -460,11 +446,7 @@ public final class CommonForgeEvents {
     }
 
     private static void syncPollution(ServerPlayer player) {
-        PollutionSavedData.PollutionSample sample = PollutionManager.getPollutionData(player.level(), player.blockPosition());
-        CompoundTag data = new CompoundTag();
-        PollutionSavedData.appendPermaSyncData(data, sample);
-        TomImpactSavedData.appendPermaSyncData(player.serverLevel(), data);
-        ModMessages.syncPermaData(player, data);
+        ModMessages.syncPermaData(player);
     }
 
     @SubscribeEvent
@@ -653,9 +635,13 @@ public final class CommonForgeEvents {
         }
 
         long time = level.getGameTime();
-        Random random = new Random(entity.getId());
-        int r600 = random.nextInt(600);
-        int r1200 = random.nextInt(1200);
+        long randomSeed = legacyRandomSeed(entity.getId());
+        long r600Step = legacyNextInt(randomSeed, 600);
+        randomSeed = legacyStepSeed(r600Step);
+        int r600 = legacyStepValue(r600Step);
+        long r1200Step = legacyNextInt(randomSeed, 1200);
+        randomSeed = legacyStepSeed(r1200Step);
+        int r1200 = legacyStepValue(r1200Step);
         if (radiation > 600.0F && (time + r600) % 600 < 20) {
             spawnVomit(entity, ParticleUtil.VOMIT_BLOOD, 25);
             if ((time + r600) % 600 == 1) {
@@ -668,9 +654,47 @@ public final class CommonForgeEvents {
             }
         }
 
-        if (radiation > 900.0F && (time + random.nextInt(10)) % 10 == 0) {
+        if (radiation > 900.0F && (time + legacyStepValue(legacyNextInt(randomSeed, 10))) % 10 == 0) {
             ParticleUtil.spawnSweat(entity, Blocks.REDSTONE_BLOCK, 1);
         }
+    }
+
+    private static long legacyRandomSeed(int seed) {
+        return (seed ^ 0x5DEECE66DL) & ((1L << 48) - 1);
+    }
+
+    private static long legacyNextSeed(long seed) {
+        return (seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
+    }
+
+    private static long legacyNextInt(long seed, int bound) {
+        if (bound <= 0 || bound > 0xFFFF) {
+            throw new IllegalArgumentException("bound must fit in 16 bits");
+        }
+        long nextSeed = legacyNextSeed(seed);
+        int bits = (int) (nextSeed >>> 17);
+        if ((bound & -bound) == bound) {
+            return legacyStep((int) ((bound * (long) bits) >> 31), nextSeed);
+        }
+        int value = bits % bound;
+        while (bits - value + (bound - 1) < 0) {
+            nextSeed = legacyNextSeed(nextSeed);
+            bits = (int) (nextSeed >>> 17);
+            value = bits % bound;
+        }
+        return legacyStep(value, nextSeed);
+    }
+
+    private static long legacyStep(int value, long seed) {
+        return (seed << 16) | (value & 0xFFFFL);
+    }
+
+    private static long legacyStepSeed(long step) {
+        return step >>> 16;
+    }
+
+    private static int legacyStepValue(long step) {
+        return (int) (step & 0xFFFFL);
     }
 
     private static void handleDigammaEffects(LivingEntity entity) {

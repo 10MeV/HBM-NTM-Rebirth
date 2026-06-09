@@ -1,5 +1,7 @@
 package com.hbm.ntm.fluid;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -13,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.ResourceLocation;
@@ -119,7 +120,7 @@ public final class HbmFluidContainerConfig {
         if (id == null) {
             throw new IllegalArgumentException(name + " has invalid item id " + itemName);
         }
-        Item item = BuiltInRegistries.ITEM.getOptional(id)
+        Item item = HbmRegistryUtil.item(id)
                 .orElseThrow(() -> new IllegalArgumentException(name + " item is not registered: " + id));
         ItemStack stack = new ItemStack(item, Math.max(1, count));
         if (nbt != null && !nbt.isBlank()) {

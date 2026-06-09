@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/machine_deuterium_tower.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/machine_deuterium_tower",
+    "default": "hbm_ntm_rebirth:block/machines/machine_deuterium_tower",
+    "texture0": "hbm_ntm_rebirth:block/machines/machine_deuterium_tower"
+  }
+}

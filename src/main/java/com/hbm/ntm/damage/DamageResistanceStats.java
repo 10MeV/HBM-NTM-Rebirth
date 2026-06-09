@@ -17,23 +17,28 @@ public class DamageResistanceStats {
 
     public ResistanceMatch match(DamageSource source) {
         String exactKey = DamageResistanceHandler.exactTypeKey(source);
+        String registryKey = DamageResistanceHandler.registryTypeKey(source);
+        String categoryKey = DamageResistanceHandler.typeToCategory(source);
+        return matchKeys(exactKey, registryKey, categoryKey,
+                DamageResistanceHandler.isUnblockableForLegacyResistance(source));
+    }
+
+    ResistanceMatch matchKeys(String exactKey, String registryKey, String categoryKey, boolean unblockable) {
         DamageResistance exact = exactResistances.get(exactKey);
         if (exact != null) {
             return new ResistanceMatch("exact", exactKey, exact);
         }
-        String registryKey = DamageResistanceHandler.registryTypeKey(source);
         if (registryKey != null && !registryKey.equals(exactKey)) {
             exact = exactResistances.get(registryKey);
             if (exact != null) {
                 return new ResistanceMatch("exact", registryKey, exact);
             }
         }
-        String categoryKey = DamageResistanceHandler.typeToCategory(source);
         DamageResistance category = categoryResistances.get(categoryKey);
         if (category != null) {
             return new ResistanceMatch("category", categoryKey, category);
         }
-        if (DamageResistanceHandler.isUnblockableForLegacyResistance(source) || otherResistance == null) {
+        if (unblockable || otherResistance == null) {
             return null;
         }
         return new ResistanceMatch("other", "other", otherResistance);

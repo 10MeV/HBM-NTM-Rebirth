@@ -13,6 +13,7 @@ import net.minecraft.world.item.TooltipFlag;
 import javax.annotation.Nullable;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -389,12 +390,38 @@ public final class ArmorRegistry {
         }
 
         @Override
+        public int size() {
+            return HazmatRegistry.protectionSnapshot().size();
+        }
+
+        @Override
         public ArrayList<HazardClass> put(Item key, ArrayList<HazardClass> value) {
             ArrayList<HazardClass> previous = get(key);
             if (key != null && value != null) {
                 HazmatRegistry.registerProtection(key, value.toArray(HazardClass[]::new));
             }
             return previous;
+        }
+
+        @Override
+        public ArrayList<HazardClass> remove(Object key) {
+            if (!(key instanceof Item item)) {
+                return null;
+            }
+            EnumSet<HazardClass> previous = HazmatRegistry.removeProtection(item);
+            return previous == null ? null : new ArrayList<>(previous);
+        }
+
+        @Override
+        public void clear() {
+            HazmatRegistry.clearProtections();
+        }
+
+        @Override
+        public Collection<ArrayList<HazardClass>> values() {
+            return HazmatRegistry.protectionSnapshot().values().stream()
+                    .map(ArrayList::new)
+                    .collect(Collectors.toUnmodifiableList());
         }
 
         @Override

@@ -11,6 +11,7 @@ import com.hbm.ntm.explosion.ExplosionRay;
 import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
+import com.hbm.ntm.util.HbmBlockStateUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
@@ -135,9 +136,8 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
             Vec3 direction = offset.normalize();
             float resistance = 0.0F;
             for (int i = 1; i < distance; i++) {
-                resistance += level().getBlockState(BlockPos.containing(origin.add(direction.scale(i))))
-                        .getBlock()
-                        .getExplosionResistance();
+                BlockPos sample = BlockPos.containing(origin.add(direction.scale(i)));
+                resistance += HbmBlockStateUtil.explosionResistance(level().getBlockState(sample), level(), sample);
             }
             if (resistance < 1.0F) {
                 resistance = 1.0F;

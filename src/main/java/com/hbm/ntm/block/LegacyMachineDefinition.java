@@ -32,6 +32,7 @@ public record LegacyMachineDefinition(
         float itemFitSize,
         float legacyItemScale,
         Function<Direction, Vec3> modelTranslationFactory,
+        Function<Direction, Float> postModelYRotationFactory,
         float yRotationOffset,
         Function<Direction, Float> yRotationFactory,
         Function<BlockPos, AABB> renderBoundingBoxFactory,
@@ -69,6 +70,13 @@ public record LegacyMachineDefinition(
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
         return modelTranslationFactory == null ? Vec3.ZERO : modelTranslationFactory.apply(facing);
+    }
+
+    public float postModelYRotation(BlockState state) {
+        Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
+                ? state.getValue(HorizontalMachineBlock.FACING)
+                : Direction.SOUTH;
+        return postModelYRotationFactory == null ? 0.0F : postModelYRotationFactory.apply(facing);
     }
 
     public VoxelShape collisionShape(BlockState state) {
@@ -114,6 +122,7 @@ public record LegacyMachineDefinition(
         private float itemFitSize = 0.58F;
         private float legacyItemScale;
         private Function<Direction, Vec3> modelTranslationFactory;
+        private Function<Direction, Float> postModelYRotationFactory;
         private float yRotationOffset = 90.0F;
         private Function<Direction, Float> yRotationFactory;
         private Function<BlockPos, AABB> renderBoundingBoxFactory;
@@ -202,6 +211,15 @@ public record LegacyMachineDefinition(
             return modelTranslation(facing -> new Vec3(x, y, z));
         }
 
+        public Builder postModelYRotation(Function<Direction, Float> postModelYRotationFactory) {
+            this.postModelYRotationFactory = postModelYRotationFactory;
+            return this;
+        }
+
+        public Builder postModelYRotation(float postModelYRotation) {
+            return postModelYRotation(facing -> postModelYRotation);
+        }
+
         public Builder yRotationOffset(float yRotationOffset) {
             this.yRotationOffset = yRotationOffset;
             return this;
@@ -245,7 +263,7 @@ public record LegacyMachineDefinition(
             return new LegacyMachineDefinition(legacyXrDimensions, legacyOffset, legacyHeightOffset,
                     placementFacingFactory, resolvedLayout, modelLocation, textureLocation, partTextures,
                     renderAll, renderParts, resolvedItemRenderAll, resolvedItemRenderParts, itemPartTextures, itemFitSize,
-                    legacyItemScale, modelTranslationFactory, yRotationOffset,
+                    legacyItemScale, modelTranslationFactory, postModelYRotationFactory, yRotationOffset,
                     yRotationFactory, renderBoundingBoxFactory, collisionShapeFactory, highlightShapeFactory,
                     particleStateFactory);
         }

@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -56,6 +57,9 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+        Vec3 translation = definition.modelTranslation(state);
+        poseStack.translate(translation.x, translation.y, translation.z);
+        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         model.renderPart("Base", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         if (chemicalPlant.shouldRenderFrame()) {

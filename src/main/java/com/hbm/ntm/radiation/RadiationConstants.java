@@ -19,9 +19,11 @@ public final class RadiationConstants {
     public static final float TC99 = 2.75F;
     public static final float CO60 = 30.0F;
     public static final float SR90 = 15.0F;
+    public static final float I131 = 150.0F;
     public static final float CS137 = 20.0F;
     public static final float AU198 = 500.0F;
     public static final float PB209 = 10_000.0F;
+    public static final float AT209 = 7_500.0F;
     public static final float RA226 = 7.5F;
     public static final float AC227 = 30.0F;
     public static final float AM241 = 8.5F;
@@ -31,6 +33,10 @@ public final class RadiationConstants {
     public static final float SA327 = 17.5F;
     public static final float SAS3 = 5.0F;
     public static final float SCHRARANIUM = SA326 * 0.1F;
+    public static final float RADSOURCE_MULTIPLIER = 3.0F;
+    public static final float PO210_BE = PO210 * RADSOURCE_MULTIPLIER;
+    public static final float RA226_BE = RA226 * RADSOURCE_MULTIPLIER;
+    public static final float PU238_BE = PU238 * RADSOURCE_MULTIPLIER;
     public static final float TRIXITE = 25.0F;
     public static final float U_FUEL = 0.5F;
     public static final float UZH = 0.125F;
@@ -53,6 +59,9 @@ public final class RadiationConstants {
     public static final float BILLET = 0.5F;
     public static final float NUGGET = 0.1F;
     public static final float RTG = BILLET * 3.0F;
+    public static final float ROD = BILLET;
+    public static final float ROD_DUAL = ROD * 2.0F;
+    public static final float ROD_QUAD = ROD * 4.0F;
     public static final float POWDER_MULTIPLIER = 3.0F;
 
     private RadiationConstants() {

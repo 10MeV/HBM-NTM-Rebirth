@@ -18,13 +18,11 @@ public final class LiquefactionRecipeCategory implements IRecipeCategory<Liquefa
     private static final int HEIGHT = 54;
 
     private final RecipeType<LiquefactionRecipe> type;
-    private final IDrawableStatic background;
     private final IDrawable icon;
     private final IDrawableStatic arrow;
 
     LiquefactionRecipeCategory(RecipeType<LiquefactionRecipe> type, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
-        this.background = guiHelper.createBlankDrawable(WIDTH, HEIGHT);
         this.icon = guiHelper.createDrawableItemLike(catalyst);
         this.arrow = guiHelper.getRecipeArrow();
     }
@@ -37,11 +35,6 @@ public final class LiquefactionRecipeCategory implements IRecipeCategory<Liquefa
     @Override
     public Component getTitle() {
         return Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_liquefactor", "Liquefactor");
-    }
-
-    @Override
-    public IDrawable getBackground() {
-        return background;
     }
 
     @Override

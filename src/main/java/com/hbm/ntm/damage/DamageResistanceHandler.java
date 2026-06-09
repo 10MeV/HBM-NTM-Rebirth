@@ -233,6 +233,20 @@ public final class DamageResistanceHandler {
         expectResistance(problems, "stats exact normalizes on_fire", stats.exactResistances().get("onfire"), 2.0F, 0.3F);
         expectResistance(problems, "stats category normalizes energy", stats.categoryResistances().get(CATEGORY_ENERGY), 4.0F, 0.5F);
         expectResistance(problems, "stats other preserved", stats.otherResistance(), 5.0F, 0.6F);
+        DamageResistanceStats precedence = new DamageResistanceStats()
+                .addExact("laser", 7.0F, 0.7F)
+                .addCategory(CATEGORY_ENERGY, 8.0F, 0.8F)
+                .setOther(9.0F, 0.9F);
+        expectMatch(problems, "stats exact beats category",
+                precedence.matchKeys("laser", null, CATEGORY_ENERGY, false), "exact", "laser", 7.0F, 0.7F);
+        expectMatch(problems, "stats registry exact fallback",
+                precedence.matchKeys("custommessage", "laser", CATEGORY_PHYSICAL, false), "exact", "laser", 7.0F, 0.7F);
+        expectMatch(problems, "stats category beats other",
+                precedence.matchKeys("missing", null, CATEGORY_ENERGY, false), "category", CATEGORY_ENERGY, 8.0F, 0.8F);
+        expectMatch(problems, "stats other fallback",
+                precedence.matchKeys("missing", null, "unknown", false), "other", "other", 9.0F, 0.9F);
+        expect(problems, "stats bypass armor skips other",
+                precedence.matchKeys("missing", null, "unknown", true) == null);
         PierceState previous = capturePiercing();
         try {
             setup(7.0F, 0.3F);
@@ -267,6 +281,14 @@ public final class DamageResistanceHandler {
         addSetInfo(auditItemInfoSets, shared, second);
         expect(problems, "item set info keeps registration order",
                 setStatsForItem(shared, auditItemInfoSets, auditSetStats) == firstSet);
+        ArmorSet partial = new ArmorSet(shared, null, legs, boots);
+        auditSetStats.clear();
+        auditItemInfoSets.clear();
+        auditSetStats.put(partial, firstSet);
+        addSetInfo(auditItemInfoSets, shared, partial);
+        ArmorSetInfo partialInfo = setInfoForItem(shared, auditItemInfoSets, auditSetStats);
+        expect(problems, "partial set info keeps null slot",
+                partialInfo != null && partialInfo.chest() == null && partialInfo.legs() == legs);
         return new CoreAudit(List.copyOf(problems));
     }
 
@@ -336,6 +358,16 @@ public final class DamageResistanceHandler {
 
     private static DamageResistanceStats setStatsForItem(Item item, Map<Item, List<ArmorSet>> itemInfoSets,
             Map<ArmorSet, DamageResistanceStats> setStats) {
+        ArmorSetInfo info = setInfoForItem(item, itemInfoSets, setStats);
+        return info == null ? null : info.stats();
+    }
+
+    public static ArmorSetInfo setInfoForItem(Item item) {
+        return setInfoForItem(item, ITEM_INFO_SETS, SET_STATS);
+    }
+
+    private static ArmorSetInfo setInfoForItem(Item item, Map<Item, List<ArmorSet>> itemInfoSets,
+            Map<ArmorSet, DamageResistanceStats> setStats) {
         List<ArmorSet> sets = itemInfoSets.get(item);
         if (sets == null) {
             return null;
@@ -343,7 +375,7 @@ public final class DamageResistanceHandler {
         for (ArmorSet set : sets) {
             DamageResistanceStats stats = setStats.get(set);
             if (stats != null) {
-                return stats;
+                return new ArmorSetInfo(set.helmet(), set.chest(), set.legs(), set.boots(), stats);
             }
         }
         return null;
@@ -486,6 +518,15 @@ public final class DamageResistanceHandler {
                 && nearly(actual.resistance(), resistance));
     }
 
+    private static void expectMatch(List<String> problems, String label, @Nullable DamageResistanceStats.ResistanceMatch actual,
+            String kind, String key, float threshold, float resistance) {
+        expect(problems, label, actual != null
+                && actual.kind().equals(kind)
+                && actual.key().equals(key)
+                && nearly(actual.resistance().threshold(), threshold)
+                && nearly(actual.resistance().resistance(), resistance));
+    }
+
     private static boolean nearly(float actual, float expected) {
         return Math.abs(actual - expected) < 0.0001F;
     }
@@ -602,6 +643,26 @@ public final class DamageResistanceHandler {
     }
 
     public record ArmorSlotBreakdown(EquipmentSlot slot, ItemStack stack, DamageResistanceStats itemStats) {
+    }
+
+    public record ArmorSetInfo(@Nullable Item helmet, @Nullable Item chest, @Nullable Item legs, @Nullable Item boots,
+                               DamageResistanceStats stats) {
+        public List<Item> nonNullItems() {
+            List<Item> items = new ArrayList<>(4);
+            if (helmet != null) {
+                items.add(helmet);
+            }
+            if (chest != null) {
+                items.add(chest);
+            }
+            if (legs != null) {
+                items.add(legs);
+            }
+            if (boots != null) {
+                items.add(boots);
+            }
+            return List.copyOf(items);
+        }
     }
 
     public record ResistanceContribution(String source, String id, String matchKind, String matchKey,

@@ -175,6 +175,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "magnetron_alt");
             return;
         }
+        if (path.equals("rod_zirnox_natural_uranium_fuel_depleted")) {
+            generatedItem(path, "rod_zirnox_uranium_fuel_depleted");
+            return;
+        }
         if (path.equals("ingot_weaponsteel")) {
             generatedItem(path, "ingot_gunsteel");
             return;

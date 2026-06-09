@@ -29,7 +29,7 @@ public class SatelliteInterfaceItem extends SatelliteChipItem implements HbmCoor
     private final Mode mode;
 
     public SatelliteInterfaceItem(Properties properties, Mode mode) {
-        super(properties, null, null);
+        super(properties, null);
         this.mode = mode;
     }
 
@@ -57,7 +57,8 @@ public class SatelliteInterfaceItem extends SatelliteChipItem implements HbmCoor
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         super.inventoryTick(stack, level, entity, slot, selected);
-        if (!selected || level.isClientSide || !(entity instanceof ServerPlayer player) || player.tickCount % 2 != 0) {
+        if (level.isClientSide || !(entity instanceof ServerPlayer player) || player.tickCount % 2 != 0
+                || !isHeldStack(player, stack, selected)) {
             return;
         }
         Satellite satellite = SatelliteSavedData.get(player.serverLevel()).getSatellite(getFrequency(stack));
@@ -110,5 +111,9 @@ public class SatelliteInterfaceItem extends SatelliteChipItem implements HbmCoor
     private static boolean isLaserAction(int action, CompoundTag data) {
         return action == ACTION_LASER || data.getBoolean("laser")
                 || HbmNetworkActions.SATELLITE_LASER.toString().equals(data.getString("actionType"));
+    }
+
+    private static boolean isHeldStack(Player player, ItemStack stack, boolean selected) {
+        return selected || player.getMainHandItem() == stack || player.getOffhandItem() == stack;
     }
 }

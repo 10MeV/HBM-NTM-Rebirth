@@ -49,6 +49,8 @@ import com.hbm.ntm.blockentity.PyroOvenBlockEntity;
 import com.hbm.ntm.blockentity.RadarBlockEntity;
 import com.hbm.ntm.blockentity.RadarLargeBlockEntity;
 import com.hbm.ntm.blockentity.RadarScreenBlockEntity;
+import com.hbm.ntm.blockentity.RadioAutocalBlockEntity;
+import com.hbm.ntm.blockentity.RadioTelexBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchControllerBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchCounterBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchLogicBlockEntity;
@@ -152,6 +154,16 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("radio_torch_controller", () ->
                     BlockEntityType.Builder.of(RadioTorchControllerBlockEntity::new,
                             ModBlocks.RADIO_TORCH_CONTROLLER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadioAutocalBlockEntity>> RADIO_AUTOCAL =
+            BLOCK_ENTITIES.register("radio_autocal", () ->
+                    BlockEntityType.Builder.of(RadioAutocalBlockEntity::new,
+                            ModBlocks.RADIO_AUTOCAL.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RadioTelexBlockEntity>> RADIO_TELEX =
+            BLOCK_ENTITIES.register("radio_telex", () ->
+                    BlockEntityType.Builder.of(RadioTelexBlockEntity::new,
+                            ModBlocks.RADIO_TELEX.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<FluidPipeBlockEntity>> FLUID_PIPE =
             BLOCK_ENTITIES.register("fluid_pipe", () ->
@@ -382,6 +394,23 @@ public final class ModBlockEntities {
                             ModBlocks.MACHINE_ORE_SLOPPER.get(),
                             ModBlocks.MACHINE_SAWMILL.get(),
                             ModBlocks.MACHINE_CRUCIBLE.get(),
+                            ModBlocks.CHIMNEY_BRICK.get(),
+                            ModBlocks.CHIMNEY_INDUSTRIAL.get(),
+                            ModBlocks.MACHINE_INTAKE.get(),
+                            ModBlocks.MACHINE_DRAIN.get(),
+                            ModBlocks.MACHINE_CHUNGUS.get(),
+                            ModBlocks.MACHINE_HEPHAESTUS.get(),
+                            ModBlocks.MACHINE_BOILER.get(),
+                            ModBlocks.MACHINE_INDUSTRIAL_BOILER.get(),
+                            ModBlocks.MACHINE_COMBUSTION_ENGINE.get(),
+                            ModBlocks.PUMP_STEAM.get(),
+                            ModBlocks.PUMP_ELECTRIC.get(),
+                            ModBlocks.HEATER_HEATEX.get(),
+                            ModBlocks.HEATER_FIREBOX.get(),
+                            ModBlocks.HEATER_OVEN.get(),
+                            ModBlocks.HEATER_OILBURNER.get(),
+                            ModBlocks.HEATER_ELECTRIC.get(),
+                            ModBlocks.MACHINE_CONDENSER_POWERED.get(),
                             ModBlocks.MACHINE_PUREX.get(),
                             ModBlocks.MACHINE_SILEX.get(),
                             ModBlocks.MACHINE_EXPOSURE_CHAMBER.get(),
@@ -395,7 +424,24 @@ public final class ModBlockEntities {
                             ModBlocks.MACHINE_RADGEN.get(),
                             ModBlocks.MACHINE_ROTARY_FURNACE.get(),
                             ModBlocks.MACHINE_TURBOFAN.get(),
-                            ModBlocks.MACHINE_TURBINEGAS.get()).build(null));
+                            ModBlocks.MACHINE_TURBINEGAS.get(),
+                            ModBlocks.MACHINE_AMMO_PRESS.get(),
+                            ModBlocks.FURNACE_IRON.get(),
+                            ModBlocks.FURNACE_STEEL.get(),
+                            ModBlocks.FURNACE_COMBINATION.get(),
+                            ModBlocks.MACHINE_BLAST_FURNACE.get(),
+                            ModBlocks.MACHINE_ARC_FURNACE.get(),
+                            ModBlocks.MACHINE_ANNIHILATOR.get(),
+                            ModBlocks.MACHINE_FEL.get(),
+                            ModBlocks.MACHINE_ORBUS.get(),
+                            ModBlocks.MACHINE_MINING_LASER.get(),
+                            ModBlocks.MACHINE_STRAND_CASTER.get(),
+                            ModBlocks.MACHINE_WOOD_BURNER.get(),
+                            ModBlocks.MACHINE_STIRLING.get(),
+                            ModBlocks.MACHINE_STIRLING_STEEL.get(),
+                            ModBlocks.MACHINE_STIRLING_CREATIVE.get(),
+                            ModBlocks.MACHINE_DEUTERIUM_TOWER.get(),
+                            ModBlocks.FRACTION_SPACER.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<TrinketBlockEntity>> TRINKET =
             BLOCK_ENTITIES.register("trinket", () ->

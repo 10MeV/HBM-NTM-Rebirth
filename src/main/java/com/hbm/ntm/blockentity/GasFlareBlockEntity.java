@@ -458,7 +458,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.put("Inventory", items.serializeNBT());
+        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "Inventory", items);
         tag.putBoolean("isOn", on);
         tag.putBoolean("doesBurn", burn);
         tag.putInt("fluidUsed", fluidUsed);
@@ -470,7 +470,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        items.deserializeNBT(tag.getCompound("Inventory"));
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, "Inventory", items);
         on = tag.getBoolean("isOn");
         burn = tag.getBoolean("doesBurn");
         fluidUsed = tag.getInt("fluidUsed");

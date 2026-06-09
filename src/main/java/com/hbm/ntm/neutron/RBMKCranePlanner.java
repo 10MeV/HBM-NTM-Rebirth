@@ -10,8 +10,153 @@ public final class RBMKCranePlanner {
     public static final int MAX_ROOM_EXTENT = 16;
     public static final int CRANE_HEIGHT = 7;
     public static final int ROTATION_STEP = 90;
+    public static final int NETWORK_RANGE = 250;
+    public static final double MAX_RENDER_DISTANCE_SQ = 65536.0D;
+    public static final String HELD_ITEM_NBT_KEY = "held";
 
     private RBMKCranePlanner() {
+    }
+
+    public static String[] nbtKeys() {
+        return new String[] {
+                "crane",
+                "craneRotationOffset",
+                "centerX",
+                "centerY",
+                "centerZ",
+                "spanF",
+                "spanB",
+                "spanL",
+                "spanR",
+                "height",
+                "posFront",
+                "posLeft",
+                HELD_ITEM_NBT_KEY
+        };
+    }
+
+    public static CranePacketField[] packetLayout(boolean setUpCrane) {
+        if (!setUpCrane) {
+            return new CranePacketField[] {
+                    new CranePacketField("setUpCrane", CraneFieldType.BOOLEAN, CraneFieldCondition.ALWAYS)
+            };
+        }
+        return new CranePacketField[] {
+                new CranePacketField("setUpCrane", CraneFieldType.BOOLEAN, CraneFieldCondition.ALWAYS),
+                new CranePacketField("craneRotationOffset", CraneFieldType.INT, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("centerX", CraneFieldType.INT, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("centerY", CraneFieldType.INT, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("centerZ", CraneFieldType.INT, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("spanF", CraneFieldType.INT, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("spanB", CraneFieldType.INT, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("spanL", CraneFieldType.INT, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("spanR", CraneFieldType.INT, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("height", CraneFieldType.INT, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("posFront", CraneFieldType.DOUBLE, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("posLeft", CraneFieldType.DOUBLE, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("progress", CraneFieldType.DOUBLE, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("hasItemLoaded", CraneFieldType.BOOLEAN, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("loadedHeat", CraneFieldType.DOUBLE, CraneFieldCondition.IF_SETUP),
+                new CranePacketField("loadedEnrichment", CraneFieldType.DOUBLE, CraneFieldCondition.IF_SETUP)
+        };
+    }
+
+    public static CraneNbtSnapshot nbtSnapshot(CraneState state, boolean hasHeldItem) {
+        CraneState safe = state == null ? CraneState.empty() : state;
+        return new CraneNbtSnapshot(
+                safe.setUpCrane(),
+                safe.craneRotationOffset(),
+                safe.center().getX(),
+                safe.center().getY(),
+                safe.center().getZ(),
+                safe.bounds().spanFront(),
+                safe.bounds().spanBack(),
+                safe.bounds().spanLeft(),
+                safe.bounds().spanRight(),
+                safe.height(),
+                safe.position().posFront(),
+                safe.position().posLeft(),
+                hasHeldItem,
+                HELD_ITEM_NBT_KEY);
+    }
+
+    public static CraneState stateFromNbt(boolean setUpCrane, int craneRotationOffset, int centerX, int centerY,
+            int centerZ, int spanF, int spanB, int spanL, int spanR, int height, double posFront, double posLeft) {
+        return new CraneState(
+                setUpCrane,
+                craneRotationOffset,
+                new BlockPos(centerX, centerY, centerZ),
+                new CraneBounds(spanF, spanB, spanL, spanR),
+                height,
+                new CranePosition(posFront, posLeft));
+    }
+
+    public static CraneServerTickPlan planServerTick(boolean setUpCrane, boolean hasTargetColumn, boolean hasLoadedRod,
+            double loadedRodHullHeat, double loadedRodEnrichment) {
+        return new CraneServerTickPlan(
+                setUpCrane,
+                hasTargetColumn ? COLUMN_INDICATOR_TICKS : 0,
+                hasLoadedRod ? loadedRodHullHeat : 0.0D,
+                hasLoadedRod ? loadedRodEnrichment : 0.0D,
+                true,
+                NETWORK_RANGE);
+    }
+
+    public static CraneClientTickPlan planClientTick(CraneClientState state) {
+        CraneClientState safe = state == null ? CraneClientState.empty() : state;
+        double nextFront;
+        double nextLeft;
+        double nextProgress;
+        int nextTurnProgress = safe.turnProgress();
+
+        if (safe.turnProgress() > 0) {
+            nextFront = safe.posFront() + ((safe.syncFront() - safe.posFront()) / (double) safe.turnProgress());
+            nextLeft = safe.posLeft() + ((safe.syncLeft() - safe.posLeft()) / (double) safe.turnProgress());
+            nextProgress = safe.progress() + ((safe.syncProgress() - safe.progress()) / (double) safe.turnProgress());
+            nextTurnProgress--;
+        } else {
+            nextFront = safe.syncFront();
+            nextLeft = safe.syncLeft();
+            nextProgress = safe.syncProgress();
+        }
+
+        CraneClientState next = new CraneClientState(
+                nextFront,
+                nextLeft,
+                nextProgress,
+                safe.syncFront(),
+                safe.syncLeft(),
+                safe.syncProgress(),
+                safe.tiltFront(),
+                safe.tiltLeft(),
+                safe.posFront(),
+                safe.posLeft(),
+                safe.progress(),
+                safe.tiltFront(),
+                safe.tiltLeft(),
+                nextTurnProgress);
+        return new CraneClientTickPlan(next);
+    }
+
+    public static CraneOperationBox operationBox(BlockPos consolePos, Direction facing, Direction side) {
+        BlockPos safePos = consolePos == null ? BlockPos.ZERO : consolePos;
+        Direction safeFacing = facing == null ? Direction.NORTH : facing;
+        Direction safeSide = side == null ? Direction.WEST : side;
+        double minX = safePos.getX() + 0.5D - safeSide.getStepX() * 1.5D;
+        double maxX = safePos.getX() + 0.5D + safeSide.getStepX() * 1.5D + safeFacing.getStepX() * 2.0D;
+        double minZ = safePos.getZ() + 0.5D - safeSide.getStepZ() * 1.5D;
+        double maxZ = safePos.getZ() + 0.5D + safeSide.getStepZ() * 1.5D + safeFacing.getStepZ() * 2.0D;
+        return new CraneOperationBox(
+                Math.min(minX, maxX),
+                safePos.getY(),
+                Math.min(minZ, maxZ),
+                Math.max(minX, maxX),
+                safePos.getY() + 2.0D,
+                Math.max(minZ, maxZ));
+    }
+
+    public static RenderContract renderContract() {
+        return new RenderContract(true, MAX_RENDER_DISTANCE_SQ);
     }
 
     public static SetupPlan planSetup(BlockPos targetColumn, int columnHeight, int spanF, int spanB, int spanL,
@@ -156,6 +301,94 @@ public final class RBMKCranePlanner {
         NONE,
         LOAD_TO_COLUMN,
         UNLOAD_FROM_COLUMN
+    }
+
+    public enum CraneFieldType {
+        BOOLEAN,
+        INT,
+        DOUBLE
+    }
+
+    public enum CraneFieldCondition {
+        ALWAYS,
+        IF_SETUP
+    }
+
+    public record CranePacketField(String name, CraneFieldType type, CraneFieldCondition condition) {
+    }
+
+    public record CraneState(
+            boolean setUpCrane,
+            int craneRotationOffset,
+            BlockPos center,
+            CraneBounds bounds,
+            int height,
+            CranePosition position) {
+        public CraneState {
+            center = center == null ? BlockPos.ZERO : center;
+            bounds = bounds == null ? CraneBounds.ZERO : bounds;
+            position = position == null ? CranePosition.ZERO : position;
+        }
+
+        public static CraneState empty() {
+            return new CraneState(false, 0, BlockPos.ZERO, CraneBounds.ZERO, 0, CranePosition.ZERO);
+        }
+    }
+
+    public record CraneNbtSnapshot(
+            boolean setUpCrane,
+            int craneRotationOffset,
+            int centerX,
+            int centerY,
+            int centerZ,
+            int spanF,
+            int spanB,
+            int spanL,
+            int spanR,
+            int height,
+            double posFront,
+            double posLeft,
+            boolean writeHeldItem,
+            String heldItemKey) {
+    }
+
+    public record CraneServerTickPlan(
+            boolean setUpCrane,
+            int targetColumnIndicatorTicks,
+            double loadedHeat,
+            double loadedEnrichment,
+            boolean sendNetwork,
+            int networkRange) {
+    }
+
+    public record CraneClientState(
+            double posFront,
+            double posLeft,
+            double progress,
+            double syncFront,
+            double syncLeft,
+            double syncProgress,
+            double tiltFront,
+            double tiltLeft,
+            double lastPosFront,
+            double lastPosLeft,
+            double lastProgress,
+            double lastTiltFront,
+            double lastTiltLeft,
+            int turnProgress) {
+        public static CraneClientState empty() {
+            return new CraneClientState(0.0D, 0.0D, 1.0D, 0.0D, 0.0D, 1.0D, 0.0D, 0.0D, 0.0D, 0.0D,
+                    1.0D, 0.0D, 0.0D, 0);
+        }
+    }
+
+    public record CraneClientTickPlan(CraneClientState state) {
+    }
+
+    public record CraneOperationBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+    }
+
+    public record RenderContract(boolean infiniteBoundingBox, double maxRenderDistanceSq) {
     }
 
     public record SetupPlan(

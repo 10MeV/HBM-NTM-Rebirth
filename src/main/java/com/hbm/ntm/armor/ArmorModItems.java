@@ -2,21 +2,28 @@ package com.hbm.ntm.armor;
 
 import com.google.common.collect.Multimap;
 import com.hbm.ntm.api.item.ArmorDashProvider;
+import com.hbm.ntm.damage.EntityDamageUtil;
+import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.player.HbmPlayerProperties;
+import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEffects;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.satellite.ISatelliteChip;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffect;
@@ -25,12 +32,20 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.GoalSelector;
+import net.minecraft.world.entity.ai.goal.SwellGoal;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
+import net.minecraft.world.entity.animal.Ocelot;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -38,11 +53,17 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.registries.RegistryObject;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -264,6 +285,178 @@ public final class ArmorModItems {
         }
     }
 
+    public static class Jetpack extends ArmorModItem {
+        private static final String FUEL_TAG = "fuel";
+
+        private final Type type;
+        private final FluidType fuelType;
+        private final int maxFuel;
+
+        public Jetpack(Item.Properties properties, Type type, FluidType fuelType, int maxFuel) {
+            super(properties, ArmorModHandler.ArmorModSlot.PLATE_ONLY, false, true, false, false);
+            this.type = type;
+            this.fuelType = fuelType;
+            this.maxFuel = maxFuel;
+        }
+
+        @Override
+        public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+            for (Component description : type.descriptions()) {
+                tooltip.add(description.copy().withStyle(ChatFormatting.GOLD));
+            }
+            tooltip.add(fuelType.getDisplayName().copy()
+                    .append(": " + getFuel(stack) + "mB / " + maxFuel + "mB")
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+            tooltip.add(Component.literal("Can be worn on its own hook pending").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.literal("Fluid filling hook pending").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.empty());
+            super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
+            if (!(entity instanceof Player player) || getFuel(mod) <= 0) {
+                return;
+            }
+
+            boolean changed = switch (type) {
+                case REGULAR -> regular(player, mod);
+                case HOVER -> hover(player, mod);
+                case VECTORED -> vector(player, mod, 2.0D, 0.4D, 0.1D, 0.1D, 3, 1.5F);
+                case BOOST -> vector(player, mod, 5.0D, 0.6D, 0.1D, 0.25D, 1, 1.0F);
+            };
+
+            if (changed) {
+                ArmorModHandler.applyMod(armor, mod);
+            }
+        }
+
+        public static int getFuel(ItemStack stack) {
+            if (stack.isEmpty() || stack.getTag() == null) {
+                return 0;
+            }
+            return stack.getTag().getInt(FUEL_TAG);
+        }
+
+        public void setFuel(ItemStack stack, int fuel) {
+            stack.getOrCreateTag().putInt(FUEL_TAG, Math.max(0, Math.min(maxFuel, fuel)));
+        }
+
+        private boolean regular(Player player, ItemStack stack) {
+            if (!HbmPlayerProperties.isJetpackActive(player)) {
+                return false;
+            }
+            Vec3 movement = player.getDeltaMovement();
+            if (movement.y < 0.4D) {
+                player.setDeltaMovement(movement.x, movement.y + 0.1D, movement.z);
+                player.hasImpulse = true;
+            }
+            player.fallDistance = 0.0F;
+            play(player, 1.5F);
+            ParticleUtil.spawnJetpack(player.level(), player, 0);
+            useUpFuel(player, stack, 5);
+            return true;
+        }
+
+        private boolean hover(Player player, ItemStack stack) {
+            boolean active = HbmPlayerProperties.isJetpackActive(player);
+            boolean triesToHover = player.isShiftKeyDown() && active;
+            boolean shouldHover = triesToHover || !player.isShiftKeyDown();
+            if (active && !triesToHover) {
+                Vec3 movement = player.getDeltaMovement();
+                if (movement.y < 0.4D) {
+                    player.setDeltaMovement(movement.x, movement.y + 0.1D, movement.z);
+                    player.hasImpulse = true;
+                }
+                player.fallDistance = 0.0F;
+                play(player, 1.5F);
+                ParticleUtil.spawnJetpack(player.level(), player, 0);
+                useUpFuel(player, stack, 5);
+                return true;
+            }
+            if (shouldHover && !player.onGround() && HbmPlayerProperties.isBackpackEnabled(player)) {
+                Vec3 movement = player.getDeltaMovement();
+                double y = movement.y;
+                if (y < -1.0D) {
+                    y += 0.2D;
+                } else if (y < -0.1D) {
+                    y += 0.1D;
+                } else if (y < 0.0D) {
+                    y = 0.0D;
+                }
+                player.setDeltaMovement(movement.x * 1.025D, y, movement.z * 1.025D);
+                player.hasImpulse = true;
+                player.fallDistance = 0.0F;
+                play(player, 1.5F);
+                ParticleUtil.spawnJetpack(player.level(), player, 0);
+                useUpFuel(player, stack, 10);
+                return true;
+            }
+            return false;
+        }
+
+        private boolean vector(Player player, ItemStack stack, double speedLimit, double verticalLimit,
+                               double verticalThrust, double lookThrust, int fuelRate, float pitch) {
+            if (!HbmPlayerProperties.isJetpackActive(player)) {
+                return false;
+            }
+            Vec3 movement = player.getDeltaMovement();
+            double y = movement.y;
+            if (y < verticalLimit) {
+                y += verticalThrust;
+            }
+            Vec3 look = player.getLookAngle();
+            double x = movement.x;
+            double z = movement.z;
+            if (new Vec3(movement.x, y, movement.z).length() < speedLimit) {
+                x += look.x * lookThrust;
+                y += look.y * lookThrust;
+                z += look.z * lookThrust;
+                if (look.y > 0.0D) {
+                    player.fallDistance = 0.0F;
+                }
+            }
+            player.setDeltaMovement(x, y, z);
+            player.hasImpulse = true;
+            play(player, pitch);
+            ParticleUtil.spawnJetpack(player.level(), player, 1);
+            useUpFuel(player, stack, fuelRate);
+            return true;
+        }
+
+        private void play(Player player, float pitch) {
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    ModSounds.WEAPON_FLAMETHROWER_SHOOT.get(), SoundSource.PLAYERS, 0.25F, pitch);
+        }
+
+        private void useUpFuel(Player player, ItemStack stack, int rate) {
+            if (player.tickCount % rate == 0) {
+                setFuel(stack, getFuel(stack) - 1);
+            }
+        }
+
+        public enum Type {
+            REGULAR(Component.literal("Regular jetpack for simple upwards momentum.")),
+            HOVER(Component.literal("Regular jetpack that will automatically hover mid-air."),
+                    Component.literal("Sneaking will stop hover mode."),
+                    Component.literal("Hover mode will consume less fuel and increase air-mobility.")),
+            VECTORED(Component.literal("High-mobility jetpack."),
+                    Component.literal("Higher fuel consumption.")),
+            BOOST(Component.literal("High-powered vectorized jetpack."),
+                    Component.literal("Highly increased fuel consumption."));
+
+            private final List<Component> descriptions;
+
+            Type(Component... descriptions) {
+                this.descriptions = List.of(descriptions);
+            }
+
+            public List<Component> descriptions() {
+                return descriptions;
+            }
+        }
+    }
+
     public static class Shield extends ArmorModItem {
         private final float shield;
 
@@ -299,6 +492,10 @@ public final class ArmorModItems {
         public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.literal("-" + Math.round((1.0F - damageMod) * 100.0F) + "% fall damage")
                     .withStyle(ChatFormatting.RED));
+            if (staticCharge) {
+                tooltip.add(Component.literal("Passively charges electric armor when walking")
+                        .withStyle(ChatFormatting.DARK_PURPLE));
+            }
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
         }
@@ -307,6 +504,30 @@ public final class ArmorModItems {
         public void onArmorModHurt(LivingHurtEvent event, ItemStack armor, ItemStack mod) {
             if (event.getSource().is(DamageTypes.FALL)) {
                 event.setAmount(event.getAmount() * damageMod);
+            }
+        }
+
+        @Override
+        public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
+            if (!staticCharge || !(entity instanceof Player player) || !FsbPoweredArmor.hasFullPoweredSetIgnoreCharge(player)) {
+                return;
+            }
+            double dx = player.getX() - player.xo;
+            double dz = player.getZ() - player.zo;
+            if (!player.onGround() || dx * dx + dz * dz <= 1.0E-6D) {
+                return;
+            }
+            for (EquipmentSlot slot : List.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET)) {
+                ItemStack equipped = player.getItemBySlot(slot);
+                if (equipped.getItem() instanceof FsbPoweredArmor powered) {
+                    long charge = powered.getDrain(equipped) / 2L;
+                    if (charge == 0L) {
+                        charge = powered.getConsumption(equipped) / 40L;
+                    }
+                    if (charge > 0L) {
+                        powered.setCharge(equipped, Math.min(powered.getMaxCharge(equipped), powered.getCharge(equipped) + charge));
+                    }
+                }
             }
         }
     }
@@ -623,6 +844,210 @@ public final class ArmorModItems {
                 }
                 ModMessages.sendAuxParticle(player, 0.0D, 0.0D, 0.0D, data);
             }
+        }
+    }
+
+    public static class Defuser extends ArmorModItem {
+        private static final String DEFUSED_TAG = "hfr_defused";
+        @Nullable
+        private static final Field GOAL_SELECTOR_FIELD = findGoalSelectorField();
+
+        public Defuser(Item.Properties properties) {
+            super(properties, ArmorModHandler.ArmorModSlot.EXTRA, true, true, true, true);
+        }
+
+        @Override
+        public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+            tooltip.add(Component.literal("Defuses nearby creepers").withStyle(ChatFormatting.YELLOW));
+            tooltip.add(Component.empty());
+            super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
+            Level level = entity.level();
+            if (level.isClientSide || level.getGameTime() % 20 != 0) {
+                return;
+            }
+            for (Creeper creeper : level.getEntitiesOfClass(Creeper.class, entity.getBoundingBox().inflate(5.0D))) {
+                defuse(creeper, entity, true);
+            }
+        }
+
+        public static boolean defuse(Creeper creeper, LivingEntity entity, boolean dropItem) {
+            creeper.setSwellDir(-1);
+            if (creeper.level().isClientSide) {
+                return false;
+            }
+
+            GoalSelector selector = goalSelector(creeper);
+            if (selector == null) {
+                return false;
+            }
+
+            List<Goal> swellGoals = selector.getAvailableGoals().stream()
+                    .map(WrappedGoal::getGoal)
+                    .filter(SwellGoal.class::isInstance)
+                    .toList();
+            if (swellGoals.isEmpty()) {
+                return false;
+            }
+
+            for (Goal goal : swellGoals) {
+                selector.removeGoal(goal);
+            }
+
+            if (dropItem) {
+                creeper.level().playSound(null, creeper.getX(), creeper.getY(), creeper.getZ(),
+                        ModSounds.TOOL_PIN_BREAK.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+                RegistryObject<Item> fuse = ModItems.legacyItem("safety_fuse");
+                if (fuse != null) {
+                    creeper.spawnAtLocation(new ItemStack(fuse.get()), 0.0F);
+                }
+                creeper.hurt(creeper.damageSources().mobAttack(entity), 1.0F);
+                creeper.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 0, 200));
+            }
+            creeper.getPersistentData().putBoolean(DEFUSED_TAG, true);
+            return true;
+        }
+
+        @Nullable
+        private static GoalSelector goalSelector(Mob mob) {
+            if (GOAL_SELECTOR_FIELD == null) {
+                return null;
+            }
+            try {
+                Object value = GOAL_SELECTOR_FIELD.get(mob);
+                return value instanceof GoalSelector selector ? selector : null;
+            } catch (IllegalAccessException ignored) {
+                return null;
+            }
+        }
+
+        @Nullable
+        private static Field findGoalSelectorField() {
+            for (String name : List.of("goalSelector", "f_21345_")) {
+                try {
+                    Field field = Mob.class.getDeclaredField(name);
+                    field.setAccessible(true);
+                    return field;
+                } catch (NoSuchFieldException ignored) {
+                }
+            }
+            return null;
+        }
+    }
+
+    public static class NeutrinoLens extends ArmorModItem implements ISatelliteChip {
+        public NeutrinoLens(Item.Properties properties) {
+            super(properties, ArmorModHandler.ArmorModSlot.EXTRA, true, false, false, false);
+        }
+
+        @Override
+        public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+            tooltip.add(Component.translatable("satchip.frequency")
+                    .append(": " + getFrequency(stack))
+                    .withStyle(ChatFormatting.AQUA));
+            tooltip.add(Component.literal("Scanner satellite marker hook pending").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.empty());
+            super.appendHoverText(stack, level, tooltip, flag);
+        }
+    }
+
+    public static class NightVision extends ArmorModItem {
+        private static final String NIGHT_VISION_ACTIVE_NBT_KEY = "ITEM_MOD_NV_ACTIVE";
+
+        public NightVision(Item.Properties properties) {
+            super(properties, ArmorModHandler.ArmorModSlot.HELMET_ONLY, true, false, false, false);
+        }
+
+        @Override
+        public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+            tooltip.add(Component.literal("Grants you night vision (requires full electric set)")
+                    .withStyle(ChatFormatting.AQUA));
+            tooltip.add(Component.empty());
+            super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
+            if (!(entity instanceof Player player) || !(armor.getItem() instanceof FsbPoweredArmor powered)
+                    || !FsbPoweredArmor.hasFullPoweredSet(player)) {
+                return;
+            }
+
+            CompoundTag tag = armor.getOrCreateTag();
+            if (HbmPlayerProperties.isHudEnabled(player)) {
+                entity.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 15 * 20, 0));
+                tag.putBoolean(NIGHT_VISION_ACTIVE_NBT_KEY, true);
+                if (entity.getRandom().nextInt(200) == 0) {
+                    powered.applyLegacyDamage(armor, 1);
+                }
+            } else if (tag.contains(NIGHT_VISION_ACTIVE_NBT_KEY)) {
+                entity.removeEffect(MobEffects.NIGHT_VISION);
+                tag.remove(NIGHT_VISION_ACTIVE_NBT_KEY);
+            }
+        }
+    }
+
+    public static class BackTesla extends ArmorModItem {
+        public BackTesla(Item.Properties properties) {
+            super(properties, ArmorModHandler.ArmorModSlot.PLATE_ONLY, false, true, false, false);
+        }
+
+        @Override
+        public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+            tooltip.add(Component.literal("Zaps nearby entities (requires full electric set)")
+                    .withStyle(ChatFormatting.YELLOW));
+            tooltip.add(Component.literal("Back model render hook pending").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.empty());
+            super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
+            if (!(entity instanceof Player player) || !(entity.level() instanceof ServerLevel level)
+                    || !(armor.getItem() instanceof FsbPoweredArmor powered)
+                    || !FsbPoweredArmor.hasFullPoweredSet(player)) {
+                return;
+            }
+
+            if (zap(level, entity, 5.0D) && entity.getRandom().nextInt(5) == 0) {
+                powered.applyLegacyDamage(armor, 1);
+            }
+        }
+
+        private boolean zap(ServerLevel level, LivingEntity source, double radius) {
+            Vec3 origin = new Vec3(source.getX(), source.getY() + 1.25D, source.getZ());
+            List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class,
+                    new AABB(origin, origin).inflate(radius), LivingEntity::isAlive);
+            boolean zapped = false;
+            for (LivingEntity target : nearby) {
+                if (target == source || target instanceof Ocelot) {
+                    continue;
+                }
+                Vec3 targetPoint = target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
+                if (origin.distanceToSqr(targetPoint) > radius * radius || isObstructed(level, origin, targetPoint, target)) {
+                    continue;
+                }
+
+                if (!(target instanceof Player player && ArmorUtil.checkForFaraday(player))) {
+                    float damage = Mth.clamp(target.getMaxHealth() * 0.5F, 3.0F, 20.0F) / Math.max(1, nearby.size());
+                    if (EntityDamageUtil.attackEntityFromNt(target, ModDamageSources.electric(level), damage)) {
+                        level.playSound(null, target.getX(), target.getY(), target.getZ(),
+                                ModSounds.WEAPON_TESLA.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+                    }
+                }
+                zapped = true;
+            }
+            return zapped;
+        }
+
+        private boolean isObstructed(ServerLevel level, Vec3 origin, Vec3 targetPoint, LivingEntity target) {
+            BlockHitResult hit = level.clip(new ClipContext(origin, targetPoint,
+                    ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, target));
+            return hit.getType() == HitResult.Type.BLOCK
+                    && hit.getLocation().distanceToSqr(origin) + 0.25D < targetPoint.distanceToSqr(origin);
         }
     }
 

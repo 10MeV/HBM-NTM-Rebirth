@@ -2,7 +2,7 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.energy.HbmBatteryItemCapabilityProvider;
-import com.hbm.ntm.energy.HbmChargeableItem;
+import com.hbm.ntm.energy.IBatteryItem;
 import com.hbm.ntm.util.HbmTextUtil;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -23,7 +23,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import org.jetbrains.annotations.Nullable;
 
-public class HbmPoweredAbilityToolItem extends HbmAbilityToolItem implements HbmChargeableItem {
+public class HbmPoweredAbilityToolItem extends HbmAbilityToolItem implements IBatteryItem {
     private final long maxCharge;
     private final long chargeRate;
     private final long consumption;
@@ -156,7 +156,7 @@ public class HbmPoweredAbilityToolItem extends HbmAbilityToolItem implements Hbm
             return 0L;
         }
         if (stack.hasTag()) {
-            return clampCharge(stack.getTag().getLong(HbmBatteryItem.DEFAULT_CHARGE_TAG));
+            return stack.getTag().getLong(HbmBatteryItem.DEFAULT_CHARGE_TAG);
         }
         stack.getOrCreateTag().putLong(HbmBatteryItem.DEFAULT_CHARGE_TAG, maxCharge);
         return maxCharge;
@@ -165,15 +165,12 @@ public class HbmPoweredAbilityToolItem extends HbmAbilityToolItem implements Hbm
     @Override
     public void setCharge(ItemStack stack, long charge) {
         if (!stack.isEmpty()) {
-            stack.getOrCreateTag().putLong(HbmBatteryItem.DEFAULT_CHARGE_TAG, clampCharge(charge));
+            stack.getOrCreateTag().putLong(HbmBatteryItem.DEFAULT_CHARGE_TAG, charge);
         }
     }
 
     @Override
     public long chargeBattery(ItemStack stack, long amount) {
-        if (amount <= 0L) {
-            return 0L;
-        }
         long before = getCharge(stack);
         setCharge(stack, before + amount);
         return getCharge(stack) - before;
@@ -181,11 +178,11 @@ public class HbmPoweredAbilityToolItem extends HbmAbilityToolItem implements Hbm
 
     @Override
     public long dischargeBattery(ItemStack stack, long amount) {
-        if (amount <= 0L) {
-            return 0L;
-        }
         long before = getCharge(stack);
         setCharge(stack, before - amount);
+        if (getCharge(stack) < 0L) {
+            setCharge(stack, 0L);
+        }
         return before - getCharge(stack);
     }
 
@@ -196,7 +193,4 @@ public class HbmPoweredAbilityToolItem extends HbmAbilityToolItem implements Hbm
         super.appendHoverText(stack, level, tooltip, flag);
     }
 
-    private long clampCharge(long charge) {
-        return Math.max(0L, Math.min(charge, maxCharge));
-    }
 }

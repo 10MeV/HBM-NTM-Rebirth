@@ -78,7 +78,7 @@ public class SoyuzCapsuleBlockEntity extends BlockEntity implements MenuProvider
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyItems(tag, items);
+        HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
     }
 
     @Override

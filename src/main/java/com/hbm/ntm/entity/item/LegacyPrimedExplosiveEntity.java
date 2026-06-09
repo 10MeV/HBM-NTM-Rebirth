@@ -1,9 +1,10 @@
 package com.hbm.ntm.entity.item;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.hbm.ntm.api.block.ChainExplodable;
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -124,7 +125,7 @@ public class LegacyPrimedExplosiveEntity extends Entity {
         detonateOnCollision = tag.getBoolean("DetonateOnCollision");
         if (tag.contains("Block")) {
             ResourceLocation id = ResourceLocation.tryParse(tag.getString("Block"));
-            bombBlock = id == null ? null : BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
+            bombBlock = id == null ? null : HbmRegistryUtil.block(id).orElse(null);
             if (bombBlock != null) {
                 entityData.set(BLOCK_STATE_ID, Block.getId(bombBlock.defaultBlockState()));
             }
@@ -136,7 +137,7 @@ public class LegacyPrimedExplosiveEntity extends Entity {
         tag.putByte("Fuse", (byte) fuse);
         tag.putBoolean("DetonateOnCollision", detonateOnCollision);
         if (bombBlock != null) {
-            tag.putString("Block", BuiltInRegistries.BLOCK.getKey(bombBlock).toString());
+            tag.putString("Block", HbmRegistryUtil.blockKey(bombBlock).toString());
         }
     }
 

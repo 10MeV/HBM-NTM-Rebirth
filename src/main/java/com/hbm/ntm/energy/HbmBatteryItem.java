@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Locale;
 
-public class HbmBatteryItem extends Item implements HbmChargeableItem {
+public class HbmBatteryItem extends Item implements IBatteryItem {
     public static final String DEFAULT_CHARGE_TAG = "charge";
 
     private final long maxCharge;
@@ -54,35 +54,28 @@ public class HbmBatteryItem extends Item implements HbmChargeableItem {
             return 0L;
         }
         if (stack.hasTag()) {
-            return clampCharge(stack, stack.getTag().getLong(getChargeTagName(stack)));
+            return stack.getTag().getLong(getChargeTagName(stack));
         }
         CompoundTag tag = stack.getOrCreateTag();
         String chargeTag = getChargeTagName(stack);
         long defaultCharge = getDefaultCharge(stack);
-        long clampedDefault = clampCharge(stack, defaultCharge);
-        tag.putLong(chargeTag, clampedDefault);
-        return clampedDefault;
+        tag.putLong(chargeTag, defaultCharge);
+        return defaultCharge;
     }
 
     public void setCharge(ItemStack stack, long charge) {
         if (!stack.isEmpty()) {
-            stack.getOrCreateTag().putLong(getChargeTagName(stack), clampCharge(stack, charge));
+            stack.getOrCreateTag().putLong(getChargeTagName(stack), charge);
         }
     }
 
     public long chargeBattery(ItemStack stack, long amount) {
-        if (amount <= 0L) {
-            return 0L;
-        }
         long before = getCharge(stack);
         setCharge(stack, before + amount);
         return getCharge(stack) - before;
     }
 
     public long dischargeBattery(ItemStack stack, long amount) {
-        if (amount <= 0L) {
-            return 0L;
-        }
         long before = getCharge(stack);
         setCharge(stack, before - amount);
         return before - getCharge(stack);

@@ -1,5 +1,7 @@
 package com.hbm.ntm.multiblock;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.registry.ModBlocks;
@@ -399,7 +401,7 @@ public final class MultiblockHelper {
         if (corePos == null) {
             return null;
         }
-        if (level instanceof Level worldLevel && !worldLevel.hasChunkAt(corePos)) {
+        if (level instanceof Level worldLevel && !HbmRegistryUtil.hasChunkAt(worldLevel, corePos)) {
             return null;
         }
         BlockState coreState = level.getBlockState(corePos);
@@ -441,8 +443,8 @@ public final class MultiblockHelper {
     }
 
     private static boolean isReplaceableOrTemporary(Level level, BlockPos pos, @Nullable BlockPos temporaryPos) {
-        return (pos.equals(temporaryPos) && level.hasChunkAt(pos))
-                || (level.hasChunkAt(pos) && level.getBlockState(pos).canBeReplaced());
+        return (pos.equals(temporaryPos) && HbmRegistryUtil.hasChunkAt(level, pos))
+                || (HbmRegistryUtil.hasChunkAt(level, pos) && level.getBlockState(pos).canBeReplaced());
     }
 
     @Nullable
@@ -509,7 +511,7 @@ public final class MultiblockHelper {
     }
 
     private static boolean canReplaceForRepair(Level level, BlockPos corePos, BlockPos pos) {
-        if (!level.hasChunkAt(pos)) {
+        if (!HbmRegistryUtil.hasChunkAt(level, pos)) {
             return false;
         }
         BlockState state = level.getBlockState(pos);
@@ -531,7 +533,7 @@ public final class MultiblockHelper {
     }
 
     private static boolean isLoaded(BlockGetter level, BlockPos pos) {
-        return !(level instanceof Level worldLevel) || worldLevel.hasChunkAt(pos);
+        return !(level instanceof Level worldLevel) || HbmRegistryUtil.hasChunkAt(worldLevel, pos);
     }
 
     private static boolean isOwnedDummy(Level level, BlockPos corePos, BlockPos pos) {

@@ -103,7 +103,7 @@ public class SoyuzCapsuleEntity extends Entity {
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         setSkin(tag.getInt("soyuz"));
-        HbmItemStackUtil.loadLegacyItems(tag, payload);
+        HbmItemStackUtil.loadLegacyOrForgeItems(tag, payload);
     }
 
     @Override

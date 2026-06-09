@@ -14,7 +14,7 @@ import net.minecraft.world.phys.HitResult;
 
 public class SatelliteDesignatorItem extends SatelliteChipItem {
     public SatelliteDesignatorItem(Properties properties) {
-        super(properties, null, null);
+        super(properties, null);
     }
 
     @Override

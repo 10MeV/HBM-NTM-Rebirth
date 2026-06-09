@@ -1,5 +1,6 @@
 package com.hbm.ntm.client;
 
+import com.hbm.ntm.network.HbmPermaSyncData;
 import net.minecraft.nbt.CompoundTag;
 
 import java.util.ArrayList;
@@ -30,6 +31,27 @@ public final class ClientPermaSyncData {
 
     public static float getFloat(String key) {
         return data.getFloat(key);
+    }
+
+    public static int[] deathEffectEntityIds() {
+        return data.getIntArray(HbmPermaSyncData.TAG_DEATH_EFFECT_ENTITY_IDS);
+    }
+
+    public static int deathEffectEntityCount() {
+        return deathEffectEntityIds().length;
+    }
+
+    public static boolean hasDeathEffectEntity(int entityId) {
+        for (int candidate : deathEffectEntityIds()) {
+            if (candidate == entityId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void appendDeathEffectEntityIds(CompoundTag tag, int[] entityIds) {
+        HbmPermaSyncData.appendDeathEffectEntityIds(tag, entityIds);
     }
 
     public static void addListener(ClientPermaSyncDataListener listener) {

@@ -11,12 +11,14 @@ import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.energy.HbmPowerNet;
+import com.hbm.ntm.energy.HbmNetworkNode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity implements HbmEnergyNodeHost, HbmEnergyConnector {
@@ -54,7 +56,32 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
     }
 
     protected HbmEnergyNode createEnergyNode() {
-        return new HbmEnergyNode(worldPosition, getEnergyConnections());
+        return shouldUseRemotePortEnergyNode()
+                ? createRemotePortEnergyNode()
+                : new HbmEnergyNode(worldPosition, getEnergyConnections());
+    }
+
+    protected HbmEnergyNode createRemotePortEnergyNode() {
+        Set<BlockPos> positions = new LinkedHashSet<>();
+        positions.add(worldPosition.immutable());
+        Set<HbmNetworkNode.NodeConnection> connections = new LinkedHashSet<>();
+        Iterable<EnergyPort> ports = getNetworkEnergyPorts();
+        if (ports == null) {
+            return HbmEnergyNode.withConnectionPoints(positions, connections);
+        }
+        for (EnergyPort port : ports) {
+            if (port == null) {
+                continue;
+            }
+            BlockPos connectorPos = port.conductorPos(worldPosition);
+            positions.add(connectorPos.relative(port.direction().getOpposite()));
+            connections.add(new HbmNetworkNode.NodeConnection(connectorPos, port.direction()));
+        }
+        return HbmEnergyNode.withConnectionPoints(positions, connections);
+    }
+
+    protected boolean shouldUseRemotePortEnergyNode() {
+        return false;
     }
 
     @Override
@@ -94,8 +121,25 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
     }
 
     protected void refreshEnergyNodeState() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        boolean shouldCreateNode = shouldCreateEnergyNode();
         boolean hasNode = energyNode != null && !energyNode.isExpired();
-        if (shouldCreateEnergyNode() != hasNode) {
+        if (!shouldCreateNode) {
+            if (energyNode != null) {
+                removeEnergyNode();
+            }
+            return;
+        }
+        if (!hasNode) {
+            refreshEnergyNode();
+            return;
+        }
+
+        HbmEnergyNode currentShape = createEnergyNode();
+        if (!energyNode.getPositions().equals(currentShape.getPositions())
+                || !energyNode.getConnectionPoints().equals(currentShape.getConnectionPoints())) {
             refreshEnergyNode();
         }
     }

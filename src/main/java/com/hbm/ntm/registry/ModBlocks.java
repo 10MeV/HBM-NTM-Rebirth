@@ -1,6 +1,7 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.block.ArmorTableBlock;
 import com.hbm.ntm.block.AssemblyFactoryBlock;
 import com.hbm.ntm.block.AssemblyMachineBlock;
 import com.hbm.ntm.block.BalefireBombBlock;
@@ -34,6 +35,7 @@ import com.hbm.ntm.block.LegacyComplexShapeBlock;
 import com.hbm.ntm.block.LegacyCrystalVirusBlock;
 import com.hbm.ntm.block.LegacyDemonLampBlock;
 import com.hbm.ntm.block.LegacyDepthBlock;
+import com.hbm.ntm.block.LegacyExplosiveBarrelBlock;
 import com.hbm.ntm.block.LegacyGasMeltdownBlock;
 import com.hbm.ntm.block.LegacyGasRadonBlock;
 import com.hbm.ntm.block.LegacyNuclearWasteBlock;
@@ -63,12 +65,15 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.block.LiquefactorBlock;
 import com.hbm.ntm.block.NuclearDeviceBlock;
 import com.hbm.ntm.block.PneumaticTubeBlock;
+import com.hbm.ntm.block.PressMachineBlock;
 import com.hbm.ntm.block.PoweredRedCableBlock;
 import com.hbm.ntm.block.PyroOvenBlock;
 import com.hbm.ntm.block.RadiatingHazardBlock;
 import com.hbm.ntm.block.RadarBlock;
 import com.hbm.ntm.block.RadarLargeBlock;
 import com.hbm.ntm.block.RadarScreenBlock;
+import com.hbm.ntm.block.RadioAutocalBlock;
+import com.hbm.ntm.block.RadioTelexBlock;
 import com.hbm.ntm.block.RadioactiveWasteEarthBlock;
 import com.hbm.ntm.block.RadioTorchControllerDeviceBlock;
 import com.hbm.ntm.block.RadioTorchCounterDeviceBlock;
@@ -154,8 +159,8 @@ public final class ModBlocks {
             () -> SoundType.METAL.getHitSound(),
             () -> SoundType.METAL.getFallSound());
 
-    // Legacy 1.7.10 machine IDs. Only machine_press has the first BlockEntity scaffold so far.
-    public static final RegistryObject<Block> MACHINE_PRESS = basicMachine("machine_press");
+    // Legacy 1.7.10 machine IDs. The press has the first BlockEntity scaffold so far.
+    public static final RegistryObject<Block> MACHINE_PRESS = pressMachine("machine_press");
     public static final RegistryObject<Block> MACHINE_DIFURNACE_OFF = machine("machine_difurnace_off");
     public static final RegistryObject<Block> MACHINE_ELECTRIC_FURNACE_OFF = machine("machine_electric_furnace_off");
     public static final RegistryObject<Block> MACHINE_BOILER_OFF = boilerMachine("machine_boiler_off");
@@ -164,6 +169,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_INDUSTRIAL_TURBINE = steamTurbineMultiblockMachine(
             "machine_industrial_turbine", industrialTurbineDefinition(), SteamTurbineMultiblockBlock.Kind.INDUSTRIAL);
     public static final RegistryObject<Block> DECON = decon("decon");
+    public static final RegistryObject<Block> MACHINE_ARMOR_TABLE = armorTable("machine_armor_table");
     public static final RegistryObject<Block> RED_CABLE = redCable("red_cable");
     public static final RegistryObject<Block> RED_CABLE_GAUGE = redCableGauge("red_cable_gauge");
     public static final RegistryObject<Block> CABLE_SWITCH = poweredRedCable("cable_switch",
@@ -177,6 +183,8 @@ public final class ModBlocks {
     public static final RegistryObject<Block> RADIO_TORCH_LOGIC = radioTorchLogic("radio_torch_logic");
     public static final RegistryObject<Block> RADIO_TORCH_READER = radioTorchReader("radio_torch_reader");
     public static final RegistryObject<Block> RADIO_TORCH_CONTROLLER = radioTorchController("radio_torch_controller");
+    public static final RegistryObject<Block> RADIO_AUTOCAL = radioAutocal("radio_autocal");
+    public static final RegistryObject<Block> RADIO_TELEX = radioTelex("radio_telex");
     public static final RegistryObject<Block> FLUID_DUCT_NEO = fluidPipe("fluid_duct_neo");
     public static final RegistryObject<Block> FLUID_VALVE = fluidValve("fluid_valve", FluidValveBlock.Kind.VALVE);
     public static final RegistryObject<Block> FLUID_SWITCH = fluidValve("fluid_switch", FluidValveBlock.Kind.SWITCH);
@@ -287,6 +295,40 @@ public final class ModBlocks {
             crucibleDefinition());
     public static final RegistryObject<Block> MACHINE_GASFLARE = gasFlareMachine("machine_gasflare",
             gasFlareDefinition());
+    public static final RegistryObject<Block> CHIMNEY_BRICK = visibleMultiblockMachine("chimney_brick",
+            chimneyBrickDefinition());
+    public static final RegistryObject<Block> CHIMNEY_INDUSTRIAL = visibleMultiblockMachine("chimney_industrial",
+            chimneyIndustrialDefinition());
+    public static final RegistryObject<Block> MACHINE_INTAKE = visibleMultiblockMachine("machine_intake",
+            intakeDefinition());
+    public static final RegistryObject<Block> MACHINE_DRAIN = visibleMultiblockMachine("machine_drain",
+            drainDefinition());
+    public static final RegistryObject<Block> MACHINE_CHUNGUS = visibleMultiblockMachine("machine_chungus",
+            chungusDefinition());
+    public static final RegistryObject<Block> MACHINE_HEPHAESTUS = visibleMultiblockMachine("machine_hephaestus",
+            hephaestusDefinition());
+    public static final RegistryObject<Block> MACHINE_BOILER = visibleMultiblockMachine("machine_boiler",
+            heatBoilerDefinition());
+    public static final RegistryObject<Block> MACHINE_INDUSTRIAL_BOILER = visibleMultiblockMachine("machine_industrial_boiler",
+            industrialBoilerDefinition());
+    public static final RegistryObject<Block> MACHINE_COMBUSTION_ENGINE = visibleMultiblockMachine("machine_combustion_engine",
+            combustionEngineDefinition());
+    public static final RegistryObject<Block> PUMP_STEAM = visibleMultiblockMachine("pump_steam",
+            pumpDefinition("pump", proxyFluid(), "block_copper"));
+    public static final RegistryObject<Block> PUMP_ELECTRIC = visibleMultiblockMachine("pump_electric",
+            pumpDefinition("pump_electric", proxyPowerFluid(), "block_steel"));
+    public static final RegistryObject<Block> HEATER_HEATEX = visibleMultiblockMachine("heater_heatex",
+            heaterHeatexDefinition());
+    public static final RegistryObject<Block> HEATER_FIREBOX = visibleMultiblockMachine("heater_firebox",
+            heaterFireboxDefinition());
+    public static final RegistryObject<Block> HEATER_OVEN = visibleMultiblockMachine("heater_oven",
+            heaterOvenDefinition());
+    public static final RegistryObject<Block> HEATER_OILBURNER = visibleMultiblockMachine("heater_oilburner",
+            heaterOilburnerDefinition());
+    public static final RegistryObject<Block> HEATER_ELECTRIC = visibleMultiblockMachine("heater_electric",
+            heaterElectricDefinition());
+    public static final RegistryObject<Block> MACHINE_CONDENSER_POWERED = visibleMultiblockMachine("machine_condenser_powered",
+            condenserPoweredDefinition());
     public static final RegistryObject<Block> MACHINE_ASSEMBLY_FACTORY = assemblyFactoryMachine("machine_assembly_factory",
             assemblyFactoryDefinition());
     public static final RegistryObject<Block> MACHINE_PUREX = visibleMultiblockMachine("machine_purex",
@@ -325,6 +367,18 @@ public final class ModBlocks {
             turbofanDefinition());
     public static final RegistryObject<Block> MACHINE_TURBINEGAS = visibleMultiblockMachine("machine_turbinegas",
             turbineGasDefinition());
+    public static final RegistryObject<Block> MACHINE_AMMO_PRESS = visibleMultiblockMachine("machine_ammo_press",
+            ammoPressDefinition());
+    public static final RegistryObject<Block> FURNACE_IRON = visibleMultiblockMachine("furnace_iron",
+            furnaceIronDefinition());
+    public static final RegistryObject<Block> FURNACE_STEEL = visibleMultiblockMachine("furnace_steel",
+            furnaceSteelDefinition());
+    public static final RegistryObject<Block> FURNACE_COMBINATION = visibleMultiblockMachine("furnace_combination",
+            furnaceCombinationDefinition());
+    public static final RegistryObject<Block> MACHINE_BLAST_FURNACE = visibleMultiblockMachine("machine_blast_furnace",
+            blastFurnaceDefinition());
+    public static final RegistryObject<Block> MACHINE_ARC_FURNACE = visibleMultiblockMachine("machine_arc_furnace",
+            arcFurnaceDefinition());
     public static final RegistryObject<Block> MACHINE_ANNIHILATOR = visibleMultiblockMachine("machine_annihilator",
             annihilatorDefinition());
     public static final RegistryObject<Block> MACHINE_FEL = visibleMultiblockMachine("machine_fel",
@@ -343,6 +397,10 @@ public final class ModBlocks {
             stirlingDefinition("stirling_steel"));
     public static final RegistryObject<Block> MACHINE_STIRLING_CREATIVE = visibleMultiblockMachine("machine_stirling_creative",
             stirlingDefinition("stirling_creative"));
+    public static final RegistryObject<Block> MACHINE_DEUTERIUM_TOWER = visibleMultiblockMachine("machine_deuterium_tower",
+            deuteriumTowerDefinition());
+    public static final RegistryObject<Block> FRACTION_SPACER = visibleMultiblockMachine("fraction_spacer",
+            fractionSpacerDefinition());
     public static final RegistryObject<Block> GLASS_BORON = legacyGlass("glass_boron");
     public static final RegistryObject<Block> GLASS_QUARTZ = quartzGlass("glass_quartz");
 
@@ -409,6 +467,9 @@ public final class ModBlocks {
     public static final RegistryObject<Block> NUKE_CUSTOM = customNuke("nuke_custom");
     public static final RegistryObject<Block> NUKE_FSTBMB = balefireBomb("nuke_fstbmb");
     public static final RegistryObject<Block> BOMB_MULTI = nonOccludingMachine("bomb_multi");
+    public static final RegistryObject<Block> RED_BARREL = explosiveBarrel("red_barrel", LegacyExplosiveBarrelBlock.Kind.RED);
+    public static final RegistryObject<Block> PINK_BARREL = explosiveBarrel("pink_barrel", LegacyExplosiveBarrelBlock.Kind.PINK);
+    public static final RegistryObject<Block> LOX_BARREL = explosiveBarrel("lox_barrel", LegacyExplosiveBarrelBlock.Kind.LOX);
     public static final RegistryObject<Block> YELLOW_BARREL = radiationBarrel("yellow_barrel", 5.0F);
     public static final RegistryObject<Block> VITRIFIED_BARREL = radiationBarrel("vitrified_barrel", 0.5F);
 
@@ -430,6 +491,7 @@ public final class ModBlocks {
             MACHINE_TURBINE,
             MACHINE_INDUSTRIAL_TURBINE,
             DECON,
+            MACHINE_ARMOR_TABLE,
             RED_CABLE,
             RED_CABLE_GAUGE,
             CABLE_SWITCH,
@@ -441,6 +503,8 @@ public final class ModBlocks {
             RADIO_TORCH_LOGIC,
             RADIO_TORCH_READER,
             RADIO_TORCH_CONTROLLER,
+            RADIO_AUTOCAL,
+            RADIO_TELEX,
             FLUID_DUCT_NEO,
             FLUID_VALVE,
             FLUID_SWITCH,
@@ -488,6 +552,23 @@ public final class ModBlocks {
             MACHINE_SAWMILL,
             MACHINE_CRUCIBLE,
             MACHINE_GASFLARE,
+            CHIMNEY_BRICK,
+            CHIMNEY_INDUSTRIAL,
+            MACHINE_INTAKE,
+            MACHINE_DRAIN,
+            MACHINE_CHUNGUS,
+            MACHINE_HEPHAESTUS,
+            MACHINE_BOILER,
+            MACHINE_INDUSTRIAL_BOILER,
+            MACHINE_COMBUSTION_ENGINE,
+            PUMP_STEAM,
+            PUMP_ELECTRIC,
+            HEATER_HEATEX,
+            HEATER_FIREBOX,
+            HEATER_OVEN,
+            HEATER_OILBURNER,
+            HEATER_ELECTRIC,
+            MACHINE_CONDENSER_POWERED,
             MACHINE_ASSEMBLY_FACTORY,
             MACHINE_PUREX,
             MACHINE_SILEX,
@@ -507,6 +588,12 @@ public final class ModBlocks {
             MACHINE_TOWER_LARGE,
             MACHINE_TURBOFAN,
             MACHINE_TURBINEGAS,
+            MACHINE_AMMO_PRESS,
+            FURNACE_IRON,
+            FURNACE_STEEL,
+            FURNACE_COMBINATION,
+            MACHINE_BLAST_FURNACE,
+            MACHINE_ARC_FURNACE,
             MACHINE_ANNIHILATOR,
             MACHINE_FEL,
             MACHINE_ORBUS,
@@ -516,6 +603,8 @@ public final class ModBlocks {
             MACHINE_STIRLING,
             MACHINE_STIRLING_STEEL,
             MACHINE_STIRLING_CREATIVE,
+            MACHINE_DEUTERIUM_TOWER,
+            FRACTION_SPACER,
             GAS_RADON,
             GAS_RADON_DENSE,
             GAS_RADON_TOMB,
@@ -795,6 +884,9 @@ public final class ModBlocks {
             NUKE_CUSTOM,
             NUKE_FSTBMB,
             BOMB_MULTI,
+            RED_BARREL,
+            PINK_BARREL,
+            LOX_BARREL,
             YELLOW_BARREL,
             VITRIFIED_BARREL
     );
@@ -862,6 +954,15 @@ public final class ModBlocks {
                 .noOcclusion(), false));
     }
 
+    private static RegistryObject<Block> pressMachine(String name) {
+        return registerBlockWithItem(name, () -> new PressMachineBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion()));
+    }
+
     private static RegistryObject<Block> boilerMachine(String name) {
         return registerBlockWithItem(name, () -> new BoilerBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
@@ -880,6 +981,14 @@ public final class ModBlocks {
 
     private static RegistryObject<Block> decon(String name) {
         return registerBlockWithItem(name, () -> new DeconBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
+    }
+
+    private static RegistryObject<Block> armorTable(String name) {
+        return registerBlockWithItem(name, () -> new ArmorTableBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.METAL)
@@ -948,6 +1057,23 @@ public final class ModBlocks {
 
     private static RegistryObject<Block> radioTorchController(String name) {
         return registerBlockWithItem(name, () -> new RadioTorchControllerDeviceBlock(radioTorchProperties()));
+    }
+
+    private static RegistryObject<Block> radioAutocal(String name) {
+        return registerBlockWithItem(name, () -> new RadioAutocalBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion()));
+    }
+
+    private static RegistryObject<Block> radioTelex(String name) {
+        return registerBlockWithItem(name, () -> new RadioTelexBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.WOOD)
+                .strength(3.0F, 10.0F)
+                .sound(SoundType.WOOD)
+                .noOcclusion()));
     }
 
     private static BlockBehaviour.Properties radioTorchProperties() {
@@ -1420,7 +1546,7 @@ public final class ModBlocks {
                 .renderParts("Main", "Fluid", "Glass")
                 .itemRenderParts("Main")
                 .legacyItemScale(3.0F)
-                .yRotation(facing -> 270.0F - facing.toYRot())
+                .yRotation(facing -> 0.0F)
                 .renderBoundingBox(pos -> new AABB(pos.offset(-1, 0, -1), pos.offset(2, 4, 2)))
                 .build();
     }
@@ -1461,7 +1587,7 @@ public final class ModBlocks {
                         .withLegacyXrCheckedFill(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(-1, 1, 1))
                         .withLegacyXrCheckedFill(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(-1, 1, -1)))
                 .legacyItemScale(3.0D, 0.5D)
-                .yRotation(facing -> 180.0F - facing.toYRot())
+                .yRotation(facing -> normalizeRotation(solidifierRotation(facing) + 90.0F))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, -1, -2), pos.offset(11, 3, 3)))
                 .build();
     }
@@ -1592,7 +1718,7 @@ public final class ModBlocks {
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyInventoryPowerFluid()))
                 .renderParts("Body", "Spinner")
                 .legacyItemScale(3.0D, 0.5D)
-                .yRotation(facing -> 0.0F)
+                .yRotation(ModBlocks::solidifierRotation)
                 .build();
     }
 
@@ -1613,9 +1739,9 @@ public final class ModBlocks {
                         .withLegacyXrCheckedFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, 0))
                         .withLegacyXrCheckedFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, -2))
                         .withLegacyXrCheckedFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, -4))
-                        .withExtraProxyOffsets(electrolyserProxyOffsets(facing), proxyInventoryPowerFluid()))
+                .withExtraProxyOffsets(electrolyserProxyOffsets(facing), proxyInventoryPowerFluid()))
                 .legacyItemScale(2.0F)
-                .yRotation(ModBlocks::solidifierRotation)
+                .yRotation(ModBlocks::pyroOvenRotation)
                 .renderBoundingBox(pos -> new AABB(pos.offset(-5, -3, -7), pos.offset(7, 5, 7)))
                 .build();
     }
@@ -1699,7 +1825,7 @@ public final class ModBlocks {
                         .withLegacyXrFill(new int[] { 1, 0, 1, 1, -2, 3 }, Direction.WEST, new BlockPos(0, 15, 0))
                         .withLegacyXrCheckOnly(new int[] { 1, 0, 1, 1, -2, 3 }, facing, new BlockPos(0, 15, 0)))
                 .legacyItemScale(4.0D, 0.5D)
-                .yRotation(facing -> 180.0F - facing.toYRot())
+                .yRotation(facing -> 180.0F)
                 .renderBoundingBox(pos -> new AABB(pos.offset(-10, -9, -10), pos.offset(11, 19, 11)))
                 .build();
     }
@@ -1813,6 +1939,234 @@ public final class ModBlocks {
                         new AABB(-1.5D, 9.0D, -1.5D, 1.5D, 9.375D, 1.5D),
                         new AABB(-0.75D, 9.375D, -0.75D, 0.75D, 12.0D, 0.75D)))
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 13, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition chimneyBrickDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("chimney_brick"), machineTexture("chimney_brick"))
+                .legacyXrDimensions(12, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 12, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyFluid()))
+                .legacyItemScale(2.25D, 0.5D)
+                .yRotation(facing -> 180.0F)
+                .particleState(legacyBlockParticleState("brick_fire"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 14, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition chimneyIndustrialDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("chimney_industrial"), machineTexture("chimney_industrial"))
+                .legacyXrDimensions(22, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 22, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyFluid()))
+                .legacyItemScale(2.75D, 0.25D)
+                .yRotation(facing -> 180.0F)
+                .particleState(legacyBlockParticleState("concrete"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 24, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition intakeDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("intake"), machineTexture("intake"))
+                .legacyXrDimensions(0, 0, 1, 0, 1, 0)
+                .legacyOffset(0)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 0, 0, 1, 0, 1, 0 }, facing)
+                        .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyPowerFluid()))
+                .renderParts("Base", "Fan")
+                .legacyItemScale(5.0D, 1.0D)
+                .yRotation(ModBlocks::solidifierRotation)
+                .modelTranslation(-0.5D, 0.0D, 0.5D)
+                .particleState(legacyBlockParticleState("block_steel"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 2, 2)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition drainDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("drain"), machineTexture("drain"))
+                .legacyXrDimensions(0, 0, 2, 0, 0, 0)
+                .legacyOffset(0)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 0, 0, 2, 0, 0, 0 }, facing))
+                .legacyItemScale(5.0D, 1.0D)
+                .yRotation(ModBlocks::solidifierRotation)
+                .particleState(legacyBlockParticleState("concrete"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-1, 0, -3), pos.offset(2, 2, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition chungusDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("chungus"), machineTexture("chungus"))
+                .legacyXrDimensions(3, 0, 0, 3, 2, 2)
+                .legacyOffset(3)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 3, 0, 0, 3, 2, 2 }, facing)
+                        .withLegacyXrFill(new int[] { 4, -4, 0, 3, 1, 1 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, 0, 6, -1, 1, 1 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 2, 0, 10, -7, 1, 1 }, facing)
+                        .withExtraProxyOffsets(chungusProxyOffsets(facing), proxyPowerFluid()))
+                .renderParts("Body", "Lever", "Blades")
+                .legacyItemScale(2.5D, 0.5D)
+                .modelTranslation(0.0D, 0.0D, -3.0D)
+                .yRotation(facing -> normalizeRotation(eastZeroRotation(facing) + 90.0F))
+                .particleState(legacyBlockParticleState("block_steel"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-4, -4, -8), pos.offset(12, 5, 7)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition hephaestusDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("hephaestus"), machineTexture("hephaestus"))
+                .legacyXrDimensions(11, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 11, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraProxyOffsets(hephaestusProxyOffsets(), proxyFluid()))
+                .renderParts("Main", "Rotor", "Core")
+                .legacyItemScale(2.25D, 0.5D)
+                .yRotation(facing -> 0.0F)
+                .particleState(legacyBlockParticleState("block_steel"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 13, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition heatBoilerDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("boiler"), machineTexture("boiler"))
+                .legacyXrDimensions(3, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 3, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraProxyOffsets(heatBoilerProxyOffsets(facing), proxyFluid()))
+                .legacyItemScale(3.0F)
+                .yRotation(ModBlocks::southZeroRotation)
+                .particleState(legacyBlockParticleState("block_steel"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 5, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition industrialBoilerDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("industrial_boiler"), machineTexture("industrial_boiler"))
+                .legacyXrDimensions(4, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 4, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraProxyOffsets(industrialBoilerProxyOffsets(), proxyFluid()))
+                .legacyItemScale(2.5F)
+                .yRotation(facing -> 0.0F)
+                .particleState(legacyBlockParticleState("block_steel"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 6, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition combustionEngineDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("combustion_engine"), machineTexture("combustion_engine"))
+                .legacyXrDimensions(1, 0, 1, 0, 3, 2)
+                .legacyOffset(0)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 1, 0, 3, 2 }, facing)
+                        .withExtraProxyOffsets(combustionEngineProxyOffsets(facing), proxyPowerFluid()))
+                .renderParts("Engine", "Canister", "Hatch")
+                .legacyItemScale(2.75F)
+                .modelTranslation(-0.5D, 0.0D, 3.0D)
+                .yRotation(ModBlocks::eastZeroRotation)
+                .particleState(legacyBlockParticleState("block_steel"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-4, 0, -3), pos.offset(4, 3, 4)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition pumpDefinition(String textureName, LegacyProxyMode extraProxyMode,
+            String particleBlock) {
+        return LegacyMachineDefinition.builder(machineModel(textureName), machineTexture(textureName))
+                .legacyXrDimensions(3, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 3, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), extraProxyMode))
+                .renderParts("Base", "Rotor", "Arms", "Piston")
+                .legacyItemScale(2.5F)
+                .yRotation(ModBlocks::pumpRotation)
+                .particleState(legacyBlockParticleState(particleBlock))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 5, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition heaterHeatexDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("heatex"), machineTexture("heater_heatex"))
+                .legacyXrDimensions(0, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 0, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyFluid()))
+                .legacyItemScale(3.25F)
+                .yRotation(ModBlocks::eastZeroRotation)
+                .particleState(legacyBlockParticleState("block_steel"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 2, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition heaterFireboxDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("firebox"), machineTexture("firebox"))
+                .legacyXrDimensions(0, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 0, 0, 1, 1, 1, 1 }, facing)
+                        .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyInventoryFluid()))
+                .renderParts("Main", "Door", "InnerEmpty")
+                .itemRenderParts("Main", "Door")
+                .legacyItemScale(3.25F)
+                .yRotation(ModBlocks::eastZeroRotation)
+                .particleState(legacyBlockParticleState("block_steel"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 2, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition heaterOvenDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("heating_oven"), machineTexture("heating_oven"))
+                .legacyXrDimensions(0, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 0, 0, 1, 1, 1, 1 }, facing)
+                        .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyInventoryFluid()))
+                .renderParts("Main", "Door", "Inner")
+                .itemRenderParts("Main", "Door")
+                .legacyItemScale(3.25F)
+                .yRotation(ModBlocks::eastZeroRotation)
+                .particleState(legacyBlockParticleState("brick_fire"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 2, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition heaterOilburnerDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("oilburner"), machineTexture("oilburner"))
+                .legacyXrDimensions(1, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraOffsets(heaterOilburnerExtraOffsets(),
+                                (Function<BlockPos, LegacyProxyMode>) ModBlocks::heaterOilburnerProxyMode)
+                        .withLegacyExtraOffsets(heaterOilburnerExtraOffsets()))
+                .legacyItemScale(3.25F)
+                .yRotation(facing -> 0.0F)
+                .particleState(legacyBlockParticleState("block_steel"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 3, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition heaterElectricDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("electric_heater"), machineTexture("electric_heater"))
+                .legacyXrDimensions(0, 0, 1, 2, 1, 1)
+                .legacyOffset(2)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 0, 0, 1, 2, 1, 1 }, facing)
+                        .withLegacyExtraProxyOffsets(
+                                List.of(LegacyMultiblockOffsets.relative(facing, 2, 0, 0)),
+                                proxyPower()))
+                .legacyItemScale(3.0F)
+                .yRotation(ModBlocks::eastZeroRotation)
+                .particleState(legacyBlockParticleState("block_steel"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, -1, -2), pos.offset(3, 2, 3)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition condenserPoweredDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("condenser"), machineTexture("condenser"))
+                .legacyXrDimensions(2, 0, 1, 1, 3, 3)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 1, 1, 3, 3 }, facing)
+                        .withExtraProxyOffsets(condenserPoweredProxyOffsets(facing), proxyPowerFluid()))
+                .renderParts("Condenser", "Fan1", "Fan2")
+                .legacyItemScale(2.75D, 0.75D)
+                .yRotation(ModBlocks::eastZeroRotation)
+                .particleState(legacyBlockParticleState("block_steel_machine"))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-4, 0, -4), pos.offset(4, 3, 4)))
                 .build();
     }
 
@@ -2051,6 +2405,98 @@ public final class ModBlocks {
                 .build();
     }
 
+    private static LegacyMachineDefinition ammoPressDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("ammo_press"), machineTexture("ammo_press"))
+                .legacyXrDimensions(1, 0, 0, 0, 1, 1)
+                .legacyOffset(0)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 0, 0, 1, 1 }, facing)
+                        .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyInventory()))
+                .renderParts("Frame", "Press", "Shells", "Bullets")
+                .legacyItemScale(5.0F)
+                .yRotation(ModBlocks::eastZeroRotation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(2, 2, 2)))
+                .particleState(legacyBlockParticleState("block_steel"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition furnaceIronDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("furnace_iron"), machineTexture("furnace_iron"))
+                .legacyXrDimensions(1, 0, 1, 0, 1, 0)
+                .legacyOffset(0)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 1, 0, 1, 0 }, facing)
+                        .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyInventory()))
+                .renderParts("Main", "Off")
+                .legacyItemScale(5.0F)
+                .modelTranslation(-0.5D, 0.0D, -0.5D)
+                .yRotation(ModBlocks::southZeroRotation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(2, 2, 2)))
+                .particleState(legacyBlockParticleState("block_aluminium"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition furnaceSteelDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("furnace_steel"), machineTexture("furnace_steel"))
+                .legacyXrDimensions(1, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 1, 1, 1, 1 }, facing)
+                        .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyInventory()))
+                .legacyItemScale(3.25F)
+                .yRotation(facing -> southZeroRotation(facing) - 90.0F)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 3, 3)))
+                .particleState(legacyBlockParticleState("block_steel"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition furnaceCombinationDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("combination_oven"), machineTexture("combination_oven"))
+                .legacyXrDimensions(1, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 1, 1, 1, 1 }, facing)
+                        .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyInventoryFluid()))
+                .legacyItemScale(3.25F)
+                .yRotation(facing -> 0.0F)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 4, 3)))
+                .particleState(legacyBlockParticleState("brick_light_alt"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition blastFurnaceDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("blast_furnace"), machineTexture("blast_furnace"))
+                .legacyXrDimensions(6, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> {
+                    BlockPos rearOrigin = LegacyMultiblockOffsets.relative(facing, -1, 0, 0);
+                    return LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 6, 0, 1, 1, 1, 1 }, facing)
+                            .withExtraProxyOffsets(blastFurnaceProxyOffsets(facing, rearOrigin),
+                                    proxyInventoryFluid());
+                })
+                .legacyItemScale(2.0F)
+                .yRotation(ModBlocks::eastZeroRotation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-3, 0, -3), pos.offset(7, 8, 4)))
+                .particleState(legacyBlockParticleState("brick_fire"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition arcFurnaceDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("arc_furnace"), machineTexture("arc_furnace"))
+                .legacyXrDimensions(4, 0, 2, 2, 2, 2)
+                .legacyOffset(2)
+                .layout(facing -> {
+                    Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+                    return LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 4, 0, 2, 2, 2, 2 }, facing)
+                            .withLegacyXrCheckedFill(new int[] { 4, 0, 3, -2, 1, 1 }, facing,
+                                    LegacyMultiblockOffsets.relative(facing, 2, 0, 0))
+                            .withExtraProxyOffsets(arcFurnaceProxyOffsets(facing, rot), proxyInventoryPower());
+                })
+                .renderParts("Furnace", "Lid", "Ring1", "Ring2", "Ring3", "Electrode1", "Electrode2",
+                        "Electrode3", "Cable1", "Cable2", "Cable3")
+                .legacyItemScale(1.75F)
+                .yRotation(ModBlocks::eastZeroRotation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-4, -2, -4), pos.offset(7, 6, 5)))
+                .particleState(legacyBlockParticleState("block_steel"))
+                .build();
+    }
+
     private static LegacyMachineDefinition annihilatorDefinition() {
         return LegacyMachineDefinition.builder(machineModel("annihilator"), machineTexture("annihilator"))
                 .legacyXrDimensions(2, 0, 4, 4, 1, 1)
@@ -2129,7 +2575,8 @@ public final class ModBlocks {
                 .itemRenderParts("caster", "plate")
                 .legacyItemScale(2.0F)
                 .modelTranslation(0.5D, 0.0D, 0.5D)
-                .yRotation(ModBlocks::southZeroRotation)
+                .yRotation(ModBlocks::strandCasterBaseRotation)
+                .postModelYRotation(180.0F)
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -7), pos.offset(3, 4, 2)))
                 .particleState(legacyBlockParticleState("brick_fire"))
                 .build();
@@ -2160,6 +2607,31 @@ public final class ModBlocks {
                 .legacyItemScale(3.25F)
                 .yRotation(ModBlocks::southZeroRotation)
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 3, 3)))
+                .particleState(legacyBlockParticleState("block_steel"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition deuteriumTowerDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("machine_deuterium_tower"), machineTexture("machine_deuterium_tower"))
+                .legacyXrDimensions(9, 0, 1, 0, 0, 1)
+                .legacyOffset(0)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 9, 0, 1, 0, 0, 1 }, facing)
+                        .withExtraProxyOffsets(deuteriumTowerProxyOffsets(facing), proxyPowerFluid()))
+                .legacyItemScale(3.0D, 0.5D)
+                .yRotation(ModBlocks::southZeroRotation)
+                .modelTranslation(0.5D, 0.0D, -0.5D)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 11, 3)))
+                .particleState(legacyBlockParticleState("concrete"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition fractionSpacerDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("fraction_spacer"), machineTexture("fraction_spacer"))
+                .legacyXrDimensions(0, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 0, 0, 1, 1, 1, 1 }, facing))
+                .legacyItemScale(3.25F)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 2, 3)))
                 .particleState(legacyBlockParticleState("block_steel"))
                 .build();
     }
@@ -2222,6 +2694,27 @@ public final class ModBlocks {
                 LegacyMultiblockOffsets.relative(facing, rot, 0, -5, 1));
     }
 
+    private static List<BlockPos> blastFurnaceProxyOffsets(Direction facing, BlockPos rearOrigin) {
+        return List.of(
+                rearOrigin.offset(1, 0, 0),
+                rearOrigin.offset(-1, 0, 0),
+                rearOrigin.offset(0, 0, 1),
+                rearOrigin.offset(0, 0, -1),
+                rearOrigin.offset(facing.getStepX(), 3, facing.getStepZ()),
+                rearOrigin.offset(facing.getStepX(), 5, facing.getStepZ()),
+                rearOrigin.offset(0, 6, 0));
+    }
+
+    private static List<BlockPos> arcFurnaceProxyOffsets(Direction facing, Direction rot) {
+        return List.of(
+                LegacyMultiblockOffsets.relative(facing, rot, 2, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 2, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 1, 2, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 2, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 1, -2, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, -2, 0));
+    }
+
     private static List<BlockPos> annihilatorProxyOffsets(Direction facing) {
         Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
@@ -2262,6 +2755,52 @@ public final class ModBlocks {
                 LegacyMultiblockOffsets.relative(facing, rot, -1, 1, 0));
     }
 
+    private static List<BlockPos> deuteriumTowerProxyOffsets(Direction facing) {
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                LegacyMultiblockOffsets.relative(facing, rot, -1, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 0, 0));
+    }
+
+    private static List<BlockPos> chungusProxyOffsets(Direction facing) {
+        Direction side = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                LegacyMultiblockOffsets.relative(facing, 4, 0, 2),
+                LegacyMultiblockOffsets.relative(facing, -10, 0),
+                LegacyMultiblockOffsets.relative(facing, side, 0, 2, 0),
+                LegacyMultiblockOffsets.relative(facing, side, 0, -2, 0));
+    }
+
+    private static List<BlockPos> hephaestusProxyOffsets() {
+        return LegacyMultiblockOffsets.combine(
+                LegacyMultiblockOffsets.cardinal(1),
+                LegacyMultiblockOffsets.cardinal(1, 11));
+    }
+
+    private static List<BlockPos> heatBoilerProxyOffsets(Direction facing) {
+        Direction side = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                LegacyMultiblockOffsets.relative(facing, side, 0, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, side, 0, -1, 0),
+                new BlockPos(0, 3, 0));
+    }
+
+    private static List<BlockPos> industrialBoilerProxyOffsets() {
+        return LegacyMultiblockOffsets.combine(
+                LegacyMultiblockOffsets.cardinal(1),
+                List.of(new BlockPos(0, 4, 0)));
+    }
+
+    private static List<BlockPos> combustionEngineProxyOffsets(Direction facing) {
+        Direction side = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                LegacyMultiblockOffsets.relative(facing, side, 0, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, side, 0, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, side, -1, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, side, -1, -1, 0));
+    }
+
     private static List<BlockPos> industrialTurbineProxyOffsets(Direction facing) {
         Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
@@ -2282,6 +2821,14 @@ public final class ModBlocks {
         return LegacyProxyMode.passive().fluidProxy();
     }
 
+    private static LegacyProxyMode proxyPower() {
+        return LegacyProxyMode.passive().powerProxy();
+    }
+
+    private static LegacyProxyMode proxyHeatSource() {
+        return LegacyProxyMode.passive().heatProxy();
+    }
+
     private static LegacyProxyMode proxyPowerFluid() {
         return LegacyProxyMode.combo(false, true, true);
     }
@@ -2294,8 +2841,33 @@ public final class ModBlocks {
         return LegacyProxyMode.combo(true, false, true);
     }
 
+    private static LegacyProxyMode proxyInventoryFluidMolten() {
+        return LegacyProxyMode.combo(true, false, true).moltenMetalProxy();
+    }
+
     private static LegacyProxyMode proxyInventoryPowerFluid() {
         return LegacyProxyMode.combo(true, true, true);
+    }
+
+    private static List<BlockPos> heaterOilburnerExtraOffsets() {
+        return LegacyMultiblockOffsets.combine(
+                LegacyMultiblockOffsets.cardinal(1),
+                List.of(new BlockPos(0, 1, 0)));
+    }
+
+    private static LegacyProxyMode heaterOilburnerProxyMode(BlockPos offset) {
+        return offset.equals(new BlockPos(0, 1, 0)) ? proxyHeatSource() : proxyFluid();
+    }
+
+    private static List<BlockPos> condenserPoweredProxyOffsets(Direction facing) {
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                LegacyMultiblockOffsets.relative(facing, rot, 0, 3, 1),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, -3, 1),
+                LegacyMultiblockOffsets.relative(facing, rot, 1, 1, 1),
+                LegacyMultiblockOffsets.relative(facing, rot, 1, -1, 1),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 1, 1),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, -1, 1));
     }
 
     private static List<BlockPos> oreSlopperProxyOffsets(Direction facing) {
@@ -2468,11 +3040,29 @@ public final class ModBlocks {
         };
     }
 
+    private static float pumpRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 270.0F;
+            case EAST -> 180.0F;
+            case SOUTH -> 90.0F;
+            default -> 0.0F;
+        };
+    }
+
     private static float bigAssTankRotation(Direction facing) {
         return switch (facing) {
             case NORTH -> 270.0F;
             case EAST -> 180.0F;
             case SOUTH -> 90.0F;
+            default -> 0.0F;
+        };
+    }
+
+    private static float eastZeroRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 90.0F;
+            case WEST -> 180.0F;
+            case SOUTH -> 270.0F;
             default -> 0.0F;
         };
     }
@@ -2535,9 +3125,9 @@ public final class ModBlocks {
 
     private static float centrifugeRotation(Direction facing) {
         return switch (facing) {
-            case SOUTH -> 90.0F;
+            case NORTH -> 90.0F;
             case WEST -> 180.0F;
-            case NORTH -> 270.0F;
+            case SOUTH -> 270.0F;
             default -> 0.0F;
         };
     }
@@ -2546,30 +3136,67 @@ public final class ModBlocks {
         return (rotation % 360.0F + 360.0F) % 360.0F;
     }
 
+    private static float northZeroRotation(Direction facing) {
+        return switch (facing) {
+            case WEST -> 90.0F;
+            case SOUTH -> 180.0F;
+            case EAST -> 270.0F;
+            default -> 0.0F;
+        };
+    }
+
     private static float sawmillRotation(Direction facing) {
         return switch (facing) {
-            case SOUTH -> 180.0F;
+            case NORTH -> 180.0F;
             case WEST -> 270.0F;
-            case NORTH -> 0.0F;
-            default -> 90.0F;
+            case EAST -> 90.0F;
+            default -> 0.0F;
         };
     }
 
     private static float crucibleRotation(Direction facing) {
         return switch (facing) {
-            case SOUTH -> 90.0F;
+            case NORTH -> 90.0F;
             case WEST -> 180.0F;
-            case NORTH -> 270.0F;
+            case SOUTH -> 270.0F;
             default -> 0.0F;
         };
     }
 
     private static float oreSlopperRotation(Direction facing) {
         return switch (facing) {
-            case NORTH -> 180.0F;
+            case WEST -> 90.0F;
+            case SOUTH -> 180.0F;
             case EAST -> 270.0F;
+            default -> 0.0F;
+        };
+    }
+
+    private static float southZeroRotation(Direction facing) {
+        return switch (facing) {
             case SOUTH -> 0.0F;
-            default -> 90.0F;
+            case EAST -> 90.0F;
+            case NORTH -> 180.0F;
+            case WEST -> 270.0F;
+            default -> 0.0F;
+        };
+    }
+
+    private static float strandCasterBaseRotation(Direction facing) {
+        return switch (facing) {
+            case WEST -> 90.0F;
+            case SOUTH -> 180.0F;
+            case EAST -> 270.0F;
+            default -> 0.0F;
+        };
+    }
+
+    private static Vec3 orbusModelTranslation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> new Vec3(1.0D, 0.0D, 1.0D);
+            case WEST -> new Vec3(1.0D, 0.0D, 0.0D);
+            case EAST -> new Vec3(0.0D, 0.0D, 1.0D);
+            default -> Vec3.ZERO;
         };
     }
 
@@ -2759,13 +3386,23 @@ public final class ModBlocks {
                         pos.getX() + 8.0D,
                         pos.getY() + 10.0D,
                         pos.getZ() + 8.0D))
-                .collisionShape(state -> soyuzLauncherLayout().shape(0.75D))
-                .highlightShape(state -> soyuzLauncherLayout().shape(0.75D))
                 .itemFitSize(0.45F)
                 .build();
     }
 
     private static LegacyMultiblockLayout soyuzLauncherLayout() {
+        return SoyuzLauncherLayoutCache.LAYOUT;
+    }
+
+    private static final class SoyuzLauncherLayoutCache {
+        private static final List<BlockPos> PROXY_OFFSETS = createSoyuzLauncherProxyOffsets();
+        private static final LegacyMultiblockLayout LAYOUT = createSoyuzLauncherLayout();
+
+        private SoyuzLauncherLayoutCache() {
+        }
+    }
+
+    private static LegacyMultiblockLayout createSoyuzLauncherLayout() {
         return LegacyMultiblockLayout.ofOffsets(List.of(BlockPos.ZERO))
                 .withLegacyXrCheckedFill(new int[] { 0, 1, 6, 6, 6, 6 }, Direction.EAST)
                 .withLegacyXrCheckedFill(new int[] { -2, 4, -3, 6, -3, 6 }, Direction.EAST)
@@ -2778,6 +3415,10 @@ public final class ModBlocks {
     }
 
     private static List<BlockPos> soyuzLauncherProxyOffsets() {
+        return SoyuzLauncherLayoutCache.PROXY_OFFSETS;
+    }
+
+    private static List<BlockPos> createSoyuzLauncherProxyOffsets() {
         Set<BlockPos> offsets = new LinkedHashSet<>();
         for (int x = -6; x <= 6; x++) {
             for (int z = -6; z <= 6; z++) {
@@ -2797,6 +3438,7 @@ public final class ModBlocks {
                 .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 4, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1),
                                 LegacyProxyMode.passive().powerProxy()))
+                .yRotation(facing -> 180.0F)
                 .renderBoundingBox(pos -> new AABB(
                         pos.getX() - 5.0D,
                         pos.getY(),
@@ -2811,6 +3453,7 @@ public final class ModBlocks {
     private static LegacyMachineDefinition radarScreenDefinition() {
         return LegacyMachineDefinition.builder(machineModel("radar_screen"), machineTexture("radar_screen"))
                 .legacyXrDimensions(1, 0, 0, 0, 1, 0)
+                .yRotation(ModBlocks::solidifierRotation)
                 .renderBoundingBox(pos -> new AABB(
                         pos.getX() - 1.0D,
                         pos.getY() - 1.0D,
@@ -3011,6 +3654,15 @@ public final class ModBlocks {
                 .sound(SoundType.METAL)
                 .noOcclusion(),
                 chunkRadiationPerTick));
+    }
+
+    private static RegistryObject<Block> explosiveBarrel(String name, LegacyExplosiveBarrelBlock.Kind kind) {
+        return registerBlockWithItem(name, () -> new LegacyExplosiveBarrelBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(0.5F, 2.5F)
+                .sound(SoundType.METAL)
+                .noOcclusion(),
+                kind));
     }
 
     private static RegistryObject<Block> legacyGlass(String name) {

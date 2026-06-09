@@ -28,6 +28,7 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.DoubleValue POLLUTION_SOOT_FOG_THRESHOLD;
     public static ForgeConfigSpec.DoubleValue POLLUTION_SOOT_FOG_DIVISOR;
     public static ForgeConfigSpec.DoubleValue POLLUTION_SMOKE_STACK_SOOT_MULT;
+    public static ForgeConfigSpec.BooleanValue ENABLE_MOB_GEAR;
     public static ForgeConfigSpec.BooleanValue RAMPANT_GLYPHID_GUIDANCE;
 
     public static ForgeConfigSpec.BooleanValue DISABLE_ASBESTOS;
@@ -118,6 +119,9 @@ public final class RadiationConfig {
         POLLUTION_SMOKE_STACK_SOOT_MULT = builder
                 .comment("Legacy POL_08_smokeStackSootMult: stored for old pollution config parity; legacy chimney tile entities use their own pollution multipliers.")
                 .defineInRange("smokeStackSootMult", 0.8D, 0.0D, Double.MAX_VALUE);
+        ENABLE_MOB_GEAR = builder
+                .comment("Legacy MobConfig 12.D01_enableMobGear: allows naturally spawning mobs to receive old HBM gear branches.")
+                .define("enableMobGear", true);
         RAMPANT_GLYPHID_GUIDANCE = builder
                 .comment("Legacy MobConfig 12.R05_rampantGlyphidGuidance: records a sleeping player's bed as the pollution/rampant target point.")
                 .define("rampantGlyphidGuidance", false);
@@ -226,6 +230,10 @@ public final class RadiationConfig {
 
     public static double pollutionSmokeStackSootMultiplier() {
         return POLLUTION_SMOKE_STACK_SOOT_MULT.get();
+    }
+
+    public static boolean mobGearEnabled() {
+        return ENABLE_MOB_GEAR.get();
     }
 
     public static boolean rampantGlyphidGuidanceEnabled() {

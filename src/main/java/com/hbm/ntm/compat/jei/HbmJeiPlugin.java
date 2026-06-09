@@ -2,6 +2,7 @@ package com.hbm.ntm.compat.jei;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
+import com.hbm.ntm.recipe.ItemProcessingRecipe;
 import com.hbm.ntm.recipe.LiquefactionRecipe;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.PressRecipe;
@@ -54,6 +55,12 @@ public final class HbmJeiPlugin implements IModPlugin {
             RecipeType.create(HbmNtm.MOD_ID, "liquefaction", LiquefactionRecipe.class);
     public static final RecipeType<PyroOvenRecipe> PYRO_OVEN =
             RecipeType.create(HbmNtm.MOD_ID, "pyro_oven", PyroOvenRecipe.class);
+    public static final RecipeType<ItemProcessingRecipe> SHREDDER =
+            RecipeType.create(HbmNtm.MOD_ID, "shredder", ItemProcessingRecipe.class);
+    public static final RecipeType<ItemProcessingRecipe> CENTRIFUGE =
+            RecipeType.create(HbmNtm.MOD_ID, "centrifuge", ItemProcessingRecipe.class);
+    public static final RecipeType<ItemProcessingRecipe> CRYSTALLIZER =
+            RecipeType.create(HbmNtm.MOD_ID, "crystallizer", ItemProcessingRecipe.class);
 
     @Override
     public ResourceLocation getPluginUid() {
@@ -98,7 +105,13 @@ public final class HbmJeiPlugin implements IModPlugin {
                         Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_solidifier", "Solidifier"),
                         ModBlocks.MACHINE_SOLIDIFIER.get(), guiHelper),
                 new LiquefactionRecipeCategory(LIQUEFACTION, ModBlocks.MACHINE_LIQUEFACTOR.get(), guiHelper),
-                new PyroOvenRecipeCategory(PYRO_OVEN, ModBlocks.MACHINE_PYROOVEN.get(), guiHelper));
+                new PyroOvenRecipeCategory(PYRO_OVEN, ModBlocks.MACHINE_PYROOVEN.get(), guiHelper),
+                new ItemProcessingRecipeCategory(SHREDDER, ItemProcessingRecipe.Machine.SHREDDER,
+                        ModBlocks.MACHINE_SHREDDER.get(), guiHelper),
+                new ItemProcessingRecipeCategory(CENTRIFUGE, ItemProcessingRecipe.Machine.CENTRIFUGE,
+                        ModBlocks.MACHINE_CENTRIFUGE.get(), guiHelper),
+                new ItemProcessingRecipeCategory(CRYSTALLIZER, ItemProcessingRecipe.Machine.CRYSTALLIZER,
+                        ModBlocks.MACHINE_CRYSTALLIZER.get(), guiHelper));
     }
 
     @Override
@@ -119,6 +132,9 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipes(SOLIDIFIER, HbmOilRecipe.solidificationRecipes());
         registration.addRecipes(LIQUEFACTION, recipeManager.getAllRecipesFor(ModRecipes.LIQUEFACTION.type().get()));
         registration.addRecipes(PYRO_OVEN, recipeManager.getAllRecipesFor(ModRecipes.PYRO_OVEN.type().get()));
+        registration.addRecipes(SHREDDER, sortedItemProcessing(recipeManager.getAllRecipesFor(ModRecipes.SHREDDER.type().get())));
+        registration.addRecipes(CENTRIFUGE, sortedItemProcessing(recipeManager.getAllRecipesFor(ModRecipes.CENTRIFUGE.type().get())));
+        registration.addRecipes(CRYSTALLIZER, sortedItemProcessing(recipeManager.getAllRecipesFor(ModRecipes.CRYSTALLIZER.type().get())));
     }
 
     @Override
@@ -141,11 +157,20 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_SOLIDIFIER.get()), SOLIDIFIER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_LIQUEFACTOR.get()), LIQUEFACTION);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_PYROOVEN.get()), PYRO_OVEN);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_SHREDDER.get()), SHREDDER);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_CENTRIFUGE.get()), CENTRIFUGE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_CRYSTALLIZER.get()), CRYSTALLIZER);
     }
 
     private static List<GenericMachineRecipe> sorted(List<GenericMachineRecipe> recipes) {
         return recipes.stream()
                 .sorted(GenericMachineRecipe.LEGACY_ORDER)
+                .toList();
+    }
+
+    private static List<ItemProcessingRecipe> sortedItemProcessing(List<ItemProcessingRecipe> recipes) {
+        return recipes.stream()
+                .sorted(java.util.Comparator.comparing(recipe -> recipe.getId().toString()))
                 .toList();
     }
 }

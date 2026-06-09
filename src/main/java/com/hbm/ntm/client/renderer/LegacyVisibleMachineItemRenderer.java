@@ -146,7 +146,9 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     private static AABB transformVisibleBounds(AABB bounds, LegacyMachineDefinition definition, BlockState state) {
         Vec3 translation = definition.modelTranslation(state);
         float yRotation = definition.yRotation(state);
-        return transformBounds(bounds, point -> rotateY(point.add(translation), yRotation).add(0.5D, 0.0D, 0.5D));
+        float postModelYRotation = definition.postModelYRotation(state);
+        return transformBounds(bounds, point -> rotateY(
+                rotateY(point, postModelYRotation).add(translation), yRotation).add(0.5D, 0.0D, 0.5D));
     }
 
     private static AABB transformBounds(AABB bounds, PointTransform transform) {
@@ -188,6 +190,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
+        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         if (definition.itemRenderAll()) {
             model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);

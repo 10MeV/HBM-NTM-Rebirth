@@ -69,6 +69,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "decon_side",
                 "decon_side",
                 "decon_side");
+        simpleSidedCubeWithItem(ModBlocks.MACHINE_ARMOR_TABLE,
+                "armor_table_bottom",
+                "armor_table_top",
+                "armor_table_side",
+                "armor_table_side",
+                "armor_table_side",
+                "armor_table_side");
         redCableWithItem();
         redCableGaugeWithItem();
         poweredRedCableWithItem(ModBlocks.CABLE_SWITCH, "cable_switch_off", "cable_switch_on");
@@ -145,6 +152,23 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SAWMILL, "machines/sawmill");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CRUCIBLE, "machines/crucible");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_GASFLARE, "machines/flare_stack");
+        visibleMachineWithItemRenderer(ModBlocks.CHIMNEY_BRICK, "machines/chimney_brick");
+        visibleMachineWithItemRenderer(ModBlocks.CHIMNEY_INDUSTRIAL, "machines/chimney_industrial");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_INTAKE, "machines/intake");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_DRAIN, "machines/drain");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CHUNGUS, "machines/chungus");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_HEPHAESTUS, "machines/hephaestus");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_BOILER, "machines/boiler");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_INDUSTRIAL_BOILER, "machines/industrial_boiler");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_COMBUSTION_ENGINE, "machines/combustion_engine");
+        visibleMachineWithItemRenderer(ModBlocks.PUMP_STEAM, "machines/pump");
+        visibleMachineWithItemRenderer(ModBlocks.PUMP_ELECTRIC, "machines/pump_electric");
+        visibleMachineWithItemRenderer(ModBlocks.HEATER_HEATEX, "machines/heatex");
+        visibleMachineWithItemRenderer(ModBlocks.HEATER_FIREBOX, "machines/firebox");
+        visibleMachineWithItemRenderer(ModBlocks.HEATER_OVEN, "machines/heating_oven");
+        visibleMachineWithItemRenderer(ModBlocks.HEATER_OILBURNER, "machines/oilburner");
+        visibleMachineWithItemRenderer(ModBlocks.HEATER_ELECTRIC, "machines/electric_heater");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CONDENSER_POWERED, "machines/condenser");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ASSEMBLY_FACTORY, "machines/assembly_factory");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_PUREX, "machines/purex");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SILEX, "machines/silex");
@@ -164,6 +188,23 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TOWER_LARGE, "machines/tower_large");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBOFAN, "machines/turbofan");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBINEGAS, "machines/turbinegas");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_AMMO_PRESS, "machines/ammo_press");
+        visibleMachineWithItemRenderer(ModBlocks.FURNACE_IRON, "machines/furnace_iron");
+        visibleMachineWithItemRenderer(ModBlocks.FURNACE_STEEL, "machines/furnace_steel");
+        visibleMachineWithItemRenderer(ModBlocks.FURNACE_COMBINATION, "machines/combination_oven");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_BLAST_FURNACE, "machines/blast_furnace");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_ARC_FURNACE, "machines/arc_furnace");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_ANNIHILATOR, "machines/annihilator");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_FEL, "machines/fel");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_ORBUS, "machines/orbus");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_MINING_LASER, "machines/mining_laser");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_STRAND_CASTER, "machines/strand_caster");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_WOOD_BURNER, "machines/wood_burner");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_STIRLING, "machines/stirling");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_STIRLING_STEEL, "machines/stirling");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_STIRLING_CREATIVE, "machines/stirling");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_DEUTERIUM_TOWER, "machines/machine_deuterium_tower");
+        visibleMachineWithItemRenderer(ModBlocks.FRACTION_SPACER, "machines/fraction_spacer");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_INDUSTRIAL_TURBINE, "machines/industrial_turbine");
         translucentCubeWithItem(ModBlocks.GLASS_BORON, "glass_boron");
         translucentCubeWithItem(ModBlocks.GLASS_QUARTZ, "glass_quartz");
@@ -225,8 +266,20 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         existingModelWithCustomItem(ModBlocks.NUKE_CUSTOM, "nuke_custom");
         existingModelWithItem(ModBlocks.NUKE_FSTBMB, "nuke_fstbmb");
         existingModelWithItem(ModBlocks.BOMB_MULTI, "bomb_multi");
-        simpleCubeWithItem(ModBlocks.YELLOW_BARREL, "barrel_yellow");
-        simpleCubeWithItem(ModBlocks.VITRIFIED_BARREL, "barrel_vitrified");
+        barrelWithItem(ModBlocks.RED_BARREL, "barrel_red");
+        barrelWithItem(ModBlocks.PINK_BARREL, "barrel_pink");
+        barrelWithItem(ModBlocks.LOX_BARREL, "barrel_lox");
+        barrelWithItem(ModBlocks.YELLOW_BARREL, "barrel_yellow");
+        barrelWithItem(ModBlocks.VITRIFIED_BARREL, "barrel_vitrified");
+    }
+
+    private void barrelWithItem(RegistryObject<Block> block, String textureName) {
+        ModelFile model = models().withExistingParent(block.getId().getPath(), modLoc("block/barrel_steel"))
+                .texture("particle", modLoc("block/legacy_blocks/" + textureName))
+                .texture("default", modLoc("block/legacy_blocks/" + textureName))
+                .texture("texture0", modLoc("block/legacy_blocks/" + textureName));
+        simpleBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
     }
 
     private void existingModelWithItem(RegistryObject<Block> block, String modelName) {

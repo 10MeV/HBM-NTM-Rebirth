@@ -75,6 +75,14 @@ public final class LegacyUvAnimation {
         return 30.0D - Math.max(0, layer) * 60.0D;
     }
 
+    public static double legacyHmfOffset(double currentTime, double modulo, double quotient) {
+        return quotient == 0.0D ? 0.0D : (currentTime % modulo) / quotient;
+    }
+
+    public static double tomFlameHmfOffset(double currentTime) {
+        return legacyHmfOffset(currentTime, 50000.0D, 2500.0D);
+    }
+
     public static double falloutRainSwayLoop(int timer, float partialTicks) {
         return ((timer & 511) + partialTicks) / 512.0D;
     }

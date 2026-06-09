@@ -3,12 +3,16 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.api.entity.RadarControl;
 import com.hbm.ntm.api.entity.RadarContext;
+import com.hbm.ntm.api.entity.RadarLaunchCommand;
 import com.hbm.ntm.api.entity.RadarDetectable;
 import com.hbm.ntm.api.entity.RadarEntry;
 import com.hbm.ntm.api.entity.RadarMap;
+import com.hbm.ntm.api.entity.RadarScanProvider;
 import com.hbm.ntm.api.entity.RadarScanResult;
 import com.hbm.ntm.api.entity.RadarScanner;
+import com.hbm.ntm.api.entity.RadarStatusSnapshot;
 import com.hbm.ntm.config.RadarConfig;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -36,7 +40,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -54,22 +57,22 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 
-public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLookOverlayProvider, MenuProvider {
+public class RadarBlockEntity extends HbmEnergyBlockEntity
+        implements LegacyLookOverlayProvider, MenuProvider, RadarRedstoneSource, RadarScanProvider {
     public static final long MAX_POWER = RadarConfig.POWER_CAP_DEFAULT;
     public static final long CONSUMPTION = RadarConfig.CONSUMPTION_DEFAULT;
     public static final int SLOT_COUNT = 10;
     public static final int SLOT_LINKER = 8;
     public static final int SLOT_BATTERY = 9;
 
-    public static final int CONTROL_SCAN_MISSILES = 0;
-    public static final int CONTROL_SCAN_SHELLS = 1;
-    public static final int CONTROL_SCAN_PLAYERS = 2;
-    public static final int CONTROL_SMART_MODE = 3;
-    public static final int CONTROL_RED_MODE = 4;
-    public static final int CONTROL_SHOW_MAP = 5;
-    public static final int CONTROL_CLEAR_MAP = 6;
+    public static final int CONTROL_SCAN_MISSILES = RadarControl.SCAN_MISSILES.id();
+    public static final int CONTROL_SCAN_SHELLS = RadarControl.SCAN_SHELLS.id();
+    public static final int CONTROL_SCAN_PLAYERS = RadarControl.SCAN_PLAYERS.id();
+    public static final int CONTROL_SMART_MODE = RadarControl.SMART_MODE.id();
+    public static final int CONTROL_RED_MODE = RadarControl.REDSTONE_MODE.id();
+    public static final int CONTROL_SHOW_MAP = RadarControl.SHOW_MAP.id();
+    public static final int CONTROL_CLEAR_MAP = RadarControl.CLEAR_MAP.id();
 
     public static final int MAP_WIDTH = RadarMap.WIDTH;
     public static final int MAP_SIZE = RadarMap.SIZE;
@@ -88,11 +91,6 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLook
     private static final String TAG_ENTRIES = "Entries";
     private static final String TAG_LAST_RED_POWER = "lastPower";
     private static final String TAG_ITEMS = "Items";
-    private static final String TAG_CONTROL = "control";
-    private static final String TAG_LINK = "link";
-    private static final String TAG_LAUNCH_ENTITY = "launchEntity";
-    private static final String TAG_LAUNCH_POS_X = "launchPosX";
-    private static final String TAG_LAUNCH_POS_Z = "launchPosZ";
     private static final String TAG_LEGACY_POWER = "power";
     private static final String TAG_MAP = "map";
     private static final String TAG_MAP_CLEAR = "mapClear";
@@ -328,6 +326,11 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLook
         return RadarScanner.redstonePower(entries, worldPosition, getRange(), redMode);
     }
 
+    @Override
+    public int redstoneOutput() {
+        return getRedPower();
+    }
+
     public List<RadarEntry> getEntries() {
         return List.copyOf(entries);
     }
@@ -336,24 +339,9 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLook
         return new RadarScanResult(entries, jammed);
     }
 
-    public int getEntryAmount() {
-        return entries.size();
-    }
-
-    public Optional<RadarEntry> getEntryAtLegacyIndex(int legacyIndex) {
-        return getScanResultSnapshot().entryAtLegacyIndex(legacyIndex);
-    }
-
-    public Optional<Boolean> isEntryPlayerAtLegacyIndex(int legacyIndex) {
-        return getScanResultSnapshot().isPlayerAtLegacyIndex(legacyIndex);
-    }
-
-    public OptionalInt getEntryTypeAtLegacyIndex(int legacyIndex) {
-        return getScanResultSnapshot().typeAtLegacyIndex(legacyIndex);
-    }
-
-    public Optional<RadarEntry.LegacyEntityInfo> getEntryInfoAtLegacyIndex(int legacyIndex) {
-        return getScanResultSnapshot().entityInfoAtLegacyIndex(legacyIndex);
+    public RadarStatusSnapshot getStatusSnapshot() {
+        return new RadarStatusSnapshot(worldPosition, getRange(), getPower(), getMaxPower(), jammed,
+                entries.size(), redstoneOutput(), scanParams(), redMode, showMap);
     }
 
     public RadarDetectable.RadarScanParams getScanSettings() {
@@ -419,6 +407,12 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLook
         return lastRedPower;
     }
 
+    @Override
+    public void provideExtraInfo(CompoundTag data) {
+        super.provideExtraInfo(data);
+        getStatusSnapshot().writeTo(data);
+    }
+
     public float getPreviousRotation() {
         return previousRotation;
     }
@@ -428,28 +422,21 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLook
     }
 
     public static CompoundTag controlTag(int control) {
-        CompoundTag tag = new CompoundTag();
-        tag.putInt(TAG_CONTROL, control);
-        return tag;
+        return RadarControl.byId(control)
+                .map(RadarControl::toTag)
+                .orElseGet(CompoundTag::new);
+    }
+
+    public static CompoundTag controlTag(RadarControl control) {
+        return control != null ? control.toTag() : new CompoundTag();
     }
 
     public static CompoundTag launchPositionTag(int linkSlot, int x, int z) {
-        CompoundTag tag = launchTag(linkSlot);
-        tag.putInt(TAG_LAUNCH_POS_X, x);
-        tag.putInt(TAG_LAUNCH_POS_Z, z);
-        return tag;
+        return RadarLaunchCommand.positionTag(linkSlot, x, z);
     }
 
     public static CompoundTag launchEntityTag(int linkSlot, int entityId) {
-        CompoundTag tag = launchTag(linkSlot);
-        tag.putInt(TAG_LAUNCH_ENTITY, entityId);
-        return tag;
-    }
-
-    private static CompoundTag launchTag(int linkSlot) {
-        CompoundTag tag = new CompoundTag();
-        tag.putInt(TAG_LINK, linkSlot);
-        return tag;
+        return RadarLaunchCommand.entityTag(linkSlot, entityId);
     }
 
     @Override
@@ -499,35 +486,27 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLook
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        if (tag.contains(TAG_CONTROL, Tag.TAG_INT)) {
+        if (RadarControl.isControlTag(tag)) {
             return true;
         }
-        if (!tag.contains(TAG_LINK, Tag.TAG_INT)) {
-            return false;
-        }
-        int linkSlot = tag.getInt(TAG_LINK);
-        return linkSlot >= 0 && linkSlot < SLOT_LINKER
-                && (tag.contains(TAG_LAUNCH_ENTITY, Tag.TAG_INT)
-                || tag.contains(TAG_LAUNCH_POS_X, Tag.TAG_INT) && tag.contains(TAG_LAUNCH_POS_Z, Tag.TAG_INT));
+        return RadarLaunchCommand.isValidTag(tag, SLOT_LINKER);
     }
 
     @Override
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
-        if (!tag.contains(TAG_CONTROL, Tag.TAG_INT)) {
+        Optional<RadarControl> control = RadarControl.fromTag(tag);
+        if (control.isEmpty()) {
             handleLaunchControl(player, tag);
             return;
         }
-        switch (tag.getInt(TAG_CONTROL)) {
-            case CONTROL_SCAN_MISSILES -> scanMissiles = !scanMissiles;
-            case CONTROL_SCAN_SHELLS -> scanShells = !scanShells;
-            case CONTROL_SCAN_PLAYERS -> scanPlayers = !scanPlayers;
-            case CONTROL_SMART_MODE -> smartMode = !smartMode;
-            case CONTROL_RED_MODE -> redMode = !redMode;
-            case CONTROL_SHOW_MAP -> showMap = !showMap;
-            case CONTROL_CLEAR_MAP -> clearFlag = true;
-            default -> {
-                return;
-            }
+        switch (control.get()) {
+            case SCAN_MISSILES -> scanMissiles = !scanMissiles;
+            case SCAN_SHELLS -> scanShells = !scanShells;
+            case SCAN_PLAYERS -> scanPlayers = !scanPlayers;
+            case SMART_MODE -> smartMode = !smartMode;
+            case REDSTONE_MODE -> redMode = !redMode;
+            case SHOW_MAP -> showMap = !showMap;
+            case CLEAR_MAP -> clearFlag = true;
         }
         setChanged();
         if (level != null) {
@@ -536,23 +515,26 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLook
     }
 
     private void handleLaunchControl(ServerPlayer player, CompoundTag tag) {
-        int linkSlot = tag.getInt(TAG_LINK);
+        RadarLaunchCommand command = RadarLaunchCommand.fromTag(tag).orElse(null);
+        if (command == null || !command.isValidLinkSlot(SLOT_LINKER)) {
+            return;
+        }
+        int linkSlot = command.linkSlot();
         ItemStack link = items.getStackInSlot(linkSlot);
         if (link.isEmpty()) {
             return;
         }
         if (link.is(ModItems.SAT_RELAY.get())) {
-            handleSatelliteRelayControl(player, link, tag);
+            handleSatelliteRelayControl(player, link, command);
             return;
         }
         if (link.is(ModItems.RADAR_LINKER.get())) {
-            handleRadarLinkerControl(player, link, tag);
+            handleRadarLinkerControl(player, link, command);
         }
     }
 
-    private void handleSatelliteRelayControl(ServerPlayer player, ItemStack link, CompoundTag tag) {
-        if (!(level instanceof ServerLevel serverLevel) || !tag.contains(TAG_LAUNCH_POS_X, Tag.TAG_INT)
-                || !tag.contains(TAG_LAUNCH_POS_Z, Tag.TAG_INT)) {
+    private void handleSatelliteRelayControl(ServerPlayer player, ItemStack link, RadarLaunchCommand command) {
+        if (!(level instanceof ServerLevel serverLevel) || command.target().isEntity()) {
             return;
         }
         Satellite satellite = SatelliteSavedData.get(serverLevel).getSatFromFreq(ISatelliteChip.getFrequencyFromStack(link));
@@ -560,8 +542,8 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLook
             return;
         }
 
-        int x = tag.getInt(TAG_LAUNCH_POS_X);
-        int z = tag.getInt(TAG_LAUNCH_POS_Z);
+        int x = command.target().x();
+        int z = command.target().z();
         if (satellite.satelliteInterface() == Satellite.SatelliteInterface.SAT_PANEL
                 && satellite.interfaceActions().contains(Satellite.InterfaceAction.CAN_CLICK)) {
             satellite.onClick(serverLevel, x, z);
@@ -577,7 +559,7 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLook
         }
     }
 
-    private void handleRadarLinkerControl(ServerPlayer player, ItemStack link, CompoundTag tag) {
+    private void handleRadarLinkerControl(ServerPlayer player, ItemStack link, RadarLaunchCommand command) {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
@@ -590,16 +572,7 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLook
         if (!(target instanceof com.hbm.ntm.api.entity.RadarCommandReceiver receiver)) {
             return;
         }
-        if (tag.contains(TAG_LAUNCH_ENTITY, Tag.TAG_INT)) {
-            Entity entity = serverLevel.getEntity(tag.getInt(TAG_LAUNCH_ENTITY));
-            if (entity != null && receiver.sendCommandEntity(entity)) {
-                playTechBleep(player);
-            }
-            return;
-        }
-        if (tag.contains(TAG_LAUNCH_POS_X, Tag.TAG_INT) && tag.contains(TAG_LAUNCH_POS_Z, Tag.TAG_INT)
-                && receiver.sendCommandPosition(tag.getInt(TAG_LAUNCH_POS_X), worldPosition.getY(),
-                tag.getInt(TAG_LAUNCH_POS_Z))) {
+        if (command.dispatch(serverLevel, worldPosition, receiver).successful()) {
             playTechBleep(player);
         }
     }
@@ -666,7 +639,7 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity implements LegacyLook
         }
         readMapSync(tag);
         if (tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
-            HbmInventoryMenuHelper.loadLegacyItemsCompound(tag, TAG_ITEMS, items);
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
         }
         if (tag.contains(TAG_ENTRIES, Tag.TAG_LIST)) {
             entries.clear();

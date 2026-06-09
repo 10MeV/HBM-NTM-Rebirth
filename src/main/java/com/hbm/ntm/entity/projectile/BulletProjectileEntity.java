@@ -1,6 +1,7 @@
 package com.hbm.ntm.entity.projectile;
 
-import com.hbm.ntm.api.entity.LegacyRadarDetectable;
+import com.hbm.ntm.api.entity.RadarContext;
+import com.hbm.ntm.api.entity.RadarDetectable;
 import com.hbm.ntm.bullet.BulletBehaviorTag;
 import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.bullet.BulletConfigSyncRegistry;
@@ -43,7 +44,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public class BulletProjectileEntity extends Entity implements LegacyRadarDetectable {
+public class BulletProjectileEntity extends Entity implements RadarDetectable {
     private static final EntityDataAccessor<Integer> CONFIG_ID =
             SynchedEntityData.defineId(BulletProjectileEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Byte> STYLE =
@@ -299,14 +300,29 @@ public class BulletProjectileEntity extends Entity implements LegacyRadarDetecta
     }
 
     @Override
-    public LegacyRadarDetectable.RadarTargetType getTargetType() {
-        return LegacyRadarDetectable.RadarTargetType.ARTILLERY;
+    public String getRadarName() {
+        return "Artillery Shell";
     }
 
     @Override
-    public boolean canBeDetectedByLegacyRadar() {
+    public int getBlipLevel() {
+        return RadarDetectable.ARTY;
+    }
+
+    @Override
+    public boolean canBeSeenBy(RadarContext radar) {
         BulletConfig currentConfig = config();
         return currentConfig != null && currentConfig.hasBehavior(BulletBehaviorTag.ARTILLERY_RADAR_TARGET);
+    }
+
+    @Override
+    public boolean paramsApplicable(RadarScanParams params) {
+        return params.scanShells();
+    }
+
+    @Override
+    public boolean suppliesRedstone(RadarScanParams params) {
+        return getDeltaMovement().y < 0.0D;
     }
 
     @Nullable

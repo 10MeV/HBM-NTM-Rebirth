@@ -52,13 +52,38 @@ public final class ArmorUtil {
             HazardClass.LIGHT,
             HazardClass.SAND
     };
+    public static final String[] metals = new String[] {
+            "chainmail",
+            "iron",
+            "silver",
+            "gold",
+            "platinum",
+            "tin",
+            "lead",
+            "liquidator",
+            "schrabidium",
+            "euphemium",
+            "steel",
+            "cmb",
+            "titanium",
+            "alloy",
+            "copper",
+            "bronze",
+            "electrum",
+            "t45",
+            "t51",
+            "bj",
+            "starmetal",
+            "hazmat",
+            "rubber",
+            "hev",
+            "ajr",
+            "rpa",
+            "spacesuit"
+    };
 
     private static final Set<String> FARADAY_KEYWORDS = Set.of(
-            "chainmail", "iron", "gold", "netherite", "steel", "titanium", "alloy",
-            "lead", "copper", "hazmat", "rubber", "schrabidium", "silver",
-            "platinum", "tin", "liquidator", "euphemium", "cmb", "bronze",
-            "electrum", "t45", "t51", "bj", "starmetal", "hev", "ajr",
-            "rpa", "spacesuit", "paa", "security", "cobalt");
+            "netherite", "paa", "security", "cobalt");
 
     public static void register() {
         HazmatRegistry.registerDefaultProtections();
@@ -615,6 +640,11 @@ public final class ArmorUtil {
             return false;
         }
         String key = stack.getItem().getDescriptionId().toLowerCase(Locale.US);
+        for (String metal : metals) {
+            if (key.contains(metal)) {
+                return true;
+            }
+        }
         for (String metal : FARADAY_KEYWORDS) {
             if (key.contains(metal)) {
                 return true;

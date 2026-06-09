@@ -34,12 +34,16 @@ import com.hbm.ntm.client.ClientHbmPlayerProperties;
 import com.hbm.ntm.client.ClientHbmLivingProperties;
 import com.hbm.ntm.client.ClientTileBinaryData;
 import com.hbm.ntm.compat.Compat;
+import com.hbm.ntm.compat.CompatCustomWarheadRegistry;
 import com.hbm.ntm.compat.CompatEnergyControl;
+import com.hbm.ntm.compat.CompatFluidRegistry;
 import com.hbm.ntm.compat.CompatRecipeRegistry;
+import com.hbm.ntm.compat.CompatTurretTargetRegistry;
 import com.hbm.ntm.damage.DamageResistanceConfig;
 import com.hbm.ntm.damage.DamageResistance;
 import com.hbm.ntm.damage.DamageResistanceHandler;
 import com.hbm.ntm.damage.DamageResistanceStats;
+import com.hbm.ntm.damage.DamageResistanceTooltipUtil;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergyDebug;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
@@ -102,6 +106,7 @@ import com.hbm.ntm.satellite.SatelliteSavedData;
 import com.hbm.ntm.uninos.HbmNodespace;
 import com.hbm.ntm.uninos.HbmUninosDiagnostics;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNodespace;
+import com.hbm.ntm.util.HbmLegacyLootUtil;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -129,6 +134,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
@@ -1616,6 +1622,8 @@ public final class ModCommands {
                         .executes(context -> getCompatRecipeStatus(context.getSource())))
                 .then(Commands.literal("fluids")
                         .executes(context -> getCompatFluidStatus(context.getSource())))
+                .then(Commands.literal("externals")
+                        .executes(context -> getCompatExternalHookStatus(context.getSource())))
                 .then(Commands.literal("steam")
                         .then(Commands.literal("level")
                                 .then(Commands.argument("level", IntegerArgumentType.integer(0, 3))
@@ -1809,8 +1817,36 @@ public final class ModCommands {
                 .executes(context -> getItemPoolSummary(context.getSource()))
                 .then(Commands.literal("summary")
                         .executes(context -> getItemPoolSummary(context.getSource())))
+                .then(Commands.literal("list")
+                        .executes(context -> listItemPoolTables(context.getSource())))
                 .then(Commands.literal("missing")
                         .executes(context -> listMissingItemPoolTables(context.getSource())))
+                .then(Commands.literal("lootnames")
+                        .executes(context -> listLegacyLootNames(context.getSource())))
+                .then(Commands.literal("lootstatus")
+                        .then(Commands.argument("lootName", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                        HbmLegacyLootUtil.LOOT_NAMES.stream(),
+                                        builder))
+                                .executes(context -> queryLegacyLootName(
+                                        context.getSource(),
+                                        StringArgumentType.getString(context, "lootName")))))
+                .then(Commands.literal("lootroll")
+                        .then(Commands.argument("lootName", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                        HbmLegacyLootUtil.LOOT_NAMES.stream(),
+                                        builder))
+                                .executes(context -> rollLegacyLootName(
+                                        context.getSource(),
+                                        StringArgumentType.getString(context, "lootName")))))
+                .then(Commands.literal("status")
+                        .then(Commands.argument("legacyPoolId", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                        HbmItemPoolRegistry.knownPoolIds().stream().sorted(),
+                                        builder))
+                                .executes(context -> queryItemPoolTable(
+                                        context.getSource(),
+                                        StringArgumentType.getString(context, "legacyPoolId")))))
                 .then(Commands.literal("table")
                         .then(Commands.argument("legacyPoolId", StringArgumentType.word())
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggest(
@@ -2367,8 +2403,10 @@ public final class ModCommands {
         ModDamageSources.DamageAliasAudit aliasAudit = ModDamageSources.aliasAudit();
         DamageResistanceConfig.ConfigAudit configAudit = DamageResistanceConfig.configAudit();
         DamageResistanceConfig.DefaultAudit defaultAudit = DamageResistanceConfig.defaultAudit();
-        if (audit.passed() && applicationAudit.passed() && aliasAudit.passed() && configAudit.passed() && defaultAudit.passed()) {
-            source.sendSuccess(() -> Component.literal("Damage resistance self-test passed: core, application, damage aliases, config parser, and legacy defaults stable."), false);
+        DamageResistanceTooltipUtil.TooltipAudit tooltipAudit = DamageResistanceTooltipUtil.tooltipAudit();
+        if (audit.passed() && applicationAudit.passed() && aliasAudit.passed() && configAudit.passed()
+                && defaultAudit.passed() && tooltipAudit.passed()) {
+            source.sendSuccess(() -> Component.literal("Damage resistance self-test passed: core, application, damage aliases, config parser, legacy defaults, and tooltip fallbacks stable."), false);
             source.sendSuccess(() -> Component.literal("Damage resistance damage alias audit: legacyTypes="
                     + aliasAudit.legacyTypes()
                     + " aliases=" + aliasAudit.aliases()), false);
@@ -2403,6 +2441,10 @@ public final class ModCommands {
             source.sendFailure(Component.literal("Damage resistance default self-test failed: "
                     + String.join(", ", defaultAudit.problems())));
         }
+        if (!tooltipAudit.passed()) {
+            source.sendFailure(Component.literal("Damage resistance tooltip self-test failed: "
+                    + String.join(", ", tooltipAudit.problems())));
+        }
         return 0;
     }
 
@@ -2415,12 +2457,15 @@ public final class ModCommands {
                 source.sendFailure(Component.literal("Missing HBM damage type: " + legacy.location()));
                 continue;
             }
+            DamageType damageType = registry.getHolderOrThrow(legacy.key()).value();
             DamageSource damageSource = new DamageSource(registry.getHolderOrThrow(legacy.key()));
+            problems += checkDamageTypeMessageId(source, legacy, damageType.msgId());
             problems += checkDamageTypeTag(source, legacy, "projectile", legacy.projectile(), damageSource.is(DamageTypeTags.IS_PROJECTILE));
             problems += checkDamageTypeTag(source, legacy, "explosion", legacy.explosion(), damageSource.is(DamageTypeTags.IS_EXPLOSION));
             problems += checkDamageTypeTag(source, legacy, "fire", legacy.fire(), damageSource.is(DamageTypeTags.IS_FIRE));
             problems += checkDamageTypeTag(source, legacy, "bypassesArmor", legacy.bypassesArmor(), damageSource.is(DamageTypeTags.BYPASSES_ARMOR));
             problems += checkDamageTypeTag(source, legacy, "absolute", legacy.absolute(), damageSource.is(DamageTypeTags.BYPASSES_RESISTANCE));
+            problems += checkDamageTypeTag(source, legacy, "effects", legacy.bypassesEffects(), damageSource.is(DamageTypeTags.BYPASSES_EFFECTS));
             problems += checkDamageTypeTag(source, legacy, "creativeAllowed", legacy.creativeAllowed(), damageSource.is(DamageTypeTags.BYPASSES_INVULNERABILITY));
         }
         int totalProblems = problems;
@@ -2430,13 +2475,26 @@ public final class ModCommands {
         return totalProblems == 0 ? 1 : totalProblems;
     }
 
+    private static int checkDamageTypeMessageId(CommandSourceStack source, ModDamageSources.LegacyDamageType legacy,
+            String actual) {
+        String expected = legacy.expectedMessageId();
+        if (expected.equals(actual)) {
+            return 0;
+        }
+        source.sendFailure(Component.literal("Damage type message_id mismatch: " + legacy.location()
+                + " expected=" + expected + " actual=" + actual
+                + " exactKey=" + DamageResistanceHandler.exactTypeKey(actual)));
+        return 1;
+    }
+
     private static int checkDamageTypeTag(CommandSourceStack source, ModDamageSources.LegacyDamageType legacy,
             String name, boolean expected, boolean actual) {
         if (expected == actual) {
             return 0;
         }
         source.sendFailure(Component.literal("Damage type tag mismatch: " + legacy.location()
-                + " " + name + " expected=" + expected + " actual=" + actual));
+                + " " + name + " expected=" + expected + " actual=" + actual
+                + " expectedTags=" + tagLabelSummary(legacy.expectedTagLabels())));
         return 1;
     }
 
@@ -2447,12 +2505,8 @@ public final class ModCommands {
             List<String> aliases = ModDamageSources.legacyAliases(legacy.key());
             source.sendSuccess(() -> Component.literal(legacy.location()
                     + " present=" + present
-                    + " projectile=" + legacy.projectile()
-                    + " explosion=" + legacy.explosion()
-                    + " fire=" + legacy.fire()
-                    + " bypassesArmor=" + legacy.bypassesArmor()
-                    + " absolute=" + legacy.absolute()
-                    + " creativeAllowed=" + legacy.creativeAllowed()
+                    + " expectedMessageId=" + legacy.expectedMessageId()
+                    + " expectedTags=" + tagLabelSummary(legacy.expectedTagLabels())
                     + (aliases.isEmpty() ? "" : " aliases=" + String.join(",", aliases))), false);
         }
         return ModDamageSources.legacyDamageTypes().size();
@@ -2469,11 +2523,23 @@ public final class ModCommands {
         boolean present = source.getLevel().registryAccess()
                 .registryOrThrow(Registries.DAMAGE_TYPE)
                 .containsKey(key.location());
+        String expectedTags = ModDamageSources.legacyDamageType(key)
+                .map(legacy -> " expectedTags=" + tagLabelSummary(legacy.expectedTagLabels()))
+                .orElse("");
+        String expectedMessageId = ModDamageSources.legacyDamageType(key)
+                .map(legacy -> " expectedMessageId=" + legacy.expectedMessageId())
+                .orElse("");
         source.sendSuccess(() -> Component.literal("Damage type alias '" + damageType + "' -> "
                 + key.location()
                 + " present=" + present
+                + expectedMessageId
+                + expectedTags
                 + " aliases=" + String.join(",", ModDamageSources.legacyAliases(key))), false);
         return present ? 1 : 0;
+    }
+
+    private static String tagLabelSummary(List<String> labels) {
+        return labels.isEmpty() ? "none" : String.join(",", labels);
     }
 
     private static int inspectDamageResistanceArmor(CommandSourceStack source, Collection<ServerPlayer> players) {
@@ -3525,6 +3591,8 @@ public final class ModCommands {
         HbmCompatFluidRegistry.Diagnostics fluidDiagnostics = HbmCompatFluidRegistry.diagnostics();
         HbmFluidForgeMappings.Diagnostics forgeFluidDiagnostics = HbmFluidForgeMappings.diagnostics();
         HbmFluidContainerRegistry.Diagnostics containerDiagnostics = HbmFluidContainerRegistry.diagnostics();
+        CompatTurretTargetRegistry.Diagnostics turretDiagnostics = CompatTurretTargetRegistry.diagnostics();
+        CompatCustomWarheadRegistry.Diagnostics warheadDiagnostics = CompatCustomWarheadRegistry.diagnostics();
         source.sendSuccess(() -> Component.literal("HBM compat integration status:"), false);
         source.sendSuccess(() -> Component.literal(" - optional mods loaded: "
                 + Compat.optionalModSummary(compatOptionalModIds())), false);
@@ -3534,13 +3602,17 @@ public final class ModCommands {
         source.sendSuccess(() -> Component.literal(" - " + fluidDiagnostics.summary()), false);
         source.sendSuccess(() -> Component.literal(" - " + forgeFluidDiagnostics.summary()), false);
         source.sendSuccess(() -> Component.literal(" - " + containerDiagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal(" - " + turretDiagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal(" - " + warheadDiagnostics.summary()), false);
         source.sendSuccess(() -> Component.literal(" - computer/peripheral integrations: paused until explicitly requested."), false);
         source.sendSuccess(() -> Component.literal(" - AE2 integration: deferred optional compatibility slice."), false);
         return recipeDiagnostics.listeners()
                 + fluidDiagnostics.listeners()
                 + containerDiagnostics.listeners()
                 + forgeFluidDiagnostics.exportMappings()
-                + forgeFluidDiagnostics.importMappings();
+                + forgeFluidDiagnostics.importMappings()
+                + turretDiagnostics.totalRegistrations()
+                + warheadDiagnostics.totalRegistrations();
     }
 
     private static int getCompatModsStatus(CommandSourceStack source) {
@@ -3551,16 +3623,28 @@ public final class ModCommands {
         }
         source.sendSuccess(() -> Component.literal("Computer/peripheral integrations: paused until explicitly requested."), false);
         source.sendSuccess(() -> Component.literal("AE2 integration: deferred optional compatibility slice."), false);
+        source.sendSuccess(() -> Component.literal("Railcraft/Torcherino legacy hacks: disabled in modern compat."), false);
         return Compat.loadedModIds(modIds).size();
     }
 
     private static int getCompatRecipeStatus(CommandSourceStack source) {
         CompatRecipeRegistry.Diagnostics diagnostics = CompatRecipeRegistry.diagnostics();
+        long supportedFacades = CompatRecipeRegistry.recipeFacadeStatuses().stream()
+                .filter(CompatRecipeRegistry.RecipeFacadeStatus::supported)
+                .count();
+        long deferredFacades = CompatRecipeRegistry.recipeFacadeStatuses().size() - supportedFacades;
         source.sendSuccess(() -> Component.literal("Compat recipe registry: " + diagnostics.summary()), false);
         source.sendSuccess(() -> Component.literal("Supported datapack JSON facades: "
                 + String.join(", ", CompatRecipeRegistry.supportedRecipeFacades())), false);
+        source.sendSuccess(() -> Component.literal("Legacy recipe facade coverage: supported="
+                + supportedFacades + " deferred=" + deferredFacades), false);
         source.sendSuccess(() -> Component.literal("Deferred legacy recipe facades: "
                 + String.join(", ", CompatRecipeRegistry.deferredLegacyRecipeFacades())), false);
+        for (CompatRecipeRegistry.RecipeFacadeStatus status : CompatRecipeRegistry.recipeFacadeStatuses()) {
+            if (!status.supported()) {
+                source.sendSuccess(() -> Component.literal(" - " + status.summary()), false);
+            }
+        }
         source.sendSuccess(() -> Component.literal("Runtime RecipeManager mutation: disabled; use datapack/datagen/reload-stage sinks."), false);
         return diagnostics.listeners() + diagnostics.lastEmittedRecipes();
     }
@@ -3572,10 +3656,29 @@ public final class ModCommands {
         source.sendSuccess(() -> Component.literal("Compat fluid registry: " + fluidDiagnostics.summary()), false);
         source.sendSuccess(() -> Component.literal("Forge fluid mappings: " + forgeFluidDiagnostics.summary()), false);
         source.sendSuccess(() -> Component.literal("Fluid container registry: " + containerDiagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal("HBM fluid definitions: total=" + HbmFluids.all().size()
+                + " custom=" + HbmFluids.customFluids().size()
+                + " foreign=" + HbmFluids.foreignFluids().size()
+                + " fixedContainers=" + HbmFluidContainerRegistry.getFixedContainersSnapshot().size()), false);
+        source.sendSuccess(() -> Component.literal("Compat fluid facade: "
+                + CompatFluidRegistry.diagnostics().summary()
+                + "; containers=" + CompatFluidRegistry.containerDiagnostics().summary()), false);
         return fluidDiagnostics.listeners()
                 + forgeFluidDiagnostics.exportMappings()
                 + forgeFluidDiagnostics.importMappings()
                 + containerDiagnostics.externalContainers();
+    }
+
+    private static int getCompatExternalHookStatus(CommandSourceStack source) {
+        CompatTurretTargetRegistry.Diagnostics turretDiagnostics = CompatTurretTargetRegistry.diagnostics();
+        CompatCustomWarheadRegistry.Diagnostics warheadDiagnostics = CompatCustomWarheadRegistry.diagnostics();
+        source.sendSuccess(() -> Component.literal("Compat external hooks: "
+                + turretDiagnostics.summary()
+                + "; " + warheadDiagnostics.summary()), false);
+        source.sendSuccess(() -> Component.literal("Turret target hooks are registered for future turret consumers; "
+                + "they do not target entities until a migrated turret uses them."), false);
+        source.sendSuccess(() -> Component.literal("Custom warhead impact hooks are consumed by CustomMissileExplosion CUSTOM0..CUSTOM9."), false);
+        return turretDiagnostics.totalRegistrations() + warheadDiagnostics.totalRegistrations();
     }
 
     private static int getCompatSteamLevel(CommandSourceStack source, int level) {
@@ -3602,8 +3705,13 @@ public final class ModCommands {
                 Compat.MOD_ENERGY_CONTROL,
                 Compat.MOD_GTCEU,
                 Compat.MOD_GREGTECH,
+                Compat.MOD_REACTORCRAFT,
+                Compat.MOD_ET_FUTURUM,
                 Compat.MOD_TCONSTRUCT,
-                Compat.MOD_RAILCRAFT);
+                Compat.MOD_GALACTICRAFT,
+                Compat.MOD_ADVANCED_ROCKETRY,
+                Compat.MOD_RAILCRAFT,
+                Compat.MOD_TORCHERINO);
     }
 
     private static int getFluidForgeMappingStatus(CommandSourceStack source) {
@@ -4163,11 +4271,31 @@ public final class ModCommands {
     private static int getItemPoolSummary(CommandSourceStack source) {
         Map<String, ResourceLocation> knownTables = HbmItemPoolRegistry.knownTables();
         List<HbmItemPoolRegistry.MissingTable> missing = HbmItemPoolRegistry.missingKnownTables(source.getLevel());
-        int available = knownTables.size() - missing.size();
+        long available = HbmItemPoolRegistry.availableKnownTableCount(source.getLevel());
         source.sendSuccess(() -> Component.literal("HBM item pools: known=" + knownTables.size()
                 + ", availableTables=" + available
                 + ", missingTables=" + missing.size()), missing.size() > 0);
         return missing.isEmpty() ? 1 : missing.size();
+    }
+
+    private static int listItemPoolTables(CommandSourceStack source) {
+        List<HbmItemPoolRegistry.TableStatus> statuses = HbmItemPoolRegistry.knownTableStatuses(source.getLevel());
+        long available = statuses.stream().filter(HbmItemPoolRegistry.TableStatus::available).count();
+        source.sendSuccess(() -> Component.literal("HBM item pool tables: known=" + statuses.size()
+                + ", available=" + available
+                + ", missing=" + (statuses.size() - available)), statuses.size() != available);
+        int shown = 0;
+        for (HbmItemPoolRegistry.TableStatus status : statuses.stream().limit(96).toList()) {
+            shown++;
+            source.sendSuccess(() -> Component.literal(" - " + status.legacyPoolId()
+                    + " -> " + status.tableId()
+                    + " available=" + status.available()), false);
+        }
+        int remaining = statuses.size() - shown;
+        if (remaining > 0) {
+            source.sendSuccess(() -> Component.literal(" - ... " + remaining + " more"), false);
+        }
+        return (int) available;
     }
 
     private static int listMissingItemPoolTables(CommandSourceStack source) {
@@ -4194,9 +4322,70 @@ public final class ModCommands {
         return missing.size();
     }
 
+    private static int listLegacyLootNames(CommandSourceStack source) {
+        Map<String, String> mapped = HbmLegacyLootUtil.mappedItemPoolLootNames();
+        List<String> deferred = HbmLegacyLootUtil.deferredLootNames();
+        source.sendSuccess(() -> Component.literal("HBM legacy loot names: total=" + HbmLegacyLootUtil.LOOT_NAMES.size()
+                + ", itemPoolMapped=" + mapped.size()
+                + ", deferred=" + deferred.size()), !deferred.isEmpty());
+        for (String lootName : HbmLegacyLootUtil.LOOT_NAMES) {
+            Optional<String> poolId = HbmLegacyLootUtil.itemPoolIdForLootName(lootName);
+            if (poolId.isPresent()) {
+                ResourceLocation tableId = HbmItemPoolRegistry.lootTableId(poolId.get());
+                boolean available = HbmItemPoolRegistry.hasTable(source.getLevel(), tableId);
+                source.sendSuccess(() -> Component.literal(" - " + lootName
+                        + " -> " + poolId.get()
+                        + " -> " + tableId
+                        + " available=" + available), false);
+            } else {
+                source.sendSuccess(() -> Component.literal(" - " + lootName + " deferred"), false);
+            }
+        }
+        return mapped.size();
+    }
+
+    private static int queryLegacyLootName(CommandSourceStack source, String lootName) {
+        Optional<String> poolId = HbmLegacyLootUtil.itemPoolIdForLootName(lootName);
+        if (poolId.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("HBM legacy loot name " + lootName
+                    + " is deferred; no safe Item Pool mapping yet."), false);
+            return 0;
+        }
+        ResourceLocation tableId = HbmItemPoolRegistry.lootTableId(poolId.get());
+        boolean available = HbmItemPoolRegistry.hasTable(source.getLevel(), tableId);
+        source.sendSuccess(() -> Component.literal("HBM legacy loot name " + lootName
+                + " -> " + poolId.get()
+                + " -> " + tableId
+                + " available=" + available), false);
+        return available ? 1 : 0;
+    }
+
+    private static int rollLegacyLootName(CommandSourceStack source, String lootName) {
+        Optional<String> poolId = HbmLegacyLootUtil.itemPoolIdForLootName(lootName);
+        if (poolId.isEmpty()) {
+            source.sendFailure(Component.literal("HBM legacy loot name " + lootName
+                    + " has no safe Item Pool mapping yet."));
+            return 0;
+        }
+
+        List<HbmLegacyLootUtil.PlacedLootStack> placedStacks = HbmLegacyLootUtil.rollMappedItemPoolLoot(
+                source.getLevel(), lootName, source.getPosition(), RandomSource.create());
+        List<ItemStack> stacks = placedStacks.stream().map(HbmLegacyLootUtil.PlacedLootStack::stack).toList();
+        if (stacks.isEmpty()) {
+            source.sendFailure(Component.literal("HBM legacy loot name " + lootName
+                    + " mapped to " + poolId.get() + " but produced no loot."));
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("HBM legacy loot name " + lootName
+                + " mapped to " + poolId.get()
+                + " rolled " + stacks.size() + " stack(s): "
+                + itemStackSummary(stacks)), false);
+        return stacks.size();
+    }
+
     private static int queryItemPoolTable(CommandSourceStack source, String legacyPoolId) {
         ResourceLocation tableId = HbmItemPoolRegistry.lootTableId(legacyPoolId);
-        boolean known = HbmItemPoolRegistry.knownPoolIds().contains(legacyPoolId);
+        boolean known = HbmItemPoolRegistry.isKnownPoolId(legacyPoolId);
         boolean available = HbmItemPoolRegistry.hasTable(source.getLevel(), tableId);
         source.sendSuccess(() -> Component.literal("HBM item pool " + legacyPoolId
                 + " -> " + tableId
@@ -4207,13 +4396,17 @@ public final class ModCommands {
 
     private static int rollItemPool(CommandSourceStack source, String legacyPoolId) {
         Vec3 origin = source.getPosition();
-        List<ItemStack> stacks = HbmItemPoolRegistry.getStacks(source.getLevel(), legacyPoolId, origin);
+        HbmItemPoolRegistry.RollResult result = HbmItemPoolRegistry.rollStacks(source.getLevel(), legacyPoolId, origin);
+        List<ItemStack> stacks = result.stacks();
         if (stacks.isEmpty()) {
             source.sendFailure(Component.literal("HBM item pool " + legacyPoolId + " produced no loot."));
             return 0;
         }
         source.sendSuccess(() -> Component.literal("HBM item pool " + legacyPoolId
-                + " rolled " + stacks.size() + " stack(s): " + itemStackSummary(stacks)), false);
+                + " rolled " + stacks.size() + " stack(s)"
+                + " table=" + result.rolledTableId()
+                + (result.usedBackup() ? " fallbackFrom=" + result.requestedTableId() : "")
+                + ": " + itemStackSummary(stacks)), false);
         return stacks.size();
     }
 

@@ -1,13 +1,20 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.client.ClientItemAnimationHandler;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public record ItemAnimationPacket(int slot, int rail, String itemKey, ResourceLocation animationFile, String animationName, boolean holdLastFrame) {
+public record ItemAnimationPacket(int slot, int rail, String itemKey, ResourceLocation animationFile, String animationName,
+                                  boolean holdLastFrame) implements HbmPreparablePacket {
+    public ItemAnimationPacket {
+        itemKey = itemKey == null ? "" : itemKey;
+        animationName = animationName == null ? "" : animationName;
+    }
+
     public static ItemAnimationPacket decode(FriendlyByteBuf buffer) {
         return new ItemAnimationPacket(
                 buffer.readVarInt(),
@@ -32,5 +39,10 @@ public record ItemAnimationPacket(int slot, int rail, String itemKey, ResourceLo
         context.enqueueWork(() -> ClientItemAnimationHandler.handle(packet.slot, packet.rail, packet.itemKey,
                 packet.animationFile, packet.animationName, packet.holdLastFrame));
         context.setPacketHandled(true);
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new ItemAnimationPacket(slot, rail, itemKey, animationFile, animationName, holdLastFrame);
     }
 }

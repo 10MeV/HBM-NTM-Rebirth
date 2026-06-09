@@ -257,7 +257,7 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyItems(tag, items);
+        HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
     }
 
     @Override

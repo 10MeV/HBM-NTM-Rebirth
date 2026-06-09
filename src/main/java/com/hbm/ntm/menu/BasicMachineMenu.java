@@ -3,6 +3,7 @@ package com.hbm.ntm.menu;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -64,10 +65,7 @@ public class BasicMachineMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return !blockEntity.isRemoved() && player.distanceToSqr(
-                blockEntity.getBlockPos().getX() + 0.5D,
-                blockEntity.getBlockPos().getY() + 0.5D,
-                blockEntity.getBlockPos().getZ() + 0.5D) <= 64.0D;
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
     }
 
     @Override
@@ -82,25 +80,24 @@ public class BasicMachineMenu extends AbstractContainerMenu {
                     return ItemStack.EMPTY;
                 }
             } else if (ForgeHooks.getBurnTime(stack, RecipeType.SMELTING) > 0) {
-                if (!moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_FUEL, BasicMachineBlockEntity.SLOT_FUEL + 1, false)
-                        && !moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_STORAGE_START, BasicMachineBlockEntity.SLOT_STORAGE_END, false)) {
+                if (!HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                        BasicMachineBlockEntity.SLOT_FUEL, BasicMachineBlockEntity.SLOT_FUEL + 1,
+                        BasicMachineBlockEntity.SLOT_STORAGE_START, BasicMachineBlockEntity.SLOT_STORAGE_END)) {
                     return ItemStack.EMPTY;
                 }
             } else if (stack.getItem() instanceof ItemPressStamp) {
-                if (!moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_STAMP, BasicMachineBlockEntity.SLOT_STAMP + 1, false)
-                        && !moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_STORAGE_START, BasicMachineBlockEntity.SLOT_STORAGE_END, false)) {
+                if (!HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                        BasicMachineBlockEntity.SLOT_STAMP, BasicMachineBlockEntity.SLOT_STAMP + 1,
+                        BasicMachineBlockEntity.SLOT_STORAGE_START, BasicMachineBlockEntity.SLOT_STORAGE_END)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (!moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_INPUT, BasicMachineBlockEntity.SLOT_INPUT + 1, false)
-                    && !moveItemStackTo(stack, BasicMachineBlockEntity.SLOT_STORAGE_START, BasicMachineBlockEntity.SLOT_STORAGE_END, false)) {
+            } else if (!HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack,
+                    BasicMachineBlockEntity.SLOT_INPUT, BasicMachineBlockEntity.SLOT_INPUT + 1,
+                    BasicMachineBlockEntity.SLOT_STORAGE_START, BasicMachineBlockEntity.SLOT_STORAGE_END)) {
                 return ItemStack.EMPTY;
             }
 
-            if (stack.isEmpty()) {
-                slot.set(ItemStack.EMPTY);
-            } else {
-                slot.setChanged();
-            }
+            HbmInventoryMenuHelper.finishQuickMove(slot, stack);
         }
         return result;
     }

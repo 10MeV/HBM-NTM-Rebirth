@@ -3,6 +3,7 @@ package com.hbm.ntm.client.screen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.ClientSatelliteData;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SatelliteInterfaceItem;
@@ -13,7 +14,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
@@ -55,11 +55,13 @@ public class SatelliteCoordScreen extends Screen {
         if (!isHeldSatelliteInterface()) {
             onClose();
         }
+        updateYFieldState();
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
+        updateYFieldState();
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
         renderFocus(graphics);
         ClientSatelliteData.current().ifPresent(snapshot -> {
@@ -110,7 +112,7 @@ public class SatelliteCoordScreen extends Screen {
         if (xField.isFocused()) {
             graphics.blit(TEXTURE, leftPos + 61, topPos + 16, 0, 126, 54, 18);
         }
-        if (yField.isFocused()) {
+        if (yField.visible && yField.isFocused()) {
             graphics.blit(TEXTURE, leftPos + 61, topPos + 52, 0, 126, 54, 18);
         }
         if (zField.isFocused()) {
@@ -123,30 +125,45 @@ public class SatelliteCoordScreen extends Screen {
         if (snapshot == null || snapshot.satellite().satelliteInterface() != Satellite.SatelliteInterface.SAT_COORD) {
             return false;
         }
-        Integer x = parseInt(xField.getValue());
-        Integer z = parseInt(zField.getValue());
+        Integer x = parseLegacyCoordinate(xField.getValue());
+        Integer z = parseLegacyCoordinate(zField.getValue());
         if (x == null || z == null) {
             return false;
         }
         int y = 0;
         if (snapshot.satellite().coordActions().contains(Satellite.CoordAction.HAS_Y)) {
-            Integer parsedY = parseInt(yField.getValue());
+            Integer parsedY = parseLegacyCoordinate(yField.getValue());
             if (parsedY == null) {
                 return false;
             }
             y = parsedY;
         }
         ModMessages.sendSatCoord(hand, x, y, z, currentFrequency());
-        minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.TOOL_TECH_BLEEP.get(), 1.0F));
         onClose();
         return true;
     }
 
-    private Integer parseInt(String value) {
+    private Integer parseLegacyCoordinate(String value) {
         try {
-            return Integer.parseInt(value.trim());
+            double parsed = Double.parseDouble(value.trim());
+            if (!Double.isFinite(parsed)) {
+                return null;
+            }
+            return (int) parsed;
         } catch (NumberFormatException ignored) {
             return null;
+        }
+    }
+
+    private void updateYFieldState() {
+        boolean hasY = ClientSatelliteData.current()
+                .map(snapshot -> snapshot.satellite().coordActions().contains(Satellite.CoordAction.HAS_Y))
+                .orElse(false);
+        yField.visible = hasY;
+        yField.active = hasY;
+        if (!hasY && yField.isFocused()) {
+            yField.setFocused(false);
         }
     }
 

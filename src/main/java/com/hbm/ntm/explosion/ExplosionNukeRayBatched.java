@@ -1,5 +1,6 @@
 package com.hbm.ntm.explosion;
 
+import com.hbm.ntm.util.HbmBlockStateUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -194,12 +195,12 @@ public class ExplosionNukeRayBatched implements ExplosionRay {
 
     public static float masqueradeResistance(BlockState state) {
         if (state.is(Blocks.SANDSTONE)) {
-            return Blocks.STONE.getExplosionResistance();
+            return HbmBlockStateUtil.explosionResistance(Blocks.STONE.defaultBlockState());
         }
         if (state.is(Blocks.OBSIDIAN)) {
-            return Blocks.STONE.getExplosionResistance() * 3.0F;
+            return HbmBlockStateUtil.explosionResistance(Blocks.STONE.defaultBlockState()) * 3.0F;
         }
-        return state.getBlock().getExplosionResistance();
+        return HbmBlockStateUtil.explosionResistance(state);
     }
 
     public void processChunk() {

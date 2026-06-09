@@ -366,7 +366,7 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     public void load(CompoundTag tag) {
         super.load(tag);
         if (items != null) {
-            HbmInventoryMenuHelper.loadLegacyItemsCompound(tag, TAG_INVENTORY, items);
+            HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         }
     }
 

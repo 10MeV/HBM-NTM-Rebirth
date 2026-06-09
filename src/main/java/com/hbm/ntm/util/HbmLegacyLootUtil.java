@@ -1,9 +1,18 @@
 package com.hbm.ntm.util;
 
+import com.hbm.ntm.itempool.HbmItemPoolIds;
+import com.hbm.ntm.itempool.HbmItemPoolRegistry;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static java.util.Map.entry;
 
 public final class HbmLegacyLootUtil {
     public static final String LOOT_BOOKLET = "LOOT_BOOKLET";
@@ -35,11 +44,60 @@ public final class HbmLegacyLootUtil {
             LOOT_GEAR,
             LOOT_SHIT);
 
+    private static final Map<String, String> ITEM_POOL_LOOT_NAMES = Map.ofEntries(
+            entry(LOOT_BONES, HbmItemPoolIds.POOL_PILE_BONES),
+            entry(LOOT_GLYPHID_HIVE, HbmItemPoolIds.POOL_PILE_HIVE),
+            entry(LOOT_SHIT, HbmItemPoolIds.POOL_PILE_OF_GARBAGE),
+            entry(LOOT_MECHANICAL, HbmItemPoolIds.POOL_PILE_MECHANICAL),
+            entry(LOOT_GEAR, HbmItemPoolIds.POOL_PILE_MECHANICAL)
+    );
+
     private HbmLegacyLootUtil() {
     }
 
     public static String[] getLootNames() {
         return LOOT_NAMES.toArray(String[]::new);
+    }
+
+    public static Optional<String> itemPoolIdForLootName(String lootName) {
+        return Optional.ofNullable(ITEM_POOL_LOOT_NAMES.get(lootName));
+    }
+
+    public static Map<String, String> mappedItemPoolLootNames() {
+        return ITEM_POOL_LOOT_NAMES;
+    }
+
+    public static List<String> deferredLootNames() {
+        return LOOT_NAMES.stream()
+                .filter(lootName -> !ITEM_POOL_LOOT_NAMES.containsKey(lootName))
+                .toList();
+    }
+
+    public static List<PlacedLootStack> rollMappedItemPoolLoot(ServerLevel level, String lootName, Vec3 origin,
+                                                               RandomSource random) {
+        Optional<String> poolId = itemPoolIdForLootName(lootName);
+        if (poolId.isEmpty()) {
+            return List.of();
+        }
+
+        RandomSource roll = random == null ? RandomSource.create() : random;
+        Vec3 lootOrigin = origin == null ? Vec3.ZERO : origin;
+        int limit = mappedRollCount(lootName, roll);
+        List<PlacedLootStack> stacks = new ArrayList<>();
+        for (int i = 0; i < limit; i++) {
+            ItemStack stack = HbmItemPoolRegistry.getStack(level, poolId.get(), lootOrigin);
+            if (!stack.isEmpty()) {
+                stacks.add(withDeviation(stack, roll.nextDouble() - 0.5D, i * 0.03125D, roll.nextDouble() - 0.5D, roll));
+            }
+        }
+        return List.copyOf(stacks);
+    }
+
+    private static int mappedRollCount(String lootName, RandomSource random) {
+        if (LOOT_MECHANICAL.equals(lootName) || LOOT_GEAR.equals(lootName)) {
+            return random.nextInt(6) + 1;
+        }
+        return random.nextInt(3) + 3;
     }
 
     public static PlacedLootStack withDeviation(ItemStack stack, double x, double y, double z, RandomSource random) {

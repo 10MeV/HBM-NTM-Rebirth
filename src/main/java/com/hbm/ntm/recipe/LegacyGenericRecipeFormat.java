@@ -1,5 +1,7 @@
 package com.hbm.ntm.recipe;
 
+import com.hbm.ntm.util.HbmRegistryUtil;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -9,7 +11,6 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModItems;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.ResourceLocation;
@@ -346,7 +347,7 @@ public final class LegacyGenericRecipeFormat {
             throw new JsonSyntaxException("Missing legacy item meta mapping: " + legacyId + " meta " + legacyMeta);
         }
 
-        Item item = BuiltInRegistries.ITEM.getOptional(legacyId)
+        Item item = HbmRegistryUtil.item(legacyId)
                 .or(() -> {
                     if (!HbmNtm.MOD_ID.equals(legacyId.getNamespace())) {
                         return java.util.Optional.empty();
@@ -400,7 +401,7 @@ public final class LegacyGenericRecipeFormat {
     }
 
     private static void writeLegacyItemStackBody(JsonArray array, ItemStack stack, int count, CompoundTag tag, boolean hasTypePrefix) {
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        ResourceLocation itemId = HbmRegistryUtil.itemKey(stack.getItem());
         array.add(itemId.toString());
         if (count != 1 || tag != null && !tag.isEmpty()) {
             array.add(count);

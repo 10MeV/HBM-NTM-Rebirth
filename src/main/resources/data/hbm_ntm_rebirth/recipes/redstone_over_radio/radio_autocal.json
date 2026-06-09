@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "TAR",
+    "PAP",
+    "PAP"
+  ],
+  "key": {
+    "T": {
+      "item": "hbm_ntm_rebirth:radio_torch_sender"
+    },
+    "A": {
+      "tag": "forge:circuits/analog"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:radio_torch_receiver"
+    },
+    "P": {
+      "tag": "forge:cast_plates"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:radio_autocal"
+  }
+}

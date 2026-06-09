@@ -1,11 +1,11 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.api.entity.RadarEntry;
+import com.hbm.ntm.api.entity.RadarScanProvider;
 import com.hbm.ntm.api.entity.RadarScanResult;
+import com.hbm.ntm.api.entity.RadarScreenSnapshot;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
@@ -14,21 +14,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalInt;
-
-public class RadarScreenBlockEntity extends BlockEntity {
-    private static final String TAG_LINKED = "linked";
-    private static final String TAG_REF = "ref";
-    private static final String TAG_RANGE = "range";
-    private static final String TAG_ENTRIES = "Entries";
-
-    private final List<RadarEntry> entries = new ArrayList<>();
-    private BlockPos refPos = BlockPos.ZERO;
-    private int range;
-    private boolean linked;
+public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProvider {
+    private RadarScreenSnapshot snapshot = RadarScreenSnapshot.UNLINKED;
 
     public RadarScreenBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MACHINE_RADAR_SCREEN.get(), pos, state);
@@ -38,64 +25,36 @@ public class RadarScreenBlockEntity extends BlockEntity {
         if (level.isClientSide) {
             return;
         }
-        if (screen.linked || !screen.entries.isEmpty()) {
+        if (screen.snapshot.linked() || !screen.snapshot.entries().isEmpty()) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
-        screen.entries.clear();
-        screen.linked = false;
+        screen.snapshot = RadarScreenSnapshot.UNLINKED;
         screen.setChanged();
     }
 
     public void receiveRadarUpdate(RadarBlockEntity radar) {
-        entries.clear();
-        entries.addAll(radar.getEntries());
-        refPos = radar.getBlockPos();
-        range = radar.getRange();
-        linked = true;
+        snapshot = RadarScreenSnapshot.linked(radar.getBlockPos(), radar.getRange(), radar.getEntries());
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
 
-    public List<RadarEntry> getEntries() {
-        return List.copyOf(entries);
-    }
-
+    @Override
     public RadarScanResult getScanResultSnapshot() {
-        return new RadarScanResult(entries, false);
-    }
-
-    public int getEntryAmount() {
-        return entries.size();
-    }
-
-    public Optional<RadarEntry> getEntryAtLegacyIndex(int legacyIndex) {
-        return getScanResultSnapshot().entryAtLegacyIndex(legacyIndex);
-    }
-
-    public Optional<Boolean> isEntryPlayerAtLegacyIndex(int legacyIndex) {
-        return getScanResultSnapshot().isPlayerAtLegacyIndex(legacyIndex);
-    }
-
-    public OptionalInt getEntryTypeAtLegacyIndex(int legacyIndex) {
-        return getScanResultSnapshot().typeAtLegacyIndex(legacyIndex);
-    }
-
-    public Optional<RadarEntry.LegacyEntityInfo> getEntryInfoAtLegacyIndex(int legacyIndex) {
-        return getScanResultSnapshot().entityInfoAtLegacyIndex(legacyIndex);
+        return snapshot.scanResult();
     }
 
     public BlockPos getRefPos() {
-        return refPos;
+        return snapshot.refPos();
     }
 
     public int getRange() {
-        return range;
+        return snapshot.range();
     }
 
     public boolean isLinked() {
-        return linked;
+        return snapshot.linked();
     }
 
     @Override
@@ -112,27 +71,19 @@ public class RadarScreenBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putBoolean(TAG_LINKED, linked);
-        tag.putLong(TAG_REF, refPos.asLong());
-        tag.putInt(TAG_RANGE, range);
+        tag.merge(snapshot.toTag(false));
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        linked = tag.getBoolean(TAG_LINKED);
-        refPos = BlockPos.of(tag.getLong(TAG_REF));
-        range = tag.getInt(TAG_RANGE);
-        if (tag.contains(TAG_ENTRIES, Tag.TAG_LIST)) {
-            entries.clear();
-            RadarEntry.readListInto(tag.getList(TAG_ENTRIES, Tag.TAG_COMPOUND), entries);
-        }
+        snapshot = RadarScreenSnapshot.fromTag(tag);
     }
 
     @Override
     public CompoundTag getUpdateTag() {
         CompoundTag tag = saveWithoutMetadata();
-        tag.put(TAG_ENTRIES, RadarEntry.writeList(entries));
+        tag.merge(snapshot.toTag(true));
         return tag;
     }
 

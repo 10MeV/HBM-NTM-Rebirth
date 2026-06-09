@@ -22,13 +22,11 @@ public final class PressRecipeCategory implements IRecipeCategory<PressRecipe> {
     private static final int HEIGHT = 54;
 
     private final RecipeType<PressRecipe> type;
-    private final IDrawableStatic background;
     private final IDrawable icon;
     private final IDrawableStatic arrow;
 
     PressRecipeCategory(RecipeType<PressRecipe> type, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
-        this.background = guiHelper.createBlankDrawable(WIDTH, HEIGHT);
         this.icon = guiHelper.createDrawableItemLike(catalyst);
         this.arrow = guiHelper.getRecipeArrow();
     }
@@ -41,11 +39,6 @@ public final class PressRecipeCategory implements IRecipeCategory<PressRecipe> {
     @Override
     public Component getTitle() {
         return Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_press", "Press");
-    }
-
-    @Override
-    public IDrawable getBackground() {
-        return background;
     }
 
     @Override

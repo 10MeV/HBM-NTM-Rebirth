@@ -13,11 +13,13 @@ public abstract class RadioTorchRedstoneBlock extends RadioTorchBlock {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public boolean isSignalSource(BlockState state) {
         return true;
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         if (level.getBlockEntity(pos) instanceof RadioTorchRedstoneSource source) {
             return source.redstoneOutput();
@@ -26,6 +28,7 @@ public abstract class RadioTorchRedstoneBlock extends RadioTorchBlock {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
         return getSignal(state, level, pos, direction);
     }

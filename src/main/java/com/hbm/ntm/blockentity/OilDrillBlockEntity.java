@@ -20,6 +20,7 @@ import com.hbm.ntm.menu.OilDrillMenu;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.util.HbmBlockStateUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.world.OilSpot;
 import java.util.ArrayList;
@@ -358,7 +359,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyItemsCompound(tag, TAG_INVENTORY, items);
+        HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         indicator = tag.getInt(TAG_INDICATOR);
         speedLevel = tag.getInt(TAG_SPEED_LEVEL);
         energyLevel = tag.getInt(TAG_ENERGY_LEVEL);
@@ -572,7 +573,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private void tryDrill(Level level, BlockPos sample) {
         BlockState state = level.getBlockState(sample);
-        if (!state.isAir() && state.getBlock().getExplosionResistance() < 1000.0F
+        if (!state.isAir() && HbmBlockStateUtil.explosionResistance(state, level, sample) < 1000.0F
                 && state.getDestroySpeed(level, sample) >= 0.0F) {
             onDrill(level, state);
             level.setBlock(sample, ModBlocks.OIL_PIPE.get().defaultBlockState(), Block.UPDATE_ALL);
