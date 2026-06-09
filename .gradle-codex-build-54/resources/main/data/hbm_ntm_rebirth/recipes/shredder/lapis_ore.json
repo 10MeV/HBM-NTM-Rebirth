@@ -1,5 +1,0 @@
-{
-  "type": "hbm_ntm_rebirth:shredder",
-  "input": { "ingredient": { "tag": "forge:ores/lapis" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_lapis", "count": 2 }
-}

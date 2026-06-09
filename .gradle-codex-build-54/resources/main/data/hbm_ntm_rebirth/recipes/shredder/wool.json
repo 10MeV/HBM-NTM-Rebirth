@@ -1,5 +1,0 @@
-{
-  "type": "hbm_ntm_rebirth:shredder",
-  "input": { "ingredient": { "tag": "minecraft:wool" } },
-  "output": { "item": "minecraft:string", "count": 4 }
-}

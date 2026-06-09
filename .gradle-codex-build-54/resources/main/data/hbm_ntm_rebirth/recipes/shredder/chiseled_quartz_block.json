@@ -1,5 +1,0 @@
-{
-  "type": "hbm_ntm_rebirth:shredder",
-  "input": { "ingredient": { "item": "minecraft:chiseled_quartz_block" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_quartz", "count": 4 }
-}

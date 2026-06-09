@@ -1,8 +1,0 @@
-{
-  "type": "hbm_ntm_rebirth:crystallizer",
-  "duration": 100,
-  "fluid": { "fluid": "PEROXIDE", "amount": 500 },
-  "input": { "ingredient": { "item": "hbm_ntm_rebirth:stone_gneiss" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_lithium" },
-  "productivity": 0.25
-}

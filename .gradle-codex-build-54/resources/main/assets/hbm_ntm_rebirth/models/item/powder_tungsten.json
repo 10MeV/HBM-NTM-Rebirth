@@ -1,6 +1,0 @@
-{
-    "textures":  {
-                     "layer0":  "hbm_ntm_rebirth:item/powder_tungsten"
-                 },
-    "parent":  "minecraft:item/generated"
-}

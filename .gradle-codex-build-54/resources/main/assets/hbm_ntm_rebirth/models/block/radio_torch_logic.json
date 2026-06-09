@@ -1,7 +1,0 @@
-{
-  "parent": "hbm_ntm_rebirth:block/template_radio_torch",
-  "textures": {
-    "side": "hbm_ntm_rebirth:block/rtty_logic_off",
-    "top": "hbm_ntm_rebirth:block/rtty_logic_on"
-  }
-}

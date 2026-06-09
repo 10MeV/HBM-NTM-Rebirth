@@ -1,6 +1,0 @@
-{
-  "parent": "hbm_ntm_rebirth:block/template_sellafield_slaked",
-  "textures": {
-    "all": "hbm_ntm_rebirth:block/sellafield_slaked"
-  }
-}

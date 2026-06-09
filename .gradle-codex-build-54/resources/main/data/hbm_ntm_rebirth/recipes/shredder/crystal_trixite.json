@@ -1,5 +1,0 @@
-{
-  "type": "hbm_ntm_rebirth:shredder",
-  "input": { "ingredient": { "item": "hbm_ntm_rebirth:crystal_trixite" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_plutonium", "count": 6 }
-}

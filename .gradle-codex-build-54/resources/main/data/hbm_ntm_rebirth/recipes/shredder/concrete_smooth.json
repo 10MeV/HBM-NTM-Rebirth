@@ -1,5 +1,0 @@
-{
-  "type": "hbm_ntm_rebirth:shredder",
-  "input": { "ingredient": { "item": "hbm_ntm_rebirth:concrete_smooth" } },
-  "output": { "item": "minecraft:gravel" }
-}

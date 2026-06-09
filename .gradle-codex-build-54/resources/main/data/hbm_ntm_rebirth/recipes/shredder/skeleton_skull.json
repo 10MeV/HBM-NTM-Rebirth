@@ -1,5 +1,0 @@
-{
-  "type": "hbm_ntm_rebirth:shredder",
-  "input": { "ingredient": { "item": "minecraft:skeleton_skull" } },
-  "output": { "item": "hbm_ntm_rebirth:biomass", "count": 4 }
-}

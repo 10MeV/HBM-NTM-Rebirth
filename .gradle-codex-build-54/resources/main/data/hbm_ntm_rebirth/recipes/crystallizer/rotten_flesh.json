@@ -1,8 +1,0 @@
-{
-  "type": "hbm_ntm_rebirth:crystallizer",
-  "duration": 100,
-  "fluid": { "fluid": "PEROXIDE", "amount": 500 },
-  "input": { "ingredient": { "item": "minecraft:rotten_flesh" } },
-  "output": { "item": "minecraft:leather", "chance": 0.25 },
-  "productivity": 0.25
-}

@@ -1,5 +1,0 @@
-{
-  "type": "hbm_ntm_rebirth:shredder",
-  "input": { "ingredient": { "item": "minecraft:red_terracotta" } },
-  "output": { "item": "minecraft:clay_ball", "count": 4 }
-}

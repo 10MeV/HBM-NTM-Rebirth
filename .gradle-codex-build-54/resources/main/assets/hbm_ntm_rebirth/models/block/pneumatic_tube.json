@@ -1,7 +1,0 @@
-{
-  "parent": "block/cube_all",
-  "textures": {
-    "all": "hbm_ntm_rebirth:block/pneumatic_tube",
-    "particle": "hbm_ntm_rebirth:block/pneumatic_tube"
-  }
-}

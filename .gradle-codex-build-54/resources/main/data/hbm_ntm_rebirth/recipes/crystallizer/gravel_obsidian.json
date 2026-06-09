@@ -1,7 +1,0 @@
-{
-  "type": "hbm_ntm_rebirth:crystallizer",
-  "duration": 100,
-  "fluid": { "fluid": "PEROXIDE", "amount": 500 },
-  "input": { "ingredient": { "item": "hbm_ntm_rebirth:gravel_obsidian" } },
-  "output": { "item": "hbm_ntm_rebirth:brick_obsidian" }
-}

@@ -1,8 +1,0 @@
-{
-  "parent": "hbm_ntm_rebirth:block/template_conveyor",
-  "textures": {
-    "top": "hbm_ntm_rebirth:block/conveyor_double_curve_left",
-    "side": "hbm_ntm_rebirth:block/conveyor_side",
-    "particle": "hbm_ntm_rebirth:block/conveyor_double_curve_left"
-  }
-}

@@ -1,6 +1,0 @@
-{
-    "textures":  {
-                     "layer0":  "hbm_ntm_rebirth:item/motor"
-                 },
-    "parent":  "minecraft:item/generated"
-}

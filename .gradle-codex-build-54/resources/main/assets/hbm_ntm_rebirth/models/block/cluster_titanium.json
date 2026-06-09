@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "hbm_ntm_rebirth:block/cluster_titanium"
-  }
-}

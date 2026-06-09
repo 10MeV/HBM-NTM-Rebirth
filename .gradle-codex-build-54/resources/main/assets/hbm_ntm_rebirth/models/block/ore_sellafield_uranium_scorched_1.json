@@ -1,8 +1,0 @@
-{
-  "parent": "hbm_ntm_rebirth:block/ore_sellafield_diamond",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/sellafield_slaked_1",
-    "base": "hbm_ntm_rebirth:block/sellafield_slaked_1",
-    "overlay": "hbm_ntm_rebirth:block/ore_overlay_uranium_scorched"
-  }
-}

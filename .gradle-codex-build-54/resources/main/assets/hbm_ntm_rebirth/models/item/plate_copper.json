@@ -1,6 +1,0 @@
-{
-    "textures":  {
-                     "layer0":  "hbm_ntm_rebirth:item/plate_copper"
-                 },
-    "parent":  "minecraft:item/generated"
-}
