@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "tag": "forge:ores/lead" } },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_lead" },
+    { "item": "hbm_ntm_rebirth:powder_lead" },
+    { "item": "hbm_ntm_rebirth:powder_gold" },
+    { "item": "minecraft:gravel" }
+  ]
+}

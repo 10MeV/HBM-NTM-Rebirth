@@ -331,24 +331,19 @@ public final class HbmRenderEffects {
     }
 
     private static boolean enabled() {
-        return HbmClientConfig.NUKE_WARP_SHOCKWAVE == null || HbmClientConfig.NUKE_WARP_SHOCKWAVE.get();
+        return HbmClientConfig.nukeWarpShockwaveEnabled();
     }
 
     private static float configuredIntensity() {
-        return HbmClientConfig.NUKE_WARP_SHOCKWAVE_INTENSITY == null
-                ? 1.0F
-                : HbmClientConfig.NUKE_WARP_SHOCKWAVE_INTENSITY.get().floatValue();
+        return HbmClientConfig.nukeWarpShockwaveIntensity();
     }
 
     private static int configuredSegments() {
-        return HbmClientConfig.NUKE_WARP_SHOCKWAVE_MESH_SEGMENTS == null
-                ? SPHERE_SEGMENTS
-                : Mth.clamp(HbmClientConfig.NUKE_WARP_SHOCKWAVE_MESH_SEGMENTS.get(), 12, 96);
+        return HbmClientConfig.nukeWarpShockwaveMeshSegments();
     }
 
     private static boolean debugWireframe() {
-        return HbmClientConfig.DEBUG_NUKE_WARP_SHOCKWAVE_WIREFRAME != null
-                && HbmClientConfig.DEBUG_NUKE_WARP_SHOCKWAVE_WIREFRAME.get();
+        return HbmClientConfig.debugNukeWarpShockwaveWireframe();
     }
 
     private static void debugLog(String message) {

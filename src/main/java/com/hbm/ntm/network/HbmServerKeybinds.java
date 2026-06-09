@@ -25,6 +25,10 @@ public final class HbmServerKeybinds {
         HbmPlayerProperties.clearKeyStates(player);
     }
 
+    public static void clearMovement(ServerPlayer player) {
+        HbmPlayerProperties.clearMovementKeyStates(player);
+    }
+
     private HbmServerKeybinds() {
     }
 }

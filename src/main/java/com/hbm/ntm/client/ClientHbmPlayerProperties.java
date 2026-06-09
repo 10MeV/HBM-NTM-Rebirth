@@ -2,8 +2,13 @@ package com.hbm.ntm.client;
 
 import com.hbm.ntm.player.HbmPlayerProperties;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class ClientHbmPlayerProperties {
+    private static final List<ClientHbmPlayerPropertiesListener> LISTENERS = new ArrayList<>();
     private static boolean hasReceivedBook;
     private static float shield;
     private static float maxShield;
@@ -72,6 +77,35 @@ public final class ClientHbmPlayerProperties {
         return dashCooldown;
     }
 
+    public static HbmPlayerProperties.SyncData snapshot() {
+        registerListener();
+        return new HbmPlayerProperties.SyncData(hasReceivedBook, shield, maxShield, backpackEnabled, magnetEnabled, hudEnabled,
+                reputation, onLadder, dashCount, stamina, dashCooldown);
+    }
+
+    public static int syncedEntryCount() {
+        return ClientPlayerSyncData.entryCount();
+    }
+
+    public static void update(ResourceLocation dataType, CompoundTag data) {
+        ClientPlayerSyncData.update(dataType, data);
+    }
+
+    public static void addListener(ClientHbmPlayerPropertiesListener listener) {
+        if (listener != null && !LISTENERS.contains(listener)) {
+            LISTENERS.add(listener);
+            registerListener();
+        }
+    }
+
+    public static void removeListener(ClientHbmPlayerPropertiesListener listener) {
+        LISTENERS.remove(listener);
+    }
+
+    public static void clearListeners() {
+        LISTENERS.clear();
+    }
+
     public static boolean shouldRenderHud() {
         net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
         return minecraft.player != null && !minecraft.options.hideGui && isHudEnabled();
@@ -91,6 +125,7 @@ public final class ClientHbmPlayerProperties {
     }
 
     public static void clearAll() {
+        ClientPlayerSyncData.clearAll();
         hasReceivedBook = false;
         shield = 0.0F;
         maxShield = 0.0F;
@@ -102,24 +137,26 @@ public final class ClientHbmPlayerProperties {
         dashCount = 0;
         stamina = 0;
         dashCooldown = 0;
+        LISTENERS.clear();
         registered = false;
     }
 
     private static void apply(CompoundTag data) {
-        hasReceivedBook = data.getBoolean(HbmPlayerProperties.KEY_HAS_RECEIVED_BOOK);
-        shield = data.getFloat(HbmPlayerProperties.KEY_SHIELD);
-        maxShield = data.getFloat(HbmPlayerProperties.KEY_MAX_SHIELD);
-        backpackEnabled = !data.contains(HbmPlayerProperties.KEY_ENABLE_BACKPACK)
-                || data.getBoolean(HbmPlayerProperties.KEY_ENABLE_BACKPACK);
-        magnetEnabled = !data.contains(HbmPlayerProperties.KEY_ENABLE_MAGNET)
-                || data.getBoolean(HbmPlayerProperties.KEY_ENABLE_MAGNET);
-        hudEnabled = !data.contains(HbmPlayerProperties.KEY_ENABLE_HUD)
-                || data.getBoolean(HbmPlayerProperties.KEY_ENABLE_HUD);
-        reputation = data.getInt(HbmPlayerProperties.KEY_REPUTATION);
-        onLadder = data.getBoolean(HbmPlayerProperties.KEY_IS_ON_LADDER);
-        dashCount = data.getInt(HbmPlayerProperties.KEY_DASH_COUNT);
-        stamina = data.getInt(HbmPlayerProperties.KEY_STAMINA);
-        dashCooldown = data.getInt(HbmPlayerProperties.KEY_DASH_COOLDOWN);
+        HbmPlayerProperties.SyncData syncData = HbmPlayerProperties.readSyncedData(data);
+        hasReceivedBook = syncData.hasReceivedBook();
+        shield = syncData.shield();
+        maxShield = syncData.maxShield();
+        backpackEnabled = syncData.backpackEnabled();
+        magnetEnabled = syncData.magnetEnabled();
+        hudEnabled = syncData.hudEnabled();
+        reputation = syncData.reputation();
+        onLadder = syncData.onLadder();
+        dashCount = syncData.dashCount();
+        stamina = syncData.stamina();
+        dashCooldown = syncData.dashCooldown();
+        for (ClientHbmPlayerPropertiesListener listener : List.copyOf(LISTENERS)) {
+            listener.onClientHbmPlayerProperties(syncData);
+        }
     }
 
     private ClientHbmPlayerProperties() {

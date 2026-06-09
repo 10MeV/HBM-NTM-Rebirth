@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:block_slag" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_cement", "count": 4 }
+}

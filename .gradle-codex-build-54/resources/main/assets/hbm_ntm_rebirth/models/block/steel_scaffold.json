@@ -1,0 +1,10 @@
+{
+  "flip_v": true,
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/legacy_blocks/scaffold.obj",
+  "textures": {
+    "default": "hbm_ntm_rebirth:block/legacy_blocks/scaffold_steel",
+    "particle": "hbm_ntm_rebirth:block/legacy_blocks/scaffold_steel",
+    "texture0": "hbm_ntm_rebirth:block/legacy_blocks/scaffold_steel"
+  }
+}

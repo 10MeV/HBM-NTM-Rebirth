@@ -1,0 +1,43 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 240,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:peroxide",
+      "pressure": 5
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_paleogenite"
+      }
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:dusts/fluorite"
+      },
+      "legacy_ore": "dustFluorite"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:nugget_bismuth"
+      }
+    }
+  ],
+  "internal_name": "chem.osmiridiumdeath",
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:death"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 1000,
+  "source_order": 73
+}

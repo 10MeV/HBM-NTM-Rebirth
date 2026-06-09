@@ -1,0 +1,43 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plate_polymer"
+      }
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:circuits/silicon"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:nuggets/any_bismoid"
+      },
+      "legacy_ore": "nuggetAnyBismoid"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:wires/gold"
+      },
+      "legacy_ore": "wireFineGold"
+    }
+  ],
+  "internal_name": "ass.chipBismoid",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:circuit_chip_bismoid"
+    }
+  ],
+  "pools": [],
+  "power": 1500,
+  "source_order": 30
+}

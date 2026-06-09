@@ -6,6 +6,11 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
 public final class ObjRbmkModels {
+    public static final int FUEL_CHANNEL_CHERENKOV_COLOR = 0x66E5FF;
+    public static final int FUEL_CHANNEL_CHERENKOV_ALPHA = 26;
+    public static final double FUEL_CHANNEL_CHERENKOV_START_Y = 0.75D;
+    public static final double FUEL_CHANNEL_CHERENKOV_STEP = 0.25D;
+
     public static final LegacyWavefrontModel ELEMENT = model("rbmk_element", iconTexture("rbmk_element")).noSmooth().mixedMode();
     public static final LegacyWavefrontModel ELEMENT_RODS = model("rbmk_element_rods", iconTexture("rbmk_element_fuel")).noSmooth();
     public static final LegacyWavefrontModel ELEMENT_RODS_VBO = model("rbmk_element_rods", iconTexture("rbmk_element_fuel")).noSmooth().asVBO();
@@ -63,9 +68,35 @@ public final class ObjRbmkModels {
         poseStack.popPose();
     }
 
+    public static void renderFuelChannelCherenkov(ObjRenderContext context, int height) {
+        LegacyUntexturedQuadRenderer.horizontalSlices(context.withAdditiveTranslucency(),
+                -0.5D, -0.5D, 0.5D, 0.5D,
+                FUEL_CHANNEL_CHERENKOV_START_Y,
+                FUEL_CHANNEL_CHERENKOV_START_Y + Math.max(0, height),
+                FUEL_CHANNEL_CHERENKOV_STEP,
+                FUEL_CHANNEL_CHERENKOV_COLOR,
+                FUEL_CHANNEL_CHERENKOV_ALPHA);
+    }
+
     public static void renderControlLid(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        RODS.renderPart("Lid", texture, poseStack, buffer, packedLight, packedOverlay);
+        RODS_VBO.renderPart("Lid", texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderTerminal(ObjRenderContext context) {
+        TERMINAL.renderAll(TERMINAL_TEXTURE, context);
+    }
+
+    public static void renderCraneConsolePart(String partName, ObjRenderContext context) {
+        CRANE_CONSOLE.renderPart(partName, CRANE_CONSOLE_TEXTURE, context);
+    }
+
+    public static void renderCranePart(String partName, ObjRenderContext context) {
+        CRANE.renderPart(partName, CRANE_TEXTURE, context);
+    }
+
+    public static void renderAutoloaderPart(String partName, ObjRenderContext context) {
+        AUTOLOADER.renderPart(partName, AUTOLOADER_TEXTURE, context);
     }
 
     public static void renderDebris(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,

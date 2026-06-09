@@ -3,7 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.AssemblyFactoryBlockEntity;
-import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
@@ -19,10 +19,6 @@ import net.minecraft.world.phys.Vec3;
 public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFactoryBlockEntity> {
     private static final int MODULES = 4;
     private static final LegacyWavefrontModel MODEL = ObjMachineModels.ASSEMBLY_FACTORY;
-    private static final double SPARK_WIDE = 0.1875D;
-    private static final double SPARK_NARROW = 0.0D;
-    private static final double SPARK_LENGTH = 1.25D;
-    private static final double SPARK_EPSILON = 0.01D;
 
     public AssemblyFactoryRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -169,34 +165,22 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
         if (arm2[3] > -0.375D && arm4[3] > -0.375D) {
             return;
         }
-        double uMin = ((blockEntity.getLevel().getGameTime() / 10.0D + partialTick)) % 10.0D;
-        double uMax = uMin + 1.0D;
+        LegacyUvAnimation.Range u = LegacyUvAnimation.assemblyFactorySparkU(blockEntity.getLevel().getGameTime(), partialTick);
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, 0xF000F0, packedOverlay)
                 .withTranslucencyNoDepthWrite();
         if (arm2[3] <= -0.375D) {
             poseStack.pushPose();
             poseStack.translate(0.5D + slide1, 1.0625D, -arm2[2] / 45.0D);
-            renderSparkPair(context, uMin, uMax, SPARK_LENGTH);
+            LegacyAssemblySparkRenderer.renderSparkPair(ObjMachineModels.ASSEMBLY_FACTORY_SPARKS_TEXTURE,
+                    context, u, LegacyAssemblySparkRenderer.LENGTH);
             poseStack.popPose();
         }
         if (arm4[3] <= -0.375D) {
             poseStack.pushPose();
             poseStack.translate(-0.5D - slide2, 1.0625D, arm4[2] / 45.0D);
-            renderSparkPair(context, uMin, uMax, -SPARK_LENGTH);
+            LegacyAssemblySparkRenderer.renderSparkPair(ObjMachineModels.ASSEMBLY_FACTORY_SPARKS_TEXTURE,
+                    context, u, -LegacyAssemblySparkRenderer.LENGTH);
             poseStack.popPose();
         }
-    }
-
-    private static void renderSparkPair(ObjRenderContext context, double uMin, double uMax, double length) {
-        LegacyTexturedQuadRenderer.quad(ObjMachineModels.ASSEMBLY_FACTORY_SPARKS_TEXTURE, context,
-                LegacyTexturedQuadRenderer.vertex(-SPARK_EPSILON, -SPARK_WIDE, length, uMin + 0.5D, 0.0D, 0xFFFFFF, 0),
-                LegacyTexturedQuadRenderer.vertex(-SPARK_EPSILON, SPARK_WIDE, length, uMin + 0.5D, 1.0D, 0xFFFFFF, 0),
-                LegacyTexturedQuadRenderer.vertex(-SPARK_EPSILON, SPARK_NARROW, 0.0D, uMax + 0.5D, 1.0D, 0xFFFFFF, 255),
-                LegacyTexturedQuadRenderer.vertex(-SPARK_EPSILON, -SPARK_NARROW, 0.0D, uMax + 0.5D, 0.0D, 0xFFFFFF, 255));
-        LegacyTexturedQuadRenderer.quad(ObjMachineModels.ASSEMBLY_FACTORY_SPARKS_TEXTURE, context,
-                LegacyTexturedQuadRenderer.vertex(SPARK_EPSILON, -SPARK_WIDE, length, uMin, 1.0D, 0xFFFFFF, 0),
-                LegacyTexturedQuadRenderer.vertex(SPARK_EPSILON, SPARK_WIDE, length, uMin, 0.0D, 0xFFFFFF, 0),
-                LegacyTexturedQuadRenderer.vertex(SPARK_EPSILON, SPARK_NARROW, 0.0D, uMax, 0.0D, 0xFFFFFF, 255),
-                LegacyTexturedQuadRenderer.vertex(SPARK_EPSILON, -SPARK_NARROW, 0.0D, uMax, 1.0D, 0xFFFFFF, 255));
     }
 }

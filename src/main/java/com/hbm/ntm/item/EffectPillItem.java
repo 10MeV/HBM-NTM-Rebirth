@@ -1,5 +1,6 @@
 package com.hbm.ntm.item;
 
+import com.hbm.ntm.config.PotionConfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -51,6 +52,9 @@ public class EffectPillItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        if (PotionConfig.hasPotionSickness(player)) {
+            return InteractionResultHolder.fail(stack);
+        }
         player.startUsingItem(hand);
         return InteractionResultHolder.consume(stack);
     }
@@ -58,6 +62,7 @@ public class EffectPillItem extends Item {
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, net.minecraft.world.entity.LivingEntity entity) {
         if (!level.isClientSide && entity instanceof Player player) {
+            PotionConfig.applyPotionSickness(player, 5);
             player.addEffect(new MobEffectInstance(effect.get(), duration, amplifier));
             if (sound != null) {
                 level.playSound(null, player.blockPosition(), sound.get(), SoundSource.PLAYERS, 1.0F, 1.0F);

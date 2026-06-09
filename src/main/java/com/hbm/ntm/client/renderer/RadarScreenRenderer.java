@@ -5,8 +5,6 @@ import com.hbm.ntm.api.entity.RadarEntry;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.RadarScreenBlockEntity;
-import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
-import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -23,7 +21,6 @@ import net.minecraft.world.phys.Vec3;
 public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlockEntity> {
     private static final ResourceLocation RADAR_GUI_TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/machine/gui_radar_nt.png");
-    private static final double TEXTURE_SIZE = 256.0D;
 
     public RadarScreenRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -74,42 +71,19 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
             ObjRenderContext context) {
         Level level = screen.getLevel();
         long gameTime = level == null ? 0L : level.getGameTime();
-        double offset = ((gameTime % 56L) + partialTick) / 30.0D;
-        LegacyUntexturedQuadRenderer.doubleSidedQuad(context,
-                0.38D, 2.0D - offset, 1.375D,
-                0.38D, 2.0D - offset, -0.375D,
-                0.38D, 2.0D - offset - 0.125D, -0.375D,
-                0.38D, 2.0D - offset - 0.125D, 1.375D,
-                0x00FF00, 0, 0, 50, 50);
+        LegacyRadarDisplayRenderer.renderWorldLinkedSweep(context,
+                LegacyRadarDisplayRenderer.worldScanOffset(gameTime, partialTick));
 
         BlockPos ref = screen.getRefPos();
-        double divisor = (double) screen.getRange() + 1.0D;
         for (RadarEntry entry : screen.getEntries()) {
-            double sX = (entry.pos().getX() - ref.getX()) / divisor * 0.875D;
-            double sZ = (entry.pos().getZ() - ref.getZ()) / divisor * 0.875D;
-            double size = 0.0625D;
-            double v0 = entry.blipLevel() * 8.0D;
-            double v1 = v0 + 8.0D;
-            LegacyTexturedQuadRenderer.pixelQuad(RADAR_GUI_TEXTURE, context,
-                    0.0F, 1.0F, 0.0F, TEXTURE_SIZE, TEXTURE_SIZE,
-                    0.38D, 1.0D - sZ + size, 0.5D - sX + size, 216.0D, v1,
-                    0.38D, 1.0D - sZ + size, 0.5D - sX - size, 224.0D, v1,
-                    0.38D, 1.0D - sZ - size, 0.5D - sX - size, 224.0D, v0,
-                    0.38D, 1.0D - sZ - size, 0.5D - sX + size, 216.0D, v0,
-                    0xFFFFFF, 255);
+            LegacyRadarDisplayRenderer.renderWorldBlip(RADAR_GUI_TEXTURE, context, entry, ref, screen.getRange());
         }
     }
 
     private static void renderNoiseOverlay(RadarScreenBlockEntity screen, ObjRenderContext context) {
         Level level = screen.getLevel();
         long gameTime = level == null ? 0L : level.getGameTime();
-        int offset = 118 + (int) Math.floorMod(gameTime * 31L + screen.getBlockPos().asLong(), 81L);
-        LegacyTexturedQuadRenderer.pixelQuad(RADAR_GUI_TEXTURE, context.withoutTranslucency(),
-                0.0F, 1.0F, 0.0F, TEXTURE_SIZE, TEXTURE_SIZE,
-                0.38D, 1.875D, 1.375D, 216.0D, offset + 40.0D,
-                0.38D, 1.875D, -0.375D, 256.0D, offset + 40.0D,
-                0.38D, 0.125D, -0.375D, 256.0D, offset,
-                0.38D, 0.125D, 1.375D, 216.0D, offset,
-                0xFFFFFF, 255);
+        LegacyRadarDisplayRenderer.renderWorldNoise(RADAR_GUI_TEXTURE, context,
+                LegacyRadarDisplayRenderer.noiseV(gameTime * 31L + screen.getBlockPos().asLong()));
     }
 }

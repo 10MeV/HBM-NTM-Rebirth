@@ -1,0 +1,12 @@
+{
+  "values": [
+    "hbm_ntm_rebirth:diesel",
+    "hbm_ntm_rebirth:diesel_flowing",
+    "hbm_ntm_rebirth:diesel_crack",
+    "hbm_ntm_rebirth:diesel_crack_flowing",
+    "hbm_ntm_rebirth:diesel_reform",
+    "hbm_ntm_rebirth:diesel_reform_flowing",
+    "hbm_ntm_rebirth:diesel_crack_reform",
+    "hbm_ntm_rebirth:diesel_crack_reform_flowing"
+  ]
+}

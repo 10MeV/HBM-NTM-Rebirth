@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:pyro_oven",
+  "input_fluid": {
+    "fluid": "GAS_COKER",
+    "amount": 4000
+  },
+  "output_fluid": {
+    "fluid": "REFORMGAS",
+    "amount": 100
+  },
+  "duration": 60
+}

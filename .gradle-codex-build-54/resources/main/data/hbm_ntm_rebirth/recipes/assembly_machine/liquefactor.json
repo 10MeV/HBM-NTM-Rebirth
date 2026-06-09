@@ -1,0 +1,49 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:shells/steel"
+      },
+      "legacy_ore": "shellSteel"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:plates/copper"
+      },
+      "legacy_ore": "plateCopper"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:any/tar"
+      }
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      }
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:coil_tungsten"
+      }
+    }
+  ],
+  "internal_name": "ass.liquefactor",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_liquefactor"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 99
+}

@@ -68,10 +68,7 @@ public abstract class ExplosionChunkLoadingEntity extends Entity {
     }
 
     protected boolean shouldExpireFromSave(CompoundTag tag) {
-        if (BombConfig.LIMIT_EXPLOSION_LIFESPAN == null) {
-            return false;
-        }
-        int limitSeconds = BombConfig.LIMIT_EXPLOSION_LIFESPAN.get();
+        int limitSeconds = BombConfig.explosionLifespanLimitSeconds();
         if (limitSeconds <= 0) {
             return false;
         }
@@ -80,7 +77,7 @@ public abstract class ExplosionChunkLoadingEntity extends Entity {
     }
 
     private static boolean chunkLoadingEnabled() {
-        return BombConfig.CHUNK_LOADING == null || BombConfig.CHUNK_LOADING.get();
+        return BombConfig.chunkLoadingEnabled();
     }
 
     private void forceChunk(int chunkX, int chunkZ) {

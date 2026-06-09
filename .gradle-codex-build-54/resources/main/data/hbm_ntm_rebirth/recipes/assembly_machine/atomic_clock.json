@@ -1,0 +1,36 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 300,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      }
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "tag": "forge:circuits/chip"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/strontium"
+      },
+      "legacy_ore": "dustStrontium"
+    }
+  ],
+  "internal_name": "ass.atomicClock",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:circuit_atomic_clock"
+    }
+  ],
+  "pools": [],
+  "power": 1000,
+  "source_order": 32
+}

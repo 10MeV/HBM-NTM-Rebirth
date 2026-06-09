@@ -85,6 +85,10 @@ public class HbmFluidTank {
         return report;
     }
 
+    public HbmFluidReleaseEffects.ReleaseReport releaseAll(Level level, BlockPos pos, FluidReleaseType releaseType, boolean simulate) {
+        return release(level, pos, fill, releaseType, simulate);
+    }
+
     public boolean isEmpty() {
         return type == HbmFluids.NONE || fill <= 0;
     }

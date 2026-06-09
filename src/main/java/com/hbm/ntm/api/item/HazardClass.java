@@ -11,9 +11,11 @@ public enum HazardClass {
     SAND("hazard.sand"),
     LIGHT("hazard.light");
 
+    public final String lang;
     private final String translationKey;
 
     HazardClass(String translationKey) {
+        this.lang = translationKey;
         this.translationKey = translationKey;
     }
 

@@ -10,6 +10,7 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,12 @@ public class SubChunkSnapshot {
             return EMPTY;
         }
 
-        LevelChunk chunk = level.getChunk(key.getChunkXPos(), key.getChunkZPos());
+        LevelChunk chunk;
+        try {
+            chunk = level.getChunk(key.getChunkXPos(), key.getChunkZPos());
+        } catch (RuntimeException ex) {
+            return EMPTY;
+        }
         int sectionIndex = level.getSectionIndexFromSectionY(key.getSectionY());
         if (sectionIndex < 0 || sectionIndex >= chunk.getSections().length) {
             return EMPTY;
@@ -80,6 +86,54 @@ public class SubChunkSnapshot {
             return EMPTY;
         }
         return new SubChunkSnapshot(palette.toArray(BlockState[]::new), data);
+    }
+
+    public static SnapshotStatus inspect(Level level, SubChunkKey key, boolean allowGeneration, int sampleLimit) {
+        if (level == null || key == null) {
+            return SnapshotStatus.empty(key, WorldUtil.ChunkAccessReport.clientOrUnsupported(0, 0),
+                    false, "missing_level_or_key");
+        }
+        WorldUtil.ChunkAccessReport chunk = WorldUtil.inspectChunk(level, key.getPos());
+        int sectionIndex = level.getSectionIndexFromSectionY(key.getSectionY());
+        boolean validSection = sectionIndex >= 0 && sectionIndex < level.getSectionsCount();
+        if (!validSection) {
+            return SnapshotStatus.empty(key, chunk, false, "section_out_of_bounds");
+        }
+        if (!allowGeneration && !chunk.full()) {
+            return SnapshotStatus.empty(key, chunk, true, "chunk_unavailable");
+        }
+
+        SubChunkSnapshot snapshot = getSnapshot(level, key, allowGeneration);
+        return new SnapshotStatus(key, chunk, true, snapshot.paletteSize(), snapshot.nonAirBlockCount(),
+                snapshot.blockStateCounts(), snapshot.nonAirWorldSamples(key, sampleLimit),
+                snapshot == EMPTY ? "empty" : "snapshot");
+    }
+
+    public static SnapshotBatch inspectAll(Level level, Collection<SubChunkKey> keys, boolean allowGeneration,
+                                           int sampleLimitPerSubChunk) {
+        if (keys == null || keys.isEmpty()) {
+            return new SnapshotBatch(0, 0, 0, 0, 0, List.of());
+        }
+        int chunkFull = 0;
+        int validSections = 0;
+        int nonEmpty = 0;
+        int nonAirBlocks = 0;
+        List<SnapshotStatus> statuses = new ArrayList<>();
+        for (SubChunkKey key : keys) {
+            SnapshotStatus status = inspect(level, key, allowGeneration, sampleLimitPerSubChunk);
+            statuses.add(status);
+            if (status.chunk().full()) {
+                chunkFull++;
+            }
+            if (status.validSection()) {
+                validSections++;
+            }
+            if (status.nonAirBlocks() > 0) {
+                nonEmpty++;
+                nonAirBlocks += status.nonAirBlocks();
+            }
+        }
+        return new SnapshotBatch(statuses.size(), chunkFull, validSections, nonEmpty, nonAirBlocks, statuses);
     }
 
     public BlockState getBlockState(int x, int y, int z) {
@@ -138,7 +192,116 @@ public class SubChunkSnapshot {
         return nonAirBlockCount() > 0;
     }
 
+    public boolean containsBlockState(BlockState state) {
+        return blockStateCount(state) > 0;
+    }
+
+    public int blockStateCount(BlockState state) {
+        if (this == EMPTY || data == null || state == null || state.isAir()) {
+            return 0;
+        }
+        int count = 0;
+        for (short index : data) {
+            if (index > 0 && index < palette.length && palette[index].equals(state)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public Map<BlockState, Integer> blockStateCounts() {
+        if (this == EMPTY || data == null) {
+            return Map.of();
+        }
+        Map<BlockState, Integer> counts = new HashMap<>();
+        for (short index : data) {
+            if (index > 0 && index < palette.length) {
+                counts.merge(palette[index], 1, Integer::sum);
+            }
+        }
+        return Map.copyOf(counts);
+    }
+
+    public List<BlockSample> nonAirSamples(int limit) {
+        if (this == EMPTY || data == null || limit <= 0) {
+            return List.of();
+        }
+        List<BlockSample> samples = new ArrayList<>();
+        for (int localY = 0; localY < 16 && samples.size() < limit; localY++) {
+            for (int localZ = 0; localZ < 16 && samples.size() < limit; localZ++) {
+                for (int localX = 0; localX < 16 && samples.size() < limit; localX++) {
+                    BlockState state = getBlockState(localX, localY, localZ);
+                    if (!state.isAir()) {
+                        samples.add(new BlockSample(localX, localY, localZ, state));
+                    }
+                }
+            }
+        }
+        return List.copyOf(samples);
+    }
+
+    public List<WorldBlockSample> nonAirWorldSamples(SubChunkKey key, int limit) {
+        if (key == null || this == EMPTY || data == null || limit <= 0) {
+            return List.of();
+        }
+        List<WorldBlockSample> samples = new ArrayList<>();
+        for (BlockSample sample : nonAirSamples(limit)) {
+            samples.add(new WorldBlockSample(
+                    new BlockPos(key.getMinBlockX() + sample.localX(),
+                            key.getMinBlockY() + sample.localY(),
+                            key.getMinBlockZ() + sample.localZ()),
+                    sample.state()));
+        }
+        return List.copyOf(samples);
+    }
+
     private static int index(int x, int y, int z) {
         return (y << 8) | (z << 4) | x;
+    }
+
+    public record BlockSample(int localX, int localY, int localZ, BlockState state) {
+    }
+
+    public record WorldBlockSample(BlockPos pos, BlockState state) {
+    }
+
+    public record SnapshotStatus(SubChunkKey key, WorldUtil.ChunkAccessReport chunk, boolean validSection,
+                                 int paletteSize, int nonAirBlocks, Map<BlockState, Integer> blockStateCounts,
+                                 List<WorldBlockSample> samples, String detail) {
+        public SnapshotStatus {
+            blockStateCounts = blockStateCounts == null ? Map.of() : Map.copyOf(blockStateCounts);
+            samples = samples == null ? List.of() : List.copyOf(samples);
+            detail = detail == null || detail.isBlank() ? "unknown" : detail;
+        }
+
+        public static SnapshotStatus empty(SubChunkKey key, WorldUtil.ChunkAccessReport chunk, boolean validSection,
+                                           String detail) {
+            return new SnapshotStatus(key, chunk, validSection, 1, 0, Map.of(), List.of(), detail);
+        }
+
+        public boolean nonEmpty() {
+            return nonAirBlocks > 0;
+        }
+    }
+
+    public record SnapshotBatch(int requestedSubChunks, int fullChunks, int validSections, int nonEmptySubChunks,
+                                int nonAirBlocks, List<SnapshotStatus> statuses) {
+        public SnapshotBatch {
+            statuses = statuses == null ? List.of() : List.copyOf(statuses);
+        }
+
+        public boolean complete() {
+            return requestedSubChunks == fullChunks && requestedSubChunks == validSections;
+        }
+
+        public Map<BlockState, Integer> blockStateCounts() {
+            Map<BlockState, Integer> counts = new HashMap<>();
+            for (SnapshotStatus status : statuses) {
+                for (Map.Entry<BlockState, Integer> entry : status.blockStateCounts().entrySet()) {
+                    counts.merge(entry.getKey(), entry.getValue(), Integer::sum);
+                }
+            }
+            return Map.copyOf(counts);
+        }
     }
 }

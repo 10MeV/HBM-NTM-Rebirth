@@ -5,6 +5,7 @@ import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmMathUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -29,10 +30,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
+import org.lwjgl.glfw.GLFW;
 
 public final class LegacyGuiElements {
     private static final ResourceLocation GUI_UTILITY = new ResourceLocation(HbmNtm.MOD_ID,
             "textures/gui/gui_utility.png");
+    private static final ResourceLocation ROUND_SMALL_GAUGE = new ResourceLocation(HbmNtm.MOD_ID,
+            "textures/gui/gauges/small_round.png");
     private static final List<UpgradeType> UPGRADE_INFO_ORDER = List.of(
             UpgradeType.SPEED,
             UpgradeType.EFFECT,
@@ -90,9 +94,42 @@ public final class LegacyGuiElements {
         RenderSystem.disableBlend();
     }
 
+    public static void renderRoundSmallGauge(GuiGraphics graphics, int x, int y, double progress) {
+        renderLegacyGauge(graphics, ROUND_SMALL_GAUGE, x, y, 18, 18, 13, progress);
+    }
+
+    public static void renderRoundSmallGauge(GuiGraphics graphics, int x, int y, double progress, float layer) {
+        renderLegacyGauge(graphics, ROUND_SMALL_GAUGE, x, y, 18, 18, 13, progress, layer);
+    }
+
+    public static void renderLegacyGauge(GuiGraphics graphics, ResourceLocation texture, int x, int y, int width,
+            int height, int frames, double progress) {
+        renderLegacyGauge(graphics, texture, x, y, width, height, frames, progress, 0.0F);
+    }
+
+    public static void renderLegacyGauge(GuiGraphics graphics, ResourceLocation texture, int x, int y, int width,
+            int height, int frames, double progress, float layer) {
+        int boundedFrames = Math.max(1, frames);
+        int frame = Mth.clamp((int) Math.round((boundedFrames - 1) * progress), 0, boundedFrames - 1);
+        PoseStack pose = graphics.pose();
+        pose.pushPose();
+        pose.translate(0.0F, 0.0F, layer);
+        graphics.blit(texture, x, y, 0, frame * height, width, height, width, height * boundedFrames);
+        pose.popPose();
+    }
+
     public static void renderTooltip(GuiGraphics graphics, Font font, List<Component> lines, int mouseX, int mouseY) {
         renderTooltip(graphics, font, lines, mouseX, mouseY, STANDARD_HEADER_OFFSET, STANDARD_LINE_DIST,
                 STANDARD_COLOR_BACKGROUND, STANDARD_COLOR_BACKGROUND, STANDARD_COLOR_LINE0, STANDARD_COLOR_LINE1);
+    }
+
+    public static void renderTextTooltip(GuiGraphics graphics, Font font, int mouseX, int mouseY, String... lines) {
+        renderTooltip(graphics, font, textComponents(lines), mouseX, mouseY);
+    }
+
+    public static void renderTextTooltip(GuiGraphics graphics, Font font, Iterable<String> lines, int mouseX,
+            int mouseY) {
+        renderTooltip(graphics, font, textComponents(lines), mouseX, mouseY);
     }
 
     public static void renderRecipeTooltip(GuiGraphics graphics, Font font, List<Component> lines, int mouseX,
@@ -102,6 +139,11 @@ public final class LegacyGuiElements {
     }
 
     public static void renderFluidTooltip(GuiGraphics graphics, Font font, HbmFluidGuiHelper.TankData tank,
+            List<Component> lines, int mouseX, int mouseY) {
+        renderFluidTooltip(graphics, font, tank == null ? null : tank.type(), lines, mouseX, mouseY);
+    }
+
+    public static void renderFluidTooltip(GuiGraphics graphics, Font font, HbmFluidGuiHelper.TankSnapshot tank,
             List<Component> lines, int mouseX, int mouseY) {
         renderFluidTooltip(graphics, font, tank == null ? null : tank.type(), lines, mouseX, mouseY);
     }
@@ -153,6 +195,11 @@ public final class LegacyGuiElements {
     public static void renderInfoTooltip(GuiGraphics graphics, Font font, int mouseX, int mouseY, int x, int y,
             int width, int height, Component... lines) {
         renderInfoTooltip(graphics, font, mouseX, mouseY, x, y, width, height, List.of(lines));
+    }
+
+    public static void renderInfoTextTooltip(GuiGraphics graphics, Font font, int mouseX, int mouseY, int x, int y,
+            int width, int height, String... lines) {
+        renderInfoTooltip(graphics, font, mouseX, mouseY, x, y, width, height, textComponents(lines));
     }
 
     public static void renderElectricityTooltip(GuiGraphics graphics, Font font, int mouseX, int mouseY, int x, int y,
@@ -207,6 +254,12 @@ public final class LegacyGuiElements {
                 List.of(lines));
     }
 
+    public static void renderCustomInfoTextTooltip(GuiGraphics graphics, Font font, int mouseX, int mouseY, int x,
+            int y, int width, int height, int tooltipX, int tooltipY, String... lines) {
+        renderCustomInfoTooltip(graphics, font, mouseX, mouseY, x, y, width, height, tooltipX, tooltipY,
+                textComponents(lines));
+    }
+
     public static void renderCustomInfoStat(GuiGraphics graphics, Font font, int mouseX, int mouseY, int x, int y,
             int width, int height, int tooltipX, int tooltipY, List<Component> lines) {
         renderCustomInfoTooltip(graphics, font, mouseX, mouseY, x, y, width, height, tooltipX, tooltipY, lines);
@@ -215,6 +268,12 @@ public final class LegacyGuiElements {
     public static void renderCustomInfoStat(GuiGraphics graphics, Font font, int mouseX, int mouseY, int x, int y,
             int width, int height, int tooltipX, int tooltipY, Component... lines) {
         renderCustomInfoTooltip(graphics, font, mouseX, mouseY, x, y, width, height, tooltipX, tooltipY, lines);
+    }
+
+    public static void renderCustomInfoTextStat(GuiGraphics graphics, Font font, int mouseX, int mouseY, int x, int y,
+            int width, int height, int tooltipX, int tooltipY, String... lines) {
+        renderCustomInfoTooltip(graphics, font, mouseX, mouseY, x, y, width, height, tooltipX, tooltipY,
+                textComponents(lines));
     }
 
     public static void renderInfoPanel(GuiGraphics graphics, int x, int y, int type) {
@@ -306,10 +365,43 @@ public final class LegacyGuiElements {
         renderItem(graphics, stack, guiLeft + x, guiTop + y);
     }
 
+    public static void renderItem(GuiGraphics graphics, ItemStack stack, int guiLeft, int guiTop, int x, int y,
+            float layer) {
+        renderItem(graphics, stack, guiLeft + x, guiTop + y, layer);
+    }
+
     public static void renderItem(GuiGraphics graphics, ItemStack stack, int x, int y) {
         if (!stack.isEmpty()) {
             graphics.renderItem(stack, x, y);
         }
+    }
+
+    public static void renderItem(GuiGraphics graphics, ItemStack stack, int x, int y, float layer) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        PoseStack pose = graphics.pose();
+        pose.pushPose();
+        pose.translate(0.0F, 0.0F, layer);
+        graphics.renderItem(stack, x, y);
+        pose.popPose();
+    }
+
+    public static void renderItemWithLabel(GuiGraphics graphics, Font font, ItemStack stack, int x, int y,
+            String label) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        PoseStack pose = graphics.pose();
+        pose.pushPose();
+        pose.translate(0.0F, 0.0F, 200.0F);
+        graphics.renderItem(stack, x, y);
+        graphics.renderItemDecorations(font, stack, x, y, label);
+        pose.popPose();
+    }
+
+    public static ItemStack templateFolderStack() {
+        return new ItemStack(ModItems.TEMPLATE_FOLDER.get());
     }
 
     public static boolean isMouseOverSlot(Slot slot, int guiLeft, int guiTop, int mouseX, int mouseY) {
@@ -486,6 +578,28 @@ public final class LegacyGuiElements {
         return Mth.clamp(page, 0, Math.max(0, maxPage));
     }
 
+    public static boolean isLegacyPageKey(int keyCode) {
+        return keyCode == GLFW.GLFW_KEY_UP
+                || keyCode == GLFW.GLFW_KEY_DOWN
+                || keyCode == GLFW.GLFW_KEY_PAGE_UP
+                || keyCode == GLFW.GLFW_KEY_PAGE_DOWN
+                || keyCode == GLFW.GLFW_KEY_HOME
+                || keyCode == GLFW.GLFW_KEY_END;
+    }
+
+    public static int applyLegacyPageKey(int page, int maxPage, int keyCode) {
+        int boundedMax = Math.max(0, maxPage);
+        return switch (keyCode) {
+            case GLFW.GLFW_KEY_UP -> Math.max(0, page - 1);
+            case GLFW.GLFW_KEY_DOWN -> Math.min(boundedMax, page + 1);
+            case GLFW.GLFW_KEY_PAGE_UP -> Math.max(0, page - 5);
+            case GLFW.GLFW_KEY_PAGE_DOWN -> Math.min(boundedMax, page + 5);
+            case GLFW.GLFW_KEY_HOME -> 0;
+            case GLFW.GLFW_KEY_END -> boundedMax;
+            default -> Mth.clamp(page, 0, boundedMax);
+        };
+    }
+
     public static void renderTooltip(GuiGraphics graphics, Font font, List<Component> lines, int mouseX, int mouseY,
             int headerOffset, int lineDist, int background0, int background1, int line0, int line1) {
         if (lines == null || lines.isEmpty()) {
@@ -571,6 +685,28 @@ public final class LegacyGuiElements {
             case OVERDRIVE -> Component.translatableWithFallback("upgrade.gui.overdrive",
                     " * Overdrive: Stacks to level %s", maxLevel);
         };
+    }
+
+    private static List<Component> textComponents(String... lines) {
+        if (lines == null || lines.length == 0) {
+            return List.of();
+        }
+        List<Component> components = new ArrayList<>(lines.length);
+        for (String line : lines) {
+            components.add(Component.literal(line == null ? "" : line));
+        }
+        return components;
+    }
+
+    private static List<Component> textComponents(Iterable<String> lines) {
+        if (lines == null) {
+            return List.of();
+        }
+        List<Component> components = new ArrayList<>();
+        for (String line : lines) {
+            components.add(Component.literal(line == null ? "" : line));
+        }
+        return components;
     }
 
     public record StackTextPart(Component text, ItemStack stack, boolean item) {

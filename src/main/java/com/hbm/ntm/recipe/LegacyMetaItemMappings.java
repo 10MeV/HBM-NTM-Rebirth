@@ -39,6 +39,9 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation FUEL_ADDITIVE = hbm("fuel_additive");
     public static final ResourceLocation DRILLBIT = hbm("drillbit");
     public static final ResourceLocation PISTON_SET = hbm("piston_set");
+    public static final ResourceLocation ARC_ELECTRODE = hbm("arc_electrode");
+    public static final ResourceLocation ARC_ELECTRODE_BURNT = hbm("arc_electrode_burnt");
+    public static final ResourceLocation PA_COIL = hbm("pa_coil");
 
     private static final Map<ResourceLocation, LinkedHashMap<Integer, RegistryObject<Item>>> ITEM_VARIANTS = new LinkedHashMap<>();
 
@@ -81,9 +84,12 @@ public final class LegacyMetaItemMappings {
                 7_400, requireLegacyItem("wire_fine_tungsten"),
                 7_900, requireLegacyItem("wire_gold")));
         registerSparse(WIRE_DENSE, Map.of(
+                2_200, requireLegacyItem("wire_dense_titanium"),
+                2_900, requireLegacyItem("wire_dense_copper"),
                 4_100, requireLegacyItem("wire_dense_niobium"),
                 7_900, requireLegacyItem("wire_dense_gold"),
-                48, requireLegacyItem("wire_dense_bscco")));
+                48, requireLegacyItem("wire_dense_bscco"),
+                6_000, requireLegacyItem("wire_dense_neodymium")));
         registerSparse(PIPE, Map.of(
                 30, requireLegacyItem("pipes_steel")));
         registerSparse(COKE, Map.of(
@@ -145,6 +151,9 @@ public final class LegacyMetaItemMappings {
                 1, requireLegacyItem("fuel_additive_deicer")));
         registerList(DRILLBIT, ModItems.DRILLBIT_ITEMS);
         registerList(PISTON_SET, ModItems.PISTON_SET_ITEMS);
+        registerList(ARC_ELECTRODE, ModItems.ARC_ELECTRODE_ITEMS.subList(0, 4));
+        registerList(ARC_ELECTRODE_BURNT, ModItems.ARC_ELECTRODE_ITEMS.subList(4, 8));
+        registerList(PA_COIL, ModItems.PA_COIL_ITEMS);
     }
 
     @SafeVarargs

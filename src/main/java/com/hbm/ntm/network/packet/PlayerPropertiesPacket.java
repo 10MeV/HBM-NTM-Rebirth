@@ -1,6 +1,6 @@
 package com.hbm.ntm.network.packet;
 
-import com.hbm.ntm.client.ClientPlayerSyncData;
+import com.hbm.ntm.client.ClientHbmPlayerProperties;
 import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -27,7 +27,7 @@ public record PlayerPropertiesPacket(ResourceLocation dataType, CompoundTag data
 
     public static void handle(PlayerPropertiesPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
-        context.enqueueWork(() -> ClientPlayerSyncData.update(packet.dataType, packet.data));
+        context.enqueueWork(() -> ClientHbmPlayerProperties.update(packet.dataType, packet.data));
         context.setPacketHandled(true);
     }
 

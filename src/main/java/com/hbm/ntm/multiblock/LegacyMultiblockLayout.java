@@ -49,8 +49,17 @@ public final class LegacyMultiblockLayout {
 
     public static LegacyMultiblockLayout ofLegacyXrChecked(int[] dimensions, Direction facing) {
         return ofOffsets(List.of(BlockPos.ZERO))
-                .withLegacyXrFill(dimensions, facing)
-                .withLegacyXrCheckOnly(dimensions, facing, BlockPos.ZERO);
+                .withLegacyXrCheckedFill(dimensions, facing);
+    }
+
+    public static LegacyMultiblockLayout ofLegacyXrChecked(int[] dimensions, Direction facing,
+            Predicate<BlockPos> proxyOffsets) {
+        return ofLegacyXrChecked(dimensions, facing).withProxyPredicate(proxyOffsets);
+    }
+
+    public static LegacyMultiblockLayout ofLegacyXrChecked(int[] dimensions, Direction facing,
+            Predicate<BlockPos> proxyOffsets, LegacyProxyMode mode) {
+        return ofLegacyXrChecked(dimensions, facing).withProxyPredicate(proxyOffsets, mode);
     }
 
     public static List<BlockPos> legacyXrFillOffsets(int[] dimensions, Direction facing) {
@@ -145,6 +154,15 @@ public final class LegacyMultiblockLayout {
         return withExtraOffsets(legacyXrFillOffsets(dimensions, facing, originOffset));
     }
 
+    public LegacyMultiblockLayout withLegacyXrCheckedFill(int[] dimensions, Direction facing) {
+        return withLegacyXrCheckedFill(dimensions, facing, BlockPos.ZERO);
+    }
+
+    public LegacyMultiblockLayout withLegacyXrCheckedFill(int[] dimensions, Direction facing, BlockPos originOffset) {
+        return withLegacyXrFill(dimensions, facing, originOffset)
+                .withLegacyXrCheckOnly(dimensions, facing, originOffset);
+    }
+
     public LegacyMultiblockLayout withLegacyXrProxyFill(int[] dimensions, Direction facing,
             BlockPos originOffset, LegacyProxyMode mode) {
         Set<BlockPos> offsets = copyOffsets(legacyXrFillOffsets(dimensions, facing, originOffset));
@@ -191,7 +209,7 @@ public final class LegacyMultiblockLayout {
     }
 
     public boolean isLegacyExtraOffset(BlockPos offset) {
-        return legacyExtraOffsets.contains(offset) || proxyMode(offset).isProxy();
+        return legacyExtraOffsets.contains(offset);
     }
 
     public LegacyProxyMode proxyMode(BlockPos offset) {

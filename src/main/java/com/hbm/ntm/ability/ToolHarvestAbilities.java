@@ -1,13 +1,16 @@
 package com.hbm.ntm.ability;
 
+import com.hbm.ntm.block.LegacySellafieldBlock;
+import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.config.ToolConfig;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.recipe.ItemProcessingRecipe;
 import com.hbm.ntm.recipe.ItemProcessingRecipeRuntime;
 import com.hbm.ntm.registry.ModItems;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
@@ -59,22 +62,22 @@ public final class ToolHarvestAbilities {
     }
 
     private static class ConfigHarvestAbility extends BaseHarvestAbility {
-        private final Supplier<net.minecraftforge.common.ForgeConfigSpec.BooleanValue> config;
+        private final BooleanSupplier config;
 
-        private ConfigHarvestAbility(String name, int sort, Supplier<net.minecraftforge.common.ForgeConfigSpec.BooleanValue> config) {
+        private ConfigHarvestAbility(String name, int sort, BooleanSupplier config) {
             super(name, sort);
             this.config = config;
         }
 
         @Override
         public boolean isAllowed() {
-            return ToolConfig.enabled(config.get());
+            return config.getAsBoolean();
         }
     }
 
     private static final class SilkTouchAbility extends ConfigHarvestAbility {
         private SilkTouchAbility() {
-            super("tool.ability.silktouch", 1, () -> ToolConfig.ABILITY_SILK);
+            super("tool.ability.silktouch", 1, ToolConfig::silkAbilityEnabled);
         }
 
         @Override
@@ -92,7 +95,7 @@ public final class ToolHarvestAbilities {
         private final int[] powerAtLevel = { 1, 2, 3, 4, 5, 9 };
 
         private LuckAbility() {
-            super("tool.ability.luck", 2, () -> ToolConfig.ABILITY_LUCK);
+            super("tool.ability.luck", 2, ToolConfig::luckAbilityEnabled);
         }
 
         @Override
@@ -118,7 +121,7 @@ public final class ToolHarvestAbilities {
 
     private static final class SmelterAbility extends ConfigHarvestAbility {
         private SmelterAbility() {
-            super("tool.ability.smelter", 3, () -> ToolConfig.ABILITY_FURNACE);
+            super("tool.ability.smelter", 3, ToolConfig::furnaceAbilityEnabled);
         }
 
         @Override
@@ -152,7 +155,7 @@ public final class ToolHarvestAbilities {
 
     private static final class MercuryAbility extends ConfigHarvestAbility {
         private MercuryAbility() {
-            super("tool.ability.mercury", 7, () -> ToolConfig.ABILITY_MERCURY);
+            super("tool.ability.mercury", 7, ToolConfig::mercuryAbilityEnabled);
         }
 
         @Override
@@ -176,7 +179,7 @@ public final class ToolHarvestAbilities {
 
     private static final class ShredderAbility extends ConfigHarvestAbility {
         private ShredderAbility() {
-            super("tool.ability.shredder", 4, () -> ToolConfig.ABILITY_SHREDDER);
+            super("tool.ability.shredder", 4, ToolConfig::shredderAbilityEnabled);
         }
 
         @Override
@@ -196,7 +199,7 @@ public final class ToolHarvestAbilities {
 
     private static final class CentrifugeAbility extends ConfigHarvestAbility {
         private CentrifugeAbility() {
-            super("tool.ability.centrifuge", 5, () -> ToolConfig.ABILITY_CENTRIFUGE);
+            super("tool.ability.centrifuge", 5, ToolConfig::centrifugeAbilityEnabled);
         }
 
         @Override
@@ -216,7 +219,7 @@ public final class ToolHarvestAbilities {
 
     private static final class CrystallizerAbility extends ConfigHarvestAbility {
         private CrystallizerAbility() {
-            super("tool.ability.crystallizer", 6, () -> ToolConfig.ABILITY_CRYSTALLIZER);
+            super("tool.ability.crystallizer", 6, ToolConfig::crystallizerAbilityEnabled);
         }
 
         @Override
@@ -238,6 +241,14 @@ public final class ToolHarvestAbilities {
     private static ItemStack blockItemStack(BlockState state) {
         if (state.is(Blocks.REDSTONE_ORE)) {
             return new ItemStack(Blocks.REDSTONE_ORE);
+        }
+        if (state.getBlock().asItem() instanceof LegacyStateBlockItem item) {
+            if (state.hasProperty(LegacySellafieldBlock.LEVEL)) {
+                return LegacyStateBlockItem.createStack(item, state.getValue(LegacySellafieldBlock.LEVEL));
+            }
+            if (state.hasProperty(LegacySellafieldSlakedBlock.LEVEL)) {
+                return LegacyStateBlockItem.createStack(item, state.getValue(LegacySellafieldSlakedBlock.LEVEL));
+            }
         }
         return new ItemStack(state.getBlock().asItem());
     }

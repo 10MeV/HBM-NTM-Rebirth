@@ -136,7 +136,7 @@ public class OilDrillMenu extends AbstractContainerMenu {
                 indicator = value;
             }
         });
-        blockEntity.getAllTanks().forEach(tank -> tanks.add(HbmFluidGuiHelper.watchTank(this::addDataSlot, tank)));
+        tanks.addAll(HbmFluidGuiHelper.watchTanks(this::addDataSlot, blockEntity.getAllTanks()));
     }
 
     private static OilDrillBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

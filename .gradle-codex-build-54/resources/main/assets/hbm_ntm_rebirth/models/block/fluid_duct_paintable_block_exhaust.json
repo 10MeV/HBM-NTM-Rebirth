@@ -1,0 +1,7 @@
+{
+  "parent": "hbm_ntm_rebirth:block/fluid_duct_paintable",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust",
+    "base": "hbm_ntm_rebirth:block/fluid_duct_paintable_block_exhaust"
+  }
+}

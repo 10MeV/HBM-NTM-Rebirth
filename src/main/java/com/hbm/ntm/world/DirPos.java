@@ -36,16 +36,9 @@ public class DirPos extends BlockPos {
     public DirPos rotate(LegacyRotation rotation) {
         return switch (rotation) {
             case NONE -> this;
-            case CLOCKWISE_90 -> new DirPos(-getZ(), getY(), getX(), rotateDirection(rotation));
+            case CLOCKWISE_90 -> new DirPos(-getZ(), getY(), getX(), rotation.rotate(direction));
             case CLOCKWISE_180 -> new DirPos(-getX(), getY(), -getZ(), direction.getOpposite());
-            case COUNTERCLOCKWISE_90 -> new DirPos(getZ(), getY(), -getX(), rotateDirection(rotation));
+            case COUNTERCLOCKWISE_90 -> new DirPos(getZ(), getY(), -getX(), rotation.rotate(direction));
         };
-    }
-
-    private Direction rotateDirection(LegacyRotation rotation) {
-        if (direction.getAxis().isVertical()) {
-            return direction;
-        }
-        return rotation == LegacyRotation.CLOCKWISE_90 ? direction.getClockWise() : direction.getCounterClockWise();
     }
 }

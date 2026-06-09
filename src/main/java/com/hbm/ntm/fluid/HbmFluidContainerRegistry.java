@@ -19,6 +19,10 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.item.alchemy.Potions;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,6 +149,37 @@ public final class HbmFluidContainerRegistry {
         return emptyContainer(container.getContainerKind());
     }
 
+    public static ItemStack getCraftingRemainder(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack fixedEmpty = getEmptyContainer(stack);
+        if (!fixedEmpty.isEmpty()) {
+            return fixedEmpty;
+        }
+        return drainForgeContainerCopy(stack);
+    }
+
+    public static List<ItemStack> getCraftingRemainders(ItemStack stack, int count) {
+        if (stack.isEmpty() || count <= 0) {
+            return List.of();
+        }
+        ItemStack empty = getCraftingRemainder(stack);
+        if (empty.isEmpty()) {
+            return List.of();
+        }
+        List<ItemStack> remainders = new ArrayList<>();
+        int remaining = count;
+        int maxStackSize = Math.max(1, empty.getMaxStackSize());
+        while (remaining > 0) {
+            ItemStack copy = empty.copy();
+            copy.setCount(Math.min(remaining, maxStackSize));
+            remainders.add(copy);
+            remaining -= copy.getCount();
+        }
+        return Collections.unmodifiableList(remainders);
+    }
+
     public static ItemStack emptyContainer(HbmFluidContainerRules.ContainerKind kind) {
         RegistryObject<Item> item = EMPTY_ITEMS.get(kind);
         return item == null ? ItemStack.EMPTY : new ItemStack(item.get());
@@ -165,13 +200,22 @@ public final class HbmFluidContainerRegistry {
     }
 
     public static boolean registerContainer(ItemStack fullContainer, ItemStack emptyContainer, FluidType type, int content) {
+        return registerContainer(ContainerSource.EXTERNAL, fullContainer, emptyContainer, type, content);
+    }
+
+    static boolean registerConfiguredContainer(ItemStack fullContainer, ItemStack emptyContainer, FluidType type, int content) {
+        return registerContainer(ContainerSource.CONFIG, fullContainer, emptyContainer, type, content);
+    }
+
+    private static boolean registerContainer(ContainerSource source, ItemStack fullContainer, ItemStack emptyContainer,
+            FluidType type, int content) {
         if (fullContainer == null || fullContainer.isEmpty()
                 || type == null || type == HbmFluids.NONE
                 || content <= 0) {
             lastSkippedContainers++;
             return false;
         }
-        EXTERNAL_ENTRIES.add(direct(ContainerSource.EXTERNAL, emptyContainer == null ? ItemStack.EMPTY : emptyContainer.copy(),
+        EXTERNAL_ENTRIES.add(direct(source, emptyContainer == null ? ItemStack.EMPTY : emptyContainer.copy(),
                 fullContainer.copy(), type, content));
         lastRegisteredContainers++;
         return true;
@@ -210,6 +254,33 @@ public final class HbmFluidContainerRegistry {
 
     private static ContainerEntry direct(ContainerSource source, ItemStack empty, ItemStack full, FluidType type, int content) {
         return new ContainerEntry(null, source, empty, full, type, content);
+    }
+
+    private static ItemStack drainForgeContainerCopy(ItemStack stack) {
+        if (stack.getItem() instanceof HbmFluidContainerItem || stack.getCount() != 1) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack working = stack.copy();
+        return working.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM)
+                .map(handler -> drainForgeContainerCopy(working, handler))
+                .orElse(ItemStack.EMPTY);
+    }
+
+    private static ItemStack drainForgeContainerCopy(ItemStack original, IFluidHandlerItem handler) {
+        boolean drainedAny = false;
+        for (int tank = 0; tank < handler.getTanks(); tank++) {
+            FluidStack contained = handler.getFluidInTank(tank);
+            if (contained.isEmpty() || HbmFluidForgeMappings.fromForge(contained) == HbmFluids.NONE) {
+                continue;
+            }
+            FluidStack drained = handler.drain(contained, IFluidHandler.FluidAction.EXECUTE);
+            drainedAny |= !drained.isEmpty();
+        }
+        if (!drainedAny) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack container = handler.getContainer();
+        return ItemStack.isSameItemSameTags(original, container) ? ItemStack.EMPTY : container.copy();
     }
 
     private static List<ContainerEntry> directEntries() {
@@ -347,6 +418,7 @@ public final class HbmFluidContainerRegistry {
     public enum ContainerSource {
         BUILTIN_FIXED,
         LEGACY_DIRECT,
+        CONFIG,
         EXTERNAL,
         KIND_DYNAMIC
     }

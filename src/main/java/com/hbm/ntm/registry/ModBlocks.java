@@ -31,6 +31,7 @@ import com.hbm.ntm.block.FluidValveBlock;
 import com.hbm.ntm.block.GasFlareBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyComplexShapeBlock;
+import com.hbm.ntm.block.LegacyCrystalVirusBlock;
 import com.hbm.ntm.block.LegacyDemonLampBlock;
 import com.hbm.ntm.block.LegacyDepthBlock;
 import com.hbm.ntm.block.LegacyGasMeltdownBlock;
@@ -54,6 +55,7 @@ import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.block.LegacyFrozenEarthBlock;
+import com.hbm.ntm.block.LegacyToxicBlock;
 import com.hbm.ntm.block.LegacyToxicGasBlock;
 import com.hbm.ntm.block.LegacyTektiteOreBlock;
 import com.hbm.ntm.block.LegacyTrinititeOreBlock;
@@ -225,6 +227,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> GAS_ASBESTOS = toxicGas("gas_asbestos", LegacyToxicGasBlock.Kind.ASBESTOS);
     public static final RegistryObject<Block> GAS_COAL = toxicGas("gas_coal", LegacyToxicGasBlock.Kind.COAL);
     public static final RegistryObject<Block> CHLORINE_GAS = toxicGas("chlorine_gas", LegacyToxicGasBlock.Kind.CHLORINE);
+    public static final RegistryObject<Block> TOXIC_BLOCK = toxicBlock("toxic_block");
     public static final RegistryObject<Block> RAD_ABSORBER = radAbsorber("rad_absorber");
     public static final RegistryObject<Block> DUMMY_BLOCK = dummyBlock("dummy_block");
     public static final RegistryObject<Block> STEEL_SCAFFOLD = steelScaffold("steel_scaffold");
@@ -322,6 +325,24 @@ public final class ModBlocks {
             turbofanDefinition());
     public static final RegistryObject<Block> MACHINE_TURBINEGAS = visibleMultiblockMachine("machine_turbinegas",
             turbineGasDefinition());
+    public static final RegistryObject<Block> MACHINE_ANNIHILATOR = visibleMultiblockMachine("machine_annihilator",
+            annihilatorDefinition());
+    public static final RegistryObject<Block> MACHINE_FEL = visibleMultiblockMachine("machine_fel",
+            felDefinition());
+    public static final RegistryObject<Block> MACHINE_ORBUS = visibleMultiblockMachine("machine_orbus",
+            orbusDefinition());
+    public static final RegistryObject<Block> MACHINE_MINING_LASER = visibleMultiblockMachine("machine_mining_laser",
+            miningLaserDefinition());
+    public static final RegistryObject<Block> MACHINE_STRAND_CASTER = visibleMultiblockMachine("machine_strand_caster",
+            strandCasterDefinition());
+    public static final RegistryObject<Block> MACHINE_WOOD_BURNER = visibleMultiblockMachine("machine_wood_burner",
+            woodBurnerDefinition());
+    public static final RegistryObject<Block> MACHINE_STIRLING = visibleMultiblockMachine("machine_stirling",
+            stirlingDefinition("stirling"));
+    public static final RegistryObject<Block> MACHINE_STIRLING_STEEL = visibleMultiblockMachine("machine_stirling_steel",
+            stirlingDefinition("stirling_steel"));
+    public static final RegistryObject<Block> MACHINE_STIRLING_CREATIVE = visibleMultiblockMachine("machine_stirling_creative",
+            stirlingDefinition("stirling_creative"));
     public static final RegistryObject<Block> GLASS_BORON = legacyGlass("glass_boron");
     public static final RegistryObject<Block> GLASS_QUARTZ = quartzGlass("glass_quartz");
 
@@ -486,6 +507,15 @@ public final class ModBlocks {
             MACHINE_TOWER_LARGE,
             MACHINE_TURBOFAN,
             MACHINE_TURBINEGAS,
+            MACHINE_ANNIHILATOR,
+            MACHINE_FEL,
+            MACHINE_ORBUS,
+            MACHINE_MINING_LASER,
+            MACHINE_STRAND_CASTER,
+            MACHINE_WOOD_BURNER,
+            MACHINE_STIRLING,
+            MACHINE_STIRLING_STEEL,
+            MACHINE_STIRLING_CREATIVE,
             GAS_RADON,
             GAS_RADON_DENSE,
             GAS_RADON_TOMB,
@@ -1060,6 +1090,21 @@ public final class ModBlocks {
                 .isViewBlocking((state, level, pos) -> false), kind));
     }
 
+    private static RegistryObject<Block> toxicBlock(String name) {
+        RegistryObject<Block> block = BLOCKS.register(name, () -> new LegacyToxicBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_LIGHT_GREEN)
+                .strength(100.0F, 500.0F)
+                .lightLevel(state -> 15)
+                .noCollission()
+                .noOcclusion()
+                .replaceable()
+                .isValidSpawn((state, level, pos, type) -> false)
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false)));
+        BLOCKS_BY_LEGACY_NAME.put(name, block);
+        return block;
+    }
+
     private static RegistryObject<Block> radAbsorber(String name) {
         return registerBlockWithItem(
                 name,
@@ -1345,7 +1390,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("chemical_plant"), machineTexture("chemical_plant"))
                 .legacyXrDimensions(2, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.squarePerimeter(1),
                                 proxyInventoryPowerFluid()))
                 .renderParts("Base", "Frame", "Slider", "Spinner")
@@ -1358,7 +1403,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("chemical_factory"), machineTexture("chemical_factory"))
                 .legacyXrDimensions(2, 0, 2, 2, 2, 2)
                 .legacyOffset(2)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 2, 2, 2, 2 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 2, 2, 2, 2 }, facing)
                         .withExtraProxyOffsets(assemblyFactoryProxyOffsets(facing), proxyInventoryPowerFluid()))
                 .renderParts("Base", "Frame", "Fan1", "Fan2")
                 .legacyItemScale(3.0D, 0.75D)
@@ -1397,7 +1442,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("refinery"), machineTexture("refinery"))
                 .legacyXrDimensions(8, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 8, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 8, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyInventoryPowerFluid()))
                 .legacyItemScale(3.0D, 0.5D)
                 .yRotation(facing -> 180.0F)
@@ -1409,12 +1454,12 @@ public final class ModBlocks {
                 .legacyXrDimensions(9, 0, 1, 1, 1, 1)
                 .legacyOffset(0)
                 .layout(facing -> LegacyMultiblockLayout.ofOffsets(List.of(BlockPos.ZERO))
-                        .withLegacyXrFill(new int[] { 1, -1, 0, 0, 0, 0 }, facing)
-                        .withLegacyXrFill(new int[] { 8, 0, 1, 1, 1, 1 }, facing, new BlockPos(0, 1, 0))
-                        .withLegacyXrFill(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(1, 1, 1))
-                        .withLegacyXrFill(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(1, 1, -1))
-                        .withLegacyXrFill(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(-1, 1, 1))
-                        .withLegacyXrFill(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(-1, 1, -1)))
+                        .withLegacyXrCheckedFill(new int[] { 1, -1, 0, 0, 0, 0 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 8, 0, 1, 1, 1, 1 }, facing, new BlockPos(0, 1, 0))
+                        .withLegacyXrCheckedFill(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(1, 1, 1))
+                        .withLegacyXrCheckedFill(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(1, 1, -1))
+                        .withLegacyXrCheckedFill(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(-1, 1, 1))
+                        .withLegacyXrCheckedFill(new int[] { -1, 1, 0, 0, 0, 0 }, facing, new BlockPos(-1, 1, -1)))
                 .legacyItemScale(3.0D, 0.5D)
                 .yRotation(facing -> 180.0F - facing.toYRot())
                 .renderBoundingBox(pos -> new AABB(pos.offset(-2, -1, -2), pos.offset(11, 3, 3)))
@@ -1425,11 +1470,11 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("catalytic_cracker"), machineTexture("catalytic_cracker"))
                 .legacyXrDimensions(0, 0, 3, 3, 2, 3)
                 .legacyOffset(3)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 0, 0, 3, 3, 2, 3 }, facing)
-                        .withLegacyXrFill(new int[] { 8, -1, 3, -1, 2, 0 }, facing)
-                        .withLegacyXrFill(new int[] { 13, 0, 0, 3, 2, 1 }, facing)
-                        .withLegacyXrFill(new int[] { 14, -13, -1, 2, 1, 0 }, facing)
-                        .withLegacyXrFill(new int[] { 3, -1, 2, 3, -1, 3 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 0, 0, 3, 3, 2, 3 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 8, -1, 3, -1, 2, 0 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 13, 0, 0, 3, 2, 1 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 14, -13, -1, 2, 1, 0 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, -1, 2, 3, -1, 3 }, facing)
                         .withExtraProxyOffsets(catalyticCrackerProxyOffsets(facing), proxyFluid()))
                 .legacyItemScale(1.8D, 0.5D)
                 .yRotation(ModBlocks::catalyticRotation)
@@ -1440,11 +1485,9 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("catalytic_reformer"), machineTexture("catalytic_reformer"))
                 .legacyXrDimensions(2, 0, 1, 1, 2, 2)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 2, 2 }, facing)
-                        .withLegacyXrFill(new int[] { 3, -3, 1, 0, -1, 2 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 3, -3, 1, 0, -1, 2 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 6, -3, 1, 1, 2, 0 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 6, -3, 1, 1, 2, 0 }, facing, BlockPos.ZERO)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 1, 1, 2, 2 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, -3, 1, 0, -1, 2 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 6, -3, 1, 1, 2, 0 }, facing)
                         .withExtraProxyOffsets(catalyticReformerProxyOffsets(facing), proxyPowerFluid()))
                 .legacyItemScale(3.5D, 0.5D)
                 .yRotation(ModBlocks::catalyticRotation)
@@ -1455,7 +1498,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("vacuum_distill"), machineTexture("vacuum_distill"))
                 .legacyXrDimensions(8, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 8, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 8, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyPowerFluid()))
                 .legacyItemScale(3.0D, 0.5D)
                 .yRotation(facing -> 0.0F)
@@ -1466,7 +1509,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("fraction_tower"), machineTexture("fraction_tower"))
                 .legacyXrDimensions(2, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyFluid()))
                 .legacyItemScale(3.25F)
                 .yRotation(facing -> 0.0F)
@@ -1477,7 +1520,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("hydrotreater"), machineTexture("hydrotreater"))
                 .legacyXrDimensions(6, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 6, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 6, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyPowerFluid()))
                 .legacyItemScale(4.0D, 0.5D)
                 .yRotation(facing -> 0.0F)
@@ -1488,17 +1531,12 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("coker"), machineTexture("coker"))
                 .legacyXrDimensions(22, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 22, 0, 1, 1, 1, 1 }, facing)
-                        .withLegacyXrFill(new int[] { 5, 0, 2, 2, 2, 2 }, Direction.NORTH, new BlockPos(0, 1, 0))
-                        .withLegacyXrCheckOnly(new int[] { 5, 0, 2, 2, 2, 2 }, Direction.NORTH, new BlockPos(0, 1, 0))
-                        .withLegacyXrFill(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(2, 1, 2))
-                        .withLegacyXrCheckOnly(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(2, 1, 2))
-                        .withLegacyXrFill(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(2, 1, -2))
-                        .withLegacyXrCheckOnly(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(2, 1, -2))
-                        .withLegacyXrFill(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(-2, 1, 2))
-                        .withLegacyXrCheckOnly(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(-2, 1, 2))
-                        .withLegacyXrFill(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(-2, 1, -2))
-                        .withLegacyXrCheckOnly(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(-2, 1, -2))
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 22, 0, 1, 1, 1, 1 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 5, 0, 2, 2, 2, 2 }, Direction.NORTH, new BlockPos(0, 1, 0))
+                        .withLegacyXrCheckedFill(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(2, 1, 2))
+                        .withLegacyXrCheckedFill(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(2, 1, -2))
+                        .withLegacyXrCheckedFill(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(-2, 1, 2))
+                        .withLegacyXrCheckedFill(new int[] { 0, 1, 0, 0, 0, 0 }, Direction.NORTH, new BlockPos(-2, 1, -2))
                         .withExtraProxyOffsets(cokerProxyOffsets(), proxyInventoryFluid()))
                 .legacyItemScale(2.75D, 0.25D)
                 .yRotation(facing -> 0.0F)
@@ -1535,11 +1573,9 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("compressor"), machineTexture("compressor"))
                 .legacyXrDimensions(2, 0, 1, 2, 1, 1)
                 .legacyOffset(2)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 2, 1, 1 }, facing)
-                        .withLegacyXrFill(new int[] { 3, -3, 1, 1, 1, 1 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 3, -3, 1, 1, 1, 1 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 8, -4, 0, 0, 1, 1 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 8, -4, 0, 0, 1, 1 }, facing, BlockPos.ZERO)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 1, 2, 1, 1 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, -3, 1, 1, 1, 1 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 8, -4, 0, 0, 1, 1 }, facing)
                         .withExtraProxyOffsets(compressorProxyOffsets(facing), proxyPowerFluid()))
                 .renderParts("Compressor", "Pump", "Fan")
                 .legacyItemScale(3.0D, 0.5D)
@@ -1552,8 +1588,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("acidizer"), machineTexture("acidizer"))
                 .legacyXrDimensions(5, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 5, 0, 1, 1, 1, 1 }, facing)
-                        .withExtraOffsets(crystallizerStructureOffsets(facing))
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 5, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyInventoryPowerFluid()))
                 .renderParts("Body", "Spinner")
                 .legacyItemScale(3.0D, 0.5D)
@@ -1565,31 +1600,19 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("electrolyser"), machineTexture("electrolyser"))
                 .legacyXrDimensions(0, 0, 5, 5, 1, 3)
                 .legacyOffset(5)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 0, 0, 5, 5, 1, 3 }, facing)
-                        .withLegacyXrFill(new int[] { 2, -1, 5, 5, 1, 1 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 2, -1, 5, 5, 1, 1 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 3, -3, 5, 5, 0, 0 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 3, -3, 5, 5, 0, 0 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 3, -1, 4, -4, -3, 3 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 3, -1, 4, -4, -3, 3 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 3, -1, 2, -2, -3, 3 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 3, -1, 2, -2, -3, 3 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 3, -1, 0, 0, -3, 3 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 3, -1, 0, 0, -3, 3 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 3, -1, -2, 2, -3, 3 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 3, -1, -2, 2, -3, 3 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 3, -1, -4, 4, -3, 3 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 3, -1, -4, 4, -3, 3 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, 4))
-                        .withLegacyXrCheckOnly(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, 4))
-                        .withLegacyXrFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, 2))
-                        .withLegacyXrCheckOnly(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, 2))
-                        .withLegacyXrFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, 0))
-                        .withLegacyXrCheckOnly(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, 0))
-                        .withLegacyXrFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, -2))
-                        .withLegacyXrCheckOnly(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, -2))
-                        .withLegacyXrFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, -4))
-                        .withLegacyXrCheckOnly(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, -4))
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 0, 0, 5, 5, 1, 3 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 2, -1, 5, 5, 1, 1 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, -3, 5, 5, 0, 0 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, -1, 4, -4, -3, 3 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, -1, 2, -2, -3, 3 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, -1, 0, 0, -3, 3 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, -1, -2, 2, -3, 3 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, -1, -4, 4, -3, 3 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, 4))
+                        .withLegacyXrCheckedFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, 2))
+                        .withLegacyXrCheckedFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, 0))
+                        .withLegacyXrCheckedFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, -2))
+                        .withLegacyXrCheckedFill(new int[] { 0, 0, 0, 0, -1, 2 }, facing, electrolyserTopColumnOrigin(facing, -4))
                         .withExtraProxyOffsets(electrolyserProxyOffsets(facing), proxyInventoryPowerFluid()))
                 .legacyItemScale(2.0F)
                 .yRotation(ModBlocks::solidifierRotation)
@@ -1601,19 +1624,13 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("bigasstank"), machineTexture("bigasstank"))
                 .legacyXrDimensions(5, 0, 4, 4, 4, 4)
                 .legacyOffset(6)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 5, 0, 4, 4, 4, 4 }, facing)
-                        .withLegacyXrFill(new int[] { 4, 0, 5, -4, 2, 2 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 4, 0, 5, -4, 2, 2 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 4, 0, -4, 5, 2, 2 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 4, 0, -4, 5, 2, 2 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 4, 0, 2, 2, 5, -4 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 4, 0, 2, 2, 5, -4 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 4, 0, 2, 2, -4, 5 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 4, 0, 2, 2, -4, 5 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 3, 0, 6, -5, 0, 0 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 3, 0, 6, -5, 0, 0 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 3, 0, -5, 6, 0, 0 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 3, 0, -5, 6, 0, 0 }, facing, BlockPos.ZERO)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 5, 0, 4, 4, 4, 4 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 4, 0, 5, -4, 2, 2 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 4, 0, -4, 5, 2, 2 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 4, 0, 2, 2, 5, -4 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 4, 0, 2, 2, -4, 5 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, 0, 6, -5, 0, 0 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 3, 0, -5, 6, 0, 0 }, facing)
                         .withExtraProxyOffsets(bigAssTankProxyOffsets(facing), proxyFluid()))
                 .legacyItemScale(2.5D, 0.5D)
                 .yRotation(ModBlocks::bigAssTankRotation)
@@ -1625,11 +1642,9 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("bat9000"), machineTexture("bat9000"))
                 .legacyXrDimensions(4, 0, 2, 2, 1, 1)
                 .legacyOffset(2)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 4, 0, 2, 2, 1, 1 }, facing)
-                        .withLegacyXrFill(new int[] { 4, 0, 1, 1, 2, -2 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 4, 0, 1, 1, 2, -2 }, facing, BlockPos.ZERO)
-                        .withLegacyXrFill(new int[] { 4, 0, 1, 1, -2, 2 }, facing)
-                        .withLegacyXrCheckOnly(new int[] { 4, 0, 1, 1, -2, 2 }, facing, BlockPos.ZERO)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 4, 0, 2, 2, 1, 1 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 4, 0, 1, 1, 2, -2 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 4, 0, 1, 1, -2, 2 }, facing)
                         .withExtraProxyOffsets(bat9000ProxyOffsets(), proxyFluid()))
                 .legacyItemScale(2.5D, 0.5D)
                 .yRotation(ModBlocks::bigAssTankRotation)
@@ -1641,8 +1656,8 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("fluidtank"), machineTexture("fluidtank"))
                 .legacyXrDimensions(2, 0, 1, 1, 2, 2)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 2, 2 }, facing)
-                        .withExtraOffsets(LegacyMultiblockOffsets.floorCorners(1)))
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 1, 1, 2, 2 }, facing)
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.floorCorners(1), proxyFluid()))
                 .legacyItemScale(3.5D, 0.75D)
                 .yRotation(facing -> (360.0F - facing.toYRot()) % 360.0F)
                 .build();
@@ -1655,7 +1670,7 @@ public final class ModBlocks {
                 .layout(facing -> {
                     Direction rot = facing.getCounterClockWise();
                     BlockPos offsetCore = new BlockPos(rot.getStepX() * 3, 0, rot.getStepZ() * 3);
-                    return LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 0, 0, 0, 6 }, facing)
+                    return LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 3, 0, 0, 0, 0, 6 }, facing)
                             .withLegacyXrFill(new int[] { 0, 0, -1, 1, 1, 1 }, facing, offsetCore)
                             .withLegacyXrFill(new int[] { 0, 0, 1, -1, 2, 2 }, facing, offsetCore)
                             .withExtraProxyOffsets(pumpjackCornerProxyOffsets(offsetCore), proxyPowerFluid())
@@ -1673,15 +1688,16 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("fracking_tower"), machineTexture("fracking_tower"))
                 .legacyXrDimensions(3, 0, 0, 0, 0, 0)
                 .legacyOffset(0)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 0, 0, 0, 0 }, facing)
-                        .withLegacyXrFill(new int[] { 1, 0, 3, 3, 3, 3 }, facing, new BlockPos(0, 2, 0))
-                        .withLegacyXrFill(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(-2, 2, -2))
-                        .withLegacyXrFill(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(-2, 2, 3))
-                        .withLegacyXrFill(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(3, 2, -2))
-                        .withLegacyXrFill(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(3, 2, 3))
-                        .withLegacyXrFill(new int[] { 10, -4, 2, 2, 2, 2 }, facing)
-                        .withLegacyXrFill(new int[] { 24, -9, 1, 1, 1, 1 }, facing)
-                        .withLegacyXrFill(new int[] { 1, 0, 1, 1, -2, 3 }, Direction.WEST, new BlockPos(0, 15, 0)))
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 3, 0, 0, 0, 0, 0 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 1, 0, 3, 3, 3, 3 }, facing, new BlockPos(0, 2, 0))
+                        .withLegacyXrCheckedFill(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(-2, 2, -2))
+                        .withLegacyXrCheckedFill(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(-2, 2, 3))
+                        .withLegacyXrCheckedFill(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(3, 2, -2))
+                        .withLegacyXrCheckedFill(new int[] { -1, 2, 0, 1, 0, 1 }, Direction.NORTH, new BlockPos(3, 2, 3))
+                        .withLegacyXrCheckedFill(new int[] { 10, -4, 2, 2, 2, 2 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 24, -9, 1, 1, 1, 1 }, facing)
+                        .withLegacyXrFill(new int[] { 1, 0, 1, 1, -2, 3 }, Direction.WEST, new BlockPos(0, 15, 0))
+                        .withLegacyXrCheckOnly(new int[] { 1, 0, 1, 1, -2, 3 }, facing, new BlockPos(0, 15, 0)))
                 .legacyItemScale(4.0D, 0.5D)
                 .yRotation(facing -> 180.0F - facing.toYRot())
                 .renderBoundingBox(pos -> new AABB(pos.offset(-10, -9, -10), pos.offset(11, 19, 11)))
@@ -1692,7 +1708,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("centrifuge"), machineTexture("centrifuge"))
                 .legacyXrDimensions(3, 0, 0, 0, 0, 0)
                 .legacyOffset(0)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 0, 0, 0, 0 }, facing))
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 3, 0, 0, 0, 0, 0 }, facing))
                 .legacyItemScale(3.5F)
                 .yRotation(ModBlocks::centrifugeRotation)
                 .collisionShape(state -> legacyRotatedShape(state,
@@ -1706,7 +1722,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("gascent"), machineTexture("gascent"))
                 .legacyXrDimensions(3, 0, 0, 0, 0, 0)
                 .legacyOffset(0)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 0, 0, 0, 0 }, facing))
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 3, 0, 0, 0, 0, 0 }, facing))
                 .renderParts("Centrifuge", "Flag")
                 .itemRenderParts("Centrifuge")
                 .legacyItemScale(3.5F)
@@ -1723,7 +1739,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("ore_slopper"), machineTexture("ore_slopper"))
                 .legacyXrDimensions(3, 0, 3, 3, 1, 1)
                 .legacyOffset(3)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 3, 0, 3, 3, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 3, 0, 3, 3, 1, 1 }, facing)
                         .withExtraProxyOffsets(oreSlopperProxyOffsets(facing), proxyInventoryPowerFluid()))
                 .legacyItemScale(3.75D, 0.5D)
                 .yRotation(ModBlocks::oreSlopperRotation)
@@ -1744,7 +1760,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("sawmill"), machineTexture("sawmill"))
                 .legacyXrDimensions(1, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 1, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyInventory()))
                 .renderParts("Main", "Blade", "GearLeft", "GearRight")
                 .legacyItemScale(3.25F)
@@ -1762,7 +1778,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("crucible"), machineTexture("crucible_heat"))
                 .legacyXrDimensions(1, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 1, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 1, 1, 1, 1 }, facing)
                         .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyInventory()))
                 .legacyItemScale(3.25F)
                 .yRotation(ModBlocks::crucibleRotation)
@@ -1787,7 +1803,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("flare_stack"), machineTexture("flare_stack"))
                 .legacyXrDimensions(11, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 11, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 11, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyPowerFluid()))
                 .legacyItemScale(2.25D, 0.5D)
                 .yRotation(facing -> 180.0F)
@@ -1804,7 +1820,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("assembly_factory"), machineTexture("assembly_factory"))
                 .legacyXrDimensions(2, 0, 2, 2, 2, 2)
                 .legacyOffset(2)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 2, 2, 2, 2 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 2, 2, 2, 2 }, facing)
                         .withExtraProxyOffsets(assemblyFactoryProxyOffsets(facing), proxyInventoryPowerFluid()))
                 .renderParts("Base", "Frame", "Slider1", "Slider2", "Slider3", "Slider4",
                         "ArmLower1", "ArmLower2", "ArmLower3", "ArmLower4",
@@ -1822,7 +1838,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("purex"), machineTexture("purex"))
                 .legacyXrDimensions(4, 0, 2, 2, 2, 2)
                 .legacyOffset(2)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 4, 0, 2, 2, 2, 2 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 4, 0, 2, 2, 2, 2 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.squarePerimeter(2), proxyInventoryPowerFluid()))
                 .renderParts("Base", "Frame", "Fan", "Pump")
                 .legacyItemScale(2.5D, 0.75D)
@@ -1835,7 +1851,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("silex"), machineTexture("silex"))
                 .legacyXrDimensions(2, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(silexProxyOffsets(facing), proxyInventoryFluid()))
                 .legacyItemScale(3.25F)
                 .yRotation(ModBlocks::solidifierRotation)
@@ -1850,7 +1866,7 @@ public final class ModBlocks {
                 .layout(facing -> {
                     Direction rot = facing.getCounterClockWise();
                     BlockPos lateralOrigin = new BlockPos(rot.getStepX() * 7, 0, rot.getStepZ() * 7);
-                    return LegacyMultiblockLayout.ofLegacyXr(new int[] { 4, 0, 2, 2, 2, 2 }, facing)
+                    return LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 4, 0, 2, 2, 2, 2 }, facing)
                             .withLegacyXrFill(new int[] { 3, 0, 0, 0, -3, 8 }, facing)
                             .withLegacyXrCheckOnly(new int[] { 3, 0, 0, 0, -3, 8 }, facing, BlockPos.ZERO)
                             .withLegacyXrFill(new int[] { 0, 0, 1, -1, -3, 6 }, facing, new BlockPos(0, 2, 0))
@@ -1874,7 +1890,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("cyclotron"), machineTexture("cyclotron"))
                 .legacyXrDimensions(2, 0, 2, 2, 2, 2)
                 .legacyOffset(2)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 2, 2, 2, 2 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 2, 2, 2, 2 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.squareSidesWithoutCorners(2), proxyInventoryPowerFluid()))
                 .renderParts("Body", "B1", "B2", "B3", "B4")
                 .legacyItemScale(2.25F)
@@ -1887,7 +1903,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("arc_welder"), machineTexture("arc_welder"))
                 .legacyXrDimensions(1, 0, 1, 0, 1, 1)
                 .legacyOffset(0)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 1, 0, 1, 0, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 1, 0, 1, 1 }, facing)
                         .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyInventoryPowerFluid()))
                 .legacyItemScale(4.0F)
                 .yRotation(ModBlocks::solidifierRotation)
@@ -1900,7 +1916,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("soldering_station"), machineTexture("soldering_station"))
                 .legacyXrDimensions(0, 0, 1, 0, 1, 0)
                 .legacyOffset(0)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 0, 0, 1, 0, 1, 0 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 0, 0, 1, 0, 1, 0 }, facing)
                         .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyInventoryPowerFluid()))
                 .legacyItemScale(5.0F)
                 .yRotation(ModBlocks::solidifierRotation)
@@ -1924,7 +1940,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("radiolysis"), machineTexture("radiolysis"))
                 .legacyXrDimensions(2, 0, 1, 1, 1, 1)
                 .legacyOffset(0)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyInventoryPowerFluid()))
                 .legacyItemScale(3.0F)
                 .yRotation(ModBlocks::radiolysisRotation)
@@ -1976,7 +1992,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("solar_boiler"), machineTexture("solar_boiler"))
                 .legacyXrDimensions(2, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(List.of(new BlockPos(0, 2, 0)), proxyFluid()))
                 .renderParts("Base")
                 .legacyItemScale(3.25F)
@@ -2032,6 +2048,119 @@ public final class ModBlocks {
                 .legacyItemScale(2.5D, 0.75D)
                 .yRotation(ModBlocks::solidifierRotation)
                 .renderBoundingBox(pos -> new AABB(pos.offset(-6, 0, -6), pos.offset(6, 4, 6)))
+                .build();
+    }
+
+    private static LegacyMachineDefinition annihilatorDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("annihilator"), machineTexture("annihilator"))
+                .legacyXrDimensions(2, 0, 4, 4, 1, 1)
+                .legacyOffset(4)
+                .layout(facing -> {
+                    BlockPos rearOrigin = LegacyMultiblockOffsets.relative(facing, -3, 0, 0);
+                    return LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 4, 4, 1, 1 }, facing)
+                            .withLegacyXrCheckedFill(new int[] { 8, -2, 1, 1, 1, 1 }, facing, rearOrigin)
+                            .withExtraProxyOffsets(annihilatorProxyOffsets(facing), proxyInventoryFluid());
+                })
+                .renderParts("Annihilator", "Roller", "Belt")
+                .partTextures(Map.of("Belt", machineTexture("annihilator_belt")))
+                .legacyItemScale(2.75D, 0.5D)
+                .yRotation(ModBlocks::assemblyFactoryRotation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, -2, -8), pos.offset(3, 4, 6)))
+                .particleState(legacyBlockParticleState("block_steel"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition felDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("fel"), machineTexture("fel"))
+                .legacyXrDimensions(2, 0, 4, 2, 1, 1)
+                .legacyOffset(2)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 2, 0, 4, 2, 1, 1 }, facing)
+                        .withExtraProxyOffsets(List.of(LegacyMultiblockOffsets.relative(facing, -4, 0, 1)),
+                                proxyPower()))
+                .legacyItemScale(3.0F)
+                .yRotation(ModBlocks::northZeroRotation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -5), pos.offset(3, 4, 3)))
+                .particleState(legacyBlockParticleState("block_steel"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition orbusDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("orbus"), machineTexture("orbus"))
+                .legacyXrDimensions(4, 0, 2, 1, 2, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 4, 0, 2, 1, 2, 1 }, facing)
+                        .withExtraProxyOffsets(orbusProxyOffsets(facing), proxyFluid()))
+                .legacyItemScale(3.0F)
+                .yRotation(facing -> 0.0F)
+                .modelTranslation(ModBlocks::orbusModelTranslation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 6, 3)))
+                .particleState(legacyBlockParticleState("block_steel"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition miningLaserDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("mining_laser"), machineTexture("mining_laser"))
+                .legacyXrDimensions(1, 1, 1, 1, 1, 1)
+                .legacyOffset(0)
+                .legacyHeightOffset(-1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 1, 1, 1, 1, 1 }, facing)
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyInventoryFluid())
+                        .withExtraProxyOffsets(List.of(new BlockPos(0, 1, 0)), proxyPower()))
+                .renderParts("Base", "Pivot", "Laser")
+                .partTextures(Map.of(
+                        "Pivot", machineTexture("mining_laser_pivot"),
+                        "Laser", machineTexture("mining_laser_laser")))
+                .legacyItemScale(3.0F)
+                .modelTranslation(0.0D, -1.0D, 0.0D)
+                .yRotation(facing -> 0.0F)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, -2, -2), pos.offset(3, 3, 3)))
+                .particleState(legacyBlockParticleState("machine_mining_laser"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition strandCasterDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("strand_caster"), machineTexture("strand_caster"))
+                .legacyXrDimensions(0, 0, 6, 0, 1, 0)
+                .legacyOffset(0)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 0, 0, 6, 0, 1, 0 }, facing)
+                        .withLegacyXrCheckedFill(new int[] { 2, 0, 1, 0, 1, 0 }, facing)
+                        .withExtraProxyOffsets(strandCasterProxyOffsets(facing), proxyInventoryFluidMolten()))
+                .renderParts("caster")
+                .itemRenderParts("caster", "plate")
+                .legacyItemScale(2.0F)
+                .modelTranslation(0.5D, 0.0D, 0.5D)
+                .yRotation(ModBlocks::southZeroRotation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -7), pos.offset(3, 4, 2)))
+                .particleState(legacyBlockParticleState("brick_fire"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition woodBurnerDefinition() {
+        return LegacyMachineDefinition.builder(machineModel("wood_burner"), machineTexture("wood_burner"))
+                .legacyXrDimensions(1, 0, 1, 0, 1, 0)
+                .legacyOffset(0)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 1, 0, 1, 0 }, facing)
+                        .withExtraProxyOffsets(woodBurnerProxyOffsets(facing), proxyInventoryPowerFluid())
+                        .withProxyPredicate(offset -> !offset.equals(BlockPos.ZERO), proxyInventory()))
+                .legacyItemScale(3.5F)
+                .modelTranslation(-0.5D, 0.0D, -0.5D)
+                .yRotation(ModBlocks::southZeroRotation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(2, 3, 2)))
+                .particleState(legacyBlockParticleState("block_steel"))
+                .build();
+    }
+
+    private static LegacyMachineDefinition stirlingDefinition(String textureName) {
+        return LegacyMachineDefinition.builder(machineModel("stirling"), machineTexture(textureName))
+                .legacyXrDimensions(1, 0, 1, 1, 1, 1)
+                .legacyOffset(1)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 1, 0, 1, 1, 1, 1 }, facing)
+                        .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1), proxyPower()))
+                .renderParts("Base", "Cog", "CogSmall", "Piston")
+                .legacyItemScale(3.25F)
+                .yRotation(ModBlocks::southZeroRotation)
+                .renderBoundingBox(pos -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 3, 3)))
+                .particleState(legacyBlockParticleState("block_steel"))
                 .build();
     }
 
@@ -2091,6 +2220,46 @@ public final class ModBlocks {
                 LegacyMultiblockOffsets.relative(facing, rot, 1, -4, 0),
                 LegacyMultiblockOffsets.relative(facing, rot, 0, 4, 1),
                 LegacyMultiblockOffsets.relative(facing, rot, 0, -5, 1));
+    }
+
+    private static List<BlockPos> annihilatorProxyOffsets(Direction facing) {
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                LegacyMultiblockOffsets.relative(facing, rot, 3, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 3, -1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 4, 0, 0));
+    }
+
+    private static List<BlockPos> orbusProxyOffsets(Direction facing) {
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                LegacyMultiblockOffsets.relative(facing, rot, 0, 0, 4),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 0, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 0, 4),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, 1, 4),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 1, 4));
+    }
+
+    private static List<BlockPos> strandCasterProxyOffsets(Direction facing) {
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 0, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -5, 0, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -5, 1, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 1, 2),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 0, 2),
+                LegacyMultiblockOffsets.relative(facing, rot, 0, 1, 2),
+                new BlockPos(0, 2, 0));
+    }
+
+    private static List<BlockPos> woodBurnerProxyOffsets(Direction facing) {
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
+        return List.of(
+                LegacyMultiblockOffsets.relative(facing, -1, 0, 0),
+                LegacyMultiblockOffsets.relative(facing, rot, -1, 1, 0));
     }
 
     private static List<BlockPos> industrialTurbineProxyOffsets(Direction facing) {
@@ -2194,14 +2363,6 @@ public final class ModBlocks {
                 LegacyMultiblockOffsets.relative(facing, rot, -1, 0, 0),
                 LegacyMultiblockOffsets.relative(facing, rot, 0, 1, 0),
                 LegacyMultiblockOffsets.relative(facing, rot, 0, -1, 0));
-    }
-
-    private static List<BlockPos> crystallizerStructureOffsets(Direction facing) {
-        return List.of(
-                LegacyMultiblockOffsets.relative(facing, 2, 1, 0),
-                LegacyMultiblockOffsets.relative(facing, 0, 1, 0),
-                LegacyMultiblockOffsets.relative(facing, 2, -1, 0),
-                LegacyMultiblockOffsets.relative(facing, 0, -1, 0));
     }
 
     private static BlockPos electrolyserTopColumnOrigin(Direction facing, int forward) {
@@ -2606,13 +2767,13 @@ public final class ModBlocks {
 
     private static LegacyMultiblockLayout soyuzLauncherLayout() {
         return LegacyMultiblockLayout.ofOffsets(List.of(BlockPos.ZERO))
-                .withLegacyXrFill(new int[] { 0, 1, 6, 6, 6, 6 }, Direction.EAST)
-                .withLegacyXrFill(new int[] { -2, 4, -3, 6, -3, 6 }, Direction.EAST)
-                .withLegacyXrFill(new int[] { -2, 4, 6, -3, -3, 6 }, Direction.EAST)
-                .withLegacyXrFill(new int[] { -2, 4, 6, -3, 6, -3 }, Direction.EAST)
-                .withLegacyXrFill(new int[] { -2, 4, -3, 6, 6, -3 }, Direction.EAST)
-                .withLegacyXrFill(new int[] { 0, 4, 1, 1, -6, 8 }, Direction.EAST)
-                .withLegacyXrFill(new int[] { 0, 4, 2, 2, 9, -5 }, Direction.EAST)
+                .withLegacyXrCheckedFill(new int[] { 0, 1, 6, 6, 6, 6 }, Direction.EAST)
+                .withLegacyXrCheckedFill(new int[] { -2, 4, -3, 6, -3, 6 }, Direction.EAST)
+                .withLegacyXrCheckedFill(new int[] { -2, 4, 6, -3, -3, 6 }, Direction.EAST)
+                .withLegacyXrCheckedFill(new int[] { -2, 4, 6, -3, 6, -3 }, Direction.EAST)
+                .withLegacyXrCheckedFill(new int[] { -2, 4, -3, 6, 6, -3 }, Direction.EAST)
+                .withLegacyXrCheckedFill(new int[] { 0, 4, 1, 1, -6, 8 }, Direction.EAST)
+                .withLegacyXrCheckedFill(new int[] { 0, 4, 2, 2, 9, -5 }, Direction.EAST)
                 .withExtraProxyOffsets(soyuzLauncherProxyOffsets(), LegacyProxyMode.combo(false, true, true));
     }
 
@@ -2633,7 +2794,7 @@ public final class ModBlocks {
         return LegacyMachineDefinition.builder(machineModel("radar_large"), machineTexture("radar_large"))
                 .legacyXrDimensions(4, 0, 1, 1, 1, 1)
                 .legacyOffset(1)
-                .layout(facing -> LegacyMultiblockLayout.ofLegacyXr(new int[] { 4, 0, 1, 1, 1, 1 }, facing)
+                .layout(facing -> LegacyMultiblockLayout.ofLegacyXrChecked(new int[] { 4, 0, 1, 1, 1, 1 }, facing)
                         .withExtraProxyOffsets(LegacyMultiblockOffsets.cardinal(1),
                                 LegacyProxyMode.passive().powerProxy()))
                 .renderBoundingBox(pos -> new AABB(
@@ -2932,6 +3093,10 @@ public final class ModBlocks {
                     new LegacyHazardSourceBlock(name, simpleResourceProperties(name, textureName), LegacyHazardSourceBlock.Effect.RADFOG);
             case "block_schraranium", "block_schrabidium", "block_schrabidate", "block_solinium", "block_schrabidium_fuel" ->
                     new LegacyHazardSourceBlock(name, simpleResourceProperties(name, textureName), LegacyHazardSourceBlock.Effect.SCHRAB);
+            case "crystal_virus" ->
+                    new LegacyCrystalVirusBlock(crystalVirusProperties());
+            case "crystal_hardened" ->
+                    new RadiatingHazardBlock(name, crystalVirusProperties());
             case "ore_uranium", "ore_uranium_scorched", "ore_gneiss_uranium", "ore_gneiss_uranium_scorched",
                     "ore_nether_uranium", "ore_nether_uranium_scorched" ->
                     new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON::get, true, false);
@@ -2947,6 +3112,14 @@ public final class ModBlocks {
                     new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName), GAS_ASBESTOS::get, true, false);
             default -> new RadiatingHazardBlock(name, simpleResourceProperties(name, textureName));
         });
+    }
+
+    private static BlockBehaviour.Properties crystalVirusProperties() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(15.0F, 3_600_000.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops();
     }
 
     private static BlockBehaviour.Properties oilSpotSurfaceProperties(String name) {

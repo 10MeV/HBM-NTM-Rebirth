@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:powder_sawdust"
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:briquette_wood"
+  },
+  "stamp": "flat"
+}

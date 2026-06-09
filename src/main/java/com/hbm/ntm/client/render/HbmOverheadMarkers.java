@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.render;
 
 import com.hbm.ntm.client.ClientHbmPlayerProperties;
+import com.hbm.ntm.client.renderer.LegacyOverheadRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -11,16 +12,13 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
-import org.joml.Quaternionf;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -91,7 +89,7 @@ public final class HbmOverheadMarkers {
         RenderSystem.enableCull();
         RenderSystem.disableBlend();
 
-        renderLabels(minecraft, camera, player, event.getPoseStack(), event.getPartialTick());
+        renderLabels(minecraft, camera, player, event.getPoseStack());
     }
 
     public static void clearAll() {
@@ -115,7 +113,7 @@ public final class HbmOverheadMarkers {
         Iterator<Map.Entry<BlockPos, Marker>> iterator = ACTIVE.entrySet().iterator();
         while (iterator.hasNext()) {
             Marker marker = iterator.next().getValue();
-            if (marker.expireAt > 0L && now > marker.expireAt) {
+            if (LegacyOverheadRenderer.expired(marker.expireAt, now)) {
                 iterator.remove();
             }
         }
@@ -130,105 +128,47 @@ public final class HbmOverheadMarkers {
             Map.Entry<BlockPos, Marker> entry = iterator.next();
             BlockPos pos = entry.getKey();
             Marker marker = entry.getValue();
-            if (marker.maxDistance > 0.0D && player.distanceToSqr(Vec3.atCenterOf(pos)) > marker.maxDistance * marker.maxDistance) {
+            if (LegacyOverheadRenderer.tooFar(player.position(), LegacyOverheadRenderer.markerCenter(pos), marker.maxDistance)) {
                 iterator.remove();
             }
         }
     }
 
-    private static void renderLabels(Minecraft minecraft, Camera camera, Player player, PoseStack poseStack, float partialTick) {
+    private static void renderLabels(Minecraft minecraft, Camera camera, Player player, PoseStack poseStack) {
         for (Map.Entry<BlockPos, Marker> entry : ACTIVE.entrySet()) {
             BlockPos pos = entry.getKey();
             Marker marker = entry.getValue();
-            if (marker.maxDistance > 0.0D && player.distanceToSqr(Vec3.atCenterOf(pos)) > marker.maxDistance * marker.maxDistance) {
+            if (LegacyOverheadRenderer.tooFar(player.position(), LegacyOverheadRenderer.markerCenter(pos), marker.maxDistance)) {
                 continue;
             }
-            renderLabel(minecraft, camera, player, poseStack, partialTick, pos, marker);
+            renderLabel(minecraft, camera, player, poseStack, pos, marker);
         }
     }
 
-    private static void renderLabel(Minecraft minecraft, Camera camera, Player player, PoseStack poseStack, float partialTick, BlockPos pos, Marker marker) {
+    private static void renderLabel(Minecraft minecraft, Camera camera, Player player, PoseStack poseStack, BlockPos pos, Marker marker) {
         Vec3 cameraPos = camera.getPosition();
-        double centerX = pos.getX() + 0.5D;
-        double centerY = pos.getY() + 0.5D;
-        double centerZ = pos.getZ() + 0.5D;
-        Vec3 toMarker = new Vec3(centerX - cameraPos.x, centerY - cameraPos.y, centerZ - cameraPos.z);
-        double distance = toMarker.length();
-        if (distance <= 1.0E-4D) {
+        Vec3 toMarker = LegacyOverheadRenderer.markerCenter(pos).subtract(cameraPos);
+        Vec3 labelPos = LegacyOverheadRenderer.labelPosition(toMarker);
+        if (labelPos == Vec3.ZERO) {
             return;
         }
 
-        Vec3 labelPos = toMarker.scale(Math.min(distance, 16.0D) / distance);
-        Vec3 look = player.getLookAngle();
-        Vec3 markerDirection = toMarker.normalize();
-        String label = marker.label == null ? "" : marker.label;
-        if (Math.abs(look.x - markerDirection.x) + Math.abs(look.y - markerDirection.y) + Math.abs(look.z - markerDirection.z) < 0.15D) {
-            label += (!label.isEmpty() ? " " : "") + ((int) distance) + "m";
-        }
+        String label = LegacyOverheadRenderer.markerLabel(marker.label, player.getLookAngle(), toMarker);
         if (label.isEmpty()) {
             return;
         }
 
-        poseStack.pushPose();
-        poseStack.translate(labelPos.x, labelPos.y, labelPos.z);
-        poseStack.mulPose(new Quaternionf(camera.rotation()));
-        float scale = -0.016666668F * 1.6F;
-        poseStack.scale(scale, scale, -scale);
-
         Font font = minecraft.font;
         MultiBufferSource.BufferSource buffer = minecraft.renderBuffers().bufferSource();
-        font.drawInBatch(label, -font.width(label) * 0.5F, 0.0F, 0xFF000000 | (marker.color & 0xFFFFFF), false,
-                poseStack.last().pose(), buffer, Font.DisplayMode.SEE_THROUGH, 0, LightTexture.FULL_BRIGHT);
+        LegacyOverheadRenderer.legacyDualPassLabel(font, buffer, poseStack, camera.rotation(), labelPos, label, marker.color);
         buffer.endBatch();
-        poseStack.popPose();
     }
 
     private static void renderBox(BufferBuilder builder, PoseStack poseStack, BlockPos pos, Marker marker) {
-        PoseStack.Pose pose = poseStack.last();
-        float minX = pos.getX();
-        float minY = pos.getY();
-        float minZ = pos.getZ();
-        float maxX = minX + 1.0F;
-        float maxY = minY + 1.0F;
-        float maxZ = minZ + 1.0F;
-        int red = marker.red();
-        int green = marker.green();
-        int blue = marker.blue();
-        int alpha = 255;
-
-        line(builder, pose, minX, minY, minZ, maxX, minY, minZ, red, green, blue, alpha);
-        line(builder, pose, maxX, minY, minZ, maxX, minY, maxZ, red, green, blue, alpha);
-        line(builder, pose, maxX, minY, maxZ, minX, minY, maxZ, red, green, blue, alpha);
-        line(builder, pose, minX, minY, maxZ, minX, minY, minZ, red, green, blue, alpha);
-        line(builder, pose, minX, maxY, minZ, maxX, maxY, minZ, red, green, blue, alpha);
-        line(builder, pose, maxX, maxY, minZ, maxX, maxY, maxZ, red, green, blue, alpha);
-        line(builder, pose, maxX, maxY, maxZ, minX, maxY, maxZ, red, green, blue, alpha);
-        line(builder, pose, minX, maxY, maxZ, minX, maxY, minZ, red, green, blue, alpha);
-        line(builder, pose, minX, minY, minZ, minX, maxY, minZ, red, green, blue, alpha);
-        line(builder, pose, maxX, minY, minZ, maxX, maxY, minZ, red, green, blue, alpha);
-        line(builder, pose, maxX, minY, maxZ, maxX, maxY, maxZ, red, green, blue, alpha);
-        line(builder, pose, minX, minY, maxZ, minX, maxY, maxZ, red, green, blue, alpha);
-    }
-
-    private static void line(BufferBuilder builder, PoseStack.Pose pose,
-            float x0, float y0, float z0, float x1, float y1, float z1,
-            int red, int green, int blue, int alpha) {
-        builder.vertex(pose.pose(), x0, y0, z0).color(red, green, blue, alpha).endVertex();
-        builder.vertex(pose.pose(), x1, y1, z1).color(red, green, blue, alpha).endVertex();
+        LegacyOverheadRenderer.markerBox(builder, poseStack.last(), pos, marker.color);
     }
 
     private record Marker(int color, long expireAt, double maxDistance, String label) {
-        private int red() {
-            return Mth.clamp((color >> 16) & 255, 0, 255);
-        }
-
-        private int green() {
-            return Mth.clamp((color >> 8) & 255, 0, 255);
-        }
-
-        private int blue() {
-            return Mth.clamp(color & 255, 0, 255);
-        }
     }
 
     private HbmOverheadMarkers() {

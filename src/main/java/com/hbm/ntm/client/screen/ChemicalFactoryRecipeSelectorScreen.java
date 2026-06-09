@@ -72,15 +72,20 @@ public class ChemicalFactoryRecipeSelectorScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isInside(mouseX, mouseY, 152, 18, 16, 16)) {
+            LegacyGuiElements.playClickSound();
             page = Math.max(0, page - 1);
             return true;
         }
         if (isInside(mouseX, mouseY, 152, 36, 16, 16)) {
+            LegacyGuiElements.playClickSound();
             page = Math.min(maxPage(), page + 1);
             return true;
         }
         if (isInside(mouseX, mouseY, 151, 71, 18, 18)) {
-            selection = GenericMachineRecipeRuntime.NULL_RECIPE;
+            if (!GenericMachineRecipeRuntime.NULL_RECIPE.equals(selection)) {
+                LegacyGuiElements.playClickSound();
+                selection = GenericMachineRecipeRuntime.NULL_RECIPE;
+            }
             return true;
         }
         if (isInside(mouseX, mouseY, 152, 90, 16, 16)) {
@@ -97,6 +102,7 @@ public class ChemicalFactoryRecipeSelectorScreen extends Screen {
         int index = hoveredRecipeIndex(mouseX, mouseY);
         if (index >= 0 && index < visibleRecipes.size()) {
             String clicked = visibleRecipes.get(index).getInternalName();
+            LegacyGuiElements.playClickSound();
             selection = clicked.equals(selection) ? GenericMachineRecipeRuntime.NULL_RECIPE : clicked;
             return true;
         }
@@ -105,8 +111,11 @@ public class ChemicalFactoryRecipeSelectorScreen extends Screen {
 
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
+        String previous = search.getValue();
         boolean typed = super.charTyped(codePoint, modifiers);
-        regenerateRecipes(search.getValue());
+        if (!previous.equals(search.getValue())) {
+            regenerateRecipes(search.getValue());
+        }
         return typed;
     }
 
@@ -121,16 +130,15 @@ public class ChemicalFactoryRecipeSelectorScreen extends Screen {
             search.setFocused(!search.isFocused());
             return true;
         }
-        if (keyCode == GLFW.GLFW_KEY_UP || keyCode == GLFW.GLFW_KEY_PAGE_UP) {
-            page = Math.max(0, page - (keyCode == GLFW.GLFW_KEY_PAGE_UP ? 5 : 1));
+        if (LegacyGuiElements.isLegacyPageKey(keyCode)) {
+            page = LegacyGuiElements.applyLegacyPageKey(page, maxPage(), keyCode);
             return true;
         }
-        if (keyCode == GLFW.GLFW_KEY_DOWN || keyCode == GLFW.GLFW_KEY_PAGE_DOWN) {
-            page = Math.min(maxPage(), page + (keyCode == GLFW.GLFW_KEY_PAGE_DOWN ? 5 : 1));
-            return true;
-        }
+        String previous = search.getValue();
         boolean handled = super.keyPressed(keyCode, scanCode, modifiers);
-        regenerateRecipes(search.getValue());
+        if (!previous.equals(search.getValue())) {
+            regenerateRecipes(search.getValue());
+        }
         return handled;
     }
 
@@ -217,7 +225,7 @@ public class ChemicalFactoryRecipeSelectorScreen extends Screen {
                 visibleRecipes.add(recipe);
             }
         }
-        page = Math.min(page, maxPage());
+        page = 0;
     }
 
     private int hoveredRecipeIndex(double mouseX, double mouseY) {

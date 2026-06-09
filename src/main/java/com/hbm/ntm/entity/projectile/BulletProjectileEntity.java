@@ -1,5 +1,7 @@
 package com.hbm.ntm.entity.projectile;
 
+import com.hbm.ntm.api.entity.LegacyRadarDetectable;
+import com.hbm.ntm.bullet.BulletBehaviorTag;
 import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.bullet.BulletConfigSyncRegistry;
 import com.hbm.ntm.bullet.BulletDamageUtil;
@@ -11,9 +13,13 @@ import com.hbm.ntm.bullet.BulletPersistenceUtil;
 import com.hbm.ntm.bullet.BulletProjectileHitUtil;
 import com.hbm.ntm.bullet.BulletProjectileTickUtil;
 import com.hbm.ntm.bullet.BulletSpecialSpawnUtil;
+import com.hbm.ntm.bullet.BulletStuckStateUtil;
 import com.hbm.ntm.bullet.BulletSyncedState;
+import com.hbm.ntm.bullet.BulletTauTrailUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModSounds;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -27,14 +33,17 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public class BulletProjectileEntity extends Entity {
+public class BulletProjectileEntity extends Entity implements LegacyRadarDetectable {
     private static final EntityDataAccessor<Integer> CONFIG_ID =
             SynchedEntityData.defineId(BulletProjectileEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Byte> STYLE =
@@ -43,12 +52,25 @@ public class BulletProjectileEntity extends Entity {
             SynchedEntityData.defineId(BulletProjectileEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> HOMING_TARGET =
             SynchedEntityData.defineId(BulletProjectileEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Byte> STUCK_IN =
+            SynchedEntityData.defineId(BulletProjectileEntity.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Boolean> IN_GROUND =
+            SynchedEntityData.defineId(BulletProjectileEntity.class, EntityDataSerializers.BOOLEAN);
 
     private BulletConfig config;
     private UUID ownerUuid;
     private int ticksInAir;
+    private int ticksInGround;
+    public int throwableShake;
+    private BlockPos stuckBlockPos;
+    private BlockState stuckBlockState;
     private boolean hasTauTrailNodes;
     private boolean enteredPortal;
+    private final List<BulletTauTrailUtil.TauTrailNode> tauTrailNodes = new ArrayList<>();
+    private double prevTauRenderX;
+    private double prevTauRenderY;
+    private double prevTauRenderZ;
+    private boolean hasTauRenderPosition;
     public float overrideDamage;
 
     public BulletProjectileEntity(EntityType<? extends BulletProjectileEntity> type, Level level) {
@@ -143,17 +165,33 @@ public class BulletProjectileEntity extends Entity {
             return;
         }
 
+        if (throwableShake > 0) {
+            throwableShake--;
+        }
+        if (inGround()) {
+            if (BulletStuckStateUtil.sameLegacyStuckBlock(level(), stuckBlockPos, stuckBlockState)) {
+                ticksInGround++;
+                if (BulletStuckStateUtil.shouldDespawnInGround(ticksInGround)) {
+                    discard();
+                }
+                return;
+            }
+            releaseFromGround();
+        }
+
         int activeTicksInAir = ticksInAir + 1;
         BulletProjectileTickUtil.TickResult result = BulletProjectileTickUtil.applyEntityTick(currentConfig, this,
                 getOwner(), homingTarget(), tickCount, activeTicksInAir, hasTauTrailNodes, previousPosition,
-                random, overrideDamage, false);
+                random, overrideDamage, inGround());
         ticksInAir = activeTicksInAir;
 
         setPos(result.nextPosition().x, result.nextPosition().y, result.nextPosition().z);
         setDeltaMovement(result.nextMotion());
         setHomingTarget(result.homingTarget());
         hasTauTrailNodes = hasTauTrailNodes || result.tauTrail().appended();
+        appendTauTrailNode(result.tauTrail());
         enteredPortal |= result.enteredPortal();
+        applyPortalState(result);
         applyEntityHitState(result.hit());
         spawnRequestedProjectiles(result);
 
@@ -186,6 +224,60 @@ public class BulletProjectileEntity extends Entity {
         return enteredPortal;
     }
 
+    public boolean inGround() {
+        return entityData.get(IN_GROUND);
+    }
+
+    public int getStuckIn() {
+        return entityData.get(STUCK_IN);
+    }
+
+    public void setStuckIn(int side) {
+        entityData.set(STUCK_IN, (byte) side);
+    }
+
+    public void getStuck(BlockPos pos, @Nullable Direction side) {
+        if (pos == null) {
+            return;
+        }
+        stuckBlockPos = pos.immutable();
+        stuckBlockState = level().getBlockState(stuckBlockPos);
+        entityData.set(IN_GROUND, true);
+        setDeltaMovement(Vec3.ZERO);
+        setStuckIn(BulletStuckStateUtil.legacySide(side));
+    }
+
+    public void getStuck(int x, int y, int z, int side) {
+        getStuck(new BlockPos(x, y, z), Direction.from3DDataValue(side));
+    }
+
+    public List<BulletTauTrailUtil.TauTrailNode> tauTrailNodes() {
+        return Collections.unmodifiableList(tauTrailNodes);
+    }
+
+    public void updateTauTrailRenderPosition(double x, double y, double z) {
+        if (!hasTauRenderPosition) {
+            prevTauRenderX = x;
+            prevTauRenderY = y;
+            prevTauRenderZ = z;
+            hasTauRenderPosition = true;
+            return;
+        }
+        double deltaX = prevTauRenderX - x;
+        double deltaY = prevTauRenderY - y;
+        double deltaZ = prevTauRenderZ - z;
+        if (deltaX != 0.0D || deltaY != 0.0D || deltaZ != 0.0D) {
+            for (int i = 0; i < tauTrailNodes.size(); i++) {
+                BulletTauTrailUtil.TauTrailNode node = tauTrailNodes.get(i);
+                tauTrailNodes.set(i, new BulletTauTrailUtil.TauTrailNode(
+                        node.offset().add(deltaX, deltaY, deltaZ), node.weight()));
+            }
+        }
+        prevTauRenderX = x;
+        prevTauRenderY = y;
+        prevTauRenderZ = z;
+    }
+
     public void setConfig(@Nullable BulletConfig config) {
         this.config = config;
         BulletSyncedState state = BulletConfigSyncRegistry.syncedState(config);
@@ -204,6 +296,17 @@ public class BulletProjectileEntity extends Entity {
 
     public void setOwner(@Nullable Entity owner) {
         ownerUuid = owner == null ? null : owner.getUUID();
+    }
+
+    @Override
+    public LegacyRadarDetectable.RadarTargetType getTargetType() {
+        return LegacyRadarDetectable.RadarTargetType.ARTILLERY;
+    }
+
+    @Override
+    public boolean canBeDetectedByLegacyRadar() {
+        BulletConfig currentConfig = config();
+        return currentConfig != null && currentConfig.hasBehavior(BulletBehaviorTag.ARTILLERY_RADAR_TARGET);
     }
 
     @Nullable
@@ -232,11 +335,35 @@ public class BulletProjectileEntity extends Entity {
         }
     }
 
+    private void applyPortalState(BulletProjectileTickUtil.TickResult result) {
+        if (result == null || !result.enteredPortal() || result.hit().scan().blockHit() == null) {
+            return;
+        }
+        handleInsidePortal(result.hit().scan().blockHit().blockPos());
+    }
+
     private void spawnRequestedProjectiles(BulletProjectileTickUtil.TickResult result) {
         if (level().isClientSide() || result == null || result.spawnRequests().isEmpty()) {
             return;
         }
         spawnAll(level(), result.spawnRequests());
+    }
+
+    private void releaseFromGround() {
+        entityData.set(IN_GROUND, false);
+        setDeltaMovement(BulletStuckStateUtil.releasedMotion(getDeltaMovement(), random));
+        ticksInGround = 0;
+        ticksInAir = 0;
+    }
+
+    private void appendTauTrailNode(BulletTauTrailUtil.TauTrailAppend tauTrail) {
+        if (tauTrail == null || tauTrail.node() == null) {
+            return;
+        }
+        tauTrailNodes.add(tauTrail.node());
+        if (tauTrail.requestIgnoreFrustum()) {
+            noCulling = true;
+        }
     }
 
     @Override
@@ -245,6 +372,8 @@ public class BulletProjectileEntity extends Entity {
         entityData.define(STYLE, BulletSyncedState.EMPTY.styleByte());
         entityData.define(TRAIL, BulletSyncedState.EMPTY.trailByte());
         entityData.define(HOMING_TARGET, BulletHomingStateUtil.NO_TARGET_ID);
+        entityData.define(STUCK_IN, (byte) BulletStuckStateUtil.LEGACY_DEFAULT_STUCK_SIDE);
+        entityData.define(IN_GROUND, false);
     }
 
     @Override

@@ -95,6 +95,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "soyuz_lander");
             return;
         }
+        if (path.equals("designator_range")) {
+            generatedItem(path, "designator_range_alt");
+            return;
+        }
         if (path.equals("fluid_icon")) {
             layeredItem(path, "fluid_icon", "fluid_identifier_overlay");
             return;
@@ -117,6 +121,18 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.startsWith("wire_dense_")) {
             generatedItem(path, "wire_dense");
+            return;
+        }
+        if (path.startsWith("arc_electrode_burnt_")) {
+            generatedItem(path, "arc_electrode_burnt." + path.substring("arc_electrode_burnt_".length()));
+            return;
+        }
+        if (path.startsWith("arc_electrode_")) {
+            generatedItem(path, "arc_electrode." + path.substring("arc_electrode_".length()));
+            return;
+        }
+        if (path.startsWith("pa_coil_")) {
+            generatedItem(path, "pa_coil." + path.substring("pa_coil_".length()));
             return;
         }
         if (path.startsWith("bolt_")) {

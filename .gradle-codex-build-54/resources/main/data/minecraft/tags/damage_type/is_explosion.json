@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "hbm_ntm_rebirth:explosion",
+    "hbm_ntm_rebirth:nuclear_blast",
+    "hbm_ntm_rebirth:tau_blast"
+  ]
+}

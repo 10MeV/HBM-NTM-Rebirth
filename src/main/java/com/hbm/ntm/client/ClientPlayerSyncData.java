@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public final class ClientPlayerSyncData {
+final class ClientPlayerSyncData {
     private static final Map<ResourceLocation, CompoundTag> DATA = new HashMap<>();
     private static final List<ClientPlayerSyncDataListener> LISTENERS = new ArrayList<>();
 

@@ -4,12 +4,14 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.entity.effect.CloudFleijaEntity;
 import com.hbm.ntm.entity.effect.CloudFleijaRainbowEntity;
 import com.hbm.ntm.entity.effect.CloudSoliniumEntity;
+import com.hbm.ntm.entity.effect.EmpBlastEntity;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
+import com.hbm.ntm.entity.item.LegacyPrimedExplosiveEntity;
 import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
 import com.hbm.ntm.entity.logic.DeathBlastEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
@@ -108,6 +110,16 @@ public final class ModEntityTypes {
                     .noSummon()
                     .build("entity_cloud_rainbow"));
 
+    public static final RegistryObject<EntityType<EmpBlastEntity>> EMP_BLAST =
+            ENTITY_TYPES.register("entity_emp_blast", () -> EntityType.Builder
+                    .<EmpBlastEntity>of(EmpBlastEntity::new, MobCategory.MISC)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(256)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_emp_blast"));
+
     public static final RegistryObject<EntityType<NukeTorexEntity>> NUKE_TOREX =
             ENTITY_TYPES.register("entity_effect_torex", () -> EntityType.Builder
                     .<NukeTorexEntity>of(NukeTorexEntity::new, MobCategory.MISC)
@@ -185,6 +197,14 @@ public final class ModEntityTypes {
                     .clientTrackingRange(256)
                     .updateInterval(1)
                     .build("entity_falling_nuke"));
+
+    public static final RegistryObject<EntityType<LegacyPrimedExplosiveEntity>> LEGACY_PRIMED_EXPLOSIVE =
+            ENTITY_TYPES.register("entity_tnt_primed_base", () -> EntityType.Builder
+                    .<LegacyPrimedExplosiveEntity>of(LegacyPrimedExplosiveEntity::new, MobCategory.MISC)
+                    .sized(0.98F, 0.98F)
+                    .clientTrackingRange(160)
+                    .updateInterval(1)
+                    .build("entity_tnt_primed_base"));
 
     public static final RegistryObject<EntityType<MinerRocketEntity>> MINER_ROCKET =
             ENTITY_TYPES.register("entity_miner_lander", () -> EntityType.Builder

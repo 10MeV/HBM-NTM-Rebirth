@@ -1,0 +1,23 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/fusion/fusion_plasma_forge.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "parts": { "visibility": {
+      "Plasma": false,
+      "SliderStriker": false,
+      "ArmLowerStriker": false,
+      "ArmUpperStriker": true,
+      "StrikerMount": false,
+      "StrikerLeft": false,
+      "StrikerRight": false,
+      "PistonLeft": false,
+      "PistonRight": false,
+      "SliderJet": false,
+      "ArmLowerJet": false,
+      "ArmUpperJet": false,
+      "Jet": false,
+      "Body": false
+  } },
+  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/plasma_forge", "default": "hbm_ntm_rebirth:block/fusion/plasma_forge" }
+}

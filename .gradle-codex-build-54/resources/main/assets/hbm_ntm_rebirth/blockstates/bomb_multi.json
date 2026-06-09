@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/bomb_multi",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/bomb_multi",
+      "y": 270
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/bomb_multi"
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/bomb_multi",
+      "y": 90
+    }
+  }
+}

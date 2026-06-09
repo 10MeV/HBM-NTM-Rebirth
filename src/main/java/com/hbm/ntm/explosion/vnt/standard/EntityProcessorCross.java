@@ -1,6 +1,7 @@
 package com.hbm.ntm.explosion.vnt.standard;
 
 import com.hbm.ntm.damage.EntityDamageUtil;
+import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.explosion.vnt.interfaces.CustomDamageHandler;
 import com.hbm.ntm.explosion.vnt.interfaces.EntityProcessor;
@@ -97,7 +98,7 @@ public class EntityProcessorCross implements EntityProcessor {
     }
 
     protected boolean shouldDealKnockback(Entity entity) {
-        return true;
+        return !(entity instanceof BulletProjectileEntity);
     }
 
     protected void attackEntity(Entity entity, ExplosionVnt explosion, float amount) {

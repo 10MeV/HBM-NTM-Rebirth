@@ -16,20 +16,27 @@ import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
+import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.radiation.ArmorRegistry;
+import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.HazardTooltipUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiEvent;
@@ -57,12 +64,36 @@ public final class ClientForgeEvents {
     private static boolean hadLevel;
     private static boolean pushedNukeHudShake;
     private static float renderSoot;
+    private static final int NOTICE_EMPTY_GAS_MASK_FILTER = 1;
+    private static final int NOTICE_EMPTY_GAS_MASK_FILTER_MILLIS = 1_500;
     private static final Map<Integer, Long> VANISHED_ENTITIES = new HashMap<>();
 
     @SubscribeEvent
     public static void onTooltip(ItemTooltipEvent event) {
         HazardTooltipUtil.addHazardInformation(event.getItemStack(), event.getToolTip());
         DamageResistanceTooltipUtil.addResistanceInformation(event.getItemStack(), event.getToolTip());
+        addHazmatProtectionInformation(event.getItemStack(), event.getToolTip());
+    }
+
+    private static void addHazmatProtectionInformation(ItemStack stack, List<Component> tooltip) {
+        List<HazardClass> protections = ArmorRegistry.hazardClasses.get(stack.getItem());
+        if (protections == null || protections.isEmpty()) {
+            return;
+        }
+
+        if (!Screen.hasShiftDown()) {
+            tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.protection.hold_shift",
+                    Component.literal("LSHIFT").withStyle(ChatFormatting.YELLOW, ChatFormatting.ITALIC))
+                    .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+            return;
+        }
+
+        tooltip.add(Component.translatable("hazard.prot").withStyle(ChatFormatting.GOLD));
+        for (HazardClass hazardClass : protections) {
+            tooltip.add(Component.literal("  ")
+                    .append(Component.translatable(hazardClass.translationKey()))
+                    .withStyle(ChatFormatting.YELLOW));
+        }
     }
 
     @SubscribeEvent
@@ -190,6 +221,7 @@ public final class ClientForgeEvents {
         HbmOverheadMarkers.tick();
         HbmBlackHoleEffects.tick();
         updateSootFog();
+        showEmptyGasMaskFilterWarning();
         pruneNetworkTransfers();
         pruneVanishedEntities();
 
@@ -203,6 +235,14 @@ public final class ClientForgeEvents {
         }
         hadLevel = true;
         spawnRadiationAura(minecraft);
+    }
+
+    private static void showEmptyGasMaskFilterWarning() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null && ArmorUtil.isWearingEmptyMask(minecraft.player)) {
+            ClientInformMessages.show(Component.translatable("info.gasmask.no_filter").withStyle(ChatFormatting.RED),
+                    NOTICE_EMPTY_GAS_MASK_FILTER, NOTICE_EMPTY_GAS_MASK_FILTER_MILLIS);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
@@ -238,7 +278,7 @@ public final class ClientForgeEvents {
         if (minecraft.player == null) {
             return;
         }
-        float radiation = ClientRadiationData.getRadiation();
+        float radiation = ClientHbmLivingProperties.getRadiation();
         if (radiation > 600.0F) {
             ParticleUtil.spawnRadiationAura(minecraft.level, radiation > 900.0F ? 4 : radiation > 800.0F ? 2 : 1);
         }
@@ -332,9 +372,8 @@ public final class ClientForgeEvents {
         ClientPermaSyncData.clearAll();
         ClientPollutionData.clearAll();
         ClientTomImpactData.clearAll();
-        ClientPlayerSyncData.clearAll();
         ClientHbmPlayerProperties.clearAll();
-        ClientRadiationData.clearAll();
+        ClientHbmLivingProperties.clearAll();
         ClientPanelData.clearAll();
         ClientInformMessages.clearAll();
         ClientMuzzleFlashEffects.clearAll();

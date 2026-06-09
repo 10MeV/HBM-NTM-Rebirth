@@ -63,19 +63,52 @@ public final class WorldSavedDataHelper {
 
     public static <T extends SavedData> Optional<T> getExistingWithFallback(ServerLevel level, String name,
             Function<CompoundTag, T> loader, String... fallbackNames) {
+        Optional<ExistingDataLookup<T>> lookup = findExistingWithFallback(level, name, loader, fallbackNames);
+        if (lookup.isPresent()) {
+            ExistingDataLookup<T> result = lookup.get();
+            if (!result.primary()) {
+                result.data().setDirty();
+                level.getDataStorage().set(name, result.data());
+            }
+            return Optional.of(result.data());
+        }
+        return Optional.empty();
+    }
+
+    public static <T extends SavedData> Optional<ExistingDataLookup<T>> findExistingWithFallback(ServerLevel level,
+            String name, Function<CompoundTag, T> loader, String... fallbackNames) {
         T data = level.getDataStorage().get(loader, name);
         if (data != null) {
-            return Optional.of(data);
+            return Optional.of(new ExistingDataLookup<>(name, name, data));
+        }
+        if (fallbackNames == null) {
+            return Optional.empty();
         }
         for (String fallbackName : fallbackNames) {
+            if (fallbackName == null || fallbackName.isBlank()) {
+                continue;
+            }
             data = level.getDataStorage().get(loader, fallbackName);
             if (data != null) {
-                data.setDirty();
-                level.getDataStorage().set(name, data);
-                return Optional.of(data);
+                return Optional.of(new ExistingDataLookup<>(name, fallbackName, data));
             }
         }
         return Optional.empty();
+    }
+
+    public static <T extends SavedData> Optional<ExistingDataLookup<T>> findExistingWithFallback(Level level,
+            String name, Function<CompoundTag, T> loader, String... fallbackNames) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return Optional.empty();
+        }
+        return findExistingWithFallback(serverLevel, name, loader, fallbackNames);
+    }
+
+    public static <T extends SavedData> Optional<ExistingDataLookup<T>> findExistingWithFallback(MinecraftServer server,
+            ResourceKey<Level> dimension, String name, Function<CompoundTag, T> loader, String... fallbackNames) {
+        ServerLevel level = server.getLevel(dimension);
+        return level == null ? Optional.empty()
+                : findExistingWithFallback(level, name, loader, fallbackNames);
     }
 
     public static <T extends SavedData> Optional<T> get(Level level, String name,
@@ -99,5 +132,20 @@ public final class WorldSavedDataHelper {
     }
 
     private WorldSavedDataHelper() {
+    }
+
+    public record ExistingDataLookup<T extends SavedData>(String requestedName, String foundName, T data) {
+        public ExistingDataLookup {
+            if (requestedName == null || requestedName.isBlank()) {
+                throw new IllegalArgumentException("requestedName");
+            }
+            if (foundName == null || foundName.isBlank()) {
+                throw new IllegalArgumentException("foundName");
+            }
+        }
+
+        public boolean primary() {
+            return requestedName.equals(foundName);
+        }
     }
 }

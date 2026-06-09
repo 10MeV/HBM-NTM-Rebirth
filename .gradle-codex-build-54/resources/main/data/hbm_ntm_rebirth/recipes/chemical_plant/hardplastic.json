@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 100,
+  "input_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:xylene"
+    },
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:phosgene"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.hardplastic",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_pc"
+    }
+  ],
+  "pools": [],
+  "power": 1000,
+  "source_order": 38
+}

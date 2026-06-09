@@ -1,0 +1,42 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 100,
+  "input_fluids": [
+    {
+      "amount": 2000,
+      "fluid": "hbm_ntm_rebirth:water"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_cement"
+      }
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "minecraft:gravel"
+      }
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:sand"
+      },
+      "legacy_ore": "sand"
+    }
+  ],
+  "internal_name": "chem.liquidconk",
+  "output_fluids": [
+    {
+      "amount": 16000,
+      "fluid": "hbm_ntm_rebirth:concrete"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 100,
+  "source_order": 26
+}

@@ -270,6 +270,91 @@ public final class LegacyUntexturedQuadRenderer {
                 rgb(red, green, blue), alpha(alpha0), alpha(alpha1), alpha(alpha2), alpha(alpha3));
     }
 
+    public static void horizontalQuad(ObjRenderContext context, double y,
+            double minX, double minZ, double maxX, double maxZ, int color, int alpha) {
+        quad(context,
+                minX, y, minZ,
+                minX, y, maxZ,
+                maxX, y, maxZ,
+                maxX, y, minZ,
+                color, alpha, alpha, alpha, alpha);
+    }
+
+    public static void horizontalSlices(ObjRenderContext context,
+            double minX, double minZ, double maxX, double maxZ,
+            double minY, double maxY, double step, int color, int alpha) {
+        if (step <= 0.0D || maxY < minY) {
+            return;
+        }
+        for (double y = minY; y <= maxY + 1.0E-6D; y += step) {
+            horizontalQuad(context, y, minX, minZ, maxX, maxZ, color, alpha);
+        }
+    }
+
+    public static void xPlaneCenteredRect(ObjRenderContext context,
+            double x, double y, double z, double halfY, double halfZ, int color, int alpha) {
+        quad(context,
+                x, y + halfY, z - halfZ,
+                x, y + halfY, z + halfZ,
+                x, y - halfY, z + halfZ,
+                x, y - halfY, z - halfZ,
+                color, alpha, alpha, alpha, alpha);
+    }
+
+    public static void xPlaneDot(ObjRenderContext context,
+            double x, double y, double z, double width, double edge, int color, int alpha) {
+        quad(context,
+                x, y + width, z,
+                x, y + edge, z + edge,
+                x, y, z + width,
+                x, y - edge, z + edge,
+                color, alpha, alpha, alpha, alpha);
+        quad(context,
+                x, y + edge, z - edge,
+                x, y + width, z,
+                x, y - edge, z - edge,
+                x, y, z - width,
+                color, alpha, alpha, alpha, alpha);
+        quad(context,
+                x, y + width, z,
+                x, y - edge, z + edge,
+                x, y - width, z,
+                x, y - edge, z - edge,
+                color, alpha, alpha, alpha, alpha);
+    }
+
+    public static void verticalCrossPanels(ObjRenderContext context,
+            double yMin, double height, double halfWidth, double offset, int color, int alpha) {
+        if (height <= 0.0D) {
+            return;
+        }
+        double yMax = yMin + height;
+        quad(context,
+                -offset, yMin, -halfWidth,
+                -offset, yMax, -halfWidth,
+                -offset, yMax, halfWidth,
+                -offset, yMin, halfWidth,
+                color, alpha, alpha, alpha, alpha);
+        quad(context,
+                offset, yMin, -halfWidth,
+                offset, yMax, -halfWidth,
+                offset, yMax, halfWidth,
+                offset, yMin, halfWidth,
+                color, alpha, alpha, alpha, alpha);
+        quad(context,
+                -halfWidth, yMin, -offset,
+                -halfWidth, yMax, -offset,
+                halfWidth, yMax, -offset,
+                halfWidth, yMin, -offset,
+                color, alpha, alpha, alpha, alpha);
+        quad(context,
+                -halfWidth, yMin, offset,
+                -halfWidth, yMax, offset,
+                halfWidth, yMax, offset,
+                halfWidth, yMin, offset,
+                color, alpha, alpha, alpha, alpha);
+    }
+
     private static int multipliedColor(ObjRenderContext context, int color) {
         if (!context.hasColor()) {
             return color & 0xFFFFFF;

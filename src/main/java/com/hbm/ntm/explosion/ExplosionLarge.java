@@ -230,7 +230,10 @@ public final class ExplosionLarge {
         for (int c = 0; c < count; c++) {
             Vec3 direction = randomDirection(level);
             for (double i = 0.0D; i < strength; i++) {
-                BlockPos pos = new BlockPos((int) (x + direction.x * i), (int) (y + direction.y * i), (int) (z + direction.z * i));
+                double sampleX = x + direction.x * i;
+                double sampleY = y + direction.y * i;
+                double sampleZ = z + direction.z * i;
+                BlockPos pos = new BlockPos((int) sampleX, (int) sampleY, (int) sampleZ);
                 BlockState state = level.getBlockState(pos);
                 if (!state.getFluidState().isEmpty()) {
                     level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
@@ -244,14 +247,9 @@ public final class ExplosionLarge {
                 }
                 RubbleEntity rubble = new RubbleEntity(level);
                 rubble.setBlockState(state);
-                rubble.setPos(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+                rubble.setPos(sampleX + 0.5D, sampleY + 0.5D, sampleZ + 0.5D);
                 Vec3 motion = new Vec3(x - rubble.getX(), y - rubble.getY(), z - rubble.getZ());
-                if (motion.lengthSqr() > 1.0E-7D) {
-                    motion = motion.normalize().scale(velocity);
-                } else {
-                    motion = randomDirection(level).scale(velocity);
-                }
-                rubble.setDeltaMovement(motion);
+                rubble.setDeltaMovement(motion.scale(velocity));
                 serverLevel.addFreshEntity(rubble);
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 break;

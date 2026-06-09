@@ -98,7 +98,7 @@ public class HbmFillableItemCapabilityProvider implements ICapabilityProvider {
             if (!canHandleSingleStack() || resource.isEmpty()) {
                 return FluidStack.EMPTY;
             }
-            FluidType type = HbmFluidForgeMappings.fromForge(resource);
+            FluidType type = HbmFluidForgeMappings.fromForgeExport(resource);
             if (type == HbmFluids.NONE || !HbmFluidForgeMappings.canExport(type) || !item.providesFluid(type, container)) {
                 return FluidStack.EMPTY;
             }

@@ -114,6 +114,6 @@ public class BalefireExplosionEntity extends ExplosionChunkLoadingEntity {
     }
 
     private static boolean extendedLoggingEnabled() {
-        return HbmCommonConfig.ENABLE_EXTENDED_LOGGING != null && HbmCommonConfig.ENABLE_EXTENDED_LOGGING.get();
+        return HbmCommonConfig.extendedLoggingEnabled();
     }
 }

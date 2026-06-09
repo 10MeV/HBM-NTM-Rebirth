@@ -3,7 +3,9 @@ package com.hbm.ntm.pollution;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.pollution.PollutionSavedData.PollutionGridPos;
 import com.hbm.ntm.pollution.PollutionSavedData.PollutionSample;
+import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.LegacyRadiationWorldUtil;
+import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.world.saveddata.WorldSavedDataHelper;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
@@ -11,10 +13,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -52,7 +58,7 @@ public final class PollutionManager {
         if (pos == null) {
             return;
         }
-        incrementPollution(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), type, amount);
+        incrementPollution(level, PollutionGridPos.ofBlock(pos), type, amount);
     }
 
     public static void incrementPollution(Level level, int x, int y, int z, PollutionType type, float amount) {
@@ -67,6 +73,25 @@ public final class PollutionManager {
         getData(serverLevel).add(pos, type, amount * RadiationConfig.pollutionMultiplier());
     }
 
+    public static void incrementPollution(Level level, BlockPos pos, PollutionSample amounts) {
+        if (pos == null) {
+            return;
+        }
+        incrementPollution(level, PollutionGridPos.ofBlock(pos), amounts);
+    }
+
+    public static void incrementPollution(Level level, int x, int y, int z, PollutionSample amounts) {
+        incrementPollution(level, new BlockPos(x, y, z), amounts);
+    }
+
+    public static void incrementPollution(Level level, PollutionGridPos pos, PollutionSample amounts) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null
+                || !hasAnyFiniteNonZero(amounts)) {
+            return;
+        }
+        getData(serverLevel).addClamped(pos, scaledFinite(amounts, RadiationConfig.pollutionMultiplier()));
+    }
+
     public static void decrementPollution(Level level, BlockPos pos, PollutionType type, float amount) {
         incrementPollution(level, pos, type, -amount);
     }
@@ -79,11 +104,101 @@ public final class PollutionManager {
         incrementPollution(level, pos, type, -amount);
     }
 
+    public static boolean applyPollutionDelta(Level level, BlockPos pos, PollutionType type, float amount) {
+        if (pos == null) {
+            return false;
+        }
+        return applyPollutionDelta(level, PollutionGridPos.ofBlock(pos), type, amount);
+    }
+
+    public static boolean applyPollutionDelta(Level level, int x, int y, int z, PollutionType type, float amount) {
+        return applyPollutionDelta(level, new BlockPos(x, y, z), type, amount);
+    }
+
+    public static boolean applyPollutionDelta(Level level, PollutionGridPos pos, PollutionType type, float amount) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null || type == null
+                || !Float.isFinite(amount) || amount == 0.0F) {
+            return false;
+        }
+        if (amount > 0.0F) {
+            PollutionSavedData data = getData(serverLevel);
+            data.add(pos, type, amount * RadiationConfig.pollutionMultiplier());
+            return true;
+        }
+
+        PollutionSavedData data = getExistingData(serverLevel);
+        if (data == null) {
+            return false;
+        }
+        float debt = -amount;
+        if (!data.get(pos).hasAtLeast(type, debt)) {
+            return false;
+        }
+        data.add(pos, type, -debt * RadiationConfig.pollutionMultiplier());
+        return true;
+    }
+
+    public static boolean applyPollutionDelta(Level level, BlockPos pos, PollutionSample amounts) {
+        if (pos == null) {
+            return false;
+        }
+        return applyPollutionDelta(level, PollutionGridPos.ofBlock(pos), amounts);
+    }
+
+    public static boolean applyPollutionDelta(Level level, int x, int y, int z, PollutionSample amounts) {
+        return applyPollutionDelta(level, new BlockPos(x, y, z), amounts);
+    }
+
+    public static boolean applyPollutionDelta(Level level, PollutionGridPos pos, PollutionSample amounts) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null
+                || !hasAnyFiniteNonZero(amounts)) {
+            return false;
+        }
+
+        PollutionSavedData data = hasAnyNegative(amounts) ? getExistingData(serverLevel) : getData(serverLevel);
+        if (data == null || !hasPollutionDebtsAvailable(data, pos, amounts)) {
+            return false;
+        }
+        data.addClamped(pos, scaledFinite(amounts, RadiationConfig.pollutionMultiplier()));
+        return true;
+    }
+
+    public static boolean decrementPollutionIfAvailable(Level level, BlockPos pos, PollutionType type, float amount) {
+        if (pos == null) {
+            return false;
+        }
+        return decrementPollutionIfAvailable(level, PollutionGridPos.ofBlock(pos), type, amount);
+    }
+
+    public static boolean decrementPollutionIfAvailable(Level level, int x, int y, int z, PollutionType type, float amount) {
+        return decrementPollutionIfAvailable(level, new BlockPos(x, y, z), type, amount);
+    }
+
+    public static boolean decrementPollutionIfAvailable(Level level, PollutionGridPos pos, PollutionType type, float amount) {
+        return Float.isFinite(amount) && amount > 0.0F && applyPollutionDelta(level, pos, type, -amount);
+    }
+
+    public static boolean hasPollutionAtLeast(Level level, BlockPos pos, PollutionType type, float amount) {
+        if (pos == null) {
+            return false;
+        }
+        return hasPollutionAtLeast(level, PollutionGridPos.ofBlock(pos), type, amount);
+    }
+
+    public static boolean hasPollutionAtLeast(Level level, int x, int y, int z, PollutionType type, float amount) {
+        return hasPollutionAtLeast(level, new BlockPos(x, y, z), type, amount);
+    }
+
+    public static boolean hasPollutionAtLeast(Level level, PollutionGridPos pos, PollutionType type, float amount) {
+        return isEnabled() && pos != null && type != null && Float.isFinite(amount) && amount >= 0.0F
+                && getPollution(level, pos, type) >= amount;
+    }
+
     public static void setPollution(Level level, BlockPos pos, PollutionType type, float amount) {
         if (pos == null) {
             return;
         }
-        setPollution(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), type, amount);
+        setPollution(level, PollutionGridPos.ofBlock(pos), type, amount);
     }
 
     public static void setPollution(Level level, int x, int y, int z, PollutionType type, float amount) {
@@ -101,7 +216,7 @@ public final class PollutionManager {
         if (pos == null) {
             return 0.0F;
         }
-        return getPollution(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), type);
+        return getPollution(level, PollutionGridPos.ofBlock(pos), type);
     }
 
     public static float getPollution(Level level, PollutionGridPos pos, PollutionType type) {
@@ -130,11 +245,21 @@ public final class PollutionManager {
         return getPollutionData(level, new BlockPos(x, y, z));
     }
 
+    public static PollutionSample getPollutionDataAtEntityEyes(LivingEntity entity) {
+        PollutionSample sample = getPollutionDataOrNullAtEntityEyes(entity);
+        return sample == null ? new PollutionSample() : sample;
+    }
+
+    public static float getPollutionAtEntityEyes(LivingEntity entity, PollutionType type) {
+        PollutionSample sample = getPollutionDataOrNullAtEntityEyes(entity);
+        return sample == null ? 0.0F : sample.get(type);
+    }
+
     public static void setPollutionData(Level level, BlockPos pos, PollutionSample sample) {
         if (pos == null) {
             return;
         }
-        setPollutionData(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), sample);
+        setPollutionData(level, PollutionGridPos.ofBlock(pos), sample);
     }
 
     public static void setPollutionData(Level level, int x, int y, int z, PollutionSample sample) {
@@ -152,7 +277,7 @@ public final class PollutionManager {
         if (pos == null) {
             return;
         }
-        updatePollutionData(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()), updater);
+        updatePollutionData(level, PollutionGridPos.ofBlock(pos), updater);
     }
 
     public static void updatePollutionData(Level level, PollutionGridPos pos, Consumer<PollutionSample> updater) {
@@ -177,6 +302,98 @@ public final class PollutionManager {
         return data == null ? Map.of() : data.pollutionSnapshot();
     }
 
+    public static List<PollutionSavedData.EntrySnapshot> pollutionEntriesSnapshot(Level level) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+            return List.of();
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        return data == null ? List.of() : data.gridEntriesSnapshot();
+    }
+
+    public static List<PollutionSavedData.EntrySnapshot> positivePollutionEntriesSnapshot(Level level, int limit) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+            return List.of();
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        return data == null ? List.of() : data.positiveEntriesSnapshot(limit);
+    }
+
+    public static List<PollutionSavedData.EntrySnapshot> positivePollutionEntriesSnapshot(Level level,
+                                                                                         PollutionType type,
+                                                                                         int limit) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || type == null) {
+            return List.of();
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        return data == null ? List.of() : data.positiveEntriesSnapshot(type, limit);
+    }
+
+    public static PollutionSavedData.DiffusionPreview previewDiffusion(Level level) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return PollutionSavedData.DiffusionPreview.empty();
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        return data == null
+                ? PollutionSavedData.DiffusionPreview.empty()
+                : data.previewDiffusion(pos -> isPollutionGridLoaded(serverLevel, pos));
+    }
+
+    public static List<PollutionSavedData.EntrySnapshot> positiveDiffusionPreviewEntries(Level level, int limit) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+            return List.of();
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        return data == null ? List.of() : data.positiveDiffusionPreviewEntries(limit);
+    }
+
+    public static List<PollutionSavedData.EntrySnapshot> positiveDiffusionPreviewEntries(Level level,
+                                                                                        PollutionType type,
+                                                                                        int limit) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || type == null) {
+            return List.of();
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        return data == null ? List.of() : data.positiveDiffusionPreviewEntries(type, limit);
+    }
+
+    public static List<PollutionSavedData.EntryDelta> diffusionDeltaEntries(Level level, int limit) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+            return List.of();
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        return data == null ? List.of() : data.diffusionDeltaEntries(limit);
+    }
+
+    public static List<PollutionSavedData.EntryDelta> diffusionDeltaEntries(Level level, PollutionType type,
+                                                                            int limit) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || type == null) {
+            return List.of();
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        return data == null ? List.of() : data.diffusionDeltaEntries(type, limit);
+    }
+
+    public static PollutionSavedData.EntryDelta diffusionDeltaAt(Level level, PollutionGridPos pos) {
+        PollutionGridPos safePos = pos == null ? new PollutionGridPos(0, 0) : pos;
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
+            return PollutionSavedData.EntryDelta.of(safePos, new PollutionSavedData.PollutionSample(),
+                    new PollutionSavedData.PollutionSample());
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        return data == null
+                ? PollutionSavedData.EntryDelta.of(safePos, new PollutionSavedData.PollutionSample(),
+                        new PollutionSavedData.PollutionSample())
+                : data.diffusionDeltaAt(safePos);
+    }
+
+    public static List<PollutionSavedData.EntryDelta> diffusionNeighborDeltas(Level level, PollutionGridPos center) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || center == null) {
+            return List.of();
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        return data == null ? List.of() : data.diffusionNeighborDeltas(center);
+    }
+
     public static void setPollutionData(Level level, Map<PollutionGridPos, PollutionSample> values) {
         if (!isEnabled() || !(level instanceof ServerLevel serverLevel)) {
             return;
@@ -196,7 +413,7 @@ public final class PollutionManager {
         if (pos == null) {
             return null;
         }
-        return getPollutionDataOrNull(level, PollutionGridPos.ofBlock(pos.getX(), pos.getZ()));
+        return getPollutionDataOrNull(level, PollutionGridPos.ofBlock(pos));
     }
 
     @Nullable
@@ -213,6 +430,15 @@ public final class PollutionManager {
         return getPollutionDataOrNull(level, new BlockPos(x, y, z));
     }
 
+    @Nullable
+    public static PollutionSample getPollutionDataOrNullAtEntityEyes(LivingEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        BlockPos pos = BlockPos.containing(entity.getX(), entity.getY() + entity.getEyeHeight(), entity.getZ());
+        return getPollutionDataOrNull(entity.level(), pos);
+    }
+
     public static void clear(Level level) {
         if (level instanceof ServerLevel serverLevel) {
             PollutionSavedData data = getExistingData(serverLevel);
@@ -224,13 +450,11 @@ public final class PollutionManager {
 
     public static PollutionSavedData.Stats getStats(Level level) {
         if (!(level instanceof ServerLevel serverLevel)) {
-            return new PollutionSavedData.Stats(0, 0, 0.0F, 0.0F, 0.0F, 0.0F,
-                    new float[PollutionType.values().length], new float[PollutionType.values().length]);
+            return PollutionSavedData.Stats.empty();
         }
         PollutionSavedData data = getExistingData(serverLevel);
         if (data == null) {
-            return new PollutionSavedData.Stats(0, 0, 0.0F, 0.0F, 0.0F, 0.0F,
-                    new float[PollutionType.values().length], new float[PollutionType.values().length]);
+            return PollutionSavedData.Stats.empty();
         }
         return data.stats(pos -> isPollutionGridLoaded(serverLevel, pos));
     }
@@ -241,6 +465,10 @@ public final class PollutionManager {
         }
         PollutionSavedData data = getExistingData(serverLevel);
         return data == null ? 0 : data.pruneLoaded(pos -> isPollutionGridLoaded(serverLevel, pos));
+    }
+
+    public static boolean isPollutionGridLoaded(Level level, PollutionGridPos pos) {
+        return level instanceof ServerLevel serverLevel && pos != null && isPollutionGridLoaded(serverLevel, pos);
     }
 
     public static void tick(ServerLevel level) {
@@ -298,6 +526,70 @@ public final class PollutionManager {
                     ATTACK_DAMAGE_MODIFIER, "Soot Anger Damage Increase", 1.5D, AttributeModifier.Operation.MULTIPLY_BASE));
         }
         mob.heal(mob.getMaxHealth());
+    }
+
+    public static boolean applyLeadFromBlockBreak(Player player, Level level, BlockPos pos) {
+        if (!isEnabled()
+                || !RadiationConfig.pollutionLeadFromBlocksEnabled()
+                || player == null
+                || pos == null
+                || ArmorUtil.hasPollutionLeadProtection(player)) {
+            return false;
+        }
+
+        float metal = getPollution(level, pos, PollutionType.HEAVYMETAL);
+        if (metal < 5.0F) {
+            return false;
+        }
+
+        int amplifier = metal < 10.0F ? 0 : metal < 25.0F ? 1 : 2;
+        player.addEffect(new MobEffectInstance(ModEffects.LEAD.get(), 100, amplifier));
+        return true;
+    }
+
+    public static void applyEntityPollutionEffects(LivingEntity entity) {
+        if (!isEnabled() || entity == null || entity.level().isClientSide || entity.tickCount % 60 != 0) {
+            return;
+        }
+
+        PollutionSample sample = getPollutionDataAtEntityEyes(entity);
+        applyPoisonEffect(entity, sample);
+        applyHeavyMetalEffect(entity, sample);
+    }
+
+    public static double getSootLungLoad(LivingEntity entity) {
+        if (!(entity instanceof Player) || !isEnabled() || ArmorUtil.hasSootLungProtection(entity)) {
+            return 0.0D;
+        }
+        return getPollution(entity.level(), entity.blockPosition(), PollutionType.SOOT);
+    }
+
+    private static void applyPoisonEffect(LivingEntity entity, PollutionSample sample) {
+        if (!RadiationConfig.pollutionPoisonEnabled() || ArmorUtil.hasPollutionPoisonProtection(entity)) {
+            return;
+        }
+        float poison = sample.get(PollutionType.POISON);
+        if (poison <= 10.0F) {
+            return;
+        }
+        if (poison < 25.0F) {
+            entity.addEffect(new MobEffectInstance(MobEffects.POISON, 100, 0));
+        } else if (poison < 50.0F) {
+            entity.addEffect(new MobEffectInstance(MobEffects.POISON, 100, 1));
+        } else {
+            entity.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 2));
+        }
+    }
+
+    private static void applyHeavyMetalEffect(LivingEntity entity, PollutionSample sample) {
+        if (!RadiationConfig.pollutionLeadPoisoningEnabled() || ArmorUtil.hasPollutionLeadProtection(entity)) {
+            return;
+        }
+        float metal = sample.get(PollutionType.HEAVYMETAL);
+        if (metal > 25.0F) {
+            int amplifier = metal < 50.0F ? 0 : 2;
+            entity.addEffect(new MobEffectInstance(ModEffects.LEAD.get(), 100, amplifier));
+        }
     }
 
     public static void unloadLevel(Level level) {
@@ -398,6 +690,52 @@ public final class PollutionManager {
 
     private static boolean isEnabled() {
         return RadiationConfig.pollutionEnabled();
+    }
+
+    private static boolean hasAnyFiniteNonZero(@Nullable PollutionSample sample) {
+        if (sample == null) {
+            return false;
+        }
+        for (PollutionType type : PollutionType.orderedValues()) {
+            float value = sample.get(type);
+            if (Float.isFinite(value) && value != 0.0F) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasAnyNegative(PollutionSample sample) {
+        for (PollutionType type : PollutionType.orderedValues()) {
+            float value = sample.get(type);
+            if (Float.isFinite(value) && value < 0.0F) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasPollutionDebtsAvailable(PollutionSavedData data, PollutionGridPos pos,
+                                                      PollutionSample amounts) {
+        PollutionSample current = data.get(pos);
+        for (PollutionType type : PollutionType.orderedValues()) {
+            float value = amounts.get(type);
+            if (Float.isFinite(value) && value < 0.0F && !current.hasAtLeast(type, -value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static PollutionSample scaledFinite(PollutionSample sample, float multiplier) {
+        PollutionSample scaled = new PollutionSample();
+        for (PollutionType type : PollutionType.orderedValues()) {
+            float value = sample.get(type);
+            if (Float.isFinite(value) && value != 0.0F) {
+                scaled.set(type, value * multiplier);
+            }
+        }
+        return scaled;
     }
 
     private static PollutionSavedData getData(ServerLevel level) {

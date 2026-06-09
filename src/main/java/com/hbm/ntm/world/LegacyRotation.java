@@ -42,6 +42,27 @@ public enum LegacyRotation {
         };
     }
 
+    public Direction rotate(Direction direction) {
+        if (direction.getAxis().isVertical()) {
+            return direction;
+        }
+        return switch (this) {
+            case NONE -> direction;
+            case CLOCKWISE_90 -> direction.getClockWise();
+            case CLOCKWISE_180 -> direction.getOpposite();
+            case COUNTERCLOCKWISE_90 -> direction.getCounterClockWise();
+        };
+    }
+
+    public static LegacyRotation fromVanilla(Rotation rotation) {
+        return switch (rotation) {
+            case CLOCKWISE_90 -> CLOCKWISE_90;
+            case CLOCKWISE_180 -> CLOCKWISE_180;
+            case COUNTERCLOCKWISE_90 -> COUNTERCLOCKWISE_90;
+            case NONE -> NONE;
+        };
+    }
+
     public static LegacyRotation getBlockRotation(Direction direction) {
         return switch (direction) {
             case NORTH -> NONE;

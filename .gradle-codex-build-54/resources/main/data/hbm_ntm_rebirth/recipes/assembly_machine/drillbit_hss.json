@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/dura_steel"
+      },
+      "legacy_ore": "ingotDuraSteel"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/titanium"
+      },
+      "legacy_ore": "ingotTitanium"
+    }
+  ],
+  "internal_name": "ass.drilldura",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:drillbit_hss"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 109
+}

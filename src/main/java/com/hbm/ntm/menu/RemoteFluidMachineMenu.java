@@ -165,7 +165,7 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
     private void addDataSlots() {
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getMaxPower, () -> maxPower, value -> maxPower = value);
-        blockEntity.getAllTanks().forEach(tank -> tanks.add(HbmFluidGuiHelper.watchTank(this::addDataSlot, tank)));
+        tanks.addAll(HbmFluidGuiHelper.watchTanks(this::addDataSlot, blockEntity.getAllTanks()));
         if (blockEntity instanceof CokerBlockEntity coker) {
             addDataSlot(new DataSlot() {
                 @Override

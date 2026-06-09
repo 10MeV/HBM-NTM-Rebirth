@@ -5,6 +5,7 @@ import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmTuple.Pair;
 import com.hbm.ntm.util.HbmWorldUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -19,13 +20,16 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraftforge.registries.RegistryObject;
 
 import javax.annotation.Nullable;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 public final class ArmorUtil {
+    @Deprecated public static final List<Pair<Item, HazardClass[]>> external = new ExternalProtectionList();
     public static final String FILTER_KEY = "hfrFilter";
+    public static final String FILTERK_KEY = FILTER_KEY;
     public static final int ASH_EXPOSURE_LIMIT_ASH_GLASSES = 64;
     public static final int ASH_EXPOSURE_LIMIT_SAND_OR_LIGHT = 192;
     public static final int ASH_EXPOSURE_LIMIT_UNPROTECTED = 243;
@@ -55,6 +59,11 @@ public final class ArmorUtil {
             "platinum", "tin", "liquidator", "euphemium", "cmb", "bronze",
             "electrum", "t45", "t51", "bj", "starmetal", "hev", "ajr",
             "rpa", "spacesuit", "paa", "security", "cobalt");
+
+    public static void register() {
+        HazmatRegistry.registerDefaultProtections();
+    }
+
     public static boolean checkForHazmat(LivingEntity entity) {
         if (entity == null) {
             return false;
@@ -472,6 +481,14 @@ public final class ArmorUtil {
 
     public static void damageGasMaskFilter(ItemStack mask, int damage) {
         ItemStack filter = getGasMaskFilter(mask);
+        if (filter.isEmpty() && ArmorModHandler.hasMods(mask)) {
+            ItemStack mod = ArmorModHandler.pryMod(mask, ArmorModHandler.helmet_only);
+            if (!mod.isEmpty() && mod.getItem() instanceof GasMask) {
+                damageGasMaskFilter(mod, damage);
+                ArmorModHandler.applyMod(mask, mod);
+            }
+            return;
+        }
         if (filter.isEmpty() || !filter.isDamageableItem()) {
             return;
         }
@@ -667,6 +684,49 @@ public final class ArmorUtil {
     private static Item legacyItem(String name) {
         RegistryObject<Item> item = ModItems.legacyItem(name);
         return item != null && item.isPresent() ? item.get() : null;
+    }
+
+    private static final class ExternalProtectionList extends AbstractList<Pair<Item, HazardClass[]>> {
+        private final List<Pair<Item, HazardClass[]>> entries = new ArrayList<>();
+
+        @Override
+        public Pair<Item, HazardClass[]> get(int index) {
+            Pair<Item, HazardClass[]> entry = entries.get(index);
+            return new Pair<>(entry.getKey(), entry.getValue().clone());
+        }
+
+        @Override
+        public int size() {
+            return entries.size();
+        }
+
+        @Override
+        public void add(int index, Pair<Item, HazardClass[]> element) {
+            if (element == null || element.getKey() == null || element.getValue() == null) {
+                return;
+            }
+            Pair<Item, HazardClass[]> copy = new Pair<>(element.getKey(), element.getValue().clone());
+            entries.add(index, copy);
+            HazmatRegistry.registerExternalProtection(copy.getKey(), copy.getValue());
+        }
+
+        @Override
+        public Pair<Item, HazardClass[]> set(int index, Pair<Item, HazardClass[]> element) {
+            Pair<Item, HazardClass[]> previous = entries.get(index);
+            if (element == null || element.getKey() == null || element.getValue() == null) {
+                return new Pair<>(previous.getKey(), previous.getValue().clone());
+            }
+            Pair<Item, HazardClass[]> copy = new Pair<>(element.getKey(), element.getValue().clone());
+            entries.set(index, copy);
+            HazmatRegistry.registerExternalProtection(copy.getKey(), copy.getValue());
+            return new Pair<>(previous.getKey(), previous.getValue().clone());
+        }
+
+        @Override
+        public Pair<Item, HazardClass[]> remove(int index) {
+            Pair<Item, HazardClass[]> previous = entries.remove(index);
+            return new Pair<>(previous.getKey(), previous.getValue().clone());
+        }
     }
 
     private ArmorUtil() {

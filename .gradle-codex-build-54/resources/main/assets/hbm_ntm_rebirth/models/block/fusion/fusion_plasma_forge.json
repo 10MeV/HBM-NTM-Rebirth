@@ -1,0 +1,7 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/fusion/fusion_plasma_forge.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/plasma_forge", "default": "hbm_ntm_rebirth:block/fusion/plasma_forge" }
+}

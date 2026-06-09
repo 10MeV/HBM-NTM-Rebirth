@@ -3,7 +3,7 @@ package com.hbm.ntm.client;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class ClientRadiationData {
+final class ClientRadiationData {
     private static float radiation;
     private static float digamma;
     private static float environment;

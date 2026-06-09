@@ -44,7 +44,7 @@ public class ForgeRecipeFluidHandlerAdapter extends ForgeFluidHandlerAdapter {
         if (resource == null || resource.isEmpty()) {
             return FluidStack.EMPTY;
         }
-        FluidType type = HbmFluidForgeMappings.fromForge(resource);
+        FluidType type = HbmFluidForgeMappings.fromForgeExport(resource);
         if (type == HbmFluids.NONE) {
             return FluidStack.EMPTY;
         }
@@ -57,18 +57,20 @@ public class ForgeRecipeFluidHandlerAdapter extends ForgeFluidHandlerAdapter {
         if (maxDrain <= 0) {
             return FluidStack.EMPTY;
         }
+        FluidType type = HbmFluids.NONE;
         for (HbmFluidTank tank : recipeOutputTanks) {
-            FluidType type = tank.getTankType();
-            if (tank.getFill() <= 0 || !HbmFluidForgeMappings.canExport(type)) {
+            FluidType tankType = tank.getTankType();
+            if (tank.getFill() <= 0 || !HbmFluidForgeMappings.canExport(tankType)) {
                 continue;
             }
-            int drained = tank.drain(maxDrain, action.simulate());
-            if (!action.simulate() && drained > 0) {
-                onChanged.run();
-            }
-            return HbmFluidForgeMappings.toForge(type, drained);
+            type = tankType;
+            break;
         }
-        return FluidStack.EMPTY;
+        if (type == HbmFluids.NONE) {
+            return FluidStack.EMPTY;
+        }
+        int drained = drainMatchingRecipeOutput(type, maxDrain, action.simulate());
+        return drained <= 0 ? FluidStack.EMPTY : HbmFluidForgeMappings.toForge(type, drained);
     }
 
     @Override

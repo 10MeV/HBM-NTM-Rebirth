@@ -1,0 +1,9 @@
+{
+  "variants": {
+    "segment=0": { "model": "hbm_ntm_rebirth:block/lantern" },
+    "segment=1": { "model": "hbm_ntm_rebirth:block/empty" },
+    "segment=2": { "model": "hbm_ntm_rebirth:block/empty" },
+    "segment=3": { "model": "hbm_ntm_rebirth:block/empty" },
+    "segment=4": { "model": "hbm_ntm_rebirth:block/empty" }
+  }
+}

@@ -68,7 +68,7 @@ public final class ExplosionNukeSmall {
     }
 
     public static MukeParams configuredHighParams() {
-        return PARAMS_HIGH.copy().blastRadius(BombConfig.FATMAN_RADIUS.get());
+        return PARAMS_HIGH.copy().blastRadius(BombConfig.fatmanRadius());
     }
 
     public static void explodeConfiguredHigh(Level level, double x, double y, double z) {

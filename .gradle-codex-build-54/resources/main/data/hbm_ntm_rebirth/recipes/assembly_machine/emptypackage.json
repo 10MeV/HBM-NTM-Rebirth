@@ -1,0 +1,35 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 40,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plate_titanium"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plastic_bag"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plastic_bag"
+      }
+    }
+  ],
+  "internal_name": "ass.emptypackage",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:fluid_pack_empty"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 333
+}

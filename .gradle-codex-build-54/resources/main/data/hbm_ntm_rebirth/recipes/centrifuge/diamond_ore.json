@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "tag": "forge:ores/diamond" } },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_diamond" },
+    { "item": "hbm_ntm_rebirth:powder_diamond" },
+    { "item": "hbm_ntm_rebirth:powder_diamond" },
+    { "item": "minecraft:gravel" }
+  ]
+}

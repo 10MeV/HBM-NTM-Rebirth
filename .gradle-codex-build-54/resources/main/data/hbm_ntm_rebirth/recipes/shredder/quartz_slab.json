@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "item": "minecraft:quartz_slab" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_quartz", "count": 2 }
+}

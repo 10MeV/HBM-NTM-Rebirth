@@ -30,8 +30,8 @@ import com.hbm.ntm.client.ClientInformMessages;
 import com.hbm.ntm.client.ClientMuzzleFlashEffects;
 import com.hbm.ntm.client.ClientPanelData;
 import com.hbm.ntm.client.ClientPermaSyncData;
-import com.hbm.ntm.client.ClientPlayerSyncData;
-import com.hbm.ntm.client.ClientRadiationData;
+import com.hbm.ntm.client.ClientHbmPlayerProperties;
+import com.hbm.ntm.client.ClientHbmLivingProperties;
 import com.hbm.ntm.client.ClientTileBinaryData;
 import com.hbm.ntm.compat.Compat;
 import com.hbm.ntm.compat.CompatEnergyControl;
@@ -71,6 +71,7 @@ import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionSavedData;
+import com.hbm.ntm.pollution.PollutionSavedData.PollutionGridPos;
 import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
@@ -88,6 +89,10 @@ import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationConstants;
 import com.hbm.ntm.radiation.RadiationSavedData;
 import com.hbm.ntm.world.BlockMigrationHelper;
+import com.hbm.ntm.world.SubChunkKey;
+import com.hbm.ntm.world.SubChunkSnapshot;
+import com.hbm.ntm.world.WorldUtil;
+import com.hbm.ntm.world.saveddata.AnnihilatorSavedData;
 import com.hbm.ntm.world.saveddata.TomImpactSavedData;
 import com.hbm.ntm.world.saveddata.WorldSavedDataDiagnostics;
 import com.hbm.ntm.satellite.ISatelliteChip;
@@ -112,6 +117,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -146,6 +152,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -157,6 +164,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class ModCommands {
+    private static final int MAX_SUBCHUNK_DIAGNOSTIC_SCAN = 4096;
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("ntmrad")
                 .requires(source -> source.hasPermission(2))
@@ -270,6 +279,149 @@ public final class ModCommands {
                                                 DimensionArgument.getDimension(context, "dimension")))))
                         .then(Commands.literal("all")
                                 .executes(context -> worldSavedDataAllStatus(context.getSource())))
+                        .then(Commands.literal("known")
+                                .executes(context -> worldSavedDataKnownData(
+                                        context.getSource(),
+                                        context.getSource().getLevel()))
+                                .then(Commands.argument("dimension", DimensionArgument.dimension())
+                                        .executes(context -> worldSavedDataKnownData(
+                                                context.getSource(),
+                                                DimensionArgument.getDimension(context, "dimension")))))
+                        .then(Commands.literal("knownAll")
+                                .executes(context -> worldSavedDataKnownDataAll(context.getSource())))
+                        .then(Commands.literal("annihilator")
+                                .then(Commands.literal("pools")
+                                        .executes(context -> worldSavedDataAnnihilatorPools(context.getSource())))
+                                .then(Commands.literal("pool")
+                                        .then(Commands.argument("name", StringArgumentType.string())
+                                                .suggests(ModCommands::suggestAnnihilatorPools)
+                                                .executes(context -> worldSavedDataAnnihilatorPool(
+                                                        context.getSource(),
+                                                        StringArgumentType.getString(context, "name")))))
+                                .then(Commands.literal("top")
+                                        .then(Commands.argument("pool", StringArgumentType.string())
+                                                .suggests(ModCommands::suggestAnnihilatorPools)
+                                                .executes(context -> worldSavedDataAnnihilatorTop(
+                                                        context.getSource(),
+                                                        StringArgumentType.getString(context, "pool"),
+                                                        12))
+                                                .then(Commands.argument("limit", IntegerArgumentType.integer(1, 64))
+                                                        .executes(context -> worldSavedDataAnnihilatorTop(
+                                                                context.getSource(),
+                                                                StringArgumentType.getString(context, "pool"),
+                                                                IntegerArgumentType.getInteger(context, "limit"))))))
+                                .then(Commands.literal("kind")
+                                        .then(Commands.argument("pool", StringArgumentType.string())
+                                                .suggests(ModCommands::suggestAnnihilatorPools)
+                                                .then(Commands.argument("kind", StringArgumentType.word())
+                                                        .suggests(ModCommands::suggestAnnihilatorKinds)
+                                                        .executes(context -> worldSavedDataAnnihilatorKind(
+                                                                context.getSource(),
+                                                                StringArgumentType.getString(context, "pool"),
+                                                                StringArgumentType.getString(context, "kind"),
+                                                                12))
+                                                        .then(Commands.argument("limit", IntegerArgumentType.integer(1, 64))
+                                                                .executes(context -> worldSavedDataAnnihilatorKind(
+                                                                        context.getSource(),
+                                                                        StringArgumentType.getString(context, "pool"),
+                                                                        StringArgumentType.getString(context, "kind"),
+                                                                        IntegerArgumentType.getInteger(context, "limit")))))))
+                                .then(Commands.literal("amount")
+                                        .then(Commands.literal("item")
+                                                .then(Commands.argument("pool", StringArgumentType.string())
+                                                        .suggests(ModCommands::suggestAnnihilatorPools)
+                                                        .then(Commands.argument("item", ResourceLocationArgument.id())
+                                                                .suggests(ModCommands::suggestItemIds)
+                                                                .executes(context -> worldSavedDataAnnihilatorItemAmount(
+                                                                        context.getSource(),
+                                                                        StringArgumentType.getString(context, "pool"),
+                                                                        ResourceLocationArgument.getId(context, "item"))))))
+                                        .then(Commands.literal("itemMeta")
+                                                .then(Commands.argument("pool", StringArgumentType.string())
+                                                        .suggests(ModCommands::suggestAnnihilatorPools)
+                                                        .then(Commands.argument("item", ResourceLocationArgument.id())
+                                                                .suggests(ModCommands::suggestItemIds)
+                                                                .then(Commands.argument("legacyMeta", IntegerArgumentType.integer(0))
+                                                                        .executes(context -> worldSavedDataAnnihilatorItemMetaAmount(
+                                                                                context.getSource(),
+                                                                                StringArgumentType.getString(context, "pool"),
+                                                                                ResourceLocationArgument.getId(context, "item"),
+                                                                                IntegerArgumentType.getInteger(context, "legacyMeta")))))))
+                                        .then(Commands.literal("fluid")
+                                                .then(Commands.argument("pool", StringArgumentType.string())
+                                                        .suggests(ModCommands::suggestAnnihilatorPools)
+                                                        .then(Commands.argument("fluid", StringArgumentType.word())
+                                                                .suggests(ModCommands::suggestHbmFluids)
+                                                                .executes(context -> worldSavedDataAnnihilatorFluidAmount(
+                                                                        context.getSource(),
+                                                                        StringArgumentType.getString(context, "pool"),
+                                                                        StringArgumentType.getString(context, "fluid"))))))
+                                        .then(Commands.literal("oredict")
+                                                .then(Commands.argument("pool", StringArgumentType.string())
+                                                        .suggests(ModCommands::suggestAnnihilatorPools)
+                                                        .then(Commands.argument("name", StringArgumentType.word())
+                                                                .executes(context -> worldSavedDataAnnihilatorOreDictAmount(
+                                                                        context.getSource(),
+                                                                        StringArgumentType.getString(context, "pool"),
+                                                                        StringArgumentType.getString(context, "name"))))))))
+                        .then(Commands.literal("chunks")
+                                .then(Commands.literal("here")
+                                        .executes(context -> worldSavedDataChunkStatus(
+                                                context.getSource(),
+                                                new ChunkPos(BlockPos.containing(context.getSource().getPosition())))))
+                                .then(Commands.literal("block")
+                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                .executes(context -> worldSavedDataChunkStatus(
+                                                        context.getSource(),
+                                                        new ChunkPos(BlockPosArgument.getBlockPos(context, "pos"))))))
+                                .then(Commands.literal("chunk")
+                                        .then(Commands.argument("x", IntegerArgumentType.integer())
+                                                .then(Commands.argument("z", IntegerArgumentType.integer())
+                                                        .executes(context -> worldSavedDataChunkStatus(
+                                                                context.getSource(),
+                                                                new ChunkPos(
+                                                                        IntegerArgumentType.getInteger(context, "x"),
+                                                                        IntegerArgumentType.getInteger(context, "z")))))))
+                                .then(Commands.literal("square")
+                                        .then(Commands.argument("radius", IntegerArgumentType.integer(0, 16))
+                                                .executes(context -> worldSavedDataChunkSquareStatus(
+                                                        context.getSource(),
+                                                        IntegerArgumentType.getInteger(context, "radius"))))))
+                        .then(Commands.literal("subchunks")
+                                .then(Commands.literal("block")
+                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                .executes(context -> worldSavedDataSubChunkStatus(
+                                                        context.getSource(),
+                                                        SubChunkKey.ofBlock(BlockPosArgument.getBlockPos(context, "pos"))))))
+                                .then(Commands.literal("range")
+                                        .then(Commands.argument("first", BlockPosArgument.blockPos())
+                                                .then(Commands.argument("second", BlockPosArgument.blockPos())
+                                                        .executes(context -> worldSavedDataSubChunkBatchStatus(
+                                                                context.getSource(),
+                                                                "range",
+                                                                SubChunkKey.betweenBuildHeight(
+                                                                        context.getSource().getLevel(),
+                                                                        BlockPosArgument.getBlockPos(context, "first"),
+                                                                        BlockPosArgument.getBlockPos(context, "second")))))))
+                                .then(Commands.literal("sphere")
+                                        .then(Commands.argument("radius", IntegerArgumentType.integer(0, 512))
+                                                .executes(context -> worldSavedDataSubChunkBatchStatus(
+                                                        context.getSource(),
+                                                        "sphere",
+                                                        SubChunkKey.aroundSphere(
+                                                                context.getSource().getLevel(),
+                                                                BlockPos.containing(context.getSource().getPosition()),
+                                                                IntegerArgumentType.getInteger(context, "radius"))))))
+                                .then(Commands.literal("sphereAt")
+                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                .then(Commands.argument("radius", IntegerArgumentType.integer(0, 512))
+                                                        .executes(context -> worldSavedDataSubChunkBatchStatus(
+                                                                context.getSource(),
+                                                                "sphere",
+                                                                SubChunkKey.aroundSphere(
+                                                                        context.getSource().getLevel(),
+                                                                        BlockPosArgument.getBlockPos(context, "pos"),
+                                                                        IntegerArgumentType.getInteger(context, "radius"))))))))
                         .then(Commands.literal("migrations")
                                 .then(Commands.literal("resetDiagnostics")
                                         .executes(context -> resetWorldSavedDataMigrationDiagnostics(context.getSource())))));
@@ -331,10 +483,320 @@ public final class ModCommands {
         return status.presentDataCount();
     }
 
+    private static int worldSavedDataKnownData(CommandSourceStack source, ServerLevel level) {
+        List<WorldSavedDataDiagnostics.KnownDataStatus> entries = WorldSavedDataDiagnostics.knownData(level);
+        long present = entries.stream().filter(WorldSavedDataDiagnostics.KnownDataStatus::present).count();
+        source.sendSuccess(() -> Component.literal("World SavedData known dimension="
+                + level.dimension().location()
+                + " present=" + present
+                + "/" + entries.size()
+                + " readOnly=true"), false);
+        for (WorldSavedDataDiagnostics.KnownDataStatus entry : entries) {
+            source.sendSuccess(() -> Component.literal(entry.summary()), false);
+        }
+        return (int) present;
+    }
+
+    private static int worldSavedDataKnownDataAll(CommandSourceStack source) {
+        WorldSavedDataDiagnostics.ServerKnownDataStatus status =
+                WorldSavedDataDiagnostics.knownData(source.getServer());
+        source.sendSuccess(() -> Component.literal("World SavedData knownAll dimensions="
+                + status.dimensionCount()
+                + " present=" + status.presentCount()
+                + "/" + status.entries().size()
+                + " readOnly=true"), false);
+        for (WorldSavedDataDiagnostics.KnownDataStatus entry : status.entries()) {
+            source.sendSuccess(() -> Component.literal(entry.summary()), false);
+        }
+        return (int) status.presentCount();
+    }
+
     private static int resetWorldSavedDataMigrationDiagnostics(CommandSourceStack source) {
         BlockMigrationHelper.resetDiagnostics();
         source.sendSuccess(() -> Component.literal("Reset world saveddata chunk migration diagnostics."), true);
         return 1;
+    }
+
+    private static int worldSavedDataChunkStatus(CommandSourceStack source, ChunkPos pos) {
+        WorldUtil.ChunkAccessReport report = WorldUtil.inspectChunk(source.getLevel(), pos);
+        source.sendSuccess(() -> Component.literal("chunk " + report.chunkX() + "," + report.chunkZ()
+                + " loaded=" + report.loaded()
+                + " full=" + report.full()
+                + " failed=" + report.failed()
+                + " detail=" + report.detail()
+                + " noGeneration=true"), false);
+        return report.available() ? 1 : 0;
+    }
+
+    private static int worldSavedDataChunkSquareStatus(CommandSourceStack source, int radius) {
+        ChunkPos center = new ChunkPos(BlockPos.containing(source.getPosition()));
+        WorldUtil.ChunkBatchReport report = WorldUtil.inspectChunksInSquare(source.getLevel(), center, radius);
+        source.sendSuccess(() -> Component.literal("chunk square center=" + center.x + "," + center.z
+                + " radius=" + radius
+                + " requested=" + report.requestedChunks()
+                + " loaded=" + report.loadedChunks()
+                + " full=" + report.fullChunks()
+                + " failed=" + report.failedChunks()
+                + " complete=" + report.complete()
+                + " noGeneration=true"), false);
+        report.chunks().stream()
+                .filter(chunk -> !chunk.available())
+                .limit(8)
+                .forEach(chunk -> source.sendSuccess(() -> Component.literal(" - " + chunk.chunkX() + ","
+                        + chunk.chunkZ()
+                        + " loaded=" + chunk.loaded()
+                        + " full=" + chunk.full()
+                        + " failed=" + chunk.failed()
+                        + " detail=" + chunk.detail()), false));
+        return report.fullChunks();
+    }
+
+    private static int worldSavedDataSubChunkStatus(CommandSourceStack source, SubChunkKey key) {
+        SubChunkSnapshot.SnapshotStatus status = SubChunkSnapshot.inspect(source.getLevel(), key, false, 4);
+        source.sendSuccess(() -> Component.literal("subchunk " + formatSubChunkKey(key)
+                + " chunkLoaded=" + status.chunk().loaded()
+                + " chunkFull=" + status.chunk().full()
+                + " validSection=" + status.validSection()
+                + " palette=" + status.paletteSize()
+                + " nonAir=" + status.nonAirBlocks()
+                + " detail=" + status.detail()
+                + " noGeneration=true"), false);
+        for (SubChunkSnapshot.WorldBlockSample sample : status.samples()) {
+            source.sendSuccess(() -> Component.literal(" - " + sample.pos().toShortString()
+                    + " " + formatBlockState(sample.state())), false);
+        }
+        sendBlockStateCounts(source, "state", status.blockStateCounts(), 8);
+        return status.nonAirBlocks();
+    }
+
+    private static int worldSavedDataSubChunkBatchStatus(CommandSourceStack source, String label,
+                                                        List<SubChunkKey> keys) {
+        int requested = keys.size();
+        List<SubChunkKey> scanned = requested > MAX_SUBCHUNK_DIAGNOSTIC_SCAN
+                ? keys.subList(0, MAX_SUBCHUNK_DIAGNOSTIC_SCAN) : keys;
+        SubChunkSnapshot.SnapshotBatch report = SubChunkSnapshot.inspectAll(source.getLevel(), scanned, false, 0);
+        source.sendSuccess(() -> Component.literal("subchunk " + label
+                + " requested=" + requested
+                + " scanned=" + report.requestedSubChunks()
+                + " fullChunks=" + report.fullChunks()
+                + " validSections=" + report.validSections()
+                + " nonEmpty=" + report.nonEmptySubChunks()
+                + " nonAir=" + report.nonAirBlocks()
+                + " complete=" + report.complete()
+                + " noGeneration=true"
+                + (requested > scanned.size() ? " truncated=true" : "")), false);
+        report.statuses().stream()
+                .filter(SubChunkSnapshot.SnapshotStatus::nonEmpty)
+                .limit(8)
+                .forEach(status -> source.sendSuccess(() -> Component.literal(" - " + formatSubChunkKey(status.key())
+                        + " nonAir=" + status.nonAirBlocks()
+                        + " palette=" + status.paletteSize()), false));
+        report.statuses().stream()
+                .filter(status -> !status.chunk().full() || !status.validSection())
+                .limit(8)
+                .forEach(status -> source.sendSuccess(() -> Component.literal(" ! " + formatSubChunkKey(status.key())
+                        + " chunkFull=" + status.chunk().full()
+                        + " validSection=" + status.validSection()
+                        + " detail=" + status.detail()), false));
+        sendBlockStateCounts(source, "state", report.blockStateCounts(), 8);
+        return report.nonEmptySubChunks();
+    }
+
+    private static String formatSubChunkKey(SubChunkKey key) {
+        return key.getChunkXPos() + "," + key.getSectionY() + "," + key.getChunkZPos();
+    }
+
+    private static String formatBlockState(net.minecraft.world.level.block.state.BlockState state) {
+        ResourceLocation key = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        return key == null ? state.toString() : key + (state.getValues().isEmpty() ? "" : state.getValues().toString());
+    }
+
+    private static void sendBlockStateCounts(CommandSourceStack source, String prefix,
+                                             Map<net.minecraft.world.level.block.state.BlockState, Integer> counts,
+                                             int limit) {
+        counts.entrySet().stream()
+                .sorted(Map.Entry.<net.minecraft.world.level.block.state.BlockState, Integer>comparingByValue().reversed())
+                .limit(limit)
+                .forEach(entry -> source.sendSuccess(() -> Component.literal(" " + prefix + " "
+                        + formatBlockState(entry.getKey()) + "=" + entry.getValue()), false));
+    }
+
+    private static CompletableFuture<Suggestions> suggestAnnihilatorPools(com.mojang.brigadier.context.CommandContext<CommandSourceStack> context,
+                                                                          SuggestionsBuilder builder) {
+        return SharedSuggestionProvider.suggest(
+                AnnihilatorSavedData.getExisting(context.getSource().getLevel())
+                        .map(AnnihilatorSavedData::poolNamesSnapshot)
+                        .orElse(List.of()),
+                builder);
+    }
+
+    private static CompletableFuture<Suggestions> suggestItemIds(com.mojang.brigadier.context.CommandContext<CommandSourceStack> context,
+                                                                 SuggestionsBuilder builder) {
+        return SharedSuggestionProvider.suggest(
+                ForgeRegistries.ITEMS.getKeys().stream().map(ResourceLocation::toString),
+                builder);
+    }
+
+    private static CompletableFuture<Suggestions> suggestHbmFluids(com.mojang.brigadier.context.CommandContext<CommandSourceStack> context,
+                                                                   SuggestionsBuilder builder) {
+        return SharedSuggestionProvider.suggest(HbmFluids.all().stream().map(FluidType::toPath), builder);
+    }
+
+    private static CompletableFuture<Suggestions> suggestAnnihilatorKinds(com.mojang.brigadier.context.CommandContext<CommandSourceStack> context,
+                                                                          SuggestionsBuilder builder) {
+        return SharedSuggestionProvider.suggest(
+                Stream.of(AnnihilatorSavedData.Kind.values())
+                        .filter(kind -> kind != AnnihilatorSavedData.Kind.UNKNOWN)
+                        .map(AnnihilatorSavedData.Kind::commandName),
+                builder);
+    }
+
+    private static int worldSavedDataAnnihilatorPools(CommandSourceStack source) {
+        Optional<AnnihilatorSavedData> data = AnnihilatorSavedData.getExisting(source.getLevel());
+        if (data.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("annihilator absent"), false);
+            return 0;
+        }
+        AnnihilatorSavedData annihilator = data.get();
+        source.sendSuccess(() -> Component.literal("annihilator pools=" + annihilator.poolCount()
+                + " entries=" + annihilator.poolEntryCount()
+                + " total=" + annihilator.totalAmount()), false);
+        for (String pool : annihilator.poolNamesSnapshot()) {
+            source.sendSuccess(() -> Component.literal(pool
+                    + " entries=" + annihilator.poolEntryCount(pool)
+                    + " total=" + annihilator.totalAmount(pool)
+                    + " keys=" + annihilator.keyKindCounts(pool)
+                    + " kindTotals=" + annihilator.keyKindTotals(pool)), false);
+        }
+        return annihilator.poolCount();
+    }
+
+    private static int worldSavedDataAnnihilatorPool(CommandSourceStack source, String pool) {
+        Optional<AnnihilatorSavedData> data = AnnihilatorSavedData.getExisting(source.getLevel());
+        if (data.isEmpty() || !data.get().hasPool(pool)) {
+            source.sendFailure(Component.literal("No annihilator pool named '" + pool + "'."));
+            return 0;
+        }
+        AnnihilatorSavedData annihilator = data.get();
+        source.sendSuccess(() -> Component.literal("annihilator pool " + pool
+                + " entries=" + annihilator.poolEntryCount(pool)
+                + " total=" + annihilator.totalAmount(pool)
+                + " keys=" + annihilator.keyKindCounts(pool)
+                + " kindTotals=" + annihilator.keyKindTotals(pool)), false);
+        sendAnnihilatorEntries(source, annihilator.topEntriesSnapshot(pool, 12));
+        return annihilator.poolEntryCount(pool);
+    }
+
+    private static int worldSavedDataAnnihilatorTop(CommandSourceStack source, String pool, int limit) {
+        Optional<AnnihilatorSavedData> data = AnnihilatorSavedData.getExisting(source.getLevel());
+        if (data.isEmpty() || !data.get().hasPool(pool)) {
+            source.sendFailure(Component.literal("No annihilator pool named '" + pool + "'."));
+            return 0;
+        }
+        List<Map.Entry<AnnihilatorSavedData.PoolKey, java.math.BigInteger>> entries =
+                data.get().topEntriesSnapshot(pool, limit);
+        source.sendSuccess(() -> Component.literal("annihilator top pool=" + pool
+                + " limit=" + limit
+                + " shown=" + entries.size()), false);
+        sendAnnihilatorEntries(source, entries);
+        return entries.size();
+    }
+
+    private static int worldSavedDataAnnihilatorKind(CommandSourceStack source, String pool, String kindName,
+                                                     int limit) {
+        Optional<AnnihilatorSavedData.Kind> kind = AnnihilatorSavedData.Kind.byCommandName(kindName);
+        if (kind.isEmpty()) {
+            source.sendFailure(Component.literal("Unknown annihilator key kind: " + kindName));
+            return 0;
+        }
+        Optional<AnnihilatorSavedData> data = AnnihilatorSavedData.getExisting(source.getLevel());
+        if (data.isEmpty() || !data.get().hasPool(pool)) {
+            source.sendFailure(Component.literal("No annihilator pool named '" + pool + "'."));
+            return 0;
+        }
+        List<Map.Entry<AnnihilatorSavedData.PoolKey, java.math.BigInteger>> entries =
+                data.get().entriesByKindSnapshot(pool, kind.get(), limit);
+        source.sendSuccess(() -> Component.literal("annihilator kind pool=" + pool
+                + " kind=" + kind.get().commandName()
+                + " total=" + data.get().keyKindTotals(pool).getOrDefault(kind.get(), java.math.BigInteger.ZERO)
+                + " entries=" + data.get().keyKindCounts(pool).getOrDefault(kind.get(), 0)
+                + " shown=" + entries.size()), false);
+        sendAnnihilatorEntries(source, entries);
+        return entries.size();
+    }
+
+    private static void sendAnnihilatorEntries(CommandSourceStack source,
+                                               List<Map.Entry<AnnihilatorSavedData.PoolKey, java.math.BigInteger>> entries) {
+        entries.forEach(entry -> source.sendSuccess(() -> Component.literal(formatAnnihilatorKey(entry.getKey())
+                + "=" + entry.getValue()), false));
+    }
+
+    private static String formatAnnihilatorKey(AnnihilatorSavedData.PoolKey key) {
+        return switch (key.kind()) {
+            case ITEM -> "item:" + key.item();
+            case ITEM_META -> "item_meta:" + key.item() + ":" + key.meta();
+            case FLUID -> "fluid:" + key.fluid();
+            case ORE_DICT -> "oredict:" + key.oreDict();
+            case UNKNOWN -> "unknown";
+        };
+    }
+
+    private static int worldSavedDataAnnihilatorItemAmount(CommandSourceStack source, String pool,
+                                                          ResourceLocation itemName) {
+        Optional<Item> item = parseItem(source, itemName);
+        if (item.isEmpty()) {
+            return 0;
+        }
+        return worldSavedDataAnnihilatorAmount(source, pool, "item:" + ForgeRegistries.ITEMS.getKey(item.get()),
+                data -> data.getItemAmount(pool, item.get()));
+    }
+
+    private static int worldSavedDataAnnihilatorItemMetaAmount(CommandSourceStack source, String pool,
+                                                              ResourceLocation itemName, int legacyMeta) {
+        Optional<Item> item = parseItem(source, itemName);
+        if (item.isEmpty()) {
+            return 0;
+        }
+        ItemStack stack = new ItemStack(item.get());
+        return worldSavedDataAnnihilatorAmount(source, pool,
+                "item_meta:" + ForgeRegistries.ITEMS.getKey(item.get()) + ":" + legacyMeta,
+                data -> data.getItemMetaAmount(pool, stack, legacyMeta));
+    }
+
+    private static int worldSavedDataAnnihilatorFluidAmount(CommandSourceStack source, String pool, String fluidName) {
+        FluidType type = HbmFluids.fromName(fluidName);
+        if (type == HbmFluids.NONE) {
+            source.sendFailure(Component.literal("Unknown HBM fluid: " + fluidName));
+            return 0;
+        }
+        return worldSavedDataAnnihilatorAmount(source, pool, "fluid:" + type.getName(),
+                data -> data.getFluidAmount(pool, type));
+    }
+
+    private static int worldSavedDataAnnihilatorOreDictAmount(CommandSourceStack source, String pool, String oreDict) {
+        return worldSavedDataAnnihilatorAmount(source, pool, "oredict:" + oreDict,
+                data -> data.getOreDictAmount(pool, oreDict));
+    }
+
+    private static int worldSavedDataAnnihilatorAmount(CommandSourceStack source, String pool, String key,
+                                                       java.util.function.Function<AnnihilatorSavedData, java.math.BigInteger> getter) {
+        Optional<AnnihilatorSavedData> data = AnnihilatorSavedData.getExisting(source.getLevel());
+        if (data.isEmpty() || !data.get().hasPool(pool)) {
+            source.sendFailure(Component.literal("No annihilator pool named '" + pool + "'."));
+            return 0;
+        }
+        java.math.BigInteger amount = getter.apply(data.get());
+        source.sendSuccess(() -> Component.literal("annihilator pool " + pool + " " + key + "=" + amount), false);
+        return amount.signum() > 0 ? 1 : 0;
+    }
+
+    private static Optional<Item> parseItem(CommandSourceStack source, ResourceLocation id) {
+        Item item = ForgeRegistries.ITEMS.getValue(id);
+        if (item == null || item == Items.AIR) {
+            source.sendFailure(Component.literal("Unknown item: " + id));
+            return Optional.empty();
+        }
+        return Optional.of(item);
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> satelliteCommand(String name) {
@@ -784,29 +1246,176 @@ public final class ModCommands {
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> pollutionCommand() {
+        LiteralArgumentBuilder<CommandSourceStack> clearPollutionGrid = Commands.literal("grid")
+                .then(Commands.argument("gridX", IntegerArgumentType.integer())
+                        .then(Commands.argument("gridZ", IntegerArgumentType.integer())
+                                .executes(context -> clearPollution(
+                                        context.getSource(),
+                                        new PollutionGridPos(
+                                                IntegerArgumentType.getInteger(context, "gridX"),
+                                                IntegerArgumentType.getInteger(context, "gridZ"))))));
         return Commands.literal("pollution")
                 .then(Commands.literal("get")
-                        .executes(context -> getPollution(context.getSource())))
+                        .executes(context -> getPollution(context.getSource()))
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .executes(context -> getPollution(
+                                        context.getSource(),
+                                        BlockPosArgument.getBlockPos(context, "pos"))))
+                        .then(Commands.literal("grid")
+                                .then(Commands.argument("gridX", IntegerArgumentType.integer())
+                                        .then(Commands.argument("gridZ", IntegerArgumentType.integer())
+                                                .executes(context -> getPollution(
+                                                        context.getSource(),
+                                                        new PollutionGridPos(
+                                                                IntegerArgumentType.getInteger(context, "gridX"),
+                                                                        IntegerArgumentType.getInteger(context, "gridZ")))))))
                 .then(Commands.literal("set")
                         .then(Commands.argument("type", StringArgumentType.word())
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggest(pollutionTypeNames(), builder))
                                 .then(Commands.argument("amount", FloatArgumentType.floatArg())
                                         .executes(context -> setPollution(context.getSource(),
                                                 StringArgumentType.getString(context, "type"),
-                                                FloatArgumentType.getFloat(context, "amount"))))))
+                                                FloatArgumentType.getFloat(context, "amount")))
+                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                .executes(context -> setPollution(
+                                                        context.getSource(),
+                                                        StringArgumentType.getString(context, "type"),
+                                                        FloatArgumentType.getFloat(context, "amount"),
+                                                        BlockPosArgument.getBlockPos(context, "pos"))))
+                                        .then(Commands.literal("grid")
+                                                .then(Commands.argument("gridX", IntegerArgumentType.integer())
+                                                        .then(Commands.argument("gridZ", IntegerArgumentType.integer())
+                                                                .executes(context -> setPollution(
+                                                                        context.getSource(),
+                                                                        StringArgumentType.getString(context, "type"),
+                                                                        FloatArgumentType.getFloat(context, "amount"),
+                                                                        new PollutionGridPos(
+                                                                                IntegerArgumentType.getInteger(context, "gridX"),
+                                                                                IntegerArgumentType.getInteger(context, "gridZ"))))))))))
                 .then(Commands.literal("add")
                         .then(Commands.argument("type", StringArgumentType.word())
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggest(pollutionTypeNames(), builder))
                                 .then(Commands.argument("amount", FloatArgumentType.floatArg())
                                         .executes(context -> addPollution(context.getSource(),
                                                 StringArgumentType.getString(context, "type"),
-                                                FloatArgumentType.getFloat(context, "amount"))))))
+                                                FloatArgumentType.getFloat(context, "amount")))
+                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                .executes(context -> addPollution(
+                                                        context.getSource(),
+                                                        StringArgumentType.getString(context, "type"),
+                                                        FloatArgumentType.getFloat(context, "amount"),
+                                                        BlockPosArgument.getBlockPos(context, "pos"))))
+                                        .then(Commands.literal("grid")
+                                                .then(Commands.argument("gridX", IntegerArgumentType.integer())
+                                                        .then(Commands.argument("gridZ", IntegerArgumentType.integer())
+                                                                .executes(context -> addPollution(
+                                                                        context.getSource(),
+                                                                        StringArgumentType.getString(context, "type"),
+                                                                        FloatArgumentType.getFloat(context, "amount"),
+                                                                        new PollutionGridPos(
+                                                                                IntegerArgumentType.getInteger(context, "gridX"),
+                                                                                IntegerArgumentType.getInteger(context, "gridZ"))))))))))
                 .then(Commands.literal("stats")
                         .executes(context -> getPollutionStats(context.getSource())))
+                .then(Commands.literal("list")
+                        .executes(context -> listPollutionEntries(context.getSource(), 10))
+                        .then(Commands.argument("limit", IntegerArgumentType.integer(1, 50))
+                                .executes(context -> listPollutionEntries(
+                                        context.getSource(),
+                                        IntegerArgumentType.getInteger(context, "limit"))))
+                        .then(Commands.literal("type")
+                                .then(Commands.argument("type", StringArgumentType.word())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                pollutionTypeNames(), builder))
+                                        .executes(context -> listPollutionEntriesByType(
+                                                context.getSource(),
+                                                StringArgumentType.getString(context, "type"),
+                                                10))
+                                        .then(Commands.argument("limit", IntegerArgumentType.integer(1, 50))
+                                                .executes(context -> listPollutionEntriesByType(
+                                                        context.getSource(),
+                                                        StringArgumentType.getString(context, "type"),
+                                                        IntegerArgumentType.getInteger(context, "limit"))))))
+                .then(Commands.literal("previewDiffusion")
+                        .executes(context -> previewPollutionDiffusion(context.getSource(), 10))
+                        .then(Commands.argument("limit", IntegerArgumentType.integer(1, 50))
+                                .executes(context -> previewPollutionDiffusion(
+                                        context.getSource(),
+                                        IntegerArgumentType.getInteger(context, "limit"))))
+                        .then(Commands.literal("type")
+                                .then(Commands.argument("type", StringArgumentType.word())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                pollutionTypeNames(), builder))
+                                        .executes(context -> previewPollutionDiffusionByType(
+                                                context.getSource(),
+                                                StringArgumentType.getString(context, "type"),
+                                                10))
+                                        .then(Commands.argument("limit", IntegerArgumentType.integer(1, 50))
+                                                .executes(context -> previewPollutionDiffusionByType(
+                                                        context.getSource(),
+                                                        StringArgumentType.getString(context, "type"),
+                                                        IntegerArgumentType.getInteger(context, "limit"))))))
+                        .then(Commands.literal("pos")
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .executes(context -> previewPollutionDiffusionAt(
+                                                context.getSource(),
+                                                PollutionGridPos.ofBlock(
+                                                        BlockPosArgument.getBlockPos(context, "pos"))))))
+                        .then(Commands.literal("grid")
+                                .then(Commands.argument("gridX", IntegerArgumentType.integer())
+                                        .then(Commands.argument("gridZ", IntegerArgumentType.integer())
+                                                .executes(context -> previewPollutionDiffusionAt(
+                                                        context.getSource(),
+                                                        new PollutionGridPos(
+                                                                IntegerArgumentType.getInteger(context, "gridX"),
+                                                                IntegerArgumentType.getInteger(context, "gridZ")))))))
+                        .then(Commands.literal("neighbors")
+                                .executes(context -> previewPollutionDiffusionNeighbors(
+                                        context.getSource(),
+                                        PollutionGridPos.ofBlock(BlockPos.containing(context.getSource().getPosition()))))
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .executes(context -> previewPollutionDiffusionNeighbors(
+                                                context.getSource(),
+                                                PollutionGridPos.ofBlock(
+                                                        BlockPosArgument.getBlockPos(context, "pos")))))
+                                .then(Commands.literal("grid")
+                                        .then(Commands.argument("gridX", IntegerArgumentType.integer())
+                                                .then(Commands.argument("gridZ", IntegerArgumentType.integer())
+                                                        .executes(context -> previewPollutionDiffusionNeighbors(
+                                                                context.getSource(),
+                                                                new PollutionGridPos(
+                                                                        IntegerArgumentType.getInteger(context, "gridX"),
+                                                                        IntegerArgumentType.getInteger(context, "gridZ")))))))))
+                .then(Commands.literal("gridOf")
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .executes(context -> getPollutionGridOf(
+                                        context.getSource(),
+                                        BlockPosArgument.getBlockPos(context, "pos")))))
+                .then(Commands.literal("neighbors")
+                        .executes(context -> getPollutionNeighbors(
+                                context.getSource(),
+                                PollutionGridPos.ofBlock(BlockPos.containing(context.getSource().getPosition()))))
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .executes(context -> getPollutionNeighbors(
+                                        context.getSource(),
+                                        PollutionGridPos.ofBlock(BlockPosArgument.getBlockPos(context, "pos")))))
+                        .then(Commands.literal("grid")
+                                .then(Commands.argument("gridX", IntegerArgumentType.integer())
+                                        .then(Commands.argument("gridZ", IntegerArgumentType.integer())
+                                                .executes(context -> getPollutionNeighbors(
+                                                        context.getSource(),
+                                                        new PollutionGridPos(
+                                                                        IntegerArgumentType.getInteger(context, "gridX"),
+                                                                        IntegerArgumentType.getInteger(context, "gridZ")))))))))
                 .then(Commands.literal("prune")
                         .executes(context -> prunePollution(context.getSource())))
                 .then(Commands.literal("clear")
-                        .executes(context -> clearPollution(context.getSource())));
+                        .executes(context -> clearPollution(context.getSource()))
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .executes(context -> clearPollution(
+                                        context.getSource(),
+                                        BlockPosArgument.getBlockPos(context, "pos"))))
+                        .then(clearPollutionGrid)));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> damageCommand() {
@@ -879,6 +1488,20 @@ public final class ModCommands {
                         .then(fluidNetworkArgument()))
                 .then(Commands.literal("network")
                         .then(fluidNetworkArgument()))
+                .then(Commands.literal("overpressure")
+                        .then(Commands.literal("all")
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .executes(context -> damageAllFluidNetworksFromOverpressure(
+                                                context.getSource(),
+                                                BlockPosArgument.getLoadedBlockPos(context, "pos")))))
+                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                .then(Commands.argument("fluid", StringArgumentType.word())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                                HbmFluids.all().stream().map(FluidType::toPath), builder))
+                                        .executes(context -> damageFluidNetworkFromOverpressure(
+                                                context.getSource(),
+                                                BlockPosArgument.getLoadedBlockPos(context, "pos"),
+                                                parseFluid(StringArgumentType.getString(context, "fluid")))))))
                 .then(Commands.literal("traits")
                         .then(Commands.literal("status")
                                 .executes(context -> getFluidTraitConfigStatus(context.getSource())))
@@ -917,6 +1540,8 @@ public final class ModCommands {
                 .then(Commands.literal("containers")
                         .then(Commands.literal("status")
                                 .executes(context -> getFluidContainerRegistryStatus(context.getSource())))
+                        .then(Commands.literal("summary")
+                                .executes(context -> summarizeFluidContainers(context.getSource())))
                         .then(Commands.literal("reload")
                                 .executes(context -> reloadFluidContainers(context.getSource())))
                         .then(Commands.literal("list")
@@ -1020,6 +1645,18 @@ public final class ModCommands {
                         .executes(context -> getNetworkProtocolSummary(context.getSource()))
                         .then(Commands.literal("summary")
                                 .executes(context -> getNetworkProtocolSummary(context.getSource())))
+                        .then(Commands.literal("channel")
+                                .executes(context -> getNetworkProtocolChannel(context.getSource())))
+                        .then(Commands.literal("fingerprint")
+                                .executes(context -> getNetworkProtocolFingerprint(context.getSource())))
+                        .then(Commands.literal("manifest")
+                                .executes(context -> getNetworkProtocolManifest(context.getSource())))
+                        .then(Commands.literal("contract")
+                                .executes(context -> getNetworkProtocolContract(context.getSource())))
+                        .then(Commands.literal("codec")
+                                .executes(context -> getNetworkProtocolCodec(context.getSource())))
+                        .then(Commands.literal("handlers")
+                                .executes(context -> getNetworkProtocolHandlers(context.getSource())))
                         .then(Commands.literal("progress")
                                 .executes(context -> getNetworkProtocolProgress(context.getSource())))
                         .then(Commands.literal("diagnostics")
@@ -1052,6 +1689,11 @@ public final class ModCommands {
                                         .executes(context -> queryLegacyNetworkPacket(
                                                 context.getSource(),
                                                 StringArgumentType.getString(context, "packet")))))
+                        .then(Commands.literal("legacyId")
+                                .then(Commands.argument("id", IntegerArgumentType.integer(0))
+                                        .executes(context -> queryLegacyNetworkPacketById(
+                                                context.getSource(),
+                                                IntegerArgumentType.getInteger(context, "id")))))
                         .then(Commands.literal("modern")
                                 .then(Commands.argument("packet", StringArgumentType.word())
                                         .suggests((context, builder) -> SharedSuggestionProvider.suggest(
@@ -1061,6 +1703,11 @@ public final class ModCommands {
                                         .executes(context -> queryModernNetworkPacket(
                                                 context.getSource(),
                                                 StringArgumentType.getString(context, "packet")))))
+                        .then(Commands.literal("modernId")
+                                .then(Commands.argument("id", IntegerArgumentType.integer(0))
+                                        .executes(context -> queryModernNetworkPacketById(
+                                                context.getSource(),
+                                                IntegerArgumentType.getInteger(context, "id")))))
                         .then(Commands.literal("wrapper")
                                 .executes(context -> getNetworkLegacyWrapper(context.getSource()))))
                 .then(Commands.literal("packetthreading")
@@ -1283,34 +1930,73 @@ public final class ModCommands {
 
     private static int getPollution(CommandSourceStack source) {
         BlockPos pos = BlockPos.containing(source.getPosition());
+        return getPollution(source, pos);
+    }
+
+    private static int getPollution(CommandSourceStack source, BlockPos pos) {
         PollutionSavedData.PollutionSample sample = PollutionManager.getPollutionData(source.getLevel(), pos);
-        source.sendSuccess(() -> Component.literal("Pollution at " + pos.toShortString()
-                + ": soot=" + round(sample.get(PollutionType.SOOT))
-                + " poison=" + round(sample.get(PollutionType.POISON))
-                + " heavymetal=" + round(sample.get(PollutionType.HEAVYMETAL))
-                + " fallout=" + round(sample.get(PollutionType.FALLOUT))), false);
+        source.sendSuccess(() -> pollutionReadout("Pollution at " + pos.toShortString()
+                + " grid " + PollutionGridPos.ofBlock(pos).formatLabel(), sample), false);
+        return Math.round(sample.sum());
+    }
+
+    private static int getPollution(CommandSourceStack source, PollutionGridPos pos) {
+        PollutionSavedData.PollutionSample sample = PollutionManager.getPollutionData(source.getLevel(), pos);
+        source.sendSuccess(() -> pollutionReadout("Pollution grid " + pos.formatLabel(), sample), false);
         return Math.round(sample.sum());
     }
 
     private static int setPollution(CommandSourceStack source, String typeName, float amount) {
+        return setPollution(source, typeName, amount, BlockPos.containing(source.getPosition()));
+    }
+
+    private static int setPollution(CommandSourceStack source, String typeName, float amount, BlockPos pos) {
         PollutionType type = parsePollutionType(source, typeName);
         if (type == null) {
             return 0;
         }
-        PollutionManager.setPollution(source.getLevel(), BlockPos.containing(source.getPosition()), type, amount);
-        source.sendSuccess(() -> Component.literal("Set " + type.id() + " pollution to " + round(amount) + "."), true);
+        PollutionManager.setPollution(source.getLevel(), pos, type, amount);
+        source.sendSuccess(() -> Component.literal("Set " + type.id() + " pollution at " + pos.toShortString()
+                + " to " + round(amount) + "."), true);
+        return Math.round(amount);
+    }
+
+    private static int setPollution(CommandSourceStack source, String typeName, float amount, PollutionGridPos pos) {
+        PollutionType type = parsePollutionType(source, typeName);
+        if (type == null) {
+            return 0;
+        }
+        PollutionManager.setPollution(source.getLevel(), pos, type, amount);
+        source.sendSuccess(() -> Component.literal("Set " + type.id() + " pollution at grid "
+                + pos.formatLabel() + " to " + round(amount) + "."), true);
         return Math.round(amount);
     }
 
     private static int addPollution(CommandSourceStack source, String typeName, float amount) {
+        return addPollution(source, typeName, amount, BlockPos.containing(source.getPosition()));
+    }
+
+    private static int addPollution(CommandSourceStack source, String typeName, float amount, BlockPos pos) {
         PollutionType type = parsePollutionType(source, typeName);
         if (type == null) {
             return 0;
         }
-        BlockPos pos = BlockPos.containing(source.getPosition());
         PollutionManager.incrementPollution(source.getLevel(), pos, type, amount);
         float current = PollutionManager.getPollution(source.getLevel(), pos, type);
-        source.sendSuccess(() -> Component.literal(type.id() + " pollution: " + round(current)), true);
+        source.sendSuccess(() -> Component.literal(type.id() + " pollution at " + pos.toShortString()
+                + ": " + round(current)), true);
+        return Math.round(current);
+    }
+
+    private static int addPollution(CommandSourceStack source, String typeName, float amount, PollutionGridPos pos) {
+        PollutionType type = parsePollutionType(source, typeName);
+        if (type == null) {
+            return 0;
+        }
+        PollutionManager.incrementPollution(source.getLevel(), pos, type, amount);
+        float current = PollutionManager.getPollution(source.getLevel(), pos, type);
+        source.sendSuccess(() -> Component.literal(type.id() + " pollution at grid "
+                + pos.formatLabel() + ": " + round(current)), true);
         return Math.round(current);
     }
 
@@ -1320,19 +2006,234 @@ public final class ModCommands {
         return 1;
     }
 
+    private static int clearPollution(CommandSourceStack source, BlockPos pos) {
+        PollutionManager.setPollutionData(source.getLevel(), pos, new PollutionSavedData.PollutionSample());
+        source.sendSuccess(() -> Component.literal("Cleared pollution at " + pos.toShortString() + "."), true);
+        return 1;
+    }
+
+    private static int clearPollution(CommandSourceStack source, PollutionGridPos pos) {
+        PollutionManager.setPollutionData(source.getLevel(), pos, new PollutionSavedData.PollutionSample());
+        source.sendSuccess(() -> Component.literal("Cleared pollution grid " + pos.formatLabel() + "."), true);
+        return 1;
+    }
+
+    private static Component pollutionReadout(String label, PollutionSavedData.PollutionSample sample) {
+        PollutionSavedData.PollutionSample data = sample == null ? new PollutionSavedData.PollutionSample() : sample;
+        return Component.literal(label + ": " + data.formatValues());
+    }
+
     private static int getPollutionStats(CommandSourceStack source) {
         PollutionSavedData.Stats stats = PollutionManager.getStats(source.getLevel());
         source.sendSuccess(() -> Component.literal("Pollution stats: entries=" + stats.totalEntries()
                 + " loaded=" + stats.loadedEntries()
+                + " positive=" + stats.positiveEntries()
+                + " loadedPositive=" + stats.loadedPositiveEntries()
+                + " stored=" + stats.storedEntries()
+                + " loadedStored=" + stats.loadedStoredEntries()
                 + " total=" + round(stats.totalPollution())
                 + " loadedTotal=" + round(stats.loadedPollution())
                 + " max=" + round(stats.maxPollution())
                 + " loadedMax=" + round(stats.loadedMaxPollution())), false);
-        source.sendSuccess(() -> Component.literal("Totals: soot=" + round(stats.totals()[PollutionType.SOOT.ordinal()])
-                + " poison=" + round(stats.totals()[PollutionType.POISON.ordinal()])
-                + " heavymetal=" + round(stats.totals()[PollutionType.HEAVYMETAL.ordinal()])
-                + " fallout=" + round(stats.totals()[PollutionType.FALLOUT.ordinal()])), false);
+        source.sendSuccess(() -> Component.literal("Totals: " + stats.formatTotals()), false);
+        source.sendSuccess(() -> Component.literal("Loaded totals: " + stats.formatLoadedTotals()), false);
+        source.sendSuccess(() -> Component.literal("Grid bounds: all=" + stats.formatGridBounds()
+                + " loaded=" + stats.formatLoadedGridBounds()
+                + " blocks=" + stats.formatBlockBounds()
+                + " loadedBlocks=" + stats.formatLoadedBlockBounds()), false);
         return stats.totalEntries();
+    }
+
+    private static int listPollutionEntries(CommandSourceStack source, int limit) {
+        List<PollutionSavedData.EntrySnapshot> entries = PollutionManager.positivePollutionEntriesSnapshot(
+                source.getLevel(), limit);
+        if (entries.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("No positive pollution entries."), false);
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("Top pollution entries: " + entries.size()), false);
+        for (PollutionSavedData.EntrySnapshot entry : entries) {
+            PollutionType dominant = entry.dominantType();
+            source.sendSuccess(() -> Component.literal(" - grid " + entry.pos().formatLabel()
+                    + " total=" + round(entry.totalPollution())
+                    + " dominant=" + (dominant == null ? "none" : dominant.id())
+                    + " " + entry.formatValues()), false);
+        }
+        return entries.size();
+    }
+
+    private static int listPollutionEntriesByType(CommandSourceStack source, String typeName, int limit) {
+        PollutionType type = parsePollutionType(source, typeName);
+        if (type == null) {
+            return 0;
+        }
+        List<PollutionSavedData.EntrySnapshot> entries = PollutionManager.positivePollutionEntriesSnapshot(
+                source.getLevel(), type, limit);
+        if (entries.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("No positive " + type.id() + " pollution entries."), false);
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("Top " + type.id() + " pollution entries: " + entries.size()),
+                false);
+        for (PollutionSavedData.EntrySnapshot entry : entries) {
+            source.sendSuccess(() -> Component.literal(" - grid " + entry.pos().formatLabel()
+                    + " " + type.id() + "=" + round(entry.get(type))
+                    + " total=" + round(entry.totalPollution())
+                    + " " + entry.formatValues()), false);
+        }
+        return entries.size();
+    }
+
+    private static int previewPollutionDiffusion(CommandSourceStack source, int limit) {
+        PollutionSavedData.DiffusionPreview preview = PollutionManager.previewDiffusion(source.getLevel());
+        PollutionSavedData.Stats before = preview.before();
+        PollutionSavedData.Stats after = preview.after();
+        source.sendSuccess(() -> Component.literal("Pollution diffusion preview: entries="
+                + before.totalEntries() + " -> " + after.totalEntries()
+                + " delta=" + preview.entryDelta()
+                + " total=" + round(before.totalPollution()) + " -> " + round(after.totalPollution())
+                + " delta=" + round(preview.totalPollutionDelta())), false);
+        source.sendSuccess(() -> Component.literal("Preview totals: " + after.formatTotals()), false);
+        source.sendSuccess(() -> Component.literal("Preview grid bounds: all=" + after.formatGridBounds()
+                + " loaded=" + after.formatLoadedGridBounds()
+                + " blocks=" + after.formatBlockBounds()
+                + " loadedBlocks=" + after.formatLoadedBlockBounds()), false);
+
+        List<PollutionSavedData.EntrySnapshot> entries = PollutionManager.positiveDiffusionPreviewEntries(
+                source.getLevel(), limit);
+        List<PollutionSavedData.EntryDelta> deltas = PollutionManager.diffusionDeltaEntries(source.getLevel(), limit);
+        if (entries.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("Preview has no positive pollution entries."), false);
+        } else {
+            source.sendSuccess(() -> Component.literal("Top preview entries: " + entries.size()), false);
+            for (PollutionSavedData.EntrySnapshot entry : entries) {
+                PollutionType dominant = entry.dominantType();
+                source.sendSuccess(() -> Component.literal(" - grid " + entry.pos().formatLabel()
+                        + " total=" + round(entry.totalPollution())
+                        + " dominant=" + (dominant == null ? "none" : dominant.id())
+                        + " " + entry.formatValues()), false);
+            }
+        }
+        if (!deltas.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("Top preview changes: " + deltas.size()), false);
+            for (PollutionSavedData.EntryDelta delta : deltas) {
+                source.sendSuccess(() -> Component.literal(" - grid " + delta.pos().formatLabel()
+                        + " total=" + round(delta.totalBefore()) + " -> " + round(delta.totalAfter())
+                        + " delta=" + round(delta.totalDelta())
+                        + " valuesDelta=" + delta.formatDeltaValues()), false);
+            }
+        }
+        return Math.max(entries.size(), deltas.size());
+    }
+
+    private static int previewPollutionDiffusionByType(CommandSourceStack source, String typeName, int limit) {
+        PollutionType type = parsePollutionType(source, typeName);
+        if (type == null) {
+            return 0;
+        }
+        PollutionSavedData.DiffusionPreview preview = PollutionManager.previewDiffusion(source.getLevel());
+        PollutionSavedData.Stats before = preview.before();
+        PollutionSavedData.Stats after = preview.after();
+        source.sendSuccess(() -> Component.literal("Pollution diffusion preview for " + type.id()
+                + ": entries=" + before.totalEntries() + " -> " + after.totalEntries()
+                + " " + type.id() + "=" + round(before.total(type)) + " -> " + round(after.total(type))
+                + " delta=" + round(after.total(type) - before.total(type))
+                + " loaded=" + round(before.loadedTotal(type)) + " -> " + round(after.loadedTotal(type))), false);
+
+        List<PollutionSavedData.EntrySnapshot> entries = PollutionManager.positiveDiffusionPreviewEntries(
+                source.getLevel(), type, limit);
+        List<PollutionSavedData.EntryDelta> deltas = PollutionManager.diffusionDeltaEntries(
+                source.getLevel(), type, limit);
+        if (entries.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("Preview has no positive " + type.id()
+                    + " pollution entries."), false);
+        } else {
+            source.sendSuccess(() -> Component.literal("Top preview " + type.id() + " entries: " + entries.size()),
+                    false);
+            for (PollutionSavedData.EntrySnapshot entry : entries) {
+                source.sendSuccess(() -> Component.literal(" - grid " + entry.pos().formatLabel()
+                        + " " + type.id() + "=" + round(entry.get(type))
+                        + " total=" + round(entry.totalPollution())
+                        + " " + entry.formatValues()), false);
+            }
+        }
+        if (!deltas.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("Top preview " + type.id() + " changes: " + deltas.size()),
+                    false);
+            for (PollutionSavedData.EntryDelta delta : deltas) {
+                source.sendSuccess(() -> Component.literal(" - grid " + delta.pos().formatLabel()
+                        + " " + type.id() + "=" + round(delta.typeBefore(type))
+                        + " -> " + round(delta.typeAfter(type))
+                        + " delta=" + round(delta.typeDelta(type))
+                        + " totalDelta=" + round(delta.totalDelta())
+                        + " valuesDelta=" + delta.formatDeltaValues()), false);
+            }
+        }
+        return Math.max(entries.size(), deltas.size());
+    }
+
+    private static int previewPollutionDiffusionAt(CommandSourceStack source, PollutionGridPos pos) {
+        PollutionSavedData.EntryDelta delta = PollutionManager.diffusionDeltaAt(source.getLevel(), pos);
+        source.sendSuccess(() -> Component.literal("Pollution diffusion preview at grid "
+                + delta.pos().formatLabel()), false);
+        sendPollutionDiffusionDeltaLine(source, "grid", delta);
+        return delta.hasAnyDelta() ? 1 : 0;
+    }
+
+    private static int previewPollutionDiffusionNeighbors(CommandSourceStack source, PollutionGridPos center) {
+        List<PollutionSavedData.EntryDelta> deltas = PollutionManager.diffusionNeighborDeltas(
+                source.getLevel(), center);
+        if (deltas.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("No pollution diffusion neighbor preview data."), false);
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("Pollution diffusion neighbor preview for "
+                + center.formatLabel()), false);
+        String[] labels = {"center", "east", "west", "south", "north"};
+        for (int i = 0; i < deltas.size(); i++) {
+            sendPollutionDiffusionDeltaLine(source, i < labels.length ? labels[i] : "grid", deltas.get(i));
+        }
+        return deltas.size();
+    }
+
+    private static void sendPollutionDiffusionDeltaLine(CommandSourceStack source, String label,
+                                                        PollutionSavedData.EntryDelta delta) {
+        PollutionSavedData.EntryDelta data = delta == null
+                ? PollutionSavedData.EntryDelta.of(new PollutionGridPos(0, 0),
+                        new PollutionSavedData.PollutionSample(), new PollutionSavedData.PollutionSample())
+                : delta;
+        source.sendSuccess(() -> Component.literal(" - " + label + " grid " + data.pos().formatLabel()
+                + " loaded=" + PollutionManager.isPollutionGridLoaded(source.getLevel(), data.pos())
+                + " total=" + round(data.totalBefore()) + " -> " + round(data.totalAfter())
+                + " delta=" + round(data.totalDelta())
+                + " before=" + data.before().formatValues()
+                + " after=" + data.after().formatValues()
+                + " valuesDelta=" + data.formatDeltaValues()), false);
+    }
+
+    private static int getPollutionGridOf(CommandSourceStack source, BlockPos pos) {
+        PollutionGridPos grid = PollutionGridPos.ofBlock(pos);
+        source.sendSuccess(() -> Component.literal("Pollution grid for " + pos.toShortString() + ": "
+                + grid.formatLabel()), false);
+        return 1;
+    }
+
+    private static int getPollutionNeighbors(CommandSourceStack source, PollutionGridPos center) {
+        source.sendSuccess(() -> Component.literal("Pollution neighbor grid readout for " + center.formatLabel()), false);
+        sendPollutionNeighborLine(source, "center", center);
+        sendPollutionNeighborLine(source, "east", center.offset(1, 0));
+        sendPollutionNeighborLine(source, "west", center.offset(-1, 0));
+        sendPollutionNeighborLine(source, "south", center.offset(0, 1));
+        sendPollutionNeighborLine(source, "north", center.offset(0, -1));
+        return 5;
+    }
+
+    private static void sendPollutionNeighborLine(CommandSourceStack source, String label, PollutionGridPos pos) {
+        PollutionSavedData.PollutionSample sample = PollutionManager.getPollutionData(source.getLevel(), pos);
+        source.sendSuccess(() -> Component.literal(" - " + label + " grid " + pos.formatLabel()
+                + " loaded=" + PollutionManager.isPollutionGridLoaded(source.getLevel(), pos)
+                + " total=" + round(sample.sum())
+                + " " + sample.formatValues()), false);
     }
 
     private static int prunePollution(CommandSourceStack source) {
@@ -1351,12 +2252,7 @@ public final class ModCommands {
     }
 
     private static String[] pollutionTypeNames() {
-        PollutionType[] types = PollutionType.values();
-        String[] names = new String[types.length];
-        for (int i = 0; i < types.length; i++) {
-            names[i] = types[i].id();
-        }
-        return names;
+        return PollutionType.ids();
     }
 
     private static int getCraterRadiationStats(CommandSourceStack source) {
@@ -2512,6 +3408,55 @@ public final class ModCommands {
         return network.links();
     }
 
+    private static int damageFluidNetworkFromOverpressure(CommandSourceStack source, BlockPos pos, FluidType type) {
+        if (type == HbmFluids.NONE) {
+            source.sendFailure(Component.literal("Unknown or empty HBM fluid type."));
+            return 0;
+        }
+        HbmFluidNodespace.OverpressureDamageResult result =
+                HbmFluidNodespace.damageNetworkFromOverpressure(source.getLevel(), pos, type);
+        if (!result.nodePresent()) {
+            source.sendFailure(Component.literal("No HBM fluid node for ")
+                    .append(type.getDisplayName())
+                    .append(" at " + pos.toShortString()));
+            return 0;
+        }
+        if (!result.networkPresent()) {
+            source.sendSuccess(() -> Component.literal("Fluid node at " + pos.toShortString()
+                    + " type=" + result.fluid()
+                    + " has no active network to overpressure."), false);
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("Fluid overpressure at " + pos.toShortString()
+                + " type=" + result.fluid()
+                + ": pipeNodes=" + result.pipeNodes()
+                + " pipeNodesDamaged=" + result.pipeNodesDamaged()
+                + " receiversDamaged=" + result.receiversDamaged()), true);
+        return result.pipeNodesDamaged() + result.receiversDamaged();
+    }
+
+    private static int damageAllFluidNetworksFromOverpressure(CommandSourceStack source, BlockPos pos) {
+        HbmFluidNodespace.OverpressureBatchDamageResult result =
+                HbmFluidNodespace.damageAllNetworksFromOverpressure(source.getLevel(), pos);
+        if (!result.nodePresent()) {
+            source.sendFailure(Component.literal("No HBM fluid nodes at " + pos.toShortString()));
+            return 0;
+        }
+        if (!result.networkPresent()) {
+            source.sendSuccess(() -> Component.literal("HBM fluid nodes at " + pos.toShortString()
+                    + " have no active networks to overpressure. fluidNodes=" + result.fluidNodes()), false);
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("Fluid overpressure at " + pos.toShortString()
+                + ": fluidNodes=" + result.fluidNodes()
+                + " networks=" + result.networks()
+                + " pipeNodes=" + result.pipeNodes()
+                + " pipeNodesDamaged=" + result.pipeNodesDamaged()
+                + " receivers=" + result.receivers()
+                + " receiversDamaged=" + result.receiversDamaged()), true);
+        return result.pipeNodesDamaged() + result.receiversDamaged();
+    }
+
     private static int getFluidTraits(CommandSourceStack source, FluidType type) {
         JsonObject traits = new JsonObject();
         for (var entry : type.getTraitJson().entrySet()) {
@@ -2711,6 +3656,38 @@ public final class ModCommands {
             source.sendSuccess(() -> Component.literal(" - " + warning), false);
         }
         return diagnostics.externalContainers();
+    }
+
+    private static int summarizeFluidContainers(CommandSourceStack source) {
+        List<HbmFluidContainerRegistry.ContainerEntry> fixedEntries = HbmFluidContainerRegistry.getFixedContainersSnapshot();
+        Map<HbmFluidContainerRegistry.ContainerSource, Integer> sourceCounts =
+                new EnumMap<>(HbmFluidContainerRegistry.ContainerSource.class);
+        Map<FluidType, Integer> fluidCounts = new java.util.IdentityHashMap<>();
+        int consumableEntries = 0;
+        int emptyReturningEntries = 0;
+        for (HbmFluidContainerRegistry.ContainerEntry entry : fixedEntries) {
+            sourceCounts.merge(entry.source(), 1, Integer::sum);
+            fluidCounts.merge(entry.type(), 1, Integer::sum);
+            if (entry.emptyContainer().isEmpty()) {
+                consumableEntries++;
+            } else {
+                emptyReturningEntries++;
+            }
+        }
+        int finalConsumableEntries = consumableEntries;
+        int finalEmptyReturningEntries = emptyReturningEntries;
+        source.sendSuccess(() -> Component.literal("Fixed fluid container summary: entries=" + fixedEntries.size()
+                + " sources=" + formatContainerSourceCounts(sourceCounts)
+                + " emptyReturning=" + finalEmptyReturningEntries
+                + " consumable=" + finalConsumableEntries), false);
+        for (FluidType type : HbmFluids.niceOrder()) {
+            int count = fluidCounts.getOrDefault(type, 0);
+            if (count > 0) {
+                source.sendSuccess(() -> Component.literal(" - " + type.getName() + ": " + count), false);
+            }
+        }
+        source.sendSuccess(() -> Component.literal("Dynamic HBM container kinds are counted by /hbm fluid containers list <fluid>."), false);
+        return fixedEntries.size();
     }
 
     private static int listFluidContainers(CommandSourceStack source, @Nullable FluidType type) {
@@ -3352,6 +4329,17 @@ public final class ModCommands {
                 + " empty=" + itemStackId(entry.emptyContainer());
     }
 
+    private static String formatContainerSourceCounts(Map<HbmFluidContainerRegistry.ContainerSource, Integer> counts) {
+        List<String> parts = new ArrayList<>();
+        for (HbmFluidContainerRegistry.ContainerSource source : HbmFluidContainerRegistry.ContainerSource.values()) {
+            int count = counts.getOrDefault(source, 0);
+            if (count > 0) {
+                parts.add(source.name().toLowerCase(Locale.US) + "=" + count);
+            }
+        }
+        return parts.isEmpty() ? "none" : String.join(", ", parts);
+    }
+
     private static Component formatHbmTank(int index, HbmFluidTank tank) {
         FluidType type = tank.getTankType();
         return Component.literal("  [" + index + "] fluid=")
@@ -3587,8 +4575,9 @@ public final class ModCommands {
         List<ModMessages.PacketRegistration> registrations = ModMessages.packetRegistrations();
         long clientbound = registrations.stream().filter(registration -> "S2C".equals(registration.direction())).count();
         long serverbound = registrations.stream().filter(registration -> "C2S".equals(registration.direction())).count();
-        source.sendSuccess(() -> Component.literal("HBM network protocol: channel=hbm_ntm_rebirth:main version="
-                + ModMessages.protocolVersion()
+        source.sendSuccess(() -> Component.literal("HBM network protocol: "
+                + ModMessages.networkChannelSummary()
+                + " fingerprint=" + ModMessages.protocolManifestFingerprint()
                 + " packets=" + ModMessages.registeredPacketCount()
                 + " s2c=" + clientbound
                 + " c2s=" + serverbound
@@ -3609,6 +4598,98 @@ public final class ModCommands {
         return registrations.size();
     }
 
+    private static int getNetworkProtocolChannel(CommandSourceStack source) {
+        ModMessages.NetworkChannelSnapshot snapshot = ModMessages.networkChannelSnapshot();
+        source.sendSuccess(() -> Component.literal("HBM network channel: legacy="
+                + snapshot.legacyChannelName()
+                + " modern=" + snapshot.modernChannelName()
+                + " protocol=" + snapshot.protocolVersion()), false);
+        source.sendSuccess(() -> Component.literal("Modern packet id range: count="
+                + snapshot.registeredPacketCount()
+                + " first=#" + snapshot.firstModernPacketId() + " " + snapshot.firstModernPacketName()
+                + " last=#" + snapshot.lastModernPacketId() + " " + snapshot.lastModernPacketName()
+                + " contiguous=" + snapshot.modernPacketIdsContiguous()), false);
+        source.sendSuccess(() -> Component.literal("Legacy discriminator range: count="
+                + snapshot.legacyPacketRegistrationCount()
+                + " first=#" + snapshot.firstLegacyPacketId() + " " + snapshot.firstLegacyPacketName()
+                + " last=#" + snapshot.lastLegacyPacketId() + " " + snapshot.lastLegacyPacketName()
+                + " contiguous=" + snapshot.legacyPacketIdsContiguous()), false);
+        source.sendSuccess(() -> Component.literal("Channel note: " + snapshot.notes()), false);
+        return snapshot.registeredPacketCount();
+    }
+
+    private static int getNetworkProtocolFingerprint(CommandSourceStack source) {
+        ModMessages.ProtocolManifestSnapshot snapshot = ModMessages.protocolManifestSnapshot();
+        source.sendSuccess(() -> Component.literal("HBM network protocol fingerprint: "
+                + snapshot.fingerprint()
+                + " legacyChannel=" + snapshot.legacyChannelName()
+                + " modernChannel=" + snapshot.modernChannelName()
+                + " protocol=" + snapshot.protocolVersion()
+                + " modernPackets=" + snapshot.modernPacketCount()
+                + " legacyPackets=" + snapshot.legacyPacketCount()
+                + " mappingRows=" + snapshot.mappingRowCount()
+                + " auditProblems=" + snapshot.auditProblems()), false);
+        source.sendSuccess(() -> Component.literal(snapshot.notes()), false);
+        return snapshot.auditProblems() ? 0 : 1;
+    }
+
+    private static int getNetworkProtocolManifest(CommandSourceStack source) {
+        ModMessages.ProtocolManifestSnapshot snapshot = ModMessages.protocolManifestSnapshot();
+        source.sendSuccess(() -> Component.literal("HBM network manifest: fingerprint="
+                + snapshot.fingerprint()
+                + " legacy=" + snapshot.legacyPacketCount()
+                + " modern=" + snapshot.modernPacketCount()
+                + " mappings=" + snapshot.mappingRowCount()
+                + " auditProblems=" + snapshot.auditProblems()), false);
+        for (ModMessages.ProtocolManifestRow row : snapshot.rows()) {
+            source.sendSuccess(() -> Component.literal("#" + row.legacyId()
+                    + " " + row.direction()
+                    + " " + row.legacyName()
+                    + " mappings=" + row.mappingCount()
+                    + " -> " + row.modernPackets()
+                    + (row.notes().isBlank() ? "" : " (" + row.notes() + ")")), false);
+        }
+        return snapshot.rows().size();
+    }
+
+    private static int getNetworkProtocolContract(CommandSourceStack source) {
+        ModMessages.ProtocolContractSnapshot snapshot = ModMessages.protocolContractSnapshot();
+        source.sendSuccess(() -> Component.literal("HBM network protocol contract: "
+                + ModMessages.protocolContractSummary()), false);
+        source.sendSuccess(() -> Component.literal("Contract channels: legacy="
+                + snapshot.legacyChannelName()
+                + " modern=" + snapshot.modernChannelName()
+                + " protocol=" + snapshot.protocolVersion()), false);
+        source.sendSuccess(() -> Component.literal(snapshot.notes()), false);
+        for (String problem : snapshot.problems()) {
+            source.sendSuccess(() -> Component.literal(" - " + problem), false);
+        }
+        return snapshot.passed() ? 1 : 0;
+    }
+
+    private static int getNetworkProtocolHandlers(CommandSourceStack source) {
+        ModMessages.HandlerRuntimeSnapshot snapshot = ModMessages.handlerRuntimeSnapshot();
+        source.sendSuccess(() -> Component.literal("HBM network handler runtime: "
+                + ModMessages.handlerRuntimeSummary()), false);
+        if (!snapshot.lastFailure().isBlank()) {
+            source.sendSuccess(() -> Component.literal("Last handler failure: " + snapshot.lastFailure()), false);
+        }
+        return snapshot.hasFailures() ? 0 : (int) Math.min(Integer.MAX_VALUE, snapshot.totalDispatches());
+    }
+
+    private static int getNetworkProtocolCodec(CommandSourceStack source) {
+        ModMessages.CodecRuntimeSnapshot snapshot = ModMessages.codecRuntimeSnapshot();
+        source.sendSuccess(() -> Component.literal("HBM network codec runtime: "
+                + ModMessages.codecRuntimeSummary()), false);
+        if (!snapshot.lastFailure().isBlank()) {
+            source.sendSuccess(() -> Component.literal("Last codec failure: " + snapshot.lastFailure()), false);
+        }
+        if (!snapshot.lastSizeWarning().isBlank()) {
+            source.sendSuccess(() -> Component.literal("Last codec size warning: " + snapshot.lastSizeWarning()), false);
+        }
+        return snapshot.hasWarnings() ? 0 : (int) Math.min(Integer.MAX_VALUE, snapshot.encodes() + snapshot.decodes());
+    }
+
     private static int getNetworkProtocolProgress(CommandSourceStack source) {
         source.sendSuccess(() -> Component.literal("HBM network packet library progress: "
                 + ModMessages.progressSummary()), false);
@@ -3625,6 +4706,8 @@ public final class ModCommands {
         ModMessages.NetworkRuntimeSnapshot snapshot = ModMessages.networkRuntimeSnapshot();
         source.sendSuccess(() -> Component.literal("HBM network runtime: "
                 + ModMessages.networkRuntimeSummary()), false);
+        source.sendSuccess(() -> Component.literal("Protocol contract: "
+                + ModMessages.protocolContractSummary()), false);
         source.sendSuccess(() -> Component.literal("Protocol audit: problems=" + snapshot.auditProblems()
                 + " missingModern=" + snapshot.auditMissingModern()
                 + " unknownLegacy=" + snapshot.auditUnknownLegacy()
@@ -3639,6 +4722,10 @@ public final class ModCommands {
                 + (snapshot.sendSafety().lastBlockedSend().isBlank()
                         ? ""
                         : " lastBlocked=\"" + snapshot.sendSafety().lastBlockedSend() + "\"")), false);
+        source.sendSuccess(() -> Component.literal("Codec runtime: "
+                + ModMessages.codecRuntimeSummary()), false);
+        source.sendSuccess(() -> Component.literal("Handler runtime: "
+                + ModMessages.handlerRuntimeSummary()), false);
         source.sendSuccess(() -> Component.literal("Threading runtime: pending=" + snapshot.threaded().pending()
                 + " queued=" + snapshot.threaded().totalQueued()
                 + " prepared=" + snapshot.threaded().totalPrepared()
@@ -3788,6 +4875,15 @@ public final class ModCommands {
         return mappings.size();
     }
 
+    private static int queryLegacyNetworkPacketById(CommandSourceStack source, int legacyId) {
+        Optional<ModMessages.LegacyPacketRegistration> registration = ModMessages.legacyPacketRegistration(legacyId);
+        if (registration.isEmpty()) {
+            source.sendFailure(Component.literal("Unknown legacy packet discriminator: " + legacyId));
+            return 0;
+        }
+        return queryLegacyNetworkPacket(source, registration.get().legacyName());
+    }
+
     private static int queryModernNetworkPacket(CommandSourceStack source, String modernName) {
         Optional<ModMessages.PacketRegistration> registration = ModMessages.packetRegistration(modernName);
         List<ModMessages.LegacyPacketMapping> mappings = ModMessages.modernPacketMappings(modernName);
@@ -3806,6 +4902,15 @@ public final class ModCommands {
                     + " (" + mapping.notes() + ")"), false);
         }
         return mappings.size();
+    }
+
+    private static int queryModernNetworkPacketById(CommandSourceStack source, int id) {
+        Optional<ModMessages.PacketRegistration> registration = ModMessages.packetRegistration(id);
+        if (registration.isEmpty()) {
+            source.sendFailure(Component.literal("Unknown modern packet id: " + id));
+            return 0;
+        }
+        return queryModernNetworkPacket(source, registration.get().typeName());
     }
 
     private static int getNetworkLegacyWrapper(CommandSourceStack source) {
@@ -3938,9 +5043,9 @@ public final class ModCommands {
         source.sendSuccess(() -> Component.literal("Client sync caches: biomeChunks="
                 + ClientBiomeSyncData.chunkCount()
                 + " panelTypes=" + ClientPanelData.panelCount()
-                + " playerData=" + ClientPlayerSyncData.entryCount()
+                + " playerData=" + ClientHbmPlayerProperties.syncedEntryCount()
                 + " permaKeys=" + ClientPermaSyncData.keyCount()
-                + " radiationEffects=" + ClientRadiationData.getContaminationCount()), false);
+                + " radiationEffects=" + ClientHbmLivingProperties.getContaminationCount()), false);
         source.sendSuccess(() -> Component.literal("Client transient effects: notices="
                 + ClientInformMessages.noticeCount()
                 + " muzzleFlashes=" + ClientMuzzleFlashEffects.flashCount()), false);

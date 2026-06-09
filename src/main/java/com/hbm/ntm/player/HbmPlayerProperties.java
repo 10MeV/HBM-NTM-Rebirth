@@ -218,6 +218,15 @@ public final class HbmPlayerProperties {
         }
     }
 
+    public static void clearKeyState(ServerPlayer player, HbmKeybind keybind) {
+        setKeyPressed(player, keybind, false);
+    }
+
+    public static void clearMovementKeyStates(ServerPlayer player) {
+        clearKeyState(player, HbmKeybind.JETPACK);
+        clearKeyState(player, HbmKeybind.DASH);
+    }
+
     public static boolean isDashActivated(Player player) {
         return runtime(player).dashActivated;
     }
@@ -467,23 +476,70 @@ public final class HbmPlayerProperties {
     }
 
     public static void sync(ServerPlayer player) {
-        ModMessages.syncPlayerProperties(player, DATA_TYPE, writeSyncedData(player));
+        ModMessages.syncPlayerProperties(player);
     }
 
     public static CompoundTag writeSyncedData(Player player) {
-        CompoundTag data = new CompoundTag();
-        data.putBoolean(KEY_HAS_RECEIVED_BOOK, hasReceivedBook(player));
-        data.putFloat(KEY_SHIELD, getShield(player));
-        data.putFloat(KEY_MAX_SHIELD, getMaxShield(player));
-        data.putBoolean(KEY_ENABLE_BACKPACK, isBackpackEnabled(player));
-        data.putBoolean(KEY_ENABLE_MAGNET, isMagnetEnabled(player));
-        data.putBoolean(KEY_ENABLE_HUD, isHudEnabled(player));
-        data.putInt(KEY_REPUTATION, getReputation(player));
-        data.putBoolean(KEY_IS_ON_LADDER, isOnLadder(player));
-        data.putInt(KEY_DASH_COUNT, getDashCount(player));
-        data.putInt(KEY_STAMINA, getStamina(player));
-        data.putInt(KEY_DASH_COOLDOWN, getDashCooldown(player));
-        return data;
+        return writePlayerSyncData(player).toTag();
+    }
+
+    public static SyncData writePlayerSyncData(Player player) {
+        return new SyncData(
+                hasReceivedBook(player),
+                getShield(player),
+                getMaxShield(player),
+                isBackpackEnabled(player),
+                isMagnetEnabled(player),
+                isHudEnabled(player),
+                getReputation(player),
+                isOnLadder(player),
+                getDashCount(player),
+                getStamina(player),
+                getDashCooldown(player));
+    }
+
+    public static SyncData readSyncedData(CompoundTag data) {
+        CompoundTag safeData = data == null ? new CompoundTag() : data;
+        return new SyncData(
+                safeData.getBoolean(KEY_HAS_RECEIVED_BOOK),
+                safeData.getFloat(KEY_SHIELD),
+                safeData.getFloat(KEY_MAX_SHIELD),
+                getDefaultTrueBoolean(safeData, KEY_ENABLE_BACKPACK),
+                getDefaultTrueBoolean(safeData, KEY_ENABLE_MAGNET),
+                getDefaultTrueBoolean(safeData, KEY_ENABLE_HUD),
+                safeData.getInt(KEY_REPUTATION),
+                safeData.getBoolean(KEY_IS_ON_LADDER),
+                safeData.getInt(KEY_DASH_COUNT),
+                safeData.getInt(KEY_STAMINA),
+                safeData.getInt(KEY_DASH_COOLDOWN));
+    }
+
+    public static SyncData emptySyncedData() {
+        return readSyncedData(new CompoundTag());
+    }
+
+    private static boolean getDefaultTrueBoolean(CompoundTag data, String key) {
+        return !data.contains(key) || data.getBoolean(key);
+    }
+
+    public record SyncData(boolean hasReceivedBook, float shield, float maxShield, boolean backpackEnabled,
+            boolean magnetEnabled, boolean hudEnabled, int reputation, boolean onLadder,
+            int dashCount, int stamina, int dashCooldown) {
+        public CompoundTag toTag() {
+            CompoundTag data = new CompoundTag();
+            data.putBoolean(KEY_HAS_RECEIVED_BOOK, hasReceivedBook);
+            data.putFloat(KEY_SHIELD, shield);
+            data.putFloat(KEY_MAX_SHIELD, maxShield);
+            data.putBoolean(KEY_ENABLE_BACKPACK, backpackEnabled);
+            data.putBoolean(KEY_ENABLE_MAGNET, magnetEnabled);
+            data.putBoolean(KEY_ENABLE_HUD, hudEnabled);
+            data.putInt(KEY_REPUTATION, reputation);
+            data.putBoolean(KEY_IS_ON_LADDER, onLadder);
+            data.putInt(KEY_DASH_COUNT, dashCount);
+            data.putInt(KEY_STAMINA, stamina);
+            data.putInt(KEY_DASH_COOLDOWN, dashCooldown);
+            return data;
+        }
     }
 
     public static void copyForRespawn(Player original, Player replacement) {

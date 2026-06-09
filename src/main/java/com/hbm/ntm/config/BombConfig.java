@@ -88,6 +88,106 @@ public final class BombConfig {
         return builder.comment(comment).defineInRange(name, defaultValue, 0, Integer.MAX_VALUE);
     }
 
+    public static int gadgetRadius() {
+        return intValue(GADGET_RADIUS, GADGET_RADIUS_DEFAULT);
+    }
+
+    public static int boyRadius() {
+        return intValue(BOY_RADIUS, BOY_RADIUS_DEFAULT);
+    }
+
+    public static int manRadius() {
+        return intValue(MAN_RADIUS, MAN_RADIUS_DEFAULT);
+    }
+
+    public static int mikeRadius() {
+        return intValue(MIKE_RADIUS, MIKE_RADIUS_DEFAULT);
+    }
+
+    public static int tsarRadius() {
+        return intValue(TSAR_RADIUS, TSAR_RADIUS_DEFAULT);
+    }
+
+    public static int prototypeRadius() {
+        return intValue(PROTOTYPE_RADIUS, PROTOTYPE_RADIUS_DEFAULT);
+    }
+
+    public static int fleijaRadius() {
+        return intValue(FLEIJA_RADIUS, FLEIJA_RADIUS_DEFAULT);
+    }
+
+    public static int soliniumRadius() {
+        return intValue(SOLINIUM_RADIUS, SOLINIUM_RADIUS_DEFAULT);
+    }
+
+    public static int n2Radius() {
+        return intValue(N2_RADIUS, N2_RADIUS_DEFAULT);
+    }
+
+    public static int missileRadius() {
+        return intValue(MISSILE_RADIUS, MISSILE_RADIUS_DEFAULT);
+    }
+
+    public static int mirvRadius() {
+        return intValue(MIRV_RADIUS, MIRV_RADIUS_DEFAULT);
+    }
+
+    public static int fatmanRadius() {
+        return intValue(FATMAN_RADIUS, FATMAN_RADIUS_DEFAULT);
+    }
+
+    public static int nukaRadius() {
+        return intValue(NUKA_RADIUS, NUKA_RADIUS_DEFAULT);
+    }
+
+    public static int antiSchrabidiumRadius() {
+        return intValue(A_SCHRAB_RADIUS, A_SCHRAB_RADIUS_DEFAULT);
+    }
+
+    public static int mk5BudgetMs() {
+        return intValue(MK5_BUDGET_MS, 50);
+    }
+
+    public static int blastSpeed() {
+        return intValue(BLAST_SPEED, 1024);
+    }
+
+    public static int falloutRangePercent() {
+        return intValue(FALLOUT_RANGE_PERCENT, 100);
+    }
+
+    public static int falloutDelayTicks() {
+        return intValue(FALLOUT_DELAY, 4);
+    }
+
+    public static int explosionLifespanLimitSeconds() {
+        return intValue(LIMIT_EXPLOSION_LIFESPAN, 0);
+    }
+
+    public static boolean chunkLoadingEnabled() {
+        return booleanValue(CHUNK_LOADING, true);
+    }
+
+    public static int explosionAlgorithm() {
+        return intValue(EXPLOSION_ALGORITHM, 2);
+    }
+
+    private static int intValue(ForgeConfigSpec.IntValue value, int fallback) {
+        try {
+            return value == null ? fallback : value.get();
+        } catch (IllegalStateException ignored) {
+            return fallback;
+        }
+    }
+
+    private static boolean booleanValue(ForgeConfigSpec.BooleanValue value, boolean fallback) {
+        try {
+            return value == null ? fallback : value.get();
+        } catch (IllegalStateException ignored) {
+            return fallback;
+        }
+    }
+
     private BombConfig() {
     }
 }

@@ -1,0 +1,24 @@
+{
+  "values": [
+    "hbm_ntm_rebirth:circuit_vacuum_tube",
+    "hbm_ntm_rebirth:circuit_capacitor",
+    "hbm_ntm_rebirth:circuit_capacitor_tantalium",
+    "hbm_ntm_rebirth:circuit_pcb",
+    "hbm_ntm_rebirth:circuit_silicon",
+    "hbm_ntm_rebirth:circuit_chip",
+    "hbm_ntm_rebirth:circuit_chip_bismoid",
+    "hbm_ntm_rebirth:circuit_analog",
+    "hbm_ntm_rebirth:circuit_basic",
+    "hbm_ntm_rebirth:circuit_advanced",
+    "hbm_ntm_rebirth:circuit_capacitor_board",
+    "hbm_ntm_rebirth:circuit_bismoid",
+    "hbm_ntm_rebirth:circuit_controller_chassis",
+    "hbm_ntm_rebirth:circuit_controller",
+    "hbm_ntm_rebirth:circuit_controller_advanced",
+    "hbm_ntm_rebirth:circuit_quantum",
+    "hbm_ntm_rebirth:circuit_chip_quantum",
+    "hbm_ntm_rebirth:circuit_controller_quantum",
+    "hbm_ntm_rebirth:circuit_atomic_clock",
+    "hbm_ntm_rebirth:circuit_numitron"
+  ]
+}

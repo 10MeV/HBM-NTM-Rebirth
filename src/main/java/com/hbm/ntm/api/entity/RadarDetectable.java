@@ -16,6 +16,20 @@ public interface RadarDetectable {
     int ARTY = 12;
     int SPECIAL = 13;
 
+    String TARGET_TIER0 = "radar.target.tier0";
+    String TARGET_TIER1 = "radar.target.tier1";
+    String TARGET_TIER2 = "radar.target.tier2";
+    String TARGET_TIER3 = "radar.target.tier3";
+    String TARGET_TIER4 = "radar.target.tier4";
+    String TARGET_CUSTOM_10 = "radar.target.custom10";
+    String TARGET_CUSTOM_10_15 = "radar.target.custom1015";
+    String TARGET_CUSTOM_15 = "radar.target.custom15";
+    String TARGET_CUSTOM_15_20 = "radar.target.custom1520";
+    String TARGET_CUSTOM_20 = "radar.target.custom20";
+    String TARGET_ABM = "radar.target.abm";
+    String TARGET_DOOMSDAY = "radar.target.doomsday";
+    String TARGET_SHUTTLE = "radar.target.shuttle";
+
     String getRadarName();
 
     int getBlipLevel();

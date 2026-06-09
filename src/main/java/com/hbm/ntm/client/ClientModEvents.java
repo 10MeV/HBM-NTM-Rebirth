@@ -35,6 +35,7 @@ import com.hbm.ntm.client.particle.RocketFlameParticle;
 import com.hbm.ntm.client.renderer.AssemblyFactoryRenderer;
 import com.hbm.ntm.client.renderer.AssemblyMachineRenderer;
 import com.hbm.ntm.client.renderer.BasicMachineRenderer;
+import com.hbm.ntm.client.renderer.BulletProjectileRenderer;
 import com.hbm.ntm.client.renderer.CableDiodeRenderer;
 import com.hbm.ntm.client.renderer.ChemicalFactoryRenderer;
 import com.hbm.ntm.client.renderer.ChemicalPlantRenderer;
@@ -43,6 +44,7 @@ import com.hbm.ntm.client.renderer.CloudFleijaRainbowRenderer;
 import com.hbm.ntm.client.renderer.CloudSoliniumRenderer;
 import com.hbm.ntm.client.renderer.CustomNukeRenderer;
 import com.hbm.ntm.client.renderer.DeathBlastRenderer;
+import com.hbm.ntm.client.renderer.EmpBlastRenderer;
 import com.hbm.ntm.client.renderer.FalloutRainRenderer;
 import com.hbm.ntm.client.renderer.FluidPipeRenderer;
 import com.hbm.ntm.client.renderer.FluidPipeAnchorRenderer;
@@ -50,6 +52,7 @@ import com.hbm.ntm.client.renderer.FluidTankRenderer;
 import com.hbm.ntm.client.renderer.LegacyDemonLampBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.LegacyLanternBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.LegacyLightBlockEntityRenderer;
+import com.hbm.ntm.client.renderer.LegacyPrimedExplosiveRenderer;
 import com.hbm.ntm.client.renderer.LegacyVisibleMachineRenderer;
 import com.hbm.ntm.client.renderer.LiquefactorRenderer;
 import com.hbm.ntm.client.renderer.MachineBatterySocketRenderer;
@@ -244,15 +247,17 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntityTypes.CLOUD_FLEIJA.get(), CloudFleijaRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLOUD_SOLINIUM.get(), CloudSoliniumRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CLOUD_FLEIJA_RAINBOW.get(), CloudFleijaRainbowRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.EMP_BLAST.get(), EmpBlastRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.BALEFIRE_EXPLOSION.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.DEATH_BLAST.get(), DeathBlastRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.FALLING_NUKE.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.LEGACY_PRIMED_EXPLOSIVE.get(), LegacyPrimedExplosiveRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MINER_ROCKET.get(), MinerRocketRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SOYUZ.get(), SoyuzRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SOYUZ_CAPSULE.get(), SoyuzCapsuleRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SHRAPNEL.get(), ShrapnelRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.RUBBLE.get(), RubbleRenderer::new);
-        event.registerEntityRenderer(ModEntityTypes.BULLET_PROJECTILE.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.BULLET_PROJECTILE.get(), BulletProjectileRenderer::new);
     }
 
     @SubscribeEvent

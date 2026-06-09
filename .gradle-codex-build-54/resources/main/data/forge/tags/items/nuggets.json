@@ -1,0 +1,29 @@
+{
+  "values": [
+    "hbm_ntm_rebirth:nugget_uranium",
+    "hbm_ntm_rebirth:nugget_u233",
+    "hbm_ntm_rebirth:nugget_u235",
+    "hbm_ntm_rebirth:nugget_u238",
+    "hbm_ntm_rebirth:nugget_th232",
+    "hbm_ntm_rebirth:nugget_plutonium",
+    "hbm_ntm_rebirth:nugget_pu238",
+    "hbm_ntm_rebirth:nugget_pu239",
+    "hbm_ntm_rebirth:nugget_pu240",
+    "hbm_ntm_rebirth:nugget_pu241",
+    "hbm_ntm_rebirth:nugget_pu_mix",
+    "hbm_ntm_rebirth:nugget_am241",
+    "hbm_ntm_rebirth:nugget_am242",
+    "hbm_ntm_rebirth:nugget_am_mix",
+    "hbm_ntm_rebirth:nugget_neptunium",
+    "hbm_ntm_rebirth:nugget_polonium",
+    "hbm_ntm_rebirth:nugget_technetium",
+    "hbm_ntm_rebirth:nugget_cobalt",
+    "hbm_ntm_rebirth:nugget_co60",
+    "hbm_ntm_rebirth:nugget_sr90",
+    "hbm_ntm_rebirth:nugget_au198",
+    "hbm_ntm_rebirth:nugget_pb209",
+    "hbm_ntm_rebirth:nugget_ra226",
+    "hbm_ntm_rebirth:nugget_solinium",
+    "hbm_ntm_rebirth:nugget_bismuth"
+  ]
+}

@@ -5,6 +5,7 @@ import com.hbm.ntm.client.obj.LegacyDangerDiamondRenderer;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
@@ -14,7 +15,6 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.CorrosiveFluidTrait;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
@@ -54,22 +54,22 @@ public final class LegacyFluidTankRenderHelper {
         FluidType type = tank.getTankType();
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
                 .withColor(0xFFFFFF, 192)
-                .withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE)
-                .withUvScroll(animation / 80.0F, animation / 120.0F);
+                .withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
 
         double off = 5.9375D;
-        double scaleFactor = 0.5D;
+        LegacyUvAnimation.Range u = LegacyUvAnimation.bigAssTankFluidU(animation);
+        double fluidV = LegacyUvAnimation.bigAssTankFluidV(height);
         ResourceLocation texture = type == null ? HbmFluids.NONE.getTexture() : type.getTexture();
         LegacyTexturedQuadRenderer.quad(texture, context, 1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.vertex(-off, 1.75D, -0.25D, 0.0D, 1.0D, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(-off, 1.75D + height, -0.25D, 0.0D, -height * 2.0D * scaleFactor, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(-off, 1.75D + height, 0.25D, scaleFactor, -height * 2.0D * scaleFactor, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(-off, 1.75D, 0.25D, scaleFactor, 1.0D, 0xFFFFFF, 192));
+                LegacyTexturedQuadRenderer.vertex(-off, 1.75D, -0.25D, u.min(), 0.0D, 0xFFFFFF, 192),
+                LegacyTexturedQuadRenderer.vertex(-off, 1.75D + height, -0.25D, u.min(), fluidV, 0xFFFFFF, 192),
+                LegacyTexturedQuadRenderer.vertex(-off, 1.75D + height, 0.25D, u.max(), fluidV, 0xFFFFFF, 192),
+                LegacyTexturedQuadRenderer.vertex(-off, 1.75D, 0.25D, u.max(), 0.0D, 0xFFFFFF, 192));
         LegacyTexturedQuadRenderer.quad(texture, context, -1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.vertex(off, 1.75D, -0.25D, scaleFactor, 1.0D, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(off, 1.75D + height, -0.25D, scaleFactor, -height * 2.0D * scaleFactor, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(off, 1.75D + height, 0.25D, 0.0D, -height * 2.0D * scaleFactor, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(off, 1.75D, 0.25D, 0.0D, 1.0D, 0xFFFFFF, 192));
+                LegacyTexturedQuadRenderer.vertex(off, 1.75D, -0.25D, u.max(), 0.0D, 0xFFFFFF, 192),
+                LegacyTexturedQuadRenderer.vertex(off, 1.75D + height, -0.25D, u.max(), fluidV, 0xFFFFFF, 192),
+                LegacyTexturedQuadRenderer.vertex(off, 1.75D + height, 0.25D, u.min(), fluidV, 0xFFFFFF, 192),
+                LegacyTexturedQuadRenderer.vertex(off, 1.75D, 0.25D, u.min(), 0.0D, 0xFFFFFF, 192));
     }
 
     public static void renderBat9000Fluid(HbmFluidTank tank, BlockState state, PoseStack poseStack,
@@ -79,37 +79,9 @@ public final class LegacyFluidTankRenderHelper {
         }
         double height = (double) tank.getFill() * 1.5D / (double) tank.getMaxFill();
         int color = fluidColor(tank.getTankType());
-        int red = color >> 16 & 255;
-        int green = color >> 8 & 255;
-        int blue = color & 255;
-        VertexConsumer consumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.translucentNoCullType());
-        PoseStack.Pose pose = poseStack.last();
-
-        double off = 2.2D;
-        LegacyUntexturedQuadRenderer.quad(consumer, pose,
-                -off, 1.5D, -0.5D,
-                -off, 1.5D + height, -0.5D,
-                -off, 1.5D + height, 0.5D,
-                -off, 1.5D, 0.5D,
-                red, green, blue, 255, 255, 255, 255);
-        LegacyUntexturedQuadRenderer.quad(consumer, pose,
-                off, 1.5D, -0.5D,
-                off, 1.5D + height, -0.5D,
-                off, 1.5D + height, 0.5D,
-                off, 1.5D, 0.5D,
-                red, green, blue, 255, 255, 255, 255);
-        LegacyUntexturedQuadRenderer.quad(consumer, pose,
-                -0.5D, 1.5D, -off,
-                -0.5D, 1.5D + height, -off,
-                0.5D, 1.5D + height, -off,
-                0.5D, 1.5D, -off,
-                red, green, blue, 255, 255, 255, 255);
-        LegacyUntexturedQuadRenderer.quad(consumer, pose,
-                -0.5D, 1.5D, off,
-                -0.5D, 1.5D + height, off,
-                0.5D, 1.5D + height, off,
-                0.5D, 1.5D, off,
-                red, green, blue, 255, 255, 255, 255);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
+                .withoutTranslucency();
+        LegacyUntexturedQuadRenderer.verticalCrossPanels(context, 1.5D, height, 0.5D, 2.2D, color, 255);
     }
 
     public static void renderSmallTankDiamonds(FluidType type, PoseStack poseStack, MultiBufferSource buffer,

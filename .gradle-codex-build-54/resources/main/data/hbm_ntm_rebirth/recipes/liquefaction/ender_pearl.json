@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:liquefaction",
+  "ingredient": {
+    "item": "minecraft:ender_pearl"
+  },
+  "output": {
+    "amount": 100,
+    "fluid": "ENDERJUICE",
+    "pressure": 0
+  }
+}

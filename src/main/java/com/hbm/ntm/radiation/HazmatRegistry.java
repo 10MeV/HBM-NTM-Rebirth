@@ -6,6 +6,7 @@ import com.hbm.ntm.api.item.GasMask;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmTuple.Pair;
 import com.hbm.ntm.util.HbmShadyUtil;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,11 +15,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,12 +32,25 @@ public final class HazmatRegistry {
     public static final double CHEST = 0.4D;
     public static final double LEGS = 0.3D;
     public static final double BOOTS = 0.1D;
+    @Deprecated public static double helmet = HELMET;
+    @Deprecated public static double chest = CHEST;
+    @Deprecated public static double legs = LEGS;
+    @Deprecated public static double boots = BOOTS;
+    @Deprecated public static final List<Pair<Item, Double>> external = new ExternalResistanceList();
 
     private static final Map<Item, Double> RESISTANCE = new IdentityHashMap<>();
     private static final Map<Item, EnumSet<HazardClass>> PROTECTION = new IdentityHashMap<>();
     private static final Map<Item, Double> EXTERNAL_RESISTANCE_DEFAULTS = new IdentityHashMap<>();
     private static final Map<Item, EnumSet<HazardClass>> EXTERNAL_PROTECTION_DEFAULTS = new IdentityHashMap<>();
     private static final int MAX_ARMOR_MOD_PROTECTION_DEPTH = 8;
+
+    public static void initDefault() {
+        registerDefaults();
+    }
+
+    public static HazmatResistanceConfig.LoadReport registerHazmats() {
+        return HazmatResistanceConfig.initialize(FMLPaths.CONFIGDIR.get());
+    }
 
     public static void registerDefaults() {
         clear();
@@ -80,9 +98,9 @@ public final class HazmatRegistry {
         registerLegacyArmorSet("cmb", cmb);
         registerLegacyArmorSet("schrabidium", schrab);
         registerLegacyArmorSet("euphemium", euph);
-        registerLegacyPiece("paa_plate", paa * CHEST);
-        registerLegacyPiece("paa_legs", paa * LEGS);
-        registerLegacyPiece("paa_boots", paa * BOOTS);
+        registerLegacyPiece("paa_plate", paa * chest);
+        registerLegacyPiece("paa_legs", paa * legs);
+        registerLegacyPiece("paa_boots", paa * boots);
         registerLegacyPiece("jackt", 0.1D);
         registerLegacyPiece("jackt2", 0.1D);
         registerLegacyPiece("gas_mask", 0.07D);
@@ -102,6 +120,10 @@ public final class HazmatRegistry {
         registerLegacyFsbArmorSet("taurun", 0.125D, ArmorUtil.FULL_PACKAGE);
         registerLegacyFsbArmorSet("trenchmaster", 1.0D, ArmorUtil.FULL_PACKAGE);
 
+        registerDefaultProtections();
+    }
+
+    public static void registerDefaultProtections() {
         registerDefaultProtection();
         replayExternalProtections();
     }
@@ -377,10 +399,10 @@ public final class HazmatRegistry {
     }
 
     public static void registerArmorSet(Item helmet, Item chest, Item legs, Item boots, double material) {
-        registerHazmat(helmet, material * HELMET);
-        registerHazmat(chest, material * CHEST);
-        registerHazmat(legs, material * LEGS);
-        registerHazmat(boots, material * BOOTS);
+        registerHazmat(helmet, material * HazmatRegistry.helmet);
+        registerHazmat(chest, material * HazmatRegistry.chest);
+        registerHazmat(legs, material * HazmatRegistry.legs);
+        registerHazmat(boots, material * HazmatRegistry.boots);
     }
 
     public static int registerArmorSet(ResourceLocation helmet, ResourceLocation chest, ResourceLocation legs,
@@ -397,19 +419,19 @@ public final class HazmatRegistry {
     private static int registerArmorSetCount(Item helmet, Item chest, Item legs, Item boots, double material) {
         int count = 0;
         if (helmet != null && helmet != Items.AIR) {
-            registerHazmat(helmet, material * HELMET);
+            registerHazmat(helmet, material * HazmatRegistry.helmet);
             count++;
         }
         if (chest != null && chest != Items.AIR) {
-            registerHazmat(chest, material * CHEST);
+            registerHazmat(chest, material * HazmatRegistry.chest);
             count++;
         }
         if (legs != null && legs != Items.AIR) {
-            registerHazmat(legs, material * LEGS);
+            registerHazmat(legs, material * HazmatRegistry.legs);
             count++;
         }
         if (boots != null && boots != Items.AIR) {
-            registerHazmat(boots, material * BOOTS);
+            registerHazmat(boots, material * HazmatRegistry.boots);
             count++;
         }
         return count;
@@ -418,19 +440,19 @@ public final class HazmatRegistry {
     public static int registerExternalArmorSet(Item helmet, Item chest, Item legs, Item boots, double material) {
         int count = 0;
         if (helmet != null && helmet != Items.AIR) {
-            registerExternalHazmat(helmet, material * HELMET);
+            registerExternalHazmat(helmet, material * HazmatRegistry.helmet);
             count++;
         }
         if (chest != null && chest != Items.AIR) {
-            registerExternalHazmat(chest, material * CHEST);
+            registerExternalHazmat(chest, material * HazmatRegistry.chest);
             count++;
         }
         if (legs != null && legs != Items.AIR) {
-            registerExternalHazmat(legs, material * LEGS);
+            registerExternalHazmat(legs, material * HazmatRegistry.legs);
             count++;
         }
         if (boots != null && boots != Items.AIR) {
-            registerExternalHazmat(boots, material * BOOTS);
+            registerExternalHazmat(boots, material * HazmatRegistry.boots);
             count++;
         }
         return count;
@@ -449,18 +471,18 @@ public final class HazmatRegistry {
     }
 
     private static void registerLegacyArmorSet(String prefix, double material) {
-        registerLegacyPiece(prefix + "_helmet", material * HELMET);
-        registerLegacyPiece(prefix + "_plate", material * CHEST);
-        registerLegacyPiece(prefix + "_legs", material * LEGS);
-        registerLegacyPiece(prefix + "_boots", material * BOOTS);
+        registerLegacyPiece(prefix + "_helmet", material * helmet);
+        registerLegacyPiece(prefix + "_plate", material * chest);
+        registerLegacyPiece(prefix + "_legs", material * legs);
+        registerLegacyPiece(prefix + "_boots", material * boots);
     }
 
     private static void registerLegacyArmorSet(String helmet, String chest, String legs, String boots,
                                                double material) {
-        registerLegacyPiece(helmet, material * HELMET);
-        registerLegacyPiece(chest, material * CHEST);
-        registerLegacyPiece(legs, material * LEGS);
-        registerLegacyPiece(boots, material * BOOTS);
+        registerLegacyPiece(helmet, material * HazmatRegistry.helmet);
+        registerLegacyPiece(chest, material * HazmatRegistry.chest);
+        registerLegacyPiece(legs, material * HazmatRegistry.legs);
+        registerLegacyPiece(boots, material * HazmatRegistry.boots);
     }
 
     private static void registerLegacyFsbArmorSet(String prefix, double material, HazardClass... helmetProtections) {
@@ -589,6 +611,52 @@ public final class HazmatRegistry {
     private static void replayExternalProtections() {
         for (Map.Entry<Item, EnumSet<HazardClass>> entry : EXTERNAL_PROTECTION_DEFAULTS.entrySet()) {
             registerProtection(entry.getKey(), entry.getValue().toArray(HazardClass[]::new));
+        }
+    }
+
+    private static List<Map.Entry<Item, Double>> externalResistanceEntries() {
+        return new ArrayList<>(EXTERNAL_RESISTANCE_DEFAULTS.entrySet());
+    }
+
+    private static final class ExternalResistanceList extends AbstractList<Pair<Item, Double>> {
+        @Override
+        public Pair<Item, Double> get(int index) {
+            Map.Entry<Item, Double> entry = externalResistanceEntries().get(index);
+            return new Pair<>(entry.getKey(), entry.getValue());
+        }
+
+        @Override
+        public int size() {
+            return EXTERNAL_RESISTANCE_DEFAULTS.size();
+        }
+
+        @Override
+        public void add(int index, Pair<Item, Double> element) {
+            if (element != null && element.getKey() != null && element.getValue() != null) {
+                registerExternalHazmat(element.getKey(), element.getValue());
+            }
+        }
+
+        @Override
+        public Pair<Item, Double> set(int index, Pair<Item, Double> element) {
+            Pair<Item, Double> previous = get(index);
+            EXTERNAL_RESISTANCE_DEFAULTS.remove(previous.getKey());
+            if (element != null && element.getKey() != null && element.getValue() != null) {
+                registerExternalHazmat(element.getKey(), element.getValue());
+            }
+            return previous;
+        }
+
+        @Override
+        public Pair<Item, Double> remove(int index) {
+            Pair<Item, Double> previous = get(index);
+            EXTERNAL_RESISTANCE_DEFAULTS.remove(previous.getKey());
+            return previous;
+        }
+
+        @Override
+        public void clear() {
+            EXTERNAL_RESISTANCE_DEFAULTS.clear();
         }
     }
 

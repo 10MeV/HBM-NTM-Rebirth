@@ -6,7 +6,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -119,6 +121,84 @@ public final class HbmFluidNodespace {
                 fluidNet.createDebugSnapshot());
     }
 
+    public static OverpressureDamageResult damageNetworkFromOverpressure(Level level, BlockPos pos, FluidType type) {
+        HbmFluidNode node = getNode(level, pos, type);
+        FluidType normalized = normalize(type);
+        if (node == null) {
+            return OverpressureDamageResult.missing(pos, normalized);
+        }
+        HbmFluidNet fluidNet = node.getFluidNet();
+        if (fluidNet == null) {
+            return OverpressureDamageResult.noNetwork(pos, normalized);
+        }
+
+        Set<HbmFluidNode> links = fluidNet.getLinks();
+        int damagedPipes = HbmFluidOverpressure.damagePipeNodes(level, links);
+        int damagedReceivers = fluidNet.damageSubscribedReceiversFromOverpressure();
+        return OverpressureDamageResult.present(pos, normalized, links.size(), damagedPipes, damagedReceivers);
+    }
+
+    public static OverpressureDamageResult damageNetworkFromOverpressure(Level level, BlockPos pos, FluidType type, int maxPipeNodes) {
+        HbmFluidNode node = getNode(level, pos, type);
+        FluidType normalized = normalize(type);
+        if (node == null) {
+            return OverpressureDamageResult.missing(pos, normalized);
+        }
+        HbmFluidNet fluidNet = node.getFluidNet();
+        if (fluidNet == null) {
+            return OverpressureDamageResult.noNetwork(pos, normalized);
+        }
+
+        Set<HbmFluidNode> links = fluidNet.getLinks();
+        int damagedPipes = HbmFluidOverpressure.damagePipeNodes(level, links, maxPipeNodes);
+        int damagedReceivers = fluidNet.damageSubscribedReceiversFromOverpressure();
+        return OverpressureDamageResult.present(pos, normalized, links.size(), damagedPipes, damagedReceivers);
+    }
+
+    public static OverpressureBatchDamageResult damageAllNetworksFromOverpressure(Level level, BlockPos pos) {
+        Set<HbmFluidNet> fluidNets = new LinkedHashSet<>();
+        int fluidNodes = 0;
+        for (FluidType type : HbmFluids.all()) {
+            if (type == HbmFluids.NONE) {
+                continue;
+            }
+            HbmFluidNode node = getNode(level, pos, type);
+            if (node == null) {
+                continue;
+            }
+            fluidNodes++;
+            HbmFluidNet fluidNet = node.getFluidNet();
+            if (fluidNet != null) {
+                fluidNets.add(fluidNet);
+            }
+        }
+        return damageCollectedNetworksFromOverpressure(level, pos, fluidNodes, fluidNets);
+    }
+
+    public static OverpressureBatchDamageResult damageNetworksFromOverpressure(Level level, BlockPos pos, Collection<FluidType> types) {
+        if (types == null || types.isEmpty()) {
+            return OverpressureBatchDamageResult.missing(pos);
+        }
+        Set<HbmFluidNet> fluidNets = new LinkedHashSet<>();
+        int fluidNodes = 0;
+        for (FluidType type : types) {
+            FluidType normalized = normalize(type);
+            if (normalized == HbmFluids.NONE) {
+                continue;
+            }
+            HbmFluidNode node = getNode(level, pos, normalized);
+            if (node == null) {
+                continue;
+            }
+            fluidNodes++;
+            HbmFluidNet fluidNet = node.getFluidNet();
+            if (fluidNet != null) {
+                fluidNets.add(fluidNet);
+            }
+        }
+        return damageCollectedNetworksFromOverpressure(level, pos, fluidNodes, fluidNets);
+    }
+
     public static String describeNodeConnections(Level level, BlockPos pos, FluidType type) {
         HbmFluidNode node = getNode(level, pos, type);
         if (node == null) {
@@ -136,6 +216,41 @@ public final class HbmFluidNodespace {
 
     private static HbmFluidNet getFluidNet(Level level, BlockPos pos, FluidType type) {
         return NODESPACE.getNetwork(level, new NodeKey(pos, type));
+    }
+
+    private static OverpressureBatchDamageResult damageCollectedNetworksFromOverpressure(
+            Level level, BlockPos pos, int fluidNodes, Collection<HbmFluidNet> fluidNets) {
+        if (fluidNodes <= 0) {
+            return OverpressureBatchDamageResult.missing(pos);
+        }
+        if (fluidNets == null || fluidNets.isEmpty()) {
+            return OverpressureBatchDamageResult.noNetworks(pos, fluidNodes);
+        }
+
+        Set<HbmFluidNode> pipeNodes = new LinkedHashSet<>();
+        Set<BlockEntity> receivers = new LinkedHashSet<>();
+        for (HbmFluidNet fluidNet : fluidNets) {
+            if (fluidNet == null) {
+                continue;
+            }
+            pipeNodes.addAll(fluidNet.getLinks());
+            for (HbmFluidReceiver receiver : fluidNet.getSubscribedReceivers()) {
+                if (receiver instanceof BlockEntity blockEntity) {
+                    receivers.add(blockEntity);
+                }
+            }
+        }
+
+        int damagedPipes = HbmFluidOverpressure.damagePipeNodes(level, pipeNodes);
+        int damagedReceivers = HbmFluidOverpressure.damageReceivers(receivers);
+        return OverpressureBatchDamageResult.present(
+                pos,
+                fluidNodes,
+                fluidNets.size(),
+                pipeNodes.size(),
+                damagedPipes,
+                receivers.size(),
+                damagedReceivers);
     }
 
     private static String describeConnections(HbmFluidNode node) {
@@ -176,6 +291,58 @@ public final class HbmFluidNodespace {
 
         private static NetworkDebugSnapshot present(BlockPos pos, FluidType type, String connections, boolean recentlyChanged, HbmFluidNet.DebugSnapshot network) {
             return new NetworkDebugSnapshot(pos, type.getName(), true, connections, recentlyChanged, true, network);
+        }
+    }
+
+    public record OverpressureDamageResult(
+            BlockPos pos,
+            String fluid,
+            boolean nodePresent,
+            boolean networkPresent,
+            int pipeNodes,
+            int pipeNodesDamaged,
+            int receiversDamaged) {
+        private static OverpressureDamageResult missing(BlockPos pos, FluidType type) {
+            return new OverpressureDamageResult(pos, type.getName(), false, false, 0, 0, 0);
+        }
+
+        private static OverpressureDamageResult noNetwork(BlockPos pos, FluidType type) {
+            return new OverpressureDamageResult(pos, type.getName(), true, false, 0, 0, 0);
+        }
+
+        private static OverpressureDamageResult present(BlockPos pos, FluidType type, int pipeNodes, int pipeNodesDamaged, int receiversDamaged) {
+            return new OverpressureDamageResult(pos, type.getName(), true, true, pipeNodes, pipeNodesDamaged, receiversDamaged);
+        }
+    }
+
+    public record OverpressureBatchDamageResult(
+            BlockPos pos,
+            boolean nodePresent,
+            boolean networkPresent,
+            int fluidNodes,
+            int networks,
+            int pipeNodes,
+            int pipeNodesDamaged,
+            int receivers,
+            int receiversDamaged) {
+        private static OverpressureBatchDamageResult missing(BlockPos pos) {
+            return new OverpressureBatchDamageResult(pos, false, false, 0, 0, 0, 0, 0, 0);
+        }
+
+        private static OverpressureBatchDamageResult noNetworks(BlockPos pos, int fluidNodes) {
+            return new OverpressureBatchDamageResult(pos, true, false, fluidNodes, 0, 0, 0, 0, 0);
+        }
+
+        private static OverpressureBatchDamageResult present(
+                BlockPos pos,
+                int fluidNodes,
+                int networks,
+                int pipeNodes,
+                int pipeNodesDamaged,
+                int receivers,
+                int receiversDamaged) {
+            return new OverpressureBatchDamageResult(
+                    pos, true, true, fluidNodes, networks, pipeNodes, pipeNodesDamaged, receivers, receiversDamaged);
         }
     }
 

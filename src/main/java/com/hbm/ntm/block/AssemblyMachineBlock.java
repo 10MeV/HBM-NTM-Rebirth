@@ -58,7 +58,7 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
 
     @Override
     protected LegacyMultiblockLayout getLayout(BlockState state) {
-        return LegacyMultiblockLayout.ofLegacyXr(LEGACY_XR_DIMENSIONS, state.getValue(FACING))
+        return LegacyMultiblockLayout.ofLegacyXrChecked(LEGACY_XR_DIMENSIONS, state.getValue(FACING))
                 .withProxyPredicate(AssemblyMachineBlock::isLegacyProxyOffset,
                         LegacyProxyMode.combo(true, true, true));
     }

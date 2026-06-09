@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "hbm_ntm_rebirth:item/ingot_pb209"
+  }
+}
+

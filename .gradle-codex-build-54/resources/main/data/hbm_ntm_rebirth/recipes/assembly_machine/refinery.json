@@ -1,0 +1,57 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 3,
+      "ingredient": {
+        "tag": "forge:welded_plates/steel"
+      },
+      "legacy_ore": "plateSextupleSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/copper"
+      },
+      "legacy_ore": "plateCopper"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:shells/steel"
+      },
+      "legacy_ore": "shellSteel"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:pipes/steel"
+      },
+      "legacy_ore": "ntmpipeSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plate_polymer"
+      }
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_analog"
+      }
+    }
+  ],
+  "internal_name": "ass.refinery",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_refinery"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 91
+}

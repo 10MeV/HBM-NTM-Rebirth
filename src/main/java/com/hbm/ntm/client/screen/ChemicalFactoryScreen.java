@@ -4,7 +4,6 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
 import com.hbm.ntm.menu.ChemicalFactoryMenu;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
-import com.hbm.ntm.registry.ModItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -142,6 +141,6 @@ public class ChemicalFactoryScreen extends AbstractContainerScreen<ChemicalFacto
     }
 
     private static ItemStack recipeIcon(GenericMachineRecipe recipe) {
-        return recipe == null ? new ItemStack(ModItems.TEMPLATE_FOLDER.get()) : recipe.getIcon();
+        return recipe == null ? LegacyGuiElements.templateFolderStack() : recipe.getIcon();
     }
 }

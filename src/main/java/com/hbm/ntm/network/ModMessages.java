@@ -19,6 +19,7 @@ import com.hbm.ntm.network.packet.CoordinateActionPacket;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.EntitySyncRequestPacket;
 import com.hbm.ntm.network.packet.ExplosionKnockbackPacket;
+import com.hbm.ntm.network.packet.ExtPropertiesSyncPacket;
 import com.hbm.ntm.network.packet.HeldItemNbtPacket;
 import com.hbm.ntm.network.packet.ItemActionPacket;
 import com.hbm.ntm.network.packet.ItemControlPacket;
@@ -41,6 +42,7 @@ import com.hbm.ntm.network.packet.TileControlPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.network.packet.TileSyncRequestPacket;
 import com.hbm.ntm.network.packet.TypedMenuActionPacket;
+import com.hbm.ntm.player.HbmPlayerProperties;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -63,6 +65,7 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.List;
@@ -77,9 +80,17 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.zip.CRC32;
 
 public final class ModMessages {
     private static final String PROTOCOL_VERSION = "1";
+    private static final String LEGACY_CHANNEL_NAME = "hbm";
+    private static final ResourceLocation CHANNEL_NAME = new ResourceLocation(HbmNtm.MOD_ID, "main");
+    private static final int EXPECTED_LEGACY_PACKET_COUNT = 27;
+    private static final int EXPECTED_FIRST_LEGACY_PACKET_ID = 0;
+    private static final String EXPECTED_FIRST_LEGACY_PACKET_NAME = "TESirenPacket";
+    private static final int EXPECTED_LAST_LEGACY_PACKET_ID = 26;
+    private static final String EXPECTED_LAST_LEGACY_PACKET_NAME = "MuzzleFlashPacket";
     private static final int LIBRARY_FOUNDATION_PROGRESS_PERCENT = 99;
     private static int packetId;
     private static final AtomicBoolean REGISTERED = new AtomicBoolean();
@@ -88,7 +99,25 @@ public final class ModMessages {
     private static final AtomicLong BLOCKED_UNREGISTERED_SENDS = new AtomicLong();
     private static final AtomicLong BLOCKED_WRONG_DIRECTION_SENDS = new AtomicLong();
     private static final AtomicLong BLOCKED_INVALID_TARGET_SENDS = new AtomicLong();
+    private static final AtomicLong HANDLER_DISPATCHES = new AtomicLong();
+    private static final AtomicLong HANDLER_DISPATCHES_S2C = new AtomicLong();
+    private static final AtomicLong HANDLER_DISPATCHES_C2S = new AtomicLong();
+    private static final AtomicLong HANDLER_FAILURES = new AtomicLong();
+    private static final AtomicLong CODEC_ENCODES = new AtomicLong();
+    private static final AtomicLong CODEC_DECODES = new AtomicLong();
+    private static final AtomicLong CODEC_ENCODE_FAILURES = new AtomicLong();
+    private static final AtomicLong CODEC_DECODE_FAILURES = new AtomicLong();
+    private static final AtomicLong CODEC_ENCODED_BYTES = new AtomicLong();
+    private static final AtomicLong CODEC_DECODED_BYTES = new AtomicLong();
+    private static final AtomicLong CODEC_MAX_ENCODED_BYTES = new AtomicLong();
+    private static final AtomicLong CODEC_MAX_DECODED_BYTES = new AtomicLong();
+    private static final AtomicLong CODEC_DECODE_LEFTOVERS = new AtomicLong();
+    private static final AtomicLong CODEC_DECODE_LEFTOVER_BYTES = new AtomicLong();
+    private static final AtomicLong CODEC_MAX_DECODE_LEFTOVER_BYTES = new AtomicLong();
     private static volatile String lastBlockedSend = "";
+    private static volatile String lastHandlerFailure = "";
+    private static volatile String lastCodecFailure = "";
+    private static volatile String lastCodecSizeWarning = "";
     private static final List<LegacyPacketRegistration> LEGACY_REGISTERED_PACKETS = List.of(
             new LegacyPacketRegistration(0, "TESirenPacket", "S2C"),
             new LegacyPacketRegistration(1, "ItemDesignatorPacket", "C2S"),
@@ -122,6 +151,8 @@ public final class ModMessages {
                     "radiation/status fields split out of legacy extended properties"),
             new LegacyPacketMapping("ExtPropPacket", "PlayerPropertiesPacket", "S2C",
                     "typed player property payloads not owned by radiation"),
+            new LegacyPacketMapping("ExtPropPacket", "ExtPropertiesSyncPacket", "S2C",
+                    "combined living and player extended properties sync matching the legacy single packet shape"),
             new LegacyPacketMapping("PermaSyncPacket", "PermaSyncPacket", "S2C",
                     "global/per-player persistent sync compound"),
             new LegacyPacketMapping("AuxParticlePacketNT", "AuxParticlePacket", "S2C",
@@ -189,7 +220,7 @@ public final class ModMessages {
                     "early dedicated machine battery button compatibility"));
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
-            .named(new ResourceLocation(HbmNtm.MOD_ID, "main"))
+            .named(CHANNEL_NAME)
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
             .clientAcceptedVersions(PROTOCOL_VERSION::equals)
             .serverAcceptedVersions(PROTOCOL_VERSION::equals)
@@ -215,6 +246,200 @@ public final class ModMessages {
 
     public static String protocolVersion() {
         return PROTOCOL_VERSION;
+    }
+
+    public static ResourceLocation channelName() {
+        return CHANNEL_NAME;
+    }
+
+    public static String legacyChannelName() {
+        return LEGACY_CHANNEL_NAME;
+    }
+
+    public static NetworkChannelSnapshot networkChannelSnapshot() {
+        PacketRegistration firstModern = PACKET_REGISTRATIONS.isEmpty() ? null : PACKET_REGISTRATIONS.get(0);
+        PacketRegistration lastModern = PACKET_REGISTRATIONS.isEmpty() ? null : PACKET_REGISTRATIONS.get(PACKET_REGISTRATIONS.size() - 1);
+        LegacyPacketRegistration firstLegacy = LEGACY_REGISTERED_PACKETS.isEmpty() ? null : LEGACY_REGISTERED_PACKETS.get(0);
+        LegacyPacketRegistration lastLegacy = LEGACY_REGISTERED_PACKETS.isEmpty() ? null : LEGACY_REGISTERED_PACKETS.get(LEGACY_REGISTERED_PACKETS.size() - 1);
+        return new NetworkChannelSnapshot(
+                LEGACY_CHANNEL_NAME,
+                CHANNEL_NAME,
+                PROTOCOL_VERSION,
+                PACKET_REGISTRATIONS.size(),
+                firstModern == null ? -1 : firstModern.id(),
+                firstModern == null ? "" : firstModern.typeName(),
+                lastModern == null ? -1 : lastModern.id(),
+                lastModern == null ? "" : lastModern.typeName(),
+                LEGACY_REGISTERED_PACKETS.size(),
+                firstLegacy == null ? -1 : firstLegacy.legacyId(),
+                firstLegacy == null ? "" : firstLegacy.legacyName(),
+                lastLegacy == null ? -1 : lastLegacy.legacyId(),
+                lastLegacy == null ? "" : lastLegacy.legacyName(),
+                packetIdsAreContiguous(PACKET_REGISTRATIONS.stream().map(PacketRegistration::id).toList()),
+                packetIdsAreContiguous(LEGACY_REGISTERED_PACKETS.stream().map(LegacyPacketRegistration::legacyId).toList()),
+                "SimpleChannel registration is append-only; legacy numeric discriminators are documented for migration lookup only");
+    }
+
+    public static ProtocolManifestSnapshot protocolManifestSnapshot() {
+        ProtocolAudit audit = protocolAudit();
+        List<ProtocolManifestRow> rows = LEGACY_REGISTERED_PACKETS.stream()
+                .map(registration -> {
+                    List<LegacyPacketMapping> mappings = legacyPacketMappings(registration.legacyName());
+                    String modernPackets = mappings.stream()
+                            .map(mapping -> packetRegistration(mapping.modernName())
+                                    .map(modern -> "#" + modern.id() + " " + modern.typeName())
+                                    .orElse("#? " + mapping.modernName()))
+                            .distinct()
+                            .toList()
+                            .stream()
+                            .reduce((left, right) -> left + ", " + right)
+                            .orElse("unmapped");
+                    String notes = mappings.stream()
+                            .map(LegacyPacketMapping::notes)
+                            .distinct()
+                            .toList()
+                            .stream()
+                            .reduce((left, right) -> left + "; " + right)
+                            .orElse("");
+                    return new ProtocolManifestRow(
+                            registration.legacyId(),
+                            registration.legacyName(),
+                            registration.direction(),
+                            mappings.size(),
+                            modernPackets,
+                            notes);
+                })
+                .toList();
+        return new ProtocolManifestSnapshot(
+                LEGACY_CHANNEL_NAME,
+                CHANNEL_NAME,
+                PROTOCOL_VERSION,
+                protocolManifestFingerprint(),
+                PACKET_REGISTRATIONS.size(),
+                LEGACY_REGISTERED_PACKETS.size(),
+                LEGACY_PACKET_MAPPINGS.size(),
+                rows,
+                audit.hasProblems(),
+                "Fingerprint covers modern registration order, legacy discriminator order, and legacy-to-modern mapping rows");
+    }
+
+    public static ProtocolContractSnapshot protocolContractSnapshot() {
+        NetworkChannelSnapshot channel = networkChannelSnapshot();
+        ProtocolAudit audit = protocolAudit();
+        ProtocolManifestSnapshot manifest = protocolManifestSnapshot();
+        List<String> problems = new ArrayList<>();
+        if (!LEGACY_CHANNEL_NAME.equals(channel.legacyChannelName())) {
+            problems.add("legacy channel changed from " + LEGACY_CHANNEL_NAME + " to " + channel.legacyChannelName());
+        }
+        if (!CHANNEL_NAME.equals(channel.modernChannelName())) {
+            problems.add("modern channel changed from " + CHANNEL_NAME + " to " + channel.modernChannelName());
+        }
+        if (!PROTOCOL_VERSION.equals(channel.protocolVersion())) {
+            problems.add("protocol version changed from " + PROTOCOL_VERSION + " to " + channel.protocolVersion());
+        }
+        if (channel.legacyPacketRegistrationCount() != EXPECTED_LEGACY_PACKET_COUNT) {
+            problems.add("legacy packet count expected " + EXPECTED_LEGACY_PACKET_COUNT
+                    + " but was " + channel.legacyPacketRegistrationCount());
+        }
+        if (channel.firstLegacyPacketId() != EXPECTED_FIRST_LEGACY_PACKET_ID
+                || !EXPECTED_FIRST_LEGACY_PACKET_NAME.equals(channel.firstLegacyPacketName())) {
+            problems.add("legacy first packet expected #" + EXPECTED_FIRST_LEGACY_PACKET_ID
+                    + " " + EXPECTED_FIRST_LEGACY_PACKET_NAME
+                    + " but was #" + channel.firstLegacyPacketId() + " " + channel.firstLegacyPacketName());
+        }
+        if (channel.lastLegacyPacketId() != EXPECTED_LAST_LEGACY_PACKET_ID
+                || !EXPECTED_LAST_LEGACY_PACKET_NAME.equals(channel.lastLegacyPacketName())) {
+            problems.add("legacy last packet expected #" + EXPECTED_LAST_LEGACY_PACKET_ID
+                    + " " + EXPECTED_LAST_LEGACY_PACKET_NAME
+                    + " but was #" + channel.lastLegacyPacketId() + " " + channel.lastLegacyPacketName());
+        }
+        if (!channel.legacyPacketIdsContiguous()) {
+            problems.add("legacy discriminator table is not contiguous");
+        }
+        if (!channel.modernPacketIdsContiguous()) {
+            problems.add("modern packet id table is not contiguous");
+        }
+        if (mappedLegacyPacketCount() != LEGACY_REGISTERED_PACKETS.size()) {
+            problems.add("not all legacy packets have modern carrier mappings: "
+                    + mappedLegacyPacketCount() + "/" + LEGACY_REGISTERED_PACKETS.size());
+        }
+        if (audit.hasProblems()) {
+            problems.add("protocol audit has problems: " + protocolAuditSummary());
+        }
+        return new ProtocolContractSnapshot(
+                manifest.fingerprint(),
+                channel.legacyChannelName(),
+                channel.modernChannelName(),
+                channel.protocolVersion(),
+                channel.registeredPacketCount(),
+                channel.legacyPacketRegistrationCount(),
+                legacyPacketMappingCount(),
+                (int) mappedLegacyPacketCount(),
+                channel.modernPacketIdsContiguous(),
+                channel.legacyPacketIdsContiguous(),
+                audit.hasProblems(),
+                List.copyOf(problems),
+                "Contract checks legacy 1.7.10 packet table invariants plus modern append-only registration health");
+    }
+
+    public static String protocolContractSummary() {
+        ProtocolContractSnapshot contract = protocolContractSnapshot();
+        return "ok=" + contract.passed()
+                + " fingerprint=" + contract.fingerprint()
+                + " modernPackets=" + contract.modernPacketCount()
+                + " legacyPackets=" + contract.legacyPacketCount()
+                + " legacyMapped=" + contract.mappedLegacyPacketCount() + "/" + contract.legacyPacketCount()
+                + " mappingRows=" + contract.mappingRowCount()
+                + " modernContiguous=" + contract.modernPacketIdsContiguous()
+                + " legacyContiguous=" + contract.legacyPacketIdsContiguous()
+                + " auditProblems=" + contract.auditProblems()
+                + " problems=" + contract.problems().size();
+    }
+
+    public static String protocolManifestFingerprint() {
+        CRC32 crc = new CRC32();
+        byte[] bytes = canonicalProtocolManifest().getBytes(StandardCharsets.UTF_8);
+        crc.update(bytes, 0, bytes.length);
+        return String.format("%08x", crc.getValue());
+    }
+
+    private static String canonicalProtocolManifest() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("legacyChannel=").append(LEGACY_CHANNEL_NAME).append('\n');
+        builder.append("modernChannel=").append(CHANNEL_NAME).append('\n');
+        builder.append("protocol=").append(PROTOCOL_VERSION).append('\n');
+        builder.append("[modern]\n");
+        for (PacketRegistration registration : PACKET_REGISTRATIONS) {
+            builder.append(registration.id()).append('|')
+                    .append(registration.direction()).append('|')
+                    .append(registration.typeName()).append('\n');
+        }
+        builder.append("[legacy]\n");
+        for (LegacyPacketRegistration registration : LEGACY_REGISTERED_PACKETS) {
+            builder.append(registration.legacyId()).append('|')
+                    .append(registration.direction()).append('|')
+                    .append(registration.legacyName()).append('\n');
+        }
+        builder.append("[mapping]\n");
+        for (LegacyPacketMapping mapping : LEGACY_PACKET_MAPPINGS) {
+            builder.append(mapping.direction()).append('|')
+                    .append(mapping.legacyName()).append('|')
+                    .append(mapping.modernName()).append('\n');
+        }
+        return builder.toString();
+    }
+
+    public static String networkChannelSummary() {
+        NetworkChannelSnapshot snapshot = networkChannelSnapshot();
+        return "legacyChannel=" + snapshot.legacyChannelName()
+                + " modernChannel=" + snapshot.modernChannelName()
+                + " protocol=" + snapshot.protocolVersion()
+                + " modernPackets=" + snapshot.registeredPacketCount()
+                + " modernRange=#" + snapshot.firstModernPacketId() + "..#" + snapshot.lastModernPacketId()
+                + " modernContiguous=" + snapshot.modernPacketIdsContiguous()
+                + " legacyPackets=" + snapshot.legacyPacketRegistrationCount()
+                + " legacyRange=#" + snapshot.firstLegacyPacketId() + "..#" + snapshot.lastLegacyPacketId()
+                + " legacyContiguous=" + snapshot.legacyPacketIdsContiguous();
     }
 
     public static int libraryFoundationProgressPercent() {
@@ -244,6 +469,12 @@ public final class ModMessages {
     public static Optional<PacketRegistration> packetRegistration(String typeName) {
         return PACKET_REGISTRATIONS.stream()
                 .filter(registration -> registration.typeName().equals(typeName))
+                .findFirst();
+    }
+
+    public static Optional<PacketRegistration> packetRegistration(int id) {
+        return PACKET_REGISTRATIONS.stream()
+                .filter(registration -> registration.id() == id)
                 .findFirst();
     }
 
@@ -292,11 +523,85 @@ public final class ModMessages {
                 lastBlockedSend);
     }
 
+    public static HandlerRuntimeSnapshot handlerRuntimeSnapshot() {
+        return new HandlerRuntimeSnapshot(
+                HANDLER_DISPATCHES.get(),
+                HANDLER_DISPATCHES_S2C.get(),
+                HANDLER_DISPATCHES_C2S.get(),
+                HANDLER_FAILURES.get(),
+                lastHandlerFailure);
+    }
+
+    public static String handlerRuntimeSummary() {
+        HandlerRuntimeSnapshot snapshot = handlerRuntimeSnapshot();
+        return "handlerDispatches=" + snapshot.totalDispatches()
+                + " s2c=" + snapshot.serverToClientDispatches()
+                + " c2s=" + snapshot.clientToServerDispatches()
+                + " failures=" + snapshot.failures()
+                + (snapshot.lastFailure().isBlank() ? "" : " lastFailure=\"" + snapshot.lastFailure() + "\"");
+    }
+
+    public static CodecRuntimeSnapshot codecRuntimeSnapshot() {
+        return new CodecRuntimeSnapshot(
+                CODEC_ENCODES.get(),
+                CODEC_DECODES.get(),
+                CODEC_ENCODE_FAILURES.get(),
+                CODEC_DECODE_FAILURES.get(),
+                CODEC_ENCODED_BYTES.get(),
+                CODEC_DECODED_BYTES.get(),
+                CODEC_MAX_ENCODED_BYTES.get(),
+                CODEC_MAX_DECODED_BYTES.get(),
+                CODEC_DECODE_LEFTOVERS.get(),
+                CODEC_DECODE_LEFTOVER_BYTES.get(),
+                CODEC_MAX_DECODE_LEFTOVER_BYTES.get(),
+                lastCodecFailure,
+                lastCodecSizeWarning);
+    }
+
+    public static String codecRuntimeSummary() {
+        CodecRuntimeSnapshot snapshot = codecRuntimeSnapshot();
+        return "codecEncodes=" + snapshot.encodes()
+                + " codecDecodes=" + snapshot.decodes()
+                + " encodedBytes=" + snapshot.encodedBytes()
+                + " decodedBytes=" + snapshot.decodedBytes()
+                + " maxEncoded=" + snapshot.maxEncodedBytes()
+                + " maxDecoded=" + snapshot.maxDecodedBytes()
+                + " decodeLeftovers=" + snapshot.decodeLeftovers()
+                + " leftoverBytes=" + snapshot.decodeLeftoverBytes()
+                + " encodeFailures=" + snapshot.encodeFailures()
+                + " decodeFailures=" + snapshot.decodeFailures()
+                + (snapshot.lastFailure().isBlank() ? "" : " lastFailure=\"" + snapshot.lastFailure() + "\"");
+    }
+
     public static void resetSendSafetyCounters() {
         BLOCKED_UNREGISTERED_SENDS.set(0L);
         BLOCKED_WRONG_DIRECTION_SENDS.set(0L);
         BLOCKED_INVALID_TARGET_SENDS.set(0L);
         lastBlockedSend = "";
+    }
+
+    public static void resetHandlerRuntimeDiagnostics() {
+        HANDLER_DISPATCHES.set(0L);
+        HANDLER_DISPATCHES_S2C.set(0L);
+        HANDLER_DISPATCHES_C2S.set(0L);
+        HANDLER_FAILURES.set(0L);
+        lastHandlerFailure = "";
+    }
+
+    public static void resetCodecRuntimeDiagnostics() {
+        CODEC_ENCODES.set(0L);
+        CODEC_DECODES.set(0L);
+        CODEC_ENCODE_FAILURES.set(0L);
+        CODEC_DECODE_FAILURES.set(0L);
+        CODEC_ENCODED_BYTES.set(0L);
+        CODEC_DECODED_BYTES.set(0L);
+        CODEC_MAX_ENCODED_BYTES.set(0L);
+        CODEC_MAX_DECODED_BYTES.set(0L);
+        CODEC_DECODE_LEFTOVERS.set(0L);
+        CODEC_DECODE_LEFTOVER_BYTES.set(0L);
+        CODEC_MAX_DECODE_LEFTOVER_BYTES.set(0L);
+        lastCodecFailure = "";
+        lastCodecSizeWarning = "";
     }
 
     public static NetworkRuntimeSnapshot networkRuntimeSnapshot() {
@@ -318,6 +623,8 @@ public final class ModMessages {
                         + audit.duplicateLegacyNames().size()
                         + audit.duplicateModernRegistrations().size(),
                 sendSafetySnapshot(),
+                codecRuntimeSnapshot(),
+                handlerRuntimeSnapshot(),
                 ThreadedPacketDispatcher.snapshot(),
                 LegacyPacketThreading.legacyCommandSnapshot(),
                 LegacyNetworkDispatcher.legacyFlushCallCount(),
@@ -340,6 +647,10 @@ public final class ModMessages {
                 + " legacyMapped=" + snapshot.mappedLegacyPacketCount() + "/" + snapshot.legacyPacketRegistrationCount()
                 + " auditProblems=" + snapshot.auditProblems()
                 + " blockedSends=" + snapshot.sendSafety().totalBlockedSends()
+                + " codecFailures=" + snapshot.codec().totalFailures()
+                + " codecLeftovers=" + snapshot.codec().decodeLeftovers()
+                + " handlerDispatches=" + snapshot.handlers().totalDispatches()
+                + " handlerFailures=" + snapshot.handlers().failures()
                 + " threadedPending=" + snapshot.threaded().pending()
                 + " threadedPrepared=" + snapshot.threaded().totalPrepared()
                 + " threadedPreparedCopies=" + snapshot.threaded().preparedCopyInstance()
@@ -354,6 +665,8 @@ public final class ModMessages {
 
     public static void resetNetworkRuntimeDiagnostics() {
         resetSendSafetyCounters();
+        resetCodecRuntimeDiagnostics();
+        resetHandlerRuntimeDiagnostics();
         ThreadedPacketDispatcher.resetState();
         LegacyPacketThreading.resetLegacyCounters();
         LegacyNetworkDispatcher.resetLegacyCounters();
@@ -386,6 +699,12 @@ public final class ModMessages {
     public static Optional<LegacyPacketRegistration> legacyPacketRegistration(String legacyName) {
         return LEGACY_REGISTERED_PACKETS.stream()
                 .filter(registration -> registration.legacyName().equals(legacyName))
+                .findFirst();
+    }
+
+    public static Optional<LegacyPacketRegistration> legacyPacketRegistration(int legacyId) {
+        return LEGACY_REGISTERED_PACKETS.stream()
+                .filter(registration -> registration.legacyId() == legacyId)
                 .findFirst();
     }
 
@@ -473,6 +792,7 @@ public final class ModMessages {
 
     public static void logProtocolAudit() {
         ProtocolAudit audit = protocolAudit();
+        ProtocolContractSnapshot contract = protocolContractSnapshot();
         if (audit.hasProblems()) {
             HbmNtm.LOGGER.warn("HBM network protocol audit found issues: {}", protocolAuditSummary());
             audit.mappingsToUnregisteredModernPackets().forEach(mapping -> HbmNtm.LOGGER.warn(
@@ -489,7 +809,13 @@ public final class ModMessages {
                     registration.legacyId(), registration.direction(), registration.legacyName()));
             return;
         }
-        HbmNtm.LOGGER.info("HBM network protocol audit passed: {}", protocolAuditSummary());
+        if (!contract.passed()) {
+            HbmNtm.LOGGER.warn("HBM network protocol contract found issues: {}", protocolContractSummary());
+            contract.problems().forEach(problem -> HbmNtm.LOGGER.warn("Network protocol contract issue: {}", problem));
+            return;
+        }
+        HbmNtm.LOGGER.info("HBM network protocol audit passed: {} contract={}",
+                protocolAuditSummary(), protocolContractSummary());
     }
 
     private static List<String> duplicateValues(List<String> values) {
@@ -497,6 +823,18 @@ public final class ModMessages {
                 .filter(value -> Collections.frequency(values, value) > 1)
                 .distinct()
                 .toList();
+    }
+
+    private static boolean packetIdsAreContiguous(List<Integer> ids) {
+        if (ids.isEmpty()) {
+            return true;
+        }
+        for (int index = 0; index < ids.size(); index++) {
+            if (ids.get(index) != index) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static void register() {
@@ -668,6 +1006,10 @@ public final class ModMessages {
                 ClientTileBinarySyncRequestPacket::decode,
                 ClientTileBinarySyncRequestPacket::encode,
                 ClientTileBinarySyncRequestPacket::handle);
+        registerServerToClient(ExtPropertiesSyncPacket.class,
+                ExtPropertiesSyncPacket::decode,
+                ExtPropertiesSyncPacket::encode,
+                ExtPropertiesSyncPacket::handle);
     }
 
     public static void sendToServer(Object message) {
@@ -1431,9 +1773,17 @@ public final class ModMessages {
         sendToPlayer(new PlayerPropertiesPacket(dataType, data), player);
     }
 
+    public static void syncPlayerProperties(ServerPlayer player) {
+        syncPlayerProperties(player, HbmPlayerProperties.DATA_TYPE, HbmPlayerProperties.writeSyncedData(player));
+    }
+
     public static void syncPlayerPropertiesThreaded(ServerPlayer player, ResourceLocation dataType,
                                                     net.minecraft.nbt.CompoundTag data) {
         ThreadedPacketDispatcher.sendToPlayer(new PlayerPropertiesPacket(dataType, data), player);
+    }
+
+    public static void syncPlayerPropertiesThreaded(ServerPlayer player) {
+        syncPlayerPropertiesThreaded(player, HbmPlayerProperties.DATA_TYPE, HbmPlayerProperties.writeSyncedData(player));
     }
 
     public static void syncPlayerPropertiesBatch(ServerPlayer player,
@@ -1547,7 +1897,11 @@ public final class ModMessages {
             BiConsumer<MSG, FriendlyByteBuf> encoder,
             BiConsumer<MSG, Supplier<NetworkEvent.Context>> handler) {
         int id = packetId++;
-        CHANNEL.registerMessage(id, type, encoder, decoder, handler, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id, type,
+                trackedEncoder(type, "S2C", encoder),
+                trackedDecoder(type, "S2C", decoder),
+                trackedHandler(type, "S2C", handler),
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         PacketRegistration registration = new PacketRegistration(id, "S2C", type.getSimpleName());
         PACKET_REGISTRATIONS.add(registration);
         PACKET_REGISTRATIONS_BY_TYPE.put(type, registration);
@@ -1559,10 +1913,110 @@ public final class ModMessages {
             BiConsumer<MSG, FriendlyByteBuf> encoder,
             BiConsumer<MSG, Supplier<NetworkEvent.Context>> handler) {
         int id = packetId++;
-        CHANNEL.registerMessage(id, type, encoder, decoder, handler, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id, type,
+                trackedEncoder(type, "C2S", encoder),
+                trackedDecoder(type, "C2S", decoder),
+                trackedHandler(type, "C2S", handler),
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
         PacketRegistration registration = new PacketRegistration(id, "C2S", type.getSimpleName());
         PACKET_REGISTRATIONS.add(registration);
         PACKET_REGISTRATIONS_BY_TYPE.put(type, registration);
+    }
+
+    private static <MSG> BiConsumer<MSG, FriendlyByteBuf> trackedEncoder(
+            Class<MSG> type,
+            String direction,
+            BiConsumer<MSG, FriendlyByteBuf> encoder) {
+        return (message, buffer) -> {
+            CODEC_ENCODES.incrementAndGet();
+            int startWriterIndex = buffer.writerIndex();
+            try {
+                encoder.accept(message, buffer);
+                int bytes = Math.max(0, buffer.writerIndex() - startWriterIndex);
+                CODEC_ENCODED_BYTES.addAndGet(bytes);
+                updateMax(CODEC_MAX_ENCODED_BYTES, bytes);
+            } catch (RuntimeException | Error exception) {
+                recordCodecFailure(type, direction, "encode", exception);
+                throw exception;
+            }
+        };
+    }
+
+    private static <MSG> Function<FriendlyByteBuf, MSG> trackedDecoder(
+            Class<MSG> type,
+            String direction,
+            Function<FriendlyByteBuf, MSG> decoder) {
+        return buffer -> {
+            CODEC_DECODES.incrementAndGet();
+            int startReadableBytes = buffer.readableBytes();
+            try {
+                MSG message = decoder.apply(buffer);
+                int remainingBytes = Math.max(0, buffer.readableBytes());
+                int consumedBytes = Math.max(0, startReadableBytes - remainingBytes);
+                CODEC_DECODED_BYTES.addAndGet(consumedBytes);
+                updateMax(CODEC_MAX_DECODED_BYTES, consumedBytes);
+                if (remainingBytes > 0) {
+                    CODEC_DECODE_LEFTOVERS.incrementAndGet();
+                    CODEC_DECODE_LEFTOVER_BYTES.addAndGet(remainingBytes);
+                    updateMax(CODEC_MAX_DECODE_LEFTOVER_BYTES, remainingBytes);
+                    lastCodecSizeWarning = direction + " decode " + type.getName()
+                            + " left " + remainingBytes + " unread byte(s)";
+                }
+                return message;
+            } catch (RuntimeException | Error exception) {
+                recordCodecFailure(type, direction, "decode", exception);
+                throw exception;
+            }
+        };
+    }
+
+    private static <MSG> BiConsumer<MSG, Supplier<NetworkEvent.Context>> trackedHandler(
+            Class<MSG> type,
+            String direction,
+            BiConsumer<MSG, Supplier<NetworkEvent.Context>> handler) {
+        return (message, contextSupplier) -> {
+            HANDLER_DISPATCHES.incrementAndGet();
+            if ("S2C".equals(direction)) {
+                HANDLER_DISPATCHES_S2C.incrementAndGet();
+            } else if ("C2S".equals(direction)) {
+                HANDLER_DISPATCHES_C2S.incrementAndGet();
+            }
+            try {
+                handler.accept(message, contextSupplier);
+            } catch (RuntimeException | Error exception) {
+                recordHandlerFailure(type, direction, exception);
+                throw exception;
+            }
+        };
+    }
+
+    private static void recordHandlerFailure(Class<?> type, String direction, Throwable exception) {
+        HANDLER_FAILURES.incrementAndGet();
+        lastHandlerFailure = direction + " " + type.getName() + ": " + exception.getClass().getSimpleName()
+                + (exception.getMessage() == null ? "" : " " + exception.getMessage());
+        HbmNtm.LOGGER.warn("HBM network handler failed for {} {}.", direction, type.getName(), exception);
+    }
+
+    private static void recordCodecFailure(Class<?> type, String direction, String phase, Throwable exception) {
+        if ("encode".equals(phase)) {
+            CODEC_ENCODE_FAILURES.incrementAndGet();
+        } else if ("decode".equals(phase)) {
+            CODEC_DECODE_FAILURES.incrementAndGet();
+        }
+        lastCodecFailure = direction + " " + phase + " " + type.getName() + ": "
+                + exception.getClass().getSimpleName()
+                + (exception.getMessage() == null ? "" : " " + exception.getMessage());
+        HbmNtm.LOGGER.warn("HBM network codec {} failed for {} {}.", phase, direction, type.getName(), exception);
+    }
+
+    private static void updateMax(AtomicLong target, long value) {
+        long previous;
+        do {
+            previous = target.get();
+            if (value <= previous) {
+                return;
+            }
+        } while (!target.compareAndSet(previous, value));
     }
 
     private static boolean canSendMessage(Object message, String target, String expectedDirection) {
@@ -1644,6 +2098,66 @@ public final class ModMessages {
     public record LegacyPacketRegistration(int legacyId, String legacyName, String direction) {
     }
 
+    public record NetworkChannelSnapshot(
+            String legacyChannelName,
+            ResourceLocation modernChannelName,
+            String protocolVersion,
+            int registeredPacketCount,
+            int firstModernPacketId,
+            String firstModernPacketName,
+            int lastModernPacketId,
+            String lastModernPacketName,
+            int legacyPacketRegistrationCount,
+            int firstLegacyPacketId,
+            String firstLegacyPacketName,
+            int lastLegacyPacketId,
+            String lastLegacyPacketName,
+            boolean modernPacketIdsContiguous,
+            boolean legacyPacketIdsContiguous,
+            String notes) {
+    }
+
+    public record ProtocolManifestSnapshot(
+            String legacyChannelName,
+            ResourceLocation modernChannelName,
+            String protocolVersion,
+            String fingerprint,
+            int modernPacketCount,
+            int legacyPacketCount,
+            int mappingRowCount,
+            List<ProtocolManifestRow> rows,
+            boolean auditProblems,
+            String notes) {
+    }
+
+    public record ProtocolManifestRow(
+            int legacyId,
+            String legacyName,
+            String direction,
+            int mappingCount,
+            String modernPackets,
+            String notes) {
+    }
+
+    public record ProtocolContractSnapshot(
+            String fingerprint,
+            String legacyChannelName,
+            ResourceLocation modernChannelName,
+            String protocolVersion,
+            int modernPacketCount,
+            int legacyPacketCount,
+            int mappingRowCount,
+            int mappedLegacyPacketCount,
+            boolean modernPacketIdsContiguous,
+            boolean legacyPacketIdsContiguous,
+            boolean auditProblems,
+            List<String> problems,
+            String notes) {
+        public boolean passed() {
+            return problems.isEmpty();
+        }
+    }
+
     public record SendSafetySnapshot(
             int registeredTypes,
             long blockedUnregisteredSends,
@@ -1652,6 +2166,44 @@ public final class ModMessages {
             String lastBlockedSend) {
         public long totalBlockedSends() {
             return blockedUnregisteredSends + blockedWrongDirectionSends + blockedInvalidTargetSends;
+        }
+    }
+
+    public record HandlerRuntimeSnapshot(
+            long totalDispatches,
+            long serverToClientDispatches,
+            long clientToServerDispatches,
+            long failures,
+            String lastFailure) {
+        public boolean hasFailures() {
+            return failures > 0L;
+        }
+    }
+
+    public record CodecRuntimeSnapshot(
+            long encodes,
+            long decodes,
+            long encodeFailures,
+            long decodeFailures,
+            long encodedBytes,
+            long decodedBytes,
+            long maxEncodedBytes,
+            long maxDecodedBytes,
+            long decodeLeftovers,
+            long decodeLeftoverBytes,
+            long maxDecodeLeftoverBytes,
+            String lastFailure,
+            String lastSizeWarning) {
+        public long totalFailures() {
+            return encodeFailures + decodeFailures;
+        }
+
+        public boolean hasFailures() {
+            return totalFailures() > 0L;
+        }
+
+        public boolean hasWarnings() {
+            return hasFailures() || decodeLeftovers > 0L;
         }
     }
 
@@ -1670,6 +2222,8 @@ public final class ModMessages {
             int auditDirectionMismatch,
             int auditDuplicateEntries,
             SendSafetySnapshot sendSafety,
+            CodecRuntimeSnapshot codec,
+            HandlerRuntimeSnapshot handlers,
             ThreadedPacketDispatcher.Snapshot threaded,
             LegacyPacketThreading.LegacyCommandSnapshot legacyPacketThreading,
             long legacyFlushCalls,
@@ -1689,6 +2243,8 @@ public final class ModMessages {
         public boolean hasRuntimeWarnings() {
             return auditProblems
                     || sendSafety.totalBlockedSends() > 0L
+                    || codec.hasWarnings()
+                    || handlers.hasFailures()
                     || threaded.totalFailed() > 0L
                     || threaded.totalDiscarded() > 0L
                     || threaded.fallbackToMainThread()

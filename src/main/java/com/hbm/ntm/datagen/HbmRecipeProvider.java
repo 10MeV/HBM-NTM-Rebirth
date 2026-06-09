@@ -503,6 +503,22 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .sourceOrder(27)
                 .save(consumer, id("chemical_plant/asphalt"));
 
+        GenericMachineRecipeBuilder.chemical("chem.desh", 100, 100)
+                .inputItem(item("powder_desh_mix"), 1)
+                .inputFluid(HbmFluids.LIGHTOIL, 200)
+                .inputFluid(HbmFluids.MERCURY, 200)
+                .outputItem(item("ingot_desh"))
+                .sourceOrder(33)
+                .save(consumer, id("chemical_plant/desh"));
+
+        GenericMachineRecipeBuilder.chemical("chem.deshcracked", 100, 100)
+                .inputItem(item("powder_desh_mix"), 1)
+                .inputFluid(HbmFluids.LIGHTOIL_CRACK, 500, 1)
+                .inputFluid(HbmFluids.MERCURY, 100)
+                .outputItem(item("ingot_desh"))
+                .sourceOrder(34)
+                .save(consumer, id("chemical_plant/desh_cracked"));
+
         GenericMachineRecipeBuilder.chemical("chem.polymer", 100, 100)
                 .inputLegacyOre("dustCoal", 2)
                 .inputLegacyOre("dustFluorite", 1)
@@ -564,6 +580,22 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .customLocalization()
                 .sourceOrder(46)
                 .save(consumer, id("chemical_plant/biooilsolidfuel"));
+
+        GenericMachineRecipeBuilder.chemical("chem.oilelectrodes", 600, 100)
+                .inputFluid(HbmFluids.HEATINGOIL, 4_000)
+                .outputLegacyMeta(LegacyMetaItemMappings.ARC_ELECTRODE, 0)
+                .pool(LegacyBlueprintPools.PREFIX_ALT + ".electrodes")
+                .customLocalization()
+                .sourceOrder(47)
+                .save(consumer, id("chemical_plant/oil_electrodes"));
+
+        GenericMachineRecipeBuilder.chemical("chem.lubeelectrodes", 600, 100)
+                .inputFluid(HbmFluids.LUBRICANT, 8_000)
+                .outputLegacyMeta(LegacyMetaItemMappings.ARC_ELECTRODE, 0)
+                .pool(LegacyBlueprintPools.PREFIX_ALT + ".electrodes")
+                .customLocalization()
+                .sourceOrder(48)
+                .save(consumer, id("chemical_plant/lube_electrodes"));
 
         GenericMachineRecipeBuilder.chemical("chem.peroxide", 50, 100)
                 .inputFluid(HbmFluids.WATER, 1_000)
@@ -648,6 +680,13 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(ModItems.CANISTER_NAPALM.get())
                 .sourceOrder(64)
                 .save(consumer, id("chemical_plant/napalm"));
+
+        GenericMachineRecipeBuilder.chemical("chem.polarized", 100, 500)
+                .inputLegacyOre("paneGlass", 1)
+                .inputFluid(HbmFluids.PETROLEUM, 1_000)
+                .outputItem(new ItemStack(legacyMetaItem(LegacyMetaItemMappings.PART_GENERIC, 5), 16))
+                .sourceOrder(66)
+                .save(consumer, id("chemical_plant/polarized"));
 
         GenericMachineRecipeBuilder.chemical("chem.yellowcake", 250, 500)
                 .inputLegacyOre("billetUranium", 2)
@@ -1584,6 +1623,46 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(ModBlocks.MACHINE_BIGASSTANK.get())
                 .sourceOrder(145)
                 .save(consumer, id("assembly_machine/big_ass_tank"));
+
+        GenericMachineRecipeBuilder.assembly("ass.cyclotron", 600, 100)
+                .inputItem(legacyBatteryPack(2), 1)
+                .inputLegacyOre("wireDenseNeodymium", 32)
+                .inputLegacyOre("plateCastSteel", 16)
+                .inputLegacyOre("ingotAnyPlastic", 24)
+                .inputLegacyOre("ingotRubber", 24)
+                .inputItem(legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 8), 16)
+                .outputItem(ModBlocks.MACHINE_CYCLOTRON.get())
+                .sourceOrder(147)
+                .save(consumer, id("assembly_machine/cyclotron"));
+
+        GenericMachineRecipeBuilder.assembly("ass.pagold", 400, 100)
+                .inputLegacyOre("wireDenseGold", 64)
+                .inputLegacyOre("wireDenseGold", 64)
+                .outputLegacyMeta(LegacyMetaItemMappings.PA_COIL, 0)
+                .sourceOrder(154)
+                .save(consumer, id("assembly_machine/pa_coil_gold"));
+
+        GenericMachineRecipeBuilder.assembly("ass.panbti", 400, 100)
+                .inputLegacyOre("wireDenseNiobium", 64)
+                .inputLegacyOre("wireDenseTitanium", 64)
+                .outputLegacyMeta(LegacyMetaItemMappings.PA_COIL, 1)
+                .sourceOrder(155)
+                .save(consumer, id("assembly_machine/pa_coil_niobium"));
+
+        GenericMachineRecipeBuilder.assembly("ass.pabscco", 400, 100)
+                .inputLegacyOre("wireDenseBSCCO", 64)
+                .inputLegacyOre("ingotAnyPlastic", 64)
+                .outputLegacyMeta(LegacyMetaItemMappings.PA_COIL, 2)
+                .sourceOrder(156)
+                .save(consumer, id("assembly_machine/pa_coil_bscco"));
+
+        GenericMachineRecipeBuilder.assembly("ass.pachlorophyte", 400, 100)
+                .inputLegacyOre("wireDenseCopper", 64)
+                .inputLegacyOre("wireDenseCopper", 64)
+                .inputItem(item("powder_chlorophyte"), 16)
+                .outputLegacyMeta(LegacyMetaItemMappings.PA_COIL, 3)
+                .sourceOrder(157)
+                .save(consumer, id("assembly_machine/pa_coil_chlorophyte"));
 
         GenericMachineRecipeBuilder.assembly("ass.exposurechamber", 200, 100)
                 .inputLegacyOre("plateCastAluminum", 12)

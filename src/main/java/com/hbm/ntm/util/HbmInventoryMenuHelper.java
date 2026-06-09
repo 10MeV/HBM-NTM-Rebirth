@@ -174,6 +174,20 @@ public final class HbmInventoryMenuHelper {
         };
     }
 
+    public static Slot lockedPlayerSlot(Inventory inventory, int slot, int x, int y) {
+        return new Slot(inventory, slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return false;
+            }
+
+            @Override
+            public boolean mayPickup(Player player) {
+                return false;
+            }
+        };
+    }
+
     public static void addPlayerInventory(SlotSink sink, Inventory inventory, int x, int y) {
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {
@@ -188,10 +202,24 @@ public final class HbmInventoryMenuHelper {
         }
     }
 
+    public static void addHotbar(SlotSink sink, Inventory inventory, int x, int y, int lockedHotbarSlot) {
+        for (int column = 0; column < 9; column++) {
+            sink.add(column == lockedHotbarSlot
+                    ? lockedPlayerSlot(inventory, column, x + column * 18, y)
+                    : new Slot(inventory, column, x + column * 18, y));
+        }
+    }
+
     public static void addPlayerInventoryAndHotbar(SlotSink sink, Inventory inventory,
             int x, int inventoryY, int hotbarY) {
         addPlayerInventory(sink, inventory, x, inventoryY);
         addHotbar(sink, inventory, x, hotbarY);
+    }
+
+    public static void addPlayerInventoryAndHotbar(SlotSink sink, Inventory inventory,
+            int x, int inventoryY, int hotbarY, int lockedHotbarSlot) {
+        addPlayerInventory(sink, inventory, x, inventoryY);
+        addHotbar(sink, inventory, x, hotbarY, lockedHotbarSlot);
     }
 
     public static void addSlots(SlotSink sink, IItemHandler items, int from, int x, int y, int rows, int columns) {
@@ -350,6 +378,11 @@ public final class HbmInventoryMenuHelper {
 
     public static boolean moveStackToAnyRange(java.util.List<Slot> slots, ItemStack stack, int... ranges) {
         return HbmInventoryUtil.moveStackToAnyRange(slots, stack, ranges);
+    }
+
+    public static boolean legacyMergeItemStack(java.util.List<Slot> slots, ItemStack stack, int start, int end,
+            boolean reverse) {
+        return HbmInventoryUtil.mergeItemStack(slots, stack, start, end, reverse);
     }
 
     public static boolean isBatteryLike(ItemStack stack) {

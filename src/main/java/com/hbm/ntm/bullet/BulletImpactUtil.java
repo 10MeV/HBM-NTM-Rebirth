@@ -1,11 +1,14 @@
 package com.hbm.ntm.bullet;
 
+import com.hbm.ntm.block.ShotDetonatableBlock;
+import com.hbm.ntm.entity.effect.EmpBlastEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.explosion.ExplosionLarge;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.explosion.NuclearExplosionUtil;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
@@ -42,7 +45,7 @@ public final class BulletImpactUtil {
 
         boolean discard = shouldDiscardAfterBlockImpact(config, hitBlock != null, inGround);
         if (level.isClientSide()) {
-            return new BlockImpactResult(discard, false, false, false, false, false, false, false, false, false,
+            return new BlockImpactResult(discard, false, false, false, false, false, false, false, false, false, false,
                     Collections.emptyList());
         }
 
@@ -56,9 +59,10 @@ public final class BulletImpactUtil {
         boolean specialBehavior = applyTaggedImpactEffects(config, level, position);
         List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests =
                 BulletSpecialSpawnUtil.collectImpactSpawnRequests(config, level, source, position, null);
-        BlockBreakResult blockBreak = applyBlockBreak(config, level, hitBlock);
+        BlockBreakResult blockBreak = applyBlockBreak(config, level, hitBlock, source);
         return new BlockImpactResult(discard, fire, emp, jolt, explosion, shrapnel, rainbow, nuke,
-                specialBehavior, blockBreak.destroyedBlock() || blockBreak.brokeGlass(), spawnRequests);
+                specialBehavior, blockBreak.destroyedBlock() || blockBreak.brokeGlass() || blockBreak.shotDetonated(),
+                blockBreak.shotDetonated(), spawnRequests);
     }
 
     public static EntityImpactResult applyEntityImpactEffects(BulletConfig config, Entity target,
@@ -89,6 +93,8 @@ public final class BulletImpactUtil {
         boolean fire = false;
         boolean lead = false;
         boolean instakill = false;
+        boolean caustic = false;
+        int customEffects = 0;
         if (config.incendiaryTicks() > 0) {
             target.setSecondsOnFire(config.incendiaryTicks());
             fire = true;
@@ -107,7 +113,19 @@ public final class BulletImpactUtil {
             instakill = true;
         }
 
-        return new EntityHurtResult(fire, lead, instakill);
+        if (config.caustic() > 0 && target instanceof Player player) {
+            ArmorUtil.damageSuitAll(player, config.caustic());
+            caustic = true;
+        }
+
+        if (!config.effects().isEmpty() && target instanceof LivingEntity living) {
+            for (MobEffectInstance effect : config.effects()) {
+                living.addEffect(new MobEffectInstance(effect));
+                customEffects++;
+            }
+        }
+
+        return new EntityHurtResult(fire, lead, instakill, caustic, customEffects);
     }
 
     public static boolean shouldDiscardAfterBlockImpact(BulletConfig config, boolean hasBlockHit, boolean inGround) {
@@ -153,6 +171,10 @@ public final class BulletImpactUtil {
         }
         ExplosionNukeGeneric.empBlast(level, legacyRoundPos(position.x), legacyRoundPos(position.y),
                 legacyRoundPos(position.z), config.emp());
+        if (config.emp() > 3) {
+            level.addFreshEntity(EmpBlastEntity.create(level, position.x, position.y + 0.5D, position.z,
+                    config.emp()));
+        }
         return true;
     }
 
@@ -233,7 +255,8 @@ public final class BulletImpactUtil {
         }
     }
 
-    private static BlockBreakResult applyBlockBreak(BulletConfig config, Level level, @Nullable BlockPos hitBlock) {
+    private static BlockBreakResult applyBlockBreak(BulletConfig config, Level level,
+            @Nullable BlockPos hitBlock, @Nullable Entity source) {
         if (hitBlock == null) {
             return BlockBreakResult.NONE;
         }
@@ -242,10 +265,14 @@ public final class BulletImpactUtil {
             return BlockBreakResult.NONE;
         }
         if (config.destroysBlocks() && state.getDestroySpeed(level, hitBlock) <= 120.0F) {
-            return new BlockBreakResult(level.destroyBlock(hitBlock, false), false);
+            return new BlockBreakResult(level.destroyBlock(hitBlock, false), false, false);
         }
         if (config.breaksGlass() && isLegacyGlass(state)) {
-            return new BlockBreakResult(false, level.destroyBlock(hitBlock, false));
+            return new BlockBreakResult(false, level.destroyBlock(hitBlock, false), false);
+        }
+        if (config.breaksGlass() && state.getBlock() instanceof ShotDetonatableBlock detonatable) {
+            return new BlockBreakResult(false, false,
+                    detonatable.detonateFromShot(level, hitBlock, state, source));
         }
         return BlockBreakResult.NONE;
     }
@@ -268,9 +295,10 @@ public final class BulletImpactUtil {
 
     public record BlockImpactResult(boolean discardProjectile, boolean placedFire, boolean emp, boolean jolt,
             boolean explosion, boolean shrapnel, boolean rainbow, boolean nuke, boolean specialBehavior,
-            boolean brokeOrDestroyedBlock, List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests) {
+            boolean brokeOrDestroyedBlock, boolean shotDetonated,
+            List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests) {
         public static final BlockImpactResult NONE = new BlockImpactResult(false, false, false, false, false, false,
-                false, false, false, false, Collections.emptyList());
+                false, false, false, false, false, Collections.emptyList());
     }
 
     public record EntityImpactResult(boolean discardProjectile, EntityHurtResult hurt, BlockImpactResult blockImpact) {
@@ -278,12 +306,13 @@ public final class BulletImpactUtil {
                 BlockImpactResult.NONE);
     }
 
-    public record EntityHurtResult(boolean setOnFire, boolean leadApplied, boolean instakilled) {
-        public static final EntityHurtResult NONE = new EntityHurtResult(false, false, false);
+    public record EntityHurtResult(boolean setOnFire, boolean leadApplied, boolean instakilled,
+            boolean damagedArmor, int customEffectsApplied) {
+        public static final EntityHurtResult NONE = new EntityHurtResult(false, false, false, false, 0);
     }
 
-    private record BlockBreakResult(boolean destroyedBlock, boolean brokeGlass) {
-        private static final BlockBreakResult NONE = new BlockBreakResult(false, false);
+    private record BlockBreakResult(boolean destroyedBlock, boolean brokeGlass, boolean shotDetonated) {
+        private static final BlockBreakResult NONE = new BlockBreakResult(false, false, false);
     }
 
     private BulletImpactUtil() {

@@ -19,6 +19,8 @@ import java.math.BigInteger;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -182,6 +184,66 @@ public class AnnihilatorSavedData extends SavedData {
         return poolInstance == null ? BigInteger.ZERO : poolInstance.getAmount(key);
     }
 
+    public BigInteger getItemAmount(String pool, Item item) {
+        return item == null ? BigInteger.ZERO : getAmount(pool, PoolKey.item(item));
+    }
+
+    public BigInteger getItemAmount(String pool, ItemStack stack) {
+        return stack == null || stack.isEmpty() ? BigInteger.ZERO : getItemAmount(pool, stack.getItem());
+    }
+
+    public BigInteger getItemMetaAmount(String pool, ItemStack stack, int legacyMeta) {
+        return stack == null || stack.isEmpty() ? BigInteger.ZERO
+                : getAmount(pool, PoolKey.itemMeta(stack, legacyMeta));
+    }
+
+    public BigInteger getFluidAmount(String pool, FluidType type) {
+        return type == null ? BigInteger.ZERO : getAmount(pool, PoolKey.fluid(type));
+    }
+
+    public BigInteger getOreDictAmount(String pool, String oreDict) {
+        return oreDict == null || oreDict.isBlank() ? BigInteger.ZERO : getAmount(pool, PoolKey.oreDict(oreDict));
+    }
+
+    public boolean hasPool(String pool) {
+        return pools.containsKey(pool);
+    }
+
+    public int poolEntryCount(String pool) {
+        AnnihilatorPool poolInstance = pools.get(pool);
+        return poolInstance == null ? 0 : poolInstance.size();
+    }
+
+    public BigInteger totalAmount(String pool) {
+        AnnihilatorPool poolInstance = pools.get(pool);
+        return poolInstance == null ? BigInteger.ZERO : poolInstance.totalAmount();
+    }
+
+    public Map<Kind, Integer> keyKindCounts(String pool) {
+        AnnihilatorPool poolInstance = pools.get(pool);
+        return poolInstance == null ? Map.of() : poolInstance.keyKindCounts();
+    }
+
+    public Map<Kind, BigInteger> keyKindTotals(String pool) {
+        AnnihilatorPool poolInstance = pools.get(pool);
+        return poolInstance == null ? Map.of() : poolInstance.keyKindTotals();
+    }
+
+    public List<Map.Entry<PoolKey, BigInteger>> poolEntriesSnapshot(String pool) {
+        AnnihilatorPool poolInstance = pools.get(pool);
+        return poolInstance == null ? List.of() : poolInstance.entriesSnapshot();
+    }
+
+    public List<Map.Entry<PoolKey, BigInteger>> topEntriesSnapshot(String pool, int limit) {
+        AnnihilatorPool poolInstance = pools.get(pool);
+        return poolInstance == null ? List.of() : poolInstance.topEntriesSnapshot(limit);
+    }
+
+    public List<Map.Entry<PoolKey, BigInteger>> entriesByKindSnapshot(String pool, Kind kind, int limit) {
+        AnnihilatorPool poolInstance = pools.get(pool);
+        return poolInstance == null ? List.of() : poolInstance.entriesByKindSnapshot(kind, limit);
+    }
+
     public List<Map.Entry<String, AnnihilatorPool>> poolsSnapshot() {
         return pools.entrySet().stream()
                 .<Map.Entry<String, AnnihilatorPool>>map(
@@ -255,6 +317,43 @@ public class AnnihilatorSavedData extends SavedData {
                     .<Map.Entry<PoolKey, BigInteger>>map(
                             entry -> new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue()))
                     .toList();
+        }
+
+        public List<Map.Entry<PoolKey, BigInteger>> topEntriesSnapshot(int limit) {
+            if (limit <= 0) {
+                return List.of();
+            }
+            return entriesSnapshot().stream()
+                    .sorted(Map.Entry.<PoolKey, BigInteger>comparingByValue(Comparator.reverseOrder()))
+                    .limit(limit)
+                    .toList();
+        }
+
+        public List<Map.Entry<PoolKey, BigInteger>> entriesByKindSnapshot(Kind kind, int limit) {
+            if (kind == null || kind == Kind.UNKNOWN || limit <= 0) {
+                return List.of();
+            }
+            return entriesSnapshot().stream()
+                    .filter(entry -> entry.getKey().kind() == kind)
+                    .sorted(Map.Entry.<PoolKey, BigInteger>comparingByValue(Comparator.reverseOrder()))
+                    .limit(limit)
+                    .toList();
+        }
+
+        public Map<Kind, Integer> keyKindCounts() {
+            EnumMap<Kind, Integer> counts = new EnumMap<>(Kind.class);
+            for (PoolKey key : items.keySet()) {
+                counts.merge(key.kind(), 1, Integer::sum);
+            }
+            return Map.copyOf(counts);
+        }
+
+        public Map<Kind, BigInteger> keyKindTotals() {
+            EnumMap<Kind, BigInteger> totals = new EnumMap<>(Kind.class);
+            for (Map.Entry<PoolKey, BigInteger> entry : items.entrySet()) {
+                totals.merge(entry.getKey().kind(), entry.getValue(), BigInteger::add);
+            }
+            return Map.copyOf(totals);
         }
 
         private ListTag serialize() {
@@ -377,6 +476,23 @@ public class AnnihilatorSavedData extends SavedData {
 
         Kind(int legacyId) {
             this.legacyId = (byte) legacyId;
+        }
+
+        public String commandName() {
+            return name().toLowerCase(java.util.Locale.ROOT);
+        }
+
+        public static Optional<Kind> byCommandName(String name) {
+            if (name == null || name.isBlank()) {
+                return Optional.empty();
+            }
+            String normalized = name.trim().toUpperCase(java.util.Locale.ROOT);
+            for (Kind kind : values()) {
+                if (kind != UNKNOWN && kind.name().equals(normalized)) {
+                    return Optional.of(kind);
+                }
+            }
+            return Optional.empty();
         }
 
         private static Kind byLegacyId(byte legacyId) {

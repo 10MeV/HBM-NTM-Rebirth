@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:pyro_oven",
+  "input_fluid": {
+    "fluid": "SYNGAS",
+    "amount": 2000
+  },
+  "input_item": {
+    "ingredient": {
+      "tag": "forge:dusts/tungsten"
+    },
+    "count": 1
+  },
+  "output_fluid": {
+    "fluid": "SPENTSTEAM",
+    "amount": 1000
+  },
+  "output_item": {
+    "item": "hbm_ntm_rebirth:ingot_tungsten_carbide"
+  },
+  "duration": 300
+}

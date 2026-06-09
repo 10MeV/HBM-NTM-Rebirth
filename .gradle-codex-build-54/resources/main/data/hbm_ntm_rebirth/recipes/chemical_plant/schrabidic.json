@@ -1,0 +1,33 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 60,
+  "input_fluids": [
+    {
+      "amount": 2000,
+      "fluid": "hbm_ntm_rebirth:sas3"
+    },
+    {
+      "amount": 2000,
+      "fluid": "hbm_ntm_rebirth:peroxide"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:pellet_charged"
+      }
+    }
+  ],
+  "internal_name": "chem.schrabidic",
+  "output_fluids": [
+    {
+      "amount": 2000,
+      "fluid": "hbm_ntm_rebirth:schrabidic"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 5000,
+  "source_order": 53
+}

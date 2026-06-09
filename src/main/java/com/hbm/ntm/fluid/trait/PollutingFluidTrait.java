@@ -1,6 +1,7 @@
 package com.hbm.ntm.fluid.trait;
 
 import com.google.gson.JsonObject;
+import com.hbm.ntm.pollution.PollutionType;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -75,8 +76,36 @@ public class PollutingFluidTrait extends FluidTrait {
         HEAVY_METAL,
         FALLOUT;
 
+        private static final PollutionKind[] ORDERED_VALUES = values();
+        private static final List<PollutionKind> ORDERED_LIST = List.of(ORDERED_VALUES);
+
+        public static List<PollutionKind> orderedValues() {
+            return ORDERED_LIST;
+        }
+
+        public PollutionType pollutionType() {
+            return switch (this) {
+                case SOOT -> PollutionType.SOOT;
+                case POISON -> PollutionType.POISON;
+                case HEAVY_METAL -> PollutionType.HEAVYMETAL;
+                case FALLOUT -> PollutionType.FALLOUT;
+            };
+        }
+
+        public static PollutionKind byPollutionType(PollutionType type) {
+            if (type == null) {
+                return null;
+            }
+            return switch (type) {
+                case SOOT -> SOOT;
+                case POISON -> POISON;
+                case HEAVYMETAL -> HEAVY_METAL;
+                case FALLOUT -> FALLOUT;
+            };
+        }
+
         public String legacyName() {
-            return this == HEAVY_METAL ? "HEAVYMETAL" : name();
+            return pollutionType().name();
         }
     }
 }

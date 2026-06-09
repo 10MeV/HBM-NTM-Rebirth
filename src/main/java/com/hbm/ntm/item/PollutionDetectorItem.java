@@ -25,13 +25,15 @@ public class PollutionDetectorItem extends Item {
         }
 
         PollutionSavedData.PollutionSample data = PollutionManager.getPollutionData(level, entity.blockPosition());
-        ModMessages.informPlayer(player, readout("Soot", data.get(PollutionType.SOOT)), 100, 4_000);
-        ModMessages.informPlayer(player, readout("Poison", data.get(PollutionType.POISON)), 101, 4_000);
-        ModMessages.informPlayer(player, readout("Heavy metal", data.get(PollutionType.HEAVYMETAL)), 102, 4_000);
+        int id = 100;
+        for (PollutionType type : PollutionType.legacyDetectorTypes()) {
+            ModMessages.informPlayer(player, readout(type, data), id++, 4_000);
+        }
     }
 
-    private static Component readout(String label, float value) {
-        float rounded = ((int) (value * 100.0F)) / 100.0F;
-        return Component.literal(label + ": " + rounded).withStyle(ChatFormatting.YELLOW);
+    private static Component readout(PollutionType type, PollutionSavedData.PollutionSample data) {
+        PollutionSavedData.PollutionSample sample = data == null ? new PollutionSavedData.PollutionSample() : data;
+        return Component.literal(type.displayName() + ": " + sample.formatValue(type))
+                .withStyle(ChatFormatting.YELLOW);
     }
 }

@@ -4,6 +4,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 
 @FunctionalInterface
-public interface ClientPlayerSyncDataListener {
+interface ClientPlayerSyncDataListener {
     void onClientPlayerSyncData(ResourceLocation dataType, CompoundTag data);
 }

@@ -23,6 +23,7 @@ public record LegacyMachineDefinition(
         Function<Direction, LegacyMultiblockLayout> layoutFactory,
         ResourceLocation modelLocation,
         ResourceLocation textureLocation,
+        Map<String, ResourceLocation> partTextures,
         boolean renderAll,
         List<String> renderParts,
         boolean itemRenderAll,
@@ -104,6 +105,7 @@ public record LegacyMachineDefinition(
         private int legacyHeightOffset;
         private Function<Direction, Direction> placementFacingFactory;
         private Function<Direction, LegacyMultiblockLayout> layoutFactory;
+        private Map<String, ResourceLocation> partTextures = Map.of();
         private boolean renderAll = true;
         private List<String> renderParts = List.of();
         private Boolean itemRenderAll;
@@ -145,12 +147,18 @@ public record LegacyMachineDefinition(
         }
 
         public Builder proxyPredicate(Predicate<BlockPos> proxyOffsets) {
-            this.layoutFactory = facing -> LegacyMultiblockLayout.ofLegacyXr(legacyXrDimensions, facing, proxyOffsets);
+            this.layoutFactory = facing -> LegacyMultiblockLayout.ofLegacyXrChecked(legacyXrDimensions, facing,
+                    proxyOffsets);
             return this;
         }
 
         public Builder layout(Function<Direction, LegacyMultiblockLayout> layoutFactory) {
             this.layoutFactory = layoutFactory;
+            return this;
+        }
+
+        public Builder partTextures(Map<String, ResourceLocation> partTextures) {
+            this.partTextures = Map.copyOf(partTextures);
             return this;
         }
 
@@ -231,12 +239,12 @@ public record LegacyMachineDefinition(
         public LegacyMachineDefinition build() {
             Function<Direction, LegacyMultiblockLayout> resolvedLayout = layoutFactory != null
                     ? layoutFactory
-                    : facing -> LegacyMultiblockLayout.ofLegacyXr(legacyXrDimensions, facing);
+                    : facing -> LegacyMultiblockLayout.ofLegacyXrChecked(legacyXrDimensions, facing);
             boolean resolvedItemRenderAll = itemRenderAll == null ? renderAll : itemRenderAll;
             List<String> resolvedItemRenderParts = itemRenderParts == null ? renderParts : itemRenderParts;
             return new LegacyMachineDefinition(legacyXrDimensions, legacyOffset, legacyHeightOffset,
-                    placementFacingFactory, resolvedLayout, modelLocation, textureLocation, renderAll, renderParts,
-                    resolvedItemRenderAll, resolvedItemRenderParts, itemPartTextures, itemFitSize,
+                    placementFacingFactory, resolvedLayout, modelLocation, textureLocation, partTextures,
+                    renderAll, renderParts, resolvedItemRenderAll, resolvedItemRenderParts, itemPartTextures, itemFitSize,
                     legacyItemScale, modelTranslationFactory, yRotationOffset,
                     yRotationFactory, renderBoundingBoxFactory, collisionShapeFactory, highlightShapeFactory,
                     particleStateFactory);

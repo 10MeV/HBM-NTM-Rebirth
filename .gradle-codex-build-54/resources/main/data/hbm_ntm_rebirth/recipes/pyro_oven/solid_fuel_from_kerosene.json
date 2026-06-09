@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:pyro_oven",
+  "input_fluid": {
+    "fluid": "KEROSENE",
+    "amount": 560
+  },
+  "output_item": {
+    "item": "hbm_ntm_rebirth:solid_fuel"
+  },
+  "duration": 60
+}

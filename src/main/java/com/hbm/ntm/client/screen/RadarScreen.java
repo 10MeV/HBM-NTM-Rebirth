@@ -1,22 +1,16 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.api.entity.RadarEntry;
+import com.hbm.ntm.api.entity.RadarMap;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.RadarBlockEntity;
+import com.hbm.ntm.client.renderer.LegacyRadarDisplayRenderer;
 import com.hbm.ntm.menu.RadarMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.TileControlPacket;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -24,7 +18,6 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Inventory;
-import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -197,8 +190,9 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
         if (menu.jammed()) {
             for (int x = 0; x < 5; x++) {
                 for (int z = 0; z < 5; z++) {
-                    graphics.blit(RADAR_TEXTURE, leftPos + RADAR_AREA_X + x * 40,
-                            topPos + RADAR_AREA_Y + z * 40, 216, 118 + random.nextInt(81), 40, 40);
+                    LegacyRadarDisplayRenderer.renderGuiNoiseTile(RADAR_TEXTURE, graphics,
+                            leftPos + RADAR_AREA_X + x * 40, topPos + RADAR_AREA_Y + z * 40,
+                            random.nextInt(81));
                 }
             }
             return;
@@ -218,49 +212,23 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
             if (height > 0) {
                 int x = leftPos + RADAR_AREA_X + i % RadarBlockEntity.MAP_WIDTH;
                 int y = topPos + RADAR_AREA_Y + 1 + i / RadarBlockEntity.MAP_WIDTH;
-                int green = (height - 50) * 255 / 78;
-                graphics.fill(x, y, x + 1, y + 1, 0xFF000000 | (Mth.clamp(green, 0, 255) << 8));
+                graphics.fill(x, y, x + 1, y + 1, 0xFF000000 | (RadarMap.green(height) << 8));
             }
         }
     }
 
     private void renderSweep(GuiGraphics graphics, float partialTick) {
-        Minecraft minecraft = Minecraft.getInstance();
-        float tick = minecraft.level == null ? 0.0F : minecraft.level.getGameTime() + partialTick;
-        double angle = -Math.toRadians((tick * 5.0F) % 360.0F + 180.0F);
-        double leadAngle = angle + 0.25D;
-        double centerX = leftPos + RADAR_CENTER_X;
-        double centerY = topPos + RADAR_CENTER_Y;
-        double trX = centerX + Math.cos(angle) * 100.0D;
-        double trY = centerY + Math.sin(angle) * 100.0D;
-        double tlX = centerX + Math.cos(leadAngle) * 100.0D;
-        double tlY = centerY + Math.sin(leadAngle) * 100.0D;
-        double blX = centerX + Math.sin(angle) * 5.0D;
-        double blY = centerY - Math.cos(angle) * 5.0D;
-
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        Matrix4f matrix = graphics.pose().last().pose();
-        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        buffer.vertex(matrix, (float) centerX, (float) centerY, 0.0F).color(0, 255, 0, 0).endVertex();
-        buffer.vertex(matrix, (float) trX, (float) trY, 0.0F).color(0, 255, 0, 180).endVertex();
-        buffer.vertex(matrix, (float) tlX, (float) tlY, 0.0F).color(0, 255, 0, 0).endVertex();
-        buffer.vertex(matrix, (float) blX, (float) blY, 0.0F).color(0, 255, 0, 0).endVertex();
-        BufferUploader.drawWithShader(buffer.end());
-        RenderSystem.disableBlend();
+        RadarBlockEntity radar = menu.getBlockEntity();
+        LegacyRadarDisplayRenderer.renderGuiSweep(graphics, leftPos + RADAR_CENTER_X, topPos + RADAR_CENTER_Y,
+                Mth.lerp(partialTick, radar.getPreviousRotation(), radar.getRotation()));
     }
 
     private void renderBlips(GuiGraphics graphics, RadarBlockEntity radar) {
         for (RadarEntry entry : radar.getEntries()) {
-            double x = (entry.pos().getX() - radar.getBlockPos().getX())
-                    / ((double) radar.getRange() * 2.0D + 1.0D) * (RADAR_AREA_SIZE - 8.0D) - 4.0D;
-            double z = (entry.pos().getZ() - radar.getBlockPos().getZ())
-                    / ((double) radar.getRange() * 2.0D + 1.0D) * (RADAR_AREA_SIZE - 8.0D) - 4.0D;
-            int blip = Mth.clamp(entry.blipLevel(), 0, 14);
-            graphics.blit(RADAR_TEXTURE, leftPos + RADAR_CENTER_X + Mth.floor(x),
-                    topPos + RADAR_CENTER_Y + Mth.floor(z), 216, 8 * blip, 8, 8);
+            LegacyRadarDisplayRenderer.ScreenOffset offset =
+                    LegacyRadarDisplayRenderer.guiBlipOffset(entry.pos(), radar.getBlockPos(), radar.getRange());
+            LegacyRadarDisplayRenderer.renderGuiBlip(RADAR_TEXTURE, graphics,
+                    leftPos + RADAR_CENTER_X + offset.x(), topPos + RADAR_CENTER_Y + offset.z(), entry.blipLevel());
         }
     }
 
@@ -330,10 +298,10 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
 
         RadarBlockEntity radar = menu.getBlockEntity();
         for (RadarEntry entry : radar.getEntries()) {
-            int x = leftPos + (int) ((entry.pos().getX() - radar.getBlockPos().getX())
-                    / ((double) radar.getRange() * 2.0D + 1.0D) * (RADAR_AREA_SIZE - 8.0D)) + RADAR_CENTER_X;
-            int z = topPos + (int) ((entry.pos().getZ() - radar.getBlockPos().getZ())
-                    / ((double) radar.getRange() * 2.0D + 1.0D) * (RADAR_AREA_SIZE - 8.0D)) + RADAR_CENTER_Y;
+            LegacyRadarDisplayRenderer.ScreenOffset offset =
+                    LegacyRadarDisplayRenderer.guiBlipHitOffset(entry.pos(), radar.getBlockPos(), radar.getRange());
+            int x = leftPos + (int) offset.x() + RADAR_CENTER_X;
+            int z = topPos + (int) offset.z() + RADAR_CENTER_Y;
             if (mouseX + 5 > x && mouseX - 4 <= x && mouseY + 5 > z && mouseY - 4 <= z) {
                 graphics.renderTooltip(font, split(List.of(
                         radarName(entry.name()),
@@ -345,10 +313,10 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
         }
 
         if (isHovering(RADAR_AREA_X, RADAR_AREA_Y, RADAR_AREA_SIZE, RADAR_AREA_SIZE, mouseX, mouseY)) {
-            int targetX = (int) ((mouseX - leftPos - RADAR_CENTER_X)
-                    * ((double) radar.getRange() * 2.0D + 1.0D) / 192.0D + radar.getBlockPos().getX());
-            int targetZ = (int) ((mouseY - topPos - RADAR_CENTER_Y)
-                    * ((double) radar.getRange() * 2.0D + 1.0D) / 192.0D + radar.getBlockPos().getZ());
+            int targetX = LegacyRadarDisplayRenderer.guiTargetX(mouseX - leftPos - RADAR_CENTER_X,
+                    radar.getBlockPos(), radar.getRange());
+            int targetZ = LegacyRadarDisplayRenderer.guiTargetZ(mouseY - topPos - RADAR_CENTER_Y,
+                    radar.getBlockPos(), radar.getRange());
             graphics.renderTooltip(font, split(List.of(Component.literal(targetX + " / " + targetZ))),
                     mouseX, mouseY);
         }
@@ -378,10 +346,10 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
     private void sendLaunchCommand(int linkSlot) {
         RadarBlockEntity radar = menu.getBlockEntity();
         for (RadarEntry entry : radar.getEntries()) {
-            int x = leftPos + (int) ((entry.pos().getX() - radar.getBlockPos().getX())
-                    / ((double) radar.getRange() * 2.0D + 1.0D) * (RADAR_AREA_SIZE - 8.0D)) + RADAR_CENTER_X;
-            int z = topPos + (int) ((entry.pos().getZ() - radar.getBlockPos().getZ())
-                    / ((double) radar.getRange() * 2.0D + 1.0D) * (RADAR_AREA_SIZE - 8.0D)) + RADAR_CENTER_Y;
+            LegacyRadarDisplayRenderer.ScreenOffset offset =
+                    LegacyRadarDisplayRenderer.guiBlipHitOffset(entry.pos(), radar.getBlockPos(), radar.getRange());
+            int x = leftPos + (int) offset.x() + RADAR_CENTER_X;
+            int z = topPos + (int) offset.z() + RADAR_CENTER_Y;
             if (lastMouseX + 5 > x && lastMouseX - 4 <= x && lastMouseY + 5 > z && lastMouseY - 4 <= z) {
                 ModMessages.sendToServer(new TileControlPacket(radar.getBlockPos(),
                         RadarBlockEntity.launchEntityTag(linkSlot, entry.entityId())));
@@ -389,10 +357,10 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
             }
         }
 
-        int targetX = (int) ((lastMouseX - leftPos - RADAR_CENTER_X)
-                * ((double) radar.getRange() * 2.0D + 1.0D) / 192.0D + radar.getBlockPos().getX());
-        int targetZ = (int) ((lastMouseY - topPos - RADAR_CENTER_Y)
-                * ((double) radar.getRange() * 2.0D + 1.0D) / 192.0D + radar.getBlockPos().getZ());
+        int targetX = LegacyRadarDisplayRenderer.guiTargetX(lastMouseX - leftPos - RADAR_CENTER_X,
+                radar.getBlockPos(), radar.getRange());
+        int targetZ = LegacyRadarDisplayRenderer.guiTargetZ(lastMouseY - topPos - RADAR_CENTER_Y,
+                radar.getBlockPos(), radar.getRange());
         ModMessages.sendToServer(new TileControlPacket(radar.getBlockPos(),
                 RadarBlockEntity.launchPositionTag(linkSlot, targetX, targetZ)));
     }

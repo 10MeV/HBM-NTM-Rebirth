@@ -142,6 +142,46 @@ public final class HbmClientConfig {
         return SHOW_BLOCK_STATE_OVERLAY != null && SHOW_BLOCK_STATE_OVERLAY.get();
     }
 
+    public static boolean nukeWarpShockwaveEnabled() {
+        return booleanValue(NUKE_WARP_SHOCKWAVE, true);
+    }
+
+    public static float nukeWarpShockwaveIntensity() {
+        return (float) doubleValue(NUKE_WARP_SHOCKWAVE_INTENSITY, 1.0D);
+    }
+
+    public static int nukeWarpShockwaveMeshSegments() {
+        return Math.max(12, Math.min(96, intValue(NUKE_WARP_SHOCKWAVE_MESH_SEGMENTS, 48)));
+    }
+
+    public static boolean debugNukeWarpShockwaveWireframe() {
+        return booleanValue(DEBUG_NUKE_WARP_SHOCKWAVE_WIREFRAME, false);
+    }
+
+    private static boolean booleanValue(ForgeConfigSpec.BooleanValue value, boolean fallback) {
+        try {
+            return value == null ? fallback : value.get();
+        } catch (IllegalStateException ignored) {
+            return fallback;
+        }
+    }
+
+    private static int intValue(ForgeConfigSpec.IntValue value, int fallback) {
+        try {
+            return value == null ? fallback : value.get();
+        } catch (IllegalStateException ignored) {
+            return fallback;
+        }
+    }
+
+    private static double doubleValue(ForgeConfigSpec.DoubleValue value, double fallback) {
+        try {
+            return value == null ? fallback : value.get();
+        } catch (IllegalStateException ignored) {
+            return fallback;
+        }
+    }
+
     private HbmClientConfig() {
     }
 }

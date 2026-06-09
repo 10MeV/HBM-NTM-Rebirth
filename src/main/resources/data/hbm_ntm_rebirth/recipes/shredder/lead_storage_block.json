@@ -1,0 +1,12 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:shredder",
+    "input":  {
+                  "ingredient":  {
+                                     "tag":  "forge:storage_blocks/lead"
+                                 }
+              },
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:powder_lead",
+                   "count":  9
+               }
+}

@@ -1,11 +1,15 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.block.ChainExplodable;
+import com.hbm.ntm.entity.item.LegacyPrimedExplosiveEntity;
+import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -13,9 +17,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class LegacyRadiationBarrelBlock extends Block {
+public class LegacyRadiationBarrelBlock extends Block implements ChainExplodable {
     private static final VoxelShape SHAPE = box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
     private final float chunkRadiationPerTick;
 
@@ -51,16 +57,36 @@ public class LegacyRadiationBarrelBlock extends Block {
 
     @Override
     public void onBlockExploded(BlockState state, Level level, BlockPos pos, Explosion explosion) {
-        super.onBlockExploded(state, level, pos, explosion);
+        level.removeBlock(pos, false);
         if (!level.isClientSide && this == ModBlocks.YELLOW_BARREL.get()) {
-            ChunkRadiationManager.incrementRadiation(level, pos, 35.0F);
-            for (int i = -5; i <= 5; i++) {
-                for (int j = -5; j <= 5; j++) {
-                    for (int k = -5; k <= 5; k++) {
-                        BlockPos target = pos.offset(i, j, k);
-                        if (level.random.nextInt(5) == 0 && level.isEmptyBlock(target)) {
-                            level.setBlock(target, ModBlocks.GAS_RADON_DENSE.get().defaultBlockState(), Block.UPDATE_ALL);
-                        }
+            level.addFreshEntity(LegacyPrimedExplosiveEntity.create(level,
+                    pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, this, 100, true));
+        }
+    }
+
+    @Override
+    public void explodeEntity(Level level, Vec3 position, @Nullable Entity source) {
+        if (level.isClientSide || this != ModBlocks.YELLOW_BARREL.get()) {
+            return;
+        }
+        BlockPos pos = BlockPos.containing(Math.floor(position.x), Math.floor(position.y), Math.floor(position.z));
+        if (level.random.nextInt(3) == 0) {
+            level.setBlock(pos, ModBlocks.TOXIC_BLOCK.get().defaultBlockState(), Block.UPDATE_ALL);
+        } else {
+            level.explode(source, position.x, position.y, position.z, 12.0F, true, Level.ExplosionInteraction.BLOCK);
+        }
+        ExplosionNukeGeneric.waste(level, pos.getX(), pos.getY(), pos.getZ(), 35);
+        spawnDenseRadon(level, pos);
+        ChunkRadiationManager.incrementRadiation(level, pos, 35.0F);
+    }
+
+    private void spawnDenseRadon(Level level, BlockPos pos) {
+        for (int i = -5; i <= 5; i++) {
+            for (int j = -5; j <= 5; j++) {
+                for (int k = -5; k <= 5; k++) {
+                    BlockPos target = pos.offset(i, j, k);
+                    if (level.random.nextInt(5) == 0 && level.isEmptyBlock(target)) {
+                        level.setBlock(target, ModBlocks.GAS_RADON_DENSE.get().defaultBlockState(), Block.UPDATE_ALL);
                     }
                 }
             }

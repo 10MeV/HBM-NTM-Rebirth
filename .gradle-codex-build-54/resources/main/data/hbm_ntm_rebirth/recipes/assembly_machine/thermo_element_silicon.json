@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 60,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:wires/gold"
+      },
+      "legacy_ore": "wireFineGold"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:billets/silicon"
+      },
+      "legacy_ore": "billetSilicon"
+    }
+  ],
+  "internal_name": "ass.thermoelementsilicon",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:thermo_element"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 39
+}

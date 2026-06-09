@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/chimney_brick.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/chimney_brick",
+    "default": "hbm_ntm_rebirth:block/machines/chimney_brick",
+    "texture0": "hbm_ntm_rebirth:block/machines/chimney_brick"
+  }
+}

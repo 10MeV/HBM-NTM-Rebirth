@@ -1,0 +1,40 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 120,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:gas"
+    },
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:oxygen"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_coltan_ore"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/fluorite"
+      },
+      "legacy_ore": "dustFluorite"
+    }
+  ],
+  "internal_name": "chem.coltanpain",
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:pain"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 100,
+  "source_order": 56
+}

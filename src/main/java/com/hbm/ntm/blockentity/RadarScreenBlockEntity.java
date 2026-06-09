@@ -1,14 +1,13 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.entity.RadarEntry;
+import com.hbm.ntm.api.entity.RadarScanResult;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -17,6 +16,8 @@ import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 public class RadarScreenBlockEntity extends BlockEntity {
     private static final String TAG_LINKED = "linked";
@@ -61,6 +62,30 @@ public class RadarScreenBlockEntity extends BlockEntity {
         return List.copyOf(entries);
     }
 
+    public RadarScanResult getScanResultSnapshot() {
+        return new RadarScanResult(entries, false);
+    }
+
+    public int getEntryAmount() {
+        return entries.size();
+    }
+
+    public Optional<RadarEntry> getEntryAtLegacyIndex(int legacyIndex) {
+        return getScanResultSnapshot().entryAtLegacyIndex(legacyIndex);
+    }
+
+    public Optional<Boolean> isEntryPlayerAtLegacyIndex(int legacyIndex) {
+        return getScanResultSnapshot().isPlayerAtLegacyIndex(legacyIndex);
+    }
+
+    public OptionalInt getEntryTypeAtLegacyIndex(int legacyIndex) {
+        return getScanResultSnapshot().typeAtLegacyIndex(legacyIndex);
+    }
+
+    public Optional<RadarEntry.LegacyEntityInfo> getEntryInfoAtLegacyIndex(int legacyIndex) {
+        return getScanResultSnapshot().entityInfoAtLegacyIndex(legacyIndex);
+    }
+
     public BlockPos getRefPos() {
         return refPos;
     }
@@ -100,14 +125,14 @@ public class RadarScreenBlockEntity extends BlockEntity {
         range = tag.getInt(TAG_RANGE);
         if (tag.contains(TAG_ENTRIES, Tag.TAG_LIST)) {
             entries.clear();
-            readEntries(tag.getList(TAG_ENTRIES, Tag.TAG_COMPOUND), entries);
+            RadarEntry.readListInto(tag.getList(TAG_ENTRIES, Tag.TAG_COMPOUND), entries);
         }
     }
 
     @Override
     public CompoundTag getUpdateTag() {
         CompoundTag tag = saveWithoutMetadata();
-        tag.put(TAG_ENTRIES, writeEntries(entries));
+        tag.put(TAG_ENTRIES, RadarEntry.writeList(entries));
         return tag;
     }
 
@@ -124,36 +149,5 @@ public class RadarScreenBlockEntity extends BlockEntity {
     @Override
     public void handleUpdateTag(CompoundTag tag) {
         load(tag);
-    }
-
-    private static ListTag writeEntries(List<RadarEntry> entries) {
-        ListTag list = new ListTag();
-        for (RadarEntry entry : entries) {
-            CompoundTag tag = new CompoundTag();
-            tag.putString("name", entry.name());
-            tag.putInt("blipLevel", entry.blipLevel());
-            tag.putInt("x", entry.pos().getX());
-            tag.putInt("y", entry.pos().getY());
-            tag.putInt("z", entry.pos().getZ());
-            tag.putString("dimension", entry.dimension().toString());
-            tag.putInt("entityId", entry.entityId());
-            tag.putBoolean("redstone", entry.redstone());
-            list.add(tag);
-        }
-        return list;
-    }
-
-    private static void readEntries(ListTag list, List<RadarEntry> target) {
-        for (Tag rawTag : list) {
-            if (rawTag instanceof CompoundTag tag) {
-                target.add(new RadarEntry(
-                        tag.getString("name"),
-                        tag.getInt("blipLevel"),
-                        new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z")),
-                        new ResourceLocation(tag.getString("dimension")),
-                        tag.getInt("entityId"),
-                        tag.getBoolean("redstone")));
-            }
-        }
     }
 }

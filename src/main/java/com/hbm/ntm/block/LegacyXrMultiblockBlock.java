@@ -54,7 +54,8 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
     }
 
     protected LegacyMultiblockLayout getLayout(BlockState state) {
-        return LegacyMultiblockLayout.ofExtents(getExtents(state)).withProxyPredicate(proxyOffsets(state));
+        return LegacyMultiblockLayout.ofLegacyXrChecked(getLegacyXrDimensions(), state.getValue(FACING),
+                proxyOffsets(state));
     }
 
     protected Direction getFacingForPlacement(BlockPlaceContext context) {

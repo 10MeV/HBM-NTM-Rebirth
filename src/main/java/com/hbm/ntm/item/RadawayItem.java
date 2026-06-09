@@ -1,5 +1,6 @@
 package com.hbm.ntm.item;
 
+import com.hbm.ntm.config.PotionConfig;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.sounds.SoundSource;
@@ -25,7 +26,11 @@ public class RadawayItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        if (PotionConfig.hasPotionSickness(player)) {
+            return InteractionResultHolder.fail(stack);
+        }
         if (!level.isClientSide) {
+            PotionConfig.applyPotionSickness(player, 5);
             MobEffect effect = ModEffects.RADAWAY.get();
             MobEffectInstance active = player.getEffect(effect);
             int appliedDuration = active == null ? duration : active.getDuration() + duration;

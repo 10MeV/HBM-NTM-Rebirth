@@ -45,6 +45,9 @@ public final class ClientPollutionData {
     }
 
     public static float get(PollutionType type) {
+        if (type == null) {
+            return 0.0F;
+        }
         return switch (type) {
             case SOOT -> soot;
             case POISON -> poison;
@@ -70,12 +73,11 @@ public final class ClientPollutionData {
     }
 
     public static float get(int ordinal) {
-        PollutionType[] types = PollutionType.values();
-        return ordinal >= 0 && ordinal < types.length ? get(types[ordinal]) : 0.0F;
+        return get(PollutionType.byOrdinal(ordinal));
     }
 
     public static float[] toArray() {
-        float[] values = new float[PollutionType.values().length];
+        float[] values = new float[PollutionType.count()];
         copyInto(values);
         return values;
     }
@@ -84,7 +86,7 @@ public final class ClientPollutionData {
         if (target == null) {
             return;
         }
-        for (PollutionType type : PollutionType.values()) {
+        for (PollutionType type : PollutionType.orderedValues()) {
             if (type.ordinal() < target.length) {
                 target[type.ordinal()] = get(type);
             }
@@ -131,13 +133,12 @@ public final class ClientPollutionData {
         }
 
         public float get(int ordinal) {
-            PollutionType[] types = PollutionType.values();
-            return ordinal >= 0 && ordinal < types.length ? get(types[ordinal]) : 0.0F;
+            return get(PollutionType.byOrdinal(ordinal));
         }
 
         public float[] toArray() {
-            float[] values = new float[PollutionType.values().length];
-            for (PollutionType type : PollutionType.values()) {
+            float[] values = new float[PollutionType.count()];
+            for (PollutionType type : PollutionType.orderedValues()) {
                 values[type.ordinal()] = get(type);
             }
             return values;
@@ -145,6 +146,6 @@ public final class ClientPollutionData {
     }
 
     private static float valueOrZero(float[] values, PollutionType type) {
-        return values != null && type.ordinal() < values.length ? values[type.ordinal()] : 0.0F;
+        return values != null && type != null && type.ordinal() < values.length ? values[type.ordinal()] : 0.0F;
     }
 }

@@ -7,11 +7,14 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +28,30 @@ public final class WorldUtil {
         } catch (RuntimeException ex) {
             return Optional.empty();
         }
+    }
+
+    public static ChunkAccessReport inspectChunk(Level level, int chunkX, int chunkZ) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return ChunkAccessReport.clientOrUnsupported(chunkX, chunkZ);
+        }
+        boolean loaded = serverLevel.hasChunk(chunkX, chunkZ);
+        try {
+            ChunkAccess chunk = serverLevel.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
+            if (chunk instanceof LevelChunk) {
+                return new ChunkAccessReport(chunkX, chunkZ, loaded, true, false, "full");
+            }
+            return new ChunkAccessReport(chunkX, chunkZ, loaded, false, false, loaded ? "loaded_not_full" : "absent");
+        } catch (RuntimeException ex) {
+            return new ChunkAccessReport(chunkX, chunkZ, loaded, false, true, ex.getClass().getSimpleName());
+        }
+    }
+
+    public static ChunkAccessReport inspectChunk(Level level, ChunkPos pos) {
+        return inspectChunk(level, pos.x, pos.z);
+    }
+
+    public static ChunkAccessReport inspectChunkAtBlock(Level level, BlockPos pos) {
+        return inspectChunk(level, blockToChunkCoord(pos.getX()), blockToChunkCoord(pos.getZ()));
     }
 
     public static Optional<LevelChunk> provideChunk(ServerLevel level, ChunkPos pos) {
@@ -49,6 +76,32 @@ public final class WorldUtil {
 
     public static boolean isChunkLoaded(Level level, ChunkPos pos) {
         return isChunkLoaded(level, pos.x, pos.z);
+    }
+
+    public static boolean isBlockLoaded(Level level, BlockPos pos) {
+        return isChunkLoaded(level, blockToChunkCoord(pos.getX()), blockToChunkCoord(pos.getZ()));
+    }
+
+    public static Optional<BlockState> getLoadedBlockState(Level level, BlockPos pos) {
+        if (level == null || pos == null || !level.isInWorldBounds(pos) || !isBlockLoaded(level, pos)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(level.getBlockState(pos));
+        } catch (RuntimeException ex) {
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<BlockEntity> getLoadedBlockEntity(Level level, BlockPos pos) {
+        if (level == null || pos == null || !level.isInWorldBounds(pos) || !isBlockLoaded(level, pos)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(level.getBlockEntity(pos));
+        } catch (RuntimeException ex) {
+            return Optional.empty();
+        }
     }
 
     public static int blockToChunkCoord(int blockCoord) {
@@ -88,6 +141,38 @@ public final class WorldUtil {
 
     public static List<ChunkPos> chunksInSquare(ChunkPos center, int radius) {
         return chunksInSquare(center.x, center.z, radius);
+    }
+
+    public static ChunkBatchReport inspectChunks(Level level, Collection<ChunkPos> chunks) {
+        if (chunks == null || chunks.isEmpty()) {
+            return new ChunkBatchReport(0, 0, 0, 0, List.of());
+        }
+        int loaded = 0;
+        int full = 0;
+        int failed = 0;
+        List<ChunkAccessReport> reports = new ArrayList<>();
+        for (ChunkPos chunk : chunks) {
+            ChunkAccessReport report = inspectChunk(level, chunk);
+            reports.add(report);
+            if (report.loaded()) {
+                loaded++;
+            }
+            if (report.full()) {
+                full++;
+            }
+            if (report.failed()) {
+                failed++;
+            }
+        }
+        return new ChunkBatchReport(reports.size(), loaded, full, failed, reports);
+    }
+
+    public static ChunkBatchReport inspectChunksInSquare(Level level, int centerChunkX, int centerChunkZ, int radius) {
+        return inspectChunks(level, chunksInSquare(centerChunkX, centerChunkZ, radius));
+    }
+
+    public static ChunkBatchReport inspectChunksInSquare(Level level, ChunkPos center, int radius) {
+        return inspectChunksInSquare(level, center.x, center.z, radius);
     }
 
     public static ChunkLoadReport loadChunksInSquare(ServerLevel level, int centerChunkX, int centerChunkZ,
@@ -211,6 +296,36 @@ public final class WorldUtil {
 
         public boolean failed() {
             return failedChunks > 0;
+        }
+    }
+
+    public record ChunkAccessReport(int chunkX, int chunkZ, boolean loaded, boolean full, boolean failed,
+                                    String detail) {
+        public ChunkAccessReport {
+            detail = detail == null || detail.isBlank() ? "unknown" : detail;
+        }
+
+        public static ChunkAccessReport clientOrUnsupported(int chunkX, int chunkZ) {
+            return new ChunkAccessReport(chunkX, chunkZ, false, false, false, "client_or_unsupported_level");
+        }
+
+        public ChunkPos pos() {
+            return new ChunkPos(chunkX, chunkZ);
+        }
+
+        public boolean available() {
+            return full && !failed;
+        }
+    }
+
+    public record ChunkBatchReport(int requestedChunks, int loadedChunks, int fullChunks, int failedChunks,
+                                   List<ChunkAccessReport> chunks) {
+        public ChunkBatchReport {
+            chunks = chunks == null ? List.of() : List.copyOf(chunks);
+        }
+
+        public boolean complete() {
+            return requestedChunks == fullChunks && failedChunks == 0;
         }
     }
 }

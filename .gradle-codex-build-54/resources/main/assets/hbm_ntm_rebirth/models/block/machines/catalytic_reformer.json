@@ -1,0 +1,11 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/catalytic_reformer.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/catalytic_reformer",
+    "default": "hbm_ntm_rebirth:block/machines/catalytic_reformer",
+    "texture0": "hbm_ntm_rebirth:block/machines/catalytic_reformer"
+  }
+}

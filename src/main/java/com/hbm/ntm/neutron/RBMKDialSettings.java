@@ -9,6 +9,7 @@ public record RBMKDialSettings(
         double fuelDiffusionModifier,
         double fuelHeatProvision,
         int columnHeightAbove,
+        boolean permanentScrap,
         double boilerHeatConsumption,
         double controlSpeedModifier,
         double reactivityModifier,
@@ -34,6 +35,7 @@ public record RBMKDialSettings(
                 1.0D,
                 0.2D,
                 4,
+                true,
                 0.1D,
                 1.0D,
                 1.0D,
@@ -105,7 +107,9 @@ public record RBMKDialSettings(
                 reasimBoilerSpeed,
                 depletionEnabled,
                 xenonEnabled,
-                meltdownsDisabled);
+                meltdownsDisabled,
+                permanentScrap,
+                meltdownOverpressure);
     }
 
     private static double clamp01(double value) {

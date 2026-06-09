@@ -83,7 +83,7 @@ public final class HbmFluidContainerConfig {
                     warnings.add("entry " + i + " has invalid fluid or amount");
                     continue;
                 }
-                if (HbmFluidContainerRegistry.registerContainer(full, empty, fluid, amount)) {
+                if (HbmFluidContainerRegistry.registerConfiguredContainer(full, empty, fluid, amount)) {
                     loaded++;
                 } else {
                     skipped++;

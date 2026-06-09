@@ -1,0 +1,35 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:dusts/sodium"
+      }
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:dusts/iron"
+      }
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      }
+    }
+  ],
+  "internal_name": "chem.batterysodium",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:battery_sodium"
+    }
+  ],
+  "pools": [],
+  "power": 10000,
+  "source_order": 30
+}

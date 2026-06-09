@@ -1,0 +1,43 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 600,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:solvent"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/any_hard_plastic"
+      },
+      "legacy_ore": "ingotAnyHardPlastic"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
+    }
+  ],
+  "internal_name": "ass.explastic",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:item_expensive_plastic"
+    }
+  ],
+  "pools": [],
+  "power": 20000,
+  "source_order": 24
+}

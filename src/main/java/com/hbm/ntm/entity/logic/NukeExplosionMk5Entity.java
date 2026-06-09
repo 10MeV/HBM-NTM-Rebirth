@@ -51,7 +51,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         }
 
         if (radius == 0) {
-            radius = BombConfig.NUKA_RADIUS.get();
+            radius = BombConfig.nukaRadius();
         }
 
         int strength = radius * 2;
@@ -105,7 +105,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         }
 
         if (!explosion.isComplete()) {
-            int budget = BombConfig.MK5_BUDGET_MS.get();
+            int budget = BombConfig.mk5BudgetMs();
             explosion.cacheChunksTick(budget);
             explosion.destructionTick(budget);
             return;
@@ -149,7 +149,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
     }
 
     private int falloutScale() {
-        return Math.max(1, (int) (length * 2.5D + falloutAdd) * BombConfig.FALLOUT_RANGE_PERCENT.get() / 100);
+        return Math.max(1, (int) (length * 2.5D + falloutAdd) * BombConfig.falloutRangePercent() / 100);
     }
 
     public NukeExplosionMk5Entity setFallout(boolean fallout) {
@@ -212,7 +212,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
 
     private static ExplosionNukeRayBatched createExplosionWorker(Level level, double x, double y, double z, int strength,
             int speed, int length, BiConsumer<Integer, Integer> chunkLoader) {
-        int algorithm = BombConfig.EXPLOSION_ALGORITHM.get();
+        int algorithm = BombConfig.explosionAlgorithm();
         if (algorithm == 1 || algorithm == 2) {
             return new ExplosionNukeRayParallelized(level, x, y, z, strength, speed, length, chunkLoader);
         }
@@ -220,6 +220,6 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
     }
 
     private static boolean extendedLoggingEnabled() {
-        return HbmCommonConfig.ENABLE_EXTENDED_LOGGING != null && HbmCommonConfig.ENABLE_EXTENDED_LOGGING.get();
+        return HbmCommonConfig.extendedLoggingEnabled();
     }
 }

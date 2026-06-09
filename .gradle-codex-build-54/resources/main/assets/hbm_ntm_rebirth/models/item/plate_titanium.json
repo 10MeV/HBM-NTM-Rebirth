@@ -1,0 +1,6 @@
+{
+    "textures":  {
+                     "layer0":  "hbm_ntm_rebirth:item/plate_titanium"
+                 },
+    "parent":  "minecraft:item/generated"
+}

@@ -4,6 +4,10 @@ package com.hbm.ntm.api.entity;
 public interface LegacyRadarDetectable {
     RadarTargetType getTargetType();
 
+    default boolean canBeDetectedByLegacyRadar() {
+        return true;
+    }
+
     enum RadarTargetType {
         MISSILE_TIER0("Micro Missile"),
         MISSILE_TIER1("Tier 1 Missile"),

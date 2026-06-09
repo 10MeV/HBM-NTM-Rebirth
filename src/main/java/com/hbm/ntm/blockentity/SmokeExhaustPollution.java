@@ -64,7 +64,7 @@ final class SmokeExhaustPollution {
                 : trait.getReleasePollution();
         boolean overflowed = false;
         for (Map.Entry<PollutionKind, Float> entry : source.entrySet()) {
-            PollutionType pollutionType = toPollutionType(entry.getKey());
+            PollutionType pollutionType = entry.getKey().pollutionType();
             HbmFluidTank tank = tankFor(pollutionType, sootTank, heavyMetalTank, poisonTank);
             overflowed |= polluteBuffered(level, pos, tank, pollutionType, entry.getValue());
         }
@@ -84,37 +84,29 @@ final class SmokeExhaustPollution {
         return null;
     }
 
-    private static PollutionType toPollutionType(PollutionKind kind) {
-        return switch (kind) {
-            case SOOT -> PollutionType.SOOT;
-            case HEAVY_METAL -> PollutionType.HEAVYMETAL;
-            case POISON -> PollutionType.POISON;
-            case FALLOUT -> PollutionType.FALLOUT;
-        };
-    }
-
     private static FluidType toSmokeType(PollutionType type) {
         if (type == null) {
             return null;
         }
-        if (type == PollutionType.SOOT) {
-            return HbmFluids.SMOKE;
-        }
-        if (type == PollutionType.HEAVYMETAL) {
-            return HbmFluids.SMOKE_LEADED;
-        }
-        return HbmFluids.SMOKE_POISON;
+        return switch (type) {
+            case SOOT -> HbmFluids.SMOKE;
+            case HEAVYMETAL -> HbmFluids.SMOKE_LEADED;
+            case POISON -> HbmFluids.SMOKE_POISON;
+            case FALLOUT -> null;
+        };
     }
 
     private static HbmFluidTank tankFor(PollutionType type, HbmFluidTank sootTank, HbmFluidTank heavyMetalTank,
             HbmFluidTank poisonTank) {
-        if (type == PollutionType.SOOT) {
-            return sootTank;
+        if (type == null) {
+            return null;
         }
-        if (type == PollutionType.HEAVYMETAL) {
-            return heavyMetalTank;
-        }
-        return poisonTank;
+        return switch (type) {
+            case SOOT -> sootTank;
+            case HEAVYMETAL -> heavyMetalTank;
+            case POISON -> poisonTank;
+            case FALLOUT -> null;
+        };
     }
 
     private SmokeExhaustPollution() {

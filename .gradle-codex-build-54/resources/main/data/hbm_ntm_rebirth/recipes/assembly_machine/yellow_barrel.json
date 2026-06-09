@@ -1,0 +1,36 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:tank_steel"
+      }
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:plates/lead"
+      },
+      "legacy_ore": "plateLead"
+    },
+    {
+      "count": 10,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:nuclear_waste"
+      }
+    }
+  ],
+  "internal_name": "ass.yellowbarrel",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:yellow_barrel"
+    }
+  ],
+  "pools": [],
+  "power": 400,
+  "source_order": 54
+}

@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import java.util.function.IntFunction;
 
 public class LegacyStateBlockItem extends BlockItem {
-    private static final String TAG_VARIANT = "hbmLegacyVariant";
+    public static final String TAG_VARIANT = "hbmLegacyVariant";
 
     private final IntegerProperty property;
     private final int variants;
@@ -48,7 +48,7 @@ public class LegacyStateBlockItem extends BlockItem {
         return Math.max(0, Math.min(variants - 1, variant));
     }
 
-    private static ItemStack createStack(LegacyStateBlockItem item, int variant) {
+    public static ItemStack createStack(LegacyStateBlockItem item, int variant) {
         ItemStack stack = new ItemStack(item);
         stack.getOrCreateTag().putInt(TAG_VARIANT, variant);
         return stack;

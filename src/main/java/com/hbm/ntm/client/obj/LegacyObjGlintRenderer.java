@@ -16,8 +16,9 @@ public final class LegacyObjGlintRenderer {
                 .withColor(red * glintColor, green * glintColor, blue * glintColor, 1.0F);
 
         for (int layer = 0; layer < 2; layer++) {
-            float movement = age * (0.001F + layer * 0.003F) * speed;
-            ObjRenderContext layerContext = base.withLegacyTextureMatrix(scale, scale, 30.0F - layer * 60.0F, 0.0F, movement);
+            float movement = (float) LegacyUvAnimation.classicGlintMovement(age, layer, speed);
+            float rotation = (float) LegacyUvAnimation.classicGlintRotation(layer);
+            ObjRenderContext layerContext = base.withLegacyTextureMatrix(scale, scale, rotation, 0.0F, movement);
             renderPartOrAll(model, texture, layerContext, partName);
         }
     }

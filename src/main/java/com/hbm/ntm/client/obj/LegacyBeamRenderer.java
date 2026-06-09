@@ -5,6 +5,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import org.joml.Vector3d;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -15,8 +17,6 @@ public final class LegacyBeamRenderer {
         RANDOM,
         SPIRAL
     }
-
-    private static final Random RANDOM = new Random();
 
     public static void solidBeam(PoseStack poseStack, MultiBufferSource buffer,
                                  double x, double y, double z,
@@ -54,13 +54,12 @@ public final class LegacyBeamRenderer {
                 : LegacyUntexturedQuadRenderer.additiveNoCullType());
         PoseStack.Pose pose = poseStack.last();
 
-        RANDOM.setSeed(start);
         double segmentLength = length / segments;
-        Vector3d previous = point(axisY, axisX, axisZ, segmentLength, size, wave, start, 0);
-        for (int i = 1; i <= segments; i++) {
-            Vector3d current = point(axisY, axisX, axisZ, segmentLength, size, wave, start, i);
+        List<BeamPoint> points = beamPoints(axisY, axisX, axisZ, segmentLength, size, wave, start, segments);
+        for (int i = 1; i < points.size(); i++) {
+            Vector3d previous = points.get(i - 1).asVector();
+            Vector3d current = points.get(i).asVector();
             renderSegment(consumer, pose, previous, current, axisX, axisZ, outerColor, innerColor, layers, thickness);
-            previous = current;
         }
     }
 
@@ -85,15 +84,40 @@ public final class LegacyBeamRenderer {
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
         PoseStack.Pose pose = poseStack.last();
 
-        RANDOM.setSeed(start);
         double segmentLength = length / segments;
-        Vector3d previous = point(axisY, axisX, axisZ, segmentLength, size, wave, start, 0);
-        for (int i = 1; i <= segments; i++) {
-            Vector3d current = point(axisY, axisX, axisZ, segmentLength, size, wave, start, i);
+        List<BeamPoint> points = beamPoints(axisY, axisX, axisZ, segmentLength, size, wave, start, segments);
+        for (int i = 1; i < points.size(); i++) {
+            Vector3d previous = points.get(i - 1).asVector();
+            Vector3d current = points.get(i).asVector();
             line(consumer, pose, previous, current, outerColor);
-            previous = current;
         }
         line(consumer, pose, new Vector3d(), skeleton, innerColor);
+    }
+
+    public static List<BeamPoint> beamPoints(double x, double y, double z,
+            WaveType wave, int start, int segments, float size) {
+        if (segments <= 0) {
+            return List.of();
+        }
+        Vector3d skeleton = new Vector3d(x, y, z);
+        double length = skeleton.length();
+        if (length <= 1.0E-5D) {
+            return List.of();
+        }
+        Vector3d axisY = new Vector3d(skeleton).normalize();
+        Vector3d axisX = perpendicular(axisY);
+        Vector3d axisZ = new Vector3d(axisY).cross(axisX).normalize();
+        return beamPoints(axisY, axisX, axisZ, length / segments, size, wave, start, segments);
+    }
+
+    private static List<BeamPoint> beamPoints(Vector3d axisY, Vector3d axisX, Vector3d axisZ,
+            double segmentLength, float size, WaveType wave, int start, int segments) {
+        Random random = new Random(start);
+        List<BeamPoint> points = new ArrayList<>(segments + 1);
+        for (int i = 0; i <= segments; i++) {
+            points.add(point(axisY, axisX, axisZ, segmentLength, size, wave, start, i, random));
+        }
+        return points;
     }
 
     private static Vector3d perpendicular(Vector3d axisY) {
@@ -101,19 +125,20 @@ public final class LegacyBeamRenderer {
         return fallback.cross(axisY).normalize();
     }
 
-    private static Vector3d point(Vector3d axisY, Vector3d axisX, Vector3d axisZ,
-                                  double segmentLength, float size, WaveType wave, int start, int index) {
+    private static BeamPoint point(Vector3d axisY, Vector3d axisX, Vector3d axisZ,
+                                  double segmentLength, float size, WaveType wave, int start, int index, Random random) {
         double angle;
         if (wave == WaveType.SPIRAL) {
             angle = Math.toRadians(start + 45.0D * index);
         } else {
-            angle = Math.PI * 2.0D * RANDOM.nextFloat();
-            angle += Math.PI * 2.0D * RANDOM.nextFloat();
+            angle = Math.PI * 2.0D * random.nextFloat();
+            angle += Math.PI * 2.0D * random.nextFloat();
         }
 
-        return new Vector3d(axisY).mul(segmentLength * index)
+        Vector3d point = new Vector3d(axisY).mul(segmentLength * index)
                 .add(new Vector3d(axisX).mul(Math.cos(angle) * size))
                 .add(new Vector3d(axisZ).mul(Math.sin(angle) * size));
+        return new BeamPoint(index, point.x, point.y, point.z);
     }
 
     private static void renderSegment(VertexConsumer consumer, PoseStack.Pose pose,
@@ -173,11 +198,17 @@ public final class LegacyBeamRenderer {
         LegacyLineRenderer.line(consumer, pose, start.x, start.y, start.z, end.x, end.y, end.z, color, 255);
     }
 
-    private static int interpolateColor(int outerColor, int innerColor, float inter) {
+    public static int interpolateColor(int outerColor, int innerColor, float inter) {
         int red = (int) (red(outerColor) + (red(innerColor) - red(outerColor)) * inter);
         int green = (int) (green(outerColor) + (green(innerColor) - green(outerColor)) * inter);
         int blue = (int) (blue(outerColor) + (blue(innerColor) - blue(outerColor)) * inter);
         return red << 16 | green << 8 | blue;
+    }
+
+    public record BeamPoint(int index, double x, double y, double z) {
+        public Vector3d asVector() {
+            return new Vector3d(x, y, z);
+        }
     }
 
     private static int red(int color) {

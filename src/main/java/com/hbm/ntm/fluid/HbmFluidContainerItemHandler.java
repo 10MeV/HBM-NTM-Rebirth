@@ -27,7 +27,7 @@ public class HbmFluidContainerItemHandler implements IFluidHandlerItem {
 
     @Override
     public @NotNull FluidStack getFluidInTank(int tank) {
-        if (tank != 0) {
+        if (tank != 0 || container.getCount() != 1) {
             return FluidStack.EMPTY;
         }
         if (!HbmForgeFluidInterop.canExposeItemToForge(item, container)) {
@@ -44,7 +44,7 @@ public class HbmFluidContainerItemHandler implements IFluidHandlerItem {
 
     @Override
     public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
-        if (tank != 0 || stack.isEmpty()) {
+        if (tank != 0 || container.getCount() != 1 || stack.isEmpty()) {
             return false;
         }
         if (!HbmForgeFluidInterop.canExposeItemToForge(item, container)) {
@@ -83,7 +83,7 @@ public class HbmFluidContainerItemHandler implements IFluidHandlerItem {
         if (!HbmForgeFluidInterop.canExposeItemToForge(item, container)) {
             return FluidStack.EMPTY;
         }
-        FluidType type = HbmFluidForgeMappings.fromForge(resource);
+        FluidType type = HbmFluidForgeMappings.fromForgeExport(resource);
         if (type == HbmFluids.NONE || item.getFirstFluidType(container) != type) {
             return FluidStack.EMPTY;
         }

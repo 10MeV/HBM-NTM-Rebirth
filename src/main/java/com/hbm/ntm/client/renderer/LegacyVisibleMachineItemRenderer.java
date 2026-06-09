@@ -193,7 +193,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
         } else {
             for (String part : definition.itemRenderParts()) {
-                model.renderPart(part, definition.itemPartTextures().getOrDefault(part, definition.textureLocation()),
+                model.renderPart(part, definition.itemPartTextures().getOrDefault(part,
+                                definition.partTextures().getOrDefault(part, definition.textureLocation())),
                         poseStack, buffer, packedLight, packedOverlay);
             }
         }

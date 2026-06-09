@@ -1,6 +1,7 @@
 package com.hbm.ntm.explosion;
 
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.radiation.ArmorUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -9,7 +10,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Ocelot;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -17,7 +17,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.registries.RegistryObject;
 
-import java.util.Locale;
 import java.util.Objects;
 
 public final class ExplosionThermo {
@@ -202,7 +201,7 @@ public final class ExplosionThermo {
 
         AABB bounds = new AABB(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius);
         for (Entity entity : level.getEntities(null, bounds)) {
-            if (entity.distanceToSqr(x, y, z) > radius * radius || hasAsbestosLikeProtection(entity)) {
+            if (entity.distanceToSqr(x, y, z) > radius * radius || hasAsbestosProtection(entity)) {
                 continue;
             }
             if (entity instanceof LivingEntity living) {
@@ -271,16 +270,8 @@ public final class ExplosionThermo {
         }
     }
 
-    private static boolean hasAsbestosLikeProtection(Entity entity) {
-        if (!(entity instanceof Player player)) {
-            return false;
-        }
-        for (ItemStack stack : player.getArmorSlots()) {
-            if (!stack.isEmpty() && stack.getItem().getDescriptionId().toLowerCase(Locale.US).contains("asbestos")) {
-                return true;
-            }
-        }
-        return false;
+    private static boolean hasAsbestosProtection(Entity entity) {
+        return entity instanceof Player player && ArmorUtil.checkForAsbestos(player);
     }
 
     private static boolean isLegacy(BlockState state, String name) {

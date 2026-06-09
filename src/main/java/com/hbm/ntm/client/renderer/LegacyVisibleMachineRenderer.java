@@ -54,7 +54,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             model.renderAll(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         } else {
             for (String part : definition.renderParts()) {
-                model.renderPart(part, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+                model.renderPart(part, definition.partTextures().getOrDefault(part, definition.textureLocation()),
+                        poseStack, buffer, modelLight, packedOverlay);
             }
         }
 

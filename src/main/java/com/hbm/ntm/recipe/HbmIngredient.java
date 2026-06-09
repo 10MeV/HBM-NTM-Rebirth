@@ -19,7 +19,6 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -206,23 +205,8 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         if (!test(stack)) {
             return List.of();
         }
-        ItemStack consumed = stack.copy();
-        consumed.setCount(1);
-        ItemStack empty = HbmFluidContainerRegistry.getEmptyContainer(consumed);
-        if (empty.isEmpty()) {
-            return List.of();
-        }
-
-        List<ItemStack> remainders = new ArrayList<>();
-        int remaining = count;
-        int maxStackSize = Math.max(1, empty.getMaxStackSize());
-        while (remaining > 0) {
-            ItemStack copy = empty.copy();
-            copy.setCount(Math.min(remaining, maxStackSize));
-            remainders.add(copy);
-            remaining -= copy.getCount();
-        }
-        return remainders;
+        ItemStack consumed = stack.copyWithCount(1);
+        return HbmFluidContainerRegistry.getCraftingRemainders(consumed, count);
     }
 
     public Optional<Integer> stackLimit() {

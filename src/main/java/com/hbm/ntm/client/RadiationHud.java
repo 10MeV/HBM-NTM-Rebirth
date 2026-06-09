@@ -1,6 +1,7 @@
 package com.hbm.ntm.client;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.renderer.LegacyScreenQuadRenderer;
 import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.client.Minecraft;
@@ -33,7 +34,7 @@ public final class RadiationHud {
     }
 
     public static void render(GuiGraphics graphics, int screenWidth, int screenHeight) {
-        float radiation = ClientRadiationData.getRadiation();
+        float radiation = ClientHbmLivingProperties.getRadiation();
         float rate = Math.max(0.0F, lastRadiation - previousRadiation);
         long now = System.currentTimeMillis();
         if (now >= lastSurveyMs + 1000L) {
@@ -47,12 +48,10 @@ public final class RadiationHud {
         int height = 18;
         int x = 16 + HbmClientConfig.geigerOffsetHorizontal();
         int y = screenHeight - 20 - HbmClientConfig.geigerOffsetVertical();
-        int bar = (int) Math.min(radiation / 1000.0F * barLength, barLength);
+        int bar = LegacyScreenQuadRenderer.scaled(radiation, 1000.0D, barLength);
 
         graphics.blit(OVERLAY_MISC, x, y, 0, 0, width, height);
-        if (bar > 0) {
-            graphics.blit(OVERLAY_MISC, x + 1, y + 1, 1, 19, bar, 16);
-        }
+        LegacyScreenQuadRenderer.blitHorizontalProgress(OVERLAY_MISC, graphics, x + 1, y + 1, 1, 19, barLength, 16, bar);
 
         if (rate > 0.0F) {
             if (rate >= 25.0F) {

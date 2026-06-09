@@ -15,7 +15,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -199,6 +201,29 @@ public final class MultiblockHelper {
             }
         }
         return true;
+    }
+
+    public static List<LayoutProblem> findLayoutProblems(BlockGetter level, BlockPos corePos,
+            LegacyMultiblockLayout layout) {
+        List<LayoutProblem> problems = new ArrayList<>();
+        for (BlockPos offset : layout.checkOffsets()) {
+            LayoutProblemType type = layoutProblem(level, corePos, layout, offset);
+            if (type != null) {
+                problems.add(new LayoutProblem(offset.immutable(), corePos.offset(offset), type));
+            }
+        }
+        return List.copyOf(problems);
+    }
+
+    public static List<LayoutProblem> findCoreLayoutProblems(BlockGetter level, BlockPos pos) {
+        CoreLayoutLookup lookup = findCoreLayout(level, pos);
+        if (lookup == null) {
+            return List.of(new LayoutProblem(BlockPos.ZERO, pos.immutable(), LayoutProblemType.MISSING_CORE));
+        }
+        if (lookup.layout() == null) {
+            return List.of(new LayoutProblem(BlockPos.ZERO, lookup.pos(), LayoutProblemType.NO_LAYOUT));
+        }
+        return findLayoutProblems(level, lookup.pos(), lookup.layout());
     }
 
     public static boolean isCoreLayoutComplete(BlockGetter level, BlockPos corePos) {
@@ -450,6 +475,39 @@ public final class MultiblockHelper {
                 : canKeepCheckOnlySpace(level, corePos.offset(offset));
     }
 
+    @Nullable
+    private static LayoutProblemType layoutProblem(BlockGetter level, BlockPos corePos, LegacyMultiblockLayout layout,
+            BlockPos offset) {
+        BlockPos pos = corePos.offset(offset);
+        if (!isLoaded(level, pos)) {
+            return LayoutProblemType.UNLOADED;
+        }
+        if (offset.equals(BlockPos.ZERO)) {
+            return findCoreAt(level, corePos) == null ? LayoutProblemType.MISSING_CORE : null;
+        }
+        if (!layout.containsOffset(offset)) {
+            return canKeepCheckOnlySpace(level, pos) ? null : LayoutProblemType.BLOCKED_CHECK_ONLY;
+        }
+        if (!(level.getBlockState(pos).getBlock() instanceof DummyBlock)) {
+            return level.getBlockState(pos).canBeReplaced()
+                    ? LayoutProblemType.MISSING_DUMMY
+                    : LayoutProblemType.BLOCKED_DUMMY;
+        }
+        if (!(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy)) {
+            return LayoutProblemType.MISSING_DUMMY_ENTITY;
+        }
+        if (!corePos.equals(dummy.getCorePos())) {
+            return LayoutProblemType.WRONG_CORE;
+        }
+        if (!layout.proxyMode(offset).equals(dummy.getProxyMode())) {
+            return LayoutProblemType.WRONG_PROXY_MODE;
+        }
+        if (layout.isLegacyExtraOffset(offset) != dummy.isLegacyExtra()) {
+            return LayoutProblemType.WRONG_LEGACY_EXTRA;
+        }
+        return null;
+    }
+
     private static boolean canReplaceForRepair(Level level, BlockPos corePos, BlockPos pos) {
         if (!level.hasChunkAt(pos)) {
             return false;
@@ -466,10 +524,14 @@ public final class MultiblockHelper {
     }
 
     private static boolean canKeepCheckOnlySpace(BlockGetter level, BlockPos pos) {
-        if (level instanceof Level worldLevel && !worldLevel.hasChunkAt(pos)) {
+        if (!isLoaded(level, pos)) {
             return false;
         }
         return level.getBlockState(pos).canBeReplaced();
+    }
+
+    private static boolean isLoaded(BlockGetter level, BlockPos pos) {
+        return !(level instanceof Level worldLevel) || worldLevel.hasChunkAt(pos);
     }
 
     private static boolean isOwnedDummy(Level level, BlockPos corePos, BlockPos pos) {
@@ -521,6 +583,26 @@ public final class MultiblockHelper {
         public boolean isComplete(BlockGetter level) {
             return layout != null && MultiblockHelper.isLayoutComplete(level, pos, layout);
         }
+
+        public List<LayoutProblem> problems(BlockGetter level) {
+            return layout == null ? List.of() : MultiblockHelper.findLayoutProblems(level, pos, layout);
+        }
+    }
+
+    public record LayoutProblem(BlockPos offset, BlockPos pos, LayoutProblemType type) {
+    }
+
+    public enum LayoutProblemType {
+        UNLOADED,
+        NO_LAYOUT,
+        MISSING_CORE,
+        MISSING_DUMMY,
+        MISSING_DUMMY_ENTITY,
+        BLOCKED_DUMMY,
+        WRONG_CORE,
+        WRONG_PROXY_MODE,
+        WRONG_LEGACY_EXTRA,
+        BLOCKED_CHECK_ONLY
     }
 
     private MultiblockHelper() {

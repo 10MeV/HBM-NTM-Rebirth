@@ -4,6 +4,7 @@ import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
+import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjRenderContext;
@@ -96,12 +97,10 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
                 .withRgba(color[0], color[1], color[2], 128)
                 .withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE)
-                .withLegacyTextureMatrix(1.0F, 1.0F, -anim / 100.0F, legacyFluidVOffset(anim));
+                .withLegacyTextureMatrix(1.0F, 1.0F,
+                        (float) LegacyUvAnimation.chemicalPlantFluidU(anim),
+                        (float) LegacyUvAnimation.chemicalPlantFluidV(anim));
         model.renderPart("Fluid", ObjMachineModels.CHEMICAL_PLANT_FLUID_TEXTURE, context);
-    }
-
-    private static float legacyFluidVOffset(float anim) {
-        return (float) (LegacyObjTransforms.softPeakSine(anim * 0.1D) * 0.1D - 0.25D);
     }
 
     private static int[] averageFluidColor(List<HbmFluidStack> stacks) {

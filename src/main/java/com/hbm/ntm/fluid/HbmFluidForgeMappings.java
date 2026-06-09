@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import com.hbm.ntm.registry.ModFluids;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -37,7 +38,10 @@ public final class HbmFluidForgeMappings {
         if (hbmType == null || hbmType == HbmFluids.NONE || forgeFluid == null || forgeFluid == Fluids.EMPTY) {
             return;
         }
-        TO_FORGE.put(hbmType, forgeFluid);
+        Fluid previous = TO_FORGE.put(hbmType, forgeFluid);
+        if (previous != null && previous != forgeFluid && FROM_FORGE.get(previous) == hbmType) {
+            FROM_FORGE.remove(previous);
+        }
         FROM_FORGE.put(forgeFluid, hbmType);
     }
 
@@ -82,6 +86,25 @@ public final class HbmFluidForgeMappings {
         for (TagAlias alias : TAG_ALIASES) {
             if (fluid.builtInRegistryHolder().is(alias.tag())) {
                 return alias.hbmType();
+            }
+        }
+        return HbmFluids.NONE;
+    }
+
+    public static FluidType fromForgeExport(FluidStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return HbmFluids.NONE;
+        }
+        return fromForgeExport(stack.getFluid());
+    }
+
+    public static FluidType fromForgeExport(Fluid fluid) {
+        if (fluid == null || fluid == Fluids.EMPTY) {
+            return HbmFluids.NONE;
+        }
+        for (Entry<FluidType, Fluid> entry : TO_FORGE.entrySet()) {
+            if (entry.getValue() == fluid) {
+                return entry.getKey();
             }
         }
         return HbmFluids.NONE;

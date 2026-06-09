@@ -183,6 +183,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         addSatelliteTranslations();
         add("info.asbestos", "My lungs are burning.");
         add("info.coaldust", "It's hard to breathe here.");
+        add("info.gasmask.no_filter", "Your mask has no filter!");
+        add("tooltip.hbm_ntm_rebirth.protection.hold_shift", "Hold <%s> to display protection info");
         add("item.hbm_ntm_rebirth.containment_box", "Lead-Lined Box");
         add("item.hbm_ntm_rebirth.plastic_bag", "Plastic Bag");
         add("item.hbm_ntm_rebirth.toolbox", "Toolbox");
@@ -332,6 +334,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("effect.hbm_ntm_rebirth.mutation", "Tainted Heart");
         add("effect.hbm_ntm_rebirth.stability", "Stability");
         add("effect.hbm_ntm_rebirth.lead", "Lead Poisoning");
+        add("effect.hbm_ntm_rebirth.potionsickness", "Potion Sickness");
         add("geiger.title", "Geiger Counter");
         add("geiger.title.dosimeter", "Dosimeter");
         add("geiger.chunkRad", "Chunk radiation: %s RAD/s");
@@ -400,14 +403,38 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("subtitles.hbm_ntm_rebirth.tool.tech_boop", "Device beeps");
         add("subtitles.hbm_ntm_rebirth.tool.tech_bleep", "Detonator bleeps");
         add("subtitles.hbm_ntm_rebirth.tool.radaway", "RadAway injector hisses");
+        add("subtitles.hbm_ntm_rebirth.step.metal", "Metal footsteps");
+        add("subtitles.hbm_ntm_rebirth.step.iron", "Iron armor moves");
+        add("subtitles.hbm_ntm_rebirth.step.metal_block", "Metal block footsteps");
+        add("subtitles.hbm_ntm_rebirth.step.powered", "Powered armor moves");
         add("subtitles.hbm_ntm_rebirth.player.cough", "Player coughs");
+        add("subtitles.hbm_ntm_rebirth.player.vomit", "Something vomits");
+        add("subtitles.hbm_ntm_rebirth.player.gulp", "Player gulps");
+        add("subtitles.hbm_ntm_rebirth.player.groan", "Player groans");
+        add("subtitles.hbm_ntm_rebirth.potatos.random", "PotatOS speaks");
         add("subtitles.hbm_ntm_rebirth.entity.ufo_blast", "Energy discharge");
         add("subtitles.hbm_ntm_rebirth.entity.slicer", "Blade slices");
         add("subtitles.hbm_ntm_rebirth.entity.chopper", "Chopper drones");
+        add("subtitles.hbm_ntm_rebirth.entity.soyuz_takeoff", "Soyuz rocket launches");
+        add("subtitles.hbm_ntm_rebirth.entity.explosion", "Explosion rumbles");
+        add("subtitles.hbm_ntm_rebirth.entity.rocket_takeoff", "Rocket launches");
+        add("subtitles.hbm_ntm_rebirth.entity.bomb", "Bomb echoes");
+        add("subtitles.hbm_ntm_rebirth.entity.bomber", "Bomber flies");
+        add("subtitles.hbm_ntm_rebirth.entity.plane", "Aircraft damaged");
+        add("subtitles.hbm_ntm_rebirth.entity.meteorite", "Meteorite falls");
+        add("subtitles.hbm_ntm_rebirth.turret.fire", "Turret fires");
+        add("subtitles.hbm_ntm_rebirth.turret.reload", "Turret reloads");
+        add("subtitles.hbm_ntm_rebirth.turret.lockon", "Turret locks on");
+        add("subtitles.hbm_ntm_rebirth.turret.mortar_whistle", "Mortar shell whistles");
+        add("subtitles.hbm_ntm_rebirth.alarm.soyuzed", "Soyuz alarm blares");
         add("subtitles.hbm_ntm_rebirth.alarm.siren", "Siren blares");
         add("subtitles.hbm_ntm_rebirth.weapon.cal_shoot", "Rifle fires");
         add("subtitles.hbm_ntm_rebirth.weapon.tesla_shoot", "Tesla weapon fires");
         add("subtitles.hbm_ntm_rebirth.weapon.hk_shoot", "Rocket launcher fires");
+        add("subtitles.hbm_ntm_rebirth.weapon.fire", "Weapon fires");
+        add("subtitles.hbm_ntm_rebirth.weapon.reload", "Weapon reloads");
+        add("subtitles.hbm_ntm_rebirth.weapon.foley", "Weapon handled");
+        add("subtitles.hbm_ntm_rebirth.weapon.action", "Weapon used");
         add("subtitles.hbm_ntm_rebirth.weapon.ricochet", "Bullet ricochets");
         add("subtitles.hbm_ntm_rebirth.weapon.gbounce", "Grenade bounces");
         add("item.hbm_ntm_rebirth.detonator", "Detonator");
@@ -509,6 +536,19 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("radar.showMap", "Show Map");
         add("radar.toggleGui", "Toggle GUI");
         add("radar.clearMap", "Clear Map");
+        add("radar.target.abm", "Anti-Ballsitic Missile");
+        add("radar.target.custom10", "Size 10 Custom Missile");
+        add("radar.target.custom1015", "Size 10/15 Custom Missile");
+        add("radar.target.custom15", "Size 15 Custom Missile");
+        add("radar.target.custom1520", "Size 15/20 Custom Missile");
+        add("radar.target.custom20", "Size 20 Custom Missile");
+        add("radar.target.doomsday", "Doomsday Missile");
+        add("radar.target.shuttle", "Reliant Robin Space Shuttle");
+        add("radar.target.tier0", "Tier 0 Missile");
+        add("radar.target.tier1", "Tier 1 Missile");
+        add("radar.target.tier2", "Tier 2 Missile");
+        add("radar.target.tier3", "Tier 3 Missile");
+        add("radar.target.tier4", "Tier 4 Missile");
         add("container.hbm_ntm_rebirth.radar.enabled", "Enabled");
         add("container.hbm_ntm_rebirth.radar.disabled", "Disabled");
         add("block.hbm_ntm_rebirth.machine_assembly_machine", "Assembly Machine");
@@ -815,6 +855,23 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.turbine_titanium", "Titanium Turbine");
         add("item.hbm_ntm_rebirth.blade_tungsten", "Tungsten Turbine Blade");
         add("item.hbm_ntm_rebirth.turbine_tungsten", "Tungsten Turbine");
+        add("item.hbm_ntm_rebirth.powder_desh_mix", "Desh Blend");
+        add("item.hbm_ntm_rebirth.powder_chlorophyte", "Chlorophyte Powder");
+        add("item.hbm_ntm_rebirth.wire_dense_copper", "Dense Copper Wire");
+        add("item.hbm_ntm_rebirth.wire_dense_titanium", "Dense Titanium Wire");
+        add("item.hbm_ntm_rebirth.wire_dense_neodymium", "Dense Neodymium Wire");
+        add("item.hbm_ntm_rebirth.pa_coil_gold", "Gold Particle Accelerator Coil");
+        add("item.hbm_ntm_rebirth.pa_coil_niobium", "Niobium-Titanium Particle Accelerator Coil");
+        add("item.hbm_ntm_rebirth.pa_coil_bscco", "BSCCO Particle Accelerator Coil");
+        add("item.hbm_ntm_rebirth.pa_coil_chlorophyte", "Chlorophyte Particle Accelerator Coil");
+        add("item.hbm_ntm_rebirth.arc_electrode_graphite", "Graphite Arc Electrode");
+        add("item.hbm_ntm_rebirth.arc_electrode_lanthanium", "Lanthanium Arc Electrode");
+        add("item.hbm_ntm_rebirth.arc_electrode_desh", "Desh Arc Electrode");
+        add("item.hbm_ntm_rebirth.arc_electrode_saturnite", "Saturnite Arc Electrode");
+        add("item.hbm_ntm_rebirth.arc_electrode_burnt_graphite", "Spent Graphite Arc Electrode");
+        add("item.hbm_ntm_rebirth.arc_electrode_burnt_lanthanium", "Spent Lanthanium Arc Electrode");
+        add("item.hbm_ntm_rebirth.arc_electrode_burnt_desh", "Spent Desh Arc Electrode");
+        add("item.hbm_ntm_rebirth.arc_electrode_burnt_saturnite", "Spent Saturnite Arc Electrode");
         add("item.hbm_ntm_rebirth.drillbit_steel", "Steel Drillbit");
         add("item.hbm_ntm_rebirth.drillbit_steel_diamond", "Steel Drillbit (Diamond-Tipped)");
         add("item.hbm_ntm_rebirth.drillbit_hss", "High-Speed Steel Drillbit");
@@ -848,6 +905,9 @@ public class HbmLanguageProvider extends LanguageProvider {
     }
 
     private void addSatelliteTranslations() {
+        add("item.hbm_ntm_rebirth.designator", "Target Designator");
+        add("item.hbm_ntm_rebirth.designator_range", "Laser Target Designator");
+        add("item.hbm_ntm_rebirth.designator_manual", "Manual Target Designator");
         add("item.hbm_ntm_rebirth.sat_chip", "Satellite ID-Chip");
         add("item.hbm_ntm_rebirth.sat_coord", "Satellite Designator");
         add("item.hbm_ntm_rebirth.sat_designator", "Satellite Laser Designator");
@@ -886,6 +946,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("satchip.no_satellite", "No satellite found on this frequency.");
         add("satchip.interface.ready", "%s online on frequency %s.");
         add("satchip.coord.ready", "%s coordinate link ready on frequency %s.");
+        add("tooltip.hbm_ntm_rebirth.designator.no_target", "Please select a target.");
+        add("tooltip.hbm_ntm_rebirth.designator.target", "Target Coordinates:");
     }
 
     private static boolean hasExplicitNukeName(String id) {
@@ -907,6 +969,9 @@ public class HbmLanguageProvider extends LanguageProvider {
             return true;
         }
         if (id.endsWith("_sword") || id.endsWith("_pickaxe") || id.endsWith("_axe") || id.endsWith("_shovel")) {
+            return true;
+        }
+        if (id.startsWith("arc_electrode_")) {
             return true;
         }
         return switch (id) {
@@ -978,15 +1043,19 @@ public class HbmLanguageProvider extends LanguageProvider {
         if (id.startsWith("circuit_")) {
             return true;
         }
+        if (id.startsWith("pa_coil_")) {
+            return true;
+        }
         return switch (id) {
             case "powder_tektite" -> true;
             case "nugget_mercury" -> true;
             case "ingot_weaponsteel", "plate_weaponsteel",
-                 "ingot_dura_steel",
-                 "plate_schrabidium",
-                 "plate_combine_steel",
-                 "plate_saturnite" -> true;
-            case "powder_coal", "powder_coal_tiny" -> true;
+                  "ingot_dura_steel",
+                  "plate_schrabidium",
+                  "plate_combine_steel",
+                  "plate_saturnite" -> true;
+            case "wire_dense_copper", "wire_dense_titanium", "wire_dense_neodymium" -> true;
+            case "powder_coal", "powder_coal_tiny", "powder_desh_mix", "powder_chlorophyte" -> true;
             case "coke_coal",
                  "coke_lignite",
                  "coke_petroleum",

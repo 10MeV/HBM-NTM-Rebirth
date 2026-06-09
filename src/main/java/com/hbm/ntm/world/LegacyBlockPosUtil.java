@@ -18,6 +18,26 @@ public final class LegacyBlockPosUtil {
         return new BlockPos(pos.getX(), pos.getY(), pos.getZ());
     }
 
+    public static BlockPos clone(BlockPos pos) {
+        return copy(pos);
+    }
+
+    public static BlockPos.MutableBlockPos mutable(int x, int y, int z) {
+        return new BlockPos.MutableBlockPos(x, y, z);
+    }
+
+    public static BlockPos.MutableBlockPos mutable(BlockPos pos) {
+        return mutable(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    public static BlockPos.MutableBlockPos mutate(BlockPos.MutableBlockPos pos, int x, int y, int z) {
+        return pos.set(x, y, z);
+    }
+
+    public static BlockPos.MutableBlockPos mutate(BlockPos.MutableBlockPos pos, BlockPos value) {
+        return mutate(pos, value.getX(), value.getY(), value.getZ());
+    }
+
     public static boolean compare(BlockPos pos, int x, int y, int z) {
         return pos.getX() == x && pos.getY() == y && pos.getZ() == z;
     }

@@ -1,0 +1,13 @@
+{
+  "parent": "minecraft:block/cube",
+  "render_type": "translucent",
+  "textures": {
+    "down": "hbm_ntm_rebirth:block/toxic_still",
+    "up": "hbm_ntm_rebirth:block/toxic_still",
+    "north": "hbm_ntm_rebirth:block/toxic_flowing",
+    "south": "hbm_ntm_rebirth:block/toxic_flowing",
+    "west": "hbm_ntm_rebirth:block/toxic_flowing",
+    "east": "hbm_ntm_rebirth:block/toxic_flowing",
+    "particle": "hbm_ntm_rebirth:block/toxic_still"
+  }
+}

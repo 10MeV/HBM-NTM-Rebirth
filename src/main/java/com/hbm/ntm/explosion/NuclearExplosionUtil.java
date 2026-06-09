@@ -9,7 +9,6 @@ import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.ForgeConfigSpec;
 
 public final class NuclearExplosionUtil {
     public static boolean spawnNuclear(Level level, int radius, double x, double y, double z) {
@@ -149,59 +148,59 @@ public final class NuclearExplosionUtil {
     }
 
     public static int gadgetRadius() {
-        return configRadius(BombConfig.GADGET_RADIUS, BombConfig.GADGET_RADIUS_DEFAULT);
+        return BombConfig.gadgetRadius();
     }
 
     public static int boyRadius() {
-        return configRadius(BombConfig.BOY_RADIUS, BombConfig.BOY_RADIUS_DEFAULT);
+        return BombConfig.boyRadius();
     }
 
     public static int manRadius() {
-        return configRadius(BombConfig.MAN_RADIUS, BombConfig.MAN_RADIUS_DEFAULT);
+        return BombConfig.manRadius();
     }
 
     public static int mikeRadius() {
-        return configRadius(BombConfig.MIKE_RADIUS, BombConfig.MIKE_RADIUS_DEFAULT);
+        return BombConfig.mikeRadius();
     }
 
     public static int tsarRadius() {
-        return configRadius(BombConfig.TSAR_RADIUS, BombConfig.TSAR_RADIUS_DEFAULT);
+        return BombConfig.tsarRadius();
     }
 
     public static int prototypeRadius() {
-        return configRadius(BombConfig.PROTOTYPE_RADIUS, BombConfig.PROTOTYPE_RADIUS_DEFAULT);
+        return BombConfig.prototypeRadius();
     }
 
     public static int fleijaRadius() {
-        return configRadius(BombConfig.FLEIJA_RADIUS, BombConfig.FLEIJA_RADIUS_DEFAULT);
+        return BombConfig.fleijaRadius();
     }
 
     public static int soliniumRadius() {
-        return configRadius(BombConfig.SOLINIUM_RADIUS, BombConfig.SOLINIUM_RADIUS_DEFAULT);
+        return BombConfig.soliniumRadius();
     }
 
     public static int n2Radius() {
-        return configRadius(BombConfig.N2_RADIUS, BombConfig.N2_RADIUS_DEFAULT);
+        return BombConfig.n2Radius();
     }
 
     public static int missileRadius() {
-        return configRadius(BombConfig.MISSILE_RADIUS, BombConfig.MISSILE_RADIUS_DEFAULT);
+        return BombConfig.missileRadius();
     }
 
     public static int mirvRadius() {
-        return configRadius(BombConfig.MIRV_RADIUS, BombConfig.MIRV_RADIUS_DEFAULT);
+        return BombConfig.mirvRadius();
     }
 
     public static int fatmanRadius() {
-        return configRadius(BombConfig.FATMAN_RADIUS, BombConfig.FATMAN_RADIUS_DEFAULT);
+        return BombConfig.fatmanRadius();
     }
 
     public static int nukaRadius() {
-        return configRadius(BombConfig.NUKA_RADIUS, BombConfig.NUKA_RADIUS_DEFAULT);
+        return BombConfig.nukaRadius();
     }
 
     public static int antiSchrabRadius() {
-        return configRadius(BombConfig.A_SCHRAB_RADIUS, BombConfig.A_SCHRAB_RADIUS_DEFAULT);
+        return BombConfig.antiSchrabidiumRadius();
     }
 
     private static boolean add(Level level, Entity entity) {
@@ -209,10 +208,6 @@ public final class NuclearExplosionUtil {
             return false;
         }
         return level.addFreshEntity(entity);
-    }
-
-    private static int configRadius(ForgeConfigSpec.IntValue value, int fallback) {
-        return value == null ? fallback : value.get();
     }
 
     private NuclearExplosionUtil() {

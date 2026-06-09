@@ -1,0 +1,34 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 20,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:petroleum"
+    },
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:unsaturateds"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/fluorite"
+      },
+      "legacy_ore": "dustFluorite"
+    }
+  ],
+  "internal_name": "chem.perfluoromethyl",
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:perfluoromethyl"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 100,
+  "source_order": 7
+}

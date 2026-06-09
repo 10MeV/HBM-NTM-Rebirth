@@ -2,8 +2,11 @@ package com.hbm.ntm.fluid;
 
 import com.hbm.ntm.api.fluid.IFillableItem;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
+import com.hbm.ntm.armor.ArmorModHandler;
+import com.hbm.ntm.armor.ArmorModItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -138,6 +141,10 @@ public final class HbmFluidItemTransfer {
                 || !HbmForgeFluidInterop.isStandardPressure(tank.getPressure()) || maxAmount <= 0) {
             return TransferResult.empty(stack);
         }
+        if (simulate) {
+            TransferResult preview = fillItemFromTank(stack.copy(), copyTank(tank), maxAmount, false, useStandardContainers);
+            return preview.moved() ? new TransferResult(stack, preview.amount()) : TransferResult.empty(stack);
+        }
         int amount = Math.min(maxAmount, tank.getFill());
         ItemStack working = stack.copy();
         if (useStandardContainers) {
@@ -146,19 +153,29 @@ public final class HbmFluidItemTransfer {
                 return standardResult;
             }
         }
-        int filled = fillHbmItem(working, tank.getTankType(), amount, simulate);
-        if (filled <= 0) {
-            TransferResult forgeResult = fillForgeItem(working, tank.getTankType(), amount, simulate);
-            working = forgeResult.stack();
-            filled = forgeResult.amount();
+        int totalFilled = 0;
+        TransferResult armorResult = fillArmorModsFromTank(working, tank, amount);
+        if (armorResult.moved()) {
+            working = armorResult.stack();
+            totalFilled += armorResult.amount();
         }
-        if (filled <= 0) {
+        int remaining = Math.min(amount - totalFilled, tank.getFill());
+        if (remaining > 0) {
+            int filled = fillHbmItem(working, tank.getTankType(), remaining, false);
+            if (filled <= 0) {
+                TransferResult forgeResult = fillForgeItem(working, tank.getTankType(), remaining, false);
+                working = forgeResult.stack();
+                filled = forgeResult.amount();
+            }
+            if (filled > 0) {
+                tank.drain(filled, false);
+                totalFilled += filled;
+            }
+        }
+        if (totalFilled <= 0) {
             return TransferResult.empty(stack);
         }
-        if (!simulate) {
-            tank.drain(filled, false);
-        }
-        return new TransferResult(working, filled);
+        return new TransferResult(working, totalFilled);
     }
 
     public static TransferResult drainItemToTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {
@@ -171,6 +188,10 @@ public final class HbmFluidItemTransfer {
                 || maxAmount <= 0) {
             return TransferResult.empty(stack);
         }
+        if (simulate) {
+            TransferResult preview = drainItemToTank(stack.copy(), copyTank(tank), maxAmount, false, useStandardContainers);
+            return preview.moved() ? new TransferResult(stack, preview.amount()) : TransferResult.empty(stack);
+        }
         ItemStack working = stack.copy();
         if (useStandardContainers) {
             TransferResult standardResult = drainStandardContainerToTank(working, tank, maxAmount, simulate);
@@ -181,24 +202,33 @@ public final class HbmFluidItemTransfer {
                 return TransferResult.empty(stack);
             }
         }
+        int totalDrained = 0;
+        TransferResult armorResult = drainArmorModsToTank(working, tank, maxAmount);
+        if (armorResult.moved()) {
+            working = armorResult.stack();
+            totalDrained += armorResult.amount();
+        }
         HbmFluidStack available = getHbmItemFluid(working);
         int drained = 0;
-        if (!available.isEmpty() && tank.canAccept(available.type(), available.pressure())) {
-            int amount = Math.min(maxAmount, Math.min(available.amount(), tank.getSpace()));
-            drained = drainHbmItem(working, available.type(), amount, simulate);
-            if (drained > 0 && !simulate) {
+        if (totalDrained < maxAmount && !available.isEmpty() && tank.canAccept(available.type(), available.pressure())) {
+            int amount = Math.min(maxAmount - totalDrained, Math.min(available.amount(), tank.getSpace()));
+            drained = drainHbmItem(working, available.type(), amount, false);
+            if (drained > 0) {
                 tank.fill(available.type(), drained, available.pressure(), false);
             }
         }
-        if (drained <= 0) {
-            TransferResult forgeResult = drainForgeItemToTank(working, tank, maxAmount, simulate);
+        if (drained <= 0 && totalDrained < maxAmount) {
+            TransferResult forgeResult = drainForgeItemToTank(working, tank, maxAmount - totalDrained, false);
             working = forgeResult.stack();
             drained = forgeResult.amount();
         }
-        if (drained <= 0) {
+        if (drained > 0) {
+            totalDrained += drained;
+        }
+        if (totalDrained <= 0) {
             return TransferResult.empty(stack);
         }
-        return new TransferResult(working, drained);
+        return new TransferResult(working, totalDrained);
     }
 
     public static HbmFluidStack getItemFluid(ItemStack stack) {
@@ -212,6 +242,10 @@ public final class HbmFluidItemTransfer {
         HbmFluidStack hbmFluid = getHbmItemFluid(stack);
         if (!hbmFluid.isEmpty()) {
             return hbmFluid;
+        }
+        HbmFluidStack armorModFluid = getArmorModFluid(stack);
+        if (!armorModFluid.isEmpty()) {
+            return armorModFluid;
         }
         FluidType registeredType = HbmFluidContainerRegistry.getFluidType(stack);
         int registeredAmount = HbmFluidContainerRegistry.getFluidContent(stack, registeredType);
@@ -241,8 +275,11 @@ public final class HbmFluidItemTransfer {
             return TransferResult.empty(stack);
         }
         return stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM)
-                .map(handler -> handler.fill(forgeFluid, simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE))
-                .map(filled -> new TransferResult(currentContainer(stack), filled))
+                .map(handler -> {
+                    int filled = handler.fill(forgeFluid, simulate ? IFluidHandler.FluidAction.SIMULATE : IFluidHandler.FluidAction.EXECUTE);
+                    ItemStack container = !simulate && filled > 0 ? handler.getContainer() : stack;
+                    return new TransferResult(container, filled);
+                })
                 .orElse(TransferResult.empty(stack));
     }
 
@@ -269,6 +306,74 @@ public final class HbmFluidItemTransfer {
         }
         ItemStack target = simulate ? stack.copy() : stack;
         return fillable.tryEmpty(type, amount, target);
+    }
+
+    private static TransferResult fillArmorModsFromTank(ItemStack armor, HbmFluidTank tank, int maxAmount) {
+        if (!hasFillableArmorMods(armor) || tank == null || tank.isEmpty() || maxAmount <= 0) {
+            return TransferResult.empty(armor);
+        }
+        int moved = 0;
+        for (ItemStack mod : ArmorModHandler.pryMods(armor)) {
+            if (!isFillableArmorMod(mod) || moved >= maxAmount || tank.isEmpty()) {
+                continue;
+            }
+            int request = Math.min(maxAmount - moved, tank.getFill());
+            int filled = fillHbmItem(mod, tank.getTankType(), request, false);
+            if (filled > 0) {
+                tank.drain(filled, false);
+                ArmorModHandler.applyMod(armor, mod);
+                moved += filled;
+            }
+        }
+        return moved > 0 ? new TransferResult(armor, moved) : TransferResult.empty(armor);
+    }
+
+    private static TransferResult drainArmorModsToTank(ItemStack armor, HbmFluidTank tank, int maxAmount) {
+        if (!hasFillableArmorMods(armor) || tank == null || maxAmount <= 0) {
+            return TransferResult.empty(armor);
+        }
+        int moved = 0;
+        for (ItemStack mod : ArmorModHandler.pryMods(armor)) {
+            if (!isFillableArmorMod(mod) || moved >= maxAmount || tank.getSpace() <= 0) {
+                continue;
+            }
+            HbmFluidStack available = getHbmItemFluid(mod);
+            if (available.isEmpty() || !tank.canAccept(available.type(), available.pressure())) {
+                continue;
+            }
+            int request = Math.min(maxAmount - moved, Math.min(available.amount(), tank.getSpace()));
+            int drained = drainHbmItem(mod, available.type(), request, false);
+            if (drained > 0) {
+                tank.fill(available.type(), drained, available.pressure(), false);
+                ArmorModHandler.applyMod(armor, mod);
+                moved += drained;
+            }
+        }
+        return moved > 0 ? new TransferResult(armor, moved) : TransferResult.empty(armor);
+    }
+
+    private static HbmFluidStack getArmorModFluid(ItemStack armor) {
+        if (!hasFillableArmorMods(armor)) {
+            return new HbmFluidStack(HbmFluids.NONE, 0);
+        }
+        for (ItemStack mod : ArmorModHandler.pryMods(armor)) {
+            if (!isFillableArmorMod(mod)) {
+                continue;
+            }
+            HbmFluidStack fluid = getItemFluid(mod);
+            if (!fluid.isEmpty()) {
+                return fluid;
+            }
+        }
+        return new HbmFluidStack(HbmFluids.NONE, 0);
+    }
+
+    private static boolean hasFillableArmorMods(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof ArmorItem && ArmorModHandler.hasMods(stack);
+    }
+
+    private static boolean isFillableArmorMod(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof ArmorModItem && stack.getItem() instanceof IFillableItem;
     }
 
     private static boolean drainInfiniteItemToTank(HbmInfiniteFluidItem item, HbmFluidTank tank, boolean simulate) {
@@ -347,12 +452,6 @@ public final class HbmFluidItemTransfer {
             }
         }
         return new HbmFluidStack(HbmFluids.NONE, 0);
-    }
-
-    private static ItemStack currentContainer(ItemStack stack) {
-        return stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM)
-                .map(IFluidHandlerItem::getContainer)
-                .orElse(stack);
     }
 
     private static TransferResult fillStandardContainerFromTank(ItemStack stack, HbmFluidTank tank, int maxAmount, boolean simulate) {
@@ -492,16 +591,24 @@ public final class HbmFluidItemTransfer {
     }
 
     public static boolean processTransfers(IItemHandlerModifiable items, Iterable<TankSlotTransfer> transfers, boolean simulate) {
+        return processTransferReport(items, transfers, simulate).moved();
+    }
+
+    public static TransferBatchReport processTransferReport(IItemHandlerModifiable items, Iterable<TankSlotTransfer> transfers) {
+        return processTransferReport(items, transfers, false);
+    }
+
+    public static TransferBatchReport processTransferReport(IItemHandlerModifiable items, Iterable<TankSlotTransfer> transfers, boolean simulate) {
         if (items == null || transfers == null) {
-            return false;
+            return TransferBatchReport.empty(simulate);
         }
-        boolean changed = false;
+        TransferBatchReport.Builder builder = new TransferBatchReport.Builder(simulate);
         for (TankSlotTransfer transfer : transfers) {
             if (transfer != null) {
-                changed |= transfer.process(items, simulate);
+                builder.add(transfer.processResult(items, simulate));
             }
         }
-        return changed;
+        return builder.build();
     }
 
     public record TransferResult(ItemStack stack, int amount) {
@@ -511,6 +618,69 @@ public final class HbmFluidItemTransfer {
 
         private static TransferResult empty(ItemStack stack) {
             return new TransferResult(stack, 0);
+        }
+    }
+
+    public record TransferBatchReport(boolean simulate, int attemptedTransfers, int movedTransfers, int movedAmount,
+                                      java.util.List<TankSlotTransferResult> results) {
+        public boolean moved() {
+            return movedTransfers > 0;
+        }
+
+        private static TransferBatchReport empty(boolean simulate) {
+            return new TransferBatchReport(simulate, 0, 0, 0, java.util.List.of());
+        }
+
+        private static final class Builder {
+            private final boolean simulate;
+            private final java.util.List<TankSlotTransferResult> results = new java.util.ArrayList<>();
+            private int movedTransfers;
+            private int movedAmount;
+
+            private Builder(boolean simulate) {
+                this.simulate = simulate;
+            }
+
+            private void add(TankSlotTransferResult result) {
+                if (result == null) {
+                    return;
+                }
+                results.add(result);
+                if (result.moved()) {
+                    movedTransfers++;
+                    movedAmount += result.movedAmount();
+                }
+            }
+
+            private TransferBatchReport build() {
+                return new TransferBatchReport(simulate, results.size(), movedTransfers, movedAmount, java.util.List.copyOf(results));
+            }
+        }
+    }
+
+    public record TankSlotTransferResult(int inputSlot, int outputSlot, TankSlotTransfer.Direction direction,
+                                         boolean moved, int movedAmount, int tankBefore, int tankAfter,
+                                         ItemStack inputBefore, ItemStack inputAfter,
+                                         ItemStack outputBefore, ItemStack outputAfter) {
+        private static TankSlotTransferResult of(TankSlotTransfer transfer, boolean moved, int movedAmount,
+                int tankBefore, int tankAfter, ItemStack inputBefore, ItemStack inputAfter,
+                ItemStack outputBefore, ItemStack outputAfter) {
+            return new TankSlotTransferResult(
+                    transfer.inputSlot(),
+                    transfer.outputSlot(),
+                    transfer.direction(),
+                    moved,
+                    Math.max(0, movedAmount),
+                    tankBefore,
+                    tankAfter,
+                    safeCopy(inputBefore),
+                    safeCopy(inputAfter),
+                    safeCopy(outputBefore),
+                    safeCopy(outputAfter));
+        }
+
+        private static ItemStack safeCopy(ItemStack stack) {
+            return stack == null ? ItemStack.EMPTY : stack.copy();
         }
     }
 
@@ -540,6 +710,49 @@ public final class HbmFluidItemTransfer {
             return direction == Direction.ITEM_TO_TANK
                     ? loadTankFromSlot(items, inputSlot, outputSlot, tank, maxAmount, simulate)
                     : unloadTankToSlot(items, inputSlot, outputSlot, tank, maxAmount, simulate);
+        }
+
+        private TankSlotTransferResult processResult(IItemHandlerModifiable items, boolean simulate) {
+            int tankBefore = tank == null ? 0 : tank.getFill();
+            ItemStack inputBefore = isValidSlot(items, inputSlot) ? items.getStackInSlot(inputSlot) : ItemStack.EMPTY;
+            ItemStack outputBefore = isValidSlot(items, outputSlot) ? items.getStackInSlot(outputSlot) : ItemStack.EMPTY;
+            boolean moved = process(items, simulate);
+            int tankAfter = tank == null ? tankBefore : tank.getFill();
+            ItemStack inputAfter = isValidSlot(items, inputSlot) ? items.getStackInSlot(inputSlot) : inputBefore;
+            ItemStack outputAfter = isValidSlot(items, outputSlot) ? items.getStackInSlot(outputSlot) : outputBefore;
+            int movedAmount = moved ? estimateMovedAmount(tankBefore, tankAfter, inputBefore) : 0;
+            return TankSlotTransferResult.of(this, moved, movedAmount, tankBefore, tankAfter,
+                    inputBefore, inputAfter, outputBefore, outputAfter);
+        }
+
+        private int estimateMovedAmount(int tankBefore, int tankAfter, ItemStack inputBefore) {
+            int delta = tankAfter - tankBefore;
+            if (delta != 0) {
+                return Math.abs(delta);
+            }
+            return movedBySimulationFallback(inputBefore);
+        }
+
+        private int movedBySimulationFallback(ItemStack inputBefore) {
+            if (tank == null || inputBefore == null || inputBefore.isEmpty()) {
+                return 0;
+            }
+            if (inputBefore.getItem() instanceof HbmInfiniteFluidItem infinite) {
+                return Math.min(maxAmount, infinite.getAmount());
+            }
+            ItemStack single = inputBefore.copy();
+            single.setCount(1);
+            HbmFluidTank tankCopy = copyTank(tank);
+            TransferResult result = direction == Direction.ITEM_TO_TANK
+                    ? drainItemToTank(single, tankCopy, maxAmount, true)
+                    : fillItemFromTank(single, tankCopy, maxAmount, true);
+            if (result.moved()) {
+                return result.amount();
+            }
+            return Math.min(maxAmount, switch (direction) {
+                case ITEM_TO_TANK -> tank.getSpace();
+                case TANK_TO_ITEM -> tank.getFill();
+            });
         }
 
         public enum Direction {

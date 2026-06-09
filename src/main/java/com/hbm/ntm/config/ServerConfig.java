@@ -21,6 +21,18 @@ public final class ServerConfig {
         return ITEM_HAZARD_DROP_TICKRATE == null ? 2 : Math.max(1, ITEM_HAZARD_DROP_TICKRATE.get());
     }
 
+    public static boolean mkuEnabled() {
+        return booleanValue(ENABLE_MKU, true);
+    }
+
+    private static boolean booleanValue(ForgeConfigSpec.BooleanValue value, boolean fallback) {
+        try {
+            return value == null ? fallback : value.get();
+        } catch (IllegalStateException ignored) {
+            return fallback;
+        }
+    }
+
     private ServerConfig() {
     }
 }

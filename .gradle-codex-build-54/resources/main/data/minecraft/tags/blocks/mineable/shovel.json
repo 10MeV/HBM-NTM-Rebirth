@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "hbm_ntm_rebirth:dirt_dead",
+    "hbm_ntm_rebirth:dirt_oily",
+    "hbm_ntm_rebirth:sand_dirty",
+    "hbm_ntm_rebirth:sand_dirty_red"
+  ]
+}

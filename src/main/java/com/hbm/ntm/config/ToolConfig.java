@@ -61,15 +61,67 @@ public final class ToolConfig {
         builder.pop();
     }
 
-    public static boolean enabled(ForgeConfigSpec.BooleanValue value) {
+    public static int recursionDepth() {
+        return intValue(RECURSION_DEPTH, 1000);
+    }
+
+    public static boolean recursiveStoneEnabled() {
+        return booleanValue(RECURSIVE_STONE, false);
+    }
+
+    public static boolean recursiveNetherrackEnabled() {
+        return booleanValue(RECURSIVE_NETHERRACK, false);
+    }
+
+    public static boolean hammerAbilityEnabled() {
+        return booleanValue(ABILITY_HAMMER, true);
+    }
+
+    public static boolean veinAbilityEnabled() {
+        return booleanValue(ABILITY_VEIN, true);
+    }
+
+    public static boolean luckAbilityEnabled() {
+        return booleanValue(ABILITY_LUCK, true);
+    }
+
+    public static boolean silkAbilityEnabled() {
+        return booleanValue(ABILITY_SILK, true);
+    }
+
+    public static boolean furnaceAbilityEnabled() {
+        return booleanValue(ABILITY_FURNACE, true);
+    }
+
+    public static boolean shredderAbilityEnabled() {
+        return booleanValue(ABILITY_SHREDDER, true);
+    }
+
+    public static boolean centrifugeAbilityEnabled() {
+        return booleanValue(ABILITY_CENTRIFUGE, true);
+    }
+
+    public static boolean crystallizerAbilityEnabled() {
+        return booleanValue(ABILITY_CRYSTALLIZER, true);
+    }
+
+    public static boolean mercuryAbilityEnabled() {
+        return booleanValue(ABILITY_MERCURY, true);
+    }
+
+    public static boolean explosionAbilityEnabled() {
+        return booleanValue(ABILITY_EXPLOSION, true);
+    }
+
+    private static boolean booleanValue(ForgeConfigSpec.BooleanValue value, boolean fallback) {
         try {
-            return value == null || value.get();
+            return value == null ? fallback : value.get();
         } catch (IllegalStateException ignored) {
-            return true;
+            return fallback;
         }
     }
 
-    public static int intValue(ForgeConfigSpec.IntValue value, int fallback) {
+    private static int intValue(ForgeConfigSpec.IntValue value, int fallback) {
         try {
             return value == null ? fallback : value.get();
         } catch (IllegalStateException ignored) {

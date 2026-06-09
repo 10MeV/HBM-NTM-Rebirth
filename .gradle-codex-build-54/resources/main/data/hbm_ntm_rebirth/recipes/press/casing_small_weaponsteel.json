@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "ingredient": {
+    "tag": "forge:plates/weapon_steel"
+  },
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:casing_small_steel"
+  },
+  "stamp": "9"
+}

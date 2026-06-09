@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      }
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:dense_wires/niobium"
+      }
+    }
+  ],
+  "internal_name": "ass.capacitorniobium",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:capacitor_niobium"
+    }
+  ],
+  "pools": [],
+  "power": 1000,
+  "source_order": 140
+}

@@ -103,7 +103,9 @@ public final class RadarScanner {
 
     private static boolean isRadarCandidate(Entity entity, RadarDetectable.RadarScanParams params) {
         return entity instanceof RadarDetectable
-                || entity instanceof LegacyRadarDetectable && params.scanMissiles()
+                || entity instanceof LegacyRadarDetectable legacy
+                && params.scanMissiles()
+                && legacy.canBeDetectedByLegacyRadar()
                 || entity instanceof Player && params.scanPlayers();
     }
 
@@ -116,7 +118,9 @@ public final class RadarScanner {
             return RadarEntry.of(detectable, entity, detectable.suppliesRedstone(params));
         }
 
-        if (entity instanceof LegacyRadarDetectable legacy && params.scanMissiles()) {
+        if (entity instanceof LegacyRadarDetectable legacy
+                && params.scanMissiles()
+                && legacy.canBeDetectedByLegacyRadar()) {
             return RadarEntry.of(legacy, entity);
         }
 

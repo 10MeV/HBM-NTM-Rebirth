@@ -14,7 +14,9 @@ public record RBMKRuntimeSettings(
         double reasimBoilerSpeed,
         boolean depletionEnabled,
         boolean xenonEnabled,
-        boolean meltdownsDisabled) {
+        boolean meltdownsDisabled,
+        boolean permanentScrap,
+        boolean meltdownOverpressure) {
     public static RBMKRuntimeSettings legacyDefaults() {
         return new RBMKRuntimeSettings(
                 2.5D,
@@ -29,6 +31,8 @@ public record RBMKRuntimeSettings(
                 false,
                 0.05D,
                 true,
+                true,
+                false,
                 true,
                 false);
     }

@@ -1,5 +1,6 @@
 package com.hbm.ntm.multiblock;
 
+import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
@@ -18,6 +19,10 @@ public interface MultiblockCoreBlock {
     }
 
     default boolean ownsMultiblockDummy(BlockState state, BlockGetter level, BlockPos corePos, BlockPos dummyPos) {
+        if (!(level.getBlockEntity(dummyPos) instanceof MultiblockDummyBlockEntity dummy)
+                || !corePos.equals(dummy.getCorePos())) {
+            return false;
+        }
         LegacyMultiblockLayout layout = getMultiblockLayout(state, level, corePos);
         if (layout != null) {
             return layout.containsOffset(dummyPos.subtract(corePos));

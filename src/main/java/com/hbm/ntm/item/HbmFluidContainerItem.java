@@ -5,6 +5,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerItemCapabilityProvider;
 import com.hbm.ntm.fluid.HbmFluidContainerRules;
+import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmForgeFluidInterop;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -152,13 +153,12 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
 
     @Override
     public boolean hasCraftingRemainingItem(ItemStack stack) {
-        return getFill(stack) > 0 && !HbmFluidContainerRegistry.getEmptyContainer(stack).isEmpty();
+        return !HbmFluidContainerRegistry.getCraftingRemainder(stack).isEmpty();
     }
 
     @Override
     public ItemStack getCraftingRemainingItem(ItemStack stack) {
-        ItemStack empty = HbmFluidContainerRegistry.getEmptyContainer(stack);
-        return empty.isEmpty() ? ItemStack.EMPTY : empty;
+        return HbmFluidContainerRegistry.getCraftingRemainder(stack);
     }
 
     @Override
@@ -190,7 +190,7 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
 
     public int getPressure(ItemStack stack) {
         CompoundTag tag = stack.getTag();
-        return tag == null ? 0 : tag.getInt(TAG_PRESSURE);
+        return tag == null ? 0 : HbmFluidTank.clampPressure(tag.getInt(TAG_PRESSURE));
     }
 
     public void setFluid(ItemStack stack, FluidType type, int amount, int pressure) {
@@ -201,7 +201,7 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
         CompoundTag tag = stack.getOrCreateTag();
         tag.putString(TAG_FLUID, type.getName());
         tag.putInt(TAG_AMOUNT, Math.min(amount, capacity));
-        tag.putInt(TAG_PRESSURE, pressure);
+        tag.putInt(TAG_PRESSURE, HbmFluidTank.clampPressure(pressure));
     }
 
     public void clearFluid(ItemStack stack) {

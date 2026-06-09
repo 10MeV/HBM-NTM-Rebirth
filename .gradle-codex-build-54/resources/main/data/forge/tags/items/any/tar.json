@@ -1,0 +1,10 @@
+{
+  "values": [
+    "hbm_ntm_rebirth:oil_tar_crude",
+    "hbm_ntm_rebirth:oil_tar_crack",
+    "hbm_ntm_rebirth:oil_tar_coal",
+    "hbm_ntm_rebirth:oil_tar_wood",
+    "hbm_ntm_rebirth:oil_tar_wax",
+    "hbm_ntm_rebirth:oil_tar_paraffin"
+  ]
+}

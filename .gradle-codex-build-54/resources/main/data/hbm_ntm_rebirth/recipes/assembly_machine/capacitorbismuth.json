@@ -1,0 +1,35 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      }
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:ingots/bismuth"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:circuits/chip_quantum"
+      }
+    }
+  ],
+  "internal_name": "ass.capacitorbismuth",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:capacitor_bismuth"
+    }
+  ],
+  "pools": [],
+  "power": 25000,
+  "source_order": 142
+}

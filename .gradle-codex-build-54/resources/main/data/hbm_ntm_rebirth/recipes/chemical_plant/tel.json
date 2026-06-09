@@ -1,0 +1,40 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 40,
+  "input_fluids": [
+    {
+      "amount": 100,
+      "fluid": "hbm_ntm_rebirth:petroleum"
+    },
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:steam"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:any/tar"
+      },
+      "legacy_ore": "anyTar"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/lead"
+      },
+      "legacy_ore": "dustLead"
+    }
+  ],
+  "internal_name": "chem.tel",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:fuel_additive_antiknock"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 17
+}

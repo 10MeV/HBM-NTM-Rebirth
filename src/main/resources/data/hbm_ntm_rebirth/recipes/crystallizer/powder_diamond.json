@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 100,
+  "fluid": { "fluid": "PEROXIDE", "amount": 500 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:powder_diamond" } },
+  "output": { "item": "minecraft:diamond" }
+}

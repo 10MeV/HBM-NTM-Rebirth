@@ -1,0 +1,16 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/fusion/fusion_torus.obj",
+  "flip_v": true,
+  "render_type": "minecraft:translucent",
+  "parts": { "visibility": {
+      "Plasma": true,
+      "Bolts4": false,
+      "Bolts3": false,
+      "Bolts2": false,
+      "Bolts1": false,
+      "Magnet": false,
+      "Torus": false
+  } },
+  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/plasma_sparkle", "default": "hbm_ntm_rebirth:block/fusion/plasma_sparkle" }
+}

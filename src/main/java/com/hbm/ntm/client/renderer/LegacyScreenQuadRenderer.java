@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -34,6 +35,43 @@ public final class LegacyScreenQuadRenderer {
         graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
+    public static void pixelQuad(ResourceLocation texture, GuiGraphics graphics,
+            double x, double y, double u, double v, double width, double height,
+            double textureWidth, double textureHeight, int color, int alpha, BlendMode blendMode) {
+        if (textureWidth == 0.0D || textureHeight == 0.0D) {
+            return;
+        }
+        unitQuad(texture, graphics, x, y, width, height,
+                u / textureWidth, (v + height) / textureHeight,
+                (u + width) / textureWidth, (v + height) / textureHeight,
+                (u + width) / textureWidth, v / textureHeight,
+                u / textureWidth, v / textureHeight,
+                color, alpha, blendMode);
+    }
+
+    public static int scaled(double current, double max, int scale) {
+        if (max <= 0.0D || scale <= 0) {
+            return 0;
+        }
+        return Math.max(0, (int) Math.min(current / max * scale, scale));
+    }
+
+    public static void blitHorizontalProgress(ResourceLocation texture, GuiGraphics graphics,
+            int x, int y, int u, int v, int width, int height, int progressWidth) {
+        int clampedWidth = Math.max(0, Math.min(width, progressWidth));
+        if (clampedWidth <= 0 || height <= 0) {
+            return;
+        }
+        graphics.blit(texture, x, y, u, v, clampedWidth, height);
+    }
+
+    public static int blitHorizontalScaled(ResourceLocation texture, GuiGraphics graphics,
+            int x, int y, int u, int v, int width, int height, double current, double max) {
+        int progress = scaled(current, max, width);
+        blitHorizontalProgress(texture, graphics, x, y, u, v, width, height, progress);
+        return progress;
+    }
+
     public static void scope16x9(ResourceLocation texture, GuiGraphics graphics, int screenWidth, int screenHeight) {
         double width = screenWidth;
         double height = screenHeight;
@@ -56,54 +94,41 @@ public final class LegacyScreenQuadRenderer {
     }
 
     public static void itemGlint(GuiGraphics graphics, int x, int y, int width, int height) {
+        itemGlint(graphics, x, y, width, height, 0x8040CC);
+    }
+
+    public static void itemGlint(GuiGraphics graphics, int x, int y, int width, int height, int color) {
+        itemGlint(graphics, x, y, width, height, color, System.currentTimeMillis());
+    }
+
+    public static void itemGlint(GuiGraphics graphics, int x, int y, int width, int height, int color, long currentMillis) {
         for (int i = 0; i < 2; i++) {
-            double uScale = 1.0D / 256.0D;
-            double vScale = 1.0D / 256.0D;
-            double u = (System.currentTimeMillis() % (3000L + i * 1873L)) / (3000.0D + i * 1873.0D) * 256.0D;
-            double v = 0.0D;
-            double hScale = i < 1 ? 4.0D : -1.0D;
+            LegacyUvAnimation.UnitQuadUv uv = LegacyUvAnimation.flatItemGlintUv(currentMillis, i, width, height);
             unitQuad(VANILLA_ITEM_GLINT, graphics, x, y, width, height,
-                    (u + height * hScale) * uScale, (v + height) * vScale,
-                    (u + width + height * hScale) * uScale, (v + height) * vScale,
-                    (u + width) * uScale, v * vScale,
-                    u * uScale, v * vScale,
-                    0x8040CC, 255, BlendMode.GLINT);
+                    uv.bottomLeftU(), uv.bottomLeftV(),
+                    uv.bottomRightU(), uv.bottomRightV(),
+                    uv.topRightU(), uv.topRightV(),
+                    uv.topLeftU(), uv.topLeftV(),
+                    color, 255, BlendMode.GLINT);
         }
     }
 
     public static void unitQuad(ResourceLocation texture, GuiGraphics graphics,
             int x, int y, int width, int height, double uMin, double vMin, double uMax, double vMax,
             int color, int alpha, BlendMode blendMode) {
-        if (width <= 0 || height <= 0) {
-            return;
-        }
-
-        blendMode.apply();
-        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-        RenderSystem.setShaderTexture(0, texture);
-        Matrix4f matrix = graphics.pose().last().pose();
-        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-        int clampedAlpha = clamp(alpha);
-        int red = color >> 16 & 255;
-        int green = color >> 8 & 255;
-        int blue = color & 255;
-        float z = 0.0F;
-
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buffer.vertex(matrix, x, y + height, z).uv((float) uMin, (float) vMax)
-                .color(red, green, blue, clampedAlpha).endVertex();
-        buffer.vertex(matrix, x + width, y + height, z).uv((float) uMax, (float) vMax)
-                .color(red, green, blue, clampedAlpha).endVertex();
-        buffer.vertex(matrix, x + width, y, z).uv((float) uMax, (float) vMin)
-                .color(red, green, blue, clampedAlpha).endVertex();
-        buffer.vertex(matrix, x, y, z).uv((float) uMin, (float) vMin)
-                .color(red, green, blue, clampedAlpha).endVertex();
-        BufferUploader.drawWithShader(buffer.end());
-        blendMode.clear();
+        unitQuad(texture, graphics, (double) x, (double) y, (double) width, (double) height,
+                uMin, vMax, uMax, vMax, uMax, vMin, uMin, vMin, color, alpha, blendMode);
     }
 
     public static void unitQuad(ResourceLocation texture, GuiGraphics graphics,
-            int x, int y, int width, int height,
+            double x, double y, double width, double height, double uMin, double vMin, double uMax, double vMax,
+            int color, int alpha, BlendMode blendMode) {
+        unitQuad(texture, graphics, x, y, width, height,
+                uMin, vMax, uMax, vMax, uMax, vMin, uMin, vMin, color, alpha, blendMode);
+    }
+
+    public static void unitQuad(ResourceLocation texture, GuiGraphics graphics,
+            double x, double y, double width, double height,
             double bottomLeftU, double bottomLeftV,
             double bottomRightU, double bottomRightV,
             double topRightU, double topRightV,
@@ -125,16 +150,28 @@ public final class LegacyScreenQuadRenderer {
         float z = 0.0F;
 
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buffer.vertex(matrix, x, y + height, z).uv((float) bottomLeftU, (float) bottomLeftV)
+        buffer.vertex(matrix, (float) x, (float) (y + height), z).uv((float) bottomLeftU, (float) bottomLeftV)
                 .color(red, green, blue, clampedAlpha).endVertex();
-        buffer.vertex(matrix, x + width, y + height, z).uv((float) bottomRightU, (float) bottomRightV)
+        buffer.vertex(matrix, (float) (x + width), (float) (y + height), z).uv((float) bottomRightU, (float) bottomRightV)
                 .color(red, green, blue, clampedAlpha).endVertex();
-        buffer.vertex(matrix, x + width, y, z).uv((float) topRightU, (float) topRightV)
+        buffer.vertex(matrix, (float) (x + width), (float) y, z).uv((float) topRightU, (float) topRightV)
                 .color(red, green, blue, clampedAlpha).endVertex();
-        buffer.vertex(matrix, x, y, z).uv((float) topLeftU, (float) topLeftV)
+        buffer.vertex(matrix, (float) x, (float) y, z).uv((float) topLeftU, (float) topLeftV)
                 .color(red, green, blue, clampedAlpha).endVertex();
         BufferUploader.drawWithShader(buffer.end());
         blendMode.clear();
+    }
+
+    public static void unitQuad(ResourceLocation texture, GuiGraphics graphics,
+            int x, int y, int width, int height,
+            double bottomLeftU, double bottomLeftV,
+            double bottomRightU, double bottomRightV,
+            double topRightU, double topRightV,
+            double topLeftU, double topLeftV,
+            int color, int alpha, BlendMode blendMode) {
+        unitQuad(texture, graphics, (double) x, (double) y, (double) width, (double) height,
+                bottomLeftU, bottomLeftV, bottomRightU, bottomRightV, topRightU, topRightV, topLeftU, topLeftV,
+                color, alpha, blendMode);
     }
 
     private static int clamp(int value) {

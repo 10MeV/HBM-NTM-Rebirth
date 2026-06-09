@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "hbm_ntm_rebirth:block/part_emitter" }
+  }
+}

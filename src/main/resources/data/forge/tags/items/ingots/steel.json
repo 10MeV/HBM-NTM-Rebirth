@@ -1,5 +1,6 @@
-{
-  "values": [
-    "hbm_ntm_rebirth:ingot_steel"
-  ]
+﻿{
+    "replace":  false,
+    "values":  [
+                   "hbm_ntm_rebirth:ingot_steel"
+               ]
 }

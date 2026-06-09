@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "tag": "forge:ores/titanium" } },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_titanium" },
+    { "item": "hbm_ntm_rebirth:powder_titanium" },
+    { "item": "hbm_ntm_rebirth:powder_iron" },
+    { "item": "minecraft:gravel" }
+  ]
+}

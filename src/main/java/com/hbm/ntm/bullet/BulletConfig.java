@@ -2,14 +2,17 @@ package com.hbm.ntm.bullet;
 
 import com.hbm.ntm.radiation.ModDamageSources;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 public record BulletConfig(
@@ -48,6 +51,7 @@ public record BulletConfig(
         int chlorine,
         int leadChance,
         int caustic,
+        List<MobEffectInstance> effects,
         boolean destroysBlocks,
         boolean instakill,
         BulletStyle style,
@@ -75,6 +79,7 @@ public record BulletConfig(
         modeName = modeName == null ? "" : modeName;
         chatColorName = chatColorName == null ? "white" : chatColorName;
         damageType = damageType == null ? ModDamageSources.REVOLVER_BULLET : damageType;
+        effects = copyEffects(effects);
         if (behaviors == null || behaviors.isEmpty()) {
             behaviors = Collections.emptySet();
         } else {
@@ -90,6 +95,19 @@ public record BulletConfig(
 
     public boolean hasBehavior(BulletBehaviorTag behavior) {
         return behaviors.contains(behavior);
+    }
+
+    private static List<MobEffectInstance> copyEffects(List<MobEffectInstance> effects) {
+        if (effects == null || effects.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<MobEffectInstance> copy = new ArrayList<>(effects.size());
+        for (MobEffectInstance effect : effects) {
+            if (effect != null) {
+                copy.add(new MobEffectInstance(effect));
+            }
+        }
+        return copy.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(copy);
     }
 
     public Builder toBuilder() {
@@ -136,6 +154,7 @@ public record BulletConfig(
         private int chlorine;
         private int leadChance;
         private int caustic;
+        private final List<MobEffectInstance> effects = new ArrayList<>();
         private boolean destroysBlocks;
         private boolean instakill;
         private BulletStyle style = BulletStyle.NONE;
@@ -194,6 +213,7 @@ public record BulletConfig(
             this.chlorine = config.chlorine;
             this.leadChance = config.leadChance;
             this.caustic = config.caustic;
+            this.effects.addAll(copyEffects(config.effects));
             this.destroysBlocks = config.destroysBlocks;
             this.instakill = config.instakill;
             this.style = config.style;
@@ -343,6 +363,19 @@ public record BulletConfig(
             return this;
         }
 
+        public Builder effect(MobEffectInstance effect) {
+            if (effect != null) {
+                this.effects.add(new MobEffectInstance(effect));
+            }
+            return this;
+        }
+
+        public Builder effects(List<MobEffectInstance> effects) {
+            this.effects.clear();
+            this.effects.addAll(copyEffects(effects));
+            return this;
+        }
+
         public Builder destroysBlocks(boolean destroysBlocks) {
             this.destroysBlocks = destroysBlocks;
             return this;
@@ -404,6 +437,7 @@ public record BulletConfig(
                     lowerBoundRicochetChance, higherBoundRicochetChance, bounceModifier, selfDamageDelay,
                     penetrates, spectral, breaksGlass, liveAfterImpact, blackPowder, incendiaryTicks, emp,
                     blockDamage, explosive, jolt, rainbow, nuke, shrapnel, chlorine, leadChance, caustic,
+                    copyEffects(effects),
                     destroysBlocks, instakill, style, trail, plink, vanillaParticle, spentCasingName,
                     dischargePerShot, modeName, chatColorName, firingRate, damageType, damageProjectile,
                     damageFire, damageExplosion, damageBypass, behaviors);

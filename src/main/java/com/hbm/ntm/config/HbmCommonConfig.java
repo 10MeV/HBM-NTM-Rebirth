@@ -8,6 +8,7 @@ public final class HbmCommonConfig {
     public static final ForgeConfigSpec.BooleanValue LOG_STARTUP;
     public static final ForgeConfigSpec.BooleanValue ENABLE_LEGACY_ID_NOTES;
     public static final ForgeConfigSpec.BooleanValue ENABLE_EXTENDED_LOGGING;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_CRYSTAL_VIRUS_SPREADING;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -25,6 +26,9 @@ public final class HbmCommonConfig {
         ENABLE_EXTENDED_LOGGING = builder
                 .comment("Legacy GeneralConfig 1.18_enableExtendedLogging: logs detonators, nuclear explosions, missile launches, grenades, and related high-impact actions.")
                 .define("enableExtendedLogging", false);
+        ENABLE_CRYSTAL_VIRUS_SPREADING = builder
+                .comment("Legacy GeneralConfig 1.21_enableVirus: allows crystal_virus blocks to spread into adjacent solid blocks and then harden.")
+                .define("enableCrystalVirusSpreading", false);
         builder.pop();
 
         NetworkConfig.define(builder);
@@ -33,8 +37,34 @@ public final class HbmCommonConfig {
         BombConfig.define(builder);
         WeaponConfig.define(builder);
         ToolConfig.define(builder);
+        PotionConfig.define(builder);
+        RadarConfig.define(builder);
 
         SPEC = builder.build();
+    }
+
+    public static boolean startupLoggingEnabled() {
+        return booleanValue(LOG_STARTUP, true);
+    }
+
+    public static boolean legacyIdNotesEnabled() {
+        return booleanValue(ENABLE_LEGACY_ID_NOTES, true);
+    }
+
+    public static boolean extendedLoggingEnabled() {
+        return booleanValue(ENABLE_EXTENDED_LOGGING, false);
+    }
+
+    public static boolean crystalVirusSpreadingEnabled() {
+        return booleanValue(ENABLE_CRYSTAL_VIRUS_SPREADING, false);
+    }
+
+    private static boolean booleanValue(ForgeConfigSpec.BooleanValue value, boolean fallback) {
+        try {
+            return value == null ? fallback : value.get();
+        } catch (IllegalStateException ignored) {
+            return fallback;
+        }
     }
 
     private HbmCommonConfig() {

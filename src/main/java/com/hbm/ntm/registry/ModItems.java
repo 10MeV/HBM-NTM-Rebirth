@@ -11,6 +11,7 @@ import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.hbm.ntm.energy.HbmCreativeBatteryItem;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
+import com.hbm.ntm.item.ArcElectrodeItem;
 import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.DetonatorItem;
@@ -39,7 +40,9 @@ import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.item.LegacyToolItem;
+import com.hbm.ntm.item.MissileDesignatorItem;
 import com.hbm.ntm.item.OreByproductItem;
+import com.hbm.ntm.item.PACoilItem;
 import com.hbm.ntm.item.PollutionDetectorItem;
 import com.hbm.ntm.item.RadawayItem;
 import com.hbm.ntm.item.RadarLinkerItem;
@@ -322,6 +325,18 @@ public final class ModItems {
     public static final RegistryObject<Item> PISTON_SET_DURA = pistonSet("piston_set_dura", PistonSetItem.Type.DURA);
     public static final RegistryObject<Item> PISTON_SET_DESH = pistonSet("piston_set_desh", PistonSetItem.Type.DESH);
     public static final RegistryObject<Item> PISTON_SET_STARMETAL = pistonSet("piston_set_starmetal", PistonSetItem.Type.STARMETAL);
+    public static final RegistryObject<Item> ARC_ELECTRODE_GRAPHITE = arcElectrode("arc_electrode_graphite", ArcElectrodeItem.Type.GRAPHITE, false);
+    public static final RegistryObject<Item> ARC_ELECTRODE_LANTHANIUM = arcElectrode("arc_electrode_lanthanium", ArcElectrodeItem.Type.LANTHANIUM, false);
+    public static final RegistryObject<Item> ARC_ELECTRODE_DESH = arcElectrode("arc_electrode_desh", ArcElectrodeItem.Type.DESH, false);
+    public static final RegistryObject<Item> ARC_ELECTRODE_SATURNITE = arcElectrode("arc_electrode_saturnite", ArcElectrodeItem.Type.SATURNITE, false);
+    public static final RegistryObject<Item> ARC_ELECTRODE_BURNT_GRAPHITE = arcElectrode("arc_electrode_burnt_graphite", ArcElectrodeItem.Type.GRAPHITE, true);
+    public static final RegistryObject<Item> ARC_ELECTRODE_BURNT_LANTHANIUM = arcElectrode("arc_electrode_burnt_lanthanium", ArcElectrodeItem.Type.LANTHANIUM, true);
+    public static final RegistryObject<Item> ARC_ELECTRODE_BURNT_DESH = arcElectrode("arc_electrode_burnt_desh", ArcElectrodeItem.Type.DESH, true);
+    public static final RegistryObject<Item> ARC_ELECTRODE_BURNT_SATURNITE = arcElectrode("arc_electrode_burnt_saturnite", ArcElectrodeItem.Type.SATURNITE, true);
+    public static final RegistryObject<Item> PA_COIL_GOLD = paCoil("pa_coil_gold", PACoilItem.Type.GOLD);
+    public static final RegistryObject<Item> PA_COIL_NIOBIUM = paCoil("pa_coil_niobium", PACoilItem.Type.NIOBIUM);
+    public static final RegistryObject<Item> PA_COIL_BSCCO = paCoil("pa_coil_bscco", PACoilItem.Type.BSCCO);
+    public static final RegistryObject<Item> PA_COIL_CHLOROPHYTE = paCoil("pa_coil_chlorophyte", PACoilItem.Type.CHLOROPHYTE);
     public static final RegistryObject<Item> DEFUSER = registerLegacy("defuser",
             () -> new LegacyToolItem(new Item.Properties().stacksTo(1).durability(100), Toolable.ToolType.DEFUSER));
     public static final RegistryObject<Item> CONVEYOR_WAND = registerLegacy("conveyor_wand",
@@ -727,6 +742,13 @@ public final class ModItems {
     public static final RegistryObject<Item> SAT_HEAD_LASER = part("sat_head_laser");
     public static final RegistryObject<Item> SAT_HEAD_RESONATOR = part("sat_head_resonator");
 
+    public static final RegistryObject<Item> DESIGNATOR = registerLegacy("designator",
+            () -> new MissileDesignatorItem(new Item.Properties().stacksTo(1), MissileDesignatorItem.Mode.BLOCK));
+    public static final RegistryObject<Item> DESIGNATOR_RANGE = registerLegacy("designator_range",
+            () -> new MissileDesignatorItem(new Item.Properties().stacksTo(1), MissileDesignatorItem.Mode.RANGE));
+    public static final RegistryObject<Item> DESIGNATOR_MANUAL = registerLegacy("designator_manual",
+            () -> new MissileDesignatorItem(new Item.Properties().stacksTo(1), MissileDesignatorItem.Mode.MANUAL));
+
     public static final RegistryObject<Item> SAT_MAPPER = satelliteItem("sat_mapper", LegacySatelliteType.MAPPER, "satchip.mapper");
     public static final RegistryObject<Item> SAT_SCANNER = satelliteItem("sat_scanner", LegacySatelliteType.SCANNER, "satchip.scanner");
     public static final RegistryObject<Item> SAT_RADAR = satelliteItem("sat_radar", LegacySatelliteType.RADAR, "satchip.radar");
@@ -759,6 +781,9 @@ public final class ModItems {
     );
 
     public static final List<RegistryObject<Item>> SATELLITE_TAB_ITEMS = List.of(
+            DESIGNATOR,
+            DESIGNATOR_RANGE,
+            DESIGNATOR_MANUAL,
             SAT_MAPPER,
             SAT_SCANNER,
             SAT_RADAR,
@@ -854,6 +879,8 @@ public final class ModItems {
             "powder_polymer",
             "powder_bakelite",
             "powder_spark_mix",
+            "powder_desh_mix",
+            "powder_chlorophyte",
             "ball_resin",
             "ingot_zirconium",
             "ingot_phosphorus",
@@ -880,8 +907,11 @@ public final class ModItems {
             "wire_fine_mingrade",
             "wire_fine_tungsten",
             "wire_dense_gold",
+            "wire_dense_copper",
+            "wire_dense_titanium",
             "wire_dense_niobium",
             "wire_dense_bscco",
+            "wire_dense_neodymium",
             "bolt_steel",
             "bolt_tungsten",
             "bolt_dura_steel",
@@ -1180,6 +1210,17 @@ public final class ModItems {
             PELLET_ANTIMATTER
     );
 
+    public static final List<RegistryObject<Item>> ARC_ELECTRODE_ITEMS = List.of(
+            ARC_ELECTRODE_GRAPHITE,
+            ARC_ELECTRODE_LANTHANIUM,
+            ARC_ELECTRODE_DESH,
+            ARC_ELECTRODE_SATURNITE,
+            ARC_ELECTRODE_BURNT_GRAPHITE,
+            ARC_ELECTRODE_BURNT_LANTHANIUM,
+            ARC_ELECTRODE_BURNT_DESH,
+            ARC_ELECTRODE_BURNT_SATURNITE
+    );
+
     private static final List<RegistryObject<Item>> MACHINE_UPGRADE_ITEMS = List.of(
             BLUEPRINTS,
             UPGRADE_SPEED_1,
@@ -1223,6 +1264,13 @@ public final class ModItems {
             PISTON_SET_DURA,
             PISTON_SET_DESH,
             PISTON_SET_STARMETAL
+    );
+
+    public static final List<RegistryObject<Item>> PA_COIL_ITEMS = List.of(
+            PA_COIL_GOLD,
+            PA_COIL_NIOBIUM,
+            PA_COIL_BSCCO,
+            PA_COIL_CHLOROPHYTE
     );
 
     private static final List<RegistryObject<Item>> ABILITY_TOOL_ITEMS = List.of(
@@ -1313,7 +1361,7 @@ public final class ModItems {
             "pellet_rtg_polonium",
             "pellet_rtg_americium",
             "pellet_rtg_gold"
-    ), MACHINE_UPGRADE_ITEMS, LEGACY_TOOL_ITEMS, DRILLBIT_ITEMS, PISTON_SET_ITEMS, ABILITY_TOOL_ITEMS, List.<RegistryObject<Item>>of(CATALYTIC_CONVERTER), SINGULARITY_FAMILY_ITEMS, CONTROL_BATTERY_ITEMS)
+    ), MACHINE_UPGRADE_ITEMS, LEGACY_TOOL_ITEMS, DRILLBIT_ITEMS, PISTON_SET_ITEMS, ARC_ELECTRODE_ITEMS, PA_COIL_ITEMS, ABILITY_TOOL_ITEMS, List.<RegistryObject<Item>>of(CATALYTIC_CONVERTER), SINGULARITY_FAMILY_ITEMS, CONTROL_BATTERY_ITEMS)
             .flatMap(List::stream)
             .toList();
 
@@ -1524,6 +1572,15 @@ public final class ModItems {
 
     private static RegistryObject<Item> pistonSet(String name, PistonSetItem.Type type) {
         return registerLegacy(name, () -> new PistonSetItem(new Item.Properties().stacksTo(1), type));
+    }
+
+    private static RegistryObject<Item> arcElectrode(String name, ArcElectrodeItem.Type type, boolean burnt) {
+        Item.Properties properties = burnt ? new Item.Properties() : new Item.Properties().stacksTo(1);
+        return registerLegacy(name, () -> new ArcElectrodeItem(properties, type, burnt));
+    }
+
+    private static RegistryObject<Item> paCoil(String name, PACoilItem.Type type) {
+        return registerLegacy(name, () -> new PACoilItem(new Item.Properties().stacksTo(1), type));
     }
 
     private static RegistryObject<Item> registerLegacy(String name, java.util.function.Supplier<Item> supplier) {

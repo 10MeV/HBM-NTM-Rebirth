@@ -15,6 +15,54 @@ public interface LegacyObjModel {
 
     List<String> getPartNames();
 
+    default void renderAllTranslucent(ObjRenderContext context) {
+        renderAll(context.withTranslucencyNoDepthWrite());
+    }
+
+    default void renderAllTranslucentDepthWrite(ObjRenderContext context) {
+        renderAll(context.withTranslucencyDepthWrite());
+    }
+
+    default void renderAllAdditive(ObjRenderContext context) {
+        renderAll(context.withAdditiveTranslucency());
+    }
+
+    default void renderPartTranslucent(String name, ObjRenderContext context) {
+        renderPart(name, context.withTranslucencyNoDepthWrite());
+    }
+
+    default void renderPartTranslucentDepthWrite(String name, ObjRenderContext context) {
+        renderPart(name, context.withTranslucencyDepthWrite());
+    }
+
+    default void renderPartAdditive(String name, ObjRenderContext context) {
+        renderPart(name, context.withAdditiveTranslucency());
+    }
+
+    default void renderOnlyTranslucent(ObjRenderContext context, String... names) {
+        renderOnly(context.withTranslucencyNoDepthWrite(), names);
+    }
+
+    default void renderOnlyTranslucentDepthWrite(ObjRenderContext context, String... names) {
+        renderOnly(context.withTranslucencyDepthWrite(), names);
+    }
+
+    default void renderOnlyAdditive(ObjRenderContext context, String... names) {
+        renderOnly(context.withAdditiveTranslucency(), names);
+    }
+
+    default void renderAllExceptTranslucent(ObjRenderContext context, String... excludedNames) {
+        renderAllExcept(context.withTranslucencyNoDepthWrite(), excludedNames);
+    }
+
+    default void renderAllExceptTranslucentDepthWrite(ObjRenderContext context, String... excludedNames) {
+        renderAllExcept(context.withTranslucencyDepthWrite(), excludedNames);
+    }
+
+    default void renderAllExceptAdditive(ObjRenderContext context, String... excludedNames) {
+        renderAllExcept(context.withAdditiveTranslucency(), excludedNames);
+    }
+
     default LegacyObjModel mixedMode() {
         return this;
     }

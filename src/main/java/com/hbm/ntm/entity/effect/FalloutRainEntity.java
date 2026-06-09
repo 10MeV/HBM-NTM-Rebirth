@@ -51,7 +51,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     private final List<Long> chunksToProcess = new ArrayList<>();
     private final List<Long> outerChunksToProcess = new ArrayList<>();
     private boolean firstTick = true;
-    private int tickDelay = BombConfig.FALLOUT_DELAY.get();
+    private int tickDelay = BombConfig.falloutDelayTicks();
     private int scale = 1;
 
     public FalloutRainEntity(EntityType<? extends FalloutRainEntity> type, Level level) {
@@ -91,8 +91,8 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
         }
 
         if (tickDelay == 0) {
-            tickDelay = BombConfig.FALLOUT_DELAY.get();
-            long deadline = start + BombConfig.MK5_BUDGET_MS.get();
+            tickDelay = BombConfig.falloutDelayTicks();
+            long deadline = start + BombConfig.mk5BudgetMs();
             int chunkBudget = legacyChunkBudget();
             while (chunkBudget-- > 0 && System.currentTimeMillis() < deadline) {
                 if (!processNextChunk()) {
@@ -108,7 +108,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     }
 
     private static int legacyChunkBudget() {
-        return Math.max(1, BombConfig.MK5_BUDGET_MS.get() / LEGACY_MIN_CHUNK_WORK_MS);
+        return Math.max(1, BombConfig.mk5BudgetMs() / LEGACY_MIN_CHUNK_WORK_MS);
     }
 
     private boolean processNextChunk() {
@@ -321,7 +321,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         setScale(tag.getInt("scale"));
-        tickDelay = tag.contains("tickDelay") ? tag.getInt("tickDelay") : BombConfig.FALLOUT_DELAY.get();
+        tickDelay = tag.contains("tickDelay") ? tag.getInt("tickDelay") : BombConfig.falloutDelayTicks();
         firstTick = !tag.contains("firstTick") || tag.getBoolean("firstTick");
         readChunkList(tag.getLongArray("chunks"), chunksToProcess);
         readChunkList(tag.getLongArray("outerChunks"), outerChunksToProcess);

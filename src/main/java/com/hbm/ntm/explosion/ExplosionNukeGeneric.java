@@ -2,6 +2,7 @@ package com.hbm.ntm.explosion;
 
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergyHandler;
+import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
@@ -338,7 +339,7 @@ public final class ExplosionNukeGeneric {
     }
 
     private static boolean isExplosionExempt(Entity entity) {
-        if (entity instanceof Ocelot) {
+        if (entity instanceof Ocelot || entity instanceof BulletProjectileEntity) {
             return true;
         }
         if (entity instanceof Player player) {

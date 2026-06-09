@@ -37,4 +37,9 @@ public record RadarContext(
             RadarDetectable.RadarScanParams params) {
         return new RadarContext(level, origin, range, LEGACY_VERTICAL_BUFFER, LEGACY_MINIMUM_ALTITUDE, params);
     }
+
+    public static RadarContext legacy(ServerLevel level, BlockPos origin, int range, int verticalBuffer,
+            int minimumAltitude, RadarDetectable.RadarScanParams params) {
+        return new RadarContext(level, origin, range, verticalBuffer, minimumAltitude, params);
+    }
 }

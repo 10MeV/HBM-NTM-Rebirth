@@ -30,6 +30,8 @@ public final class ModEffects {
             EFFECTS.register("stability", () -> new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x4F9CFF));
     public static final RegistryObject<MobEffect> LEAD =
             EFFECTS.register("lead", () -> new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x767682));
+    public static final RegistryObject<MobEffect> POTION_SICKNESS =
+            EFFECTS.register("potionsickness", () -> new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFF8080));
 
     public static void register(IEventBus modBus) {
         EFFECTS.register(modBus);

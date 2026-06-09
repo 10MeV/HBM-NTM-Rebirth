@@ -1,0 +1,57 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 300,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:shells/titanium"
+      },
+      "legacy_ore": "shellTitanium"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:pipes/dura_steel"
+      },
+      "legacy_ore": "ntmpipeDuraSteel"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:turbine_tungsten"
+      }
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:dense_wires/gold"
+      },
+      "legacy_ore": "wireDenseGold"
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      }
+    }
+  ],
+  "internal_name": "ass.turbofan",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_turbofan"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 132
+}

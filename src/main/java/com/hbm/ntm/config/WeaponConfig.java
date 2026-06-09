@@ -17,6 +17,22 @@ public final class WeaponConfig {
         builder.pop();
     }
 
+    public static boolean droppedAntimatterCellsEnabled() {
+        return booleanValue(DROP_ANTIMATTER_CELLS, true);
+    }
+
+    public static boolean droppedSingularitiesEnabled() {
+        return booleanValue(DROP_SINGULARITY, true);
+    }
+
+    private static boolean booleanValue(ForgeConfigSpec.BooleanValue value, boolean fallback) {
+        try {
+            return value == null ? fallback : value.get();
+        } catch (IllegalStateException ignored) {
+            return fallback;
+        }
+    }
+
     private WeaponConfig() {
     }
 }

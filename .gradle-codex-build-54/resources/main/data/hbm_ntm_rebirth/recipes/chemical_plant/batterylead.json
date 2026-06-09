@@ -1,0 +1,34 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 100,
+  "input_fluids": [
+    {
+      "amount": 8000,
+      "fluid": "hbm_ntm_rebirth:sulfuric_acid"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plate_steel"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ingot_lead"
+      }
+    }
+  ],
+  "internal_name": "chem.batterylead",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:battery_lead"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 28
+}

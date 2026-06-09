@@ -159,11 +159,7 @@ public final class GenericMachineRecipeRuntime {
             if (!Float.isFinite(amount) || amount == 0.0F) {
                 return;
             }
-            if (amount > 0.0F) {
-                PollutionManager.incrementPollution(level, pos, pollution.type(), amount);
-            } else if (PollutionManager.getPollution(level, pos, pollution.type()) >= -amount) {
-                PollutionManager.decrementPollution(level, pos, pollution.type(), -amount);
-            }
+            PollutionManager.applyPollutionDelta(level, pos, pollution.type(), amount);
         });
     }
 

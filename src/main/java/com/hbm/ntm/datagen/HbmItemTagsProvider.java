@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -57,6 +58,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("tools/screwdrivers", "screwdriver");
         addLegacyForgeTag("tools/hand_drills", "hand_drill");
         addLegacyForgeTag("sand", net.minecraft.world.level.block.Blocks.SAND.asItem(), net.minecraft.world.level.block.Blocks.RED_SAND.asItem());
+        addLegacyGlassPaneTags();
         addLegacyMaterialTags();
         addLegacyForgeTag("circuits/vacuum_tube", "circuit_vacuum_tube");
         addLegacyForgeTag("circuits/capacitor", "circuit_capacitor");
@@ -140,6 +142,28 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("dyes/gray", "powder_ash_misc");
         addLegacyForgeTag("dyes/brown", "powder_ash_fly");
         addLegacyForgeTag("dyes/magenta", "powder_ash_fullerene");
+    }
+
+    private void addLegacyGlassPaneTags() {
+        addLegacyForgeTag("glass_panes",
+                Items.GLASS_PANE,
+                Items.WHITE_STAINED_GLASS_PANE,
+                Items.LIGHT_GRAY_STAINED_GLASS_PANE,
+                Items.GRAY_STAINED_GLASS_PANE,
+                Items.BLACK_STAINED_GLASS_PANE,
+                Items.BROWN_STAINED_GLASS_PANE,
+                Items.RED_STAINED_GLASS_PANE,
+                Items.ORANGE_STAINED_GLASS_PANE,
+                Items.YELLOW_STAINED_GLASS_PANE,
+                Items.LIME_STAINED_GLASS_PANE,
+                Items.GREEN_STAINED_GLASS_PANE,
+                Items.CYAN_STAINED_GLASS_PANE,
+                Items.LIGHT_BLUE_STAINED_GLASS_PANE,
+                Items.BLUE_STAINED_GLASS_PANE,
+                Items.PURPLE_STAINED_GLASS_PANE,
+                Items.MAGENTA_STAINED_GLASS_PANE,
+                Items.PINK_STAINED_GLASS_PANE);
+        addLegacyForgeTag("glass_panes/colorless", Items.GLASS_PANE);
     }
 
     private void addLegacyEnumMultiBridgeTags() {
@@ -335,8 +359,11 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("wireFine", "wires", "wire_fine_mingrade", "Mingrade");
         addLegacyMaterialAliases("wireFine", "wires", "wire_fine_tungsten", "Tungsten");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_gold", "Gold");
+        addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_copper", "Copper");
+        addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_titanium", "Titanium");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_niobium", "Niobium");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_bscco", "BSCCO");
+        addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_neodymium", "Neodymium");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_steel", "Steel");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_copper", "Copper");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_rubber", "Rubber");

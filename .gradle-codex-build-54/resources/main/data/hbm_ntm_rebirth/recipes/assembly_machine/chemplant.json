@@ -1,0 +1,55 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/steel"
+      },
+      "legacy_ore": "ingotSteel"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:pipes/copper"
+      },
+      "legacy_ore": "ntmpipeCopper"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plate_polymer"
+      }
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:coil_tungsten"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_analog"
+      }
+    }
+  ],
+  "internal_name": "ass.chemplant",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_chemical_plant"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 78
+}

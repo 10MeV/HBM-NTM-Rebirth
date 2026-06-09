@@ -1,0 +1,11 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:shredder",
+    "input":  {
+                  "ingredient":  {
+                                     "tag":  "forge:ingots/copper"
+                                 }
+              },
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:powder_copper"
+               }
+}

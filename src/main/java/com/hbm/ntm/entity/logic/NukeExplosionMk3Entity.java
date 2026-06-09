@@ -58,7 +58,7 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
         NukeExplosionMk3Entity entity = new NukeExplosionMk3Entity(level);
         entity.setPos(x, y, z);
         entity.destructionRange = range;
-        entity.speed = BombConfig.BLAST_SPEED.get();
+        entity.speed = BombConfig.blastSpeed();
         entity.coefficient = 1.0F;
         entity.waste = false;
         entity.extType = EXT_FLEIJA;
@@ -69,7 +69,7 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
         NukeExplosionMk3Entity entity = new NukeExplosionMk3Entity(level);
         entity.setPos(x, y, z);
         entity.destructionRange = range;
-        entity.speed = BombConfig.BLAST_SPEED.get();
+        entity.speed = BombConfig.blastSpeed();
         entity.coefficient = 1.0F;
         entity.waste = true;
         return entity;
@@ -258,7 +258,7 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
     }
 
     private static boolean extendedLoggingEnabled() {
-        return HbmCommonConfig.ENABLE_EXTENDED_LOGGING != null && HbmCommonConfig.ENABLE_EXTENDED_LOGGING.get();
+        return HbmCommonConfig.extendedLoggingEnabled();
     }
 
     private static boolean isFleijaInterrupted(Level level, double x, double y, double z) {

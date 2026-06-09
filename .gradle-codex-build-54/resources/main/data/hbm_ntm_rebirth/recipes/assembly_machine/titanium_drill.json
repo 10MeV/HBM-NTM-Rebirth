@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:cast_plates/dura_steel"
+      },
+      "legacy_ore": "plateCastDuraSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/titanium"
+      },
+      "legacy_ore": "plateTitanium"
+    }
+  ],
+  "internal_name": "ass.titaniumdrill",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:drill_titanium"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 42
+}

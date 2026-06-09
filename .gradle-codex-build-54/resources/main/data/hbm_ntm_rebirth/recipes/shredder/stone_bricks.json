@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "item": "minecraft:stone_bricks" } },
+  "output": { "item": "minecraft:gravel" }
+}

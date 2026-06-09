@@ -187,7 +187,7 @@ public final class HbmFluidTraitConfig {
         PollutingFluidTrait trait = new PollutingFluidTrait();
         JsonObject release = object(object, "release");
         if (release != null) {
-            for (PollutingFluidTrait.PollutionKind kind : PollutingFluidTrait.PollutionKind.values()) {
+            for (PollutingFluidTrait.PollutionKind kind : PollutingFluidTrait.PollutionKind.orderedValues()) {
                 Float value = floatValue(release, kind.legacyName());
                 if (value == null) {
                     value = floatValue(release, kind.name());
@@ -199,7 +199,7 @@ public final class HbmFluidTraitConfig {
         }
         JsonObject burn = object(object, "burn");
         if (burn != null) {
-            for (PollutingFluidTrait.PollutionKind kind : PollutingFluidTrait.PollutionKind.values()) {
+            for (PollutingFluidTrait.PollutionKind kind : PollutingFluidTrait.PollutionKind.orderedValues()) {
                 Float value = floatValue(burn, kind.legacyName());
                 if (value == null) {
                     value = floatValue(burn, kind.name());

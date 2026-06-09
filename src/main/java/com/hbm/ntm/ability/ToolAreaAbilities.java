@@ -29,7 +29,7 @@ public final class ToolAreaAbilities {
 
         @Override
         public boolean isAllowed() {
-            return ToolConfig.enabled(ToolConfig.ABILITY_VEIN);
+            return ToolConfig.veinAbilityEnabled();
         }
 
         @Override
@@ -47,10 +47,10 @@ public final class ToolAreaAbilities {
             Level world = context.level();
             BlockState reference = world.getBlockState(context.pos());
 
-            if (reference.is(Blocks.STONE) && !ToolConfig.enabled(ToolConfig.RECURSIVE_STONE)) {
+            if (reference.is(Blocks.STONE) && !ToolConfig.recursiveStoneEnabled()) {
                 return false;
             }
-            if (reference.is(Blocks.NETHERRACK) && !ToolConfig.enabled(ToolConfig.RECURSIVE_NETHERRACK)) {
+            if (reference.is(Blocks.NETHERRACK) && !ToolConfig.recursiveNetherrackEnabled()) {
                 return false;
             }
 
@@ -72,7 +72,7 @@ public final class ToolAreaAbilities {
                 return;
             }
             int nextDepth = depth + 1;
-            if (nextDepth > ToolConfig.intValue(ToolConfig.RECURSION_DEPTH, 1000)) {
+            if (nextDepth > ToolConfig.recursionDepth()) {
                 return;
             }
             visited.add(pos);
@@ -97,7 +97,7 @@ public final class ToolAreaAbilities {
 
         @Override
         public boolean isAllowed() {
-            return ToolConfig.enabled(ToolConfig.ABILITY_EXPLOSION);
+            return ToolConfig.explosionAbilityEnabled();
         }
 
         @Override
@@ -191,7 +191,7 @@ public final class ToolAreaAbilities {
 
         @Override
         public boolean isAllowed() {
-            return ToolConfig.enabled(ToolConfig.ABILITY_HAMMER);
+            return ToolConfig.hammerAbilityEnabled();
         }
 
         @Override

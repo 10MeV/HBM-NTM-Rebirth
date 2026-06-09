@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": { "item": "minecraft:glowstone_dust" },
+    "R": { "item": "minecraft:redstone_torch" },
+    "I": { "item": "minecraft:iron_ingot" }
+  },
+  "pattern": [
+    "G",
+    "R",
+    "I"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:radio_torch_receiver",
+    "count": 4
+  },
+  "show_notification": true
+}

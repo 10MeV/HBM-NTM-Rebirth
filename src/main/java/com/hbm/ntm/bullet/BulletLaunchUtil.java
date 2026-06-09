@@ -3,6 +3,7 @@ package com.hbm.ntm.bullet;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,16 @@ public final class BulletLaunchUtil {
             plans[i] = shooterLaunchPlan(config, shooter, random, accuracyBoost);
         }
         return new LaunchBatch(plans);
+    }
+
+    public static LaunchBatch shooterBatchWithLegacyCasing(BulletConfig config, LivingEntity shooter,
+            RandomSource random, boolean accuracyBoost, int ejectorId) {
+        LaunchBatch batch = shooterBatch(config, shooter, random, accuracyBoost);
+        if (config == null || shooter == null || config.spentCasingName().isBlank()) {
+            return batch;
+        }
+        return batch.withCasingRequest(BulletCasingEjectUtil.legacyEjectorFromShooter(shooter, ejectorId,
+                config.spentCasingName()));
     }
 
     public static LaunchPlan shooterLaunchPlan(BulletConfig config, LivingEntity shooter, RandomSource random,
@@ -116,9 +127,30 @@ public final class BulletLaunchUtil {
         return new Rotation(Mth.wrapDegrees(yaw), Mth.wrapDegrees(pitch));
     }
 
-    public record LaunchBatch(LaunchPlan[] plans) {
+    public record LaunchBatch(LaunchPlan[] plans, BulletCasingEjectUtil.CasingRequest casingRequest) {
+        public LaunchBatch(LaunchPlan[] plans) {
+            this(plans, BulletCasingEjectUtil.CasingRequest.NONE);
+        }
+
+        public LaunchBatch {
+            plans = plans == null ? new LaunchPlan[0] : plans;
+            casingRequest = casingRequest == null ? BulletCasingEjectUtil.CasingRequest.NONE : casingRequest;
+        }
+
         public int count() {
             return plans.length;
+        }
+
+        public boolean hasCasingRequest() {
+            return casingRequest.valid();
+        }
+
+        public LaunchBatch withCasingRequest(BulletCasingEjectUtil.CasingRequest request) {
+            return new LaunchBatch(plans, request);
+        }
+
+        public boolean executeCasing(Level level) {
+            return BulletCasingEjectUtil.execute(level, casingRequest);
         }
     }
 

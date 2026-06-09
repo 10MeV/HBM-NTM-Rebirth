@@ -1,11 +1,16 @@
 package com.hbm.ntm.player;
 
 import com.hbm.ntm.config.ServerConfig;
+import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
 import com.hbm.ntm.radiation.RadiationData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.ArrayList;
 import java.util.AbstractList;
 import java.util.List;
 
@@ -104,6 +109,97 @@ public final class HbmLivingProperties {
                 .toList();
     }
 
+    public static SyncData writeSyncedData(LivingEntity entity, float chunkRadiation, float resistance) {
+        return new SyncData(
+                getRadiation(entity),
+                getDigamma(entity),
+                getRadBuf(entity),
+                chunkRadiation,
+                resistance,
+                getAsbestos(entity),
+                getBlackLung(entity),
+                getBombTimer(entity),
+                getContagion(entity),
+                getOil(entity),
+                getFire(entity),
+                getPhosphorus(entity),
+                getBalefire(entity),
+                getBlackFire(entity),
+                getContaminationEffectsForSync(entity));
+    }
+
+    public static void sync(ServerPlayer player, float chunkRadiation, float resistance) {
+        ModMessages.sendToPlayer(new PlayerRadiationSyncPacket(writeSyncedData(player, chunkRadiation, resistance)), player);
+    }
+
+    public static SyncData emptySyncedData() {
+        return new SyncData(0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, List.of());
+    }
+
+    public static void encodeSyncedData(SyncData data, FriendlyByteBuf buffer) {
+        SyncData safeData = data == null ? emptySyncedData() : data;
+        buffer.writeFloat(safeData.radiation());
+        buffer.writeFloat(safeData.digamma());
+        buffer.writeFloat(safeData.radBuf());
+        buffer.writeFloat(safeData.chunkRadiation());
+        buffer.writeFloat(safeData.resistance());
+        buffer.writeVarInt(safeData.asbestos());
+        buffer.writeVarInt(safeData.blackLung());
+        buffer.writeVarInt(safeData.bombTimer());
+        buffer.writeVarInt(safeData.contagion());
+        buffer.writeVarInt(safeData.oil());
+        buffer.writeVarInt(safeData.fire());
+        buffer.writeVarInt(safeData.phosphorus());
+        buffer.writeVarInt(safeData.balefire());
+        buffer.writeVarInt(safeData.blackFire());
+        buffer.writeVarInt(safeData.contaminationEffects().size());
+        for (ContaminationEffect effect : safeData.contaminationEffects()) {
+            encodeContaminationEffect(effect, buffer);
+        }
+    }
+
+    public static SyncData decodeSyncedData(FriendlyByteBuf buffer) {
+        float radiation = buffer.readFloat();
+        float digamma = buffer.readFloat();
+        float radBuf = buffer.readFloat();
+        float chunkRadiation = buffer.readFloat();
+        float resistance = buffer.readFloat();
+        int asbestos = buffer.readVarInt();
+        int blackLung = buffer.readVarInt();
+        int bombTimer = buffer.readVarInt();
+        int contagion = buffer.readVarInt();
+        int oil = buffer.readVarInt();
+        int fire = buffer.readVarInt();
+        int phosphorus = buffer.readVarInt();
+        int balefire = buffer.readVarInt();
+        int blackFire = buffer.readVarInt();
+        int contaminationCount = buffer.readVarInt();
+        List<ContaminationEffect> contaminationEffects = new ArrayList<>(contaminationCount);
+        for (int i = 0; i < contaminationCount; i++) {
+            contaminationEffects.add(decodeContaminationEffect(buffer));
+        }
+        return new SyncData(radiation, digamma, radBuf, chunkRadiation, resistance,
+                asbestos, blackLung, bombTimer, contagion, oil, fire, phosphorus, balefire, blackFire,
+                contaminationEffects);
+    }
+
+    public static void encodeContaminationEffect(ContaminationEffect effect, FriendlyByteBuf buffer) {
+        ContaminationEffect safeEffect = effect == null ? new ContaminationEffect(0.0F, 1, 0, false) : effect;
+        buffer.writeFloat(safeEffect.maxRad);
+        buffer.writeVarInt(safeEffect.maxTime);
+        buffer.writeVarInt(safeEffect.time);
+        buffer.writeBoolean(safeEffect.ignoresArmor());
+    }
+
+    public static ContaminationEffect decodeContaminationEffect(FriendlyByteBuf buffer) {
+        return new ContaminationEffect(
+                buffer.readFloat(),
+                buffer.readVarInt(),
+                buffer.readVarInt(),
+                buffer.readBoolean());
+    }
+
     public static int getAsbestos(LivingEntity entity) {
         return RadiationData.getAsbestos(entity);
     }
@@ -145,7 +241,7 @@ public final class HbmLivingProperties {
     }
 
     public static int getContagion(LivingEntity entity) {
-        if (!ServerConfig.ENABLE_MKU.get()) {
+        if (!ServerConfig.mkuEnabled()) {
             return 0;
         }
         return RadiationData.getContagion(entity);
@@ -297,6 +393,14 @@ public final class HbmLivingProperties {
             tag.putInt("time", Math.max(0, time));
             tag.putBoolean("ignoreArmor", ignoreArmor);
             return tag;
+        }
+    }
+
+    public record SyncData(float radiation, float digamma, float radBuf, float chunkRadiation, float resistance,
+            int asbestos, int blackLung, int bombTimer, int contagion, int oil, int fire, int phosphorus, int balefire, int blackFire,
+            List<ContaminationEffect> contaminationEffects) {
+        public SyncData {
+            contaminationEffects = List.copyOf(contaminationEffects);
         }
     }
 
