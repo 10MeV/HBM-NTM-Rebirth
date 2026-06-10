@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.api.item.Crosshair;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -75,6 +76,46 @@ public final class LegacyScreenQuadRenderer {
         int progress = scaled(current, max, width);
         blitHorizontalProgress(texture, graphics, x, y, u, v, width, height, progress);
         return progress;
+    }
+
+    public static RadCounterPlan radCounterPlan(int screenHeight, int horizontalOffset, int verticalOffset,
+            double radiation, double radiationRate) {
+        int barLength = 74;
+        int x = 16 + horizontalOffset;
+        int y = screenHeight - 20 - verticalOffset;
+        int bar = scaled(radiation, 1000.0D, barLength);
+        RadWarningPlan warning = radWarningPlan(x + barLength + 2, y - 18, radiationRate);
+        String label = "";
+        if (radiationRate > 1000.0D) {
+            label = ">1000 RAD/s";
+        } else if (radiationRate >= 1.0D) {
+            label = Math.round(radiationRate) + " RAD/s";
+        } else if (radiationRate > 0.0D) {
+            label = "<1 RAD/s";
+        }
+        return new RadCounterPlan(
+                new ScreenRect(x, y, 94, 18),
+                new TextureRect(0, 0, 94, 18),
+                new ScreenRect(x + 1, y + 1, bar, 16),
+                new TextureRect(1, 19, bar, 16),
+                warning,
+                label,
+                x,
+                y - 8,
+                0xFF0000);
+    }
+
+    public static RadWarningPlan radWarningPlan(int x, int y, double radiationRate) {
+        if (radiationRate >= 25.0D) {
+            return new RadWarningPlan(true, new ScreenRect(x, y, 18, 18), new TextureRect(36, 36, 18, 18));
+        }
+        if (radiationRate >= 10.0D) {
+            return new RadWarningPlan(true, new ScreenRect(x, y, 18, 18), new TextureRect(18, 36, 18, 18));
+        }
+        if (radiationRate >= 2.5D) {
+            return new RadWarningPlan(true, new ScreenRect(x, y, 18, 18), new TextureRect(0, 36, 18, 18));
+        }
+        return RadWarningPlan.hidden();
     }
 
     public static void scope16x9(ResourceLocation texture, GuiGraphics graphics, int screenWidth, int screenHeight) {
@@ -160,6 +201,16 @@ public final class LegacyScreenQuadRenderer {
         return new AmmoAltHudPlan(new ScreenRect(x, y, 16, 16), x + 16, y + 6);
     }
 
+    public static ItemStackPopPlan itemStackPopPlan(int x, int y, float animationsToGo, float partialTick, boolean renderEffect) {
+        float pop = animationsToGo - partialTick;
+        if (pop <= 0.0F) {
+            return new ItemStackPopPlan(x, y, renderEffect, false, x + 8.0F, y + 12.0F, 1.0F, 1.0F, true);
+        }
+        float scale = 1.0F + pop / 5.0F;
+        return new ItemStackPopPlan(x, y, renderEffect, true, x + 8.0F, y + 12.0F,
+                1.0F / scale, (scale + 1.0F) / 2.0F, true);
+    }
+
     public static DashLayout dashLayout(int screenHeight) {
         return new DashLayout(16, screenHeight - 40 - 2, 30, 10, 2, 12);
     }
@@ -225,6 +276,39 @@ public final class LegacyScreenQuadRenderer {
                 label, left + 40, top + 1, 10);
     }
 
+    public static OverlayStatePlan legacyOverlayStatePlan() {
+        return new OverlayStatePlan(true, false, false, false,
+                LegacyTexturedRenderMode.BlendFunction.NORMAL_ALPHA, 1.0F, 1.0F, 1.0F, 1.0F,
+                true, true, true, true);
+    }
+
+    public static BadgeHudPlan badgeHudPlan(boolean true528, boolean trueExp, boolean trueRam) {
+        int offsetX = 2;
+        int offsetY = 2;
+        int stepWidth = 26;
+        List<BadgePlan> badges = new ArrayList<>(4);
+        if (true528) {
+            badges.add(new BadgePlan(BadgeKind.TRUE_528, new ScreenRect(offsetX, offsetY, 24, 8),
+                    new TextureRect(0, 218, 24, 8)));
+            offsetX += stepWidth;
+        }
+        if (trueExp) {
+            badges.add(new BadgePlan(BadgeKind.TRUE_EXP, new ScreenRect(offsetX, offsetY, 24, 8),
+                    new TextureRect(0, 226, 24, 8)));
+            offsetX += stepWidth;
+        }
+        if (trueRam) {
+            badges.add(new BadgePlan(BadgeKind.TRUE_RAM, new ScreenRect(offsetX, offsetY, 24, 8),
+                    new TextureRect(0, 234, 24, 8)));
+            offsetX += stepWidth;
+        }
+        if (true528 && trueExp && trueRam) {
+            badges.add(new BadgePlan(BadgeKind.TRUE_328, new ScreenRect(offsetX, offsetY, 24, 8),
+                    new TextureRect(0, 242, 24, 8)));
+        }
+        return new BadgeHudPlan(2, 2, stepWidth, List.copyOf(badges), legacyOverlayStatePlan());
+    }
+
     public static void itemGlint(GuiGraphics graphics, int x, int y) {
         itemGlint(graphics, x, y, 16, 16);
     }
@@ -239,7 +323,7 @@ public final class LegacyScreenQuadRenderer {
 
     public static void itemGlint(GuiGraphics graphics, int x, int y, int width, int height, int color, long currentMillis) {
         for (int i = 0; i < 2; i++) {
-            LegacyUvAnimation.UnitQuadUv uv = LegacyUvAnimation.flatItemGlintUv(currentMillis, i, width, height);
+            LegacyUvAnimation.UnitQuadUv uv = LegacyUvAnimation.flatItemGlintPlan(currentMillis, i, width, height).uv();
             unitQuad(VANILLA_ITEM_GLINT, graphics, x, y, width, height,
                     uv.bottomLeftU(), uv.bottomLeftV(),
                     uv.bottomRightU(), uv.bottomRightV(),
@@ -384,6 +468,17 @@ public final class LegacyScreenQuadRenderer {
     public record TextureRect(int u, int v, int width, int height) {
     }
 
+    public record RadCounterPlan(ScreenRect frame, TextureRect frameTexture,
+            ScreenRect fill, TextureRect fillTexture, RadWarningPlan warning,
+            String label, int labelX, int labelY, int labelColor) {
+    }
+
+    public record RadWarningPlan(boolean visible, ScreenRect rect, TextureRect texture) {
+        public static RadWarningPlan hidden() {
+            return new RadWarningPlan(false, new ScreenRect(0, 0, 0, 0), new TextureRect(0, 0, 0, 0));
+        }
+    }
+
     public record CrosshairPlan(boolean visible, int x, int y, int u, int v, int size) {
         public static CrosshairPlan hidden() {
             return new CrosshairPlan(false, 0, 0, 0, 0, 0);
@@ -402,6 +497,10 @@ public final class LegacyScreenQuadRenderer {
     public record AmmoAltHudPlan(ScreenRect item, int countTextX, int countTextY) {
     }
 
+    public record ItemStackPopPlan(int x, int y, boolean renderEffect, boolean popTransform,
+            float pivotX, float pivotY, float scaleX, float scaleY, boolean renderSecondPass) {
+    }
+
     public record DashLayout(int x, int y, int barWidth, int barHeight, int gap, int rowHeight) {
     }
 
@@ -416,6 +515,27 @@ public final class LegacyScreenQuadRenderer {
 
     public record ShieldBarPlan(ScreenRect frame, TextureRect frameTexture, ScreenRect fill, TextureRect fillTexture,
             String label, int labelCenterX, int labelY, int consumedLeftHeight) {
+    }
+
+    public record OverlayStatePlan(boolean blendEnabled, boolean depthTestEnabled, boolean depthWrite,
+                                   boolean alphaTestEnabled, LegacyTexturedRenderMode.BlendFunction blendFunction,
+                                   float red, float green, float blue, float alpha,
+                                   boolean restoreDepthWrite, boolean restoreDepthTest,
+                                   boolean restoreAlphaTest, boolean restoreColor) {
+    }
+
+    public enum BadgeKind {
+        TRUE_528,
+        TRUE_EXP,
+        TRUE_RAM,
+        TRUE_328
+    }
+
+    public record BadgePlan(BadgeKind kind, ScreenRect rect, TextureRect texture) {
+    }
+
+    public record BadgeHudPlan(int startX, int startY, int stepWidth, List<BadgePlan> badges,
+                               OverlayStatePlan state) {
     }
 
     private LegacyScreenQuadRenderer() {

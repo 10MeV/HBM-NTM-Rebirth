@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "R": {
+      "item": "hbm_ntm_rebirth:radio_torch_receiver"
+    },
+    "C": {
+      "tag": "forge:circuits/numitron"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:rbmk_display_blank"
+    }
+  },
+  "pattern": [
+    " R ",
+    "CCC",
+    " B "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_numitron"
+  },
+  "show_notification": true
+}

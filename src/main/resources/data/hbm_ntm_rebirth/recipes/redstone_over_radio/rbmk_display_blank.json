@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "tag": "forge:ingots/bismuth"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:concrete_asbestos"
+    }
+  },
+  "pattern": [
+    "B",
+    "D"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_display_blank",
+    "count": 8
+  },
+  "show_notification": true
+}

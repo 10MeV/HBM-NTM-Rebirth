@@ -174,7 +174,7 @@ public final class HbmItemStackUtil {
     public static NonNullList<ItemStack> readStacksFromNbt(ItemStack container) {
         int count = 0;
         if (container != null && container.hasTag()) {
-            count = container.getTag().getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND).size();
+            count = slottedItemListSize(container.getTag());
         }
         return readStacksFromNbt(container, count);
     }
@@ -183,7 +183,7 @@ public final class HbmItemStackUtil {
         if (container == null || container.isEmpty() || !container.hasTag()) {
             return NonNullList.withSize(Math.max(0, count), ItemStack.EMPTY);
         }
-        return loadLegacyItems(container.getTag(), count);
+        return loadLegacyOrForgeItems(container.getTag(), count);
     }
 
     public static ItemStack[] readStackArrayFromNbt(ItemStack container) {
@@ -488,6 +488,12 @@ public final class HbmItemStackUtil {
         loadLegacyOrForgeItems(getCompoundOrNull(tag, key), items);
     }
 
+    public static NonNullList<ItemStack> loadLegacyOrForgeItems(CompoundTag tag, int slotCount) {
+        NonNullList<ItemStack> items = NonNullList.withSize(Math.max(0, slotCount), ItemStack.EMPTY);
+        loadLegacyOrForgeItems(tag, items);
+        return items;
+    }
+
     public static NonNullList<ItemStack> loadLegacyItems(CompoundTag tag, int slotCount) {
         NonNullList<ItemStack> items = NonNullList.withSize(Math.max(0, slotCount), ItemStack.EMPTY);
         loadSlottedItems(tag, LEGACY_ITEMS_TAG, LEGACY_SLOT_TAG, items);
@@ -573,6 +579,16 @@ public final class HbmItemStackUtil {
         return tag == null || key == null || key.isBlank() ? null : tag.getCompound(key);
     }
 
+    private static int slottedItemListSize(CompoundTag tag) {
+        if (tag == null) {
+            return 0;
+        }
+        if (tag.contains(LEGACY_ITEMS_TAG, Tag.TAG_LIST)) {
+            return tag.getList(LEGACY_ITEMS_TAG, Tag.TAG_COMPOUND).size();
+        }
+        return tag.getList("Items", Tag.TAG_COMPOUND).size();
+    }
+
     private static String validSlotKey(String slotKey) {
         return slotKey == null || slotKey.isBlank() ? LEGACY_SLOT_TAG : slotKey;
     }
@@ -587,6 +603,20 @@ public final class HbmItemStackUtil {
             if (!stack.isEmpty()) {
                 drops.add(stack.copy());
                 items.setStackInSlot(slot, ItemStack.EMPTY);
+            }
+        }
+        return drops;
+    }
+
+    public static List<ItemStack> clearToDrops(IItemHandler items) {
+        List<ItemStack> drops = new ArrayList<>();
+        if (items == null) {
+            return drops;
+        }
+        for (int slot = 0; slot < items.getSlots(); slot++) {
+            ItemStack stack = items.extractItem(slot, Integer.MAX_VALUE, false);
+            if (!stack.isEmpty()) {
+                drops.add(stack);
             }
         }
         return drops;

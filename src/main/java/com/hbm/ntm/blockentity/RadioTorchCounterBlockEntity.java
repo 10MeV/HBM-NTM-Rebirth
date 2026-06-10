@@ -6,6 +6,7 @@ import com.hbm.ntm.api.redstoneoverradio.RTTYCounterState;
 import com.hbm.ntm.api.redstoneoverradio.RTTYPatternMatcher;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -44,7 +45,7 @@ public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity {
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
             ItemStack result = super.insertItem(slot, stack, simulate);
             if (!simulate && !getStackInSlot(slot).isEmpty()) {
-                setStackInSlot(slot, copyPatternStack(getStackInSlot(slot)));
+                setStackInSlot(slot, HbmItemStackUtil.carefulCopyWithSize(getStackInSlot(slot), 1));
             }
             return result;
         }
@@ -169,12 +170,4 @@ public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity {
         return count;
     }
 
-    private static ItemStack copyPatternStack(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return ItemStack.EMPTY;
-        }
-        ItemStack copy = stack.copy();
-        copy.setCount(1);
-        return copy;
-    }
 }

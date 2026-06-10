@@ -55,6 +55,45 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.FROZEN_LOG.get(), ModBlocks.FROZEN_PLANKS.get());
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
+        tag(BlockTags.MINEABLE_WITH_AXE).add(
+                ModBlocks.RED_PYLON_MEDIUM_WOOD.get(),
+                ModBlocks.RED_PYLON_MEDIUM_WOOD_TRANSFORMER.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(
+                ModBlocks.RED_CONNECTOR.get(),
+                ModBlocks.RED_CONNECTOR_SUPER.get(),
+                ModBlocks.RED_PYLON.get(),
+                ModBlocks.RED_PYLON_MEDIUM_STEEL.get(),
+                ModBlocks.RED_PYLON_MEDIUM_STEEL_TRANSFORMER.get(),
+                ModBlocks.RED_PYLON_LARGE.get(),
+                ModBlocks.SUBSTATION.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(
+                ModBlocks.RED_CONNECTOR.get(),
+                ModBlocks.RED_CONNECTOR_SUPER.get(),
+                ModBlocks.RED_PYLON.get(),
+                ModBlocks.RED_PYLON_MEDIUM_STEEL.get(),
+                ModBlocks.RED_PYLON_MEDIUM_STEEL_TRANSFORMER.get(),
+                ModBlocks.RED_PYLON_LARGE.get(),
+                ModBlocks.SUBSTATION.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(
+                ModBlocks.BLOCK_GRAPHITE.get(),
+                ModBlocks.BLOCK_GRAPHITE_DRILLED.get(),
+                ModBlocks.BLOCK_GRAPHITE_FUEL.get(),
+                ModBlocks.BLOCK_GRAPHITE_PLUTONIUM.get(),
+                ModBlocks.BLOCK_GRAPHITE_ROD.get(),
+                ModBlocks.BLOCK_GRAPHITE_SOURCE.get(),
+                ModBlocks.BLOCK_GRAPHITE_LITHIUM.get(),
+                ModBlocks.BLOCK_GRAPHITE_TRITIUM.get(),
+                ModBlocks.BLOCK_GRAPHITE_DETECTOR.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(
+                ModBlocks.BLOCK_GRAPHITE.get(),
+                ModBlocks.BLOCK_GRAPHITE_DRILLED.get(),
+                ModBlocks.BLOCK_GRAPHITE_FUEL.get(),
+                ModBlocks.BLOCK_GRAPHITE_PLUTONIUM.get(),
+                ModBlocks.BLOCK_GRAPHITE_ROD.get(),
+                ModBlocks.BLOCK_GRAPHITE_SOURCE.get(),
+                ModBlocks.BLOCK_GRAPHITE_LITHIUM.get(),
+                ModBlocks.BLOCK_GRAPHITE_TRITIUM.get(),
+                ModBlocks.BLOCK_GRAPHITE_DETECTOR.get());
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         tag(forgeBlockTag("glass")).add(Blocks.GLASS, Blocks.WHITE_STAINED_GLASS,

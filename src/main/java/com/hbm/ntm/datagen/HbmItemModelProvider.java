@@ -7,6 +7,7 @@ import com.hbm.ntm.item.HbmAbilitySwordItem;
 import com.hbm.ntm.item.HbmAbilityToolItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
+import com.hbm.ntm.item.SednaGunItem;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -27,6 +28,8 @@ public class HbmItemModelProvider extends ItemModelProvider {
         ModItems.CONTROL_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.CONTROL_FLUID_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.NUKE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
+        ModItems.WEAPON_TAB_ITEMS.forEach(item -> itemModel(item.get()));
+        ModItems.MISSILE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.SATELLITE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.HIDDEN_RECIPE_ITEMS.forEach(item -> itemModel(item.get()));
@@ -95,6 +98,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "soyuz_lander");
             return;
         }
+        if (path.equals("missile_test")) {
+            generatedItem(path, "missile_micro");
+            return;
+        }
         if (path.equals("designator_range")) {
             generatedItem(path, "designator_range_alt");
             return;
@@ -103,8 +110,24 @@ public class HbmItemModelProvider extends ItemModelProvider {
             layeredItem(path, "fluid_icon", "fluid_identifier_overlay");
             return;
         }
+        if (path.equals("holotape_image_restored")) {
+            generatedItem(path, "holotape");
+            return;
+        }
+        if (path.equals("holotape_damaged")) {
+            generatedItem(path, "holotape_damaged");
+            return;
+        }
         if (path.equals("niter")) {
             generatedItem(path, "salpeter");
+            return;
+        }
+        if (path.equals("five_htp")) {
+            generatedItem(path, "5htp");
+            return;
+        }
+        if (path.equals("ingot_mercury")) {
+            generatedItem(path, "nugget_mercury");
             return;
         }
         if (path.equals("plate_cast_ferrouranium")) {
@@ -171,12 +194,52 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "pellets_charged");
             return;
         }
+        if (path.startsWith("pellet_rtg_depleted_")) {
+            generatedItem(path, "pellet_rtg_depleted." + path.substring("pellet_rtg_depleted_".length()));
+            return;
+        }
+        if (path.startsWith("rod_") && isBreedingRodVariant(path.substring("rod_".length()))) {
+            generatedItem(path, "rod." + path.substring("rod_".length()));
+            return;
+        }
+        if (path.startsWith("rod_dual_") && !path.equals("rod_dual_empty")) {
+            generatedItem(path, "rod_dual." + path.substring("rod_dual_".length()));
+            return;
+        }
+        if (path.startsWith("rod_quad_") && !path.equals("rod_quad_empty")) {
+            generatedItem(path, "rod_quad." + path.substring("rod_quad_".length()));
+            return;
+        }
         if (path.equals("magnetron")) {
             generatedItem(path, "magnetron_alt");
             return;
         }
         if (path.equals("rod_zirnox_natural_uranium_fuel_depleted")) {
             generatedItem(path, "rod_zirnox_uranium_fuel_depleted");
+            return;
+        }
+        if (path.startsWith("pwr_fuel_hot_")) {
+            generatedItem(path, "pwr_fuel_hot");
+            return;
+        }
+        if (path.startsWith("pwr_fuel_depleted_")) {
+            generatedItem(path, "pwr_fuel_depleted");
+            return;
+        }
+        if (path.startsWith("pwr_fuel_")) {
+            generatedItem(path, "pwr_fuel." + path.substring("pwr_fuel_".length()));
+            return;
+        }
+        if (path.startsWith("watz_pellet_")) {
+            generatedItem(path, path);
+            return;
+        }
+        if (path.startsWith("rbmk_pellet_")) {
+            layeredItem(path, path, "rbmk_pellet_overlay_e0");
+            return;
+        }
+        if (path.startsWith("ncrpa_")) {
+            generatedItem(path, "rpa_" + path.substring("ncrpa_".length()));
             return;
         }
         if (path.equals("ingot_weaponsteel")) {
@@ -237,6 +300,35 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.startsWith("casing_")) {
             generatedItem(path, "casing." + path.substring("casing_".length()));
+            return;
+        }
+        if (path.startsWith("ammo_standard_")) {
+            generatedItem(path, "ammo_standard." + path.substring("ammo_standard_".length()));
+            return;
+        }
+        if (item instanceof SednaGunItem) {
+            getBuilder(path)
+                    .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
+            return;
+        }
+        if (path.startsWith("mp_chip_")) {
+            generatedItem(path, "mp_c_" + path.substring("mp_chip_".length()));
+            return;
+        }
+        if (path.startsWith("mp_warhead_")) {
+            generatedItem(path, "mp_warhead");
+            return;
+        }
+        if (path.startsWith("mp_fuselage_")) {
+            generatedItem(path, "mp_fuselage");
+            return;
+        }
+        if (path.startsWith("mp_stability_")) {
+            generatedItem(path, "mp_stability");
+            return;
+        }
+        if (path.startsWith("mp_thruster_")) {
+            generatedItem(path, "mp_thruster");
             return;
         }
         if (path.startsWith("fuel_additive_")) {
@@ -360,6 +452,14 @@ public class HbmItemModelProvider extends ItemModelProvider {
             case "part_generic_hde" -> "heavy_duty_element";
             case "part_generic_glass_polarized" -> "glass_polarized";
             default -> itemPath.substring("part_generic_".length());
+        };
+    }
+
+    private static boolean isBreedingRodVariant(String variant) {
+        return switch (variant) {
+            case "lithium", "tritium", "co", "co60", "th232", "thf", "u235", "np237", "u238",
+                 "pu238", "pu239", "rgp", "waste", "lead", "uranium", "ra226", "ac227" -> true;
+            default -> false;
         };
     }
 

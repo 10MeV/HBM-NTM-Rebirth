@@ -7,11 +7,13 @@ import com.hbm.ntm.fluid.ForgeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidNode;
 import com.hbm.ntm.fluid.HbmFluidNodeHost;
+import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUser;
 import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
+import com.hbm.ntm.fluid.FluidType;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,35 +90,116 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     }
 
     protected int subscribeFluidProviderToPorts(com.hbm.ntm.fluid.FluidType type, com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        return subscribeFluidProviderToPortsReport(type, provider).subscribedPorts();
+    }
+
+    protected HbmFluidUtil.PortSubscribeReport subscribeFluidProviderToPortsReport(FluidType type,
+            com.hbm.ntm.fluid.HbmFluidProvider provider) {
         return level == null || level.isClientSide
-                ? 0
-                : HbmFluidUtil.subscribeProviderToPorts(level, worldPosition, getFluidPorts(), type, provider);
+                ? HbmFluidUtil.PortSubscribeReport.empty()
+                : HbmFluidUtil.subscribeProviderToPortsReport(level, worldPosition, getFluidPorts(), type, provider);
     }
 
     protected int subscribeFluidReceiverToPorts(com.hbm.ntm.fluid.FluidType type, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
+        return subscribeFluidReceiverToPortsReport(type, receiver).subscribedPorts();
+    }
+
+    protected HbmFluidUtil.PortSubscribeReport subscribeFluidReceiverToPortsReport(FluidType type,
+            com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
         return level == null || level.isClientSide
-                ? 0
-                : HbmFluidUtil.subscribeReceiverToPorts(level, worldPosition, getFluidPorts(), type, receiver);
+                ? HbmFluidUtil.PortSubscribeReport.empty()
+                : HbmFluidUtil.subscribeReceiverToPortsReport(level, worldPosition, getFluidPorts(), type, receiver);
     }
 
     protected int tryProvideFluidToPorts(com.hbm.ntm.fluid.FluidType type, int pressure, com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        return tryProvideFluidToPortsReport(type, pressure, provider).touchedPorts();
+    }
+
+    protected HbmFluidUtil.PortTransferReport tryProvideFluidToPortsReport(FluidType type, int pressure,
+            com.hbm.ntm.fluid.HbmFluidProvider provider) {
         return level == null || level.isClientSide
-                ? 0
-                : HbmFluidUtil.tryProvideToPorts(level, worldPosition, getFluidPorts(), type, pressure, provider);
+                ? HbmFluidUtil.PortTransferReport.empty()
+                : HbmFluidUtil.tryProvideToPortsReport(level, worldPosition, getFluidPorts(), type, pressure, provider);
+    }
+
+    protected HbmFluidPortMachine.PortMachineRefreshReport refreshReceiverFluidPortsReport(
+            Iterable<HbmFluidTank> receivingTanks, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineRefreshReport.empty()
+                : HbmFluidPortMachine.refreshReceiverPortsReport(
+                        level, worldPosition, getFluidPorts(), receivingTanks, receiver);
+    }
+
+    protected HbmFluidPortMachine.PortMachineRefreshReport refreshProviderFluidPortsReport(
+            Iterable<HbmFluidTank> sendingTanks, com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineRefreshReport.empty()
+                : HbmFluidPortMachine.refreshProviderPortsReport(
+                        level, worldPosition, getFluidPorts(), sendingTanks, provider);
+    }
+
+    protected HbmFluidPortMachine.PortMachineRefreshReport refreshTransceiverFluidPortsReport(
+            Iterable<HbmFluidTank> receivingTanks, Iterable<HbmFluidTank> sendingTanks,
+            com.hbm.ntm.fluid.HbmStandardFluidTransceiver transceiver) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineRefreshReport.empty()
+                : HbmFluidPortMachine.refreshTransceiverPortsReport(
+                        level, worldPosition, getFluidPorts(), receivingTanks, sendingTanks, transceiver);
+    }
+
+    protected HbmFluidPortMachine.PortMachineDetachReport detachReceiverFluidPortsReport(
+            Iterable<HbmFluidTank> receivingTanks, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineDetachReport.empty()
+                : HbmFluidPortMachine.detachReceiverPortsReport(
+                        level, worldPosition, getFluidPorts(), receivingTanks, receiver);
+    }
+
+    protected HbmFluidPortMachine.PortMachineDetachReport detachProviderFluidPortsReport(
+            Iterable<HbmFluidTank> sendingTanks, com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineDetachReport.empty()
+                : HbmFluidPortMachine.detachProviderPortsReport(
+                        level, worldPosition, getFluidPorts(), sendingTanks, provider);
+    }
+
+    protected HbmFluidPortMachine.PortMachineDetachReport detachTransceiverFluidPortsReport(
+            Iterable<HbmFluidTank> receivingTanks, Iterable<HbmFluidTank> sendingTanks,
+            com.hbm.ntm.fluid.HbmStandardFluidTransceiver transceiver) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineDetachReport.empty()
+                : HbmFluidPortMachine.detachTransceiverPortsReport(
+                        level, worldPosition, getFluidPorts(), receivingTanks, sendingTanks, transceiver);
     }
 
     protected int unsubscribeFluidProviderFromPorts(com.hbm.ntm.fluid.FluidType type,
             com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        return unsubscribeFluidProviderFromPortsReport(type, provider).unsubscribedPorts();
+    }
+
+    protected HbmFluidUtil.PortDetachReport unsubscribeFluidProviderFromPortsReport(FluidType type,
+            com.hbm.ntm.fluid.HbmFluidProvider provider) {
         return level == null || level.isClientSide
-                ? 0
-                : HbmFluidUtil.unsubscribeProviderFromPorts(level, worldPosition, getFluidPorts(), type, provider);
+                ? HbmFluidUtil.PortDetachReport.empty()
+                : HbmFluidUtil.unsubscribeProviderFromPortsReport(level, worldPosition, getFluidPorts(), type, provider);
     }
 
     protected int unsubscribeFluidReceiverFromPorts(com.hbm.ntm.fluid.FluidType type,
             com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
+        return unsubscribeFluidReceiverFromPortsReport(type, receiver).unsubscribedPorts();
+    }
+
+    protected HbmFluidUtil.PortDetachReport unsubscribeFluidReceiverFromPortsReport(FluidType type,
+            com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
         return level == null || level.isClientSide
-                ? 0
-                : HbmFluidUtil.unsubscribeReceiverFromPorts(level, worldPosition, getFluidPorts(), type, receiver);
+                ? HbmFluidUtil.PortDetachReport.empty()
+                : HbmFluidUtil.unsubscribeReceiverFromPortsReport(level, worldPosition, getFluidPorts(), type, receiver);
+    }
+
+    protected HbmFluidUtil.PortSetSnapshot inspectFluidPorts(FluidType type) {
+        return level == null
+                ? new HbmFluidUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0)
+                : HbmFluidUtil.inspectPorts(level, worldPosition, getFluidPorts(), type);
     }
 
     @Override

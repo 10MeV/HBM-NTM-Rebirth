@@ -55,30 +55,44 @@ public final class HbmFluidUtil {
 
     public static int subscribeProviderToPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type,
             HbmFluidProvider provider) {
+        return subscribeProviderToPortsReport(level, origin, ports, type, provider).subscribedPorts();
+    }
+
+    public static PortSubscribeReport subscribeProviderToPortsReport(Level level, BlockPos origin,
+            Iterable<FluidPort> ports, FluidType type, HbmFluidProvider provider) {
         if (ports == null) {
-            return 0;
+            return PortSubscribeReport.empty();
         }
         int subscribed = 0;
+        int attempted = 0;
         for (FluidPort port : ports) {
+            attempted++;
             if (subscribeProviderToPort(level, origin, port, type, provider)) {
                 subscribed++;
             }
         }
-        return subscribed;
+        return new PortSubscribeReport(attempted, subscribed);
     }
 
     public static int subscribeReceiverToPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type,
             HbmFluidReceiver receiver) {
+        return subscribeReceiverToPortsReport(level, origin, ports, type, receiver).subscribedPorts();
+    }
+
+    public static PortSubscribeReport subscribeReceiverToPortsReport(Level level, BlockPos origin,
+            Iterable<FluidPort> ports, FluidType type, HbmFluidReceiver receiver) {
         if (ports == null) {
-            return 0;
+            return PortSubscribeReport.empty();
         }
         int subscribed = 0;
+        int attempted = 0;
         for (FluidPort port : ports) {
+            attempted++;
             if (subscribeReceiverToPort(level, origin, port, type, receiver)) {
                 subscribed++;
             }
         }
-        return subscribed;
+        return new PortSubscribeReport(attempted, subscribed);
     }
 
     public static boolean subscribeProviderToNetwork(Level level, BlockPos connectorPos, Direction connectorSide,
@@ -119,30 +133,44 @@ public final class HbmFluidUtil {
 
     public static int unsubscribeProviderFromPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type,
             HbmFluidProvider provider) {
+        return unsubscribeProviderFromPortsReport(level, origin, ports, type, provider).unsubscribedPorts();
+    }
+
+    public static PortDetachReport unsubscribeProviderFromPortsReport(Level level, BlockPos origin,
+            Iterable<FluidPort> ports, FluidType type, HbmFluidProvider provider) {
         if (ports == null) {
-            return 0;
+            return PortDetachReport.empty();
         }
         int unsubscribed = 0;
+        int attempted = 0;
         for (FluidPort port : ports) {
+            attempted++;
             if (unsubscribeProviderFromPort(level, origin, port, type, provider)) {
                 unsubscribed++;
             }
         }
-        return unsubscribed;
+        return new PortDetachReport(attempted, unsubscribed);
     }
 
     public static int unsubscribeReceiverFromPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type,
             HbmFluidReceiver receiver) {
+        return unsubscribeReceiverFromPortsReport(level, origin, ports, type, receiver).unsubscribedPorts();
+    }
+
+    public static PortDetachReport unsubscribeReceiverFromPortsReport(Level level, BlockPos origin,
+            Iterable<FluidPort> ports, FluidType type, HbmFluidReceiver receiver) {
         if (ports == null) {
-            return 0;
+            return PortDetachReport.empty();
         }
         int unsubscribed = 0;
+        int attempted = 0;
         for (FluidPort port : ports) {
+            attempted++;
             if (unsubscribeReceiverFromPort(level, origin, port, type, receiver)) {
                 unsubscribed++;
             }
         }
-        return unsubscribed;
+        return new PortDetachReport(attempted, unsubscribed);
     }
 
     public static boolean unsubscribeProviderFromNetwork(Level level, BlockPos connectorPos, Direction connectorSide,
@@ -167,18 +195,29 @@ public final class HbmFluidUtil {
 
     public static int tryProvideToPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type,
             int pressure, HbmFluidProvider provider) {
+        return tryProvideToPortsReport(level, origin, ports, type, pressure, provider).touchedPorts();
+    }
+
+    public static PortTransferReport tryProvideToPortsReport(Level level, BlockPos origin, Iterable<FluidPort> ports,
+            FluidType type, int pressure, HbmFluidProvider provider) {
         if (ports == null) {
-            return 0;
+            return PortTransferReport.empty();
         }
         int touched = 0;
+        int subscribedPorts = 0;
+        long transferred = 0L;
         for (FluidPort port : ports) {
             boolean subscribed = subscribeProviderToPort(level, origin, port, type, provider);
-            long transferred = provideDirectlyToPort(level, origin, port, type, pressure, provider);
-            if (subscribed || transferred > 0L) {
+            long portTransferred = provideDirectlyToPort(level, origin, port, type, pressure, provider);
+            if (subscribed) {
+                subscribedPorts++;
+            }
+            if (subscribed || portTransferred > 0L) {
                 touched++;
             }
+            transferred += portTransferred;
         }
-        return touched;
+        return new PortTransferReport(touched, subscribedPorts, transferred);
     }
 
     public static PortSetSnapshot inspectPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type) {
@@ -328,5 +367,30 @@ public final class HbmFluidUtil {
             int links,
             int providers,
             int receivers) {
+    }
+
+    public record PortTransferReport(
+            int touchedPorts,
+            int subscribedPorts,
+            long transferredMb) {
+        public static PortTransferReport empty() {
+            return new PortTransferReport(0, 0, 0L);
+        }
+    }
+
+    public record PortSubscribeReport(
+            int attemptedPorts,
+            int subscribedPorts) {
+        public static PortSubscribeReport empty() {
+            return new PortSubscribeReport(0, 0);
+        }
+    }
+
+    public record PortDetachReport(
+            int attemptedPorts,
+            int unsubscribedPorts) {
+        public static PortDetachReport empty() {
+            return new PortDetachReport(0, 0);
+        }
     }
 }

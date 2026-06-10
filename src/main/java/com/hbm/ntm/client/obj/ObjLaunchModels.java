@@ -74,6 +74,8 @@ public final class ObjLaunchModels {
     public static final ResourceLocation SOYUZ_LAUNCHER_SUPPORT_BASE_TEXTURE = texture("soyuz_launcher_support_base");
     public static final ResourceLocation SOYUZ_LAUNCHER_SUPPORT_TEXTURE = texture("soyuz_launcher_support");
 
+    public static final SoyuzLauncherStatePlan SOYUZ_LAUNCHER_STATE = new SoyuzLauncherStatePlan(false, true);
+
     public static ObjModelPart part(String name) {
         return ObjModelLibrary.blockPart("launch_table/" + name, RenderType.cutout());
     }
@@ -93,18 +95,23 @@ public final class ObjLaunchModels {
     }
 
     public static List<SoyuzLauncherPartPlan> soyuzLauncherPlan(float rotation) {
-        return List.of(
+        return soyuzLauncherRenderPlan(rotation).parts();
+    }
+
+    public static SoyuzLauncherRenderPlan soyuzLauncherRenderPlan(float rotation) {
+        List<SoyuzLauncherPartPlan> parts = List.of(
                 fixed(SOYUZ_LAUNCHER_LEGS_LEGACY, SOYUZ_LAUNCHER_LEG_TEXTURE),
                 fixed(SOYUZ_LAUNCHER_TABLE_LEGACY, SOYUZ_LAUNCHER_TABLE_TEXTURE),
                 fixed(SOYUZ_LAUNCHER_TOWER_BASE_LEGACY, SOYUZ_LAUNCHER_TOWER_BASE_TEXTURE),
                 moving(SOYUZ_LAUNCHER_TOWER_LEGACY, SOYUZ_LAUNCHER_TOWER_TEXTURE, 5.5D, 5.5D, rotation, false),
                 fixed(SOYUZ_LAUNCHER_SUPPORT_BASE_LEGACY, SOYUZ_LAUNCHER_SUPPORT_BASE_TEXTURE),
                 moving(SOYUZ_LAUNCHER_SUPPORT_LEGACY, SOYUZ_LAUNCHER_SUPPORT_TEXTURE, 5.5D, -6.5D, rotation, true));
+        return new SoyuzLauncherRenderPlan(rotation, SOYUZ_LAUNCHER_STATE, parts);
     }
 
     public static void renderSoyuzLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        for (SoyuzLauncherPartPlan plan : soyuzLauncherPlan(rotation)) {
+        for (SoyuzLauncherPartPlan plan : soyuzLauncherRenderPlan(rotation).parts()) {
             poseStack.pushPose();
             if (plan.rotates()) {
                 poseStack.translate(0.0D, plan.pivotY(), plan.pivotZ());
@@ -138,5 +145,16 @@ public final class ObjLaunchModels {
         public boolean rotates() {
             return rotationDegrees != 0.0F || pivotY != 0.0D || pivotZ != 0.0D;
         }
+
+        public double axisX() {
+            return negativeXAxis ? -1.0D : 1.0D;
+        }
+    }
+
+    public record SoyuzLauncherRenderPlan(float rotationDegrees, SoyuzLauncherStatePlan state,
+                                          List<SoyuzLauncherPartPlan> parts) {
+    }
+
+    public record SoyuzLauncherStatePlan(boolean cullEnabled, boolean restoreCullEnabled) {
     }
 }

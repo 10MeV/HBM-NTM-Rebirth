@@ -55,6 +55,12 @@ public record RadarLaunchCommand(int linkSlot, Target target) {
         return Optional.empty();
     }
 
+    public CompoundTag toTag() {
+        return target.isEntity()
+                ? entityTag(linkSlot, target.entityId())
+                : positionTag(linkSlot, target.x(), target.z());
+    }
+
     public static boolean isValidTag(CompoundTag tag, int linkSlotCount) {
         Optional<RadarLaunchCommand> command = fromTag(tag);
         return command.isPresent() && command.get().isValidLinkSlot(linkSlotCount);
@@ -62,6 +68,14 @@ public record RadarLaunchCommand(int linkSlot, Target target) {
 
     public boolean isValidLinkSlot(int linkSlotCount) {
         return linkSlot >= 0 && linkSlot < linkSlotCount;
+    }
+
+    public boolean targetsEntity() {
+        return target.isEntity();
+    }
+
+    public boolean targetsPosition() {
+        return !target.isEntity();
     }
 
     public RadarCommandResult dispatch(ServerLevel level, BlockPos radarPos, RadarCommandReceiver receiver) {

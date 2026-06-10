@@ -22,6 +22,8 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.IntValue NUKE_WARP_SHOCKWAVE_MESH_SEGMENTS;
     public static final ForgeConfigSpec.BooleanValue DEBUG_NUKE_WARP_SHOCKWAVE_WIREFRAME;
     public static final ForgeConfigSpec.BooleanValue COOLING_TOWER_PARTICLES;
+    public static final ForgeConfigSpec.BooleanValue ITEM_TOOLTIP_SHOW_CUSTOM_NUKE;
+    public static final ForgeConfigSpec.BooleanValue NEI_HIDE_SECRETS;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -84,6 +86,18 @@ public final class HbmClientConfig {
         COOLING_TOWER_PARTICLES = builder
                 .comment("Legacy ClientConfig.COOLING_TOWER_PARTICLES: enables steam plume particles for active cooling towers.")
                 .define("coolingTowerParticles", true);
+        builder.pop();
+
+        builder.push("tooltips");
+        ITEM_TOOLTIP_SHOW_CUSTOM_NUKE = builder
+                .comment("Legacy ClientConfig.ITEM_TOOLTIP_SHOW_CUSTOM_NUKE: shows custom nuke stage contribution lines for items used by the custom nuke.")
+                .define("showCustomNukeTooltips", true);
+        builder.pop();
+
+        builder.push("jei");
+        NEI_HIDE_SECRETS = builder
+                .comment("Legacy ClientConfig.NEI_HIDE_SECRETS: hides secret blueprint-pool machine recipes from JEI display.")
+                .define("hideSecretRecipes", true);
         builder.pop();
 
         SPEC = builder.build();
@@ -156,6 +170,14 @@ public final class HbmClientConfig {
 
     public static boolean debugNukeWarpShockwaveWireframe() {
         return booleanValue(DEBUG_NUKE_WARP_SHOCKWAVE_WIREFRAME, false);
+    }
+
+    public static boolean customNukeTooltips() {
+        return booleanValue(ITEM_TOOLTIP_SHOW_CUSTOM_NUKE, true);
+    }
+
+    public static boolean hideSecretJeiRecipes() {
+        return booleanValue(NEI_HIDE_SECRETS, true);
     }
 
     private static boolean booleanValue(ForgeConfigSpec.BooleanValue value, boolean fallback) {

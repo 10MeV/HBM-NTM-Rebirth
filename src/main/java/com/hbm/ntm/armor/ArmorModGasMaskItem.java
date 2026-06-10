@@ -1,6 +1,6 @@
 package com.hbm.ntm.armor;
 
-import com.hbm.ntm.api.item.GasMask;
+import api.hbm.item.IGasMask;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.ArmorUtil;
 import net.minecraft.network.chat.Component;
@@ -15,7 +15,7 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class ArmorModGasMaskItem extends ArmorModItem implements GasMask {
+public class ArmorModGasMaskItem extends ArmorModItem implements IGasMask {
     private final boolean mono;
 
     public ArmorModGasMaskItem(Properties properties, boolean mono) {
@@ -65,10 +65,7 @@ public class ArmorModGasMaskItem extends ArmorModItem implements GasMask {
             ItemStack filter = getFilter(stack, player);
             if (!filter.isEmpty()) {
                 if (!level.isClientSide) {
-                    ArmorUtil.removeFilter(stack);
-                    if (!player.getInventory().add(filter)) {
-                        player.drop(filter, true);
-                    }
+                    ArmorUtil.removeGasMaskFilterToInventory(stack, player);
                 }
                 return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
             }

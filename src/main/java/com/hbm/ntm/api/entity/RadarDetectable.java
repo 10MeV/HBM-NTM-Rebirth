@@ -1,5 +1,9 @@
 package com.hbm.ntm.api.entity;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+
 public interface RadarDetectable {
     int TIER0 = 0;
     int TIER1 = 1;
@@ -42,5 +46,58 @@ public interface RadarDetectable {
 
     record RadarScanParams(boolean scanMissiles, boolean scanShells, boolean scanPlayers, boolean smartMode) {
         public static final RadarScanParams DEFAULT = new RadarScanParams(true, true, true, true);
+
+        private static final String TAG_SCAN_MISSILES = "scanMissiles";
+        private static final String TAG_SCAN_SHELLS = "scanShells";
+        private static final String TAG_SCAN_PLAYERS = "scanPlayers";
+        private static final String TAG_SMART_MODE = "smartMode";
+
+        public CompoundTag toTag() {
+            CompoundTag tag = new CompoundTag();
+            writeTo(tag);
+            return tag;
+        }
+
+        public void writeTo(CompoundTag tag) {
+            tag.putBoolean(TAG_SCAN_MISSILES, scanMissiles);
+            tag.putBoolean(TAG_SCAN_SHELLS, scanShells);
+            tag.putBoolean(TAG_SCAN_PLAYERS, scanPlayers);
+            tag.putBoolean(TAG_SMART_MODE, smartMode);
+        }
+
+        public static RadarScanParams fromTag(CompoundTag tag) {
+            return fromTag(tag, DEFAULT);
+        }
+
+        public static RadarScanParams fromTag(CompoundTag tag, RadarScanParams fallback) {
+            RadarScanParams defaults = fallback != null ? fallback : DEFAULT;
+            if (tag == null) {
+                return defaults;
+            }
+            return new RadarScanParams(
+                    booleanOrDefault(tag, TAG_SCAN_MISSILES, defaults.scanMissiles()),
+                    booleanOrDefault(tag, TAG_SCAN_SHELLS, defaults.scanShells()),
+                    booleanOrDefault(tag, TAG_SCAN_PLAYERS, defaults.scanPlayers()),
+                    booleanOrDefault(tag, TAG_SMART_MODE, defaults.smartMode()));
+        }
+
+        public void writeLegacyWire(FriendlyByteBuf buffer) {
+            buffer.writeBoolean(scanMissiles);
+            buffer.writeBoolean(scanShells);
+            buffer.writeBoolean(scanPlayers);
+            buffer.writeBoolean(smartMode);
+        }
+
+        public static RadarScanParams readLegacyWire(FriendlyByteBuf buffer) {
+            return new RadarScanParams(
+                    buffer.readBoolean(),
+                    buffer.readBoolean(),
+                    buffer.readBoolean(),
+                    buffer.readBoolean());
+        }
+
+        private static boolean booleanOrDefault(CompoundTag tag, String key, boolean fallback) {
+            return tag.contains(key, Tag.TAG_BYTE) ? tag.getBoolean(key) : fallback;
+        }
     }
 }

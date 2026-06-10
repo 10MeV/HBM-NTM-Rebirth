@@ -3,6 +3,7 @@ package com.hbm.ntm.entity.projectile;
 import com.hbm.ntm.api.entity.RadarContext;
 import com.hbm.ntm.api.entity.RadarDetectable;
 import com.hbm.ntm.bullet.BulletBehaviorTag;
+import com.hbm.ntm.bullet.BulletCollisionUtil;
 import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.bullet.BulletConfigSyncRegistry;
 import com.hbm.ntm.bullet.BulletDamageUtil;
@@ -67,6 +68,8 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
     private BlockState stuckBlockState;
     private boolean hasTauTrailNodes;
     private boolean enteredPortal;
+    private int ricochets;
+    private float acceleration;
     private final List<BulletTauTrailUtil.TauTrailNode> tauTrailNodes = new ArrayList<>();
     private double prevTauRenderX;
     private double prevTauRenderY;
@@ -99,7 +102,9 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         if (plan == null || !plan.valid()) {
             return false;
         }
-        return level.addFreshEntity(fromLaunchPlan(level, plan, request.shooter()));
+        BulletProjectileEntity bullet = fromLaunchPlan(level, plan, request.shooter());
+        bullet.overrideDamage = request.overrideDamage();
+        return level.addFreshEntity(bullet);
     }
 
     public static int spawnAll(Level level, List<BulletSpecialSpawnUtil.SpawnRequest> requests) {
@@ -183,22 +188,46 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         int activeTicksInAir = ticksInAir + 1;
         BulletProjectileTickUtil.TickResult result = BulletProjectileTickUtil.applyEntityTick(currentConfig, this,
                 getOwner(), homingTarget(), tickCount, activeTicksInAir, hasTauTrailNodes, previousPosition,
-                random, overrideDamage, inGround());
+                random, overrideDamage, inGround(), acceleration);
         ticksInAir = activeTicksInAir;
+        acceleration = result.acceleration();
 
-        setPos(result.nextPosition().x, result.nextPosition().y, result.nextPosition().z);
-        setDeltaMovement(result.nextMotion());
+        boolean stuckByHook = applyChargeHookStick(currentConfig, result);
+        if (!stuckByHook) {
+            setPos(result.nextPosition().x, result.nextPosition().y, result.nextPosition().z);
+            setDeltaMovement(result.nextMotion());
+        }
         setHomingTarget(result.homingTarget());
         hasTauTrailNodes = hasTauTrailNodes || result.tauTrail().appended();
         appendTauTrailNode(result.tauTrail());
         enteredPortal |= result.enteredPortal();
         applyPortalState(result);
         applyEntityHitState(result.hit());
+        boolean exceededRicochetLimit = applyRicochetState(currentConfig, result.hit());
         spawnRequestedProjectiles(result);
 
-        if (result.discardProjectile()) {
+        if (result.discardProjectile() || exceededRicochetLimit) {
             discard();
         }
+    }
+
+    private boolean applyChargeHookStick(BulletConfig currentConfig, BulletProjectileTickUtil.TickResult result) {
+        if (currentConfig == null || result == null
+                || !currentConfig.hasBehavior(BulletBehaviorTag.CHARGE_HOOK_STICK)) {
+            return false;
+        }
+        BulletProjectileHitUtil.HitApplication hit = result.hit();
+        if (hit == null || hit.scan() == null || hit.scan().primaryHit() != BulletCollisionUtil.PrimaryHit.BLOCK
+                || hit.scan().blockHit() == null) {
+            return false;
+        }
+        BulletCollisionUtil.BlockCollision blockHit = hit.scan().blockHit();
+        Vec3 motion = hit.resultingMotion().lengthSqr() > 1.0E-7D ? hit.resultingMotion() : getDeltaMovement();
+        Vec3 offset = motion.lengthSqr() > 1.0E-7D ? motion.normalize().scale(-0.05D) : Vec3.ZERO;
+        Vec3 stuckPosition = blockHit.location().add(offset);
+        setPos(stuckPosition.x, stuckPosition.y, stuckPosition.z);
+        getStuck(blockHit.blockPos(), blockHit.side());
+        return true;
     }
 
     @Nullable
@@ -343,12 +372,23 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         if (hit == null || hit.entityHits().isEmpty()) {
             return;
         }
+        if (hit.overrideDamageChanged()) {
+            overrideDamage = hit.nextOverrideDamage();
+        }
         for (BulletProjectileHitUtil.EntityHitApplication entityHit : hit.entityHits()) {
             BulletDamageUtil.EntityHitResult result = entityHit.result();
             if (result.resetHomingTarget()) {
                 entityData.set(HOMING_TARGET, BulletHomingStateUtil.NO_TARGET_ID);
             }
         }
+    }
+
+    private boolean applyRicochetState(BulletConfig currentConfig, BulletProjectileHitUtil.HitApplication hit) {
+        if (currentConfig == null || hit == null || !hit.blockHit().ricocheted()) {
+            return false;
+        }
+        ricochets++;
+        return currentConfig.maxRicochetCount() > 0 && ricochets > currentConfig.maxRicochetCount();
     }
 
     private void applyPortalState(BulletProjectileTickUtil.TickResult result) {

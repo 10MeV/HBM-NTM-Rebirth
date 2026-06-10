@@ -19,9 +19,32 @@ public final class LegacyDecoItemRenderer {
     public static final float BLOCK_ALPHA_THRESHOLD_RESET = 0.1F;
     public static final float POLYGON_OFFSET_FACTOR = -1.0F;
     public static final float POLYGON_OFFSET_UNITS = -1.0F;
+    public static final int GL_BLEND_SRC_ALPHA = 770;
+    public static final int GL_BLEND_ONE_MINUS_SRC_ALPHA = 771;
+    public static final int GL_BLEND_SRC_COLOR = 772;
+    public static final int GL_BLEND_ONE = 1;
 
     public static boolean shouldUseBlockGuiPath(boolean itemSpriteIsBlock, boolean blockRendersIn3d) {
         return itemSpriteIsBlock && blockRendersIn3d;
+    }
+
+    public static ItemGuiRenderStatePlan itemGuiRenderStatePlan(boolean renderWithColor, boolean renderEffect) {
+        return new ItemGuiRenderStatePlan(
+                GL_BLEND_SRC_ALPHA, GL_BLEND_ONE_MINUS_SRC_ALPHA,
+                true, true, true, false,
+                renderWithColor, renderEffect,
+                polygonOffsetPlan());
+    }
+
+    public static GlintEffectStatePlan glintEffectStatePlan() {
+        return new GlintEffectStatePlan(
+                true, false, false, true, true,
+                GL_BLEND_SRC_COLOR, GL_BLEND_ONE,
+                GLINT_COLOR);
+    }
+
+    public static PolygonOffsetPlan polygonOffsetPlan() {
+        return new PolygonOffsetPlan(true, POLYGON_OFFSET_FACTOR, POLYGON_OFFSET_UNITS);
     }
 
     public static RenderPassState renderPassState(int blockRenderPass) {
@@ -42,11 +65,9 @@ public final class LegacyDecoItemRenderer {
     public static List<FlatGlintPass> flatGlintPasses(int x, int y, int width, int height, long currentMillis) {
         List<FlatGlintPass> passes = new ArrayList<>(2);
         for (int pass = 0; pass < 2; pass++) {
-            double period = 3000.0D + pass * 1873.0D;
-            double animation = LegacyUvAnimation.wrappedFraction(currentMillis, period) * 256.0D;
-            double horizontalShear = pass == 0 ? 4.0D : -1.0D;
-            LegacyUvAnimation.UnitQuadUv uv = LegacyUvAnimation.flatItemGlintUv(currentMillis, pass, width, height);
-            passes.add(new FlatGlintPass(pass, x, y, width, height, animation, horizontalShear, uv));
+            LegacyUvAnimation.FlatItemGlintPlan glint = LegacyUvAnimation.flatItemGlintPlan(currentMillis, pass, width, height);
+            passes.add(new FlatGlintPass(pass, x, y, width, height,
+                    glint.animationPixels(), glint.horizontalShear(), glint.uv()));
         }
         return List.copyOf(passes);
     }
@@ -61,6 +82,20 @@ public final class LegacyDecoItemRenderer {
     }
 
     public record RenderPassState(boolean translucent, float alphaThreshold, float resetAlphaThreshold) {
+    }
+
+    public record ItemGuiRenderStatePlan(int blendSrc, int blendDst, boolean polygonOffsetEnabled,
+                                         boolean lightingDisabledDuringIcon, boolean blendEnabledDuringIcon,
+                                         boolean alphaTestDisabledAfterIcon, boolean renderWithColor,
+                                         boolean renderEffect, PolygonOffsetPlan polygonOffset) {
+    }
+
+    public record GlintEffectStatePlan(boolean depthFuncEqual, boolean lightingEnabled, boolean depthWriteEnabled,
+                                       boolean alphaTestEnabled, boolean blendEnabled, int blendSrc, int blendDst,
+                                       int color) {
+    }
+
+    public record PolygonOffsetPlan(boolean enabled, float factor, float units) {
     }
 
     public record GuiBlockTransform(float translateX, float translateY, float translateZ,

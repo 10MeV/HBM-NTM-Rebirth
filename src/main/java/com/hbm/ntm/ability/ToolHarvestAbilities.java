@@ -11,16 +11,23 @@ import com.hbm.ntm.registry.ModItems;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class ToolHarvestAbilities {
+    private static final TagKey<Block> REDSTONE_ORES = TagKey.create(Registries.BLOCK, new ResourceLocation("forge", "ores/redstone"));
+    private static final TagKey<Block> REDSTONE_BLOCKS = TagKey.create(Registries.BLOCK, new ResourceLocation("forge", "storage_blocks/redstone"));
+
     public static final IToolHarvestAbility NONE = new BaseHarvestAbility("", 0);
     public static final IToolHarvestAbility SILK = new SilkTouchAbility();
     public static final IToolHarvestAbility LUCK = new LuckAbility();
@@ -161,9 +168,9 @@ public final class ToolHarvestAbilities {
         @Override
         public void onHarvestBlock(int level, ToolHarvestContext context) {
             int mercury = 0;
-            if (context.state().is(Blocks.REDSTONE_ORE)) {
+            if (context.state().is(REDSTONE_ORES)) {
                 mercury = context.player().getRandom().nextInt(5) + 4;
-            } else if (context.state().is(Blocks.REDSTONE_BLOCK)) {
+            } else if (context.state().is(REDSTONE_BLOCKS)) {
                 mercury = context.player().getRandom().nextInt(7) + 8;
             }
 

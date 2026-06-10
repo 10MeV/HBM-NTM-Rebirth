@@ -42,6 +42,7 @@ public class AnnihilatorSavedData extends SavedData {
     private static final String TAG_AMOUNT = "amount";
 
     private final Map<String, AnnihilatorPool> pools = new HashMap<>();
+    private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
 
     public AnnihilatorSavedData() {
         setDirty();
@@ -51,12 +52,24 @@ public class AnnihilatorSavedData extends SavedData {
         AnnihilatorSavedData data = new AnnihilatorSavedData();
         data.pools.clear();
         ListTag pools = tag.getList(TAG_POOLS, Tag.TAG_COMPOUND);
+        int entriesRead = 0;
+        int entriesLoaded = 0;
+        int invalidKeys = 0;
+        int invalidAmounts = 0;
+        int duplicateKeys = 0;
         for (int i = 0; i < pools.size(); i++) {
             CompoundTag poolTag = pools.getCompound(i);
             AnnihilatorPool pool = new AnnihilatorPool();
-            pool.deserialize(poolTag.getList(TAG_POOL, Tag.TAG_COMPOUND));
+            PoolLoadDiagnostics poolDiagnostics = pool.deserialize(poolTag.getList(TAG_POOL, Tag.TAG_COMPOUND));
+            entriesRead += poolDiagnostics.entriesRead();
+            entriesLoaded += poolDiagnostics.entriesLoaded();
+            invalidKeys += poolDiagnostics.invalidKeys();
+            invalidAmounts += poolDiagnostics.invalidAmounts();
+            duplicateKeys += poolDiagnostics.duplicateKeys();
             data.pools.put(poolTag.getString(TAG_POOL_NAME), pool);
         }
+        data.loadDiagnostics = new LoadDiagnostics(pools.size(), entriesRead, entriesLoaded,
+                invalidKeys, invalidAmounts, duplicateKeys);
         data.setDirty(false);
         return data;
     }
@@ -230,6 +243,26 @@ public class AnnihilatorSavedData extends SavedData {
         return poolInstance == null ? Map.of() : poolInstance.keyKindTotals();
     }
 
+    public Map<Kind, Integer> keyKindCounts() {
+        EnumMap<Kind, Integer> counts = new EnumMap<>(Kind.class);
+        for (AnnihilatorPool pool : pools.values()) {
+            for (Map.Entry<Kind, Integer> entry : pool.keyKindCounts().entrySet()) {
+                counts.merge(entry.getKey(), entry.getValue(), Integer::sum);
+            }
+        }
+        return Map.copyOf(counts);
+    }
+
+    public Map<Kind, BigInteger> keyKindTotals() {
+        EnumMap<Kind, BigInteger> totals = new EnumMap<>(Kind.class);
+        for (AnnihilatorPool pool : pools.values()) {
+            for (Map.Entry<Kind, BigInteger> entry : pool.keyKindTotals().entrySet()) {
+                totals.merge(entry.getKey(), entry.getValue(), BigInteger::add);
+            }
+        }
+        return Map.copyOf(totals);
+    }
+
     public List<Map.Entry<PoolKey, BigInteger>> poolEntriesSnapshot(String pool) {
         AnnihilatorPool poolInstance = pools.get(pool);
         return poolInstance == null ? List.of() : poolInstance.entriesSnapshot();
@@ -256,6 +289,24 @@ public class AnnihilatorSavedData extends SavedData {
         return pools.keySet().stream().sorted().toList();
     }
 
+    public List<PoolSummary> poolSummariesSnapshot() {
+        return pools.entrySet().stream()
+                .map(entry -> PoolSummary.of(entry.getKey(), entry.getValue()))
+                .sorted(Comparator.comparing(PoolSummary::name))
+                .toList();
+    }
+
+    public List<PoolSummary> topPoolSummariesSnapshot(int limit) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        return poolSummariesSnapshot().stream()
+                .sorted(Comparator.comparing(PoolSummary::totalAmount).reversed()
+                        .thenComparing(PoolSummary::name))
+                .limit(limit)
+                .toList();
+    }
+
     public boolean removePool(String pool) {
         if (pools.remove(pool) != null) {
             setDirty();
@@ -280,6 +331,10 @@ public class AnnihilatorSavedData extends SavedData {
 
     public boolean isEmpty() {
         return pools.isEmpty();
+    }
+
+    public LoadDiagnostics loadDiagnostics() {
+        return loadDiagnostics;
     }
 
     public void markDirty() {
@@ -368,11 +423,30 @@ public class AnnihilatorSavedData extends SavedData {
             return list;
         }
 
-        private void deserialize(ListTag list) {
+        private PoolLoadDiagnostics deserialize(ListTag list) {
+            int entriesLoaded = 0;
+            int invalidKeys = 0;
+            int invalidAmounts = 0;
+            int duplicateKeys = 0;
             for (int i = 0; i < list.size(); i++) {
                 CompoundTag tag = list.getCompound(i);
-                PoolKey.load(tag).ifPresent(key -> readAmount(tag).ifPresent(amount -> items.put(key, amount)));
+                Optional<PoolKey> key = PoolKey.load(tag);
+                if (key.isEmpty()) {
+                    invalidKeys++;
+                    continue;
+                }
+                Optional<BigInteger> amount = readAmount(tag);
+                if (amount.isEmpty()) {
+                    invalidAmounts++;
+                    continue;
+                }
+                if (items.containsKey(key.get())) {
+                    duplicateKeys++;
+                }
+                items.put(key.get(), amount.get());
+                entriesLoaded++;
             }
+            return new PoolLoadDiagnostics(list.size(), entriesLoaded, invalidKeys, invalidAmounts, duplicateKeys);
         }
 
         private AnnihilatorPool copy() {
@@ -509,6 +583,51 @@ public class AnnihilatorSavedData extends SavedData {
     public record IncrementResult(BigInteger previous, BigInteger current) {
     }
 
+    public record LoadDiagnostics(int poolsRead, int entriesRead, int entriesLoaded,
+                                  int invalidKeys, int invalidAmounts, int duplicateKeys) {
+        public static LoadDiagnostics empty() {
+            return new LoadDiagnostics(0, 0, 0, 0, 0, 0);
+        }
+
+        public boolean clean() {
+            return invalidKeys == 0 && invalidAmounts == 0 && duplicateKeys == 0;
+        }
+
+        public int problemCount() {
+            return invalidKeys + invalidAmounts + duplicateKeys;
+        }
+
+        public List<String> issues() {
+            List<String> issues = new ArrayList<>();
+            if (invalidKeys > 0) {
+                issues.add("invalid_keys=" + invalidKeys);
+            }
+            if (invalidAmounts > 0) {
+                issues.add("invalid_amounts=" + invalidAmounts);
+            }
+            if (duplicateKeys > 0) {
+                issues.add("duplicate_keys=" + duplicateKeys);
+            }
+            return List.copyOf(issues);
+        }
+
+        public String summary() {
+            return "poolsRead=" + poolsRead
+                    + " entriesRead=" + entriesRead
+                    + " entriesLoaded=" + entriesLoaded
+                    + " invalidKeys=" + invalidKeys
+                    + " invalidAmounts=" + invalidAmounts
+                    + " duplicateKeys=" + duplicateKeys
+                    + " problems=" + problemCount()
+                    + " issues=" + issues()
+                    + " clean=" + clean();
+        }
+    }
+
+    private record PoolLoadDiagnostics(int entriesRead, int entriesLoaded,
+                                       int invalidKeys, int invalidAmounts, int duplicateKeys) {
+    }
+
     public record PoolPushResult(IncrementResult increment, boolean paidOut, String payoutStatus,
                                  boolean alwaysPayOut) {
         private static PoolPushResult empty(boolean alwaysPayOut) {
@@ -524,6 +643,22 @@ public class AnnihilatorSavedData extends SavedData {
         private static ItemPoolPushResult empty(boolean alwaysPayOut) {
             IncrementResult empty = new IncrementResult(BigInteger.ZERO, BigInteger.ZERO);
             return new ItemPoolPushResult(empty, empty, Optional.empty(), List.of(), false, "empty", alwaysPayOut);
+        }
+    }
+
+    public record PoolSummary(String name, int entries, BigInteger totalAmount,
+                              Map<Kind, Integer> keyKindCounts,
+                              Map<Kind, BigInteger> keyKindTotals) {
+        public PoolSummary {
+            Objects.requireNonNull(name, "name");
+            Objects.requireNonNull(totalAmount, "totalAmount");
+            keyKindCounts = keyKindCounts == null ? Map.of() : Map.copyOf(keyKindCounts);
+            keyKindTotals = keyKindTotals == null ? Map.of() : Map.copyOf(keyKindTotals);
+        }
+
+        private static PoolSummary of(String name, AnnihilatorPool pool) {
+            return new PoolSummary(name, pool.size(), pool.totalAmount(),
+                    pool.keyKindCounts(), pool.keyKindTotals());
         }
     }
 }

@@ -11,6 +11,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -24,6 +25,7 @@ public class RadiationSavedData extends SavedData {
     private static final String TAG_RADIATION = "radiation";
 
     private final Map<Long, Float> chunkRadiation = new HashMap<>();
+    private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
 
     public static RadiationSavedData load(CompoundTag tag) {
         RadiationSavedData data = new RadiationSavedData();
@@ -35,6 +37,7 @@ public class RadiationSavedData extends SavedData {
                 data.chunkRadiation.put(entry.getLong(TAG_CHUNK), radiation);
             }
         }
+        data.loadDiagnostics = LoadDiagnostics.inspect(tag);
         return data;
     }
 
@@ -217,11 +220,96 @@ public class RadiationSavedData extends SavedData {
         return Collections.unmodifiableSet(chunkRadiation.entrySet());
     }
 
+    public LoadDiagnostics loadDiagnostics() {
+        return loadDiagnostics;
+    }
+
     private static float clamp(float value) {
         return Mth.clamp(value, 0.0F, RadiationConstants.MAX_CHUNK_RADIATION);
     }
 
     public record Stats(int totalEntries, int loadedEntries, int positiveEntries, int loadedPositiveEntries,
                         float totalRadiation, float loadedRadiation, float maxRadiation, float loadedMaxRadiation) {
+    }
+
+    public record LoadDiagnostics(boolean hasEntriesTag, int entries, int missingChunks,
+                                  int missingRadiationValues, int nonFiniteRadiationValues,
+                                  int duplicateChunks) {
+        public static LoadDiagnostics empty() {
+            return new LoadDiagnostics(false, 0, 0, 0, 0, 0);
+        }
+
+        public static LoadDiagnostics inspect(CompoundTag tag) {
+            if (tag == null) {
+                return empty();
+            }
+            boolean hasEntries = tag.contains(TAG_ENTRIES, Tag.TAG_LIST);
+            ListTag entries = tag.getList(TAG_ENTRIES, Tag.TAG_COMPOUND);
+            int missingChunks = 0;
+            int missingRadiationValues = 0;
+            int nonFiniteRadiationValues = 0;
+            int duplicateChunks = 0;
+            Set<Long> seen = new HashSet<>();
+            for (int i = 0; i < entries.size(); i++) {
+                CompoundTag entry = entries.getCompound(i);
+                if (!entry.contains(TAG_CHUNK)) {
+                    missingChunks++;
+                }
+                if (!entry.contains(TAG_RADIATION)) {
+                    missingRadiationValues++;
+                } else if (!Float.isFinite(entry.getFloat(TAG_RADIATION))) {
+                    nonFiniteRadiationValues++;
+                }
+                if (!seen.add(entry.getLong(TAG_CHUNK))) {
+                    duplicateChunks++;
+                }
+            }
+            return new LoadDiagnostics(hasEntries, entries.size(), missingChunks, missingRadiationValues,
+                    nonFiniteRadiationValues, duplicateChunks);
+        }
+
+        public int problemCount() {
+            return (hasEntriesTag ? 0 : 1)
+                    + missingChunks
+                    + missingRadiationValues
+                    + nonFiniteRadiationValues
+                    + duplicateChunks;
+        }
+
+        public boolean clean() {
+            return problemCount() == 0;
+        }
+
+        public List<String> issues() {
+            List<String> issues = new ArrayList<>();
+            if (!hasEntriesTag) {
+                issues.add("missing_entries");
+            }
+            if (missingChunks > 0) {
+                issues.add("missing_chunks=" + missingChunks);
+            }
+            if (missingRadiationValues > 0) {
+                issues.add("missing_radiation_values=" + missingRadiationValues);
+            }
+            if (nonFiniteRadiationValues > 0) {
+                issues.add("non_finite_radiation_values=" + nonFiniteRadiationValues);
+            }
+            if (duplicateChunks > 0) {
+                issues.add("duplicate_chunks=" + duplicateChunks);
+            }
+            return List.copyOf(issues);
+        }
+
+        public String summary() {
+            return "hasEntries=" + hasEntriesTag
+                    + " entries=" + entries
+                    + " missingChunks=" + missingChunks
+                    + " missingRadiationValues=" + missingRadiationValues
+                    + " nonFiniteRadiationValues=" + nonFiniteRadiationValues
+                    + " duplicateChunks=" + duplicateChunks
+                    + " problems=" + problemCount()
+                    + " issues=" + issues()
+                    + " clean=" + clean();
+        }
     }
 }

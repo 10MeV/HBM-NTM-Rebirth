@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": { "model": "hbm_ntm_rebirth:block/charge_miner" },
+    "facing=up": { "model": "hbm_ntm_rebirth:block/charge_miner" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/charge_miner" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/charge_miner" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/charge_miner" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/charge_miner" }
+  }
+}

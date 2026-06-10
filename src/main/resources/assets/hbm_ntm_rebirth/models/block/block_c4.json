@@ -1,6 +1,12 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube",
   "textures": {
-    "all": "hbm_ntm_rebirth:block/block_c4"
+    "particle": "hbm_ntm_rebirth:block/block_c4",
+    "down": "hbm_ntm_rebirth:block/block_c4",
+    "up": "hbm_ntm_rebirth:block/block_c4",
+    "north": "hbm_ntm_rebirth:block/block_c4_front",
+    "south": "hbm_ntm_rebirth:block/block_c4",
+    "west": "hbm_ntm_rebirth:block/block_c4",
+    "east": "hbm_ntm_rebirth:block/block_c4"
   }
 }

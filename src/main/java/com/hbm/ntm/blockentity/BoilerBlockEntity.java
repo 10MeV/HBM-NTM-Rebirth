@@ -4,6 +4,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.api.tile.HeatSource;
+import com.hbm.ntm.config.BoilerConfig;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -31,8 +32,6 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     public static final int STEAM_TANK = 1;
     private static final int FEED_TANK_CAPACITY = 16_000;
     private static final int STEAM_TANK_CAPACITY = FEED_TANK_CAPACITY * 100;
-    private static final int MAX_HEAT = 3_200_000;
-    private static final double HEAT_DIFFUSION = 0.1D;
 
     private final HbmFluidTank feedTank;
     private final HbmFluidTank steamTank;
@@ -86,7 +85,7 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     }
 
     public void addHeat(int heat) {
-        this.heat = Math.min(MAX_HEAT, Math.max(0, this.heat + Math.max(0, heat)));
+        this.heat = Math.min(BoilerConfig.maxHeat(), Math.max(0, this.heat + Math.max(0, heat)));
     }
 
     public HbmFluidThermalExchange.ThermalResult previewBoiling() {
@@ -118,6 +117,7 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, BoilerBlockEntity blockEntity) {
+        blockEntity.normalizeConfigState();
         blockEntity.prepareOutputTank();
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, blockEntity);
         blockEntity.pullHeatFromBelow(level, pos);
@@ -130,16 +130,20 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
         }
     }
 
+    private void normalizeConfigState() {
+        heat = Math.min(BoilerConfig.maxHeat(), Math.max(0, heat));
+    }
+
     private void pullHeatFromBelow(Level level, BlockPos pos) {
         BlockEntity sourceBlockEntity = level.getBlockEntity(pos.below());
         if (sourceBlockEntity instanceof HeatSource source) {
             int diff = source.getHeatStored() - heat;
             if (diff > 0) {
-                int transferred = (int) Math.ceil(diff * HEAT_DIFFUSION);
-                transferred = Math.min(transferred, MAX_HEAT - heat);
+                int transferred = (int) Math.ceil(diff * BoilerConfig.diffusion());
+                transferred = Math.min(transferred, BoilerConfig.maxHeat() - heat);
                 if (transferred > 0) {
                     source.useUpHeat(transferred);
-                    heat = Math.min(MAX_HEAT, heat + transferred);
+                    heat = Math.min(BoilerConfig.maxHeat(), heat + transferred);
                     return;
                 }
             }
@@ -229,6 +233,6 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        heat = Math.min(MAX_HEAT, Math.max(0, tag.getInt("heat")));
+        heat = Math.min(BoilerConfig.maxHeat(), Math.max(0, tag.getInt("heat")));
     }
 }

@@ -1,6 +1,6 @@
 # Blender 4.0.2
 # www.blender.org
-mtllib Fleija.mtl
+mtllib fleija.mtl
 o Cylinder.001
 v 0.000000 0.812500 -0.750000
 v 0.000000 0.812500 0.750000

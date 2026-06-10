@@ -13,7 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -130,50 +129,13 @@ public class CompressorMenu extends AbstractContainerMenu {
     private void addDataSlots() {
         HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getPower(), () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getMaxPower(), () -> maxPower, value -> maxPower = value);
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getProgress();
-            }
-
-            @Override
-            public void set(int value) {
-                progress = value;
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getProcessTime();
-            }
-
-            @Override
-            public void set(int value) {
-                processTime = Math.max(1, value);
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getPowerRequirement();
-            }
-
-            @Override
-            public void set(int value) {
-                powerRequirement = value;
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getInputTank().getPressure();
-            }
-
-            @Override
-            public void set(int value) {
-                inputPressure = value;
-            }
-        });
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getProgress, value -> progress = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getProcessTime,
+                value -> processTime = Math.max(1, value));
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getPowerRequirement,
+                value -> powerRequirement = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, () -> blockEntity.getInputTank().getPressure(),
+                value -> inputPressure = value);
         inputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getInputTank());
         outputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getOutputTank());
     }

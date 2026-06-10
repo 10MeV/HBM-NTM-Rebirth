@@ -1,5 +1,5 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
-  "input": { "ingredient": { "item": "hbm_ntm_rebirth:ore_rare" } },
+  "input": { "ingredient": { "tag": "forge:ores/rare_earth" } },
   "output": { "item": "hbm_ntm_rebirth:powder_desh_mix" }
 }

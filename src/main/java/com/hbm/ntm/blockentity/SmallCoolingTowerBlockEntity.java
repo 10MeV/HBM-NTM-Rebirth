@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.config.CoolingTowerConfig;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
@@ -8,12 +9,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class SmallCoolingTowerBlockEntity extends CoolingTowerBlockEntity {
-    private static final int INPUT_CAPACITY = 1_000;
-    private static final int OUTPUT_CAPACITY = 1_000;
     private static final List<FluidPort> PORTS = cardinalPorts(3);
 
     public SmallCoolingTowerBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.SMALL_COOLING_TOWER.get(), pos, state, INPUT_CAPACITY, OUTPUT_CAPACITY);
+        super(ModBlockEntities.SMALL_COOLING_TOWER.get(), pos, state, CoolingTowerConfig.smallInputTankSize(),
+                CoolingTowerConfig.smallOutputTankSize());
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, SmallCoolingTowerBlockEntity tower) {
@@ -27,5 +27,15 @@ public class SmallCoolingTowerBlockEntity extends CoolingTowerBlockEntity {
     @Override
     protected Iterable<FluidPort> ports() {
         return PORTS;
+    }
+
+    @Override
+    protected int configuredInputCapacity() {
+        return CoolingTowerConfig.smallInputTankSize();
+    }
+
+    @Override
+    protected int configuredOutputCapacity() {
+        return CoolingTowerConfig.smallOutputTankSize();
     }
 }

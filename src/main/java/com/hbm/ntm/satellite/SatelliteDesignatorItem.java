@@ -28,11 +28,10 @@ public class SatelliteDesignatorItem extends SatelliteChipItem {
                     Direction direction = hit.getDirection();
                     BlockPos target = hit.getBlockPos().relative(direction);
                     if (satellite.satelliteInterface() == Satellite.SatelliteInterface.SAT_COORD) {
-                        satellite.onCoordAction(serverPlayer.serverLevel(), serverPlayer, target.getX(), target.getY(), target.getZ());
+                        satellite.tryCoordAction(serverPlayer.serverLevel(), serverPlayer, target.getX(), target.getY(), target.getZ());
                     } else if (satellite.satelliteInterface() == Satellite.SatelliteInterface.SAT_PANEL) {
-                        satellite.onClick(serverPlayer.serverLevel(), target.getX(), target.getZ());
+                        satellite.tryClick(serverPlayer.serverLevel(), target.getX(), target.getZ());
                     }
-                    SatelliteSavedData.get(serverPlayer.serverLevel()).setDirty();
                 }
             }
         }

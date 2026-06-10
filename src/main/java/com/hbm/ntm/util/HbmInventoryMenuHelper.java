@@ -22,6 +22,8 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
+import java.util.function.IntConsumer;
+
 public final class HbmInventoryMenuHelper {
     public static final String LEGACY_ITEMS_TAG = HbmItemStackUtil.LEGACY_ITEMS_TAG;
     public static final String LEGACY_SLOT_TAG = HbmItemStackUtil.LEGACY_SLOT_TAG;
@@ -119,41 +121,11 @@ public final class HbmInventoryMenuHelper {
 
     public static SlotItemHandler patternSlot(IItemHandler items, int slot, int x, int y, boolean allowStackSize,
             boolean canHover) {
-        return new SlotItemHandler(items, slot, x, y) {
-            @Override
-            public boolean mayPickup(Player player) {
-                return false;
-            }
-
-            @Override
-            public int getMaxStackSize() {
-                return 1;
-            }
-
-            @Override
-            public int getMaxStackSize(ItemStack stack) {
-                return 1;
-            }
-
-            @Override
-            public void set(ItemStack stack) {
-                super.set(copyPatternStack(stack, allowStackSize));
-            }
-
-            @Override
-            public boolean isActive() {
-                return canHover;
-            }
-        };
+        return new LegacyPatternSlot(items, slot, x, y, allowStackSize, canHover);
     }
 
     public static SlotItemHandler legacyMachineSlot(IItemHandler items, int slot, int x, int y) {
-        return new SlotItemHandler(items, slot, x, y) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return true;
-            }
-        };
+        return new LegacyMachineSlot(items, slot, x, y);
     }
 
     public static SlotItemHandler deprecatedSlot(IItemHandler items, int slot, int x, int y) {
@@ -349,11 +321,7 @@ public final class HbmInventoryMenuHelper {
         if (stack.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        ItemStack copy = stack.copy();
-        if (!allowStackSize) {
-            copy.setCount(1);
-        }
-        return copy;
+        return allowStackSize ? stack.copy() : HbmItemStackUtil.carefulCopyWithSize(stack, 1);
     }
 
     private static void awardOutputExperience(Player player, ServerLevel level, ItemStack stack, int removeCount,
@@ -401,6 +369,49 @@ public final class HbmInventoryMenuHelper {
 
     public static int openItemHotbarSlotIndex(int contentSlotCount, int hotbarSlot) {
         return contentSlotCount + 27 + hotbarSlot;
+    }
+
+    public static boolean handleLegacyPatternModeClick(java.util.List<Slot> slots, int slotId, int button,
+            ClickType clickType, int firstSlot, int slotCount, IntConsumer modeCycler, Runnable changeBroadcaster) {
+        if (clickType != ClickType.PICKUP || button != 1 || slotId < firstSlot || slotId >= firstSlot + slotCount
+                || slotId < 0 || slotId >= slots.size()) {
+            return false;
+        }
+        Slot slot = slots.get(slotId);
+        if (!slot.hasItem()) {
+            return false;
+        }
+        modeCycler.accept(slotId - firstSlot);
+        if (changeBroadcaster != null) {
+            changeBroadcaster.run();
+        }
+        return true;
+    }
+
+    public static boolean isLegacyPatternSlot(Slot slot) {
+        return slot instanceof LegacyPatternSlot;
+    }
+
+    public static CompoundTag legacyPatternDropTag(int menuSlot, ItemStack stack) {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt("slot", menuSlot);
+
+        CompoundTag item = new CompoundTag();
+        if (!stack.isEmpty()) {
+            stack.save(item);
+        }
+        tag.put("stack", item);
+        return tag;
+    }
+
+    public static CompoundTag legacyPatternDropTag(java.util.List<Slot> slots, int menuSlot, ItemStack stack) {
+        if (menuSlot < 0 || menuSlot >= slots.size() || stack.isEmpty()) {
+            return null;
+        }
+        if (!isLegacyPatternSlot(slots.get(menuSlot))) {
+            return null;
+        }
+        return legacyPatternDropTag(menuSlot, stack);
     }
 
     public static boolean isBatteryLike(ItemStack stack) {
@@ -498,5 +509,68 @@ public final class HbmInventoryMenuHelper {
     @FunctionalInterface
     public interface StackMover {
         boolean move(ItemStack stack, int startIndex, int endIndex, boolean reverseDirection);
+    }
+
+    private static class LegacyPatternSlot extends SlotItemHandler {
+        private final boolean allowStackSize;
+        private final boolean canHover;
+
+        private LegacyPatternSlot(IItemHandler items, int slot, int x, int y, boolean allowStackSize,
+                boolean canHover) {
+            super(items, slot, x, y);
+            this.allowStackSize = allowStackSize;
+            this.canHover = canHover;
+        }
+
+        @Override
+        public boolean mayPickup(Player player) {
+            return false;
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            return 1;
+        }
+
+        @Override
+        public int getMaxStackSize(ItemStack stack) {
+            return 1;
+        }
+
+        @Override
+        public void set(ItemStack stack) {
+            super.set(copyPatternStack(stack, allowStackSize));
+        }
+
+        @Override
+        public boolean isActive() {
+            return canHover;
+        }
+    }
+
+    private static class LegacyMachineSlot extends SlotItemHandler {
+        private final IItemHandler items;
+        private final int itemSlot;
+
+        private LegacyMachineSlot(IItemHandler items, int slot, int x, int y) {
+            super(items, slot, x, y);
+            this.items = items;
+            this.itemSlot = slot;
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return items.isItemValid(itemSlot, stack);
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            return Math.max(super.getMaxStackSize(), hasItem() ? getItem().getCount() : 1);
+        }
+
+        @Override
+        public int getMaxStackSize(ItemStack stack) {
+            return Math.max(super.getMaxStackSize(stack), hasItem() ? getItem().getCount() : 1);
+        }
     }
 }

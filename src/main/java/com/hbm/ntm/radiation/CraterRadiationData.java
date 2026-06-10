@@ -9,10 +9,15 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.LinkedHashSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +29,7 @@ public class CraterRadiationData extends SavedData {
     private static final String TAG_ZONES = "zones";
 
     private final Map<Long, CraterZone> zones = new HashMap<>();
+    private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
 
     public static CraterRadiationData load(CompoundTag tag) {
         CraterRadiationData data = new CraterRadiationData();
@@ -36,6 +42,7 @@ public class CraterRadiationData extends SavedData {
                 data.zones.put(cells[i], zone);
             }
         }
+        data.loadDiagnostics = LoadDiagnostics.inspect(tag);
         return data;
     }
 
@@ -91,6 +98,14 @@ public class CraterRadiationData extends SavedData {
 
     public static Stats getStats(ServerLevel level) {
         return get(level).stats(level);
+    }
+
+    public static Optional<CraterRadiationData> getExisting(ServerLevel level) {
+        return WorldSavedDataHelper.getExisting(level, DATA_NAME, CraterRadiationData::load);
+    }
+
+    public static Optional<CraterRadiationData> getExisting(Level level) {
+        return WorldSavedDataHelper.getExisting(level, DATA_NAME, CraterRadiationData::load);
     }
 
     public static ResyncResult resyncLoadedBiomes(ServerLevel level) {
@@ -161,6 +176,14 @@ public class CraterRadiationData extends SavedData {
         return new Stats(total, loaded, outer, crater, inner, loadedOuter, loadedCrater, loadedInner);
     }
 
+    public Stats statsSnapshot(ServerLevel level) {
+        return stats(level);
+    }
+
+    public LoadDiagnostics loadDiagnostics() {
+        return loadDiagnostics;
+    }
+
     private static CraterZone zoneFromBiome(Holder<Biome> biome) {
         return biome.unwrapKey()
                 .map(CraterRadiationData::zoneFromBiomeKey)
@@ -201,6 +224,82 @@ public class CraterRadiationData extends SavedData {
     }
 
     public record ResyncResult(int totalMarkers, int loadedMarkers, int changedCells, int changedChunks) {
+    }
+
+    public record LoadDiagnostics(boolean hasCellsTag, boolean hasZonesTag, int cells, int zones,
+                                  int mismatchedEntries, int unknownZoneIds, int duplicateCells) {
+        public static LoadDiagnostics empty() {
+            return new LoadDiagnostics(false, false, 0, 0, 0, 0, 0);
+        }
+
+        public static LoadDiagnostics inspect(CompoundTag tag) {
+            if (tag == null) {
+                return empty();
+            }
+            boolean hasCells = tag.contains(TAG_CELLS);
+            boolean hasZones = tag.contains(TAG_ZONES);
+            long[] cells = tag.getLongArray(TAG_CELLS);
+            byte[] zoneIds = tag.getByteArray(TAG_ZONES);
+            int count = Math.min(cells.length, zoneIds.length);
+            int unknownZoneIds = 0;
+            int duplicateCells = 0;
+            Set<Long> seen = new HashSet<>();
+            for (int i = 0; i < count; i++) {
+                if (zoneIds[i] < CraterZone.NONE.id || zoneIds[i] > CraterZone.INNER.id) {
+                    unknownZoneIds++;
+                }
+                if (!seen.add(cells[i])) {
+                    duplicateCells++;
+                }
+            }
+            return new LoadDiagnostics(hasCells, hasZones, cells.length, zoneIds.length,
+                    Math.abs(cells.length - zoneIds.length), unknownZoneIds, duplicateCells);
+        }
+
+        public int problemCount() {
+            return (hasCellsTag ? 0 : 1)
+                    + (hasZonesTag ? 0 : 1)
+                    + mismatchedEntries
+                    + unknownZoneIds
+                    + duplicateCells;
+        }
+
+        public boolean clean() {
+            return problemCount() == 0;
+        }
+
+        public List<String> issues() {
+            List<String> issues = new ArrayList<>();
+            if (!hasCellsTag) {
+                issues.add("missing_cells");
+            }
+            if (!hasZonesTag) {
+                issues.add("missing_zones");
+            }
+            if (mismatchedEntries > 0) {
+                issues.add("mismatched_entries=" + mismatchedEntries);
+            }
+            if (unknownZoneIds > 0) {
+                issues.add("unknown_zone_ids=" + unknownZoneIds);
+            }
+            if (duplicateCells > 0) {
+                issues.add("duplicate_cells=" + duplicateCells);
+            }
+            return List.copyOf(issues);
+        }
+
+        public String summary() {
+            return "hasCells=" + hasCellsTag
+                    + " hasZones=" + hasZonesTag
+                    + " cells=" + cells
+                    + " zones=" + zones
+                    + " mismatchedEntries=" + mismatchedEntries
+                    + " unknownZoneIds=" + unknownZoneIds
+                    + " duplicateCells=" + duplicateCells
+                    + " problems=" + problemCount()
+                    + " issues=" + issues()
+                    + " clean=" + clean();
+        }
     }
 
     public enum CraterZone {

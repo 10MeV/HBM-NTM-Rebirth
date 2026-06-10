@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "hbm_ntm_rebirth:block/red_pylon_medium_wood_transformer" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/red_pylon_medium_wood_transformer" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/red_pylon_medium_wood_transformer" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/red_pylon_medium_wood_transformer" }
+  }
+}

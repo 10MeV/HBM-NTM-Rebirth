@@ -9,7 +9,9 @@ import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SatelliteSavedData;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmInventoryUtil;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -30,17 +32,18 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvider {
     public static final int OUTPUT_SLOT_COUNT = 15;
     public static final int SLOT_CHIP = 15;
     public static final int SLOT_COUNT = 16;
+    private static final int[] OUTPUT_SLOTS = new int[] {
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
+    };
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final long CARGO_DELAY_MILLIS = 10L * 60L * 1000L;
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
@@ -54,7 +57,9 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
             setChanged();
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> itemHandler =
+            LazyOptional.of(() -> new ExtractOnlySidedItemHandler(items, OUTPUT_SLOTS));
+    private String customName;
 
     public SatelliteDockBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SAT_DOCK.get(), pos, state);
@@ -116,6 +121,11 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
         return HbmInventoryMenuHelper.clearToDrops(items);
     }
 
+    @Override
+    public AABB getRenderBoundingBox() {
+        return LegacyMachineRenderBounds.visibleMultiblockOr(this, super.getRenderBoundingBox());
+    }
+
     private void unloadCargo(ServerLevel level, String pool) {
         int itemAmount = level.random.nextInt(6) + 10;
         Vec3 origin = Vec3.atCenterOf(worldPosition);
@@ -128,29 +138,11 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
         if (stack.isEmpty()) {
             return;
         }
-        ItemStack remaining = stack.copy();
-        for (int slot = 0; slot < OUTPUT_SLOT_COUNT; slot++) {
-            ItemStack current = items.getStackInSlot(slot);
-            if (!current.isEmpty() && ItemStack.isSameItemSameTags(current, remaining)
-                    && current.getCount() < current.getMaxStackSize()) {
-                int toAdd = Math.min(current.getMaxStackSize() - current.getCount(), remaining.getCount());
-                current.grow(toAdd);
-                remaining.shrink(toAdd);
-                if (remaining.isEmpty()) {
-                    setChanged();
-                    return;
-                }
-            }
-        }
-
-        for (int slot = 0; slot < OUTPUT_SLOT_COUNT; slot++) {
-            if (items.getStackInSlot(slot).isEmpty()) {
-                ItemStack one = remaining.copy();
-                one.setCount(1);
-                items.setStackInSlot(slot, one);
-                setChanged();
-                return;
-            }
+        ItemStack remaining = HbmInventoryUtil.tryAddItemToExistingStacksUnchecked(items, 0,
+                OUTPUT_SLOT_COUNT - 1, stack);
+        if (!remaining.isEmpty()) {
+            HbmInventoryUtil.tryAddItemToFirstNewSlotUnchecked(items, 0, OUTPUT_SLOT_COUNT - 1,
+                    remaining.copyWithCount(1));
         }
     }
 
@@ -162,83 +154,21 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
         if (target == null) {
             return;
         }
-        AtomicBoolean handledCapability = new AtomicBoolean(false);
-        target.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
-            handledCapability.set(true);
-            for (int slot = 0; slot < OUTPUT_SLOT_COUNT; slot++) {
-                ItemStack stack = items.getStackInSlot(slot);
-                if (stack.isEmpty()) {
-                    continue;
-                }
-                ItemStack single = stack.copy();
-                single.setCount(1);
-                ItemStack remainder = ItemHandlerHelper.insertItemStacked(handler, single, false);
-                if (remainder.isEmpty()) {
-                    stack.shrink(1);
-                    if (stack.isEmpty()) {
-                        items.setStackInSlot(slot, ItemStack.EMPTY);
-                    }
-                    setChanged();
-                    return;
-                }
-            }
-        });
-        if (handledCapability.get()) {
+        Optional<IItemHandler> handler = target.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve();
+        if (handler.isPresent()) {
+            HbmInventoryUtil.moveSingleItemFromHandlerToHandler(items, 0, OUTPUT_SLOT_COUNT - 1, handler.get());
             return;
         }
         if (target instanceof Container container) {
-            ejectIntoContainer(container);
-        }
-    }
-
-    private void ejectIntoContainer(Container container) {
-        for (int slot = 0; slot < OUTPUT_SLOT_COUNT; slot++) {
-            ItemStack stack = items.getStackInSlot(slot);
-            if (stack.isEmpty()) {
-                continue;
-            }
-            ItemStack single = stack.copy();
-            single.setCount(1);
-            for (int targetSlot = 0; targetSlot < container.getContainerSize(); targetSlot++) {
-                ItemStack current = container.getItem(targetSlot);
-                if (!current.isEmpty() && ItemStack.isSameItemSameTags(current, single)
-                        && current.getCount() < current.getMaxStackSize()) {
-                    current.grow(1);
-                    stack.shrink(1);
-                    if (stack.isEmpty()) {
-                        items.setStackInSlot(slot, ItemStack.EMPTY);
-                    }
-                    container.setChanged();
-                    setChanged();
-                    return;
-                }
-            }
-        }
-
-        for (int slot = 0; slot < OUTPUT_SLOT_COUNT; slot++) {
-            ItemStack stack = items.getStackInSlot(slot);
-            if (stack.isEmpty()) {
-                continue;
-            }
-            ItemStack single = stack.copy();
-            single.setCount(1);
-            for (int targetSlot = 0; targetSlot < container.getContainerSize(); targetSlot++) {
-                if (container.getItem(targetSlot).isEmpty() && container.canPlaceItem(targetSlot, single)) {
-                    container.setItem(targetSlot, single);
-                    stack.shrink(1);
-                    if (stack.isEmpty()) {
-                        items.setStackInSlot(slot, ItemStack.EMPTY);
-                    }
-                    container.setChanged();
-                    setChanged();
-                    return;
-                }
-            }
+            HbmInventoryUtil.moveSingleItemFromHandlerToContainer(items, 0, OUTPUT_SLOT_COUNT - 1, container);
         }
     }
 
     @Override
     public Component getDisplayName() {
+        if (customName != null && !customName.isBlank()) {
+            return Component.literal(customName);
+        }
         return Component.translatable("container.hbm_ntm_rebirth.sat_dock");
     }
 
@@ -252,12 +182,16 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        customName = tag.getString(TAG_CUSTOM_NAME);
     }
 
     @Override
@@ -272,5 +206,52 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
             return itemHandler.cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    private static final class ExtractOnlySidedItemHandler implements IItemHandler {
+        private final ItemStackHandler items;
+        private final int[] slots;
+
+        private ExtractOnlySidedItemHandler(ItemStackHandler items, int[] slots) {
+            this.items = items;
+            this.slots = slots;
+        }
+
+        @Override
+        public int getSlots() {
+            return slots.length;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return items.getStackInSlot(mapSlot(slot));
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return items.extractItem(mapSlot(slot), amount, simulate);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return items.getSlotLimit(mapSlot(slot));
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return false;
+        }
+
+        private int mapSlot(int slot) {
+            if (slot < 0 || slot >= slots.length) {
+                throw new IndexOutOfBoundsException(slot);
+            }
+            return slots[slot];
+        }
     }
 }

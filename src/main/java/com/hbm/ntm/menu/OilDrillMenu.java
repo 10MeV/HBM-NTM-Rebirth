@@ -14,7 +14,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.ItemStackHandler;
@@ -121,17 +120,7 @@ public class OilDrillMenu extends AbstractContainerMenu {
     private void addDataSlots() {
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getMaxPower, () -> maxPower, value -> maxPower = value);
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getIndicator();
-            }
-
-            @Override
-            public void set(int value) {
-                indicator = value;
-            }
-        });
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getIndicator, value -> indicator = value);
         tanks.addAll(HbmFluidGuiHelper.watchTanks(this::addDataSlot, blockEntity.getAllTanks()));
     }
 

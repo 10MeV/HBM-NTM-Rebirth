@@ -20,9 +20,13 @@ public class SoyuzCapsuleRenderer extends EntityRenderer<SoyuzCapsuleEntity> {
     public void render(SoyuzCapsuleEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        float wobble = (float) Math.sin((entity.tickCount + partialTick) * 0.05F) * 7.0F;
-        poseStack.mulPose(Axis.ZP.rotationDegrees(wobble));
-        poseStack.mulPose(Axis.XP.rotationDegrees(wobble));
+        double time = entity.tickCount + partialTick;
+        float zWobble = (float) Math.sin(time * 0.05D) * 5.0F;
+        float xWobble = (float) Math.sin(time * 0.05D + Math.PI * 0.5D) * 5.0F;
+        poseStack.translate(0.0D, 7.0D, 0.0D);
+        poseStack.mulPose(Axis.ZP.rotationDegrees(zWobble));
+        poseStack.mulPose(Axis.XP.rotationDegrees(xWobble));
+        poseStack.translate(0.0D, -7.0D, 0.0D);
         ObjSoyuzModels.renderLanderCapsule(false, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         ObjSoyuzModels.renderLanderChute(poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();

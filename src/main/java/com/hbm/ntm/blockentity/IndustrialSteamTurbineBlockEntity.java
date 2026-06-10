@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.config.SteamTurbineConfig;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -20,9 +21,6 @@ import net.minecraft.world.level.block.state.BlockState;
 public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEntity {
     private static final String[] SPIN_BLOCKS = new String[] {"", "|", "/", "\\"};
     private static final long MAX_STORED_POWER = 100_000_000L;
-    private static final int INPUT_TANK_SIZE = 750_000;
-    private static final int OUTPUT_TANK_SIZE = 3_000_000;
-    private static final double EFFICIENCY = 1.0D;
     private static final double CONSUMPTION_PERCENT = 0.2D;
     private static final double FLYWHEEL_MAX_ENERGY = 50_000_000D;
 
@@ -32,8 +30,8 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
     private long maxPowerTarget;
 
     public IndustrialSteamTurbineBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.INDUSTRIAL_STEAM_TURBINE.get(), pos, state, MAX_STORED_POWER, INPUT_TANK_SIZE,
-                OUTPUT_TANK_SIZE);
+        super(ModBlockEntities.INDUSTRIAL_STEAM_TURBINE.get(), pos, state, MAX_STORED_POWER,
+                SteamTurbineConfig.industrialInputTankSize(), SteamTurbineConfig.industrialOutputTankSize());
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, IndustrialSteamTurbineBlockEntity turbine) {
@@ -42,7 +40,7 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
 
     @Override
     protected double getEfficiency() {
-        return EFFICIENCY;
+        return SteamTurbineConfig.industrialEfficiency();
     }
 
     @Override
@@ -52,10 +50,17 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
 
     @Override
     protected void applyGeneratedPower(long power) {
-        maxPowerTarget = HbmTurbineConversion.previewMaxPowerForPercent(inputTank, EFFICIENCY, CONSUMPTION_PERCENT);
+        maxPowerTarget = HbmTurbineConversion.previewMaxPowerForPercent(inputTank, getEfficiency(),
+                CONSUMPTION_PERCENT);
         if (power > 0L) {
             flywheelEnergy = Math.min(Long.MAX_VALUE - power, flywheelEnergy) + power;
         }
+    }
+
+    @Override
+    protected void normalizeConfigState() {
+        normalizeTankCapacity(SteamTurbineConfig.industrialInputTankSize(),
+                SteamTurbineConfig.industrialOutputTankSize());
     }
 
     @Override

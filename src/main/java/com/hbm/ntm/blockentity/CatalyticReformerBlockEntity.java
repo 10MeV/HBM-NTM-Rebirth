@@ -2,6 +2,8 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts.LegacyPort;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -87,17 +89,13 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
     protected Iterable<FluidPort> getFluidPorts() {
         Direction facing = facing();
         Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
-        return List.of(
-                FluidPort.of(facing.getStepX() * 2 + rot.getStepX(), 0,
-                        facing.getStepZ() * 2 + rot.getStepZ(), facing),
-                FluidPort.of(facing.getStepX() * 2 - rot.getStepX(), 0,
-                        facing.getStepZ() * 2 - rot.getStepZ(), facing),
-                FluidPort.of(-facing.getStepX() * 2 + rot.getStepX(), 0,
-                        -facing.getStepZ() * 2 + rot.getStepZ(), facing.getOpposite()),
-                FluidPort.of(-facing.getStepX() * 2 - rot.getStepX(), 0,
-                        -facing.getStepZ() * 2 - rot.getStepZ(), facing.getOpposite()),
-                FluidPort.of(rot.getStepX() * 3, 0, rot.getStepZ() * 3, rot),
-                FluidPort.of(-rot.getStepX() * 3, 0, -rot.getStepZ() * 3, rot.getOpposite()));
+        return HbmFluidPortLayouts.legacy(facing, rot,
+                LegacyPort.of(2, 1, facing),
+                LegacyPort.of(2, -1, facing),
+                LegacyPort.of(-2, 1, facing.getOpposite()),
+                LegacyPort.of(-2, -1, facing.getOpposite()),
+                LegacyPort.of(0, 3, rot),
+                LegacyPort.of(0, -3, rot.getOpposite()));
     }
 
     @Override

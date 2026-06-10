@@ -10,6 +10,7 @@ public final class RadiationConstants {
     public static final float U238 = 0.25F;
     public static final float TH232 = 0.1F;
     public static final float PU = 7.5F;
+    public static final float PU_REACTOR_GRADE = 6.25F;
     public static final float PU238 = 10.0F;
     public static final float PU239 = 5.0F;
     public static final float PU240 = 7.5F;
@@ -62,6 +63,7 @@ public final class RadiationConstants {
     public static final float ROD = BILLET;
     public static final float ROD_DUAL = ROD * 2.0F;
     public static final float ROD_QUAD = ROD * 4.0F;
+    public static final float ROD_RBMK = ROD * 8.0F;
     public static final float POWDER_MULTIPLIER = 3.0F;
 
     private RadiationConstants() {

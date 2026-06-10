@@ -1,8 +1,10 @@
 package com.hbm.ntm.compat.jei;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.ItemProcessingRecipe;
+import com.hbm.ntm.recipe.LegacyBlueprintPools;
 import com.hbm.ntm.recipe.LiquefactionRecipe;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.PressRecipe;
@@ -33,6 +35,8 @@ public final class HbmJeiPlugin implements IModPlugin {
             RecipeType.create(HbmNtm.MOD_ID, "purex", GenericMachineRecipe.class);
     public static final RecipeType<GenericMachineRecipe> PRECASS =
             RecipeType.create(HbmNtm.MOD_ID, "precass", GenericMachineRecipe.class);
+    public static final RecipeType<GenericMachineRecipe> ARC_WELDER =
+            RecipeType.create(HbmNtm.MOD_ID, "arc_welder", GenericMachineRecipe.class);
     public static final RecipeType<PressRecipe> PRESS =
             RecipeType.create(HbmNtm.MOD_ID, "press", PressRecipe.class);
     public static final RecipeType<HbmOilRecipe> REFINERY =
@@ -79,6 +83,8 @@ public final class HbmJeiPlugin implements IModPlugin {
                         ModBlocks.MACHINE_PUREX.get(), guiHelper),
                 new HbmMachineRecipeCategory(PRECASS, GenericMachineRecipe.Machine.PRECASS,
                         ModBlocks.MACHINE_ASSEMBLY_MACHINE.get(), guiHelper),
+                new HbmMachineRecipeCategory(ARC_WELDER, GenericMachineRecipe.Machine.ARC_WELDER,
+                        ModBlocks.MACHINE_ARC_WELDER.get(), guiHelper),
                 new PressRecipeCategory(PRESS, ModBlocks.MACHINE_PRESS.get(), guiHelper),
                 new HbmOilRecipeCategory(REFINERY,
                         Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_refinery", "Refinery"),
@@ -121,6 +127,7 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipes(CHEMICAL_PLANT, sorted(recipeManager.getAllRecipesFor(ModRecipes.CHEMICAL_PLANT.type().get())));
         registration.addRecipes(PUREX, sorted(recipeManager.getAllRecipesFor(ModRecipes.PUREX.type().get())));
         registration.addRecipes(PRECASS, sorted(recipeManager.getAllRecipesFor(ModRecipes.PRECASS.type().get())));
+        registration.addRecipes(ARC_WELDER, sorted(recipeManager.getAllRecipesFor(ModRecipes.ARC_WELDER.type().get())));
         registration.addRecipes(PRESS, recipeManager.getAllRecipesFor(ModRecipes.PRESS.type().get()));
         registration.addRecipes(REFINERY, HbmOilRecipe.refineryRecipes());
         registration.addRecipes(CATALYTIC_CRACKER, HbmOilRecipe.crackingRecipes());
@@ -146,6 +153,7 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_PUREX.get()), PUREX);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get()), PRECASS);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ASSEMBLY_FACTORY.get()), PRECASS);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ARC_WELDER.get()), ARC_WELDER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_PRESS.get()), PRESS);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_REFINERY.get()), REFINERY);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_CATALYTIC_CRACKER.get()), CATALYTIC_CRACKER);
@@ -164,8 +172,14 @@ public final class HbmJeiPlugin implements IModPlugin {
 
     private static List<GenericMachineRecipe> sorted(List<GenericMachineRecipe> recipes) {
         return recipes.stream()
+                .filter(HbmJeiPlugin::isVisibleGenericRecipe)
                 .sorted(GenericMachineRecipe.LEGACY_ORDER)
                 .toList();
+    }
+
+    private static boolean isVisibleGenericRecipe(GenericMachineRecipe recipe) {
+        return !HbmClientConfig.hideSecretJeiRecipes()
+                || recipe.getPools().stream().noneMatch(pool -> LegacyBlueprintPools.kind(pool) == LegacyBlueprintPools.Kind.SECRET);
     }
 
     private static List<ItemProcessingRecipe> sortedItemProcessing(List<ItemProcessingRecipe> recipes) {

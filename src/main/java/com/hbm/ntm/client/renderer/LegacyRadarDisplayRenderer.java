@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.api.entity.RadarDisplayProjection;
 import com.hbm.ntm.api.entity.RadarEntry;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
@@ -21,15 +22,15 @@ public final class LegacyRadarDisplayRenderer {
     public static final double TEXTURE_SIZE = 256.0D;
     public static final int BLIP_U = 216;
     public static final int BLIP_SIZE = 8;
-    public static final int GUI_AREA_SIZE = 200;
-    public static final int GUI_BLIP_RANGE = GUI_AREA_SIZE - BLIP_SIZE;
+    public static final int GUI_AREA_SIZE = RadarDisplayProjection.GUI_AREA_SIZE;
+    public static final int GUI_BLIP_RANGE = RadarDisplayProjection.GUI_BLIP_RANGE;
     public static final double WORLD_PANEL_X = 0.38D;
     public static final double WORLD_PANEL_Y_MIN = 0.125D;
     public static final double WORLD_PANEL_Y_MAX = 1.875D;
     public static final double WORLD_PANEL_Z_MIN = -0.375D;
     public static final double WORLD_PANEL_Z_MAX = 1.375D;
-    public static final double WORLD_BLIP_SIZE = 0.0625D;
-    public static final double WORLD_BLIP_RANGE = 0.875D;
+    public static final double WORLD_BLIP_SIZE = RadarDisplayProjection.WORLD_BLIP_SIZE;
+    public static final double WORLD_BLIP_RANGE = RadarDisplayProjection.WORLD_BLIP_RANGE;
 
     public static double worldScanOffset(long gameTime, float partialTick) {
         return ((gameTime % 56L) + partialTick) / 30.0D;
@@ -60,41 +61,36 @@ public final class LegacyRadarDisplayRenderer {
 
     public static void renderWorldBlip(ResourceLocation texture, ObjRenderContext context, RadarEntry entry,
             BlockPos reference, int range) {
-        double divisor = (double) range + 1.0D;
-        double sX = (entry.pos().getX() - reference.getX()) / divisor * WORLD_BLIP_RANGE;
-        double sZ = (entry.pos().getZ() - reference.getZ()) / divisor * WORLD_BLIP_RANGE;
+        RadarDisplayProjection.WorldOffset offset =
+                RadarDisplayProjection.worldBlipOffset(entry.pos(), reference, range);
         int blip = Mth.clamp(entry.blipLevel(), 0, 31);
         double v0 = blip * BLIP_SIZE;
         double v1 = v0 + BLIP_SIZE;
         LegacyTexturedQuadRenderer.pixelQuad(texture, context,
                 0.0F, 1.0F, 0.0F, TEXTURE_SIZE, TEXTURE_SIZE,
-                WORLD_PANEL_X, 1.0D - sZ + WORLD_BLIP_SIZE, 0.5D - sX + WORLD_BLIP_SIZE, BLIP_U, v1,
-                WORLD_PANEL_X, 1.0D - sZ + WORLD_BLIP_SIZE, 0.5D - sX - WORLD_BLIP_SIZE, BLIP_U + BLIP_SIZE, v1,
-                WORLD_PANEL_X, 1.0D - sZ - WORLD_BLIP_SIZE, 0.5D - sX - WORLD_BLIP_SIZE, BLIP_U + BLIP_SIZE, v0,
-                WORLD_PANEL_X, 1.0D - sZ - WORLD_BLIP_SIZE, 0.5D - sX + WORLD_BLIP_SIZE, BLIP_U, v0,
+                WORLD_PANEL_X, 1.0D - offset.z() + WORLD_BLIP_SIZE, 0.5D - offset.x() + WORLD_BLIP_SIZE, BLIP_U, v1,
+                WORLD_PANEL_X, 1.0D - offset.z() + WORLD_BLIP_SIZE, 0.5D - offset.x() - WORLD_BLIP_SIZE, BLIP_U + BLIP_SIZE, v1,
+                WORLD_PANEL_X, 1.0D - offset.z() - WORLD_BLIP_SIZE, 0.5D - offset.x() - WORLD_BLIP_SIZE, BLIP_U + BLIP_SIZE, v0,
+                WORLD_PANEL_X, 1.0D - offset.z() - WORLD_BLIP_SIZE, 0.5D - offset.x() + WORLD_BLIP_SIZE, BLIP_U, v0,
                 0xFFFFFF, 255);
     }
 
     public static ScreenOffset guiBlipOffset(BlockPos entry, BlockPos center, int range) {
-        double divisor = (double) range * 2.0D + 1.0D;
-        double x = (entry.getX() - center.getX()) / divisor * GUI_BLIP_RANGE - 4.0D;
-        double z = (entry.getZ() - center.getZ()) / divisor * GUI_BLIP_RANGE - 4.0D;
-        return new ScreenOffset(x, z);
+        RadarDisplayProjection.ScreenOffset offset = RadarDisplayProjection.guiBlipOffset(entry, center, range);
+        return new ScreenOffset(offset.x(), offset.z());
     }
 
     public static ScreenOffset guiBlipHitOffset(BlockPos entry, BlockPos center, int range) {
-        double divisor = (double) range * 2.0D + 1.0D;
-        double x = (entry.getX() - center.getX()) / divisor * GUI_BLIP_RANGE;
-        double z = (entry.getZ() - center.getZ()) / divisor * GUI_BLIP_RANGE;
-        return new ScreenOffset(x, z);
+        RadarDisplayProjection.ScreenOffset offset = RadarDisplayProjection.guiBlipHitOffset(entry, center, range);
+        return new ScreenOffset(offset.x(), offset.z());
     }
 
     public static int guiTargetX(double screenOffsetFromCenter, BlockPos center, int range) {
-        return (int) (screenOffsetFromCenter * ((double) range * 2.0D + 1.0D) / GUI_BLIP_RANGE + center.getX());
+        return RadarDisplayProjection.guiTargetX(screenOffsetFromCenter, center, range);
     }
 
     public static int guiTargetZ(double screenOffsetFromCenter, BlockPos center, int range) {
-        return (int) (screenOffsetFromCenter * ((double) range * 2.0D + 1.0D) / GUI_BLIP_RANGE + center.getZ());
+        return RadarDisplayProjection.guiTargetZ(screenOffsetFromCenter, center, range);
     }
 
     public static void renderGuiBlip(ResourceLocation texture, GuiGraphics graphics,

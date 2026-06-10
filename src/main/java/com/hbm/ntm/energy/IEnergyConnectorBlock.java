@@ -14,8 +14,12 @@ public interface IEnergyConnectorBlock extends HbmEnergyConnectorBlock {
         return side != null;
     }
 
+    default boolean canConnect(BlockGetter level, int x, int y, int z, @Nullable Direction side) {
+        return canConnect(level, new BlockPos(x, y, z), side);
+    }
+
     @Override
     default boolean canConnectEnergy(BlockGetter level, BlockPos pos, @Nullable Direction side) {
-        return canConnect(level, pos, side);
+        return canConnect(level, pos.getX(), pos.getY(), pos.getZ(), side);
     }
 }

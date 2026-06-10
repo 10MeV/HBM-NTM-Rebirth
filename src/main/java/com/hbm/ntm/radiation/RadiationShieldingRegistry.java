@@ -13,6 +13,10 @@ public final class RadiationShieldingRegistry {
         RESISTANCE.put(item, Math.max(0.0F, resistance));
     }
 
+    public static void remove(Item item) {
+        RESISTANCE.remove(item);
+    }
+
     public static void clear() {
         RESISTANCE.clear();
     }

@@ -1,5 +1,6 @@
 package com.hbm.ntm.network.packet;
 
+import com.hbm.ntm.network.HbmPreparablePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
@@ -7,7 +8,7 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public record ExplosionKnockbackPacket(Vec3 motion) {
+public record ExplosionKnockbackPacket(Vec3 motion) implements HbmPreparablePacket {
     public ExplosionKnockbackPacket {
         motion = motion == null ? Vec3.ZERO : motion;
     }
@@ -31,5 +32,10 @@ public record ExplosionKnockbackPacket(Vec3 motion) {
             }
         });
         context.setPacketHandled(true);
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new ExplosionKnockbackPacket(motion);
     }
 }

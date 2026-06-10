@@ -1,9 +1,12 @@
 package com.hbm.ntm.datagen;
 
+import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.itempool.HbmItemPoolIds;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.data.loot.LootTableSubProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -13,6 +16,7 @@ import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
+import net.minecraft.world.level.storage.loot.functions.SetNbtFunction;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
@@ -46,6 +50,20 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(Items.BREAD, 1, 3, 10),
                 entry(Items.STICK, 2, 5, 10),
                 entry(ModItems.legacyItem("powder_sawdust"), 2, 5, 5)));
+
+        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SODA), pool(
+                entry(ModItems.BOTTLE_NUKA, 1, 1, 10),
+                entry(ModItems.BOTTLE_CHERRY, 1, 1, 5),
+                entry(ModItems.BOTTLE_QUANTUM, 1, 1, 1),
+                entry(ModItems.CAN_BEPIS, 1, 1, 10),
+                entry(ModItems.CAN_LUNA, 1, 1, 10),
+                entry(ModItems.CAN_MUG, 1, 1, 10),
+                entry(ModItems.CAN_BREEN, 1, 1, 1)));
+
+        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SNACKS), pool(
+                entry(ModItems.DEFINITELYFOOD, 1, 1, 10),
+                entry(ModItems.TWINKIE, 1, 1, 10),
+                entry(ModItems.CHOCOLATE, 1, 1, 10)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VAULT_RUSTY), pool(
                 entry(Items.GOLD_INGOT, 3, 14, 1),
@@ -96,6 +114,8 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 meta(LegacyMetaItemMappings.CASING, CASING_SHOTSHELL, 4, 10, 3),
                 entry(legacyItem("cordite"), 4, 6, 5),
                 meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_REDSTONE, 1, 1, 1),
+                fluidCanister(HbmFluids.DIESEL, 1, 2, 2),
+                fluidCanister(HbmFluids.BIOFUEL, 1, 2, 3),
                 entry(ModItems.GAS_MASK_FILTER, 1, 1, 3)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_ANTENNA), pool(
@@ -115,6 +135,9 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_ANALOG, 1, 1, 3),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CHIP, 1, 1, 2),
                 meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LITHIUM, 1, 1, 1),
+                entry(ModBlocks.RED_BARREL, 1, 1, 6),
+                fluidCanister(HbmFluids.DIESEL, 1, 2, 2),
+                fluidCanister(HbmFluids.BIOFUEL, 1, 2, 3),
                 entry(ModItems.GAS_MASK_FILTER, 1, 1, 4)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_NUKE_TRASH), pool(
@@ -132,11 +155,16 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(legacyItem("powder_neptunium"), 1, 1, 1),
                 entry(legacyItem("powder_strontium"), 1, 1, 1),
                 entry(legacyItem("powder_cobalt"), 1, 1, 1),
+                entry(legacyItem("rod_zirnox_tritium"), 1, 1, 1),
                 entry(legacyItem("pellet_rtg"), 1, 1, 3),
                 entry(ModBlocks.YELLOW_BARREL, 1, 3, 3),
                 entry(ModItems.GAS_MASK_FILTER, 1, 1, 5)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VERTIBIRD), pool(
+                entry(ModItems.T51_HELMET, 1, 1, 15),
+                entry(ModItems.T51_PLATE, 1, 1, 15),
+                entry(ModItems.T51_LEGS, 1, 1, 15),
+                entry(ModItems.T51_BOOTS, 1, 1, 15),
                 entry(legacyItem("billet_uranium_fuel"), 1, 1, 2),
                 entry(legacyItem("ingot_uranium_fuel"), 1, 1, 2),
                 entry(ModItems.GAS_MASK_M65, 1, 1, 5),
@@ -204,6 +232,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(legacyItem("billet_beryllium"), 1, 1, 1),
                 entry(legacyItem("nugget_u233"), 1, 1, 1),
                 entry(legacyItem("nugget_uranium_fuel"), 1, 1, 1),
+                entry(legacyItem("rod_zirnox_empty"), 1, 3, 3),
                 entry(legacyItem("ingot_graphite"), 1, 4, 3),
                 entry(legacyItem("pile_rod_uranium"), 2, 5, 3),
                 entry(legacyItem("pile_rod_source"), 1, 2, 2),
@@ -251,6 +280,8 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(Items.CLOCK, 1, 1, 3),
                 entry(Items.BOOK, 1, 5, 10),
                 entry(ModItems.ARMOR_POLISH, 1, 1, 3),
+                entry(ModItems.JACKET, 1, 1, 1),
+                entry(ModItems.JACKET2, 1, 1, 1),
                 entry(ModItems.GAS_MASK_M65, 1, 1, 2),
                 entry(ModItems.GAS_MASK_MONO, 1, 1, 2),
                 entry(ModItems.GOGGLES, 1, 1, 2),
@@ -268,6 +299,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 meta(LegacyMetaItemMappings.STAMP_BOOK, 7, 1, 1, 1)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_OIL_RIG), pool(
+                fluidCanister(HbmFluids.OIL, 1, 4, 5),
                 entry(ModItems.CANISTER_EMPTY, 4, 16, 10),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_ANALOG, 1, 4, 1),
                 meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CAPACITOR, 1, 1, 3)));
@@ -297,6 +329,8 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.STEEL_INGOT, 1, 2, 10),
                 entry(ModItems.ALUMINIUM_INGOT, 1, 2, 10),
                 entry(ModItems.GAS_MASK_M65, 1, 1, 10),
+                entry(ModItems.STEEL_CHESTPLATE, 1, 1, 5),
+                entry(ModItems.STEEL_LEGS, 1, 1, 5),
                 entry(ModItems.STEEL_PICKAXE, 1, 1, 5),
                 entry(ModItems.STEEL_SHOVEL, 1, 1, 5),
                 entry(Items.EXPERIENCE_BOTTLE, 1, 3, 5)));
@@ -338,9 +372,14 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.SCREWDRIVER, 1, 1, 30),
                 meta(LegacyMetaItemMappings.CASING, CASING_SMALL_STEEL, 1, 4, 30),
                 meta(LegacyMetaItemMappings.CASING, CASING_SMALL, 3, 8, 40),
-                meta(LegacyMetaItemMappings.CASING, CASING_BUCKSHOT, 3, 8, 40)));
+                meta(LegacyMetaItemMappings.CASING, CASING_BUCKSHOT, 3, 8, 40),
+                entry(ModItems.TAURUN_HELMET, 1, 1, 20),
+                entry(ModItems.TAURUN_PLATE, 1, 1, 20),
+                entry(ModItems.TAURUN_LEGS, 1, 1, 20),
+                entry(ModItems.TAURUN_BOOTS, 1, 1, 20)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SUPPLIES), pool(
+                fluidCanister(HbmFluids.DIESEL, 1, 4, 5),
                 entry(ModItems.GEIGER_COUNTER, 1, 1, 2),
                 entry(ModItems.RADAWAY, 1, 5, 10)));
 
@@ -385,6 +424,19 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
         return LootItem.lootTableItem(item)
                 .setWeight(weight)
                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(min, max)));
+    }
+
+    private static LootPoolSingletonContainer.Builder<?> fluidCanister(FluidType type, int min, int max, int weight) {
+        return entry(ModItems.CANISTER_FULL, min, max, weight)
+                .apply(SetNbtFunction.setTag(fluidTag(type, 1_000, 0)));
+    }
+
+    private static CompoundTag fluidTag(FluidType type, int amount, int pressure) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("hbm_fluid", type.getName());
+        tag.putInt("hbm_fluid_amount", amount);
+        tag.putInt("hbm_fluid_pressure", pressure);
+        return tag;
     }
 
     private static RegistryObject<Item> legacyItem(String name) {

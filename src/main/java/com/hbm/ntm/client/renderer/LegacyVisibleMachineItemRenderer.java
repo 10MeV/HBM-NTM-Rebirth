@@ -1,11 +1,20 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.LegacyConnectorBlock;
+import com.hbm.ntm.block.LegacyLargePylonBlock;
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMediumPylonBlock;
+import com.hbm.ntm.block.LegacySmallPylonBlock;
+import com.hbm.ntm.block.LegacySubstationBlock;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.block.AssemblyMachineBlock;
 import com.hbm.ntm.block.MachineBatterySocketBlock;
+import com.hbm.ntm.block.VendingMachineBlock;
+import com.hbm.ntm.item.LegacyStateBlockItem;
+import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjNetworkModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -44,7 +53,13 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         if (!(stack.getItem() instanceof BlockItem blockItem)
                 || !(blockItem.getBlock() instanceof LegacyVisibleMultiblockMachineBlock
                 || blockItem.getBlock() instanceof AssemblyMachineBlock
-                || blockItem.getBlock() instanceof MachineBatterySocketBlock)) {
+                || blockItem.getBlock() instanceof MachineBatterySocketBlock
+                || blockItem.getBlock() instanceof VendingMachineBlock
+                || blockItem.getBlock() instanceof LegacyConnectorBlock
+                || blockItem.getBlock() instanceof LegacySmallPylonBlock
+                || blockItem.getBlock() instanceof LegacyMediumPylonBlock
+                || blockItem.getBlock() instanceof LegacyLargePylonBlock
+                || blockItem.getBlock() instanceof LegacySubstationBlock)) {
             return;
         }
 
@@ -54,6 +69,18 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             renderAssemblyMachineItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof MachineBatterySocketBlock) {
             renderBatterySocketItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof VendingMachineBlock block) {
+            renderVendingMachineItem(block, stack, displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof LegacyConnectorBlock connector) {
+            renderConnectorItem(connector.kind(), displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof LegacySmallPylonBlock) {
+            renderSmallPylonItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof LegacyMediumPylonBlock pylon) {
+            renderMediumPylonItem(pylon.kind(), displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof LegacyLargePylonBlock) {
+            renderLargePylonItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof LegacySubstationBlock) {
+            renderSubstationItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         }
     }
 
@@ -95,6 +122,105 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.pushPose();
         applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 5.0F);
         MachineBatterySocketRenderer.MODEL.renderPart("Socket", MachineBatterySocketRenderer.SOCKET_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderVendingMachineItem(VendingMachineBlock block, ItemStack stack,
+            ItemDisplayContext displayContext, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay) {
+        int variant = 0;
+        if (stack.getItem() instanceof LegacyStateBlockItem item) {
+            variant = item.getVariant(stack);
+        } else if (stack.getItem() instanceof LegacyStateMultiblockBlockItem item) {
+            variant = item.getVariant(stack);
+        }
+        BlockState state = block.defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.SOUTH)
+                .setValue(VendingMachineBlock.VARIANT, variant);
+        String part = variant == 0 ? "Soda" : "Obamna";
+        AABB bounds = VendingMachineRenderer.MODEL.boundsOnly(part);
+
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 6.25F);
+        VendingMachineRenderer.render(state, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderMediumPylonItem(LegacyMediumPylonBlock.Kind kind, ItemDisplayContext displayContext,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        AABB rawBounds = kind.transformer()
+                ? ObjNetworkModels.PYLON_MEDIUM_LEGACY.boundsOnly("Pylon", "Transformer")
+                : ObjNetworkModels.PYLON_MEDIUM_LEGACY.boundsOnly("Pylon");
+        AABB bounds = transformBounds(rawBounds,
+                point -> rotateY(point.scale(0.5D).add(0.75D, 0.0D, 0.0D), 90.0F).add(0.5D, 0.0D, 0.5D));
+
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 4.5F);
+        poseStack.translate(0.5D, 0.0D, 0.5D);
+        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        poseStack.scale(0.5F, 0.5F, 0.5F);
+        poseStack.translate(0.75D, 0.0D, 0.0D);
+        ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderPart("Pylon",
+                kind.steel() ? LegacyPylonRenderer.PYLON_MEDIUM_STEEL_TEXTURE : LegacyPylonRenderer.PYLON_MEDIUM_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        if (kind.transformer()) {
+            ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderPart("Transformer",
+                    kind.steel() ? LegacyPylonRenderer.PYLON_MEDIUM_STEEL_TEXTURE : LegacyPylonRenderer.PYLON_MEDIUM_TEXTURE,
+                    poseStack, buffer, packedLight, packedOverlay);
+        }
+        poseStack.popPose();
+    }
+
+    private static void renderSmallPylonItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, LegacySmallPylonModel.LEGACY_RENDER_BOUNDS, 0.58F, 4.5F);
+        LegacySmallPylonModel.render(poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderConnectorItem(LegacyConnectorBlock.Kind kind, ItemDisplayContext displayContext,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        AABB rawBounds = (kind == LegacyConnectorBlock.Kind.SUPER
+                ? ObjNetworkModels.CONNECTOR_SUPER_LEGACY
+                : ObjNetworkModels.CONNECTOR_LEGACY).boundsAll();
+        AABB bounds = transformBounds(rawBounds, point -> point.scale(2.0D));
+
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 7.0F);
+        poseStack.scale(2.0F, 2.0F, 2.0F);
+        if (kind == LegacyConnectorBlock.Kind.SUPER) {
+            ObjNetworkModels.CONNECTOR_SUPER_LEGACY.renderAll(LegacyPylonRenderer.CONNECTOR_SUPER_TEXTURE,
+                    poseStack, buffer, packedLight, packedOverlay);
+        } else {
+            ObjNetworkModels.CONNECTOR_LEGACY.renderAll(LegacyPylonRenderer.CONNECTOR_TEXTURE,
+                    poseStack, buffer, packedLight, packedOverlay);
+        }
+        poseStack.popPose();
+    }
+
+    private static void renderLargePylonItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        AABB bounds = transformBounds(ObjNetworkModels.PYLON_LARGE_LEGACY.boundsAll(),
+                point -> point.scale(0.5D));
+
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 2.25F);
+        poseStack.scale(0.5F, 0.5F, 0.5F);
+        ObjNetworkModels.PYLON_LARGE_LEGACY.renderAll(LegacyPylonRenderer.PYLON_LARGE_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderSubstationItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        AABB bounds = transformBounds(ObjNetworkModels.SUBSTATION_LEGACY.boundsAll(), point -> point.scale(0.5D));
+
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 4.5F);
+        poseStack.scale(0.5F, 0.5F, 0.5F);
+        ObjNetworkModels.SUBSTATION_LEGACY.renderAll(LegacyPylonRenderer.SUBSTATION_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }

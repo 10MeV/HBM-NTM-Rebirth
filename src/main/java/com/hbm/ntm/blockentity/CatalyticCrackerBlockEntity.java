@@ -4,6 +4,8 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts.LegacyPort;
 import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -148,22 +150,14 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
     protected Iterable<FluidPort> getFluidPorts() {
         Direction facing = facing();
         Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
-        return List.of(
-                FluidPort.of(facing.getStepX() * 4 + rot.getStepX(), 0,
-                        facing.getStepZ() * 4 + rot.getStepZ(), facing),
-                FluidPort.of(facing.getStepX() * 4 - rot.getStepX() * 2, 0,
-                        facing.getStepZ() * 4 - rot.getStepZ() * 2, facing),
-                FluidPort.of(-facing.getStepX() * 4 + rot.getStepX(), 0,
-                        -facing.getStepZ() * 4 + rot.getStepZ(), facing.getOpposite()),
-                FluidPort.of(-facing.getStepX() * 4 - rot.getStepX() * 2, 0,
-                        -facing.getStepZ() * 4 - rot.getStepZ() * 2, facing.getOpposite()),
-                FluidPort.of(facing.getStepX() * 2 + rot.getStepX() * 3, 0,
-                        facing.getStepZ() * 2 + rot.getStepZ() * 3, rot),
-                FluidPort.of(facing.getStepX() * 2 - rot.getStepX() * 4, 0,
-                        facing.getStepZ() * 2 - rot.getStepZ() * 4, rot),
-                FluidPort.of(-facing.getStepX() * 2 + rot.getStepX() * 3, 0,
-                        -facing.getStepZ() * 2 + rot.getStepZ() * 3, rot.getOpposite()),
-                FluidPort.of(-facing.getStepX() * 2 - rot.getStepX() * 4, 0,
-                        -facing.getStepZ() * 2 - rot.getStepZ() * 4, rot.getOpposite()));
+        return HbmFluidPortLayouts.legacy(facing, rot,
+                LegacyPort.of(4, 1, facing),
+                LegacyPort.of(4, -2, facing),
+                LegacyPort.of(-4, 1, facing.getOpposite()),
+                LegacyPort.of(-4, -2, facing.getOpposite()),
+                LegacyPort.of(2, 3, rot),
+                LegacyPort.of(2, -4, rot),
+                LegacyPort.of(-2, 3, rot.getOpposite()),
+                LegacyPort.of(-2, -4, rot.getOpposite()));
     }
 }

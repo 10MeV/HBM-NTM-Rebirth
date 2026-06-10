@@ -21,6 +21,7 @@ import com.hbm.ntm.recipe.HbmFluidContainerIngredient;
 import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.data.recipes.RecipeCategory;
@@ -28,6 +29,7 @@ import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.SpecialRecipeBuilder;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
@@ -74,6 +76,11 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_steel_plate", has(ModItems.STEEL_PLATE.get()))
                 .save(consumer, id("energy/machine_battery_socket_steel"));
 
+        SimpleCookingRecipeBuilder.smelting(Ingredient.of(item("glyphid_meat")), RecipeCategory.FOOD,
+                        item("glyphid_meat_grilled"), 1.0F, 200)
+                .unlockedBy("has_glyphid_meat", has(item("glyphid_meat")))
+                .save(consumer, id("smelting/glyphid_meat"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, legacyBatteryPack(0))
                 .pattern("IRI")
                 .pattern("PRP")
@@ -114,11 +121,15 @@ public final class HbmRecipeProvider extends RecipeProvider {
         selfChargingConversion(consumer, legacySelfChargingBattery(8), "battery_sc_pb209", item("billet_pb209"));
         selfChargingConversion(consumer, legacySelfChargingBattery(9), "battery_sc_am241", item("billet_am241"));
         energyNetworkRecipes(consumer);
+        redstoneOverRadioRecipes(consumer);
         legacyToolRecipes(consumer);
         legacyPartRecipes(consumer);
         legacyStructuralRecipes(consumer);
         legacyArmorTableRecipe(consumer);
+        legacyArmorModuleMaterialRecipes(consumer);
+        legacyArmorModuleRecipes(consumer);
         legacyHazmatRecipes(consumer);
+        legacyArmorRecipes(consumer);
 
         chemicalPlantSourceRecipes(consumer);
         chemicalBatteryRecipes(consumer);
@@ -201,6 +212,76 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('A', ModItems.ALUMINIUM_INGOT.get())
                 .unlockedBy("has_red_cable", has(ModBlocks.RED_CABLE.get()))
                 .save(consumer, id("energy/cable_diode"));
+    }
+
+    private static void redstoneOverRadioRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_DISPLAY_BLANK.get(), 8)
+                .pattern("B")
+                .pattern("D")
+                .define('B', forgeTag("ingots/bismuth"))
+                .define('D', block("concrete_asbestos"))
+                .unlockedBy("has_concrete_asbestos", has(block("concrete_asbestos")))
+                .save(consumer, id("redstone_over_radio/rbmk_display_blank"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_KEY_PAD.get())
+                .pattern("R")
+                .pattern("C")
+                .pattern("B")
+                .define('R', ModBlocks.RADIO_TORCH_SENDER.get())
+                .define('C', forgeTag("circuits/vacuum_tube"))
+                .define('B', ModBlocks.RBMK_DISPLAY_BLANK.get())
+                .unlockedBy("has_rbmk_display_blank", has(ModBlocks.RBMK_DISPLAY_BLANK.get()))
+                .save(consumer, id("redstone_over_radio/rbmk_key_pad"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_GAUGE.get())
+                .pattern("R")
+                .pattern("C")
+                .pattern("B")
+                .define('R', ModBlocks.RADIO_TORCH_RECEIVER.get())
+                .define('C', forgeTag("circuits/vacuum_tube"))
+                .define('B', ModBlocks.RBMK_DISPLAY_BLANK.get())
+                .unlockedBy("has_rbmk_display_blank", has(ModBlocks.RBMK_DISPLAY_BLANK.get()))
+                .save(consumer, id("redstone_over_radio/rbmk_gauge"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_NUMITRON.get())
+                .pattern(" R ")
+                .pattern("CCC")
+                .pattern(" B ")
+                .define('R', ModBlocks.RADIO_TORCH_RECEIVER.get())
+                .define('C', forgeTag("circuits/numitron"))
+                .define('B', ModBlocks.RBMK_DISPLAY_BLANK.get())
+                .unlockedBy("has_rbmk_display_blank", has(ModBlocks.RBMK_DISPLAY_BLANK.get()))
+                .save(consumer, id("redstone_over_radio/rbmk_numitron"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_GRAPH.get())
+                .pattern("R")
+                .pattern("C")
+                .pattern("B")
+                .define('R', ModBlocks.RADIO_TORCH_RECEIVER.get())
+                .define('C', item("crt_display"))
+                .define('B', ModBlocks.RBMK_DISPLAY_BLANK.get())
+                .unlockedBy("has_rbmk_display_blank", has(ModBlocks.RBMK_DISPLAY_BLANK.get()))
+                .save(consumer, id("redstone_over_radio/rbmk_graph"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_LEVER.get())
+                .pattern("R")
+                .pattern("C")
+                .pattern("B")
+                .define('R', ModBlocks.RADIO_TORCH_SENDER.get())
+                .define('C', forgeTag("ingots/copper"))
+                .define('B', ModBlocks.RBMK_DISPLAY_BLANK.get())
+                .unlockedBy("has_rbmk_display_blank", has(ModBlocks.RBMK_DISPLAY_BLANK.get()))
+                .save(consumer, id("redstone_over_radio/rbmk_lever"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_INDICATOR.get())
+                .pattern("R")
+                .pattern("C")
+                .pattern("B")
+                .define('R', ModBlocks.RADIO_TORCH_RECEIVER.get())
+                .define('C', ModItems.TUNGSTEN_COIL.get())
+                .define('B', ModBlocks.RBMK_DISPLAY_BLANK.get())
+                .unlockedBy("has_rbmk_display_blank", has(ModBlocks.RBMK_DISPLAY_BLANK.get()))
+                .save(consumer, id("redstone_over_radio/rbmk_indicator"));
     }
 
     private static void legacyToolRecipes(Consumer<FinishedRecipe> consumer) {
@@ -318,6 +399,1270 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('E', cloth)
                 .unlockedBy("has_" + recipePrefix + "_cloth", has(cloth))
                 .save(consumer, id("armor/" + recipePrefix + "_boots"));
+    }
+
+    private static void legacyArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        standardArmorSet(consumer, "steel", forgeTag("ingots/steel"),
+                ModItems.STEEL_HELMET.get(), ModItems.STEEL_CHESTPLATE.get(),
+                ModItems.STEEL_LEGS.get(), ModItems.STEEL_BOOTS.get());
+        standardArmorSet(consumer, "titanium", forgeTag("ingots/titanium"),
+                ModItems.TITANIUM_HELMET.get(), ModItems.TITANIUM_CHESTPLATE.get(),
+                ModItems.TITANIUM_LEGS.get(), ModItems.TITANIUM_BOOTS.get());
+        standardArmorSet(consumer, "cmb", forgeTag("ingots/combine_steel"),
+                ModItems.CMB_HELMET.get(), ModItems.CMB_PLATE.get(),
+                ModItems.CMB_LEGS.get(), ModItems.CMB_BOOTS.get());
+
+        cobaltArmorRecipes(consumer);
+        securityArmorRecipes(consumer);
+        asbestosArmorRecipes(consumer);
+        hazmatPaaArmorRecipes(consumer);
+        paaArmorRecipes(consumer);
+        liquidatorArmorRecipes(consumer);
+        maskRecipes(consumer);
+        starmetalArmorRecipes(consumer);
+        schrabidiumArmorRecipes(consumer);
+        euphemiumArmorRecipes(consumer);
+        poweredArmorRecipes(consumer);
+    }
+
+    private static void cobaltArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike cobaltBillet = item("billet_cobalt");
+        upgradeArmorPiece(consumer, "cobalt_helmet", ModItems.COBALT_HELMET.get(),
+                "ECE",
+                'E', cobaltBillet,
+                'C', ModItems.STEEL_HELMET.get());
+        upgradeArmorPiece(consumer, "cobalt_plate", ModItems.COBALT_PLATE.get(),
+                " E ", "ECE", " E ",
+                'E', cobaltBillet,
+                'C', ModItems.STEEL_CHESTPLATE.get());
+        upgradeArmorPiece(consumer, "cobalt_legs", ModItems.COBALT_LEGS.get(),
+                "ECE", "E E",
+                'E', cobaltBillet,
+                'C', ModItems.STEEL_LEGS.get());
+        upgradeArmorPiece(consumer, "cobalt_boots", ModItems.COBALT_BOOTS.get(),
+                "ECE",
+                'E', cobaltBillet,
+                'C', ModItems.STEEL_BOOTS.get());
+    }
+
+    private static void securityArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.SECURITY_HELMET.get())
+                .pattern("SSS")
+                .pattern("IGI")
+                .define('S', forgeTag("plates/steel"))
+                .define('I', forgeTag("ingots/any_rubber"))
+                .define('G', forgeTag("glass_panes"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("armor/security_helmet"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.SECURITY_PLATE.get())
+                .pattern("KWK")
+                .pattern("IKI")
+                .pattern("WKW")
+                .define('K', item("plate_kevlar"))
+                .define('I', forgeTag("ingots/any_plastic"))
+                .define('W', ItemTags.WOOL)
+                .unlockedBy("has_plate_kevlar", has(item("plate_kevlar")))
+                .save(consumer, id("armor/security_plate"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.SECURITY_LEGS.get())
+                .pattern("IWI")
+                .pattern("K K")
+                .pattern("W W")
+                .define('K', item("plate_kevlar"))
+                .define('I', forgeTag("ingots/any_plastic"))
+                .define('W', ItemTags.WOOL)
+                .unlockedBy("has_plate_kevlar", has(item("plate_kevlar")))
+                .save(consumer, id("armor/security_legs"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.SECURITY_BOOTS.get())
+                .pattern("P P")
+                .pattern("I I")
+                .define('P', forgeTag("plates/steel"))
+                .define('I', forgeTag("ingots/any_rubber"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("armor/security_boots"));
+    }
+
+    private static void asbestosArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike asbestosCloth = item("asbestos_cloth");
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.ASBESTOS_HELMET.get())
+                .pattern("EEE")
+                .pattern("EIE")
+                .define('E', asbestosCloth)
+                .define('I', forgeTag("plates/gold"))
+                .unlockedBy("has_asbestos_cloth", has(asbestosCloth))
+                .save(consumer, id("armor/asbestos_helmet"));
+        armorPiece(consumer, "asbestos_plate", ModItems.ASBESTOS_PLATE.get(), asbestosCloth, "E E", "EEE", "EEE");
+        armorPiece(consumer, "asbestos_legs", ModItems.ASBESTOS_LEGS.get(), asbestosCloth, "EEE", "E E", "E E");
+        armorPiece(consumer, "asbestos_boots", ModItems.ASBESTOS_BOOTS.get(), asbestosCloth, "E E", "E E");
+    }
+
+    private static void hazmatPaaArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike platePaa = item("plate_paa");
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.HAZMAT_PAA_HELMET.get())
+                .pattern("EEE")
+                .pattern("IEI")
+                .pattern(" P ")
+                .define('E', platePaa)
+                .define('I', forgeTag("glass_panes"))
+                .define('P', forgeTag("plates/iron"))
+                .unlockedBy("has_plate_paa", has(platePaa))
+                .save(consumer, id("armor/hazmat_paa_helmet"));
+        armorPiece(consumer, "hazmat_paa_plate", ModItems.HAZMAT_PAA_PLATE.get(), platePaa, "E E", "EEE", "EEE");
+        armorPiece(consumer, "hazmat_paa_legs", ModItems.HAZMAT_PAA_LEGS.get(), platePaa, "EEE", "E E", "E E");
+        armorPiece(consumer, "hazmat_paa_boots", ModItems.HAZMAT_PAA_BOOTS.get(), platePaa, "E E", "E E");
+    }
+
+    private static void paaArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike platePaa = item("plate_paa");
+        ItemLike neutronReflector = item("neutron_reflector");
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.PAA_PLATE.get())
+                .pattern("E E")
+                .pattern("NEN")
+                .pattern("ENE")
+                .define('E', platePaa)
+                .define('N', neutronReflector)
+                .unlockedBy("has_plate_paa", has(platePaa))
+                .save(consumer, id("armor/paa_plate"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.PAA_LEGS.get())
+                .pattern("EEE")
+                .pattern("N N")
+                .pattern("E E")
+                .define('E', platePaa)
+                .define('N', neutronReflector)
+                .unlockedBy("has_plate_paa", has(platePaa))
+                .save(consumer, id("armor/paa_legs"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.PAA_BOOTS.get())
+                .pattern("E E")
+                .pattern("N N")
+                .define('E', platePaa)
+                .define('N', neutronReflector)
+                .unlockedBy("has_plate_paa", has(platePaa))
+                .save(consumer, id("armor/paa_boots"));
+    }
+
+    private static void liquidatorArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.LIQUIDATOR_HELMET.get())
+                .pattern("III")
+                .pattern("CBC")
+                .pattern("III")
+                .define('I', forgeTag("ingots/any_rubber"))
+                .define('C', ModItems.CLADDING_LEAD.get())
+                .define('B', ModItems.HAZMAT_HELMET_GREY.get())
+                .unlockedBy("has_grey_hazmat_helmet", has(ModItems.HAZMAT_HELMET_GREY.get()))
+                .save(consumer, id("armor/liquidator_helmet"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.LIQUIDATOR_PLATE.get())
+                .pattern("ICI")
+                .pattern("TBT")
+                .pattern("ICI")
+                .define('I', forgeTag("ingots/any_rubber"))
+                .define('C', ModItems.CLADDING_LEAD.get())
+                .define('B', ModItems.HAZMAT_PLATE_GREY.get())
+                .define('T', ModItems.GAS_EMPTY.get())
+                .unlockedBy("has_grey_hazmat_plate", has(ModItems.HAZMAT_PLATE_GREY.get()))
+                .save(consumer, id("armor/liquidator_plate"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.LIQUIDATOR_LEGS.get())
+                .pattern("III")
+                .pattern("CBC")
+                .pattern("I I")
+                .define('I', forgeTag("ingots/any_rubber"))
+                .define('C', ModItems.CLADDING_LEAD.get())
+                .define('B', ModItems.HAZMAT_LEGS_GREY.get())
+                .unlockedBy("has_grey_hazmat_legs", has(ModItems.HAZMAT_LEGS_GREY.get()))
+                .save(consumer, id("armor/liquidator_legs"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.LIQUIDATOR_BOOTS.get())
+                .pattern("ICI")
+                .pattern("IBI")
+                .define('I', forgeTag("ingots/any_rubber"))
+                .define('C', ModItems.CLADDING_LEAD.get())
+                .define('B', ModItems.HAZMAT_BOOTS_GREY.get())
+                .unlockedBy("has_grey_hazmat_boots", has(ModItems.HAZMAT_BOOTS_GREY.get()))
+                .save(consumer, id("armor/liquidator_boots"));
+    }
+
+    private static void maskRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.GOGGLES.get())
+                .pattern("P P")
+                .pattern("GPG")
+                .define('G', forgeTag("glass_panes"))
+                .define('P', forgeTag("plates/steel"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("armor/goggles"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.GAS_MASK.get())
+                .pattern("PPP")
+                .pattern("GPG")
+                .pattern(" F ")
+                .define('G', forgeTag("glass_panes"))
+                .define('P', forgeTag("plates/steel"))
+                .define('F', forgeTag("plates/iron"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("armor/gas_mask"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.GAS_MASK_M65.get())
+                .pattern("PPP")
+                .pattern("GPG")
+                .pattern(" F ")
+                .define('G', forgeTag("glass_panes"))
+                .define('P', forgeTag("ingots/any_rubber"))
+                .define('F', forgeTag("plates/iron"))
+                .unlockedBy("has_any_rubber", has(forgeTag("ingots/any_rubber")))
+                .save(consumer, id("armor/gas_mask_m65"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.GAS_MASK_OLDE.get())
+                .pattern("PPP")
+                .pattern("GPG")
+                .pattern(" F ")
+                .define('G', forgeTag("glass_panes"))
+                .define('P', Items.LEATHER)
+                .define('F', Items.IRON_INGOT)
+                .unlockedBy("has_leather", has(Items.LEATHER))
+                .save(consumer, id("armor/gas_mask_olde"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.GAS_MASK_MONO.get())
+                .pattern(" P ")
+                .pattern("PPP")
+                .pattern(" F ")
+                .define('P', forgeTag("ingots/any_rubber"))
+                .define('F', forgeTag("plates/iron"))
+                .unlockedBy("has_any_rubber", has(forgeTag("ingots/any_rubber")))
+                .save(consumer, id("armor/gas_mask_mono"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.MASK_RAG.get())
+                .pattern("RRR")
+                .define('R', item("rag_damp"))
+                .unlockedBy("has_damp_rag", has(item("rag_damp")))
+                .save(consumer, id("armor/mask_rag"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.MASK_PISS.get())
+                .pattern("RRR")
+                .define('R', item("rag_piss"))
+                .unlockedBy("has_piss_rag", has(item("rag_piss")))
+                .save(consumer, id("armor/mask_piss"));
+    }
+
+    private static void starmetalArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike starmetal = item("ingot_starmetal");
+        upgradeArmorPiece(consumer, "starmetal_helmet", ModItems.STARMETAL_HELMET.get(),
+                "EEE", "ECE",
+                'E', starmetal,
+                'C', ModItems.COBALT_HELMET.get());
+        upgradeArmorPiece(consumer, "starmetal_plate", ModItems.STARMETAL_PLATE.get(),
+                "ECE", "EEE", "EEE",
+                'E', starmetal,
+                'C', ModItems.COBALT_PLATE.get());
+        upgradeArmorPiece(consumer, "starmetal_legs", ModItems.STARMETAL_LEGS.get(),
+                "EEE", "ECE", "E E",
+                'E', starmetal,
+                'C', ModItems.COBALT_LEGS.get());
+        upgradeArmorPiece(consumer, "starmetal_boots", ModItems.STARMETAL_BOOTS.get(),
+                "E E", "ECE",
+                'E', starmetal,
+                'C', ModItems.COBALT_BOOTS.get());
+    }
+
+    private static void schrabidiumArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike schrabidium = item("ingot_schrabidium");
+        ItemLike chargedPellet = item("pellet_charged");
+        upgradeArmorPiece(consumer, "schrabidium_helmet", ModItems.SCHRABIDIUM_HELMET.get(),
+                "EEE", "ESE", " P ",
+                'E', schrabidium,
+                'S', ModItems.STARMETAL_HELMET.get(),
+                'P', chargedPellet);
+        upgradeArmorPiece(consumer, "schrabidium_plate", ModItems.SCHRABIDIUM_PLATE.get(),
+                "ESE", "EPE", "EEE",
+                'E', schrabidium,
+                'S', ModItems.STARMETAL_PLATE.get(),
+                'P', chargedPellet);
+        upgradeArmorPiece(consumer, "schrabidium_legs", ModItems.SCHRABIDIUM_LEGS.get(),
+                "EEE", "ESE", "EPE",
+                'E', schrabidium,
+                'S', ModItems.STARMETAL_LEGS.get(),
+                'P', chargedPellet);
+        upgradeArmorPiece(consumer, "schrabidium_boots", ModItems.SCHRABIDIUM_BOOTS.get(),
+                "EPE", "ESE",
+                'E', schrabidium,
+                'S', ModItems.STARMETAL_BOOTS.get(),
+                'P', chargedPellet);
+    }
+
+    private static void euphemiumArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike plate = item("plate_euphemium");
+        armorPiece(consumer, "euphemium_helmet", ModItems.EUPHEMIUM_HELMET.get(), plate, "EEE", "E E");
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.EUPHEMIUM_PLATE.get())
+                .pattern("EWE")
+                .pattern("EEE")
+                .pattern("EEE")
+                .define('E', plate)
+                .define('W', item("watch"))
+                .unlockedBy("has_plate_euphemium", has(plate))
+                .save(consumer, id("armor/euphemium_plate"));
+        armorPiece(consumer, "euphemium_legs", ModItems.EUPHEMIUM_LEGS.get(), plate, "EEE", "E E", "E E");
+        armorPiece(consumer, "euphemium_boots", ModItems.EUPHEMIUM_BOOTS.get(), plate, "E E", "E E");
+    }
+
+    private static void poweredArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        t51ArmorRecipes(consumer);
+        ajrArmorRecipes(consumer);
+        bjArmorRecipes(consumer);
+        hevArmorRecipes(consumer);
+        rpaArmorRecipes(consumer);
+        steamsuitArmorRecipes(consumer);
+    }
+
+    private static void t51ArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike plate = item("plate_armor_titanium");
+        ItemLike basicCircuit = item("circuit_basic");
+        ItemLike motor = item("motor");
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.T51_HELMET.get())
+                .pattern("PPC")
+                .pattern("PBP")
+                .pattern("IXI")
+                .define('P', plate)
+                .define('C', basicCircuit)
+                .define('B', ModItems.TITANIUM_HELMET.get())
+                .define('I', forgeTag("ingots/any_rubber"))
+                .define('X', ModItems.GAS_MASK_M65.get())
+                .unlockedBy("has_titanium_armor_plate", has(plate))
+                .save(consumer, id("armor/t51_helmet"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.T51_PLATE.get())
+                .pattern("MPM")
+                .pattern("TBT")
+                .pattern("PPP")
+                .define('M', motor)
+                .define('P', plate)
+                .define('T', ModItems.GAS_EMPTY.get())
+                .define('B', ModItems.TITANIUM_CHESTPLATE.get())
+                .unlockedBy("has_titanium_armor_plate", has(plate))
+                .save(consumer, id("armor/t51_plate"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.T51_LEGS.get())
+                .pattern("MPM")
+                .pattern("PBP")
+                .pattern("P P")
+                .define('M', motor)
+                .define('P', plate)
+                .define('B', ModItems.TITANIUM_LEGS.get())
+                .unlockedBy("has_titanium_armor_plate", has(plate))
+                .save(consumer, id("armor/t51_legs"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.T51_BOOTS.get())
+                .pattern("P P")
+                .pattern("PBP")
+                .define('P', plate)
+                .define('B', ModItems.TITANIUM_BOOTS.get())
+                .unlockedBy("has_titanium_armor_plate", has(plate))
+                .save(consumer, id("armor/t51_boots"));
+    }
+
+    private static void ajrArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike plate = item("plate_armor_ajr");
+        ItemLike basicCircuit = item("circuit_basic");
+        ItemLike motor = item("motor_desh");
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AJR_HELMET.get())
+                .pattern("PPC")
+                .pattern("PBP")
+                .pattern("IXI")
+                .define('P', plate)
+                .define('C', basicCircuit)
+                .define('B', ModItems.TITANIUM_HELMET.get())
+                .define('I', forgeTag("ingots/any_plastic"))
+                .define('X', ModItems.GAS_MASK_M65.get())
+                .unlockedBy("has_ajr_armor_plate", has(plate))
+                .save(consumer, id("armor/ajr_helmet"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AJR_PLATE.get())
+                .pattern("MPM")
+                .pattern("TBT")
+                .pattern("PPP")
+                .define('M', motor)
+                .define('P', plate)
+                .define('T', ModItems.GAS_EMPTY.get())
+                .define('B', ModItems.TITANIUM_CHESTPLATE.get())
+                .unlockedBy("has_ajr_armor_plate", has(plate))
+                .save(consumer, id("armor/ajr_plate"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AJR_LEGS.get())
+                .pattern("MPM")
+                .pattern("PBP")
+                .pattern("P P")
+                .define('M', motor)
+                .define('P', plate)
+                .define('B', ModItems.TITANIUM_LEGS.get())
+                .unlockedBy("has_ajr_armor_plate", has(plate))
+                .save(consumer, id("armor/ajr_legs"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AJR_BOOTS.get())
+                .pattern("P P")
+                .pattern("PBP")
+                .define('P', plate)
+                .define('B', ModItems.TITANIUM_BOOTS.get())
+                .unlockedBy("has_ajr_armor_plate", has(plate))
+                .save(consumer, id("armor/ajr_boots"));
+
+        ajroRecolorRecipe(consumer, "ajro_helmet", ModItems.AJRO_HELMET.get(), ModItems.AJR_HELMET.get());
+        ajroRecolorRecipe(consumer, "ajro_plate", ModItems.AJRO_PLATE.get(), ModItems.AJR_PLATE.get());
+        ajroRecolorRecipe(consumer, "ajro_legs", ModItems.AJRO_LEGS.get(), ModItems.AJR_LEGS.get());
+        ajroRecolorRecipe(consumer, "ajro_boots", ModItems.AJRO_BOOTS.get(), ModItems.AJR_BOOTS.get());
+    }
+
+    private static void ajroRecolorRecipe(Consumer<FinishedRecipe> consumer, String name, ItemLike result,
+            ItemLike base) {
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, result)
+                .requires(base)
+                .requires(Items.RED_DYE)
+                .requires(Items.BLACK_DYE)
+                .unlockedBy("has_" + base.asItem(), has(base))
+                .save(consumer, id("armor/" + name));
+    }
+
+    private static void bjArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike lunarPlate = item("plate_armor_lunar");
+        ItemLike motor = item("motor_desh");
+        ItemLike advancedCircuit = item("circuit_advanced");
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.BJ_HELMET.get())
+                .pattern("SBS")
+                .pattern(" C ")
+                .pattern(" I ")
+                .define('S', Items.STRING)
+                .define('B', Items.BLACK_WOOL)
+                .define('C', advancedCircuit)
+                .define('I', item("ingot_starmetal"))
+                .unlockedBy("has_advanced_circuit", has(advancedCircuit))
+                .save(consumer, id("armor/bj_helmet"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.BJ_PLATE.get())
+                .pattern("N N")
+                .pattern("MSM")
+                .pattern("NCN")
+                .define('N', lunarPlate)
+                .define('M', motor)
+                .define('S', ModItems.STARMETAL_PLATE.get())
+                .define('C', advancedCircuit)
+                .unlockedBy("has_lunar_armor_plate", has(lunarPlate))
+                .save(consumer, id("armor/bj_plate"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.BJ_LEGS.get())
+                .pattern("MBM")
+                .pattern("NSN")
+                .pattern("N N")
+                .define('N', lunarPlate)
+                .define('M', motor)
+                .define('S', ModItems.STARMETAL_LEGS.get())
+                .define('B', block("block_starmetal"))
+                .unlockedBy("has_lunar_armor_plate", has(lunarPlate))
+                .save(consumer, id("armor/bj_legs"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.BJ_BOOTS.get())
+                .pattern("N N")
+                .pattern("BSB")
+                .define('N', lunarPlate)
+                .define('S', ModItems.STARMETAL_BOOTS.get())
+                .define('B', block("block_starmetal"))
+                .unlockedBy("has_lunar_armor_plate", has(lunarPlate))
+                .save(consumer, id("armor/bj_boots"));
+    }
+
+    private static void hevArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike plate = item("plate_armor_hev");
+        ItemLike basicCircuit = item("circuit_basic");
+        ItemLike motor = item("motor_desh");
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.HEV_HELMET.get())
+                .pattern("PPC")
+                .pattern("PBP")
+                .pattern("IFI")
+                .define('P', plate)
+                .define('C', basicCircuit)
+                .define('B', ModItems.TITANIUM_HELMET.get())
+                .define('I', forgeTag("ingots/any_plastic"))
+                .define('F', ModItems.GAS_MASK_FILTER.get())
+                .unlockedBy("has_hev_armor_plate", has(plate))
+                .save(consumer, id("armor/hev_helmet"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.HEV_PLATE.get())
+                .pattern("MPM")
+                .pattern("IBI")
+                .pattern("PPP")
+                .define('M', motor)
+                .define('P', plate)
+                .define('I', forgeTag("ingots/any_plastic"))
+                .define('B', ModItems.TITANIUM_CHESTPLATE.get())
+                .unlockedBy("has_hev_armor_plate", has(plate))
+                .save(consumer, id("armor/hev_plate"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.HEV_LEGS.get())
+                .pattern("MPM")
+                .pattern("IBI")
+                .pattern("P P")
+                .define('M', motor)
+                .define('P', plate)
+                .define('I', forgeTag("ingots/any_plastic"))
+                .define('B', ModItems.TITANIUM_LEGS.get())
+                .unlockedBy("has_hev_armor_plate", has(plate))
+                .save(consumer, id("armor/hev_legs"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.HEV_BOOTS.get())
+                .pattern("P P")
+                .pattern("PBP")
+                .define('P', plate)
+                .define('B', ModItems.TITANIUM_BOOTS.get())
+                .unlockedBy("has_hev_armor_plate", has(plate))
+                .save(consumer, id("armor/hev_boots"));
+    }
+
+    private static void rpaArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike legendary = item("parts_legendary_tier2");
+        ItemLike kevlar = item("plate_kevlar");
+        ItemLike ajrPlate = item("plate_armor_ajr");
+        ItemLike motor = item("motor_desh");
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.RPA_HELMET.get())
+                .pattern("KPK")
+                .pattern("PLP")
+                .pattern(" F ")
+                .define('L', legendary)
+                .define('K', kevlar)
+                .define('P', ajrPlate)
+                .define('F', ModItems.GAS_MASK_FILTER_COMBO.get())
+                .unlockedBy("has_legendary_tier2_part", has(legendary))
+                .save(consumer, id("armor/rpa_helmet"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.RPA_PLATE.get())
+                .pattern("P P")
+                .pattern("MLM")
+                .pattern("PKP")
+                .define('L', legendary)
+                .define('K', kevlar)
+                .define('P', ajrPlate)
+                .define('M', motor)
+                .unlockedBy("has_legendary_tier2_part", has(legendary))
+                .save(consumer, id("armor/rpa_plate"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.RPA_LEGS.get())
+                .pattern("MPM")
+                .pattern("KLK")
+                .pattern("P P")
+                .define('L', legendary)
+                .define('K', kevlar)
+                .define('P', ajrPlate)
+                .define('M', motor)
+                .unlockedBy("has_legendary_tier2_part", has(legendary))
+                .save(consumer, id("armor/rpa_legs"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.RPA_BOOTS.get())
+                .pattern("KLK")
+                .pattern("P P")
+                .define('L', legendary)
+                .define('K', kevlar)
+                .define('P', ajrPlate)
+                .unlockedBy("has_legendary_tier2_part", has(legendary))
+                .save(consumer, id("armor/rpa_boots"));
+    }
+
+    private static void steamsuitArmorRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike desh = item("ingot_desh");
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.STEAMSUIT_HELMET.get())
+                .pattern("DCD")
+                .pattern("CXC")
+                .pattern(" F ")
+                .define('D', desh)
+                .define('C', forgeTag("plates/copper"))
+                .define('X', ModItems.STEEL_HELMET.get())
+                .define('F', ModItems.GAS_MASK_FILTER.get())
+                .unlockedBy("has_desh_ingot", has(desh))
+                .save(consumer, id("armor/steamsuit_helmet"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.STEAMSUIT_PLATE.get())
+                .pattern("C C")
+                .pattern("DXD")
+                .pattern("CFC")
+                .define('D', desh)
+                .define('C', forgeTag("plates/copper"))
+                .define('X', ModItems.STEEL_CHESTPLATE.get())
+                .define('F', item("tank_steel"))
+                .unlockedBy("has_desh_ingot", has(desh))
+                .save(consumer, id("armor/steamsuit_plate"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.STEAMSUIT_LEGS.get())
+                .pattern("CCC")
+                .pattern("DXD")
+                .pattern("C C")
+                .define('D', desh)
+                .define('C', forgeTag("plates/copper"))
+                .define('X', ModItems.STEEL_LEGS.get())
+                .unlockedBy("has_desh_ingot", has(desh))
+                .save(consumer, id("armor/steamsuit_legs"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.STEAMSUIT_BOOTS.get())
+                .pattern("C C")
+                .pattern("DXD")
+                .define('D', desh)
+                .define('C', forgeTag("plates/copper"))
+                .define('X', ModItems.STEEL_BOOTS.get())
+                .unlockedBy("has_desh_ingot", has(desh))
+                .save(consumer, id("armor/steamsuit_boots"));
+    }
+
+    private static void standardArmorSet(Consumer<FinishedRecipe> consumer, String prefix, TagKey<Item> material,
+            ItemLike helmet, ItemLike chestplate, ItemLike leggings, ItemLike boots) {
+        armorPiece(consumer, prefix + "_helmet", helmet, material, "XXX", "X X");
+        armorPiece(consumer, prefix + "_plate", chestplate, material, "X X", "XXX", "XXX");
+        armorPiece(consumer, prefix + "_legs", leggings, material, "XXX", "X X", "X X");
+        armorPiece(consumer, prefix + "_boots", boots, material, "X X", "X X");
+    }
+
+    private static void armorPiece(Consumer<FinishedRecipe> consumer, String name, ItemLike result,
+            ItemLike material, String... pattern) {
+        ShapedRecipeBuilder builder = ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, result);
+        for (String row : pattern) {
+            builder.pattern(row);
+        }
+        builder.define(pattern[0].indexOf('X') >= 0 ? 'X' : 'E', material)
+                .unlockedBy("has_" + material.asItem(), has(material))
+                .save(consumer, id("armor/" + name));
+    }
+
+    private static void armorPiece(Consumer<FinishedRecipe> consumer, String name, ItemLike result,
+            TagKey<Item> material, String... pattern) {
+        ShapedRecipeBuilder builder = ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, result);
+        for (String row : pattern) {
+            builder.pattern(row);
+        }
+        builder.define(pattern[0].indexOf('X') >= 0 ? 'X' : 'E', material)
+                .unlockedBy("has_" + name + "_material", has(material))
+                .save(consumer, id("armor/" + name));
+    }
+
+    private static void upgradeArmorPiece(Consumer<FinishedRecipe> consumer, String name, ItemLike result,
+            String row1, char key1, ItemLike item1, char key2, ItemLike item2) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, result)
+                .pattern(row1)
+                .define(key1, item1)
+                .define(key2, item2)
+                .unlockedBy("has_" + item2.asItem(), has(item2))
+                .save(consumer, id("armor/" + name));
+    }
+
+    private static void upgradeArmorPiece(Consumer<FinishedRecipe> consumer, String name, ItemLike result,
+            String row1, String row2, char key1, ItemLike item1, char key2, ItemLike item2) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, result)
+                .pattern(row1)
+                .pattern(row2)
+                .define(key1, item1)
+                .define(key2, item2)
+                .unlockedBy("has_" + item2.asItem(), has(item2))
+                .save(consumer, id("armor/" + name));
+    }
+
+    private static void upgradeArmorPiece(Consumer<FinishedRecipe> consumer, String name, ItemLike result,
+            String row1, String row2, char key1, ItemLike item1, char key2, ItemLike item2,
+            char key3, ItemLike item3) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, result)
+                .pattern(row1)
+                .pattern(row2)
+                .define(key1, item1)
+                .define(key2, item2)
+                .define(key3, item3)
+                .unlockedBy("has_" + item2.asItem(), has(item2))
+                .save(consumer, id("armor/" + name));
+    }
+
+    private static void upgradeArmorPiece(Consumer<FinishedRecipe> consumer, String name, ItemLike result,
+            String row1, String row2, String row3, char key1, ItemLike item1, char key2, ItemLike item2) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, result)
+                .pattern(row1)
+                .pattern(row2)
+                .pattern(row3)
+                .define(key1, item1)
+                .define(key2, item2)
+                .unlockedBy("has_" + item2.asItem(), has(item2))
+                .save(consumer, id("armor/" + name));
+    }
+
+    private static void upgradeArmorPiece(Consumer<FinishedRecipe> consumer, String name, ItemLike result,
+            String row1, String row2, String row3, char key1, ItemLike item1, char key2, ItemLike item2,
+            char key3, ItemLike item3) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, result)
+                .pattern(row1)
+                .pattern(row2)
+                .pattern(row3)
+                .define(key1, item1)
+                .define(key2, item2)
+                .define(key3, item3)
+                .unlockedBy("has_" + item2.asItem(), has(item2))
+                .save(consumer, id("armor/" + name));
+    }
+
+    private static void legacyArmorModuleMaterialRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("ingot_euphemium"))
+                .pattern("EEE")
+                .pattern("EEE")
+                .pattern("EEE")
+                .define('E', item("nugget_euphemium"))
+                .unlockedBy("has_euphemium_nugget", has(item("nugget_euphemium")))
+                .save(consumer, id("parts/ingot_euphemium_from_nuggets"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("nugget_euphemium"), 9)
+                .requires(item("ingot_euphemium"))
+                .unlockedBy("has_euphemium_ingot", has(item("ingot_euphemium")))
+                .save(consumer, id("parts/nugget_euphemium_from_ingot"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("block_euphemium"))
+                .pattern("EEE")
+                .pattern("EEE")
+                .pattern("EEE")
+                .define('E', item("ingot_euphemium"))
+                .unlockedBy("has_euphemium_ingot", has(item("ingot_euphemium")))
+                .save(consumer, id("parts/block_euphemium"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ingot_euphemium"), 9)
+                .requires(block("block_euphemium"))
+                .unlockedBy("has_euphemium_block", has(block("block_euphemium")))
+                .save(consumer, id("parts/ingot_euphemium_from_block"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.CANTEEN_VODKA.get())
+                .pattern("O")
+                .pattern("P")
+                .define('O', Items.POTATO)
+                .define('P', forgeTag("plates/steel"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("consumables/canteen_vodka"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.FIVE_HTP.get())
+                .requires(forgeTag("dusts/coal"))
+                .requires(forgeTag("dusts/euphemium"))
+                .requires(ModItems.CANTEEN_VODKA.get())
+                .unlockedBy("has_vodka_canteen", has(ModItems.CANTEEN_VODKA.get()))
+                .save(consumer, id("consumables/five_htp"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.BOTTLE_MERCURY.get())
+                .pattern("MMM")
+                .pattern("MBM")
+                .pattern("MMM")
+                .define('M', item("ingot_mercury"))
+                .define('B', Items.GLASS_BOTTLE)
+                .unlockedBy("has_mercury_ingot", has(item("ingot_mercury")))
+                .save(consumer, id("parts/bottle_mercury"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ingot_mercury"), 8)
+                .requires(ModItems.BOTTLE_MERCURY.get())
+                .unlockedBy("has_bottle_mercury", has(ModItems.BOTTLE_MERCURY.get()))
+                .save(consumer, id("parts/ingot_mercury_from_bottle"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("ingot_mercury"))
+                .pattern("MMM")
+                .pattern("MMM")
+                .pattern("MMM")
+                .define('M', item("nugget_mercury"))
+                .unlockedBy("has_mercury_drop", has(item("nugget_mercury")))
+                .save(consumer, id("parts/ingot_mercury_from_nuggets"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("nugget_mercury"), 9)
+                .requires(item("ingot_mercury"))
+                .unlockedBy("has_mercury_ingot", has(item("ingot_mercury")))
+                .save(consumer, id("parts/nugget_mercury_from_ingot"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("ingot_lead"))
+                .pattern("LLL")
+                .pattern("LLL")
+                .pattern("LLL")
+                .define('L', item("nugget_lead"))
+                .unlockedBy("has_lead_nugget", has(item("nugget_lead")))
+                .save(consumer, id("parts/ingot_lead_from_nuggets"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("nugget_lead"), 9)
+                .requires(item("ingot_lead"))
+                .unlockedBy("has_lead_ingot", has(item("ingot_lead")))
+                .save(consumer, id("parts/nugget_lead_from_ingot"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("ingot_gh336"))
+                .pattern("GGG")
+                .pattern("GGG")
+                .pattern("GGG")
+                .define('G', item("nugget_gh336"))
+                .unlockedBy("has_gh336_nugget", has(item("nugget_gh336")))
+                .save(consumer, id("parts/ingot_gh336_from_nuggets"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("nugget_gh336"), 9)
+                .requires(item("ingot_gh336"))
+                .unlockedBy("has_gh336_ingot", has(item("ingot_gh336")))
+                .save(consumer, id("parts/nugget_gh336_from_ingot"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("billet_gh336"))
+                .pattern("GGG")
+                .pattern("GGG")
+                .define('G', item("nugget_gh336"))
+                .unlockedBy("has_gh336_nugget", has(item("nugget_gh336")))
+                .save(consumer, id("parts/billet_gh336_from_nuggets"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("nugget_gh336"), 6)
+                .requires(item("billet_gh336"))
+                .unlockedBy("has_gh336_billet", has(item("billet_gh336")))
+                .save(consumer, id("parts/nugget_gh336_from_billet"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("billet_gh336"), 3)
+                .pattern("GG")
+                .define('G', item("ingot_gh336"))
+                .unlockedBy("has_gh336_ingot", has(item("ingot_gh336")))
+                .save(consumer, id("parts/billet_gh336_from_ingots"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ingot_gh336"), 2)
+                .requires(item("billet_gh336"), 3)
+                .unlockedBy("has_gh336_billet", has(item("billet_gh336")))
+                .save(consumer, id("parts/ingot_gh336_from_billets"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("block_starmetal"))
+                .pattern("SSS")
+                .pattern("SSS")
+                .pattern("SSS")
+                .define('S', item("ingot_starmetal"))
+                .unlockedBy("has_starmetal_ingot", has(item("ingot_starmetal")))
+                .save(consumer, id("parts/block_starmetal"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ingot_starmetal"), 9)
+                .requires(block("block_starmetal"))
+                .unlockedBy("has_starmetal_block", has(block("block_starmetal")))
+                .save(consumer, id("parts/ingot_starmetal_from_block"));
+    }
+
+    private static void legacyArmorModuleRecipes(Consumer<FinishedRecipe> consumer) {
+        ItemLike ductTape = item("ducttape");
+        ItemLike basicCircuit = legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 8);
+        ItemLike advancedCircuit = legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 9);
+        ItemLike bismoidCircuit = legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 11);
+        ItemLike vacuumTube = legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 0);
+        ItemLike denseMingradeWire = legacyMetaItem(LegacyMetaItemMappings.WIRE_DENSE, 31);
+        ItemLike fineCopperWire = legacyMetaItem(LegacyMetaItemMappings.WIRE_FINE, 2_900);
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, ModItems.CLADDING_PAINT.get())
+                .requires(item("nugget_lead"), 4)
+                .requires(Items.CLAY_BALL)
+                .requires(Items.GLASS_BOTTLE)
+                .unlockedBy("has_lead_nugget", has(item("nugget_lead")))
+                .save(consumer, id("armor_modules/cladding_paint"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.CLADDING_RUBBER.get())
+                .pattern("RCR")
+                .pattern("CDC")
+                .pattern("RCR")
+                .define('R', forgeTag("ingots/any_rubber"))
+                .define('C', forgeTag("dusts/coal"))
+                .define('D', ductTape)
+                .unlockedBy("has_ducttape", has(ductTape))
+                .save(consumer, id("armor_modules/cladding_rubber"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.CLADDING_LEAD.get())
+                .pattern("DPD")
+                .pattern("PRP")
+                .pattern("DPD")
+                .define('D', ductTape)
+                .define('P', forgeTag("plates/lead"))
+                .define('R', ModItems.CLADDING_RUBBER.get())
+                .unlockedBy("has_cladding_rubber", has(ModItems.CLADDING_RUBBER.get()))
+                .save(consumer, id("armor_modules/cladding_lead"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.CLADDING_DESH.get())
+                .pattern("DPD")
+                .pattern("PRP")
+                .pattern("DPD")
+                .define('D', ductTape)
+                .define('P', item("plate_desh"))
+                .define('R', ModItems.CLADDING_LEAD.get())
+                .unlockedBy("has_cladding_lead", has(ModItems.CLADDING_LEAD.get()))
+                .save(consumer, id("armor_modules/cladding_desh"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.CLADDING_GHIORSIUM.get())
+                .pattern("DPD")
+                .pattern("PRP")
+                .pattern("DPD")
+                .define('D', ductTape)
+                .define('P', item("ingot_gh336"))
+                .define('R', ModItems.CLADDING_DESH.get())
+                .unlockedBy("has_cladding_desh", has(ModItems.CLADDING_DESH.get()))
+                .save(consumer, id("armor_modules/cladding_ghiorsium"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.CLADDING_OBSIDIAN.get())
+                .pattern("OOO")
+                .pattern("PDP")
+                .pattern("OOO")
+                .define('O', Blocks.OBSIDIAN)
+                .define('P', forgeTag("plates/steel"))
+                .define('D', ductTape)
+                .unlockedBy("has_obsidian", has(Blocks.OBSIDIAN))
+                .save(consumer, id("armor_modules/cladding_obsidian"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.CLADDING_IRON.get())
+                .pattern("OOO")
+                .pattern("PDP")
+                .pattern("OOO")
+                .define('O', forgeTag("plates/iron"))
+                .define('P', item("plate_polymer"))
+                .define('D', ductTape)
+                .unlockedBy("has_plate_polymer", has(item("plate_polymer")))
+                .save(consumer, id("armor_modules/cladding_iron"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INSERT_STEEL.get())
+                .pattern("DPD")
+                .pattern("PSP")
+                .pattern("DPD")
+                .define('D', ductTape)
+                .define('P', forgeTag("plates/iron"))
+                .define('S', block("block_steel"))
+                .unlockedBy("has_steel_block", has(block("block_steel")))
+                .save(consumer, id("armor_modules/insert_steel"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INSERT_DU.get())
+                .pattern("DPD")
+                .pattern("PSP")
+                .pattern("DPD")
+                .define('D', ductTape)
+                .define('P', forgeTag("plates/iron"))
+                .define('S', block("block_u238"))
+                .unlockedBy("has_u238_block", has(block("block_u238")))
+                .save(consumer, id("armor_modules/insert_du"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INSERT_GHIORSIUM.get())
+                .pattern("DPD")
+                .pattern("PSP")
+                .pattern("DPD")
+                .define('D', ductTape)
+                .define('P', forgeTag("ingots/gh336"))
+                .define('S', forgeTag("ingots/u238"))
+                .unlockedBy("has_gh336_ingot", has(forgeTag("ingots/gh336")))
+                .save(consumer, id("armor_modules/insert_ghiorsium"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INSERT_POLONIUM.get())
+                .pattern("DPD")
+                .pattern("PSP")
+                .pattern("DPD")
+                .define('D', ductTape)
+                .define('P', forgeTag("plates/iron"))
+                .define('S', block("block_polonium"))
+                .unlockedBy("has_polonium_block", has(block("block_polonium")))
+                .save(consumer, id("armor_modules/insert_polonium"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INSERT_ERA.get())
+                .pattern("DPD")
+                .pattern("PSP")
+                .pattern("DPD")
+                .define('D', ductTape)
+                .define('P', forgeTag("plates/iron"))
+                .define('S', ModItems.INGOT_SEMTEX.get())
+                .unlockedBy("has_semtex_bar", has(ModItems.INGOT_SEMTEX.get()))
+                .save(consumer, id("armor_modules/insert_era"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INSERT_KEVLAR.get())
+                .pattern("KIK")
+                .pattern("IDI")
+                .pattern("KIK")
+                .define('K', item("plate_kevlar"))
+                .define('I', forgeTag("ingots/any_rubber"))
+                .define('D', ductTape)
+                .unlockedBy("has_plate_kevlar", has(item("plate_kevlar")))
+                .save(consumer, id("armor_modules/insert_kevlar"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INSERT_SAPI.get())
+                .pattern("PKP")
+                .pattern("DPD")
+                .pattern("PKP")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('K', ModItems.INSERT_KEVLAR.get())
+                .define('D', ductTape)
+                .unlockedBy("has_insert_kevlar", has(ModItems.INSERT_KEVLAR.get()))
+                .save(consumer, id("armor_modules/insert_sapi"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INSERT_ESAPI.get())
+                .pattern("PKP")
+                .pattern("DSD")
+                .pattern("PKP")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('K', ModItems.INSERT_SAPI.get())
+                .define('D', ductTape)
+                .define('S', forgeTag("plates/weapon_steel"))
+                .unlockedBy("has_insert_sapi", has(ModItems.INSERT_SAPI.get()))
+                .save(consumer, id("armor_modules/insert_esapi"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INSERT_XSAPI.get())
+                .pattern("PKP")
+                .pattern("DSD")
+                .pattern("PKP")
+                .define('P', forgeTag("ingots/asbestos"))
+                .define('K', ModItems.INSERT_ESAPI.get())
+                .define('D', ductTape)
+                .define('S', forgeTag("plates/saturnite"))
+                .unlockedBy("has_insert_esapi", has(ModItems.INSERT_ESAPI.get()))
+                .save(consumer, id("armor_modules/insert_xsapi"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INSERT_YHARONITE.get())
+                .pattern("YIY")
+                .pattern("IYI")
+                .pattern("YIY")
+                .define('Y', item("billet_yharonite"))
+                .define('I', ModItems.INSERT_DU.get())
+                .unlockedBy("has_billet_yharonite", has(item("billet_yharonite")))
+                .save(consumer, id("armor_modules/insert_yharonite"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.SERVO_SET.get())
+                .pattern("MBM")
+                .pattern("PBP")
+                .pattern("MBM")
+                .define('M', ModItems.MOTOR.get())
+                .define('B', forgeTag("bolts/steel"))
+                .define('P', forgeTag("plates/iron"))
+                .unlockedBy("has_motor", has(ModItems.MOTOR.get()))
+                .save(consumer, id("armor_modules/servo_set"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.SERVO_SET_DESH.get())
+                .pattern("MBM")
+                .pattern("PSP")
+                .pattern("MBM")
+                .define('M', item("motor_desh"))
+                .define('B', forgeTag("bolts/dura_steel"))
+                .define('P', item("plate_desh"))
+                .define('S', ModItems.SERVO_SET.get())
+                .unlockedBy("has_servo_set", has(ModItems.SERVO_SET.get()))
+                .save(consumer, id("armor_modules/servo_set_desh"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.ATTACHMENT_MASK.get())
+                .pattern("DID")
+                .pattern("IGI")
+                .pattern(" F ")
+                .define('D', ductTape)
+                .define('I', forgeTag("ingots/any_rubber"))
+                .define('G', forgeTag("glass_panes"))
+                .define('F', forgeTag("plates/iron"))
+                .unlockedBy("has_ducttape", has(ductTape))
+                .save(consumer, id("armor_modules/attachment_mask"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.ATTACHMENT_MASK_MONO.get())
+                .pattern(" D ")
+                .pattern("DID")
+                .pattern(" F ")
+                .define('D', ductTape)
+                .define('I', forgeTag("ingots/any_rubber"))
+                .define('F', forgeTag("plates/iron"))
+                .unlockedBy("has_ducttape", has(ductTape))
+                .save(consumer, id("armor_modules/attachment_mask_mono"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.PADS_RUBBER.get())
+                .pattern("P P")
+                .pattern("IDI")
+                .pattern("P P")
+                .define('P', forgeTag("ingots/any_rubber"))
+                .define('I', forgeTag("plates/iron"))
+                .define('D', ductTape)
+                .unlockedBy("has_ducttape", has(ductTape))
+                .save(consumer, id("armor_modules/pads_rubber"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.PADS_SLIME.get())
+                .pattern("SPS")
+                .pattern("DSD")
+                .pattern("SPS")
+                .define('S', Items.SLIME_BALL)
+                .define('P', ModItems.PADS_RUBBER.get())
+                .define('D', ductTape)
+                .unlockedBy("has_pads_rubber", has(ModItems.PADS_RUBBER.get()))
+                .save(consumer, id("armor_modules/pads_slime"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.PADS_STATIC.get())
+                .pattern("CDC")
+                .pattern("ISI")
+                .pattern("CDC")
+                .define('C', forgeTag("ingots/copper"))
+                .define('D', ductTape)
+                .define('I', forgeTag("ingots/any_rubber"))
+                .define('S', ModItems.PADS_SLIME.get())
+                .unlockedBy("has_pads_slime", has(ModItems.PADS_SLIME.get()))
+                .save(consumer, id("armor_modules/pads_static"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.ARMOR_BATTERY.get())
+                .pattern("PWP")
+                .pattern("PCP")
+                .pattern("PWP")
+                .define('P', forgeTag("plates/steel"))
+                .define('W', denseMingradeWire)
+                .define('C', legacyBatteryPack(7))
+                .unlockedBy("has_gold_capacitor", has(legacyBatteryPack(7)))
+                .save(consumer, id("armor_modules/armor_battery"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.ARMOR_BATTERY_MK2.get())
+                .pattern("PWP")
+                .pattern("PCP")
+                .pattern("PWP")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('W', denseMingradeWire)
+                .define('C', legacyBatteryPack(8))
+                .unlockedBy("has_niobium_capacitor", has(legacyBatteryPack(8)))
+                .save(consumer, id("armor_modules/armor_battery_mk2"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.ARMOR_BATTERY_MK3.get())
+                .pattern("PWP")
+                .pattern("PCP")
+                .pattern("PWP")
+                .define('P', forgeTag("plates/gold"))
+                .define('W', denseMingradeWire)
+                .define('C', legacyBatteryPack(9))
+                .unlockedBy("has_tantalum_capacitor", has(legacyBatteryPack(9)))
+                .save(consumer, id("armor_modules/armor_battery_mk3"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.JETPACK_FLY.get())
+                .pattern("ACA")
+                .pattern("TLT")
+                .pattern("D D")
+                .define('A', ModItems.ALUMINIUM_PLATE.get())
+                .define('C', basicCircuit)
+                .define('T', item("tank_steel"))
+                .define('L', Items.LEATHER)
+                .define('D', item("thruster_small"))
+                .unlockedBy("has_thruster_small", has(item("thruster_small")))
+                .save(consumer, id("armor_modules/jetpack_fly"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.JETPACK_BREAK.get())
+                .pattern("ICI")
+                .pattern("TJT")
+                .pattern("I I")
+                .define('I', item("plate_polymer"))
+                .define('C', basicCircuit)
+                .define('T', item("ingot_dura_steel"))
+                .define('J', ModItems.JETPACK_FLY.get())
+                .unlockedBy("has_jetpack_fly", has(ModItems.JETPACK_FLY.get()))
+                .save(consumer, id("armor_modules/jetpack_break"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.JETPACK_VECTOR.get())
+                .pattern("TCT")
+                .pattern("MJM")
+                .pattern("B B")
+                .define('T', item("tank_steel"))
+                .define('C', advancedCircuit)
+                .define('M', ModItems.MOTOR.get())
+                .define('J', ModItems.JETPACK_BREAK.get())
+                .define('B', forgeTag("bolts/dura_steel"))
+                .unlockedBy("has_jetpack_break", has(ModItems.JETPACK_BREAK.get()))
+                .save(consumer, id("armor_modules/jetpack_vector"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.JETPACK_BOOST.get())
+                .pattern("PCP")
+                .pattern("DJD")
+                .pattern("PAP")
+                .define('P', forgeTag("plates/saturnite"))
+                .define('C', advancedCircuit)
+                .define('D', forgeTag("ingots/desh"))
+                .define('J', ModItems.JETPACK_VECTOR.get())
+                .define('A', forgeTag("cast_plates/copper"))
+                .unlockedBy("has_jetpack_vector", has(ModItems.JETPACK_VECTOR.get()))
+                .save(consumer, id("armor_modules/jetpack_boost"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.HORSESHOE_MAGNET.get())
+                .pattern("L L")
+                .pattern("I I")
+                .pattern("ILI")
+                .define('L', ModItems.LODESTONE.get())
+                .define('I', forgeTag("ingots/iron"))
+                .unlockedBy("has_lodestone", has(ModItems.LODESTONE.get()))
+                .save(consumer, id("armor_modules/horseshoe_magnet"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INDUSTRIAL_MAGNET.get())
+                .pattern("SMS")
+                .pattern(" B ")
+                .pattern("SMS")
+                .define('S', forgeTag("ingots/steel"))
+                .define('M', ModItems.HORSESHOE_MAGNET.get())
+                .define('B', denseMingradeWire)
+                .unlockedBy("has_horseshoe_magnet", has(ModItems.HORSESHOE_MAGNET.get()))
+                .save(consumer, id("armor_modules/industrial_magnet"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.BATHWATER_MK2.get())
+                .pattern("MWM")
+                .pattern("WBW")
+                .pattern("MWM")
+                .define('M', ModItems.BOTTLE_MERCURY.get())
+                .define('W', item("nuclear_waste"))
+                .define('B', ModItems.BATHWATER.get())
+                .unlockedBy("has_bathwater", has(ModItems.BATHWATER.get()))
+                .save(consumer, id("armor_modules/bathwater_mk2"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.MEDAL_LIQUIDATOR.get())
+                .pattern("GBG")
+                .pattern("BFB")
+                .pattern("GBG")
+                .define('G', forgeTag("nuggets/au198"))
+                .define('B', forgeTag("ingots/boron"))
+                .define('F', item("debris_fuel"))
+                .unlockedBy("has_debris_fuel", has(item("debris_fuel")))
+                .save(consumer, id("armor_modules/medal_liquidator"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.BLACK_DIAMOND.get())
+                .pattern("NIN")
+                .pattern("IGI")
+                .pattern("NIN")
+                .define('N', forgeTag("nuggets/au198"))
+                .define('I', ModItems.INK.get())
+                .define('G', forgeTag("gems/volcanic"))
+                .unlockedBy("has_volcanic_gem", has(forgeTag("gems/volcanic")))
+                .save(consumer, id("armor_modules/black_diamond"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.PROTECTION_CHARM.get())
+                .pattern(" M ")
+                .pattern("MDM")
+                .pattern(" M ")
+                .define('M', item("fragment_meteorite"))
+                .define('D', Items.DIAMOND)
+                .unlockedBy("has_meteorite_fragment", has(item("fragment_meteorite")))
+                .save(consumer, id("armor_modules/protection_charm"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.METEOR_CHARM.get())
+                .pattern(" M ")
+                .pattern("MDM")
+                .pattern(" M ")
+                .define('M', item("fragment_meteorite"))
+                .define('D', forgeTag("gems/volcanic"))
+                .unlockedBy("has_meteorite_fragment", has(item("fragment_meteorite")))
+                .save(consumer, id("armor_modules/meteor_charm"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, ModItems.INJECTOR_5HTP.get())
+                .requires(ModItems.FIVE_HTP.get())
+                .requires(basicCircuit)
+                .requires(forgeTag("plates/saturnite"))
+                .unlockedBy("has_five_htp", has(ModItems.FIVE_HTP.get()))
+                .save(consumer, id("armor_modules/injector_5htp"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, ModItems.INJECTOR_KNIFE.get())
+                .requires(ModItems.INJECTOR_5HTP.get())
+                .requires(Items.IRON_SWORD)
+                .unlockedBy("has_injector_5htp", has(ModItems.INJECTOR_5HTP.get()))
+                .save(consumer, id("armor_modules/injector_knife"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.GAS_TESTER.get())
+                .pattern("G")
+                .pattern("C")
+                .pattern("I")
+                .define('G', forgeTag("plates/gold"))
+                .define('C', vacuumTube)
+                .define('I', forgeTag("plates/iron"))
+                .unlockedBy("has_vacuum_tube", has(vacuumTube))
+                .save(consumer, id("armor_modules/gas_tester"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.DEFUSER_GOLD.get())
+                .pattern("GPG")
+                .pattern("PRP")
+                .pattern("GPG")
+                .define('G', Items.GUNPOWDER)
+                .define('P', forgeTag("plates/gold"))
+                .define('R', vanillaTag("music_discs"))
+                .unlockedBy("has_music_disc", has(vanillaTag("music_discs")))
+                .save(consumer, id("armor_modules/defuser_gold"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.BALLISTIC_GAUNTLET.get())
+                .pattern(" WS")
+                .pattern("WRS")
+                .pattern(" RS")
+                .define('W', fineCopperWire)
+                .define('R', item("ring_starmetal"))
+                .define('S', forgeTag("plates/steel"))
+                .unlockedBy("has_starmetal_ring", has(item("ring_starmetal")))
+                .save(consumer, id("armor_modules/ballistic_gauntlet"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.NEUTRINO_LENS.get())
+                .pattern("PSP")
+                .pattern("SCS")
+                .pattern("PSP")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('S', forgeTag("ingots/starmetal"))
+                .define('C', bismoidCircuit)
+                .unlockedBy("has_starmetal_ingot", has(forgeTag("ingots/starmetal")))
+                .save(consumer, id("armor_modules/neutrino_lens"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.NIGHT_VISION.get())
+                .pattern("P P")
+                .pattern("GCG")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('G', forgeTag("glass"))
+                .define('C', basicCircuit)
+                .unlockedBy("has_basic_circuit", has(basicCircuit))
+                .save(consumer, id("armor_modules/night_vision"));
     }
 
     private static void legacyPartRecipes(Consumer<FinishedRecipe> consumer) {
@@ -741,6 +2086,26 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .sourceOrder(42)
                 .save(consumer, id("chemical_plant/epearl"));
 
+        GenericMachineRecipeBuilder.chemical("chem.meth", 60, 300)
+                .inputItem(Items.WHEAT, 1)
+                .inputItem(Items.COCOA_BEANS, 2)
+                .inputFluid(HbmFluids.LUBRICANT, 400)
+                .inputFluid(HbmFluids.PEROXIDE, 500)
+                .outputItem(new ItemStack(item("chocolate"), 4))
+                .sourceOrder(41)
+                .save(consumer, id("chemical_plant/meth"));
+
+        GenericMachineRecipeBuilder.chemical("chem.meatprocessing", 200, 200)
+                .inputLegacyOre("glyphidMeat", 3)
+                .inputFluid(HbmFluids.WATER, 1_000)
+                .outputItem(new ItemStack(item("sulfur"), 4))
+                .outputItem(new ItemStack(item("niter"), 3))
+                .outputFluid(HbmFluids.SALIENT, 250)
+                .icon(item("glyphid_meat"))
+                .customLocalization()
+                .sourceOrder(43)
+                .save(consumer, id("chemical_plant/meat_processing"));
+
         GenericMachineRecipeBuilder.chemical("chem.rustysteel", 40, 100)
                 .inputItem(block("deco_steel"), 8)
                 .inputFluid(HbmFluids.WATER, 1_000)
@@ -748,14 +2113,43 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .sourceOrder(44)
                 .save(consumer, id("chemical_plant/rustysteel"));
 
+        GenericMachineRecipeBuilder.chemical("chem.coltancleaning", 60, 100)
+                .inputLegacyOre("dustColtan", 2)
+                .inputLegacyOre("dustCoal", 1)
+                .inputFluid(HbmFluids.PEROXIDE, 250)
+                .inputFluid(HbmFluids.HYDROGEN, 500)
+                .outputItem(item("powder_coltan"))
+                .outputItem(item("powder_niobium"))
+                .outputItem(item("dust"))
+                .outputFluid(HbmFluids.WATER, 500)
+                .sourceOrder(55)
+                .save(consumer, id("chemical_plant/coltan_cleaning"));
+
         GenericMachineRecipeBuilder.chemical("chem.coltanpain", 120, 100)
-                .inputItem(item("powder_coltan_ore"), 1)
+                .inputItem(item("powder_coltan"), 1)
                 .inputLegacyOre("dustFluorite", 1)
                 .inputFluid(HbmFluids.GAS, 1_000)
                 .inputFluid(HbmFluids.OXYGEN, 500)
                 .outputFluid(HbmFluids.PAIN, 1_000)
                 .sourceOrder(56)
                 .save(consumer, id("chemical_plant/coltanpain"));
+
+        GenericMachineRecipeBuilder.chemical("chem.coltancrystal", 80, 100)
+                .inputFluid(HbmFluids.PAIN, 1_000)
+                .inputFluid(HbmFluids.PEROXIDE, 500)
+                .outputItem(item("gem_tantalium"))
+                .outputItem(new ItemStack(item("dust"), 3))
+                .outputFluid(HbmFluids.WATER, 250)
+                .sourceOrder(57)
+                .save(consumer, id("chemical_plant/coltan_crystal"));
+
+        GenericMachineRecipeBuilder.chemical("chem.cordite", 40, 100)
+                .inputLegacyOre("dustSaltpeter", 2)
+                .inputItem(item("powder_sawdust"), 2)
+                .inputFluid(HbmFluids.GAS, 200)
+                .outputItem(new ItemStack(item("cordite"), 4))
+                .sourceOrder(58)
+                .save(consumer, id("chemical_plant/cordite"));
 
         GenericMachineRecipeBuilder.chemical("chem.rocketfuel", 200, 100)
                 .inputItem(item("solid_fuel"), 2)
@@ -764,6 +2158,36 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(new ItemStack(item("rocket_fuel"), 4))
                 .sourceOrder(59)
                 .save(consumer, id("chemical_plant/rocketfuel"));
+
+        GenericMachineRecipeBuilder.chemical("chem.dynamite", 50, 100)
+                .inputItem(Items.SUGAR, 1)
+                .inputLegacyOre("dustSaltpeter", 1)
+                .inputLegacyOre("sand", 1)
+                .outputItem(new ItemStack(item("ball_dynamite"), 2))
+                .sourceOrder(60)
+                .save(consumer, id("chemical_plant/dynamite"));
+
+        GenericMachineRecipeBuilder.chemical("chem.tnt", 100, 1_000)
+                .inputLegacyOre("dustSaltpeter", 1)
+                .inputFluid(HbmFluids.AROMATICS, 500)
+                .outputItem(new ItemStack(item("ball_tnt"), 4))
+                .sourceOrder(61)
+                .save(consumer, id("chemical_plant/tnt"));
+
+        GenericMachineRecipeBuilder.chemical("chem.tatb", 50, 5_000)
+                .inputItem(item("ball_tnt"), 1)
+                .inputFluid(HbmFluids.SOURGAS, 200, 1)
+                .inputFluid(HbmFluids.NITRIC_ACID, 10)
+                .outputItem(item("ball_tatb"))
+                .sourceOrder(62)
+                .save(consumer, id("chemical_plant/tatb"));
+
+        GenericMachineRecipeBuilder.chemical("chem.c4", 100, 1_000)
+                .inputLegacyOre("dustSaltpeter", 1)
+                .inputFluid(HbmFluids.UNSATURATEDS, 500)
+                .outputItem(new ItemStack(item("ingot_c4"), 4))
+                .sourceOrder(63)
+                .save(consumer, id("chemical_plant/c4"));
 
         GenericMachineRecipeBuilder.chemical("chem.napalm", 40, 100)
                 .inputItem(ModItems.CANISTER_EMPTY.get(), 1)
@@ -812,6 +2236,14 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputFluid(HbmFluids.SAS3, 1_000)
                 .sourceOrder(70)
                 .save(consumer, id("chemical_plant/sas3"));
+
+        GenericMachineRecipeBuilder.chemical("chem.balefire", 100, 10_000)
+                .inputItem(item("egg_balefire_shard"), 1)
+                .inputFluid(HbmFluids.KEROSENE, 6_000)
+                .outputItem(item("powder_balefire"))
+                .outputFluid(HbmFluids.BALEFIRE, 8_000)
+                .sourceOrder(71)
+                .save(consumer, id("chemical_plant/balefire"));
 
         GenericMachineRecipeBuilder.chemical("chem.dhc", 400, 500)
                 .inputFluid(HbmFluids.DEUTERIUM, 500)
@@ -1956,6 +3388,36 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2, 1)
                 .outputItem(ModItems.SAT_LUNAR_MINER.get())
                 .save(consumer, id("assembly_machine/satellite_lunar_miner"));
+
+        GenericMachineRecipeBuilder.arcWelder("arc.satellitemapper", 600, 10_000)
+                .inputItem(item("sat_base"), 1)
+                .inputItem(item("sat_head_mapper"), 1)
+                .outputItem(ModItems.SAT_MAPPER.get())
+                .save(consumer, id("arc_welder/satellite_mapper"));
+
+        GenericMachineRecipeBuilder.arcWelder("arc.satellitescanner", 600, 10_000)
+                .inputItem(item("sat_base"), 1)
+                .inputItem(item("sat_head_scanner"), 1)
+                .outputItem(ModItems.SAT_SCANNER.get())
+                .save(consumer, id("arc_welder/satellite_scanner"));
+
+        GenericMachineRecipeBuilder.arcWelder("arc.satelliteradar", 600, 10_000)
+                .inputItem(item("sat_base"), 1)
+                .inputItem(item("sat_head_radar"), 1)
+                .outputItem(ModItems.SAT_RADAR.get())
+                .save(consumer, id("arc_welder/satellite_radar"));
+
+        GenericMachineRecipeBuilder.arcWelder("arc.satellitelaser", 600, 50_000)
+                .inputItem(item("sat_base"), 1)
+                .inputItem(item("sat_head_laser"), 1)
+                .outputItem(ModItems.SAT_LASER.get())
+                .save(consumer, id("arc_welder/satellite_laser"));
+
+        GenericMachineRecipeBuilder.arcWelder("arc.satelliteresonator", 600, 50_000)
+                .inputItem(item("sat_base"), 1)
+                .inputItem(item("sat_head_resonator"), 1)
+                .outputItem(ModItems.SAT_RESONATOR.get())
+                .save(consumer, id("arc_welder/satellite_resonator"));
     }
 
     private static void fluidContainerRecipes(Consumer<FinishedRecipe> consumer) {
@@ -2428,6 +3890,10 @@ public final class HbmRecipeProvider extends RecipeProvider {
         return HbmItemTagsProvider.forgeItemTag(path);
     }
 
+    private static TagKey<Item> vanillaTag(String path) {
+        return TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", path));
+    }
+
     private static final class GenericMachineRecipeBuilder {
         private final ResourceLocation serializerId;
         private final GenericMachineRecipe.Machine machine;
@@ -2476,6 +3942,11 @@ public final class HbmRecipeProvider extends RecipeProvider {
         private static GenericMachineRecipeBuilder precass(String internalName, int duration, long power) {
             return new GenericMachineRecipeBuilder(GenericMachineRecipe.Machine.PRECASS,
                     id("precass"), internalName, duration, power);
+        }
+
+        private static GenericMachineRecipeBuilder arcWelder(String internalName, int duration, long power) {
+            return new GenericMachineRecipeBuilder(GenericMachineRecipe.Machine.ARC_WELDER,
+                    id("arc_welder"), internalName, duration, power);
         }
 
         private GenericMachineRecipeBuilder inputItem(ItemLike item, int count) {

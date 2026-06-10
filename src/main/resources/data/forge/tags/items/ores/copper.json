@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "hbm_ntm_rebirth:ore_copper"
+    "hbm_ntm_rebirth:ore_copper",
+    "hbm_ntm_rebirth:ore_gneiss_copper"
   ]
 }

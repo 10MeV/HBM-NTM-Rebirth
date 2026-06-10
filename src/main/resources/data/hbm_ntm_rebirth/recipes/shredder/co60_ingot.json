@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "tag": "forge:ingots/co60" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_co60" }
+}

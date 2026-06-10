@@ -4,6 +4,7 @@ import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.armor.ArmorModItem;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
@@ -102,11 +103,7 @@ public class ArmorTableMenu extends AbstractContainerMenu {
             return ItemStack.EMPTY;
         }
 
-        if (stack.isEmpty()) {
-            slot.set(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
+        HbmInventoryMenuHelper.finishQuickMove(slot, stack);
         return result;
     }
 

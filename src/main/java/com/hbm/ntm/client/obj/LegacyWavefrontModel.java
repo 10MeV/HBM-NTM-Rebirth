@@ -44,11 +44,18 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
     private boolean smoothing = true;
     private boolean loaded;
     private boolean failed;
+    private boolean mixedMode;
+    private boolean vboRequested;
     private LegacyWavefrontModel vboView;
 
     public LegacyWavefrontModel(ResourceLocation modelLocation, ResourceLocation textureLocation) {
+        this(modelLocation, textureLocation, false);
+    }
+
+    public LegacyWavefrontModel(ResourceLocation modelLocation, ResourceLocation textureLocation, boolean mixedMode) {
         this.modelLocation = modelLocation;
         this.textureLocation = textureLocation;
+        this.mixedMode = mixedMode;
         synchronized (ALL_MODELS) {
             ALL_MODELS.add(this);
         }
@@ -56,6 +63,10 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     public LegacyWavefrontModel(ResourceLocation modelLocation) {
         this(modelLocation, InventoryMenu.BLOCK_ATLAS);
+    }
+
+    public LegacyWavefrontModel(ResourceLocation modelLocation, boolean mixedMode) {
+        this(modelLocation, InventoryMenu.BLOCK_ATLAS, mixedMode);
     }
 
     public ResourceLocation modelLocation() {
@@ -73,11 +84,13 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     @Override
     public synchronized LegacyWavefrontModel mixedMode() {
+        this.mixedMode = true;
         return this;
     }
 
     @Override
     public synchronized LegacyWavefrontModel asVBO() {
+        this.vboRequested = true;
         if (vboView == null) {
             vboView = this;
         }
@@ -669,6 +682,79 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         return !failed && groups.containsKey(normalize(name));
     }
 
+    public synchronized boolean isLoaded() {
+        return loaded;
+    }
+
+    public synchronized boolean hasFailed() {
+        ensureLoaded();
+        return failed;
+    }
+
+    public synchronized boolean smoothingEnabled() {
+        return smoothing;
+    }
+
+    public synchronized boolean mixedModeEnabled() {
+        return mixedMode;
+    }
+
+    public synchronized boolean vboRequested() {
+        return vboRequested;
+    }
+
+    public synchronized SelectionPlan renderAllPlan() {
+        return selectionPlan(SelectionMode.ALL);
+    }
+
+    public synchronized SelectionPlan renderOnlyPlan(String... groupNames) {
+        return selectionPlan(SelectionMode.ONLY, groupNames);
+    }
+
+    public synchronized SelectionPlan renderPartPlan(String partName) {
+        return selectionPlan(SelectionMode.PART, partName);
+    }
+
+    public synchronized SelectionPlan renderAllExceptPlan(String... excludedGroupNames) {
+        return selectionPlan(SelectionMode.ALL_EXCEPT, excludedGroupNames);
+    }
+
+    public synchronized SelectionPlan tessellateAllPlan() {
+        return selectionPlan(SelectionMode.TESSELLATE_ALL);
+    }
+
+    public synchronized SelectionPlan tessellateOnlyPlan(String... groupNames) {
+        return selectionPlan(SelectionMode.TESSELLATE_ONLY, groupNames);
+    }
+
+    public synchronized SelectionPlan tessellatePartPlan(String partName) {
+        return selectionPlan(SelectionMode.TESSELLATE_PART, partName);
+    }
+
+    public synchronized SelectionPlan tessellateAllExceptPlan(String... excludedGroupNames) {
+        return selectionPlan(SelectionMode.TESSELLATE_ALL_EXCEPT, excludedGroupNames);
+    }
+
+    public synchronized SelectionPlan selectionPlan(SelectionMode mode, String... groupNames) {
+        ensureLoaded();
+        List<String> requested = requestedNames(groupNames);
+        if (failed) {
+            return new SelectionPlan(modelLocation, textureLocation, mode, requested, List.of(), requested,
+                    emptyBounds(), loaded, true, smoothing, mixedMode, vboRequested, mixedMode && mode.directRender());
+        }
+
+        Set<String> requestedKeys = normalizedSet(groupNames);
+        List<Group> selectedGroups = switch (mode) {
+            case ALL, TESSELLATE_ALL -> List.copyOf(groupOrder);
+            case ONLY, PART, TESSELLATE_ONLY, TESSELLATE_PART -> selectedOnly(requestedKeys);
+            case ALL_EXCEPT, TESSELLATE_ALL_EXCEPT -> selectedAllExcept(requestedKeys);
+        };
+        List<String> missing = missingRequested(requested, requestedKeys);
+        return new SelectionPlan(modelLocation, textureLocation, mode, requested,
+                selectedGroups.stream().map(Group::name).toList(), missing, selectedBounds(selectedGroups),
+                loaded, false, smoothing, mixedMode, vboRequested, mixedMode && mode.directRender());
+    }
+
     public synchronized AABB boundsAll() {
         ensureLoaded();
         if (failed) {
@@ -1067,6 +1153,9 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     private static Set<String> normalizedSet(String... names) {
         Set<String> normalized = new LinkedHashSet<>();
+        if (names == null) {
+            return normalized;
+        }
         for (String name : names) {
             normalized.add(normalize(name));
         }
@@ -1155,6 +1244,66 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
         HbmNtm.LOGGER.warn("Legacy OBJ model {} has no group '{}'. Known groups: {}", modelLocation, partName, getPartNames());
     }
 
+    private List<Group> selectedOnly(Set<String> included) {
+        List<Group> selected = new ArrayList<>();
+        for (Group group : groupOrder) {
+            if (included.contains(normalize(group.name()))) {
+                selected.add(group);
+            }
+        }
+        return selected;
+    }
+
+    private List<Group> selectedAllExcept(Set<String> excluded) {
+        List<Group> selected = new ArrayList<>();
+        for (Group group : groupOrder) {
+            if (!excluded.contains(normalize(group.name()))) {
+                selected.add(group);
+            }
+        }
+        return selected;
+    }
+
+    private List<String> missingRequested(List<String> requested, Set<String> requestedKeys) {
+        if (requestedKeys.isEmpty()) {
+            return List.of();
+        }
+        Set<String> found = new LinkedHashSet<>();
+        for (Group group : groupOrder) {
+            String key = normalize(group.name());
+            if (requestedKeys.contains(key)) {
+                found.add(key);
+            }
+        }
+        List<String> missing = new ArrayList<>();
+        for (String name : requested) {
+            String key = normalize(name);
+            if (!key.isEmpty() && !found.contains(key)) {
+                missing.add(name);
+            }
+        }
+        return List.copyOf(missing);
+    }
+
+    private static List<String> requestedNames(String... names) {
+        if (names == null || names.length == 0) {
+            return List.of();
+        }
+        List<String> requested = new ArrayList<>(names.length);
+        for (String name : names) {
+            requested.add(name);
+        }
+        return List.copyOf(requested);
+    }
+
+    private static AABB selectedBounds(List<Group> selectedGroups) {
+        return selectedGroups.isEmpty() ? emptyBounds() : boundsOf(selectedGroups);
+    }
+
+    private static AABB emptyBounds() {
+        return new AABB(0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
+    }
+
     private static AABB boundsOf(List<Group> groups) {
         double minX = Double.POSITIVE_INFINITY;
         double minY = Double.POSITIVE_INFINITY;
@@ -1193,10 +1342,46 @@ public final class LegacyWavefrontModel implements LegacyObjModel {
 
     private static float legacyObjUtilShadowFactor(Matrix3f normalMatrix, Vector3f faceNormal, boolean partBrightness) {
         Vector3f transformed = new Vector3f(faceNormal).mul(normalMatrix);
-        float brightness = partBrightness
-                ? transformed.y() * 0.3F + 0.7F - Math.abs(transformed.x()) * 0.1F + Math.abs(transformed.z()) * 0.1F
-                : (transformed.y() + 0.7F) * 0.9F - Math.abs(transformed.x()) * 0.1F + Math.abs(transformed.z()) * 0.1F;
-        return Math.max(0.45F, brightness);
+        return partBrightness
+                ? LegacyObjTransforms.objUtilPartShadowFactor(transformed)
+                : LegacyObjTransforms.objUtilAllShadowFactor(transformed);
+    }
+
+    public enum SelectionMode {
+        ALL(true),
+        ONLY(true),
+        PART(true),
+        ALL_EXCEPT(true),
+        TESSELLATE_ALL(false),
+        TESSELLATE_ONLY(false),
+        TESSELLATE_PART(false),
+        TESSELLATE_ALL_EXCEPT(false);
+
+        private final boolean directRender;
+
+        SelectionMode(boolean directRender) {
+            this.directRender = directRender;
+        }
+
+        public boolean directRender() {
+            return directRender;
+        }
+    }
+
+    public record SelectionPlan(
+            ResourceLocation modelLocation,
+            ResourceLocation textureLocation,
+            SelectionMode mode,
+            List<String> requestedParts,
+            List<String> selectedParts,
+            List<String> missingParts,
+            AABB selectedBounds,
+            boolean loaded,
+            boolean failed,
+            boolean smoothing,
+            boolean mixedMode,
+            boolean vboRequested,
+            boolean mixedModeDirectRenderUnsupported) {
     }
 
     private record Group(String name, List<Face> faces) {

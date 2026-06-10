@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class HbmNetworkNode {
@@ -40,6 +41,7 @@ public class HbmNetworkNode {
         this.connections = this.connectionPoints.stream()
                 .filter(connection -> !connection.direct())
                 .map(NodeConnection::direction)
+                .filter(Objects::nonNull)
                 .collect(() -> EnumSet.noneOf(Direction.class), EnumSet::add, EnumSet::addAll);
     }
 
@@ -140,11 +142,16 @@ public class HbmNetworkNode {
             this(pos, direction, false, null);
         }
 
+        public static NodeConnection point(BlockPos pos) {
+            return new NodeConnection(pos, null, false, null);
+        }
+
         public static NodeConnection direct(BlockPos target, BlockPos origin) {
             return new NodeConnection(target, Direction.UP, true, origin);
         }
 
         public NodeConnection {
+            Objects.requireNonNull(pos, "pos");
             pos = pos.immutable();
             if (directOrigin != null) {
                 directOrigin = directOrigin.immutable();
@@ -158,6 +165,9 @@ public class HbmNetworkNode {
                         && incoming.directOrigin() != null
                         && pos.equals(incoming.directOrigin())
                         && directOrigin.equals(incoming.pos());
+            }
+            if (direction == null || incoming.direction() == null) {
+                return direction == null && incoming.direction() == null && pos.equals(incoming.pos());
             }
             return pos.relative(direction.getOpposite()).equals(incoming.pos())
                     && direction == incoming.direction().getOpposite();

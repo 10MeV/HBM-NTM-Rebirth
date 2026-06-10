@@ -54,6 +54,7 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
         }
         tower.inputTank.setTankType(HbmFluids.SPENTSTEAM);
         tower.outputTank.setTankType(HbmFluids.WATER);
+        tower.normalizeConfigCapacity();
 
         int convert = Math.min(tower.inputTank.getFill(), tower.outputTank.getSpace());
         tower.throughput = convert;
@@ -197,10 +198,20 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        normalizeConfigCapacity();
         age = Math.floorMod(tag.getInt("age"), 2);
         waterTimer = Math.max(0, tag.getInt("waterTimer"));
         throughput = Math.max(0, tag.getInt("throughput"));
     }
+
+    protected void normalizeConfigCapacity() {
+        inputTank.changeTankSize(configuredInputCapacity());
+        outputTank.changeTankSize(configuredOutputCapacity());
+    }
+
+    protected abstract int configuredInputCapacity();
+
+    protected abstract int configuredOutputCapacity();
 
     protected abstract Iterable<FluidPort> ports();
 

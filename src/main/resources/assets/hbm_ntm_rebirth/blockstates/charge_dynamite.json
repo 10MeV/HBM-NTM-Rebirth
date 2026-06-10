@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": { "model": "hbm_ntm_rebirth:block/charge_dynamite" },
+    "facing=up": { "model": "hbm_ntm_rebirth:block/charge_dynamite" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/charge_dynamite" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/charge_dynamite" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/charge_dynamite" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/charge_dynamite" }
+  }
+}

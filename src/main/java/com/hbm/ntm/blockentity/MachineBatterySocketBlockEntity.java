@@ -19,11 +19,11 @@ import com.hbm.ntm.energy.HbmEnergyProvider;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
-import com.hbm.ntm.energy.HbmNetworkNode;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import com.hbm.ntm.menu.MachineBatterySocketMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.world.DirPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -49,8 +49,10 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -382,7 +384,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         for (BlockPos offset : MachineBatterySocketBlock.socketOffsets(facing)) {
             positions.add(worldPosition.offset(offset));
         }
-        Set<HbmNetworkNode.NodeConnection> connections = new LinkedHashSet<>();
+        List<DirPos> connections = new ArrayList<>();
         Direction rot = facing.getClockWise();
         addConnection(connections, facing, facing);
         addConnection(connections, facing, rot, facing);
@@ -392,7 +394,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         addConnection(connections, rot, rot, facing.getOpposite(), 2);
         addConnection(connections, rot.getOpposite(), rot.getOpposite());
         addConnection(connections, rot.getOpposite(), rot.getOpposite(), facing.getOpposite());
-        return HbmEnergyNode.withConnectionPoints(positions, connections);
+        return HbmEnergyNode.withLegacyConnectionPoints(positions, connections);
     }
 
     private void handleModeTransition(int currentMode) {
@@ -427,20 +429,20 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         return state.hasProperty(MachineBatterySocketBlock.FACING) ? state.getValue(MachineBatterySocketBlock.FACING) : Direction.SOUTH;
     }
 
-    private void addConnection(Set<HbmNetworkNode.NodeConnection> connections, Direction direction, Direction offset) {
-        connections.add(new HbmNetworkNode.NodeConnection(worldPosition.relative(offset), direction));
+    private void addConnection(List<DirPos> connections, Direction direction, Direction offset) {
+        connections.add(new DirPos(worldPosition.relative(offset), direction));
     }
 
-    private void addConnection(Set<HbmNetworkNode.NodeConnection> connections, Direction direction, Direction offsetA, Direction offsetB) {
-        connections.add(new HbmNetworkNode.NodeConnection(worldPosition.relative(offsetA).relative(offsetB), direction));
+    private void addConnection(List<DirPos> connections, Direction direction, Direction offsetA, Direction offsetB) {
+        connections.add(new DirPos(worldPosition.relative(offsetA).relative(offsetB), direction));
     }
 
-    private void addConnection(Set<HbmNetworkNode.NodeConnection> connections, Direction direction, Direction offset, int distance) {
-        connections.add(new HbmNetworkNode.NodeConnection(worldPosition.relative(offset, distance), direction));
+    private void addConnection(List<DirPos> connections, Direction direction, Direction offset, int distance) {
+        connections.add(new DirPos(worldPosition.relative(offset, distance), direction));
     }
 
-    private void addConnection(Set<HbmNetworkNode.NodeConnection> connections, Direction direction, Direction offsetA, Direction offsetB, int distanceA) {
-        connections.add(new HbmNetworkNode.NodeConnection(worldPosition.relative(offsetA, distanceA).relative(offsetB), direction));
+    private void addConnection(List<DirPos> connections, Direction direction, Direction offsetA, Direction offsetB, int distanceA) {
+        connections.add(new DirPos(worldPosition.relative(offsetA, distanceA).relative(offsetB), direction));
     }
 
     private void updatePowerLog(long previousPower) {

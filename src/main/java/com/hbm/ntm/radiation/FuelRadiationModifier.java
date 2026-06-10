@@ -1,5 +1,6 @@
 package com.hbm.ntm.radiation;
 
+import com.hbm.ntm.item.ZirnoxRodItem;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
@@ -12,10 +13,12 @@ public class FuelRadiationModifier implements HazardModifier {
 
     @Override
     public float modify(ItemStack stack, LivingEntity holder, float level) {
-        if (!stack.isDamageableItem() || stack.getMaxDamage() <= 0) {
+        int maxDamage = stack.getMaxDamage();
+        if (maxDamage <= 0) {
             return level;
         }
-        double depletion = Math.pow((double) stack.getDamageValue() / stack.getMaxDamage(), 0.4D);
+        int life = stack.getItem() instanceof ZirnoxRodItem ? ZirnoxRodItem.getLifeTime(stack) : stack.getDamageValue();
+        double depletion = Math.pow((double) life / (double) maxDamage, 0.4D);
         return (float) (level + (target - level) * depletion);
     }
 }

@@ -3,12 +3,12 @@ package com.hbm.ntm.menu;
 import com.hbm.ntm.blockentity.CustomNukeBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmMenuDataSlots;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -57,17 +57,8 @@ public class CustomNukeMenu extends AbstractContainerMenu {
 
         for (int i = 0; i < StatsData.COUNT; i++) {
             final int index = i;
-            addDataSlot(new DataSlot() {
-                @Override
-                public int get() {
-                    return statsData.get(index);
-                }
-
-                @Override
-                public void set(int value) {
-                    statsData.set(index, value);
-                }
-            });
+            HbmMenuDataSlots.addInt(this::addDataSlot, () -> statsData.get(index),
+                    value -> statsData.set(index, value));
         }
     }
 

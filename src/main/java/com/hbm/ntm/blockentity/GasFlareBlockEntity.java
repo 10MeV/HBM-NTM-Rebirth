@@ -11,6 +11,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -74,11 +75,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(
             UpgradeType.SPEED, 3,
             UpgradeType.EFFECT, 3);
-    private static final List<FluidPort> FLUID_PORTS = List.of(
-            FluidPort.of(2, 0, 0, Direction.EAST),
-            FluidPort.of(-2, 0, 0, Direction.WEST),
-            FluidPort.of(0, 0, 2, Direction.SOUTH),
-            FluidPort.of(0, 0, -2, Direction.NORTH));
+    private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.cardinal(2);
     private static final List<EnergyPort> ENERGY_PORTS = List.of(
             EnergyPort.of(2, 0, 0, Direction.EAST),
             EnergyPort.of(-2, 0, 0, Direction.WEST),

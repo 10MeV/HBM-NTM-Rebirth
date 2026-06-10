@@ -1,0 +1,21 @@
+{
+  "parent": "hbm_ntm_rebirth:block/det_cord_part",
+  "textures": {
+    "cord": "hbm_ntm_rebirth:block/det_cord",
+    "particle": "hbm_ntm_rebirth:block/det_cord"
+  },
+  "elements": [
+    {
+      "from": [6, 6, 6],
+      "to": [10, 10, 10],
+      "faces": {
+        "down": { "texture": "#cord" },
+        "up": { "texture": "#cord" },
+        "north": { "texture": "#cord" },
+        "south": { "texture": "#cord" },
+        "west": { "texture": "#cord" },
+        "east": { "texture": "#cord" }
+      }
+    }
+  ]
+}

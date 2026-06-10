@@ -346,6 +346,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
             case CHEMICAL_PLANT -> new ItemStack(ModBlocks.MACHINE_CHEMICAL_PLANT.get());
             case PUREX -> new ItemStack(ModBlocks.MACHINE_PUREX.get());
             case PRECASS -> new ItemStack(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get());
+            case ARC_WELDER -> new ItemStack(ModBlocks.MACHINE_ARC_WELDER.get());
         };
     }
 
@@ -373,7 +374,8 @@ public class GenericMachineRecipe implements Recipe<Container> {
         CHEMICAL_PLANT(3, 3, 3, 3),
         ASSEMBLY_MACHINE(12, 1, 1, 1),
         PUREX(3, 3, 6, 1),
-        PRECASS(9, 1, 9, 1);
+        PRECASS(9, 1, 9, 1),
+        ARC_WELDER(3, 1, 1, 0);
 
         private final int inputItemLimit;
         private final int inputFluidLimit;
@@ -409,6 +411,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
                 case ASSEMBLY_MACHINE -> ModRecipes.ASSEMBLY_MACHINE.serializer().getId();
                 case PUREX -> ModRecipes.PUREX.serializer().getId();
                 case PRECASS -> ModRecipes.PRECASS.serializer().getId();
+                case ARC_WELDER -> ModRecipes.ARC_WELDER.serializer().getId();
             };
         }
 
@@ -425,6 +428,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
                 case ASSEMBLY_MACHINE -> ModRecipes.ASSEMBLY_MACHINE.type().get();
                 case PUREX -> ModRecipes.PUREX.type().get();
                 case PRECASS -> ModRecipes.PRECASS.type().get();
+                case ARC_WELDER -> ModRecipes.ARC_WELDER.type().get();
             };
         }
 
@@ -434,6 +438,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
                 case ASSEMBLY_MACHINE -> ModRecipes.ASSEMBLY_MACHINE.serializer().get();
                 case PUREX -> ModRecipes.PUREX.serializer().get();
                 case PRECASS -> ModRecipes.PRECASS.serializer().get();
+                case ARC_WELDER -> ModRecipes.ARC_WELDER.serializer().get();
             };
         }
 

@@ -291,13 +291,27 @@ public final class ObjMissilePartModels {
     public static void renderMissile(LegacyMissilePart thruster, LegacyMissilePart fins, LegacyMissilePart fuselage,
             LegacyMissilePart warhead, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        for (MissileRenderStep step : missileSteps(thruster, fins, fuselage, warhead)) {
+        for (MissileRenderStep step : missileRenderPlan(thruster, fins, fuselage, warhead).steps()) {
             step.part().render(poseStack, buffer, packedLight, packedOverlay);
             if (step.translateAfterY() != 0.0D) {
                 poseStack.translate(0.0D, step.translateAfterY(), 0.0D);
             }
         }
         poseStack.popPose();
+    }
+
+    public static MissileRenderPlan missileRenderPlan(LegacyMissilePart thruster, LegacyMissilePart fins,
+            LegacyMissilePart fuselage, LegacyMissilePart warhead) {
+        List<MissileRenderStep> steps = missileSteps(thruster, fins, fuselage, warhead);
+        return new MissileRenderPlan(
+                isKind(thruster, PartKind.THRUSTER),
+                isKind(fins, PartKind.FINS),
+                isKind(fuselage, PartKind.FUSELAGE),
+                isKind(warhead, PartKind.WARHEAD),
+                missileHeight(thruster, fuselage, warhead),
+                stackedRenderHeight(steps),
+                steps,
+                missilePlacementSteps(steps));
     }
 
     public static List<MissileRenderStep> missileSteps(LegacyMissilePart thruster, LegacyMissilePart fins,
@@ -316,6 +330,44 @@ public final class ObjMissilePartModels {
             steps.add(new MissileRenderStep(warhead, 0.0D));
         }
         return Collections.unmodifiableList(steps);
+    }
+
+    public static List<MissilePlacementStep> missilePlacementSteps(LegacyMissilePart thruster, LegacyMissilePart fins,
+            LegacyMissilePart fuselage, LegacyMissilePart warhead) {
+        return missilePlacementSteps(missileSteps(thruster, fins, fuselage, warhead));
+    }
+
+    public static List<MissilePlacementStep> missilePlacementSteps(List<MissileRenderStep> steps) {
+        List<MissilePlacementStep> placements = new ArrayList<>(steps.size());
+        double y = 0.0D;
+        for (int index = 0; index < steps.size(); index++) {
+            MissileRenderStep step = steps.get(index);
+            placements.add(new MissilePlacementStep(index, step.part(), y, step.translateAfterY(), y + step.translateAfterY()));
+            y += step.translateAfterY();
+        }
+        return Collections.unmodifiableList(placements);
+    }
+
+    public static double missileHeight(LegacyMissilePart thruster, LegacyMissilePart fuselage, LegacyMissilePart warhead) {
+        double height = 0.0D;
+        if (isKind(warhead, PartKind.WARHEAD)) {
+            height += warhead.height();
+        }
+        if (isKind(fuselage, PartKind.FUSELAGE)) {
+            height += fuselage.height();
+        }
+        if (isKind(thruster, PartKind.THRUSTER)) {
+            height += thruster.height();
+        }
+        return height;
+    }
+
+    public static double stackedRenderHeight(List<MissileRenderStep> steps) {
+        double height = 0.0D;
+        for (MissileRenderStep step : steps) {
+            height += step.translateAfterY();
+        }
+        return height;
     }
 
     public static boolean isKind(LegacyMissilePart part, PartKind kind) {
@@ -388,5 +440,23 @@ public final class ObjMissilePartModels {
     }
 
     public record MissileRenderStep(LegacyMissilePart part, double translateAfterY) {
+    }
+
+    public record MissilePlacementStep(int index, LegacyMissilePart part, double yBefore,
+                                       double translateAfterY, double yAfter) {
+    }
+
+    public record MissileRenderPlan(
+            boolean hasThruster,
+            boolean hasFins,
+            boolean hasFuselage,
+            boolean hasWarhead,
+            double multipartHeight,
+            double stackedRenderHeight,
+            List<MissileRenderStep> steps,
+            List<MissilePlacementStep> placements) {
+        public boolean hasCompleteStack() {
+            return hasThruster && hasFuselage && hasWarhead;
+        }
     }
 }

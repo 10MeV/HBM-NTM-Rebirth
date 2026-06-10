@@ -5,13 +5,13 @@ import com.hbm.ntm.blockentity.LegacyBigTankBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmMenuDataSlots;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.SlotItemHandler;
@@ -111,40 +111,12 @@ public class FluidTankMenu extends AbstractContainerMenu {
     }
 
     private void addDataSlots() {
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getMode();
-            }
-
-            @Override
-            public void set(int value) {
-                mode = value;
-            }
-        });
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getMode, value -> mode = value);
         tank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getTank());
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.isExploded() ? 1 : 0;
-            }
-
-            @Override
-            public void set(int value) {
-                exploded = value;
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.isOnFire() ? 1 : 0;
-            }
-
-            @Override
-            public void set(int value) {
-                onFire = value;
-            }
-        });
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isExploded,
+                value -> exploded = value ? 1 : 0);
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isOnFire,
+                value -> onFire = value ? 1 : 0);
     }
 
     private static FluidTankBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

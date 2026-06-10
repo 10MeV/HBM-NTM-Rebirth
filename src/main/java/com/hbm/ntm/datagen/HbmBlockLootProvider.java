@@ -1,7 +1,9 @@
 package com.hbm.ntm.datagen;
 
+import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
+import net.minecraft.advancements.critereon.StatePropertiesPredicate;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.world.flag.FeatureFlags;
@@ -14,6 +16,7 @@ import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.functions.SetNbtFunction;
 import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
+import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import net.minecraftforge.registries.RegistryObject;
@@ -39,6 +42,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         && block != ModBlocks.MACHINE_WELL
                         && block != ModBlocks.MACHINE_PUMPJACK
                         && block != ModBlocks.MACHINE_FRACKING_TOWER)
+                .filter(block -> block != ModBlocks.VENDING_MACHINE)
                 .forEach(block -> dropSelf(block.get()));
         add(ModBlocks.MACHINE_FLUIDTANK.get(), noDrop());
         add(ModBlocks.MACHINE_BAT9000.get(), noDrop());
@@ -46,16 +50,19 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.MACHINE_REFINERY.get(), noDrop());
         add(ModBlocks.BARREL_PLASTIC.get(), noDrop());
         dropSelf(ModBlocks.BARREL_CORRODED.get());
+        dropSelf(ModBlocks.MACHINE_FENSU.get());
         add(ModBlocks.BARREL_STEEL.get(), noDrop());
         add(ModBlocks.BARREL_TCALLOY.get(), noDrop());
         add(ModBlocks.BARREL_ANTIMATTER.get(), noDrop());
         add(ModBlocks.MACHINE_WELL.get(), noDrop());
         add(ModBlocks.MACHINE_PUMPJACK.get(), noDrop());
         add(ModBlocks.MACHINE_FRACKING_TOWER.get(), noDrop());
+        add(ModBlocks.VENDING_MACHINE.get(), noDrop());
         dropSelf(ModBlocks.MACHINE_SATLINKER.get());
         dropSelf(ModBlocks.SAT_DOCK.get());
         dropSelf(ModBlocks.SOYUZ_CAPSULE.get());
         dropSelf(ModBlocks.SOYUZ_LAUNCHER.get());
+        dropSelf(ModBlocks.LAUNCH_PAD.get());
         add(ModBlocks.OIL_PIPE.get(), noDrop());
         add(ModBlocks.CONVEYOR.get(), conveyorWandDrop("REGULAR"));
         add(ModBlocks.CONVEYOR_EXPRESS.get(), conveyorWandDrop("EXPRESS"));
@@ -63,7 +70,9 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.CONVEYOR_TRIPLE.get(), conveyorWandDrop("TRIPLE"));
         add(ModBlocks.CONVEYOR_LIFT.get(), conveyorWandDrop("REGULAR"));
         add(ModBlocks.CONVEYOR_CHUTE.get(), conveyorWandDrop("REGULAR"));
+        ModBlocks.PYLON_BLOCKS.forEach(block -> dropSelf(block.get()));
         ModBlocks.BLOCK_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
+        addPileGraphiteDrops();
         add(ModBlocks.WASTE_LEAVES.get(), noDrop());
         add(ModBlocks.LEAVES_LAYER.get(), noDrop());
         add(ModBlocks.WASTE_LOG.get(), wasteLogDrop());
@@ -74,7 +83,16 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.FIRE_DIGAMMA.get(), noDrop());
         add(ModBlocks.BALEFIRE.get(), noDrop());
         add(ModBlocks.MUD_BLOCK.get(), noDrop());
-        ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> dropSelf(block.get()));
+        ModBlocks.NUKE_TAB_BLOCKS.stream()
+                .filter(block -> block != ModBlocks.CHARGE_DYNAMITE
+                        && block != ModBlocks.CHARGE_MINER
+                        && block != ModBlocks.CHARGE_C4
+                        && block != ModBlocks.CHARGE_SEMTEX)
+                .forEach(block -> dropSelf(block.get()));
+        add(ModBlocks.CHARGE_DYNAMITE.get(), noDrop());
+        add(ModBlocks.CHARGE_MINER.get(), noDrop());
+        add(ModBlocks.CHARGE_C4.get(), noDrop());
+        add(ModBlocks.CHARGE_SEMTEX.get(), noDrop());
         add(ModBlocks.GAS_RADON.get(), noDrop());
         add(ModBlocks.GAS_RADON_DENSE.get(), noDrop());
         add(ModBlocks.GAS_RADON_TOMB.get(), noDrop());
@@ -96,6 +114,55 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.ORE_SELLAFIELD_DIAMOND.get(), block -> singleItemDrop(Items.DIAMOND));
         add(ModBlocks.ORE_SELLAFIELD_EMERALD.get(), block -> singleItemDrop(Items.EMERALD));
         add(ModBlocks.ORE_SELLAFIELD_RADGEM.get(), block -> singleItemDrop(ModItems.legacyItem("gem_rad").get()));
+    }
+
+    private void addPileGraphiteDrops() {
+        add(ModBlocks.BLOCK_GRAPHITE_DRILLED.get(), pileGraphiteDrop());
+        add(ModBlocks.BLOCK_GRAPHITE_FUEL.get(), pileGraphiteFuelDrop());
+        add(ModBlocks.BLOCK_GRAPHITE_PLUTONIUM.get(), pileGraphiteDrop("pile_rod_plutonium"));
+        add(ModBlocks.BLOCK_GRAPHITE_ROD.get(), pileGraphiteDrop("pile_rod_boron"));
+        add(ModBlocks.BLOCK_GRAPHITE_SOURCE.get(), pileGraphiteDrop("pile_rod_source"));
+        add(ModBlocks.BLOCK_GRAPHITE_LITHIUM.get(), pileGraphiteDrop("pile_rod_lithium"));
+        add(ModBlocks.BLOCK_GRAPHITE_TRITIUM.get(), pileGraphiteDrop("cell_tritium"));
+        add(ModBlocks.BLOCK_GRAPHITE_DETECTOR.get(), pileGraphiteDrop("pile_rod_detector"));
+    }
+
+    private LootTable.Builder pileGraphiteDrop() {
+        return pileGraphiteBaseDrop();
+    }
+
+    private LootTable.Builder pileGraphiteDrop(String insertedLegacyItem) {
+        return pileGraphiteBaseDrop()
+                .withPool(singleSurvivingItemPool(ModItems.legacyItem(insertedLegacyItem).get()));
+    }
+
+    private LootTable.Builder pileGraphiteFuelDrop() {
+        Block block = ModBlocks.BLOCK_GRAPHITE_FUEL.get();
+        return pileGraphiteBaseDrop()
+                .withPool(singleSurvivingItemPool(ModItems.legacyItem("pile_rod_uranium").get())
+                        .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
+                                .setProperties(StatePropertiesPredicate.Builder.properties()
+                                        .hasProperty(PileGraphiteDrilledBaseBlock.ACTIVE, false))))
+                .withPool(singleSurvivingItemPool(ModItems.legacyItem("pile_rod_pu239").get())
+                        .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
+                                .setProperties(StatePropertiesPredicate.Builder.properties()
+                                        .hasProperty(PileGraphiteDrilledBaseBlock.ACTIVE, true))));
+    }
+
+    private LootTable.Builder pileGraphiteBaseDrop() {
+        return LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(ConstantValue.exactly(1.0F))
+                        .add(LootItem.lootTableItem(ModItems.legacyItem("ingot_graphite").get())
+                                .apply(SetItemCountFunction.setCount(ConstantValue.exactly(8.0F))))
+                        .when(ExplosionCondition.survivesExplosion()));
+    }
+
+    private LootPool.Builder singleSurvivingItemPool(Item item) {
+        return LootPool.lootPool()
+                .setRolls(ConstantValue.exactly(1.0F))
+                .add(LootItem.lootTableItem(item))
+                .when(ExplosionCondition.survivesExplosion());
     }
 
     @SuppressWarnings("deprecation")

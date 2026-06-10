@@ -15,6 +15,7 @@ import com.hbm.ntm.menu.ToolAbilityMenu;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmKeybindReceiver;
 import com.hbm.ntm.network.ModMessages;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -359,6 +360,9 @@ public class HbmAbilityToolItem extends DiggerItem implements DepthRockTool, Hbm
         if (keybind != HbmKeybind.ABILITY_CYCLE) {
             return;
         }
+        if (isLookingAtInteractiveBlock(player)) {
+            return;
+        }
 
         ToolAbilityConfiguration configuration = getConfiguration(stack);
         if (configuration.presets().size() < 2) {
@@ -407,6 +411,25 @@ public class HbmAbilityToolItem extends DiggerItem implements DepthRockTool, Hbm
 
     private static GameType currentGameType(ServerPlayer player) {
         return player.gameMode.getGameModeForPlayer();
+    }
+
+    private static boolean isLookingAtInteractiveBlock(ServerPlayer player) {
+        HitResult hitResult = player.pick(5.0D, 0.0F, false);
+        if (!(hitResult instanceof BlockHitResult blockHitResult)) {
+            return false;
+        }
+
+        BlockState state = player.level().getBlockState(blockHitResult.getBlockPos());
+        Block block = state.getBlock();
+        try {
+            Method actual = block.getClass().getMethod("use", BlockState.class, Level.class, BlockPos.class,
+                    Player.class, InteractionHand.class, BlockHitResult.class);
+            Method vanilla = Block.class.getMethod("use", BlockState.class, Level.class, BlockPos.class,
+                    Player.class, InteractionHand.class, BlockHitResult.class);
+            return actual.getDeclaringClass() != vanilla.getDeclaringClass();
+        } catch (ReflectiveOperationException ignored) {
+            return false;
+        }
     }
 
     private boolean isEffectiveFor(BlockState state) {

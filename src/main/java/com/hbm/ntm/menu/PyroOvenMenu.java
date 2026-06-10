@@ -12,7 +12,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -100,28 +99,9 @@ public class PyroOvenMenu extends AbstractContainerMenu {
     private void addDataSlots() {
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getMaxPower, () -> maxPower, value -> maxPower = value);
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) (blockEntity.getProgressFraction() * 10_000.0F);
-            }
-
-            @Override
-            public void set(int value) {
-                progress = value;
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getUsage();
-            }
-
-            @Override
-            public void set(int value) {
-                usage = value;
-            }
-        });
+        HbmMenuDataSlots.addInt(this::addDataSlot,
+                () -> (int) (blockEntity.getProgressFraction() * 10_000.0F), value -> progress = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getUsage, value -> usage = value);
         inputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getInputTank());
         outputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getOutputTank());
     }

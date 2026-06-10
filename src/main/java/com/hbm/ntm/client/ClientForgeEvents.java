@@ -1,13 +1,22 @@
 package com.hbm.ntm.client;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.armor.ArmorModHandler;
+import com.hbm.ntm.armor.ArmorModItems;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
 import com.hbm.ntm.client.overlay.LegacyLookOverlayRenderer;
+import com.hbm.ntm.client.obj.ObjArmorModels;
 import com.hbm.ntm.client.overlay.ToolAbilityHudRenderer;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.render.LegacyMultiblockHighlightRenderer;
+import com.hbm.ntm.client.renderer.LegacyAccessoryRenderHelper;
+import com.hbm.ntm.client.renderer.SednaGunItemRenderer;
+import com.hbm.ntm.client.sound.LegacyMovingEntitySound;
+import com.hbm.ntm.client.sound.LegacyNullSoundRedirects;
+import com.hbm.ntm.blockentity.CustomNukeBlockEntity;
+import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.damage.DamageResistanceTooltipUtil;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
@@ -17,6 +26,7 @@ import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.api.item.HazardClass;
+import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.particle.ParticleUtil;
@@ -27,24 +37,33 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderHighlightEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.ViewportEvent;
+import net.minecraftforge.client.event.sound.PlaySoundEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -73,6 +92,23 @@ public final class ClientForgeEvents {
         HazardTooltipUtil.addHazardInformation(event.getItemStack(), event.getToolTip());
         DamageResistanceTooltipUtil.addResistanceInformation(event.getItemStack(), event.getToolTip());
         addHazmatProtectionInformation(event.getItemStack(), event.getToolTip());
+        addCustomNukeInformation(event.getItemStack(), event.getToolTip());
+    }
+
+    private static void addCustomNukeInformation(ItemStack stack, List<Component> tooltip) {
+        if (!HbmClientConfig.customNukeTooltips()) {
+            return;
+        }
+        CustomNukeBlockEntity.CustomNukeTooltipEntry entry = CustomNukeBlockEntity.getTooltipEntry(stack);
+        if (entry == null) {
+            return;
+        }
+        if (!tooltip.isEmpty()) {
+            tooltip.add(Component.empty());
+        }
+        String prefix = entry.multiplier() ? "Adds multiplier " : "Adds ";
+        tooltip.add(Component.literal(prefix + entry.value() + " to the custom nuke stage " + entry.stage())
+                .withStyle(ChatFormatting.GOLD));
     }
 
     private static void addHazmatProtectionInformation(ItemStack stack, List<Component> tooltip) {
@@ -94,6 +130,44 @@ public final class ClientForgeEvents {
                     .append(Component.translatable(hazardClass.translationKey()))
                     .withStyle(ChatFormatting.YELLOW));
         }
+    }
+
+    @SubscribeEvent
+    public static void onPlaySound(PlaySoundEvent event) {
+        SoundInstance sound = event.getSound();
+        if (sound == null) {
+            sound = event.getOriginalSound();
+        }
+        if (LegacyNullSoundRedirects.handle(sound)) {
+            event.setSound(null);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRenderHand(RenderHandEvent event) {
+        ItemStack stack = event.getItemStack();
+        if (!(stack.getItem() instanceof SednaGunItem)) {
+            return;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        Player player = minecraft.player;
+        if (player == null) {
+            return;
+        }
+
+        event.setCanceled(true);
+        HumanoidArm arm = event.getHand() == InteractionHand.MAIN_HAND
+                ? player.getMainArm()
+                : player.getMainArm().getOpposite();
+        ItemDisplayContext context = arm == HumanoidArm.LEFT
+                ? ItemDisplayContext.FIRST_PERSON_LEFT_HAND
+                : ItemDisplayContext.FIRST_PERSON_RIGHT_HAND;
+
+        PoseStack poseStack = event.getPoseStack();
+        poseStack.pushPose();
+        SednaGunItemRenderer.INSTANCE.renderByItem(stack, context, poseStack, event.getMultiBufferSource(),
+                event.getPackedLight(), OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
     }
 
     @SubscribeEvent
@@ -380,6 +454,7 @@ public final class ClientForgeEvents {
         HbmRenderEffects.clearAll();
         HbmOverheadMarkers.clearAll();
         HbmBlackHoleEffects.clearAll();
+        LegacyMovingEntitySound.clearAll();
         NukeHudEffects.clearAll();
         TileSyncPacket.clearClientResyncRequests();
         ClientTileBinaryData.clearClientResyncRequests();
@@ -452,6 +527,35 @@ public final class ClientForgeEvents {
         if (isVanished(event.getEntity())) {
             event.setCanceled(true);
         }
+    }
+
+    @SubscribeEvent
+    public static void onRenderLivingPost(RenderLivingEvent.Post<?, ?> event) {
+        if (event.getEntity() instanceof Player player
+                && event.getRenderer().getModel() instanceof HumanoidModel<?> humanoid) {
+            renderBackTesla(player, humanoid, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+        }
+    }
+
+    private static void renderBackTesla(Player player, HumanoidModel<?> humanoid, PoseStack poseStack,
+                                        MultiBufferSource buffer, int packedLight) {
+        ItemStack chestplate = player.getItemBySlot(EquipmentSlot.CHEST);
+        if (!ArmorModHandler.hasMods(chestplate)) {
+            return;
+        }
+        ItemStack mod = ArmorModHandler.pryMod(chestplate, ArmorModHandler.plate_only);
+        if (!(mod.getItem() instanceof ArmorModItems.BackTesla)) {
+            return;
+        }
+
+        poseStack.pushPose();
+        humanoid.body.translateAndRotate(poseStack);
+        poseStack.scale(LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE,
+                LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE,
+                LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE);
+        ObjArmorModels.MOD_TESLA.renderAll(ObjArmorModels.MOD_TESLA_TEXTURE, poseStack, buffer,
+                packedLight, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
     }
 
     private static boolean isVanished(LivingEntity entity) {

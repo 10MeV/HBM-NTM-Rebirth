@@ -126,8 +126,7 @@ public class RadioAutocalScreen extends AbstractContainerScreen<RadioAutocalMenu
     }
 
     private boolean hovering(int x, int y, int mouseX, int mouseY) {
-        return leftPos + x <= mouseX && mouseX < leftPos + x + BUTTON_SIZE
-                && topPos + y <= mouseY && mouseY < topPos + y + BUTTON_SIZE;
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, BUTTON_SIZE, BUTTON_SIZE);
     }
 
     private String statusLine() {

@@ -1,6 +1,12 @@
 package com.hbm.ntm.client.obj;
 
 public final class LegacyUvAnimation {
+    public static final double FLAT_GLINT_TEXTURE_SIZE = 256.0D;
+    public static final double FLAT_GLINT_BASE_PERIOD_MILLIS = 3000.0D;
+    public static final double FLAT_GLINT_PASS_PERIOD_OFFSET_MILLIS = 1873.0D;
+    public static final double FLAT_GLINT_FIRST_PASS_SHEAR = 4.0D;
+    public static final double FLAT_GLINT_SECOND_PASS_SHEAR = -1.0D;
+
     public static double tickTime(long worldTime, float partialTicks) {
         return (double) worldTime + partialTicks;
     }
@@ -50,16 +56,26 @@ public final class LegacyUvAnimation {
 
     public static UnitQuadUv flatItemGlintUv(long currentMillis, int pass, double width, double height) {
         int safePass = Math.max(0, pass);
-        double period = 3000.0D + safePass * 1873.0D;
-        double animation = wrappedFraction(currentMillis, period) * 256.0D;
-        double hScale = safePass == 0 ? 4.0D : -1.0D;
-        double uScale = 1.0D / 256.0D;
-        double vScale = 1.0D / 256.0D;
+        FlatItemGlintPlan plan = flatItemGlintPlan(currentMillis, safePass, width, height);
+        double animation = plan.animationPixels();
+        double hScale = plan.horizontalShear();
+        double uScale = plan.uScale();
+        double vScale = plan.vScale();
         return new UnitQuadUv(
                 (animation + height * hScale) * uScale, height * vScale,
                 (animation + width + height * hScale) * uScale, height * vScale,
                 (animation + width) * uScale, 0.0D,
                 animation * uScale, 0.0D);
+    }
+
+    public static FlatItemGlintPlan flatItemGlintPlan(long currentMillis, int pass, double width, double height) {
+        int safePass = Math.max(0, pass);
+        double period = FLAT_GLINT_BASE_PERIOD_MILLIS + safePass * FLAT_GLINT_PASS_PERIOD_OFFSET_MILLIS;
+        double animation = wrappedFraction(currentMillis, period) * FLAT_GLINT_TEXTURE_SIZE;
+        double horizontalShear = safePass == 0 ? FLAT_GLINT_FIRST_PASS_SHEAR : FLAT_GLINT_SECOND_PASS_SHEAR;
+        double scale = 1.0D / FLAT_GLINT_TEXTURE_SIZE;
+        return new FlatItemGlintPlan(safePass, period, animation, horizontalShear, scale, scale,
+                flatItemGlintUvFrom(animation, horizontalShear, scale, scale, width, height));
     }
 
     public static double textureMatrixGlintOffset(long currentMillis, double periodMillis, double distance) {
@@ -75,12 +91,25 @@ public final class LegacyUvAnimation {
         return 30.0D - Math.max(0, layer) * 60.0D;
     }
 
+    public static TextureMatrixPlan classicGlintTextureMatrix(double age, int layer, double speed, double scale) {
+        return new TextureMatrixPlan(TextureMatrixOrder.SCALE_ROTATE_TRANSLATE,
+                scale, scale, classicGlintRotation(layer), 0.0D, classicGlintMovement(age, layer, speed));
+    }
+
     public static double legacyHmfOffset(double currentTime, double modulo, double quotient) {
         return quotient == 0.0D ? 0.0D : (currentTime % modulo) / quotient;
     }
 
+    public static HmfUvModPlan legacyHmfModPlan(double currentTime, double modulo, double quotient) {
+        return new HmfUvModPlan(modulo, quotient, legacyHmfOffset(currentTime, modulo, quotient));
+    }
+
     public static double tomFlameHmfOffset(double currentTime) {
         return legacyHmfOffset(currentTime, 50000.0D, 2500.0D);
+    }
+
+    public static HmfUvModPlan tomFlameHmfModPlan(double currentTime) {
+        return legacyHmfModPlan(currentTime, 50000.0D, 2500.0D);
     }
 
     public static double falloutRainSwayLoop(int timer, float partialTicks) {
@@ -151,6 +180,30 @@ public final class LegacyUvAnimation {
             double bottomRightU, double bottomRightV,
             double topRightU, double topRightV,
             double topLeftU, double topLeftV) {
+    }
+
+    public enum TextureMatrixOrder {
+        SCALE_ROTATE_TRANSLATE
+    }
+
+    public record TextureMatrixPlan(TextureMatrixOrder order, double scaleU, double scaleV,
+                                    double rotationDegrees, double translateU, double translateV) {
+    }
+
+    public record HmfUvModPlan(double modulo, double quotient, double offset) {
+    }
+
+    public record FlatItemGlintPlan(int pass, double periodMillis, double animationPixels,
+                                    double horizontalShear, double uScale, double vScale, UnitQuadUv uv) {
+    }
+
+    private static UnitQuadUv flatItemGlintUvFrom(double animation, double horizontalShear,
+            double uScale, double vScale, double width, double height) {
+        return new UnitQuadUv(
+                (animation + height * horizontalShear) * uScale, height * vScale,
+                (animation + width + height * horizontalShear) * uScale, height * vScale,
+                (animation + width) * uScale, 0.0D,
+                animation * uScale, 0.0D);
     }
 
     private LegacyUvAnimation() {

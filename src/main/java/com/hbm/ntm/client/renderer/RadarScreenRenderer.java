@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.entity.RadarEntry;
+import com.hbm.ntm.api.entity.RadarScreenDisplayProfile;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.RadarScreenBlockEntity;
@@ -32,7 +33,7 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.MACHINE;
+        return RadarScreenDisplayProfile.VIEW_DISTANCE;
     }
 
     @Override

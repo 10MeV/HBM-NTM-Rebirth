@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:definitelyfood",
+          "weight": 10
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:twinkie",
+          "weight": 10
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:chocolate",
+          "weight": 10
+        }
+      ]
+    }
+  ]
+}

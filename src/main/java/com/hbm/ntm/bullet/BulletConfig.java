@@ -26,11 +26,16 @@ public record BulletConfig(
         int bulletsMax,
         float damageMin,
         float damageMax,
+        float armorThresholdNegation,
+        float armorPiercingPercent,
+        float knockbackMultiplier,
         float headshotMultiplier,
+        boolean damageFalloffByPenetration,
         double gravity,
         int maxAge,
         boolean ricochets,
         double ricochetAngle,
+        int maxRicochetCount,
         int lowerBoundRicochetChance,
         int higherBoundRicochetChance,
         double bounceModifier,
@@ -129,11 +134,16 @@ public record BulletConfig(
         private int bulletsMax;
         private float damageMin;
         private float damageMax;
+        private float armorThresholdNegation;
+        private float armorPiercingPercent;
+        private float knockbackMultiplier = 0.1F;
         private float headshotMultiplier = 1.0F;
+        private boolean damageFalloffByPenetration = true;
         private double gravity;
         private int maxAge;
         private boolean ricochets;
         private double ricochetAngle;
+        private int maxRicochetCount;
         private int lowerBoundRicochetChance;
         private int higherBoundRicochetChance;
         private double bounceModifier;
@@ -188,11 +198,16 @@ public record BulletConfig(
             this.bulletsMax = config.bulletsMax;
             this.damageMin = config.damageMin;
             this.damageMax = config.damageMax;
+            this.armorThresholdNegation = config.armorThresholdNegation;
+            this.armorPiercingPercent = config.armorPiercingPercent;
+            this.knockbackMultiplier = config.knockbackMultiplier;
             this.headshotMultiplier = config.headshotMultiplier;
+            this.damageFalloffByPenetration = config.damageFalloffByPenetration;
             this.gravity = config.gravity;
             this.maxAge = config.maxAge;
             this.ricochets = config.ricochets;
             this.ricochetAngle = config.ricochetAngle;
+            this.maxRicochetCount = config.maxRicochetCount;
             this.lowerBoundRicochetChance = config.lowerBoundRicochetChance;
             this.higherBoundRicochetChance = config.higherBoundRicochetChance;
             this.bounceModifier = config.bounceModifier;
@@ -258,8 +273,24 @@ public record BulletConfig(
             return this;
         }
 
+        public Builder armor(float armorThresholdNegation, float armorPiercingPercent) {
+            this.armorThresholdNegation = armorThresholdNegation;
+            this.armorPiercingPercent = armorPiercingPercent;
+            return this;
+        }
+
+        public Builder knockback(float knockbackMultiplier) {
+            this.knockbackMultiplier = knockbackMultiplier;
+            return this;
+        }
+
         public Builder headshotMultiplier(float headshotMultiplier) {
             this.headshotMultiplier = headshotMultiplier;
+            return this;
+        }
+
+        public Builder damageFalloffByPenetration(boolean damageFalloffByPenetration) {
+            this.damageFalloffByPenetration = damageFalloffByPenetration;
             return this;
         }
 
@@ -275,6 +306,11 @@ public record BulletConfig(
             this.lowerBoundRicochetChance = lowerChance;
             this.higherBoundRicochetChance = higherChance;
             this.bounceModifier = bounceModifier;
+            return this;
+        }
+
+        public Builder maxRicochetCount(int maxRicochetCount) {
+            this.maxRicochetCount = Math.max(0, maxRicochetCount);
             return this;
         }
 
@@ -433,8 +469,9 @@ public record BulletConfig(
 
         public BulletConfig build() {
             return new BulletConfig(legacyName, ammo, ammoCount, velocity, spread, wear, bulletsMin, bulletsMax,
-                    damageMin, damageMax, headshotMultiplier, gravity, maxAge, ricochets, ricochetAngle,
-                    lowerBoundRicochetChance, higherBoundRicochetChance, bounceModifier, selfDamageDelay,
+                    damageMin, damageMax, armorThresholdNegation, armorPiercingPercent, knockbackMultiplier,
+                    headshotMultiplier, damageFalloffByPenetration, gravity, maxAge, ricochets, ricochetAngle,
+                    maxRicochetCount, lowerBoundRicochetChance, higherBoundRicochetChance, bounceModifier, selfDamageDelay,
                     penetrates, spectral, breaksGlass, liveAfterImpact, blackPowder, incendiaryTicks, emp,
                     blockDamage, explosive, jolt, rainbow, nuke, shrapnel, chlorine, leadChance, caustic,
                     copyEffects(effects),

@@ -19,6 +19,16 @@ public final class BulletConfigSyncRegistry {
     public static final int WORM_BOLT = 8;
     public static final int WORM_LASER = 9;
     public static final int UFO_ROCKET = 10;
+    public static final int G12_BP = 41;
+    public static final int G12_BP_MAGNUM = 42;
+    public static final int G12_BP_SLUG = 43;
+    public static final int G12 = 44;
+    public static final int G12_SLUG = 45;
+    public static final int G12_FLECHETTE = 46;
+    public static final int G12_MAGNUM = 47;
+    public static final int G12_EXPLOSIVE = 48;
+    public static final int G12_PHOSPHORUS = 49;
+    public static final int SEDNA_RUNTIME_COMPLEX_START = 50;
 
     private static final Map<Integer, BulletConfig> BY_LEGACY_ID = new LinkedHashMap<>();
     private static final Map<BulletConfig, Integer> LEGACY_ID_BY_CONFIG = new IdentityHashMap<>();
@@ -38,6 +48,16 @@ public final class BulletConfigSyncRegistry {
         register(WORM_BOLT, LegacyBulletConfigs.WORM_BOLT);
         register(WORM_LASER, LegacyBulletConfigs.WORM_LASER);
         register(UFO_ROCKET, LegacyBulletConfigs.UFO_ROCKET);
+        register(G12_BP, LegacySednaRuntimeBulletConfigs.G12_BP);
+        register(G12_BP_MAGNUM, LegacySednaRuntimeBulletConfigs.G12_BP_MAGNUM);
+        register(G12_BP_SLUG, LegacySednaRuntimeBulletConfigs.G12_BP_SLUG);
+        register(G12, LegacySednaRuntimeBulletConfigs.G12);
+        register(G12_SLUG, LegacySednaRuntimeBulletConfigs.G12_SLUG);
+        register(G12_FLECHETTE, LegacySednaRuntimeBulletConfigs.G12_FLECHETTE);
+        register(G12_MAGNUM, LegacySednaRuntimeBulletConfigs.G12_MAGNUM);
+        register(G12_EXPLOSIVE, LegacySednaRuntimeBulletConfigs.G12_EXPLOSIVE);
+        register(G12_PHOSPHORUS, LegacySednaRuntimeBulletConfigs.G12_PHOSPHORUS);
+        registerRange(SEDNA_RUNTIME_COMPLEX_START, LegacySednaRuntimeBulletConfigs.allAdditionalSynced());
         initialized = true;
     }
 
@@ -69,6 +89,13 @@ public final class BulletConfigSyncRegistry {
             throw new IllegalStateException("Duplicate bullet config legacy id " + legacyId);
         }
         LEGACY_ID_BY_CONFIG.put(config, legacyId);
+    }
+
+    private static void registerRange(int firstLegacyId, Iterable<BulletConfig> configs) {
+        int legacyId = firstLegacyId;
+        for (BulletConfig config : configs) {
+            register(legacyId++, config);
+        }
     }
 
     private BulletConfigSyncRegistry() {

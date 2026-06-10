@@ -47,6 +47,7 @@ public class SoyuzEntity extends Entity {
     public SoyuzEntity(EntityType<? extends SoyuzEntity> type, Level level) {
         super(type, level);
         setNoGravity(true);
+        noCulling = true;
         noPhysics = true;
     }
 

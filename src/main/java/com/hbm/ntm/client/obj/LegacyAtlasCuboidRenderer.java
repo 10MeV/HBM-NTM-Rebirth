@@ -3,6 +3,8 @@ package com.hbm.ntm.client.obj;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 
+import java.util.List;
+
 public final class LegacyAtlasCuboidRenderer {
     public static final double SMALL_BLOCK_PIXEL = 1.0D / 16.0D;
     public static final double SMALL_BLOCK_MIN = 11.0D * SMALL_BLOCK_PIXEL / 2.0D;
@@ -35,6 +37,44 @@ public final class LegacyAtlasCuboidRenderer {
                 x + SMALL_BLOCK_MAX, y + SMALL_BLOCK_MAX, z + SMALL_BLOCK_MAX);
     }
 
+    public static SmallBlockPlan smallBlockPlan(double x, double y, double z) {
+        return smallBlockPlan(smallBlockBounds(x, y, z));
+    }
+
+    public static SmallBlockPlan smallBlockPlan(CuboidBounds bounds) {
+        return new SmallBlockPlan(bounds, List.of(
+                smallFace(Direction.SOUTH, "south", 0.0F, 1.0F, 0.0F,
+                        vertex(bounds.minX(), bounds.minY(), bounds.maxZ(), 1.0D, 0.0D),
+                        vertex(bounds.maxX(), bounds.minY(), bounds.maxZ(), 0.0D, 0.0D),
+                        vertex(bounds.maxX(), bounds.maxY(), bounds.maxZ(), 0.0D, 1.0D),
+                        vertex(bounds.minX(), bounds.maxY(), bounds.maxZ(), 1.0D, 1.0D)),
+                smallFace(Direction.EAST, "east", 0.0F, 1.0F, 0.0F,
+                        vertex(bounds.minX(), bounds.minY(), bounds.maxZ(), 1.0D, 0.0D),
+                        vertex(bounds.minX(), bounds.minY(), bounds.minZ(), 0.0D, 0.0D),
+                        vertex(bounds.minX(), bounds.maxY(), bounds.minZ(), 0.0D, 1.0D),
+                        vertex(bounds.minX(), bounds.maxY(), bounds.maxZ(), 1.0D, 1.0D)),
+                smallFace(Direction.NORTH, "north", 0.0F, 1.0F, 0.0F,
+                        vertex(bounds.maxX(), bounds.minY(), bounds.maxZ(), 1.0D, 0.0D),
+                        vertex(bounds.minX(), bounds.minY(), bounds.maxZ(), 0.0D, 0.0D),
+                        vertex(bounds.minX(), bounds.maxY(), bounds.maxZ(), 0.0D, 1.0D),
+                        vertex(bounds.maxX(), bounds.maxY(), bounds.maxZ(), 1.0D, 1.0D)),
+                smallFace(Direction.WEST, "west", 0.0F, 1.0F, 0.0F,
+                        vertex(bounds.maxX(), bounds.minY(), bounds.minZ(), 1.0D, 0.0D),
+                        vertex(bounds.maxX(), bounds.minY(), bounds.maxZ(), 0.0D, 0.0D),
+                        vertex(bounds.maxX(), bounds.maxY(), bounds.maxZ(), 0.0D, 1.0D),
+                        vertex(bounds.maxX(), bounds.maxY(), bounds.minZ(), 1.0D, 1.0D)),
+                smallFace(Direction.UP, "top", 0.0F, 1.0F, 0.0F,
+                        vertex(bounds.minX(), bounds.minY(), bounds.maxZ(), 1.0D, 0.0D),
+                        vertex(bounds.maxX(), bounds.minY(), bounds.maxZ(), 0.0D, 0.0D),
+                        vertex(bounds.maxX(), bounds.minY(), bounds.minZ(), 0.0D, 1.0D),
+                        vertex(bounds.minX(), bounds.minY(), bounds.minZ(), 1.0D, 1.0D)),
+                smallFace(Direction.DOWN, "bottom", 0.0F, 1.0F, 0.0F,
+                        vertex(bounds.maxX(), bounds.maxY(), bounds.maxZ(), 1.0D, 0.0D),
+                        vertex(bounds.minX(), bounds.maxY(), bounds.maxZ(), 0.0D, 0.0D),
+                        vertex(bounds.minX(), bounds.maxY(), bounds.minZ(), 0.0D, 1.0D),
+                        vertex(bounds.maxX(), bounds.maxY(), bounds.minZ(), 1.0D, 1.0D))));
+    }
+
     public static void cuboid(TextureAtlasSprite top, TextureAtlasSprite bottom,
             TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
             ObjRenderContext context, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
@@ -61,6 +101,10 @@ public final class LegacyAtlasCuboidRenderer {
         cuboid(sprite, sprite, sprite, sprite, sprite, sprite, context, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
+    public static CuboidPlan cuboidPlan(CuboidBounds bounds) {
+        return cuboidPlan(bounds, false);
+    }
+
     public static void croppedCuboid(TextureAtlasSprite top, TextureAtlasSprite bottom,
             TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
             ObjRenderContext context, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
@@ -84,6 +128,10 @@ public final class LegacyAtlasCuboidRenderer {
         croppedCuboid(sprite, context, bounds.minX(), bounds.minY(), bounds.minZ(), bounds.maxX(), bounds.maxY(), bounds.maxZ());
     }
 
+    public static CuboidPlan croppedCuboidPlan(CuboidBounds bounds) {
+        return cuboidPlan(bounds, true);
+    }
+
     public static void centeredCube(TextureAtlasSprite sprite, ObjRenderContext context, double radius) {
         croppedCuboid(sprite, context, centeredCubeBounds(radius));
     }
@@ -94,8 +142,16 @@ public final class LegacyAtlasCuboidRenderer {
                 0.5D + radius, 0.5D + radius, 0.5D + radius);
     }
 
+    public static CuboidPlan centeredCubePlan(double radius) {
+        return croppedCuboidPlan(centeredCubeBounds(radius));
+    }
+
     public static void directionalSlab(TextureAtlasSprite sprite, ObjRenderContext context,
             Direction direction, double thickness) {
+        croppedCuboid(sprite, context, directionalSlabBounds(direction, thickness));
+    }
+
+    public static CuboidBounds directionalSlabBounds(Direction direction, double thickness) {
         double minX = 0.0D;
         double minY = 0.0D;
         double minZ = 0.0D;
@@ -112,7 +168,11 @@ public final class LegacyAtlasCuboidRenderer {
             case EAST -> minX = 1.0D - thickness;
         }
 
-        croppedCuboid(sprite, context, new CuboidBounds(minX, minY, minZ, maxX, maxY, maxZ));
+        return new CuboidBounds(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    public static CuboidPlan directionalSlabPlan(Direction direction, double thickness) {
+        return croppedCuboidPlan(directionalSlabBounds(direction, thickness));
     }
 
     public static void cross(TextureAtlasSprite sprite, ObjRenderContext context,
@@ -129,6 +189,21 @@ public final class LegacyAtlasCuboidRenderer {
                 LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, minZ, 16.0D, 0.0D));
     }
 
+    public static List<PlaneQuadPlan> crossPlan(double minX, double minY, double minZ,
+            double maxX, double maxY, double maxZ) {
+        return List.of(
+                new PlaneQuadPlan("cross_z", true, 0.0F, 0.0F, 1.0F, List.of(
+                        cuboidVertex(minX, maxY, minZ, 0.0D, 0.0D),
+                        cuboidVertex(minX, minY, minZ, 0.0D, 16.0D),
+                        cuboidVertex(maxX, minY, maxZ, 16.0D, 16.0D),
+                        cuboidVertex(maxX, maxY, maxZ, 16.0D, 0.0D))),
+                new PlaneQuadPlan("cross_x", true, 1.0F, 0.0F, 0.0F, List.of(
+                        cuboidVertex(minX, maxY, maxZ, 0.0D, 0.0D),
+                        cuboidVertex(minX, minY, maxZ, 0.0D, 16.0D),
+                        cuboidVertex(maxX, minY, minZ, 16.0D, 16.0D),
+                        cuboidVertex(maxX, maxY, minZ, 16.0D, 0.0D))));
+    }
+
     public static void wallQuad(TextureAtlasSprite sprite, ObjRenderContext context,
             double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
         wallQuad(sprite, context, 0.0F, 1.0F, 0.0F, minX, minY, minZ, maxX, maxY, maxZ);
@@ -142,6 +217,53 @@ public final class LegacyAtlasCuboidRenderer {
                 LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, minZ, 0.0D, 16.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, maxZ, 16.0D, 16.0D),
                 LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, maxZ, 16.0D, 0.0D));
+    }
+
+    public static PlaneQuadPlan wallQuadPlan(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        return wallQuadPlan(0.0F, 1.0F, 0.0F, minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    public static PlaneQuadPlan wallQuadPlan(float normalX, float normalY, float normalZ,
+            double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        return new PlaneQuadPlan("wall", true, normalX, normalY, normalZ, List.of(
+                cuboidVertex(minX, maxY, minZ, 0.0D, 0.0D),
+                cuboidVertex(minX, minY, minZ, 0.0D, 16.0D),
+                cuboidVertex(maxX, minY, maxZ, 16.0D, 16.0D),
+                cuboidVertex(maxX, maxY, maxZ, 16.0D, 0.0D)));
+    }
+
+    private static CuboidPlan cuboidPlan(CuboidBounds bounds, boolean cropped) {
+        return new CuboidPlan(bounds, cropped, List.of(
+                cuboidFace(Direction.SOUTH, "south", cropped, 0.0F, 0.0F, 1.0F,
+                        cuboidVertex(bounds.maxX(), bounds.maxY(), bounds.maxZ(), cropped ? forwardPixel(bounds.maxX(), bounds.minX(), bounds.maxX(), 16.0D) : 16.0D, cropped ? reversePixel(bounds.maxY(), bounds.minY(), bounds.maxY(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.minX(), bounds.maxY(), bounds.maxZ(), cropped ? forwardPixel(bounds.minX(), bounds.minX(), bounds.maxX(), 0.0D) : 0.0D, cropped ? reversePixel(bounds.maxY(), bounds.minY(), bounds.maxY(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.minX(), bounds.minY(), bounds.maxZ(), cropped ? forwardPixel(bounds.minX(), bounds.minX(), bounds.maxX(), 0.0D) : 0.0D, cropped ? reversePixel(bounds.minY(), bounds.minY(), bounds.maxY(), 16.0D) : 16.0D),
+                        cuboidVertex(bounds.maxX(), bounds.minY(), bounds.maxZ(), cropped ? forwardPixel(bounds.maxX(), bounds.minX(), bounds.maxX(), 16.0D) : 16.0D, cropped ? reversePixel(bounds.minY(), bounds.minY(), bounds.maxY(), 16.0D) : 16.0D)),
+                cuboidFace(Direction.EAST, "east", cropped, 1.0F, 0.0F, 0.0F,
+                        cuboidVertex(bounds.maxX(), bounds.maxY(), bounds.maxZ(), cropped ? reversePixel(bounds.maxZ(), bounds.minZ(), bounds.maxZ(), 0.0D) : 16.0D, cropped ? reversePixel(bounds.maxY(), bounds.minY(), bounds.maxY(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.maxX(), bounds.maxY(), bounds.minZ(), cropped ? reversePixel(bounds.minZ(), bounds.minZ(), bounds.maxZ(), 16.0D) : 0.0D, cropped ? reversePixel(bounds.maxY(), bounds.minY(), bounds.maxY(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.maxX(), bounds.minY(), bounds.minZ(), cropped ? reversePixel(bounds.minZ(), bounds.minZ(), bounds.maxZ(), 16.0D) : 0.0D, cropped ? reversePixel(bounds.minY(), bounds.minY(), bounds.maxY(), 16.0D) : 16.0D),
+                        cuboidVertex(bounds.maxX(), bounds.minY(), bounds.maxZ(), cropped ? reversePixel(bounds.maxZ(), bounds.minZ(), bounds.maxZ(), 0.0D) : 16.0D, cropped ? reversePixel(bounds.minY(), bounds.minY(), bounds.maxY(), 16.0D) : 16.0D)),
+                cuboidFace(Direction.NORTH, "north", cropped, 0.0F, 0.0F, -1.0F,
+                        cuboidVertex(bounds.maxX(), bounds.maxY(), bounds.minZ(), cropped ? reversePixel(bounds.maxX(), bounds.minX(), bounds.maxX(), 0.0D) : 16.0D, cropped ? reversePixel(bounds.maxY(), bounds.minY(), bounds.maxY(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.minX(), bounds.maxY(), bounds.minZ(), cropped ? reversePixel(bounds.minX(), bounds.minX(), bounds.maxX(), 16.0D) : 0.0D, cropped ? reversePixel(bounds.maxY(), bounds.minY(), bounds.maxY(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.minX(), bounds.minY(), bounds.minZ(), cropped ? reversePixel(bounds.minX(), bounds.minX(), bounds.maxX(), 16.0D) : 0.0D, cropped ? reversePixel(bounds.minY(), bounds.minY(), bounds.maxY(), 16.0D) : 16.0D),
+                        cuboidVertex(bounds.maxX(), bounds.minY(), bounds.minZ(), cropped ? reversePixel(bounds.maxX(), bounds.minX(), bounds.maxX(), 0.0D) : 16.0D, cropped ? reversePixel(bounds.minY(), bounds.minY(), bounds.maxY(), 16.0D) : 16.0D)),
+                cuboidFace(Direction.WEST, "west", cropped, -1.0F, 0.0F, 0.0F,
+                        cuboidVertex(bounds.minX(), bounds.maxY(), bounds.minZ(), cropped ? forwardPixel(bounds.minZ(), bounds.minZ(), bounds.maxZ(), 0.0D) : 16.0D, cropped ? reversePixel(bounds.maxY(), bounds.minY(), bounds.maxY(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.minX(), bounds.maxY(), bounds.maxZ(), cropped ? forwardPixel(bounds.maxZ(), bounds.minZ(), bounds.maxZ(), 16.0D) : 0.0D, cropped ? reversePixel(bounds.maxY(), bounds.minY(), bounds.maxY(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.minX(), bounds.minY(), bounds.maxZ(), cropped ? forwardPixel(bounds.maxZ(), bounds.minZ(), bounds.maxZ(), 16.0D) : 0.0D, cropped ? reversePixel(bounds.minY(), bounds.minY(), bounds.maxY(), 16.0D) : 16.0D),
+                        cuboidVertex(bounds.minX(), bounds.minY(), bounds.minZ(), cropped ? forwardPixel(bounds.minZ(), bounds.minZ(), bounds.maxZ(), 0.0D) : 16.0D, cropped ? reversePixel(bounds.minY(), bounds.minY(), bounds.maxY(), 16.0D) : 16.0D)),
+                cuboidFace(Direction.UP, "top", cropped, 0.0F, 1.0F, 0.0F,
+                        cuboidVertex(bounds.maxX(), bounds.maxY(), bounds.minZ(), cropped ? forwardPixel(bounds.maxX(), bounds.minX(), bounds.maxX(), 16.0D) : 16.0D, cropped ? forwardPixel(bounds.minZ(), bounds.minZ(), bounds.maxZ(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.minX(), bounds.maxY(), bounds.minZ(), cropped ? forwardPixel(bounds.minX(), bounds.minX(), bounds.maxX(), 0.0D) : 0.0D, cropped ? forwardPixel(bounds.minZ(), bounds.minZ(), bounds.maxZ(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.minX(), bounds.maxY(), bounds.maxZ(), cropped ? forwardPixel(bounds.minX(), bounds.minX(), bounds.maxX(), 0.0D) : 0.0D, cropped ? forwardPixel(bounds.maxZ(), bounds.minZ(), bounds.maxZ(), 16.0D) : 16.0D),
+                        cuboidVertex(bounds.maxX(), bounds.maxY(), bounds.maxZ(), cropped ? forwardPixel(bounds.maxX(), bounds.minX(), bounds.maxX(), 16.0D) : 16.0D, cropped ? forwardPixel(bounds.maxZ(), bounds.minZ(), bounds.maxZ(), 16.0D) : 16.0D)),
+                cuboidFace(Direction.DOWN, "bottom", cropped, 0.0F, -1.0F, 0.0F,
+                        cuboidVertex(bounds.maxX(), bounds.minY(), bounds.minZ(), cropped ? forwardPixel(bounds.maxX(), bounds.minX(), bounds.maxX(), 16.0D) : 16.0D, cropped ? forwardPixel(bounds.minZ(), bounds.minZ(), bounds.maxZ(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.minX(), bounds.minY(), bounds.minZ(), cropped ? forwardPixel(bounds.minX(), bounds.minX(), bounds.maxX(), 0.0D) : 0.0D, cropped ? forwardPixel(bounds.minZ(), bounds.minZ(), bounds.maxZ(), 0.0D) : 0.0D),
+                        cuboidVertex(bounds.minX(), bounds.minY(), bounds.maxZ(), cropped ? forwardPixel(bounds.minX(), bounds.minX(), bounds.maxX(), 0.0D) : 0.0D, cropped ? forwardPixel(bounds.maxZ(), bounds.minZ(), bounds.maxZ(), 16.0D) : 16.0D),
+                        cuboidVertex(bounds.maxX(), bounds.minY(), bounds.maxZ(), cropped ? forwardPixel(bounds.maxX(), bounds.minX(), bounds.maxX(), 16.0D) : 16.0D, cropped ? forwardPixel(bounds.maxZ(), bounds.minZ(), bounds.maxZ(), 16.0D) : 16.0D))));
     }
 
     private static void southFace(TextureAtlasSprite sprite, ObjRenderContext context,
@@ -293,6 +415,30 @@ public final class LegacyAtlasCuboidRenderer {
     public record CuboidBounds(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
     }
 
+    public record CuboidPlan(CuboidBounds bounds, boolean cropped, List<CuboidFacePlan> faces) {
+    }
+
+    public record CuboidFacePlan(Direction direction, String legacyIconRole, boolean cropped,
+                                 float normalX, float normalY, float normalZ, List<CuboidVertex> vertices) {
+    }
+
+    public record PlaneQuadPlan(String legacyRole, boolean doubleSided,
+                                float normalX, float normalY, float normalZ, List<CuboidVertex> vertices) {
+    }
+
+    public record CuboidVertex(double x, double y, double z, double u, double v) {
+    }
+
+    public record SmallBlockPlan(CuboidBounds bounds, List<SmallBlockFacePlan> faces) {
+    }
+
+    public record SmallBlockFacePlan(Direction direction, String legacyIconRole, float normalX, float normalY,
+                                     float normalZ, List<SmallBlockVertex> vertices) {
+    }
+
+    public record SmallBlockVertex(double x, double y, double z, double u, double v) {
+    }
+
     public record SmallBlockStatePlan(
             boolean blendEnabled,
             boolean cullEnabled,
@@ -300,6 +446,24 @@ public final class LegacyAtlasCuboidRenderer {
             boolean depthWriteEnabled,
             boolean lightingEnabledAfterDraw,
             int alpha) {
+    }
+
+    private static SmallBlockFacePlan smallFace(Direction direction, String legacyIconRole,
+            float normalX, float normalY, float normalZ, SmallBlockVertex... vertices) {
+        return new SmallBlockFacePlan(direction, legacyIconRole, normalX, normalY, normalZ, List.of(vertices));
+    }
+
+    private static CuboidFacePlan cuboidFace(Direction direction, String legacyIconRole, boolean cropped,
+            float normalX, float normalY, float normalZ, CuboidVertex... vertices) {
+        return new CuboidFacePlan(direction, legacyIconRole, cropped, normalX, normalY, normalZ, List.of(vertices));
+    }
+
+    private static CuboidVertex cuboidVertex(double x, double y, double z, double u, double v) {
+        return new CuboidVertex(x, y, z, u, v);
+    }
+
+    private static SmallBlockVertex vertex(double x, double y, double z, double u, double v) {
+        return new SmallBlockVertex(x, y, z, u, v);
     }
 
     private LegacyAtlasCuboidRenderer() {

@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "tag": "forge:ores/redstone" } },
+  "output": { "item": "minecraft:redstone", "count": 2 }
+}

@@ -509,6 +509,56 @@ public final class CompatRecipeRegistry {
                 fluidInput);
     }
 
+    public static JsonObject createArcWelder(String name, ItemStack output, int duration, long power,
+            HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        return createArcWelder(compatRecipeId("arc_welder", name), name, output, duration, power, inputFluid,
+                inputItems);
+    }
+
+    public static JsonObject createArcWelder(ResourceLocation id, String name, ItemStack output, int duration,
+            long power, HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        return createGeneric(GenericMachineRecipe.Machine.ARC_WELDER, id, name, false, output, duration, power,
+                list(inputItems), singleFluid(inputFluid), itemOutputList(output),
+                List.of());
+    }
+
+    public static JsonObject createArcWelder(String name, HbmItemOutput output, int duration, long power,
+            HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        return createArcWelder(compatRecipeId("arc_welder", name), name, output, duration, power, inputFluid,
+                inputItems);
+    }
+
+    public static JsonObject createArcWelder(ResourceLocation id, String name, HbmItemOutput output, int duration,
+            long power, HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        requireItemOutput(output, "arc welder output");
+        return createGeneric(GenericMachineRecipe.Machine.ARC_WELDER, id, name, false, output.representativeStack(),
+                duration, power, list(inputItems), singleFluid(inputFluid), outputList(output), List.of());
+    }
+
+    public static ResourceLocation registerArcWelder(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            String name, ItemStack output, int duration, long power, HbmFluidStack inputFluid,
+            HbmIngredient[] inputItems) {
+        return emit(sink, id, createArcWelder(id, name, output, duration, power, inputFluid, inputItems));
+    }
+
+    public static ResourceLocation registerArcWelder(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            String name, HbmItemOutput output, int duration, long power, HbmFluidStack inputFluid,
+            HbmIngredient[] inputItems) {
+        return emit(sink, id, createArcWelder(id, name, output, duration, power, inputFluid, inputItems));
+    }
+
+    public static ResourceLocation registerArcWelder(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemStack output, int duration, long power, HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        return registerArcWelder(sink, compatRecipeId("arc_welder", name), name, output, duration, power,
+                inputFluid, inputItems);
+    }
+
+    public static ResourceLocation registerArcWelder(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmItemOutput output, int duration, long power, HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
+        return registerArcWelder(sink, compatRecipeId("arc_welder", name), name, output, duration, power,
+                inputFluid, inputItems);
+    }
+
     public static JsonObject createGeneric(GenericMachineRecipe.Machine machine, ResourceLocation id, String name,
             boolean named, ItemStack icon, int duration, long power, List<HbmIngredient> inputItems,
             List<HbmFluidStack> inputFluids, List<HbmItemOutput> outputItems, List<HbmFluidStack> outputFluids) {
@@ -541,12 +591,43 @@ public final class CompatRecipeRegistry {
         return json;
     }
 
+    public static JsonObject createGeneric(GenericMachineRecipe.Machine machine, ResourceLocation id, String name,
+            boolean named, ItemStack icon, int duration, long power, HbmIngredient[] inputItems,
+            HbmFluidStack[] inputFluids, HbmItemOutput[] outputItems, HbmFluidStack[] outputFluids) {
+        return createGeneric(machine, id, name, named, icon, duration, power, list(inputItems), fluidList(inputFluids),
+                outputList(outputItems), fluidList(outputFluids));
+    }
+
     public static ResourceLocation registerGeneric(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
             GenericMachineRecipe.Machine machine, String name, boolean named, ItemStack icon, int duration, long power,
             List<HbmIngredient> inputItems, List<HbmFluidStack> inputFluids, List<HbmItemOutput> outputItems,
             List<HbmFluidStack> outputFluids) {
         return emit(sink, id, createGeneric(machine, id, name, named, icon, duration, power, inputItems, inputFluids,
                 outputItems, outputFluids));
+    }
+
+    public static ResourceLocation registerGeneric(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            GenericMachineRecipe.Machine machine, String name, boolean named, ItemStack icon, int duration, long power,
+            HbmIngredient[] inputItems, HbmFluidStack[] inputFluids, HbmItemOutput[] outputItems,
+            HbmFluidStack[] outputFluids) {
+        return emit(sink, id, createGeneric(machine, id, name, named, icon, duration, power, inputItems, inputFluids,
+                outputItems, outputFluids));
+    }
+
+    public static ResourceLocation registerGeneric(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            GenericMachineRecipe.Machine machine, boolean named, ItemStack icon, int duration, long power,
+            List<HbmIngredient> inputItems, List<HbmFluidStack> inputFluids, List<HbmItemOutput> outputItems,
+            List<HbmFluidStack> outputFluids) {
+        return registerGeneric(sink, compatRecipeId(genericMachineFolder(machine), name), machine, name, named, icon,
+                duration, power, inputItems, inputFluids, outputItems, outputFluids);
+    }
+
+    public static ResourceLocation registerGeneric(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            GenericMachineRecipe.Machine machine, boolean named, ItemStack icon, int duration, long power,
+            HbmIngredient[] inputItems, HbmFluidStack[] inputFluids, HbmItemOutput[] outputItems,
+            HbmFluidStack[] outputFluids) {
+        return registerGeneric(sink, compatRecipeId(genericMachineFolder(machine), name), machine, name, named, icon,
+                duration, power, inputItems, inputFluids, outputItems, outputFluids);
     }
 
     public static Diagnostics diagnostics() {
@@ -593,7 +674,7 @@ public final class CompatRecipeRegistry {
                 deferred("registerCompressor", "compressor", "modern serializer not yet migrated"),
                 deferred("registerElectrolyzerFluid", "electrolyzer_fluid", "modern serializer not yet migrated"),
                 deferred("registerElectrolyzerMetal", "electrolyzer_metal", "material recipe serializer not yet migrated"),
-                deferred("registerArcWelder", "arc_welder", "modern serializer not yet migrated"),
+                supported("registerArcWelder", "arc_welder", "GenericMachineRecipe.Machine.ARC_WELDER"),
                 deferred("registerRotaryFurnace", "rotary_furnace", "material recipe serializer not yet migrated"),
                 deferred("registerExposureChamber", "exposure_chamber", "modern serializer not yet migrated"),
                 deferred("registerFusionReactor", "fusion_reactor", "fusion recipe model not yet migrated"),
@@ -695,6 +776,12 @@ public final class CompatRecipeRegistry {
         }
     }
 
+    private static void requireItemOutput(HbmItemOutput output, String name) {
+        if (output == null) {
+            throw new IllegalArgumentException("HBM compat recipe " + name + " cannot be empty");
+        }
+    }
+
     private static void requireFluidOutput(HbmFluidStack stack, String name) {
         if (stack == null || stack.isEmpty()) {
             throw new IllegalArgumentException("HBM compat recipe " + name + " cannot be empty");
@@ -739,6 +826,17 @@ public final class CompatRecipeRegistry {
             case SHREDDER -> "shredder";
             case CENTRIFUGE -> "centrifuge";
             case CRYSTALLIZER -> "crystallizer";
+        };
+    }
+
+    private static String genericMachineFolder(GenericMachineRecipe.Machine machine) {
+        Objects.requireNonNull(machine, "machine");
+        return switch (machine) {
+            case ASSEMBLY_MACHINE -> "assembly_machine";
+            case CHEMICAL_PLANT -> "chemical_plant";
+            case PUREX -> "purex";
+            case PRECASS -> "precass";
+            case ARC_WELDER -> "arc_welder";
         };
     }
 

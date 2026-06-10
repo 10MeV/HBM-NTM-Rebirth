@@ -51,6 +51,10 @@ public final class LegacyOreDictionaryMappings {
         registerExact("dyeWhite", FORGE, "dyes/white");
 
         registerExact("itemRubber", FORGE, "rubber");
+        registerExact("ingotAnyPlasticexplosive", FORGE, "ingots/any_plastic_explosive");
+        registerExact("ingotAnyPlasticExplosive", FORGE, "ingots/any_plastic_explosive");
+        registerExact("ingotAnyHighexplosive", FORGE, "ingots/any_high_explosive");
+        registerExact("ingotAnyHighExplosive", FORGE, "ingots/any_high_explosive");
         registerExact("coalCoke", FORGE, "gems/coal_coke");
         registerExact("fuelCoke", FORGE, "gems/coke");
         registerExact("coke", FORGE, "gems/coke");

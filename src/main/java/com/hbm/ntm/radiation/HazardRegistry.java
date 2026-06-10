@@ -2,6 +2,7 @@ package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.neutron.RBMKFuelRodRegistry;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
@@ -62,7 +63,9 @@ public final class HazardRegistry {
         registerExistingLegacyResourceHazards();
         registerLegacyWasteAndCrystalHazards();
         registerLegacyNukePartHazards();
+        registerLegacyHolotapeHazards();
         registerLegacyReactorComponentHazards();
+        registerLegacyBreedingRodHazards();
         registerLegacyBalefireAndReactorDebrisHazards();
 
         register(ModItems.URANIUM_POWDER.get(), HazardType.RADIATION, RadiationConstants.U * RadiationConstants.POWDER_MULTIPLIER);
@@ -253,7 +256,7 @@ public final class HazardRegistry {
         registerBlockRad("block_pu238", RadiationConstants.PU238 * RadiationConstants.BLOCK);
         registerBlockRad("block_pu239", RadiationConstants.PU239 * RadiationConstants.BLOCK);
         registerBlockRad("block_pu240", RadiationConstants.PU240 * RadiationConstants.BLOCK);
-        registerBlockRad("block_pu_mix", 6.25F * RadiationConstants.BLOCK);
+        registerBlockRad("block_pu_mix", RadiationConstants.PU_REACTOR_GRADE * RadiationConstants.BLOCK);
         registerBlockRad("block_plutonium_fuel", RadiationConstants.PU_FUEL * RadiationConstants.BLOCK);
         registerBlockRad("block_trinitite", RadiationConstants.TRINITITE * RadiationConstants.BLOCK);
         registerBlockRad("block_waste", RadiationConstants.WASTE * RadiationConstants.BLOCK);
@@ -460,6 +463,11 @@ public final class HazardRegistry {
                 new HazardEntry(HazardType.BLINDING, 45.0F));
     }
 
+    private static void registerLegacyHolotapeHazards() {
+        registerByName("holotape_damaged", HazardType.DIGAMMA, 1000.0F);
+        registerLegacyMeta(LegacyMetaItemMappings.HOLOTAPE_IMAGE, 1, HazardType.DIGAMMA, 1.0F);
+    }
+
     private static void registerLegacyReactorComponentHazards() {
         registerLegacyDepletedFuelWaste("waste_natural_uranium", RadiationConstants.WASTE * RadiationConstants.BILLET * 11.5F);
         registerLegacyDepletedFuelWaste("waste_uranium", RadiationConstants.WASTE * RadiationConstants.BILLET * 10.0F);
@@ -488,9 +496,11 @@ public final class HazardRegistry {
         registerLegacyRadSourceWaste("waste_plate_pu238be", RadiationConstants.PU238_BE * RadiationConstants.NUGGET);
 
         registerByName("pile_rod_uranium", HazardType.RADIATION, RadiationConstants.U * RadiationConstants.BILLET * 3.0F);
-        registerByName("pile_rod_pu239", HazardType.RADIATION, RadiationConstants.PU239 * RadiationConstants.BILLET + RadiationConstants.PU239 * RadiationConstants.BILLET + RadiationConstants.WASTE * RadiationConstants.BILLET);
-        registerByName("pile_rod_plutonium", HazardType.RADIATION, RadiationConstants.PU239 * RadiationConstants.BILLET * 2.0F + RadiationConstants.WASTE * RadiationConstants.BILLET);
+        registerByName("pile_rod_pu239", HazardType.RADIATION, RadiationConstants.PU_REACTOR_GRADE * RadiationConstants.BILLET + RadiationConstants.PU239 * RadiationConstants.BILLET + RadiationConstants.U * RadiationConstants.BILLET);
+        registerByName("pile_rod_plutonium", HazardType.RADIATION, RadiationConstants.PU_REACTOR_GRADE * RadiationConstants.BILLET * 2.0F + RadiationConstants.U * RadiationConstants.BILLET);
         registerByName("pile_rod_source", HazardType.RADIATION, RadiationConstants.RA226_BE * RadiationConstants.BILLET * 3.0F);
+
+        registerLegacyZirnoxFuelHazards();
 
         registerByName("rod_zirnox_natural_uranium_fuel_depleted", HazardType.RADIATION, RadiationConstants.WASTE * RadiationConstants.ROD_DUAL * 11.5F);
         registerByName("rod_zirnox_uranium_fuel_depleted", HazardType.RADIATION, RadiationConstants.WASTE * RadiationConstants.ROD_DUAL * 10.0F);
@@ -515,6 +525,25 @@ public final class HazardRegistry {
         registerRtgPelletByName("pellet_rtg_lead", RadiationConstants.PB209 * RadiationConstants.RTG, 0.0F, 7.0F, 50.0F);
         registerRtgPelletByName("pellet_rtg_gold", RadiationConstants.AU198 * RadiationConstants.RTG, 0.0F, 5.0F, 0.0F);
         registerRtgPelletByName("pellet_rtg_americium", RadiationConstants.AM241 * RadiationConstants.RTG, 0.0F, 0.0F, 0.0F);
+        registerLegacyMeta(LegacyMetaItemMappings.PELLET_RTG_DEPLETED, 2, HazardType.RADIATION, RadiationConstants.NP237 * RadiationConstants.RTG);
+        registerLegacyRbmkFuelHazards();
+        registerLegacyPwrFuelHazards();
+        registerLegacyWatzPelletHazards();
+    }
+
+    private static void registerLegacyZirnoxFuelHazards() {
+        float rodDual = RadiationConstants.ROD_DUAL;
+        registerLegacyFuelMeta(LegacyMetaItemMappings.ROD_ZIRNOX, 0, RadiationConstants.U * rodDual, RadiationConstants.WASTE * rodDual * 11.5F, false);
+        registerLegacyFuelMeta(LegacyMetaItemMappings.ROD_ZIRNOX, 1, RadiationConstants.U_FUEL * rodDual, RadiationConstants.WASTE * rodDual * 10.0F, false);
+        registerLegacyFuelMeta(LegacyMetaItemMappings.ROD_ZIRNOX, 2, RadiationConstants.TH232 * rodDual, RadiationConstants.TH_FUEL * rodDual, false);
+        registerLegacyFuelMeta(LegacyMetaItemMappings.ROD_ZIRNOX, 3, RadiationConstants.TH_FUEL * rodDual, RadiationConstants.WASTE * rodDual * 7.5F, false);
+        registerLegacyFuelMeta(LegacyMetaItemMappings.ROD_ZIRNOX, 4, RadiationConstants.MOX_FUEL * rodDual, RadiationConstants.WASTE * rodDual * 10.0F, false);
+        registerLegacyFuelMeta(LegacyMetaItemMappings.ROD_ZIRNOX, 5, RadiationConstants.PU_FUEL * rodDual, RadiationConstants.WASTE * rodDual * 12.5F, false);
+        registerLegacyFuelMeta(LegacyMetaItemMappings.ROD_ZIRNOX, 6, RadiationConstants.U233 * rodDual, RadiationConstants.WASTE * rodDual * 10.0F, false);
+        registerLegacyFuelMeta(LegacyMetaItemMappings.ROD_ZIRNOX, 7, RadiationConstants.U235 * rodDual, RadiationConstants.WASTE * rodDual * 11.0F, false);
+        registerLegacyFuelMeta(LegacyMetaItemMappings.ROD_ZIRNOX, 8, RadiationConstants.SA_FUEL * rodDual, RadiationConstants.WASTE * rodDual * 15.0F, false);
+        registerLegacyFuelMeta(LegacyMetaItemMappings.ROD_ZIRNOX, 9, 0.0F, 0.001F * rodDual, false);
+        registerLegacyFuelMeta(LegacyMetaItemMappings.ROD_ZIRNOX, 10, RadiationConstants.MOX_FUEL * rodDual, RadiationConstants.WASTE * rodDual * 5.0F, false);
     }
 
     private static void registerLegacyBalefireAndReactorDebrisHazards() {
@@ -539,6 +568,172 @@ public final class HazardRegistry {
         registerByName("debris_exchanger", HazardType.RADIATION, 25.0F);
         registerByName("debris_shrapnel", HazardType.RADIATION, 2.5F);
         registerByName("debris_element", HazardType.RADIATION, 100.0F);
+    }
+
+    private static void registerLegacyBreedingRodHazards() {
+        registerBreedingRodRadiation(1, 0.001F);
+        registerBreedingRodRadiation(3, RadiationConstants.CO60);
+        registerBreedingRodRadiation(15, RadiationConstants.RA226);
+        registerBreedingRodRadiation(16, RadiationConstants.AC227);
+        registerBreedingRodRadiation(4, RadiationConstants.TH232);
+        registerBreedingRodRadiation(5, RadiationConstants.TH_FUEL);
+        registerBreedingRodRadiation(6, RadiationConstants.U235);
+        registerBreedingRodRadiation(7, RadiationConstants.NP237);
+        registerBreedingRodRadiation(8, RadiationConstants.U238);
+        registerBreedingRodRadiation(9, RadiationConstants.PU238);
+        registerBreedingRodRadiation(10, RadiationConstants.PU239);
+        registerBreedingRodRadiation(11, RadiationConstants.PU_REACTOR_GRADE);
+        registerBreedingRodRadiation(12, RadiationConstants.WASTE);
+        registerBreedingRodRadiation(14, RadiationConstants.U);
+    }
+
+    private static void registerLegacyRbmkFuelHazards() {
+        for (LegacyRbmkHazard hazard : legacyRbmkHazards()) {
+            var entry = RBMKFuelRodRegistry.find(hazard.rodId());
+            if (entry.isEmpty()) {
+                continue;
+            }
+            registerRbmkFuelByName(hazard.rodId(), hazard.rodBase(), hazard.rodDepleted(),
+                    true, hazard.linear(), hazard.rodBlinding(), hazard.rodDigamma(),
+                    entry.get().spec().totalYield());
+            if (!hazard.pelletId().isEmpty()) {
+                registerRbmkPelletByName(hazard.pelletId(), hazard.pelletBase(),
+                        hazard.pelletDepleted(), hazard.pelletBlinding(), hazard.pelletDigamma());
+            }
+        }
+    }
+
+    private static List<LegacyRbmkHazard> legacyRbmkHazards() {
+        float rod = RadiationConstants.ROD_RBMK;
+        float pellet = RadiationConstants.BILLET;
+        return List.of(
+                rbmk("rbmk_fuel_ueu", "rbmk_pellet_ueu", RadiationConstants.U, RadiationConstants.WASTE * 20.0F, false),
+                rbmk("rbmk_fuel_meu", "rbmk_pellet_meu", RadiationConstants.U_FUEL, RadiationConstants.WASTE * 21.5F, false),
+                rbmk("rbmk_fuel_heu233", "rbmk_pellet_heu233", RadiationConstants.U233, RadiationConstants.WASTE * 31.0F, false),
+                rbmk("rbmk_fuel_heu235", "rbmk_pellet_heu235", RadiationConstants.U235, RadiationConstants.WASTE * 30.0F, false),
+                rbmk("rbmk_fuel_uzh", "rbmk_pellet_uzh", RadiationConstants.UZH, RadiationConstants.WASTE * 20.0F, false),
+                rbmk("rbmk_fuel_thmeu", "rbmk_pellet_thmeu", RadiationConstants.TH_FUEL, RadiationConstants.WASTE * 17.5F, false),
+                rbmk("rbmk_fuel_lep", "rbmk_pellet_lep", RadiationConstants.PU_FUEL, RadiationConstants.WASTE * 25.0F, false),
+                rbmk("rbmk_fuel_mep", "rbmk_pellet_mep", RadiationConstants.PU_REACTOR_GRADE, RadiationConstants.WASTE * 30.0F, false),
+                rbmk("rbmk_fuel_hep239", "rbmk_pellet_hep239", RadiationConstants.PU239, RadiationConstants.WASTE * 32.5F, false),
+                rbmk("rbmk_fuel_hep241", "rbmk_pellet_hep241", RadiationConstants.PU241, RadiationConstants.WASTE * 35.0F, false),
+                rbmk("rbmk_fuel_lea", "rbmk_pellet_lea", RadiationConstants.AM_FUEL, RadiationConstants.WASTE * 26.0F, false),
+                rbmk("rbmk_fuel_mea", "rbmk_pellet_mea", RadiationConstants.AM_MIX, RadiationConstants.WASTE * 30.5F, false),
+                rbmk("rbmk_fuel_hea241", "rbmk_pellet_hea241", RadiationConstants.AM241, RadiationConstants.WASTE * 33.5F, false),
+                rbmk("rbmk_fuel_hea242", "rbmk_pellet_hea242", RadiationConstants.AM242, RadiationConstants.WASTE * 34.0F, false),
+                rbmk("rbmk_fuel_men", "rbmk_pellet_men", RadiationConstants.NP_FUEL, RadiationConstants.WASTE * 22.5F, false),
+                rbmk("rbmk_fuel_hen", "rbmk_pellet_hen", RadiationConstants.NP237, RadiationConstants.WASTE * 30.0F, false),
+                rbmk("rbmk_fuel_mox", "rbmk_pellet_mox", RadiationConstants.MOX_FUEL, RadiationConstants.WASTE * 25.5F, false),
+                rbmk("rbmk_fuel_les", "rbmk_pellet_les", RadiationConstants.SA_FUEL, RadiationConstants.WASTE * 24.5F, false),
+                rbmk("rbmk_fuel_mes", "rbmk_pellet_mes", RadiationConstants.SA_FUEL, RadiationConstants.WASTE * 30.0F, false),
+                rbmk("rbmk_fuel_hes", "rbmk_pellet_hes", RadiationConstants.SA_FUEL, RadiationConstants.WASTE * 50.0F, false),
+                rbmk("rbmk_fuel_leaus", "rbmk_pellet_leaus", 0.0F, RadiationConstants.WASTE * 37.5F, false),
+                rbmk("rbmk_fuel_heaus", "rbmk_pellet_heaus", 0.0F, RadiationConstants.WASTE * 32.5F, false),
+                rbmk("rbmk_fuel_po210be", "rbmk_pellet_po210be", RadiationConstants.PO210_BE, RadiationConstants.PO210_BE * 0.1F, true),
+                rbmk("rbmk_fuel_ra226be", "rbmk_pellet_ra226be", RadiationConstants.RA226_BE, RadiationConstants.RA226_BE * 0.4F, true),
+                new LegacyRbmkHazard("rbmk_fuel_pu238be", "rbmk_pellet_pu238be",
+                        RadiationConstants.PU238_BE * rod, RadiationConstants.WASTE * rod * 2.5F, false, 0.0F, 0.0F,
+                        RadiationConstants.PU238_BE * pellet, RadiationConstants.WASTE * 1.5F, 0.0F, 0.0F),
+                rbmk("rbmk_fuel_balefire_gold", "rbmk_pellet_balefire_gold", RadiationConstants.AU198, RadiationConstants.BALEFIRE * 0.5F, true),
+                new LegacyRbmkHazard("rbmk_fuel_flashlead", "rbmk_pellet_flashlead",
+                        RadiationConstants.PB209 * 1.25F * rod, RadiationConstants.PB209 * RadiationConstants.NUGGET * 0.05F * rod, true, 0.0F, 0.0F,
+                        RadiationConstants.PB209 * 1.25F * pellet, RadiationConstants.PB209 * RadiationConstants.NUGGET * 0.05F, 0.0F, 0.0F),
+                rbmk("rbmk_fuel_balefire", "rbmk_pellet_balefire", RadiationConstants.BALEFIRE, RadiationConstants.BALEFIRE * 100.0F, true),
+                new LegacyRbmkHazard("rbmk_fuel_zfb_bismuth", "rbmk_pellet_zfb_bismuth",
+                        RadiationConstants.PU241 * rod * 0.1F, RadiationConstants.WASTE * rod * 5.0F, false, 0.0F, 0.0F,
+                        RadiationConstants.PU241 * pellet * 0.1F, RadiationConstants.WASTE * pellet * 5.0F, 0.0F, 0.0F),
+                new LegacyRbmkHazard("rbmk_fuel_zfb_pu241", "rbmk_pellet_zfb_pu241",
+                        RadiationConstants.PU239 * rod * 0.1F, RadiationConstants.WASTE * rod * 7.5F, false, 0.0F, 0.0F,
+                        RadiationConstants.PU239 * pellet * 0.1F, RadiationConstants.WASTE * pellet * 7.5F, 0.0F, 0.0F),
+                new LegacyRbmkHazard("rbmk_fuel_zfb_am_mix", "rbmk_pellet_zfb_am_mix",
+                        RadiationConstants.PU241 * rod * 0.1F, RadiationConstants.WASTE * rod * 10.0F, false, 0.0F, 0.0F,
+                        RadiationConstants.PU241 * pellet * 0.1F, RadiationConstants.WASTE * pellet * 10.0F, 0.0F, 0.0F),
+                rbmk("rbmk_fuel_drx", "rbmk_pellet_drx", RadiationConstants.BALEFIRE, RadiationConstants.BALEFIRE * 100.0F, true, 0.0F, 1.0F / 3.0F, 1.0F / 24.0F)
+        );
+    }
+
+    private static LegacyRbmkHazard rbmk(String rodId, String pelletId, float base, float depleted, boolean linear) {
+        return rbmk(rodId, pelletId, base, depleted, linear, 0.0F, 0.0F, 0.0F);
+    }
+
+    private static LegacyRbmkHazard rbmk(String rodId, String pelletId, float base, float depleted, boolean linear, float rodBlinding, float rodDigamma, float pelletDigamma) {
+        return new LegacyRbmkHazard(rodId, pelletId,
+                base * RadiationConstants.ROD_RBMK,
+                depleted * RadiationConstants.ROD_RBMK,
+                linear,
+                rodBlinding,
+                rodDigamma,
+                base * RadiationConstants.BILLET,
+                depleted * RadiationConstants.BILLET,
+                0.0F,
+                pelletDigamma);
+    }
+
+    private record LegacyRbmkHazard(
+            String rodId,
+            String pelletId,
+            float rodBase,
+            float rodDepleted,
+            boolean linear,
+            float rodBlinding,
+            float rodDigamma,
+            float pelletBase,
+            float pelletDepleted,
+            float pelletBlinding,
+            float pelletDigamma) {
+    }
+
+    private static void registerLegacyPwrFuelHazards() {
+        registerPwrFuel(0, "meu", RadiationConstants.U_FUEL * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(1, "heu233", RadiationConstants.U233 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(2, "heu235", RadiationConstants.U235 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(3, "men", RadiationConstants.NP_FUEL * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(4, "hen237", RadiationConstants.NP237 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(5, "mox", RadiationConstants.MOX_FUEL * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(6, "mep", RadiationConstants.PU_REACTOR_GRADE * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(7, "hep239", RadiationConstants.PU239 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(8, "hep241", RadiationConstants.PU241 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(9, "mea", RadiationConstants.AM_MIX * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(10, "hea242", RadiationConstants.AM242 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(11, "hes326", RadiationConstants.SA326 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(12, "hes327", RadiationConstants.SA327 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(13, "bfb_am_mix", RadiationConstants.AM_MIX * RadiationConstants.BILLET);
+        registerPwrFuel(14, "bfb_pu241", RadiationConstants.PU241 * RadiationConstants.BILLET);
+    }
+
+    private static void registerPwrFuel(int legacyMeta, String suffix, float base) {
+        registerLegacyMeta(LegacyMetaItemMappings.PWR_FUEL, legacyMeta, HazardType.RADIATION, base);
+        registerByName("pwr_fuel_" + suffix, HazardType.RADIATION, base);
+
+        HazardData hot = new HazardData()
+                .addEntry(HazardType.RADIATION, base * 10.0F)
+                .addEntry(HazardType.HOT, 5.0F);
+        registerLegacyMeta(LegacyMetaItemMappings.PWR_FUEL_HOT, legacyMeta, hot);
+        registerByName("pwr_fuel_hot_" + suffix,
+                new HazardEntry(HazardType.RADIATION, base * 10.0F),
+                new HazardEntry(HazardType.HOT, 5.0F));
+
+        registerLegacyMeta(LegacyMetaItemMappings.PWR_FUEL_DEPLETED, legacyMeta, HazardType.RADIATION, base * 10.0F);
+        registerByName("pwr_fuel_depleted_" + suffix, HazardType.RADIATION, base * 10.0F);
+    }
+
+    private static void registerLegacyWatzPelletHazards() {
+        float fourIngots = RadiationConstants.INGOT * 4.0F;
+        registerWatzPellet(0, "schrabidium", RadiationConstants.SA326 * fourIngots);
+        registerWatzPellet(1, "hes", RadiationConstants.SA_FUEL * fourIngots);
+        registerWatzPellet(2, "mes", RadiationConstants.SA_FUEL * fourIngots);
+        registerWatzPellet(3, "les", RadiationConstants.SA_FUEL * fourIngots);
+        registerWatzPellet(4, "hen", RadiationConstants.NP237 * fourIngots);
+        registerWatzPellet(5, "meu", RadiationConstants.U_FUEL * fourIngots);
+        registerWatzPellet(6, "mep", RadiationConstants.PU_REACTOR_GRADE * fourIngots);
+        registerWatzPellet(9, "du", RadiationConstants.U238 * fourIngots);
+        registerWatzPellet(10, "nqd", RadiationConstants.U235 * fourIngots);
+        registerWatzPellet(11, "nqr", RadiationConstants.PU239 * fourIngots);
+    }
+
+    private static void registerWatzPellet(int legacyMeta, String suffix, float radiation) {
+        registerLegacyMeta(LegacyMetaItemMappings.WATZ_PELLET, legacyMeta, HazardType.RADIATION, radiation);
+        registerByName("watz_pellet_" + suffix, HazardType.RADIATION, radiation);
     }
 
     private static void registerMaterialPowderHazards() {
@@ -703,6 +898,17 @@ public final class HazardRegistry {
                 .ifPresent(stack -> registerStack(stack, data));
     }
 
+    public static void registerLegacyFuelMeta(ResourceLocation legacyId, int legacyMeta, float base, float target, boolean blinding) {
+        LegacyMetaItemMappings.stack(legacyId, legacyMeta, 1)
+                .ifPresent(stack -> registerFuelRadiation(stack, base, target, blinding));
+    }
+
+    private static void registerBreedingRodRadiation(int legacyMeta, float base) {
+        registerLegacyMeta(LegacyMetaItemMappings.ROD, legacyMeta, HazardType.RADIATION, base);
+        registerLegacyMeta(LegacyMetaItemMappings.ROD_DUAL, legacyMeta, HazardType.RADIATION, base * RadiationConstants.ROD_DUAL);
+        registerLegacyMeta(LegacyMetaItemMappings.ROD_QUAD, legacyMeta, HazardType.RADIATION, base * RadiationConstants.ROD_QUAD);
+    }
+
     public static void registerFuelRadiation(Item item, float base, float target, boolean blinding) {
         HazardData data = new HazardData()
                 .addEntry(new HazardEntry(HazardType.RADIATION, base).withModifier(new FuelRadiationModifier(target)));
@@ -744,6 +950,20 @@ public final class HazardRegistry {
         RegistryObject<Item> item = ModItems.legacyItem(itemName);
         if (item != null) {
             registerRtgPellet(item.get(), base, target, hot, blinding);
+        }
+    }
+
+    private static void registerRbmkFuelByName(String itemName, float base, float depleted, boolean hot, boolean linear, float blinding, float digamma, double initialYield) {
+        RegistryObject<Item> item = ModItems.legacyItem(itemName);
+        if (item != null) {
+            registerRbmkFuel(item.get(), base, depleted, hot, linear, blinding, digamma, initialYield);
+        }
+    }
+
+    private static void registerRbmkPelletByName(String itemName, float base, float depleted, float blinding, float digamma) {
+        RegistryObject<Item> item = ModItems.legacyItem(itemName);
+        if (item != null) {
+            registerRbmkPellet(item.get(), base, depleted, blinding, digamma);
         }
     }
 
@@ -798,6 +1018,18 @@ public final class HazardRegistry {
             data.addEntry(HazardType.DIGAMMA, digamma);
         }
         registerStack(stack, data);
+    }
+
+    public static void registerRbmkPellet(Item item, float base, float depleted, float blinding, float digamma) {
+        HazardData data = new HazardData()
+                .addEntry(new HazardEntry(HazardType.RADIATION, base).withModifier(new RbmkPelletRadiationModifier(depleted)));
+        if (blinding > 0.0F) {
+            data.addEntry(HazardType.BLINDING, blinding);
+        }
+        if (digamma > 0.0F) {
+            data.addEntry(HazardType.DIGAMMA, digamma);
+        }
+        register(item, data);
     }
 
     public static void registerLegacyRbmkPellet(ResourceLocation legacyId, int legacyMeta, float base, float depleted, float blinding, float digamma) {

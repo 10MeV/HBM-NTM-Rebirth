@@ -1,6 +1,7 @@
 package com.hbm.ntm.api.fluid;
 
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
@@ -50,9 +51,7 @@ public interface IFluidStandardSenderMK2 extends IFluidProviderMK2, HbmStandardF
         }
         BlockPos origin = connectorPos.relative(directionFromSender.getOpposite());
         return HbmFluidUtil.tryProvideToPorts(level, origin,
-                List.of(new HbmFluidUtil.FluidPort(
-                        new BlockPos(directionFromSender.getStepX(), directionFromSender.getStepY(), directionFromSender.getStepZ()),
-                        directionFromSender)),
+                List.of(HbmFluidPortLayouts.adjacent(directionFromSender)),
                 type, pressure, this) > 0;
     }
 
@@ -64,13 +63,8 @@ public interface IFluidStandardSenderMK2 extends IFluidProviderMK2, HbmStandardF
         if (tank == null || level == null || pos == null) {
             return 0;
         }
-        int touched = 0;
-        for (Direction direction : Direction.values()) {
-            if (tryProvide(tank, level, pos.relative(direction), direction)) {
-                touched++;
-            }
-        }
-        return touched;
+        return HbmFluidUtil.tryProvideToPorts(level, pos, HbmFluidPortLayouts.allAdjacent(),
+                tank.getTankType(), tank.getPressure(), this);
     }
 
     default boolean sendFluid(HbmFluidTank tank, Level level, BlockPos connectorPos, Direction directionFromSender) {

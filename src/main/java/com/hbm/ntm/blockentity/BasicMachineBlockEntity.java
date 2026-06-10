@@ -5,6 +5,7 @@ import com.hbm.ntm.menu.BasicMachineMenu;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.PressRecipe;
 import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -329,24 +330,12 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
 
     private boolean canFitOutput(PressRecipe recipe) {
         ItemStack result = recipe.getResultItem(level.registryAccess());
-        ItemStack output = items.getStackInSlot(SLOT_OUTPUT);
-        if (output.isEmpty()) {
-            return true;
-        }
-        if (!ItemStack.isSameItemSameTags(output, result)) {
-            return false;
-        }
-        return output.getCount() + result.getCount() <= output.getMaxStackSize();
+        return HbmInventoryUtil.doesHandlerHaveSpaceUnchecked(items, SLOT_OUTPUT, SLOT_OUTPUT, result);
     }
 
     private void finishPressRecipe(PressRecipe recipe) {
         ItemStack result = recipe.getResultItem(level.registryAccess());
-        ItemStack output = items.getStackInSlot(SLOT_OUTPUT);
-        if (output.isEmpty()) {
-            items.setStackInSlot(SLOT_OUTPUT, result.copy());
-        } else {
-            output.grow(result.getCount());
-        }
+        HbmInventoryUtil.tryAddItemToHandlerUnchecked(items, SLOT_OUTPUT, SLOT_OUTPUT, result);
 
         level.playSound(null, worldPosition, ModSounds.BLOCK_PRESS_OPERATE.get(), SoundSource.BLOCKS, 1.5F, 1.0F);
 

@@ -1168,66 +1168,100 @@ public final class ModMessages {
     }
 
     public static void syncTileToTracking(HbmTileSyncable syncable, BlockEntity blockEntity) {
-        sendToTrackingChunk(new TileSyncPacket(blockEntity.getBlockPos(), syncable.getClientSyncTag()), blockEntity);
+        sendToTrackingChunk(tileSyncPacket(blockEntity, syncable), blockEntity);
     }
 
     public static void syncTileToTrackingThreaded(HbmTileSyncable syncable, BlockEntity blockEntity) {
-        ThreadedPacketDispatcher.sendToTrackingChunk(new TileSyncPacket(blockEntity.getBlockPos(), syncable.getClientSyncTag()), blockEntity);
+        ThreadedPacketDispatcher.sendToTrackingChunk(tileSyncPacket(blockEntity, syncable), blockEntity);
     }
 
     public static void syncTileToPlayer(HbmTileSyncable syncable, BlockEntity blockEntity, ServerPlayer player) {
-        sendToPlayer(new TileSyncPacket(blockEntity.getBlockPos(), syncable.getClientSyncTag()), player);
+        sendToPlayer(tileSyncPacket(blockEntity, syncable), player);
     }
 
     public static void syncTileToPlayerThreaded(HbmTileSyncable syncable, BlockEntity blockEntity, ServerPlayer player) {
-        ThreadedPacketDispatcher.sendToPlayer(new TileSyncPacket(blockEntity.getBlockPos(), syncable.getClientSyncTag()), player);
+        ThreadedPacketDispatcher.sendToPlayer(tileSyncPacket(blockEntity, syncable), player);
     }
 
     public static void syncEntityToTracking(HbmEntitySyncable syncable, Entity entity) {
-        sendToEntityTrackers(new EntitySyncPacket(entity.getId(), syncable.getClientSyncTag()), entity);
+        sendToEntityTrackers(entitySyncPacket(entity, syncable), entity);
     }
 
     public static void syncEntityToTrackingThreaded(HbmEntitySyncable syncable, Entity entity) {
-        ThreadedPacketDispatcher.sendToEntityTrackers(new EntitySyncPacket(entity.getId(), syncable.getClientSyncTag()), entity);
+        ThreadedPacketDispatcher.sendToEntityTrackers(entitySyncPacket(entity, syncable), entity);
     }
 
     public static void syncEntityToPlayer(HbmEntitySyncable syncable, Entity entity, ServerPlayer player) {
         if (syncable.canSendClientSyncTo(player)) {
-            sendToPlayer(new EntitySyncPacket(entity.getId(), syncable.getClientSyncTag()), player);
+            sendToPlayer(entitySyncPacket(entity, syncable), player);
         }
     }
 
     public static void syncEntityToPlayerThreaded(HbmEntitySyncable syncable, Entity entity, ServerPlayer player) {
         if (syncable.canSendClientSyncTo(player)) {
-            ThreadedPacketDispatcher.sendToPlayer(new EntitySyncPacket(entity.getId(), syncable.getClientSyncTag()), player);
+            ThreadedPacketDispatcher.sendToPlayer(entitySyncPacket(entity, syncable), player);
         }
     }
 
+    public static TileSyncPacket tileSyncPacket(BlockPos pos, net.minecraft.nbt.CompoundTag data) {
+        return new TileSyncPacket(pos, data);
+    }
+
+    public static TileSyncPacket tileSyncPacket(int x, int y, int z, net.minecraft.nbt.CompoundTag data) {
+        return tileSyncPacket(new BlockPos(x, y, z), data);
+    }
+
+    public static TileSyncPacket tileSyncPacket(BlockEntity blockEntity, HbmTileSyncable syncable) {
+        return tileSyncPacket(blockEntity.getBlockPos(), syncable.getClientSyncTag());
+    }
+
+    public static EntitySyncPacket entitySyncPacket(int entityId, net.minecraft.nbt.CompoundTag data) {
+        return new EntitySyncPacket(entityId, data);
+    }
+
+    public static EntitySyncPacket entitySyncPacket(Entity entity, net.minecraft.nbt.CompoundTag data) {
+        return entitySyncPacket(entity == null ? -1 : entity.getId(), data);
+    }
+
+    public static EntitySyncPacket entitySyncPacket(Entity entity, HbmEntitySyncable syncable) {
+        return entitySyncPacket(entity, syncable.getClientSyncTag());
+    }
+
     public static void sendClientEntityEvent(Entity entity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
-        sendToEntityTrackers(new ClientEntityEventPacket(entity.getId(), eventType, data), entity);
+        sendToEntityTrackers(clientEntityEventPacket(entity, eventType, data), entity);
     }
 
     public static void sendClientEntityEventThreaded(Entity entity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
-        ThreadedPacketDispatcher.sendToEntityTrackers(new ClientEntityEventPacket(entity.getId(), eventType, data), entity);
+        ThreadedPacketDispatcher.sendToEntityTrackers(clientEntityEventPacket(entity, eventType, data), entity);
     }
 
     public static void sendClientEntityEventAndSelf(Entity entity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
-        sendToEntityAndSelf(new ClientEntityEventPacket(entity.getId(), eventType, data), entity);
+        sendToEntityAndSelf(clientEntityEventPacket(entity, eventType, data), entity);
     }
 
     public static void sendClientEntityEventAndSelfThreaded(Entity entity, ResourceLocation eventType,
                                                             net.minecraft.nbt.CompoundTag data) {
-        ThreadedPacketDispatcher.sendToEntityAndSelf(new ClientEntityEventPacket(entity.getId(), eventType, data), entity);
+        ThreadedPacketDispatcher.sendToEntityAndSelf(clientEntityEventPacket(entity, eventType, data), entity);
     }
 
     public static void sendClientEntityEvent(ServerPlayer player, Entity entity, ResourceLocation eventType,
                                              net.minecraft.nbt.CompoundTag data) {
-        sendToPlayer(new ClientEntityEventPacket(entity.getId(), eventType, data), player);
+        sendToPlayer(clientEntityEventPacket(entity, eventType, data), player);
     }
 
     public static void sendClientEntityEventThreaded(ServerPlayer player, Entity entity, ResourceLocation eventType,
                                                      net.minecraft.nbt.CompoundTag data) {
-        ThreadedPacketDispatcher.sendToPlayer(new ClientEntityEventPacket(entity.getId(), eventType, data), player);
+        ThreadedPacketDispatcher.sendToPlayer(clientEntityEventPacket(entity, eventType, data), player);
+    }
+
+    public static ClientEntityEventPacket clientEntityEventPacket(int entityId, ResourceLocation eventType,
+                                                                  net.minecraft.nbt.CompoundTag data) {
+        return new ClientEntityEventPacket(entityId, eventType, data);
+    }
+
+    public static ClientEntityEventPacket clientEntityEventPacket(Entity entity, ResourceLocation eventType,
+                                                                  net.minecraft.nbt.CompoundTag data) {
+        return clientEntityEventPacket(entity == null ? -1 : entity.getId(), eventType, data);
     }
 
     public static void sendEntityAction(Entity entity, ResourceLocation actionType, net.minecraft.nbt.CompoundTag data) {
@@ -1235,11 +1269,11 @@ public final class ModMessages {
     }
 
     public static void informPlayer(ServerPlayer player, Component message, int id, int millis) {
-        sendToPlayer(new ClientInformPacket(message, id, millis), player);
+        sendToPlayer(playerInformPacket(message, id, millis), player);
     }
 
     public static void informPlayerThreaded(ServerPlayer player, Component message, int id, int millis) {
-        ThreadedPacketDispatcher.sendToPlayer(new ClientInformPacket(message, id, millis), player);
+        ThreadedPacketDispatcher.sendToPlayer(playerInformPacket(message, id, millis), player);
     }
 
     public static void informPlayer(ServerPlayer player, Component message, int id) {
@@ -1298,9 +1332,41 @@ public final class ModMessages {
         informPlayerThreaded(player, message, id);
     }
 
+    public static ClientInformPacket playerInformPacket(Component message, int id, int millis) {
+        return new ClientInformPacket(message, id, millis);
+    }
+
+    public static ClientInformPacket playerInformPacket(Component message, int id) {
+        return playerInformPacket(message, id, LEGACY_PLAYER_INFORM_DEFAULT_MILLIS);
+    }
+
+    public static ClientInformPacket playerInformPacket(String message, int id, int millis) {
+        return playerInformPacket(Component.literal(message == null ? "" : message), id, millis);
+    }
+
+    public static ClientInformPacket playerInformPacket(String message, int id) {
+        return playerInformPacket(message, id, LEGACY_PLAYER_INFORM_DEFAULT_MILLIS);
+    }
+
+    public static ClientInformPacket legacyPlayerInformPacket(String message, int id, int millis) {
+        return playerInformPacket(message, id, millis);
+    }
+
+    public static ClientInformPacket legacyPlayerInformPacket(String message, int id) {
+        return playerInformPacket(message, id);
+    }
+
+    public static ClientInformPacket legacyPlayerInformPacket(Component message, int id, int millis) {
+        return playerInformPacket(message, id, millis);
+    }
+
+    public static ClientInformPacket legacyPlayerInformPacket(Component message, int id) {
+        return playerInformPacket(message, id);
+    }
+
     public static void sendAuxParticle(ServerLevel level, double x, double y, double z, net.minecraft.nbt.CompoundTag data,
                                        double range) {
-        sendToAllAround(new AuxParticlePacket(auxParticlePayload(data, x, y, z)), level, x, y, z, range);
+        sendToAllAround(auxParticlePacket(x, y, z, data), level, x, y, z, range);
     }
 
     public static void sendAuxParticleNT(ServerLevel level, double x, double y, double z,
@@ -1319,8 +1385,7 @@ public final class ModMessages {
 
     public static void sendAuxParticleThreaded(ServerLevel level, double x, double y, double z,
                                                net.minecraft.nbt.CompoundTag data, double range) {
-        ThreadedPacketDispatcher.sendToAllAround(new AuxParticlePacket(auxParticlePayload(data, x, y, z)),
-                level, x, y, z, range);
+        ThreadedPacketDispatcher.sendToAllAround(auxParticlePacket(x, y, z, data), level, x, y, z, range);
     }
 
     public static void sendAuxParticleNTThreaded(ServerLevel level, double x, double y, double z,
@@ -1341,7 +1406,7 @@ public final class ModMessages {
 
     public static void sendAuxParticle(ServerPlayer player, double x, double y, double z,
                                        net.minecraft.nbt.CompoundTag data) {
-        sendToPlayer(new AuxParticlePacket(auxParticlePayload(data, x, y, z)), player);
+        sendToPlayer(auxParticlePacket(x, y, z, data), player);
     }
 
     public static void sendAuxParticleNT(ServerPlayer player, double x, double y, double z,
@@ -1351,7 +1416,7 @@ public final class ModMessages {
 
     public static void sendAuxParticleThreaded(ServerPlayer player, double x, double y, double z,
                                                net.minecraft.nbt.CompoundTag data) {
-        ThreadedPacketDispatcher.sendToPlayer(new AuxParticlePacket(auxParticlePayload(data, x, y, z)), player);
+        ThreadedPacketDispatcher.sendToPlayer(auxParticlePacket(x, y, z, data), player);
     }
 
     public static void sendAuxParticleNTThreaded(ServerPlayer player, double x, double y, double z,
@@ -1367,26 +1432,31 @@ public final class ModMessages {
         return auxParticlePacket(x, y, z, data);
     }
 
+    public static AuxParticlePacket auxParticlePacketNT(net.minecraft.nbt.CompoundTag data, double x, double y,
+                                                        double z) {
+        return auxParticlePacket(x, y, z, data);
+    }
+
     public static void sendItemAnimation(ServerPlayer player, int slot, int rail, String itemKey,
                                          ResourceLocation animationFile, String animationName, boolean holdLastFrame) {
-        sendToPlayer(new ItemAnimationPacket(slot, rail, itemKey, animationFile, animationName, holdLastFrame), player);
+        sendToPlayer(itemAnimationPacket(slot, rail, itemKey, animationFile, animationName, holdLastFrame), player);
     }
 
     public static void sendItemAnimationThreaded(ServerPlayer player, int slot, int rail, String itemKey,
                                                  ResourceLocation animationFile, String animationName,
                                                  boolean holdLastFrame) {
         ThreadedPacketDispatcher.sendToPlayer(
-                new ItemAnimationPacket(slot, rail, itemKey, animationFile, animationName, holdLastFrame), player);
+                itemAnimationPacket(slot, rail, itemKey, animationFile, animationName, holdLastFrame), player);
     }
 
     public static void sendLegacyItemAnimation(ServerPlayer player, int animationType, int receiverIndex, int itemIndex) {
-        sendToPlayer(new LegacyItemAnimationPacket((short) animationType, receiverIndex, itemIndex), player);
+        sendToPlayer(legacyItemAnimationPacket(animationType, receiverIndex, itemIndex), player);
     }
 
     public static void sendLegacyItemAnimationThreaded(ServerPlayer player, int animationType, int receiverIndex,
                                                        int itemIndex) {
         ThreadedPacketDispatcher.sendToPlayer(
-                new LegacyItemAnimationPacket((short) animationType, receiverIndex, itemIndex), player);
+                legacyItemAnimationPacket(animationType, receiverIndex, itemIndex), player);
     }
 
     public static void sendLegacyItemAnimation(ServerPlayer player, int animationType, int receiverIndex) {
@@ -1430,19 +1500,58 @@ public final class ModMessages {
         sendLegacyItemAnimationThreaded(player, animationType);
     }
 
+    public static ItemAnimationPacket itemAnimationPacket(int slot, int rail, String itemKey,
+                                                          ResourceLocation animationFile, String animationName,
+                                                          boolean holdLastFrame) {
+        return new ItemAnimationPacket(slot, rail, itemKey, animationFile, animationName, holdLastFrame);
+    }
+
+    public static LegacyItemAnimationPacket legacyItemAnimationPacket(int animationType, int receiverIndex,
+                                                                      int itemIndex) {
+        return new LegacyItemAnimationPacket((short) animationType, receiverIndex, itemIndex);
+    }
+
+    public static LegacyItemAnimationPacket legacyItemAnimationPacket(int animationType, int receiverIndex) {
+        return legacyItemAnimationPacket(animationType, receiverIndex, 0);
+    }
+
+    public static LegacyItemAnimationPacket legacyItemAnimationPacket(int animationType) {
+        return legacyItemAnimationPacket(animationType, 0, 0);
+    }
+
+    public static LegacyItemAnimationPacket hbmAnimationPacket(int animationType, int receiverIndex, int itemIndex) {
+        return legacyItemAnimationPacket(animationType, receiverIndex, itemIndex);
+    }
+
+    public static LegacyItemAnimationPacket hbmAnimationPacket(int animationType, int receiverIndex) {
+        return legacyItemAnimationPacket(animationType, receiverIndex);
+    }
+
+    public static LegacyItemAnimationPacket hbmAnimationPacket(int animationType) {
+        return legacyItemAnimationPacket(animationType);
+    }
+
     public static void sendMuzzleFlash(Entity entity) {
-        sendToEntityTrackers(new MuzzleFlashPacket(entity.getId()), entity);
+        sendToEntityTrackers(muzzleFlashPacket(entity), entity);
+    }
+
+    public static MuzzleFlashPacket muzzleFlashPacket(Entity entity) {
+        return new MuzzleFlashPacket(entity == null ? -1 : entity.getId());
+    }
+
+    public static MuzzleFlashPacket muzzleFlashPacket(int entityId) {
+        return new MuzzleFlashPacket(entityId);
     }
 
     public static void sendMuzzleFlash(ServerLevel level, Entity entity, double range) {
         if (entity != null) {
-            sendToAllAround(new MuzzleFlashPacket(entity.getId()), level, entity.getX(), entity.getY(), entity.getZ(), range);
+            sendToAllAround(muzzleFlashPacket(entity), level, entity.getX(), entity.getY(), entity.getZ(), range);
         }
     }
 
     public static void sendMuzzleFlashThreaded(ServerLevel level, Entity entity, double range) {
         if (entity != null) {
-            ThreadedPacketDispatcher.sendToAllAround(new MuzzleFlashPacket(entity.getId()),
+            ThreadedPacketDispatcher.sendToAllAround(muzzleFlashPacket(entity),
                     level, entity.getX(), entity.getY(), entity.getZ(), range);
         }
     }
@@ -1572,10 +1681,25 @@ public final class ModMessages {
         return new CoordinateActionPacket(hand, pos, action, value, frequency, data);
     }
 
+    public static CoordinateActionPacket coordinateActionPacket(InteractionHand hand, int x, int y, int z,
+                                                               int action, int value, int frequency,
+                                                               net.minecraft.nbt.CompoundTag data) {
+        return coordinateActionPacket(hand, new BlockPos(x, y, z), action, value, frequency, data);
+    }
+
+    public static CoordinateActionPacket coordinateActionPacket(BlockPos pos, int action, int value, int frequency,
+                                                               net.minecraft.nbt.CompoundTag data) {
+        return coordinateActionPacket(InteractionHand.MAIN_HAND, pos, action, value, frequency, data);
+    }
+
     public static CoordinateActionPacket satCoordPacket(InteractionHand hand, BlockPos pos, int frequency) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putString("actionType", HbmNetworkActions.SATELLITE_COORDINATE.toString());
         return coordinateActionPacket(hand, pos, 0, 0, frequency, data);
+    }
+
+    public static CoordinateActionPacket satCoordPacket(BlockPos pos, int frequency) {
+        return satCoordPacket(InteractionHand.MAIN_HAND, pos, frequency);
     }
 
     public static CoordinateActionPacket satCoordPacket(InteractionHand hand, int x, int y, int z, int frequency) {
@@ -1588,6 +1712,10 @@ public final class ModMessages {
 
     public static void sendSatelliteCoordinateAction(BlockPos pos, int frequency) {
         sendSatelliteCoordinateAction(InteractionHand.MAIN_HAND, pos, frequency);
+    }
+
+    public static void sendSatelliteCoordinateAction(int x, int y, int z, int frequency) {
+        sendSatelliteCoordinateAction(new BlockPos(x, y, z), frequency);
     }
 
     public static void sendSatelliteLaserAction(InteractionHand hand, int x, int z, int frequency) {
@@ -1605,12 +1733,26 @@ public final class ModMessages {
         return satLaserPacket(InteractionHand.MAIN_HAND, x, z, frequency);
     }
 
+    public static CoordinateActionPacket satLaserPacket(BlockPos pos, int frequency) {
+        BlockPos safePos = pos == null ? BlockPos.ZERO : pos;
+        return satLaserPacket(safePos.getX(), safePos.getZ(), frequency);
+    }
+
     public static void sendSatelliteLaserAction(int x, int z, int frequency) {
         sendSatelliteLaserAction(InteractionHand.MAIN_HAND, x, z, frequency);
     }
 
+    public static void sendSatelliteLaserAction(BlockPos pos, int frequency) {
+        BlockPos safePos = pos == null ? BlockPos.ZERO : pos;
+        sendSatelliteLaserAction(safePos.getX(), safePos.getZ(), frequency);
+    }
+
     public static void sendSatCoord(InteractionHand hand, int x, int y, int z, int frequency) {
         sendSatelliteCoordinateAction(hand, new BlockPos(x, y, z), frequency);
+    }
+
+    public static void sendSatCoord(BlockPos pos, int frequency) {
+        sendSatelliteCoordinateAction(pos, frequency);
     }
 
     public static void sendSatCoord(int x, int y, int z, int frequency) {
@@ -1625,25 +1767,35 @@ public final class ModMessages {
         sendSatLaser(InteractionHand.MAIN_HAND, x, z, frequency);
     }
 
+    public static void sendSatLaser(BlockPos pos, int frequency) {
+        sendSatelliteLaserAction(pos, frequency);
+    }
+
     public static void syncHeldItemNbt(ServerPlayer player, InteractionHand hand, ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return;
-        }
-        ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(stack.getItem());
-        if (itemId != null) {
-            sendToPlayer(new HeldItemNbtPacket(hand, itemId, stack.getDamageValue(), stack.getOrCreateTag().copy()), player);
-        }
+        heldItemNbtPacket(hand, stack).ifPresent(packet -> sendToPlayer(packet, player));
     }
 
     public static void syncHeldItemNbtThreaded(ServerPlayer player, InteractionHand hand, ItemStack stack) {
+        heldItemNbtPacket(hand, stack).ifPresent(packet -> ThreadedPacketDispatcher.sendToPlayer(packet, player));
+    }
+
+    public static Optional<HeldItemNbtPacket> heldItemNbtPacket(InteractionHand hand, ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
-            return;
+            return Optional.empty();
         }
         ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(stack.getItem());
-        if (itemId != null) {
-            ThreadedPacketDispatcher.sendToPlayer(
-                    new HeldItemNbtPacket(hand, itemId, stack.getDamageValue(), stack.getOrCreateTag().copy()), player);
+        if (itemId == null) {
+            return Optional.empty();
         }
+        return Optional.of(new HeldItemNbtPacket(hand, itemId, stack.getDamageValue(), stack.getOrCreateTag().copy()));
+    }
+
+    public static Optional<HeldItemNbtPacket> heldItemNbtPacket(ItemStack stack) {
+        return heldItemNbtPacket(InteractionHand.MAIN_HAND, stack);
+    }
+
+    public static Optional<HeldItemNbtPacket> legacyHeldItemNbtPacket(ItemStack stack) {
+        return heldItemNbtPacket(stack);
     }
 
     public static void syncHeldItemNbt(ServerPlayer player, ItemStack stack) {
@@ -1710,8 +1862,16 @@ public final class ModMessages {
         sendToServer(auxButtonPacket(pos, value, id));
     }
 
+    public static void sendLegacyButton(BlockEntity blockEntity, int value, int id) {
+        sendLegacyButton(blockEntity.getBlockPos(), value, id);
+    }
+
     public static LegacyButtonPacket auxButtonPacket(BlockPos pos, int value, int id) {
         return new LegacyButtonPacket(pos, value, id);
+    }
+
+    public static LegacyButtonPacket auxButtonPacket(BlockEntity blockEntity, int value, int id) {
+        return auxButtonPacket(blockEntity.getBlockPos(), value, id);
     }
 
     public static LegacyButtonPacket auxButtonPacket(int x, int y, int z, int value, int id) {
@@ -1720,6 +1880,10 @@ public final class ModMessages {
 
     public static LegacyButtonPacket legacyButtonPacket(BlockPos pos, int value, int id) {
         return auxButtonPacket(pos, value, id);
+    }
+
+    public static LegacyButtonPacket legacyButtonPacket(BlockEntity blockEntity, int value, int id) {
+        return auxButtonPacket(blockEntity, value, id);
     }
 
     public static LegacyButtonPacket legacyButtonPacket(int x, int y, int z, int value, int id) {
@@ -1734,6 +1898,10 @@ public final class ModMessages {
         sendLegacyButton(pos, value, id);
     }
 
+    public static void sendAuxButton(BlockEntity blockEntity, int value, int id) {
+        sendLegacyButton(blockEntity, value, id);
+    }
+
     public static void sendAuxButton(int x, int y, int z, int value, int id) {
         sendLegacyButton(x, y, z, value, id);
     }
@@ -1742,8 +1910,16 @@ public final class ModMessages {
         sendToServer(nbtControlPacket(pos, data));
     }
 
+    public static void sendTileControl(BlockEntity blockEntity, net.minecraft.nbt.CompoundTag data) {
+        sendTileControl(blockEntity.getBlockPos(), data);
+    }
+
     public static TileControlPacket nbtControlPacket(BlockPos pos, net.minecraft.nbt.CompoundTag data) {
         return new TileControlPacket(pos, data);
+    }
+
+    public static TileControlPacket nbtControlPacket(BlockEntity blockEntity, net.minecraft.nbt.CompoundTag data) {
+        return nbtControlPacket(blockEntity.getBlockPos(), data);
     }
 
     public static TileControlPacket nbtControlPacket(int x, int y, int z, net.minecraft.nbt.CompoundTag data) {
@@ -1758,12 +1934,24 @@ public final class ModMessages {
         return nbtControlPacket(pos, data);
     }
 
+    public static TileControlPacket tileControlPacket(BlockEntity blockEntity, net.minecraft.nbt.CompoundTag data) {
+        return nbtControlPacket(blockEntity, data);
+    }
+
     public static void sendTileControl(int x, int y, int z, net.minecraft.nbt.CompoundTag data) {
         sendTileControl(new BlockPos(x, y, z), data);
     }
 
     public static void sendNbtControl(BlockPos pos, net.minecraft.nbt.CompoundTag data) {
         sendTileControl(pos, data);
+    }
+
+    public static void sendNbtControl(BlockEntity blockEntity, net.minecraft.nbt.CompoundTag data) {
+        sendTileControl(blockEntity, data);
+    }
+
+    public static void sendNbtControl(net.minecraft.nbt.CompoundTag data, BlockEntity blockEntity) {
+        sendTileControl(blockEntity, data);
     }
 
     public static void sendNbtControl(int x, int y, int z, net.minecraft.nbt.CompoundTag data) {
@@ -1784,12 +1972,40 @@ public final class ModMessages {
         return new ServerTileActionPacket(pos, actionType, value, data);
     }
 
+    public static ServerTileActionPacket typedTileActionPacket(BlockEntity blockEntity, ResourceLocation actionType,
+                                                               int value, net.minecraft.nbt.CompoundTag data) {
+        return typedTileActionPacket(blockEntity.getBlockPos(), actionType, value, data);
+    }
+
+    public static ServerTileActionPacket typedTileActionPacket(int x, int y, int z, ResourceLocation actionType,
+                                                               int value, net.minecraft.nbt.CompoundTag data) {
+        return typedTileActionPacket(new BlockPos(x, y, z), actionType, value, data);
+    }
+
+    public static void sendTypedTileAction(BlockEntity blockEntity, ResourceLocation actionType, int value,
+                                           net.minecraft.nbt.CompoundTag data) {
+        sendTypedTileAction(blockEntity.getBlockPos(), actionType, value, data);
+    }
+
+    public static void sendTypedTileAction(int x, int y, int z, ResourceLocation actionType, int value,
+                                           net.minecraft.nbt.CompoundTag data) {
+        sendTypedTileAction(new BlockPos(x, y, z), actionType, value, data);
+    }
+
     public static void sendTypedTileAction(BlockPos pos, ResourceLocation actionType) {
         sendTypedTileAction(pos, actionType, 0, new net.minecraft.nbt.CompoundTag());
     }
 
     public static void sendTypedTileAction(BlockPos pos, ResourceLocation actionType, int value) {
         sendTypedTileAction(pos, actionType, value, new net.minecraft.nbt.CompoundTag());
+    }
+
+    public static void sendTypedTileAction(BlockEntity blockEntity, ResourceLocation actionType) {
+        sendTypedTileAction(blockEntity.getBlockPos(), actionType);
+    }
+
+    public static void sendTypedTileAction(BlockEntity blockEntity, ResourceLocation actionType, int value) {
+        sendTypedTileAction(blockEntity.getBlockPos(), actionType, value);
     }
 
     public static void sendTileBinaryControl(BlockPos pos, ResourceLocation channel,
@@ -1805,10 +2021,15 @@ public final class ModMessages {
         }
     }
 
+    public static void sendTileBinaryControl(BlockEntity blockEntity, ResourceLocation channel,
+                                             java.util.function.Consumer<FriendlyByteBuf> writer) {
+        sendTileBinaryControl(blockEntity.getBlockPos(), channel, writer);
+    }
+
     public static void sendTileBinaryControl(BlockPos pos, ResourceLocation channel, byte[] payload) {
         byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
         if (safePayload.length <= ServerTileBinaryControlPacket.MAX_PAYLOAD_BYTES) {
-            sendToServer(new ServerTileBinaryControlPacket(pos, channel, safePayload));
+            sendToServer(serverTileBinaryControlPacket(pos, channel, safePayload));
             return;
         }
         UUID transferId = UUID.randomUUID();
@@ -1827,8 +2048,39 @@ public final class ModMessages {
         }
     }
 
+    public static void sendTileBinaryControl(BlockEntity blockEntity, ResourceLocation channel, byte[] payload) {
+        sendTileBinaryControl(blockEntity.getBlockPos(), channel, payload);
+    }
+
+    public static ServerTileBinaryControlPacket serverTileBinaryControlPacket(BlockPos pos, ResourceLocation channel,
+                                                                              byte[] payload) {
+        return new ServerTileBinaryControlPacket(pos, channel, payload);
+    }
+
+    public static ServerTileBinaryControlPacket serverTileBinaryControlPacket(int x, int y, int z,
+                                                                              ResourceLocation channel,
+                                                                              byte[] payload) {
+        return serverTileBinaryControlPacket(new BlockPos(x, y, z), channel, payload);
+    }
+
+    public static ServerTileBinaryControlPacket serverTileBinaryControlPacket(BlockEntity blockEntity,
+                                                                              ResourceLocation channel,
+                                                                              byte[] payload) {
+        return serverTileBinaryControlPacket(blockEntity.getBlockPos(), channel, payload);
+    }
+
+    public static ServerTileBinaryControlPacket tileBinaryControlPacket(BlockPos pos, ResourceLocation channel,
+                                                                        byte[] payload) {
+        return serverTileBinaryControlPacket(pos, channel, payload);
+    }
+
+    public static ServerTileBinaryControlPacket tileBinaryControlPacket(BlockEntity blockEntity,
+                                                                        ResourceLocation channel, byte[] payload) {
+        return serverTileBinaryControlPacket(blockEntity, channel, payload);
+    }
+
     public static void syncPermaData(ServerPlayer player, net.minecraft.nbt.CompoundTag data) {
-        sendToPlayer(new PermaSyncPacket(data), player);
+        sendToPlayer(permaSyncPacket(data), player);
     }
 
     public static void syncPermaData(ServerPlayer player) {
@@ -1844,7 +2096,7 @@ public final class ModMessages {
     }
 
     public static void syncPermaDataThreaded(ServerPlayer player, net.minecraft.nbt.CompoundTag data) {
-        ThreadedPacketDispatcher.sendToPlayer(new PermaSyncPacket(data), player);
+        ThreadedPacketDispatcher.sendToPlayer(permaSyncPacket(data), player);
     }
 
     public static void syncPermaDataThreaded(ServerPlayer player) {
@@ -1859,8 +2111,24 @@ public final class ModMessages {
         syncPermaDataThreaded(player);
     }
 
+    public static PermaSyncPacket permaSyncPacket(net.minecraft.nbt.CompoundTag data) {
+        return new PermaSyncPacket(data);
+    }
+
+    public static PermaSyncPacket permaSyncPacket(ServerPlayer player) {
+        return permaSyncPacket(player == null ? new net.minecraft.nbt.CompoundTag() : HbmPermaSyncData.writeForPlayer(player));
+    }
+
     public static void sendExplosionKnockback(ServerPlayer player, Vec3 motion) {
-        sendToPlayer(new ExplosionKnockbackPacket(motion), player);
+        sendToPlayer(explosionKnockbackPacket(motion), player);
+    }
+
+    public static ExplosionKnockbackPacket explosionKnockbackPacket(Vec3 motion) {
+        return new ExplosionKnockbackPacket(motion);
+    }
+
+    public static ExplosionKnockbackPacket explosionKnockbackPacket(double x, double y, double z) {
+        return explosionKnockbackPacket(new Vec3(x, y, z));
     }
 
     public static void sendExplosionKnockback(ServerPlayer player, double x, double y, double z) {
@@ -1880,7 +2148,7 @@ public final class ModMessages {
     public static void syncClientBinaryData(ServerPlayer player, ResourceLocation channel, String name, byte[] payload) {
         byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
         if (safePayload.length <= ClientBinaryDataPacket.MAX_PAYLOAD_BYTES) {
-            sendToPlayer(new ClientBinaryDataPacket(channel, name, safePayload, false), player);
+            sendToPlayer(clientBinaryDataPacket(channel, name, safePayload, false), player);
             return;
         }
         UUID transferId = UUID.randomUUID();
@@ -1903,7 +2171,7 @@ public final class ModMessages {
                                                     byte[] payload) {
         byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
         if (safePayload.length <= ClientBinaryDataPacket.MAX_PAYLOAD_BYTES) {
-            ThreadedPacketDispatcher.sendToPlayer(new ClientBinaryDataPacket(channel, name, safePayload, false), player);
+            ThreadedPacketDispatcher.sendToPlayer(clientBinaryDataPacket(channel, name, safePayload, false), player);
             return;
         }
         UUID transferId = UUID.randomUUID();
@@ -1948,19 +2216,45 @@ public final class ModMessages {
     }
 
     public static void clearClientBinaryData(ServerPlayer player, ResourceLocation channel) {
-        sendToPlayer(new ClientBinaryDataPacket(channel, "", new byte[0], true), player);
+        sendToPlayer(clientBinaryDataPacket(channel, "", new byte[0], true), player);
     }
 
     public static void clearClientBinaryDataThreaded(ServerPlayer player, ResourceLocation channel) {
-        ThreadedPacketDispatcher.sendToPlayer(new ClientBinaryDataPacket(channel, "", new byte[0], true), player);
+        ThreadedPacketDispatcher.sendToPlayer(clientBinaryDataPacket(channel, "", new byte[0], true), player);
     }
 
     public static void markClientBinaryDataReady(ServerPlayer player, ResourceLocation channel) {
-        sendToPlayer(new ClientBinaryDataReadyPacket(channel), player);
+        sendToPlayer(clientBinaryDataReadyPacket(channel), player);
     }
 
     public static void markClientBinaryDataReadyThreaded(ServerPlayer player, ResourceLocation channel) {
-        ThreadedPacketDispatcher.sendToPlayer(new ClientBinaryDataReadyPacket(channel), player);
+        ThreadedPacketDispatcher.sendToPlayer(clientBinaryDataReadyPacket(channel), player);
+    }
+
+    public static ClientBinaryDataPacket clientBinaryDataPacket(ResourceLocation channel, String name, byte[] payload,
+                                                               boolean clearChannel) {
+        return new ClientBinaryDataPacket(channel, name, payload, clearChannel);
+    }
+
+    public static ClientBinaryDataReadyPacket clientBinaryDataReadyPacket(ResourceLocation channel) {
+        return new ClientBinaryDataReadyPacket(channel);
+    }
+
+    public static ClientBinaryDataPacket serializableRecipePacket(String filename, byte[] fileBytes) {
+        return clientBinaryDataPacket(LEGACY_SERIALIZABLE_RECIPE_CHANNEL, filename, fileBytes, false);
+    }
+
+    public static Optional<ClientBinaryDataPacket> serializableRecipePacket(File recipeFile) {
+        return readSerializableRecipeFile(recipeFile)
+                .map(recipe -> serializableRecipePacket(recipe.filename(), recipe.fileBytes()));
+    }
+
+    public static ClientBinaryDataPacket clearSerializableRecipesPacket() {
+        return clientBinaryDataPacket(LEGACY_SERIALIZABLE_RECIPE_CHANNEL, "", new byte[0], true);
+    }
+
+    public static ClientBinaryDataReadyPacket serializableRecipeReinitPacket() {
+        return clientBinaryDataReadyPacket(LEGACY_SERIALIZABLE_RECIPE_CHANNEL);
     }
 
     public static void sendSerializableRecipe(ServerPlayer player, String filename, byte[] fileBytes) {
@@ -2038,24 +2332,34 @@ public final class ModMessages {
     }
 
     public static void sendClientTileEvent(BlockEntity blockEntity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
-        sendToTrackingChunk(new ClientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
+        sendToTrackingChunk(clientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
     }
 
     public static void sendClientTileEvent(Level level, BlockPos pos, ResourceLocation eventType,
                                            net.minecraft.nbt.CompoundTag data) {
-        sendToTrackingChunk(new ClientTileEventPacket(pos, eventType, data), level, pos);
+        sendToTrackingChunk(clientTileEventPacket(pos, eventType, data), level, pos);
     }
 
     public static void sendClientTileEventThreaded(BlockEntity blockEntity, ResourceLocation eventType,
                                                    net.minecraft.nbt.CompoundTag data) {
-        ThreadedPacketDispatcher.sendToTrackingChunk(new ClientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
+        ThreadedPacketDispatcher.sendToTrackingChunk(clientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
     }
 
     public static void sendClientTileEventThreaded(Level level, BlockPos pos, ResourceLocation eventType,
                                                    net.minecraft.nbt.CompoundTag data) {
         if (level instanceof ServerLevel serverLevel) {
-            ThreadedPacketDispatcher.sendToTrackingChunk(new ClientTileEventPacket(pos, eventType, data), serverLevel, pos);
+            ThreadedPacketDispatcher.sendToTrackingChunk(clientTileEventPacket(pos, eventType, data), serverLevel, pos);
         }
+    }
+
+    public static ClientTileEventPacket clientTileEventPacket(BlockPos pos, ResourceLocation eventType,
+                                                              net.minecraft.nbt.CompoundTag data) {
+        return new ClientTileEventPacket(pos, eventType, data);
+    }
+
+    public static ClientTileEventPacket clientTileEventPacket(int x, int y, int z, ResourceLocation eventType,
+                                                              net.minecraft.nbt.CompoundTag data) {
+        return clientTileEventPacket(new BlockPos(x, y, z), eventType, data);
     }
 
     public static void syncTileBinaryToTracking(HbmTileBinarySyncProvider provider, BlockEntity blockEntity) {
@@ -2233,7 +2537,7 @@ public final class ModMessages {
     }
 
     public static void syncMissileMultipart(BlockEntity blockEntity, MissileMultipartSnapshot multipart) {
-        sendToTrackingChunk(new ClientMissileMultipartPacket(blockEntity.getBlockPos(), multipart), blockEntity);
+        sendToTrackingChunk(missileMultipartPacket(blockEntity.getBlockPos(), multipart), blockEntity);
     }
 
     public static void syncMissileMultipart(BlockEntity blockEntity, ItemStack warhead, ItemStack fuselage,
@@ -2242,35 +2546,89 @@ public final class ModMessages {
     }
 
     public static void syncMissileMultipart(Level level, BlockPos pos, MissileMultipartSnapshot multipart) {
-        sendToTrackingChunk(new ClientMissileMultipartPacket(pos, multipart), level, pos);
+        sendToTrackingChunk(missileMultipartPacket(pos, multipart), level, pos);
     }
 
     public static void syncMissileMultipart(ServerPlayer player, BlockPos pos, MissileMultipartSnapshot multipart) {
-        sendToPlayer(new ClientMissileMultipartPacket(pos, multipart), player);
+        sendToPlayer(missileMultipartPacket(pos, multipart), player);
+    }
+
+    public static void syncMissileMultipartThreaded(BlockEntity blockEntity, MissileMultipartSnapshot multipart) {
+        ThreadedPacketDispatcher.sendToTrackingChunk(missileMultipartPacket(blockEntity.getBlockPos(), multipart), blockEntity);
+    }
+
+    public static void syncMissileMultipartThreaded(BlockEntity blockEntity, ItemStack warhead, ItemStack fuselage,
+                                                    ItemStack fins, ItemStack thruster) {
+        syncMissileMultipartThreaded(blockEntity, MissileMultipartSnapshot.of(warhead, fuselage, fins, thruster));
+    }
+
+    public static void syncMissileMultipartThreaded(Level level, BlockPos pos, MissileMultipartSnapshot multipart) {
+        if (level instanceof ServerLevel serverLevel) {
+            ThreadedPacketDispatcher.sendToTrackingChunk(missileMultipartPacket(pos, multipart), serverLevel, pos);
+        }
+    }
+
+    public static void syncMissileMultipartThreaded(ServerPlayer player, BlockPos pos, MissileMultipartSnapshot multipart) {
+        ThreadedPacketDispatcher.sendToPlayer(missileMultipartPacket(pos, multipart), player);
+    }
+
+    public static ClientMissileMultipartPacket missileMultipartPacket(BlockPos pos, MissileMultipartSnapshot multipart) {
+        return new ClientMissileMultipartPacket(pos, multipart);
+    }
+
+    public static ClientMissileMultipartPacket missileMultipartPacket(BlockPos pos, ItemStack warhead,
+                                                                      ItemStack fuselage, ItemStack fins,
+                                                                      ItemStack thruster) {
+        return missileMultipartPacket(pos, MissileMultipartSnapshot.of(warhead, fuselage, fins, thruster));
+    }
+
+    public static ClientMissileMultipartPacket teMissileMultipartPacket(int x, int y, int z,
+                                                                        MissileMultipartSnapshot multipart) {
+        return missileMultipartPacket(new BlockPos(x, y, z), multipart);
     }
 
     public static void sendClientTileEvent(ServerPlayer player, BlockPos pos, ResourceLocation eventType,
                                            net.minecraft.nbt.CompoundTag data) {
-        sendToPlayer(new ClientTileEventPacket(pos, eventType, data), player);
+        sendToPlayer(clientTileEventPacket(pos, eventType, data), player);
     }
 
     public static void sendVaultDoorEvent(BlockEntity blockEntity, boolean opening, int state, boolean resetClientTime, int type) {
-        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
-        data.putBoolean("opening", opening);
-        data.putInt("state", state);
-        data.putBoolean("resetClientTime", resetClientTime);
-        data.putInt("type", type);
-        sendClientTileEvent(blockEntity, HbmNetworkActions.VAULT_DOOR, data);
+        sendToTrackingChunk(vaultDoorPacket(blockEntity.getBlockPos(), opening, state, resetClientTime, type), blockEntity);
     }
 
     public static void sendVaultDoorEvent(Level level, BlockPos pos, boolean opening, int state,
                                           boolean resetClientTime, int type) {
+        sendToTrackingChunk(vaultDoorPacket(pos, opening, state, resetClientTime, type), level, pos);
+    }
+
+    public static ClientTileEventPacket vaultDoorPacket(BlockPos pos, boolean opening, int state,
+                                                        boolean resetClientTime, int type) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putBoolean("opening", opening);
         data.putInt("state", state);
         data.putBoolean("resetClientTime", resetClientTime);
         data.putInt("type", type);
-        sendClientTileEvent(level, pos, HbmNetworkActions.VAULT_DOOR, data);
+        return clientTileEventPacket(pos, HbmNetworkActions.VAULT_DOOR, data);
+    }
+
+    public static ClientTileEventPacket vaultDoorPacket(int x, int y, int z, boolean opening, int state,
+                                                        boolean resetClientTime, int type) {
+        return vaultDoorPacket(new BlockPos(x, y, z), opening, state, resetClientTime, type);
+    }
+
+    public static ClientTileEventPacket teVaultPacket(BlockPos pos, boolean opening, int state, long sysTime, int type) {
+        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
+        data.putBoolean("opening", opening);
+        data.putInt("state", state);
+        data.putLong("sysTime", sysTime);
+        data.putBoolean("resetClientTime", sysTime == 1L);
+        data.putInt("type", type);
+        return clientTileEventPacket(pos, HbmNetworkActions.VAULT_DOOR, data);
+    }
+
+    public static ClientTileEventPacket teVaultPacket(int x, int y, int z, boolean opening, int state,
+                                                      long sysTime, int type) {
+        return teVaultPacket(new BlockPos(x, y, z), opening, state, sysTime, type);
     }
 
     public static void sendVaultDoorEvent(Level level, int x, int y, int z, boolean opening, int state,
@@ -2279,17 +2637,30 @@ public final class ModMessages {
     }
 
     public static void sendSirenEvent(BlockEntity blockEntity, int trackId, boolean active) {
+        sendToTrackingChunk(sirenPacket(blockEntity.getBlockPos(), trackId, active), blockEntity);
+    }
+
+    public static ClientTileEventPacket sirenPacket(BlockPos pos, int trackId, boolean active) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putInt("trackId", trackId);
         data.putBoolean("active", active);
-        sendClientTileEvent(blockEntity, HbmNetworkActions.SIREN, data);
+        return clientTileEventPacket(pos, HbmNetworkActions.SIREN, data);
+    }
+
+    public static ClientTileEventPacket sirenPacket(int x, int y, int z, int trackId, boolean active) {
+        return sirenPacket(new BlockPos(x, y, z), trackId, active);
+    }
+
+    public static ClientTileEventPacket teSirenPacket(BlockPos pos, int trackId, boolean active) {
+        return sirenPacket(pos, trackId, active);
+    }
+
+    public static ClientTileEventPacket teSirenPacket(int x, int y, int z, int trackId, boolean active) {
+        return sirenPacket(x, y, z, trackId, active);
     }
 
     public static void sendSirenEvent(Level level, BlockPos pos, int trackId, boolean active) {
-        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
-        data.putInt("trackId", trackId);
-        data.putBoolean("active", active);
-        sendClientTileEvent(level, pos, HbmNetworkActions.SIREN, data);
+        sendToTrackingChunk(sirenPacket(pos, trackId, active), level, pos);
     }
 
     public static void sendSirenEvent(Level level, int x, int y, int z, int trackId, boolean active) {
@@ -2298,6 +2669,12 @@ public final class ModMessages {
 
     public static void syncForceFieldState(BlockEntity blockEntity, float radius, int health, int maxHealth,
                                            int power, boolean active, int color, int cooldown) {
+        sendToTrackingChunk(forceFieldPacket(blockEntity.getBlockPos(), radius, health, maxHealth,
+                power, active, color, cooldown), blockEntity);
+    }
+
+    public static TileSyncPacket forceFieldPacket(BlockPos pos, float radius, int health, int maxHealth,
+                                                  int power, boolean active, int color, int cooldown) {
         net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
         data.putFloat("radius", radius);
         data.putInt("health", health);
@@ -2306,20 +2683,27 @@ public final class ModMessages {
         data.putBoolean("active", active);
         data.putInt("color", color);
         data.putInt("cooldown", cooldown);
-        sendToTrackingChunk(new TileSyncPacket(blockEntity.getBlockPos(), data), blockEntity);
+        return new TileSyncPacket(pos, data);
+    }
+
+    public static TileSyncPacket forceFieldPacket(int x, int y, int z, float radius, int health, int maxHealth,
+                                                  int power, boolean active, int color, int cooldown) {
+        return forceFieldPacket(new BlockPos(x, y, z), radius, health, maxHealth, power, active, color, cooldown);
+    }
+
+    public static TileSyncPacket teffPacket(BlockPos pos, float radius, int health, int maxHealth,
+                                            int power, boolean active, int color, int cooldown) {
+        return forceFieldPacket(pos, radius, health, maxHealth, power, active, color, cooldown);
+    }
+
+    public static TileSyncPacket teffPacket(int x, int y, int z, float radius, int health, int maxHealth,
+                                            int power, boolean active, int color, int cooldown) {
+        return forceFieldPacket(x, y, z, radius, health, maxHealth, power, active, color, cooldown);
     }
 
     public static void syncForceFieldState(Level level, BlockPos pos, float radius, int health, int maxHealth,
                                            int power, boolean active, int color, int cooldown) {
-        net.minecraft.nbt.CompoundTag data = new net.minecraft.nbt.CompoundTag();
-        data.putFloat("radius", radius);
-        data.putInt("health", health);
-        data.putInt("maxHealth", maxHealth);
-        data.putInt("power", power);
-        data.putBoolean("active", active);
-        data.putInt("color", color);
-        data.putInt("cooldown", cooldown);
-        sendToTrackingChunk(new TileSyncPacket(pos, data), level, pos);
+        sendToTrackingChunk(forceFieldPacket(pos, radius, health, maxHealth, power, active, color, cooldown), level, pos);
     }
 
     public static void syncForceFieldState(Level level, int x, int y, int z, float radius, int health, int maxHealth,
@@ -2375,7 +2759,7 @@ public final class ModMessages {
     public static void sendClientTileBinaryData(ServerPlayer player, BlockPos pos, ResourceLocation channel, byte[] payload) {
         byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
         if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
-            sendToPlayer(new ClientTileBinaryDataPacket(pos, channel, safePayload), player);
+            sendToPlayer(clientTileBinaryDataPacket(pos, channel, safePayload), player);
             return;
         }
         UUID transferId = UUID.randomUUID();
@@ -2400,7 +2784,7 @@ public final class ModMessages {
         }
         byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
         if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
-            sendToTrackingChunk(new ClientTileBinaryDataPacket(pos, channel, safePayload), level, pos);
+            sendToTrackingChunk(clientTileBinaryDataPacket(pos, channel, safePayload), level, pos);
             return;
         }
         UUID transferId = UUID.randomUUID();
@@ -2419,14 +2803,40 @@ public final class ModMessages {
         }
     }
 
+    public static ClientTileBinaryDataPacket clientTileBinaryDataPacket(BlockPos pos, ResourceLocation channel,
+                                                                        byte[] payload) {
+        return new ClientTileBinaryDataPacket(pos, channel, payload);
+    }
+
+    public static ClientTileBinaryDataPacket bufPacket(BlockPos pos, ResourceLocation channel, byte[] payload) {
+        return clientTileBinaryDataPacket(pos, channel, payload);
+    }
+
+    public static ClientTileBinaryDataPacket bufPacket(BlockPos pos, byte[] payload) {
+        return bufPacket(pos, HbmNetworkActions.BUF_PACKET, payload);
+    }
+
+    public static ClientTileBinaryDataPacket bufPacket(int x, int y, int z, byte[] payload) {
+        return bufPacket(new BlockPos(x, y, z), payload);
+    }
+
+    public static ClientTileBinaryDataPacket bufPacket(BlockEntity blockEntity, HbmTileBinarySyncProvider provider,
+                                                       ResourceLocation channel) {
+        return bufPacket(blockEntity.getBlockPos(), channel, writeTileBinaryPayload(provider));
+    }
+
+    public static ClientTileBinaryDataPacket bufPacket(BlockEntity blockEntity, HbmTileBinarySyncProvider provider) {
+        return bufPacket(blockEntity, provider, provider.getClientTileBinarySyncChannel());
+    }
+
     public static void syncClientPanelData(ServerPlayer player, ResourceLocation panelType, int legacyType,
                                            net.minecraft.nbt.CompoundTag data) {
-        sendToPlayer(new ClientPanelDataPacket(panelType, legacyType, data), player);
+        sendToPlayer(clientPanelDataPacket(panelType, legacyType, data), player);
     }
 
     public static void syncClientPanelDataThreaded(ServerPlayer player, ResourceLocation panelType, int legacyType,
                                                    net.minecraft.nbt.CompoundTag data) {
-        ThreadedPacketDispatcher.sendToPlayer(new ClientPanelDataPacket(panelType, legacyType, data), player);
+        ThreadedPacketDispatcher.sendToPlayer(clientPanelDataPacket(panelType, legacyType, data), player);
     }
 
     public static void syncSatellitePanelData(ServerPlayer player, int legacyType, net.minecraft.nbt.CompoundTag data) {
@@ -2455,12 +2865,30 @@ public final class ModMessages {
         syncSatellitePanelDataThreaded(player, legacyType, data);
     }
 
+    public static ClientPanelDataPacket clientPanelDataPacket(ResourceLocation panelType, int legacyType,
+                                                              net.minecraft.nbt.CompoundTag data) {
+        return new ClientPanelDataPacket(panelType, legacyType, data);
+    }
+
+    public static ClientPanelDataPacket satellitePanelDataPacket(int legacyType,
+                                                                 net.minecraft.nbt.CompoundTag data) {
+        return clientPanelDataPacket(HbmNetworkActions.SATELLITE_PANEL, legacyType, data);
+    }
+
+    public static ClientPanelDataPacket satPanelPacket(int legacyType, net.minecraft.nbt.CompoundTag data) {
+        return satellitePanelDataPacket(legacyType, data);
+    }
+
+    public static ClientPanelDataPacket satellitePanelPacket(int legacyType, net.minecraft.nbt.CompoundTag data) {
+        return satellitePanelDataPacket(legacyType, data);
+    }
+
     public static void sendPlayerRadiation(ServerPlayer player, HbmLivingProperties.SyncData data) {
-        sendToPlayer(new PlayerRadiationSyncPacket(data), player);
+        sendToPlayer(playerRadiationPacket(data), player);
     }
 
     public static void sendPlayerRadiationThreaded(ServerPlayer player, HbmLivingProperties.SyncData data) {
-        ThreadedPacketDispatcher.sendToPlayer(new PlayerRadiationSyncPacket(data), player);
+        ThreadedPacketDispatcher.sendToPlayer(playerRadiationPacket(data), player);
     }
 
     public static void syncPlayerRadiation(ServerPlayer player, float chunkRadiation, float resistance) {
@@ -2478,11 +2906,11 @@ public final class ModMessages {
     }
 
     public static void sendExtProperties(ServerPlayer player, HbmExtendedProperties.SyncData data) {
-        sendToPlayer(new ExtPropertiesSyncPacket(data), player);
+        sendToPlayer(extPropertiesPacket(data), player);
     }
 
     public static void sendExtPropertiesThreaded(ServerPlayer player, HbmExtendedProperties.SyncData data) {
-        ThreadedPacketDispatcher.sendToPlayer(new ExtPropertiesSyncPacket(data), player);
+        ThreadedPacketDispatcher.sendToPlayer(extPropertiesPacket(data), player);
     }
 
     public static void syncExtendedProperties(ServerPlayer player, float chunkRadiation, float resistance) {
@@ -2508,7 +2936,7 @@ public final class ModMessages {
     }
 
     public static void syncPlayerProperties(ServerPlayer player, ResourceLocation dataType, net.minecraft.nbt.CompoundTag data) {
-        sendToPlayer(new PlayerPropertiesPacket(dataType, data), player);
+        sendToPlayer(playerPropertiesPacket(dataType, data), player);
     }
 
     public static void syncPlayerProperties(ServerPlayer player) {
@@ -2517,7 +2945,7 @@ public final class ModMessages {
 
     public static void syncPlayerPropertiesThreaded(ServerPlayer player, ResourceLocation dataType,
                                                     net.minecraft.nbt.CompoundTag data) {
-        ThreadedPacketDispatcher.sendToPlayer(new PlayerPropertiesPacket(dataType, data), player);
+        ThreadedPacketDispatcher.sendToPlayer(playerPropertiesPacket(dataType, data), player);
     }
 
     public static void syncPlayerPropertiesThreaded(ServerPlayer player) {
@@ -2528,6 +2956,41 @@ public final class ModMessages {
                                                  Map<ResourceLocation, net.minecraft.nbt.CompoundTag> properties) {
         Map<ResourceLocation, net.minecraft.nbt.CompoundTag> safeProperties = properties == null ? Map.of() : properties;
         safeProperties.forEach((dataType, data) -> syncPlayerProperties(player, dataType, data));
+    }
+
+    public static PlayerRadiationSyncPacket playerRadiationPacket(HbmLivingProperties.SyncData data) {
+        return new PlayerRadiationSyncPacket(data);
+    }
+
+    public static PlayerRadiationSyncPacket playerRadiationPacket(ServerPlayer player, float chunkRadiation,
+                                                                  float resistance) {
+        return playerRadiationPacket(HbmLivingProperties.writeSyncedData(player, chunkRadiation, resistance));
+    }
+
+    public static ExtPropertiesSyncPacket extPropertiesPacket(HbmExtendedProperties.SyncData data) {
+        return new ExtPropertiesSyncPacket(data);
+    }
+
+    public static ExtPropertiesSyncPacket extPropertiesPacket(ServerPlayer player, float chunkRadiation,
+                                                              float resistance) {
+        return extPropertiesPacket(HbmExtendedProperties.writeSyncedData(player, chunkRadiation, resistance));
+    }
+
+    public static ExtPropertiesSyncPacket extPropPacket(ServerPlayer player, float chunkRadiation, float resistance) {
+        return extPropertiesPacket(player, chunkRadiation, resistance);
+    }
+
+    public static ExtPropertiesSyncPacket extPropPacket(HbmExtendedProperties.SyncData data) {
+        return extPropertiesPacket(data);
+    }
+
+    public static PlayerPropertiesPacket playerPropertiesPacket(ResourceLocation dataType,
+                                                                net.minecraft.nbt.CompoundTag data) {
+        return new PlayerPropertiesPacket(dataType, data);
+    }
+
+    public static PlayerPropertiesPacket playerPropertiesPacket(ServerPlayer player) {
+        return playerPropertiesPacket(HbmPlayerProperties.DATA_TYPE, HbmPlayerProperties.writeSyncedData(player));
     }
 
     public static void sendMenuAction(int action, int value, net.minecraft.nbt.CompoundTag data) {
@@ -2574,31 +3037,77 @@ public final class ModMessages {
         return typedMenuActionPacket(HbmNetworkActions.ANVIL_CRAFT, recipeIndex, data);
     }
 
+    public static TypedMenuActionPacket anvilCraftPacket(int recipeIndex) {
+        return anvilCraftPacket(recipeIndex, 0);
+    }
+
     public static void sendAnvilCraft(int recipeIndex, int mode) {
         sendAnvilCraftAction(recipeIndex, mode);
+    }
+
+    public static void sendAnvilCraft(int recipeIndex) {
+        sendAnvilCraftAction(recipeIndex, 0);
     }
 
     public static void sendAnvilCraftPacket(int recipeIndex, int mode) {
         sendAnvilCraftAction(recipeIndex, mode);
     }
 
+    public static void sendAnvilCraftPacket(int recipeIndex) {
+        sendAnvilCraftAction(recipeIndex, 0);
+    }
+
     public static void syncClientBiome(ServerPlayer player, int blockX, int blockZ, short biome) {
-        sendToPlayer(ClientBiomeSyncPacket.single(blockX, blockZ, biome), player);
+        sendToPlayer(biomeSyncPacket(blockX, blockZ, biome), player);
+    }
+
+    public static ClientBiomeSyncPacket biomeSyncPacket(int blockX, int blockZ, byte biome) {
+        return biomeSyncPacket(blockX, blockZ, (short) biome);
+    }
+
+    public static ClientBiomeSyncPacket biomeSyncPacket(int blockX, int blockZ, short biome) {
+        return ClientBiomeSyncPacket.single(blockX, blockZ, biome);
+    }
+
+    public static ClientBiomeSyncPacket biomeSyncChunkPacket(int chunkX, int chunkZ, byte[] biomeArray) {
+        if (biomeArray == null) {
+            return ClientBiomeSyncPacket.chunk(chunkX, chunkZ, null);
+        }
+        short[] biomes = new short[biomeArray.length];
+        for (int i = 0; i < biomeArray.length; i++) {
+            biomes[i] = (short) biomeArray[i];
+        }
+        return biomeSyncChunkPacket(chunkX, chunkZ, biomes);
+    }
+
+    public static ClientBiomeSyncPacket biomeSyncChunkPacket(int chunkX, int chunkZ, short[] biomeArray) {
+        return ClientBiomeSyncPacket.chunk(chunkX, chunkZ, biomeArray);
     }
 
     public static void syncClientBiome(ServerLevel level, int blockX, int blockZ, short biome, double range) {
-        sendToAllAround(ClientBiomeSyncPacket.single(blockX, blockZ, biome),
+        sendToAllAround(biomeSyncPacket(blockX, blockZ, biome),
                 level, blockX, legacyBiomeSyncY(level), blockZ, range);
     }
 
     public static void syncClientBiomeChunk(ServerPlayer player, int chunkX, int chunkZ, short[] biomeArray) {
-        sendToPlayer(ClientBiomeSyncPacket.chunk(chunkX, chunkZ, biomeArray), player);
+        sendToPlayer(biomeSyncChunkPacket(chunkX, chunkZ, biomeArray), player);
+    }
+
+    public static void syncClientBiomeChunk(ServerPlayer player, int chunkX, int chunkZ, byte[] biomeArray) {
+        sendToPlayer(biomeSyncChunkPacket(chunkX, chunkZ, biomeArray), player);
     }
 
     public static void syncClientBiomeChunk(ServerLevel level, int chunkX, int chunkZ, short[] biomeArray, double range) {
         int centerX = (chunkX << 4) + 8;
         int centerZ = (chunkZ << 4) + 8;
-        sendToAllAround(ClientBiomeSyncPacket.chunk(chunkX, chunkZ, biomeArray),
+        sendToAllAround(biomeSyncChunkPacket(chunkX, chunkZ, biomeArray),
+                level, centerX, legacyBiomeSyncY(level), centerZ, range);
+    }
+
+    public static void syncClientBiomeChunk(ServerLevel level, int chunkX, int chunkZ, byte[] biomeArray, double range) {
+        int centerX = (chunkX << 4) + 8;
+        int centerZ = (chunkZ << 4) + 8;
+        sendToAllAround(biomeSyncChunkPacket(chunkX, chunkZ, biomeArray),
                 level, centerX, legacyBiomeSyncY(level), centerZ, range);
     }
 
@@ -2606,8 +3115,16 @@ public final class ModMessages {
         if (pos == null || state == null) {
             return;
         }
-        sendToAllAround(new ParticleBurstPacket(pos, state), level,
+        sendToAllAround(particleBurstPacket(pos, state), level,
                 pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, range);
+    }
+
+    public static ParticleBurstPacket particleBurstPacket(BlockPos pos, BlockState state) {
+        return new ParticleBurstPacket(pos, state);
+    }
+
+    public static ParticleBurstPacket particleBurstPacket(int x, int y, int z, BlockState state) {
+        return particleBurstPacket(new BlockPos(x, y, z), state);
     }
 
     public static void sendParticleBurst(ServerLevel level, int x, int y, int z, BlockState state, double range) {
@@ -2618,7 +3135,7 @@ public final class ModMessages {
         if (pos == null || state == null) {
             return;
         }
-        ThreadedPacketDispatcher.sendToAllAround(new ParticleBurstPacket(pos, state),
+        ThreadedPacketDispatcher.sendToAllAround(particleBurstPacket(pos, state),
                 level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, range);
     }
 
@@ -2628,8 +3145,24 @@ public final class ModMessages {
 
     public static void sendCompressedExplosionEffect(ServerLevel level, Vec3 center, float size, List<BlockPos> affectedBlocks, double range) {
         Vec3 safeCenter = center == null ? Vec3.ZERO : center;
-        sendToAllAround(new CompressedExplosionEffectPacket(safeCenter, size, affectedBlocks),
+        sendToAllAround(compressedExplosionEffectPacket(safeCenter, size, affectedBlocks),
                 level, safeCenter.x, safeCenter.y, safeCenter.z, range);
+    }
+
+    public static CompressedExplosionEffectPacket compressedExplosionEffectPacket(Vec3 center, float size,
+                                                                                 List<BlockPos> affectedBlocks) {
+        return new CompressedExplosionEffectPacket(center, size, affectedBlocks);
+    }
+
+    public static CompressedExplosionEffectPacket compressedExplosionEffectPacket(double x, double y, double z,
+                                                                                 float size,
+                                                                                 List<BlockPos> affectedBlocks) {
+        return compressedExplosionEffectPacket(new Vec3(x, y, z), size, affectedBlocks);
+    }
+
+    public static CompressedExplosionEffectPacket explosionEffectPacket(Vec3 center, float size,
+                                                                       List<BlockPos> affectedBlocks) {
+        return compressedExplosionEffectPacket(center, size, affectedBlocks);
     }
 
     public static void sendCompressedExplosionEffect(ServerLevel level, double x, double y, double z, float size,
@@ -2640,7 +3173,7 @@ public final class ModMessages {
     public static void sendCompressedExplosionEffectThreaded(ServerLevel level, Vec3 center, float size,
                                                              List<BlockPos> affectedBlocks, double range) {
         Vec3 safeCenter = center == null ? Vec3.ZERO : center;
-        ThreadedPacketDispatcher.sendToAllAround(new CompressedExplosionEffectPacket(safeCenter, size, affectedBlocks),
+        ThreadedPacketDispatcher.sendToAllAround(compressedExplosionEffectPacket(safeCenter, size, affectedBlocks),
                 level, safeCenter.x, safeCenter.y, safeCenter.z, range);
     }
 

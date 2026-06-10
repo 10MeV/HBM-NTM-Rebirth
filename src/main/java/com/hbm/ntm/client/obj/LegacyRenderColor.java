@@ -63,6 +63,36 @@ public final class LegacyRenderColor {
         return color(Math.round(red(color) * scale), Math.round(green(color) * scale), Math.round(blue(color) * scale));
     }
 
+    public static int lerp(int from, int to, float t) {
+        float clamped = Math.max(0.0F, Math.min(1.0F, t));
+        return color(
+                Math.round(red(from) + (red(to) - red(from)) * clamped),
+                Math.round(green(from) + (green(to) - green(from)) * clamped),
+                Math.round(blue(from) + (blue(to) - blue(from)) * clamped));
+    }
+
+    public static int lerpArgb(int from, int to, float t) {
+        float clamped = Math.max(0.0F, Math.min(1.0F, t));
+        return argb(
+                Math.round(alpha(from) + (alpha(to) - alpha(from)) * clamped),
+                Math.round(red(from) + (red(to) - red(from)) * clamped),
+                Math.round(green(from) + (green(to) - green(from)) * clamped),
+                Math.round(blue(from) + (blue(to) - blue(from)) * clamped));
+    }
+
+    public static ColorComponents components(int argb) {
+        return new ColorComponents(red(argb), green(argb), blue(argb), alpha(argb),
+                redF(argb), greenF(argb), blueF(argb), alphaF(argb));
+    }
+
+    public static ColorMultiplyPlan multiplyPlan(int left, int right) {
+        return new ColorMultiplyPlan(left, right, multiply(left, right));
+    }
+
+    public static ColorAlphaPlan alphaPlan(int rgb, int alpha) {
+        return new ColorAlphaPlan(rgb & 0xFFFFFF, clamp(alpha), withAlpha(rgb, alpha));
+    }
+
     public static int lightenColor(int rgb, double percent) {
         int red = (int) (red(rgb) + (255 - red(rgb)) * percent);
         int green = (int) (green(rgb) + (255 - green(rgb)) * percent);
@@ -104,6 +134,16 @@ public final class LegacyRenderColor {
 
     private static int clamp(int value) {
         return Math.max(0, Math.min(255, value));
+    }
+
+    public record ColorComponents(int red, int green, int blue, int alpha,
+                                  float redFloat, float greenFloat, float blueFloat, float alphaFloat) {
+    }
+
+    public record ColorMultiplyPlan(int left, int right, int result) {
+    }
+
+    public record ColorAlphaPlan(int rgb, int alpha, int argb) {
     }
 
     private LegacyRenderColor() {

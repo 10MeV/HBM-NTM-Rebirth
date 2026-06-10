@@ -20,13 +20,27 @@ public final class LegacyDangerDiamondRenderer {
     private static final BlendPlan BLEND_PLAN = new BlendPlan(true, 770, 771, 1, 0);
 
     public static void render(ObjRenderContext context, int poison, int flammability, int reactivity, Symbol symbol) {
-        for (QuadSpec quad : visibleQuadSpecs(poison, flammability, reactivity, symbol)) {
+        for (QuadSpec quad : renderPlan(poison, flammability, reactivity, symbol).visibleQuads()) {
             quad(context, quad);
         }
     }
 
     public static BlendPlan blendPlan() {
         return BLEND_PLAN;
+    }
+
+    public static DangerDiamondPlan renderPlan(int poison, int flammability, int reactivity, Symbol symbol) {
+        QuadSpec base = baseSpec();
+        QuadSpec poisonNumber = numberSpec(poison, 0.0D, NUMBER_OFFSET);
+        QuadSpec flammabilityNumber = numberSpec(flammability, NUMBER_OFFSET, 0.0D);
+        QuadSpec reactivityNumber = numberSpec(reactivity, 0.0D, -NUMBER_OFFSET);
+        QuadSpec symbolQuad = symbolSpec(symbol, -NUMBER_OFFSET, 0.0D);
+        List<QuadSpec> visible = Arrays.stream(new QuadSpec[] {
+                base, poisonNumber, flammabilityNumber, reactivityNumber, symbolQuad
+        }).filter(spec -> spec != null).toList();
+        return new DangerDiamondPlan(TEXTURE, TEXTURE_SIZE, poison, flammability, reactivity,
+                symbol == null ? Symbol.NONE : symbol, BLEND_PLAN, base, poisonNumber,
+                flammabilityNumber, reactivityNumber, symbolQuad, visible);
     }
 
     public static void number(ObjRenderContext context, int value, double yOffset, double zOffset) {
@@ -148,6 +162,22 @@ public final class LegacyDangerDiamondRenderer {
     }
 
     public record BlendPlan(boolean blendEnabled, int srcRgb, int dstRgb, int srcAlpha, int dstAlpha) {
+    }
+
+    public record DangerDiamondPlan(
+            ResourceLocation texture,
+            double textureSize,
+            int poison,
+            int flammability,
+            int reactivity,
+            Symbol symbol,
+            BlendPlan blend,
+            QuadSpec base,
+            QuadSpec poisonNumber,
+            QuadSpec flammabilityNumber,
+            QuadSpec reactivityNumber,
+            QuadSpec symbolQuad,
+            List<QuadSpec> visibleQuads) {
     }
 
     private LegacyDangerDiamondRenderer() {

@@ -1,0 +1,13 @@
+newmtl None
+Kd 0.8 0.8 0.8
+Ka 0.0 0.0 0.0
+Ks 0.0 0.0 0.0
+illum 2
+map_Kd #default
+
+newmtl None_tank_new_eth.png
+Kd 0.8 0.8 0.8
+Ka 0.0 0.0 0.0
+Ks 0.0 0.0 0.0
+illum 2
+map_Kd #default

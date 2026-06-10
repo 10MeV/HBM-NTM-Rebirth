@@ -5,12 +5,15 @@ import com.hbm.ntm.ability.ToolAbilityConfiguration;
 import com.hbm.ntm.item.HbmAbilityToolItem;
 import com.hbm.ntm.network.HbmNetworkActions;
 import com.hbm.ntm.network.HbmTypedMenuActionReceiver;
+import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.registry.ModMenuTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -18,6 +21,9 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 
 public class ToolAbilityMenu extends AbstractContainerMenu implements HbmTypedMenuActionReceiver {
+    private static final int NOTICE_TOOL_ABILITY = 14;
+    private static final int NOTICE_MILLIS = 2_000;
+
     private final Inventory inventory;
     private final InteractionHand hand;
 
@@ -83,5 +89,8 @@ public class ToolAbilityMenu extends AbstractContainerMenu implements HbmTypedMe
             configuration.reset(tool.availableAbilities());
         }
         tool.setConfiguration(getToolStack(), configuration);
+        ModMessages.informPlayer(player, configuration.getActivePreset().getMessage(), NOTICE_TOOL_ABILITY, NOTICE_MILLIS);
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.EXPERIENCE_ORB_PICKUP,
+                SoundSource.PLAYERS, 0.25F, configuration.getActivePreset().isNone() ? 0.75F : 1.25F);
     }
 }

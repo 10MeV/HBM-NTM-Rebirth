@@ -10,7 +10,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -54,16 +53,9 @@ public class RadioTorchMenu extends AbstractContainerMenu {
     @Override
     public void clicked(int slotId, int button, ClickType clickType, Player player) {
         if (blockEntity instanceof RadioTorchCounterBlockEntity counter
-                && clickType == ClickType.PICKUP
-                && button == 1
-                && slotId >= 0
-                && slotId < COUNTER_FILTER_SLOT_COUNT) {
-            Slot slot = slots.get(slotId);
-            if (slot.hasItem()) {
-                counter.nextFilterMode(slotId);
-                broadcastChanges();
-                return;
-            }
+                && HbmInventoryMenuHelper.handleLegacyPatternModeClick(slots, slotId, button, clickType,
+                        0, COUNTER_FILTER_SLOT_COUNT, counter::nextFilterMode, this::broadcastChanges)) {
+            return;
         }
         super.clicked(slotId, button, clickType, player);
     }

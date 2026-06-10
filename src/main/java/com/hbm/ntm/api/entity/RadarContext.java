@@ -42,4 +42,8 @@ public record RadarContext(
             int minimumAltitude, RadarDetectable.RadarScanParams params) {
         return new RadarContext(level, origin, range, verticalBuffer, minimumAltitude, params);
     }
+
+    public RadarScanVolume volume() {
+        return RadarScanVolume.fromContext(this);
+    }
 }

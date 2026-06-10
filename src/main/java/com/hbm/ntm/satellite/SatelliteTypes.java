@@ -1,7 +1,6 @@
 package com.hbm.ntm.satellite;
 
 import com.hbm.ntm.entity.logic.DeathBlastEntity;
-import com.hbm.ntm.itempool.HbmItemPoolIds;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.server.level.ServerLevel;
@@ -75,8 +74,13 @@ final class SatelliteLaser extends Satellite {
 
     @Override
     public void onClick(ServerLevel level, int x, int z) {
+        tryClick(level, x, z);
+    }
+
+    @Override
+    public boolean tryClick(ServerLevel level, int x, int z) {
         if (lastOperationMillis + 10_000L >= System.currentTimeMillis()) {
-            return;
+            return true;
         }
         lastOperationMillis = System.currentTimeMillis();
         SatelliteSavedData.get(level).markDirty();
@@ -85,6 +89,7 @@ final class SatelliteLaser extends Satellite {
         DeathBlastEntity blast = new DeathBlastEntity(level);
         blast.setPos(x, y, z);
         level.addFreshEntity(blast);
+        return true;
     }
 }
 
@@ -101,10 +106,16 @@ final class SatelliteResonator extends Satellite {
 
     @Override
     public void onCoordAction(ServerLevel level, ServerPlayer player, int x, int y, int z) {
+        tryCoordAction(level, player, x, y, z);
+    }
+
+    @Override
+    public boolean tryCoordAction(ServerLevel level, ServerPlayer player, int x, int y, int z) {
         playTeleportSound(level, player);
         player.stopRiding();
         player.teleportTo(level, x + 0.5D, y, z + 0.5D, player.getYRot(), player.getXRot());
         playTeleportSound(level, player);
+        return true;
     }
 }
 
@@ -120,9 +131,6 @@ final class SatelliteRelay extends Satellite {
 }
 
 class SatelliteMiner extends Satellite {
-    static final String POOL_SAT_MINER = HbmItemPoolIds.POOL_SAT_MINER;
-    static final String POOL_SAT_LUNAR = HbmItemPoolIds.POOL_SAT_LUNAR;
-
     private long lastOperationMillis;
 
     SatelliteMiner() {
@@ -144,10 +152,6 @@ class SatelliteMiner extends Satellite {
         lastOperationMillis = tag.getLong("lastOp");
     }
 
-    public java.util.Optional<String> cargoPool() {
-        return java.util.Optional.of(POOL_SAT_MINER);
-    }
-
     @Override
     public long lastOperationMillis() {
         return lastOperationMillis;
@@ -165,10 +169,6 @@ final class SatelliteLunarMiner extends SatelliteMiner {
         return LegacySatelliteType.LUNAR_MINER;
     }
 
-    @Override
-    public java.util.Optional<String> cargoPool() {
-        return java.util.Optional.of(POOL_SAT_LUNAR);
-    }
 }
 
 final class SatelliteHorizons extends Satellite {

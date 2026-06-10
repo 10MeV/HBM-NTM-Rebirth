@@ -198,6 +198,13 @@ public record ObjRenderContext(
                 vScale * (sin * uTranslate + cos * vTranslate));
     }
 
+    public ObjRenderContext withTextureMatrixPlan(LegacyUvAnimation.TextureMatrixPlan plan) {
+        return switch (plan.order()) {
+            case SCALE_ROTATE_TRANSLATE -> withLegacyTextureMatrix((float) plan.scaleU(), (float) plan.scaleV(),
+                    (float) plan.rotationDegrees(), (float) plan.translateU(), (float) plan.translateV());
+        };
+    }
+
     public ObjRenderContext withUvScroll(float uOffset, float vOffset) {
         return withUvTransform(1.0F, 1.0F, uOffset, vOffset);
     }
@@ -211,6 +218,10 @@ public record ObjRenderContext(
             return this;
         }
         return withUvMatrix(uScale, uFromV, vFromU, vScale, uOffset, vOffset + (float) (((double) currentTime % modulo) / quotient));
+    }
+
+    public ObjRenderContext withLegacyHmfAnimation(LegacyUvAnimation.HmfUvModPlan plan) {
+        return withUvMatrix(uScale, uFromV, vFromU, vScale, uOffset, vOffset + (float) plan.offset());
     }
 
     public ObjRenderContext withLegacyTextureOffset(float textureOffset) {

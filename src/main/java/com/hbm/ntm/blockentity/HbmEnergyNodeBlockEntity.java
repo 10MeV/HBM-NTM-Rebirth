@@ -7,6 +7,7 @@ import com.hbm.ntm.energy.HbmEnergyNodeHost;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -18,6 +19,12 @@ public abstract class HbmEnergyNodeBlockEntity extends BlockEntity implements Hb
 
     protected HbmEnergyNodeBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+    }
+
+    public static <T extends HbmEnergyNodeBlockEntity> void serverTick(Level level, BlockPos pos, BlockState state, T blockEntity) {
+        if (!level.isClientSide) {
+            blockEntity.refreshEnergyNodeState();
+        }
     }
 
     @Override
@@ -55,6 +62,30 @@ public abstract class HbmEnergyNodeBlockEntity extends BlockEntity implements Hb
         return true;
     }
 
+    protected void refreshEnergyNodeState() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        boolean shouldCreateNode = shouldCreateEnergyNode();
+        boolean hasNode = energyNode != null && !energyNode.isExpired();
+        if (!shouldCreateNode) {
+            if (energyNode != null) {
+                removeEnergyNode();
+            }
+            return;
+        }
+        if (!hasNode) {
+            refreshEnergyNode();
+            return;
+        }
+
+        HbmEnergyNode currentShape = createEnergyNode();
+        if (!energyNode.getPositions().equals(currentShape.getPositions())
+                || !energyNode.getConnectionPoints().equals(currentShape.getConnectionPoints())) {
+            refreshEnergyNode();
+        }
+    }
+
     @Override
     public void removeEnergyNode() {
         if (level == null || level.isClientSide) {
@@ -68,7 +99,7 @@ public abstract class HbmEnergyNodeBlockEntity extends BlockEntity implements Hb
     @Override
     public void onLoad() {
         super.onLoad();
-        refreshEnergyNode();
+        refreshEnergyNodeState();
     }
 
     @Override

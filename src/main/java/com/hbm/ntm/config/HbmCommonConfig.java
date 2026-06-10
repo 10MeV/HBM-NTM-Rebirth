@@ -9,6 +9,7 @@ public final class HbmCommonConfig {
     public static final ForgeConfigSpec.BooleanValue ENABLE_LEGACY_ID_NOTES;
     public static final ForgeConfigSpec.BooleanValue ENABLE_EXTENDED_LOGGING;
     public static final ForgeConfigSpec.BooleanValue ENABLE_CRYSTAL_VIRUS_SPREADING;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_MOTD;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -29,6 +30,9 @@ public final class HbmCommonConfig {
         ENABLE_CRYSTAL_VIRUS_SPREADING = builder
                 .comment("Legacy GeneralConfig 1.21_enableVirus: allows crystal_virus blocks to spread into adjacent solid blocks and then harden.")
                 .define("enableCrystalVirusSpreading", false);
+        ENABLE_MOTD = builder
+                .comment("Legacy GeneralConfig 1.36_enableMOTD: shows the HBM loaded-world chat message when a player joins.")
+                .define("enableMotd", true);
         builder.pop();
 
         NetworkConfig.define(builder);
@@ -38,6 +42,12 @@ public final class HbmCommonConfig {
         WeaponConfig.define(builder);
         ToolConfig.define(builder);
         PotionConfig.define(builder);
+        AshpitConfig.define(builder);
+        SteamEngineConfig.define(builder);
+        CoolingTowerConfig.define(builder);
+        SteamTurbineConfig.define(builder);
+        OilDrillConfig.define(builder);
+        BoilerConfig.define(builder);
         RadarConfig.define(builder);
 
         SPEC = builder.build();
@@ -57,6 +67,10 @@ public final class HbmCommonConfig {
 
     public static boolean crystalVirusSpreadingEnabled() {
         return booleanValue(ENABLE_CRYSTAL_VIRUS_SPREADING, false);
+    }
+
+    public static boolean motdEnabled() {
+        return booleanValue(ENABLE_MOTD, true);
     }
 
     private static boolean booleanValue(ForgeConfigSpec.BooleanValue value, boolean fallback) {

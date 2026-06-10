@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "tag": "forge:ores/plutonium" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_plutonium", "count": 2 }
+}

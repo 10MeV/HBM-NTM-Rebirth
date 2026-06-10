@@ -1,0 +1,21 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/rbmk/icons/rbmk_display",
+    "panel": "hbm_ntm_rebirth:block/rbmk/icons/rbmk_display"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 4],
+      "to": [16, 16, 16],
+      "faces": {
+        "north": { "texture": "#panel", "cullface": "north" },
+        "east": { "texture": "#panel", "cullface": "east" },
+        "south": { "texture": "#panel", "cullface": "south" },
+        "west": { "texture": "#panel", "cullface": "west" },
+        "up": { "texture": "#panel", "cullface": "up" },
+        "down": { "texture": "#panel", "cullface": "down" }
+      }
+    }
+  ]
+}

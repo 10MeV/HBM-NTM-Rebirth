@@ -15,6 +15,10 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 
 public final class RadiationUtil {
+    public static float calculateRadiationMod(LivingEntity entity) {
+        return RadiationResistance.calculateRadiationMod(entity);
+    }
+
     public static float getRads(LivingEntity entity) {
         if (isRadImmune(entity)) {
             return 0.0F;

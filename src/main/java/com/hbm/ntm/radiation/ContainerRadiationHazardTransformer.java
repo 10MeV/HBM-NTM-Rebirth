@@ -55,23 +55,10 @@ public class ContainerRadiationHazardTransformer implements HazardTransformer {
     }
 
     private static float readLegacyItemInventoryRadiation(CompoundTag tag, int maxSlots) {
-        if (!tag.contains("items", Tag.TAG_LIST)) {
+        if (!tag.contains(HbmItemStackUtil.LEGACY_ITEMS_TAG, Tag.TAG_LIST) && !tag.contains("Items", Tag.TAG_LIST)) {
             return 0.0F;
         }
-        NonNullList<ItemStack> items = HbmItemStackUtil.loadLegacyItems(tag, maxSlots);
-        float radiation = 0.0F;
-        for (ItemStack held : items) {
-            radiation += HazardRegistry.getStackRadiation(held);
-        }
-        return radiation;
-    }
-
-    private static float readContainerHelperRadiation(CompoundTag tag, int maxSlots) {
-        if (!tag.contains("Items", Tag.TAG_LIST)) {
-            return 0.0F;
-        }
-        NonNullList<ItemStack> items = NonNullList.withSize(maxSlots, ItemStack.EMPTY);
-        HbmItemStackUtil.loadSlottedItems(tag, "Items", "Slot", items);
+        NonNullList<ItemStack> items = HbmItemStackUtil.loadLegacyOrForgeItems(tag, maxSlots);
         float radiation = 0.0F;
         for (ItemStack held : items) {
             radiation += HazardRegistry.getStackRadiation(held);
@@ -124,8 +111,8 @@ public class ContainerRadiationHazardTransformer implements HazardTransformer {
         private float readRadiation(CompoundTag tag) {
             return switch (this) {
                 case STORAGE_CRATE -> readLegacySlotRadiation(tag, scanSlots);
-                case TOOLBOX, LEAD_BOX, PLASTIC_BAG -> readLegacyItemInventoryRadiation(tag, scanSlots) + readContainerHelperRadiation(tag, scanSlots);
-                default -> readLegacySlotRadiation(tag, scanSlots) + readLegacyItemInventoryRadiation(tag, scanSlots) + readContainerHelperRadiation(tag, scanSlots);
+                case TOOLBOX, LEAD_BOX, PLASTIC_BAG -> readLegacyItemInventoryRadiation(tag, scanSlots);
+                default -> readLegacySlotRadiation(tag, scanSlots) + readLegacyItemInventoryRadiation(tag, scanSlots);
             };
         }
 

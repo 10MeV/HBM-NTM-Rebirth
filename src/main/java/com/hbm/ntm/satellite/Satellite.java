@@ -6,19 +6,29 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.Item;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+import java.util.EnumMap;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 public abstract class Satellite {
     private static final Map<Item, LegacySatelliteType> ITEM_TYPES = new IdentityHashMap<>();
+    private static final EnumMap<LegacySatelliteType, String> CARGO_POOLS = new EnumMap<>(LegacySatelliteType.class);
 
     protected final EnumSet<InterfaceAction> interfaceActions = EnumSet.noneOf(InterfaceAction.class);
     protected final EnumSet<CoordAction> coordActions = EnumSet.noneOf(CoordAction.class);
     protected SatelliteInterface satelliteInterface = SatelliteInterface.NONE;
+
+    static {
+        for (LegacySatelliteType type : LegacySatelliteType.values()) {
+            type.defaultCargoPool().ifPresent(cargo -> CARGO_POOLS.put(type, cargo));
+        }
+    }
 
     public static Satellite create(int legacyId) {
         LegacySatelliteType type = LegacySatelliteType.byLegacyId(legacyId);
@@ -57,7 +67,17 @@ public abstract class Satellite {
     }
 
     public static void registerSatelliteItem(Item item, LegacySatelliteType type) {
-        ITEM_TYPES.put(item, type);
+        if (item != null && type != null) {
+            ITEM_TYPES.put(item, type);
+        }
+    }
+
+    public static void registerSatellite(LegacySatelliteType type, Item item) {
+        registerSatelliteItem(item, type);
+    }
+
+    public static void registerSatellite(int legacyId, Item item) {
+        registerSatelliteItem(item, LegacySatelliteType.byLegacyId(legacyId));
     }
 
     public static Optional<LegacySatelliteType> getTypeFromItem(Item item) {
@@ -75,6 +95,39 @@ public abstract class Satellite {
 
     public static int getIDFromItem(Item item) {
         return getLegacyIdFromItem(item);
+    }
+
+    public static Optional<String> getCargoPoolFromItem(Item item) {
+        return getTypeFromItem(item).flatMap(Satellite::cargoPoolForType);
+    }
+
+    @Nullable
+    public static String getCargoForItem(Item item) {
+        return getCargoPoolFromItem(item).orElse(null);
+    }
+
+    public static void registerCargo(LegacySatelliteType type, String cargoPool) {
+        if (type == null || cargoPool == null || cargoPool.isBlank()) {
+            return;
+        }
+        CARGO_POOLS.put(type, cargoPool);
+    }
+
+    public static void registerCargo(int legacyId, String cargoPool) {
+        registerCargo(LegacySatelliteType.byLegacyId(legacyId), cargoPool);
+    }
+
+    public static Optional<String> cargoPoolForType(LegacySatelliteType type) {
+        return Optional.ofNullable(type == null ? null : CARGO_POOLS.get(type));
+    }
+
+    @Nullable
+    public static String getCargoForType(LegacySatelliteType type) {
+        return cargoPoolForType(type).orElse(null);
+    }
+
+    public static List<LegacySatelliteType> satelliteTypesSnapshot() {
+        return List.of(LegacySatelliteType.values());
     }
 
     public static Map<Item, LegacySatelliteType> itemTypesSnapshot() {
@@ -113,7 +166,7 @@ public abstract class Satellite {
 
     public CompoundTag saveData() {
         CompoundTag tag = new CompoundTag();
-        save(tag);
+        writeToNBT(tag);
         return tag;
     }
 
@@ -123,6 +176,14 @@ public abstract class Satellite {
     public void load(CompoundTag tag) {
     }
 
+    public void writeToNBT(CompoundTag tag) {
+        save(tag);
+    }
+
+    public void readFromNBT(CompoundTag tag) {
+        load(tag);
+    }
+
     public void onOrbit(ServerLevel level, double x, double y, double z) {
         // Achievements and gameplay side effects are restored with the concrete satellite systems.
     }
@@ -130,11 +191,19 @@ public abstract class Satellite {
     public void onClick(ServerLevel level, int x, int z) {
     }
 
+    public boolean tryClick(ServerLevel level, int x, int z) {
+        return false;
+    }
+
     public void onCoordAction(ServerLevel level, ServerPlayer player, int x, int y, int z) {
     }
 
+    public boolean tryCoordAction(ServerLevel level, ServerPlayer player, int x, int y, int z) {
+        return false;
+    }
+
     public Optional<String> cargoPool() {
-        return Optional.empty();
+        return cargoPoolForType(type());
     }
 
     public long lastOperationMillis() {

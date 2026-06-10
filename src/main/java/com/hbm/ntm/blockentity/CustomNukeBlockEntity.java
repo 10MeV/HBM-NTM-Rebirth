@@ -153,6 +153,19 @@ public class CustomNukeBlockEntity extends BlockEntity implements MenuProvider {
         return new CustomNukeStats(tnt, nuke, hydro, amat, dirty, schrab, euph, falling);
     }
 
+    @Nullable
+    public static CustomNukeTooltipEntry getTooltipEntry(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return null;
+        }
+        for (CustomNukeEntry entry : CustomNukeEntries.entries()) {
+            if (entry.matches(stack)) {
+                return new CustomNukeTooltipEntry(entry.type().displayName(), entry.value(), entry.multiplier());
+            }
+        }
+        return null;
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, CustomNukeBlockEntity blockEntity) {
         blockEntity.getStats();
     }
@@ -306,13 +319,26 @@ public class CustomNukeBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     private enum BombType {
-        TNT,
-        NUKE,
-        HYDRO,
-        AMAT,
-        DIRTY,
-        SCHRAB,
-        EUPH
+        TNT("TNT"),
+        NUKE("Nuclear"),
+        HYDRO("Hydrogen"),
+        AMAT("Antimatter"),
+        DIRTY("Salted"),
+        SCHRAB("Schrabidium"),
+        EUPH("Anti Mass");
+
+        private final String displayName;
+
+        BombType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        String displayName() {
+            return displayName;
+        }
+    }
+
+    public record CustomNukeTooltipEntry(String stage, float value, boolean multiplier) {
     }
 
     public record CustomNukeStats(float tnt, float nuke, float hydro, float amat, float dirty, float schrab,

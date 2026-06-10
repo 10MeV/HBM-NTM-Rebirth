@@ -5,7 +5,6 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
@@ -15,18 +14,15 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.items.ItemStackHandler;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SoyuzCapsuleBlockEntity extends BlockEntity implements MenuProvider {
     public static final int CARGO_SLOT_COUNT = 18;
     public static final int SLOT_ROCKET = 18;
     public static final int SLOT_COUNT = 19;
+    private static final String TAG_CUSTOM_NAME = "name";
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -34,7 +30,7 @@ public class SoyuzCapsuleBlockEntity extends BlockEntity implements MenuProvider
             setChanged();
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private String customName;
 
     public SoyuzCapsuleBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SOYUZ_CAPSULE.get(), pos, state);
@@ -60,6 +56,9 @@ public class SoyuzCapsuleBlockEntity extends BlockEntity implements MenuProvider
 
     @Override
     public Component getDisplayName() {
+        if (hasCustomName()) {
+            return Component.literal(customName);
+        }
         return Component.translatable("container.hbm_ntm_rebirth.soyuz_capsule");
     }
 
@@ -73,25 +72,26 @@ public class SoyuzCapsuleBlockEntity extends BlockEntity implements MenuProvider
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (hasCustomName()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        customName = tag.getString(TAG_CUSTOM_NAME);
     }
 
     @Override
-    public void invalidateCaps() {
-        super.invalidateCaps();
-        itemHandler.invalidate();
+    public AABB getRenderBoundingBox() {
+        BlockPos pos = getBlockPos();
+        return new AABB(pos.getX() - 1.0D, pos.getY() - 1.0D, pos.getZ() - 1.0D,
+                pos.getX() + 2.0D, pos.getY() + 3.0D, pos.getZ() + 2.0D);
     }
 
-    @Override
-    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
-        }
-        return super.getCapability(capability, side);
+    private boolean hasCustomName() {
+        return customName != null && !customName.isEmpty();
     }
 }

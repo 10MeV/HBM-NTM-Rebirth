@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "hbm_ntm_rebirth:ore_cobalt"
+    "hbm_ntm_rebirth:ore_cobalt",
+    "hbm_ntm_rebirth:ore_nether_cobalt"
   ]
 }

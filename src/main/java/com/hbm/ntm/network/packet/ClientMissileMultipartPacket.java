@@ -1,6 +1,7 @@
 package com.hbm.ntm.network.packet;
 
 import com.hbm.ntm.network.HbmClientMissileMultipartReceiver;
+import com.hbm.ntm.network.HbmPreparablePacket;
 import com.hbm.ntm.network.MissileMultipartSnapshot;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -10,7 +11,7 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public record ClientMissileMultipartPacket(BlockPos pos, MissileMultipartSnapshot multipart) {
+public record ClientMissileMultipartPacket(BlockPos pos, MissileMultipartSnapshot multipart) implements HbmPreparablePacket {
     public ClientMissileMultipartPacket {
         pos = pos == null ? BlockPos.ZERO : pos;
         multipart = multipart == null ? MissileMultipartSnapshot.EMPTY : multipart;
@@ -38,5 +39,10 @@ public record ClientMissileMultipartPacket(BlockPos pos, MissileMultipartSnapsho
             }
         });
         context.setPacketHandled(true);
+    }
+
+    @Override
+    public Object prepareForThreadedSend() {
+        return new ClientMissileMultipartPacket(pos, multipart);
     }
 }

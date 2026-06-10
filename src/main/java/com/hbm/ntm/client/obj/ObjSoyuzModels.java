@@ -31,6 +31,10 @@ public final class ObjSoyuzModels {
     public static final ResourceLocation MODULE_PROPULSION_TEXTURE = texture("capsule/module_propulsion");
     public static final ResourceLocation MODULE_SOLAR_TEXTURE = texture("capsule/module_solar");
 
+    public static final SoyuzRenderStatePlan MAIN_RENDER_STATE = new SoyuzRenderStatePlan(true, true, false, true);
+    public static final SoyuzRenderStatePlan BOOSTER_RENDER_STATE = new SoyuzRenderStatePlan(true, true, false, true);
+    public static final SoyuzRenderStatePlan MODULE_RENDER_STATE = new SoyuzRenderStatePlan(true, true, true, true);
+
     public static void renderSoyuz(SoyuzTextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         renderMain(textures, poseStack, buffer, packedLight, packedOverlay);
@@ -61,6 +65,17 @@ public final class ObjSoyuzModels {
             MODULE.renderOnly(plan.texture(), poseStack, buffer, packedLight, packedOverlay,
                     plan.parts().toArray(String[]::new));
         }
+    }
+
+    public static SoyuzRenderPlan soyuzRenderPlan(int skin) {
+        SoyuzTextureSet textures = textureSetForSkin(skin);
+        return new SoyuzRenderPlan(skin, textures,
+                new SoyuzSectionPlan("main", MAIN_RENDER_STATE, mainPartPlan(textures)),
+                new SoyuzSectionPlan("boosters", BOOSTER_RENDER_STATE, boosterPartPlan(textures)));
+    }
+
+    public static SoyuzSectionPlan moduleRenderPlan() {
+        return new SoyuzSectionPlan("module", MODULE_RENDER_STATE, modulePartPlan());
     }
 
     public static SoyuzTextureSet textureSetForSkin(int skin) {
@@ -155,5 +170,16 @@ public final class ObjSoyuzModels {
     }
 
     public record SoyuzPartPlan(ResourceLocation texture, List<String> parts) {
+    }
+
+    public record SoyuzSectionPlan(String section, SoyuzRenderStatePlan state, List<SoyuzPartPlan> parts) {
+    }
+
+    public record SoyuzRenderPlan(int requestedSkin, SoyuzTextureSet textures,
+                                  SoyuzSectionPlan main, SoyuzSectionPlan boosters) {
+    }
+
+    public record SoyuzRenderStatePlan(boolean cullEnabled, boolean smoothShade,
+                                       boolean lightingForcedEnabled, boolean restoreFlatShade) {
     }
 }

@@ -129,18 +129,20 @@ public class HbmFluidContainerItem extends Item implements IFillableItem, HbmFor
             return 0xFFFFFF;
         }
         ContainerFluidTrait container = type.getTrait(ContainerFluidTrait.class);
-        return switch (kind) {
-            case CANISTER -> tintIndex == 1
+        if (kind == HbmFluidContainerRules.ContainerKind.CANISTER) {
+            return tintIndex == 1
                     ? container == null ? type.getColor() : container.getCanisterColor()
                     : 0xFFFFFF;
-            case GAS_TANK -> tintIndex == 1
-                    ? container == null ? type.getColor() : container.getGasTankBottleColorOr(type.getColor())
-                    : tintIndex == 2
-                            ? container == null ? 0xFFFFFF : container.getGasTankLabelColorOr(0xFFFFFF)
-                            : 0xFFFFFF;
-            case FLUID_TANK, LEAD_FLUID_TANK, FLUID_BARREL, FLUID_PACK, DISPERSER_CANISTER, GLYPHID_GLAND ->
-                    tintIndex == 1 ? type.getColor() : 0xFFFFFF;
-        };
+        }
+        if (kind == HbmFluidContainerRules.ContainerKind.GAS_TANK) {
+            if (tintIndex == 1) {
+                return container == null ? type.getColor() : container.getGasTankBottleColorOr(type.getColor());
+            }
+            return tintIndex == 2
+                    ? container == null ? 0xFFFFFF : container.getGasTankLabelColorOr(0xFFFFFF)
+                    : 0xFFFFFF;
+        }
+        return tintIndex == 1 ? type.getColor() : 0xFFFFFF;
     }
 
     public int getCapacity() {

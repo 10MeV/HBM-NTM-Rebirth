@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "tag": "forge:ingots/sr90" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_sr90" }
+}

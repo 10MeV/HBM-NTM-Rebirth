@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/det_nuke",
+    "down": "hbm_ntm_rebirth:block/det_nuke_top",
+    "up": "hbm_ntm_rebirth:block/det_nuke_top",
+    "north": "hbm_ntm_rebirth:block/det_nuke",
+    "south": "hbm_ntm_rebirth:block/det_nuke",
+    "west": "hbm_ntm_rebirth:block/det_nuke",
+    "east": "hbm_ntm_rebirth:block/det_nuke"
+  }
+}

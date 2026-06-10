@@ -15,6 +15,7 @@ import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
 import com.hbm.ntm.fluid.HbmFluidRepairMaterials;
 import com.hbm.ntm.fluid.HbmFluidRepairMaterials.HbmRepairMaterial;
 import com.hbm.ntm.fluid.HbmFluidRepairable;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -77,15 +78,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     protected static final int DEFAULT_TANK_CAPACITY = 256_000;
     private static final long DEFAULT_TRANSFER_SPEED_FLOOR = 500L;
-    private static final List<FluidPort> FLUID_PORTS = List.of(
-            FluidPort.of(2, 0, -1, Direction.EAST),
-            FluidPort.of(2, 0, 1, Direction.EAST),
-            FluidPort.of(-2, 0, -1, Direction.WEST),
-            FluidPort.of(-2, 0, 1, Direction.WEST),
-            FluidPort.of(-1, 0, 2, Direction.SOUTH),
-            FluidPort.of(1, 0, 2, Direction.SOUTH),
-            FluidPort.of(-1, 0, -2, Direction.NORTH),
-            FluidPort.of(1, 0, -2, Direction.NORTH));
+    private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.squareSidesWithoutCorners(2);
 
     private final HbmFluidTank tank;
     private final RORDispatcher ror;

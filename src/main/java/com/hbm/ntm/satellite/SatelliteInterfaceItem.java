@@ -6,7 +6,6 @@ import com.hbm.ntm.network.ModMessages;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -96,12 +95,10 @@ public class SatelliteInterfaceItem extends SatelliteChipItem implements HbmCoor
             return;
         }
         if (isLaserAction(action, data)) {
-            satellite.onClick(player.serverLevel(), pos.getX(), pos.getZ());
-            SatelliteSavedData.get(player.serverLevel()).setDirty();
+            satellite.tryClick(player.serverLevel(), pos.getX(), pos.getZ());
             return;
         }
-        satellite.onCoordAction(player.serverLevel(), player, pos.getX(), pos.getY(), pos.getZ());
-        SatelliteSavedData.get(player.serverLevel()).setDirty();
+        satellite.tryCoordAction(player.serverLevel(), player, pos.getX(), pos.getY(), pos.getZ());
     }
 
     public Mode mode() {

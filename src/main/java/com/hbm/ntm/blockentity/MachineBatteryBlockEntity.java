@@ -11,6 +11,7 @@ import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.api.tile.ControlReceiver;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
+import com.hbm.ntm.energy.HbmEnergyNode;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -33,6 +34,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -49,9 +51,9 @@ import java.util.function.IntSupplier;
 public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, HbmTileSyncable,
         RORValueProvider, RORInteractive, LegacyLookOverlayProvider, ControlReceiver, CopiableSettings {
     private static final String TAG_INVENTORY = "Inventory";
-    private static final long MAX_POWER = 1_000_000L;
-    private static final long MAX_RECEIVE = MAX_POWER / 200L;
-    private static final long MAX_EXTRACT = MAX_POWER / 600L;
+    protected static final long MAX_POWER = 1_000_000L;
+    protected static final long MAX_RECEIVE = MAX_POWER / 200L;
+    protected static final long MAX_EXTRACT = MAX_POWER / 600L;
 
     public static final int MODE_INPUT = 0;
     public static final int MODE_BUFFER = 1;
@@ -107,11 +109,17 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     private int lastMode = MODE_NONE;
 
     public MachineBatteryBlockEntity(BlockPos pos, BlockState state) {
-        this(pos, state, new BatteryEnergyStorage(MAX_POWER, MAX_RECEIVE, MAX_EXTRACT));
+        this(ModBlockEntities.MACHINE_BATTERY.get(), pos, state, MAX_POWER, MAX_RECEIVE, MAX_EXTRACT);
     }
 
-    private MachineBatteryBlockEntity(BlockPos pos, BlockState state, BatteryEnergyStorage energy) {
-        super(ModBlockEntities.MACHINE_BATTERY.get(), pos, state, energy);
+    protected MachineBatteryBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state,
+            long maxPower, long maxReceive, long maxExtract) {
+        this(type, pos, state, new BatteryEnergyStorage(maxPower, maxReceive, maxExtract));
+    }
+
+    protected MachineBatteryBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state,
+            BatteryEnergyStorage energy) {
+        super(type, pos, state, energy);
         this.batteryEnergy = energy;
         this.batteryEnergy.bindModeSupplier(this::getCurrentMode);
         this.ror = createRorDispatcher();
@@ -136,14 +144,9 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         inventoryChanged |= chargeItemDelta != 0L;
 
         switch (currentMode) {
-            case MODE_INPUT -> {
-                blockEntity.subscribeEnergyReceiverToAllSides();
-            }
-            case MODE_BUFFER -> {
-                blockEntity.refreshEnergyNodeState();
-                blockEntity.refreshEnergyNetworkSubscriptions();
-            }
-            case MODE_OUTPUT -> HbmEnergyUtil.tryProvideToAllNeighbors(level, pos, blockEntity.energy);
+            case MODE_INPUT -> blockEntity.handleInputMode();
+            case MODE_BUFFER -> blockEntity.handleBufferMode();
+            case MODE_OUTPUT -> blockEntity.handleOutputMode();
             default -> {
             }
         }
@@ -170,7 +173,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         if (power <= 0L || energy.getMaxPower() <= 0L) {
             return 0;
         }
-        return Mth.clamp((int) (power * 15L / energy.getMaxPower()) + 1, 0, 15);
+        return Mth.clamp((int) ((double) power / (double) energy.getMaxPower() * 15.0D) + 1, 0, 15);
     }
 
     @Override
@@ -196,6 +199,11 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     }
 
     @Override
+    protected HbmEnergyNode createEnergyNode() {
+        return HbmEnergyNode.withStandardLegacyConnections(worldPosition);
+    }
+
+    @Override
     protected boolean shouldSubscribeAsProvider() {
         return getCurrentMode() == MODE_BUFFER;
     }
@@ -205,12 +213,12 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         return getCurrentMode() == MODE_BUFFER;
     }
 
-    private int getCurrentMode() {
+    protected int getCurrentMode() {
         boolean powered = level != null && level.hasNeighborSignal(worldPosition);
         return clampMode(powered ? redHigh : redLow);
     }
 
-    private void handleModeTransition(int currentMode) {
+    protected void handleModeTransition(int currentMode) {
         if (currentMode == lastMode) {
             return;
         }
@@ -222,7 +230,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         lastMode = currentMode;
     }
 
-    private static short clampMode(short mode) {
+    protected static short clampMode(short mode) {
         return mode >= MODE_INPUT && mode <= MODE_NONE ? mode : MODE_INPUT;
     }
 
@@ -323,7 +331,8 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     }
 
     public int getPowerBarHeight(int maxHeight) {
-        return energy.getMaxPower() <= 0L ? 0 : (int) (energy.getPower() * maxHeight / energy.getMaxPower());
+        return energy.getMaxPower() <= 0L ? 0
+                : Mth.clamp((int) ((double) energy.getPower() / (double) energy.getMaxPower() * maxHeight), 0, maxHeight);
     }
 
     public long getDeltaPerSecond() {
@@ -366,6 +375,21 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
                         "mode" + RORInteractive.PARAM_SEPARATOR + "fallback (0-3)")
                 .function("setpriority", this::runRorSetPriority, "priority (0-2)")
                 .build();
+    }
+
+    protected void handleInputMode() {
+        subscribeEnergyReceiverToAllSides();
+    }
+
+    protected void handleBufferMode() {
+        refreshEnergyNodeState();
+        refreshEnergyNetworkSubscriptions();
+    }
+
+    protected void handleOutputMode() {
+        if (level != null) {
+            HbmEnergyUtil.tryProvideToAllNeighbors(level, worldPosition, energy);
+        }
     }
 
     private String runRorSetMode(String[] params) {
@@ -635,15 +659,15 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         }
     }
 
-    private static final class BatteryEnergyStorage extends HbmEnergyStorage {
+    protected static class BatteryEnergyStorage extends HbmEnergyStorage {
         private HbmEnergyReceiver.ConnectionPriority priority = HbmEnergyReceiver.ConnectionPriority.LOW;
         private IntSupplier modeSupplier = () -> MODE_NONE;
 
-        private BatteryEnergyStorage(long maxPower, long maxReceive, long maxExtract) {
+        protected BatteryEnergyStorage(long maxPower, long maxReceive, long maxExtract) {
             super(maxPower, maxReceive, maxExtract);
         }
 
-        private void bindModeSupplier(IntSupplier modeSupplier) {
+        protected void bindModeSupplier(IntSupplier modeSupplier) {
             this.modeSupplier = modeSupplier == null ? () -> MODE_NONE : modeSupplier;
         }
 
@@ -664,7 +688,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
             return priority;
         }
 
-        private void setPriority(HbmEnergyReceiver.ConnectionPriority priority) {
+        protected void setPriority(HbmEnergyReceiver.ConnectionPriority priority) {
             this.priority = sanitizeBatteryPriority(priority);
         }
     }

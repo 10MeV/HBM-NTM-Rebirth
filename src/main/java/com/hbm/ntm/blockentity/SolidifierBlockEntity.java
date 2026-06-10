@@ -20,6 +20,7 @@ import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.SolidifierMenu;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,6 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -347,21 +347,11 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (stack.isEmpty()) {
             return false;
         }
-        ItemStack existing = items.getStackInSlot(SLOT_OUTPUT);
-        return existing.isEmpty()
-                || ItemHandlerHelper.canItemStacksStack(existing, stack)
-                && existing.getCount() + stack.getCount() <= Math.min(existing.getMaxStackSize(), items.getSlotLimit(SLOT_OUTPUT));
+        return HbmInventoryUtil.doesHandlerHaveSpaceUnchecked(items, SLOT_OUTPUT, SLOT_OUTPUT, stack);
     }
 
     private void addOutput(ItemStack stack) {
-        ItemStack existing = items.getStackInSlot(SLOT_OUTPUT);
-        if (existing.isEmpty()) {
-            items.setStackInSlot(SLOT_OUTPUT, stack.copy());
-            return;
-        }
-        ItemStack merged = existing.copy();
-        merged.grow(stack.getCount());
-        items.setStackInSlot(SLOT_OUTPUT, merged);
+        HbmInventoryUtil.tryAddItemToHandlerUnchecked(items, SLOT_OUTPUT, SLOT_OUTPUT, stack);
     }
 
     private static final class SolidifierExternalItemHandler implements IItemHandler {

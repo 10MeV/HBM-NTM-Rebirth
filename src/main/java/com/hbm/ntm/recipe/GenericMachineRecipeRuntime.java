@@ -4,6 +4,7 @@ import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.pollution.PollutionManager;
+import com.hbm.ntm.pollution.PollutionType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -105,6 +106,16 @@ public final class GenericMachineRecipeRuntime {
             double progress, ItemStack blueprint, HbmEnergyStorage energy, ItemStackHandler items, int[] inputSlots,
             int[] outputSlots, List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks,
             ProcessingFactors factors, boolean extraCondition, int defaultTankCapacity, @Nullable BlockPos pollutionPos) {
+        return update(level, machine, selectedRecipe, progress, blueprint, energy, items, inputSlots, outputSlots,
+                inputTanks, outputTanks, factors, extraCondition, defaultTankCapacity, pollutionPos,
+                PollutionSink.DIRECT);
+    }
+
+    public static ProcessingResult update(Level level, GenericMachineRecipe.Machine machine, String selectedRecipe,
+            double progress, ItemStack blueprint, HbmEnergyStorage energy, ItemStackHandler items, int[] inputSlots,
+            int[] outputSlots, List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks,
+            ProcessingFactors factors, boolean extraCondition, int defaultTankCapacity,
+            @Nullable BlockPos pollutionPos, @Nullable PollutionSink pollutionSink) {
         GenericMachineRecipe recipe = findByInternalName(level, machine, selectedRecipe);
         if (recipe != null && !GenericMachineRecipeSelector.isAllowedByBlueprint(recipe, blueprint)) {
             return new ProcessingResult(NULL_RECIPE, 0.0D, false, true, null, false);
@@ -131,7 +142,7 @@ public final class GenericMachineRecipeRuntime {
         }
 
         energy.setPower(energy.getPower() - requiredPower(recipe, factors.powerMultiplier()));
-        applyTickPollution(level, pollutionPos, recipe);
+        applyTickPollution(level, pollutionPos, recipe, pollutionSink);
         double nextProgress = progress + Math.min(factors.speedMultiplier() / Math.max(recipe.getDuration(), 1), 1.0D);
         boolean completed = false;
         if (nextProgress >= 1.0D) {
@@ -150,16 +161,18 @@ public final class GenericMachineRecipeRuntime {
         return new ProcessingResult(recipe.getInternalName(), nextProgress, true, true, recipe, completed);
     }
 
-    private static void applyTickPollution(Level level, @Nullable BlockPos pos, GenericMachineRecipe recipe) {
+    private static void applyTickPollution(Level level, @Nullable BlockPos pos, GenericMachineRecipe recipe,
+            @Nullable PollutionSink pollutionSink) {
         if (pos == null || level.getGameTime() % 20 != 0) {
             return;
         }
+        PollutionSink sink = pollutionSink == null ? PollutionSink.DIRECT : pollutionSink;
         recipe.getExtraData().pollution().ifPresent(pollution -> {
             float amount = pollution.amount();
             if (!Float.isFinite(amount) || amount == 0.0F) {
                 return;
             }
-            PollutionManager.applyPollutionDelta(level, pos, pollution.type(), amount);
+            sink.apply(level, pos, pollution.type(), amount);
         });
     }
 
@@ -183,19 +196,29 @@ public final class GenericMachineRecipeRuntime {
         if (recipe == null || recipe.getItemInputs().isEmpty()) {
             return false;
         }
+        boolean inputSlot = false;
+        for (int candidate : inputSlots) {
+            if (candidate == slot) {
+                inputSlot = true;
+                break;
+            }
+        }
+        if (!inputSlot) {
+            return false;
+        }
         List<HbmIngredient> inputs = recipe.getItemInputs();
-        for (int i = 0; i < Math.min(inputSlots.length, inputs.size()); i++) {
-            if (inputSlots[i] == slot && inputs.get(i).test(stack, true)) {
+        for (HbmIngredient input : inputs) {
+            if (input.test(stack, true)) {
                 return true;
             }
         }
-        if (recipe.getAutoSwitchGroup() == null || inputSlots.length == 0 || inputSlots[0] != slot) {
+        if (recipe.getAutoSwitchGroup() == null || inputSlots.length == 0) {
             return false;
         }
         return index(level, machine).recipes().stream()
                 .filter(candidate -> recipe.getAutoSwitchGroup().equals(candidate.getAutoSwitchGroup()))
                 .filter(candidate -> !candidate.getItemInputs().isEmpty())
-                .anyMatch(candidate -> candidate.getItemInputs().get(0).test(stack, true));
+                .anyMatch(candidate -> candidate.getItemInputs().stream().anyMatch(input -> input.test(stack, true)));
     }
 
     public static boolean isSlotClogged(GenericMachineRecipe recipe, GenericMachineRecipe.Machine machine, Level level,
@@ -295,22 +318,42 @@ public final class GenericMachineRecipeRuntime {
     private static ItemInputMatchPlan matchItemInputs(GenericMachineRecipe recipe, ItemStackHandler items, int[] inputSlots) {
         List<HbmIngredient> itemInputs = recipe.getItemInputs();
         int itemCount = Math.min(itemInputs.size(), inputSlots.length);
+        if (itemInputs.size() > inputSlots.length) {
+            return null;
+        }
         int[] matchedSlots = new int[itemCount];
         Arrays.fill(matchedSlots, -1);
 
-        for (int i = 0; i < itemCount; i++) {
-            int inputSlot = inputSlots[i];
-            ItemStack stack = items.getStackInSlot(inputSlot);
-            if (stack.isEmpty()) {
-                return null;
-            }
-            HbmIngredient input = itemInputs.get(i);
-            if (!input.test(stack)) {
-                return null;
-            }
-            matchedSlots[i] = inputSlot;
+        boolean[] usedSlots = new boolean[inputSlots.length];
+        return matchItemInputsRecursive(itemInputs, items, inputSlots, matchedSlots, usedSlots, 0)
+                ? new ItemInputMatchPlan(matchedSlots)
+                : null;
+    }
+
+    private static boolean matchItemInputsRecursive(List<HbmIngredient> itemInputs, ItemStackHandler items,
+            int[] inputSlots, int[] matchedSlots, boolean[] usedSlots, int inputIndex) {
+        if (inputIndex >= itemInputs.size()) {
+            return true;
         }
-        return new ItemInputMatchPlan(matchedSlots);
+        HbmIngredient input = itemInputs.get(inputIndex);
+        for (int slotIndex = 0; slotIndex < inputSlots.length; slotIndex++) {
+            if (usedSlots[slotIndex]) {
+                continue;
+            }
+            int inputSlot = inputSlots[slotIndex];
+            ItemStack stack = items.getStackInSlot(inputSlot);
+            if (stack.isEmpty() || !input.test(stack)) {
+                continue;
+            }
+            usedSlots[slotIndex] = true;
+            matchedSlots[inputIndex] = inputSlot;
+            if (matchItemInputsRecursive(itemInputs, items, inputSlots, matchedSlots, usedSlots, inputIndex + 1)) {
+                return true;
+            }
+            matchedSlots[inputIndex] = -1;
+            usedSlots[slotIndex] = false;
+        }
+        return false;
     }
 
     private static boolean hasPower(HbmEnergyStorage energy, GenericMachineRecipe recipe, double powerMultiplier) {
@@ -602,6 +645,13 @@ public final class GenericMachineRecipeRuntime {
 
     private static boolean hasUnresolvedItemInput(GenericMachineRecipe recipe) {
         return recipe.getItemInputs().stream().anyMatch(HbmIngredient::unresolvedDisplayInput);
+    }
+
+    @FunctionalInterface
+    public interface PollutionSink {
+        PollutionSink DIRECT = PollutionManager::applyPollutionDelta;
+
+        boolean apply(Level level, BlockPos pos, PollutionType type, float amount);
     }
 
     private record ItemInputMatchPlan(int[] matchedSlots) {

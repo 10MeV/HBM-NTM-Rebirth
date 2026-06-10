@@ -34,6 +34,7 @@ public final class Compat {
     public static final String MOD_GREGTECH = "gregtech";
     public static final String MOD_GT6 = MOD_GREGTECH;
     public static final String MOD_REACTORCRAFT = "reactorcraft";
+    public static final String MOD_REC = MOD_REACTORCRAFT;
     public static final String MOD_ET_FUTURUM = "etfuturum";
     public static final String MOD_EF = MOD_ET_FUTURUM;
     public static final String MOD_GALACTICRAFT = "galacticraftcore";
@@ -42,6 +43,12 @@ public final class Compat {
     public static final String MOD_AR = MOD_ADVANCED_ROCKETRY;
     public static final String MOD_TCONSTRUCT = "tconstruct";
     public static final String MOD_TIC = MOD_TCONSTRUCT;
+    public static final String MOD_THAUMCRAFT = "tc";
+    public static final String MOD_TC = MOD_THAUMCRAFT;
+    public static final String MOD_ENDLESS_IDS = "endlessids";
+    public static final String MOD_EIDS = MOD_ENDLESS_IDS;
+    public static final String MOD_ANGELICA = "angelica";
+    public static final String MOD_ANG = MOD_ANGELICA;
     public static final String MOD_RAILCRAFT = "railcraft";
     public static final String MOD_RC = MOD_RAILCRAFT;
     public static final String MOD_TORCHERINO = "torcherino";
@@ -116,7 +123,7 @@ public final class Compat {
     }
 
     public static boolean isModLoaded(String modId) {
-        return modId != null && !modId.isBlank() && ModList.get().isLoaded(modId);
+        return modId != null && !modId.isBlank() && ModList.get().isLoaded(normalizedModId(modId));
     }
 
     public static boolean isAnyModLoaded(String... modIds) {
@@ -246,8 +253,20 @@ public final class Compat {
         return getPreferredItemOutput(candidates, List.of(HbmNtm.MOD_ID, "minecraft"));
     }
 
+    public static ItemStack getPreferredItemOutput(ItemStack... candidates) {
+        return candidates == null ? ItemStack.EMPTY : getPreferredItemOutput(Arrays.asList(candidates));
+    }
+
     public static ItemStack getPreferredOreOutput(List<ItemStack> candidates) {
         return getPreferredItemOutput(candidates);
+    }
+
+    public static ItemStack getPreferredOreOutput(ItemStack... candidates) {
+        return getPreferredItemOutput(candidates);
+    }
+
+    public static ItemStack getPreferredItemOutput(List<ItemStack> candidates, String... preferredNamespaces) {
+        return getPreferredItemOutput(candidates, preferredNamespaces == null ? List.of() : Arrays.asList(preferredNamespaces));
     }
 
     public static ItemStack getPreferredItemOutput(List<ItemStack> candidates, List<String> preferredNamespaces) {
@@ -283,11 +302,25 @@ public final class Compat {
     }
 
     @Nullable
+    public static ResourceLocation itemId(Item item) {
+        if (item == null || item == Items.AIR) {
+            return null;
+        }
+        return ForgeRegistries.ITEMS.getKey(item);
+    }
+
+    @Nullable
     public static ResourceLocation itemId(ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
             return null;
         }
-        return ForgeRegistries.ITEMS.getKey(stack.getItem());
+        return itemId(stack.getItem());
+    }
+
+    @Nullable
+    public static String itemNamespace(Item item) {
+        ResourceLocation id = itemId(item);
+        return id == null ? null : id.getNamespace();
     }
 
     @Nullable
@@ -298,7 +331,12 @@ public final class Compat {
 
     public static boolean isItemFromMod(ItemStack stack, String modId) {
         String namespace = itemNamespace(stack);
-        return namespace != null && modId != null && namespace.equals(modId);
+        return namespace != null && modId != null && namespace.equals(normalizedModId(modId));
+    }
+
+    public static boolean isItemFromMod(Item item, String modId) {
+        String namespace = itemNamespace(item);
+        return namespace != null && modId != null && namespace.equals(normalizedModId(modId));
     }
 
     @Nullable
@@ -328,12 +366,12 @@ public final class Compat {
 
     public static boolean isBlockFromMod(Block block, String modId) {
         String namespace = blockNamespace(block);
-        return namespace != null && modId != null && namespace.equals(modId);
+        return namespace != null && modId != null && namespace.equals(normalizedModId(modId));
     }
 
     public static boolean isBlockFromMod(BlockState state, String modId) {
         String namespace = blockNamespace(state);
-        return namespace != null && modId != null && namespace.equals(modId);
+        return namespace != null && modId != null && namespace.equals(normalizedModId(modId));
     }
 
     @Nullable
@@ -440,6 +478,14 @@ public final class Compat {
     }
 
     @Nullable
+    public static ResourceLocation resource(String id) {
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+        return ResourceLocation.tryParse(id);
+    }
+
+    @Nullable
     public static ResourceLocation resource(String namespace, String path) {
         if (namespace == null || namespace.isBlank() || path == null || path.isBlank()) {
             return null;
@@ -453,11 +499,15 @@ public final class Compat {
             return Integer.MAX_VALUE;
         }
         for (int index = 0; index < preferredNamespaces.size(); index++) {
-            if (id.getNamespace().equals(preferredNamespaces.get(index))) {
+            if (id.getNamespace().equals(normalizedModId(preferredNamespaces.get(index)))) {
                 return index;
             }
         }
         return Integer.MAX_VALUE;
+    }
+
+    private static String normalizedModId(String modId) {
+        return modId == null ? "" : modId.toLowerCase(Locale.ROOT);
     }
 
     private Compat() {

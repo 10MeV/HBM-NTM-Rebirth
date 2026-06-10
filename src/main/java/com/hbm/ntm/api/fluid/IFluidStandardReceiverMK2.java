@@ -4,6 +4,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidNet;
 import com.hbm.ntm.fluid.HbmFluidNode;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import java.util.List;
@@ -43,13 +44,8 @@ public interface IFluidStandardReceiverMK2 extends IFluidReceiverMK2, HbmStandar
         if (level == null || pos == null) {
             return 0;
         }
-        int subscribed = 0;
-        for (Direction direction : Direction.values()) {
-            if (trySubscribe(type, level, pos.relative(direction), direction)) {
-                subscribed++;
-            }
-        }
-        return subscribed;
+        return com.hbm.ntm.fluid.HbmFluidUtil.subscribeReceiverToPorts(
+                level, pos, HbmFluidPortLayouts.allAdjacent(), type, this);
     }
 
     default boolean tryUnsubscribe(FluidType type, Level level, BlockPos connectorPos) {

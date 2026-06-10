@@ -1,6 +1,7 @@
 package com.hbm.ntm.api.entity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -126,6 +127,26 @@ public record RadarEntry(String name, int blipLevel, BlockPos pos, ResourceLocat
         return entries;
     }
 
+    public void writeLegacyWire(FriendlyByteBuf buffer) {
+        buffer.writeUtf(name);
+        buffer.writeShort(blipLevel);
+        buffer.writeInt(pos.getX());
+        buffer.writeInt(pos.getY());
+        buffer.writeInt(pos.getZ());
+        buffer.writeShort(legacyDimensionId(dimension));
+        buffer.writeInt(entityId);
+    }
+
+    public static RadarEntry readLegacyWire(FriendlyByteBuf buffer) {
+        return new RadarEntry(
+                buffer.readUtf(),
+                buffer.readShort(),
+                new BlockPos(buffer.readInt(), buffer.readInt(), buffer.readInt()),
+                dimensionFromLegacyId(buffer.readShort()),
+                buffer.readInt(),
+                false);
+    }
+
     private static String stringOrLegacy(CompoundTag tag, String key, String legacyKey) {
         return tag.contains(key, Tag.TAG_STRING) ? tag.getString(key) : tag.getString(legacyKey);
     }
@@ -150,6 +171,29 @@ public record RadarEntry(String name, int blipLevel, BlockPos pos, ResourceLocat
             if (legacyDimension == 1) {
                 return new ResourceLocation("minecraft", "the_end");
             }
+        }
+        return DEFAULT_DIMENSION;
+    }
+
+    private static int legacyDimensionId(ResourceLocation dimension) {
+        if (DEFAULT_DIMENSION.equals(dimension)) {
+            return 0;
+        }
+        if (new ResourceLocation("minecraft", "the_nether").equals(dimension)) {
+            return -1;
+        }
+        if (new ResourceLocation("minecraft", "the_end").equals(dimension)) {
+            return 1;
+        }
+        return 0;
+    }
+
+    private static ResourceLocation dimensionFromLegacyId(int legacyDimension) {
+        if (legacyDimension == -1) {
+            return new ResourceLocation("minecraft", "the_nether");
+        }
+        if (legacyDimension == 1) {
+            return new ResourceLocation("minecraft", "the_end");
         }
         return DEFAULT_DIMENSION;
     }

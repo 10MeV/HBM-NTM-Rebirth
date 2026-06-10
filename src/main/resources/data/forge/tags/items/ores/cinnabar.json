@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "hbm_ntm_rebirth:ore_cinnebar",
+    "hbm_ntm_rebirth:ore_depth_cinnebar"
+  ]
+}

@@ -9,7 +9,6 @@ import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEffects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -76,22 +75,13 @@ public final class ExplosionChaos {
     }
 
     public static void spawnPoisonCloud(Level level, double x, double y, double z, int count, double speed, int type) {
-        spawnChaosCloud(level, x, y, z, count, speed, type == 1 ? "green" : type == 2 ? "pink" : "orange");
+        ParticleUtil.spawnChaosCloudBurst(level, x, y, z, count, speed, type == 1
+                ? ParticleUtil.CHAOS_CLOUD_GREEN
+                : type == 2 ? ParticleUtil.CHAOS_CLOUD_PINK : ParticleUtil.CHAOS_CLOUD_ORANGE);
     }
 
     public static void spawnVolley(Level level, double x, double y, double z, int count, double speed) {
-        if (level == null || count <= 0) {
-            return;
-        }
-        for (int i = 0; i < count; i++) {
-            CompoundTag data = new CompoundTag();
-            data.putString("type", "chaosCloud");
-            data.putString("mode", "orange");
-            data.putDouble("mX", level.random.nextGaussian() * speed);
-            data.putDouble("mY", level.random.nextDouble() * speed * 7.5D);
-            data.putDouble("mZ", level.random.nextGaussian() * speed);
-            ParticleUtil.spawnAux(level, x, y, z, data, 150.0D);
-        }
+        ParticleUtil.spawnChaosVolley(level, x, y, z, count, speed);
     }
 
     public static void poison(Level level, double x, double y, double z, double range) {
@@ -177,21 +167,6 @@ public final class ExplosionChaos {
             if (Math.sqrt(dx * dx + dy * dy + dz * dz) < range) {
                 entity.teleportTo(entity.getX() + offsetX, entity.getY() + offsetY, entity.getZ() + offsetZ);
             }
-        }
-    }
-
-    private static void spawnChaosCloud(Level level, double x, double y, double z, int count, double speed, String mode) {
-        if (level == null || count <= 0) {
-            return;
-        }
-        for (int i = 0; i < count; i++) {
-            CompoundTag data = new CompoundTag();
-            data.putString("type", "chaosCloud");
-            data.putString("mode", mode);
-            data.putDouble("mX", level.random.nextGaussian() * speed);
-            data.putDouble("mY", level.random.nextGaussian() * speed);
-            data.putDouble("mZ", level.random.nextGaussian() * speed);
-            ParticleUtil.spawnAux(level, x, y, z, data, 150.0D);
         }
     }
 

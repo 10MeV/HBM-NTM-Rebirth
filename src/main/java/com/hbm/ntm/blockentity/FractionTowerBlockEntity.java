@@ -6,6 +6,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.PairRecipe;
@@ -19,11 +20,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class FractionTowerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
     private static final int TANK_CAPACITY = 4_000;
-    private static final List<FluidPort> FLUID_PORTS = List.of(
-            FluidPort.of(2, 0, 0, Direction.EAST),
-            FluidPort.of(-2, 0, 0, Direction.WEST),
-            FluidPort.of(0, 0, 2, Direction.SOUTH),
-            FluidPort.of(0, 0, -2, Direction.NORTH));
+    private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.cardinal(2);
 
     private final HbmFluidTank inputTank;
     private final HbmFluidTank leftOutputTank;

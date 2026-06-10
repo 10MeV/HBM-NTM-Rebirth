@@ -11,6 +11,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -22,8 +23,11 @@ import net.minecraftforge.registries.RegistryObject;
 import javax.annotation.Nullable;
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 public final class ArmorUtil {
@@ -87,6 +91,76 @@ public final class ArmorUtil {
 
     public static void register() {
         HazmatRegistry.registerDefaultProtections();
+    }
+
+    public static void registerProtection(Item item, HazardClass... hazardClasses) {
+        HazmatRegistry.registerProtection(item, hazardClasses);
+    }
+
+    public static boolean registerProtection(ResourceLocation itemId, HazardClass... hazardClasses) {
+        return HazmatRegistry.registerProtection(itemId, hazardClasses);
+    }
+
+    public static boolean registerProtection(String itemId, HazardClass... hazardClasses) {
+        return HazmatRegistry.registerProtection(itemId, hazardClasses);
+    }
+
+    public static void registerExternalProtection(Item item, HazardClass... hazardClasses) {
+        HazmatRegistry.registerExternalProtection(item, hazardClasses);
+    }
+
+    public static boolean registerExternalProtection(ResourceLocation itemId, HazardClass... hazardClasses) {
+        return HazmatRegistry.registerExternalProtection(itemId, hazardClasses);
+    }
+
+    public static boolean registerExternalProtection(String itemId, HazardClass... hazardClasses) {
+        return HazmatRegistry.registerExternalProtection(itemId, hazardClasses);
+    }
+
+    public static EnumSet<HazardClass> removeProtection(Item item) {
+        return HazmatRegistry.removeProtection(item);
+    }
+
+    public static boolean removeProtection(ResourceLocation itemId) {
+        Item item = HazmatRegistry.resolveItem(itemId);
+        return item != null && removeProtection(item) != null;
+    }
+
+    public static boolean removeProtection(String itemId) {
+        Item item = HazmatRegistry.resolveItem(itemId);
+        return item != null && removeProtection(item) != null;
+    }
+
+    public static EnumSet<HazardClass> removeExternalProtection(Item item) {
+        return HazmatRegistry.removeExternalProtection(item);
+    }
+
+    public static boolean removeExternalProtection(ResourceLocation itemId) {
+        return HazmatRegistry.removeExternalProtection(itemId);
+    }
+
+    public static boolean removeExternalProtection(String itemId) {
+        return HazmatRegistry.removeExternalProtection(itemId);
+    }
+
+    public static void clearProtections() {
+        HazmatRegistry.clearProtections();
+    }
+
+    public static void clearExternalProtections() {
+        HazmatRegistry.clearExternalProtections();
+    }
+
+    public static Set<HazardClass> getProtection(ItemStack stack) {
+        return HazmatRegistry.getProtection(stack);
+    }
+
+    public static Set<HazardClass> getProtectionFromItem(ItemStack stack, LivingEntity entity) {
+        return HazmatRegistry.getProtectionFromItem(stack, entity);
+    }
+
+    public static Map<Item, EnumSet<HazardClass>> protectionSnapshot() {
+        return HazmatRegistry.protectionSnapshot();
     }
 
     public static boolean checkForHazmat(LivingEntity entity) {
@@ -468,6 +542,21 @@ public final class ArmorUtil {
         return filter;
     }
 
+    public static boolean removeGasMaskFilterToInventory(ItemStack mask, Player player) {
+        if (player == null) {
+            return false;
+        }
+        ItemStack filter = getGasMaskFilter(mask);
+        if (filter.isEmpty()) {
+            return false;
+        }
+        removeFilter(mask);
+        if (!player.getInventory().add(filter)) {
+            player.drop(filter, true);
+        }
+        return true;
+    }
+
     public static ItemStack getGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
         ItemStack filter = getGasMaskFilter(mask);
         if (filter.isEmpty() && ArmorModHandler.hasMods(mask)) {
@@ -548,6 +637,12 @@ public final class ArmorUtil {
         for (Component line : filterLore) {
             tooltip.add(Component.literal("  ").withStyle(ChatFormatting.YELLOW).append(line));
         }
+    }
+
+    public static void addGasMaskTooltip(ItemStack maskStack, @Nullable LivingEntity entity,
+                                         List<Component> tooltip, boolean advanced) {
+        addGasMaskTooltip(maskStack, entity, tooltip,
+                advanced ? TooltipFlag.ADVANCED : TooltipFlag.NORMAL);
     }
 
     public static void addGasMaskBlacklistTooltip(ItemStack maskStack, @Nullable LivingEntity entity,
@@ -737,7 +832,7 @@ public final class ArmorUtil {
             }
             Pair<Item, HazardClass[]> copy = new Pair<>(element.getKey(), element.getValue().clone());
             entries.add(index, copy);
-            HazmatRegistry.registerExternalProtection(copy.getKey(), copy.getValue());
+            syncItem(copy.getKey());
         }
 
         @Override
@@ -748,14 +843,84 @@ public final class ArmorUtil {
             }
             Pair<Item, HazardClass[]> copy = new Pair<>(element.getKey(), element.getValue().clone());
             entries.set(index, copy);
-            HazmatRegistry.registerExternalProtection(copy.getKey(), copy.getValue());
+            syncItem(previous.getKey());
+            syncItem(copy.getKey());
             return new Pair<>(previous.getKey(), previous.getValue().clone());
         }
 
         @Override
         public Pair<Item, HazardClass[]> remove(int index) {
             Pair<Item, HazardClass[]> previous = entries.remove(index);
+            syncItem(previous.getKey());
             return new Pair<>(previous.getKey(), previous.getValue().clone());
+        }
+
+        @Override
+        public void clear() {
+            List<Item> affected = entries.stream()
+                    .map(Pair::getKey)
+                    .distinct()
+                    .toList();
+            entries.clear();
+            for (Item item : affected) {
+                syncItem(item);
+            }
+        }
+
+        @Override
+        public boolean contains(Object object) {
+            return indexOf(object) >= 0;
+        }
+
+        @Override
+        public int indexOf(Object object) {
+            if (!(object instanceof Pair<?, ?> pair)) {
+                return -1;
+            }
+            for (int index = 0; index < entries.size(); index++) {
+                if (matches(entries.get(index), pair)) {
+                    return index;
+                }
+            }
+            return -1;
+        }
+
+        @Override
+        public int lastIndexOf(Object object) {
+            if (!(object instanceof Pair<?, ?> pair)) {
+                return -1;
+            }
+            for (int index = entries.size() - 1; index >= 0; index--) {
+                if (matches(entries.get(index), pair)) {
+                    return index;
+                }
+            }
+            return -1;
+        }
+
+        @Override
+        public boolean remove(Object object) {
+            int index = indexOf(object);
+            if (index < 0) {
+                return false;
+            }
+            remove(index);
+            return true;
+        }
+
+        private void syncItem(Item item) {
+            HazmatRegistry.removeExternalProtection(item);
+            for (Pair<Item, HazardClass[]> entry : entries) {
+                if (entry.getKey() == item) {
+                    HazmatRegistry.registerExternalProtection(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+        private boolean matches(Pair<Item, HazardClass[]> entry, Pair<?, ?> candidate) {
+            return entry.getKey() == candidate.getKey()
+                    && candidate.getValue() instanceof HazardClass[] hazards
+                    && Arrays.equals(entry.getValue(), hazards);
         }
     }
 

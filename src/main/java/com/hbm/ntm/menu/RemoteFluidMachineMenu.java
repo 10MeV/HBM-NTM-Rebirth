@@ -20,7 +20,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.ItemStackHandler;
@@ -163,17 +162,7 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getMaxPower, () -> maxPower, value -> maxPower = value);
         tanks.addAll(HbmFluidGuiHelper.watchTanks(this::addDataSlot, blockEntity.getAllTanks()));
         if (blockEntity instanceof CokerBlockEntity coker) {
-            addDataSlot(new DataSlot() {
-                @Override
-                public int get() {
-                    return coker.getProgress();
-                }
-
-                @Override
-                public void set(int value) {
-                    cokerProgress = value;
-                }
-            });
+            HbmMenuDataSlots.addInt(this::addDataSlot, coker::getProgress, value -> cokerProgress = value);
             HbmMenuDataSlots.addLong(this::addDataSlot, coker::getHeat, () -> cokerHeat, value -> cokerHeat = (int) value);
         }
     }

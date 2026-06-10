@@ -10,6 +10,8 @@ import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionType;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 
 final class SmokeExhaustPollution {
@@ -24,11 +26,16 @@ final class SmokeExhaustPollution {
     }
 
     static void pollute(Level level, BlockPos pos, FluidType type, long amountMb) {
+        pollute(level, pos, type, amountMb, 1.0D);
+    }
+
+    static void pollute(Level level, BlockPos pos, FluidType type, long amountMb, double multiplier) {
         PollutionType pollutionType = toPollutionType(type);
-        if (pollutionType == null || level == null || pos == null || amountMb <= 0L) {
+        if (pollutionType == null || level == null || pos == null || amountMb <= 0L
+                || !Double.isFinite(multiplier) || multiplier <= 0.0D) {
             return;
         }
-        PollutionManager.incrementPollution(level, pos, pollutionType, amountMb / 100.0F);
+        PollutionManager.incrementPollution(level, pos, pollutionType, (float) (amountMb * multiplier / 100.0D));
     }
 
     static boolean polluteBuffered(Level level, BlockPos pos, HbmFluidTank tank, PollutionType type, float amount) {
@@ -42,6 +49,7 @@ final class SmokeExhaustPollution {
         if (overflow > 0) {
             if (level != null && pos != null) {
                 PollutionManager.incrementPollution(level, pos, type, overflow / 100.0F);
+                playOverflowHiss(level, pos);
             }
             return true;
         }
@@ -107,6 +115,12 @@ final class SmokeExhaustPollution {
             case POISON -> poisonTank;
             case FALLOUT -> null;
         };
+    }
+
+    private static void playOverflowHiss(Level level, BlockPos pos) {
+        if (level.random.nextInt(3) == 0) {
+            level.playSound(null, pos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.1F, 1.5F);
+        }
     }
 
     private SmokeExhaustPollution() {

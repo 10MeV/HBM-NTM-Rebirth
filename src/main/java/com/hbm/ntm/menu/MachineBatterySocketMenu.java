@@ -4,13 +4,13 @@ import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmMenuDataSlots;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -103,89 +103,13 @@ public class MachineBatterySocketMenu extends AbstractContainerMenu {
     }
 
     private void addBatteryDataSlots() {
-        addLongDataSlot(() -> blockEntity.getPower(), () -> power, value -> power = value);
-        addLongDataSlot(() -> blockEntity.getMaxPower(), () -> maxPower, value -> maxPower = value);
-        addLongDataSlot(() -> blockEntity.getDeltaPerSecond(), () -> delta, value -> delta = value);
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getRedLow();
-            }
-
-            @Override
-            public void set(int value) {
-                redLow = value;
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getRedHigh();
-            }
-
-            @Override
-            public void set(int value) {
-                redHigh = value;
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getBatteryPriority().ordinal();
-            }
-
-            @Override
-            public void set(int value) {
-                priorityOrdinal = value;
-            }
-        });
-    }
-
-    private void addLongDataSlot(LongGetter serverGetter, LongGetter clientGetter, LongSetter setter) {
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) (serverGetter.get() & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~0xFFFFL) | (value & 0xFFFFL));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 16) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 16)) | ((long) (value & 0xFFFF) << 16));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 32) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 32)) | ((long) (value & 0xFFFF) << 32));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 48) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 48)) | ((long) (value & 0xFFFF) << 48));
-            }
-        });
+        HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
+        HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getMaxPower, () -> maxPower, value -> maxPower = value);
+        HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getDeltaPerSecond, () -> delta, value -> delta = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getRedLow, value -> redLow = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getRedHigh, value -> redHigh = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, () -> blockEntity.getBatteryPriority().ordinal(),
+                value -> priorityOrdinal = value);
     }
 
     private static MachineBatterySocketBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
@@ -194,14 +118,5 @@ public class MachineBatterySocketMenu extends AbstractContainerMenu {
             return socket;
         }
         throw new IllegalStateException("Expected machine battery socket block entity at " + pos);
-    }
-
-    @FunctionalInterface
-    private interface LongGetter {
-        long get();
-    }
-
-    private interface LongSetter {
-        void set(long value);
     }
 }

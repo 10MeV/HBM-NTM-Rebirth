@@ -65,10 +65,14 @@ public final class BulletKinematicsUtil {
     }
 
     public static Vec3 movementDelta(BulletConfig config, Vec3 motion) {
+        return movementDelta(config, motion, 0.0F);
+    }
+
+    public static Vec3 movementDelta(BulletConfig config, Vec3 motion, float acceleration) {
         if (config == null || motion == null) {
             return Vec3.ZERO;
         }
-        return motion.scale(config.velocity());
+        return motion.scale(config.velocity() + acceleration);
     }
 
     public static Vec3 applyPostMovePhysics(BulletConfig config, Vec3 motion) {

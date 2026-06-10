@@ -158,6 +158,361 @@ public final class RBMKBlockPlanner {
         return new TexturePlan(vertical ? TextureRole.COLUMN_TOP : TextureRole.COLUMN_SIDE);
     }
 
+    public static BlockContract blockContract(String legacyId) {
+        String id = legacyId == null ? "" : legacyId;
+        return switch (id) {
+            case "rbmk_rod" -> rbmkRod(id, "rbmk/rbmk_element", "TileEntityRBMKRod", false, false);
+            case "rbmk_rod_mod" -> rbmkRod(id, "rbmk/rbmk_element_mod", "TileEntityRBMKRod", true, false);
+            case "rbmk_rod_reasim" ->
+                    rbmkRod(id, "rbmk/rbmk_element_reasim", "TileEntityRBMKRodReaSim", false, true);
+            case "rbmk_rod_reasim_mod" ->
+                    rbmkRod(id, "rbmk/rbmk_element_reasim_mod", "TileEntityRBMKRodReaSim", true, true);
+            case "rbmk_control" ->
+                    rbmkControl(id, "rbmk/rbmk_control", "TileEntityRBMKControlManual", false, false, false);
+            case "rbmk_control_mod" ->
+                    rbmkControl(id, "rbmk/rbmk_control_mod", "TileEntityRBMKControlManual", true, false, false);
+            case "rbmk_control_auto" ->
+                    rbmkControl(id, "rbmk/rbmk_control_auto", "TileEntityRBMKControlAuto", false, true, false);
+            case "rbmk_control_reasim" ->
+                    rbmkControl(id, "rbmk/rbmk_control_reasim", "TileEntityRBMKControlManual", false, false, true);
+            case "rbmk_control_reasim_auto" ->
+                    rbmkControl(id, "rbmk/rbmk_control_reasim_auto", "TileEntityRBMKControlAuto", false, true, true);
+            case "rbmk_blank" -> rbmkPassive(id, "rbmk/rbmk_blank", "TileEntityRBMKBlank", ProxyPlan.none());
+            case "rbmk_boiler" ->
+                    rbmkPiped(id, "rbmk/rbmk_boiler", "TileEntityRBMKBoiler", ProxyPlan.fluidProxy());
+            case "rbmk_reflector" ->
+                    rbmkPassive(id, "rbmk/rbmk_reflector", "TileEntityRBMKReflector", ProxyPlan.none());
+            case "rbmk_absorber" ->
+                    rbmkPassive(id, "rbmk/rbmk_absorber", "TileEntityRBMKAbsorber", ProxyPlan.none());
+            case "rbmk_moderator" ->
+                    rbmkPassive(id, "rbmk/rbmk_moderator", "TileEntityRBMKModerator", ProxyPlan.none());
+            case "rbmk_outgasser" ->
+                    rbmkPassive(id, "rbmk/rbmk_outgasser", "TileEntityRBMKOutgasser", ProxyPlan.inventoryFluid());
+            case "rbmk_storage" ->
+                    rbmkPassive(id, "rbmk/rbmk_storage", "TileEntityRBMKStorage", ProxyPlan.inventoryProxy());
+            case "rbmk_cooler" ->
+                    rbmkPassive(id, "rbmk/rbmk_cooler", "TileEntityRBMKCooler", ProxyPlan.fluidProxy());
+            case "rbmk_heater" ->
+                    rbmkPiped(id, "rbmk/rbmk_heater", "TileEntityRBMKHeater", ProxyPlan.fluidProxy());
+            case "rbmk_console" -> new BlockContract(
+                    id,
+                    LegacyBlockClass.CONSOLE,
+                    "rbmk/rbmk_console",
+                    CreativeTabRole.MACHINE,
+                    LEGACY_HARDNESS,
+                    LEGACY_RESISTANCE,
+                    RenderRole.TESR_ONLY,
+                    false,
+                    false,
+                    new LegacyDimensions(3, 0, 0, 0, 2, 2),
+                    1,
+                    new TileEntityPlan("TileEntityRBMKConsole", TileEntityCreation.CORE_ONLY, ProxyPlan.none()),
+                    InteractionContract.console(),
+                    IconContract.simple(false, false),
+                    List.of("extra footprint {0,0,0,1,2,2}", "guide book click zone handled by RBMKPanelBlockPlanner"));
+            case "rbmk_crane_console" -> new BlockContract(
+                    id,
+                    LegacyBlockClass.CRANE_CONSOLE,
+                    "rbmk/rbmk_crane_console",
+                    CreativeTabRole.MACHINE,
+                    LEGACY_HARDNESS,
+                    LEGACY_RESISTANCE,
+                    RenderRole.DEFAULT_MODEL,
+                    true,
+                    true,
+                    new LegacyDimensions(1, 0, 0, 0, 1, 1),
+                    0,
+                    new TileEntityPlan("TileEntityCraneConsole", TileEntityCreation.CORE_ONLY, ProxyPlan.none()),
+                    InteractionContract.screwdriverRotates(),
+                    IconContract.simple(false, false),
+                    List.of("screwdriver cycles crane rotation"));
+            case "rbmk_display_blank" ->
+                    miniPanel(id, "TileEntity:none", RBMKPanelPlanner.PanelType.DISPLAY, false, false);
+            case "rbmk_display" -> miniPanel(id, "TileEntityRBMKDisplay", RBMKPanelPlanner.PanelType.DISPLAY, false, true);
+            case "rbmk_key_pad" -> miniPanel(id, "TileEntityRBMKKeyPad", RBMKPanelPlanner.PanelType.KEYPAD, true, false);
+            case "rbmk_gauge" -> miniPanel(id, "TileEntityRBMKGauge", RBMKPanelPlanner.PanelType.GAUGE, true, false);
+            case "rbmk_numitron" -> miniPanel(id, "TileEntityRBMKNumitron", RBMKPanelPlanner.PanelType.NUMITRON, true, false);
+            case "rbmk_graph" -> miniPanel(id, "TileEntityRBMKGraph", RBMKPanelPlanner.PanelType.GRAPH, true, false);
+            case "rbmk_lever" -> miniPanel(id, "TileEntityRBMKLever", RBMKPanelPlanner.PanelType.LEVER, true, false);
+            case "rbmk_indicator" ->
+                    miniPanel(id, "TileEntityRBMKIndicator", RBMKPanelPlanner.PanelType.INDICATOR, true, false);
+            case "rbmk_terminal" ->
+                    miniPanel(id, "TileEntityRBMKTerminal", RBMKPanelPlanner.PanelType.TERMINAL, false, false);
+            case "rbmk_autoloader" -> new BlockContract(
+                    id,
+                    LegacyBlockClass.AUTOLOADER,
+                    "rbmk_autoloader",
+                    CreativeTabRole.MACHINE,
+                    50.0F,
+                    60.0F,
+                    RenderRole.TESR_ONLY,
+                    false,
+                    false,
+                    new LegacyDimensions(8, 0, 0, 0, 0, 0),
+                    0,
+                    new TileEntityPlan("TileEntityRBMKAutoloader", TileEntityCreation.CORE_OR_PROXY,
+                            ProxyPlan.inventoryProxy()),
+                    InteractionContract.openStandardGui(),
+                    IconContract.simple(false, false),
+                    List.of("custom collision boxes: narrow stem and upper body"));
+            case "rbmk_loader" -> new BlockContract(
+                    id,
+                    LegacyBlockClass.LOADER,
+                    "rbmk_loader",
+                    CreativeTabRole.MACHINE,
+                    50.0F,
+                    60.0F,
+                    RenderRole.DEFAULT_MODEL,
+                    true,
+                    true,
+                    new LegacyDimensions(0, 0, 0, 0, 0, 0),
+                    0,
+                    new TileEntityPlan("", TileEntityCreation.NONE, ProxyPlan.none()),
+                    InteractionContract.tooltipOnly(),
+                    IconContract.simple(false, false),
+                    List.of("Fluid connector: UP accepts heatable, other sides accept coolable or perfluoromethyl"));
+            case "rbmk_steam_inlet" -> ioBlock(id, "rbmk_steam_inlet", "TileEntityRBMKInlet");
+            case "rbmk_steam_outlet" -> ioBlock(id, "rbmk_steam_outlet", "TileEntityRBMKOutlet");
+            case "pribris" -> debris(id, "rbmk/rbmk_debris");
+            case "pribris_burning" -> debris(id, "rbmk/rbmk_debris_burning");
+            case "pribris_radiating" -> debris(id, "rbmk/rbmk_debris_radiating");
+            case "pribris_digamma" -> debris(id, "rbmk/rbmk_debris_digamma");
+            case "deco_rbmk" -> decoration(id, "rbmk/rbmk_top");
+            case "deco_rbmk_smooth" -> decoration(id, "rbmk/rbmk_blank_top");
+            default -> new BlockContract(
+                    id,
+                    LegacyBlockClass.UNKNOWN,
+                    "",
+                    CreativeTabRole.NONE,
+                    0.0F,
+                    0.0F,
+                    RenderRole.DEFAULT_MODEL,
+                    true,
+                    true,
+                    new LegacyDimensions(0, 0, 0, 0, 0, 0),
+                    0,
+                    new TileEntityPlan("", TileEntityCreation.NONE, ProxyPlan.none()),
+                    InteractionContract.none(),
+                    IconContract.simple(false, false),
+                    List.of());
+        };
+    }
+
+    public static TileEntityPlan tileEntityPlan(String legacyId, int meta) {
+        BlockContract contract = blockContract(legacyId);
+        if (contract.tileEntity().creation() == TileEntityCreation.ALWAYS) {
+            return contract.tileEntity();
+        }
+        if (contract.tileEntity().creation() == TileEntityCreation.CORE_ONLY && meta >= CORE_METADATA_OFFSET) {
+            return contract.tileEntity();
+        }
+        if (contract.tileEntity().creation() == TileEntityCreation.CORE_OR_PROXY) {
+            if (meta >= CORE_METADATA_OFFSET || ("rbmk_autoloader".equals(contract.legacyId()) && meta >= 12)) {
+                return contract.tileEntity();
+            }
+            if (hasExtra(meta) || "rbmk_storage".equals(contract.legacyId()) || "rbmk_autoloader".equals(contract.legacyId())) {
+                return new TileEntityPlan("TileEntityProxyCombo", TileEntityCreation.PROXY_ONLY,
+                        contract.tileEntity().proxy());
+            }
+        }
+        return new TileEntityPlan("", TileEntityCreation.NONE, ProxyPlan.none());
+    }
+
+    public static List<String> iconNames(String legacyId) {
+        BlockContract contract = blockContract(legacyId);
+        List<String> names = new ArrayList<>();
+        String base = contract.textureName();
+        if (base.isEmpty()) {
+            return List.of();
+        }
+        if (contract.icon().rbmkBaseIcons()) {
+            names.add(base + "_side");
+            names.add(base + "_top");
+            if (!contract.icon().hasOwnLid()) {
+                names.add(base + "_cover_top");
+                names.add(base + "_cover_side");
+                names.add(base + "_glass_top");
+                names.add(base + "_glass_side");
+            }
+            if (contract.icon().piped()) {
+                names.add(base + "_pipe_top");
+                names.add(base + "_pipe_side");
+            }
+            if (contract.icon().rodInterior()) {
+                names.add(base + "_inner");
+                names.add(base + "_fuel");
+            }
+            if (contract.icon().reasimBottom()) {
+                names.add(base + "_bottom");
+            }
+            return List.copyOf(names);
+        }
+        names.add(base);
+        return List.copyOf(names);
+    }
+
+    private static BlockContract rbmkRod(String id, String texture, String tileEntity, boolean moderated,
+            boolean reasim) {
+        return new BlockContract(
+                id,
+                reasim ? LegacyBlockClass.REASIM_ROD : LegacyBlockClass.ROD,
+                texture,
+                CreativeTabRole.MACHINE,
+                LEGACY_HARDNESS,
+                LEGACY_RESISTANCE,
+                RenderRole.RODS,
+                false,
+                false,
+                new LegacyDimensions(3, 0, 0, 0, 0, 0),
+                0,
+                new TileEntityPlan(tileEntity, TileEntityCreation.CORE_OR_PROXY, ProxyPlan.inventoryProxy()),
+                InteractionContract.rod(),
+                new IconContract(true, false, false, true, false, false),
+                List.of(moderated ? "moderated=true" : "moderated=false"));
+    }
+
+    private static BlockContract rbmkPassive(String id, String texture, String tileEntity, ProxyPlan proxy) {
+        TileEntityCreation creation = proxy.hasAny() ? TileEntityCreation.CORE_OR_PROXY : TileEntityCreation.CORE_ONLY;
+        return new BlockContract(
+                id,
+                LegacyBlockClass.RBMK_BASE,
+                texture,
+                CreativeTabRole.MACHINE,
+                LEGACY_HARDNESS,
+                LEGACY_RESISTANCE,
+                RenderRole.PASSIVE,
+                true,
+                true,
+                new LegacyDimensions(3, 0, 0, 0, 0, 0),
+                0,
+                new TileEntityPlan(tileEntity, creation, proxy),
+                InteractionContract.openGuiWhenNotSneaking(),
+                IconContract.rbmkBase(false),
+                List.of());
+    }
+
+    private static BlockContract rbmkPiped(String id, String texture, String tileEntity, ProxyPlan proxy) {
+        return new BlockContract(
+                id,
+                LegacyBlockClass.PIPED_BASE,
+                texture,
+                CreativeTabRole.MACHINE,
+                LEGACY_HARDNESS,
+                LEGACY_RESISTANCE,
+                RenderRole.CONTROL,
+                true,
+                true,
+                new LegacyDimensions(3, 0, 0, 0, 0, 0),
+                0,
+                new TileEntityPlan(tileEntity, TileEntityCreation.CORE_OR_PROXY, proxy),
+                InteractionContract.openGuiWhenNotSneaking(),
+                new IconContract(true, false, true, false, false, false),
+                List.of("renderPipes static flag swaps side/top icons to pipe textures"));
+    }
+
+    private static BlockContract rbmkControl(String id, String texture, String tileEntity, boolean moderated,
+            boolean automatic, boolean reasim) {
+        return new BlockContract(
+                id,
+                automatic ? LegacyBlockClass.CONTROL_AUTO : LegacyBlockClass.CONTROL_MANUAL,
+                texture,
+                CreativeTabRole.MACHINE,
+                LEGACY_HARDNESS,
+                LEGACY_RESISTANCE,
+                RenderRole.CONTROL,
+                true,
+                true,
+                new LegacyDimensions(3, 0, 0, 0, 0, 0),
+                0,
+                new TileEntityPlan(tileEntity, automatic ? TileEntityCreation.CORE_ONLY : TileEntityCreation.CORE_OR_PROXY,
+                        automatic ? ProxyPlan.none() : ProxyPlan.emptyProxy()),
+                InteractionContract.openGuiWhenNotSneaking(),
+                new IconContract(true, true, true, false, reasim, false),
+                List.of(moderated ? "moderated=true" : "moderated=false",
+                        automatic ? "auto control" : "manual control",
+                        reasim ? "bottom icon when no lid" : ""));
+    }
+
+    private static BlockContract miniPanel(String id, String tileEntity, RBMKPanelPlanner.PanelType panelType,
+            boolean screwdriverGui, boolean screwdriverRotates) {
+        return new BlockContract(
+                id,
+                LegacyBlockClass.MINI_PANEL,
+                "rbmk/rbmk_display",
+                CreativeTabRole.MACHINE,
+                LEGACY_HARDNESS,
+                LEGACY_RESISTANCE,
+                RenderRole.MINI_PANEL,
+                false,
+                false,
+                new LegacyDimensions(0, 0, 0, 0, 0, 0),
+                0,
+                new TileEntityPlan(tileEntity, "TileEntity:none".equals(tileEntity)
+                        ? TileEntityCreation.NONE : TileEntityCreation.ALWAYS, ProxyPlan.none()),
+                screwdriverRotates ? InteractionContract.screwdriverRotates()
+                        : screwdriverGui ? InteractionContract.screwdriverOpensGui()
+                        : InteractionContract.openGuiWhenNotSneaking(),
+                IconContract.simple(false, false),
+                List.of("panelType=" + panelType.name(), "uses RBMKMiniPanelBase side bounds and inventory slab render"));
+    }
+
+    private static BlockContract ioBlock(String id, String texture, String tileEntity) {
+        return new BlockContract(
+                id,
+                LegacyBlockClass.IO_PORT,
+                texture,
+                CreativeTabRole.MACHINE,
+                50.0F,
+                60.0F,
+                RenderRole.DEFAULT_MODEL,
+                true,
+                true,
+                new LegacyDimensions(0, 0, 0, 0, 0, 0),
+                0,
+                new TileEntityPlan(tileEntity, TileEntityCreation.ALWAYS, ProxyPlan.none()),
+                InteractionContract.tooltipOnly(),
+                IconContract.simple(false, false),
+                List.of("standard info tooltip"));
+    }
+
+    private static BlockContract debris(String id, String texture) {
+        return new BlockContract(
+                id,
+                LegacyBlockClass.DEBRIS,
+                texture,
+                CreativeTabRole.MACHINE,
+                50.0F,
+                600.0F,
+                RenderRole.DEBRIS,
+                false,
+                false,
+                new LegacyDimensions(0, 0, 0, 0, 0, 0),
+                0,
+                new TileEntityPlan("", TileEntityCreation.NONE, ProxyPlan.none()),
+                InteractionContract.none(),
+                IconContract.simple(false, false),
+                List.of());
+    }
+
+    private static BlockContract decoration(String id, String texture) {
+        return new BlockContract(
+                id,
+                LegacyBlockClass.DECORATION,
+                texture,
+                CreativeTabRole.BLOCK,
+                5.0F,
+                100.0F,
+                RenderRole.DEFAULT_MODEL,
+                true,
+                true,
+                new LegacyDimensions(0, 0, 0, 0, 0, 0),
+                0,
+                new TileEntityPlan("", TileEntityCreation.NONE, ProxyPlan.none()),
+                InteractionContract.none(),
+                IconContract.simple(false, false),
+                List.of());
+    }
+
     public enum MetadataKind {
         DUMMY,
         EXTRA_DUMMY,
@@ -191,7 +546,188 @@ public final class RBMKBlockPlanner {
         PIPE_SIDE
     }
 
+    public enum LegacyBlockClass {
+        UNKNOWN,
+        DECORATION,
+        RBMK_BASE,
+        ROD,
+        REASIM_ROD,
+        PIPED_BASE,
+        CONTROL_MANUAL,
+        CONTROL_AUTO,
+        CONSOLE,
+        CRANE_CONSOLE,
+        MINI_PANEL,
+        AUTOLOADER,
+        LOADER,
+        IO_PORT,
+        DEBRIS
+    }
+
+    public enum CreativeTabRole {
+        NONE,
+        BLOCK,
+        MACHINE
+    }
+
+    public enum RenderRole {
+        DEFAULT_MODEL,
+        NORMAL,
+        RODS,
+        PASSIVE,
+        CONTROL,
+        MINI_PANEL,
+        TESR_ONLY,
+        DEBRIS
+    }
+
+    public enum TileEntityCreation {
+        NONE,
+        ALWAYS,
+        CORE_ONLY,
+        CORE_OR_PROXY,
+        PROXY_ONLY
+    }
+
+    public enum ActivationMode {
+        NONE,
+        OPEN_GUI_WHEN_NOT_SNEAKING,
+        STANDARD_OPEN_BEHAVIOR,
+        SCREWDRIVER_OPENS_GUI,
+        SCREWDRIVER_ROTATES,
+        ROD_HAND_LOAD_OR_OPEN_GUI,
+        CONSOLE_GUIDE_OR_OPEN_GUI,
+        TOOLTIP_ONLY
+    }
+
     public record LegacyDimensions(int up, int down, int forward, int backward, int left, int right) {
+    }
+
+    public record BlockContract(
+            String legacyId,
+            LegacyBlockClass legacyClass,
+            String textureName,
+            CreativeTabRole creativeTab,
+            float hardness,
+            float resistance,
+            RenderRole renderRole,
+            boolean opaqueCube,
+            boolean renderAsNormalBlock,
+            LegacyDimensions dimensions,
+            int offset,
+            TileEntityPlan tileEntity,
+            InteractionContract interaction,
+            IconContract icon,
+            List<String> notes) {
+        public BlockContract {
+            legacyId = legacyId == null ? "" : legacyId;
+            textureName = textureName == null ? "" : textureName;
+            legacyClass = legacyClass == null ? LegacyBlockClass.UNKNOWN : legacyClass;
+            creativeTab = creativeTab == null ? CreativeTabRole.NONE : creativeTab;
+            renderRole = renderRole == null ? RenderRole.DEFAULT_MODEL : renderRole;
+            dimensions = dimensions == null ? new LegacyDimensions(0, 0, 0, 0, 0, 0) : dimensions;
+            tileEntity = tileEntity == null ? new TileEntityPlan("", TileEntityCreation.NONE, ProxyPlan.none()) : tileEntity;
+            interaction = interaction == null ? InteractionContract.none() : interaction;
+            icon = icon == null ? IconContract.simple(false, false) : icon;
+            notes = List.copyOf(notes == null ? List.of() : notes);
+        }
+    }
+
+    public record TileEntityPlan(String coreTileEntity, TileEntityCreation creation, ProxyPlan proxy) {
+        public TileEntityPlan {
+            coreTileEntity = coreTileEntity == null ? "" : coreTileEntity;
+            creation = creation == null ? TileEntityCreation.NONE : creation;
+            proxy = proxy == null ? ProxyPlan.none() : proxy;
+        }
+    }
+
+    public record ProxyPlan(boolean inventory, boolean power, boolean fluid, boolean emptyProxyCreated) {
+        public static ProxyPlan none() {
+            return new ProxyPlan(false, false, false, false);
+        }
+
+        public static ProxyPlan emptyProxy() {
+            return new ProxyPlan(false, false, false, true);
+        }
+
+        public static ProxyPlan inventoryProxy() {
+            return new ProxyPlan(true, false, false, true);
+        }
+
+        public static ProxyPlan fluidProxy() {
+            return new ProxyPlan(false, false, true, true);
+        }
+
+        public static ProxyPlan inventoryFluid() {
+            return new ProxyPlan(true, false, true, true);
+        }
+
+        public boolean hasAny() {
+            return inventory || power || fluid || emptyProxyCreated;
+        }
+    }
+
+    public record InteractionContract(
+            ActivationMode activation,
+            boolean bossFbiMark,
+            boolean acceptsLidUse,
+            boolean opensGuiClientSideOnly,
+            boolean opensGuiServerSideOnly,
+            boolean consumesHeldRod,
+            boolean standardInfoTooltip) {
+        public static InteractionContract none() {
+            return new InteractionContract(ActivationMode.NONE, false, false, false, false, false, false);
+        }
+
+        public static InteractionContract tooltipOnly() {
+            return new InteractionContract(ActivationMode.TOOLTIP_ONLY, false, false, false, false, false, true);
+        }
+
+        public static InteractionContract openGuiWhenNotSneaking() {
+            return new InteractionContract(ActivationMode.OPEN_GUI_WHEN_NOT_SNEAKING, false, true, false, true, false,
+                    false);
+        }
+
+        public static InteractionContract openStandardGui() {
+            return new InteractionContract(ActivationMode.STANDARD_OPEN_BEHAVIOR, false, false, false, true, false,
+                    false);
+        }
+
+        public static InteractionContract screwdriverOpensGui() {
+            return new InteractionContract(ActivationMode.SCREWDRIVER_OPENS_GUI, false, false, true, false, false,
+                    true);
+        }
+
+        public static InteractionContract screwdriverRotates() {
+            return new InteractionContract(ActivationMode.SCREWDRIVER_ROTATES, false, false, false, true, false,
+                    false);
+        }
+
+        public static InteractionContract rod() {
+            return new InteractionContract(ActivationMode.ROD_HAND_LOAD_OR_OPEN_GUI, true, true, false, true, true,
+                    false);
+        }
+
+        public static InteractionContract console() {
+            return new InteractionContract(ActivationMode.CONSOLE_GUIDE_OR_OPEN_GUI, true, false, true, false, false,
+                    false);
+        }
+    }
+
+    public record IconContract(
+            boolean rbmkBaseIcons,
+            boolean hasOwnLid,
+            boolean piped,
+            boolean rodInterior,
+            boolean reasimBottom,
+            boolean miniPanelBounds) {
+        public static IconContract simple(boolean miniPanelBounds, boolean reasimBottom) {
+            return new IconContract(false, false, false, false, reasimBottom, miniPanelBounds);
+        }
+
+        public static IconContract rbmkBase(boolean hasOwnLid) {
+            return new IconContract(true, hasOwnLid, false, false, false, false);
+        }
     }
 
     public record ColumnStructurePlan(

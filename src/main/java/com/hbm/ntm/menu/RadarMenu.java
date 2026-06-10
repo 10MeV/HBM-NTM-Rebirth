@@ -1,37 +1,26 @@
 package com.hbm.ntm.menu;
 
+import com.hbm.ntm.api.entity.RadarInventoryProfile;
+import com.hbm.ntm.api.entity.RadarMenuLayout;
+import com.hbm.ntm.api.entity.RadarMenuState;
+import com.hbm.ntm.api.entity.RadarRedstoneMode;
 import com.hbm.ntm.blockentity.RadarBlockEntity;
-import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmMenuDataSlots;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class RadarMenu extends AbstractContainerMenu {
-    private static final int MACHINE_SLOT_COUNT = RadarBlockEntity.SLOT_COUNT;
-    private static final int PLAYER_INVENTORY_START = MACHINE_SLOT_COUNT;
-    private static final int PLAYER_INVENTORY_END = PLAYER_INVENTORY_START + 27;
-    private static final int HOTBAR_END = PLAYER_INVENTORY_END + 9;
-
     private final RadarBlockEntity blockEntity;
-    private long power;
-    private long maxPower;
-    private int scanMissiles;
-    private int scanShells;
-    private int scanPlayers;
-    private int smartMode;
-    private int redMode;
-    private int showMap;
-    private int jammed;
-    private int redPower;
+    private RadarMenuState state = RadarMenuState.DEFAULT;
 
     public RadarMenu(int containerId, Inventory playerInventory, FriendlyByteBuf data) {
         this(containerId, playerInventory, getBlockEntity(playerInventory, data.readBlockPos()));
@@ -41,11 +30,9 @@ public class RadarMenu extends AbstractContainerMenu {
         super(ModMenuTypes.RADAR.get(), containerId);
         this.blockEntity = blockEntity;
 
-        for (int slot = 0; slot < 8; slot++) {
-            addSlot(new SlotItemHandler(blockEntity.getItems(), slot, 26 + slot * 18, 17));
+        for (RadarMenuLayout.MachineSlot slot : RadarMenuLayout.machineSlots()) {
+            addSlot(new SlotItemHandler(blockEntity.getItems(), slot.slot(), slot.x(), slot.y()));
         }
-        addSlot(new SlotItemHandler(blockEntity.getItems(), RadarBlockEntity.SLOT_LINKER, 26, 44));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), RadarBlockEntity.SLOT_BATTERY, 152, 44));
         addPlayerInventory(playerInventory);
         addRadarDataSlots();
     }
@@ -54,48 +41,60 @@ public class RadarMenu extends AbstractContainerMenu {
         return blockEntity;
     }
 
+    public RadarMenuState getState() {
+        return state;
+    }
+
     public long getPower() {
-        return power;
+        return state.power();
     }
 
     public long getMaxPower() {
-        return maxPower;
+        return state.maxPower();
     }
 
     public boolean scanMissiles() {
-        return scanMissiles != 0;
+        return state.scanSettings().scanMissiles();
     }
 
     public boolean scanShells() {
-        return scanShells != 0;
+        return state.scanSettings().scanShells();
     }
 
     public boolean scanPlayers() {
-        return scanPlayers != 0;
+        return state.scanSettings().scanPlayers();
     }
 
     public boolean smartMode() {
-        return smartMode != 0;
+        return state.scanSettings().smartMode();
     }
 
     public boolean redMode() {
-        return redMode != 0;
+        return state.redstoneProximityMode();
     }
 
     public boolean showMap() {
-        return showMap != 0;
+        return state.showMap();
     }
 
     public boolean jammed() {
-        return jammed != 0;
+        return state.jammed();
     }
 
     public int getRedPower() {
-        return redPower;
+        return state.redstonePower();
     }
 
     public int getPowerBarWidth(int maxWidth) {
-        return maxPower <= 0L ? 0 : (int) (power * maxWidth / maxPower);
+        return state.powerBarWidth(maxWidth);
+    }
+
+    public boolean hasPower() {
+        return state.hasPower();
+    }
+
+    public boolean hasOperatingPower(long consumption) {
+        return state.hasOperatingPower(consumption);
     }
 
     @Override
@@ -116,24 +115,8 @@ public class RadarMenu extends AbstractContainerMenu {
 
         ItemStack stack = slot.getItem();
         result = stack.copy();
-        if (index < MACHINE_SLOT_COUNT) {
-            if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (stack.is(ModItems.RADAR_LINKER.get())) {
-            if (!moveItemStackTo(stack, RadarBlockEntity.SLOT_LINKER, RadarBlockEntity.SLOT_LINKER + 1, false)
-                    && !moveItemStackTo(stack, 0, RadarBlockEntity.SLOT_LINKER, false)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (stack.is(ModItems.SAT_RELAY.get())) {
-            if (!moveItemStackTo(stack, 0, RadarBlockEntity.SLOT_LINKER, false)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (HbmInventoryMenuHelper.isBatteryLike(stack)) {
-            if (!moveItemStackTo(stack, RadarBlockEntity.SLOT_BATTERY, RadarBlockEntity.SLOT_BATTERY + 1, false)) {
-                return ItemStack.EMPTY;
-            }
-        } else {
+        RadarInventoryProfile.QuickMovePlan plan = RadarInventoryProfile.quickMovePlan(index, result);
+        if (!moveByPlan(stack, plan)) {
             return ItemStack.EMPTY;
         }
 
@@ -142,99 +125,43 @@ public class RadarMenu extends AbstractContainerMenu {
     }
 
     private void addPlayerInventory(Inventory inventory) {
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 9; column++) {
-                addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 103 + row * 18));
-            }
+        for (RadarMenuLayout.PlayerSlot slot : RadarMenuLayout.playerInventorySlots()) {
+            addSlot(new Slot(inventory, slot.slot(), slot.x(), slot.y()));
         }
+    }
 
-        for (int column = 0; column < 9; column++) {
-            addSlot(new Slot(inventory, column, 8 + column * 18, 161));
+    private boolean moveByPlan(ItemStack stack, RadarInventoryProfile.QuickMovePlan plan) {
+        if (plan == null || !plan.hasPrimary()) {
+            return false;
         }
+        if (moveItemStackTo(stack, plan.primaryStart(), plan.primaryEnd(), plan.reversePrimary())) {
+            return true;
+        }
+        return plan.hasFallback()
+                && moveItemStackTo(stack, plan.fallbackStart(), plan.fallbackEnd(), plan.reverseFallback());
     }
 
     private void addRadarDataSlots() {
-        addLongDataSlot(() -> blockEntity.getPower(), () -> power, value -> power = value);
-        addLongDataSlot(() -> blockEntity.getMaxPower(), () -> maxPower, value -> maxPower = value);
-        addBooleanDataSlot(() -> blockEntity.isScanMissiles(), value -> scanMissiles = value);
-        addBooleanDataSlot(() -> blockEntity.isScanShells(), value -> scanShells = value);
-        addBooleanDataSlot(() -> blockEntity.isScanPlayers(), value -> scanPlayers = value);
-        addBooleanDataSlot(() -> blockEntity.isSmartMode(), value -> smartMode = value);
-        addBooleanDataSlot(() -> blockEntity.isRedMode(), value -> redMode = value);
-        addBooleanDataSlot(() -> blockEntity.isShowMap(), value -> showMap = value);
-        addBooleanDataSlot(() -> blockEntity.isJammed(), value -> jammed = value);
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getLastRedPower();
-            }
-
-            @Override
-            public void set(int value) {
-                redPower = value;
-            }
-        });
-    }
-
-    private void addBooleanDataSlot(BooleanGetter serverGetter, IntSetter setter) {
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return serverGetter.get() ? 1 : 0;
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set(value);
-            }
-        });
-    }
-
-    private void addLongDataSlot(LongGetter serverGetter, LongGetter clientGetter, LongSetter setter) {
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) (serverGetter.get() & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~0xFFFFL) | (value & 0xFFFFL));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 16) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 16)) | ((long) (value & 0xFFFF) << 16));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 32) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 32)) | ((long) (value & 0xFFFF) << 32));
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return (int) ((serverGetter.get() >>> 48) & 0xFFFFL);
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set((clientGetter.get() & ~(0xFFFFL << 48)) | ((long) (value & 0xFFFF) << 48));
-            }
-        });
+        HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> state.power(),
+                value -> state = state.withPower(value));
+        HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getMaxPower, () -> state.maxPower(),
+                value -> state = state.withMaxPower(value));
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isScanMissiles,
+                value -> state = state.withScanMissiles(value));
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isScanShells,
+                value -> state = state.withScanShells(value));
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isScanPlayers,
+                value -> state = state.withScanPlayers(value));
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isSmartMode,
+                value -> state = state.withSmartMode(value));
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isRedMode,
+                value -> state = state.withRedstoneMode(RadarRedstoneMode.fromLegacyFlag(value)));
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isShowMap,
+                value -> state = state.withShowMap(value));
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isJammed,
+                value -> state = state.withJammed(value));
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getLastRedPower,
+                value -> state = state.withRedstonePower(value));
     }
 
     private static RadarBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
@@ -243,24 +170,5 @@ public class RadarMenu extends AbstractContainerMenu {
             return radar;
         }
         throw new IllegalStateException("Expected radar block entity at " + pos);
-    }
-
-    @FunctionalInterface
-    private interface BooleanGetter {
-        boolean get();
-    }
-
-    @FunctionalInterface
-    private interface IntSetter {
-        void set(int value);
-    }
-
-    @FunctionalInterface
-    private interface LongGetter {
-        long get();
-    }
-
-    private interface LongSetter {
-        void set(long value);
     }
 }

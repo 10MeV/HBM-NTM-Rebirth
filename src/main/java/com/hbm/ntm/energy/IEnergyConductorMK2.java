@@ -17,8 +17,9 @@ public interface IEnergyConductorMK2 extends IEnergyConnectorMK2 {
     }
 
     default HbmEnergyNode createNode(Level level, BlockPos pos) {
-        return new HbmEnergyNode(pos, level == null || pos == null
-                ? java.util.Set.of()
-                : HbmEnergyConnectionUtil.collectNodeConnections(level, pos, this));
+        if (pos == null) {
+            return new HbmEnergyNode(BlockPos.ZERO);
+        }
+        return HbmEnergyNode.withStandardLegacyConnections(pos);
     }
 }

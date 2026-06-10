@@ -1,5 +1,7 @@
 package com.hbm.ntm.energy;
 
+import com.hbm.ntm.api.tile.LoadedTile;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Iterator;
@@ -156,42 +158,28 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
 
     public long update() {
         if (providerEntries.isEmpty() || receiverEntries.isEmpty()) {
-            pruneStale(System.currentTimeMillis());
             return 0L;
         }
 
         long timestamp = System.currentTimeMillis();
         List<Entry<HbmEnergyProvider>> providers = collectProviders(timestamp);
-        if (providers.isEmpty()) {
-            return 0L;
-        }
-
         long powerAvailable = sumEntries(providers);
         ReceiverDemand receiverDemand = collectReceivers(timestamp);
-        if (receiverDemand.totalDemand <= 0L) {
-            return 0L;
-        }
 
         long energyUsed = distributeToReceivers(receiverDemand, Math.min(powerAvailable, receiverDemand.totalDemand), true);
-        if (energyUsed <= 0L) {
-            return 0L;
+        if (energyUsed > 0L) {
+            removeFromProviders(providers, powerAvailable, energyUsed);
         }
-
-        removeFromProviders(providers, powerAvailable, energyUsed);
         energyTracker += energyUsed;
         return energyUsed;
     }
 
     public long sendPowerDiode(long power) {
-        if (power <= 0L || receiverEntries.isEmpty()) {
-            return Math.max(0L, power);
-        }
-
-        ReceiverDemand receiverDemand = collectReceivers(System.currentTimeMillis());
-        if (receiverDemand.totalDemand <= 0L) {
+        if (receiverEntries.isEmpty()) {
             return power;
         }
 
+        ReceiverDemand receiverDemand = collectReceiversForDiode(System.currentTimeMillis());
         long energyUsed = distributeToReceivers(receiverDemand, Math.min(power, receiverDemand.totalDemand), false);
         energyTracker += energyUsed;
         return power - energyUsed;
@@ -235,6 +223,25 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
         return result;
     }
 
+    private ReceiverDemand collectReceiversForDiode(long timestamp) {
+        ReceiverDemand result = new ReceiverDemand();
+        Iterator<Map.Entry<HbmEnergyReceiver, Long>> iterator = receiverEntries.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<HbmEnergyReceiver, Long> entry = iterator.next();
+            if (isExpired(timestamp, entry.getValue())) {
+                iterator.remove();
+                continue;
+            }
+            HbmEnergyReceiver receiver = entry.getKey();
+            long demand = Math.min(receiver.getMaxPower() - receiver.getPower(), receiver.getReceiverSpeed());
+            HbmEnergyReceiver.ConnectionPriority priority = receiver.getPriority();
+            result.receivers.get(priority).add(new Entry<>(receiver, demand));
+            result.demand.put(priority, result.demand.get(priority) + demand);
+            result.totalDemand += demand;
+        }
+        return result;
+    }
+
     private long distributeToReceivers(ReceiverDemand receiverDemand, long toTransfer, boolean clampToReceiverDemand) {
         long energyUsed = 0L;
         HbmEnergyReceiver.ConnectionPriority[] priorities = HbmEnergyReceiver.ConnectionPriority.values();
@@ -242,7 +249,7 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
             HbmEnergyReceiver.ConnectionPriority priority = priorities[i];
             List<Entry<HbmEnergyReceiver>> receivers = receiverDemand.receivers.get(priority);
             long priorityDemand = receiverDemand.demand.get(priority);
-            if (receivers.isEmpty() || priorityDemand <= 0L || toTransfer <= 0L) {
+            if (receivers.isEmpty()) {
                 continue;
             }
 
@@ -299,10 +306,13 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
         if (subscriber == null) {
             return false;
         }
+        if (subscriber instanceof LoadedTile loadedTile && !loadedTile.isLoaded()) {
+            return false;
+        }
         if (subscriber instanceof HbmLoadedEnergy loadedEnergy && !loadedEnergy.isEnergyLoaded()) {
             return false;
         }
-        return !(subscriber instanceof BlockEntity blockEntity) || !blockEntity.isRemoved();
+        return !(subscriber instanceof BlockEntity blockEntity) || (!blockEntity.isRemoved() && blockEntity.getLevel() != null);
     }
 
     private static long sumEntries(List<Entry<HbmEnergyProvider>> entries) {

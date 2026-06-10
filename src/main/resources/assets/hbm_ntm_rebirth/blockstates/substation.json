@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "hbm_ntm_rebirth:block/substation" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/substation" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/substation" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/substation" }
+  }
+}

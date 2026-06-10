@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "minecraft:iron_ore",
-    "minecraft:deepslate_iron_ore"
+    "minecraft:deepslate_iron_ore",
+    "hbm_ntm_rebirth:ore_gneiss_iron"
   ]
 }

@@ -1,0 +1,45 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:bottle_nuka",
+          "weight": 10
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:bottle_cherry",
+          "weight": 5
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:bottle_quantum",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:can_bepis",
+          "weight": 10
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:can_luna",
+          "weight": 10
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:can_mug",
+          "weight": 10
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:can_breen",
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

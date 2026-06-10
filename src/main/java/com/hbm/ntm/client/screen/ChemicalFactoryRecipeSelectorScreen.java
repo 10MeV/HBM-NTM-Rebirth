@@ -242,8 +242,7 @@ public class ChemicalFactoryRecipeSelectorScreen extends Screen {
     }
 
     private boolean isInside(double mouseX, double mouseY, int x, int y, int width, int height) {
-        return mouseX >= leftPos + x && mouseX < leftPos + x + width
-                && mouseY >= topPos + y && mouseY < topPos + y + height;
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private GenericMachineRecipe selectedRecipe() {

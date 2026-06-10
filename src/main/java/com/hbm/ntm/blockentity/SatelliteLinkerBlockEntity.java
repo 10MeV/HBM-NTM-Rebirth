@@ -36,9 +36,11 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
     public static final int SLOT_COUNT = 3;
 
     private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_CUSTOM_NAME = "name";
     private static final int[] SLOTS_TOP = new int[] { SLOT_SOURCE };
     private static final int[] SLOTS_BOTTOM = new int[] { SLOT_TARGET };
     private static final int[] SLOTS_SIDE = new int[] { SLOT_RANDOMIZE };
+    private static final int[] SLOTS_ALL = new int[] { SLOT_SOURCE, SLOT_TARGET, SLOT_RANDOMIZE };
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -46,13 +48,15 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
             setChanged();
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> itemHandler =
+            LazyOptional.of(() -> new ExtractOnlySidedItemHandler(items, SLOTS_ALL));
     private final LazyOptional<IItemHandler> topItemHandler =
             LazyOptional.of(() -> new ExtractOnlySidedItemHandler(items, SLOTS_TOP));
     private final LazyOptional<IItemHandler> bottomItemHandler =
             LazyOptional.of(() -> new ExtractOnlySidedItemHandler(items, SLOTS_BOTTOM));
     private final LazyOptional<IItemHandler> sideItemHandler =
             LazyOptional.of(() -> new ExtractOnlySidedItemHandler(items, SLOTS_SIDE));
+    private String customName;
 
     public SatelliteLinkerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MACHINE_SATLINKER.get(), pos, state);
@@ -100,6 +104,9 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public Component getDisplayName() {
+        if (customName != null && !customName.isBlank()) {
+            return Component.literal(customName);
+        }
         return Component.translatable("container.hbm_ntm_rebirth.sat_linker");
     }
 
@@ -113,6 +120,9 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
     }
 
     @Override
@@ -125,6 +135,7 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
         } else {
             HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
         }
+        customName = tag.getString(TAG_CUSTOM_NAME);
     }
 
     @Override

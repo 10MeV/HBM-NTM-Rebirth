@@ -72,7 +72,7 @@ public class SatellitePanelScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
-        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current().orElse(null);
+        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current(currentFrequency()).orElse(null);
         if (snapshot == null) {
             drawNotConnected(graphics);
         } else if (snapshot.satellite().satelliteInterface() != Satellite.SatelliteInterface.SAT_PANEL) {
@@ -99,7 +99,7 @@ public class SatellitePanelScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current().orElse(null);
+        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current(currentFrequency()).orElse(null);
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && snapshot != null
                 && snapshot.satellite().interfaceActions().contains(Satellite.InterfaceAction.CAN_CLICK)
                 && isInsideMap((int) mouseX, (int) mouseY)) {

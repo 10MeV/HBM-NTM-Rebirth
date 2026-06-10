@@ -12,7 +12,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -105,50 +104,10 @@ public class GasFlareMenu extends AbstractContainerMenu {
     private void addDataSlots() {
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getMaxPower, () -> maxPower, value -> maxPower = value);
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.isOn() ? 1 : 0;
-            }
-
-            @Override
-            public void set(int value) {
-                on = value != 0;
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.doesBurn() ? 1 : 0;
-            }
-
-            @Override
-            public void set(int value) {
-                burn = value != 0;
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getFluidUsed();
-            }
-
-            @Override
-            public void set(int value) {
-                fluidUsed = value;
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getLastOutput();
-            }
-
-            @Override
-            public void set(int value) {
-                output = value;
-            }
-        });
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isOn, value -> on = value);
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::doesBurn, value -> burn = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getFluidUsed, value -> fluidUsed = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getLastOutput, value -> output = value);
         tank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getTank());
     }
 

@@ -4,12 +4,14 @@ import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
+import com.hbm.ntm.config.OilDrillConfig;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -138,7 +140,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     private OilDrillBlockEntity(BlockPos pos, BlockState state, Kind kind, HbmFluidTank oilTank,
             HbmFluidTank gasTank, @Nullable HbmFluidTank frackingTank) {
         super(ModBlockEntities.OIL_DRILL.get(), pos, state,
-                new HbmEnergyStorage(kind.maxPower, kind.maxPower, 0L),
+                new HbmEnergyStorage(kind.maxPower(), kind.maxPower(), 0L),
                 frackingTank == null ? List.of(oilTank, gasTank) : List.of(oilTank, gasTank, frackingTank));
         this.kind = kind;
         this.oilTank = oilTank;
@@ -151,6 +153,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
             return;
         }
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, drill);
+        drill.normalizeConfigState();
         boolean changed = drill.tickOilDrill(level, pos);
         if (changed) {
             drill.setChanged();
@@ -213,12 +216,12 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public int getPowerReqEff() {
-        int req = kind.consumption;
+        int req = kind.consumption();
         return Math.max(0, (req + (req / 4 * speedLevel) - (req / 4 * energyLevel)) * overLevel);
     }
 
     public int getDelayEff() {
-        int delay = kind.delay;
+        int delay = kind.delay();
         return Math.max((delay - (delay / 4 * speedLevel) + (delay / 10 * energyLevel)) / overLevel, 1);
     }
 
@@ -282,11 +285,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
                     new FluidPort(offset(rot, 4).offset(offset(dir.getOpposite(), 2)), dir),
                     new FluidPort(offset(rot, 4).offset(offset(dir, 2)), dir.getOpposite()));
         }
-        return List.of(
-                FluidPort.of(1, 0, 0, Direction.EAST),
-                FluidPort.of(-1, 0, 0, Direction.WEST),
-                FluidPort.of(0, 0, 1, Direction.SOUTH),
-                FluidPort.of(0, 0, -1, Direction.NORTH));
+        return HbmFluidPortLayouts.horizontalAdjacent();
     }
 
     @Override
@@ -359,6 +358,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        normalizeConfigState();
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         indicator = tag.getInt(TAG_INDICATOR);
         speedLevel = tag.getInt(TAG_SPEED_LEVEL);
@@ -412,6 +412,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void readPersistentState(CompoundTag persistent) {
+        normalizeConfigState();
         energy.setPower(persistent.getLong("power"));
         indicator = INDICATOR_OK;
         for (int i = 0; i < getAllTanks().size(); i++) {
@@ -654,7 +655,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (kind != Kind.FRACKING_TOWER || frackingTank == null) {
             return true;
         }
-        if (frackingTank.getFill() >= Kind.FRACKING_TOWER.solutionRequired) {
+        if (frackingTank.getFill() >= Kind.FRACKING_TOWER.solutionRequired()) {
             return true;
         }
         indicator = INDICATOR_NO_FRACKSOL;
@@ -665,10 +666,10 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (kind == Kind.FRACKING_TOWER) {
             frackingSuck(level, pos, state);
         } else if (isLegacyBlock(state, "ore_oil")) {
-            oilTank.setFill(Math.min(oilTank.getFill() + kind.oilPerDeposit, oilTank.getMaxFill()));
-            gasTank.setFill(Math.min(gasTank.getFill() + randomBetween(level, kind.gasMin, kind.gasMax),
+            oilTank.setFill(Math.min(oilTank.getFill() + kind.oilPerDeposit(), oilTank.getMaxFill()));
+            gasTank.setFill(Math.min(gasTank.getFill() + randomBetween(level, kind.gasMin(), kind.gasMax()),
                     gasTank.getMaxFill()));
-            if (level.random.nextDouble() < kind.drainChance) {
+            if (level.random.nextDouble() < kind.drainChance()) {
                 Block emptyOil = legacyBlock("ore_oil_empty");
                 if (emptyOil != Blocks.AIR) {
                     level.setBlock(pos, emptyOil.defaultBlockState(), Block.UPDATE_ALL);
@@ -683,24 +684,24 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oil = 0;
         int gas = 0;
         if (isLegacyBlock(state, "ore_oil")) {
-            oil = Kind.FRACKING_TOWER.oilPerDeposit;
-            gas = randomBetween(level, Kind.FRACKING_TOWER.gasMin, Kind.FRACKING_TOWER.gasMax);
-            if (level.random.nextDouble() < Kind.FRACKING_TOWER.drainChance) {
+            oil = Kind.FRACKING_TOWER.oilPerDeposit();
+            gas = randomBetween(level, Kind.FRACKING_TOWER.gasMin(), Kind.FRACKING_TOWER.gasMax());
+            if (level.random.nextDouble() < Kind.FRACKING_TOWER.drainChance()) {
                 Block emptyOil = legacyBlock("ore_oil_empty");
                 if (emptyOil != Blocks.AIR) {
                     level.setBlock(pos, emptyOil.defaultBlockState(), Block.UPDATE_ALL);
                 }
             }
         } else if (isLegacyBlock(state, "ore_bedrock_oil")) {
-            oil = Kind.FRACKING_TOWER.bedrockOilPerDeposit;
-            gas = randomBetween(level, Kind.FRACKING_TOWER.bedrockGasMin, Kind.FRACKING_TOWER.bedrockGasMax);
+            oil = Kind.FRACKING_TOWER.bedrockOilPerDeposit();
+            gas = randomBetween(level, Kind.FRACKING_TOWER.bedrockGasMin(), Kind.FRACKING_TOWER.bedrockGasMax());
         }
         oilTank.setFill(Math.min(oilTank.getFill() + oil, oilTank.getMaxFill()));
         gasTank.setFill(Math.min(gasTank.getFill() + gas, gasTank.getMaxFill()));
         if (frackingTank != null) {
-            frackingTank.setFill(Math.max(0, frackingTank.getFill() - Kind.FRACKING_TOWER.solutionRequired));
+            frackingTank.setFill(Math.max(0, frackingTank.getFill() - Kind.FRACKING_TOWER.solutionRequired()));
         }
-        OilSpot.generateOilSpot(level, worldPosition, Kind.FRACKING_TOWER.destructionRange, 10);
+        OilSpot.generateOilSpot(level, worldPosition, Kind.FRACKING_TOWER.destructionRange(), 10);
         playSuckEffects(level, pos);
     }
 
@@ -713,6 +714,12 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private static int randomBetween(Level level, int min, int max) {
         return min + level.random.nextInt(max - min + 1);
+    }
+
+    private void normalizeConfigState() {
+        long maxPower = kind.maxPower();
+        energy.setMaxPower(maxPower);
+        energy.setTransferRates(maxPower, 0L);
     }
 
     private static void shuffleDirections(List<Direction> directions, Level level) {
@@ -790,6 +797,82 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
             this.bedrockGasMin = bedrockGasMin;
             this.bedrockGasMax = bedrockGasMax;
             this.destructionRange = destructionRange;
+        }
+
+        private long maxPower() {
+            return switch (this) {
+                case WELL -> OilDrillConfig.derrickPowerCap();
+                case PUMPJACK -> OilDrillConfig.pumpjackPowerCap();
+                case FRACKING_TOWER -> OilDrillConfig.frackingPowerCap();
+            };
+        }
+
+        private int consumption() {
+            return switch (this) {
+                case WELL -> OilDrillConfig.derrickConsumption();
+                case PUMPJACK -> OilDrillConfig.pumpjackConsumption();
+                case FRACKING_TOWER -> OilDrillConfig.frackingConsumption();
+            };
+        }
+
+        private int delay() {
+            return switch (this) {
+                case WELL -> OilDrillConfig.derrickDelay();
+                case PUMPJACK -> OilDrillConfig.pumpjackDelay();
+                case FRACKING_TOWER -> OilDrillConfig.frackingDelay();
+            };
+        }
+
+        private int oilPerDeposit() {
+            return switch (this) {
+                case WELL -> OilDrillConfig.derrickOilPerDeposit();
+                case PUMPJACK -> OilDrillConfig.pumpjackOilPerDeposit();
+                case FRACKING_TOWER -> OilDrillConfig.frackingOilPerDeposit();
+            };
+        }
+
+        private int gasMin() {
+            return switch (this) {
+                case WELL -> OilDrillConfig.derrickGasPerDepositMin();
+                case PUMPJACK -> OilDrillConfig.pumpjackGasPerDepositMin();
+                case FRACKING_TOWER -> OilDrillConfig.frackingGasPerDepositMin();
+            };
+        }
+
+        private int gasMax() {
+            return switch (this) {
+                case WELL -> OilDrillConfig.derrickGasPerDepositMax();
+                case PUMPJACK -> OilDrillConfig.pumpjackGasPerDepositMax();
+                case FRACKING_TOWER -> OilDrillConfig.frackingGasPerDepositMax();
+            };
+        }
+
+        private double drainChance() {
+            return switch (this) {
+                case WELL -> OilDrillConfig.derrickDrainChance();
+                case PUMPJACK -> OilDrillConfig.pumpjackDrainChance();
+                case FRACKING_TOWER -> OilDrillConfig.frackingDrainChance();
+            };
+        }
+
+        private int solutionRequired() {
+            return this == FRACKING_TOWER ? OilDrillConfig.frackingSolutionRequired() : solutionRequired;
+        }
+
+        private int bedrockOilPerDeposit() {
+            return this == FRACKING_TOWER ? OilDrillConfig.frackingBedrockOilPerDeposit() : bedrockOilPerDeposit;
+        }
+
+        private int bedrockGasMin() {
+            return this == FRACKING_TOWER ? OilDrillConfig.frackingBedrockGasPerDepositMin() : bedrockGasMin;
+        }
+
+        private int bedrockGasMax() {
+            return this == FRACKING_TOWER ? OilDrillConfig.frackingBedrockGasPerDepositMax() : bedrockGasMax;
+        }
+
+        private int destructionRange() {
+            return this == FRACKING_TOWER ? OilDrillConfig.frackingDestructionRange() : destructionRange;
         }
 
         private static Kind fromState(BlockState state) {

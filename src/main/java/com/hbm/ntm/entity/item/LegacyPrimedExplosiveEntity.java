@@ -46,9 +46,15 @@ public class LegacyPrimedExplosiveEntity extends Entity {
 
     public static LegacyPrimedExplosiveEntity create(Level level, double x, double y, double z, Block bombBlock,
             int fuseWindow, boolean detonateOnCollision) {
+        int fuse = fuseWindow <= 0 ? 0 : level.random.nextInt(fuseWindow) + fuseWindow / 2;
+        return createFixedFuse(level, x, y, z, bombBlock, fuse, detonateOnCollision);
+    }
+
+    public static LegacyPrimedExplosiveEntity createFixedFuse(Level level, double x, double y, double z, Block bombBlock,
+            int fuse, boolean detonateOnCollision) {
         LegacyPrimedExplosiveEntity entity = new LegacyPrimedExplosiveEntity(level);
         entity.bombBlock = bombBlock;
-        entity.fuse = fuseWindow <= 0 ? 0 : level.random.nextInt(fuseWindow) + fuseWindow / 2;
+        entity.fuse = Math.max(0, fuse);
         entity.detonateOnCollision = detonateOnCollision;
         entity.entityData.set(BLOCK_STATE_ID, Block.getId(bombBlock.defaultBlockState()));
         entity.entityData.set(FUSE, entity.fuse);

@@ -1,5 +1,6 @@
 package com.hbm.ntm.uninos;
 
+import com.hbm.ntm.api.tile.LoadedTile;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.ArrayList;
@@ -107,7 +108,13 @@ public class HbmSubscribableNodeNet<R, P, L extends HbmNetworkNode> extends HbmN
     }
 
     protected boolean isValidSubscriber(Object subscriber) {
-        return subscriber != null && (!(subscriber instanceof BlockEntity blockEntity) || !blockEntity.isRemoved());
+        if (subscriber == null) {
+            return false;
+        }
+        if (subscriber instanceof LoadedTile loadedTile && !loadedTile.isLoaded()) {
+            return false;
+        }
+        return !(subscriber instanceof BlockEntity blockEntity) || (!blockEntity.isRemoved() && blockEntity.getLevel() != null);
     }
 
     private boolean isExpired(long timestamp, long lastSeen) {

@@ -64,7 +64,7 @@ public class SatelliteCoordScreen extends Screen {
         updateYFieldState();
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
         renderFocus(graphics);
-        ClientSatelliteData.current().ifPresent(snapshot -> {
+        ClientSatelliteData.current(currentFrequency()).ifPresent(snapshot -> {
             Satellite satellite = snapshot.satellite();
             if (!satellite.coordActions().contains(Satellite.CoordAction.HAS_Y)) {
                 graphics.blit(TEXTURE, leftPos + 61, topPos + 52, 0, 144, 54, 18);
@@ -121,7 +121,7 @@ public class SatelliteCoordScreen extends Screen {
     }
 
     private boolean sendCoordinateAction() {
-        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current().orElse(null);
+        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current(currentFrequency()).orElse(null);
         if (snapshot == null || snapshot.satellite().satelliteInterface() != Satellite.SatelliteInterface.SAT_COORD) {
             return false;
         }
@@ -157,7 +157,7 @@ public class SatelliteCoordScreen extends Screen {
     }
 
     private void updateYFieldState() {
-        boolean hasY = ClientSatelliteData.current()
+        boolean hasY = ClientSatelliteData.current(currentFrequency())
                 .map(snapshot -> snapshot.satellite().coordActions().contains(Satellite.CoordAction.HAS_Y))
                 .orElse(false);
         yField.visible = hasY;

@@ -9,6 +9,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmExtinguishType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidRepairMaterials;
 import com.hbm.ntm.fluid.HbmFluidRepairMaterials.HbmRepairMaterial;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -29,6 +30,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
+import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -53,7 +55,6 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -194,15 +195,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected Iterable<FluidPort> getFluidPorts() {
-        return List.of(
-                FluidPort.of(2, 0, 1, Direction.EAST),
-                FluidPort.of(2, 0, -1, Direction.EAST),
-                FluidPort.of(-2, 0, 1, Direction.WEST),
-                FluidPort.of(-2, 0, -1, Direction.WEST),
-                FluidPort.of(1, 0, 2, Direction.SOUTH),
-                FluidPort.of(-1, 0, 2, Direction.SOUTH),
-                FluidPort.of(1, 0, -2, Direction.NORTH),
-                FluidPort.of(-1, 0, -2, Direction.NORTH));
+        return HbmFluidPortLayouts.squareSidesWithoutCorners(2);
     }
 
     @Override
@@ -565,18 +558,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (stack.isEmpty()) {
             return;
         }
-        ItemStack existing = items.getStackInSlot(SLOT_SOLID_OUTPUT);
-        if (existing.isEmpty()) {
-            items.setStackInSlot(SLOT_SOLID_OUTPUT, stack.copy());
-            return;
-        }
-        if (!ItemHandlerHelper.canItemStacksStack(existing, stack)
-                || existing.getCount() + stack.getCount() > Math.min(existing.getMaxStackSize(), items.getSlotLimit(SLOT_SOLID_OUTPUT))) {
-            return;
-        }
-        ItemStack merged = existing.copy();
-        merged.grow(stack.getCount());
-        items.setStackInSlot(SLOT_SOLID_OUTPUT, merged);
+        HbmInventoryUtil.tryAddItemToHandlerUnchecked(items, SLOT_SOLID_OUTPUT, SLOT_SOLID_OUTPUT, stack);
     }
 
     private HbmFluidTank inputTank() {

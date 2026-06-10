@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": { "model": "hbm_ntm_rebirth:block/charge_semtex" },
+    "facing=up": { "model": "hbm_ntm_rebirth:block/charge_semtex" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/charge_semtex" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/charge_semtex" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/charge_semtex" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/charge_semtex" }
+  }
+}

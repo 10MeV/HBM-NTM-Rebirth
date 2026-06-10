@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.block.FluidBarrelBlock;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -21,13 +22,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.items.IItemHandler;
 
 public class FluidBarrelBlockEntity extends FluidTankBlockEntity {
-    private static final List<FluidPort> ADJACENT_PORTS = List.of(
-            FluidPort.of(1, 0, 0, Direction.EAST),
-            FluidPort.of(-1, 0, 0, Direction.WEST),
-            FluidPort.of(0, 1, 0, Direction.UP),
-            FluidPort.of(0, -1, 0, Direction.DOWN),
-            FluidPort.of(0, 0, 1, Direction.SOUTH),
-            FluidPort.of(0, 0, -1, Direction.NORTH));
+    private static final List<FluidPort> ADJACENT_PORTS = HbmFluidPortLayouts.allAdjacent();
 
     public FluidBarrelBlockEntity(BlockPos pos, BlockState state) {
         super(pos, state, ModBlockEntities.FLUID_BARREL.get(),

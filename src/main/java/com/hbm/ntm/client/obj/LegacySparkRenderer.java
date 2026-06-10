@@ -22,13 +22,6 @@ public final class LegacySparkRenderer {
 
     public static SparkRenderPlan sparkPlan(int seed, double x, double y, double z,
             float length, int min, int max, int colorOuter, int colorInner) {
-        return new SparkRenderPlan(sparkSegments(seed, x, y, z, length, min, max),
-                SETUP_LINE_WIDTH, OUTER_LINE_WIDTH, INNER_LINE_WIDTH, colorOuter, colorInner,
-                new SparkStatePlan(false, false));
-    }
-
-    public static List<SparkSegment> sparkSegments(int seed, double x, double y, double z,
-            float length, int min, int max) {
         Random random = new Random(seed);
         double dirX = random.nextDouble() - 0.5D;
         double dirY = random.nextDouble() - 0.5D;
@@ -38,24 +31,45 @@ public final class LegacySparkRenderer {
             dirY = 1.0D;
             dirLength = 1.0D;
         }
+        SparkVector rawDirection = new SparkVector(dirX, dirY, dirZ);
         dirX /= dirLength;
         dirY /= dirLength;
         dirZ /= dirLength;
+        SparkVector direction = new SparkVector(dirX, dirY, dirZ);
 
         int segments = min + (max > 0 ? random.nextInt(max) : 0);
+        List<SparkStepPlan> steps = new ArrayList<>(Math.max(0, segments));
         List<SparkSegment> result = new ArrayList<>(Math.max(0, segments));
+        double currentX = x;
+        double currentY = y;
+        double currentZ = z;
         for (int i = 0; i < segments; i++) {
-            double prevX = x;
-            double prevY = y;
-            double prevZ = z;
+            double prevX = currentX;
+            double prevY = currentY;
+            double prevZ = currentZ;
+            float scaleX = random.nextFloat();
+            float scaleY = random.nextFloat();
+            float scaleZ = random.nextFloat();
+            double deltaX = dirX * length * scaleX;
+            double deltaY = dirY * length * scaleY;
+            double deltaZ = dirZ * length * scaleZ;
+            currentX += deltaX;
+            currentY += deltaY;
+            currentZ += deltaZ;
 
-            x += dirX * length * random.nextFloat();
-            y += dirY * length * random.nextFloat();
-            z += dirZ * length * random.nextFloat();
-
-            result.add(new SparkSegment(prevX, prevY, prevZ, x, y, z));
+            SparkSegment segment = new SparkSegment(prevX, prevY, prevZ, currentX, currentY, currentZ);
+            steps.add(new SparkStepPlan(i, scaleX, scaleY, scaleZ, new SparkVector(deltaX, deltaY, deltaZ), segment));
+            result.add(segment);
         }
-        return result;
+
+        return new SparkRenderPlan(seed, new SparkVector(x, y, z), length, min, max, segments,
+                rawDirection, direction, steps, result, SETUP_LINE_WIDTH, OUTER_LINE_WIDTH, INNER_LINE_WIDTH,
+                colorOuter, colorInner, new SparkStatePlan(false, false, true, true, true, 3));
+    }
+
+    public static List<SparkSegment> sparkSegments(int seed, double x, double y, double z,
+            float length, int min, int max) {
+        return sparkPlan(seed, x, y, z, length, min, max, 0xFFFFFF, 0xFFFFFF).segments();
     }
 
     private static double length(double x, double y, double z) {
@@ -65,7 +79,23 @@ public final class LegacySparkRenderer {
     public record SparkSegment(double x0, double y0, double z0, double x1, double y1, double z1) {
     }
 
+    public record SparkVector(double x, double y, double z) {
+    }
+
+    public record SparkStepPlan(int index, float scaleX, float scaleY, float scaleZ,
+                                SparkVector delta, SparkSegment segment) {
+    }
+
     public record SparkRenderPlan(
+            int seed,
+            SparkVector origin,
+            float length,
+            int minSegments,
+            int maxRandomSegments,
+            int segmentCount,
+            SparkVector rawDirection,
+            SparkVector initialDirection,
+            List<SparkStepPlan> steps,
             List<SparkSegment> segments,
             float setupLineWidth,
             float outerLineWidth,
@@ -75,7 +105,9 @@ public final class LegacySparkRenderer {
             SparkStatePlan state) {
     }
 
-    public record SparkStatePlan(boolean textureEnabled, boolean lightingEnabled) {
+    public record SparkStatePlan(boolean textureEnabled, boolean lightingEnabled,
+                                 boolean restoresTexture, boolean restoresLighting, boolean pushedMatrix,
+                                 int tessellatorDrawMode) {
     }
 
     private LegacySparkRenderer() {

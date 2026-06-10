@@ -1,9 +1,12 @@
 package com.hbm.ntm.armor;
 
 import com.google.common.collect.Multimap;
+import com.hbm.ntm.api.fluid.IFillableItem;
 import com.hbm.ntm.api.item.ArmorDashProvider;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFillableItemCapabilityProvider;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.player.HbmLivingProperties;
@@ -15,6 +18,9 @@ import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.satellite.ISatelliteChip;
+import com.hbm.ntm.satellite.LegacySatelliteType;
+import com.hbm.ntm.satellite.Satellite;
+import com.hbm.ntm.satellite.SatelliteSavedData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -52,14 +58,17 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.registries.RegistryObject;
 
 import javax.annotation.Nullable;
@@ -285,7 +294,7 @@ public final class ArmorModItems {
         }
     }
 
-    public static class Jetpack extends ArmorModItem {
+    public static class Jetpack extends ArmorModItem implements IFillableItem {
         private static final String FUEL_TAG = "fuel";
 
         private final Type type;
@@ -308,9 +317,13 @@ public final class ArmorModItems {
                     .append(": " + getFuel(stack) + "mB / " + maxFuel + "mB")
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
             tooltip.add(Component.literal("Can be worn on its own hook pending").withStyle(ChatFormatting.DARK_GRAY));
-            tooltip.add(Component.literal("Fluid filling hook pending").withStyle(ChatFormatting.DARK_GRAY));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public @Nullable ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
+            return new HbmFillableItemCapabilityProvider(stack, this, maxFuel);
         }
 
         @Override
@@ -340,6 +353,41 @@ public final class ArmorModItems {
 
         public void setFuel(ItemStack stack, int fuel) {
             stack.getOrCreateTag().putInt(FUEL_TAG, Math.max(0, Math.min(maxFuel, fuel)));
+        }
+
+        @Override
+        public boolean acceptsFluid(FluidType type, ItemStack stack) {
+            return type == fuelType && getFuel(stack) < maxFuel;
+        }
+
+        @Override
+        public int tryFill(FluidType type, int amount, ItemStack stack) {
+            if (amount <= 0 || !acceptsFluid(type, stack)) {
+                return Math.max(0, amount);
+            }
+            int moved = Math.min(amount, maxFuel - getFuel(stack));
+            setFuel(stack, getFuel(stack) + moved);
+            return amount - moved;
+        }
+
+        @Override
+        public boolean providesFluid(FluidType type, ItemStack stack) {
+            return false;
+        }
+
+        @Override
+        public int tryEmpty(FluidType type, int amount, ItemStack stack) {
+            return 0;
+        }
+
+        @Override
+        public FluidType getFirstFluidType(ItemStack stack) {
+            return HbmFluids.NONE;
+        }
+
+        @Override
+        public int getFill(ItemStack stack) {
+            return getFuel(stack);
         }
 
         private boolean regular(Player player, ItemStack stack) {
@@ -939,6 +987,19 @@ public final class ArmorModItems {
     }
 
     public static class NeutrinoLens extends ArmorModItem implements ISatelliteChip {
+        private static final int SCANNER_RANGE_CHUNKS = 3;
+        private static final int SCANNER_MAX_HITS = 100;
+        private static final List<ScannerTarget> SCANNER_TARGETS = List.of(
+                ScannerTarget.legacy("ore_alexandrite", 1, "Alexandrite", 0x00ffff),
+                ScannerTarget.legacy("ore_oil", 300, "Oil", 0xa0a0a0),
+                ScannerTarget.legacy("ore_bedrock_oil", 300, "Bedrock Oil", 0xa0a0a0),
+                ScannerTarget.legacy("ore_coltan", 5, "Coltan", 0xa0a000),
+                ScannerTarget.legacy("stone_gneiss", 5000, "Schist", 0x8080ff),
+                ScannerTarget.legacy("ore_australium", 1000, "Australium", 0xffff00),
+                ScannerTarget.vanilla(Blocks.END_PORTAL_FRAME, 1, "End Portal", 0x40b080),
+                ScannerTarget.legacy("bobblehead", 1, "A Treasure!", 0xff0000)
+        );
+
         public NeutrinoLens(Item.Properties properties) {
             super(properties, ArmorModHandler.ArmorModSlot.EXTRA, true, false, false, false);
         }
@@ -948,9 +1009,91 @@ public final class ArmorModItems {
             tooltip.add(Component.translatable("satchip.frequency")
                     .append(": " + getFrequency(stack))
                     .withStyle(ChatFormatting.AQUA));
-            tooltip.add(Component.literal("Scanner satellite marker hook pending").withStyle(ChatFormatting.DARK_GRAY));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
+            if (!(entity instanceof ServerPlayer player) || !(entity.level() instanceof ServerLevel level)) {
+                return;
+            }
+
+            Satellite satellite = SatelliteSavedData.get(level).getSatellite(getFrequency(mod));
+            if (satellite == null || satellite.type() != LegacySatelliteType.SCANNER) {
+                return;
+            }
+
+            scanAndMark(level, player);
+        }
+
+        private void scanAndMark(ServerLevel level, ServerPlayer player) {
+            BlockPos playerPos = player.blockPosition();
+            int minY = level.getMinBuildHeight();
+            int maxSpan = Math.max(1, level.getMaxBuildHeight() - minY);
+            int heightSpan = Mth.clamp(playerPos.getY() - minY + 10, 64, maxSpan);
+            int segY = minY + (int) (level.getGameTime() % heightSpan);
+            int centerChunkX = playerPos.getX() >> 4;
+            int centerChunkZ = playerPos.getZ() >> 4;
+            int hits = 0;
+            BlockPos.MutableBlockPos scanPos = new BlockPos.MutableBlockPos();
+
+            for (int chunkX = centerChunkX - SCANNER_RANGE_CHUNKS; chunkX <= centerChunkX + SCANNER_RANGE_CHUNKS; chunkX++) {
+                for (int chunkZ = centerChunkZ - SCANNER_RANGE_CHUNKS; chunkZ <= centerChunkZ + SCANNER_RANGE_CHUNKS; chunkZ++) {
+                    LevelChunk chunk = level.getChunk(chunkX, chunkZ);
+                    for (int ix = 0; ix < 16; ix++) {
+                        for (int iz = 0; iz < 16; iz++) {
+                            scanPos.set((chunkX << 4) + ix, segY, (chunkZ << 4) + iz);
+                            Block block = chunk.getBlockState(scanPos).getBlock();
+                            for (ScannerTarget target : SCANNER_TARGETS) {
+                                if (target.tryMark(block, scanPos, player)) {
+                                    hits++;
+                                    if (hits > SCANNER_MAX_HITS) {
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private record ScannerTarget(@Nullable String legacyName, @Nullable Block vanillaBlock, int chance,
+                                     @Nullable String label, int color) {
+            private static ScannerTarget legacy(String legacyName, int chance, @Nullable String label, int color) {
+                return new ScannerTarget(legacyName, null, chance, label, color);
+            }
+
+            private static ScannerTarget vanilla(Block block, int chance, @Nullable String label, int color) {
+                return new ScannerTarget(null, block, chance, label, color);
+            }
+
+            private boolean tryMark(Block block, BlockPos pos, ServerPlayer player) {
+                Block target = targetBlock();
+                if (target != block || player.getRandom().nextInt(chance) != 0) {
+                    return false;
+                }
+                CompoundTag data = new CompoundTag();
+                data.putString("type", ParticleUtil.TYPE_MARKER);
+                data.putInt("color", color);
+                data.putInt("expires", 15_000);
+                data.putDouble("dist", 300.0D);
+                if (label != null) {
+                    data.putString("label", label);
+                }
+                ModMessages.sendAuxParticle(player, pos.getX(), pos.getY(), pos.getZ(), data);
+                return true;
+            }
+
+            @Nullable
+            private Block targetBlock() {
+                if (vanillaBlock != null) {
+                    return vanillaBlock;
+                }
+                RegistryObject<? extends Block> object = ModBlocks.legacyBlock(legacyName);
+                return object == null ? null : object.get();
+            }
         }
     }
 
@@ -999,7 +1142,6 @@ public final class ArmorModItems {
         public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.literal("Zaps nearby entities (requires full electric set)")
                     .withStyle(ChatFormatting.YELLOW));
-            tooltip.add(Component.literal("Back model render hook pending").withStyle(ChatFormatting.DARK_GRAY));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
         }
@@ -1078,7 +1220,6 @@ public final class ArmorModItems {
         public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.literal("\"I've had worse\"").withStyle(ChatFormatting.ITALIC));
             tooltip.add(Component.literal("Punches fire 12 gauge shells").withStyle(ChatFormatting.YELLOW));
-            tooltip.add(Component.literal("Attack hook pending").withStyle(ChatFormatting.DARK_GRAY));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
         }

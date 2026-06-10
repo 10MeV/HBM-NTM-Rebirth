@@ -29,6 +29,8 @@ public final class ModRecipes {
             register("purex", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.PUREX));
     public static final RecipeHolder<GenericMachineRecipe> PRECASS =
             register("precass", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.PRECASS));
+    public static final RecipeHolder<GenericMachineRecipe> ARC_WELDER =
+            register("arc_welder", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.ARC_WELDER));
     public static final RecipeHolder<LiquefactionRecipe> LIQUEFACTION = register("liquefaction", LiquefactionRecipe.Serializer::new);
     public static final RecipeHolder<PyroOvenRecipe> PYRO_OVEN = register("pyro_oven", PyroOvenRecipe.Serializer::new);
     public static final RecipeHolder<ItemProcessingRecipe> SHREDDER =

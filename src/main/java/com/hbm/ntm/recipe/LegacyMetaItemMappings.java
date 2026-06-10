@@ -42,6 +42,17 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation ARC_ELECTRODE = hbm("arc_electrode");
     public static final ResourceLocation ARC_ELECTRODE_BURNT = hbm("arc_electrode_burnt");
     public static final ResourceLocation PA_COIL = hbm("pa_coil");
+    public static final ResourceLocation PELLET_RTG_DEPLETED = hbm("pellet_rtg_depleted");
+    public static final ResourceLocation HOLOTAPE_IMAGE = hbm("holotape_image");
+    public static final ResourceLocation ROD = hbm("rod");
+    public static final ResourceLocation ROD_DUAL = hbm("rod_dual");
+    public static final ResourceLocation ROD_QUAD = hbm("rod_quad");
+    public static final ResourceLocation ROD_ZIRNOX = hbm("rod_zirnox");
+    public static final ResourceLocation PWR_FUEL = hbm("pwr_fuel");
+    public static final ResourceLocation PWR_FUEL_HOT = hbm("pwr_fuel_hot");
+    public static final ResourceLocation PWR_FUEL_DEPLETED = hbm("pwr_fuel_depleted");
+    public static final ResourceLocation WATZ_PELLET = hbm("watz_pellet");
+    public static final ResourceLocation AMMO_STANDARD = hbm("ammo_standard");
 
     private static final Map<ResourceLocation, LinkedHashMap<Integer, RegistryObject<Item>>> ITEM_VARIANTS = new LinkedHashMap<>();
 
@@ -88,6 +99,7 @@ public final class LegacyMetaItemMappings {
                 2_900, requireLegacyItem("wire_dense_copper"),
                 4_100, requireLegacyItem("wire_dense_niobium"),
                 7_900, requireLegacyItem("wire_dense_gold"),
+                31, requireLegacyItem("wire_dense_mingrade"),
                 48, requireLegacyItem("wire_dense_bscco"),
                 6_000, requireLegacyItem("wire_dense_neodymium")));
         registerSparse(PIPE, Map.of(
@@ -146,6 +158,16 @@ public final class LegacyMetaItemMappings {
                 4, requireLegacyItem("casing_shotshell"),
                 5, requireLegacyItem("casing_buckshot"),
                 6, requireLegacyItem("casing_buckshot_advanced")));
+        registerSparse(AMMO_STANDARD, Map.of(
+                41, requireLegacyItem("ammo_standard_g12_bp"),
+                42, requireLegacyItem("ammo_standard_g12_bp_magnum"),
+                43, requireLegacyItem("ammo_standard_g12_bp_slug"),
+                44, requireLegacyItem("ammo_standard_g12"),
+                45, requireLegacyItem("ammo_standard_g12_slug"),
+                46, requireLegacyItem("ammo_standard_g12_flechette"),
+                47, requireLegacyItem("ammo_standard_g12_magnum"),
+                48, requireLegacyItem("ammo_standard_g12_explosive"),
+                49, requireLegacyItem("ammo_standard_g12_phosphorus")));
         registerSparse(FUEL_ADDITIVE, Map.of(
                 0, requireLegacyItem("fuel_additive_antiknock"),
                 1, requireLegacyItem("fuel_additive_deicer")));
@@ -154,6 +176,85 @@ public final class LegacyMetaItemMappings {
         registerList(ARC_ELECTRODE, ModItems.ARC_ELECTRODE_ITEMS.subList(0, 4));
         registerList(ARC_ELECTRODE_BURNT, ModItems.ARC_ELECTRODE_ITEMS.subList(4, 8));
         registerList(PA_COIL, ModItems.PA_COIL_ITEMS);
+        register(PELLET_RTG_DEPLETED,
+                requireLegacyItem("pellet_rtg_depleted_bismuth"),
+                requireLegacyItem("pellet_rtg_depleted_mercury"),
+                requireLegacyItem("pellet_rtg_depleted_neptunium"),
+                requireLegacyItem("pellet_rtg_depleted_lead"),
+                requireLegacyItem("pellet_rtg_depleted_zirconium"),
+                requireLegacyItem("pellet_rtg_depleted_nickel"));
+        registerSparse(HOLOTAPE_IMAGE, Map.of(
+                1, requireLegacyItem("holotape_image_restored")));
+        register(ROD,
+                requireLegacyItem("rod_lithium"),
+                requireLegacyItem("rod_tritium"),
+                requireLegacyItem("rod_co"),
+                requireLegacyItem("rod_co60"),
+                requireLegacyItem("rod_th232"),
+                requireLegacyItem("rod_thf"),
+                requireLegacyItem("rod_u235"),
+                requireLegacyItem("rod_np237"),
+                requireLegacyItem("rod_u238"),
+                requireLegacyItem("rod_pu238"),
+                requireLegacyItem("rod_pu239"),
+                requireLegacyItem("rod_rgp"),
+                requireLegacyItem("rod_waste"),
+                requireLegacyItem("rod_lead"),
+                requireLegacyItem("rod_uranium"),
+                requireLegacyItem("rod_ra226"),
+                requireLegacyItem("rod_ac227"));
+        register(ROD_DUAL,
+                requireLegacyItem("rod_dual_lithium"),
+                requireLegacyItem("rod_dual_tritium"),
+                requireLegacyItem("rod_dual_co"),
+                requireLegacyItem("rod_dual_co60"),
+                requireLegacyItem("rod_dual_th232"),
+                requireLegacyItem("rod_dual_thf"),
+                requireLegacyItem("rod_dual_u235"),
+                requireLegacyItem("rod_dual_np237"),
+                requireLegacyItem("rod_dual_u238"),
+                requireLegacyItem("rod_dual_pu238"),
+                requireLegacyItem("rod_dual_pu239"),
+                requireLegacyItem("rod_dual_rgp"),
+                requireLegacyItem("rod_dual_waste"),
+                requireLegacyItem("rod_dual_lead"),
+                requireLegacyItem("rod_dual_uranium"),
+                requireLegacyItem("rod_dual_ra226"),
+                requireLegacyItem("rod_dual_ac227"));
+        register(ROD_QUAD,
+                requireLegacyItem("rod_quad_lithium"),
+                requireLegacyItem("rod_quad_tritium"),
+                requireLegacyItem("rod_quad_co"),
+                requireLegacyItem("rod_quad_co60"),
+                requireLegacyItem("rod_quad_th232"),
+                requireLegacyItem("rod_quad_thf"),
+                requireLegacyItem("rod_quad_u235"),
+                requireLegacyItem("rod_quad_np237"),
+                requireLegacyItem("rod_quad_u238"),
+                requireLegacyItem("rod_quad_pu238"),
+                requireLegacyItem("rod_quad_pu239"),
+                requireLegacyItem("rod_quad_rgp"),
+                requireLegacyItem("rod_quad_waste"),
+                requireLegacyItem("rod_quad_lead"),
+                requireLegacyItem("rod_quad_uranium"),
+                requireLegacyItem("rod_quad_ra226"),
+                requireLegacyItem("rod_quad_ac227"));
+        register(ROD_ZIRNOX,
+                requireLegacyItem("rod_zirnox_natural_uranium_fuel"),
+                requireLegacyItem("rod_zirnox_uranium_fuel"),
+                requireLegacyItem("rod_zirnox_th232"),
+                requireLegacyItem("rod_zirnox_thorium_fuel"),
+                requireLegacyItem("rod_zirnox_mox_fuel"),
+                requireLegacyItem("rod_zirnox_plutonium_fuel"),
+                requireLegacyItem("rod_zirnox_u233_fuel"),
+                requireLegacyItem("rod_zirnox_u235_fuel"),
+                requireLegacyItem("rod_zirnox_les_fuel"),
+                requireLegacyItem("rod_zirnox_lithium"),
+                requireLegacyItem("rod_zirnox_zfb_mox"));
+        registerList(PWR_FUEL, ModItems.PWR_FUEL_ITEMS);
+        registerList(PWR_FUEL_HOT, ModItems.PWR_FUEL_HOT_ITEMS);
+        registerList(PWR_FUEL_DEPLETED, ModItems.PWR_FUEL_DEPLETED_ITEMS);
+        registerList(WATZ_PELLET, ModItems.WATZ_PELLET_ITEMS);
     }
 
     @SafeVarargs

@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "minecraft:emerald_ore",
-    "minecraft:deepslate_emerald_ore"
+    "minecraft:deepslate_emerald_ore",
+    "hbm_ntm_rebirth:ore_sellafield_emerald"
   ]
 }

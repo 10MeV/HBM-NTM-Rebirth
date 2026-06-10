@@ -31,6 +31,7 @@ public class MinerRocketEntity extends Entity {
     public MinerRocketEntity(EntityType<? extends MinerRocketEntity> type, Level level) {
         super(type, level);
         setNoGravity(true);
+        noCulling = true;
         noPhysics = true;
     }
 

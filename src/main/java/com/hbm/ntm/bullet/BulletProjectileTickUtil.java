@@ -15,14 +15,22 @@ import java.util.List;
 public final class BulletProjectileTickUtil {
     public static TickResult applyEntityTick(BulletConfig config, Entity projectile, @Nullable Entity shooter,
             @Nullable LivingEntity currentHomingTarget, int ticksExisted, int ticksInAir, boolean hasTauTrailNodes,
-            @Nullable Vec3 previousPosition, @Nullable RandomSource random, float overrideDamage, boolean inGround) {
+            @Nullable Vec3 previousPosition, @Nullable RandomSource random, float overrideDamage, boolean inGround,
+            float acceleration) {
         if (projectile == null) {
             return TickResult.NONE;
         }
         return applyTick(config, projectile.level(), projectile, shooter, currentHomingTarget,
                 projectile.getBoundingBox(), projectile.position(), projectile.getDeltaMovement(), ticksExisted,
                 ticksInAir, hasTauTrailNodes, previousPosition, projectile.isInWater(), random, overrideDamage,
-                inGround);
+                inGround, acceleration);
+    }
+
+    public static TickResult applyEntityTick(BulletConfig config, Entity projectile, @Nullable Entity shooter,
+            @Nullable LivingEntity currentHomingTarget, int ticksExisted, int ticksInAir, boolean hasTauTrailNodes,
+            @Nullable Vec3 previousPosition, @Nullable RandomSource random, float overrideDamage, boolean inGround) {
+        return applyEntityTick(config, projectile, shooter, currentHomingTarget, ticksExisted, ticksInAir,
+                hasTauTrailNodes, previousPosition, random, overrideDamage, inGround, 0.0F);
     }
 
     public static TickResult applyTick(BulletConfig config, Level level, @Nullable Entity projectile,
@@ -30,6 +38,16 @@ public final class BulletProjectileTickUtil {
             Vec3 position, Vec3 motion, int ticksExisted, int ticksInAir, boolean hasTauTrailNodes,
             @Nullable Vec3 previousPosition, boolean inWater, @Nullable RandomSource random, float overrideDamage,
             boolean inGround) {
+        return applyTick(config, level, projectile, shooter, currentHomingTarget, projectileBounds, position, motion,
+                ticksExisted, ticksInAir, hasTauTrailNodes, previousPosition, inWater, random, overrideDamage,
+                inGround, 0.0F);
+    }
+
+    public static TickResult applyTick(BulletConfig config, Level level, @Nullable Entity projectile,
+            @Nullable Entity shooter, @Nullable LivingEntity currentHomingTarget, AABB projectileBounds,
+            Vec3 position, Vec3 motion, int ticksExisted, int ticksInAir, boolean hasTauTrailNodes,
+            @Nullable Vec3 previousPosition, boolean inWater, @Nullable RandomSource random, float overrideDamage,
+            boolean inGround, float acceleration) {
         if (config == null || level == null || position == null || motion == null) {
             return TickResult.NONE;
         }
@@ -45,31 +63,34 @@ public final class BulletProjectileTickUtil {
 
         BulletUpdateBehaviorUtil.KnownUpdateResult update =
                 BulletUpdateBehaviorUtil.applyKnownPreMoveUpdate(config, projectile, shooter, motion,
-                        currentHomingTarget);
+                        currentHomingTarget, previousPosition, acceleration);
         Vec3 updatedMotion = update.motion();
+        float updatedAcceleration = update.acceleration();
         BulletKinematicsUtil.LifetimeCheck lifetime = BulletKinematicsUtil.checkLifetime(config, ticksExisted);
         boolean discardProjectile = lifetime.shouldDiscard() || update.discardProjectile();
         if (lifetime.zeroMaxAge() || update.discardProjectile()) {
             return new TickResult(position, updatedMotion, update.homingTarget(),
                     BulletProjectileHitUtil.HitApplication.NONE, update, tauTrail, preMoveParticles, 0, lifetime,
-                    true, false, meteorFlameParticles, Collections.unmodifiableList(spawnRequests));
+                    true, false, meteorFlameParticles, Collections.unmodifiableList(spawnRequests),
+                    updatedAcceleration);
         }
 
         BulletCollisionUtil.CollisionScan scan = projectile == null
                 ? BulletCollisionUtil.scan(config, level, null, shooter, projectileBounds, position, updatedMotion,
-                        ticksInAir)
+                        ticksInAir, updatedAcceleration)
                 : BulletCollisionUtil.scan(config, level, projectile, shooter, projectileBounds, position,
-                        updatedMotion, ticksInAir);
+                        updatedMotion, ticksInAir, updatedAcceleration);
         BulletProjectileHitUtil.HitApplication hit = projectile == null
                 ? BulletProjectileHitUtil.HitApplication.NONE
                 : BulletProjectileHitUtil.applyScannedHits(config, level, projectile, shooter, updatedMotion, scan,
-                        roll, overrideDamage, inGround);
+                        roll, overrideDamage, inGround, ticksInAir);
         discardProjectile |= hit.discardProjectile();
         spawnRequests.addAll(hit.spawnRequests());
 
         Vec3 postHitMotion = hit == BulletProjectileHitUtil.HitApplication.NONE ? updatedMotion : hit.resultingMotion();
         Vec3 moveBase = moveBase(position, scan, hit);
-        Vec3 nextPosition = moveBase.add(BulletKinematicsUtil.movementDelta(config, postHitMotion));
+        Vec3 nextPosition = moveBase.add(BulletKinematicsUtil.movementDelta(config, postHitMotion,
+                updatedAcceleration));
         Vec3 nextMotion = inWater
                 ? BulletKinematicsUtil.applyPostMoveWaterPhysics(config, postHitMotion)
                 : BulletKinematicsUtil.applyPostMovePhysics(config, postHitMotion);
@@ -78,7 +99,7 @@ public final class BulletProjectileTickUtil {
 
         return new TickResult(nextPosition, nextMotion, update.homingTarget(), hit, update, tauTrail,
                 preMoveParticles, trailParticles, lifetime, discardProjectile, hit.enteredPortal(),
-                meteorFlameParticles, Collections.unmodifiableList(spawnRequests));
+                meteorFlameParticles, Collections.unmodifiableList(spawnRequests), updatedAcceleration);
     }
 
     private static Vec3 moveBase(Vec3 position, BulletCollisionUtil.CollisionScan scan,
@@ -93,12 +114,14 @@ public final class BulletProjectileTickUtil {
             BulletProjectileHitUtil.HitApplication hit, BulletUpdateBehaviorUtil.KnownUpdateResult update,
             BulletTauTrailUtil.TauTrailAppend tauTrail, int preMoveParticles, int trailParticles,
             BulletKinematicsUtil.LifetimeCheck lifetime, boolean discardProjectile, boolean enteredPortal,
-            int meteorFlameParticles, List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests) {
+            int meteorFlameParticles, List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests,
+            float acceleration) {
         public static final TickResult NONE = new TickResult(Vec3.ZERO, Vec3.ZERO, null,
                 BulletProjectileHitUtil.HitApplication.NONE,
                 BulletUpdateBehaviorUtil.KnownUpdateResult.NONE,
                 BulletTauTrailUtil.TauTrailAppend.NONE, 0, 0,
-                new BulletKinematicsUtil.LifetimeCheck(true, false), true, false, 0, Collections.emptyList());
+                new BulletKinematicsUtil.LifetimeCheck(true, false), true, false, 0, Collections.emptyList(),
+                0.0F);
     }
 
     private BulletProjectileTickUtil() {

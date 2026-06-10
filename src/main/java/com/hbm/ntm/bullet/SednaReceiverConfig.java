@@ -1,5 +1,8 @@
 package com.hbm.ntm.bullet;
 
+import com.hbm.ntm.sound.LegacySoundIds;
+import net.minecraft.resources.ResourceLocation;
+
 import java.util.Optional;
 
 public record SednaReceiverConfig(
@@ -50,11 +53,16 @@ public record SednaReceiverConfig(
         canFireHandlerName = clean(canFireHandlerName);
         fireHandlerName = clean(fireHandlerName);
         recoilHandlerName = clean(recoilHandlerName);
+        fireSoundName = LegacySoundIds.normalizeIdString(fireSoundName);
         notes = clean(notes);
     }
 
     public Optional<SednaMagazineConfig> magazine() {
         return LegacySednaMagazineConfigs.byKey(magazineKey);
+    }
+
+    public Optional<ResourceLocation> fireSoundLocation() {
+        return Optional.ofNullable(LegacySoundIds.resolveLocation(fireSoundName));
     }
 
     public static Builder builder(String legacyKey, int receiverIndex, String sourceClassName) {

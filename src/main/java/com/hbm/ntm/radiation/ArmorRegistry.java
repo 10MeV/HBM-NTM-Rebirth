@@ -11,14 +11,19 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
 import javax.annotation.Nullable;
+import java.util.AbstractCollection;
 import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 /**
  * Compatibility facade for the 1.7.10 ArmorRegistry hazard-class API.
@@ -37,7 +42,15 @@ public final class ArmorRegistry {
         HazmatRegistry.registerProtection(item, hazards);
     }
 
+    public static void registerProtection(Item item, HazardClass... hazards) {
+        HazmatRegistry.registerProtection(item, hazards);
+    }
+
     public static boolean registerHazard(ResourceLocation itemId, HazardClass... hazards) {
+        return HazmatRegistry.registerProtection(itemId, hazards);
+    }
+
+    public static boolean registerProtection(ResourceLocation itemId, HazardClass... hazards) {
         return HazmatRegistry.registerProtection(itemId, hazards);
     }
 
@@ -45,7 +58,15 @@ public final class ArmorRegistry {
         return HazmatRegistry.registerProtection(itemId, hazards);
     }
 
+    public static boolean registerProtection(String itemId, HazardClass... hazards) {
+        return HazmatRegistry.registerProtection(itemId, hazards);
+    }
+
     public static void registerExternalHazard(Item item, HazardClass... hazards) {
+        HazmatRegistry.registerExternalProtection(item, hazards);
+    }
+
+    public static void registerExternalProtection(Item item, HazardClass... hazards) {
         HazmatRegistry.registerExternalProtection(item, hazards);
     }
 
@@ -53,8 +74,64 @@ public final class ArmorRegistry {
         return HazmatRegistry.registerExternalProtection(itemId, hazards);
     }
 
+    public static boolean registerExternalProtection(ResourceLocation itemId, HazardClass... hazards) {
+        return HazmatRegistry.registerExternalProtection(itemId, hazards);
+    }
+
     public static boolean registerExternalHazard(String itemId, HazardClass... hazards) {
         return HazmatRegistry.registerExternalProtection(itemId, hazards);
+    }
+
+    public static boolean registerExternalProtection(String itemId, HazardClass... hazards) {
+        return HazmatRegistry.registerExternalProtection(itemId, hazards);
+    }
+
+    public static EnumSet<HazardClass> removeExternalHazard(Item item) {
+        return HazmatRegistry.removeExternalProtection(item);
+    }
+
+    public static boolean removeExternalHazard(ResourceLocation itemId) {
+        return HazmatRegistry.removeExternalProtection(itemId);
+    }
+
+    public static boolean removeExternalHazard(String itemId) {
+        return HazmatRegistry.removeExternalProtection(itemId);
+    }
+
+    public static void clearExternalHazards() {
+        HazmatRegistry.clearExternalProtections();
+    }
+
+    public static ArrayList<HazardClass> removeHazard(Item item) {
+        EnumSet<HazardClass> previous = HazmatRegistry.removeProtection(item);
+        return previous == null ? null : new ArrayList<>(previous);
+    }
+
+    public static boolean removeHazard(ResourceLocation itemId) {
+        Item item = HazmatRegistry.resolveItem(itemId);
+        return item != null && removeHazard(item) != null;
+    }
+
+    public static boolean removeHazard(String itemId) {
+        Item item = HazmatRegistry.resolveItem(itemId);
+        return item != null && removeHazard(item) != null;
+    }
+
+    public static void clearHazards() {
+        HazmatRegistry.clearProtections();
+    }
+
+    public static ArrayList<HazardClass> getProtection(ItemStack stack) {
+        return new ArrayList<>(HazmatRegistry.getProtection(stack));
+    }
+
+    public static ArrayList<HazardClass> getProtection(LivingEntity entity, int slot) {
+        EquipmentSlot equipmentSlot = tryLegacyEquipmentSlot(slot);
+        return equipmentSlot == null ? new ArrayList<>() : getProtection(entity, equipmentSlot);
+    }
+
+    public static ArrayList<HazardClass> getProtection(LivingEntity entity, EquipmentSlot slot) {
+        return new ArrayList<>(HazmatRegistry.getProtection(entity, slot));
     }
 
     public static boolean hasAllProtection(LivingEntity entity, int slot, HazardClass... hazards) {
@@ -133,12 +210,22 @@ public final class ArmorRegistry {
         return ArmorUtil.hasProtectionAndDamageFilter(entity, slot, hazard, filterDamage);
     }
 
+    public static boolean hasProtectionAndDamageFilter(LivingEntity entity, int slot, HazardClass hazard,
+                                                       int filterDamage) {
+        return ArmorUtil.hasProtectionAndDamageFilter(entity, slot, hazard, filterDamage);
+    }
+
     public static boolean hasProtectionAndDamageFilter(LivingEntity entity, HazardClass hazard, int filterDamage) {
         return ArmorUtil.hasProtectionAndDamageFilter(entity, hazard, filterDamage);
     }
 
     public static boolean hasProtectionAndDamageFilter(LivingEntity entity, EquipmentSlot slot, int filterDamage,
                                                        HazardClass hazard) {
+        return ArmorUtil.hasProtectionAndDamageFilter(entity, slot, hazard, filterDamage);
+    }
+
+    public static boolean hasProtectionAndDamageFilter(LivingEntity entity, EquipmentSlot slot, HazardClass hazard,
+                                                       int filterDamage) {
         return ArmorUtil.hasProtectionAndDamageFilter(entity, slot, hazard, filterDamage);
     }
 
@@ -319,6 +406,10 @@ public final class ArmorRegistry {
         return ArmorUtil.removeWornGasMaskFilter(entity);
     }
 
+    public static boolean removeGasMaskFilterToInventory(ItemStack mask, Player player) {
+        return ArmorUtil.removeGasMaskFilterToInventory(mask, player);
+    }
+
     public static ItemStack getGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
         return ArmorUtil.getGasMaskFilterRecursively(mask, entity);
     }
@@ -346,6 +437,11 @@ public final class ArmorRegistry {
     public static void addGasMaskTooltip(ItemStack maskStack, @Nullable LivingEntity entity,
                                          List<Component> tooltip, TooltipFlag flag) {
         ArmorUtil.addGasMaskTooltip(maskStack, entity, tooltip, flag);
+    }
+
+    public static void addGasMaskTooltip(ItemStack maskStack, @Nullable LivingEntity entity,
+                                         List<Component> tooltip, boolean advanced) {
+        ArmorUtil.addGasMaskTooltip(maskStack, entity, tooltip, advanced);
     }
 
     public static void addGasMaskBlacklistTooltip(ItemStack maskStack, @Nullable LivingEntity entity,
@@ -381,7 +477,7 @@ public final class ArmorRegistry {
                 return null;
             }
             EnumSet<HazardClass> protections = HazmatRegistry.protectionSnapshot().get(item);
-            return protections == null ? null : new ArrayList<>(protections);
+            return protections == null ? null : new BackedHazardClassList(item, protections);
         }
 
         @Override
@@ -395,12 +491,39 @@ public final class ArmorRegistry {
         }
 
         @Override
+        public boolean isEmpty() {
+            return HazmatRegistry.protectionSnapshot().isEmpty();
+        }
+
+        @Override
         public ArrayList<HazardClass> put(Item key, ArrayList<HazardClass> value) {
             ArrayList<HazardClass> previous = get(key);
             if (key != null && value != null) {
                 HazmatRegistry.registerProtection(key, value.toArray(HazardClass[]::new));
             }
             return previous;
+        }
+
+        @Override
+        public ArrayList<HazardClass> computeIfAbsent(Item key,
+                Function<? super Item, ? extends ArrayList<HazardClass>> mappingFunction) {
+            ArrayList<HazardClass> existing = get(key);
+            if (existing != null || key == null) {
+                return existing;
+            }
+            ArrayList<HazardClass> created = mappingFunction.apply(key);
+            if (created == null) {
+                return null;
+            }
+            HazmatRegistry.registerProtection(key, created.toArray(HazardClass[]::new));
+            return get(key);
+        }
+
+        @Override
+        public void putAll(Map<? extends Item, ? extends ArrayList<HazardClass>> map) {
+            for (Entry<? extends Item, ? extends ArrayList<HazardClass>> entry : map.entrySet()) {
+                put(entry.getKey(), entry.getValue());
+            }
         }
 
         @Override
@@ -413,22 +536,286 @@ public final class ArmorRegistry {
         }
 
         @Override
+        public boolean containsValue(Object value) {
+            if (!(value instanceof Collection<?> collection)) {
+                return false;
+            }
+            for (EnumSet<HazardClass> protections : HazmatRegistry.protectionSnapshot().values()) {
+                if (new ArrayList<>(protections).equals(collection)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
         public void clear() {
             HazmatRegistry.clearProtections();
         }
 
         @Override
         public Collection<ArrayList<HazardClass>> values() {
-            return HazmatRegistry.protectionSnapshot().values().stream()
-                    .map(ArrayList::new)
-                    .collect(Collectors.toUnmodifiableList());
+            return new AbstractCollection<>() {
+                @Override
+                public Iterator<ArrayList<HazardClass>> iterator() {
+                    Iterator<Entry<Item, EnumSet<HazardClass>>> iterator =
+                            HazmatRegistry.protectionSnapshot().entrySet().iterator();
+                    return new Iterator<>() {
+                        @Nullable private Item current;
+
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public ArrayList<HazardClass> next() {
+                            Entry<Item, EnumSet<HazardClass>> entry = iterator.next();
+                            current = entry.getKey();
+                            return new BackedHazardClassList(entry.getKey(), entry.getValue());
+                        }
+
+                        @Override
+                        public void remove() {
+                            if (current == null) {
+                                throw new IllegalStateException();
+                            }
+                            HazmatRegistry.removeProtection(current);
+                            current = null;
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return LegacyHazardClassMap.this.size();
+                }
+
+                @Override
+                public boolean contains(Object object) {
+                    return LegacyHazardClassMap.this.containsValue(object);
+                }
+
+                @Override
+                public boolean remove(Object object) {
+                    if (!(object instanceof Collection<?> collection)) {
+                        return false;
+                    }
+                    for (Entry<Item, EnumSet<HazardClass>> entry : HazmatRegistry.protectionSnapshot().entrySet()) {
+                        if (new ArrayList<>(entry.getValue()).equals(collection)) {
+                            HazmatRegistry.removeProtection(entry.getKey());
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                @Override
+                public void clear() {
+                    LegacyHazardClassMap.this.clear();
+                }
+            };
         }
 
         @Override
         public Set<Entry<Item, ArrayList<HazardClass>>> entrySet() {
-            return HazmatRegistry.protectionSnapshot().entrySet().stream()
-                    .map(entry -> Map.entry(entry.getKey(), new ArrayList<>(entry.getValue())))
-                    .collect(Collectors.toUnmodifiableSet());
+            return new AbstractSet<>() {
+                @Override
+                public Iterator<Entry<Item, ArrayList<HazardClass>>> iterator() {
+                    Iterator<Entry<Item, EnumSet<HazardClass>>> iterator =
+                            HazmatRegistry.protectionSnapshot().entrySet().iterator();
+                    return new Iterator<>() {
+                        @Nullable private Item current;
+
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public Entry<Item, ArrayList<HazardClass>> next() {
+                            Entry<Item, EnumSet<HazardClass>> entry = iterator.next();
+                            current = entry.getKey();
+                            return new BackedHazardClassEntry(entry.getKey());
+                        }
+
+                        @Override
+                        public void remove() {
+                            if (current == null) {
+                                throw new IllegalStateException();
+                            }
+                            HazmatRegistry.removeProtection(current);
+                            current = null;
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return LegacyHazardClassMap.this.size();
+                }
+
+                @Override
+                public boolean contains(Object object) {
+                    if (!(object instanceof Entry<?, ?> entry)) {
+                        return false;
+                    }
+                    Object key = entry.getKey();
+                    ArrayList<HazardClass> value = LegacyHazardClassMap.this.get(key);
+                    return value != null && value.equals(entry.getValue());
+                }
+
+                @Override
+                public boolean remove(Object object) {
+                    if (!contains(object) || !(object instanceof Entry<?, ?> entry)
+                            || !(entry.getKey() instanceof Item item)) {
+                        return false;
+                    }
+                    HazmatRegistry.removeProtection(item);
+                    return true;
+                }
+
+                @Override
+                public void clear() {
+                    LegacyHazardClassMap.this.clear();
+                }
+            };
+        }
+    }
+
+    private static final class BackedHazardClassEntry implements Entry<Item, ArrayList<HazardClass>> {
+        private final Item item;
+
+        private BackedHazardClassEntry(Item item) {
+            this.item = item;
+        }
+
+        @Override
+        public Item getKey() {
+            return item;
+        }
+
+        @Override
+        public ArrayList<HazardClass> getValue() {
+            EnumSet<HazardClass> protections = HazmatRegistry.protectionSnapshot().get(item);
+            return protections == null ? null : new BackedHazardClassList(item, protections);
+        }
+
+        @Override
+        public ArrayList<HazardClass> setValue(ArrayList<HazardClass> value) {
+            ArrayList<HazardClass> previous = getValue();
+            if (value == null) {
+                HazmatRegistry.removeProtection(item);
+            } else {
+                HazmatRegistry.registerProtection(item, value.toArray(HazardClass[]::new));
+            }
+            return previous;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (!(object instanceof Entry<?, ?> entry)) {
+                return false;
+            }
+            return Objects.equals(item, entry.getKey()) && Objects.equals(getValue(), entry.getValue());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(item) ^ Objects.hashCode(getValue());
+        }
+    }
+
+    private static final class BackedHazardClassList extends ArrayList<HazardClass> {
+        private final Item item;
+
+        private BackedHazardClassList(Item item, Collection<HazardClass> hazards) {
+            super(hazards);
+            this.item = item;
+        }
+
+        @Override
+        public boolean add(HazardClass hazardClass) {
+            boolean changed = super.add(hazardClass);
+            sync();
+            return changed;
+        }
+
+        @Override
+        public void add(int index, HazardClass element) {
+            super.add(index, element);
+            sync();
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends HazardClass> collection) {
+            boolean changed = super.addAll(collection);
+            if (changed) {
+                sync();
+            }
+            return changed;
+        }
+
+        @Override
+        public boolean addAll(int index, Collection<? extends HazardClass> collection) {
+            boolean changed = super.addAll(index, collection);
+            if (changed) {
+                sync();
+            }
+            return changed;
+        }
+
+        @Override
+        public HazardClass set(int index, HazardClass element) {
+            HazardClass previous = super.set(index, element);
+            sync();
+            return previous;
+        }
+
+        @Override
+        public HazardClass remove(int index) {
+            HazardClass previous = super.remove(index);
+            sync();
+            return previous;
+        }
+
+        @Override
+        public boolean remove(Object object) {
+            boolean changed = super.remove(object);
+            if (changed) {
+                sync();
+            }
+            return changed;
+        }
+
+        @Override
+        public boolean removeAll(Collection<?> collection) {
+            boolean changed = super.removeAll(collection);
+            if (changed) {
+                sync();
+            }
+            return changed;
+        }
+
+        @Override
+        public boolean retainAll(Collection<?> collection) {
+            boolean changed = super.retainAll(collection);
+            if (changed) {
+                sync();
+            }
+            return changed;
+        }
+
+        @Override
+        public void clear() {
+            if (!isEmpty()) {
+                super.clear();
+                sync();
+            }
+        }
+
+        private void sync() {
+            HazmatRegistry.registerProtection(item, toArray(HazardClass[]::new));
         }
     }
 

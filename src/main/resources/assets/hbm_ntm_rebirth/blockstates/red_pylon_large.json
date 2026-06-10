@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "hbm_ntm_rebirth:block/red_pylon_large" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/red_pylon_large" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/red_pylon_large" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/red_pylon_large" }
+  }
+}

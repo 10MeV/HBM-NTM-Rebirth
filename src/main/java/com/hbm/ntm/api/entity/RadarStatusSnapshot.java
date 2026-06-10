@@ -20,11 +20,6 @@ public record RadarStatusSnapshot(BlockPos pos, int range, long power, long maxP
     private static final String TAG_JAMMED = "jammed";
     private static final String TAG_ENTRY_AMOUNT = "amount";
     private static final String TAG_REDSTONE_POWER = "redstone";
-    private static final String TAG_SCAN_MISSILES = "scanMissiles";
-    private static final String TAG_SCAN_SHELLS = "scanShells";
-    private static final String TAG_SCAN_PLAYERS = "scanPlayers";
-    private static final String TAG_SMART_MODE = "smartMode";
-    private static final String TAG_REDSTONE_PROXIMITY_MODE = "redMode";
     private static final String TAG_SHOW_MAP = "showMap";
 
     public RadarStatusSnapshot {
@@ -53,20 +48,14 @@ public record RadarStatusSnapshot(BlockPos pos, int range, long power, long maxP
         tag.putBoolean(TAG_JAMMED, jammed);
         tag.putInt(TAG_ENTRY_AMOUNT, entryAmount);
         tag.putInt(TAG_REDSTONE_POWER, redstonePower);
-        tag.putBoolean(TAG_SCAN_MISSILES, scanSettings.scanMissiles());
-        tag.putBoolean(TAG_SCAN_SHELLS, scanSettings.scanShells());
-        tag.putBoolean(TAG_SCAN_PLAYERS, scanSettings.scanPlayers());
-        tag.putBoolean(TAG_SMART_MODE, scanSettings.smartMode());
-        tag.putBoolean(TAG_REDSTONE_PROXIMITY_MODE, redstoneProximityMode);
+        scanSettings.writeTo(tag);
+        redstoneMode().writeTo(tag);
         tag.putBoolean(TAG_SHOW_MAP, showMap);
     }
 
     public static RadarStatusSnapshot fromTag(CompoundTag tag) {
-        RadarDetectable.RadarScanParams scanSettings = new RadarDetectable.RadarScanParams(
-                tag.getBoolean(TAG_SCAN_MISSILES),
-                tag.getBoolean(TAG_SCAN_SHELLS),
-                tag.getBoolean(TAG_SCAN_PLAYERS),
-                tag.getBoolean(TAG_SMART_MODE));
+        RadarDetectable.RadarScanParams scanSettings = RadarDetectable.RadarScanParams.fromTag(tag);
+        RadarRedstoneMode redstoneMode = RadarRedstoneMode.fromTag(tag);
         return new RadarStatusSnapshot(
                 new BlockPos(intOrLegacy(tag, TAG_X, TAG_LEGACY_X), intOrLegacy(tag, TAG_Y, TAG_LEGACY_Y),
                         intOrLegacy(tag, TAG_Z, TAG_LEGACY_Z)),
@@ -77,8 +66,12 @@ public record RadarStatusSnapshot(BlockPos pos, int range, long power, long maxP
                 tag.getInt(TAG_ENTRY_AMOUNT),
                 tag.getInt(TAG_REDSTONE_POWER),
                 scanSettings,
-                tag.getBoolean(TAG_REDSTONE_PROXIMITY_MODE),
+                redstoneMode.legacyFlag(),
                 tag.getBoolean(TAG_SHOW_MAP));
+    }
+
+    public RadarRedstoneMode redstoneMode() {
+        return RadarRedstoneMode.fromLegacyFlag(redstoneProximityMode);
     }
 
     private static int intOrLegacy(CompoundTag tag, String key, String legacyKey) {

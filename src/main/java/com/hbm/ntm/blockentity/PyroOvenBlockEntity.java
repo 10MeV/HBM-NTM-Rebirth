@@ -26,6 +26,7 @@ import com.hbm.ntm.recipe.PyroOvenRecipe;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
+import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +52,6 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -572,38 +572,14 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean canFitOutputs(List<ItemStack> outputs) {
-        ItemStack simulated = items.getStackInSlot(SLOT_OUTPUT).copy();
-        for (ItemStack output : outputs) {
-            if (output.isEmpty()) {
-                continue;
-            }
-            if (simulated.isEmpty()) {
-                simulated = output.copy();
-                if (simulated.getCount() > Math.min(simulated.getMaxStackSize(), items.getSlotLimit(SLOT_OUTPUT))) {
-                    return false;
-                }
-            } else if (ItemHandlerHelper.canItemStacksStack(simulated, output)
-                    && simulated.getCount() + output.getCount() <= Math.min(simulated.getMaxStackSize(), items.getSlotLimit(SLOT_OUTPUT))) {
-                simulated.grow(output.getCount());
-            } else {
-                return false;
-            }
-        }
-        return true;
+        return HbmInventoryUtil.doesHandlerHaveSpaceUnchecked(items, SLOT_OUTPUT, SLOT_OUTPUT, outputs);
     }
 
     private void addOutput(ItemStack stack) {
         if (stack.isEmpty()) {
             return;
         }
-        ItemStack existing = items.getStackInSlot(SLOT_OUTPUT);
-        if (existing.isEmpty()) {
-            items.setStackInSlot(SLOT_OUTPUT, stack.copy());
-            return;
-        }
-        ItemStack merged = existing.copy();
-        merged.grow(stack.getCount());
-        items.setStackInSlot(SLOT_OUTPUT, merged);
+        HbmInventoryUtil.tryAddItemToHandlerUnchecked(items, SLOT_OUTPUT, SLOT_OUTPUT, stack);
     }
 
     private static List<FluidPort> fluidPorts(BlockState state) {

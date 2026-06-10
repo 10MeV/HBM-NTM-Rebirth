@@ -2,6 +2,7 @@ package com.hbm.ntm.event;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.command.ModCommands;
+import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.config.ServerConfig;
 import com.hbm.ntm.config.WeaponConfig;
@@ -15,6 +16,7 @@ import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
+import com.hbm.ntm.explosion.ExplosionChaos;
 import com.hbm.ntm.explosion.ExplosionNukeSmall;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
@@ -46,8 +48,10 @@ import com.hbm.ntm.uninos.HbmUninosNodespaces;
 import com.hbm.ntm.util.HbmCraftingAdvancementUtil;
 import com.hbm.ntm.world.BlockMigrationHelper;
 import com.hbm.ntm.world.saveddata.TomImpactSavedData;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -90,6 +94,7 @@ import net.minecraftforge.event.level.ChunkDataEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
 
@@ -422,6 +427,16 @@ public final class CommonForgeEvents {
                     itemEntity.getY() + itemEntity.getBbHeight() * 0.5D, itemEntity.getZ(),
                     20.0F, itemEntity, 50.0F).explode();
         }
+
+        if (itemEntity.onGround() && WeaponConfig.droppedXenCrystalsEnabled()
+                && itemEntity.level() instanceof ServerLevel level && isLegacyItem(stack, "crystal_xen")) {
+            itemEntity.discard();
+            int x = Mth.floor(itemEntity.getX());
+            int y = Mth.floor(itemEntity.getY());
+            int z = Mth.floor(itemEntity.getZ());
+            ExplosionChaos.floater(level, x, y, z, 25, 75);
+            ExplosionChaos.move(level, x, y, z, 25, 0, 75, 0);
+        }
     }
 
     private static void spawnDroppedVortex(ItemEntity itemEntity, ServerLevel level, float size) {
@@ -429,6 +444,11 @@ public final class CommonForgeEvents {
         VortexEntity vortex = new VortexEntity(level, size);
         vortex.moveTo(itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 0.0F, 0.0F);
         level.addFreshEntity(vortex);
+    }
+
+    private static boolean isLegacyItem(ItemStack stack, String legacyName) {
+        var item = ModItems.legacyItem(legacyName);
+        return item != null && stack.is(item.get());
     }
 
     public static void syncRadiationNow(ServerPlayer player) {
@@ -466,8 +486,29 @@ public final class CommonForgeEvents {
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            sendMotd(player);
             syncRadiation(player);
         }
+    }
+
+    private static void sendMotd(ServerPlayer player) {
+        if (!HbmCommonConfig.motdEnabled()) {
+            return;
+        }
+        player.sendSystemMessage(Component.literal("Loaded world with " + modDisplayName() + " "
+                + modVersion() + " for Minecraft " + SharedConstants.getCurrentVersion().getName() + "!"));
+    }
+
+    private static String modDisplayName() {
+        return ModList.get().getModContainerById(HbmNtm.MOD_ID)
+                .map(container -> container.getModInfo().getDisplayName())
+                .orElse("HBM NTM Rebirth");
+    }
+
+    private static String modVersion() {
+        return ModList.get().getModContainerById(HbmNtm.MOD_ID)
+                .map(container -> container.getModInfo().getVersion().toString())
+                .orElse("unknown");
     }
 
     @SubscribeEvent

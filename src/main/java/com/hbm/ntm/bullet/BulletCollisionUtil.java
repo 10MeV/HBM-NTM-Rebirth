@@ -20,18 +20,29 @@ public final class BulletCollisionUtil {
 
     public static CollisionScan scan(BulletConfig config, Level level, @Nullable Entity projectile,
             @Nullable Entity shooter, Vec3 position, Vec3 motion, int ticksInAir) {
+        return scan(config, level, projectile, shooter, position, motion, ticksInAir, 0.0F);
+    }
+
+    public static CollisionScan scan(BulletConfig config, Level level, @Nullable Entity projectile,
+            @Nullable Entity shooter, Vec3 position, Vec3 motion, int ticksInAir, float acceleration) {
         AABB bounds = projectile == null ? defaultBounds(position) : projectile.getBoundingBox();
-        return scan(config, level, projectile, shooter, bounds, position, motion, ticksInAir);
+        return scan(config, level, projectile, shooter, bounds, position, motion, ticksInAir, acceleration);
     }
 
     public static CollisionScan scan(BulletConfig config, Level level, @Nullable Entity projectile,
             @Nullable Entity shooter, AABB projectileBounds, Vec3 position, Vec3 motion, int ticksInAir) {
+        return scan(config, level, projectile, shooter, projectileBounds, position, motion, ticksInAir, 0.0F);
+    }
+
+    public static CollisionScan scan(BulletConfig config, Level level, @Nullable Entity projectile,
+            @Nullable Entity shooter, AABB projectileBounds, Vec3 position, Vec3 motion, int ticksInAir,
+            float acceleration) {
         if (config == null || level == null || position == null || motion == null) {
             return CollisionScan.NONE;
         }
 
         AABB bounds = projectileBounds == null ? defaultBounds(position) : projectileBounds;
-        Vec3 movement = BulletKinematicsUtil.movementDelta(config, motion);
+        Vec3 movement = BulletKinematicsUtil.movementDelta(config, motion, acceleration);
         Vec3 end = position.add(movement);
         BlockCollision blockHit = config.spectral() ? null : findBlockHit(level, projectile, position, end);
         Vec3 clippedEnd = blockHit == null ? end : blockHit.location();

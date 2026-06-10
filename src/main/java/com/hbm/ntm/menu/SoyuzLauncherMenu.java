@@ -13,7 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -159,38 +158,32 @@ public class SoyuzLauncherMenu extends AbstractContainerMenu {
     public ItemStack quickMoveStack(Player player, int index) {
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                 MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                SoyuzLauncherBlockEntity.SLOT_ROCKET, SoyuzLauncherBlockEntity.SLOT_CARGO_END);
+                SoyuzLauncherBlockEntity.SLOT_ROCKET, SoyuzLauncherBlockEntity.SLOT_ROCKET + 1);
     }
 
     private void addDataSlots() {
         HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getStoredPower(), () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getMaxStoredPower(), () -> maxPower, value -> maxPower = value);
-        addIntSlot(() -> blockEntity.getMode(), value -> mode = value);
-        addIntSlot(() -> blockEntity.getCountdown(), value -> countdown = value);
-        addIntSlot(() -> blockEntity.isStarting() ? 1 : 0, value -> starting = value);
-        addIntSlot(() -> blockEntity.hasRocket() ? 1 : 0, value -> rocketStatus = value);
-        addIntSlot(() -> blockEntity.designatorStatus(), value -> designatorStatus = value);
-        addIntSlot(() -> blockEntity.satelliteStatus(), value -> satelliteStatus = value);
-        addIntSlot(() -> blockEntity.orbitalStatus(), value -> orbitalStatus = value);
-        addIntSlot(() -> blockEntity.hasFuel() ? 1 : 0, value -> fuelStatus = value);
-        addIntSlot(() -> blockEntity.hasOxygen() ? 1 : 0, value -> oxygenStatus = value);
-        addIntSlot(() -> blockEntity.hasPower() ? 1 : 0, value -> powerStatus = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getMode, value -> mode = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getCountdown, value -> countdown = value);
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isStarting,
+                value -> starting = value ? 1 : 0);
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::hasRocket,
+                value -> rocketStatus = value ? 1 : 0);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::designatorStatus,
+                value -> designatorStatus = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::satelliteStatus,
+                value -> satelliteStatus = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::orbitalStatus,
+                value -> orbitalStatus = value);
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::hasFuel,
+                value -> fuelStatus = value ? 1 : 0);
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::hasOxygen,
+                value -> oxygenStatus = value ? 1 : 0);
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::hasPower,
+                value -> powerStatus = value ? 1 : 0);
         keroseneTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.keroseneTank());
         oxygenTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.oxygenTank());
-    }
-
-    private void addIntSlot(IntGetter getter, IntSetter setter) {
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return getter.get();
-            }
-
-            @Override
-            public void set(int value) {
-                setter.set(value);
-            }
-        });
     }
 
     private static SoyuzLauncherBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {
@@ -199,13 +192,5 @@ public class SoyuzLauncherMenu extends AbstractContainerMenu {
             return launcher;
         }
         throw new IllegalStateException("Expected Soyuz launcher block entity at " + pos);
-    }
-
-    private interface IntGetter {
-        int get();
-    }
-
-    private interface IntSetter {
-        void set(int value);
     }
 }

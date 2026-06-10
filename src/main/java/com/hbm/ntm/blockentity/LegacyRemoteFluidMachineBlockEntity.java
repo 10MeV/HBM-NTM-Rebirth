@@ -9,6 +9,7 @@ import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -301,15 +302,7 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     }
 
     protected List<FluidPort> fixedSurroundingPorts() {
-        return List.of(
-                FluidPort.of(2, 0, 1, Direction.EAST),
-                FluidPort.of(2, 0, -1, Direction.EAST),
-                FluidPort.of(-2, 0, 1, Direction.WEST),
-                FluidPort.of(-2, 0, -1, Direction.WEST),
-                FluidPort.of(1, 0, 2, Direction.SOUTH),
-                FluidPort.of(-1, 0, 2, Direction.SOUTH),
-                FluidPort.of(1, 0, -2, Direction.NORTH),
-                FluidPort.of(-1, 0, -2, Direction.NORTH));
+        return HbmFluidPortLayouts.squareSidesWithoutCorners(2);
     }
 
     protected List<FluidPort> portsFromOffsets(List<BlockPos> offsets) {

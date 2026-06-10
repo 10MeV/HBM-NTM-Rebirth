@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": { "model": "hbm_ntm_rebirth:block/red_connector_super" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/red_connector_super" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/red_connector_super" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/red_connector_super" },
+    "facing=up": { "model": "hbm_ntm_rebirth:block/red_connector_super" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/red_connector_super" }
+  }
+}

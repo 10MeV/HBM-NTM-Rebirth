@@ -44,10 +44,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,6 +76,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_STARTING = "starting";
     private static final String TAG_COUNTDOWN = "countdown";
     private static final String TAG_POWER = "power";
+    private static final String TAG_CUSTOM_NAME = "name";
 
     private final HbmFluidTank keroseneTank = new HbmFluidTank(HbmFluids.KEROSENE, TANK_CAPACITY);
     private final HbmFluidTank oxygenTank = new HbmFluidTank(HbmFluids.OXYGEN, TANK_CAPACITY);
@@ -105,10 +103,10 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
     private int mode;
     private boolean starting;
     private int countdown = MAX_COUNTDOWN;
+    private String customName;
     private Object audioLoop;
     private List<BlockPos> launcherPorts;
     private List<FluidPort> networkFluidPorts;
@@ -449,6 +447,9 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public Component getDisplayName() {
+        if (hasCustomName()) {
+            return Component.literal(customName);
+        }
         return Component.translatableWithFallback("container.hbm_ntm_rebirth.soyuz_launcher",
                 "Soyuz Launch Platform");
     }
@@ -490,6 +491,9 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putInt(TAG_MODE, mode);
         tag.putBoolean(TAG_STARTING, starting);
         tag.putInt(TAG_COUNTDOWN, countdown);
+        if (hasCustomName()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
     }
 
     @Override
@@ -506,6 +510,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         mode = tag.getInt(TAG_MODE);
         starting = tag.getBoolean(TAG_STARTING);
         countdown = tag.contains(TAG_COUNTDOWN) ? tag.getInt(TAG_COUNTDOWN) : MAX_COUNTDOWN;
+        customName = tag.getString(TAG_CUSTOM_NAME);
     }
 
     @Override
@@ -520,17 +525,12 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
-    public void invalidateCaps() {
-        super.invalidateCaps();
-        itemHandler.invalidate();
+    public AABB getRenderBoundingBox() {
+        return LegacyMachineRenderBounds.visibleMultiblockOr(this, super.getRenderBoundingBox());
     }
 
-    @Override
-    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
-        }
-        return super.getCapability(capability, side);
+    private boolean hasCustomName() {
+        return customName != null && !customName.isEmpty();
     }
 
     private List<BlockPos> launcherPorts() {

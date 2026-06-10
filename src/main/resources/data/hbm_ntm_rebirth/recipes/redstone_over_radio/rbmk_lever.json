@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "R": {
+      "item": "hbm_ntm_rebirth:radio_torch_sender"
+    },
+    "C": {
+      "tag": "forge:ingots/copper"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:rbmk_display_blank"
+    }
+  },
+  "pattern": [
+    "R",
+    "C",
+    "B"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_lever"
+  },
+  "show_notification": true
+}

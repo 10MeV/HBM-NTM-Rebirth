@@ -1,6 +1,6 @@
 # Blender v2.79 (sub 7) OBJ File: 'salted boy.blend'
 # www.blender.org
-mtllib salted boy.mtl
+mtllib salted_boy.mtl
 o Cylinder.002
 v -0.000000 -0.724444 -2.500000
 v -0.000000 -0.724445 1.750000

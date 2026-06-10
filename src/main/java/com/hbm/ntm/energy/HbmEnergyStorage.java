@@ -61,7 +61,12 @@ public class HbmEnergyStorage implements HbmEnergyProvider, HbmEnergyReceiver {
 
     @Override
     public long transferPower(long power) {
-        return HbmEnergyReceiver.super.transferPower(Math.min(power, maxReceive));
+        if (power <= 0L) {
+            return 0L;
+        }
+        long cappedTransfer = Math.min(power, maxReceive);
+        long cappedRemainder = HbmEnergyReceiver.super.transferPower(cappedTransfer);
+        return power - cappedTransfer + cappedRemainder;
     }
 
     @Override

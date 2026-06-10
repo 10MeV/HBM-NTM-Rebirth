@@ -25,6 +25,8 @@ public enum HbmArmorMaterials implements ArmorMaterial {
     CMB("cmb", 60, 50, () -> legacyIngredient("ingot_combine_steel")),
     SECURITY("security", 100, 15, () -> legacyIngredient("plate_kevlar")),
     STARMETAL("starmetal", 150, 100, () -> legacyIngredient("ingot_starmetal")),
+    JACKET("jackt", 30, 5, () -> legacyIngredient("ingot_steel")),
+    JACKET2("jackt2", 30, 5, () -> legacyIngredient("ingot_steel")),
     T51("t51", 150, 0, () -> legacyIngredient("plate_armor_titanium")),
     DESH_POWERED("desh_powered", 150, 0, () -> legacyIngredient("ingot_desh")),
     AJR("ajr", 150, 0, () -> legacyIngredient("plate_armor_ajr")),
@@ -77,7 +79,7 @@ public enum HbmArmorMaterials implements ArmorMaterial {
                 || this == HAZMAT_PAA || this == LIQUIDATOR || this == SCHRABIDIUM || this == EUPHEMIUM
                 || this == CMB || this == SECURITY || this == STARMETAL || this == T51 || this == DESH_POWERED
                 || this == AJR || this == BJ || this == ENV || this == HEV || this == FAU || this == DNS
-                || this == TAURUN || this == TRENCHMASTER) {
+                || this == TAURUN || this == TRENCHMASTER || this == JACKET || this == JACKET2) {
             return switch (type) {
                 case HELMET, BOOTS -> 3;
                 case CHESTPLATE -> 8;

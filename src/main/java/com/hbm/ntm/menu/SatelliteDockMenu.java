@@ -52,7 +52,7 @@ public class SatelliteDockMenu extends AbstractContainerMenu {
     public ItemStack quickMoveStack(Player player, int index) {
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                 MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                SatelliteDockBlockEntity.SLOT_CHIP, SatelliteDockBlockEntity.SLOT_CHIP + 1);
+                0, SatelliteDockBlockEntity.OUTPUT_SLOT_COUNT);
     }
 
     private static SatelliteDockBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

@@ -4,12 +4,12 @@ import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmMenuDataSlots;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -115,50 +115,10 @@ public class BasicMachineMenu extends AbstractContainerMenu {
     }
 
     private void addMachineDataSlots(BasicMachineBlockEntity blockEntity) {
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getProgress();
-            }
-
-            @Override
-            public void set(int value) {
-                blockEntity.setProgress(value);
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getBurnTime();
-            }
-
-            @Override
-            public void set(int value) {
-                blockEntity.setBurnTime(value);
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getSpeed();
-            }
-
-            @Override
-            public void set(int value) {
-                blockEntity.setSpeed(value);
-            }
-        });
-        addDataSlot(new DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getPress();
-            }
-
-            @Override
-            public void set(int value) {
-                blockEntity.setPress(value);
-            }
-        });
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getProgress, blockEntity::setProgress);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getBurnTime, blockEntity::setBurnTime);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getSpeed, blockEntity::setSpeed);
+        HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getPress, blockEntity::setPress);
     }
 
     private static BasicMachineBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

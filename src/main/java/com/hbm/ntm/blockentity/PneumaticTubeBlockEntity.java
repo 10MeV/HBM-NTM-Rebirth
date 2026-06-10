@@ -194,7 +194,7 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         if (slot < 0 || slot >= filter.length) {
             return;
         }
-        filter[slot] = stack == null ? ItemStack.EMPTY : stack.copyWithCount(1);
+        filter[slot] = HbmItemStackUtil.carefulCopyWithSize(stack, 1);
         setChanged();
     }
 

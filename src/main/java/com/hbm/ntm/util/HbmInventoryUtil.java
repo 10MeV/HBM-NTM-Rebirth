@@ -13,6 +13,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 
 import java.util.Arrays;
@@ -179,6 +180,152 @@ public final class HbmInventoryUtil {
             }
         }
         return remainder;
+    }
+
+    public static boolean doesHandlerHaveSpaceUnchecked(ItemStackHandler inventory, int start, int end,
+            ItemStack... items) {
+        return doesHandlerHaveSpaceUnchecked(inventory, start, end, items == null ? List.of() : Arrays.asList(items));
+    }
+
+    public static boolean doesHandlerHaveSpaceUnchecked(ItemStackHandler inventory, int start, int end,
+            List<ItemStack> items) {
+        if (inventory == null) {
+            return items == null || items.isEmpty();
+        }
+        ItemStack[] copy = HbmItemStackUtil.carefulCopyArray(inventory);
+        for (ItemStack item : items) {
+            if (item != null && !item.isEmpty()
+                    && !tryAddItemToHandlerCopyUnchecked(inventory, copy, start, end, item).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static ItemStack tryAddItemToHandlerUnchecked(ItemStackHandler inventory, int start, int end,
+            ItemStack stack) {
+        ItemStack remainder = tryAddItemToExistingStacksUnchecked(inventory, start, end, stack);
+        if (inventory == null || remainder.isEmpty()) {
+            return remainder;
+        }
+        for (int slot = Math.max(0, start); slot <= Math.min(end, inventory.getSlots() - 1); slot++) {
+            if (inventory.getStackInSlot(slot).isEmpty()) {
+                int transfer = Math.min(remainder.getCount(), slotLimit(inventory, slot, remainder));
+                if (transfer > 0) {
+                    inventory.setStackInSlot(slot, remainder.copyWithCount(transfer));
+                    remainder.shrink(transfer);
+                    if (remainder.isEmpty()) {
+                        return ItemStack.EMPTY;
+                    }
+                }
+            }
+        }
+        return remainder;
+    }
+
+    public static ItemStack tryAddItemToExistingStacksUnchecked(ItemStackHandler inventory, int start, int end,
+            ItemStack stack) {
+        ItemStack remainder = HbmItemStackUtil.carefulCopy(stack);
+        if (inventory == null || remainder.isEmpty()) {
+            return remainder;
+        }
+        for (int slot = Math.max(0, start); slot <= Math.min(end, inventory.getSlots() - 1); slot++) {
+            ItemStack current = inventory.getStackInSlot(slot);
+            if (!current.isEmpty() && HbmItemStackUtil.doesStackDataMatch(current, remainder)) {
+                int transfer = Math.min(remainder.getCount(), slotSpace(inventory, slot, current));
+                if (transfer > 0) {
+                    ItemStack merged = current.copy();
+                    merged.grow(transfer);
+                    inventory.setStackInSlot(slot, merged);
+                    remainder.shrink(transfer);
+                    if (remainder.isEmpty()) {
+                        return ItemStack.EMPTY;
+                    }
+                }
+            }
+        }
+        return remainder;
+    }
+
+    public static ItemStack tryAddItemToFirstNewSlotUnchecked(ItemStackHandler inventory, int start, int end,
+            ItemStack stack) {
+        ItemStack remainder = HbmItemStackUtil.carefulCopy(stack);
+        if (inventory == null || remainder.isEmpty()) {
+            return remainder;
+        }
+        for (int slot = Math.max(0, start); slot <= Math.min(end, inventory.getSlots() - 1); slot++) {
+            if (inventory.getStackInSlot(slot).isEmpty()) {
+                int transfer = Math.min(remainder.getCount(), slotLimit(inventory, slot, remainder));
+                if (transfer > 0) {
+                    inventory.setStackInSlot(slot, remainder.copyWithCount(transfer));
+                    remainder.shrink(transfer);
+                    return remainder.isEmpty() ? ItemStack.EMPTY : remainder;
+                }
+            }
+        }
+        return remainder;
+    }
+
+    public static boolean moveSingleItemFromHandlerToHandler(ItemStackHandler source, int sourceStart, int sourceEnd,
+            IItemHandler target) {
+        if (source == null || target == null) {
+            return false;
+        }
+        for (int slot = Math.max(0, sourceStart); slot <= Math.min(sourceEnd, source.getSlots() - 1); slot++) {
+            ItemStack stack = source.getStackInSlot(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            ItemStack single = stack.copyWithCount(1);
+            if (ItemHandlerHelper.insertItemStacked(target, single, true).isEmpty()
+                    && ItemHandlerHelper.insertItemStacked(target, single, false).isEmpty()) {
+                removeOneFromHandlerSlot(source, slot, stack);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean moveSingleItemFromHandlerToContainer(ItemStackHandler source, int sourceStart, int sourceEnd,
+            Container target) {
+        if (source == null || target == null) {
+            return false;
+        }
+        for (int slot = Math.max(0, sourceStart); slot <= Math.min(sourceEnd, source.getSlots() - 1); slot++) {
+            ItemStack stack = source.getStackInSlot(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            ItemStack single = stack.copyWithCount(1);
+            for (int targetSlot = 0; targetSlot < target.getContainerSize(); targetSlot++) {
+                ItemStack current = target.getItem(targetSlot);
+                if (!current.isEmpty() && HbmItemStackUtil.doesStackDataMatch(current, single)
+                        && current.getCount() < current.getMaxStackSize()) {
+                    current.grow(1);
+                    target.setItem(targetSlot, current);
+                    target.setChanged();
+                    removeOneFromHandlerSlot(source, slot, stack);
+                    return true;
+                }
+            }
+        }
+
+        for (int slot = Math.max(0, sourceStart); slot <= Math.min(sourceEnd, source.getSlots() - 1); slot++) {
+            ItemStack stack = source.getStackInSlot(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            ItemStack single = stack.copyWithCount(1);
+            for (int targetSlot = 0; targetSlot < target.getContainerSize(); targetSlot++) {
+                if (target.getItem(targetSlot).isEmpty() && target.canPlaceItem(targetSlot, single)) {
+                    target.setItem(targetSlot, single);
+                    target.setChanged();
+                    removeOneFromHandlerSlot(source, slot, stack);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public static ItemStack tryAddItemToInventory(Container inventory, ItemStack stack) {
@@ -1333,18 +1480,17 @@ public final class HbmInventoryUtil {
             }
             return List.copyOf(result);
         }
+        if (object instanceof List<?> list) {
+            List<List<ItemStack>> result = new ArrayList<>(list.size());
+            for (Object entry : list) {
+                appendMixedDisplayEntry(result, entry);
+            }
+            return List.copyOf(result);
+        }
         if (object instanceof Object[] mixed) {
             List<List<ItemStack>> result = new ArrayList<>(mixed.length);
             for (Object entry : mixed) {
-                List<List<ItemStack>> extracted = extractDisplayStacks(entry);
-                if (extracted.isEmpty()) {
-                    result.add(List.of());
-                } else {
-                    result.add(extracted.get(0));
-                    if (extracted.size() > 1) {
-                        result.addAll(extracted.subList(1, extracted.size()));
-                    }
-                }
+                appendMixedDisplayEntry(result, entry);
             }
             return List.copyOf(result);
         }
@@ -1360,6 +1506,36 @@ public final class HbmInventoryUtil {
                     .toArray(ItemStack[]::new);
         }
         return matrix;
+    }
+
+    public static ItemStack[][] extractObject(Object object) {
+        return extractDisplayStackMatrix(object);
+    }
+
+    private static void appendMixedDisplayEntry(List<List<ItemStack>> result, Object entry) {
+        if (entry instanceof ItemStack[] options) {
+            result.add(copyDisplayOptions(options));
+            return;
+        }
+        List<List<ItemStack>> extracted = extractDisplayStacks(entry);
+        if (extracted.isEmpty()) {
+            result.add(List.of());
+        } else {
+            result.add(extracted.get(0));
+            if (extracted.size() > 1) {
+                result.addAll(extracted.subList(1, extracted.size()));
+            }
+        }
+    }
+
+    private static List<ItemStack> copyDisplayOptions(ItemStack[] options) {
+        List<ItemStack> result = new ArrayList<>(options.length);
+        for (ItemStack option : options) {
+            if (option != null && !option.isEmpty()) {
+                result.add(option.copy());
+            }
+        }
+        return List.copyOf(result);
     }
 
     private static MatchPlan matchIngredients(IItemHandler inventory, int[] slots, List<HbmIngredient> ingredients) {
@@ -1506,6 +1682,56 @@ public final class HbmInventoryUtil {
             }
         }
         return remainder;
+    }
+
+    private static ItemStack tryAddItemToHandlerCopyUnchecked(ItemStackHandler inventory, ItemStack[] copy, int start,
+            int end, ItemStack stack) {
+        ItemStack remainder = HbmItemStackUtil.carefulCopy(stack);
+        if (remainder.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        for (int slot = Math.max(0, start); slot <= Math.min(end, copy.length - 1); slot++) {
+            ItemStack current = emptyIfNull(copy[slot]);
+            if (!current.isEmpty() && HbmItemStackUtil.doesStackDataMatch(current, remainder)) {
+                int transfer = Math.min(remainder.getCount(), slotSpace(inventory, slot, current));
+                if (transfer > 0) {
+                    current = current.copy();
+                    current.grow(transfer);
+                    copy[slot] = current;
+                    remainder.shrink(transfer);
+                    if (remainder.isEmpty()) {
+                        return ItemStack.EMPTY;
+                    }
+                }
+            }
+        }
+        for (int slot = Math.max(0, start); slot <= Math.min(end, copy.length - 1); slot++) {
+            if (emptyIfNull(copy[slot]).isEmpty()) {
+                int transfer = Math.min(remainder.getCount(), slotLimit(inventory, slot, remainder));
+                if (transfer > 0) {
+                    copy[slot] = remainder.copyWithCount(transfer);
+                    remainder.shrink(transfer);
+                    if (remainder.isEmpty()) {
+                        return ItemStack.EMPTY;
+                    }
+                }
+            }
+        }
+        return remainder;
+    }
+
+    private static int slotSpace(ItemStackHandler inventory, int slot, ItemStack current) {
+        return Math.max(0, slotLimit(inventory, slot, current) - current.getCount());
+    }
+
+    private static int slotLimit(ItemStackHandler inventory, int slot, ItemStack stack) {
+        return Math.min(stack.getMaxStackSize(), inventory.getSlotLimit(slot));
+    }
+
+    private static void removeOneFromHandlerSlot(ItemStackHandler source, int slot, ItemStack stack) {
+        ItemStack remaining = stack.copy();
+        remaining.shrink(1);
+        source.setStackInSlot(slot, remaining.isEmpty() ? ItemStack.EMPTY : remaining);
     }
 
     private static HbmIngredient withCount(HbmIngredient ingredient, int count) {

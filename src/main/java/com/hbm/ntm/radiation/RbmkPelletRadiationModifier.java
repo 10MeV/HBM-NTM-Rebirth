@@ -5,7 +5,12 @@ import net.minecraft.world.item.ItemStack;
 
 public class RbmkPelletRadiationModifier implements HazardModifier {
     private final float target;
-    private final int legacyMeta;
+    private final Integer legacyMeta;
+
+    public RbmkPelletRadiationModifier(float target) {
+        this.target = target;
+        this.legacyMeta = null;
+    }
 
     public RbmkPelletRadiationModifier(float target, int legacyMeta) {
         this.target = target;
@@ -14,7 +19,7 @@ public class RbmkPelletRadiationModifier implements HazardModifier {
 
     @Override
     public float modify(ItemStack stack, LivingEntity holder, float level) {
-        int meta = rectify(legacyMeta);
+        int meta = rectify(legacyMeta == null ? stack.getDamageValue() : legacyMeta);
         float depletion = (meta % 5) / 4.0F;
         float modified = level + (target - level) * depletion;
         if (meta >= 5) {

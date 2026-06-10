@@ -26,8 +26,10 @@ public final class ParticleUtil {
     public static final String TYPE_EX_HYDROGEN = "exHydrogen";
     public static final String TYPE_EX_BALEFIRE = "exBalefire";
     public static final String TYPE_EXHAUST = "exhaust";
+    public static final String TYPE_FLAMETHROWER = "flamethrower";
     public static final String TYPE_EXPLOSION_LARGE = "explosionLarge";
     public static final String TYPE_EXPLOSION_SMALL = "explosionSmall";
+    public static final String TYPE_WEAPON_EXPLOSION = "weaponExplosion";
     public static final String TYPE_VNT_EXPLOSION = "vntExplosion";
     public static final String TYPE_BLACK_POWDER = "blackPowder";
     public static final String TYPE_ASHES = "ashes";
@@ -72,6 +74,7 @@ public final class ParticleUtil {
     public static final String TYPE_VANISH = "vanish";
     public static final String TYPE_MARKER = "marker";
     public static final String TYPE_FROZEN = "frozen";
+    public static final String TYPE_CHAOS_CLOUD = "chaosCloud";
     public static final String VOMIT_NORMAL = "normal";
     public static final String VOMIT_BLOOD = "blood";
     public static final String VOMIT_SMOKE = "smoke";
@@ -98,6 +101,14 @@ public final class ParticleUtil {
     public static final String VANILLA_VOLCANO = "volcano";
     public static final String EXHAUST_SOYUZ = "soyuz";
     public static final String EXHAUST_METEOR = "meteor";
+    public static final String CHAOS_CLOUD_ORANGE = "orange";
+    public static final String CHAOS_CLOUD_GREEN = "green";
+    public static final String CHAOS_CLOUD_PINK = "pink";
+    public static final int FLAMETHROWER_META_FIRE = 0;
+    public static final int FLAMETHROWER_META_BALEFIRE = 1;
+    public static final int FLAMETHROWER_META_DIGAMMA = 2;
+    public static final int FLAMETHROWER_META_OXY = 3;
+    public static final int FLAMETHROWER_META_BLACK = 4;
     public static final int GIBLET_MEAT = 0;
     public static final int GIBLET_SLIME = 1;
     public static final int GIBLET_METAL = 2;
@@ -191,6 +202,33 @@ public final class ParticleUtil {
         data.putInt("count", count);
         data.putDouble("width", width);
         spawnAux(level, x, y, z, data, 350.0D);
+    }
+
+    public static void spawnFlamethrower(Level level, double x, double y, double z, int meta) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_FLAMETHROWER);
+        data.putInt("meta", meta);
+        spawnAux(level, x, y, z, data, 50.0D);
+    }
+
+    public static void spawnFireFlamethrower(Level level, double x, double y, double z) {
+        spawnFlamethrower(level, x, y, z, FLAMETHROWER_META_FIRE);
+    }
+
+    public static void spawnBalefireFlamethrower(Level level, double x, double y, double z) {
+        spawnFlamethrower(level, x, y, z, FLAMETHROWER_META_BALEFIRE);
+    }
+
+    public static void spawnDigammaFlamethrower(Level level, double x, double y, double z) {
+        spawnFlamethrower(level, x, y, z, FLAMETHROWER_META_DIGAMMA);
+    }
+
+    public static void spawnOxyFlamethrower(Level level, double x, double y, double z) {
+        spawnFlamethrower(level, x, y, z, FLAMETHROWER_META_OXY);
+    }
+
+    public static void spawnBlackFlamethrower(Level level, double x, double y, double z) {
+        spawnFlamethrower(level, x, y, z, FLAMETHROWER_META_BLACK);
     }
 
     public static void spawnHaze(Level level, double x, double y, double z) {
@@ -627,6 +665,15 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 200.0D);
     }
 
+    public static void spawnWeaponExplosion(Level level, double x, double y, double z, int count, float scale, float speed) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_WEAPON_EXPLOSION);
+        data.putInt("count", count);
+        data.putFloat("scale", scale);
+        data.putFloat("speed", speed);
+        spawnAux(level, x, y, z, data, Math.max(100.0D, scale * 16.0D));
+    }
+
     public static void spawnVntExplosion(Level level, double x, double y, double z, float size, long[] affectedBlocks) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_VNT_EXPLOSION);
@@ -836,6 +883,43 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 96.0D);
     }
 
+    public static void spawnChaosCloud(Level level, double x, double y, double z, double motionX, double motionY, double motionZ, String mode) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_CHAOS_CLOUD);
+        data.putString("mode", normalizeChaosCloudMode(mode));
+        data.putDouble("mX", motionX);
+        data.putDouble("mY", motionY);
+        data.putDouble("mZ", motionZ);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnChaosCloudBurst(Level level, double x, double y, double z, int count, double speed, String mode) {
+        if (level == null || count <= 0) {
+            return;
+        }
+        String resolvedMode = normalizeChaosCloudMode(mode);
+        for (int i = 0; i < count; i++) {
+            spawnChaosCloud(level, x, y, z,
+                    level.random.nextGaussian() * speed,
+                    level.random.nextGaussian() * speed,
+                    level.random.nextGaussian() * speed,
+                    resolvedMode);
+        }
+    }
+
+    public static void spawnChaosVolley(Level level, double x, double y, double z, int count, double speed) {
+        if (level == null || count <= 0) {
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            spawnChaosCloud(level, x, y, z,
+                    level.random.nextGaussian() * speed,
+                    level.random.nextDouble() * speed * 7.5D,
+                    level.random.nextGaussian() * speed,
+                    CHAOS_CLOUD_ORANGE);
+        }
+    }
+
     private static CompoundTag smokeTag(String mode, int count) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_SMOKE);
@@ -877,6 +961,13 @@ public final class ParticleUtil {
         CompoundTag data = new CompoundTag();
         data.putString("type", type);
         spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    private static String normalizeChaosCloudMode(String mode) {
+        if (CHAOS_CLOUD_GREEN.equals(mode) || CHAOS_CLOUD_PINK.equals(mode)) {
+            return mode;
+        }
+        return CHAOS_CLOUD_ORANGE;
     }
 
     public static void putBlockState(CompoundTag data, BlockState state) {

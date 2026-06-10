@@ -140,7 +140,7 @@ public class ManualDesignatorScreen extends Screen {
 
     private record DesignatorButton(int x, int y, int type, int operator, int reference, int value, String tooltip) {
         boolean contains(int mouseX, int mouseY) {
-            return mouseX >= x && mouseX < x + 18 && mouseY > y && mouseY <= y + 18;
+            return LegacyGuiElements.isMouseOver(mouseX, mouseY, x, y, 18, 18);
         }
     }
 }

@@ -13,6 +13,7 @@ import com.hbm.ntm.item.HbmAbilityToolItem;
 import com.hbm.ntm.menu.ToolAbilityMenu;
 import com.hbm.ntm.network.HbmNetworkActions;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.registry.ModSounds;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -235,7 +236,7 @@ public class ToolAbilityScreen extends AbstractContainerScreen<ToolAbilityMenu> 
 
         int availableLevels = availableAbilities.maxLevel(hoveredAbility) + 1;
         if (hoveredAbility != selectedAbility || availableLevels > 1) {
-            playClick(2.0F);
+            playAbilityClick(2.0F);
         }
 
         if (hoveredAbility == selectedAbility) {
@@ -348,6 +349,12 @@ public class ToolAbilityScreen extends AbstractContainerScreen<ToolAbilityMenu> 
     private void playClick(float pitch) {
         if (minecraft != null) {
             minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, pitch));
+        }
+    }
+
+    private void playAbilityClick(float pitch) {
+        if (minecraft != null) {
+            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.TOOL_TECH_BOOP.get(), pitch));
         }
     }
 

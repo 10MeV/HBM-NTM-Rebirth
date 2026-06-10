@@ -75,6 +75,27 @@ public enum LegacyTexturedRenderMode {
         return this != CUTOUT_NO_CULL;
     }
 
+    public RenderModeStatePlan statePlan() {
+        return switch (this) {
+            case CUTOUT_NO_CULL -> new RenderModeStatePlan(false, BlendFunction.NONE, true, DepthTest.LEQUAL,
+                    false, true, true, true);
+            case TRANSLUCENT -> new RenderModeStatePlan(true, BlendFunction.NORMAL_ALPHA, true, DepthTest.LEQUAL,
+                    true, true, true, true);
+            case TRANSLUCENT_NO_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.NORMAL_ALPHA, false, DepthTest.LEQUAL,
+                    false, true, true, true);
+            case TRANSLUCENT_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.NORMAL_ALPHA, true, DepthTest.LEQUAL,
+                    false, true, true, true);
+            case ADDITIVE_NO_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.ADDITIVE, false, DepthTest.LEQUAL,
+                    false, true, true, true);
+            case ADDITIVE_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.ADDITIVE, true, DepthTest.LEQUAL,
+                    false, true, true, true);
+            case GLINT_NO_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.GLINT, false, DepthTest.LEQUAL,
+                    false, true, true, true);
+            case GLINT_EQUAL_DEPTH -> new RenderModeStatePlan(true, BlendFunction.GLINT, false, DepthTest.EQUAL,
+                    false, true, true, true);
+        };
+    }
+
     public LegacyTexturedRenderMode withAlpha(int alpha) {
         return alpha < 255 && this == CUTOUT_NO_CULL ? TRANSLUCENT : this;
     }
@@ -114,5 +135,22 @@ public enum LegacyTexturedRenderMode {
                 case CUTOUT_NO_CULL, TRANSLUCENT -> mode.renderType(texture);
             };
         }
+    }
+
+    public enum BlendFunction {
+        NONE,
+        NORMAL_ALPHA,
+        ADDITIVE,
+        GLINT
+    }
+
+    public enum DepthTest {
+        LEQUAL,
+        EQUAL
+    }
+
+    public record RenderModeStatePlan(boolean blendEnabled, BlendFunction blendFunction, boolean depthWrite,
+                                      DepthTest depthTest, boolean vanillaEntityTranslucent,
+                                      boolean cullDisabled, boolean lightmapEnabled, boolean overlayEnabled) {
     }
 }

@@ -196,6 +196,23 @@ public class SubChunkSnapshot {
         return blockStateCount(state) > 0;
     }
 
+    public boolean containsBlock(Block block) {
+        return blockCount(block) > 0;
+    }
+
+    public int blockCount(Block block) {
+        if (this == EMPTY || data == null || block == null || block == Blocks.AIR) {
+            return 0;
+        }
+        int count = 0;
+        for (short index : data) {
+            if (index > 0 && index < palette.length && palette[index].is(block)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     public int blockStateCount(BlockState state) {
         if (this == EMPTY || data == null || state == null || state.isAir()) {
             return 0;
@@ -217,6 +234,19 @@ public class SubChunkSnapshot {
         for (short index : data) {
             if (index > 0 && index < palette.length) {
                 counts.merge(palette[index], 1, Integer::sum);
+            }
+        }
+        return Map.copyOf(counts);
+    }
+
+    public Map<Block, Integer> blockCounts() {
+        if (this == EMPTY || data == null) {
+            return Map.of();
+        }
+        Map<Block, Integer> counts = new HashMap<>();
+        for (short index : data) {
+            if (index > 0 && index < palette.length) {
+                counts.merge(palette[index].getBlock(), 1, Integer::sum);
             }
         }
         return Map.copyOf(counts);
@@ -282,6 +312,18 @@ public class SubChunkSnapshot {
         public boolean nonEmpty() {
             return nonAirBlocks > 0;
         }
+
+        public Map<Block, Integer> blockCounts() {
+            Map<Block, Integer> counts = new HashMap<>();
+            for (Map.Entry<BlockState, Integer> entry : blockStateCounts.entrySet()) {
+                counts.merge(entry.getKey().getBlock(), entry.getValue(), Integer::sum);
+            }
+            return Map.copyOf(counts);
+        }
+
+        public int blockCount(Block block) {
+            return block == null ? 0 : blockCounts().getOrDefault(block, 0);
+        }
     }
 
     public record SnapshotBatch(int requestedSubChunks, int fullChunks, int validSections, int nonEmptySubChunks,
@@ -302,6 +344,20 @@ public class SubChunkSnapshot {
                 }
             }
             return Map.copyOf(counts);
+        }
+
+        public Map<Block, Integer> blockCounts() {
+            Map<Block, Integer> counts = new HashMap<>();
+            for (SnapshotStatus status : statuses) {
+                for (Map.Entry<Block, Integer> entry : status.blockCounts().entrySet()) {
+                    counts.merge(entry.getKey(), entry.getValue(), Integer::sum);
+                }
+            }
+            return Map.copyOf(counts);
+        }
+
+        public int blockCount(Block block) {
+            return block == null ? 0 : blockCounts().getOrDefault(block, 0);
         }
     }
 }

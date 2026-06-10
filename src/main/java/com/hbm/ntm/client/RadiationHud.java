@@ -43,26 +43,22 @@ public final class RadiationHud {
             lastRadiation = radiation;
         }
 
-        int barLength = 74;
-        int width = 94;
-        int height = 18;
-        int x = 16 + HbmClientConfig.geigerOffsetHorizontal();
-        int y = screenHeight - 20 - HbmClientConfig.geigerOffsetVertical();
-        int bar = LegacyScreenQuadRenderer.scaled(radiation, 1000.0D, barLength);
-
-        graphics.blit(OVERLAY_MISC, x, y, 0, 0, width, height);
-        LegacyScreenQuadRenderer.blitHorizontalProgress(OVERLAY_MISC, graphics, x + 1, y + 1, 1, 19, barLength, 16, bar);
-
-        if (rate > 0.0F) {
-            if (rate >= 25.0F) {
-                graphics.blit(OVERLAY_MISC, x + barLength + 2, y - 18, 36, 36, 18, 18);
-            } else if (rate >= 10.0F) {
-                graphics.blit(OVERLAY_MISC, x + barLength + 2, y - 18, 18, 36, 18, 18);
-            } else if (rate >= 2.5F) {
-                graphics.blit(OVERLAY_MISC, x + barLength + 2, y - 18, 0, 36, 18, 18);
-            }
-            String label = rate > 1000.0F ? ">1000 RAD/s" : rate >= 1.0F ? Math.round(rate) + " RAD/s" : "<1 RAD/s";
-            graphics.drawString(Minecraft.getInstance().font, label, x, y - 8, 0xFFFF0000, false);
+        LegacyScreenQuadRenderer.RadCounterPlan plan = LegacyScreenQuadRenderer.radCounterPlan(screenHeight,
+                HbmClientConfig.geigerOffsetHorizontal(), HbmClientConfig.geigerOffsetVertical(), radiation, rate);
+        graphics.blit(OVERLAY_MISC, plan.frame().x(), plan.frame().y(), plan.frameTexture().u(),
+                plan.frameTexture().v(), plan.frame().width(), plan.frame().height());
+        if (plan.fill().width() > 0) {
+            graphics.blit(OVERLAY_MISC, plan.fill().x(), plan.fill().y(), plan.fillTexture().u(),
+                    plan.fillTexture().v(), plan.fill().width(), plan.fill().height());
+        }
+        if (plan.warning().visible()) {
+            graphics.blit(OVERLAY_MISC, plan.warning().rect().x(), plan.warning().rect().y(),
+                    plan.warning().texture().u(), plan.warning().texture().v(),
+                    plan.warning().rect().width(), plan.warning().rect().height());
+        }
+        if (!plan.label().isEmpty()) {
+            graphics.drawString(Minecraft.getInstance().font, plan.label(), plan.labelX(), plan.labelY(),
+                    0xFF000000 | plan.labelColor(), false);
         }
     }
 

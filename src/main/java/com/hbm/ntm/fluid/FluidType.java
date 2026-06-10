@@ -291,14 +291,27 @@ public final class FluidType {
     }
 
     private static ResourceLocation texture(String name) {
-        ResourceLocation parsed = ResourceLocation.tryParse(name);
+        String safeName = sanitizePath(name);
+        ResourceLocation parsed = ResourceLocation.tryParse(safeName);
         if (parsed != null && name.contains(":")) {
             return parsed;
         }
-        String path = name.endsWith(".png") ? name.substring(0, name.length() - 4) : name;
+        String path = safeName;
         if (!path.startsWith("textures/")) {
+            if (path.endsWith(".png")) {
+                path = path.substring(0, path.length() - 4);
+            }
             path = "textures/gui/fluids/" + path + ".png";
+        } else if (!path.endsWith(".png")) {
+            path = path + ".png";
         }
         return new ResourceLocation(HbmNtm.MOD_ID, path);
+    }
+
+    private static String sanitizePath(String name) {
+        return (name == null ? "" : name)
+                .replace('\\', '/')
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9:/._-]", "_");
     }
 }

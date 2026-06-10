@@ -37,6 +37,7 @@ import com.hbm.ntm.compat.Compat;
 import com.hbm.ntm.compat.CompatCustomWarheadRegistry;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.compat.CompatFluidRegistry;
+import com.hbm.ntm.compat.CompatHandler;
 import com.hbm.ntm.compat.CompatRecipeRegistry;
 import com.hbm.ntm.compat.CompatTurretTargetRegistry;
 import com.hbm.ntm.damage.DamageResistanceConfig;
@@ -143,6 +144,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -285,6 +287,16 @@ public final class ModCommands {
                                                 DimensionArgument.getDimension(context, "dimension")))))
                         .then(Commands.literal("all")
                                 .executes(context -> worldSavedDataAllStatus(context.getSource())))
+                        .then(Commands.literal("health")
+                                .executes(context -> worldSavedDataHealth(
+                                        context.getSource(),
+                                        context.getSource().getLevel()))
+                                .then(Commands.argument("dimension", DimensionArgument.dimension())
+                                        .executes(context -> worldSavedDataHealth(
+                                                context.getSource(),
+                                                DimensionArgument.getDimension(context, "dimension")))))
+                        .then(Commands.literal("healthAll")
+                                .executes(context -> worldSavedDataHealthAll(context.getSource())))
                         .then(Commands.literal("known")
                                 .executes(context -> worldSavedDataKnownData(
                                         context.getSource(),
@@ -295,7 +307,20 @@ public final class ModCommands {
                                                 DimensionArgument.getDimension(context, "dimension")))))
                         .then(Commands.literal("knownAll")
                                 .executes(context -> worldSavedDataKnownDataAll(context.getSource())))
+                        .then(Commands.literal("tom")
+                                .then(Commands.literal("summary")
+                                        .executes(context -> worldSavedDataTomSummary(context.getSource())))
+                                .then(Commands.literal("summaryAll")
+                                        .executes(context -> worldSavedDataTomSummaryAll(context.getSource())))
+                                .then(Commands.literal("cache")
+                                        .executes(context -> worldSavedDataTomCache(context.getSource()))))
                         .then(Commands.literal("annihilator")
+                                .then(Commands.literal("summary")
+                                        .executes(context -> worldSavedDataAnnihilatorSummary(context.getSource())))
+                                .then(Commands.literal("summaryAll")
+                                        .executes(context -> worldSavedDataAnnihilatorSummaryAll(context.getSource())))
+                                .then(Commands.literal("load")
+                                        .executes(context -> worldSavedDataAnnihilatorLoad(context.getSource())))
                                 .then(Commands.literal("pools")
                                         .executes(context -> worldSavedDataAnnihilatorPools(context.getSource())))
                                 .then(Commands.literal("pool")
@@ -370,6 +395,22 @@ public final class ModCommands {
                                                                         context.getSource(),
                                                                         StringArgumentType.getString(context, "pool"),
                                                                         StringArgumentType.getString(context, "name"))))))))
+                        .then(Commands.literal("satellites")
+                                .then(Commands.literal("summary")
+                                        .executes(context -> worldSavedDataSatelliteSummary(context.getSource())))
+                                .then(Commands.literal("summaryAll")
+                                        .executes(context -> worldSavedDataSatelliteSummaryAll(context.getSource())))
+                                .then(Commands.literal("load")
+                                        .executes(context -> worldSavedDataSatelliteLoad(context.getSource())))
+                                .then(Commands.literal("types")
+                                        .executes(context -> worldSavedDataSatelliteTypes(context.getSource())))
+                                .then(Commands.literal("frequencies")
+                                        .executes(context -> worldSavedDataSatelliteFrequencies(
+                                                context.getSource(), 32))
+                                        .then(Commands.argument("limit", IntegerArgumentType.integer(1, 256))
+                                                .executes(context -> worldSavedDataSatelliteFrequencies(
+                                                        context.getSource(),
+                                                        IntegerArgumentType.getInteger(context, "limit"))))))
                         .then(Commands.literal("chunks")
                                 .then(Commands.literal("here")
                                         .executes(context -> worldSavedDataChunkStatus(
@@ -399,6 +440,49 @@ public final class ModCommands {
                                                 .executes(context -> worldSavedDataSubChunkStatus(
                                                         context.getSource(),
                                                         SubChunkKey.ofBlock(BlockPosArgument.getBlockPos(context, "pos"))))))
+                                .then(Commands.literal("count")
+                                        .then(Commands.argument("block", ResourceLocationArgument.id())
+                                                .suggests((context, builder) -> suggestBlockIds(context, builder))
+                                                .then(Commands.literal("block")
+                                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                                .executes(context -> worldSavedDataSubChunkBlockCount(
+                                                                        context.getSource(),
+                                                                        ResourceLocationArgument.getId(context, "block"),
+                                                                        "block",
+                                                                        List.of(SubChunkKey.ofBlock(
+                                                                                BlockPosArgument.getBlockPos(context, "pos")))))))
+                                                .then(Commands.literal("range")
+                                                        .then(Commands.argument("first", BlockPosArgument.blockPos())
+                                                                .then(Commands.argument("second", BlockPosArgument.blockPos())
+                                                                        .executes(context -> worldSavedDataSubChunkBlockCount(
+                                                                                context.getSource(),
+                                                                                ResourceLocationArgument.getId(context, "block"),
+                                                                                "range",
+                                                                                SubChunkKey.betweenBuildHeight(
+                                                                                        context.getSource().getLevel(),
+                                                                                        BlockPosArgument.getBlockPos(context, "first"),
+                                                                                        BlockPosArgument.getBlockPos(context, "second")))))))
+                                                .then(Commands.literal("sphere")
+                                                        .then(Commands.argument("radius", IntegerArgumentType.integer(0, 512))
+                                                                .executes(context -> worldSavedDataSubChunkBlockCount(
+                                                                        context.getSource(),
+                                                                        ResourceLocationArgument.getId(context, "block"),
+                                                                        "sphere",
+                                                                        SubChunkKey.aroundSphere(
+                                                                                context.getSource().getLevel(),
+                                                                                BlockPos.containing(context.getSource().getPosition()),
+                                                                                IntegerArgumentType.getInteger(context, "radius"))))))
+                                                .then(Commands.literal("sphereAt")
+                                                        .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                                                .then(Commands.argument("radius", IntegerArgumentType.integer(0, 512))
+                                                                        .executes(context -> worldSavedDataSubChunkBlockCount(
+                                                                                context.getSource(),
+                                                                                ResourceLocationArgument.getId(context, "block"),
+                                                                                "sphereAt",
+                                                                                SubChunkKey.aroundSphere(
+                                                                                        context.getSource().getLevel(),
+                                                                                        BlockPosArgument.getBlockPos(context, "pos"),
+                                                                                        IntegerArgumentType.getInteger(context, "radius")))))))))
                                 .then(Commands.literal("range")
                                         .then(Commands.argument("first", BlockPosArgument.blockPos())
                                                 .then(Commands.argument("second", BlockPosArgument.blockPos())
@@ -429,6 +513,19 @@ public final class ModCommands {
                                                                         BlockPosArgument.getBlockPos(context, "pos"),
                                                                         IntegerArgumentType.getInteger(context, "radius"))))))))
                         .then(Commands.literal("migrations")
+                                .then(Commands.literal("status")
+                                        .executes(context -> worldSavedDataMigrationStatus(context.getSource())))
+                                .then(Commands.literal("last")
+                                        .executes(context -> worldSavedDataMigrationLast(context.getSource())))
+                                .then(Commands.literal("marker")
+                                        .then(Commands.literal("absent")
+                                                .executes(context -> worldSavedDataMigrationMarker(
+                                                        context.getSource(), null)))
+                                        .then(Commands.literal("build")
+                                                .then(Commands.argument("previousBuild", IntegerArgumentType.integer(-1))
+                                                        .executes(context -> worldSavedDataMigrationMarker(
+                                                                context.getSource(),
+                                                                IntegerArgumentType.getInteger(context, "previousBuild"))))))
                                 .then(Commands.literal("resetDiagnostics")
                                         .executes(context -> resetWorldSavedDataMigrationDiagnostics(context.getSource())))));
     }
@@ -443,11 +540,8 @@ public final class ModCommands {
 
         source.sendSuccess(() -> Component.literal("World SavedData dimension=" + status.dimension()), false);
         if (status.hasTomImpact()) {
-            TomImpactSavedData.Snapshot snapshot = status.tomImpact();
-            source.sendSuccess(() -> Component.literal("impactData present dust=" + round(snapshot.dust())
-                    + " fire=" + round(snapshot.fire())
-                    + " impact=" + snapshot.impact()
-                    + " climate=" + snapshot.hasClimate()), false);
+            source.sendSuccess(() -> Component.literal("impactData present "
+                    + status.tomImpactSummary().detail()), false);
         } else {
             source.sendSuccess(() -> Component.literal("impactData absent"), false);
         }
@@ -455,16 +549,17 @@ public final class ModCommands {
                 ? "annihilator present pools=" + status.annihilatorPools()
                 + " entries=" + status.annihilatorEntries()
                 + " total=" + status.annihilatorTotalAmount()
+                + " keys=" + status.annihilatorSummary().keyKindCounts()
+                + " kindTotals=" + status.annihilatorSummary().keyKindTotals()
+                + " load={" + status.annihilatorSummary().loadDiagnostics().summary() + "}"
                 : "annihilator absent"), false);
         source.sendSuccess(() -> Component.literal(status.hasSatellites()
                 ? "satellites present entries=" + status.satelliteCount()
+                + " types=" + status.satelliteSummary().typeCounts()
+                + " frequencies=" + status.satelliteSummary().frequencies()
+                + " load={" + status.satelliteSummary().loadDiagnostics().summary() + "}"
                 : "satellites absent"), false);
-        source.sendSuccess(() -> Component.literal("chunk migrations currentBuild=" + migrations.currentBuild()
-                + " loaded=" + migrations.loadedChunks()
-                + " fresh=" + migrations.freshChunks()
-                + " upToDate=" + migrations.upToDateChunks()
-                + " migrated=" + migrations.migratedChunks()
-                + " saved=" + migrations.savedChunks()), false);
+        source.sendSuccess(() -> Component.literal("chunk migrations " + migrations.summary()), false);
         return status.presentDataCount();
     }
 
@@ -472,30 +567,61 @@ public final class ModCommands {
         WorldSavedDataDiagnostics.ServerStatus status = WorldSavedDataDiagnostics.inspect(source.getServer());
         source.sendSuccess(() -> Component.literal("World SavedData levels=" + status.levels().size()
                 + " levelsWithData=" + status.levelsWithDataCount()
-                + " presentData=" + status.presentDataCount()), false);
+                + " presentData=" + status.presentDataCount()
+                + " tomClimateDimensions=" + status.tomClimateDimensions()
+                + " annihilatorPools=" + status.totalAnnihilatorPools()
+                + " annihilatorEntries=" + status.totalAnnihilatorEntries()
+                + " annihilatorTotal=" + status.totalAnnihilatorAmount()
+                + " satellites=" + status.totalSatelliteCount()), false);
         for (WorldSavedDataDiagnostics.LevelStatus level : status.levels()) {
             source.sendSuccess(() -> Component.literal(level.summary()
-                    + " tomClimate=" + level.tomImpact().hasClimate()
-                    + " annihilatorPools=" + level.annihilatorPools()
-                    + " satellites=" + level.satelliteCount()), false);
+                    + " tom=" + level.tomImpactSummary().detail()
+                    + " annihilator=" + level.annihilatorSummary().detail()
+                    + " satellites=" + level.satelliteSummary().detail()), false);
         }
         BlockMigrationHelper.MigrationDiagnostics migrations = status.migrations();
-        source.sendSuccess(() -> Component.literal("chunk migrations currentBuild=" + migrations.currentBuild()
-                + " loaded=" + migrations.loadedChunks()
-                + " fresh=" + migrations.freshChunks()
-                + " upToDate=" + migrations.upToDateChunks()
-                + " migrated=" + migrations.migratedChunks()
-                + " saved=" + migrations.savedChunks()), false);
+        source.sendSuccess(() -> Component.literal("chunk migrations " + migrations.summary()), false);
         return status.presentDataCount();
+    }
+
+    private static int worldSavedDataHealth(CommandSourceStack source, ServerLevel level) {
+        WorldSavedDataDiagnostics.LevelHealthStatus health = WorldSavedDataDiagnostics.health(level);
+        source.sendSuccess(() -> Component.literal("World SavedData health "
+                + health.summary()
+                + " readOnly=true"), false);
+        health.issues().forEach(issue -> source.sendSuccess(() -> Component.literal(" ! " + issue), false));
+        return health.clean() ? 1 : 0;
+    }
+
+    private static int worldSavedDataHealthAll(CommandSourceStack source) {
+        WorldSavedDataDiagnostics.ServerHealthStatus health = WorldSavedDataDiagnostics.health(source.getServer());
+        source.sendSuccess(() -> Component.literal("World SavedData healthAll dimensions=" + health.levels().size()
+                + " cleanDimensions=" + health.cleanDimensions()
+                + " problemDimensions=" + health.problemDimensions()
+                + " totalProblems=" + health.totalProblems()
+                + " readOnly=true"), false);
+        for (WorldSavedDataDiagnostics.LevelHealthStatus level : health.levels()) {
+            if (!level.clean()) {
+                source.sendSuccess(() -> Component.literal(" ! " + level.summary()), false);
+                level.issues().forEach(issue -> source.sendSuccess(() -> Component.literal("   - "
+                        + level.dimension() + " " + issue), false));
+            }
+        }
+        return health.totalProblems();
     }
 
     private static int worldSavedDataKnownData(CommandSourceStack source, ServerLevel level) {
         List<WorldSavedDataDiagnostics.KnownDataStatus> entries = WorldSavedDataDiagnostics.knownData(level);
         long present = entries.stream().filter(WorldSavedDataDiagnostics.KnownDataStatus::present).count();
+        long primary = entries.stream().filter(entry -> entry.present() && entry.primary()).count();
+        long fallback = entries.stream().filter(WorldSavedDataDiagnostics.KnownDataStatus::fallback).count();
         source.sendSuccess(() -> Component.literal("World SavedData known dimension="
                 + level.dimension().location()
                 + " present=" + present
                 + "/" + entries.size()
+                + " primary=" + primary
+                + " fallback=" + fallback
+                + " absent=" + (entries.size() - present)
                 + " readOnly=true"), false);
         for (WorldSavedDataDiagnostics.KnownDataStatus entry : entries) {
             source.sendSuccess(() -> Component.literal(entry.summary()), false);
@@ -510,11 +636,74 @@ public final class ModCommands {
                 + status.dimensionCount()
                 + " present=" + status.presentCount()
                 + "/" + status.entries().size()
+                + " primary=" + status.primaryCount()
+                + " fallback=" + status.fallbackCount()
+                + " absent=" + status.absentCount()
                 + " readOnly=true"), false);
         for (WorldSavedDataDiagnostics.KnownDataStatus entry : status.entries()) {
             source.sendSuccess(() -> Component.literal(entry.summary()), false);
         }
         return (int) status.presentCount();
+    }
+
+    private static int worldSavedDataTomSummary(CommandSourceStack source) {
+        Optional<TomImpactSavedData> data = TomImpactSavedData.getExisting(source.getLevel());
+        if (data.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("impactData absent"), false);
+            return 0;
+        }
+        TomImpactSavedData tom = data.get();
+        source.sendSuccess(() -> Component.literal("impactData summary " + tom.snapshot().summary()
+                + " load={" + tom.loadDiagnostics().summary() + "}"
+                + " readOnly=true"), false);
+        return tom.snapshot().hasClimate() || tom.snapshot().impact() ? 1 : 0;
+    }
+
+    private static int worldSavedDataTomSummaryAll(CommandSourceStack source) {
+        WorldSavedDataDiagnostics.ServerStatus status = WorldSavedDataDiagnostics.inspect(source.getServer());
+        source.sendSuccess(() -> Component.literal("impactData summaryAll dimensions=" + status.levels().size()
+                + " climateDimensions=" + status.tomClimateDimensions()
+                + " readOnly=true"), false);
+        for (WorldSavedDataDiagnostics.LevelStatus level : status.levels()) {
+            if (level.hasTomImpact()) {
+                source.sendSuccess(() -> Component.literal(" - " + level.dimension()
+                        + " " + level.tomImpactSummary().detail()), false);
+            }
+        }
+        return (int) status.tomClimateDimensions();
+    }
+
+    private static int worldSavedDataTomCache(CommandSourceStack source) {
+        TomImpactSavedData cached = TomImpactSavedData.getLastCachedOrNull();
+        if (cached == null) {
+            source.sendSuccess(() -> Component.literal("impactData lastCached=null readOnly=true"), false);
+            return 0;
+        }
+        source.sendSuccess(() -> Component.literal("impactData lastCached "
+                + cached.snapshot().summary()
+                + " load={" + cached.loadDiagnostics().summary() + "}"
+                + " readOnly=true"), false);
+        return 1;
+    }
+
+    private static int worldSavedDataMigrationStatus(CommandSourceStack source) {
+        BlockMigrationHelper.MigrationDiagnostics migrations = BlockMigrationHelper.diagnostics();
+        source.sendSuccess(() -> Component.literal("chunk migrations " + migrations.summary()), false);
+        source.sendSuccess(() -> Component.literal("lastLoad " + migrations.lastLoadResult().summary()), false);
+        return (int) Math.min(Integer.MAX_VALUE, migrations.loadedChunks());
+    }
+
+    private static int worldSavedDataMigrationLast(CommandSourceStack source) {
+        BlockMigrationHelper.MigrationResult result = BlockMigrationHelper.diagnostics().lastLoadResult();
+        source.sendSuccess(() -> Component.literal("chunk migration lastLoad " + result.summary()), false);
+        return result.migrated() ? 1 : 0;
+    }
+
+    private static int worldSavedDataMigrationMarker(CommandSourceStack source, Integer previousBuild) {
+        BlockMigrationHelper.MigrationMarker marker = BlockMigrationHelper.inspectMarker(previousBuild);
+        source.sendSuccess(() -> Component.literal("chunk migration marker " + marker.summary()
+                + " readOnly=true"), false);
+        return marker.needsMigration() ? 1 : 0;
     }
 
     private static int resetWorldSavedDataMigrationDiagnostics(CommandSourceStack source) {
@@ -572,6 +761,7 @@ public final class ModCommands {
                     + " " + formatBlockState(sample.state())), false);
         }
         sendBlockStateCounts(source, "state", status.blockStateCounts(), 8);
+        sendBlockCounts(source, "block", status.blockCounts(), 8);
         return status.nonAirBlocks();
     }
 
@@ -605,7 +795,37 @@ public final class ModCommands {
                         + " validSection=" + status.validSection()
                         + " detail=" + status.detail()), false));
         sendBlockStateCounts(source, "state", report.blockStateCounts(), 8);
+        sendBlockCounts(source, "block", report.blockCounts(), 8);
         return report.nonEmptySubChunks();
+    }
+
+    private static int worldSavedDataSubChunkBlockCount(CommandSourceStack source, ResourceLocation blockId,
+                                                        String label, List<SubChunkKey> keys) {
+        Optional<Block> block = parseBlock(source, blockId);
+        if (block.isEmpty()) {
+            return 0;
+        }
+        int requested = keys.size();
+        List<SubChunkKey> scanned = requested > MAX_SUBCHUNK_DIAGNOSTIC_SCAN
+                ? keys.subList(0, MAX_SUBCHUNK_DIAGNOSTIC_SCAN) : keys;
+        SubChunkSnapshot.SnapshotBatch report = SubChunkSnapshot.inspectAll(source.getLevel(), scanned, false, 0);
+        int count = report.blockCount(block.get());
+        source.sendSuccess(() -> Component.literal("subchunk " + label
+                + " block=" + blockId
+                + " count=" + count
+                + " requested=" + requested
+                + " scanned=" + report.requestedSubChunks()
+                + " fullChunks=" + report.fullChunks()
+                + " validSections=" + report.validSections()
+                + " nonEmpty=" + report.nonEmptySubChunks()
+                + " noGeneration=true"
+                + (requested > scanned.size() ? " truncated=true" : "")), false);
+        report.statuses().stream()
+                .filter(status -> status.blockCount(block.get()) > 0)
+                .limit(8)
+                .forEach(status -> source.sendSuccess(() -> Component.literal(" - " + formatSubChunkKey(status.key())
+                        + " " + blockId + "=" + status.blockCount(block.get())), false));
+        return count;
     }
 
     private static String formatSubChunkKey(SubChunkKey key) {
@@ -617,6 +837,11 @@ public final class ModCommands {
         return key == null ? state.toString() : key + (state.getValues().isEmpty() ? "" : state.getValues().toString());
     }
 
+    private static String formatBlock(Block block) {
+        ResourceLocation key = ForgeRegistries.BLOCKS.getKey(block);
+        return key == null ? block.toString() : key.toString();
+    }
+
     private static void sendBlockStateCounts(CommandSourceStack source, String prefix,
                                              Map<net.minecraft.world.level.block.state.BlockState, Integer> counts,
                                              int limit) {
@@ -625,6 +850,15 @@ public final class ModCommands {
                 .limit(limit)
                 .forEach(entry -> source.sendSuccess(() -> Component.literal(" " + prefix + " "
                         + formatBlockState(entry.getKey()) + "=" + entry.getValue()), false));
+    }
+
+    private static void sendBlockCounts(CommandSourceStack source, String prefix, Map<Block, Integer> counts,
+                                        int limit) {
+        counts.entrySet().stream()
+                .sorted(Map.Entry.<Block, Integer>comparingByValue().reversed())
+                .limit(limit)
+                .forEach(entry -> source.sendSuccess(() -> Component.literal(" " + prefix + " "
+                        + formatBlock(entry.getKey()) + "=" + entry.getValue()), false));
     }
 
     private static CompletableFuture<Suggestions> suggestAnnihilatorPools(com.mojang.brigadier.context.CommandContext<CommandSourceStack> context,
@@ -643,6 +877,13 @@ public final class ModCommands {
                 builder);
     }
 
+    private static CompletableFuture<Suggestions> suggestBlockIds(com.mojang.brigadier.context.CommandContext<CommandSourceStack> context,
+                                                                  SuggestionsBuilder builder) {
+        return SharedSuggestionProvider.suggest(
+                ForgeRegistries.BLOCKS.getKeys().stream().map(ResourceLocation::toString),
+                builder);
+    }
+
     private static CompletableFuture<Suggestions> suggestHbmFluids(com.mojang.brigadier.context.CommandContext<CommandSourceStack> context,
                                                                    SuggestionsBuilder builder) {
         return SharedSuggestionProvider.suggest(HbmFluids.all().stream().map(FluidType::toPath), builder);
@@ -655,6 +896,39 @@ public final class ModCommands {
                         .filter(kind -> kind != AnnihilatorSavedData.Kind.UNKNOWN)
                         .map(AnnihilatorSavedData.Kind::commandName),
                 builder);
+    }
+
+    private static int worldSavedDataAnnihilatorSummary(CommandSourceStack source) {
+        Optional<AnnihilatorSavedData> data = AnnihilatorSavedData.getExisting(source.getLevel());
+        if (data.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("annihilator absent"), false);
+            return 0;
+        }
+        AnnihilatorSavedData annihilator = data.get();
+        source.sendSuccess(() -> Component.literal("annihilator summary pools=" + annihilator.poolCount()
+                + " entries=" + annihilator.poolEntryCount()
+                + " total=" + annihilator.totalAmount()
+                + " keys=" + annihilator.keyKindCounts()
+                + " kindTotals=" + annihilator.keyKindTotals()
+                + " readOnly=true"), false);
+        sendAnnihilatorPoolSummaries(source, annihilator.topPoolSummariesSnapshot(8));
+        return annihilator.poolCount();
+    }
+
+    private static int worldSavedDataAnnihilatorSummaryAll(CommandSourceStack source) {
+        WorldSavedDataDiagnostics.ServerStatus status = WorldSavedDataDiagnostics.inspect(source.getServer());
+        source.sendSuccess(() -> Component.literal("annihilator summaryAll dimensions=" + status.levels().size()
+                + " pools=" + status.totalAnnihilatorPools()
+                + " entries=" + status.totalAnnihilatorEntries()
+                + " total=" + status.totalAnnihilatorAmount()
+                + " readOnly=true"), false);
+        for (WorldSavedDataDiagnostics.LevelStatus level : status.levels()) {
+            if (level.hasAnnihilator()) {
+                source.sendSuccess(() -> Component.literal(" - " + level.dimension()
+                        + " " + level.annihilatorSummary().detail()), false);
+            }
+        }
+        return status.totalAnnihilatorPools();
     }
 
     private static int worldSavedDataAnnihilatorPools(CommandSourceStack source) {
@@ -675,6 +949,18 @@ public final class ModCommands {
                     + " kindTotals=" + annihilator.keyKindTotals(pool)), false);
         }
         return annihilator.poolCount();
+    }
+
+    private static int worldSavedDataAnnihilatorLoad(CommandSourceStack source) {
+        Optional<AnnihilatorSavedData> data = AnnihilatorSavedData.getExisting(source.getLevel());
+        if (data.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("annihilator absent"), false);
+            return 0;
+        }
+        AnnihilatorSavedData.LoadDiagnostics diagnostics = data.get().loadDiagnostics();
+        source.sendSuccess(() -> Component.literal("annihilator load " + diagnostics.summary()
+                + " readOnly=true"), false);
+        return diagnostics.clean() ? 1 : 0;
     }
 
     private static int worldSavedDataAnnihilatorPool(CommandSourceStack source, String pool) {
@@ -729,6 +1015,15 @@ public final class ModCommands {
                 + " shown=" + entries.size()), false);
         sendAnnihilatorEntries(source, entries);
         return entries.size();
+    }
+
+    private static void sendAnnihilatorPoolSummaries(CommandSourceStack source,
+                                                     List<AnnihilatorSavedData.PoolSummary> pools) {
+        pools.forEach(pool -> source.sendSuccess(() -> Component.literal(" - " + pool.name()
+                + " entries=" + pool.entries()
+                + " total=" + pool.totalAmount()
+                + " keys=" + pool.keyKindCounts()
+                + " kindTotals=" + pool.keyKindTotals()), false));
     }
 
     private static void sendAnnihilatorEntries(CommandSourceStack source,
@@ -796,6 +1091,85 @@ public final class ModCommands {
         return amount.signum() > 0 ? 1 : 0;
     }
 
+    private static int worldSavedDataSatelliteSummary(CommandSourceStack source) {
+        Optional<SatelliteSavedData> data = SatelliteSavedData.getExisting(source.getLevel());
+        if (data.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("satellites absent"), false);
+            return 0;
+        }
+        SatelliteSavedData satellites = data.get();
+        source.sendSuccess(() -> Component.literal("satellites summary entries=" + satellites.size()
+                + " types=" + satellites.typeCounts()
+                + " frequencies=" + satellites.frequenciesSnapshot(16)
+                + " readOnly=true"), false);
+        sendSatelliteSummaries(source, satellites.satelliteSummariesSnapshot(8));
+        return satellites.size();
+    }
+
+    private static int worldSavedDataSatelliteSummaryAll(CommandSourceStack source) {
+        WorldSavedDataDiagnostics.ServerStatus status = WorldSavedDataDiagnostics.inspect(source.getServer());
+        source.sendSuccess(() -> Component.literal("satellites summaryAll dimensions=" + status.levels().size()
+                + " entries=" + status.totalSatelliteCount()
+                + " readOnly=true"), false);
+        for (WorldSavedDataDiagnostics.LevelStatus level : status.levels()) {
+            if (level.hasSatellites()) {
+                source.sendSuccess(() -> Component.literal(" - " + level.dimension()
+                        + " " + level.satelliteSummary().detail()), false);
+            }
+        }
+        return status.totalSatelliteCount();
+    }
+
+    private static int worldSavedDataSatelliteLoad(CommandSourceStack source) {
+        Optional<SatelliteSavedData> data = SatelliteSavedData.getExisting(source.getLevel());
+        if (data.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("satellites absent"), false);
+            return 0;
+        }
+        SatelliteSavedData.LoadDiagnostics diagnostics = data.get().loadDiagnostics();
+        source.sendSuccess(() -> Component.literal("satellites load " + diagnostics.summary()
+                + " readOnly=true"), false);
+        return diagnostics.clean() ? 1 : 0;
+    }
+
+    private static int worldSavedDataSatelliteTypes(CommandSourceStack source) {
+        Optional<SatelliteSavedData> data = SatelliteSavedData.getExisting(source.getLevel());
+        if (data.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("satellites absent"), false);
+            return 0;
+        }
+        Map<LegacySatelliteType, Integer> counts = data.get().typeCounts();
+        source.sendSuccess(() -> Component.literal("satellites types=" + counts + " readOnly=true"), false);
+        return counts.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    private static int worldSavedDataSatelliteFrequencies(CommandSourceStack source, int limit) {
+        Optional<SatelliteSavedData> data = SatelliteSavedData.getExisting(source.getLevel());
+        if (data.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("satellites absent"), false);
+            return 0;
+        }
+        List<Integer> frequencies = data.get().frequenciesSnapshot(limit);
+        source.sendSuccess(() -> Component.literal("satellites frequencies limit=" + limit
+                + " shown=" + frequencies.size()
+                + " values=" + frequencies
+                + " readOnly=true"), false);
+        return frequencies.size();
+    }
+
+    private static void sendSatelliteSummaries(CommandSourceStack source,
+                                               List<SatelliteSavedData.SatelliteSummary> satellites) {
+        satellites.forEach(satellite -> source.sendSuccess(() -> Component.literal(" - freq="
+                + satellite.frequency()
+                + " id=" + satellite.legacyId()
+                + " name=" + satellite.legacyName()
+                + " interface=" + satellite.satelliteInterface()
+                + " interfaceActions=" + satellite.interfaceActions()
+                + " coordActions=" + satellite.coordActions()
+                + " cargo=" + satellite.cargoPool().orElse("")
+                + " lastOp=" + satellite.lastOperationMillis()), false));
+    }
+
     private static Optional<Item> parseItem(CommandSourceStack source, ResourceLocation id) {
         Item item = ForgeRegistries.ITEMS.getValue(id);
         if (item == null || item == Items.AIR) {
@@ -803,6 +1177,16 @@ public final class ModCommands {
             return Optional.empty();
         }
         return Optional.of(item);
+    }
+
+    private static Optional<Block> parseBlock(CommandSourceStack source, ResourceLocation id) {
+        Block block = ForgeRegistries.BLOCKS.getValue(id);
+        ResourceLocation key = block == null ? null : ForgeRegistries.BLOCKS.getKey(block);
+        if (block == null || key == null || !key.equals(id)) {
+            source.sendFailure(Component.literal("Unknown block: " + id));
+            return Optional.empty();
+        }
+        return Optional.of(block);
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> satelliteCommand(String name) {
@@ -3595,7 +3979,7 @@ public final class ModCommands {
         CompatCustomWarheadRegistry.Diagnostics warheadDiagnostics = CompatCustomWarheadRegistry.diagnostics();
         source.sendSuccess(() -> Component.literal("HBM compat integration status:"), false);
         source.sendSuccess(() -> Component.literal(" - optional mods loaded: "
-                + Compat.optionalModSummary(compatOptionalModIds())), false);
+                + CompatHandler.optionalCompatSummary()), false);
         source.sendSuccess(() -> Component.literal(" - " + recipeDiagnostics.summary()), false);
         source.sendSuccess(() -> Component.literal(" - recipe JSON facades: "
                 + String.join(", ", CompatRecipeRegistry.supportedRecipeFacades())), false);
@@ -3604,7 +3988,8 @@ public final class ModCommands {
         source.sendSuccess(() -> Component.literal(" - " + containerDiagnostics.summary()), false);
         source.sendSuccess(() -> Component.literal(" - " + turretDiagnostics.summary()), false);
         source.sendSuccess(() -> Component.literal(" - " + warheadDiagnostics.summary()), false);
-        source.sendSuccess(() -> Component.literal(" - computer/peripheral integrations: paused until explicitly requested."), false);
+        source.sendSuccess(() -> Component.literal(" - computer/peripheral integrations: "
+                + CompatHandler.computerIntegrationStatus() + "."), false);
         source.sendSuccess(() -> Component.literal(" - AE2 integration: deferred optional compatibility slice."), false);
         return recipeDiagnostics.listeners()
                 + fluidDiagnostics.listeners()
@@ -3621,7 +4006,8 @@ public final class ModCommands {
         for (String modId : modIds) {
             source.sendSuccess(() -> Component.literal(" - " + modId + ": " + Compat.isModLoaded(modId)), false);
         }
-        source.sendSuccess(() -> Component.literal("Computer/peripheral integrations: paused until explicitly requested."), false);
+        source.sendSuccess(() -> Component.literal("Computer/peripheral integrations: "
+                + CompatHandler.computerIntegrationStatus() + "."), false);
         source.sendSuccess(() -> Component.literal("AE2 integration: deferred optional compatibility slice."), false);
         source.sendSuccess(() -> Component.literal("Railcraft/Torcherino legacy hacks: disabled in modern compat."), false);
         return Compat.loadedModIds(modIds).size();
@@ -3699,19 +4085,7 @@ public final class ModCommands {
     }
 
     private static List<String> compatOptionalModIds() {
-        return List.of(
-                Compat.MOD_JEI,
-                Compat.MOD_AE2,
-                Compat.MOD_ENERGY_CONTROL,
-                Compat.MOD_GTCEU,
-                Compat.MOD_GREGTECH,
-                Compat.MOD_REACTORCRAFT,
-                Compat.MOD_ET_FUTURUM,
-                Compat.MOD_TCONSTRUCT,
-                Compat.MOD_GALACTICRAFT,
-                Compat.MOD_ADVANCED_ROCKETRY,
-                Compat.MOD_RAILCRAFT,
-                Compat.MOD_TORCHERINO);
+        return CompatHandler.optionalCompatModIds();
     }
 
     private static int getFluidForgeMappingStatus(CommandSourceStack source) {

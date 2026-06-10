@@ -54,7 +54,7 @@ public final class WorldSavedDataHelper {
 
     public static <T extends SavedData> T getWithFallback(ServerLevel level, String name,
             Function<CompoundTag, T> loader, Supplier<T> factory, String... fallbackNames) {
-        Optional<T> existing = getExistingWithFallback(level, name, loader, fallbackNames);
+        Optional<T> existing = promoteExistingWithFallback(level, name, loader, fallbackNames);
         if (existing.isPresent()) {
             return existing.get();
         }
@@ -63,13 +63,15 @@ public final class WorldSavedDataHelper {
 
     public static <T extends SavedData> Optional<T> getExistingWithFallback(ServerLevel level, String name,
             Function<CompoundTag, T> loader, String... fallbackNames) {
+        return findExistingWithFallback(level, name, loader, fallbackNames).map(ExistingDataLookup::data);
+    }
+
+    public static <T extends SavedData> Optional<T> promoteExistingWithFallback(ServerLevel level, String name,
+            Function<CompoundTag, T> loader, String... fallbackNames) {
         Optional<ExistingDataLookup<T>> lookup = findExistingWithFallback(level, name, loader, fallbackNames);
         if (lookup.isPresent()) {
             ExistingDataLookup<T> result = lookup.get();
-            if (!result.primary()) {
-                result.data().setDirty();
-                level.getDataStorage().set(name, result.data());
-            }
+            promoteLookup(level, name, result);
             return Optional.of(result.data());
         }
         return Optional.empty();
@@ -111,6 +113,16 @@ public final class WorldSavedDataHelper {
                 : findExistingWithFallback(level, name, loader, fallbackNames);
     }
 
+    public static <T extends SavedData> boolean promoteLookup(ServerLevel level, String name,
+            ExistingDataLookup<T> result) {
+        if (result == null || result.primary()) {
+            return false;
+        }
+        result.data().setDirty();
+        level.getDataStorage().set(name, result.data());
+        return true;
+    }
+
     public static <T extends SavedData> Optional<T> get(Level level, String name,
             Function<CompoundTag, T> loader, Supplier<T> factory) {
         if (!(level instanceof ServerLevel serverLevel)) {
@@ -146,6 +158,16 @@ public final class WorldSavedDataHelper {
 
         public boolean primary() {
             return requestedName.equals(foundName);
+        }
+
+        public String source() {
+            return primary() ? "primary" : "fallback";
+        }
+
+        public String summary() {
+            return "requested=" + requestedName
+                    + " found=" + foundName
+                    + " source=" + source();
         }
     }
 }

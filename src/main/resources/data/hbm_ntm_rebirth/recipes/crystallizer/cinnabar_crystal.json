@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 600,
+  "fluid": { "fluid": "PEROXIDE", "amount": 500 },
+  "input": { "ingredient": { "tag": "forge:crystals/cinnabar" } },
+  "output": { "item": "hbm_ntm_rebirth:nugget_mercury", "count": 3 },
+  "productivity": 0.25
+}

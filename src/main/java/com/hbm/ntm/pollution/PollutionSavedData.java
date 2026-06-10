@@ -11,11 +11,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class PollutionSavedData extends SavedData {
     public static final String DATA_NAME = "hbmpollution";
@@ -30,6 +32,7 @@ public class PollutionSavedData extends SavedData {
     private static final String TAG_CHUNK_Z = "chunkZ";
 
     private final Map<Long, PollutionSample> pollution = new HashMap<>();
+    private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
 
     public static PollutionSavedData load(CompoundTag tag) {
         PollutionSavedData data = new PollutionSavedData();
@@ -45,6 +48,7 @@ public class PollutionSavedData extends SavedData {
                 data.pollution.put(pos.toLong(), sample);
             }
         }
+        data.loadDiagnostics = LoadDiagnostics.inspect(tag);
         return data;
     }
 
@@ -490,6 +494,83 @@ public class PollutionSavedData extends SavedData {
 
     public boolean isEmpty() {
         return pollution.isEmpty();
+    }
+
+    public LoadDiagnostics loadDiagnostics() {
+        return loadDiagnostics;
+    }
+
+    public record LoadDiagnostics(boolean hasEntriesTag, int entries, int missingCoordinates,
+                                  int nonFiniteValues, int duplicateCells) {
+        public static LoadDiagnostics empty() {
+            return new LoadDiagnostics(false, 0, 0, 0, 0);
+        }
+
+        public static LoadDiagnostics inspect(CompoundTag tag) {
+            if (tag == null) {
+                return empty();
+            }
+            boolean hasEntries = tag.contains(TAG_ENTRIES, Tag.TAG_LIST);
+            ListTag entries = tag.getList(TAG_ENTRIES, Tag.TAG_COMPOUND);
+            int missingCoordinates = 0;
+            int nonFiniteValues = 0;
+            int duplicateCells = 0;
+            Set<Long> seen = new HashSet<>();
+            for (int i = 0; i < entries.size(); i++) {
+                CompoundTag entry = entries.getCompound(i);
+                if (!entry.contains(TAG_CHUNK_X) || !entry.contains(TAG_CHUNK_Z)) {
+                    missingCoordinates++;
+                }
+                long key = new PollutionGridPos(entry.getInt(TAG_CHUNK_X), entry.getInt(TAG_CHUNK_Z)).toLong();
+                if (!seen.add(key)) {
+                    duplicateCells++;
+                }
+                for (PollutionType type : PollutionType.orderedValues()) {
+                    String name = tagName(type);
+                    if (entry.contains(name) && !Float.isFinite(entry.getFloat(name))) {
+                        nonFiniteValues++;
+                    }
+                }
+            }
+            return new LoadDiagnostics(hasEntries, entries.size(), missingCoordinates, nonFiniteValues,
+                    duplicateCells);
+        }
+
+        public int problemCount() {
+            return (hasEntriesTag ? 0 : 1) + missingCoordinates + nonFiniteValues + duplicateCells;
+        }
+
+        public boolean clean() {
+            return problemCount() == 0;
+        }
+
+        public List<String> issues() {
+            List<String> issues = new ArrayList<>();
+            if (!hasEntriesTag) {
+                issues.add("missing_entries");
+            }
+            if (missingCoordinates > 0) {
+                issues.add("missing_coordinates=" + missingCoordinates);
+            }
+            if (nonFiniteValues > 0) {
+                issues.add("non_finite_values=" + nonFiniteValues);
+            }
+            if (duplicateCells > 0) {
+                issues.add("duplicate_cells=" + duplicateCells);
+            }
+            return List.copyOf(issues);
+        }
+
+        public String summary() {
+            return "hasEntries=" + hasEntriesTag
+                    + " entries=" + entries
+                    + " missingCoordinates=" + missingCoordinates
+                    + " nonFiniteValues=" + nonFiniteValues
+                    + " duplicateCells=" + duplicateCells
+                    + " problems=" + problemCount()
+                    + " issues=" + issues()
+                    + " clean=" + clean();
+        }
     }
 
     @FunctionalInterface

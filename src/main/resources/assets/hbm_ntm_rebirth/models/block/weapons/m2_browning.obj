@@ -1,6 +1,6 @@
 # Blender v2.82 (sub 7) OBJ File: 'M2_Browning.blend'
 # www.blender.org
-mtllib M2_Browning.mtl
+mtllib m2_browning.mtl
 o Cube_Cube.001
 v -0.292703 1.378147 2.654137
 v -0.292703 1.972637 2.654137

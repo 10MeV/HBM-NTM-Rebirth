@@ -48,6 +48,40 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
         return tanks.size();
     }
 
+    public List<HbmFluidTank> getVisibleTanks() {
+        return tanks;
+    }
+
+    public List<HbmFluidTank> getInputTanks() {
+        return inputTanks;
+    }
+
+    public List<HbmFluidTank> getOutputTanks() {
+        return outputTanks;
+    }
+
+    public AdapterSnapshot createSnapshot() {
+        return new AdapterSnapshot(
+                HbmFluidGuiHelper.snapshotTanks(tanks),
+                HbmFluidGuiHelper.snapshotTanks(inputTanks),
+                HbmFluidGuiHelper.snapshotTanks(outputTanks),
+                inputPressure,
+                canFill,
+                canDrain);
+    }
+
+    public int previewFill(FluidStack resource) {
+        return fill(resource, FluidAction.SIMULATE);
+    }
+
+    public FluidStack previewDrain(FluidStack resource) {
+        return drain(resource, FluidAction.SIMULATE);
+    }
+
+    public FluidStack previewDrain(int maxDrain) {
+        return drain(maxDrain, FluidAction.SIMULATE);
+    }
+
     @Override
     public FluidStack getFluidInTank(int tank) {
         if (!isValidTank(tank)) {
@@ -180,5 +214,14 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
             }
         }
         return List.copyOf(visible);
+    }
+
+    public record AdapterSnapshot(
+            HbmFluidGuiHelper.TankSetSnapshot visibleTanks,
+            HbmFluidGuiHelper.TankSetSnapshot inputTanks,
+            HbmFluidGuiHelper.TankSetSnapshot outputTanks,
+            int inputPressure,
+            boolean canFill,
+            boolean canDrain) {
     }
 }

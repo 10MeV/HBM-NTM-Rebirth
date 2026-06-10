@@ -9,6 +9,7 @@ import com.hbm.ntm.item.FluidPipeBlockItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
+import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
 import com.hbm.ntm.item.TrinketBlockItem;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
 import net.minecraft.core.registries.Registries;
@@ -91,11 +92,19 @@ public final class ModCreativeTabs {
                     })
                     .build());
 
+    public static final RegistryObject<CreativeModeTab> WEAPONS = CREATIVE_TABS.register("weapons",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.hbm_ntm_rebirth.weapons"))
+                    .icon(() -> ModItems.AMMO_STANDARD_G12.get().getDefaultInstance())
+                    .displayItems((parameters, output) -> ModItems.WEAPON_TAB_ITEMS.forEach(item -> acceptItem(output, item)))
+                    .build());
+
     public static final RegistryObject<CreativeModeTab> MISSILES = CREATIVE_TABS.register("missiles",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm_ntm_rebirth.missiles"))
-                    .icon(() -> ModItems.SAT_MAPPER.get().getDefaultInstance())
+                    .icon(() -> ModItems.MISSILE_GENERIC.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
+                        ModItems.MISSILE_TAB_ITEMS.forEach(item -> acceptItem(output, item));
                         ModItems.SATELLITE_TAB_ITEMS.forEach(item -> acceptItem(output, item));
                         ModBlocks.SATELLITE_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));
                     })
@@ -111,6 +120,8 @@ public final class ModCreativeTabs {
         }
         if (item instanceof TrinketBlockItem trinket) {
             TrinketBlockItem.addCreativeStacks(output, trinket);
+        } else if (item instanceof LegacyStateMultiblockBlockItem stateItem) {
+            stateItem.addCreativeStacks(output);
         } else if (item instanceof LegacyStateBlockItem stateItem) {
             stateItem.addCreativeStacks(output);
         } else {

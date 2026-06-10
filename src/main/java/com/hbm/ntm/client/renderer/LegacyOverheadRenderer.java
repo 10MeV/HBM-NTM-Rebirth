@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.LegacyLineRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.Font;
@@ -136,6 +137,20 @@ public final class LegacyOverheadRenderer {
                 770, 771);
     }
 
+    public static OverheadLineStatePlan thermalSightStatePlan() {
+        return lineStatePlan();
+    }
+
+    public static OverheadLineStatePlan markerStatePlan() {
+        return lineStatePlan();
+    }
+
+    public static TagStatePlan tagStatePlan(boolean disableDepthTest) {
+        return new TagStatePlan(false, false, !disableDepthTest, false, true,
+                LegacyTexturedRenderMode.BlendFunction.NORMAL_ALPHA, 770, 771, 1, 0,
+                true, true, true, true, true, 1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
     public static ActionPreviewPlan actionPreviewPlan(int offsetX, int offsetY, int offsetZ, boolean success) {
         return new ActionPreviewPlan(offsetX, offsetY, offsetZ, success,
                 success ? ACTION_PREVIEW_SUCCESS_COLOR : ACTION_PREVIEW_FAILURE_COLOR,
@@ -249,6 +264,28 @@ public final class LegacyOverheadRenderer {
             boolean depthWriteEnabled,
             int blendSrc,
             int blendDst) {
+    }
+
+    public record TagStatePlan(
+            boolean lightingEnabled,
+            boolean depthWrite,
+            boolean depthTestEnabled,
+            boolean textureEnabledForBackground,
+            boolean blendEnabled,
+            LegacyTexturedRenderMode.BlendFunction blendFunction,
+            int blendSrcRgb,
+            int blendDstRgb,
+            int blendSrcAlpha,
+            int blendDstAlpha,
+            boolean restoreTexture,
+            boolean restoreDepthWrite,
+            boolean restoreDepthTest,
+            boolean restoreLighting,
+            boolean restoreBlend,
+            float restoreRed,
+            float restoreGreen,
+            float restoreBlue,
+            float restoreAlpha) {
     }
 
     public record ActionPreviewPlan(

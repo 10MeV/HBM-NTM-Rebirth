@@ -1,5 +1,27 @@
 {
   "variants": {
-    "": { "model": "hbm_ntm_rebirth:block/block_semtex" }
+    "facing=down": {
+      "model": "hbm_ntm_rebirth:block/block_semtex",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/block_semtex",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/block_semtex"
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/block_semtex",
+      "y": 180
+    },
+    "facing=up": {
+      "model": "hbm_ntm_rebirth:block/block_semtex",
+      "x": 270
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/block_semtex",
+      "y": 270
+    }
   }
 }

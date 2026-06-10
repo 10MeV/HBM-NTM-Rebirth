@@ -15,6 +15,7 @@ import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmInventoryUtil;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -28,7 +29,6 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,10 +274,7 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
         if (items == null) {
             return false;
         }
-        ItemStack existing = items.getStackInSlot(SLOT_OUTPUT);
-        return existing.isEmpty()
-                || ItemHandlerHelper.canItemStacksStack(existing, stack)
-                && existing.getCount() + stack.getCount() <= Math.min(existing.getMaxStackSize(), items.getSlotLimit(SLOT_OUTPUT));
+        return HbmInventoryUtil.doesHandlerHaveSpaceUnchecked(items, SLOT_OUTPUT, SLOT_OUTPUT, stack);
     }
 
     private void addOutput(ItemStack stack) {
@@ -285,14 +282,7 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
         if (items == null || stack.isEmpty()) {
             return;
         }
-        ItemStack existing = items.getStackInSlot(SLOT_OUTPUT);
-        if (existing.isEmpty()) {
-            items.setStackInSlot(SLOT_OUTPUT, stack.copy());
-            return;
-        }
-        ItemStack merged = existing.copy();
-        merged.grow(stack.getCount());
-        items.setStackInSlot(SLOT_OUTPUT, merged);
+        HbmInventoryUtil.tryAddItemToHandlerUnchecked(items, SLOT_OUTPUT, SLOT_OUTPUT, stack);
     }
 
     private static final class CokerExternalItemHandler implements IItemHandler {

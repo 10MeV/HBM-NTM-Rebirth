@@ -1,9 +1,11 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.config.SteamTurbineConfig;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -27,18 +29,7 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
         implements HbmStandardFluidReceiver, HbmStandardFluidSender {
     public static final int INPUT_TANK = 0;
     public static final int OUTPUT_TANK = 1;
-    private static final long MAX_POWER = 1_000_000L;
-    private static final int INPUT_TANK_SIZE = 64_000;
-    private static final int OUTPUT_TANK_SIZE = 128_000;
-    private static final int MAX_STEAM_PER_TICK = 6_000;
-    private static final double EFFICIENCY = 0.85D;
-    private static final List<FluidPort> FLUID_PORTS = List.of(
-            FluidPort.of(0, -1, 0, Direction.DOWN),
-            FluidPort.of(0, 1, 0, Direction.UP),
-            FluidPort.of(0, 0, -1, Direction.NORTH),
-            FluidPort.of(0, 0, 1, Direction.SOUTH),
-            FluidPort.of(-1, 0, 0, Direction.WEST),
-            FluidPort.of(1, 0, 0, Direction.EAST));
+    private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.allAdjacent();
 
     private final HbmFluidTank inputTank;
     private final HbmFluidTank outputTank;
@@ -48,9 +39,10 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
     private long lastPowerProduced;
 
     public SteamTurbineBlockEntity(BlockPos pos, BlockState state) {
-        this(pos, state, new HbmEnergyStorage(MAX_POWER, 0L, MAX_POWER),
-                new HbmFluidTank(HbmFluids.STEAM, INPUT_TANK_SIZE),
-                new HbmFluidTank(HbmFluids.SPENTSTEAM, OUTPUT_TANK_SIZE));
+        this(pos, state, new HbmEnergyStorage(SteamTurbineConfig.steamTurbineMaxPower(), 0L,
+                        SteamTurbineConfig.steamTurbineMaxPower()),
+                new HbmFluidTank(HbmFluids.STEAM, SteamTurbineConfig.steamTurbineInputTankSize()),
+                new HbmFluidTank(HbmFluids.SPENTSTEAM, SteamTurbineConfig.steamTurbineOutputTankSize()));
     }
 
     private SteamTurbineBlockEntity(BlockPos pos, BlockState state, HbmEnergyStorage energy, HbmFluidTank inputTank,
@@ -65,6 +57,7 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
             return;
         }
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, turbine);
+        turbine.normalizeConfigState();
         turbine.age = (turbine.age + 1) % 2;
         turbine.energy.setPower((long) (turbine.energy.getPower() * 0.95D));
         HbmTurbineConversion.prepareOutputTank(turbine.inputTank, turbine.outputTank);
@@ -88,7 +81,16 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private TurbineResult runTurbine() {
-        return HbmTurbineConversion.run(inputTank, outputTank, EFFICIENCY, MAX_STEAM_PER_TICK, false);
+        return HbmTurbineConversion.run(inputTank, outputTank, SteamTurbineConfig.steamTurbineEfficiency(),
+                SteamTurbineConfig.steamTurbineMaxSteamPerTick(), false);
+    }
+
+    private void normalizeConfigState() {
+        long maxPower = SteamTurbineConfig.steamTurbineMaxPower();
+        energy.setMaxPower(maxPower);
+        energy.setTransferRates(0L, maxPower);
+        inputTank.changeTankSize(SteamTurbineConfig.steamTurbineInputTankSize());
+        outputTank.changeTankSize(SteamTurbineConfig.steamTurbineOutputTankSize());
     }
 
     public HbmFluidTank getInputTank() {
@@ -196,6 +198,7 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        normalizeConfigState();
         age = Math.floorMod(tag.getInt("age"), 2);
         lastInputUsed = Math.max(0, tag.getInt("lastInputUsed"));
         lastOutputProduced = Math.max(0, tag.getInt("lastOutputProduced"));

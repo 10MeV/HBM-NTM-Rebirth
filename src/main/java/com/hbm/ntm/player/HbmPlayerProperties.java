@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.armor.ArmorModItems;
 import com.hbm.ntm.api.item.ArmorDashProvider;
+import com.hbm.ntm.item.FsbArmorItem;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.registry.ModSounds;
@@ -405,6 +406,10 @@ public final class HbmPlayerProperties {
 
     private static int getArmorModDashCount(Player player) {
         int dashCount = 0;
+        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        if (chest.getItem() instanceof FsbArmorItem fsb && fsb.hasFullSet(player)) {
+            dashCount += fsb.getDashes();
+        }
         for (ItemStack armor : player.getArmorSlots()) {
             if (!(armor.getItem() instanceof ArmorItem) || !ArmorModHandler.hasMods(armor)) {
                 continue;

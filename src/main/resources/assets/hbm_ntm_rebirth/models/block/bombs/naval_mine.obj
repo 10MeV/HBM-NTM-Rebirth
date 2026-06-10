@@ -1,6 +1,6 @@
 # Blender 4.0.2
 # www.blender.org
-mtllib NMine.mtl
+mtllib nmine.mtl
 o Cylinder
 v 0.000000 -0.062500 -0.937500
 v 0.000000 0.062500 -0.937500

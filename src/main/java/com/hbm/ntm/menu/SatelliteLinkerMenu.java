@@ -45,7 +45,8 @@ public class SatelliteLinkerMenu extends AbstractContainerMenu {
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END, 0, MACHINE_SLOT_COUNT);
+                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
+                SatelliteLinkerBlockEntity.SLOT_SOURCE, SatelliteLinkerBlockEntity.SLOT_SOURCE + 1);
     }
 
     private static SatelliteLinkerBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

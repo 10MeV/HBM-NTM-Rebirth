@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.entity.RadarScanProvider;
 import com.hbm.ntm.api.entity.RadarScanResult;
+import com.hbm.ntm.api.entity.RadarScreenDisplayProfile;
 import com.hbm.ntm.api.entity.RadarScreenSnapshot;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -25,15 +26,19 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
         if (level.isClientSide) {
             return;
         }
-        if (screen.snapshot.linked() || !screen.snapshot.entries().isEmpty()) {
+        if (RadarScreenDisplayProfile.shouldSyncBeforeReset(screen.snapshot)) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
-        screen.snapshot = RadarScreenSnapshot.UNLINKED;
+        screen.snapshot = RadarScreenDisplayProfile.resetAfterServerTick(screen.snapshot);
         screen.setChanged();
     }
 
     public void receiveRadarUpdate(RadarBlockEntity radar) {
-        snapshot = RadarScreenSnapshot.linked(radar.getBlockPos(), radar.getRange(), radar.getEntries());
+        receiveRadarSnapshot(RadarScreenSnapshot.linked(radar.getBlockPos(), radar.getRange(), radar.getEntries()));
+    }
+
+    public void receiveRadarSnapshot(RadarScreenSnapshot snapshot) {
+        this.snapshot = snapshot != null ? snapshot : RadarScreenSnapshot.UNLINKED;
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
@@ -59,13 +64,7 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
 
     @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(
-                worldPosition.getX() - 1.0D,
-                worldPosition.getY() - 1.0D,
-                worldPosition.getZ() - 1.0D,
-                worldPosition.getX() + 2.0D,
-                worldPosition.getY() + 2.0D,
-                worldPosition.getZ() + 2.0D);
+        return RadarScreenDisplayProfile.renderBoundingBox(worldPosition);
     }
 
     @Override

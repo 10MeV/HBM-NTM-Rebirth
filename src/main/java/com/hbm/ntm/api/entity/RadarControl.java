@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 public enum RadarControl {
@@ -59,7 +60,19 @@ public enum RadarControl {
         return Arrays.stream(values()).filter(control -> tag.contains(control.legacyKey)).findFirst();
     }
 
+    public static List<RadarControl> controlsFromTag(CompoundTag tag) {
+        if (tag == null) {
+            return List.of();
+        }
+        if (tag.contains(TAG_CONTROL, Tag.TAG_INT)) {
+            return byId(tag.getInt(TAG_CONTROL)).stream().toList();
+        }
+        return Arrays.stream(values())
+                .filter(control -> tag.contains(control.legacyKey))
+                .toList();
+    }
+
     public static boolean isControlTag(CompoundTag tag) {
-        return fromTag(tag).isPresent();
+        return !controlsFromTag(tag).isEmpty();
     }
 }

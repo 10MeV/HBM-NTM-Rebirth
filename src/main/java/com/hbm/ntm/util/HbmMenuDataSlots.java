@@ -54,6 +54,34 @@ public final class HbmMenuDataSlots {
         });
     }
 
+    public static void addInt(DataSlotSink sink, IntGetter serverGetter, IntSetter setter) {
+        sink.add(new DataSlot() {
+            @Override
+            public int get() {
+                return serverGetter.get();
+            }
+
+            @Override
+            public void set(int value) {
+                setter.set(value);
+            }
+        });
+    }
+
+    public static void addBoolean(DataSlotSink sink, BooleanGetter serverGetter, BooleanSetter setter) {
+        sink.add(new DataSlot() {
+            @Override
+            public int get() {
+                return serverGetter.get() ? 1 : 0;
+            }
+
+            @Override
+            public void set(int value) {
+                setter.set(value != 0);
+            }
+        });
+    }
+
     public static void addProgress(DataSlotSink sink, DoubleGetter serverGetter, IntSetter setter) {
         sink.add(new DataSlot() {
             @Override
@@ -79,6 +107,11 @@ public final class HbmMenuDataSlots {
     }
 
     @FunctionalInterface
+    public interface IntGetter {
+        int get();
+    }
+
+    @FunctionalInterface
     public interface DoubleGetter {
         double get();
     }
@@ -86,6 +119,16 @@ public final class HbmMenuDataSlots {
     @FunctionalInterface
     public interface IntSetter {
         void set(int value);
+    }
+
+    @FunctionalInterface
+    public interface BooleanGetter {
+        boolean get();
+    }
+
+    @FunctionalInterface
+    public interface BooleanSetter {
+        void set(boolean value);
     }
 
     @FunctionalInterface

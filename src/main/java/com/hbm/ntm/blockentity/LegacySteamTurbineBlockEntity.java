@@ -58,6 +58,7 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
             return;
         }
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, turbine);
+        turbine.normalizeConfigState();
         HbmTurbineConversion.prepareOutputTank(turbine.inputTank, turbine.outputTank);
 
         turbine.beforeTurbineTick();
@@ -100,6 +101,14 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
     }
 
     protected void beforeTurbineTick() {
+    }
+
+    protected void normalizeConfigState() {
+    }
+
+    protected void normalizeTankCapacity(int inputCapacity, int outputCapacity) {
+        inputTank.changeTankSize(inputCapacity);
+        outputTank.changeTankSize(outputCapacity);
     }
 
     protected void tryProvideEnergy(Level level, BlockPos pos) {
@@ -242,6 +251,7 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        normalizeConfigState();
         lastInputUsed = Math.max(0, tag.getInt("lastInputUsed"));
         lastOutputProduced = Math.max(0, tag.getInt("lastOutputProduced"));
         lastPowerProduced = Math.max(0L, tag.getLong("lastPowerProduced"));

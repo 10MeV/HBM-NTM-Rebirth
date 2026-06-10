@@ -183,18 +183,10 @@ public class ChemicalFactoryMenu extends AbstractContainerMenu {
         }
         waterTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getWaterTank());
         spentSteamTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getSpentSteamTank());
-        addDataSlot(new net.minecraft.world.inventory.DataSlot() {
-            @Override
-            public int get() {
-                return blockEntity.getWaterTank().getFill() >= 100
-                        && blockEntity.getSpentSteamTank().getFill() <= blockEntity.getSpentSteamTank().getMaxFill() - 100 ? 1 : 0;
-            }
-
-            @Override
-            public void set(int value) {
-                canCool = value;
-            }
-        });
+        HbmMenuDataSlots.addBoolean(this::addDataSlot,
+                () -> blockEntity.getWaterTank().getFill() >= 100
+                        && blockEntity.getSpentSteamTank().getFill() <= blockEntity.getSpentSteamTank().getMaxFill() - 100,
+                value -> canCool = value ? 1 : 0);
     }
 
     private static ChemicalFactoryBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

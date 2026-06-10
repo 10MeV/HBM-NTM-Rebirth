@@ -1,8 +1,10 @@
 package com.hbm.ntm.satellite;
 
+import com.hbm.ntm.itempool.HbmItemPoolIds;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public enum LegacySatelliteType {
@@ -45,6 +47,18 @@ public enum LegacySatelliteType {
 
     public Satellite.SatelliteInterface satelliteInterface() {
         return satelliteInterface;
+    }
+
+    public Optional<String> cargoPool() {
+        return Satellite.cargoPoolForType(this);
+    }
+
+    Optional<String> defaultCargoPool() {
+        return switch (this) {
+            case MINER -> Optional.of(HbmItemPoolIds.POOL_SAT_MINER);
+            case LUNAR_MINER -> Optional.of(HbmItemPoolIds.POOL_SAT_LUNAR);
+            default -> Optional.empty();
+        };
     }
 
     public static LegacySatelliteType byLegacyId(int legacyId) {

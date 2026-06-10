@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.config.SteamEngineConfig;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
@@ -29,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         implements HbmStandardFluidReceiver, HbmStandardFluidSender {
     private static final long MAX_POWER = 1_000_000L;
-    private static final int STEAM_CAPACITY = 2_000;
-    private static final int SPENT_STEAM_CAPACITY = 20;
-    private static final double EFFICIENCY = 0.85D;
 
     private final HbmFluidTank steamTank;
     private final HbmFluidTank spentSteamTank;
@@ -41,8 +39,8 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public SteamEngineBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmEnergyStorage(MAX_POWER, 0L, MAX_POWER),
-                new HbmFluidTank(HbmFluids.STEAM, STEAM_CAPACITY),
-                new HbmFluidTank(HbmFluids.SPENTSTEAM, SPENT_STEAM_CAPACITY));
+                new HbmFluidTank(HbmFluids.STEAM, SteamEngineConfig.steamCapacity()),
+                new HbmFluidTank(HbmFluids.SPENTSTEAM, SteamEngineConfig.spentSteamCapacity()));
     }
 
     private SteamEngineBlockEntity(BlockPos pos, BlockState state, HbmEnergyStorage energy,
@@ -59,6 +57,7 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, engine);
         engine.steamTank.setTankType(HbmFluids.STEAM);
         engine.spentSteamTank.setTankType(HbmFluids.SPENTSTEAM);
+        engine.normalizeConfigCapacity();
         engine.energy.setPower(0L);
 
         TurbineResult result = engine.runConversion();
@@ -88,7 +87,12 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private TurbineResult runConversion() {
-        return HbmTurbineConversion.run(steamTank, spentSteamTank, EFFICIENCY, Integer.MAX_VALUE, false);
+        return HbmTurbineConversion.run(steamTank, spentSteamTank, SteamEngineConfig.efficiency(), Integer.MAX_VALUE, false);
+    }
+
+    private void normalizeConfigCapacity() {
+        steamTank.changeTankSize(SteamEngineConfig.steamCapacity());
+        spentSteamTank.changeTankSize(SteamEngineConfig.spentSteamCapacity());
     }
 
     public HbmFluidTank getSteamTank() {
@@ -221,6 +225,7 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        normalizeConfigCapacity();
         rotor = tag.getFloat("rotor");
         acceleration = Math.max(0.0F, tag.getFloat("acceleration"));
         lastPowerProduced = Math.max(0L, tag.getLong("lastPowerProduced"));

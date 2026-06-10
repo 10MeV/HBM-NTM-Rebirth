@@ -9,12 +9,18 @@ import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.Level.ExplosionInteraction;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class ToolAreaAbilities {
+    private static final TagKey<Block> REDSTONE_ORES = TagKey.create(Registries.BLOCK, new ResourceLocation("forge", "ores/redstone"));
+
     public static final IToolAreaAbility NONE = new BaseAreaAbility("", 0) {
         @Override
         public boolean onDig(int level, ToolDigContext context) {
@@ -142,10 +148,10 @@ public final class ToolAreaAbilities {
     }
 
     private static boolean isSameBlock(BlockState state, BlockState reference) {
-        if (state == reference || state.equals(reference)) {
+        if (state.equals(reference)) {
             return true;
         }
-        return state.is(reference.getBlock());
+        return state.is(REDSTONE_ORES) && reference.is(REDSTONE_ORES);
     }
 
     private static List<BlockPos> createOffsets() {

@@ -34,6 +34,7 @@ public class SoyuzCapsuleEntity extends Entity {
     public SoyuzCapsuleEntity(EntityType<? extends SoyuzCapsuleEntity> type, Level level) {
         super(type, level);
         setNoGravity(true);
+        noCulling = true;
     }
 
     public SoyuzCapsuleEntity(Level level) {
@@ -50,7 +51,7 @@ public class SoyuzCapsuleEntity extends Entity {
         super.tick();
 
         if (getDeltaMovement().y > -0.2D) {
-            setDeltaMovement(0.0D, getDeltaMovement().y - 0.01D, 0.0D);
+            setDeltaMovement(0.0D, getDeltaMovement().y - 0.02D, 0.0D);
         } else {
             setDeltaMovement(0.0D, -0.2D, 0.0D);
         }

@@ -1,19 +1,22 @@
 package com.hbm.ntm.item;
 
-import com.hbm.ntm.api.item.GasMask;
+import api.hbm.item.IGasMask;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.ArmorUtil;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
-public class HazmatArmorItem extends ArmorItem implements GasMask {
+public class HazmatArmorItem extends ArmorItem implements IGasMask {
     public HazmatArmorItem(ArmorMaterial material, Type type, Properties properties) {
         super(material, type, properties);
     }
@@ -30,7 +33,7 @@ public class HazmatArmorItem extends ArmorItem implements GasMask {
 
     @Override
     public boolean isFilterApplicable(ItemStack stack, LivingEntity entity, ItemStack filter) {
-        return filter != null && !filter.isEmpty();
+        return true;
     }
 
     @Override
@@ -49,5 +52,20 @@ public class HazmatArmorItem extends ArmorItem implements GasMask {
         if (getType() == Type.HELMET) {
             ArmorUtil.addGasMaskTooltip(stack, null, tooltip, flag);
         }
+    }
+
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (getType() == Type.HELMET && player.isShiftKeyDown()) {
+            ItemStack filter = getFilter(stack, player);
+            if (!filter.isEmpty()) {
+                if (!level.isClientSide) {
+                    ArmorUtil.removeGasMaskFilterToInventory(stack, player);
+                }
+                return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+            }
+        }
+        return super.use(level, player, hand);
     }
 }

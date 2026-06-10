@@ -1,6 +1,7 @@
 package com.hbm.ntm.api.entity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 
@@ -55,6 +56,30 @@ public record RadarScreenSnapshot(boolean linked, BlockPos refPos, int range, Li
         List<RadarEntry> entries = tag.contains(TAG_ENTRIES, Tag.TAG_LIST)
                 ? RadarEntry.readList(tag.getList(TAG_ENTRIES, Tag.TAG_COMPOUND))
                 : List.of();
+        return new RadarScreenSnapshot(linked, refPos, range, entries);
+    }
+
+    public void writeLegacyWire(FriendlyByteBuf buffer) {
+        buffer.writeBoolean(linked);
+        buffer.writeInt(refPos.getX());
+        buffer.writeInt(refPos.getY());
+        buffer.writeInt(refPos.getZ());
+        buffer.writeInt(range);
+        buffer.writeInt(entries.size());
+        for (RadarEntry entry : entries) {
+            entry.writeLegacyWire(buffer);
+        }
+    }
+
+    public static RadarScreenSnapshot readLegacyWire(FriendlyByteBuf buffer) {
+        boolean linked = buffer.readBoolean();
+        BlockPos refPos = new BlockPos(buffer.readInt(), buffer.readInt(), buffer.readInt());
+        int range = buffer.readInt();
+        int count = Math.max(0, buffer.readInt());
+        java.util.ArrayList<RadarEntry> entries = new java.util.ArrayList<>(count);
+        for (int index = 0; index < count; index++) {
+            entries.add(RadarEntry.readLegacyWire(buffer));
+        }
         return new RadarScreenSnapshot(linked, refPos, range, entries);
     }
 

@@ -11,52 +11,12 @@
           "source_order": 5
         },
         {
-          "internal_name": "chem.meth",
-          "source_order": 41
-        },
-        {
-          "internal_name": "chem.meatprocessing",
-          "source_order": 43
-        },
-        {
-          "internal_name": "chem.coltancleaning",
-          "source_order": 55
-        },
-        {
-          "internal_name": "chem.coltancrystal",
-          "source_order": 57
-        },
-        {
-          "internal_name": "chem.cordite",
-          "source_order": 58
-        },
-        {
-          "internal_name": "chem.dynamite",
-          "source_order": 60
-        },
-        {
-          "internal_name": "chem.tnt",
-          "source_order": 61
-        },
-        {
-          "internal_name": "chem.tatb",
-          "source_order": 62
-        },
-        {
-          "internal_name": "chem.c4",
-          "source_order": 63
-        },
-        {
           "internal_name": "chem.laminate",
           "source_order": 65
-        },
-        {
-          "internal_name": "chem.balefire",
-          "source_order": 71
         }
       ],
-      "missing_count": 12,
-      "modern_count": 62,
+      "missing_count": 2,
+      "modern_count": 72,
       "present": [
         {
           "internal_name": "chem.hydrogen",
@@ -299,10 +259,22 @@
           "source_order": 40
         },
         {
+          "internal_name": "chem.meth",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/meth",
+          "modern_source_order": 41,
+          "source_order": 41
+        },
+        {
           "internal_name": "chem.epearl",
           "modern_id": "hbm_ntm_rebirth:chemical_plant/epearl",
           "modern_source_order": 42,
           "source_order": 42
+        },
+        {
+          "internal_name": "chem.meatprocessing",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/meat_processing",
+          "modern_source_order": 43,
+          "source_order": 43
         },
         {
           "internal_name": "chem.rustysteel",
@@ -371,16 +343,58 @@
           "source_order": 54
         },
         {
+          "internal_name": "chem.coltancleaning",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/coltan_cleaning",
+          "modern_source_order": 55,
+          "source_order": 55
+        },
+        {
           "internal_name": "chem.coltanpain",
           "modern_id": "hbm_ntm_rebirth:chemical_plant/coltanpain",
           "modern_source_order": 56,
           "source_order": 56
         },
         {
+          "internal_name": "chem.coltancrystal",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/coltan_crystal",
+          "modern_source_order": 57,
+          "source_order": 57
+        },
+        {
+          "internal_name": "chem.cordite",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/cordite",
+          "modern_source_order": 58,
+          "source_order": 58
+        },
+        {
           "internal_name": "chem.rocketfuel",
           "modern_id": "hbm_ntm_rebirth:chemical_plant/rocketfuel",
           "modern_source_order": 59,
           "source_order": 59
+        },
+        {
+          "internal_name": "chem.dynamite",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/dynamite",
+          "modern_source_order": 60,
+          "source_order": 60
+        },
+        {
+          "internal_name": "chem.tnt",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/tnt",
+          "modern_source_order": 61,
+          "source_order": 61
+        },
+        {
+          "internal_name": "chem.tatb",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/tatb",
+          "modern_source_order": 62,
+          "source_order": 62
+        },
+        {
+          "internal_name": "chem.c4",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/c4",
+          "modern_source_order": 63,
+          "source_order": 63
         },
         {
           "internal_name": "chem.napalm",
@@ -419,6 +433,12 @@
           "source_order": 70
         },
         {
+          "internal_name": "chem.balefire",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/balefire",
+          "modern_source_order": 71,
+          "source_order": 71
+        },
+        {
           "internal_name": "chem.dhc",
           "modern_id": "hbm_ntm_rebirth:chemical_plant/dhc",
           "modern_source_order": 72,
@@ -431,7 +451,7 @@
           "source_order": 73
         }
       ],
-      "present_count": 62,
+      "present_count": 72,
       "status": "checked"
     },
     {
@@ -1285,42 +1305,6 @@
           "source_order": 322
         },
         {
-          "internal_name": "ass.satellitebase",
-          "source_order": 323
-        },
-        {
-          "internal_name": "ass.satellitemapper",
-          "source_order": 324
-        },
-        {
-          "internal_name": "ass.satellitescanner",
-          "source_order": 325
-        },
-        {
-          "internal_name": "ass.satelliteradar",
-          "source_order": 326
-        },
-        {
-          "internal_name": "ass.satellitelaser",
-          "source_order": 327
-        },
-        {
-          "internal_name": "ass.satelliteresonator",
-          "source_order": 328
-        },
-        {
-          "internal_name": "ass.satelliterelay",
-          "source_order": 329
-        },
-        {
-          "internal_name": "ass.satelliteasteroidminer",
-          "source_order": 330
-        },
-        {
-          "internal_name": "ass.satellitelunarminer",
-          "source_order": 331
-        },
-        {
           "internal_name": "ass.nitra",
           "source_order": 332
         },
@@ -1329,8 +1313,8 @@
           "source_order": 334
         }
       ],
-      "missing_count": 222,
-      "modern_count": 387,
+      "missing_count": 213,
+      "modern_count": 396,
       "present": [
         {
           "internal_name": "ass.plateiron",
@@ -2005,13 +1989,67 @@
           "source_order": 158
         },
         {
+          "internal_name": "ass.satellitebase",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/satellite_base",
+          "modern_source_order": 2147483647,
+          "source_order": 323
+        },
+        {
+          "internal_name": "ass.satellitemapper",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/satellite_mapper",
+          "modern_source_order": 2147483647,
+          "source_order": 324
+        },
+        {
+          "internal_name": "ass.satellitescanner",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/satellite_scanner",
+          "modern_source_order": 2147483647,
+          "source_order": 325
+        },
+        {
+          "internal_name": "ass.satelliteradar",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/satellite_radar",
+          "modern_source_order": 2147483647,
+          "source_order": 326
+        },
+        {
+          "internal_name": "ass.satellitelaser",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/satellite_laser",
+          "modern_source_order": 2147483647,
+          "source_order": 327
+        },
+        {
+          "internal_name": "ass.satelliteresonator",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/satellite_resonator",
+          "modern_source_order": 2147483647,
+          "source_order": 328
+        },
+        {
+          "internal_name": "ass.satelliterelay",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/satellite_relay",
+          "modern_source_order": 2147483647,
+          "source_order": 329
+        },
+        {
+          "internal_name": "ass.satelliteasteroidminer",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/satellite_asteroid_miner",
+          "modern_source_order": 2147483647,
+          "source_order": 330
+        },
+        {
+          "internal_name": "ass.satellitelunarminer",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/satellite_lunar_miner",
+          "modern_source_order": 2147483647,
+          "source_order": 331
+        },
+        {
           "internal_name": "ass.emptypackage",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/emptypackage",
           "modern_source_order": 333,
           "source_order": 333
         }
       ],
-      "present_count": 113,
+      "present_count": 122,
       "status": "checked"
     }
   ],
