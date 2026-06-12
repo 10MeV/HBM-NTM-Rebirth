@@ -8,6 +8,9 @@ public final class RadarScreenDisplayProfile {
     public static final int LINKED_SYNC_DELAY_TICKS = 25;
     public static final double MAX_RENDER_DISTANCE_SQUARED = 65_536.0D;
     public static final int VIEW_DISTANCE = 256;
+    private static final int WORLD_SWEEP_PERIOD_TICKS = 56;
+    private static final double WORLD_SWEEP_SPEED_DIVISOR = 30.0D;
+    private static final long NOISE_TIME_MULTIPLIER = 31L;
 
     public static boolean shouldSyncBeforeReset(RadarScreenSnapshot snapshot) {
         return snapshot != null && (snapshot.linked() || !snapshot.entries().isEmpty());
@@ -15,6 +18,18 @@ public final class RadarScreenDisplayProfile {
 
     public static RadarScreenSnapshot resetAfterServerTick(RadarScreenSnapshot snapshot) {
         return RadarScreenSnapshot.UNLINKED;
+    }
+
+    public static ServerTickPlan serverTick(RadarScreenSnapshot snapshot) {
+        return new ServerTickPlan(shouldSyncBeforeReset(snapshot), resetAfterServerTick(snapshot));
+    }
+
+    public static double worldSweepOffset(long gameTime, float partialTick) {
+        return ((gameTime % WORLD_SWEEP_PERIOD_TICKS) + partialTick) / WORLD_SWEEP_SPEED_DIVISOR;
+    }
+
+    public static long worldNoiseSeed(long gameTime, BlockPos pos) {
+        return gameTime * NOISE_TIME_MULTIPLIER + (pos != null ? pos.asLong() : 0L);
     }
 
     public static AABB renderBoundingBox(BlockPos pos) {
@@ -25,6 +40,9 @@ public final class RadarScreenDisplayProfile {
                 pos.getX() + 2.0D,
                 pos.getY() + 2.0D,
                 pos.getZ() + 2.0D);
+    }
+
+    public record ServerTickPlan(boolean syncBeforeReset, RadarScreenSnapshot nextSnapshot) {
     }
 
     private RadarScreenDisplayProfile() {

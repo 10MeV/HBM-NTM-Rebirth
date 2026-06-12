@@ -5,6 +5,7 @@ import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import com.hbm.ntm.util.HbmTuple.Pair;
 import com.hbm.ntm.util.HbmWorldUtil;
 import net.minecraft.ChatFormatting;
@@ -497,13 +498,27 @@ public final class ArmorUtil {
         return wornMask.isPresent() ? wornMask.mask().getFilter(wornMask.maskStack(), entity) : ItemStack.EMPTY;
     }
 
+    public static boolean hasWornGasMask(LivingEntity entity) {
+        return getWornGasMask(entity).isPresent();
+    }
+
+    public static boolean hasWornGasMaskFilter(LivingEntity entity) {
+        return !getWornGasMaskFilter(entity).isEmpty();
+    }
+
+    public static boolean canInstallWornGasMaskFilter(LivingEntity entity, ItemStack filter) {
+        WornGasMask wornMask = getWornGasMask(entity);
+        return wornMask.isPresent() && filter != null && !filter.isEmpty()
+                && wornMask.mask().isFilterApplicable(wornMask.maskStack(), entity, filter);
+    }
+
     public static boolean installWornGasMaskFilter(LivingEntity entity, ItemStack filter) {
         WornGasMask wornMask = getWornGasMask(entity);
         if (!wornMask.isPresent() || filter == null || filter.isEmpty()
                 || !wornMask.mask().isFilterApplicable(wornMask.maskStack(), entity, filter)) {
             return false;
         }
-        wornMask.mask().installFilter(wornMask.maskStack(), entity, filter.copyWithCount(1));
+        wornMask.mask().installFilter(wornMask.maskStack(), entity, HbmItemStackUtil.carefulCopyWithSize(filter, 1));
         wornMask.persist();
         return true;
     }
@@ -516,7 +531,8 @@ public final class ArmorUtil {
         }
 
         ItemStack current = wornMask.mask().getFilter(wornMask.maskStack(), player);
-        wornMask.mask().installFilter(wornMask.maskStack(), player, heldFilter.copyWithCount(1));
+        wornMask.mask().installFilter(wornMask.maskStack(), player,
+                HbmItemStackUtil.carefulCopyWithSize(heldFilter, 1));
         wornMask.persist();
 
         if (current != null && !current.isEmpty()) {
@@ -542,19 +558,51 @@ public final class ArmorUtil {
         return filter;
     }
 
+    public static boolean removeWornGasMaskFilterToInventory(Player player) {
+        WornGasMask wornMask = getWornGasMask(player);
+        if (!wornMask.isPresent()) {
+            return false;
+        }
+        ItemStack filter = wornMask.mask().getFilter(wornMask.maskStack(), player);
+        if (filter == null || filter.isEmpty()) {
+            return false;
+        }
+        removeFilter(wornMask.maskStack());
+        wornMask.persist();
+        HbmItemStackUtil.giveOrDrop(player, filter, true);
+        return true;
+    }
+
     public static boolean removeGasMaskFilterToInventory(ItemStack mask, Player player) {
         if (player == null) {
             return false;
         }
-        ItemStack filter = getGasMaskFilter(mask);
+        ItemStack filter = removeGasMaskFilterRecursively(mask);
         if (filter.isEmpty()) {
             return false;
         }
-        removeFilter(mask);
-        if (!player.getInventory().add(filter)) {
-            player.drop(filter, true);
-        }
+        HbmItemStackUtil.giveOrDrop(player, filter, true);
         return true;
+    }
+
+    public static ItemStack removeGasMaskFilterRecursively(ItemStack mask) {
+        ItemStack filter = getGasMaskFilter(mask);
+        if (!filter.isEmpty()) {
+            removeFilter(mask);
+            return filter;
+        }
+        if (mask != null && !mask.isEmpty() && ArmorModHandler.hasMods(mask)) {
+            ItemStack mod = ArmorModHandler.pryMod(mask, ArmorModHandler.helmet_only);
+            if (!mod.isEmpty() && mod.getItem() instanceof GasMask) {
+                filter = getGasMaskFilter(mod);
+                if (!filter.isEmpty()) {
+                    removeFilter(mod);
+                    ArmorModHandler.applyMod(mask, mod);
+                    return filter;
+                }
+            }
+        }
+        return ItemStack.EMPTY;
     }
 
     public static ItemStack getGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
@@ -566,6 +614,30 @@ public final class ArmorUtil {
             }
         }
         return filter;
+    }
+
+    public static boolean hasGasMaskFilter(ItemStack mask) {
+        return !getGasMaskFilter(mask).isEmpty();
+    }
+
+    public static boolean hasGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
+        return !getGasMaskFilterRecursively(mask, entity).isEmpty();
+    }
+
+    public static boolean canInstallGasMaskFilter(ItemStack maskStack, LivingEntity entity, ItemStack filter) {
+        if (maskStack == null || maskStack.isEmpty() || filter == null || filter.isEmpty()) {
+            return false;
+        }
+        if (maskStack.getItem() instanceof GasMask mask) {
+            return mask.isFilterApplicable(maskStack, entity, filter);
+        }
+        if (ArmorModHandler.hasMods(maskStack)) {
+            ItemStack mod = ArmorModHandler.pryMod(maskStack, ArmorModHandler.helmet_only);
+            return !mod.isEmpty()
+                    && mod.getItem() instanceof GasMask mask
+                    && mask.isFilterApplicable(mod, entity, filter);
+        }
+        return false;
     }
 
     public static ItemStack getGasMaskFilter(ItemStack mask) {
@@ -583,7 +655,8 @@ public final class ArmorUtil {
         if (mask == null || mask.isEmpty() || filter == null || filter.isEmpty()) {
             return;
         }
-        mask.getOrCreateTag().put(FILTER_KEY, filter.copyWithCount(1).save(new CompoundTag()));
+        mask.getOrCreateTag().put(FILTER_KEY, HbmItemStackUtil.carefulCopyWithSize(filter, 1)
+                .save(new CompoundTag()));
     }
 
     public static void removeFilter(ItemStack mask) {

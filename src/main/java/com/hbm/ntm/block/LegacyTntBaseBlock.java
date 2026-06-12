@@ -177,7 +177,7 @@ public class LegacyTntBaseBlock extends Block implements ChainExplodable, Toolab
     @Override
     public void explodeEntity(Level level, Vec3 position, @Nullable Entity source) {
         if (!level.isClientSide) {
-            level.explode(source, position.x, position.y, position.z, kind.power(), true, Level.ExplosionInteraction.BLOCK);
+            level.explode(source, position.x, position.y, position.z, kind.power(), false, Level.ExplosionInteraction.BLOCK);
         }
     }
 

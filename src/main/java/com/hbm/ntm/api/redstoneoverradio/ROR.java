@@ -9,6 +9,10 @@ public final class ROR {
         return RORInfo.PREFIX_FUNCTION + name;
     }
 
+    public static String functionName(String name) {
+        return name != null && name.startsWith(RORInfo.PREFIX_FUNCTION) ? name : function(name);
+    }
+
     public static String functionInfo(String name, String params) {
         return params == null || params.isEmpty()
                 ? function(name)
@@ -19,7 +23,7 @@ public final class ROR {
         if (interactive == null) {
             throw new RORFunctionException(RORInteractive.EX_NULL);
         }
-        return interactive.runRORFunction(RORInteractive.getCommand(command), RORInteractive.getParams(command));
+        return interactive.runRORFunction(functionName(RORInteractive.getCommand(command)), RORInteractive.getParams(command));
     }
 
     private ROR() {

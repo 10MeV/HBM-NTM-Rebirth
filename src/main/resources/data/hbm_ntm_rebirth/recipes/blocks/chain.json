@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "S": {
+      "item": "hbm_ntm_rebirth:steel_beam"
+    }
+  },
+  "pattern": [
+    "S",
+    "S",
+    "S"
+  ],
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:chain"
+  },
+  "show_notification": true
+}

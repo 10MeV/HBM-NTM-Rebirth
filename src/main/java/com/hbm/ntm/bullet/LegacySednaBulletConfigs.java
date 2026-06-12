@@ -358,7 +358,7 @@ public final class LegacySednaBulletConfigs {
     public static final SednaBulletConfig NI4NI_ARC = register(SednaBulletConfig.builder("ni4ni_arc")
             .beam().damageClass(DamageClass.PHYSICAL).physics(0.0D, 5).armor(10.0F, 0.2F)
             .renderRotations(false).penetration(false).beamRenderer(BR_NI4NI_BOLT)
-            .behavior(SednaBehaviorTag.BEAM_HIT));
+            .behavior(SednaBehaviorTag.BEAM_HIT).behavior(SednaBehaviorTag.NI4NI_COIN_RICOCHET));
 
     public static final SednaBulletConfig NUKE_STANDARD = register(miniNuke("nuke_standard", "NUKE_STANDARD",
             3.0F, 0.0F, 1, 1.0F).renderer(R_NUKE).behavior(SednaBehaviorTag.MINI_NUKE_STANDARD));

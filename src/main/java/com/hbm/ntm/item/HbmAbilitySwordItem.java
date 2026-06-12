@@ -5,9 +5,11 @@ import com.google.common.collect.Multimap;
 import com.hbm.ntm.ability.AvailableAbilities;
 import com.hbm.ntm.ability.IWeaponAbility;
 import com.hbm.ntm.ability.WeaponHitContext;
+import com.hbm.ntm.registry.ModSounds;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -27,6 +29,7 @@ public class HbmAbilitySwordItem extends SwordItem {
     private final Multimap<Attribute, AttributeModifier> defaultModifiers;
     private final float attackDamage;
     private final double movementModifier;
+    private boolean playGavelHitSound;
 
     public HbmAbilitySwordItem(Tier tier, float attackDamageModifier, double movementModifier, Properties properties) {
         super(tier, 0, 0.0F, properties);
@@ -44,6 +47,11 @@ public class HbmAbilitySwordItem extends SwordItem {
 
     public HbmAbilitySwordItem addAbility(IWeaponAbility ability, int level) {
         availableAbilities.addAbility(ability, level);
+        return this;
+    }
+
+    public HbmAbilitySwordItem playGavelHitSound() {
+        this.playGavelHitSound = true;
         return this;
     }
 
@@ -66,6 +74,10 @@ public class HbmAbilitySwordItem extends SwordItem {
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity victim, LivingEntity attacker) {
         if (!attacker.level().isClientSide && attacker instanceof ServerPlayer player && canOperate(stack)) {
+            if (playGavelHitSound) {
+                attacker.level().playSound(null, victim.getX(), victim.getY(), victim.getZ(),
+                        ModSounds.WEAPON_WHACK.get(), SoundSource.PLAYERS, 3.0F, 1.0F);
+            }
             WeaponHitContext context = new WeaponHitContext(attacker.level(), player, victim, stack);
             availableAbilities.getWeaponAbilities().forEach((ability, level) -> ability.onHit(level, context));
         }

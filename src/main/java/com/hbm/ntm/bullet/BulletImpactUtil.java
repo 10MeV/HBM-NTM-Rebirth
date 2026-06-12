@@ -77,6 +77,7 @@ public final class BulletImpactUtil {
         boolean fire = applyIncendiaryBlocks(config, level, position);
         fire |= applyFlameBlockImpact(config, level, hitBlock, hitSide);
         boolean extinguish = applyFireExtinguishBlocks(config, level, hitBlock, position);
+        boolean extinguisherPlacement = applyFireExtinguisherPlacement(config, level, hitBlock, hitSide, position);
         boolean emp = applyEmp(config, level, position);
         boolean jolt = applyJolt(config, level, position);
         boolean explosion = applyExplosion(config, level, position, source);
@@ -90,7 +91,7 @@ public final class BulletImpactUtil {
                         impactDamage(config, impactDamage));
         BlockBreakResult blockBreak = applyBlockBreak(config, level, hitBlock, source);
         return new BlockImpactResult(discard, fire, emp, jolt, explosion, shrapnel, rainbow, nuke,
-                specialBehavior || extinguish,
+                specialBehavior || extinguish || extinguisherPlacement,
                 blockBreak.destroyedBlock() || blockBreak.brokeGlass() || blockBreak.shotDetonated(),
                 blockBreak.shotDetonated(), extinguish, spawnRequests);
     }
@@ -315,6 +316,26 @@ public final class BulletImpactUtil {
         return changed;
     }
 
+    private static boolean applyFireExtinguisherPlacement(BulletConfig config, Level level,
+            @Nullable BlockPos hitBlock, @Nullable Direction hitSide, Vec3 position) {
+        if (!hasAnyBehavior(config, BulletBehaviorTag.FIRE_EXTINGUISH_FOAM,
+                BulletBehaviorTag.FIRE_EXTINGUISH_SAND)) {
+            return false;
+        }
+        BlockPos target = hitBlock == null ? legacyFloorPos(position.x, position.y, position.z) : hitBlock;
+        if (hitSide != null && level.random.nextBoolean()) {
+            target = target.relative(hitSide);
+        }
+        BlockState placedState = config.hasBehavior(BulletBehaviorTag.FIRE_EXTINGUISH_FOAM)
+                ? ModBlocks.legacyBlock("block_foam").get().defaultBlockState()
+                : ModBlocks.SAND_BORON.get().defaultBlockState();
+        BlockState currentState = level.getBlockState(target);
+        if (!currentState.canBeReplaced() || !placedState.canSurvive(level, target)) {
+            return false;
+        }
+        return level.setBlock(target, placedState, 3);
+    }
+
     private static boolean isExtinguishableFire(BlockState state) {
         return state.is(Blocks.FIRE)
                 || state.is(Blocks.SOUL_FIRE)
@@ -489,7 +510,7 @@ public final class BulletImpactUtil {
         }
     }
 
-    private static void applyBatterySocketDischarge(Level level, Vec3 position, @Nullable Entity source) {
+    public static void applyBatterySocketDischarge(Level level, Vec3 position, @Nullable Entity source) {
         if (level == null || level.isClientSide() || position == null) {
             return;
         }

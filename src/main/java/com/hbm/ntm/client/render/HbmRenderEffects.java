@@ -150,15 +150,9 @@ public final class HbmRenderEffects {
         RenderSystem.enableCull();
 
         RenderSystem.setShader(() -> warpWorldShader);
-        warpWorldShader.setSampler("Sampler0", sceneCopy);
         warpWorldShader.setSampler("ScreenTexture", sceneCopy);
-        warpWorldShader.setSampler("TargetTexture", sceneCopy);
         setUniform("useType", 1);
-        setUniform("screenSize", (float) mainTarget.viewWidth, (float) mainTarget.viewHeight);
         setUniform("time", time);
-        setUniform("ColorModulator", 1.0F, 1.0F, 1.0F, 1.0F);
-        setUniform("uColor", 0.0F, 0.0F, 0.0F, 0.0F);
-        setUniform("uType", 0);
 
         boolean debugWireframe = debugWireframe();
         for (Shockwave shockwave : ACTIVE) {

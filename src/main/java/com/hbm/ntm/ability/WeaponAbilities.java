@@ -74,7 +74,11 @@ public final class WeaponAbilities {
         public void onHit(int level, WeaponHitContext context) {
             if (context.victim() instanceof LivingEntity living && living.getHealth() > 0.0F) {
                 float amount = amountAtLevel[level];
-                living.setHealth(Math.max(0.0F, living.getHealth() - amount));
+                float remaining = living.getHealth() - amount;
+                living.setHealth(Math.max(0.0F, remaining));
+                if (remaining <= 0.0F) {
+                    living.die(living.damageSources().magic());
+                }
                 context.player().heal(amount);
             }
         }

@@ -110,6 +110,11 @@ public class LegacyExplosiveBarrelBlock extends Block implements ChainExplodable
             ExplosionThermo.freezer(level, pos.getX(), pos.getY(), pos.getZ(), 7);
             return;
         }
+        if (kind == Kind.TAINT) {
+            level.explode(source, position.x, position.y, position.z, 1.0F, false, Level.ExplosionInteraction.NONE);
+            com.hbm.ntm.explosion.ExplosionChaos.taintBlocks(level, pos.getX(), pos.getY(), pos.getZ(), 4, 100);
+            return;
+        }
 
         level.explode(source, position.x, position.y, position.z, 2.5F, true, Level.ExplosionInteraction.BLOCK);
     }
@@ -136,7 +141,8 @@ public class LegacyExplosiveBarrelBlock extends Block implements ChainExplodable
     public enum Kind {
         RED(true, 2, 15),
         PINK(true, 2, 15),
-        LOX(false, 0, 0);
+        LOX(false, 0, 0),
+        TAINT(false, 0, 0);
 
         private final boolean detonatesFromShot;
         private final int encouragement;

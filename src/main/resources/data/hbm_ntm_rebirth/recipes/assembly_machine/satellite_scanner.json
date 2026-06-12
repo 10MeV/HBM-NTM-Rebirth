@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.satellitescanner",
+  "duration": 600,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:shells/steel" }, "count": 3, "legacy_ore": "shellSteel" },
+    { "ingredient": { "tag": "forge:cast_plates/titanium" }, "count": 8, "legacy_ore": "plateCastTitanium" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:plate_desh" }, "count": 4 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:magnetron" }, "count": 8 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 8, "legacy_id": "hbm:circuit", "legacy_meta": 9 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:sat_head_scanner" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

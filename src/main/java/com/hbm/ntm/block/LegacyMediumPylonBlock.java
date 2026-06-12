@@ -3,10 +3,16 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.blockentity.MediumPylonBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class LegacyMediumPylonBlock extends LegacyPylonBlock {
     private static final int[] LEGACY_DIMENSIONS = { 6, 0, 0, 0, 0, 0 };
@@ -31,6 +37,13 @@ public class LegacyMediumPylonBlock extends LegacyPylonBlock {
     @Override
     protected BlockEntityType<?> getPylonBlockEntityType() {
         return ModBlockEntities.RED_PYLON_MEDIUM.get();
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        appendLegacyWireTooltip(tooltip, "Triple", 45);
     }
 
     public enum Kind {

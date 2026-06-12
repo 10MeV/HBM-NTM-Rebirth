@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "PSP",
+    "SCS",
+    "PSP"
+  ],
+  "key": {
+    "P": {
+      "tag": "forge:plates/steel"
+    },
+    "S": {
+      "tag": "forge:ingots/saturnite"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:sat_chip"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_satlinker"
+  }
+}

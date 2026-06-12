@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "SII",
+    "SCA",
+    "SPP"
+  ],
+  "key": {
+    "I": {
+      "tag": "forge:ingots/steel"
+    },
+    "S": {
+      "tag": "forge:ingots/saturnite"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_polymer"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:sat_chip"
+    },
+    "A": {
+      "item": "hbm_ntm_rebirth:circuit_advanced"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:sat_coord"
+  }
+}

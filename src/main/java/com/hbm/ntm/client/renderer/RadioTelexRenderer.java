@@ -14,9 +14,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class RadioTelexRenderer implements BlockEntityRenderer<RadioTelexBlockEntity> {
-    private static final ResourceLocation TEXTURE =
+    static final ResourceLocation TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/telex.png");
-    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(
+    static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(
             new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/telex.obj"), TEXTURE).noSmooth().asVBO();
 
     public RadioTelexRenderer(BlockEntityRendererProvider.Context context) {

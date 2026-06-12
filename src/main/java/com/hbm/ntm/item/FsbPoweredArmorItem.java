@@ -62,8 +62,8 @@ public class FsbPoweredArmorItem extends FsbArmorItem implements FsbPoweredArmor
     }
 
     @Override
-    public void onArmorTick(ItemStack stack, Level level, Player player) {
-        super.onArmorTick(stack, level, player);
+    public void tickEquippedArmor(ItemStack stack, Level level, Player player) {
+        super.tickEquippedArmor(stack, level, player);
         if (!level.isClientSide && drain > 0L && !player.getAbilities().instabuild
                 && FsbPoweredArmor.hasFullPoweredSet(player)) {
             dischargeBattery(stack, drain);

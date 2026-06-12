@@ -30,7 +30,6 @@ import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.monster.ZombifiedPiglin;
 import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ClipContext;
@@ -81,7 +80,7 @@ public final class HbmParticleEffects {
             spawnContrail(level, data, x, y, z, type);
         } else if (ParticleUtil.TYPE_EXHAUST.equals(type)) {
             spawnExhaust(level, data, x, y, z);
-        } else if ("flamethrower".equals(type)) {
+        } else if (ParticleUtil.TYPE_FLAMETHROWER.equals(type)) {
             spawnFlamethrower(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_EXPLOSION_LARGE.equals(type)) {
             spawnExplosionLarge(level, data, x, y, z);
@@ -99,9 +98,9 @@ public final class HbmParticleEffects {
             spawnSkeleton(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_GIBLETS.equals(type)) {
             spawnGiblets(level, data, x, y, z);
-        } else if ("sweat".equals(type)) {
+        } else if (ParticleUtil.TYPE_SWEAT.equals(type)) {
             spawnEntitySweat(level, data);
-        } else if ("vomit".equals(type)) {
+        } else if (ParticleUtil.TYPE_VOMIT.equals(type)) {
             spawnEntityVomit(level, data);
         } else if (ParticleUtil.TYPE_RADIATION_FOG.equals(type) || ParticleUtil.TYPE_RADIATION_FOG_SNAKE.equals(type)) {
             level.addParticle(ModParticleTypes.RADIATION_FOG.get(), x, y, z, 0.0D, 0.0D, 0.0D);
@@ -109,7 +108,7 @@ public final class HbmParticleEffects {
             level.addParticle(ModParticleTypes.RADIATION_FOG.get(), x, y, z, 0.0D, 0.0D, 0.0D);
         } else if (ParticleUtil.TYPE_SCHRAB_FOG.equals(type)) {
             level.addParticle(ModParticleTypes.SCHRAB_FOG.get(), x, y, z, 0.0D, 0.0D, 0.0D);
-        } else if ("weaponExplosion".equals(type)) {
+        } else if (ParticleUtil.TYPE_WEAPON_EXPLOSION.equals(type)) {
             spawnWeaponExplosion(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_TAU.equals(type)) {
             spawnTau(level, data, x, y, z);
@@ -167,7 +166,7 @@ public final class HbmParticleEffects {
             spawnUfoCloud(level, data, x, y, z);
         } else if (ParticleUtil.TYPE_BALEFIRE_CLOUD.equals(type)) {
             MukeCloudParticle.add(level, x, y, z, 0.0D, 0.0D, 0.0D, true);
-        } else if ("chaosCloud".equals(type)) {
+        } else if (ParticleUtil.TYPE_CHAOS_CLOUD.equals(type)) {
             spawnChaosCloud(level, data, x, y, z);
         }
     }
@@ -419,15 +418,15 @@ public final class HbmParticleEffects {
 
     private static void spawnVanillaBurst(ClientLevel level, CompoundTag data, double x, double y, double z) {
         double motion = data.getDouble("motion");
-        int count = Math.max(1, data.getInt("count"));
+        int count = Math.max(0, data.getInt("count"));
         String mode = data.getString("mode");
         RandomSource random = level.random;
         for (int i = 0; i < count; i++) {
             double motionX = random.nextGaussian() * motion;
             double motionY = random.nextGaussian() * motion;
             double motionZ = random.nextGaussian() * motion;
-            if ("blockdust".equals(mode)) {
-                Particle particle = new TerrainParticle(level, x, y, z, motionX, motionY + 0.2D, motionZ,
+            if (ParticleUtil.VANILLA_BLOCK_DUST.equals(mode)) {
+                Particle particle = new LegacyVanillaExtTerrainParticle(level, x, y, z, motionX, motionY + 0.2D, motionZ,
                         LegacyBlockStateMappings.fromParticleData(data));
                 addWithLifetime(particle, 50 + random.nextInt(50));
             } else {
@@ -441,7 +440,7 @@ public final class HbmParticleEffects {
         double motionX = data.getDouble("mX");
         double motionY = data.getDouble("mY");
         double motionZ = data.getDouble("mZ");
-        if ("volcano".equals(mode)) {
+        if (ParticleUtil.VANILLA_VOLCANO.equals(mode)) {
             addExSmoke(level, x, y, z,
                     level.random.nextGaussian() * 0.2D,
                     2.5D + level.random.nextDouble(),
@@ -453,8 +452,8 @@ public final class HbmParticleEffects {
                     0.35F);
             return;
         }
-        if ("largeexplode".equals(mode)) {
-            int count = Math.max(0, data.getByte("count"));
+        if (ParticleUtil.VANILLA_LARGE_EXPLODE.equals(mode)) {
+            int count = data.contains("count") ? Byte.toUnsignedInt(data.getByte("count")) : 0;
             Particle primary = LargeExplodeParticle.primary(level, x, y, z, data.getFloat("size"));
             if (primary != null) {
                 Minecraft.getInstance().particleEngine.add(primary);
@@ -467,18 +466,19 @@ public final class HbmParticleEffects {
             }
             return;
         }
-        if ("townaura".equals(mode)) {
+        if (ParticleUtil.VANILLA_TOWN_AURA.equals(mode)) {
             addTownAuraWithVelocity(level, x, y, z, motionX, motionY, motionZ);
             return;
         }
         Particle particle = createVanillaExtParticle(level, data, x, y, z, motionX, motionY, motionZ);
         if (particle != null) {
-            if (data.getInt("overrideAge") > 0) {
-                particle.setLifetime(data.getInt("overrideAge"));
-            }
+            applyLegacyVanillaExtOverrides(particle, data);
             Minecraft.getInstance().particleEngine.add(particle);
         } else {
-            spawnNamedVanilla(level, mode, x, y, z, motionX, motionY, motionZ);
+            Particle fallback = spawnNamedVanilla(level, mode, x, y, z, motionX, motionY, motionZ);
+            if (fallback != null) {
+                applyLegacyVanillaExtOverrides(fallback, data);
+            }
         }
     }
 
@@ -611,7 +611,7 @@ public final class HbmParticleEffects {
 
     private static void spawnEntitySweat(ClientLevel level, CompoundTag data) {
         Entity entity = level.getEntity(data.getInt("entity"));
-        if (entity == null) {
+        if (!(entity instanceof LivingEntity living)) {
             return;
         }
         BlockState state = LegacyBlockStateMappings.fromParticleData(data);
@@ -627,7 +627,7 @@ public final class HbmParticleEffects {
 
     private static void spawnEntityVomit(ClientLevel level, CompoundTag data) {
         Entity entity = level.getEntity(data.getInt("entity"));
-        if (entity == null) {
+        if (!(entity instanceof LivingEntity living)) {
             return;
         }
         int count = Math.max(1, data.getInt("count")) / (particleSettingDivisor());
@@ -636,10 +636,14 @@ public final class HbmParticleEffects {
             return;
         }
 
-        Vec3 look = entity.getLookAngle();
-        double x = entity.getX();
-        double y = entity.getY() - entity.getMyRidingOffset() + entity.getEyeHeight() + (entity instanceof Player ? 1.0D : 0.0D);
-        double z = entity.getZ();
+        Vec3 look = living.getLookAngle();
+        if (look.lengthSqr() < 1.0E-7D) {
+            look = Vec3.directionFromRotation(living.getXRot(), living.getYRot());
+        }
+        Vec3 forward = look.normalize();
+        double x = living.getX() + forward.x * 0.35D;
+        double y = living.getEyeY() + forward.y * 0.35D;
+        double z = living.getZ() + forward.z * 0.35D;
         for (int i = 0; i < count; i++) {
             double randomX = level.random.nextGaussian();
             double randomY = level.random.nextGaussian();
@@ -894,7 +898,7 @@ public final class HbmParticleEffects {
         RandomSource random = level.random;
         int cloudCount = Math.max(1, getInt(data, "cloudCount", 15));
         int debrisCount = Math.max(0, getInt(data, "debrisCount", 10));
-        int debrisSize = Math.max(1, getInt(data, "debrisSize", 16));
+        int debrisSize = Math.max(0, getInt(data, "debrisSize", 16));
         float cloudScale = Math.max(0.25F, getFloat(data, "cloudScale", 5.0F));
         float cloudSpeedMult = Math.max(0.1F, getFloat(data, "cloudSpeedMult", 1.0F));
         float waveScale = Math.max(4.0F, getFloat(data, "waveScale", 45.0F));
@@ -925,6 +929,9 @@ public final class HbmParticleEffects {
         }
 
         for (int i = 0; i < debrisCount; i++) {
+            if (debrisSize <= 0) {
+                continue;
+            }
             double offsetX = random.nextGaussian() * debrisHorizontalDeviation;
             double offsetZ = random.nextGaussian() * debrisHorizontalDeviation;
             BlockState debrisState = nearbyBlockState(level, x + offsetX, y + debrisVerticalOffset, z + offsetZ);
@@ -1265,78 +1272,105 @@ public final class HbmParticleEffects {
         return new Vec3(x * cos + z * sin, 0.0D, z * cos - x * sin);
     }
 
-    private static void spawnNamedVanilla(ClientLevel level, String mode, double x, double y, double z, double motionX, double motionY, double motionZ) {
+    private static Particle spawnNamedVanilla(ClientLevel level, String mode, double x, double y, double z, double motionX, double motionY, double motionZ) {
         if (ParticleUtil.VANILLA_EXPLODE.equals(mode)) {
             Particle particle = LargeExplodeParticle.explode(level, x, y, z, motionX, motionY, motionZ);
             if (particle != null) {
                 Minecraft.getInstance().particleEngine.add(particle);
+                return particle;
             } else {
-                level.addParticle(ParticleTypes.EXPLOSION, x, y, z, motionX, motionY, motionZ);
+                return Minecraft.getInstance().particleEngine.createParticle(ParticleTypes.EXPLOSION, x, y, z, motionX, motionY, motionZ);
             }
-            return;
         }
         if (ParticleUtil.VANILLA_LARGE_EXPLODE.equals(mode)) {
             Particle particle = LargeExplodeParticle.largeVanilla(level, x, y, z, (float) motionX);
             if (particle != null) {
                 Minecraft.getInstance().particleEngine.add(particle);
+                return particle;
             } else {
-                level.addParticle(ParticleTypes.EXPLOSION, x, y, z, motionX, motionY, motionZ);
+                return Minecraft.getInstance().particleEngine.createParticle(ParticleTypes.EXPLOSION, x, y, z, motionX, motionY, motionZ);
             }
-            return;
         }
         if (ParticleUtil.VANILLA_HUGE_EXPLOSION.equals(mode)) {
             Particle particle = LargeExplodeParticle.hugeExplosionSeed(level, x, y, z);
             if (particle != null) {
                 Minecraft.getInstance().particleEngine.add(particle);
+                return particle;
             } else {
-                level.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, motionX, motionY, motionZ);
+                return Minecraft.getInstance().particleEngine.createParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, motionX, motionY, motionZ);
             }
-            return;
         }
         ParticleOptions particle = switch (mode) {
-            case "flame" -> ParticleTypes.FLAME;
-            case "smoke" -> ParticleTypes.SMOKE;
-            case "cloud" -> ParticleTypes.CLOUD;
-            case "townaura" -> ModParticleTypes.TOWN_AURA.get();
-            case "reddust" -> DustParticleOptions.REDSTONE;
-            case "bluedust" -> new DustParticleOptions(new Vector3f(0.01F, 0.01F, 1.0F), 1.0F);
-            case "greendust" -> new DustParticleOptions(new Vector3f(0.01F, 0.5F, 0.1F), 1.0F);
-            case "fireworks" -> ParticleTypes.FIREWORK;
-            case "blockdust" -> new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());
-            case "colordust" -> DustParticleOptions.REDSTONE;
+            case ParticleUtil.VANILLA_FLAME -> ParticleTypes.FLAME;
+            case ParticleUtil.VANILLA_SMOKE -> ParticleTypes.SMOKE;
+            case ParticleUtil.VANILLA_CLOUD -> ParticleTypes.CLOUD;
+            case ParticleUtil.VANILLA_TOWN_AURA -> ModParticleTypes.TOWN_AURA.get();
+            case ParticleUtil.VANILLA_RED_DUST -> DustParticleOptions.REDSTONE;
+            case ParticleUtil.VANILLA_BLUE_DUST -> new DustParticleOptions(new Vector3f(0.01F, 0.01F, 1.0F), 1.0F);
+            case ParticleUtil.VANILLA_GREEN_DUST -> new DustParticleOptions(new Vector3f(0.01F, 0.5F, 0.1F), 1.0F);
+            case ParticleUtil.VANILLA_FIREWORKS -> ParticleTypes.FIREWORK;
+            case ParticleUtil.VANILLA_BLOCK_DUST -> new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());
+            case ParticleUtil.VANILLA_COLOR_DUST -> DustParticleOptions.REDSTONE;
             default -> ParticleTypes.POOF;
         };
-        level.addParticle(particle, x, y, z, motionX, motionY, motionZ);
+        return Minecraft.getInstance().particleEngine.createParticle(particle, x, y, z, motionX, motionY, motionZ);
     }
 
     private static Particle createVanillaExtParticle(ClientLevel level, CompoundTag data, double x, double y, double z,
             double motionX, double motionY, double motionZ) {
         String mode = data.getString("mode");
-        if ("cloud".equals(mode) && data.contains("r")) {
+        if (ParticleUtil.VANILLA_CLOUD.equals(mode) && data.contains("r")) {
             float rng = level.random.nextFloat() * 0.1F;
             return createExSmoke(level, x, y, z, 0.0D, 0.0D, 0.0D, 7.5F, 100 + level.random.nextInt(40),
                     data.getFloat("r") + rng, data.getFloat("g") + rng, data.getFloat("b") + rng);
         }
-        if ("smoke".equals(mode) && data.contains("overrideAge") && HbmSmokeParticle.exSmokeSprites() != null) {
+        if (ParticleUtil.VANILLA_SMOKE.equals(mode) && data.contains("overrideAge") && HbmSmokeParticle.exSmokeSprites() != null) {
             Particle particle = new HbmSmokeParticle(level, x, y, z, motionX, motionY, motionZ,
                     HbmSmokeParticle.exSmokeSprites(), 1.0F, Math.max(1, data.getInt("overrideAge")), true);
             particle.setParticleSpeed(motionX, motionY, motionZ);
             return particle;
         }
-        if ("blockdust".equals(mode)) {
-            Particle particle = new TerrainParticle(level, x, y, z, motionX, motionY + 0.2D, motionZ,
+        if (ParticleUtil.VANILLA_BLOCK_DUST.equals(mode)) {
+            Particle particle = new LegacyVanillaExtTerrainParticle(level, x, y, z, motionX, motionY + 0.2D, motionZ,
                     LegacyBlockStateMappings.fromParticleData(data));
             particle.setLifetime(10 + level.random.nextInt(20));
             return particle;
         }
-        if ("colordust".equals(mode)) {
-            Particle particle = new TerrainParticle(level, x, y, z, motionX, motionY + 0.2D, motionZ,
+        if (ParticleUtil.VANILLA_COLOR_DUST.equals(mode)) {
+            Particle particle = new LegacyVanillaExtTerrainParticle(level, x, y, z, motionX, motionY + 0.2D, motionZ,
                     Blocks.WHITE_WOOL.defaultBlockState());
             particle.setColor(data.getFloat("r"), data.getFloat("g"), data.getFloat("b"));
             particle.setLifetime(10 + level.random.nextInt(20));
             return particle;
         }
         return null;
+    }
+
+    private static void applyLegacyVanillaExtOverrides(Particle particle, CompoundTag data) {
+        if (data.getInt("overrideAge") > 0) {
+            particle.setLifetime(data.getInt("overrideAge"));
+        }
+        if (data.getBoolean("noclip")) {
+            if (particle instanceof LegacyVanillaExtPhysicsOverride override) {
+                override.hbm$setPhysics(false);
+            }
+        }
+    }
+
+    private interface LegacyVanillaExtPhysicsOverride {
+        void hbm$setPhysics(boolean hasPhysics);
+    }
+
+    private static class LegacyVanillaExtTerrainParticle extends TerrainParticle implements LegacyVanillaExtPhysicsOverride {
+        protected LegacyVanillaExtTerrainParticle(ClientLevel level, double x, double y, double z,
+                double xSpeed, double ySpeed, double zSpeed, net.minecraft.world.level.block.state.BlockState state) {
+            super(level, x, y, z, xSpeed, ySpeed, zSpeed, state);
+        }
+
+        @Override
+        public void hbm$setPhysics(boolean hasPhysics) {
+            this.hasPhysics = hasPhysics;
+        }
     }
 
     private static void burstSimple(ClientLevel level, ParticleOptions particle, double x, double y, double z, int count, double motion) {

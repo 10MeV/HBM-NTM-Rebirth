@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.explosion.CustomNukeExplosion;
+import com.hbm.ntm.entity.projectile.FallingNukeEntity;
 import com.hbm.ntm.menu.CustomNukeMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
@@ -368,6 +369,14 @@ public class CustomNukeBlockEntity extends BlockEntity implements MenuProvider {
 
         public void explode(Level level, double x, double y, double z) {
             CustomNukeExplosion.explode(level, x, y, z, tnt, nuke, hydro, amat, dirty, schrab, euph);
+        }
+
+        public void spawnFalling(Level level, double x, double y, double z, byte legacyFacingMeta) {
+            if (level == null || level.isClientSide()) {
+                return;
+            }
+            level.addFreshEntity(FallingNukeEntity.create(level, x, y, z, tnt, nuke, hydro, amat, dirty, schrab,
+                    euph, legacyFacingMeta));
         }
     }
 }

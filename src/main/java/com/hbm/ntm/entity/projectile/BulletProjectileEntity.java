@@ -18,6 +18,7 @@ import com.hbm.ntm.bullet.BulletSpecialSpawnUtil;
 import com.hbm.ntm.bullet.BulletStuckStateUtil;
 import com.hbm.ntm.bullet.BulletSyncedState;
 import com.hbm.ntm.bullet.BulletTauTrailUtil;
+import com.hbm.ntm.bullet.Ni4NiCoinRicochetUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
@@ -205,8 +206,9 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         applyEntityHitState(result.hit());
         boolean exceededRicochetLimit = applyRicochetState(currentConfig, result.hit());
         spawnRequestedProjectiles(result);
+        boolean redirectedByNi4NiCoin = Ni4NiCoinRicochetUtil.apply(this, currentConfig, result, overrideDamage);
 
-        if (result.discardProjectile() || exceededRicochetLimit) {
+        if (result.discardProjectile() || exceededRicochetLimit || redirectedByNi4NiCoin) {
             discard();
         }
     }
@@ -366,6 +368,10 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
 
     private void setHomingTarget(@Nullable LivingEntity target) {
         entityData.set(HOMING_TARGET, BulletHomingStateUtil.targetId(target));
+    }
+
+    public void setHomingTargetEntity(@Nullable LivingEntity target) {
+        setHomingTarget(target);
     }
 
     private void applyEntityHitState(BulletProjectileHitUtil.HitApplication hit) {

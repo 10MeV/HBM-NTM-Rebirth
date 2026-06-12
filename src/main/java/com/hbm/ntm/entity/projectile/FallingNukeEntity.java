@@ -4,12 +4,18 @@ import com.hbm.ntm.explosion.CustomNukeExplosion;
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 public class FallingNukeEntity extends Entity {
+    private static final EntityDataAccessor<Byte> LEGACY_FACING_META =
+            SynchedEntityData.defineId(FallingNukeEntity.class, EntityDataSerializers.BYTE);
+
     private float tnt;
     private float nuke;
     private float hydro;
@@ -17,7 +23,6 @@ public class FallingNukeEntity extends Entity {
     private float dirty;
     private float schrab;
     private float euph;
-    private byte legacyFacingMeta;
 
     public FallingNukeEntity(EntityType<? extends FallingNukeEntity> type, Level level) {
         super(type, level);
@@ -41,7 +46,7 @@ public class FallingNukeEntity extends Entity {
             float amat, float dirty, float schrab, float euph, byte legacyFacingMeta) {
         FallingNukeEntity entity = new FallingNukeEntity(level, tnt, nuke, hydro, amat, dirty, schrab, euph);
         entity.setPos(x, y, z);
-        entity.legacyFacingMeta = legacyFacingMeta;
+        entity.setLegacyFacingMeta(legacyFacingMeta);
         return entity;
     }
 
@@ -68,11 +73,16 @@ public class FallingNukeEntity extends Entity {
     }
 
     public byte legacyFacingMeta() {
-        return legacyFacingMeta;
+        return entityData.get(LEGACY_FACING_META);
+    }
+
+    private void setLegacyFacingMeta(byte legacyFacingMeta) {
+        entityData.set(LEGACY_FACING_META, legacyFacingMeta);
     }
 
     @Override
     protected void defineSynchedData() {
+        entityData.define(LEGACY_FACING_META, (byte) 0);
     }
 
     @Override
@@ -84,7 +94,7 @@ public class FallingNukeEntity extends Entity {
         dirty = tag.getFloat("dirty");
         schrab = tag.getFloat("schrab");
         euph = tag.getFloat("euph");
-        legacyFacingMeta = tag.getByte("legacyFacingMeta");
+        setLegacyFacingMeta(tag.getByte("legacyFacingMeta"));
     }
 
     @Override
@@ -96,6 +106,6 @@ public class FallingNukeEntity extends Entity {
         tag.putFloat("dirty", dirty);
         tag.putFloat("schrab", schrab);
         tag.putFloat("euph", euph);
-        tag.putByte("legacyFacingMeta", legacyFacingMeta);
+        tag.putByte("legacyFacingMeta", legacyFacingMeta());
     }
 }

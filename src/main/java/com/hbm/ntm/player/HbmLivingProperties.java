@@ -5,6 +5,7 @@ import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.radiation.RadiationData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,9 +13,15 @@ import net.minecraft.world.entity.LivingEntity;
 import java.util.ArrayList;
 import java.util.AbstractList;
 import java.util.List;
+import java.util.UUID;
 
 public final class HbmLivingProperties {
     public static final String TAG_ROOT = "HbmLivingProps";
+    @Deprecated(forRemoval = false)
+    public static final String key = "NTM_EXT_LIVING";
+    public static final UUID DIGAMMA_UUID = RadiationData.DIGAMMA_UUID;
+    @Deprecated(forRemoval = false)
+    public static final UUID digamma_UUID = DIGAMMA_UUID;
     public static final int MAX_ASBESTOS = RadiationData.MAX_ASBESTOS;
     public static final int MAX_BLACK_LUNG = RadiationData.MAX_BLACK_LUNG;
     @Deprecated
@@ -127,6 +134,10 @@ public final class HbmLivingProperties {
                 getContaminationEffectsForSync(entity));
     }
 
+    public static CompoundTag writeSyncedDataTag(LivingEntity entity, float chunkRadiation, float resistance) {
+        return writeSyncedData(entity, chunkRadiation, resistance).toTag();
+    }
+
     public static void sync(ServerPlayer player, float chunkRadiation, float resistance) {
         ModMessages.syncPlayerRadiation(player, chunkRadiation, resistance);
     }
@@ -138,6 +149,22 @@ public final class HbmLivingProperties {
     public static SyncData emptySyncedData() {
         return new SyncData(0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, List.of());
+    }
+
+    public static LegacySyncData writeLegacySyncedData(LivingEntity entity) {
+        return new LegacySyncData(
+                getRadiation(entity),
+                getDigamma(entity),
+                getAsbestos(entity),
+                getBombTimer(entity),
+                getContagion(entity),
+                getBlackLung(entity),
+                getOil(entity),
+                getContaminationEffectsForSync(entity));
+    }
+
+    public static LegacySyncData emptyLegacySyncedData() {
+        return new LegacySyncData(0.0F, 0.0F, 0, 0, 0, 0, 0, List.of());
     }
 
     public static void encodeSyncedData(SyncData data, FriendlyByteBuf buffer) {
@@ -187,6 +214,117 @@ public final class HbmLivingProperties {
                 contaminationEffects);
     }
 
+    public static void encodeLegacySyncedData(LegacySyncData data, FriendlyByteBuf buffer) {
+        LegacySyncData safeData = data == null ? emptyLegacySyncedData() : data;
+        buffer.writeFloat(safeData.radiation());
+        buffer.writeFloat(safeData.digamma());
+        buffer.writeInt(safeData.asbestos());
+        buffer.writeInt(safeData.bombTimer());
+        buffer.writeInt(safeData.contagion());
+        buffer.writeInt(safeData.blackLung());
+        buffer.writeInt(safeData.oil());
+        buffer.writeInt(safeData.contaminationEffects().size());
+        for (ContaminationEffect effect : safeData.contaminationEffects()) {
+            encodeLegacyContaminationEffect(effect, buffer);
+        }
+    }
+
+    public static LegacySyncData decodeLegacySyncedData(FriendlyByteBuf buffer) {
+        if (buffer == null || buffer.readableBytes() <= 0) {
+            return emptyLegacySyncedData();
+        }
+        float radiation = buffer.readFloat();
+        float digamma = buffer.readFloat();
+        int asbestos = buffer.readInt();
+        int bombTimer = buffer.readInt();
+        int contagion = buffer.readInt();
+        int blackLung = buffer.readInt();
+        int oil = buffer.readInt();
+        int contaminationCount = buffer.readInt();
+        List<ContaminationEffect> contaminationEffects = new ArrayList<>(contaminationCount);
+        for (int i = 0; i < contaminationCount; i++) {
+            contaminationEffects.add(decodeLegacyContaminationEffect(buffer));
+        }
+        return new LegacySyncData(radiation, digamma, asbestos, bombTimer, contagion, blackLung, oil, contaminationEffects);
+    }
+
+    public static SyncData readSyncedData(CompoundTag data) {
+        CompoundTag safeData = data == null ? new CompoundTag() : data;
+        return new SyncData(
+                safeData.getFloat("hfr_radiation"),
+                safeData.getFloat("hfr_digamma"),
+                safeData.getFloat("hfr_rad_buf"),
+                safeData.getFloat("chunkRadiation"),
+                safeData.getFloat("resistance"),
+                safeData.getInt("hfr_asbestos"),
+                safeData.getInt("hfr_blacklung"),
+                safeData.getInt("hfr_bomb"),
+                safeData.getInt("hfr_contagion"),
+                safeData.getInt("hfr_oil"),
+                safeData.getInt("hfr_fire"),
+                safeData.getInt("hfr_phosphorus"),
+                safeData.getInt("hfr_balefire"),
+                safeData.getInt("hfr_blackfire"),
+                contaminationEffectsFromTag(safeData.getList("contamination", Tag.TAG_COMPOUND)));
+    }
+
+    public static void serializeSyncedData(LivingEntity entity, FriendlyByteBuf buffer, float chunkRadiation, float resistance) {
+        encodeSyncedData(writeSyncedData(entity, chunkRadiation, resistance), buffer);
+    }
+
+    public static void deserializeSyncedData(LivingEntity entity, FriendlyByteBuf buffer) {
+        applySyncedData(entity, decodeSyncedData(buffer));
+    }
+
+    public static void deserializeSyncedData(LivingEntity entity, CompoundTag data) {
+        applySyncedData(entity, readSyncedData(data));
+    }
+
+    public static void serializeLegacySyncedData(LivingEntity entity, FriendlyByteBuf buffer) {
+        encodeLegacySyncedData(writeLegacySyncedData(entity), buffer);
+    }
+
+    public static void deserializeLegacySyncedData(LivingEntity entity, FriendlyByteBuf buffer) {
+        applyLegacySyncedData(entity, decodeLegacySyncedData(buffer));
+    }
+
+    public static void applySyncedData(LivingEntity entity, SyncData data) {
+        if (entity == null) {
+            return;
+        }
+        SyncData safeData = data == null ? emptySyncedData() : data;
+        RadiationData.applySyncedData(entity,
+                safeData.radiation(),
+                safeData.digamma(),
+                safeData.radBuf(),
+                safeData.asbestos(),
+                safeData.blackLung(),
+                safeData.bombTimer(),
+                safeData.contagion(),
+                safeData.oil(),
+                safeData.fire(),
+                safeData.phosphorus(),
+                safeData.balefire(),
+                safeData.blackFire(),
+                toListTag(safeData.contaminationEffects()));
+    }
+
+    public static void applyLegacySyncedData(LivingEntity entity, LegacySyncData data) {
+        if (entity == null) {
+            return;
+        }
+        LegacySyncData safeData = data == null ? emptyLegacySyncedData() : data;
+        RadiationData.applyLegacySyncedData(entity,
+                safeData.radiation(),
+                safeData.digamma(),
+                safeData.asbestos(),
+                safeData.bombTimer(),
+                safeData.contagion(),
+                safeData.blackLung(),
+                safeData.oil(),
+                toListTag(safeData.contaminationEffects()));
+    }
+
     public static void encodeContaminationEffect(ContaminationEffect effect, FriendlyByteBuf buffer) {
         ContaminationEffect safeEffect = effect == null ? new ContaminationEffect(0.0F, 1, 0, false) : effect;
         buffer.writeFloat(safeEffect.maxRad);
@@ -200,6 +338,22 @@ public final class HbmLivingProperties {
                 buffer.readFloat(),
                 buffer.readVarInt(),
                 buffer.readVarInt(),
+                buffer.readBoolean());
+    }
+
+    public static void encodeLegacyContaminationEffect(ContaminationEffect effect, FriendlyByteBuf buffer) {
+        ContaminationEffect safeEffect = effect == null ? new ContaminationEffect(0.0F, 1, 0, false) : effect;
+        buffer.writeFloat(safeEffect.maxRad);
+        buffer.writeInt(safeEffect.maxTime);
+        buffer.writeInt(safeEffect.time);
+        buffer.writeBoolean(safeEffect.ignoresArmor());
+    }
+
+    public static ContaminationEffect decodeLegacyContaminationEffect(FriendlyByteBuf buffer) {
+        return new ContaminationEffect(
+                buffer.readFloat(),
+                buffer.readInt(),
+                buffer.readInt(),
                 buffer.readBoolean());
     }
 
@@ -348,12 +502,41 @@ public final class HbmLivingProperties {
         RadiationData.copyForRespawn(original, replacement);
     }
 
+    public static CompoundTag writePersistentData(LivingEntity entity) {
+        return RadiationData.writePersistentData(entity);
+    }
+
+    public static void readPersistentData(LivingEntity entity, CompoundTag data) {
+        RadiationData.readPersistentData(entity, data);
+    }
+
+    public static void saveNBTData(LivingEntity entity, CompoundTag nbt) {
+        RadiationData.saveNBTData(entity, nbt);
+    }
+
+    public static void loadNBTData(LivingEntity entity, CompoundTag nbt) {
+        RadiationData.loadNBTData(entity, nbt);
+    }
+
     private static ListTag toListTag(List<ContaminationEffect> effects) {
         ListTag tag = new ListTag();
+        if (effects == null) {
+            return tag;
+        }
         for (ContaminationEffect effect : effects) {
-            tag.add(effect.toTag());
+            if (effect != null) {
+                tag.add(effect.toTag());
+            }
         }
         return tag;
+    }
+
+    private static List<ContaminationEffect> contaminationEffectsFromTag(ListTag tag) {
+        List<ContaminationEffect> effects = new ArrayList<>(tag.size());
+        for (int i = 0; i < tag.size(); i++) {
+            effects.add(ContaminationEffect.fromTag(tag.getCompound(i)));
+        }
+        return effects;
     }
 
     private static ContaminationEffect fromData(RadiationData.ContaminationEffect effect) {
@@ -397,13 +580,62 @@ public final class HbmLivingProperties {
             tag.putBoolean("ignoreArmor", ignoreArmor);
             return tag;
         }
+
+        public static ContaminationEffect fromTag(CompoundTag tag) {
+            CompoundTag safeTag = tag == null ? new CompoundTag() : tag;
+            return new ContaminationEffect(
+                    safeTag.getFloat("maxRad"),
+                    Math.max(1, safeTag.getInt("maxTime")),
+                    Math.max(0, safeTag.getInt("time")),
+                    safeTag.getBoolean("ignoreArmor"));
+        }
     }
 
     public record SyncData(float radiation, float digamma, float radBuf, float chunkRadiation, float resistance,
             int asbestos, int blackLung, int bombTimer, int contagion, int oil, int fire, int phosphorus, int balefire, int blackFire,
             List<ContaminationEffect> contaminationEffects) {
         public SyncData {
-            contaminationEffects = List.copyOf(contaminationEffects);
+            contaminationEffects = contaminationEffects == null ? List.of() : List.copyOf(contaminationEffects);
+        }
+
+        public CompoundTag toTag() {
+            CompoundTag tag = new CompoundTag();
+            tag.putFloat("hfr_radiation", radiation);
+            tag.putFloat("hfr_digamma", digamma);
+            tag.putFloat("hfr_rad_buf", radBuf);
+            tag.putFloat("chunkRadiation", chunkRadiation);
+            tag.putFloat("resistance", resistance);
+            tag.putInt("hfr_asbestos", asbestos);
+            tag.putInt("hfr_blacklung", blackLung);
+            tag.putInt("hfr_bomb", bombTimer);
+            tag.putInt("hfr_contagion", contagion);
+            tag.putInt("hfr_oil", oil);
+            tag.putInt("hfr_fire", fire);
+            tag.putInt("hfr_phosphorus", phosphorus);
+            tag.putInt("hfr_balefire", balefire);
+            tag.putInt("hfr_blackfire", blackFire);
+            tag.put("contamination", toListTag(contaminationEffects));
+            return tag;
+        }
+    }
+
+    public record LegacySyncData(float radiation, float digamma, int asbestos, int bombTimer, int contagion,
+            int blackLung, int oil, List<ContaminationEffect> contaminationEffects) {
+        public LegacySyncData {
+            contaminationEffects = contaminationEffects == null ? List.of() : List.copyOf(contaminationEffects);
+        }
+
+        public CompoundTag toTag() {
+            CompoundTag tag = new CompoundTag();
+            tag.putFloat("hfr_radiation", radiation);
+            tag.putFloat("hfr_digamma", digamma);
+            tag.putInt("hfr_asbestos", asbestos);
+            tag.putInt("hfr_bomb", bombTimer);
+            tag.putInt("hfr_contagion", contagion);
+            tag.putInt("hfr_blacklung", blackLung);
+            tag.putInt("hfr_oil", oil);
+            tag.put("contamination", toListTag(contaminationEffects));
+            return tag;
         }
     }
 

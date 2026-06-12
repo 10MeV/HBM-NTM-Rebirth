@@ -1,14 +1,10 @@
 package com.hbm.ntm.client.screen;
 
-import com.hbm.ntm.api.entity.RadarEntry;
 import com.hbm.ntm.api.entity.RadarControl;
 import com.hbm.ntm.api.entity.RadarControlPanel;
-import com.hbm.ntm.api.entity.RadarDisplayProjection;
-import com.hbm.ntm.api.entity.RadarGuiHitProfile;
-import com.hbm.ntm.api.entity.RadarGuiLayout;
+import com.hbm.ntm.api.entity.RadarGuiRenderProfile;
 import com.hbm.ntm.api.entity.RadarGuiTargetProfile;
-import com.hbm.ntm.api.entity.RadarLaunchKeyProfile;
-import com.hbm.ntm.api.entity.RadarMap;
+import com.hbm.ntm.api.entity.RadarLaunchCommand;
 import com.hbm.ntm.api.entity.RadarScreenActionProfile;
 import com.hbm.ntm.api.entity.RadarScreenHoverProfile;
 import com.hbm.ntm.api.entity.RadarScreenTooltipProfile;
@@ -25,7 +21,6 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -60,13 +55,13 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
             return;
         }
 
-        graphics.blit(LINK_TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        blit(graphics, LINK_TEXTURE, RadarGuiRenderProfile.slotBackground(leftPos, topPos));
 
-        int powerWidth = menu.getPowerBarWidth(RadarGuiLayout.SLOT_ENERGY_WIDTH);
+        int powerWidth = menu.getPowerBarWidth(RadarGuiRenderProfile.slotEnergyWidth());
         if (powerWidth > 0) {
-            graphics.blit(LINK_TEXTURE, leftPos + RadarGuiLayout.SLOT_ENERGY_X,
-                    topPos + RadarGuiLayout.SLOT_ENERGY_Y, RadarGuiLayout.SLOT_ENERGY_U,
-                    RadarGuiLayout.SLOT_ENERGY_V, powerWidth, RadarGuiLayout.SLOT_ENERGY_HEIGHT);
+            RadarGuiRenderProfile.EnergyBar bar =
+                    RadarGuiRenderProfile.slotEnergyBar(leftPos, topPos, powerWidth);
+            graphics.blit(LINK_TEXTURE, bar.x(), bar.y(), bar.u(), bar.v(), bar.width(), bar.height());
         }
         renderToggleStrip(graphics);
     }
@@ -78,8 +73,9 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
         }
 
         String name = title.getString();
-        graphics.drawString(font, name, imageWidth / 2 - font.width(name) / 2, 6, 0x404040, false);
-        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
+        graphics.drawString(font, name, view.titleX(font.width(name)), view.titleY(), view.labelColor(), false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY,
+                view.labelColor(), false);
     }
 
     @Override
@@ -110,44 +106,31 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (view.main()) {
-            if (keyCode == 256 || minecraft.options.keyInventory.matches(keyCode, scanCode)) {
-                onClose();
-                return true;
-            }
-            int linkSlot = RadarLaunchKeyProfile.linkSlotForKey(keyCode);
-            if (linkSlot >= 0 && RadarGuiHitProfile.hitsRadarArea(leftPos, topPos, lastMouseX, lastMouseY)) {
-                sendLaunchCommand(linkSlot);
-                return true;
-            }
-            return true;
+            return handleScreenAction(RadarScreenActionProfile.mainKey(keyCode,
+                    minecraft.options.keyInventory.matches(keyCode, scanCode),
+                    leftPos, topPos, lastMouseX, lastMouseY), true);
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     private void renderMainRadar(GuiGraphics graphics, float partialTick) {
         RadarBlockEntity radar = menu.getBlockEntity();
-        graphics.blit(RADAR_TEXTURE, leftPos, topPos, 0, 0, RadarGuiLayout.MAIN_WIDTH, RadarGuiLayout.MAIN_HEIGHT);
-        graphics.blit(RADAR_TEXTURE, leftPos + RadarGuiLayout.MAIN_SIDE_STRIP_X,
-                topPos + RadarGuiLayout.MAIN_SIDE_STRIP_TOP_Y, RadarGuiLayout.MAIN_SIDE_STRIP_U,
-                RadarGuiLayout.MAIN_SIDE_STRIP_TOP_V, RadarGuiLayout.MAIN_SIDE_STRIP_WIDTH,
-                RadarGuiLayout.MAIN_SIDE_STRIP_TOP_HEIGHT);
-        graphics.blit(RADAR_TEXTURE, leftPos + RadarGuiLayout.MAIN_SIDE_STRIP_X,
-                topPos + RadarGuiLayout.MAIN_SIDE_STRIP_BOTTOM_Y, RadarGuiLayout.MAIN_SIDE_STRIP_U,
-                RadarGuiLayout.MAIN_SIDE_STRIP_BOTTOM_V, RadarGuiLayout.MAIN_SIDE_STRIP_WIDTH,
-                RadarGuiLayout.MAIN_SIDE_STRIP_BOTTOM_HEIGHT);
+        for (RadarGuiRenderProfile.TextureBlit background : RadarGuiRenderProfile.mainBackground(leftPos, topPos)) {
+            blit(graphics, RADAR_TEXTURE, background);
+        }
 
-        int powerWidth = menu.getPowerBarWidth(RadarGuiLayout.MAIN_ENERGY_WIDTH);
+        int powerWidth = menu.getPowerBarWidth(RadarGuiRenderProfile.mainEnergyWidth());
         if (powerWidth > 0) {
-            graphics.blit(RADAR_TEXTURE, leftPos + RadarGuiLayout.MAIN_ENERGY_X,
-                    topPos + RadarGuiLayout.MAIN_ENERGY_Y, RadarGuiLayout.MAIN_ENERGY_U,
-                    RadarGuiLayout.MAIN_ENERGY_V, powerWidth, RadarGuiLayout.MAIN_ENERGY_TEXTURE_HEIGHT);
+            RadarGuiRenderProfile.EnergyBar bar =
+                    RadarGuiRenderProfile.mainEnergyBar(leftPos, topPos, powerWidth);
+            graphics.blit(RADAR_TEXTURE, bar.x(), bar.y(), bar.u(), bar.v(), bar.width(), bar.height());
         }
 
         for (RadarControlPanel.Button controlButton : RadarControlPanel.buttons()) {
-            if (active(controlButton) ^ (menu.jammed() && random.nextBoolean())) {
-                graphics.blit(RADAR_TEXTURE, leftPos + controlButton.mainX(), topPos + controlButton.mainY(),
-                        controlButton.iconU(), controlButton.iconV(), RadarControlPanel.BUTTON_SIZE,
-                        RadarControlPanel.BUTTON_SIZE);
+            if (RadarGuiRenderProfile.shouldRenderMainControlIcon(active(controlButton), menu.jammed(),
+                    random.nextBoolean())) {
+                blit(graphics, RADAR_TEXTURE,
+                        RadarGuiRenderProfile.mainControlIcon(leftPos, topPos, controlButton));
             }
         }
 
@@ -156,13 +139,10 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
         }
 
         if (menu.jammed()) {
-            for (int x = 0; x < 5; x++) {
-                for (int z = 0; z < 5; z++) {
-                    LegacyRadarDisplayRenderer.renderGuiNoiseTile(RADAR_TEXTURE, graphics,
-                            leftPos + RadarGuiLayout.RADAR_AREA_X + x * 40,
-                            topPos + RadarGuiLayout.RADAR_AREA_Y + z * 40,
-                            random.nextInt(81));
-                }
+            for (RadarGuiRenderProfile.NoiseTile tile : RadarGuiRenderProfile.noiseTiles()) {
+                LegacyRadarDisplayRenderer.renderGuiNoiseTile(RADAR_TEXTURE, graphics,
+                        leftPos + tile.x(), topPos + tile.y(),
+                        random.nextInt(RadarGuiRenderProfile.NOISE_TEXTURE_VARIANTS));
             }
             return;
         }
@@ -175,47 +155,43 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
     }
 
     private void renderMap(GuiGraphics graphics, byte[] map) {
-        int size = Math.min(map.length, RadarBlockEntity.MAP_SIZE);
-        for (int i = 0; i < size; i++) {
-            byte height = map[i];
-            if (height > 0) {
-                int x = RadarGuiLayout.mapPixelX(leftPos, i);
-                int y = RadarGuiLayout.mapPixelY(topPos, i);
-                graphics.fill(x, y, x + 1, y + 1, 0xFF000000 | (RadarMap.green(height) << 8));
-            }
-        }
+        RadarGuiRenderProfile.forEachMapPixel(leftPos, topPos, map, RadarBlockEntity.MAP_SIZE,
+                pixel -> graphics.fill(pixel.x(), pixel.y(), pixel.x() + 1, pixel.y() + 1, pixel.color()));
     }
 
     private void renderSweep(GuiGraphics graphics, float partialTick) {
         RadarBlockEntity radar = menu.getBlockEntity();
-        LegacyRadarDisplayRenderer.renderGuiSweep(graphics,
-                leftPos + RadarGuiLayout.RADAR_CENTER_X, topPos + RadarGuiLayout.RADAR_CENTER_Y,
-                Mth.lerp(partialTick, radar.getPreviousRotation(), radar.getRotation()));
+        RadarGuiRenderProfile.ScreenPoint center = RadarGuiRenderProfile.sweepCenter(leftPos, topPos);
+        LegacyRadarDisplayRenderer.renderGuiSweep(graphics, center.x(), center.y(),
+                RadarGuiRenderProfile.sweepRotation(partialTick, radar.getPreviousRotation(), radar.getRotation()));
     }
 
     private void renderBlips(GuiGraphics graphics, RadarBlockEntity radar) {
-        for (RadarEntry entry : radar.getEntries()) {
-            RadarDisplayProjection.ScreenOffset offset =
-                    RadarDisplayProjection.guiBlipOffset(entry.pos(), radar.getBlockPos(), radar.getRange());
-            LegacyRadarDisplayRenderer.renderGuiBlip(RADAR_TEXTURE, graphics,
-                    leftPos + RadarGuiLayout.RADAR_CENTER_X + offset.x(),
-                    topPos + RadarGuiLayout.RADAR_CENTER_Y + offset.z(), entry.blipLevel());
-        }
+        RadarGuiRenderProfile.forEachBlip(leftPos, topPos, radar.getEntries(), radar.getBlockPos(), radar.getRange(),
+                blip -> LegacyRadarDisplayRenderer.renderGuiBlip(RADAR_TEXTURE, graphics,
+                        blip.x(), blip.y(), blip.level()));
     }
 
     private void renderToggleStrip(GuiGraphics graphics) {
         for (RadarControlPanel.Button controlButton : RadarControlPanel.buttons()) {
-            int x = leftPos + controlButton.slotX();
-            int y = topPos + controlButton.slotY();
-            int border = active(controlButton) ? 0xFF1F8F32 : 0xFF4C4C4C;
-            graphics.fill(x - 1, y - 1, x + 9, y + 9, 0xFF101010);
-            graphics.fill(x - 1, y - 1, x + 9, y, border);
-            graphics.fill(x - 1, y + 8, x + 9, y + 9, border);
-            graphics.fill(x - 1, y, x, y + 8, border);
-            graphics.fill(x + 8, y, x + 9, y + 8, border);
+            RadarGuiRenderProfile.SlotToggleFrame frame =
+                    RadarGuiRenderProfile.slotToggleFrame(controlButton, active(controlButton));
+            int x = leftPos + frame.x();
+            int y = topPos + frame.y();
+            int border = frame.borderColor();
+            graphics.fill(leftPos + frame.outerLeft(), topPos + frame.outerTop(),
+                    leftPos + frame.outerRight(), topPos + frame.outerBottom(),
+                    RadarGuiRenderProfile.SLOT_TOGGLE_BACKGROUND);
+            graphics.fill(leftPos + frame.outerLeft(), topPos + frame.outerTop(),
+                    leftPos + frame.outerRight(), y, border);
+            graphics.fill(leftPos + frame.outerLeft(), topPos + frame.iconBottom(),
+                    leftPos + frame.outerRight(), topPos + frame.outerBottom(), border);
+            graphics.fill(leftPos + frame.outerLeft(), y, x, topPos + frame.iconBottom(), border);
+            graphics.fill(leftPos + frame.iconRight(), y, leftPos + frame.outerRight(),
+                    topPos + frame.iconBottom(), border);
             if (active(controlButton)) {
-                graphics.blit(RADAR_TEXTURE, x, y, controlButton.iconU(), controlButton.iconV(),
-                        RadarControlPanel.BUTTON_SIZE, RadarControlPanel.BUTTON_SIZE);
+                blit(graphics, RADAR_TEXTURE,
+                        RadarGuiRenderProfile.slotControlIcon(leftPos, topPos, controlButton));
             }
         }
     }
@@ -234,41 +210,19 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
         }
 
         RadarBlockEntity radar = menu.getBlockEntity();
-        RadarGuiTargetProfile.Target entryTarget = RadarGuiTargetProfile.hoveredEntry(radar.getEntries(),
-                radar.getBlockPos(), radar.getRange(), leftPos, topPos, mouseX, mouseY);
-        if (entryTarget != null && entryTarget.hasEntry()) {
-            graphics.renderTooltip(font, split(RadarScreenTooltipProfile.entry(radarName(entryTarget.entry().name()),
-                    entryTarget.entry().pos())), mouseX, mouseY);
-            return;
-        }
-
-        if (RadarGuiHitProfile.hitsRadarArea(leftPos, topPos, mouseX, mouseY)) {
-            RadarGuiTargetProfile.Target target = RadarGuiTargetProfile.positionTarget(radar.getBlockPos(),
-                    radar.getRange(), leftPos, topPos, mouseX, mouseY);
-            graphics.renderTooltip(font, split(RadarScreenTooltipProfile.target(target.x(), target.z())),
-                    mouseX, mouseY);
-        }
+        RadarScreenTooltipProfile.mainTarget(radar.getEntries(), radar.getBlockPos(), radar.getRange(),
+                leftPos, topPos, mouseX, mouseY, RadarScreen::radarName)
+                .ifPresent(tooltip -> graphics.renderTooltip(font, split(tooltip.lines()), tooltip.x(), tooltip.y()));
     }
 
     private boolean renderChromeTooltip(GuiGraphics graphics, RadarScreenHoverProfile.Hover hover,
             boolean includeControlState, int mouseX, int mouseY) {
-        switch (hover.type()) {
-            case ENERGY -> graphics.renderTooltip(font, split(RadarScreenTooltipProfile.energy(menu.getPower(),
-                    menu.getMaxPower(), menu.getRedPower())), mouseX, mouseY);
-            case CONTROL -> {
-                RadarControlPanel.Button button = hover.button();
-                graphics.renderTooltip(font, split(includeControlState
-                        ? RadarScreenTooltipProfile.control(button.tooltipKey(), active(button))
-                        : localizedLines(button.tooltipKey())), mouseX, mouseY);
-            }
-            case TOGGLE_VIEW -> graphics.renderTooltip(font,
-                    split(localizedLines(RadarScreenTooltipProfile.TOGGLE_GUI_KEY)), mouseX, mouseY);
-            case CLEAR_MAP -> graphics.renderTooltip(font,
-                    split(localizedLines(RadarScreenTooltipProfile.CLEAR_MAP_KEY)), mouseX, mouseY);
-            case NONE -> {
-                return false;
-            }
+        if (hover.type() == RadarScreenHoverProfile.Type.NONE) {
+            return false;
         }
+        boolean active = hover.button() != null && active(hover.button());
+        graphics.renderTooltip(font, split(RadarScreenTooltipProfile.chrome(hover, includeControlState,
+                active, menu.getPower(), menu.getMaxPower(), menu.getRedPower())), mouseX, mouseY);
         return true;
     }
 
@@ -283,18 +237,9 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
 
     private void sendLaunchCommand(int linkSlot) {
         RadarBlockEntity radar = menu.getBlockEntity();
-        RadarGuiTargetProfile.Target entryTarget = RadarGuiTargetProfile.hoveredEntry(radar.getEntries(),
-                radar.getBlockPos(), radar.getRange(), leftPos, topPos, lastMouseX, lastMouseY);
-        if (entryTarget != null && entryTarget.hasEntry()) {
-            ModMessages.sendToServer(new TileControlPacket(radar.getBlockPos(),
-                    RadarBlockEntity.launchEntityTag(linkSlot, entryTarget.entry().entityId())));
-            return;
-        }
-
-        RadarGuiTargetProfile.Target target = RadarGuiTargetProfile.positionTarget(radar.getBlockPos(),
-                radar.getRange(), leftPos, topPos, lastMouseX, lastMouseY);
-        ModMessages.sendToServer(new TileControlPacket(radar.getBlockPos(),
-                RadarBlockEntity.launchPositionTag(linkSlot, target.x(), target.z())));
+        RadarLaunchCommand command = RadarGuiTargetProfile.launchCommand(radar.getEntries(),
+                radar.getBlockPos(), radar.getRange(), leftPos, topPos, lastMouseX, lastMouseY, linkSlot);
+        ModMessages.sendToServer(new TileControlPacket(radar.getBlockPos(), command.toTag()));
     }
 
     private boolean handleScreenAction(RadarScreenActionProfile.Action action, boolean fallback) {
@@ -305,6 +250,14 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
             }
             case VIEW -> {
                 setView(action.view());
+                yield true;
+            }
+            case CLOSE -> {
+                onClose();
+                yield true;
+            }
+            case LAUNCH -> {
+                sendLaunchCommand(action.linkSlot());
                 yield true;
             }
             case CONSUME -> true;
@@ -323,6 +276,7 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
         imageWidth = view.width();
         imageHeight = view.height();
         inventoryLabelY = view.inventoryLabelY();
+        inventoryLabelX = view.inventoryLabelX();
     }
 
     private static Component radarName(String name) {
@@ -333,7 +287,8 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
         return RadarScreenTooltipProfile.split(tooltip);
     }
 
-    private static List<Component> localizedLines(String key) {
-        return RadarScreenTooltipProfile.localizedLines(key);
+    private static void blit(GuiGraphics graphics, ResourceLocation texture, RadarGuiRenderProfile.TextureBlit blit) {
+        graphics.blit(texture, blit.x(), blit.y(), blit.u(), blit.v(), blit.width(), blit.height());
     }
+
 }

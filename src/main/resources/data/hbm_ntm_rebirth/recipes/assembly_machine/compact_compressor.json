@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.compactcompressor",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:cast_plates/steel" }, "count": 8, "legacy_ore": "plateCastSteel" },
+    { "ingredient": { "tag": "forge:shells/titanium" }, "count": 4, "legacy_ore": "shellTitanium" },
+    { "ingredient": { "tag": "forge:pipes/copper" }, "count": 4, "legacy_ore": "ntmpipeCopper" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor" }, "count": 2 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_basic" }, "count": 4, "legacy_id": "hbm:circuit", "legacy_meta": 0 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:machine_compressor_compact" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 102
+}

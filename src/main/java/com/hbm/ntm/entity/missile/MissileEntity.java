@@ -2,14 +2,19 @@ package com.hbm.ntm.entity.missile;
 
 import com.hbm.ntm.api.entity.LegacyMissileRadarDetectable;
 import com.hbm.ntm.api.entity.LegacyMissileRadarProfile;
-import com.hbm.ntm.bullet.BulletLaunchUtil;
-import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
-import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
+import com.hbm.ntm.entity.effect.BlackHoleEntity;
+import com.hbm.ntm.entity.effect.EmpBlastEntity;
+import com.hbm.ntm.entity.logic.EmpLogicEntity;
 import com.hbm.ntm.explosion.ExplosionLarge;
 import com.hbm.ntm.explosion.ExplosionChaos;
+import com.hbm.ntm.explosion.ExplosionNukeGeneric;
+import com.hbm.ntm.explosion.ExplosionNT;
+import com.hbm.ntm.explosion.NuclearExplosionUtil;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.item.missile.MissileItem;
+import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -26,6 +31,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
@@ -152,6 +158,10 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
                     ExplosionChaos.igniteFlammableBlocks(level(), Mth.floor(getX() + 0.5D),
                             Mth.floor(getY() + 0.5D), Mth.floor(getZ() + 0.5D), variant.igniteRadius());
                 }
+                if (variant.igniteAllRadius() > 0) {
+                    ExplosionChaos.igniteAllBlocks(level(), Mth.floor(getX()),
+                            Mth.floor(getY()), Mth.floor(getZ()), variant.igniteAllRadius());
+                }
                 spawnImpactShrapnel(variant);
             }
             case DECOY -> WeaponExplosionUtil.explodeStandard(level(), getX(), getY(), getZ(),
@@ -171,6 +181,70 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
                         1.0F, this);
                 ExplosionLarge.spawnRubble(level(), getX(), getY(), getZ(), variant.busterExtraCount(), this);
             }
+            case DRILL -> {
+                for (int i = 0; i < variant.busterDepth(); i++) {
+                    new ExplosionNT(level(), this, getX(), getY() - i, getZ(), variant.explosionStrength())
+                            .addAllAttrib(ExplosionNT.ExAttrib.ERRODE)
+                            .explode();
+                }
+                ExplosionLarge.spawnParticles(level(), getX(), getY(), getZ(), 25);
+                ExplosionLarge.spawnShrapnels(level(), getX(), getY(), getZ(), variant.shrapnelCount(),
+                        1.0F, this);
+                ExplosionLarge.jolt(level(), getX(), getY(), getZ(), 10, 50, 1.0D);
+            }
+            case EMP_BLAST -> {
+                ExplosionNukeGeneric.empBlast(level(), (int) getX(), (int) getY(), (int) getZ(), 50);
+                level().addFreshEntity(EmpBlastEntity.create(level(), getX(), getY(), getZ(), 50));
+            }
+            case EMP_LOGIC -> {
+                EmpLogicEntity emp = new EmpLogicEntity(ModEntityTypes.EMP_LOGIC.get(), level());
+                emp.setPos(getX(), getY(), getZ());
+                level().addFreshEntity(emp);
+            }
+            case NUKE_MICRO -> NuclearExplosionUtil.explodeFatman(level(), getX(), getY() + 0.5D, getZ());
+            case SCHRABIDIUM -> NuclearExplosionUtil.spawnAntiSchrabidium(level(), getX(), getY(), getZ());
+            case BLACK_HOLE -> {
+                level().explode(this, getX(), getY(), getZ(), 1.5F, false, Level.ExplosionInteraction.BLOCK);
+                BlackHoleEntity blackHole = new BlackHoleEntity(level(), 1.5F);
+                blackHole.setPos(getX(), getY(), getZ());
+                level().addFreshEntity(blackHole);
+            }
+            case TAINT -> {
+                level().explode(this, hit.getLocation().x, hit.getLocation().y, hit.getLocation().z,
+                        5.0F, false, Level.ExplosionInteraction.BLOCK);
+                BlockPos origin = hit instanceof BlockHitResult blockHit
+                        ? blockHit.getBlockPos()
+                        : BlockPos.containing(hit.getLocation());
+                ExplosionChaos.taintBlocksAtLevel(level(), origin.getX(), origin.getY(), origin.getZ(), 5, 100, 0);
+            }
+            case NUCLEAR -> NuclearExplosionUtil.spawnMissileNuclear(level(), getX(), getY(), getZ());
+            case MIRV -> NuclearExplosionUtil.spawnMissileMirv(level(), getX(), getY(), getZ());
+            case VOLCANO -> {
+                ExplosionLarge.explode(level(), getX(), getY(), getZ(), 10.0F, true, true, true, this);
+                placeVolcanoCore();
+            }
+            case DOOMSDAY -> NuclearExplosionUtil.spawnMissileDoomsday(level(), getX(), getY(), getZ());
+        }
+    }
+
+    private void placeVolcanoCore() {
+        int originX = Mth.floor(getX());
+        int originY = Mth.floor(getY());
+        int originZ = Mth.floor(getZ());
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    cursor.set(originX + x, originY + y, originZ + z);
+                    if (!level().isOutsideBuildHeight(cursor)) {
+                        level().setBlock(cursor, ModBlocks.VOLCANIC_LAVA_BLOCK.get().defaultBlockState(), 3);
+                    }
+                }
+            }
+        }
+        cursor.set(originX, originY, originZ);
+        if (!level().isOutsideBuildHeight(cursor)) {
+            level().setBlock(cursor, ModBlocks.VOLCANO_CORE.get().defaultBlockState(), 3);
         }
     }
 
@@ -181,19 +255,9 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
     }
 
     private void spawnClusterSubmunitions(int count) {
-        Vec3 heading = getDeltaMovement();
-        if (heading.lengthSqr() <= 1.0E-7D) {
-            heading = new Vec3(0.0D, -1.0D, 0.0D);
-        }
-        Vec3 position = position();
-        for (int i = 0; i < count; i++) {
-            BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedLaunchPlan(
-                    LegacySednaRuntimeBulletConfigs.CLUSTER_SUBMUNITION, position, heading, 1.0F,
-                    (float) Math.PI * 0.25F, level().random);
-            if (plan.valid()) {
-                level().addFreshEntity(BulletProjectileEntity.fromLaunchPlan(level(), plan, this));
-            }
-        }
+        ExplosionChaos.cluster(level(), getX(), getY(), getZ(), count,
+                getYRot() * Mth.DEG_TO_RAD, getXRot() * Mth.DEG_TO_RAD,
+                (float) Math.PI * 0.25F, (float) Math.PI * 0.25F, 1.0F, this);
     }
 
     public void killMissile() {
@@ -308,35 +372,76 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
 
     public enum Variant {
         GENERIC(MissileItem.FormFactor.V2, LegacyMissileRadarProfile.TIER1, 25.0F,
-                Impact.STANDARD, 15.0F, 24, 0, 0, 0, 0,
+                Impact.STANDARD, 15.0F, 24, 0, 0, 0, 0, 0,
                 "plate_titanium", 4, "thruster_small", 1),
         STRONG(MissileItem.FormFactor.STRONG, LegacyMissileRadarProfile.TIER2, 30.0F,
-                Impact.STANDARD, 30.0F, 32, 0, 0, 0, 0,
+                Impact.STANDARD, 30.0F, 32, 0, 0, 0, 0, 0,
                 "plate_steel", 10, "plate_titanium", 6, "thruster_medium", 1),
         BURST(MissileItem.FormFactor.HUGE, LegacyMissileRadarProfile.TIER3, 35.0F,
-                Impact.STANDARD, 50.0F, 48, 0, 0, 0, 0,
+                Impact.STANDARD, 50.0F, 48, 0, 0, 0, 0, 0,
                 "plate_steel", 16, "plate_titanium", 10, "thruster_large", 1),
         DECOY(MissileItem.FormFactor.V2, LegacyMissileRadarProfile.TIER4, 25.0F,
-                Impact.DECOY, 4.0F, 0, 0, 0, 0, 0,
+                Impact.DECOY, 4.0F, 0, 0, 0, 0, 0, 0,
                 "plate_titanium", 4, "thruster_small", 1),
         INCENDIARY(MissileItem.FormFactor.V2, LegacyMissileRadarProfile.TIER1, 25.0F,
-                Impact.FIRE, 15.0F, 24, 0, 0, 0, 0,
+                Impact.FIRE, 15.0F, 24, 0, 0, 0, 0, 0,
                 "plate_titanium", 4, "thruster_small", 1),
         CLUSTER(MissileItem.FormFactor.V2, LegacyMissileRadarProfile.TIER1, 25.0F,
-                Impact.CLUSTER, 5.0F, 0, 0, 25, 0, 0,
+                Impact.CLUSTER, 5.0F, 0, 0, 0, 25, 0, 0,
                 "plate_titanium", 4, "thruster_small", 1),
         BUSTER(MissileItem.FormFactor.V2, LegacyMissileRadarProfile.TIER1, 25.0F,
-                Impact.BUSTER, 5.0F, 0, 0, 0, 15, 5,
+                Impact.BUSTER, 5.0F, 0, 0, 0, 0, 15, 5,
                 "plate_titanium", 4, "thruster_small", 1),
         INCENDIARY_STRONG(MissileItem.FormFactor.STRONG, LegacyMissileRadarProfile.TIER2, 30.0F,
-                Impact.FIRE, 30.0F, 32, 25, 0, 0, 0,
+                Impact.FIRE, 30.0F, 32, 25, 0, 0, 0, 0,
                 "plate_steel", 10, "plate_titanium", 6, "thruster_medium", 1),
         CLUSTER_STRONG(MissileItem.FormFactor.STRONG, LegacyMissileRadarProfile.TIER2, 30.0F,
-                Impact.CLUSTER, 15.0F, 0, 0, 50, 0, 0,
+                Impact.CLUSTER, 15.0F, 0, 0, 0, 50, 0, 0,
                 "plate_steel", 10, "plate_titanium", 6, "thruster_medium", 1),
         BUSTER_STRONG(MissileItem.FormFactor.STRONG, LegacyMissileRadarProfile.TIER2, 30.0F,
-                Impact.BUSTER, 7.5F, 0, 0, 0, 20, 8,
-                "plate_steel", 10, "plate_titanium", 6, "thruster_medium", 1);
+                Impact.BUSTER, 7.5F, 0, 0, 0, 0, 20, 8,
+                "plate_steel", 10, "plate_titanium", 6, "thruster_medium", 1),
+        INFERNO(MissileItem.FormFactor.HUGE, LegacyMissileRadarProfile.TIER3, 35.0F,
+                Impact.FIRE, 50.0F, 48, 25, 10, 0, 0, 0,
+                "plate_steel", 16, "plate_titanium", 10, "thruster_large", 1),
+        RAIN(MissileItem.FormFactor.HUGE, LegacyMissileRadarProfile.TIER3, 35.0F,
+                Impact.CLUSTER, 25.0F, 0, 0, 0, 100, 0, 0,
+                "plate_steel", 16, "plate_titanium", 10, "thruster_large", 1),
+        DRILL(MissileItem.FormFactor.HUGE, LegacyMissileRadarProfile.TIER3, 35.0F,
+                Impact.DRILL, 10.0F, 12, 0, 0, 0, 30, 0,
+                "plate_steel", 16, "plate_titanium", 10, "thruster_large", 1),
+        STEALTH(MissileItem.FormFactor.V2, LegacyMissileRadarProfile.STEALTH, 25.0F,
+                Impact.STANDARD, 20.0F, 24, 0, 0, 0, 0, 0,
+                "bolt_steel", 4),
+        EMP(MissileItem.FormFactor.MICRO, LegacyMissileRadarProfile.TIER0, 20.0F,
+                Impact.EMP_BLAST, 0.0F, 0, 0, 0, 0, 0, 0,
+                "wire_fine", 4, "plate_titanium", 4, "shell", 2, "ducttape", 1),
+        EMP_STRONG(MissileItem.FormFactor.STRONG, LegacyMissileRadarProfile.TIER2, 30.0F,
+                Impact.EMP_LOGIC, 0.0F, 0, 0, 0, 0, 0, 0,
+                "plate_steel", 10, "plate_titanium", 6, "thruster_medium", 1),
+        MICRO(MissileItem.FormFactor.MICRO, LegacyMissileRadarProfile.TIER0, 20.0F,
+                Impact.NUKE_MICRO, 0.0F, 0, 0, 0, 0, 0, 0,
+                "wire_fine", 4, "plate_titanium", 4, "shell", 2, "ducttape", 1),
+        SCHRABIDIUM(MissileItem.FormFactor.MICRO, LegacyMissileRadarProfile.TIER0, 20.0F,
+                Impact.SCHRABIDIUM, 0.0F, 0, 0, 0, 0, 0, 0,
+                "wire_fine", 4, "plate_titanium", 4, "shell", 2, "ducttape", 1),
+        BHOLE(MissileItem.FormFactor.MICRO, LegacyMissileRadarProfile.TIER0, 20.0F,
+                Impact.BLACK_HOLE, 0.0F, 0, 0, 0, 0, 0, 0,
+                "wire_fine", 4, "plate_titanium", 4, "shell", 2, "ducttape", 1),
+        TAINT(MissileItem.FormFactor.MICRO, LegacyMissileRadarProfile.TIER0, 20.0F,
+                Impact.TAINT, 0.0F, 0, 0, 0, 0, 0, 0,
+                "wire_fine", 4, "plate_titanium", 4, "shell", 2, "ducttape", 1),
+        NUCLEAR(MissileItem.FormFactor.ATLAS, LegacyMissileRadarProfile.TIER4, 40.0F,
+                Impact.NUCLEAR, 0.0F, 0, 0, 0, 0, 0, 0,
+                "plate_titanium", 16, "plate_steel", 20, "plate_aluminium", 12, "thruster_large", 1),
+        MIRV(MissileItem.FormFactor.ATLAS, LegacyMissileRadarProfile.TIER4, 40.0F,
+                Impact.MIRV, 0.0F, 0, 0, 0, 0, 0, 0,
+                "plate_titanium", 16, "plate_steel", 20, "plate_aluminium", 12, "thruster_large", 1),
+        VOLCANO(MissileItem.FormFactor.ATLAS, LegacyMissileRadarProfile.TIER4, 40.0F,
+                Impact.VOLCANO, 0.0F, 0, 0, 0, 0, 0, 0,
+                "plate_titanium", 16, "plate_steel", 20, "plate_aluminium", 12, "thruster_large", 1),
+        DOOMSDAY(MissileItem.FormFactor.ATLAS, LegacyMissileRadarProfile.TIER4, 40.0F,
+                Impact.DOOMSDAY, 0.0F, 0, 0, 0, 0, 0, 0);
 
         private final MissileItem.FormFactor formFactor;
         private final LegacyMissileRadarProfile radarProfile;
@@ -345,14 +450,15 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         private final float explosionStrength;
         private final int shrapnelCount;
         private final int igniteRadius;
+        private final int igniteAllRadius;
         private final int clusterCount;
         private final int busterDepth;
         private final int busterExtraCount;
         private final List<ItemStack> debris;
 
         Variant(MissileItem.FormFactor formFactor, LegacyMissileRadarProfile radarProfile, float health,
-                Impact impact, float explosionStrength, int shrapnelCount, int igniteRadius, int clusterCount,
-                int busterDepth, int busterExtraCount, Object... debris) {
+                Impact impact, float explosionStrength, int shrapnelCount, int igniteRadius, int igniteAllRadius,
+                int clusterCount, int busterDepth, int busterExtraCount, Object... debris) {
             this.formFactor = formFactor;
             this.radarProfile = radarProfile;
             this.health = health;
@@ -360,6 +466,7 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
             this.explosionStrength = explosionStrength;
             this.shrapnelCount = shrapnelCount;
             this.igniteRadius = igniteRadius;
+            this.igniteAllRadius = igniteAllRadius;
             this.clusterCount = clusterCount;
             this.busterDepth = busterDepth;
             this.busterExtraCount = busterExtraCount;
@@ -399,6 +506,10 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
             return igniteRadius;
         }
 
+        public int igniteAllRadius() {
+            return igniteAllRadius;
+        }
+
         public int clusterCount() {
             return clusterCount;
         }
@@ -433,6 +544,17 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         FIRE,
         DECOY,
         CLUSTER,
-        BUSTER
+        BUSTER,
+        DRILL,
+        EMP_BLAST,
+        EMP_LOGIC,
+        NUKE_MICRO,
+        SCHRABIDIUM,
+        BLACK_HOLE,
+        TAINT,
+        NUCLEAR,
+        MIRV,
+        VOLCANO,
+        DOOMSDAY
     }
 }

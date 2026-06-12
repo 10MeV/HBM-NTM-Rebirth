@@ -7,7 +7,10 @@ import net.minecraft.util.FormattedCharSequence;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 public final class RadarScreenTooltipProfile {
     public static final String TOGGLE_GUI_KEY = "radar.toggleGui";
@@ -48,7 +51,44 @@ public final class RadarScreenTooltipProfile {
         return List.of(Component.literal(x + " / " + z));
     }
 
+    public static Optional<Tooltip> mainTarget(List<RadarEntry> entries, BlockPos radarPos, int range,
+            int leftPos, int topPos, int mouseX, int mouseY, Function<String, Component> nameResolver) {
+        RadarGuiTargetProfile.Target entryTarget = RadarGuiTargetProfile.hoveredEntry(entries,
+                radarPos, range, leftPos, topPos, mouseX, mouseY);
+        if (entryTarget != null && entryTarget.hasEntry()) {
+            RadarEntry entry = entryTarget.entry();
+            Component name = nameResolver != null ? nameResolver.apply(entry.name()) : Component.literal(entry.name());
+            return Optional.of(new Tooltip(entry(name, entry.pos()), entryTarget.screenX(), entryTarget.screenZ()));
+        }
+
+        if (RadarGuiHitProfile.hitsRadarArea(leftPos, topPos, mouseX, mouseY)) {
+            RadarGuiTargetProfile.Target target = RadarGuiTargetProfile.positionTarget(radarPos,
+                    range, leftPos, topPos, mouseX, mouseY);
+            return Optional.of(new Tooltip(target(target.x(), target.z()), mouseX, mouseY));
+        }
+        return Optional.empty();
+    }
+
+    public static List<Component> chrome(RadarScreenHoverProfile.Hover hover, boolean includeControlState,
+            boolean active, long power, long maxPower, int redstonePower) {
+        return switch (hover.type()) {
+            case ENERGY -> energy(power, maxPower, redstonePower);
+            case CONTROL -> includeControlState
+                    ? control(hover.button().tooltipKey(), active)
+                    : localizedLines(hover.button().tooltipKey());
+            case TOGGLE_VIEW -> localizedLines(TOGGLE_GUI_KEY);
+            case CLEAR_MAP -> localizedLines(CLEAR_MAP_KEY);
+            case NONE -> Collections.emptyList();
+        };
+    }
+
     public static List<FormattedCharSequence> split(List<Component> tooltip) {
         return tooltip.stream().map(Component::getVisualOrderText).toList();
+    }
+
+    public record Tooltip(List<Component> lines, int x, int y) {
+        public Tooltip {
+            lines = List.copyOf(lines != null ? lines : List.of());
+        }
     }
 }

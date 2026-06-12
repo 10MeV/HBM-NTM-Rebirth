@@ -2,6 +2,8 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
+import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.config.SteamTurbineConfig;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
@@ -18,7 +20,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEntity {
+public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEntity implements RORValueProvider {
     private static final String[] SPIN_BLOCKS = new String[] {"", "|", "/", "\\"};
     private static final long MAX_STORED_POWER = 100_000_000L;
     private static final double CONSUMPTION_PERCENT = 0.2D;
@@ -28,10 +30,15 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
     private long lastPowerTarget;
     private long flywheelEnergy;
     private long maxPowerTarget;
+    private final RORDispatcher ror;
 
     public IndustrialSteamTurbineBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.INDUSTRIAL_STEAM_TURBINE.get(), pos, state, MAX_STORED_POWER,
                 SteamTurbineConfig.industrialInputTankSize(), SteamTurbineConfig.industrialOutputTankSize());
+        this.ror = RORDispatcher.builder()
+                .value("output", () -> Long.toString(lastPowerTarget))
+                .value("flywheel", () -> Integer.toString((int) (spin * 100.0D)))
+                .build();
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, IndustrialSteamTurbineBlockEntity turbine) {
@@ -85,6 +92,16 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
 
     public long getMaxPowerTarget() {
         return maxPowerTarget;
+    }
+
+    @Override
+    public String[] getFunctionInfo() {
+        return ror.getFunctionInfo();
+    }
+
+    @Override
+    public String provideRORValue(String name) {
+        return ror.provideValue(name);
     }
 
     @Override

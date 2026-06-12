@@ -10,6 +10,7 @@ import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -30,6 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class HbmPlayerProperties {
     public static final ResourceLocation DATA_TYPE = new ResourceLocation(HbmNtm.MOD_ID, "player_props");
+    @Deprecated(forRemoval = false)
+    public static final String key = "NTM_EXT_PLAYER";
     public static final int NOTICE_ID_JETPACK = 5;
     public static final int NOTICE_ID_MAGNET = 6;
     public static final int NOTICE_ID_HUD = 7;
@@ -49,6 +52,12 @@ public final class HbmPlayerProperties {
     public static final int DASH_COOLDOWN_LENGTH = 5;
     public static final int PLINK_COOLDOWN_LENGTH = 10;
     public static final float SHIELD_CAP = 100.0F;
+    @Deprecated(forRemoval = false)
+    public static final int dashCooldownLength = DASH_COOLDOWN_LENGTH;
+    @Deprecated(forRemoval = false)
+    public static final int plinkCooldownLength = PLINK_COOLDOWN_LENGTH;
+    @Deprecated(forRemoval = false)
+    public static final float shieldCap = SHIELD_CAP;
 
     private static final int NOTICE_MILLIS = 1_000;
     private static final Map<UUID, EnumSet<HbmKeybind>> PRESSED_KEYS = new ConcurrentHashMap<>();
@@ -118,7 +127,7 @@ public final class HbmPlayerProperties {
         return getDefaultTrueBoolean(player, KEY_ENABLE_BACKPACK);
     }
 
-    public static void setBackpackEnabled(ServerPlayer player, boolean enabled) {
+    public static void setBackpackEnabled(Player player, boolean enabled) {
         setBoolean(player, KEY_ENABLE_BACKPACK, enabled);
     }
 
@@ -130,7 +139,7 @@ public final class HbmPlayerProperties {
         return isMagnetEnabled(player);
     }
 
-    public static void setMagnetEnabled(ServerPlayer player, boolean enabled) {
+    public static void setMagnetEnabled(Player player, boolean enabled) {
         setBoolean(player, KEY_ENABLE_MAGNET, enabled);
     }
 
@@ -138,7 +147,7 @@ public final class HbmPlayerProperties {
         return getDefaultTrueBoolean(player, KEY_ENABLE_HUD);
     }
 
-    public static void setHudEnabled(ServerPlayer player, boolean enabled) {
+    public static void setHudEnabled(Player player, boolean enabled) {
         setBoolean(player, KEY_ENABLE_HUD, enabled);
     }
 
@@ -488,6 +497,10 @@ public final class HbmPlayerProperties {
         return writePlayerSyncData(player).toTag();
     }
 
+    public static CompoundTag writeSyncedDataTag(Player player) {
+        return writeSyncedData(player);
+    }
+
     public static SyncData writePlayerSyncData(Player player) {
         return new SyncData(
                 hasReceivedBook(player),
@@ -521,6 +534,151 @@ public final class HbmPlayerProperties {
 
     public static SyncData emptySyncedData() {
         return readSyncedData(new CompoundTag());
+    }
+
+    public static void encodeSyncedData(SyncData data, FriendlyByteBuf buffer) {
+        SyncData safeData = data == null ? emptySyncedData() : data;
+        encodeLegacySyncedData(safeData, buffer);
+        buffer.writeVarInt(safeData.dashCount());
+        buffer.writeVarInt(safeData.stamina());
+        buffer.writeVarInt(safeData.dashCooldown());
+    }
+
+    public static SyncData decodeSyncedData(FriendlyByteBuf buffer) {
+        if (buffer == null || buffer.readableBytes() <= 0) {
+            return emptySyncedData();
+        }
+        boolean hasReceivedBook = buffer.readBoolean();
+        float shield = buffer.readFloat();
+        float maxShield = buffer.readFloat();
+        boolean backpackEnabled = buffer.readBoolean();
+        boolean hudEnabled = buffer.readBoolean();
+        int reputation = buffer.readInt();
+        boolean onLadder = buffer.readBoolean();
+        boolean magnetEnabled = buffer.readBoolean();
+        int dashCount = buffer.readableBytes() > 0 ? buffer.readVarInt() : 0;
+        int stamina = buffer.readableBytes() > 0 ? buffer.readVarInt() : 0;
+        int dashCooldown = buffer.readableBytes() > 0 ? buffer.readVarInt() : 0;
+        return new SyncData(hasReceivedBook, shield, maxShield, backpackEnabled, magnetEnabled,
+                hudEnabled, reputation, onLadder, dashCount, stamina, dashCooldown);
+    }
+
+    public static void encodeLegacySyncedData(SyncData data, FriendlyByteBuf buffer) {
+        SyncData safeData = data == null ? emptySyncedData() : data;
+        buffer.writeBoolean(safeData.hasReceivedBook());
+        buffer.writeFloat(safeData.shield());
+        buffer.writeFloat(safeData.maxShield());
+        buffer.writeBoolean(safeData.backpackEnabled());
+        buffer.writeBoolean(safeData.hudEnabled());
+        buffer.writeInt(safeData.reputation());
+        buffer.writeBoolean(safeData.onLadder());
+        buffer.writeBoolean(safeData.magnetEnabled());
+    }
+
+    public static SyncData decodeLegacySyncedData(FriendlyByteBuf buffer) {
+        if (buffer == null || buffer.readableBytes() <= 0) {
+            return emptySyncedData();
+        }
+        boolean hasReceivedBook = buffer.readBoolean();
+        float shield = buffer.readFloat();
+        float maxShield = buffer.readFloat();
+        boolean backpackEnabled = buffer.readBoolean();
+        boolean hudEnabled = buffer.readBoolean();
+        int reputation = buffer.readInt();
+        boolean onLadder = buffer.readBoolean();
+        boolean magnetEnabled = buffer.readBoolean();
+        return new SyncData(hasReceivedBook, shield, maxShield, backpackEnabled, magnetEnabled,
+                hudEnabled, reputation, onLadder, 0, 0, 0);
+    }
+
+    public static void serializeSyncedData(Player player, FriendlyByteBuf buffer) {
+        encodeSyncedData(writePlayerSyncData(player), buffer);
+    }
+
+    public static void deserializeSyncedData(Player player, FriendlyByteBuf buffer) {
+        applySyncedData(player, decodeSyncedData(buffer));
+    }
+
+    public static void deserializeSyncedData(Player player, CompoundTag data) {
+        applySyncedData(player, readSyncedData(data));
+    }
+
+    public static void serializeLegacySyncedData(Player player, FriendlyByteBuf buffer) {
+        encodeLegacySyncedData(writePlayerSyncData(player), buffer);
+    }
+
+    public static void deserializeLegacySyncedData(Player player, FriendlyByteBuf buffer) {
+        applyLegacySyncedData(player, decodeLegacySyncedData(buffer));
+    }
+
+    public static void applySyncedData(Player player, SyncData data) {
+        if (player == null) {
+            return;
+        }
+        SyncData safeData = data == null ? emptySyncedData() : data;
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean(KEY_HAS_RECEIVED_BOOK, safeData.hasReceivedBook());
+        tag.putFloat(KEY_SHIELD, safeData.shield());
+        tag.putFloat(KEY_MAX_SHIELD, safeData.maxShield());
+        tag.putBoolean(KEY_ENABLE_BACKPACK, safeData.backpackEnabled());
+        tag.putBoolean(KEY_ENABLE_MAGNET, safeData.magnetEnabled());
+        tag.putBoolean(KEY_ENABLE_HUD, safeData.hudEnabled());
+        tag.putInt(KEY_REPUTATION, safeData.reputation());
+        tag.putBoolean(KEY_IS_ON_LADDER, safeData.onLadder());
+        readPersistentData(player, tag);
+
+        RuntimeData runtime = runtime(player);
+        runtime.totalDashCount = Math.max(0, safeData.dashCount());
+        runtime.stamina = Math.max(0, safeData.stamina());
+        runtime.dashCooldown = Math.max(0, safeData.dashCooldown());
+    }
+
+    public static void applyLegacySyncedData(Player player, SyncData data) {
+        if (player == null) {
+            return;
+        }
+        SyncData safeData = data == null ? emptySyncedData() : data;
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean(KEY_HAS_RECEIVED_BOOK, safeData.hasReceivedBook());
+        tag.putFloat(KEY_SHIELD, safeData.shield());
+        tag.putFloat(KEY_MAX_SHIELD, safeData.maxShield());
+        tag.putBoolean(KEY_ENABLE_BACKPACK, safeData.backpackEnabled());
+        tag.putBoolean(KEY_ENABLE_MAGNET, safeData.magnetEnabled());
+        tag.putBoolean(KEY_ENABLE_HUD, safeData.hudEnabled());
+        tag.putInt(KEY_REPUTATION, safeData.reputation());
+        tag.putBoolean(KEY_IS_ON_LADDER, safeData.onLadder());
+        readPersistentData(player, tag);
+    }
+
+    public static CompoundTag writePersistentData(Player player) {
+        return getTag(player).copy();
+    }
+
+    public static void readPersistentData(Player player, CompoundTag data) {
+        if (player == null) {
+            return;
+        }
+        CompoundTag tag = data == null ? new CompoundTag() : data.copy();
+        applyDefaults(tag);
+        player.getPersistentData().put(TAG_ROOT, tag);
+        player.getPersistentData().remove(TAG_PREVIOUS_ROOT);
+    }
+
+    public static void saveNBTData(Player player, CompoundTag nbt) {
+        if (nbt != null) {
+            nbt.put(TAG_ROOT, writePersistentData(player));
+        }
+    }
+
+    public static void loadNBTData(Player player, CompoundTag nbt) {
+        if (nbt == null) {
+            return;
+        }
+        if (nbt.contains(TAG_ROOT, net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+            readPersistentData(player, nbt.getCompound(TAG_ROOT));
+        } else if (nbt.contains(TAG_PREVIOUS_ROOT, net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+            readPersistentData(player, nbt.getCompound(TAG_PREVIOUS_ROOT));
+        }
     }
 
     private static boolean getDefaultTrueBoolean(CompoundTag data, String key) {

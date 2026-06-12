@@ -25,10 +25,15 @@ public enum HbmArmorMaterials implements ArmorMaterial {
     CMB("cmb", 60, 50, () -> legacyIngredient("ingot_combine_steel")),
     SECURITY("security", 100, 15, () -> legacyIngredient("plate_kevlar")),
     STARMETAL("starmetal", 150, 100, () -> legacyIngredient("ingot_starmetal")),
+    BISMUTH("bismuth", 100, 100, () -> legacyIngredient("plate_bismuth")),
+    ROBES("robes", 15, 12, () -> legacyIngredient("rag")),
+    ZIRCONIUM("zirconium", 1000, 1000, () -> legacyIngredient("ingot_zirconium")),
+    DNT("dnt", 3, 0, () -> legacyIngredient("ingot_dineutronium")),
     JACKET("jackt", 30, 5, () -> legacyIngredient("ingot_steel")),
     JACKET2("jackt2", 30, 5, () -> legacyIngredient("ingot_steel")),
     T51("t51", 150, 0, () -> legacyIngredient("plate_armor_titanium")),
     DESH_POWERED("desh_powered", 150, 0, () -> legacyIngredient("ingot_desh")),
+    DIESEL("dieselsuit", 150, 0, () -> legacyIngredient("plate_copper"), 0.25F),
     AJR("ajr", 150, 0, () -> legacyIngredient("plate_armor_ajr")),
     BJ("bj", 150, 0, () -> legacyIngredient("plate_armor_lunar")),
     ENV("env", 150, 10, () -> legacyIngredient("plate_armor_hev")),
@@ -44,13 +49,20 @@ public enum HbmArmorMaterials implements ArmorMaterial {
     private final int durabilityMultiplier;
     private final int enchantmentValue;
     private final Supplier<Ingredient> repairIngredient;
+    private final float knockbackResistance;
 
     HbmArmorMaterials(String name, int durabilityMultiplier, int enchantmentValue,
             Supplier<Ingredient> repairIngredient) {
+        this(name, durabilityMultiplier, enchantmentValue, repairIngredient, 0.0F);
+    }
+
+    HbmArmorMaterials(String name, int durabilityMultiplier, int enchantmentValue,
+            Supplier<Ingredient> repairIngredient, float knockbackResistance) {
         this.name = name;
         this.durabilityMultiplier = durabilityMultiplier;
         this.enchantmentValue = enchantmentValue;
         this.repairIngredient = repairIngredient;
+        this.knockbackResistance = Math.max(0.0F, knockbackResistance);
     }
 
     @Override
@@ -75,10 +87,21 @@ public enum HbmArmorMaterials implements ArmorMaterial {
                 case LEGGINGS -> 3;
             };
         }
+        if (this == ZIRCONIUM) {
+            return switch (type) {
+                case HELMET -> 2;
+                case CHESTPLATE -> 5;
+                case LEGGINGS -> 3;
+                case BOOTS -> 1;
+            };
+        }
+        if (this == DNT) {
+            return 1;
+        }
         if (this == STEEL || this == TITANIUM || this == ALLOY || this == COBALT || this == PAA
                 || this == HAZMAT_PAA || this == LIQUIDATOR || this == SCHRABIDIUM || this == EUPHEMIUM
                 || this == CMB || this == SECURITY || this == STARMETAL || this == T51 || this == DESH_POWERED
-                || this == AJR || this == BJ || this == ENV || this == HEV || this == FAU || this == DNS
+                || this == BISMUTH || this == DIESEL || this == AJR || this == BJ || this == ENV || this == HEV || this == FAU || this == DNS
                 || this == TAURUN || this == TRENCHMASTER || this == JACKET || this == JACKET2) {
             return switch (type) {
                 case HELMET, BOOTS -> 3;
@@ -121,7 +144,7 @@ public enum HbmArmorMaterials implements ArmorMaterial {
 
     @Override
     public float getKnockbackResistance() {
-        return 0.0F;
+        return knockbackResistance;
     }
 
     private static Ingredient legacyIngredient(String name) {

@@ -16,6 +16,8 @@ import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemHandlerHelper;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public final class HbmFluidItemTransfer {
@@ -609,6 +611,118 @@ public final class HbmFluidItemTransfer {
             }
         }
         return builder.build();
+    }
+
+    public static List<TankSlotTransfer> loadTransfers(int inputSlotStart, int outputSlotStart, HbmFluidTank... tanks) {
+        return loadTransfers(inputSlotStart, outputSlotStart, 1, tanks);
+    }
+
+    public static List<TankSlotTransfer> loadTransfers(int inputSlotStart, int outputSlotStart, int slotStride,
+            HbmFluidTank... tanks) {
+        return slotTransfers(inputSlotStart, outputSlotStart, slotStride, TankSlotTransfer.Direction.ITEM_TO_TANK,
+                true, tanks);
+    }
+
+    public static List<TankSlotTransfer> loadTransfers(int inputSlotStart, int outputSlotStart,
+            Iterable<HbmFluidTank> tanks) {
+        return loadTransfers(inputSlotStart, outputSlotStart, 1, tanks);
+    }
+
+    public static List<TankSlotTransfer> loadTransfers(int inputSlotStart, int outputSlotStart, int slotStride,
+            Iterable<HbmFluidTank> tanks) {
+        return slotTransfers(inputSlotStart, outputSlotStart, slotStride, TankSlotTransfer.Direction.ITEM_TO_TANK,
+                true, tanks);
+    }
+
+    public static List<TankSlotTransfer> loadTransfersIncludingEmptyTypes(int inputSlotStart, int outputSlotStart,
+            Iterable<HbmFluidTank> tanks) {
+        return slotTransfers(inputSlotStart, outputSlotStart, 1, TankSlotTransfer.Direction.ITEM_TO_TANK, false, tanks);
+    }
+
+    public static List<TankSlotTransfer> unloadTransfers(int inputSlotStart, int outputSlotStart,
+            HbmFluidTank... tanks) {
+        return unloadTransfers(inputSlotStart, outputSlotStart, 1, tanks);
+    }
+
+    public static List<TankSlotTransfer> unloadTransfers(int inputSlotStart, int outputSlotStart, int slotStride,
+            HbmFluidTank... tanks) {
+        return slotTransfers(inputSlotStart, outputSlotStart, slotStride, TankSlotTransfer.Direction.TANK_TO_ITEM,
+                true, tanks);
+    }
+
+    public static List<TankSlotTransfer> unloadTransfers(int inputSlotStart, int outputSlotStart,
+            Iterable<HbmFluidTank> tanks) {
+        return unloadTransfers(inputSlotStart, outputSlotStart, 1, tanks);
+    }
+
+    public static List<TankSlotTransfer> unloadTransfers(int inputSlotStart, int outputSlotStart, int slotStride,
+            Iterable<HbmFluidTank> tanks) {
+        return slotTransfers(inputSlotStart, outputSlotStart, slotStride, TankSlotTransfer.Direction.TANK_TO_ITEM,
+                true, tanks);
+    }
+
+    public static List<TankSlotTransfer> unloadTransfersIncludingEmptyTypes(int inputSlotStart, int outputSlotStart,
+            Iterable<HbmFluidTank> tanks) {
+        return slotTransfers(inputSlotStart, outputSlotStart, 1, TankSlotTransfer.Direction.TANK_TO_ITEM, false, tanks);
+    }
+
+    @SafeVarargs
+    public static List<TankSlotTransfer> combineTransfers(Iterable<TankSlotTransfer>... transferGroups) {
+        List<TankSlotTransfer> transfers = new ArrayList<>();
+        if (transferGroups == null) {
+            return transfers;
+        }
+        for (Iterable<TankSlotTransfer> group : transferGroups) {
+            if (group == null) {
+                continue;
+            }
+            for (TankSlotTransfer transfer : group) {
+                if (transfer != null) {
+                    transfers.add(transfer);
+                }
+            }
+        }
+        return transfers;
+    }
+
+    private static List<TankSlotTransfer> slotTransfers(int inputSlotStart, int outputSlotStart, int slotStride,
+            TankSlotTransfer.Direction direction, boolean skipNone, HbmFluidTank... tanks) {
+        List<TankSlotTransfer> transfers = new ArrayList<>();
+        if (tanks == null) {
+            return transfers;
+        }
+        int stride = Math.max(1, slotStride);
+        for (int i = 0; i < tanks.length; i++) {
+            addSlotTransfer(transfers, inputSlotStart + i * stride, outputSlotStart + i * stride,
+                    direction, skipNone, tanks[i]);
+        }
+        return transfers;
+    }
+
+    private static List<TankSlotTransfer> slotTransfers(int inputSlotStart, int outputSlotStart, int slotStride,
+            TankSlotTransfer.Direction direction, boolean skipNone, Iterable<HbmFluidTank> tanks) {
+        List<TankSlotTransfer> transfers = new ArrayList<>();
+        if (tanks == null) {
+            return transfers;
+        }
+        int stride = Math.max(1, slotStride);
+        int index = 0;
+        for (HbmFluidTank tank : tanks) {
+            addSlotTransfer(transfers, inputSlotStart + index * stride, outputSlotStart + index * stride,
+                    direction, skipNone, tank);
+            index++;
+        }
+        return transfers;
+    }
+
+    private static void addSlotTransfer(List<TankSlotTransfer> transfers, int inputSlot, int outputSlot,
+            TankSlotTransfer.Direction direction, boolean skipNone, HbmFluidTank tank) {
+        if (tank == null || (skipNone && tank.getTankType() == HbmFluids.NONE)) {
+            return;
+        }
+        transfers.add(direction == TankSlotTransfer.Direction.ITEM_TO_TANK
+                ? TankSlotTransfer.load(inputSlot, outputSlot, tank)
+                : TankSlotTransfer.unload(inputSlot, outputSlot, tank));
     }
 
     public record TransferResult(ItemStack stack, int amount) {

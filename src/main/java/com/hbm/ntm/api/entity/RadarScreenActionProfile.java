@@ -3,7 +3,21 @@ package com.hbm.ntm.api.entity;
 import org.jetbrains.annotations.Nullable;
 
 public final class RadarScreenActionProfile {
+    public static final int KEY_ESCAPE = 256;
+
     private RadarScreenActionProfile() {
+    }
+
+    public static Action mainKey(int keyCode, boolean inventoryKey, int leftPos, int topPos,
+            int mouseX, int mouseY) {
+        if (keyCode == KEY_ESCAPE || inventoryKey) {
+            return Action.close();
+        }
+        int linkSlot = RadarLaunchKeyProfile.linkSlotForKey(keyCode);
+        if (linkSlot >= 0 && RadarGuiHitProfile.hitsRadarArea(leftPos, topPos, mouseX, mouseY)) {
+            return Action.launch(linkSlot);
+        }
+        return Action.consume();
     }
 
     public static Action mainClick(int leftPos, int topPos, double mouseX, double mouseY) {
@@ -41,27 +55,38 @@ public final class RadarScreenActionProfile {
         return Action.none();
     }
 
-    public record Action(Type type, @Nullable RadarControl control, @Nullable RadarScreenViewProfile view) {
+    public record Action(Type type, @Nullable RadarControl control, @Nullable RadarScreenViewProfile view,
+            int linkSlot) {
         private static Action control(RadarControl control) {
-            return new Action(Type.CONTROL, control, null);
+            return new Action(Type.CONTROL, control, null, -1);
         }
 
         private static Action view(RadarScreenViewProfile view) {
-            return new Action(Type.VIEW, null, view);
+            return new Action(Type.VIEW, null, view, -1);
+        }
+
+        private static Action close() {
+            return new Action(Type.CLOSE, null, null, -1);
+        }
+
+        private static Action launch(int linkSlot) {
+            return new Action(Type.LAUNCH, null, null, linkSlot);
         }
 
         private static Action consume() {
-            return new Action(Type.CONSUME, null, null);
+            return new Action(Type.CONSUME, null, null, -1);
         }
 
         private static Action none() {
-            return new Action(Type.NONE, null, null);
+            return new Action(Type.NONE, null, null, -1);
         }
     }
 
     public enum Type {
         NONE,
         CONSUME,
+        CLOSE,
+        LAUNCH,
         CONTROL,
         VIEW
     }

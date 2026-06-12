@@ -5,18 +5,9 @@
       "legacy_file": "ChemicalPlantRecipes.java",
       "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/ChemicalPlantRecipes.java",
       "machine": "chemical_plant",
-      "missing": [
-        {
-          "internal_name": "chem.helium3",
-          "source_order": 5
-        },
-        {
-          "internal_name": "chem.laminate",
-          "source_order": 65
-        }
-      ],
-      "missing_count": 2,
-      "modern_count": 72,
+      "missing": [],
+      "missing_count": 0,
+      "modern_count": 75,
       "present": [
         {
           "internal_name": "chem.hydrogen",
@@ -47,6 +38,12 @@
           "modern_id": "hbm_ntm_rebirth:chemical_plant/xenonoxy",
           "modern_source_order": 4,
           "source_order": 4
+        },
+        {
+          "internal_name": "chem.helium3",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/helium3",
+          "modern_source_order": 5,
+          "source_order": 5
         },
         {
           "internal_name": "chem.co2",
@@ -403,6 +400,12 @@
           "source_order": 64
         },
         {
+          "internal_name": "chem.laminate",
+          "modern_id": "hbm_ntm_rebirth:chemical_plant/laminate",
+          "modern_source_order": 65,
+          "source_order": 65
+        },
+        {
           "internal_name": "chem.polarized",
           "modern_id": "hbm_ntm_rebirth:chemical_plant/polarized",
           "modern_source_order": 66,
@@ -451,7 +454,7 @@
           "source_order": 73
         }
       ],
-      "present_count": 72,
+      "present_count": 74,
       "status": "checked"
     },
     {
@@ -525,30 +528,6 @@
           "source_order": 69
         },
         {
-          "internal_name": "ass.capnuka",
-          "source_order": 70
-        },
-        {
-          "internal_name": "ass.capquantum",
-          "source_order": 71
-        },
-        {
-          "internal_name": "ass.capsparkle",
-          "source_order": 72
-        },
-        {
-          "internal_name": "ass.caprad",
-          "source_order": 73
-        },
-        {
-          "internal_name": "ass.capfritz",
-          "source_order": 74
-        },
-        {
-          "internal_name": "ass.capkorl",
-          "source_order": 75
-        },
-        {
           "internal_name": "ass.precass",
           "source_order": 80
         },
@@ -559,10 +538,6 @@
         {
           "internal_name": "ass.rtg",
           "source_order": 86
-        },
-        {
-          "internal_name": "ass.compactcompressor",
-          "source_order": 102
         },
         {
           "internal_name": "ass.epress",
@@ -949,64 +924,12 @@
           "source_order": 233
         },
         {
-          "internal_name": "ass.turrettauon",
-          "source_order": 234
-        },
-        {
           "internal_name": "ass.turretrichard",
           "source_order": 235
         },
         {
           "internal_name": "ass.turrethoward",
           "source_order": 236
-        },
-        {
-          "internal_name": "ass.maxwell",
-          "source_order": 237
-        },
-        {
-          "internal_name": "ass.fritz",
-          "source_order": 238
-        },
-        {
-          "internal_name": "ass.arty",
-          "source_order": 239
-        },
-        {
-          "internal_name": "ass.himars",
-          "source_order": 240
-        },
-        {
-          "internal_name": "ass.himarssmall",
-          "source_order": 241
-        },
-        {
-          "internal_name": "ass.himarssmallhe",
-          "source_order": 242
-        },
-        {
-          "internal_name": "ass.himarssmallwp",
-          "source_order": 243
-        },
-        {
-          "internal_name": "ass.himarssmalltb",
-          "source_order": 244
-        },
-        {
-          "internal_name": "ass.himarssmallnuke",
-          "source_order": 245
-        },
-        {
-          "internal_name": "ass.himarssmalllava",
-          "source_order": 246
-        },
-        {
-          "internal_name": "ass.himarslarge",
-          "source_order": 247
-        },
-        {
-          "internal_name": "ass.himarslargetb",
-          "source_order": 248
         },
         {
           "internal_name": "ass.missileassembly",
@@ -1281,18 +1204,6 @@
           "source_order": 316
         },
         {
-          "internal_name": "chem.shellchlorine",
-          "source_order": 317
-        },
-        {
-          "internal_name": "ass.shellphosgene",
-          "source_order": 318
-        },
-        {
-          "internal_name": "ass.shellmustard",
-          "source_order": 319
-        },
-        {
           "internal_name": "ass.soyuzcore",
           "source_order": 320
         },
@@ -1313,8 +1224,8 @@
           "source_order": 334
         }
       ],
-      "missing_count": 213,
-      "modern_count": 396,
+      "missing_count": 190,
+      "modern_count": 418,
       "present": [
         {
           "internal_name": "ass.plateiron",
@@ -1641,6 +1552,42 @@
           "source_order": 55
         },
         {
+          "internal_name": "ass.capnuka",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/cap_nuka",
+          "modern_source_order": 70,
+          "source_order": 70
+        },
+        {
+          "internal_name": "ass.capquantum",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/cap_quantum",
+          "modern_source_order": 71,
+          "source_order": 71
+        },
+        {
+          "internal_name": "ass.capsparkle",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/cap_sparkle",
+          "modern_source_order": 72,
+          "source_order": 72
+        },
+        {
+          "internal_name": "ass.caprad",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/cap_rad",
+          "modern_source_order": 73,
+          "source_order": 73
+        },
+        {
+          "internal_name": "ass.capfritz",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/cap_fritz",
+          "modern_source_order": 74,
+          "source_order": 74
+        },
+        {
+          "internal_name": "ass.capkorl",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/cap_korl",
+          "modern_source_order": 75,
+          "source_order": 75
+        },
+        {
           "internal_name": "ass.shredder",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/shredder",
           "modern_source_order": 76,
@@ -1777,6 +1724,12 @@
           "modern_id": "hbm_ntm_rebirth:assembly_machine/compressor",
           "modern_source_order": 101,
           "source_order": 101
+        },
+        {
+          "internal_name": "ass.compactcompressor",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/compact_compressor",
+          "modern_source_order": 102,
+          "source_order": 102
         },
         {
           "internal_name": "ass.silex",
@@ -1989,6 +1942,102 @@
           "source_order": 158
         },
         {
+          "internal_name": "ass.turrettauon",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/turret_tauon",
+          "modern_source_order": 2147483647,
+          "source_order": 234
+        },
+        {
+          "internal_name": "ass.maxwell",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/turret_maxwell",
+          "modern_source_order": 2147483647,
+          "source_order": 237
+        },
+        {
+          "internal_name": "ass.fritz",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/turret_fritz",
+          "modern_source_order": 2147483647,
+          "source_order": 238
+        },
+        {
+          "internal_name": "ass.arty",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/turret_arty",
+          "modern_source_order": 2147483647,
+          "source_order": 239
+        },
+        {
+          "internal_name": "ass.himars",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/turret_himars",
+          "modern_source_order": 2147483647,
+          "source_order": 240
+        },
+        {
+          "internal_name": "ass.himarssmall",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/himarssmall",
+          "modern_source_order": 2147483647,
+          "source_order": 241
+        },
+        {
+          "internal_name": "ass.himarssmallhe",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/himarssmallhe",
+          "modern_source_order": 2147483647,
+          "source_order": 242
+        },
+        {
+          "internal_name": "ass.himarssmallwp",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/himarssmallwp",
+          "modern_source_order": 2147483647,
+          "source_order": 243
+        },
+        {
+          "internal_name": "ass.himarssmalltb",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/himarssmalltb",
+          "modern_source_order": 2147483647,
+          "source_order": 244
+        },
+        {
+          "internal_name": "ass.himarssmallnuke",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/himarssmallnuke",
+          "modern_source_order": 2147483647,
+          "source_order": 245
+        },
+        {
+          "internal_name": "ass.himarssmalllava",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/himarssmalllava",
+          "modern_source_order": 2147483647,
+          "source_order": 246
+        },
+        {
+          "internal_name": "ass.himarslarge",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/himarslarge",
+          "modern_source_order": 2147483647,
+          "source_order": 247
+        },
+        {
+          "internal_name": "ass.himarslargetb",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/himarslargetb",
+          "modern_source_order": 2147483647,
+          "source_order": 248
+        },
+        {
+          "internal_name": "chem.shellchlorine",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/shell_chlorine",
+          "modern_source_order": 2147483647,
+          "source_order": 317
+        },
+        {
+          "internal_name": "ass.shellphosgene",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/shell_phosgene",
+          "modern_source_order": 2147483647,
+          "source_order": 318
+        },
+        {
+          "internal_name": "ass.shellmustard",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/shell_mustard",
+          "modern_source_order": 2147483647,
+          "source_order": 319
+        },
+        {
           "internal_name": "ass.satellitebase",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/satellite_base",
           "modern_source_order": 2147483647,
@@ -2049,7 +2098,7 @@
           "source_order": 333
         }
       ],
-      "present_count": 122,
+      "present_count": 145,
       "status": "checked"
     }
   ],

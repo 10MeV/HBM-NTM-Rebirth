@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "WWW",
+    "CIC",
+    "WWW"
+  ],
+  "key": {
+    "W": {
+      "tag": "forge:wires/mingrade"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_advanced"
+    },
+    "I": {
+      "tag": "forge:ingots/any_plastic"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:sat_chip"
+  }
+}

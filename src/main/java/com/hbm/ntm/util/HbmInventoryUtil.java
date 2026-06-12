@@ -134,6 +134,52 @@ public final class HbmInventoryUtil {
         return false;
     }
 
+    public static ItemStack tryAddItemToInventory(Player player, ItemStack stack) {
+        return player == null ? HbmItemStackUtil.carefulCopy(stack)
+                : tryAddItemToInventory(player.getInventory(), stack);
+    }
+
+    public static ItemStack tryAddItemToInventory(Inventory inventory, ItemStack stack) {
+        if (inventory == null) {
+            return HbmItemStackUtil.carefulCopy(stack);
+        }
+        return tryAddItemToInventory(inventory, 0, inventory.items.size() - 1, stack);
+    }
+
+    public static ItemStack tryAddItemToInventory(Inventory inventory, int start, int end, ItemStack stack) {
+        if (inventory == null) {
+            return HbmItemStackUtil.carefulCopy(stack);
+        }
+        ItemStack remainder = tryAddItemToExistingStack(inventory, start, end, stack);
+        return remainder.isEmpty() || tryAddItemToNewSlot(inventory, start, end, remainder) ? ItemStack.EMPTY : remainder;
+    }
+
+    public static ItemStack tryAddItemToExistingStack(Inventory inventory, int start, int end, ItemStack stack) {
+        if (inventory == null) {
+            return HbmItemStackUtil.carefulCopy(stack);
+        }
+        ItemStack input = HbmItemStackUtil.carefulCopy(stack);
+        ItemStack remainder = tryAddItemToExistingStack(inventory.items, start, end, input);
+        if (remainder.getCount() != input.getCount()) {
+            inventory.setChanged();
+        }
+        return remainder;
+    }
+
+    public static boolean tryAddItemToNewSlot(Inventory inventory, int start, int end, ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return true;
+        }
+        if (inventory == null) {
+            return false;
+        }
+        boolean added = tryAddItemToNewSlot(inventory.items, start, end, stack);
+        if (added) {
+            inventory.setChanged();
+        }
+        return added;
+    }
+
     public static ItemStack tryAddItemToInventory(IItemHandler inventory, ItemStack stack) {
         if (inventory == null) {
             return HbmItemStackUtil.carefulCopy(stack);
@@ -212,7 +258,7 @@ public final class HbmInventoryUtil {
             if (inventory.getStackInSlot(slot).isEmpty()) {
                 int transfer = Math.min(remainder.getCount(), slotLimit(inventory, slot, remainder));
                 if (transfer > 0) {
-                    inventory.setStackInSlot(slot, remainder.copyWithCount(transfer));
+                    inventory.setStackInSlot(slot, HbmItemStackUtil.carefulCopyWithSize(remainder, transfer));
                     remainder.shrink(transfer);
                     if (remainder.isEmpty()) {
                         return ItemStack.EMPTY;
@@ -257,7 +303,7 @@ public final class HbmInventoryUtil {
             if (inventory.getStackInSlot(slot).isEmpty()) {
                 int transfer = Math.min(remainder.getCount(), slotLimit(inventory, slot, remainder));
                 if (transfer > 0) {
-                    inventory.setStackInSlot(slot, remainder.copyWithCount(transfer));
+                    inventory.setStackInSlot(slot, HbmItemStackUtil.carefulCopyWithSize(remainder, transfer));
                     remainder.shrink(transfer);
                     return remainder.isEmpty() ? ItemStack.EMPTY : remainder;
                 }
@@ -276,7 +322,7 @@ public final class HbmInventoryUtil {
             if (stack.isEmpty()) {
                 continue;
             }
-            ItemStack single = stack.copyWithCount(1);
+            ItemStack single = HbmItemStackUtil.carefulCopyWithSize(stack, 1);
             if (ItemHandlerHelper.insertItemStacked(target, single, true).isEmpty()
                     && ItemHandlerHelper.insertItemStacked(target, single, false).isEmpty()) {
                 removeOneFromHandlerSlot(source, slot, stack);
@@ -296,7 +342,7 @@ public final class HbmInventoryUtil {
             if (stack.isEmpty()) {
                 continue;
             }
-            ItemStack single = stack.copyWithCount(1);
+            ItemStack single = HbmItemStackUtil.carefulCopyWithSize(stack, 1);
             for (int targetSlot = 0; targetSlot < target.getContainerSize(); targetSlot++) {
                 ItemStack current = target.getItem(targetSlot);
                 if (!current.isEmpty() && HbmItemStackUtil.doesStackDataMatch(current, single)
@@ -315,7 +361,7 @@ public final class HbmInventoryUtil {
             if (stack.isEmpty()) {
                 continue;
             }
-            ItemStack single = stack.copyWithCount(1);
+            ItemStack single = HbmItemStackUtil.carefulCopyWithSize(stack, 1);
             for (int targetSlot = 0; targetSlot < target.getContainerSize(); targetSlot++) {
                 if (target.getItem(targetSlot).isEmpty() && target.canPlaceItem(targetSlot, single)) {
                     target.setItem(targetSlot, single);
@@ -406,6 +452,38 @@ public final class HbmInventoryUtil {
         return doesInventoryHaveSpace(inventory, start, end, items == null ? List.of() : Arrays.asList(items));
     }
 
+    public static boolean doesInventoryHaveSpace(Player player, ItemStack... items) {
+        return player != null && doesInventoryHaveSpace(player.getInventory(), items);
+    }
+
+    public static boolean doesInventoryHaveSpace(Player player, List<ItemStack> items) {
+        return player != null && doesInventoryHaveSpace(player.getInventory(), items);
+    }
+
+    public static boolean doesInventoryHaveSpace(Inventory inventory, ItemStack... items) {
+        return inventory != null && doesInventoryHaveSpace(inventory, 0, inventory.items.size() - 1, items);
+    }
+
+    public static boolean doesInventoryHaveSpace(Inventory inventory, List<ItemStack> items) {
+        return inventory != null && doesInventoryHaveSpace(inventory, 0, inventory.items.size() - 1, items);
+    }
+
+    public static boolean doesInventoryHaveSpace(Inventory inventory, int start, int end, ItemStack... items) {
+        return inventory != null && doesInventoryHaveSpace(inventory.items, start, end, items);
+    }
+
+    public static boolean doesInventoryHaveSpace(Inventory inventory, int start, int end, List<ItemStack> items) {
+        return inventory != null && doesInventoryHaveSpace(inventory.items, start, end, items);
+    }
+
+    public static boolean doesPlayerInventoryHaveSpace(Player player, ItemStack... items) {
+        return doesInventoryHaveSpace(player, items);
+    }
+
+    public static boolean doesPlayerInventoryHaveSpace(Player player, List<ItemStack> items) {
+        return doesInventoryHaveSpace(player, items);
+    }
+
     public static boolean doesInventoryHaveSpace(ItemStack[] inventory, int start, int end, ItemStack... items) {
         ItemStack[] copy = HbmItemStackUtil.carefulCopyArray(inventory);
         if (copy == null) {
@@ -488,6 +566,15 @@ public final class HbmInventoryUtil {
         return tryConsumeIngredients(inventory, start, end, true, ingredients);
     }
 
+    public static boolean doesInventoryHaveIngredients(Inventory inventory, List<HbmIngredient> ingredients) {
+        return tryConsumeIngredients(inventory, ingredients, true);
+    }
+
+    public static boolean doesInventoryHaveIngredients(Inventory inventory, int start, int end,
+            HbmIngredient... ingredients) {
+        return tryConsumeIngredients(inventory, start, end, true, ingredients);
+    }
+
     public static boolean tryConsumeIngredients(ItemStack[] inventory, int start, int end, boolean simulate,
             HbmIngredient... ingredients) {
         MatchPlan plan = matchIngredients(inventory, start, end, ingredients == null ? List.of() : Arrays.asList(ingredients));
@@ -513,6 +600,14 @@ public final class HbmInventoryUtil {
     }
 
     public static boolean tryConsumeAStack(Container inventory, int start, int end, HbmIngredient ingredient) {
+        return ingredient == null || tryConsumeIngredients(inventory, start, end, false, ingredient);
+    }
+
+    public static boolean tryConsumeAStack(Inventory inventory, HbmIngredient ingredient) {
+        return ingredient == null || tryConsumeIngredients(inventory, List.of(ingredient), false);
+    }
+
+    public static boolean tryConsumeAStack(Inventory inventory, int start, int end, HbmIngredient ingredient) {
         return ingredient == null || tryConsumeIngredients(inventory, start, end, false, ingredient);
     }
 
@@ -575,11 +670,26 @@ public final class HbmInventoryUtil {
     }
 
     public static boolean tryConsumeIngredients(Inventory inventory, List<HbmIngredient> ingredients, boolean simulate) {
+        return tryConsumeIngredients(inventory, 0, inventory == null ? -1 : inventory.items.size() - 1, ingredients,
+                simulate);
+    }
+
+    public static boolean tryConsumeIngredients(Inventory inventory, int start, int end, boolean simulate,
+            HbmIngredient... ingredients) {
+        return tryConsumeIngredients(inventory, start, end, ingredients == null ? List.of() : Arrays.asList(ingredients),
+                simulate);
+    }
+
+    public static boolean tryConsumeIngredients(Inventory inventory, int start, int end,
+            List<HbmIngredient> ingredients, boolean simulate) {
+        if (inventory == null) {
+            return ingredients == null || ingredients.isEmpty();
+        }
         ItemStackHandler handler = new ItemStackHandler(inventory.items.size());
         for (int slot = 0; slot < inventory.items.size(); slot++) {
             handler.setStackInSlot(slot, inventory.items.get(slot).copy());
         }
-        int[] slots = range(inventory.items.size());
+        int[] slots = rangeInclusive(start, end, inventory.items.size());
         MatchPlan plan = matchIngredients(handler, slots, ingredients);
         if (plan == null) {
             return false;
@@ -592,6 +702,7 @@ public final class HbmInventoryUtil {
                     inventory.items.set(consumption.slot(), ItemStack.EMPTY);
                 }
             }
+            inventory.setChanged();
         }
         return true;
     }
@@ -703,11 +814,30 @@ public final class HbmInventoryUtil {
     }
 
     public static int countIngredientMatches(Player player, HbmIngredient ingredient, boolean ignoreSize) {
-        return countIngredientMatches(player.getInventory().items, ingredient, ignoreSize);
+        return player == null ? 0 : countIngredientMatches(player.getInventory(), ingredient, ignoreSize);
+    }
+
+    public static int countIngredientMatches(Inventory inventory, HbmIngredient ingredient, boolean ignoreSize) {
+        return inventory == null ? 0 : countIngredientMatches(inventory, 0, inventory.items.size() - 1, ingredient,
+                ignoreSize);
+    }
+
+    public static int countIngredientMatches(Inventory inventory, int start, int end, HbmIngredient ingredient,
+            boolean ignoreSize) {
+        return inventory == null ? 0 : countIngredientMatches(inventory.items, start, end, ingredient, ignoreSize);
     }
 
     public static int countAStackMatches(Player player, HbmIngredient ingredient, boolean ignoreSize) {
         return countIngredientMatches(player, ingredient, ignoreSize);
+    }
+
+    public static int countAStackMatches(Inventory inventory, HbmIngredient ingredient, boolean ignoreSize) {
+        return countIngredientMatches(inventory, ingredient, ignoreSize);
+    }
+
+    public static int countAStackMatches(Inventory inventory, int start, int end, HbmIngredient ingredient,
+            boolean ignoreSize) {
+        return countIngredientMatches(inventory, start, end, ingredient, ignoreSize);
     }
 
     public static boolean doesInventoryHaveIngredient(ItemStack[] inventory, HbmIngredient ingredient,
@@ -739,12 +869,42 @@ public final class HbmInventoryUtil {
 
     public static boolean doesPlayerHaveIngredient(Player player, HbmIngredient ingredient, boolean shouldRemove,
             boolean ignoreSize) {
-        return doesInventoryHaveIngredient(player.getInventory().items, ingredient, shouldRemove, ignoreSize);
+        return player != null && doesInventoryHaveIngredient(player.getInventory(), ingredient, shouldRemove,
+                ignoreSize);
     }
 
     public static boolean doesPlayerHaveAStack(Player player, HbmIngredient ingredient, boolean shouldRemove,
             boolean ignoreSize) {
         return doesPlayerHaveIngredient(player, ingredient, shouldRemove, ignoreSize);
+    }
+
+    public static boolean doesInventoryHaveIngredient(Inventory inventory, HbmIngredient ingredient,
+            boolean shouldRemove, boolean ignoreSize) {
+        return inventory != null && doesInventoryHaveIngredient(inventory, 0, inventory.items.size() - 1, ingredient,
+                shouldRemove, ignoreSize);
+    }
+
+    public static boolean doesInventoryHaveIngredient(Inventory inventory, int start, int end,
+            HbmIngredient ingredient, boolean shouldRemove, boolean ignoreSize) {
+        if (inventory == null) {
+            return false;
+        }
+        boolean matched = doesInventoryHaveIngredient(inventory.items, start, end, ingredient, shouldRemove,
+                ignoreSize);
+        if (matched && shouldRemove) {
+            inventory.setChanged();
+        }
+        return matched;
+    }
+
+    public static boolean doesInventoryHaveAStack(Inventory inventory, HbmIngredient ingredient,
+            boolean shouldRemove, boolean ignoreSize) {
+        return doesInventoryHaveIngredient(inventory, ingredient, shouldRemove, ignoreSize);
+    }
+
+    public static boolean doesInventoryHaveAStack(Inventory inventory, int start, int end,
+            HbmIngredient ingredient, boolean shouldRemove, boolean ignoreSize) {
+        return doesInventoryHaveIngredient(inventory, start, end, ingredient, shouldRemove, ignoreSize);
     }
 
     public static boolean doesInventoryHaveIngredient(NonNullList<ItemStack> inventory, HbmIngredient ingredient,
@@ -864,7 +1024,15 @@ public final class HbmInventoryUtil {
     }
 
     public static int countTagMatches(Player player, TagKey<Item> tag) {
-        return player == null ? 0 : countTagMatches(player.getInventory().items, tag);
+        return player == null ? 0 : countTagMatches(player.getInventory(), tag);
+    }
+
+    public static int countTagMatches(Inventory inventory, TagKey<Item> tag) {
+        return inventory == null ? 0 : countTagMatches(inventory, 0, inventory.items.size() - 1, tag);
+    }
+
+    public static int countTagMatches(Inventory inventory, int start, int end, TagKey<Item> tag) {
+        return inventory == null ? 0 : countTagMatches(inventory.items, start, end, tag);
     }
 
     public static int countTagMatches(NonNullList<ItemStack> inventory, TagKey<Item> tag) {
@@ -947,6 +1115,22 @@ public final class HbmInventoryUtil {
         return countLegacyOreMatches(player, legacyOreName);
     }
 
+    public static int countLegacyOreMatches(Inventory inventory, String legacyOreName) {
+        return countTagMatches(inventory, LegacyOreDictionaryMappings.itemTag(legacyOreName));
+    }
+
+    public static int countOreDictMatches(Inventory inventory, String legacyOreName) {
+        return countLegacyOreMatches(inventory, legacyOreName);
+    }
+
+    public static int countLegacyOreMatches(Inventory inventory, int start, int end, String legacyOreName) {
+        return countTagMatches(inventory, start, end, LegacyOreDictionaryMappings.itemTag(legacyOreName));
+    }
+
+    public static int countOreDictMatches(Inventory inventory, int start, int end, String legacyOreName) {
+        return countLegacyOreMatches(inventory, start, end, legacyOreName);
+    }
+
     public static int countLegacyOreMatches(ItemStack[] inventory, String legacyOreName) {
         return countTagMatches(inventory, LegacyOreDictionaryMappings.itemTag(legacyOreName));
     }
@@ -1017,6 +1201,14 @@ public final class HbmInventoryUtil {
         return countTagMatches(player, tag) >= count;
     }
 
+    public static boolean hasTagMatches(Inventory inventory, TagKey<Item> tag, int count) {
+        return countTagMatches(inventory, tag) >= count;
+    }
+
+    public static boolean hasTagMatches(Inventory inventory, int start, int end, TagKey<Item> tag, int count) {
+        return countTagMatches(inventory, start, end, tag) >= count;
+    }
+
     public static boolean hasTagMatches(ItemStack[] inventory, TagKey<Item> tag, int count) {
         return countTagMatches(inventory, tag) >= count;
     }
@@ -1056,6 +1248,23 @@ public final class HbmInventoryUtil {
 
     public static boolean hasOreDictMatches(Player player, String legacyOreName, int count) {
         return hasLegacyOreMatches(player, legacyOreName, count);
+    }
+
+    public static boolean hasLegacyOreMatches(Inventory inventory, String legacyOreName, int count) {
+        return hasTagMatches(inventory, LegacyOreDictionaryMappings.itemTag(legacyOreName), count);
+    }
+
+    public static boolean hasOreDictMatches(Inventory inventory, String legacyOreName, int count) {
+        return hasLegacyOreMatches(inventory, legacyOreName, count);
+    }
+
+    public static boolean hasLegacyOreMatches(Inventory inventory, int start, int end, String legacyOreName,
+            int count) {
+        return hasTagMatches(inventory, start, end, LegacyOreDictionaryMappings.itemTag(legacyOreName), count);
+    }
+
+    public static boolean hasOreDictMatches(Inventory inventory, int start, int end, String legacyOreName, int count) {
+        return hasLegacyOreMatches(inventory, start, end, legacyOreName, count);
     }
 
     public static boolean hasLegacyOreMatches(ItemStack[] inventory, String legacyOreName, int count) {
@@ -1132,7 +1341,22 @@ public final class HbmInventoryUtil {
         if (player == null) {
             return;
         }
-        consumeTagMatches(player.getInventory().items, tag, count);
+        consumeTagMatches(player.getInventory(), tag, count);
+    }
+
+    public static void consumeTagMatches(Inventory inventory, TagKey<Item> tag, int count) {
+        consumeTagMatches(inventory, 0, inventory == null ? -1 : inventory.items.size() - 1, tag, count);
+    }
+
+    public static void consumeTagMatches(Inventory inventory, int start, int end, TagKey<Item> tag, int count) {
+        if (inventory == null) {
+            return;
+        }
+        int before = countTagMatches(inventory, start, end, tag);
+        consumeTagMatches(inventory.items, start, end, tag, count);
+        if (before != countTagMatches(inventory, start, end, tag)) {
+            inventory.setChanged();
+        }
     }
 
     public static void consumeTagMatches(NonNullList<ItemStack> items, TagKey<Item> tag, int count) {
@@ -1248,6 +1472,24 @@ public final class HbmInventoryUtil {
 
     public static void consumeOreDictMatches(Player player, String legacyOreName, int count) {
         consumeLegacyOreMatches(player, legacyOreName, count);
+    }
+
+    public static void consumeLegacyOreMatches(Inventory inventory, String legacyOreName, int count) {
+        consumeTagMatches(inventory, LegacyOreDictionaryMappings.itemTag(legacyOreName), count);
+    }
+
+    public static void consumeOreDictMatches(Inventory inventory, String legacyOreName, int count) {
+        consumeLegacyOreMatches(inventory, legacyOreName, count);
+    }
+
+    public static void consumeLegacyOreMatches(Inventory inventory, int start, int end, String legacyOreName,
+            int count) {
+        consumeTagMatches(inventory, start, end, LegacyOreDictionaryMappings.itemTag(legacyOreName), count);
+    }
+
+    public static void consumeOreDictMatches(Inventory inventory, int start, int end, String legacyOreName,
+            int count) {
+        consumeLegacyOreMatches(inventory, start, end, legacyOreName, count);
     }
 
     public static void consumeLegacyOreMatches(ItemStack[] inventory, String legacyOreName, int count) {
@@ -1396,10 +1638,10 @@ public final class HbmInventoryUtil {
             while (!stack.isEmpty() && inRange(index, boundedStart, boundedEnd, reverse)) {
                 Slot slot = slots.get(index);
                 ItemStack current = slot.getItem();
-                if (!current.isEmpty() && ItemStack.isSameItemSameTags(stack, current)) {
+                if (!current.isEmpty() && HbmItemStackUtil.doesStackDataMatch(stack, current)) {
                     int max = Math.min(slot.getMaxStackSize(stack), stack.getMaxStackSize());
                     int transfer = Math.min(stack.getCount(), max - current.getCount());
-                    if (transfer > 0 && slot.mayPlace(stack.copyWithCount(transfer))) {
+                    if (transfer > 0 && slot.mayPlace(HbmItemStackUtil.carefulCopyWithSize(stack, transfer))) {
                         stack.shrink(transfer);
                         current.grow(transfer);
                         slot.setByPlayer(current);
@@ -1419,7 +1661,7 @@ public final class HbmInventoryUtil {
                 if (current.isEmpty()) {
                     int transfer = Math.min(stack.getCount(),
                             Math.min(slot.getMaxStackSize(stack), stack.getMaxStackSize()));
-                    if (transfer > 0 && slot.mayPlace(stack.copyWithCount(transfer))) {
+                    if (transfer > 0 && slot.mayPlace(HbmItemStackUtil.carefulCopyWithSize(stack, transfer))) {
                         slot.setByPlayer(stack.split(transfer));
                         slot.setChanged();
                         moved = true;
@@ -1709,7 +1951,7 @@ public final class HbmInventoryUtil {
             if (emptyIfNull(copy[slot]).isEmpty()) {
                 int transfer = Math.min(remainder.getCount(), slotLimit(inventory, slot, remainder));
                 if (transfer > 0) {
-                    copy[slot] = remainder.copyWithCount(transfer);
+                    copy[slot] = HbmItemStackUtil.carefulCopyWithSize(remainder, transfer);
                     remainder.shrink(transfer);
                     if (remainder.isEmpty()) {
                         return ItemStack.EMPTY;
@@ -1736,7 +1978,8 @@ public final class HbmInventoryUtil {
 
     private static HbmIngredient withCount(HbmIngredient ingredient, int count) {
         return new HbmIngredient(ingredient.ingredient(), count, ingredient.exactStack(), ingredient.partialNbt(),
-                ingredient.legacyId(), ingredient.legacyMeta(), ingredient.legacyWildcard(), ingredient.legacyOreName());
+                ingredient.legacyId(), ingredient.legacyMeta(), ingredient.legacyWildcard(), ingredient.legacyOreName(),
+                ingredient.fluidContainerType(), ingredient.fluidContainerAmount());
     }
 
     private static int[] range(int size) {

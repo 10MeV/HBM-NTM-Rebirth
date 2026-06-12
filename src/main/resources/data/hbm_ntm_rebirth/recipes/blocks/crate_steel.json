@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "tag": "forge:ingots/steel"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "I I",
+    "III"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:crate_steel"
+  },
+  "show_notification": true
+}

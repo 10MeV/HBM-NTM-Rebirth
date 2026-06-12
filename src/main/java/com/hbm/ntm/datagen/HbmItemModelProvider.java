@@ -1,5 +1,6 @@
 package com.hbm.ntm.datagen;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
@@ -7,6 +8,7 @@ import com.hbm.ntm.item.HbmAbilitySwordItem;
 import com.hbm.ntm.item.HbmAbilityToolItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
+import com.hbm.ntm.item.LegacyArtilleryAmmoItem;
 import com.hbm.ntm.item.SednaGunItem;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
@@ -16,6 +18,9 @@ import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class HbmItemModelProvider extends ItemModelProvider {
     public HbmItemModelProvider(PackOutput output, String modId, ExistingFileHelper existingFileHelper) {
@@ -38,6 +43,9 @@ public class HbmItemModelProvider extends ItemModelProvider {
 
     private void itemModel(Item item) {
         String path = ForgeRegistries.ITEMS.getKey(item).getPath();
+        if (hasManualItemModel(path)) {
+            return;
+        }
         if (item instanceof HbmBatteryPackItem) {
             getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("builtin/entity")));
@@ -53,6 +61,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
                     .texture("layer0", modLoc("item/" + battery.getLegacyTexturePath()));
+            return;
+        }
+        if (item instanceof LegacyArtilleryAmmoItem ammo) {
+            generatedItem(path, ammo.type().itemTexture());
             return;
         }
         if (item instanceof com.hbm.ntm.item.FluidIdentifierItem) {
@@ -118,12 +130,20 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "holotape_damaged");
             return;
         }
+        if (path.equals("nossy_hat")) {
+            generatedItem(path, "hat");
+            return;
+        }
         if (path.equals("niter")) {
             generatedItem(path, "salpeter");
             return;
         }
         if (path.equals("five_htp")) {
             generatedItem(path, "5htp");
+            return;
+        }
+        if (path.equals("fmn")) {
+            generatedItem(path, "tablet");
             return;
         }
         if (path.equals("ingot_mercury")) {
@@ -188,6 +208,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.startsWith("plate_welded_")) {
             generatedItem(path, "plate_welded");
+            return;
+        }
+        if (path.startsWith("mechanism_")) {
+            generatedItem(path, "part_mechanism");
             return;
         }
         if (path.equals("pellet_charged")) {
@@ -367,6 +391,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "trigger");
             return;
         }
+        if (path.equals("reacher")) {
+            handheldItem(path, path);
+            return;
+        }
         if (path.equals("fluid_duct") || path.equals("fluid_duct_neo") || path.equals("fluid_valve") || path.equals("fluid_switch")
                 || path.equals("fluid_counter_valve") || path.equals("fluid_duct_box")
                 || path.equals("fluid_duct_gauge") || path.equals("fluid_duct_paintable")) {
@@ -396,6 +424,24 @@ public class HbmItemModelProvider extends ItemModelProvider {
             return;
         }
         basicItem(item);
+    }
+
+    private static boolean hasManualItemModel(String path) {
+        return Files.isRegularFile(projectRoot()
+                .resolve("src/main/resources/assets")
+                .resolve(HbmNtm.MOD_ID)
+                .resolve("models/item")
+                .resolve(path + ".json"));
+    }
+
+    private static Path projectRoot() {
+        Path current = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
+        if (current.getFileName() != null
+                && ("run-data".equals(current.getFileName().toString()) || "run".equals(current.getFileName().toString()))
+                && current.getParent() != null) {
+            return current.getParent();
+        }
+        return current;
     }
 
     private void fluidContainerItem(String path, HbmFluidContainerItem container) {

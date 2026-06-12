@@ -1,4 +1,4 @@
-#version 400
+#version 150
 
 uniform sampler2D MainDepthSampler;
 uniform sampler2D MainColorSampler;
@@ -34,7 +34,6 @@ float worldPosToViewDistance(vec3 worldPos);
 
 const float pi = 3.14159265;
 const float CORE_RADIUS = 0.3;
-const float CORE_EDGE_SOFTNESS = 0.01;
 const vec3 CORE_COLOR = vec3(0.0);
 
 const int MAX_ITERATIONS = 200;
@@ -387,8 +386,9 @@ void GasDisc(inout vec3 color, inout float alpha, vec3 pos, float lodBias)
 float CoreSphere(vec3 pos)
 {
     float dist = length(pos);
-    float inner = CORE_RADIUS - CORE_EDGE_SOFTNESS;
-    float outer = CORE_RADIUS + CORE_EDGE_SOFTNESS;
+    float coreEdgeSoftness = max(0.001, lensBoundarySoftness * 0.02);
+    float inner = CORE_RADIUS - coreEdgeSoftness;
+    float outer = CORE_RADIUS + coreEdgeSoftness;
     return 1.0 - smoothstep(inner, outer, dist);
 }
 
@@ -527,14 +527,15 @@ RenderResult renderBlackhole3D(vec3 localRo, vec3 localRd, vec2 screenUV, float 
         }
 
         float distSq = dot(raypos, raypos);
-        float coreOuterSq = (CORE_RADIUS + CORE_EDGE_SOFTNESS);
+        float coreEdgeSoftness = max(0.001, lensBoundarySoftness * 0.02);
+        float coreOuterSq = (CORE_RADIUS + coreEdgeSoftness);
         coreOuterSq *= coreOuterSq;
 
         if (distSq < coreOuterSq)
         {
             float dist = sqrt(distSq);
-            float coreAlpha = 1.0 - smoothstep(CORE_RADIUS - CORE_EDGE_SOFTNESS,
-                                               CORE_RADIUS + CORE_EDGE_SOFTNESS, dist);
+            float coreAlpha = 1.0 - smoothstep(CORE_RADIUS - coreEdgeSoftness,
+                                               CORE_RADIUS + coreEdgeSoftness, dist);
 
             if (coreAlpha > 0.0)
             {

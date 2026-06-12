@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "active=false,aluminum=false,axis=x": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source",
+      "x": 90,
+      "y": 90
+    },
+    "active=false,aluminum=false,axis=y": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source"
+    },
+    "active=false,aluminum=false,axis=z": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source",
+      "x": 90
+    },
+    "active=false,aluminum=true,axis=x": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source_aluminum",
+      "x": 90,
+      "y": 90
+    },
+    "active=false,aluminum=true,axis=y": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source_aluminum"
+    },
+    "active=false,aluminum=true,axis=z": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source_aluminum",
+      "x": 90
+    },
+    "active=true,aluminum=false,axis=x": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source_active",
+      "x": 90,
+      "y": 90
+    },
+    "active=true,aluminum=false,axis=y": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source_active"
+    },
+    "active=true,aluminum=false,axis=z": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source_active",
+      "x": 90
+    },
+    "active=true,aluminum=true,axis=x": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source_active_aluminum",
+      "x": 90,
+      "y": 90
+    },
+    "active=true,aluminum=true,axis=y": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source_active_aluminum"
+    },
+    "active=true,aluminum=true,axis=z": {
+      "model": "hbm_ntm_rebirth:block/block_graphite_source_active_aluminum",
+      "x": 90
+    }
+  }
+}

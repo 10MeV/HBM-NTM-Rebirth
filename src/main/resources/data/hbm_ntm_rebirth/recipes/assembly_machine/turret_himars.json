@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.himars",
+  "duration": 1200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:battery_lithium" }, "count": 1, "legacy_id": "hbm:battery_pack", "legacy_meta": 2 },
+    { "ingredient": { "tag": "forge:ingots/steel" }, "count": 64, "legacy_ore": "ingotSteel" },
+    { "ingredient": { "tag": "forge:ingots/steel" }, "count": 64, "legacy_ore": "ingotSteel" },
+    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 64, "legacy_ore": "ingotAnyPlastic" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor_desh" }, "count": 5 },
+    { "ingredient": { "tag": "forge:circuits/advanced" }, "count": 8, "legacy_ore": "circuitAdvanced" },
+    { "ingredient": { "tag": "forge:gun_mechanisms/saturnite" }, "count": 8, "legacy_ore": "gunMechanismSaturnite" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:machine_radar" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:crt_display" }, "count": 1 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:turret_himars" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

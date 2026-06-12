@@ -57,7 +57,7 @@ public class LegacyDebrisParticle extends TerrainParticle {
 
     public static LegacyDebrisParticle create(ClientLevel level, double x, double y, double z,
             double motionX, double motionY, double motionZ, BlockState state, int debrisSize) {
-        if (state == null || state.isAir()) {
+        if (debrisSize <= 0 || state == null || state.isAir()) {
             return null;
         }
         return new LegacyDebrisParticle(level, x, y, z, motionX, motionY, motionZ, state, debrisSize);

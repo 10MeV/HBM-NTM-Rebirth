@@ -11,7 +11,6 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
-import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
 import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
@@ -60,7 +59,6 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.List;
@@ -580,22 +578,11 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private boolean processFluidContainers() {
-        List<TankSlotTransfer> transfers = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            if (inputTanks[i].getTankType() != HbmFluids.NONE) {
-                transfers.add(TankSlotTransfer.load(
-                        SLOT_FLUID_INPUT_START + i,
-                        SLOT_FLUID_INPUT_RETURN_START + i,
-                        inputTanks[i]));
-            }
-            if (outputTanks[i].getTankType() != HbmFluids.NONE) {
-                transfers.add(TankSlotTransfer.unload(
-                        SLOT_FLUID_OUTPUT_START + i,
-                        SLOT_FLUID_OUTPUT_RETURN_START + i,
-                        outputTanks[i]));
-            }
-        }
-        return HbmFluidItemTransfer.processTransfers(items, transfers);
+        return HbmFluidItemTransfer.processTransfers(items, HbmFluidItemTransfer.combineTransfers(
+                HbmFluidItemTransfer.loadTransfers(
+                        SLOT_FLUID_INPUT_START, SLOT_FLUID_INPUT_RETURN_START, inputTanks),
+                HbmFluidItemTransfer.unloadTransfers(
+                        SLOT_FLUID_OUTPUT_START, SLOT_FLUID_OUTPUT_RETURN_START, outputTanks)));
     }
 
     private boolean isFluidInputContainerSlotActive(int slot) {

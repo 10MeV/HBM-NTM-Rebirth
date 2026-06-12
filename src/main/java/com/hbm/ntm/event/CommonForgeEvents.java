@@ -20,7 +20,10 @@ import com.hbm.ntm.explosion.ExplosionChaos;
 import com.hbm.ntm.explosion.ExplosionNukeSmall;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
+import com.hbm.ntm.item.EuphemiumArmorItem;
+import com.hbm.ntm.item.FsbArmorItem;
 import com.hbm.ntm.item.HbmAbilityToolItem;
+import com.hbm.ntm.item.No9ArmorItem;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
@@ -39,6 +42,7 @@ import com.hbm.ntm.radiation.HazardExposureUtil;
 import com.hbm.ntm.radiation.HazmatRegistry;
 import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.ModDamageSources;
+import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlocks;
@@ -62,6 +66,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
@@ -106,6 +111,13 @@ import java.util.Set;
 
 @Mod.EventBusSubscriber(modid = HbmNtm.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class CommonForgeEvents {
+    private static final EquipmentSlot[] ARMOR_TICK_SLOTS = {
+            EquipmentSlot.HEAD,
+            EquipmentSlot.CHEST,
+            EquipmentSlot.LEGS,
+            EquipmentSlot.FEET
+    };
+
     private static final String HAZARD_ENTITY_TICK_KEY = "hbmHazardTick";
     private static final String CONTAGION_ITEM_TAG = "ntmContagion";
     private static final int CRATER_MELT_INTERVAL_TICKS = 4;
@@ -190,7 +202,22 @@ public final class CommonForgeEvents {
 
         Player player = event.player;
         HbmPlayerProperties.tickRuntime(player);
+        tickEquippedHbmArmor(player);
         HazardExposureUtil.updatePlayerInventory(player);
+    }
+
+    private static void tickEquippedHbmArmor(Player player) {
+        Level level = player.level();
+        for (EquipmentSlot slot : ARMOR_TICK_SLOTS) {
+            ItemStack stack = player.getItemBySlot(slot);
+            if (stack.getItem() instanceof FsbArmorItem armor) {
+                armor.tickEquippedArmor(stack, level, player);
+            } else if (stack.getItem() instanceof EuphemiumArmorItem armor) {
+                armor.tickEquippedArmor(stack, level, player);
+            } else if (stack.getItem() instanceof No9ArmorItem armor) {
+                armor.tickEquippedArmor(stack, level, player);
+            }
+        }
     }
 
     @SubscribeEvent
@@ -259,7 +286,7 @@ public final class CommonForgeEvents {
         }
 
         if (entity.tickCount % 20 == 0 && entity instanceof ServerPlayer serverPlayer) {
-            syncRadiation(serverPlayer);
+            syncRadiationThreaded(serverPlayer);
             syncPollution(serverPlayer);
         }
     }
@@ -461,6 +488,12 @@ public final class CommonForgeEvents {
 
     private static void syncRadiation(ServerPlayer player) {
         HbmExtendedProperties.sync(player,
+                ChunkRadiationManager.getRadiation(player.level(), player.blockPosition()),
+                HazmatRegistry.getResistance(player));
+    }
+
+    private static void syncRadiationThreaded(ServerPlayer player) {
+        HbmExtendedProperties.syncThreaded(player,
                 ChunkRadiationManager.getRadiation(player.level(), player.blockPosition()),
                 HazmatRegistry.getResistance(player));
     }
@@ -746,9 +779,7 @@ public final class CommonForgeEvents {
         }
 
         if ((entity.getMaxHealth() <= 0.0F || digamma >= 10.0F) && entity.isAlive()) {
-            entity.setAbsorptionAmount(0.0F);
-            entity.hurt(ModDamageSources.digamma(entity.level()), 500.0F);
-            entity.setHealth(0.0F);
+            RadiationData.handleFatalDigamma(entity);
         }
 
         int chance = Math.max(10 - (int) digamma, 1);

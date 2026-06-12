@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "hbm_ntm_rebirth:item/ammo_standard.ct_mortar_charge"
+  }
+}

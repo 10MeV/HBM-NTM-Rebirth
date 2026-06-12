@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.armor.ArmorModItems;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
+import com.hbm.ntm.client.overlay.LegacyHelmetOverlayRenderer;
 import com.hbm.ntm.client.overlay.LegacyLookOverlayRenderer;
 import com.hbm.ntm.client.obj.ObjArmorModels;
 import com.hbm.ntm.client.overlay.ToolAbilityHudRenderer;
@@ -12,6 +13,9 @@ import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.render.LegacyMultiblockHighlightRenderer;
 import com.hbm.ntm.client.renderer.LegacyAccessoryRenderHelper;
+import com.hbm.ntm.client.renderer.LegacyHeadArmorRenderer;
+import com.hbm.ntm.client.renderer.LegacyObjArmorRenderer;
+import com.hbm.ntm.client.renderer.LegacyScreenQuadRenderer;
 import com.hbm.ntm.client.renderer.SednaGunItemRenderer;
 import com.hbm.ntm.client.sound.LegacyMovingEntitySound;
 import com.hbm.ntm.client.sound.LegacyNullSoundRedirects;
@@ -45,6 +49,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -80,6 +85,8 @@ import java.util.Map;
 
 @Mod.EventBusSubscriber(modid = HbmNtm.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ClientForgeEvents {
+    private static final ResourceLocation OVERLAY_MISC_TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/overlay_misc.png");
     private static boolean hadLevel;
     private static boolean pushedNukeHudShake;
     private static float renderSoot;
@@ -93,6 +100,24 @@ public final class ClientForgeEvents {
         DamageResistanceTooltipUtil.addResistanceInformation(event.getItemStack(), event.getToolTip());
         addHazmatProtectionInformation(event.getItemStack(), event.getToolTip());
         addCustomNukeInformation(event.getItemStack(), event.getToolTip());
+        addItemTagInformation(event);
+    }
+
+    private static void addItemTagInformation(ItemTooltipEvent event) {
+        if (!event.getFlags().isAdvanced() || !HbmClientConfig.itemTagTooltips()) {
+            return;
+        }
+        List<ResourceLocation> tags = event.getItemStack().getTags()
+                .map(tag -> tag.location())
+                .sorted(Comparator.comparing(ResourceLocation::toString))
+                .toList();
+        if (tags.isEmpty()) {
+            return;
+        }
+        event.getToolTip().add(Component.literal("Item Tags:").withStyle(ChatFormatting.BLUE));
+        for (ResourceLocation tag : tags) {
+            event.getToolTip().add(Component.literal(" -" + tag).withStyle(ChatFormatting.AQUA));
+        }
     }
 
     private static void addCustomNukeInformation(ItemStack stack, List<Component> tooltip) {
@@ -182,6 +207,10 @@ public final class ClientForgeEvents {
             renderNukeFlash(event);
         }
 
+        if (event.getOverlay().id().equals(VanillaGuiOverlay.CROSSHAIR.id())) {
+            renderSednaCrosshair(event, minecraft);
+        }
+
         if (event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id()) && NukeHudEffects.hasShake()) {
             event.getGuiGraphics().pose().pushPose();
             pushedNukeHudShake = true;
@@ -193,6 +222,10 @@ public final class ClientForgeEvents {
     public static void onOverlay(RenderGuiOverlayEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
+        if (event.getOverlay().id().equals(VanillaGuiOverlay.HELMET.id())) {
+            LegacyHelmetOverlayRenderer.render(event);
+            return;
+        }
         if (event.getOverlay().id().equals(VanillaGuiOverlay.CROSSHAIR.id())) {
             LegacyLookOverlayRenderer.render(event);
             if (ClientHbmPlayerProperties.shouldRenderHud()) {
@@ -211,6 +244,24 @@ public final class ClientForgeEvents {
         }
         DashHud.render(event.getGuiGraphics(), event.getWindow().getGuiScaledHeight());
         ClientInformMessages.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
+    }
+
+    private static void renderSednaCrosshair(RenderGuiOverlayEvent.Pre event, Minecraft minecraft) {
+        Player player = minecraft.player;
+        if (player == null || !HbmClientConfig.customCrosshairsEnabled()) {
+            return;
+        }
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof SednaGunItem gun)) {
+            return;
+        }
+        event.setCanceled(true);
+        if (gun.shouldHideCrosshair(stack)) {
+            return;
+        }
+        LegacyScreenQuadRenderer.renderCrosshair(OVERLAY_MISC_TEXTURE, event.getGuiGraphics(),
+                event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight(),
+                gun.currentCrosshair(stack));
     }
 
     @SubscribeEvent
@@ -531,9 +582,15 @@ public final class ClientForgeEvents {
 
     @SubscribeEvent
     public static void onRenderLivingPost(RenderLivingEvent.Post<?, ?> event) {
-        if (event.getEntity() instanceof Player player
-                && event.getRenderer().getModel() instanceof HumanoidModel<?> humanoid) {
-            renderBackTesla(player, humanoid, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+        if (event.getRenderer().getModel() instanceof HumanoidModel<?> humanoid) {
+            LegacyObjArmorRenderer.renderEquippedArmor(event.getEntity(), humanoid, event.getPoseStack(),
+                    event.getMultiBufferSource(), event.getPackedLight());
+            LegacyHeadArmorRenderer.renderEquippedHeadArmor(event.getEntity(), humanoid, event.getPoseStack(),
+                    event.getMultiBufferSource(), event.getPackedLight());
+            if (event.getEntity() instanceof Player player) {
+                renderBackTesla(player, humanoid, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+                renderWings(player, humanoid, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+            }
         }
     }
 
@@ -554,6 +611,108 @@ public final class ClientForgeEvents {
                 LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE,
                 LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE);
         ObjArmorModels.MOD_TESLA.renderAll(ObjArmorModels.MOD_TESLA_TEXTURE, poseStack, buffer,
+                packedLight, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
+    }
+
+    private static void renderWings(Player player, HumanoidModel<?> humanoid, PoseStack poseStack,
+                                    MultiBufferSource buffer, int packedLight) {
+        ArmorModItems.Wings wings = directOrInstalledWings(player);
+        if (wings == null) {
+            return;
+        }
+
+        poseStack.pushPose();
+        humanoid.body.translateAndRotate(poseStack);
+        poseStack.scale(LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE,
+                LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE,
+                LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE);
+        renderWingModel(player, poseStack, buffer, packedLight, wings.isMurky() ? 0 : 1);
+        poseStack.popPose();
+    }
+
+    private static ArmorModItems.Wings directOrInstalledWings(Player player) {
+        ItemStack chestplate = player.getItemBySlot(EquipmentSlot.CHEST);
+        if (chestplate.getItem() instanceof ArmorModItems.Wings wings) {
+            return wings;
+        }
+        if (!ArmorModHandler.hasMods(chestplate)) {
+            return null;
+        }
+        ItemStack mod = ArmorModHandler.pryMod(chestplate, ArmorModHandler.plate_only);
+        return mod.getItem() instanceof ArmorModItems.Wings wings ? wings : null;
+    }
+
+    private static void renderWingModel(Player player, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                        int legacyMode) {
+        double rot = Math.sin(player.tickCount * 0.2D) * 20.0D;
+        double rot2 = Math.sin(player.tickCount * 0.2D - Math.PI * 0.5D) * 50.0D + 30.0D;
+        if (legacyMode != 1 && player.onGround()) {
+            rot = 20.0D;
+            rot2 = 160.0D;
+        }
+        if (legacyMode == 1) {
+            if (player.onGround()) {
+                rot = 30.0D;
+                rot2 = -30.0D;
+            } else if (player.getDeltaMovement().y < -0.1D) {
+                rot = 0.0D;
+                rot2 = 10.0D;
+            } else {
+                rot = 30.0D;
+                rot2 = 20.0D;
+            }
+        }
+
+        poseStack.translate(0.0D, -2.0D, 0.0D);
+        renderLeftWing(player, poseStack, buffer, packedLight, rot, rot2);
+        renderRightWing(player, poseStack, buffer, packedLight, rot, rot2);
+    }
+
+    private static void renderLeftWing(Player player, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                       double rot, double rot2) {
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.YP.rotationDegrees(-10.0F));
+        poseStack.translate(1.0D, 5.0D, 3.0D);
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) (rot * 0.5D)));
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) (rot + 5.0D)));
+        poseStack.mulPose(Axis.XP.rotationDegrees(45.0F));
+        poseStack.translate(-1.0D, -5.0D, -3.0D);
+        poseStack.translate(1.0D, 5.0D, 3.0D);
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) rot));
+        poseStack.translate(-1.0D, -5.0D, -3.0D);
+        ObjArmorModels.WINGS.renderPart("LeftBase", ObjArmorModels.WINGS_MURK_TEXTURE, poseStack, buffer,
+                packedLight, OverlayTexture.NO_OVERLAY);
+
+        poseStack.translate(16.0D, 5.0D, 2.0D);
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) rot2));
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) (rot2 * 0.25D + 5.0D)));
+        poseStack.translate(-16.0D, -5.0D, -2.0D);
+        ObjArmorModels.WINGS.renderPart("LeftTip", ObjArmorModels.WINGS_MURK_TEXTURE, poseStack, buffer,
+                packedLight, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
+    }
+
+    private static void renderRightWing(Player player, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                        double rot, double rot2) {
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.YP.rotationDegrees(10.0F));
+        poseStack.translate(-1.0D, 5.0D, 3.0D);
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) (-rot * 0.5D)));
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) (-rot - 5.0D)));
+        poseStack.mulPose(Axis.XP.rotationDegrees(45.0F));
+        poseStack.translate(1.0D, -5.0D, -3.0D);
+        poseStack.translate(-1.0D, 5.0D, 3.0D);
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) -rot));
+        poseStack.translate(1.0D, -5.0D, -3.0D);
+        ObjArmorModels.WINGS.renderPart("RightBase", ObjArmorModels.WINGS_MURK_TEXTURE, poseStack, buffer,
+                packedLight, OverlayTexture.NO_OVERLAY);
+
+        poseStack.translate(-16.0D, 5.0D, 2.0D);
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) -rot2));
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) (-rot2 * 0.25D - 5.0D)));
+        poseStack.translate(16.0D, -5.0D, -2.0D);
+        ObjArmorModels.WINGS.renderPart("RightTip", ObjArmorModels.WINGS_MURK_TEXTURE, poseStack, buffer,
                 packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
     }

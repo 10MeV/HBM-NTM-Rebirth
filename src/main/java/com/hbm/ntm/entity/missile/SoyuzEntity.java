@@ -6,7 +6,6 @@ import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.Satellite;
-import com.hbm.ntm.satellite.SatelliteChipItem;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.util.HbmItemStackUtil;
@@ -117,10 +116,9 @@ public class SoyuzEntity extends Entity {
         if (level() instanceof ServerLevel serverLevel) {
             if (mode == MODE_SATELLITE) {
                 ItemStack load = payload.get(0);
-                if (!load.isEmpty() && load.getItem() instanceof SatelliteChipItem satelliteItem
-                        && satelliteItem.isLaunchableSatellite()) {
+                if (Satellite.getTypeFromStack(load).isPresent()) {
                     int frequency = ISatelliteChip.getFrequencyFromStack(load);
-                    Satellite.orbit(serverLevel, satelliteItem.satelliteType().legacyId(), frequency, getX(), getY(), getZ());
+                    Satellite.orbit(serverLevel, load, frequency, getX(), getY(), getZ());
                 }
             } else if (mode == MODE_CAPSULE) {
                 SoyuzCapsuleEntity capsule = new SoyuzCapsuleEntity(serverLevel);

@@ -5,8 +5,10 @@ import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -317,6 +319,12 @@ public final class HbmInventoryMenuHelper {
         return 0.0D;
     }
 
+    private static boolean isLegacySlotMouseOver(Slot slot, int guiLeft, int guiTop, double mouseX, double mouseY) {
+        int x = guiLeft + slot.x;
+        int y = guiTop + slot.y;
+        return x <= mouseX && x + 16 > mouseX && y < mouseY && y + 16 >= mouseY;
+    }
+
     private static ItemStack copyPatternStack(ItemStack stack, boolean allowStackSize) {
         if (stack.isEmpty()) {
             return ItemStack.EMPTY;
@@ -414,6 +422,21 @@ public final class HbmInventoryMenuHelper {
         return legacyPatternDropTag(menuSlot, stack);
     }
 
+    public static CompoundTag legacyPatternDropTag(java.util.List<Slot> slots, int guiLeft, int guiTop,
+            double mouseX, double mouseY, ItemStack stack) {
+        if (slots == null || stack.isEmpty()) {
+            return null;
+        }
+        for (int menuSlot = 0; menuSlot < slots.size(); menuSlot++) {
+            Slot slot = slots.get(menuSlot);
+            if (slot != null && slot.isActive() && isLegacyPatternSlot(slot)
+                    && isLegacySlotMouseOver(slot, guiLeft, guiTop, mouseX, mouseY)) {
+                return legacyPatternDropTag(menuSlot, stack);
+            }
+        }
+        return null;
+    }
+
     public static boolean isBatteryLike(ItemStack stack) {
         return !stack.isEmpty() && (stack.getItem() instanceof HbmBatteryItem
                 || stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent());
@@ -423,7 +446,31 @@ public final class HbmInventoryMenuHelper {
         return HbmItemStackUtil.saveLegacyItems(items);
     }
 
+    public static CompoundTag saveLegacyItems(IItemHandler items) {
+        return HbmItemStackUtil.saveLegacyItems(items);
+    }
+
+    public static CompoundTag saveLegacyItems(ItemStack[] items) {
+        return HbmItemStackUtil.saveLegacyItems(items);
+    }
+
+    public static CompoundTag saveLegacyItems(Container items) {
+        return HbmItemStackUtil.saveLegacyItems(items);
+    }
+
     public static void saveLegacyItemsToTag(CompoundTag target, ItemStackHandler items) {
+        HbmItemStackUtil.saveLegacyItemsToTag(target, items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, IItemHandler items) {
+        HbmItemStackUtil.saveLegacyItemsToTag(target, items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, ItemStack[] items) {
+        HbmItemStackUtil.saveLegacyItemsToTag(target, items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, Container items) {
         HbmItemStackUtil.saveLegacyItemsToTag(target, items);
     }
 
@@ -431,7 +478,31 @@ public final class HbmInventoryMenuHelper {
         HbmItemStackUtil.saveLegacyItemsToTag(target, key, items);
     }
 
+    public static void saveLegacyItemsToTag(CompoundTag target, String key, IItemHandler items) {
+        HbmItemStackUtil.saveLegacyItemsToTag(target, key, items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, String key, ItemStack[] items) {
+        HbmItemStackUtil.saveLegacyItemsToTag(target, key, items);
+    }
+
+    public static void saveLegacyItemsToTag(CompoundTag target, String key, Container items) {
+        HbmItemStackUtil.saveLegacyItemsToTag(target, key, items);
+    }
+
     public static void saveLegacyItemsCompoundToTag(CompoundTag target, String key, ItemStackHandler items) {
+        HbmItemStackUtil.saveLegacyItemsCompoundToTag(target, key, items);
+    }
+
+    public static void saveLegacyItemsCompoundToTag(CompoundTag target, String key, IItemHandler items) {
+        HbmItemStackUtil.saveLegacyItemsCompoundToTag(target, key, items);
+    }
+
+    public static void saveLegacyItemsCompoundToTag(CompoundTag target, String key, ItemStack[] items) {
+        HbmItemStackUtil.saveLegacyItemsCompoundToTag(target, key, items);
+    }
+
+    public static void saveLegacyItemsCompoundToTag(CompoundTag target, String key, Container items) {
         HbmItemStackUtil.saveLegacyItemsCompoundToTag(target, key, items);
     }
 
@@ -451,7 +522,58 @@ public final class HbmInventoryMenuHelper {
         HbmItemStackUtil.saveLegacyItemsCompoundToTag(target, key, items);
     }
 
+    public static ListTag saveSlottedItems(ItemStackHandler items, String slotKey) {
+        return HbmItemStackUtil.saveSlottedItems(items, slotKey);
+    }
+
+    public static ListTag saveSlottedItems(IItemHandler items, String slotKey) {
+        return HbmItemStackUtil.saveSlottedItems(items, slotKey);
+    }
+
+    public static ListTag saveSlottedItems(ItemStack[] items, String slotKey) {
+        return HbmItemStackUtil.saveSlottedItems(items, slotKey);
+    }
+
+    public static ListTag saveSlottedItems(NonNullList<ItemStack> items, String slotKey) {
+        return HbmItemStackUtil.saveSlottedItems(items, slotKey);
+    }
+
+    public static ListTag saveSlottedItems(Container items, String slotKey) {
+        return HbmItemStackUtil.saveSlottedItems(items, slotKey);
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey,
+            ItemStackHandler items) {
+        HbmItemStackUtil.saveSlottedItemsToTag(target, listKey, slotKey, items);
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey,
+            IItemHandler items) {
+        HbmItemStackUtil.saveSlottedItemsToTag(target, listKey, slotKey, items);
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey, ItemStack[] items) {
+        HbmItemStackUtil.saveSlottedItemsToTag(target, listKey, slotKey, items);
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey,
+            NonNullList<ItemStack> items) {
+        HbmItemStackUtil.saveSlottedItemsToTag(target, listKey, slotKey, items);
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey, Container items) {
+        HbmItemStackUtil.saveSlottedItemsToTag(target, listKey, slotKey, items);
+    }
+
     public static void loadLegacyItems(CompoundTag tag, ItemStackHandler items) {
+        HbmItemStackUtil.loadLegacyItems(tag, items);
+    }
+
+    public static void loadLegacyItems(CompoundTag tag, ItemStack[] items) {
+        HbmItemStackUtil.loadLegacyItems(tag, items);
+    }
+
+    public static void loadLegacyItems(CompoundTag tag, Container items) {
         HbmItemStackUtil.loadLegacyItems(tag, items);
     }
 
@@ -459,7 +581,23 @@ public final class HbmInventoryMenuHelper {
         HbmItemStackUtil.loadLegacyItems(tag, key, items);
     }
 
+    public static void loadLegacyItems(CompoundTag tag, String key, ItemStack[] items) {
+        HbmItemStackUtil.loadLegacyItems(tag, key, items);
+    }
+
+    public static void loadLegacyItems(CompoundTag tag, String key, Container items) {
+        HbmItemStackUtil.loadLegacyItems(tag, key, items);
+    }
+
     public static void loadLegacyItemsCompound(CompoundTag tag, String key, ItemStackHandler items) {
+        HbmItemStackUtil.loadLegacyItemsCompound(tag, key, items);
+    }
+
+    public static void loadLegacyItemsCompound(CompoundTag tag, String key, ItemStack[] items) {
+        HbmItemStackUtil.loadLegacyItemsCompound(tag, key, items);
+    }
+
+    public static void loadLegacyItemsCompound(CompoundTag tag, String key, Container items) {
         HbmItemStackUtil.loadLegacyItemsCompound(tag, key, items);
     }
 
@@ -467,12 +605,32 @@ public final class HbmInventoryMenuHelper {
         HbmItemStackUtil.loadLegacyOrForgeItems(tag, items);
     }
 
+    public static void loadLegacyOrForgeItems(CompoundTag tag, ItemStack[] items) {
+        HbmItemStackUtil.loadLegacyOrForgeItems(tag, items);
+    }
+
+    public static void loadLegacyOrForgeItems(CompoundTag tag, Container items) {
+        HbmItemStackUtil.loadLegacyOrForgeItems(tag, items);
+    }
+
     public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, ItemStackHandler items) {
+        HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, key, items);
+    }
+
+    public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, ItemStack[] items) {
+        HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, key, items);
+    }
+
+    public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, Container items) {
         HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, key, items);
     }
 
     public static NonNullList<ItemStack> loadLegacyItems(CompoundTag tag, int slotCount) {
         return HbmItemStackUtil.loadLegacyItems(tag, slotCount);
+    }
+
+    public static NonNullList<ItemStack> loadLegacyOrForgeItems(CompoundTag tag, int slotCount) {
+        return HbmItemStackUtil.loadLegacyOrForgeItems(tag, slotCount);
     }
 
     public static void loadLegacyItems(CompoundTag tag, NonNullList<ItemStack> items) {
@@ -485,6 +643,59 @@ public final class HbmInventoryMenuHelper {
 
     public static void loadLegacyItemsCompound(CompoundTag tag, String key, NonNullList<ItemStack> items) {
         HbmItemStackUtil.loadLegacyItemsCompound(tag, key, items);
+    }
+
+    public static void loadLegacyOrForgeItems(CompoundTag tag, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.loadLegacyOrForgeItems(tag, items);
+    }
+
+    public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, key, items);
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey, ItemStackHandler items) {
+        HbmItemStackUtil.loadSlottedItems(tag, listKey, slotKey, items);
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey, ItemStack[] items) {
+        HbmItemStackUtil.loadSlottedItems(tag, listKey, slotKey, items);
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey,
+            NonNullList<ItemStack> items) {
+        HbmItemStackUtil.loadSlottedItems(tag, listKey, slotKey, items);
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey, Container items) {
+        HbmItemStackUtil.loadSlottedItems(tag, listKey, slotKey, items);
+    }
+
+    public static void loadSlottedItems(ListTag list, String slotKey, ItemStackHandler items) {
+        HbmItemStackUtil.loadSlottedItems(list, slotKey, items);
+    }
+
+    public static void loadSlottedItems(ListTag list, String slotKey, ItemStack[] items) {
+        HbmItemStackUtil.loadSlottedItems(list, slotKey, items);
+    }
+
+    public static void loadSlottedItems(ListTag list, String slotKey, NonNullList<ItemStack> items) {
+        HbmItemStackUtil.loadSlottedItems(list, slotKey, items);
+    }
+
+    public static void loadSlottedItems(ListTag list, String slotKey, Container items) {
+        HbmItemStackUtil.loadSlottedItems(list, slotKey, items);
+    }
+
+    public static java.util.List<ItemStack> clearToDrops(NonNullList<ItemStack> items) {
+        return HbmItemStackUtil.clearToDrops(items);
+    }
+
+    public static java.util.List<ItemStack> clearToDrops(ItemStack[] items) {
+        return HbmItemStackUtil.clearToDrops(items);
+    }
+
+    public static java.util.List<ItemStack> clearToDrops(Container items) {
+        return HbmItemStackUtil.clearToDrops(items);
     }
 
     public static java.util.List<ItemStack> clearToDrops(ItemStackHandler items) {

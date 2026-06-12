@@ -109,11 +109,11 @@ public final class RadiationUtil {
         if (level <= 0.0F || stackCount <= 0) {
             return;
         }
-        applyDigammaData(entity, level * stackCount / 20.0F);
+        applyDigammaData(entity, level / 20.0F);
     }
 
     public static void applyDigammaDirect(LivingEntity entity, float amount) {
-        if (amount <= 0.0F || entity instanceof RadiationImmune) {
+        if (amount <= 0.0F || entity instanceof RadiationImmune || isLegacyClassName(entity, "EntityDuck")) {
             return;
         }
         if (entity instanceof Player player && player.isCreative()) {
@@ -139,6 +139,8 @@ public final class RadiationUtil {
 
     private static boolean isLegacyImmuneEntityName(LivingEntity entity) {
         return isLegacyClassName(entity, "CreeperNuclear")
+                || isLegacyClassName(entity, "EntityCreeperNuclear")
+                || isLegacyClassName(entity, "EntityCreeperTainted")
                 || isLegacyClassName(entity, "EntityQuackos")
                 || isLegacyClassName(entity, "EntityLootableBody");
     }

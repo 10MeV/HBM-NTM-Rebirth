@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/template_glass_pane_noside",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "pane": "hbm_ntm_rebirth:block/reinforced_laminate_pane",
+    "edge": "hbm_ntm_rebirth:block/reinforced_laminate_pane_edge"
+  }
+}

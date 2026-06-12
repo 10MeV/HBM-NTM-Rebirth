@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "forge:ingots/steel"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    " PP",
+    "PII",
+    " PP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:fins_small_steel"
+  },
+  "show_notification": true
+}

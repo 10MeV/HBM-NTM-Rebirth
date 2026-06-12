@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:crystal_phosphorus"
+    },
+    "F": {
+      "item": "hbm_ntm_rebirth:fins_quad_titanium"
+    },
+    "I": {
+      "item": "hbm_ntm_rebirth:mp_thruster_10_xenon"
+    },
+    "N": {
+      "item": "hbm_ntm_rebirth:plate_armor_lunar"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:bj_plate"
+    },
+    "T": {
+      "type": "hbm_ntm_rebirth:fluid_container",
+      "fluid": "hbm_ntm_rebirth:xenon",
+      "amount": 1000
+    }
+  },
+  "pattern": [
+    "NFN",
+    "TPT",
+    "ICI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:bj_plate_jetpack"
+  },
+  "show_notification": true
+}

@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -36,6 +37,10 @@ public final class CompatRecipeRegistry {
         if (listener != null && !LISTENERS.contains(listener)) {
             LISTENERS.add(listener);
         }
+    }
+
+    public static boolean unregisterRecipeRegisterListener(com.hbm.ntm.api.recipe.RecipeRegisterListener listener) {
+        return listener != null && LISTENERS.remove(listener);
     }
 
     public static void emitRecipeRegisterListeners(com.hbm.ntm.api.recipe.RecipeSink sink) {
@@ -338,14 +343,52 @@ public final class CompatRecipeRegistry {
         return json;
     }
 
+    public static JsonObject createItemProcessing(ItemProcessingRecipe.Machine machine, HbmIngredient input,
+            HbmItemOutput[] outputs, HbmFluidStack fluidInput, int duration, float productivity) {
+        return createItemProcessing(machine, input, outputList(outputs), fluidInput, duration, productivity);
+    }
+
+    public static JsonObject createItemProcessing(ItemProcessingRecipe.Machine machine, HbmIngredient input,
+            ItemStack[] outputs, HbmFluidStack fluidInput, int duration, float productivity) {
+        return createItemProcessing(machine, input, itemOutputList(outputs), fluidInput, duration, productivity);
+    }
+
     public static ResourceLocation registerItemProcessing(com.hbm.ntm.api.recipe.RecipeSink sink,
             ResourceLocation id, ItemProcessingRecipe.Machine machine, HbmIngredient input,
             List<HbmItemOutput> outputs, HbmFluidStack fluidInput, int duration, float productivity) {
         return emit(sink, id, createItemProcessing(machine, input, outputs, fluidInput, duration, productivity));
     }
 
+    public static ResourceLocation registerItemProcessing(com.hbm.ntm.api.recipe.RecipeSink sink,
+            ResourceLocation id, ItemProcessingRecipe.Machine machine, HbmIngredient input,
+            HbmItemOutput[] outputs, HbmFluidStack fluidInput, int duration, float productivity) {
+        return registerItemProcessing(sink, id, machine, input, outputList(outputs), fluidInput, duration,
+                productivity);
+    }
+
+    public static ResourceLocation registerItemProcessing(com.hbm.ntm.api.recipe.RecipeSink sink,
+            ResourceLocation id, ItemProcessingRecipe.Machine machine, HbmIngredient input,
+            ItemStack[] outputs, HbmFluidStack fluidInput, int duration, float productivity) {
+        return registerItemProcessing(sink, id, machine, input, itemOutputList(outputs), fluidInput, duration,
+                productivity);
+    }
+
     public static ResourceLocation registerItemProcessing(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
             ItemProcessingRecipe.Machine machine, HbmIngredient input, List<HbmItemOutput> outputs,
+            HbmFluidStack fluidInput, int duration, float productivity) {
+        return registerItemProcessing(sink, compatRecipeId(itemProcessingFolder(machine), name), machine, input,
+                outputs, fluidInput, duration, productivity);
+    }
+
+    public static ResourceLocation registerItemProcessing(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemProcessingRecipe.Machine machine, HbmIngredient input, HbmItemOutput[] outputs,
+            HbmFluidStack fluidInput, int duration, float productivity) {
+        return registerItemProcessing(sink, compatRecipeId(itemProcessingFolder(machine), name), machine, input,
+                outputs, fluidInput, duration, productivity);
+    }
+
+    public static ResourceLocation registerItemProcessing(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemProcessingRecipe.Machine machine, HbmIngredient input, ItemStack[] outputs,
             HbmFluidStack fluidInput, int duration, float productivity) {
         return registerItemProcessing(sink, compatRecipeId(itemProcessingFolder(machine), name), machine, input,
                 outputs, fluidInput, duration, productivity);
@@ -365,7 +408,15 @@ public final class CompatRecipeRegistry {
         return createShredder(HbmIngredient.of(input, 1), output);
     }
 
+    public static JsonObject createShredder(ItemLike input, HbmItemOutput output) {
+        return createShredder(HbmIngredient.of(input, 1), output);
+    }
+
     public static JsonObject createShredder(TagKey<Item> input, ItemStack output) {
+        return createShredder(HbmIngredient.of(input, 1), output);
+    }
+
+    public static JsonObject createShredder(TagKey<Item> input, HbmItemOutput output) {
         return createShredder(HbmIngredient.of(input, 1), output);
     }
 
@@ -389,6 +440,26 @@ public final class CompatRecipeRegistry {
     public static ResourceLocation registerShredder(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
             HbmIngredient input, HbmItemOutput output) {
         return registerShredder(sink, compatRecipeId("shredder", name), input, output);
+    }
+
+    public static ResourceLocation registerShredder(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemLike input, ItemStack output) {
+        return registerShredder(sink, id, HbmIngredient.of(input, 1), output);
+    }
+
+    public static ResourceLocation registerShredder(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemLike input, HbmItemOutput output) {
+        return registerShredder(sink, id, HbmIngredient.of(input, 1), output);
+    }
+
+    public static ResourceLocation registerShredder(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            TagKey<Item> input, ItemStack output) {
+        return registerShredder(sink, id, HbmIngredient.of(input, 1), output);
+    }
+
+    public static ResourceLocation registerShredder(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            TagKey<Item> input, HbmItemOutput output) {
+        return registerShredder(sink, id, HbmIngredient.of(input, 1), output);
     }
 
     public static ResourceLocation registerShredder(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
@@ -415,7 +486,15 @@ public final class CompatRecipeRegistry {
         return createCentrifuge(HbmIngredient.of(input, 1), outputs);
     }
 
+    public static JsonObject createCentrifuge(ItemLike input, HbmItemOutput[] outputs) {
+        return createCentrifuge(HbmIngredient.of(input, 1), outputs);
+    }
+
     public static JsonObject createCentrifuge(TagKey<Item> input, ItemStack[] outputs) {
+        return createCentrifuge(HbmIngredient.of(input, 1), outputs);
+    }
+
+    public static JsonObject createCentrifuge(TagKey<Item> input, HbmItemOutput[] outputs) {
         return createCentrifuge(HbmIngredient.of(input, 1), outputs);
     }
 
@@ -439,6 +518,26 @@ public final class CompatRecipeRegistry {
     public static ResourceLocation registerCentrifuge(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
             HbmIngredient input, HbmItemOutput[] outputs) {
         return registerCentrifuge(sink, compatRecipeId("centrifuge", name), input, outputs);
+    }
+
+    public static ResourceLocation registerCentrifuge(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemLike input, ItemStack[] outputs) {
+        return registerCentrifuge(sink, id, HbmIngredient.of(input, 1), outputs);
+    }
+
+    public static ResourceLocation registerCentrifuge(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemLike input, HbmItemOutput[] outputs) {
+        return registerCentrifuge(sink, id, HbmIngredient.of(input, 1), outputs);
+    }
+
+    public static ResourceLocation registerCentrifuge(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            TagKey<Item> input, ItemStack[] outputs) {
+        return registerCentrifuge(sink, id, HbmIngredient.of(input, 1), outputs);
+    }
+
+    public static ResourceLocation registerCentrifuge(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            TagKey<Item> input, HbmItemOutput[] outputs) {
+        return registerCentrifuge(sink, id, HbmIngredient.of(input, 1), outputs);
     }
 
     public static ResourceLocation registerCentrifuge(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
@@ -468,7 +567,17 @@ public final class CompatRecipeRegistry {
         return createCrystallizer(HbmIngredient.of(input, 1), output, duration, productivity, fluidInput);
     }
 
+    public static JsonObject createCrystallizer(ItemLike input, HbmItemOutput output, int duration,
+            float productivity, HbmFluidStack fluidInput) {
+        return createCrystallizer(HbmIngredient.of(input, 1), output, duration, productivity, fluidInput);
+    }
+
     public static JsonObject createCrystallizer(TagKey<Item> input, ItemStack output, int duration,
+            float productivity, HbmFluidStack fluidInput) {
+        return createCrystallizer(HbmIngredient.of(input, 1), output, duration, productivity, fluidInput);
+    }
+
+    public static JsonObject createCrystallizer(TagKey<Item> input, HbmItemOutput output, int duration,
             float productivity, HbmFluidStack fluidInput) {
         return createCrystallizer(HbmIngredient.of(input, 1), output, duration, productivity, fluidInput);
     }
@@ -495,6 +604,30 @@ public final class CompatRecipeRegistry {
             HbmIngredient input, HbmItemOutput output, int duration, float productivity, HbmFluidStack fluidInput) {
         return registerCrystallizer(sink, compatRecipeId("crystallizer", name), input, output, duration,
                 productivity, fluidInput);
+    }
+
+    public static ResourceLocation registerCrystallizer(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemLike input, ItemStack output, int duration, float productivity, HbmFluidStack fluidInput) {
+        return registerCrystallizer(sink, id, HbmIngredient.of(input, 1), output, duration, productivity,
+                fluidInput);
+    }
+
+    public static ResourceLocation registerCrystallizer(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            ItemLike input, HbmItemOutput output, int duration, float productivity, HbmFluidStack fluidInput) {
+        return registerCrystallizer(sink, id, HbmIngredient.of(input, 1), output, duration, productivity,
+                fluidInput);
+    }
+
+    public static ResourceLocation registerCrystallizer(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            TagKey<Item> input, ItemStack output, int duration, float productivity, HbmFluidStack fluidInput) {
+        return registerCrystallizer(sink, id, HbmIngredient.of(input, 1), output, duration, productivity,
+                fluidInput);
+    }
+
+    public static ResourceLocation registerCrystallizer(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            TagKey<Item> input, HbmItemOutput output, int duration, float productivity, HbmFluidStack fluidInput) {
+        return registerCrystallizer(sink, id, HbmIngredient.of(input, 1), output, duration, productivity,
+                fluidInput);
     }
 
     public static ResourceLocation registerCrystallizer(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
@@ -557,6 +690,38 @@ public final class CompatRecipeRegistry {
             HbmItemOutput output, int duration, long power, HbmFluidStack inputFluid, HbmIngredient[] inputItems) {
         return registerArcWelder(sink, compatRecipeId("arc_welder", name), name, output, duration, power,
                 inputFluid, inputItems);
+    }
+
+    public static JsonObject createArcWelder(String name, ItemStack output, int duration, long power,
+            HbmFluidStack inputFluid, ItemLike... inputItems) {
+        return createArcWelder(name, output, duration, power, inputFluid, ingredients(inputItems));
+    }
+
+    public static JsonObject createArcWelder(String name, HbmItemOutput output, int duration, long power,
+            HbmFluidStack inputFluid, ItemLike... inputItems) {
+        return createArcWelder(name, output, duration, power, inputFluid, ingredients(inputItems));
+    }
+
+    public static ResourceLocation registerArcWelder(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            ItemStack output, int duration, long power, HbmFluidStack inputFluid, ItemLike... inputItems) {
+        return registerArcWelder(sink, name, output, duration, power, inputFluid, ingredients(inputItems));
+    }
+
+    public static ResourceLocation registerArcWelder(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
+            HbmItemOutput output, int duration, long power, HbmFluidStack inputFluid, ItemLike... inputItems) {
+        return registerArcWelder(sink, name, output, duration, power, inputFluid, ingredients(inputItems));
+    }
+
+    public static ResourceLocation registerArcWelder(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            String name, ItemStack output, int duration, long power, HbmFluidStack inputFluid,
+            ItemLike... inputItems) {
+        return registerArcWelder(sink, id, name, output, duration, power, inputFluid, ingredients(inputItems));
+    }
+
+    public static ResourceLocation registerArcWelder(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
+            String name, HbmItemOutput output, int duration, long power, HbmFluidStack inputFluid,
+            ItemLike... inputItems) {
+        return registerArcWelder(sink, id, name, output, duration, power, inputFluid, ingredients(inputItems));
     }
 
     public static JsonObject createGeneric(GenericMachineRecipe.Machine machine, ResourceLocation id, String name,
@@ -642,11 +807,53 @@ public final class CompatRecipeRegistry {
                 .toList();
     }
 
+    public static List<String> supportedLegacyRecipeFacades() {
+        return recipeFacadeStatuses().stream()
+                .filter(RecipeFacadeStatus::supported)
+                .map(RecipeFacadeStatus::legacyMethod)
+                .toList();
+    }
+
     public static List<String> deferredLegacyRecipeFacades() {
         return recipeFacadeStatuses().stream()
                 .filter(status -> !status.supported())
                 .map(RecipeFacadeStatus::legacyMethod)
                 .toList();
+    }
+
+    public static List<RecipeFacadeStatus> supportedRecipeFacadeStatuses() {
+        return recipeFacadeStatuses().stream()
+                .filter(RecipeFacadeStatus::supported)
+                .toList();
+    }
+
+    public static List<RecipeFacadeStatus> deferredRecipeFacadeStatuses() {
+        return recipeFacadeStatuses().stream()
+                .filter(status -> !status.supported())
+                .toList();
+    }
+
+    public static Optional<RecipeFacadeStatus> recipeFacadeStatus(String legacyMethodOrModernFacade) {
+        if (legacyMethodOrModernFacade == null || legacyMethodOrModernFacade.isBlank()) {
+            return Optional.empty();
+        }
+        String needle = legacyMethodOrModernFacade.toLowerCase(Locale.ROOT);
+        return recipeFacadeStatuses().stream()
+                .filter(status -> status.legacyMethod().equalsIgnoreCase(needle)
+                        || status.modernFacade().equalsIgnoreCase(needle))
+                .findFirst();
+    }
+
+    public static boolean isRecipeFacadeSupported(String legacyMethodOrModernFacade) {
+        return recipeFacadeStatus(legacyMethodOrModernFacade)
+                .map(RecipeFacadeStatus::supported)
+                .orElse(false);
+    }
+
+    public static RecipeFacadeCoverage recipeFacadeCoverage() {
+        List<RecipeFacadeStatus> statuses = recipeFacadeStatuses();
+        int supported = (int) statuses.stream().filter(RecipeFacadeStatus::supported).count();
+        return new RecipeFacadeCoverage(statuses.size(), supported, statuses.size() - supported);
     }
 
     public static List<RecipeFacadeStatus> recipeFacadeStatuses() {
@@ -868,6 +1075,16 @@ public final class CompatRecipeRegistry {
                 .toList();
     }
 
+    private static HbmIngredient[] ingredients(ItemLike[] inputs) {
+        if (inputs == null || inputs.length == 0) {
+            return new HbmIngredient[0];
+        }
+        return Arrays.stream(inputs)
+                .filter(Objects::nonNull)
+                .map(input -> HbmIngredient.of(input, 1))
+                .toArray(HbmIngredient[]::new);
+    }
+
     private static <T> List<T> list(T[] array) {
         if (array == null || array.length == 0) {
             return List.of();
@@ -920,6 +1137,12 @@ public final class CompatRecipeRegistry {
         public String summary() {
             return legacyMethod + " -> " + modernFacade + " (" + (supported ? "supported" : "deferred")
                     + ": " + note + ")";
+        }
+    }
+
+    public record RecipeFacadeCoverage(int total, int supported, int deferred) {
+        public String summary() {
+            return "recipe facades supported=" + supported + "/" + total + " deferred=" + deferred;
         }
     }
 

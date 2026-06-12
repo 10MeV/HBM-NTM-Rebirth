@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:glass_boron"
+    },
+    "L": {
+      "item": "hbm_ntm_rebirth:glass_lead"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "BBB",
+    "LLL",
+    "P P"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_lid_glass",
+    "count": 4
+  },
+  "show_notification": true
+}

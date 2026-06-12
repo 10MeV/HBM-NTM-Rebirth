@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.maxwell",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:capacitor_niobium" }, "count": 1, "legacy_id": "hbm:battery_pack", "legacy_meta": 8 },
+    { "ingredient": { "tag": "forge:ingots/steel" }, "count": 24, "legacy_ore": "ingotSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor" }, "count": 2 },
+    { "ingredient": { "tag": "forge:circuits/advanced" }, "count": 2, "legacy_ore": "circuitAdvanced" },
+    { "ingredient": { "tag": "forge:pipes/steel" }, "count": 4, "legacy_ore": "ntmpipeSteel" },
+    { "ingredient": { "tag": "forge:gun_mechanisms/saturnite" }, "count": 3, "legacy_ore": "gunMechanismSaturnite" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:magnetron" }, "count": 16 },
+    { "ingredient": { "tag": "forge:ingots/any_resistant_alloy" }, "count": 8, "legacy_ore": "ingotAnyResistantAlloy" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:crt_display" }, "count": 1 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:turret_maxwell" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

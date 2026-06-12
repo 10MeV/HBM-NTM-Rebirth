@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [
+    "D",
+    "S",
+    "D"
+  ],
+  "key": {
+    "D": { "item": "hbm_ntm_rebirth:ingot_phosphorus" },
+    "S": { "item": "hbm_ntm_rebirth:ammo_arty" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:ammo_arty_phosphorus" }
+}

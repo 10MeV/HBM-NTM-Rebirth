@@ -2,6 +2,7 @@ package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.particle.ParticleUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -13,6 +14,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,6 +75,7 @@ public final class RadiationData {
     public static void setDigamma(LivingEntity entity, float digamma) {
         getTag(entity).putFloat(TAG_DIGAMMA, Mth.clamp(digamma, 0.0F, 10.0F));
         applyDigammaModifier(entity);
+        handleFatalDigamma(entity);
     }
 
     public static void incrementDigamma(LivingEntity entity, float amount) {
@@ -96,6 +99,20 @@ public final class RadiationData {
         if (entity.getHealth() > entity.getMaxHealth() && entity.getMaxHealth() > 0.0F) {
             entity.setHealth(entity.getMaxHealth());
         }
+    }
+
+    public static void handleFatalDigamma(LivingEntity entity) {
+        if (entity.level().isClientSide || !entity.isAlive()) {
+            return;
+        }
+        float digamma = getDigamma(entity);
+        if (entity.getMaxHealth() > 0.0F && digamma < 10.0F) {
+            return;
+        }
+        entity.setAbsorptionAmount(0.0F);
+        entity.hurt(ModDamageSources.digamma(entity.level()), 500.0F);
+        entity.setHealth(0.0F);
+        ParticleUtil.spawnSweat(entity, Blocks.SOUL_SAND, 50);
     }
 
     public static float getRadEnv(LivingEntity entity) {
@@ -253,6 +270,40 @@ public final class RadiationData {
         }
     }
 
+    public static void applySyncedData(LivingEntity entity, float radiation, float digamma, float radBuf,
+            int asbestos, int blackLung, int bombTimer, int contagion, int oil, int fire, int phosphorus,
+            int balefire, int blackFire, ListTag contamination) {
+        CompoundTag tag = getTag(entity);
+        tag.putFloat(TAG_RADIATION, clampPlayerRadiation(radiation));
+        tag.putFloat(TAG_DIGAMMA, Mth.clamp(digamma, 0.0F, 10.0F));
+        tag.putFloat(TAG_RAD_BUF, radBuf);
+        tag.putInt(TAG_ASBESTOS, Math.max(0, asbestos));
+        tag.putInt(TAG_BLACK_LUNG, Math.max(0, blackLung));
+        tag.putInt(TAG_BOMB_TIMER, bombTimer);
+        tag.putInt(TAG_CONTAGION, Math.max(0, contagion));
+        tag.putInt(TAG_OIL, Math.max(0, oil));
+        tag.putInt(TAG_FIRE, Math.max(0, fire));
+        tag.putInt(TAG_PHOSPHORUS, Math.max(0, phosphorus));
+        tag.putInt(TAG_BALEFIRE, Math.max(0, balefire));
+        tag.putInt(TAG_BLACK_FIRE, Math.max(0, blackFire));
+        setContamination(entity, contamination == null ? new ListTag() : contamination);
+        applyDigammaModifier(entity);
+    }
+
+    public static void applyLegacySyncedData(LivingEntity entity, float radiation, float digamma,
+            int asbestos, int bombTimer, int contagion, int blackLung, int oil, ListTag contamination) {
+        CompoundTag tag = getTag(entity);
+        tag.putFloat(TAG_RADIATION, clampPlayerRadiation(radiation));
+        tag.putFloat(TAG_DIGAMMA, Mth.clamp(digamma, 0.0F, 10.0F));
+        tag.putInt(TAG_ASBESTOS, Math.max(0, asbestos));
+        tag.putInt(TAG_BOMB_TIMER, bombTimer);
+        tag.putInt(TAG_CONTAGION, Math.max(0, contagion));
+        tag.putInt(TAG_BLACK_LUNG, Math.max(0, blackLung));
+        tag.putInt(TAG_OIL, Math.max(0, oil));
+        setContamination(entity, contamination == null ? new ListTag() : contamination);
+        applyDigammaModifier(entity);
+    }
+
     public static void addContamination(LivingEntity entity, float maxRad, int maxTime, int time, boolean ignoreArmor) {
         CompoundTag effect = new CompoundTag();
         effect.putFloat(TAG_CONTAMINATION_MAX_RAD, maxRad);
@@ -336,6 +387,35 @@ public final class RadiationData {
             replacement.getPersistentData().put(TAG_ROOT, originalData.getCompound(TAG_ROOT).copy());
         } else if (originalData.contains(TAG_PREVIOUS_ROOT, Tag.TAG_COMPOUND)) {
             replacement.getPersistentData().put(TAG_ROOT, originalData.getCompound(TAG_PREVIOUS_ROOT).copy());
+        }
+    }
+
+    public static CompoundTag writePersistentData(LivingEntity entity) {
+        return getTag(entity).copy();
+    }
+
+    public static void readPersistentData(LivingEntity entity, CompoundTag data) {
+        CompoundTag tag = data == null ? new CompoundTag() : data.copy();
+        migrateTemporaryContaminationList(tag);
+        entity.getPersistentData().put(TAG_ROOT, tag);
+        entity.getPersistentData().remove(TAG_PREVIOUS_ROOT);
+        applyDigammaModifier(entity);
+    }
+
+    public static void saveNBTData(LivingEntity entity, CompoundTag nbt) {
+        if (nbt != null) {
+            nbt.put(TAG_ROOT, writePersistentData(entity));
+        }
+    }
+
+    public static void loadNBTData(LivingEntity entity, CompoundTag nbt) {
+        if (nbt == null) {
+            return;
+        }
+        if (nbt.contains(TAG_ROOT, Tag.TAG_COMPOUND)) {
+            readPersistentData(entity, nbt.getCompound(TAG_ROOT));
+        } else if (nbt.contains(TAG_PREVIOUS_ROOT, Tag.TAG_COMPOUND)) {
+            readPersistentData(entity, nbt.getCompound(TAG_PREVIOUS_ROOT));
         }
     }
 

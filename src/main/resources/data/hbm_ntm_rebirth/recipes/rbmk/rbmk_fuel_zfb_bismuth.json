@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:rbmk_fuel_empty" },
+    { "item": "hbm_ntm_rebirth:billet_zfb_bismuth" },
+    { "item": "hbm_ntm_rebirth:billet_zfb_bismuth" },
+    { "item": "hbm_ntm_rebirth:billet_zfb_bismuth" },
+    { "item": "hbm_ntm_rebirth:billet_zfb_bismuth" },
+    { "item": "hbm_ntm_rebirth:billet_zfb_bismuth" },
+    { "item": "hbm_ntm_rebirth:billet_zfb_bismuth" },
+    { "item": "hbm_ntm_rebirth:billet_zfb_bismuth" },
+    { "item": "hbm_ntm_rebirth:billet_zfb_bismuth" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:rbmk_fuel_zfb_bismuth" }
+}

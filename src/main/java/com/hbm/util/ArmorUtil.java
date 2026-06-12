@@ -360,6 +360,18 @@ public final class ArmorUtil {
         return com.hbm.ntm.radiation.ArmorUtil.getWornGasMaskFilter(entity);
     }
 
+    public static boolean hasWornGasMask(LivingEntity entity) {
+        return com.hbm.ntm.radiation.ArmorUtil.hasWornGasMask(entity);
+    }
+
+    public static boolean hasWornGasMaskFilter(LivingEntity entity) {
+        return com.hbm.ntm.radiation.ArmorUtil.hasWornGasMaskFilter(entity);
+    }
+
+    public static boolean canInstallWornGasMaskFilter(LivingEntity entity, ItemStack filter) {
+        return com.hbm.ntm.radiation.ArmorUtil.canInstallWornGasMaskFilter(entity, filter);
+    }
+
     public static boolean installWornGasMaskFilter(LivingEntity entity, ItemStack filter) {
         return com.hbm.ntm.radiation.ArmorUtil.installWornGasMaskFilter(entity, filter);
     }
@@ -373,8 +385,16 @@ public final class ArmorUtil {
         return com.hbm.ntm.radiation.ArmorUtil.removeWornGasMaskFilter(entity);
     }
 
+    public static boolean removeWornGasMaskFilterToInventory(Player player) {
+        return com.hbm.ntm.radiation.ArmorUtil.removeWornGasMaskFilterToInventory(player);
+    }
+
     public static boolean removeGasMaskFilterToInventory(ItemStack mask, Player player) {
         return com.hbm.ntm.radiation.ArmorUtil.removeGasMaskFilterToInventory(mask, player);
+    }
+
+    public static ItemStack removeGasMaskFilterRecursively(ItemStack mask) {
+        return com.hbm.ntm.radiation.ArmorUtil.removeGasMaskFilterRecursively(mask);
     }
 
     public static void installGasMaskFilter(ItemStack mask, ItemStack filter) {
@@ -391,6 +411,18 @@ public final class ArmorUtil {
 
     public static ItemStack getGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
         return com.hbm.ntm.radiation.ArmorUtil.getGasMaskFilterRecursively(mask, entity);
+    }
+
+    public static boolean hasGasMaskFilter(ItemStack mask) {
+        return com.hbm.ntm.radiation.ArmorUtil.hasGasMaskFilter(mask);
+    }
+
+    public static boolean hasGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
+        return com.hbm.ntm.radiation.ArmorUtil.hasGasMaskFilterRecursively(mask, entity);
+    }
+
+    public static boolean canInstallGasMaskFilter(ItemStack maskStack, LivingEntity entity, ItemStack filter) {
+        return com.hbm.ntm.radiation.ArmorUtil.canInstallGasMaskFilter(maskStack, entity, filter);
     }
 
     public static void damageGasMaskFilter(LivingEntity entity, int damage) {

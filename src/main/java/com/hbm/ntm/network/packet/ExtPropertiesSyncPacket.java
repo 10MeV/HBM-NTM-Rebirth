@@ -4,9 +4,6 @@ import com.hbm.ntm.client.ClientHbmLivingProperties;
 import com.hbm.ntm.client.ClientHbmPlayerProperties;
 import com.hbm.ntm.network.HbmPreparablePacket;
 import com.hbm.ntm.player.HbmExtendedProperties;
-import com.hbm.ntm.player.HbmLivingProperties;
-import com.hbm.ntm.player.HbmPlayerProperties;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -18,23 +15,18 @@ public record ExtPropertiesSyncPacket(HbmExtendedProperties.SyncData data) imple
     }
 
     public static ExtPropertiesSyncPacket decode(FriendlyByteBuf buffer) {
-        HbmLivingProperties.SyncData living = HbmLivingProperties.decodeSyncedData(buffer);
-        CompoundTag player = buffer.readNbt();
-        return new ExtPropertiesSyncPacket(new HbmExtendedProperties.SyncData(
-                living,
-                HbmPlayerProperties.readSyncedData(player)));
+        return new ExtPropertiesSyncPacket(HbmExtendedProperties.decodeSyncedData(buffer));
     }
 
     public static void encode(ExtPropertiesSyncPacket packet, FriendlyByteBuf buffer) {
-        HbmLivingProperties.encodeSyncedData(packet.data.living(), buffer);
-        buffer.writeNbt(packet.data.player().toTag());
+        HbmExtendedProperties.encodeSyncedData(packet.data, buffer);
     }
 
     public static void handle(ExtPropertiesSyncPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
             ClientHbmLivingProperties.update(packet.data.living());
-            ClientHbmPlayerProperties.update(HbmPlayerProperties.DATA_TYPE, packet.data.player().toTag());
+            ClientHbmPlayerProperties.update(packet.data.player());
         });
         context.setPacketHandled(true);
     }

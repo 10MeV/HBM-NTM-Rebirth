@@ -1,12 +1,18 @@
 package com.hbm.ntm.particle;
 
 import com.hbm.ntm.network.ModMessages;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public final class ParticleUtil {
     public static final String TYPE_GAS_FLAME = "gasfire";
@@ -118,6 +124,72 @@ public final class ParticleUtil {
     }
 
     public static void spawnGasFlame(Level level, double x, double y, double z, double motionX, double motionY, double motionZ, float scale) {
+        spawnGasFlame(level, x, y, z, motionX, motionY, motionZ, scale, 150.0D);
+    }
+
+    public static void spawnGasFlame(Level level, Vec3 position, Vec3 motion) {
+        if (position == null || motion == null) {
+            return;
+        }
+        spawnGasFlame(level, position.x, position.y, position.z, motion.x, motion.y, motion.z);
+    }
+
+    public static void spawnGasFlame(Level level, Vec3 position, Vec3 motion, float scale) {
+        if (position == null || motion == null) {
+            return;
+        }
+        spawnGasFlame(level, position.x, position.y, position.z, motion.x, motion.y, motion.z, scale);
+    }
+
+    public static void spawnGeysirGasFlame(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return;
+        }
+        spawnGasFlame(level, pos.getX() + 0.5D, pos.getY() + 1.1D, pos.getZ() + 0.5D,
+                level.random.nextGaussian() * 0.05D, 0.2D, level.random.nextGaussian() * 0.05D,
+                6.5F, 75.0D);
+    }
+
+    public static void spawnTurbofanAfterburnerFlame(Level level, BlockPos pos, Direction exhaustDirection, int nozzleIndex) {
+        if (level == null || pos == null) {
+            return;
+        }
+        Direction dir = horizontalOrNorth(exhaustDirection);
+        int nozzle = Math.max(0, Math.min(1, nozzleIndex));
+        double speed = 2.0D + level.random.nextDouble() * 3.0D;
+        double deviation = level.random.nextGaussian() * 0.2D;
+        spawnGasFlame(level,
+                pos.getX() + 0.5D - dir.getStepX() * (3.0D - nozzle),
+                pos.getY() + 1.5D,
+                pos.getZ() + 0.5D - dir.getStepZ() * (3.0D - nozzle),
+                -dir.getStepX() * speed + deviation,
+                0.0D,
+                -dir.getStepZ() * speed + deviation,
+                8.0F,
+                150.0D);
+    }
+
+    public static void spawnTurbofanDamageGasFlame(Level level, BlockPos pos, Direction exhaustDirection) {
+        if (level == null || pos == null) {
+            return;
+        }
+        Direction dir = horizontalOrNorth(exhaustDirection);
+        Direction rot = dir.getClockWise();
+        spawnGasFlame(level,
+                pos.getX() + 0.5D + dir.getStepX() * (level.random.nextDouble() * 4.0D - 2.0D)
+                        + rot.getStepX() * (level.random.nextDouble() * 2.0D - 1.0D),
+                pos.getY() + 1.0D + level.random.nextDouble() * 2.0D,
+                pos.getZ() + 0.5D - dir.getStepZ() * (level.random.nextDouble() * 4.0D - 2.0D)
+                        + rot.getStepZ() * (level.random.nextDouble() * 2.0D - 1.0D),
+                0.0D,
+                0.1D * level.random.nextDouble(),
+                0.0D,
+                4.0F,
+                150.0D);
+    }
+
+    private static void spawnGasFlame(Level level, double x, double y, double z, double motionX, double motionY, double motionZ,
+            float scale, double range) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_GAS_FLAME);
         data.putDouble("mX", motionX);
@@ -126,7 +198,7 @@ public final class ParticleUtil {
         if (scale > 0.0F) {
             data.putFloat("scale", scale);
         }
-        spawnAux(level, x, y, z, data, 150.0D);
+        spawnAux(level, x, y, z, data, range);
     }
 
     public static void spawnDroneLine(Level level, double x, double y, double z, double lineX, double lineY, double lineZ, int color) {
@@ -211,6 +283,14 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 50.0D);
     }
 
+    public static void spawnLegacyFlameEffect(Level level, double x, double y, double z, int meta) {
+        spawnFlamethrower(level, x, y, z, meta);
+    }
+
+    public static void spawnLegacyFlameEffectClient(Level level, double x, double y, double z, int meta) {
+        spawnFlamethrower(level, x, y, z, meta);
+    }
+
     public static void spawnFireFlamethrower(Level level, double x, double y, double z) {
         spawnFlamethrower(level, x, y, z, FLAMETHROWER_META_FIRE);
     }
@@ -237,8 +317,32 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
+    public static void spawnHaze(Level level, Vec3 position) {
+        if (position == null) {
+            return;
+        }
+        spawnHaze(level, position.x, position.y, position.z);
+    }
+
+    public static void spawnHazeCloud(Level level, Vec3 center, int count, double horizontalSpread) {
+        if (level == null || center == null || count <= 0) {
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            spawnHaze(level,
+                    center.x + level.random.nextGaussian() * horizontalSpread,
+                    center.y,
+                    center.z + level.random.nextGaussian() * horizontalSpread);
+        }
+    }
+
     public static void spawnPlasmaBlast(Level level, double x, double y, double z, float red, float green, float blue,
             float pitch, float yaw, float scale) {
+        spawnPlasmaBlast(level, x, y, z, red, green, blue, pitch, yaw, scale, 150.0D);
+    }
+
+    public static void spawnPlasmaBlast(Level level, double x, double y, double z, float red, float green, float blue,
+            float pitch, float yaw, float scale, double range) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_PLASMA_BLAST);
         data.putFloat("r", red);
@@ -247,7 +351,41 @@ public final class ParticleUtil {
         data.putFloat("pitch", pitch);
         data.putFloat("yaw", yaw);
         data.putFloat("scale", scale);
-        spawnAux(level, x, y, z, data, 150.0D);
+        spawnAux(level, x, y, z, data, range);
+    }
+
+    public static void spawnPlasmaBlast(Level level, Vec3 position, float red, float green, float blue,
+            float pitch, float yaw, float scale) {
+        if (position == null) {
+            return;
+        }
+        spawnPlasmaBlast(level, position.x, position.y, position.z, red, green, blue, pitch, yaw, scale);
+    }
+
+    public static void spawnPlasmaBlast(Level level, Vec3 position, int color, Direction direction, float scale) {
+        if (position == null) {
+            return;
+        }
+        Direction dir = horizontalOrNorth(direction);
+        spawnPlasmaBlast(level, position.x, position.y, position.z,
+                legacyColorComponent(color, 16),
+                legacyColorComponent(color, 8),
+                legacyColorComponent(color, 0),
+                legacyPlasmaPitch(dir),
+                legacyPlasmaYaw(dir),
+                scale);
+    }
+
+    public static void spawnEmitterPlasmaBlast(Level level, Vec3 position, int color, Direction direction, float girth) {
+        spawnPlasmaBlast(level, position, color, direction, girth * 5.0F);
+    }
+
+    public static void spawnArtilleryClusterSplitPlasmaBlast(Level level, Vec3 position) {
+        if (position == null) {
+            return;
+        }
+        spawnPlasmaBlast(level, position.x, position.y, position.z,
+                1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 50.0F, 500.0D);
     }
 
     public static void spawnJustTilt(Level level, int time) {
@@ -313,6 +451,50 @@ public final class ParticleUtil {
     public static void spawnLaunchSmoke(Level level, double x, double y, double z, double motionX, double motionY, double motionZ) {
         CompoundTag data = motionParticleTag(TYPE_LAUNCH_SMOKE, motionX, motionY, motionZ);
         spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnLaunchSmoke(Level level, Vec3 position, Vec3 motion) {
+        if (position == null || motion == null) {
+            return;
+        }
+        spawnLaunchSmoke(level, position.x, position.y, position.z, motion.x, motion.y, motion.z);
+    }
+
+    public static void spawnLaunchPadSmokeBurst(Level level, BlockPos pos, Direction facing, boolean allowSideRotation) {
+        spawnLaunchPadSmokeBurst(level, pos, facing, 15, allowSideRotation);
+    }
+
+    public static void spawnLaunchPadSmokeBurst(Level level, BlockPos pos, Direction facing, int count, boolean allowSideRotation) {
+        if (level == null || pos == null || count <= 0) {
+            return;
+        }
+        Direction base = horizontalOrNorth(facing);
+        for (int i = 0; i < count; i++) {
+            Direction dir = level.random.nextBoolean() ? base.getOpposite() : base;
+            if (allowSideRotation && level.random.nextBoolean()) {
+                dir = dir.getClockWise();
+            }
+            double speed = level.random.nextGaussian() * 0.15D + 0.75D;
+            spawnLaunchSmoke(level, pos.getX() + 0.5D, pos.getY() + 0.25D, pos.getZ() + 0.5D,
+                    speed * dir.getStepX(), 0.0D, speed * dir.getStepZ());
+        }
+    }
+
+    public static void spawnLaunchTableSmokeBurst(Level level, BlockPos pos, double horizontalSigma) {
+        spawnLaunchTableSmokeBurst(level, pos, 15, horizontalSigma);
+    }
+
+    public static void spawnLaunchTableSmokeBurst(Level level, BlockPos pos, int count, double horizontalSigma) {
+        if (level == null || pos == null || count <= 0) {
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            boolean zAxis = level.random.nextBoolean();
+            double motionX = zAxis ? 0.0D : level.random.nextGaussian() * horizontalSigma;
+            double motionZ = zAxis ? level.random.nextGaussian() * horizontalSigma : 0.0D;
+            spawnLaunchSmoke(level, pos.getX() + 0.5D, pos.getY() + 0.25D, pos.getZ() + 0.5D,
+                    motionX, 0.0D, motionZ);
+        }
     }
 
     public static void spawnMissileContrail(Level level, double x, double y, double z, double motionX, double motionY, double motionZ) {
@@ -495,16 +677,44 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 250.0D);
     }
 
+    public static void spawnSmokeCloud(Level level, double x, double y, double z, int count) {
+        spawnSmoke(level, x, y, z, SMOKE_CLOUD, count);
+    }
+
+    public static void spawnSmokeRadial(Level level, double x, double y, double z, int count) {
+        spawnSmoke(level, x, y, z, SMOKE_RADIAL, count);
+    }
+
+    public static void spawnSmokeRadialDigamma(Level level, double x, double y, double z, int count) {
+        spawnSmoke(level, x, y, z, SMOKE_RADIAL_DIGAMMA, count);
+    }
+
     public static void spawnSmokeShock(Level level, double x, double y, double z, int count, double strength, boolean randomStrength) {
         CompoundTag data = smokeTag(randomStrength ? SMOKE_SHOCK_RANDOM : SMOKE_SHOCK, count);
         data.putDouble("strength", strength);
         spawnAux(level, x, y, z, data, 250.0D);
     }
 
+    public static void spawnSmokeShock(Level level, double x, double y, double z, int count, double strength) {
+        spawnSmokeShock(level, x, y, z, count, strength, false);
+    }
+
+    public static void spawnSmokeShockRandom(Level level, double x, double y, double z, int count, double strength) {
+        spawnSmokeShock(level, x, y, z, count, strength, true);
+    }
+
     public static void spawnSmokeRing(Level level, double x, double y, double z, String mode, int count, double range) {
         CompoundTag data = smokeTag(mode, count);
         data.putDouble("range", range);
         spawnAux(level, x, y, z, data, 250.0D);
+    }
+
+    public static void spawnSmokeWave(Level level, double x, double y, double z, int count, double range) {
+        spawnSmokeRing(level, x, y, z, SMOKE_WAVE, count, range);
+    }
+
+    public static void spawnSmokeFoamSplash(Level level, double x, double y, double z, int count, double range) {
+        spawnSmokeRing(level, x, y, z, SMOKE_FOAM_SPLASH, count, range);
     }
 
     public static void spawnVanillaBurst(Level level, double x, double y, double z, String mode, int count, double motion) {
@@ -514,6 +724,26 @@ public final class ParticleUtil {
         data.putInt("count", count);
         data.putDouble("motion", motion);
         spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaFlameBurst(Level level, double x, double y, double z, int count, double motion) {
+        spawnVanillaBurst(level, x, y, z, VANILLA_FLAME, count, motion);
+    }
+
+    public static void spawnVanillaCloudBurst(Level level, double x, double y, double z, int count, double motion) {
+        spawnVanillaBurst(level, x, y, z, VANILLA_CLOUD, count, motion);
+    }
+
+    public static void spawnVanillaRedDustBurst(Level level, double x, double y, double z, int count, double motion) {
+        spawnVanillaBurst(level, x, y, z, VANILLA_RED_DUST, count, motion);
+    }
+
+    public static void spawnVanillaBlueDustBurst(Level level, double x, double y, double z, int count, double motion) {
+        spawnVanillaBurst(level, x, y, z, VANILLA_BLUE_DUST, count, motion);
+    }
+
+    public static void spawnVanillaGreenDustBurst(Level level, double x, double y, double z, int count, double motion) {
+        spawnVanillaBurst(level, x, y, z, VANILLA_GREEN_DUST, count, motion);
     }
 
     public static void spawnVanillaBlockDustBurst(Level level, double x, double y, double z, int count, double motion, Block block) {
@@ -530,6 +760,21 @@ public final class ParticleUtil {
         data.putInt("count", count);
         data.putDouble("motion", motion);
         putBlockState(data, state);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaRedstoneBlockDustBurst(Level level, double x, double y, double z, int count, double motion) {
+        spawnVanillaBlockDustBurst(level, x, y, z, count, motion, Blocks.REDSTONE_BLOCK.defaultBlockState());
+    }
+
+    public static void spawnVanillaLegacyBlockDustBurst(Level level, double x, double y, double z, int count, double motion,
+            int legacyBlockId, int meta) {
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_VANILLA_BURST);
+        data.putString("mode", VANILLA_BLOCK_DUST);
+        data.putInt("count", count);
+        data.putDouble("motion", motion);
+        putLegacyBlockId(data, legacyBlockId, meta);
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
@@ -552,6 +797,18 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
+    public static void spawnVanillaFlame(Level level, double x, double y, double z) {
+        spawnVanilla(level, x, y, z, VANILLA_FLAME, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnVanillaSmoke(Level level, double x, double y, double z) {
+        spawnVanilla(level, x, y, z, VANILLA_SMOKE, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnVanillaCloud(Level level, double x, double y, double z) {
+        spawnVanilla(level, x, y, z, VANILLA_CLOUD, 0.0D, 0.0D, 0.0D);
+    }
+
     public static void spawnVanillaExplode(Level level, double x, double y, double z, double motionX, double motionY, double motionZ) {
         spawnVanilla(level, x, y, z, VANILLA_EXPLODE, motionX, motionY, motionZ);
     }
@@ -569,6 +826,59 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
+    public static void spawnVanillaExtFlame(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ) {
+        spawnVanillaExt(level, x, y, z, VANILLA_FLAME, motionX, motionY, motionZ);
+    }
+
+    public static void spawnVanillaExtFlame(Level level, double x, double y, double z) {
+        spawnVanillaExtFlame(level, x, y, z, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnVanillaExtSmoke(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ) {
+        spawnVanillaExt(level, x, y, z, VANILLA_SMOKE, motionX, motionY, motionZ);
+    }
+
+    public static void spawnVanillaExtSmoke(Level level, double x, double y, double z) {
+        spawnVanillaExtSmoke(level, x, y, z, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnVanillaExtCloud(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ) {
+        spawnVanillaExt(level, x, y, z, VANILLA_CLOUD, motionX, motionY, motionZ);
+    }
+
+    public static void spawnVanillaExtCloud(Level level, double x, double y, double z) {
+        spawnVanillaExtCloud(level, x, y, z, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnVanillaExtRedDust(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ) {
+        spawnVanillaExt(level, x, y, z, VANILLA_RED_DUST, motionX, motionY, motionZ);
+    }
+
+    public static void spawnVanillaExtRedDust(Level level, double x, double y, double z) {
+        spawnVanillaExtRedDust(level, x, y, z, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnVanillaExtBlueDust(Level level, double x, double y, double z) {
+        spawnVanillaExt(level, x, y, z, VANILLA_BLUE_DUST, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnVanillaExtGreenDust(Level level, double x, double y, double z) {
+        spawnVanillaExt(level, x, y, z, VANILLA_GREEN_DUST, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnVanillaExtFireworks(Level level, double x, double y, double z) {
+        spawnVanillaExt(level, x, y, z, VANILLA_FIREWORKS, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnVanillaExtTownAura(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ) {
+        spawnVanillaExt(level, x, y, z, VANILLA_TOWN_AURA, motionX, motionY, motionZ);
+    }
+
     public static void spawnVanillaExt(Level level, double x, double y, double z, String mode,
             double motionX, double motionY, double motionZ, int overrideAge, boolean noClip) {
         CompoundTag data = vanillaExtTag(mode, motionX, motionY, motionZ);
@@ -579,6 +889,20 @@ public final class ParticleUtil {
             data.putBoolean("noclip", true);
         }
         spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaExtSmoke(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ, int overrideAge, boolean noClip) {
+        spawnVanillaExt(level, x, y, z, VANILLA_SMOKE, motionX, motionY, motionZ, overrideAge, noClip);
+    }
+
+    public static void spawnGasFlareSmoke(Level level, double x, double y, double z) {
+        spawnVanillaExtSmoke(level, x, y, z, 0.0D, 0.0D, 0.0D, 50, true);
+    }
+
+    public static void spawnVanillaExtVolcano(Level level, double x, double y, double z) {
+        CompoundTag data = vanillaExtTag(VANILLA_VOLCANO, 0.0D, 0.0D, 0.0D);
+        spawnAux(level, x, y, z, data, 250.0D);
     }
 
     public static void spawnVanillaExtLargeExplode(Level level, double x, double y, double z, float size, int count) {
@@ -612,6 +936,13 @@ public final class ParticleUtil {
     }
 
     public static void spawnVanillaExtLegacyBlockDust(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ, int legacyBlockId, int meta) {
+        CompoundTag data = vanillaExtTag(VANILLA_BLOCK_DUST, motionX, motionY, motionZ);
+        putLegacyBlockId(data, legacyBlockId, meta);
+        spawnAux(level, x, y, z, data, 150.0D);
+    }
+
+    public static void spawnVanillaExtLegacyBlockDust(Level level, double x, double y, double z,
             double motionX, double motionY, double motionZ, String legacyBlockName, int meta) {
         if (legacyBlockName == null || legacyBlockName.isBlank()) {
             return;
@@ -636,6 +967,18 @@ public final class ParticleUtil {
                 16, 50, 1.0F, 3.0F, -2.0F, 200.0F);
     }
 
+    public static void spawnLegacyExplosionSmall(Level level, double x, double y, double z) {
+        spawnExplosionLarge(level, x, y, z, 10, 2.0F, 0.5F, 25.0F, 5, 8, 20, 0.75F, 1.0F, -2.0F, 150.0F);
+    }
+
+    public static void spawnLegacyExplosionStandard(Level level, double x, double y, double z) {
+        spawnExplosionLarge(level, x, y, z, 15, 5.0F, 1.0F, 45.0F, 10, 16, 50, 1.0F, 3.0F, -2.0F, 200.0F);
+    }
+
+    public static void spawnLegacyExplosionLarge(Level level, double x, double y, double z) {
+        spawnExplosionLarge(level, x, y, z, 30, 6.5F, 2.0F, 65.0F, 25, 16, 50, 1.25F, 3.0F, -2.0F, 350.0F);
+    }
+
     public static void spawnExplosionLarge(Level level, double x, double y, double z, int cloudCount, float cloudScale, float cloudSpeedMult,
             float waveScale, int debrisCount, int debrisSize, int debrisRetry, float debrisVelocity,
             float debrisHorizontalDeviation, float debrisVerticalOffset, float soundRange) {
@@ -646,7 +989,7 @@ public final class ParticleUtil {
         data.putFloat("cloudSpeedMult", cloudSpeedMult);
         data.putFloat("waveScale", waveScale);
         data.putInt("debrisCount", debrisCount);
-        data.putInt("debrisSize", Math.max(1, debrisSize));
+        data.putInt("debrisSize", Math.max(0, debrisSize));
         data.putInt("debrisRetry", Math.max(0, debrisRetry));
         data.putFloat("debrisVelocity", debrisVelocity);
         data.putFloat("debrisHorizontalDeviation", debrisHorizontalDeviation);
@@ -656,12 +999,17 @@ public final class ParticleUtil {
     }
 
     public static void spawnExplosionSmall(Level level, double x, double y, double z, int cloudCount, float cloudScale, float cloudSpeedMult) {
+        spawnExplosionSmall(level, x, y, z, cloudCount, cloudScale, cloudSpeedMult, 15);
+    }
+
+    public static void spawnExplosionSmall(Level level, double x, double y, double z, int cloudCount, float cloudScale,
+            float cloudSpeedMult, int debris) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_EXPLOSION_SMALL);
         data.putInt("cloudCount", cloudCount);
         data.putFloat("cloudScale", cloudScale);
         data.putFloat("cloudSpeedMult", cloudSpeedMult);
-        data.putInt("debris", 15);
+        data.putInt("debris", Math.max(0, debris));
         spawnAux(level, x, y, z, data, 200.0D);
     }
 
@@ -697,6 +1045,29 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 200.0D);
     }
 
+    public static void spawnBlackPowder(Level level, Vec3 position, Vec3 heading, int cloudCount, float cloudScale,
+            float cloudSpeedMult, int sparkCount, float sparkSpeedMult) {
+        if (position == null || heading == null) {
+            return;
+        }
+        spawnBlackPowder(level, position.x(), position.y(), position.z(), heading.x(), heading.y(), heading.z(),
+                cloudCount, cloudScale, cloudSpeedMult, sparkCount, sparkSpeedMult);
+    }
+
+    public static void spawnBlackPowder(Entity entity, int cloudCount, float cloudScale, float cloudSpeedMult,
+            int sparkCount, float sparkSpeedMult) {
+        if (entity == null) {
+            return;
+        }
+        Vec3 motion = entity.getDeltaMovement();
+        spawnBlackPowder(entity.level(), entity.getX(), entity.getY(), entity.getZ(), motion.x(), motion.y(), motion.z(),
+                cloudCount, cloudScale, cloudSpeedMult, sparkCount, sparkSpeedMult);
+    }
+
+    public static void spawnMk4BlackPowder(Entity entity) {
+        spawnBlackPowder(entity, 10, 0.25F, 0.5F, 10, 0.25F);
+    }
+
     public static void spawnAshes(Level level, double x, double y, double z, int entityId, int ashesCount, float ashesScale) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_ASHES);
@@ -704,6 +1075,13 @@ public final class ParticleUtil {
         data.putInt("ashesCount", ashesCount);
         data.putFloat("ashesScale", ashesScale);
         spawnAux(level, x, y, z, data, 100.0D);
+    }
+
+    public static void spawnAshes(Entity entity, int ashesCount, float ashesScale) {
+        if (entity == null) {
+            return;
+        }
+        spawnAshes(entity.level(), entity.getX(), entity.getY(), entity.getZ(), entity.getId(), ashesCount, ashesScale);
     }
 
     public static void spawnCasing(Level level, double x, double y, double z, double motionX, double motionY, double motionZ,
@@ -731,6 +1109,59 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 50.0D);
     }
 
+    public static void spawnCasingFromView(Level level, double x, double y, double z, float yaw, float pitch,
+            double frontMotion, double heightMotion, double sideMotion, double motionVariance,
+            float momentumPitch, float momentumYaw, String name, boolean smoking, int smokeLife, double smokeLift, int nodeLife) {
+        if (level == null) {
+            return;
+        }
+        Vec3 motion = legacyLocalToWorld(sideMotion, heightMotion, frontMotion, pitch, yaw);
+        spawnCasing(level, x, y, z,
+                motion.x() + level.random.nextGaussian() * motionVariance,
+                motion.y() + level.random.nextGaussian() * motionVariance,
+                motion.z() + level.random.nextGaussian() * motionVariance,
+                yaw, pitch, momentumPitch, momentumYaw, name, smoking, smokeLife, smokeLift, nodeLife);
+    }
+
+    public static void spawnCasing(LivingEntity shooter, double frontOffset, double heightOffset, double sideOffset,
+            double frontMotion, double heightMotion, double sideMotion, double motionVariance, String name) {
+        spawnCasing(shooter, frontOffset, heightOffset, sideOffset, frontMotion, heightMotion, sideMotion, motionVariance,
+                5.0F, 10.0F, name, false, 0, 0.0D, 0);
+    }
+
+    public static void spawnCasing(LivingEntity shooter, double frontOffset, double heightOffset, double sideOffset,
+            double frontMotion, double heightMotion, double sideMotion, double motionVariance,
+            float momentumPitch, float momentumYaw, String name) {
+        spawnCasing(shooter, frontOffset, heightOffset, sideOffset, frontMotion, heightMotion, sideMotion, motionVariance,
+                momentumPitch, momentumYaw, name, false, 0, 0.0D, 0);
+    }
+
+    public static void spawnCasing(LivingEntity shooter, double frontOffset, double heightOffset, double sideOffset,
+            double frontMotion, double heightMotion, double sideMotion, double motionVariance,
+            float momentumPitch, float momentumYaw, String name, boolean smoking, int smokeLife, double smokeLift, int nodeLife) {
+        if (shooter == null) {
+            return;
+        }
+        double adjustedHeightOffset = shooter.isShiftKeyDown() ? heightOffset - 0.075D : heightOffset;
+        Vec3 offset = legacyLocalToWorld(sideOffset, adjustedHeightOffset, frontOffset, shooter.getXRot(), shooter.getYRot());
+        Vec3 localMotion = legacyLocalToWorld(sideMotion, heightMotion, frontMotion, shooter.getXRot(), shooter.getYRot());
+        Vec3 entityMotion = shooter.getDeltaMovement();
+        Level level = shooter.level();
+        double motionX = entityMotion.x() + localMotion.x() + level.random.nextGaussian() * motionVariance;
+        double motionY = entityMotion.y() + localMotion.y() + level.random.nextGaussian() * motionVariance;
+        double motionZ = entityMotion.z() + localMotion.z() + level.random.nextGaussian() * motionVariance;
+        if (shooter instanceof Player player && player.getAbilities().flying) {
+            motionY -= 0.04D;
+        }
+        spawnCasing(level,
+                shooter.getX() + offset.x(),
+                shooter.getY() + shooter.getEyeHeight() + offset.y(),
+                shooter.getZ() + offset.z(),
+                motionX, motionY, motionZ,
+                shooter.getYRot(), shooter.getXRot(), momentumPitch, momentumYaw,
+                name, smoking, smokeLife, smokeLift, nodeLife);
+    }
+
     public static void spawnLegacyCasing(Level level, double x, double y, double z, int ejectorId, String name,
             float pitchRadians, float yawRadians, boolean crouched) {
         CompoundTag data = new CompoundTag();
@@ -751,6 +1182,20 @@ public final class ParticleUtil {
         data.putBoolean("gib", gib);
         data.putFloat("force", force);
         spawnAux(level, x, y, z, data, 100.0D);
+    }
+
+    public static void spawnSkeleton(Entity entity, float brightness) {
+        if (entity == null) {
+            return;
+        }
+        spawnSkeleton(entity.level(), entity.getX(), entity.getY(), entity.getZ(), entity.getId(), brightness, false, 0.0F);
+    }
+
+    public static void spawnSkeletonGib(Entity entity, float force) {
+        if (entity == null) {
+            return;
+        }
+        spawnSkeleton(entity.level(), entity.getX(), entity.getY(), entity.getZ(), entity.getId(), 1.0F, true, force);
     }
 
     public static void spawnGiblets(Entity entity, int gibType) {
@@ -816,6 +1261,39 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 250.0D);
     }
 
+    public static void spawnRbmkMush(Level level, Vec3 position, float scale) {
+        if (position == null) {
+            return;
+        }
+        spawnRbmkMush(level, position.x, position.y, position.z, scale);
+    }
+
+    public static void spawnWatzRbmkMush(Level level, BlockPos pos) {
+        if (pos == null) {
+            return;
+        }
+        spawnRbmkMush(level, pos.getX() + 0.5D, pos.getY() + 2.0D, pos.getZ() + 0.5D, 5.0F);
+    }
+
+    public static void spawnRbmkMushFromBounds(Level level, int minX, int maxX, int minZ, int maxZ, double y) {
+        int smallDim = Math.min(maxX - minX, maxZ - minZ);
+        int avgX = minX + (maxX - minX) / 2;
+        int avgZ = minZ + (maxZ - minZ) / 2;
+        spawnRbmkMush(level, avgX + 0.5D, y, avgZ + 0.5D, smallDim);
+    }
+
+    public static void spawnArtilleryPhosphorusMush(Level level, Vec3 position) {
+        spawnRbmkMush(level, position, 10.0F);
+    }
+
+    public static void spawnHimarsPhosphorusMush(Level level, Vec3 position) {
+        spawnRbmkMush(level, position, 15.0F);
+    }
+
+    public static void spawnHimarsThermobaricMush(Level level, Vec3 position) {
+        spawnRbmkMush(level, position, 20.0F);
+    }
+
     public static void spawnCoolingTower(Level level, double x, double y, double z, float lift, float baseScale, float maxScale, int lifetime) {
         spawnCoolingTower(level, x, y, z, lift, baseScale, maxScale, lifetime, false, 0.075F, 0.25F, -1);
     }
@@ -839,6 +1317,120 @@ public final class ParticleUtil {
         spawnAux(level, x, y, z, data, 150.0D);
     }
 
+    public static void spawnSmallCoolingTowerSteam(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return;
+        }
+        spawnCoolingTower(level, pos.getX() + 0.5D, pos.getY() + 18.0D, pos.getZ() + 0.5D,
+                1.0F, 0.5F, 4.0F, 250 + level.random.nextInt(250));
+    }
+
+    public static void spawnLargeCoolingTowerSteam(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return;
+        }
+        spawnCoolingTower(level,
+                pos.getX() + 0.5D + level.random.nextDouble() * 3.0D - 1.5D,
+                pos.getY() + 1.0D,
+                pos.getZ() + 0.5D + level.random.nextDouble() * 3.0D - 1.5D,
+                0.5F, 1.0F, 10.0F, 750 + level.random.nextInt(250));
+    }
+
+    public static void spawnBrickChimneySmoke(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return;
+        }
+        spawnCoolingTower(level, pos.getX() + 0.5D, pos.getY() + 12.0D, pos.getZ() + 0.5D,
+                10.0F, 0.5F, 3.0F, 250 + level.random.nextInt(50), false, 0.075F, 0.25F, 0x404040);
+    }
+
+    public static void spawnIndustrialChimneySmoke(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return;
+        }
+        spawnCoolingTower(level, pos.getX() + 0.5D, pos.getY() + 22.0D, pos.getZ() + 0.5D,
+                10.0F, 0.75F, 3.0F, 250 + level.random.nextInt(50), false, 0.075F, 0.25F, 0x404040);
+    }
+
+    public static void spawnCokerChimneySmoke(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return;
+        }
+        spawnCoolingTower(level, pos.getX() + 0.5D, pos.getY() + 22.0D, pos.getZ() + 0.5D,
+                10.0F, 0.75F, 3.0F, 200 + level.random.nextInt(50), false, 0.075F, 0.25F, 0x404040);
+    }
+
+    public static void spawnGasFlareVentSmoke(Level level, BlockPos pos, int color) {
+        if (level == null || pos == null) {
+            return;
+        }
+        spawnCoolingTower(level, pos.getX() + 0.5D, pos.getY() + 11.0D, pos.getZ() + 0.5D,
+                1.0F, 0.25F, 3.0F, 150 + level.random.nextInt(20), false, 0.075F, 0.25F, color);
+    }
+
+    public static void spawnMachineVentSmoke(Level level, double x, double y, double z, float baseScale, float maxScale, int color) {
+        if (level == null) {
+            return;
+        }
+        spawnCoolingTower(level, x, y, z, 10.0F, baseScale, maxScale, 100 + level.random.nextInt(20),
+                false, 0.075F, 0.25F, color);
+    }
+
+    public static void spawnPyroOvenVentSmoke(Level level, BlockPos pos, Direction ventDirection) {
+        if (pos == null) {
+            return;
+        }
+        Direction dir = horizontalOrNorth(ventDirection);
+        spawnMachineVentSmoke(level, pos.getX() + 0.5D - dir.getStepX(), pos.getY() + 3.0D,
+                pos.getZ() + 0.5D - dir.getStepZ(), 0.25F, 2.5F, 0x202020);
+    }
+
+    public static void spawnRotaryFurnaceVentSmoke(Level level, BlockPos pos, Direction ventDirection) {
+        if (pos == null) {
+            return;
+        }
+        Direction dir = horizontalOrNorth(ventDirection);
+        spawnMachineVentSmoke(level, pos.getX() + 0.5D + dir.getStepX(), pos.getY() + 5.0D,
+                pos.getZ() + 0.5D + dir.getStepZ(), 0.25F, 2.5F, 0x202020);
+    }
+
+    public static void spawnCrucibleSootSmoke(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return;
+        }
+        spawnCoolingTower(level, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D,
+                10.0F, 0.75F, 3.5F, 100 + level.random.nextInt(20), false, 0.075F, 0.25F, 0x202020);
+    }
+
+    public static void spawnMachineDrainDischarge(Level level, BlockPos pos, Direction facing, int color, boolean gaseous) {
+        if (level == null || pos == null) {
+            return;
+        }
+        Direction dir = horizontalOrNorth(facing);
+        double x = pos.getX() + 0.5D - dir.getStepX() * 2.5D;
+        double y = pos.getY() + 0.5D;
+        double z = pos.getZ() + 0.5D - dir.getStepZ() * 2.5D;
+        if (gaseous) {
+            spawnCoolingTower(level, x, y, z, 0.5F, 0.375F, 3.0F, 100 + level.random.nextInt(50),
+                    false, 0.075F, 0.25F, color);
+        } else {
+            spawnSplash(level, x, y, z, color);
+        }
+    }
+
+    public static void spawnLaunchPadFuelVapor(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return;
+        }
+        double x = pos.getX() + 0.5D + level.random.nextGaussian() * 0.5D;
+        double z = pos.getZ() + 0.5D + level.random.nextGaussian() * 0.5D;
+        int lifetime = 70 + level.random.nextInt(30);
+        for (int i = 0; i < 3; i++) {
+            spawnCoolingTower(level, x, pos.getY() + 2.0D, z, 0.0F, 0.5F, 2.0F, lifetime,
+                    true, 0.05F, 0.25F, -1);
+        }
+    }
+
     public static void spawnSplash(Level level, double x, double y, double z, int color) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_SPLASH);
@@ -846,6 +1438,13 @@ public final class ParticleUtil {
             data.putInt("color", color);
         }
         spawnAux(level, x, y, z, data, 100.0D);
+    }
+
+    public static void spawnSplash(Level level, Vec3 position, int color) {
+        if (position == null) {
+            return;
+        }
+        spawnSplash(level, position.x, position.y, position.z, color);
     }
 
     public static void spawnRift(Level level, double x, double y, double z) {
@@ -881,6 +1480,46 @@ public final class ParticleUtil {
         data.putFloat("base", base);
         data.putFloat("off", offset);
         spawnAux(level, x, y, z, data, 96.0D);
+    }
+
+    public static void spawnFoundry(Level level, Vec3 position, int color, Direction direction, float length, float base, float offset) {
+        if (position == null) {
+            return;
+        }
+        spawnFoundry(level, position.x, position.y, position.z, color, legacyDirectionOrdinal(direction), length, base, offset);
+    }
+
+    public static void spawnFoundryPour(Level level, Vec3 position, int color, Direction direction, float length) {
+        spawnFoundry(level, position, color, direction, length, 0.625F, 0.625F);
+    }
+
+    public static void spawnFoundryOutletPour(Level level, Vec3 position, int color, Direction direction, float length) {
+        spawnFoundry(level, position, color, direction, length, 0.0F, 0.375F);
+    }
+
+    public static void spawnFoundryMachinePour(Level level, BlockPos pos, Direction direction, double horizontalOffset,
+            double yOffset, int color, float length) {
+        if (pos == null) {
+            return;
+        }
+        Direction dir = horizontalOrNorth(direction);
+        spawnFoundryPour(level,
+                new Vec3(pos.getX() + 0.5D + dir.getStepX() * horizontalOffset,
+                        pos.getY() + yOffset,
+                        pos.getZ() + 0.5D + dir.getStepZ() * horizontalOffset),
+                color, dir, length);
+    }
+
+    public static void spawnFoundryOutletPour(Level level, BlockPos pos, Direction direction, int color, float length) {
+        if (pos == null) {
+            return;
+        }
+        Direction dir = horizontalOrNorth(direction);
+        spawnFoundryOutletPour(level,
+                new Vec3(pos.getX() + 0.5D - dir.getStepX() * 0.125D,
+                        pos.getY() + 0.125D,
+                        pos.getZ() + 0.5D - dir.getStepZ() * 0.125D),
+                color, dir, length);
     }
 
     public static void spawnChaosCloud(Level level, double x, double y, double z, double motionX, double motionY, double motionZ, String mode) {
@@ -970,12 +1609,62 @@ public final class ParticleUtil {
         return CHAOS_CLOUD_ORANGE;
     }
 
+    private static Direction horizontalOrNorth(Direction direction) {
+        if (direction == null || direction == Direction.UP || direction == Direction.DOWN) {
+            return Direction.NORTH;
+        }
+        return direction;
+    }
+
+    private static int legacyDirectionOrdinal(Direction direction) {
+        Direction dir = direction == null ? Direction.NORTH : direction;
+        return switch (dir) {
+            case DOWN -> 0;
+            case UP -> 1;
+            case NORTH -> 2;
+            case SOUTH -> 3;
+            case WEST -> 4;
+            case EAST -> 5;
+        };
+    }
+
+    private static float legacyColorComponent(int color, int shift) {
+        return ((color >> shift) & 255) / 256.0F;
+    }
+
+    private static float legacyPlasmaPitch(Direction direction) {
+        Direction dir = horizontalOrNorth(direction);
+        return dir == Direction.NORTH || dir == Direction.WEST ? 90.0F : -90.0F;
+    }
+
+    private static float legacyPlasmaYaw(Direction direction) {
+        Direction dir = horizontalOrNorth(direction);
+        return dir == Direction.WEST || dir == Direction.EAST ? 90.0F : 0.0F;
+    }
+
+    private static Vec3 legacyLocalToWorld(double side, double height, double front, float pitchDegrees, float yawDegrees) {
+        double pitch = -Math.toRadians(pitchDegrees);
+        double pitchCos = Math.cos(pitch);
+        double pitchSin = Math.sin(pitch);
+        double yPitch = height * pitchCos + front * pitchSin;
+        double zPitch = front * pitchCos - height * pitchSin;
+
+        double yaw = -Math.toRadians(yawDegrees);
+        double yawCos = Math.cos(yaw);
+        double yawSin = Math.sin(yaw);
+        return new Vec3(side * yawCos + zPitch * yawSin, yPitch, zPitch * yawCos - side * yawSin);
+    }
+
     public static void putBlockState(CompoundTag data, BlockState state) {
         LegacyBlockStateMappings.putState(data, state);
     }
 
     public static void putLegacyBlockName(CompoundTag data, String legacyBlockName, int meta) {
         LegacyBlockStateMappings.putLegacyName(data, legacyBlockName, meta);
+    }
+
+    public static void putLegacyBlockId(CompoundTag data, int legacyBlockId, int meta) {
+        LegacyBlockStateMappings.putLegacyId(data, legacyBlockId, meta);
     }
 
     public static void spawnAux(Level level, double x, double y, double z, CompoundTag data, double range) {

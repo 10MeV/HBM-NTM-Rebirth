@@ -16,7 +16,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.items.SlotItemHandler;
 
 import java.util.List;
 
@@ -41,14 +40,17 @@ public class AssemblyMachineMenu extends AbstractContainerMenu {
         super(ModMenuTypes.ASSEMBLY_MACHINE.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), AssemblyMachineBlockEntity.SLOT_BATTERY, 152, 81));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), AssemblyMachineBlockEntity.SLOT_BLUEPRINT, 35, 126));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                AssemblyMachineBlockEntity.SLOT_BATTERY, 152, 81));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                AssemblyMachineBlockEntity.SLOT_BLUEPRINT, 35, 126));
         addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), AssemblyMachineBlockEntity.SLOT_UPGRADE_START, 152, 108));
         addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), AssemblyMachineBlockEntity.SLOT_UPGRADE_END, 152, 126));
         for (int row = 0; row < 4; row++) {
             for (int column = 0; column < 3; column++) {
                 int slot = AssemblyMachineBlockEntity.SLOT_INPUT_START + column + row * 3;
-                addSlot(new SlotItemHandler(blockEntity.getItems(), slot, 8 + column * 18, 18 + row * 18));
+                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), slot,
+                        8 + column * 18, 18 + row * 18));
             }
         }
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), AssemblyMachineBlockEntity.SLOT_OUTPUT, 98, 45));

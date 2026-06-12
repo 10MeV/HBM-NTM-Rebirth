@@ -10,7 +10,6 @@ import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
-import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -160,8 +159,7 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     }
 
     protected void refreshFluidPorts() {
-        HbmFluidPortMachine.refreshTransceiverPorts(level, worldPosition, getFluidPorts(),
-                receivingTanks, sendingTanks, this);
+        refreshTrackedTransceiverFluidPortsReport(receivingTanks, sendingTanks, this);
     }
 
     @Override

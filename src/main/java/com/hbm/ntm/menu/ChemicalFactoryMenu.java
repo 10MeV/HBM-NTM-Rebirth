@@ -16,7 +16,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.items.SlotItemHandler;
 
 import java.util.List;
 
@@ -44,15 +43,17 @@ public class ChemicalFactoryMenu extends AbstractContainerMenu {
         super(ModMenuTypes.CHEMICAL_FACTORY.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalFactoryBlockEntity.SLOT_BATTERY, 224, 88));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                ChemicalFactoryBlockEntity.SLOT_BATTERY, 224, 88));
         HbmInventoryMenuHelper.addUpgradeSlots(this::addSlot, blockEntity.getItems(),
                 ChemicalFactoryBlockEntity.SLOT_UPGRADE_START, 206, 125, 1, 3);
         for (int module = 0; module < 4; module++) {
             int y = 20 + module * 22;
-            addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalFactoryBlockEntity.blueprintSlot(module), 93, y));
+            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                    ChemicalFactoryBlockEntity.blueprintSlot(module), 93, y));
             for (int i = 0; i < 3; i++) {
-                addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalFactoryBlockEntity.inputStart(module) + i,
-                        10 + i * 16, y));
+                addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                        ChemicalFactoryBlockEntity.inputStart(module) + i, 10 + i * 16, y));
             }
             for (int i = 0; i < 3; i++) {
                 addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),

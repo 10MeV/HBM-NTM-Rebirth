@@ -15,7 +15,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.items.SlotItemHandler;
 
 public class BasicMachineMenu extends AbstractContainerMenu {
     private static final int PLAYER_INVENTORY_START = 13;
@@ -32,12 +31,13 @@ public class BasicMachineMenu extends AbstractContainerMenu {
         super(ModMenuTypes.BASIC_MACHINE.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_FUEL, 26, 53));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_STAMP, 80, 17));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_INPUT, 80, 53));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_OUTPUT, 140, 35));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_FUEL, 26, 53));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_STAMP, 80, 17));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_INPUT, 80, 53));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_OUTPUT, 140, 35));
         for (int column = 0; column < 9; column++) {
-            addSlot(new SlotItemHandler(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_STORAGE_START + column, 8 + column * 18, 84));
+            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                    BasicMachineBlockEntity.SLOT_STORAGE_START + column, 8 + column * 18, 84));
         }
         addPlayerInventory(playerInventory);
         addMachineDataSlots(blockEntity);

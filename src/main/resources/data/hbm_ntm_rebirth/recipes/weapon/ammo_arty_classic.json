@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [
+    " D ",
+    "DSD",
+    " D "
+  ],
+  "key": {
+    "D": { "item": "hbm_ntm_rebirth:ball_dynamite" },
+    "S": { "item": "hbm_ntm_rebirth:ammo_arty" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:ammo_arty_classic" }
+}

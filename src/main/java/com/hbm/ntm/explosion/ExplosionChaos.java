@@ -1,6 +1,9 @@
 package com.hbm.ntm.explosion;
 
+import com.hbm.ntm.bullet.BulletLaunchUtil;
+import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.damage.EntityDamageUtil;
+import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.ArmorUtil;
@@ -22,7 +25,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SnowLayerBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.RegistryObject;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -82,6 +87,36 @@ public final class ExplosionChaos {
 
     public static void spawnVolley(Level level, double x, double y, double z, int count, double speed) {
         ParticleUtil.spawnChaosVolley(level, x, y, z, count, speed);
+    }
+
+    public static void cluster(Level level, double x, double y, double z, int count, float yaw, float pitch,
+            float yawRand, float pitchRand, float speed) {
+        cluster(level, x, y, z, count, yaw, pitch, yawRand, pitchRand, speed, null);
+    }
+
+    public static void cluster(Level level, double x, double y, double z, int count, float yaw, float pitch,
+            float yawRand, float pitchRand, float speed, @Nullable Entity source) {
+        if (level == null || level.isClientSide() || count <= 0 || speed <= 0.0F) {
+            return;
+        }
+
+        Vec3 position = new Vec3(x, y, z);
+        for (int i = 0; i < count; i++) {
+            float bulletYaw = yaw + (float) (yawRand * level.random.nextGaussian());
+            float bulletPitch = pitch + (float) (pitchRand * level.random.nextGaussian());
+            Vec3 heading = new Vec3(
+                    -Math.sin(bulletYaw) * Math.cos(bulletPitch),
+                    Math.sin(bulletPitch),
+                    Math.cos(bulletYaw) * Math.cos(bulletPitch));
+            BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedLaunchPlan(
+                    LegacySednaRuntimeBulletConfigs.CLUSTER_SUBMUNITION, position, heading, speed, 0.0F, level.random);
+            if (!plan.valid()) {
+                continue;
+            }
+            BulletProjectileEntity bullet = BulletProjectileEntity.fromLaunchPlan(level, plan, source);
+            bullet.overrideDamage = 50.0F;
+            level.addFreshEntity(bullet);
+        }
     }
 
     public static void poison(Level level, double x, double y, double z, double range) {
@@ -167,6 +202,59 @@ public final class ExplosionChaos {
             if (Math.sqrt(dx * dx + dy * dy + dz * dz) < range) {
                 entity.teleportTo(entity.getX() + offsetX, entity.getY() + offsetY, entity.getZ() + offsetZ);
             }
+        }
+    }
+
+    public static void taintBlocks(Level level, int x, int y, int z, int radius, int attempts) {
+        taintBlocks(level, x, y, z, radius, attempts, -1);
+    }
+
+    public static void taintBlocksAtLevel(Level level, int x, int y, int z, int radius, int attempts, int taintLevel) {
+        taintBlocks(level, x, y, z, radius, attempts, taintLevel);
+    }
+
+    private static void taintBlocks(Level level, int x, int y, int z, int radius, int attempts, int taintLevel) {
+        if (level == null || level.isClientSide() || radius <= 0 || attempts <= 0) {
+            return;
+        }
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int bound = radius * 2 + 1;
+        for (int i = 0; i < attempts; i++) {
+            cursor.set(
+                    x + level.random.nextInt(bound) - radius,
+                    y + level.random.nextInt(bound) - radius,
+                    z + level.random.nextInt(bound) - radius);
+            tryPlaceTaint(level, cursor, taintLevel);
+        }
+    }
+
+    public static void taintBlocksLegacyWindow(Level level, int x, int y, int z, int range) {
+        if (level == null || level.isClientSide() || range <= 0) {
+            return;
+        }
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int offset = range / 2 - 1;
+        for (int i = 0; i < range * 10; i++) {
+            cursor.set(
+                    x + level.random.nextInt(range) - offset,
+                    y + level.random.nextInt(range) - offset,
+                    z + level.random.nextInt(range) - offset);
+            tryPlaceTaint(level, cursor, -1);
+        }
+    }
+
+    private static void tryPlaceTaint(Level level, BlockPos pos, int taintLevel) {
+        if (level.isOutsideBuildHeight(pos)) {
+            return;
+        }
+        BlockState state = level.getBlockState(pos);
+        if (!state.isAir() && state.isCollisionShapeFullBlock(level, pos)) {
+            int levelToPlace = taintLevel >= 0 ? taintLevel : level.random.nextInt(3) + 4;
+            level.setBlock(pos,
+                    com.hbm.ntm.block.LegacyTaintBlock.stateForLevel(levelToPlace),
+                    Block.UPDATE_CLIENTS);
         }
     }
 

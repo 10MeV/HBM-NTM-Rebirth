@@ -1,157 +1,201 @@
 package com.hbm.ntm.compat;
 
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
+import com.hbm.ntm.api.entity.LegacyMissileRadarDetectable;
+import com.hbm.ntm.api.entity.RadarContext;
+import com.hbm.ntm.api.entity.RadarDetectable;
+import com.hbm.ntm.turret.TurretBlockEntityBase;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.npc.Npc;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraftforge.common.util.FakePlayer;
 
-/**
- * External turret targeting registry migrated from the 1.7.10 CompatExternal API.
- * The registry is ready for modern turret consumers, but does not target anything
- * by itself.
- */
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiFunction;
+import java.util.function.Predicate;
+
 public final class CompatTurretTargetRegistry {
-    private static final Map<TargetType, Set<Class<? extends Entity>>> SIMPLE_TARGETS =
-            new EnumMap<>(TargetType.class);
-    private static final Set<Class<? extends Entity>> BLACKLIST = ConcurrentHashMap.newKeySet();
-    private static final Map<Class<? extends Entity>, BiFunction<Entity, Object, Integer>> CONDITIONS =
-            new ConcurrentHashMap<>();
+    private static final List<Predicate<Entity>> BLACKLIST = new CopyOnWriteArrayList<>();
+    private static final List<BiFunction<Entity, TurretBlockEntityBase, TargetDecision>> CONDITIONS =
+            new CopyOnWriteArrayList<>();
+    private static final List<Predicate<Entity>> FRIENDLY = new CopyOnWriteArrayList<>();
+    private static final List<Predicate<Entity>> HOSTILE = new CopyOnWriteArrayList<>();
+    private static final List<Predicate<Entity>> MACHINE = new CopyOnWriteArrayList<>();
+    private static final List<Predicate<Entity>> PLAYER = new CopyOnWriteArrayList<>();
+    private static final List<Class<? extends Entity>> BLACKLIST_CLASSES = new CopyOnWriteArrayList<>();
+    private static final List<ClassCondition> CLASS_CONDITIONS = new CopyOnWriteArrayList<>();
+    private static final List<Class<? extends Entity>> FRIENDLY_CLASSES = new CopyOnWriteArrayList<>();
+    private static final List<Class<? extends Entity>> HOSTILE_CLASSES = new CopyOnWriteArrayList<>();
+    private static final List<Class<? extends Entity>> MACHINE_CLASSES = new CopyOnWriteArrayList<>();
+    private static final List<Class<? extends Entity>> PLAYER_CLASSES = new CopyOnWriteArrayList<>();
 
     static {
-        for (TargetType type : TargetType.values()) {
-            SIMPLE_TARGETS.put(type, ConcurrentHashMap.newKeySet());
-        }
+        registerFriendly(entity -> entity instanceof Animal || entity instanceof Npc || entity instanceof TamableAnimal);
+        registerHostile(entity -> entity instanceof Enemy);
+        registerMachine(entity -> entity instanceof AbstractMinecart);
+        registerPlayer(entity -> entity instanceof Player && !(entity instanceof FakePlayer));
     }
 
-    public static void registerSimple(Class<? extends Entity> clazz, TargetType type) {
-        if (clazz != null && type != null) {
-            SIMPLE_TARGETS.get(type).add(clazz);
-        }
+    private CompatTurretTargetRegistry() {
     }
 
-    public static void registerSimple(Class<? extends Entity> clazz, int legacyType) {
-        TargetType type = TargetType.fromLegacyId(legacyType);
-        if (type != null) {
-            registerSimple(clazz, type);
-        }
+    public static void registerBlacklist(Predicate<Entity> predicate) {
+        BLACKLIST.add(predicate);
     }
 
     public static void registerBlacklist(Class<? extends Entity> clazz) {
-        if (clazz != null) {
-            BLACKLIST.add(clazz);
+        BLACKLIST_CLASSES.add(clazz);
+    }
+
+    public static void registerCondition(BiFunction<Entity, TurretBlockEntityBase, TargetDecision> condition) {
+        CONDITIONS.add(condition);
+    }
+
+    public static void registerCondition(Class<? extends Entity> clazz, BiFunction<Entity, Object, Integer> condition) {
+        CLASS_CONDITIONS.add(new ClassCondition(clazz, condition));
+    }
+
+    public static void registerSimple(Class<? extends Entity> clazz, int type) {
+        registerSimple(clazz, TargetType.fromLegacyInt(type));
+    }
+
+    public static void registerSimple(Class<? extends Entity> clazz, TargetType type) {
+        switch (type) {
+            case FRIENDLY -> FRIENDLY_CLASSES.add(clazz);
+            case HOSTILE -> HOSTILE_CLASSES.add(clazz);
+            case MACHINE -> MACHINE_CLASSES.add(clazz);
+            case PLAYER -> PLAYER_CLASSES.add(clazz);
         }
     }
 
-    public static void registerCondition(Class<? extends Entity> clazz,
-            BiFunction<Entity, Object, Integer> condition) {
-        if (clazz != null && condition != null) {
-            CONDITIONS.put(clazz, condition);
-        }
+    public static void registerFriendly(Predicate<Entity> predicate) {
+        FRIENDLY.add(predicate);
+    }
+
+    public static void registerHostile(Predicate<Entity> predicate) {
+        HOSTILE.add(predicate);
+    }
+
+    public static void registerMachine(Predicate<Entity> predicate) {
+        MACHINE.add(predicate);
+    }
+
+    public static void registerPlayer(Predicate<Entity> predicate) {
+        PLAYER.add(predicate);
     }
 
     public static boolean isBlacklisted(Entity entity) {
-        return entity != null && matchesAny(entity, BLACKLIST);
+        return BLACKLIST.stream().anyMatch(predicate -> predicate.test(entity))
+                || BLACKLIST_CLASSES.stream().anyMatch(clazz -> clazz.isAssignableFrom(entity.getClass()));
     }
 
-    public static boolean isSimpleTarget(Entity entity, TargetType type) {
-        return entity != null && type != null && matchesAny(entity, SIMPLE_TARGETS.get(type));
-    }
-
-    /**
-     * Legacy return contract: -1 ignore, 0 continue normal checks, 1 target.
-     */
-    public static int evaluateCondition(Entity entity, Object turret) {
-        if (entity == null) {
-            return 0;
-        }
-        for (Map.Entry<Class<? extends Entity>, BiFunction<Entity, Object, Integer>> entry : CONDITIONS.entrySet()) {
-            if (entry.getKey().isAssignableFrom(entity.getClass())) {
-                Integer result = entry.getValue().apply(entity, turret);
-                if (result != null && result != 0) {
-                    return result < 0 ? -1 : 1;
+    public static TargetDecision evaluateConditions(Entity entity, TurretBlockEntityBase turret) {
+        for (ClassCondition condition : CLASS_CONDITIONS) {
+            if (condition.clazz().isAssignableFrom(entity.getClass())) {
+                int result = condition.condition().apply(entity, turret);
+                if (result < 0) {
+                    return TargetDecision.REJECT;
+                }
+                if (result > 0) {
+                    return TargetDecision.ACCEPT;
                 }
             }
         }
-        return 0;
+        for (BiFunction<Entity, TurretBlockEntityBase, TargetDecision> condition : CONDITIONS) {
+            TargetDecision decision = condition.apply(entity, turret);
+            if (decision != null && decision != TargetDecision.PASS) {
+                return decision;
+            }
+        }
+        return TargetDecision.PASS;
     }
 
-    public static List<Class<? extends Entity>> simpleTargets(TargetType type) {
-        return type == null ? List.of() : List.copyOf(SIMPLE_TARGETS.get(type));
+    public static boolean isFriendly(Entity entity) {
+        return FRIENDLY.stream().anyMatch(predicate -> predicate.test(entity))
+                || FRIENDLY_CLASSES.stream().anyMatch(clazz -> clazz.isAssignableFrom(entity.getClass()));
     }
 
-    public static List<Class<? extends Entity>> blacklist() {
-        return List.copyOf(BLACKLIST);
+    public static boolean isHostile(Entity entity) {
+        return HOSTILE.stream().anyMatch(predicate -> predicate.test(entity))
+                || HOSTILE_CLASSES.stream().anyMatch(clazz -> clazz.isAssignableFrom(entity.getClass()));
     }
 
-    public static Map<Class<? extends Entity>, BiFunction<Entity, Object, Integer>> conditions() {
-        return Map.copyOf(CONDITIONS);
+    public static boolean isMachine(Entity entity) {
+        return isMachine(entity, null);
+    }
+
+    public static boolean isMachine(Entity entity, TurretBlockEntityBase turret) {
+        if (turret != null && entity instanceof RadarDetectable detectable
+                && turret.getLevel() instanceof ServerLevel serverLevel
+                && !detectable.canBeSeenBy(RadarContext.legacy(serverLevel, turret.getBlockPos()))) {
+            return false;
+        }
+        if (entity instanceof LegacyMissileRadarDetectable missile) {
+            return missile.radarVerticalMotion() < 0.0D;
+        }
+        return MACHINE.stream().anyMatch(predicate -> predicate.test(entity))
+                || MACHINE_CLASSES.stream().anyMatch(clazz -> clazz.isAssignableFrom(entity.getClass()));
+    }
+
+    public static boolean isPlayer(Entity entity) {
+        return PLAYER.stream().anyMatch(predicate -> predicate.test(entity))
+                || PLAYER_CLASSES.stream().anyMatch(clazz -> clazz.isAssignableFrom(entity.getClass()));
     }
 
     public static Diagnostics diagnostics() {
         return new Diagnostics(
-                SIMPLE_TARGETS.get(TargetType.PLAYER).size(),
-                SIMPLE_TARGETS.get(TargetType.FRIENDLY).size(),
-                SIMPLE_TARGETS.get(TargetType.HOSTILE).size(),
-                SIMPLE_TARGETS.get(TargetType.MACHINE).size(),
-                BLACKLIST.size(),
-                CONDITIONS.size());
+                BLACKLIST.size() + BLACKLIST_CLASSES.size(),
+                CONDITIONS.size() + CLASS_CONDITIONS.size(),
+                FRIENDLY.size() + FRIENDLY_CLASSES.size(),
+                HOSTILE.size() + HOSTILE_CLASSES.size(),
+                MACHINE.size() + MACHINE_CLASSES.size(),
+                PLAYER.size() + PLAYER_CLASSES.size());
     }
 
-    private static boolean matchesAny(Entity entity, Set<Class<? extends Entity>> classes) {
-        for (Class<? extends Entity> clazz : classes) {
-            if (clazz.isAssignableFrom(entity.getClass())) {
-                return true;
-            }
-        }
-        return false;
+    public enum TargetDecision {
+        ACCEPT,
+        REJECT,
+        PASS
     }
 
     public enum TargetType {
-        PLAYER(0),
-        FRIENDLY(1),
-        HOSTILE(2),
-        MACHINE(3);
+        FRIENDLY,
+        HOSTILE,
+        MACHINE,
+        PLAYER;
 
-        private final int legacyId;
-
-        TargetType(int legacyId) {
-            this.legacyId = legacyId;
-        }
-
-        public int legacyId() {
-            return legacyId;
-        }
-
-        public static TargetType fromLegacyId(int legacyId) {
-            for (TargetType type : values()) {
-                if (type.legacyId == legacyId) {
-                    return type;
-                }
-            }
-            return null;
+        private static TargetType fromLegacyInt(int type) {
+            return switch (type) {
+                case 0 -> PLAYER;
+                case 1 -> FRIENDLY;
+                case 2 -> HOSTILE;
+                case 3 -> MACHINE;
+                default -> HOSTILE;
+            };
         }
     }
 
-    public record Diagnostics(int playerTargets, int friendlyTargets, int hostileTargets, int machineTargets,
-                              int blacklistedTargets, int conditionalTargets) {
+    public record Diagnostics(int blacklists, int conditions, int friendly, int hostile, int machine, int player) {
         public int totalRegistrations() {
-            return playerTargets + friendlyTargets + hostileTargets + machineTargets
-                    + blacklistedTargets + conditionalTargets;
+            return blacklists + conditions + friendly + hostile + machine + player;
         }
 
         public String summary() {
-            return "turret targets player=" + playerTargets
-                    + " friendly=" + friendlyTargets
-                    + " hostile=" + hostileTargets
-                    + " machine=" + machineTargets
-                    + " blacklist=" + blacklistedTargets
-                    + " conditions=" + conditionalTargets;
+            return "turret target hooks: blacklist=" + blacklists
+                    + " conditions=" + conditions
+                    + " friendly=" + friendly
+                    + " hostile=" + hostile
+                    + " machine=" + machine
+                    + " player=" + player
+                    + " total=" + totalRegistrations();
         }
     }
 
-    private CompatTurretTargetRegistry() {
+    private record ClassCondition(Class<? extends Entity> clazz, BiFunction<Entity, Object, Integer> condition) {
     }
 }

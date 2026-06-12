@@ -6,7 +6,11 @@ public record PileNeutronSettings(
         PileNeutronBlockRules blockRules,
         PileNeutronRadiationHandler radiationHandler) {
     public static PileNeutronSettings legacyDefaults() {
-        return new PileNeutronSettings(5, 0.5D, PileLegacyBlockRules.LEGACY_DEFAULTS, PileNeutronRadiationHandler.NOOP);
+        return new PileNeutronSettings(
+                5,
+                0.5D,
+                PileLegacyBlockRules.LEGACY_DEFAULTS,
+                PileNeutronRadiationHandler.LEGACY_CONTAMINATION);
     }
 
     public PileNeutronSettings {

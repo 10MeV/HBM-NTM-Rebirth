@@ -1,13 +1,7 @@
 #version 150
 
-uniform sampler2D Sampler0;
 uniform sampler2D ScreenTexture;
-uniform sampler2D TargetTexture;
 
-uniform vec4 ColorModulator;
-uniform vec4 uColor;
-uniform int uType;
-uniform vec2 screenSize;
 uniform float time;
 uniform mat4 ProjMat;
 uniform mat4 ModelViewMat;

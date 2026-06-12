@@ -364,18 +364,22 @@ public final class ModDamageSources {
                 .map(LegacyDamageType::expectedTagLabels)
                 .filter(tags -> tags.equals(List.of("bypassesArmor", "absolute", "effects")))
                 .isPresent());
-        expect(problems, "combine ball legacy message id", legacyDamageType(COMBINE_BALL)
-                .map(LegacyDamageType::expectedMessageId)
-                .filter("cmb"::equals)
-                .isPresent());
-        expect(problems, "subatomic legacy message id", legacyDamageType(SUBATOMIC)
-                .map(LegacyDamageType::expectedMessageId)
-                .filter("subAtomic"::equals)
-                .isPresent());
-        expect(problems, "nuclear blast legacy message id", legacyDamageType(NUCLEAR_BLAST)
-                .map(LegacyDamageType::expectedMessageId)
-                .filter("nuclearBlast"::equals)
-                .isPresent());
+        expectMessageId(problems, COMBINE_BALL, "cmb");
+        expectMessageId(problems, SUBATOMIC, "subAtomic");
+        expectMessageId(problems, NUCLEAR_BLAST, "nuclearBlast");
+        expectMessageId(problems, MUD_POISONING, "mudPoisoning");
+        expectMessageId(problems, TAU_BLAST, "tauBlast");
+        expectMessageId(problems, BLACK_LUNG, "blacklung");
+        expectMessageId(problems, ACID_PLAYER, "acidPlayer");
+        expectMessageId(problems, ELECTRICITY, "electricity");
+        expectMessageId(problems, REVOLVER_BULLET, "revolverBullet");
+        expectMessageId(problems, CHOPPER_BULLET, "chopperBullet");
+        com.hbm.lib.ModDamageSource.FacadeAudit facadeAudit = com.hbm.lib.ModDamageSource.facadeAudit();
+        if (!facadeAudit.passed()) {
+            problems.addAll(facadeAudit.problems().stream()
+                    .map(problem -> "ModDamageSource facade " + problem)
+                    .toList());
+        }
 
         return new DamageAliasAudit(List.copyOf(problems), LEGACY_DAMAGE_TYPES.size(), LEGACY_DAMAGE_KEYS.size());
     }
@@ -526,6 +530,15 @@ public final class ModDamageSources {
         }
     }
 
+    private static void expectMessageId(List<String> problems, ResourceKey<DamageType> key, String expected) {
+        String actual = legacyDamageType(key)
+                .map(LegacyDamageType::expectedMessageId)
+                .orElse("<missing>");
+        if (!expected.equals(actual)) {
+            problems.add("message id " + key.location() + " -> " + actual + ", expected " + expected);
+        }
+    }
+
     public record LegacyDamageType(ResourceKey<DamageType> key, boolean projectile, boolean explosion, boolean fire,
                                    boolean bypassesArmor, boolean absolute, boolean creativeAllowed) {
         public ResourceLocation location() {
@@ -566,7 +579,7 @@ public final class ModDamageSources {
             return switch (location().getPath()) {
                 case "acid_player" -> "acidPlayer";
                 case "ams_core" -> "amsCore";
-                case "black_lung" -> "blacklung";
+                case "black_lung", "blacklung" -> "blacklung";
                 case "chopper_bullet" -> "chopperBullet";
                 case "combine_ball" -> "cmb";
                 case "euthanized_self" -> "euthanizedSelf";

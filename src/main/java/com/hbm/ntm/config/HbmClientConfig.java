@@ -14,6 +14,7 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.IntValue TOOL_HUD_INDICATOR_Y;
     public static final ForgeConfigSpec.BooleanValue NUKE_HUD_FLASH;
     public static final ForgeConfigSpec.BooleanValue NUKE_HUD_SHAKE;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_CROSSHAIRS;
     public static final ForgeConfigSpec.BooleanValue LEGACY_LOOK_OVERLAY;
     public static final ForgeConfigSpec.BooleanValue SHOW_BLOCK_STATE_OVERLAY;
     public static final ForgeConfigSpec.DoubleValue GUN_ANIMATION_SPEED;
@@ -22,6 +23,7 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.IntValue NUKE_WARP_SHOCKWAVE_MESH_SEGMENTS;
     public static final ForgeConfigSpec.BooleanValue DEBUG_NUKE_WARP_SHOCKWAVE_WIREFRAME;
     public static final ForgeConfigSpec.BooleanValue COOLING_TOWER_PARTICLES;
+    public static final ForgeConfigSpec.BooleanValue ITEM_TOOLTIP_SHOW_TAGS;
     public static final ForgeConfigSpec.BooleanValue ITEM_TOOLTIP_SHOW_CUSTOM_NUKE;
     public static final ForgeConfigSpec.BooleanValue NEI_HIDE_SECRETS;
 
@@ -56,6 +58,9 @@ public final class HbmClientConfig {
         NUKE_HUD_SHAKE = builder
                 .comment("Legacy ClientConfig.NUKE_HUD_SHAKE: enables the nuclear explosion HUD shake.")
                 .define("nukeHudShake", true);
+        ENABLE_CROSSHAIRS = builder
+                .comment("Legacy GeneralConfig 1.22_enableCrosshairs: shows custom HBM crosshairs when an NTM gun is held.")
+                .define("enableCrosshairs", true);
         LEGACY_LOOK_OVERLAY = builder
                 .comment("Legacy ClientConfig.DODD_RBMK_DIAGNOSTIC: enables crosshair look overlays for migrated blocks, items, and entities.")
                 .define("legacyLookOverlay", true);
@@ -89,6 +94,9 @@ public final class HbmClientConfig {
         builder.pop();
 
         builder.push("tooltips");
+        ITEM_TOOLTIP_SHOW_TAGS = builder
+                .comment("Legacy ClientConfig.ITEM_TOOLTIP_SHOW_OREDICT: shows modern item tags in advanced item tooltips.")
+                .define("showItemTags", true);
         ITEM_TOOLTIP_SHOW_CUSTOM_NUKE = builder
                 .comment("Legacy ClientConfig.ITEM_TOOLTIP_SHOW_CUSTOM_NUKE: shows custom nuke stage contribution lines for items used by the custom nuke.")
                 .define("showCustomNukeTooltips", true);
@@ -148,6 +156,10 @@ public final class HbmClientConfig {
         return NUKE_HUD_SHAKE == null || NUKE_HUD_SHAKE.get();
     }
 
+    public static boolean customCrosshairsEnabled() {
+        return booleanValue(ENABLE_CROSSHAIRS, true);
+    }
+
     public static boolean legacyLookOverlay() {
         return LEGACY_LOOK_OVERLAY == null || LEGACY_LOOK_OVERLAY.get();
     }
@@ -174,6 +186,10 @@ public final class HbmClientConfig {
 
     public static boolean customNukeTooltips() {
         return booleanValue(ITEM_TOOLTIP_SHOW_CUSTOM_NUKE, true);
+    }
+
+    public static boolean itemTagTooltips() {
+        return booleanValue(ITEM_TOOLTIP_SHOW_TAGS, true);
     }
 
     public static boolean hideSecretJeiRecipes() {

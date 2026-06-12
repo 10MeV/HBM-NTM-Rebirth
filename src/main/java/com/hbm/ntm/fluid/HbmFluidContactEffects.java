@@ -28,8 +28,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 
 public final class HbmFluidContactEffects {
-    private static final ResourceLocation HBM_DEATH_EFFECT = new ResourceLocation(HbmNtm.MOD_ID, "death");
-
     public static ContactReport previewContact(FluidType fluid, Entity entity, float intensity) {
         return collectContact(fluid, entity, Mth.clamp(intensity, 0.0F, 1.0F), false);
     }
@@ -195,9 +193,6 @@ public final class HbmFluidContactEffects {
     }
 
     private static Optional<MobEffect> resolveEffect(ResourceLocation effectId) {
-        if (effectId.equals(HBM_DEATH_EFFECT)) {
-            return Optional.empty();
-        }
         return HbmRegistryUtil.mobEffect(effectId);
     }
 

@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "hbm_ntm_rebirth:mechanism_gunmetal",
+    "hbm_ntm_rebirth:mechanism_weaponsteel",
+    "hbm_ntm_rebirth:mechanism_saturnite"
+  ]
+}

@@ -3,7 +3,9 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.blockentity.HbmLegacyWireNodeBlockEntity;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.util.ColorUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -18,6 +20,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 @SuppressWarnings("deprecation")
 public abstract class LegacyPylonBlock extends LegacyXrMultiblockBlock implements EntityBlock {
@@ -92,4 +96,12 @@ public abstract class LegacyPylonBlock extends LegacyXrMultiblockBlock implement
     }
 
     protected abstract BlockEntityType<?> getPylonBlockEntityType();
+
+    protected static void appendLegacyWireTooltip(List<Component> tooltip, String connectionType, int rangeMeters) {
+        HbmLegacyWireNodeBlock.appendLegacyWireTooltip(tooltip, connectionType, rangeMeters);
+    }
+
+    protected static void appendLegacyGoldTooltip(List<Component> tooltip, String text) {
+        tooltip.add(Component.literal(text).withStyle(ChatFormatting.GOLD));
+    }
 }

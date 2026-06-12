@@ -70,6 +70,11 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
                 canDrain);
     }
 
+    public static AdapterSnapshot emptySnapshot() {
+        HbmFluidGuiHelper.TankSetSnapshot emptyTanks = HbmFluidGuiHelper.snapshotTanks(List.of());
+        return new AdapterSnapshot(emptyTanks, emptyTanks, emptyTanks, 0, false, false);
+    }
+
     public int previewFill(FluidStack resource) {
         return fill(resource, FluidAction.SIMULATE);
     }

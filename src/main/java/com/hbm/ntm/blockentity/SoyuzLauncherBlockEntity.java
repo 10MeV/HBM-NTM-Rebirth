@@ -20,7 +20,8 @@ import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModSounds;
-import com.hbm.ntm.satellite.SatelliteChipItem;
+import com.hbm.ntm.satellite.LegacySatelliteType;
+import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -91,7 +92,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
             return switch (slot) {
                 case SLOT_ROCKET -> stack.is(ModItems.MISSILE_SOYUZ.get());
                 case SLOT_DESIGNATOR -> stack.getItem() instanceof DesignatorItem || hasLegacyDesignatorCoords(stack);
-                case SLOT_SATELLITE -> stack.getItem() instanceof SatelliteChipItem;
+                case SLOT_SATELLITE -> Satellite.getTypeFromStack(stack).isPresent();
                 case SLOT_ORBITAL -> stack.is(ModItems.MISSILE_SOYUZ_LANDER.get());
                 case SLOT_BATTERY -> stack.getCapability(ForgeCapabilities.ENERGY, null).isPresent();
                 default -> true;
@@ -170,9 +171,8 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oldCountdown = countdown;
         boolean oldStarting = starting;
 
-        HbmFluidItemTransfer.processTransfers(items, List.of(
-                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_KEROSENE_INPUT, SLOT_KEROSENE_OUTPUT, keroseneTank()),
-                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_OXYGEN_INPUT, SLOT_OXYGEN_OUTPUT, oxygenTank())));
+        processFluidItemTransfers(items, HbmFluidItemTransfer.loadTransfers(
+                SLOT_KEROSENE_INPUT, SLOT_KEROSENE_OUTPUT, 2, keroseneTank(), oxygenTank()));
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
 
         if (!starting || !canLaunch()) {
@@ -295,15 +295,15 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (mode == MODE_CARGO) {
             return 0;
         }
-        return items.getStackInSlot(SLOT_SATELLITE).isEmpty() ? 1 : 2;
+        return Satellite.getTypeFromStack(items.getStackInSlot(SLOT_SATELLITE)).isPresent() ? 2 : 1;
     }
 
     public int orbitalStatus() {
         if (mode == MODE_CARGO) {
             return 0;
         }
-        ItemStack satellite = items.getStackInSlot(SLOT_SATELLITE);
-        if (satellite.is(ModItems.SAT_GERALD.get()) || satellite.is(ModItems.SAT_LUNAR_MINER.get())) {
+        LegacySatelliteType type = Satellite.getTypeFromStack(items.getStackInSlot(SLOT_SATELLITE)).orElse(null);
+        if (type == LegacySatelliteType.HORIZONS || type == LegacySatelliteType.LUNAR_MINER) {
             return items.getStackInSlot(SLOT_ORBITAL).is(ModItems.MISSILE_SOYUZ_LANDER.get()) ? 2 : 1;
         }
         return 0;

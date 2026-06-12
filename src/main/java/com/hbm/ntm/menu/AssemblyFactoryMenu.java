@@ -16,7 +16,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.items.SlotItemHandler;
 
 import java.util.List;
 
@@ -44,18 +43,20 @@ public class AssemblyFactoryMenu extends AbstractContainerMenu {
         super(ModMenuTypes.ASSEMBLY_FACTORY.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), AssemblyFactoryBlockEntity.SLOT_BATTERY, 234, 112));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                AssemblyFactoryBlockEntity.SLOT_BATTERY, 234, 112));
         HbmInventoryMenuHelper.addUpgradeSlots(this::addSlot, blockEntity.getItems(),
                 AssemblyFactoryBlockEntity.SLOT_UPGRADE_START, 214, 149, 1, 3);
         for (int module = 0; module < 4; module++) {
             int ox = (module % 2) * 109;
             int oy = (module / 2) * 56;
-            addSlot(new SlotItemHandler(blockEntity.getItems(), AssemblyFactoryBlockEntity.blueprintSlot(module),
-                    25 + ox, 54 + oy));
+            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                    AssemblyFactoryBlockEntity.blueprintSlot(module), 25 + ox, 54 + oy));
             for (int row = 0; row < 2; row++) {
                 for (int column = 0; column < 6; column++) {
                     int slot = AssemblyFactoryBlockEntity.inputStart(module) + column + row * 6;
-                    addSlot(new SlotItemHandler(blockEntity.getItems(), slot, 7 + ox + column * 16, 20 + oy + row * 16));
+                    addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), slot,
+                            7 + ox + column * 16, 20 + oy + row * 16));
                 }
             }
             addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), AssemblyFactoryBlockEntity.outputSlot(module),

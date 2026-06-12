@@ -169,6 +169,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
                 Items.PURPLE_STAINED_GLASS_PANE,
                 Items.MAGENTA_STAINED_GLASS_PANE,
                 Items.PINK_STAINED_GLASS_PANE);
+        addLegacyForgeTag("glass_panes", "reinforced_laminate_pane");
         addLegacyForgeTag("glass_panes/colorless", Items.GLASS_PANE);
     }
 
@@ -248,6 +249,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("ingot", "ingots", "ingot_combine_steel", "CMBSteel");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_saturnite", "Saturnite");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_meteorite", "Meteorite");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_dineutronium", "Dineutronium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_cft", "CFT");
         addLegacyMaterialAliases("ingot", "ingots", "fragment_coltan", "Coltan");
         addLegacyMaterialAliases("gem", "gems", "gem_tantalium", "Tantalum");
@@ -262,6 +264,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("dust", "dusts", "powder_copper", "Copper");
         addLegacyMaterialAliases("dust", "dusts", "powder_iron", "Iron");
         addLegacyMaterialAliases("dust", "dusts", "powder_steel", "Steel");
+        addLegacyMaterialAliases("dust", "dusts", "powder_boron", "Boron");
         addLegacyMaterialAliases("dust", "dusts", "powder_lead", "Lead");
         addLegacyMaterialAliases("dust", "dusts", "powder_lithium", "Lithium");
         addLegacyMaterialAliases("dust", "dusts", "powder_cobalt", "Cobalt");
@@ -384,8 +387,13 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("bolt", "bolts", "bolt_steel", "Steel");
         addLegacyMaterialAliases("bolt", "bolts", "bolt_tungsten", "Tungsten");
         addLegacyMaterialAliases("bolt", "bolts", "bolt_dura_steel", "DuraSteel");
+        addLegacyMaterialAliases("shell", "shells", "shell_aluminium", "Aluminum", "Aluminium");
+        addLegacyMaterialAliases("shell", "shells", "shell_copper", "Copper");
         addLegacyMaterialAliases("shell", "shells", "shell_steel", "Steel");
         addLegacyMaterialAliases("shell", "shells", "shell_titanium", "Titanium");
+        addLegacyMaterialAliases("gunMechanism", "gun_mechanisms", "mechanism_gunmetal", "GunMetal");
+        addLegacyMaterialAliases("gunMechanism", "gun_mechanisms", "mechanism_weaponsteel", "WeaponSteel");
+        addLegacyMaterialAliases("gunMechanism", "gun_mechanisms", "mechanism_saturnite", "Saturnite");
         addLegacyMaterialAliases("wireFine", "wires", "wire_gold", "Gold");
         addLegacyMaterialAliases("wireFine", "wires", "wire_fine_copper", "Copper");
         addLegacyMaterialAliases("wireFine", "wires", "wire_fine_mingrade", "Mingrade");
@@ -408,6 +416,8 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_lead", "Lead");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_copper", "Copper");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_copper", "Copper");
+        addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_titanium", "Titanium");
+        addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_titanium", "Titanium");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_aluminium", "Aluminum");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_aluminium", "Aluminum");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_dura_steel", "DuraSteel");
@@ -432,6 +442,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("welded_plates/zirconium", "plate_welded_zirconium");
         addLegacyForgeTag("plates/welded_copper", "plate_welded_copper");
         addLegacyForgeTag("plates/welded_zirconium", "plate_welded_zirconium");
+        addLegacyForgeTag("ingots/chainsteel", "ingot_chainsteel");
         addLegacyForgeTag("any/concrete", net.minecraft.world.item.Items.COBBLESTONE);
         tag(forgeItemTag("any/concrete")).add(ModBlocks.legacyBlock("concrete_smooth").get().asItem());
     }

@@ -1,5 +1,6 @@
 package com.hbm.ntm.api.block;
 
+import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
@@ -26,7 +27,7 @@ public interface Toolable {
 
         public void register(ItemStack stack) {
             if (stack != null && !stack.isEmpty()) {
-                stacksForDisplay.add(stack.copyWithCount(1));
+                stacksForDisplay.add(HbmItemStackUtil.carefulCopyWithSize(stack, 1));
             }
         }
 
@@ -40,7 +41,7 @@ public interface Toolable {
             }
             for (ToolType type : values()) {
                 for (ItemStack tool : type.stacksForDisplay) {
-                    if (ItemStack.isSameItemSameTags(tool, stack)) {
+                    if (HbmItemStackUtil.doesStackDataMatch(tool, stack)) {
                         return type;
                     }
                 }

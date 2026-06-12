@@ -176,6 +176,9 @@ public final class HbmEnergyUtil {
             return false;
         }
         BlockPos conductorPos = port.conductorPos(origin);
+        if (!isLoadedPort(level, origin, port)) {
+            return false;
+        }
         boolean subscribed = subscribeProviderToNetwork(level, conductorPos, port.conductorSide(), provider);
         HbmEnergyDebug.spawnRemoteProviderSubscription(level, conductorPos, port.direction(), subscribed);
         return subscribed;
@@ -195,6 +198,9 @@ public final class HbmEnergyUtil {
             return false;
         }
         BlockPos conductorPos = port.conductorPos(origin);
+        if (!isLoadedPort(level, origin, port)) {
+            return false;
+        }
         boolean subscribed = subscribeReceiverToNetwork(level, conductorPos, port.conductorSide(), receiver);
         HbmEnergyDebug.spawnRemoteReceiverSubscription(level, conductorPos, port.direction(), subscribed);
         return subscribed;
@@ -271,6 +277,9 @@ public final class HbmEnergyUtil {
         if (level == null || origin == null || port == null || provider == null) {
             return false;
         }
+        if (!isLoadedPort(level, origin, port)) {
+            return false;
+        }
         return unsubscribeProviderFromNetwork(level, port.conductorPos(origin), port.conductorSide(), provider);
     }
 
@@ -283,6 +292,9 @@ public final class HbmEnergyUtil {
 
     public static boolean unsubscribeReceiverFromPort(Level level, BlockPos origin, EnergyPort port, HbmEnergyReceiver receiver) {
         if (level == null || origin == null || port == null || receiver == null) {
+            return false;
+        }
+        if (!isLoadedPort(level, origin, port)) {
             return false;
         }
         return unsubscribeReceiverFromNetwork(level, port.conductorPos(origin), port.conductorSide(), receiver);
@@ -385,6 +397,9 @@ public final class HbmEnergyUtil {
             return 0L;
         }
         BlockPos targetPos = port.conductorPos(origin);
+        if (!isLoadedPort(level, origin, port)) {
+            return 0L;
+        }
         BlockEntity target = level.getBlockEntity(targetPos);
         if (target == null) {
             return 0L;
@@ -448,6 +463,11 @@ public final class HbmEnergyUtil {
         }
         BlockPos conductorPos = port.conductorPos(origin);
         Direction conductorSide = port.conductorSide();
+        if (!isLoadedPort(level, origin, port)) {
+            return new PortSnapshot(conductorPos, conductorSide,
+                    false, false, false, false,
+                    0, 0, 0, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
+        }
         BlockEntity conductor = level.getBlockEntity(conductorPos);
         boolean connectorPresent = conductor instanceof HbmEnergyConnector;
         boolean connectable = connectorPresent
@@ -506,6 +526,9 @@ public final class HbmEnergyUtil {
 
     public static HbmPowerNet getConnectablePowerNet(Level level, BlockPos conductorPos, Direction conductorSide) {
         if (level == null || conductorPos == null || conductorSide == null) {
+            return null;
+        }
+        if (!isLoadedBlock(level, conductorPos)) {
             return null;
         }
         BlockEntity conductor = level.getBlockEntity(conductorPos);
@@ -594,6 +617,9 @@ public final class HbmEnergyUtil {
             return 0L;
         }
         BlockPos targetPos = port.conductorPos(origin);
+        if (!isLoadedPort(level, origin, port)) {
+            return 0L;
+        }
         Direction targetSide = port.conductorSide();
         BlockEntity target = level.getBlockEntity(targetPos);
         if (target instanceof HbmEnergyReceiver receiver
@@ -647,6 +673,19 @@ public final class HbmEnergyUtil {
             provider.usePower(accepted);
         }
         return accepted;
+    }
+
+    public static boolean isLoadedPort(Level level, BlockPos origin, EnergyPort port) {
+        if (level == null || origin == null || port == null) {
+            return false;
+        }
+        BlockPos conductorPos = port.conductorPos(origin);
+        return isLoadedBlock(level, conductorPos)
+                && isLoadedBlock(level, conductorPos.relative(port.direction().getOpposite()));
+    }
+
+    public static boolean isLoadedBlock(Level level, BlockPos pos) {
+        return level != null && pos != null && level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4);
     }
 
     public record PortSnapshot(

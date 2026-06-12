@@ -26,10 +26,12 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
         if (level.isClientSide) {
             return;
         }
-        if (RadarScreenDisplayProfile.shouldSyncBeforeReset(screen.snapshot)) {
+        RadarScreenDisplayProfile.ServerTickPlan tickPlan =
+                RadarScreenDisplayProfile.serverTick(screen.snapshot);
+        if (tickPlan.syncBeforeReset()) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
-        screen.snapshot = RadarScreenDisplayProfile.resetAfterServerTick(screen.snapshot);
+        screen.snapshot = tickPlan.nextSnapshot();
         screen.setChanged();
     }
 
@@ -60,6 +62,10 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
 
     public boolean isLinked() {
         return snapshot.linked();
+    }
+
+    public RadarScreenSnapshot getSnapshot() {
+        return snapshot;
     }
 
     @Override

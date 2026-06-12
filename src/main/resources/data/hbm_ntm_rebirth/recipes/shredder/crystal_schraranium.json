@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": {
+    "ingredient": {
+      "tag": "forge:crystals/schraranium"
+    }
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:nugget_schrabidium",
+    "count": 3
+  }
+}

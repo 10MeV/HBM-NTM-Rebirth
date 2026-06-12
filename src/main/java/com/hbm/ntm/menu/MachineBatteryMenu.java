@@ -13,7 +13,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.items.SlotItemHandler;
 
 public class MachineBatteryMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = 2;
@@ -37,8 +36,10 @@ public class MachineBatteryMenu extends AbstractContainerMenu {
         super(ModMenuTypes.MACHINE_BATTERY.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), MachineBatteryBlockEntity.SLOT_DISCHARGE, 26, 17));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), MachineBatteryBlockEntity.SLOT_CHARGE, 26, 53));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                MachineBatteryBlockEntity.SLOT_DISCHARGE, 26, 17));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                MachineBatteryBlockEntity.SLOT_CHARGE, 26, 53));
         addPlayerInventory(playerInventory);
         addBatteryDataSlots();
     }

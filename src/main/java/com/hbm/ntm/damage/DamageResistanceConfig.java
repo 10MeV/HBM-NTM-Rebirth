@@ -287,13 +287,17 @@ public final class DamageResistanceConfig {
         JsonArray setStats = array(defaults, "setStats");
         JsonArray entityStats = array(defaults, "entityStats");
 
-        expect(problems, "legacy default item count", itemStats.size() == 2);
+        expect(problems, "legacy default item count", itemStats.size() == 4);
         expect(problems, "legacy default armor set count", setStats.size() == 34);
         expect(problems, "legacy default entity count", entityStats.size() == 2);
         expect(problems, "jackt physical stats",
                 hasCategory(statsForItem(itemStats, "jackt"), DamageResistanceHandler.CATEGORY_PHYSICAL, 1.0F, 0.20F));
         expect(problems, "jackt2 physical stats",
                 hasCategory(statsForItem(itemStats, "jackt2"), DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.25F));
+        expect(problems, "nossy hat DT",
+                hasOther(statsForItem(itemStats, "nossy_hat"), 2.0F, 0.0F));
+        expect(problems, "no9 DT",
+                hasOther(statsForItem(itemStats, "no9"), 0.5F, 0.0F));
         expect(problems, "steel set physical stats",
                 hasCategory(statsForSet(setStats, "steel_helmet", "steel_plate", "steel_legs", "steel_boots"),
                         DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.1F));
@@ -355,6 +359,8 @@ public final class DamageResistanceConfig {
 
         addItem(itemStats, "jackt", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 1.0F, 0.20F));
         addItem(itemStats, "jackt2", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.25F));
+        addItem(itemStats, "nossy_hat", new DamageResistanceStats().setOther(2.0F, 0.0F));
+        addItem(itemStats, "no9", new DamageResistanceStats().setOther(0.5F, 0.0F));
 
         addSet(setStats, "steel_helmet", "steel_plate", "steel_legs", "steel_boots", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 2.0F, 0.1F));
         addSet(setStats, "titanium_helmet", "titanium_plate", "titanium_legs", "titanium_boots", new DamageResistanceStats().addCategory(DamageResistanceHandler.CATEGORY_PHYSICAL, 3.0F, 0.1F));
@@ -666,8 +672,12 @@ public final class DamageResistanceConfig {
         ResourceLocation parsed = ResourceLocation.tryParse(id);
         String path = parsed == null ? id : parsed.getPath();
         RegistryObject<Item> legacy = ModItems.legacyItem(path);
-        if (legacy != null && legacy.isPresent()) {
-            return legacy.get();
+        if (legacy != null) {
+            try {
+                return legacy.get();
+            } catch (IllegalStateException ignored) {
+                // During early config/default audits, fall through to the Forge registry lookup.
+            }
         }
         ResourceLocation location = parsed == null ? ResourceLocation.tryParse(HbmNtm.MOD_ID + ":" + id) : parsed;
         if (location == null) {

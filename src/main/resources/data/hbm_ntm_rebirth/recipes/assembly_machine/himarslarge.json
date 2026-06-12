@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.himarslarge",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 24, "legacy_ore": "plateSteel" },
+    { "ingredient": { "tag": "forge:ingots/any_hardplastic" }, "count": 12, "legacy_ore": "ingotAnyHardPlastic" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:rocket_fuel" }, "count": 36 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:ball_tatb" }, "count": 16 },
+    { "ingredient": { "tag": "forge:circuits/advanced" }, "count": 1, "legacy_ore": "circuitAdvanced" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:ammo_himars_single" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

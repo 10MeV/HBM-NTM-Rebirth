@@ -16,7 +16,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.items.SlotItemHandler;
 
 import java.util.List;
 
@@ -42,12 +41,13 @@ public class ArcWelderMenu extends AbstractContainerMenu {
         super(ModMenuTypes.ARC_WELDER.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_INPUT_0, 17, 36));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_INPUT_1, 35, 36));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_INPUT_2, 53, 36));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_INPUT_0, 17, 36));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_INPUT_1, 35, 36));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_INPUT_2, 53, 36));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_OUTPUT, 107, 36));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_BATTERY, 152, 72));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_FLUID_IDENTIFIER, 17, 63));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_BATTERY, 152, 72));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                ArcWelderBlockEntity.SLOT_FLUID_IDENTIFIER, 17, 63));
         addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_UPGRADE_0, 89, 63));
         addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), ArcWelderBlockEntity.SLOT_UPGRADE_1, 107, 63));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 122, 180);

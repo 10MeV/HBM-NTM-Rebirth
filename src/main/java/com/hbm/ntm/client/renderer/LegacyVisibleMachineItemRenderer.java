@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.ElectricPressBlock;
 import com.hbm.ntm.block.LegacyConnectorBlock;
 import com.hbm.ntm.block.LegacyLargePylonBlock;
 import com.hbm.ntm.block.LegacyMachineDefinition;
@@ -8,12 +9,16 @@ import com.hbm.ntm.block.LegacyMediumPylonBlock;
 import com.hbm.ntm.block.LegacySmallPylonBlock;
 import com.hbm.ntm.block.LegacySubstationBlock;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
+import com.hbm.ntm.block.RadioAutocalBlock;
+import com.hbm.ntm.block.RadioTelexBlock;
 import com.hbm.ntm.block.AssemblyMachineBlock;
 import com.hbm.ntm.block.MachineBatterySocketBlock;
+import com.hbm.ntm.block.MachineLpw2Block;
 import com.hbm.ntm.block.VendingMachineBlock;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -54,12 +59,16 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                 || !(blockItem.getBlock() instanceof LegacyVisibleMultiblockMachineBlock
                 || blockItem.getBlock() instanceof AssemblyMachineBlock
                 || blockItem.getBlock() instanceof MachineBatterySocketBlock
+                || blockItem.getBlock() instanceof MachineLpw2Block
+                || blockItem.getBlock() instanceof ElectricPressBlock
                 || blockItem.getBlock() instanceof VendingMachineBlock
                 || blockItem.getBlock() instanceof LegacyConnectorBlock
                 || blockItem.getBlock() instanceof LegacySmallPylonBlock
                 || blockItem.getBlock() instanceof LegacyMediumPylonBlock
                 || blockItem.getBlock() instanceof LegacyLargePylonBlock
-                || blockItem.getBlock() instanceof LegacySubstationBlock)) {
+                || blockItem.getBlock() instanceof LegacySubstationBlock
+                || blockItem.getBlock() instanceof RadioAutocalBlock
+                || blockItem.getBlock() instanceof RadioTelexBlock)) {
             return;
         }
 
@@ -69,6 +78,10 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             renderAssemblyMachineItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof MachineBatterySocketBlock) {
             renderBatterySocketItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof MachineLpw2Block) {
+            renderLpw2Item(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof ElectricPressBlock) {
+            renderElectricPressItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof VendingMachineBlock block) {
             renderVendingMachineItem(block, stack, displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof LegacyConnectorBlock connector) {
@@ -81,6 +94,10 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             renderLargePylonItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof LegacySubstationBlock) {
             renderSubstationItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof RadioAutocalBlock) {
+            renderAutocalItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof RadioTelexBlock) {
+            renderTelexItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         }
     }
 
@@ -122,6 +139,33 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.pushPose();
         applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 5.0F);
         MachineBatterySocketRenderer.MODEL.renderPart("Socket", MachineBatterySocketRenderer.SOCKET_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderElectricPressItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        AABB bodyBounds = ObjMachineModels.EPRESS_BODY.boundsAll();
+        AABB headBounds = transformBounds(ObjMachineModels.EPRESS_HEAD.boundsAll(), point -> point.add(0.0D, 1.5D, 0.0D));
+        AABB bounds = union(bodyBounds, headBounds);
+
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 4.5F);
+        ObjMachineModels.EPRESS_BODY.renderAll(ObjMachineModels.EPRESS_BODY_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(0.0D, 1.5D, 0.0D);
+        ObjMachineModels.EPRESS_HEAD.renderAll(ObjMachineModels.EPRESS_HEAD_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderLpw2Item(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        AABB bounds = com.hbm.ntm.client.obj.ObjReactorModels.LPW2.boundsAll();
+
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 0.0F);
+        com.hbm.ntm.client.obj.ObjReactorModels.LPW2.renderAll(com.hbm.ntm.client.obj.ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
@@ -225,6 +269,25 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.popPose();
     }
 
+    private static void renderAutocalItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, RadioAutocalRenderer.MODEL.boundsAll(), 0.58F, 6.25F);
+        RadioAutocalRenderer.MODEL.renderAll(RadioAutocalRenderer.TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderTelexItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        AABB bounds = transformBounds(RadioTelexRenderer.MODEL.boundsAll(), point -> point.add(0.0D, 0.0D, -0.5D));
+
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 6.0F);
+        poseStack.translate(0.0D, 0.0D, -0.5D);
+        RadioTelexRenderer.MODEL.renderAll(RadioTelexRenderer.TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
     private static BlockState itemState(LegacyVisibleMultiblockMachineBlock block) {
         BlockState state = block.defaultBlockState();
         if (state.hasProperty(HorizontalMachineBlock.FACING)) {
@@ -300,6 +363,16 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         }
 
         return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    private static AABB union(AABB first, AABB second) {
+        return new AABB(
+                Math.min(first.minX, second.minX),
+                Math.min(first.minY, second.minY),
+                Math.min(first.minZ, second.minZ),
+                Math.max(first.maxX, second.maxX),
+                Math.max(first.maxY, second.maxY),
+                Math.max(first.maxZ, second.maxZ));
     }
 
     private static Vec3 rotateY(Vec3 point, float degrees) {

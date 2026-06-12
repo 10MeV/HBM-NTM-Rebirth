@@ -12,6 +12,8 @@ import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
 import com.hbm.ntm.item.TrinketBlockItem;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -30,13 +32,16 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm_ntm_rebirth.parts"))
                     .icon(() -> ModItems.URANIUM_INGOT.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModItems.PARTS_TAB_ITEMS.forEach(item -> {
-                        if (item.get() instanceof DepletedFuelItem depletedFuel) {
-                            DepletedFuelItem.addCreativeStacks(output, depletedFuel);
-                        } else {
-                            output.accept(item.get());
-                        }
-                    }))
+                    .displayItems((parameters, output) -> {
+                        CreativeModeTab.Output dedupedOutput = deduplicating(output);
+                        ModItems.PARTS_TAB_ITEMS.forEach(item -> {
+                            if (item.get() instanceof DepletedFuelItem depletedFuel) {
+                                DepletedFuelItem.addCreativeStacks(dedupedOutput, depletedFuel);
+                            } else {
+                                dedupedOutput.accept(item.get());
+                            }
+                        });
+                    })
                     .build());
 
     public static final RegistryObject<CreativeModeTab> MACHINES = CREATIVE_TABS.register("machines",
@@ -44,10 +49,11 @@ public final class ModCreativeTabs {
                     .title(Component.translatable("itemGroup.hbm_ntm_rebirth.machines"))
                     .icon(() -> ModBlocks.MACHINE_PRESS.get().asItem().getDefaultInstance())
                     .displayItems((parameters, output) -> {
-                        ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));
-                        ModBlocks.MACHINE_TAB_EXTRA_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));
+                        CreativeModeTab.Output dedupedOutput = deduplicating(output);
+                        ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
+                        ModBlocks.MACHINE_TAB_EXTRA_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
                         if (ModItems.CONVEYOR_WAND.get() instanceof ConveyorWandItem conveyorWand) {
-                            ConveyorWandItem.addCreativeStacks(output, conveyorWand);
+                            ConveyorWandItem.addCreativeStacks(dedupedOutput, conveyorWand);
                         }
                     })
                     .build());
@@ -56,13 +62,16 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm_ntm_rebirth.consumables"))
                     .icon(() -> ModItems.GEIGER_COUNTER.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> {
-                        if (item.get() instanceof HbmBatteryItem battery) {
-                            battery.addCreativeStacks(output, item.get().getDefaultInstance());
-                        } else {
-                            output.accept(item.get());
-                        }
-                    }))
+                    .displayItems((parameters, output) -> {
+                        CreativeModeTab.Output dedupedOutput = deduplicating(output);
+                        ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> {
+                            if (item.get() instanceof HbmBatteryItem battery) {
+                                battery.addCreativeStacks(dedupedOutput, item.get().getDefaultInstance());
+                            } else {
+                                dedupedOutput.accept(item.get());
+                            }
+                        });
+                    })
                     .build());
 
     public static final RegistryObject<CreativeModeTab> CONTROL = CREATIVE_TABS.register("control",
@@ -70,8 +79,9 @@ public final class ModCreativeTabs {
                     .title(Component.translatable("itemGroup.hbm_ntm_rebirth.control"))
                     .icon(() -> ModItems.legacyItem("plate_fuel_u235").get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
-                        ModItems.CONTROL_TAB_ITEMS.forEach(item -> acceptItem(output, item));
-                        ModItems.CONTROL_FLUID_ITEMS.forEach(item -> acceptItem(output, item));
+                        CreativeModeTab.Output dedupedOutput = deduplicating(output);
+                        ModItems.CONTROL_TAB_ITEMS.forEach(item -> acceptItem(dedupedOutput, item));
+                        ModItems.CONTROL_FLUID_ITEMS.forEach(item -> acceptItem(dedupedOutput, item));
                     })
                     .build());
 
@@ -79,7 +89,10 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm_ntm_rebirth.blocks"))
                     .icon(() -> ModBlocks.WASTE_EARTH.get().asItem().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModBlocks.BLOCK_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem())))
+                    .displayItems((parameters, output) -> {
+                        CreativeModeTab.Output dedupedOutput = deduplicating(output);
+                        ModBlocks.BLOCK_TAB_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
+                    })
                     .build());
 
     public static final RegistryObject<CreativeModeTab> NUKES = CREATIVE_TABS.register("nukes",
@@ -87,8 +100,9 @@ public final class ModCreativeTabs {
                     .title(Component.translatable("itemGroup.hbm_ntm_rebirth.nukes"))
                     .icon(() -> ModBlocks.NUKE_GADGET.get().asItem().getDefaultInstance())
                     .displayItems((parameters, output) -> {
-                        ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));
-                        ModItems.NUKE_TAB_ITEMS.forEach(item -> output.accept(item.get()));
+                        CreativeModeTab.Output dedupedOutput = deduplicating(output);
+                        ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
+                        ModItems.NUKE_TAB_ITEMS.forEach(item -> dedupedOutput.accept(item.get()));
                     })
                     .build());
 
@@ -96,7 +110,11 @@ public final class ModCreativeTabs {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm_ntm_rebirth.weapons"))
                     .icon(() -> ModItems.AMMO_STANDARD_G12.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> ModItems.WEAPON_TAB_ITEMS.forEach(item -> acceptItem(output, item)))
+                    .displayItems((parameters, output) -> {
+                        CreativeModeTab.Output dedupedOutput = deduplicating(output);
+                        ModItems.WEAPON_TAB_ITEMS.forEach(item -> acceptItem(dedupedOutput, item));
+                        ModBlocks.TURRET_TAB_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
+                    })
                     .build());
 
     public static final RegistryObject<CreativeModeTab> MISSILES = CREATIVE_TABS.register("missiles",
@@ -104,9 +122,10 @@ public final class ModCreativeTabs {
                     .title(Component.translatable("itemGroup.hbm_ntm_rebirth.missiles"))
                     .icon(() -> ModItems.MISSILE_GENERIC.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
-                        ModItems.MISSILE_TAB_ITEMS.forEach(item -> acceptItem(output, item));
-                        ModItems.SATELLITE_TAB_ITEMS.forEach(item -> acceptItem(output, item));
-                        ModBlocks.SATELLITE_TAB_BLOCKS.forEach(block -> acceptBlockItem(output, block.get().asItem()));
+                        CreativeModeTab.Output dedupedOutput = deduplicating(output);
+                        ModItems.MISSILE_TAB_ITEMS.forEach(item -> acceptItem(dedupedOutput, item));
+                        ModItems.SATELLITE_TAB_ITEMS.forEach(item -> acceptItem(dedupedOutput, item));
+                        ModBlocks.SATELLITE_TAB_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
                     })
                     .build());
 
@@ -154,6 +173,27 @@ public final class ModCreativeTabs {
         }
         stack.setCount(1);
         output.accept(stack);
+    }
+
+    private static CreativeModeTab.Output deduplicating(CreativeModeTab.Output output) {
+        List<ItemStack> accepted = new ArrayList<>();
+        return new CreativeModeTab.Output() {
+            @Override
+            public void accept(ItemStack stack, CreativeModeTab.TabVisibility visibility) {
+                if (stack.isEmpty()) {
+                    return;
+                }
+                ItemStack normalized = stack.copy();
+                normalized.setCount(1);
+                for (ItemStack previous : accepted) {
+                    if (ItemStack.matches(previous, normalized)) {
+                        return;
+                    }
+                }
+                accepted.add(normalized.copy());
+                output.accept(stack, visibility);
+            }
+        };
     }
 
     private ModCreativeTabs() {

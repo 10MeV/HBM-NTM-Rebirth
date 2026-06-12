@@ -22,6 +22,7 @@ import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
@@ -385,7 +386,8 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
             if (existing.isEmpty()) {
                 return ItemStack.EMPTY;
             }
-            ItemStack extracted = existing.copyWithCount(Math.min(amount, existing.getCount()));
+            ItemStack extracted = HbmItemStackUtil.carefulCopyWithSize(existing,
+                    Math.min(amount, existing.getCount()));
             if (!simulate) {
                 ItemStack remaining = existing.copy();
                 remaining.shrink(extracted.getCount());

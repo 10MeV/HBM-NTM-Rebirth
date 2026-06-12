@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.satelliteresonator",
+  "duration": 600,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:cast_plates/steel" }, "count": 6, "legacy_ore": "plateCastSteel" },
+    { "ingredient": { "tag": "forge:ingots/saturnite" }, "count": 12, "legacy_ore": "ingotSaturnite" },
+    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 48, "legacy_ore": "ingotAnyPlastic" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:crystal_xen" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 16, "legacy_id": "hbm:circuit", "legacy_meta": 9 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:sat_head_resonator" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

@@ -35,6 +35,9 @@ public class MissileRenderer extends EntityRenderer<MissileEntity> {
     }
 
     private static LegacyWavefrontModel model(MissileEntity entity) {
+        if (entity.variant() == MissileEntity.Variant.STEALTH) {
+            return ObjMissilePartModels.MISSILE_STEALTH;
+        }
         return switch (entity.variant().formFactor()) {
             case STRONG -> ObjMissilePartModels.MISSILE_STRONG;
             case HUGE -> ObjMissilePartModels.MISSILE_HUGE;
@@ -51,11 +54,25 @@ public class MissileRenderer extends EntityRenderer<MissileEntity> {
             case INCENDIARY_STRONG -> ObjMissilePartModels.MISSILE_STRONG_IN_TEXTURE;
             case CLUSTER_STRONG -> ObjMissilePartModels.MISSILE_STRONG_CL_TEXTURE;
             case BUSTER_STRONG -> ObjMissilePartModels.MISSILE_STRONG_BU_TEXTURE;
+            case EMP_STRONG -> ObjMissilePartModels.MISSILE_STRONG_EMP_TEXTURE;
             case BURST -> ObjMissilePartModels.MISSILE_HUGE_HE_TEXTURE;
+            case INFERNO -> ObjMissilePartModels.MISSILE_HUGE_IN_TEXTURE;
+            case RAIN -> ObjMissilePartModels.MISSILE_HUGE_CL_TEXTURE;
+            case DRILL -> ObjMissilePartModels.MISSILE_HUGE_BU_TEXTURE;
+            case STEALTH -> ObjMissilePartModels.MISSILE_STEALTH_TEXTURE;
             case DECOY -> ObjMissilePartModels.MISSILE_V2_DECOY_TEXTURE;
             case INCENDIARY -> ObjMissilePartModels.MISSILE_V2_IN_TEXTURE;
             case CLUSTER -> ObjMissilePartModels.MISSILE_V2_CL_TEXTURE;
             case BUSTER -> ObjMissilePartModels.MISSILE_V2_BU_TEXTURE;
+            case MICRO -> ObjMissilePartModels.MISSILE_MICRO_TEXTURE;
+            case TAINT -> ObjMissilePartModels.MISSILE_MICRO_TAINT_TEXTURE;
+            case BHOLE -> ObjMissilePartModels.MISSILE_MICRO_BHOLE_TEXTURE;
+            case SCHRABIDIUM -> ObjMissilePartModels.MISSILE_MICRO_SCHRAB_TEXTURE;
+            case EMP -> ObjMissilePartModels.MISSILE_MICRO_EMP_TEXTURE;
+            case NUCLEAR -> ObjMissilePartModels.MISSILE_ATLAS_NUCLEAR_TEXTURE;
+            case MIRV -> ObjMissilePartModels.MISSILE_ATLAS_THERMO_TEXTURE;
+            case VOLCANO -> ObjMissilePartModels.MISSILE_ATLAS_VOLCANO_TEXTURE;
+            case DOOMSDAY -> ObjMissilePartModels.MISSILE_ATLAS_DOOMSDAY_TEXTURE;
             case GENERIC -> ObjMissilePartModels.MISSILE_V2_HE_TEXTURE;
         };
     }

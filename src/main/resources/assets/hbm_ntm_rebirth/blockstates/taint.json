@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "level=0": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=1": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=2": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=3": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=4": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=5": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=6": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=7": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=8": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=9": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=10": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=11": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=12": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=13": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=14": { "model": "hbm_ntm_rebirth:block/taint" },
+    "level=15": { "model": "hbm_ntm_rebirth:block/taint" }
+  }
+}

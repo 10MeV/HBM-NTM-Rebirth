@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 10,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:cap_nuka"
+      }
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:cap_nuka"
+      }
+    }
+  ],
+  "internal_name": "ass.capnuka",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:block_cap_nuka"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 70
+}

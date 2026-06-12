@@ -316,7 +316,7 @@ public final class ArmorModItems {
             tooltip.add(fuelType.getDisplayName().copy()
                     .append(": " + getFuel(stack) + "mB / " + maxFuel + "mB")
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
-            tooltip.add(Component.literal("Can be worn on its own hook pending").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.literal("Can be worn on its own!").withStyle(ChatFormatting.GOLD));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
         }
@@ -328,20 +328,36 @@ public final class ArmorModItems {
 
         @Override
         public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
-            if (!(entity instanceof Player player) || getFuel(mod) <= 0) {
+            if (!(entity instanceof Player player)) {
                 return;
             }
 
-            boolean changed = switch (type) {
-                case REGULAR -> regular(player, mod);
-                case HOVER -> hover(player, mod);
-                case VECTORED -> vector(player, mod, 2.0D, 0.4D, 0.1D, 0.1D, 3, 1.5F);
-                case BOOST -> vector(player, mod, 5.0D, 0.6D, 0.1D, 0.25D, 1, 1.0F);
-            };
-
-            if (changed) {
+            if (tickJetpack(player, mod)) {
                 ArmorModHandler.applyMod(armor, mod);
             }
+        }
+
+        public boolean tickJetpack(Player player, ItemStack stack) {
+            if (getFuel(stack) <= 0) {
+                return false;
+            }
+            boolean changed = switch (type) {
+                case REGULAR -> regular(player, stack);
+                case HOVER -> hover(player, stack);
+                case VECTORED -> vector(player, stack, 2.0D, 0.4D, 0.1D, 0.1D, 3, 1.5F);
+                case BOOST -> vector(player, stack, 5.0D, 0.6D, 0.1D, 0.25D, 1, 1.0F);
+            };
+            return changed && !stack.isEmpty();
+        }
+
+        @Override
+        public boolean canEquip(ItemStack stack, EquipmentSlot armorType, Entity entity) {
+            return armorType == EquipmentSlot.CHEST;
+        }
+
+        @Override
+        public @Nullable EquipmentSlot getEquipmentSlot(ItemStack stack) {
+            return EquipmentSlot.CHEST;
         }
 
         public static int getFuel(ItemStack stack) {
@@ -502,6 +518,138 @@ public final class ArmorModItems {
             public List<Component> descriptions() {
                 return descriptions;
             }
+        }
+    }
+
+    public static class Wings extends ArmorModItem {
+        private final boolean murky;
+
+        public Wings(Item.Properties properties, boolean murky) {
+            super(properties, ArmorModHandler.ArmorModSlot.PLATE_ONLY, false, true, false, false);
+            this.murky = murky;
+        }
+
+        public boolean isMurky() {
+            return murky;
+        }
+
+        @Override
+        public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+            tooltip.add(Component.literal("Can be worn on its own!").withStyle(ChatFormatting.GOLD));
+            tooltip.add(Component.empty());
+            super.appendHoverText(stack, level, tooltip, flag);
+        }
+
+        @Override
+        public void onArmorModTick(LivingEntity entity, ItemStack armor, ItemStack mod) {
+            if (entity instanceof Player player) {
+                tickWings(player);
+            }
+        }
+
+        @Override
+        public boolean canEquip(ItemStack stack, EquipmentSlot armorType, Entity entity) {
+            return armorType == EquipmentSlot.CHEST;
+        }
+
+        @Override
+        public @Nullable EquipmentSlot getEquipmentSlot(ItemStack stack) {
+            return EquipmentSlot.CHEST;
+        }
+
+        public boolean tickWings(Player player) {
+            if (player.onGround()) {
+                return false;
+            }
+
+            com.hbm.ntm.util.ArmorUtil.resetFlightTime(player);
+            if (player.fallDistance > 0.0F) {
+                player.fallDistance = 0.0F;
+            }
+
+            if (murky) {
+                tickMurkyWings(player);
+            } else {
+                tickLimpWings(player);
+            }
+            return true;
+        }
+
+        private static void tickLimpWings(Player player) {
+            Vec3 movement = player.getDeltaMovement();
+            double x = movement.x;
+            double y = movement.y;
+            double z = movement.z;
+
+            if (y < -0.4D) {
+                y = -0.4D;
+            }
+            if (player.isShiftKeyDown() && y < -0.08D) {
+                double lift = y * -0.2D;
+                Vec3 look = player.getLookAngle().scale(lift);
+                x += look.x;
+                y += lift + look.y;
+                z += look.z;
+            }
+            player.setDeltaMovement(x, y, z);
+            player.hasImpulse = true;
+        }
+
+        private static void tickMurkyWings(Player player) {
+            Vec3 movement = player.getDeltaMovement();
+            double x = movement.x;
+            double y = movement.y;
+            double z = movement.z;
+
+            if (HbmPlayerProperties.isJetpackActive(player)) {
+                if (player.isShiftKeyDown()) {
+                    if (y < -1.0D) {
+                        y += 0.4D;
+                    } else if (y < -0.1D) {
+                        y += 0.2D;
+                    } else if (y < 0.0D) {
+                        y = 0.0D;
+                    } else if (y > 1.0D) {
+                        y -= 0.4D;
+                    } else if (y > 0.1D) {
+                        y -= 0.2D;
+                    } else if (y > 0.0D) {
+                        y = 0.0D;
+                    }
+                } else if (y < 0.6D) {
+                    y += 0.2D;
+                } else {
+                    y = 0.8D;
+                }
+            } else if (HbmPlayerProperties.isBackpackEnabled(player) && !player.isShiftKeyDown()) {
+                if (y < -1.0D) {
+                    y += 0.4D;
+                } else if (y < -0.1D) {
+                    y += 0.2D;
+                } else if (y < 0.0D) {
+                    y = 0.0D;
+                }
+            }
+
+            if (HbmPlayerProperties.isBackpackEnabled(player)) {
+                Vec3 look = new Vec3(player.getLookAngle().x, 0.0D, player.getLookAngle().z);
+                if (look.lengthSqr() > 1.0E-7D) {
+                    look = look.normalize();
+                    double modifier = player.isSprinting() ? 1.0D : 0.25D;
+                    if (player.zza != 0.0F) {
+                        x += look.x * 0.35D * player.zza * modifier;
+                        z += look.z * 0.35D * player.zza * modifier;
+                    }
+                    if (player.xxa != 0.0F) {
+                        Vec3 strafe = look.yRot((float) Math.PI * 0.5F);
+                        x += strafe.x * 0.15D * player.xxa * modifier;
+                        z += strafe.z * 0.15D * player.xxa * modifier;
+                    }
+                }
+            }
+
+            player.setDeltaMovement(x, y, z);
+            player.hasImpulse = true;
         }
     }
 

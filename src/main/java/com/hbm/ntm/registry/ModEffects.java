@@ -1,6 +1,9 @@
 package com.hbm.ntm.registry;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.effect.BangMobEffect;
+import com.hbm.ntm.effect.LeadMobEffect;
+import com.hbm.ntm.effect.PhosphorusMobEffect;
 import com.hbm.ntm.effect.RadawayMobEffect;
 import com.hbm.ntm.effect.RadiationMobEffect;
 import com.hbm.ntm.effect.SimpleMobEffect;
@@ -18,6 +21,8 @@ public final class ModEffects {
 
     public static final RegistryObject<MobEffect> RADIATION =
             EFFECTS.register("radiation", RadiationMobEffect::new);
+    public static final RegistryObject<MobEffect> BANG =
+            EFFECTS.register("bang", BangMobEffect::new);
     public static final RegistryObject<MobEffect> RADAWAY =
             EFFECTS.register("radaway", RadawayMobEffect::new);
     public static final RegistryObject<MobEffect> RADX =
@@ -29,9 +34,13 @@ public final class ModEffects {
     public static final RegistryObject<MobEffect> STABILITY =
             EFFECTS.register("stability", () -> new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x4F9CFF));
     public static final RegistryObject<MobEffect> LEAD =
-            EFFECTS.register("lead", () -> new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x767682));
+            EFFECTS.register("lead", LeadMobEffect::new);
+    public static final RegistryObject<MobEffect> PHOSPHORUS =
+            EFFECTS.register("phosphorus", PhosphorusMobEffect::new);
     public static final RegistryObject<MobEffect> POTION_SICKNESS =
             EFFECTS.register("potionsickness", () -> new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFF8080));
+    public static final RegistryObject<MobEffect> DEATH =
+            EFFECTS.register("death", () -> new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x111111));
 
     public static void register(IEventBus modBus) {
         EFFECTS.register(modBus);

@@ -65,7 +65,7 @@ public class SatelliteInterfaceItem extends SatelliteChipItem implements HbmCoor
             return;
         }
         CompoundTag data = new CompoundTag();
-        satellite.save(data);
+        satellite.writeToNBT(data);
         data.putString("legacyName", satellite.legacyName());
         data.putInt("frequency", getFrequency(stack));
         ModMessages.syncSatellitePanelData(player, satellite.legacyId(), data);

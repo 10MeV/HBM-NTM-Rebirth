@@ -9,7 +9,6 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidCompressorRecipes;
-import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidPortMachine;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -223,8 +222,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean setInputTypeFromIdentifierSlot() {
-        boolean changed = HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
-                inputTank, level, worldPosition);
+        boolean changed = setFluidTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER, inputTank);
         if (changed) {
             setupOutputTank();
         }

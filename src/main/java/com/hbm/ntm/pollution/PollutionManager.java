@@ -519,7 +519,6 @@ public final class PollutionManager {
                     ModItems.HAZMAT_PLATE.get(),
                     ModItems.HAZMAT_LEGS.get(),
                     ModItems.HAZMAT_BOOTS.get());
-            return;
         }
         if (soot <= RadiationConfig.pollutionBuffMobThreshold()) {
             return;

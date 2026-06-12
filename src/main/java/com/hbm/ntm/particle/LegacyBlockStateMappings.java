@@ -160,6 +160,11 @@ public final class LegacyBlockStateMappings {
         data.putInt(KEY_META, legacyMeta);
     }
 
+    public static void putLegacyId(CompoundTag data, int legacyBlockId, int legacyMeta) {
+        data.putInt(KEY_BLOCK, legacyBlockId);
+        data.putInt(KEY_META, legacyMeta);
+    }
+
     private static BlockState fromParticleNameFields(CompoundTag data) {
         String[] keys = {
                 KEY_BLOCK_NAME,

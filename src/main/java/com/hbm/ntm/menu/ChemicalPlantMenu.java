@@ -16,7 +16,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.items.SlotItemHandler;
 
 import java.util.List;
 
@@ -41,28 +40,30 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
         super(ModMenuTypes.CHEMICAL_PLANT.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_BATTERY, 152, 81));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_BLUEPRINT, 35, 126));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                ChemicalPlantBlockEntity.SLOT_BATTERY, 152, 81));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                ChemicalPlantBlockEntity.SLOT_BLUEPRINT, 35, 126));
         addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_UPGRADE_START, 152, 108));
         addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_UPGRADE_END, 152, 126));
 
         for (int i = 0; i < 3; i++) {
-            addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_START + i,
-                    8 + i * 18, 99));
+            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                    ChemicalPlantBlockEntity.SLOT_ITEM_INPUT_START + i, 8 + i * 18, 99));
         }
         for (int i = 0; i < 3; i++) {
             addOutputSlot(ChemicalPlantBlockEntity.SLOT_ITEM_OUTPUT_START + i, 80 + i * 18, 99);
         }
         for (int i = 0; i < 3; i++) {
-            addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_FLUID_INPUT_START + i,
-                    8 + i * 18, 54));
+            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                    ChemicalPlantBlockEntity.SLOT_FLUID_INPUT_START + i, 8 + i * 18, 54));
         }
         for (int i = 0; i < 3; i++) {
             addOutputSlot(ChemicalPlantBlockEntity.SLOT_FLUID_INPUT_RETURN_START + i, 8 + i * 18, 72);
         }
         for (int i = 0; i < 3; i++) {
-            addSlot(new SlotItemHandler(blockEntity.getItems(), ChemicalPlantBlockEntity.SLOT_FLUID_OUTPUT_START + i,
-                    80 + i * 18, 54));
+            addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+                    ChemicalPlantBlockEntity.SLOT_FLUID_OUTPUT_START + i, 80 + i * 18, 54));
         }
         for (int i = 0; i < 3; i++) {
             addOutputSlot(ChemicalPlantBlockEntity.SLOT_FLUID_OUTPUT_RETURN_START + i, 80 + i * 18, 72);

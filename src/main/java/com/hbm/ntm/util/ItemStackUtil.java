@@ -3,14 +3,19 @@ package com.hbm.ntm.util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -18,6 +23,9 @@ import java.util.List;
  */
 @Deprecated(forRemoval = false)
 public final class ItemStackUtil {
+    public static final String LEGACY_ITEMS_TAG = HbmItemStackUtil.LEGACY_ITEMS_TAG;
+    public static final String LEGACY_SLOT_TAG = HbmItemStackUtil.LEGACY_SLOT_TAG;
+
     private ItemStackUtil() {
     }
 
@@ -65,6 +73,10 @@ public final class ItemStackUtil {
         HbmItemStackUtil.addStacksToNbt(stack, stacks);
     }
 
+    public static void addStacksToNbt(ItemStack stack, List<ItemStack> stacks) {
+        HbmItemStackUtil.addStacksToNbt(stack, stacks);
+    }
+
     public static void setStacksToNbt(ItemStack stack, ItemStack[] stacks, boolean removeWhenEmpty) {
         HbmItemStackUtil.setStacksToNbt(stack, stacks, removeWhenEmpty);
     }
@@ -81,6 +93,14 @@ public final class ItemStackUtil {
         return HbmItemStackUtil.readStacksFromNBT(stack, count);
     }
 
+    public static ItemStack[] readStackArrayFromNbt(ItemStack stack) {
+        return HbmItemStackUtil.readStackArrayFromNbt(stack);
+    }
+
+    public static ItemStack[] readStackArrayFromNbt(ItemStack stack, int count) {
+        return HbmItemStackUtil.readStackArrayFromNbt(stack, count);
+    }
+
     public static NonNullList<ItemStack> readStacksFromNbt(ItemStack stack) {
         return HbmItemStackUtil.readStacksFromNbt(stack);
     }
@@ -89,12 +109,20 @@ public final class ItemStackUtil {
         return HbmItemStackUtil.readStacksFromNbt(stack, count);
     }
 
+    public static boolean hasLegacyItemsTag(ItemStack stack) {
+        return HbmItemStackUtil.hasLegacyItemsTag(stack);
+    }
+
     public static List<String> getOreDictNames(ItemStack stack) {
         return HbmItemStackUtil.getOreDictNames(stack);
     }
 
     public static List<String> getTagNames(ItemStack stack) {
         return HbmItemStackUtil.getTagNames(stack);
+    }
+
+    public static List<ResourceLocation> getTagIds(ItemStack stack) {
+        return HbmItemStackUtil.getTagIds(stack);
     }
 
     public static String getModIdFromItemStack(ItemStack stack) {
@@ -107,6 +135,10 @@ public final class ItemStackUtil {
 
     public static boolean doesStackDataMatch(ItemStack first, ItemStack second) {
         return HbmItemStackUtil.doesStackDataMatch(first, second);
+    }
+
+    public static boolean isInAnyTag(ItemStack stack, Collection<TagKey<Item>> tags) {
+        return HbmItemStackUtil.isInAnyTag(stack, tags);
     }
 
     public static void addNBTFromString(ItemStack stack, String nbt) {
@@ -135,6 +167,50 @@ public final class ItemStackUtil {
 
     public static CompoundTag saveLegacyItems(Container items) {
         return HbmItemStackUtil.saveLegacyItems(items);
+    }
+
+    public static ListTag saveSlottedItems(ItemStack[] items, String slotKey) {
+        return HbmItemStackUtil.saveSlottedItems(items, slotKey);
+    }
+
+    public static ListTag saveSlottedItems(NonNullList<ItemStack> items, String slotKey) {
+        return HbmItemStackUtil.saveSlottedItems(items, slotKey);
+    }
+
+    public static ListTag saveSlottedItems(IItemHandler items, String slotKey) {
+        return HbmItemStackUtil.saveSlottedItems(items, slotKey);
+    }
+
+    public static ListTag saveSlottedItems(ItemStackHandler items, String slotKey) {
+        return HbmItemStackUtil.saveSlottedItems(items, slotKey);
+    }
+
+    public static ListTag saveSlottedItems(Container items, String slotKey) {
+        return HbmItemStackUtil.saveSlottedItems(items, slotKey);
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey,
+            ItemStack[] items) {
+        HbmItemStackUtil.saveSlottedItemsToTag(target, listKey, slotKey, items);
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey,
+            NonNullList<ItemStack> items) {
+        HbmItemStackUtil.saveSlottedItemsToTag(target, listKey, slotKey, items);
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey,
+            IItemHandler items) {
+        HbmItemStackUtil.saveSlottedItemsToTag(target, listKey, slotKey, items);
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey,
+            ItemStackHandler items) {
+        HbmItemStackUtil.saveSlottedItemsToTag(target, listKey, slotKey, items);
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey, Container items) {
+        HbmItemStackUtil.saveSlottedItemsToTag(target, listKey, slotKey, items);
     }
 
     public static void saveLegacyItemsToTag(CompoundTag target, ItemStack[] items) {
@@ -241,6 +317,10 @@ public final class ItemStackUtil {
         HbmItemStackUtil.loadLegacyItemsCompound(tag, key, items);
     }
 
+    public static NonNullList<ItemStack> loadLegacyItems(CompoundTag tag, int slotCount) {
+        return HbmItemStackUtil.loadLegacyItems(tag, slotCount);
+    }
+
     public static NonNullList<ItemStack> loadLegacyOrForgeItems(CompoundTag tag, int slotCount) {
         return HbmItemStackUtil.loadLegacyOrForgeItems(tag, slotCount);
     }
@@ -257,6 +337,10 @@ public final class ItemStackUtil {
         HbmItemStackUtil.loadLegacyOrForgeItems(tag, items);
     }
 
+    public static void loadLegacyOrForgeItems(CompoundTag tag, Container items) {
+        HbmItemStackUtil.loadLegacyOrForgeItems(tag, items);
+    }
+
     public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, ItemStack[] items) {
         HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, key, items);
     }
@@ -267,6 +351,43 @@ public final class ItemStackUtil {
 
     public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, ItemStackHandler items) {
         HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, key, items);
+    }
+
+    public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, Container items) {
+        HbmItemStackUtil.loadLegacyOrForgeItemsCompound(tag, key, items);
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey, ItemStack[] target) {
+        HbmItemStackUtil.loadSlottedItems(tag, listKey, slotKey, target);
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey, ItemStackHandler target) {
+        HbmItemStackUtil.loadSlottedItems(tag, listKey, slotKey, target);
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey, Container target) {
+        HbmItemStackUtil.loadSlottedItems(tag, listKey, slotKey, target);
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey,
+            NonNullList<ItemStack> target) {
+        HbmItemStackUtil.loadSlottedItems(tag, listKey, slotKey, target);
+    }
+
+    public static void loadSlottedItems(ListTag list, String slotKey, ItemStack[] target) {
+        HbmItemStackUtil.loadSlottedItems(list, slotKey, target);
+    }
+
+    public static void loadSlottedItems(ListTag list, String slotKey, NonNullList<ItemStack> target) {
+        HbmItemStackUtil.loadSlottedItems(list, slotKey, target);
+    }
+
+    public static void loadSlottedItems(ListTag list, String slotKey, ItemStackHandler target) {
+        HbmItemStackUtil.loadSlottedItems(list, slotKey, target);
+    }
+
+    public static void loadSlottedItems(ListTag list, String slotKey, Container target) {
+        HbmItemStackUtil.loadSlottedItems(list, slotKey, target);
     }
 
     public static List<ItemStack> clearToDrops(ItemStack[] items) {
@@ -311,5 +432,22 @@ public final class ItemStackUtil {
 
     public static boolean giveOrDrop(Player player, ItemStack stack) {
         return HbmItemStackUtil.giveOrDrop(player, stack);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, boolean throwRandomly) {
+        return HbmItemStackUtil.giveOrDrop(player, stack, throwRandomly);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, Level fallbackLevel, double x, double y, double z) {
+        return HbmItemStackUtil.giveOrDrop(player, stack, fallbackLevel, x, y, z);
+    }
+
+    public static void giveChanceStacksToPlayer(Player player, List<HbmItemStackUtil.ChanceStack> stacks) {
+        HbmItemStackUtil.giveChanceStacksToPlayer(player, stacks, player == null ? null : player.getRandom());
+    }
+
+    public static void giveChanceStacksToPlayer(Player player, List<HbmItemStackUtil.ChanceStack> stacks,
+            RandomSource random) {
+        HbmItemStackUtil.giveChanceStacksToPlayer(player, stacks, random);
     }
 }

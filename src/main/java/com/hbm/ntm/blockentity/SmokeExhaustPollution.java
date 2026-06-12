@@ -39,6 +39,11 @@ final class SmokeExhaustPollution {
     }
 
     static boolean polluteBuffered(Level level, BlockPos pos, HbmFluidTank tank, PollutionType type, float amount) {
+        return polluteBuffered(level, pos, tank, type, amount, true);
+    }
+
+    static boolean polluteBuffered(Level level, BlockPos pos, HbmFluidTank tank, PollutionType type, float amount,
+            boolean playHiss) {
         FluidType smokeType = toSmokeType(type);
         if (smokeType == null || tank == null || amount <= 0.0F || !Float.isFinite(amount)) {
             return false;
@@ -49,7 +54,9 @@ final class SmokeExhaustPollution {
         if (overflow > 0) {
             if (level != null && pos != null) {
                 PollutionManager.incrementPollution(level, pos, type, overflow / 100.0F);
-                playOverflowHiss(level, pos);
+                if (playHiss) {
+                    playOverflowHiss(level, pos);
+                }
             }
             return true;
         }

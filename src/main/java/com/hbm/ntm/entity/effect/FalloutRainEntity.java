@@ -1,6 +1,7 @@
 package com.hbm.ntm.entity.effect;
 
 import com.hbm.ntm.block.FalloutLayerBlock;
+import com.hbm.ntm.block.LegacyVolcanoCoreBlock;
 import com.hbm.ntm.config.BombConfig;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoadingEntity;
@@ -187,6 +188,11 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
                 continue;
             }
 
+            if (state.is(ModBlocks.VOLCANO_CORE.get())) {
+                level().setBlock(pos, copyVolcanoMode(state, ModBlocks.VOLCANO_RAD_CORE.get().defaultBlockState()), 3);
+                continue;
+            }
+
             BlockPos above = pos.above();
             BlockState aboveState = level().getBlockState(above);
             if (depth == 0 && canReplaceWithFallout(aboveState, above)) {
@@ -249,6 +255,13 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
 
     private static boolean isLegacyFalloutCollapsible(float hardness) {
         return hardness >= 0.0F && hardness <= HbmBlockStateUtil.explosionResistance(Blocks.STONE_BRICKS.defaultBlockState());
+    }
+
+    private static BlockState copyVolcanoMode(BlockState source, BlockState replacement) {
+        return source.hasProperty(LegacyVolcanoCoreBlock.MODE)
+                && replacement.hasProperty(LegacyVolcanoCoreBlock.MODE)
+                ? replacement.setValue(LegacyVolcanoCoreBlock.MODE, source.getValue(LegacyVolcanoCoreBlock.MODE))
+                : replacement;
     }
 
     private boolean applyCraterRadiationMarker(int x, int z, double percent) {

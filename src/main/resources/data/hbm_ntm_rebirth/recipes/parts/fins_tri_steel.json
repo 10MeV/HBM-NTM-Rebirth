@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "tag": "forge:storage_blocks/steel"
+    },
+    "I": {
+      "tag": "forge:ingots/steel"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    " PI",
+    "IIB",
+    " PI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:fins_tri_steel"
+  },
+  "show_notification": true
+}

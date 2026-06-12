@@ -2,6 +2,7 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.CustomNukeBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -107,13 +108,28 @@ public class CustomNukeBlock extends HorizontalMachineBlock implements EntityBlo
             return false;
         }
 
+        BlockState state = level.getBlockState(pos);
         blockEntity.clearSlots();
         level.removeBlock(pos, false);
-        level.playSound(null, pos, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS,
-                1.0F, 0.9F + level.random.nextFloat() * 0.1F);
-        level.gameEvent(null, GameEvent.EXPLODE, pos);
-        stats.explode(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        if (stats.falling()) {
+            stats.spawnFalling(level, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, legacyFacingMeta(state));
+        } else {
+            level.playSound(null, pos, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS,
+                    1.0F, 0.9F + level.random.nextFloat() * 0.1F);
+            level.gameEvent(null, GameEvent.EXPLODE, pos);
+            stats.explode(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        }
         return true;
+    }
+
+    private static byte legacyFacingMeta(BlockState state) {
+        Direction facing = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
+        return switch (facing) {
+            case EAST -> 3;
+            case SOUTH -> 4;
+            case WEST -> 2;
+            default -> 5;
+        };
     }
 
     @Override

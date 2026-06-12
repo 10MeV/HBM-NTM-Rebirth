@@ -42,12 +42,18 @@ public final class HbmFluidUtil {
         if (level == null || origin == null || port == null || type == null || type == HbmFluids.NONE || provider == null) {
             return false;
         }
+        if (!isLoadedPort(level, origin, port)) {
+            return false;
+        }
         return subscribeProviderToNetwork(level, port.connectorPos(origin), port.connectorSide(), type, provider);
     }
 
     public static boolean subscribeReceiverToPort(Level level, BlockPos origin, FluidPort port, FluidType type,
             HbmFluidReceiver receiver) {
         if (level == null || origin == null || port == null || type == null || type == HbmFluids.NONE || receiver == null) {
+            return false;
+        }
+        if (!isLoadedPort(level, origin, port)) {
             return false;
         }
         return subscribeReceiverToNetwork(level, port.connectorPos(origin), port.connectorSide(), type, receiver);
@@ -120,12 +126,18 @@ public final class HbmFluidUtil {
         if (level == null || origin == null || port == null || provider == null) {
             return false;
         }
+        if (!isLoadedPort(level, origin, port)) {
+            return false;
+        }
         return unsubscribeProviderFromNetwork(level, port.connectorPos(origin), port.connectorSide(), type, provider);
     }
 
     public static boolean unsubscribeReceiverFromPort(Level level, BlockPos origin, FluidPort port, FluidType type,
             HbmFluidReceiver receiver) {
         if (level == null || origin == null || port == null || receiver == null) {
+            return false;
+        }
+        if (!isLoadedPort(level, origin, port)) {
             return false;
         }
         return unsubscribeReceiverFromNetwork(level, port.connectorPos(origin), port.connectorSide(), type, receiver);
@@ -252,6 +264,10 @@ public final class HbmFluidUtil {
         }
         BlockPos connectorPos = port.connectorPos(origin);
         Direction connectorSide = port.connectorSide();
+        if (!isLoadedPort(level, origin, port)) {
+            return new PortSnapshot(connectorPos, connectorSide, normalizedType.getName(),
+                    false, false, false, false, 0, 0, 0);
+        }
         BlockEntity connector = level.getBlockEntity(connectorPos);
         boolean connectorPresent = connector instanceof HbmFluidConnector;
         boolean connectable = connectorPresent
@@ -277,6 +293,9 @@ public final class HbmFluidUtil {
         if (level == null || connectorPos == null || connectorSide == null || type == null || type == HbmFluids.NONE) {
             return null;
         }
+        if (!isLoadedBlock(level, connectorPos)) {
+            return null;
+        }
         BlockEntity connector = level.getBlockEntity(connectorPos);
         if (!(connector instanceof HbmFluidConnector fluidConnector) || !fluidConnector.canConnectFluid(type, connectorSide)) {
             return null;
@@ -292,6 +311,9 @@ public final class HbmFluidUtil {
             return 0L;
         }
         BlockPos targetPos = port.connectorPos(origin);
+        if (!isLoadedPort(level, origin, port)) {
+            return 0L;
+        }
         Direction targetSide = port.connectorSide();
         BlockEntity target = level.getBlockEntity(targetPos);
         if (target instanceof HbmFluidConnector connector && !connector.canConnectFluid(type, targetSide)) {
@@ -340,6 +362,19 @@ public final class HbmFluidUtil {
             provider.useUpFluid(type, pressure, accepted);
         }
         return accepted;
+    }
+
+    public static boolean isLoadedPort(Level level, BlockPos origin, FluidPort port) {
+        if (level == null || origin == null || port == null) {
+            return false;
+        }
+        BlockPos connectorPos = port.connectorPos(origin);
+        return isLoadedBlock(level, connectorPos)
+                && isLoadedBlock(level, connectorPos.relative(port.direction().getOpposite()));
+    }
+
+    public static boolean isLoadedBlock(Level level, BlockPos pos) {
+        return level != null && pos != null && level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4);
     }
 
     public record PortSnapshot(

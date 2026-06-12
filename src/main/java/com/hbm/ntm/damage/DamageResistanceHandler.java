@@ -265,6 +265,31 @@ public final class DamageResistanceHandler {
         expect(problems, "negative pierce doubles DR cap path", nearly(overPierce.effectiveDr(), 0.5F));
         DamageFormula fullAbsorb = reduceDamage(10.0F, 12.0F, 0.0F, 0.0F, 0.0F);
         expect(problems, "DT full absorb", nearly(fullAbsorb.finalDamage(), 0.0F));
+        api.hbm.entity.IResistanceProvider legacyProvider = new api.hbm.entity.IResistanceProvider() {
+            @Override
+            public float[] getCurrentDTDR(DamageSource damage, float amount, float pierceDT, float pierce) {
+                return new float[] { amount + pierceDT, pierce };
+            }
+        };
+        expect(problems, "legacy api resistance provider is modern provider", legacyProvider instanceof ResistanceProvider);
+        float[] legacyProvided = legacyProvider.getCurrentDtDr(null, 2.0F, 3.0F, 0.4F);
+        expect(problems, "legacy api resistance provider delegates",
+                legacyProvided.length >= 2 && nearly(legacyProvided[0], 5.0F) && nearly(legacyProvided[1], 0.4F));
+        expect(problems, "legacy util handler category bridge",
+                com.hbm.util.DamageResistanceHandler.CATEGORY_ENERGY.equals(CATEGORY_ENERGY)
+                        && com.hbm.util.DamageResistanceHandler.categoryKey(
+                                com.hbm.util.DamageResistanceHandler.DamageClass.LASER).equals(CATEGORY_ENERGY));
+        com.hbm.util.DamageResistanceHandler.ResistanceStats legacyStats =
+                new com.hbm.util.DamageResistanceHandler.ResistanceStats()
+                        .addExact("subAtomic2", 1.0F, 0.2F)
+                        .addCategory(com.hbm.util.DamageResistanceHandler.DamageClass.ELECTRIC, 2.0F, 0.3F)
+                        .setOther(3.0F, 0.4F);
+        expectResistance(problems, "legacy util handler exact normalization",
+                legacyStats.modern().exactResistances().get("subatomic"), 1.0F, 0.2F);
+        expectResistance(problems, "legacy util handler category normalization",
+                legacyStats.modern().categoryResistances().get(CATEGORY_ENERGY), 2.0F, 0.3F);
+        expectResistance(problems, "legacy util handler other conversion",
+                legacyStats.modern().otherResistance(), 3.0F, 0.4F);
         DamageResistanceStats firstSet = new DamageResistanceStats().setOther(1.0F, 0.1F);
         DamageResistanceStats secondSet = new DamageResistanceStats().setOther(2.0F, 0.2F);
         Item shared = net.minecraft.world.item.Items.IRON_HELMET;

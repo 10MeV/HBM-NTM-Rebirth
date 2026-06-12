@@ -12,11 +12,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class PileBreedingFuelBlockEntity extends BlockEntity implements PileNeutronColumn, PileNeutronReceiver {
+public class PileBreedingFuelBlockEntity extends PileGraphiteBlockEntity implements PileNeutronColumn, PileNeutronReceiver {
     private final PileFuelState fuelState = new PileFuelState();
 
     public PileBreedingFuelBlockEntity(BlockPos pos, BlockState state) {

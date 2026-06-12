@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.turretchekhov",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:battery_lead" }, "count": 1, "legacy_id": "hbm:battery_pack", "legacy_meta": 1 },
+    { "ingredient": { "tag": "forge:ingots/steel" }, "count": 16, "legacy_ore": "ingotSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor" }, "count": 3 },
+    { "ingredient": { "tag": "forge:circuits/advanced" }, "count": 1, "legacy_ore": "circuitAdvanced" },
+    { "ingredient": { "tag": "forge:pipes/steel" }, "count": 3, "legacy_ore": "ntmpipeSteel" },
+    { "ingredient": { "tag": "forge:gun_mechanisms/gun_metal" }, "count": 3, "legacy_ore": "gunMechanismGunMetal" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:crate_iron" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:crt_display" }, "count": 1 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:turret_chekhov" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

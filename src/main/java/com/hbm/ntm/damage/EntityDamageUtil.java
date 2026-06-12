@@ -1,6 +1,9 @@
 package com.hbm.ntm.damage;
 
+import com.hbm.ntm.radiation.ModDamageSources;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -24,12 +27,58 @@ public final class EntityDamageUtil {
         return attackEntityFromNt(entity, source, amount, 0.0F, 0.0F);
     }
 
+    public static boolean attackEntityFromNt(Entity entity, ResourceKey<DamageType> type, float amount) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, type), amount);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, legacyTypeOrId), amount);
+    }
+
     public static boolean attackEntityFromNt(Entity entity, DamageSource source, float amount, float pierceDt, float pierceDr) {
         return attackEntityFromNt(entity, source, amount, false, true, 0.0D, pierceDt, pierceDr);
     }
 
+    public static boolean attackEntityFromNt(Entity entity, ResourceKey<DamageType> type, float amount,
+            float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, type), amount, pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
+            float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, legacyTypeOrId), amount, pierceDt, pierceDr);
+    }
+
     public static boolean attackEntityFromNt(Entity entity, DamageSource source, float amount, boolean ignoreIFrame) {
         return attackEntityFromNt(entity, source, amount, ignoreIFrame, true, 0.0D, 0.0F, 0.0F);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, ResourceKey<DamageType> type, float amount,
+            boolean ignoreIFrame) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, type), amount, ignoreIFrame);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
+            boolean ignoreIFrame) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, legacyTypeOrId), amount, ignoreIFrame);
     }
 
     public static boolean attackEntityFromNt(Entity entity, DamageSource source, float amount, boolean ignoreIFrame,
@@ -37,15 +86,67 @@ public final class EntityDamageUtil {
         return attackEntityFromNt(entity, source, amount, ignoreIFrame, true, 0.0D, pierceDt, pierceDr);
     }
 
+    public static boolean attackEntityFromNt(Entity entity, ResourceKey<DamageType> type, float amount,
+            boolean ignoreIFrame, float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, type), amount, ignoreIFrame, pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
+            boolean ignoreIFrame, float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, legacyTypeOrId), amount, ignoreIFrame, pierceDt, pierceDr);
+    }
+
     public static boolean attackEntityFromNt(Entity entity, DamageSource source, float amount, boolean ignoreIFrame,
             double knockbackMultiplier, float pierceDt, float pierceDr) {
         return attackEntityFromNt(entity, source, amount, ignoreIFrame, true, knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, ResourceKey<DamageType> type, float amount,
+            boolean ignoreIFrame, double knockbackMultiplier, float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, type), amount, ignoreIFrame, knockbackMultiplier,
+                pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
+            boolean ignoreIFrame, double knockbackMultiplier, float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, legacyTypeOrId), amount, ignoreIFrame,
+                knockbackMultiplier, pierceDt, pierceDr);
     }
 
     public static boolean attackEntityFromNt(Entity entity, DamageSource source, float amount, boolean ignoreIFrame,
             boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt, float pierceDr) {
         return attackEntityFromNtDetailed(entity, source, amount, ignoreIFrame, allowSpecialCancel, knockbackMultiplier,
                 pierceDt, pierceDr).damaged();
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, ResourceKey<DamageType> type, float amount,
+            boolean ignoreIFrame, boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, type), amount, ignoreIFrame, allowSpecialCancel,
+                knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
+            boolean ignoreIFrame, boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, legacyTypeOrId), amount, ignoreIFrame,
+                allowSpecialCancel, knockbackMultiplier, pierceDt, pierceDr);
     }
 
     public static DamageApplication attackEntityFromNtDetailed(Entity entity, DamageSource source, float amount,
@@ -102,6 +203,20 @@ public final class EntityDamageUtil {
         return attackEntityFromNt(entity, source, amount, true, true, 0.0D, 0.0F, 0.0F);
     }
 
+    public static boolean attackEntityFromIgnoreIFrame(Entity entity, ResourceKey<DamageType> type, float amount) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromIgnoreIFrame(entity, sourceFor(entity, type), amount);
+    }
+
+    public static boolean attackEntityFromIgnoreIFrame(Entity entity, String legacyTypeOrId, float amount) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromIgnoreIFrame(entity, sourceFor(entity, legacyTypeOrId), amount);
+    }
+
     public static boolean allowSpecialCancel() {
         return ALLOW_SPECIAL_CANCEL.get();
     }
@@ -122,6 +237,11 @@ public final class EntityDamageUtil {
                 new DamageApplication(false, false, 5.0F, 0.0F, OUTCOME_CANCELED).shouldRetryIgnoringIFrames());
         expect(problems, "damaged should not retry i-frame",
                 !new DamageApplication(true, false, 5.0F, 3.0F, OUTCOME_DAMAGED).shouldRetryIgnoringIFrames());
+        expect(problems, "legacy util facade skips non-positive key",
+                !com.hbm.util.EntityDamageUtil.attackEntityFromNT(null, com.hbm.lib.ModDamageSource.radiation, -1.0F));
+        expect(problems, "legacy util facade skips non-positive string",
+                !com.hbm.util.EntityDamageUtil.attackEntityFromIgnoreIFrame(null,
+                        com.hbm.lib.ModDamageSource.s_emp, 0.0F));
 
         boolean previousAllowSpecialCancel = ALLOW_SPECIAL_CANCEL.get();
         try {
@@ -163,6 +283,20 @@ public final class EntityDamageUtil {
             return true;
         }
         return player.canHarmPlayer(attacker);
+    }
+
+    private static DamageSource sourceFor(Entity entity, ResourceKey<DamageType> type) {
+        if (entity == null) {
+            throw new IllegalArgumentException("A target entity is required to create damage source " + type.location());
+        }
+        return ModDamageSources.source(entity.level(), type);
+    }
+
+    private static DamageSource sourceFor(Entity entity, String legacyTypeOrId) {
+        if (entity == null) {
+            throw new IllegalArgumentException("A target entity is required to create damage source " + legacyTypeOrId);
+        }
+        return ModDamageSources.source(entity.level(), legacyTypeOrId);
     }
 
     private static void applyKnockback(LivingEntity target, Entity attacker, double multiplier) {

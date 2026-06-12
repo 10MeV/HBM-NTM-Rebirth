@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:sat_chip"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    {
+      "item": "hbm_ntm_rebirth:radar_linker"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:sat_relay"
+  }
+}

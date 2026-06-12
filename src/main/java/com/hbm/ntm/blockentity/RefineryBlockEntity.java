@@ -32,6 +32,7 @@ import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -469,12 +470,12 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         boolean oldOn = isOn;
         isOn = false;
         changed |= setInputTypeFromIdentifier();
-        changed |= HbmFluidItemTransfer.processTransfers(items, List.of(
-                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank()),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_HEAVY_CONTAINER, SLOT_HEAVY_CONTAINER_OUTPUT, outputTank(0)),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_NAPHTHA_CONTAINER, SLOT_NAPHTHA_CONTAINER_OUTPUT, outputTank(1)),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_LIGHT_CONTAINER, SLOT_LIGHT_CONTAINER_OUTPUT, outputTank(2)),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_PETROLEUM_CONTAINER, SLOT_PETROLEUM_CONTAINER_OUTPUT, outputTank(3))));
+        changed |= processFluidItemTransfers(items, HbmFluidItemTransfer.combineTransfers(
+                HbmFluidItemTransfer.loadTransfers(
+                        SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank()),
+                HbmFluidItemTransfer.unloadTransfers(
+                        SLOT_HEAVY_CONTAINER, SLOT_HEAVY_CONTAINER_OUTPUT, 2,
+                        outputTank(0), outputTank(1), outputTank(2), outputTank(3))));
         long oldPower = energy.getPower();
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
         changed |= oldPower != energy.getPower();
@@ -491,8 +492,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean setInputTypeFromIdentifier() {
-        return HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
-                inputTank(), level, worldPosition);
+        return setFluidTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER, inputTank());
     }
 
     private boolean refine() {
@@ -600,7 +600,8 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
             if (existing.isEmpty()) {
                 return ItemStack.EMPTY;
             }
-            ItemStack extracted = existing.copyWithCount(Math.min(amount, existing.getCount()));
+            ItemStack extracted = HbmItemStackUtil.carefulCopyWithSize(existing,
+                    Math.min(amount, existing.getCount()));
             if (!simulate) {
                 ItemStack remaining = existing.copy();
                 remaining.shrink(extracted.getCount());

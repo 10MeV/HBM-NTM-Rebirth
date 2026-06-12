@@ -10,6 +10,7 @@ import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SatelliteSavedData;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmInventoryUtil;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -142,7 +143,7 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
                 OUTPUT_SLOT_COUNT - 1, stack);
         if (!remaining.isEmpty()) {
             HbmInventoryUtil.tryAddItemToFirstNewSlotUnchecked(items, 0, OUTPUT_SLOT_COUNT - 1,
-                    remaining.copyWithCount(1));
+                    HbmItemStackUtil.carefulCopyWithSize(remaining, 1));
         }
     }
 

@@ -73,7 +73,7 @@ public class LegacyRadiationBarrelBlock extends Block implements ChainExplodable
         if (level.random.nextInt(3) == 0) {
             level.setBlock(pos, ModBlocks.TOXIC_BLOCK.get().defaultBlockState(), Block.UPDATE_ALL);
         } else {
-            level.explode(source, position.x, position.y, position.z, 12.0F, true, Level.ExplosionInteraction.BLOCK);
+            level.explode(source, position.x, position.y, position.z, 12.0F, false, Level.ExplosionInteraction.BLOCK);
         }
         ExplosionNukeGeneric.waste(level, pos.getX(), pos.getY(), pos.getZ(), 35);
         spawnDenseRadon(level, pos);

@@ -7,9 +7,11 @@ import com.hbm.ntm.menu.AshpitMenu;
 import com.hbm.ntm.menu.AssemblyFactoryMenu;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
 import com.hbm.ntm.menu.BasicMachineMenu;
+import com.hbm.ntm.menu.BombMultiMenu;
 import com.hbm.ntm.menu.ChemicalFactoryMenu;
 import com.hbm.ntm.menu.ChemicalPlantMenu;
 import com.hbm.ntm.menu.CompressorMenu;
+import com.hbm.ntm.menu.CrateMenu;
 import com.hbm.ntm.menu.CustomNukeMenu;
 import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.menu.GasFlareMenu;
@@ -33,6 +35,7 @@ import com.hbm.ntm.menu.SolidifierMenu;
 import com.hbm.ntm.menu.SoyuzCapsuleMenu;
 import com.hbm.ntm.menu.SoyuzLauncherMenu;
 import com.hbm.ntm.menu.ToolAbilityMenu;
+import com.hbm.ntm.menu.TurretMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -101,11 +104,20 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<MachineBatterySocketMenu>> MACHINE_BATTERY_SOCKET =
             MENUS.register("machine_battery_socket", () -> IForgeMenuType.create(MachineBatterySocketMenu::new));
 
+    public static final RegistryObject<MenuType<CrateMenu>> STORAGE_CRATE =
+            MENUS.register("storage_crate", () -> IForgeMenuType.create(CrateMenu::new));
+
+    public static final RegistryObject<MenuType<TurretMenu>> TURRET =
+            MENUS.register("turret", () -> IForgeMenuType.create(TurretMenu::new));
+
     public static final RegistryObject<MenuType<NuclearDeviceMenu>> NUCLEAR_DEVICE =
             MENUS.register("nuclear_device", () -> IForgeMenuType.create(NuclearDeviceMenu::new));
 
     public static final RegistryObject<MenuType<CustomNukeMenu>> CUSTOM_NUKE =
             MENUS.register("custom_nuke", () -> IForgeMenuType.create(CustomNukeMenu::new));
+
+    public static final RegistryObject<MenuType<BombMultiMenu>> BOMB_MULTI =
+            MENUS.register("bomb_multi", () -> IForgeMenuType.create(BombMultiMenu::new));
 
     public static final RegistryObject<MenuType<RadarMenu>> RADAR =
             MENUS.register("radar", () -> IForgeMenuType.create(RadarMenu::new));

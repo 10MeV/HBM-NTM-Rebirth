@@ -69,6 +69,10 @@ public final class CustomMissileExplosion {
                 NuclearExplosionUtil.spawnNuclearNoFallout(level, (int) strength, x, y, z);
                 return true;
             }
+            case TAINT -> {
+                ExplosionChaos.taintBlocksLegacyWindow(level, (int) x, (int) y, (int) z, (int) strength);
+                return true;
+            }
             case CLOUD -> {
                 level.levelEvent(2002, net.minecraft.core.BlockPos.containing(Math.round(x), Math.round(y), Math.round(z)), 0);
                 ExplosionChaos.spawnPoisonCloud(level, x - motion.x, y - motion.y, z - motion.z, 750, 2.5D, 2);

@@ -5,9 +5,13 @@ import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.fluid.ForgeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
+import com.hbm.ntm.fluid.HbmFluidItemTransfer.TransferBatchReport;
 import com.hbm.ntm.fluid.HbmFluidNode;
 import com.hbm.ntm.fluid.HbmFluidNodeHost;
 import com.hbm.ntm.fluid.HbmFluidPortMachine;
+import com.hbm.ntm.fluid.HbmFluidPortSubscriptionTracker;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUser;
@@ -32,7 +36,9 @@ import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +52,7 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     private final Map<Direction, LazyOptional<IFluidHandler>> sidedFluidHandlers = new EnumMap<>(Direction.class);
     private LazyOptional<IFluidHandler> nullSideFluidHandler;
     private final Map<com.hbm.ntm.fluid.FluidType, HbmFluidNode> fluidNodes = new HashMap<>();
+    private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
 
     protected HbmFluidBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, List<HbmFluidTank> tanks) {
         super(type, pos, state);
@@ -147,6 +154,31 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
                         level, worldPosition, getFluidPorts(), receivingTanks, sendingTanks, transceiver);
     }
 
+    protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport refreshTrackedReceiverFluidPortsReport(
+            Iterable<HbmFluidTank> receivingTanks, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport.empty()
+                : fluidPortSubscriptions.refreshReceiver(
+                        level, worldPosition, getFluidPorts(), receivingTanks, receiver);
+    }
+
+    protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport refreshTrackedProviderFluidPortsReport(
+            Iterable<HbmFluidTank> sendingTanks, com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport.empty()
+                : fluidPortSubscriptions.refreshProvider(
+                        level, worldPosition, getFluidPorts(), sendingTanks, provider);
+    }
+
+    protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport refreshTrackedTransceiverFluidPortsReport(
+            Iterable<HbmFluidTank> receivingTanks, Iterable<HbmFluidTank> sendingTanks,
+            com.hbm.ntm.fluid.HbmStandardFluidTransceiver transceiver) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport.empty()
+                : fluidPortSubscriptions.refreshTransceiver(
+                        level, worldPosition, getFluidPorts(), receivingTanks, sendingTanks, transceiver);
+    }
+
     protected HbmFluidPortMachine.PortMachineDetachReport detachReceiverFluidPortsReport(
             Iterable<HbmFluidTank> receivingTanks, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
         return level == null || level.isClientSide
@@ -170,6 +202,18 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
                 ? HbmFluidPortMachine.PortMachineDetachReport.empty()
                 : HbmFluidPortMachine.detachTransceiverPortsReport(
                         level, worldPosition, getFluidPorts(), receivingTanks, sendingTanks, transceiver);
+    }
+
+    protected HbmFluidPortMachine.PortMachineDetachReport detachTrackedFluidPortsReport(
+            com.hbm.ntm.fluid.HbmFluidReceiver receiver, com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortMachine.PortMachineDetachReport.empty()
+                : fluidPortSubscriptions.detachAll(level, worldPosition, getFluidPorts(), receiver, provider);
+    }
+
+    protected HbmFluidPortMachine.PortMachineDetachReport detachTrackedTransceiverFluidPortsReport(
+            com.hbm.ntm.fluid.HbmStandardFluidTransceiver transceiver) {
+        return detachTrackedFluidPortsReport(transceiver, transceiver);
     }
 
     protected int unsubscribeFluidProviderFromPorts(com.hbm.ntm.fluid.FluidType type,
@@ -202,6 +246,89 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
                 : HbmFluidUtil.inspectPorts(level, worldPosition, getFluidPorts(), type);
     }
 
+    public ForgeFluidCapabilityView inspectForgeFluidCapability(@Nullable Direction side) {
+        ForgeFluidHandlerAdapter adapter = createFluidHandlerAdapter(side);
+        HbmFluidSideMode mode = getFluidSideMode(side);
+        return new ForgeFluidCapabilityView(
+                side,
+                mode,
+                adapter != null,
+                adapter == null ? ForgeFluidHandlerAdapter.emptySnapshot() : adapter.createSnapshot());
+    }
+
+    public ForgeFluidCapabilityPreview previewForgeFluidFill(@Nullable Direction side, FluidStack stack) {
+        ForgeFluidHandlerAdapter adapter = createFluidHandlerAdapter(side);
+        HbmFluidSideMode mode = getFluidSideMode(side);
+        ForgeFluidHandlerAdapter.AdapterSnapshot snapshot = adapter == null
+                ? ForgeFluidHandlerAdapter.emptySnapshot()
+                : adapter.createSnapshot();
+        int filled = adapter == null ? 0 : adapter.previewFill(stack);
+        return new ForgeFluidCapabilityPreview(side, mode, adapter != null, snapshot, filled, FluidStack.EMPTY);
+    }
+
+    public ForgeFluidCapabilityPreview previewForgeFluidDrain(@Nullable Direction side, FluidStack stack) {
+        ForgeFluidHandlerAdapter adapter = createFluidHandlerAdapter(side);
+        HbmFluidSideMode mode = getFluidSideMode(side);
+        ForgeFluidHandlerAdapter.AdapterSnapshot snapshot = adapter == null
+                ? ForgeFluidHandlerAdapter.emptySnapshot()
+                : adapter.createSnapshot();
+        FluidStack drained = adapter == null ? FluidStack.EMPTY : adapter.previewDrain(stack);
+        return new ForgeFluidCapabilityPreview(side, mode, adapter != null, snapshot, 0, drained);
+    }
+
+    public ForgeFluidCapabilityPreview previewForgeFluidDrain(@Nullable Direction side, int maxDrain) {
+        ForgeFluidHandlerAdapter adapter = createFluidHandlerAdapter(side);
+        HbmFluidSideMode mode = getFluidSideMode(side);
+        ForgeFluidHandlerAdapter.AdapterSnapshot snapshot = adapter == null
+                ? ForgeFluidHandlerAdapter.emptySnapshot()
+                : adapter.createSnapshot();
+        FluidStack drained = adapter == null ? FluidStack.EMPTY : adapter.previewDrain(maxDrain);
+        return new ForgeFluidCapabilityPreview(side, mode, adapter != null, snapshot, 0, drained);
+    }
+
+    protected boolean processFluidItemTransfers(IItemHandlerModifiable items, Iterable<TankSlotTransfer> transfers) {
+        return processFluidItemTransfersReport(items, transfers).moved();
+    }
+
+    protected TransferBatchReport processFluidItemTransfersReport(IItemHandlerModifiable items,
+            Iterable<TankSlotTransfer> transfers) {
+        return processFluidItemTransfersReport(items, transfers, false);
+    }
+
+    protected TransferBatchReport processFluidItemTransfersReport(IItemHandlerModifiable items,
+            Iterable<TankSlotTransfer> transfers, boolean simulate) {
+        TransferBatchReport report = HbmFluidItemTransfer.processTransferReport(items, transfers, simulate);
+        if (!simulate && report.moved()) {
+            onFluidContentsChanged();
+        }
+        return report;
+    }
+
+    protected boolean setFluidTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot,
+            HbmFluidTank tank) {
+        return setFluidTankTypeFromIdentifierSlot(items, inputSlot, inputSlot, tank, 0, false);
+    }
+
+    protected boolean setFluidTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot,
+            HbmFluidTank tank) {
+        return setFluidTankTypeFromIdentifierSlot(items, inputSlot, outputSlot, tank, 0, false);
+    }
+
+    protected boolean setFluidTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot,
+            HbmFluidTank tank, int pressure, boolean forcePressure) {
+        return setFluidTankTypeFromIdentifierSlot(items, inputSlot, inputSlot, tank, pressure, forcePressure);
+    }
+
+    protected boolean setFluidTankTypeFromIdentifierSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot,
+            HbmFluidTank tank, int pressure, boolean forcePressure) {
+        boolean changed = HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(
+                items, inputSlot, outputSlot, tank, level, worldPosition, pressure, forcePressure);
+        if (changed) {
+            onFluidContentsChanged();
+        }
+        return changed;
+    }
+
     @Override
     public HbmFluidNode getFluidNode() {
         return fluidNodes.values().stream().findFirst().orElse(null);
@@ -232,6 +359,28 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     @Override
     public void removeFluidNode() {
         fluidNodes.clear();
+    }
+
+    @Override
+    public void setRemoved() {
+        detachTrackedFluidPortsOnLifecycle();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        detachTrackedFluidPortsOnLifecycle();
+        super.onChunkUnloaded();
+    }
+
+    private void detachTrackedFluidPortsOnLifecycle() {
+        com.hbm.ntm.fluid.HbmFluidReceiver receiver = this instanceof com.hbm.ntm.fluid.HbmFluidReceiver fluidReceiver
+                ? fluidReceiver
+                : null;
+        com.hbm.ntm.fluid.HbmFluidProvider provider = this instanceof com.hbm.ntm.fluid.HbmFluidProvider fluidProvider
+                ? fluidProvider
+                : null;
+        detachTrackedFluidPortsReport(receiver, provider);
     }
 
     @Override
@@ -314,28 +463,70 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     private LazyOptional<IFluidHandler> createFluidHandler(@Nullable Direction side) {
         HbmFluidSideMode mode = getFluidSideMode(side);
-        if (mode == HbmFluidSideMode.NONE) {
-            return LazyOptional.empty();
+        return mode == HbmFluidSideMode.NONE
+                ? LazyOptional.empty()
+                : LazyOptional.of(() -> createFluidHandlerAdapter(side, mode));
+    }
+
+    @Nullable
+    private ForgeFluidHandlerAdapter createFluidHandlerAdapter(@Nullable Direction side) {
+        return createFluidHandlerAdapter(side, getFluidSideMode(side));
+    }
+
+    @Nullable
+    private ForgeFluidHandlerAdapter createFluidHandlerAdapter(@Nullable Direction side, HbmFluidSideMode mode) {
+        if (mode == null || mode == HbmFluidSideMode.NONE) {
+            return null;
         }
         if (mode == HbmFluidSideMode.BOTH) {
-            return LazyOptional.of(() -> new ForgeFluidHandlerAdapter(
+            return new ForgeFluidHandlerAdapter(
                     getInputTanks(side),
                     getOutputTanks(side),
                     getInputPressure(side),
                     true,
                     true,
-                    this::onFluidContentsChanged));
+                    this::onFluidContentsChanged);
         }
         List<HbmFluidTank> visibleTanks = mode == HbmFluidSideMode.INPUT ? getInputTanks(side) : getOutputTanks(side);
-        return LazyOptional.of(() -> new ForgeFluidHandlerAdapter(
+        return new ForgeFluidHandlerAdapter(
                 visibleTanks,
                 getInputPressure(side),
                 mode.canFill(),
                 mode.canDrain(),
-                this::onFluidContentsChanged));
+                this::onFluidContentsChanged);
     }
 
     protected int getInputPressure(@Nullable Direction side) {
         return 0;
+    }
+
+    public record ForgeFluidCapabilityView(
+            @Nullable Direction side,
+            HbmFluidSideMode sideMode,
+            boolean handlerPresent,
+            ForgeFluidHandlerAdapter.AdapterSnapshot snapshot) {
+        public boolean canFill() {
+            return handlerPresent && snapshot.canFill();
+        }
+
+        public boolean canDrain() {
+            return handlerPresent && snapshot.canDrain();
+        }
+    }
+
+    public record ForgeFluidCapabilityPreview(
+            @Nullable Direction side,
+            HbmFluidSideMode sideMode,
+            boolean handlerPresent,
+            ForgeFluidHandlerAdapter.AdapterSnapshot snapshot,
+            int filledAmount,
+            FluidStack drainedStack) {
+        public int drainedAmount() {
+            return drainedStack == null || drainedStack.isEmpty() ? 0 : drainedStack.getAmount();
+        }
+
+        public boolean moved() {
+            return filledAmount > 0 || drainedAmount() > 0;
+        }
     }
 }

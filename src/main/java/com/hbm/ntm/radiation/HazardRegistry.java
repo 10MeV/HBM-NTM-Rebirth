@@ -2,6 +2,7 @@ package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.neutron.RBMKFuelRodRegistry;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.registry.ModBlocks;
@@ -26,6 +27,7 @@ public final class HazardRegistry {
     private static final Map<TagKey<Item>, HazardData> TAG_HAZARDS = new LinkedHashMap<>();
     private static final Map<Item, HazardData> ITEM_HAZARDS = new IdentityHashMap<>();
     private static final Map<HazardStackKey, HazardData> STACK_HAZARDS = new LinkedHashMap<>();
+    private static final Map<LegacyStateVariantKey, HazardData> LEGACY_STATE_VARIANT_HAZARDS = new LinkedHashMap<>();
     private static final Set<TagKey<Item>> TAG_BLACKLIST = new HashSet<>();
     private static final Set<HazardStackKey> STACK_BLACKLIST = new HashSet<>();
     private static final List<HazardTransformer> TRANSFORMERS = new ArrayList<>();
@@ -34,6 +36,7 @@ public final class HazardRegistry {
         TAG_HAZARDS.clear();
         ITEM_HAZARDS.clear();
         STACK_HAZARDS.clear();
+        LEGACY_STATE_VARIANT_HAZARDS.clear();
         TAG_BLACKLIST.clear();
         STACK_BLACKLIST.clear();
         TRANSFORMERS.clear();
@@ -64,6 +67,7 @@ public final class HazardRegistry {
         registerLegacyWasteAndCrystalHazards();
         registerLegacyNukePartHazards();
         registerLegacyHolotapeHazards();
+        registerLegacyDemonCoreHazards();
         registerLegacyReactorComponentHazards();
         registerLegacyBreedingRodHazards();
         registerLegacyBalefireAndReactorDebrisHazards();
@@ -144,6 +148,8 @@ public final class HazardRegistry {
         registerRad("ingot_thorium_fuel", RadiationConstants.TH_FUEL);
         registerRad("ingot_schrabidium_fuel", RadiationConstants.SA_FUEL);
         registerByName("ingot_schrabidium_fuel", HazardType.BLINDING, 5.0F);
+        registerRad("ingot_hes", RadiationConstants.SA_FUEL);
+        registerRad("ingot_les", RadiationConstants.SA_FUEL);
 
         registerRad("solid_fuel_bf", 1_000.0F);
         registerRad("solid_fuel_presto_bf", 2_000.0F);
@@ -171,6 +177,7 @@ public final class HazardRegistry {
         registerNugget("nugget_au198", RadiationConstants.AU198);
         registerNugget("nugget_pb209", RadiationConstants.PB209);
         registerNugget("nugget_ra226", RadiationConstants.RA226);
+        registerNugget("nugget_actinium", RadiationConstants.AC227);
 
         registerNugget("nugget_uranium_fuel", RadiationConstants.U_FUEL);
         registerNugget("nugget_thorium_fuel", RadiationConstants.TH_FUEL);
@@ -180,6 +187,8 @@ public final class HazardRegistry {
         registerNugget("nugget_americium_fuel", RadiationConstants.AM_FUEL);
         registerNugget("nugget_schrabidium_fuel", RadiationConstants.SA_FUEL);
         registerByName("nugget_schrabidium_fuel", HazardType.BLINDING, 5.0F * RadiationConstants.NUGGET);
+        registerNugget("nugget_hes", RadiationConstants.SA_FUEL);
+        registerNugget("nugget_les", RadiationConstants.SA_FUEL);
 
         registerBillet("billet_uranium", RadiationConstants.U);
         registerBillet("billet_u233", RadiationConstants.U233);
@@ -239,6 +248,7 @@ public final class HazardRegistry {
         registerBlockRad("ore_sellafield_uranium_scorched", RadiationConstants.U);
         registerBlockRad("ore_sellafield_schrabidium", RadiationConstants.SA326);
         registerBlockRad("ore_sellafield_radgem", 25.0F);
+        registerSellafieldItemHazards();
         registerBlockRad("waste_trinitite", RadiationConstants.TRINITITE * RadiationConstants.BLOCK);
         registerBlockRad("waste_trinitite_red", RadiationConstants.TRINITITE * RadiationConstants.BLOCK);
 
@@ -273,6 +283,15 @@ public final class HazardRegistry {
         registerBlockByName("block_schrabidium_fuel", HazardType.BLINDING, 5.0F * RadiationConstants.BLOCK);
         registerBlockRad("block_ra226", RadiationConstants.RA226 * RadiationConstants.BLOCK);
         registerBlockRad("block_actinium", RadiationConstants.AC227 * RadiationConstants.BLOCK);
+    }
+
+    private static void registerSellafieldItemHazards() {
+        registerLegacyStateBlockVariant("sellafield", 0, HazardType.RADIATION, 0.5F);
+        registerLegacyStateBlockVariant("sellafield", 1, HazardType.RADIATION, 1.0F);
+        registerLegacyStateBlockVariant("sellafield", 2, HazardType.RADIATION, 2.5F);
+        registerLegacyStateBlockVariant("sellafield", 3, HazardType.RADIATION, 4.0F);
+        registerLegacyStateBlockVariant("sellafield", 4, HazardType.RADIATION, 5.0F);
+        registerLegacyStateBlockVariant("sellafield", 5, HazardType.RADIATION, 10.0F);
     }
 
     private static void registerLegacyMaterialSecondaryHazards() {
@@ -353,20 +372,17 @@ public final class HazardRegistry {
         registerRad("nugget_cobalt", RadiationConstants.CO60 * RadiationConstants.NUGGET);
         registerRad("insert_polonium", 100.0F);
         registerRad("ingot_mud", 1.0F);
-        registerRad("block_yellowcake", RadiationConstants.YELLOWCAKE * RadiationConstants.BLOCK * RadiationConstants.POWDER_MULTIPLIER);
-        registerRad("block_euphemium", 500_000.0F);
-        registerRad("block_euphemium_cluster", 500_000.0F);
-        registerRad("block_schrabidium_cluster", RadiationConstants.SA326 * RadiationConstants.BLOCK);
-        registerRad("block_tritium", 0.1F);
+        registerBlockRad("block_yellowcake", RadiationConstants.YELLOWCAKE * RadiationConstants.BLOCK * RadiationConstants.POWDER_MULTIPLIER);
+        registerBlockRad("block_euphemium", 500_000.0F);
+        registerBlockRad("block_euphemium_cluster", 500_000.0F);
+        registerBlockRad("block_schrabidium_cluster", RadiationConstants.SA326 * RadiationConstants.BLOCK);
+        registerBlockRad("block_tritium", 0.1F);
         registerRad("fallout", RadiationConstants.FALLOUT * RadiationConstants.POWDER_MULTIPLIER * 2.0F);
-        registerRad("block_fallout", RadiationConstants.YELLOWCAKE * RadiationConstants.BLOCK * RadiationConstants.POWDER_MULTIPLIER);
+        registerBlockRad("block_fallout", RadiationConstants.YELLOWCAKE * RadiationConstants.BLOCK * RadiationConstants.POWDER_MULTIPLIER);
         registerBlockByName("yellow_barrel", HazardType.RADIATION, RadiationConstants.WASTE * RadiationConstants.INGOT * 10.0F);
-        registerRad("ore_gneiss_gas", 1.0F);
-        registerRad("ore_asbestos", 1.0F);
-        registerRad("ore_gneiss_asbestos", 1.0F);
-        registerRad("block_schrabidate", RadiationConstants.SA326 * 0.1F * RadiationConstants.BLOCK);
-        registerRad("block_ra226", RadiationConstants.RA226 * RadiationConstants.BLOCK);
-        registerRad("block_actinium", RadiationConstants.AC227 * RadiationConstants.BLOCK);
+        registerBlockRad("ore_gneiss_gas", 1.0F);
+        registerBlockRad("ore_asbestos", 1.0F);
+        registerBlockRad("ore_gneiss_asbestos", 1.0F);
 
         registerByName("powder_lignite", HazardType.COAL, RadiationConstants.POWDER_MULTIPLIER);
         registerByName("lignite", HazardType.COAL, RadiationConstants.INGOT);
@@ -466,6 +482,11 @@ public final class HazardRegistry {
     private static void registerLegacyHolotapeHazards() {
         registerByName("holotape_damaged", HazardType.DIGAMMA, 1000.0F);
         registerLegacyMeta(LegacyMetaItemMappings.HOLOTAPE_IMAGE, 1, HazardType.DIGAMMA, 1.0F);
+    }
+
+    private static void registerLegacyDemonCoreHazards() {
+        register(ModItems.DEMON_CORE_OPEN.get(), HazardType.RADIATION, 5.0F);
+        register(ModItems.DEMON_CORE_CLOSED.get(), HazardType.RADIATION, 100_000.0F);
     }
 
     private static void registerLegacyReactorComponentHazards() {
@@ -738,8 +759,11 @@ public final class HazardRegistry {
 
     private static void registerMaterialPowderHazards() {
         registerByName("powder_lithium", HazardType.HYDROACTIVE, RadiationConstants.POWDER_MULTIPLIER);
+        registerByName("powder_lithium_tiny", HazardType.HYDROACTIVE, RadiationConstants.NUGGET * RadiationConstants.POWDER_MULTIPLIER);
         registerByName("powder_sodium", HazardType.HYDROACTIVE, RadiationConstants.POWDER_MULTIPLIER);
         registerByName("powder_asbestos", HazardType.ASBESTOS, RadiationConstants.POWDER_MULTIPLIER);
+        registerByName("powder_actinium", HazardType.RADIATION, RadiationConstants.AC227 * RadiationConstants.POWDER_MULTIPLIER);
+        registerByName("powder_actinium_tiny", HazardType.RADIATION, RadiationConstants.AC227 * RadiationConstants.NUGGET * RadiationConstants.POWDER_MULTIPLIER);
         registerByName("powder_schrabidium",
                 new HazardEntry(HazardType.RADIATION, RadiationConstants.SA326 * RadiationConstants.POWDER_MULTIPLIER),
                 new HazardEntry(HazardType.BLINDING, 50.0F * RadiationConstants.POWDER_MULTIPLIER));
@@ -886,6 +910,21 @@ public final class HazardRegistry {
             return;
         }
         mergeData(STACK_HAZARDS.computeIfAbsent(HazardStackKey.of(stack), key -> new HazardData()), data);
+    }
+
+    public static void registerLegacyStateVariant(Item item, int variant, HazardType type, float level) {
+        if (level <= 0.0F || isDisabled(type)) {
+            return;
+        }
+        LEGACY_STATE_VARIANT_HAZARDS.computeIfAbsent(new LegacyStateVariantKey(item, variant), key -> new HazardData())
+                .addEntry(type, level);
+    }
+
+    private static void registerLegacyStateBlockVariant(String blockName, int variant, HazardType type, float level) {
+        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(blockName);
+        if (block != null) {
+            registerLegacyStateVariant(block.get().asItem(), variant, type, level);
+        }
     }
 
     public static void registerLegacyMeta(ResourceLocation legacyId, int legacyMeta, HazardType type, float level) {
@@ -1091,6 +1130,10 @@ public final class HazardRegistry {
         if (stackData != null) {
             chronological.add(stackData);
         }
+        HazardData legacyVariantData = LEGACY_STATE_VARIANT_HAZARDS.get(LegacyStateVariantKey.of(stack));
+        if (legacyVariantData != null) {
+            chronological.add(legacyVariantData);
+        }
 
         List<HazardEntry> entries = new ArrayList<>();
         for (HazardTransformer transformer : TRANSFORMERS) {
@@ -1175,6 +1218,13 @@ public final class HazardRegistry {
     private record HazardStackKey(Item item, int damage) {
         private static HazardStackKey of(ItemStack stack) {
             return new HazardStackKey(stack.getItem(), stack.getDamageValue());
+        }
+    }
+
+    private record LegacyStateVariantKey(Item item, int variant) {
+        private static LegacyStateVariantKey of(ItemStack stack) {
+            int variant = stack.getItem() instanceof LegacyStateBlockItem stateItem ? stateItem.getVariant(stack) : 0;
+            return new LegacyStateVariantKey(stack.getItem(), variant);
         }
     }
 }

@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": {
+    "ingredient": {
+      "tag": "forge:crystals/rare_earth"
+    }
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:powder_desh_mix",
+    "count": 2
+  }
+}

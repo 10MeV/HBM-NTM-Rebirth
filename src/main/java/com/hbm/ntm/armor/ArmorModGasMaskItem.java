@@ -32,26 +32,6 @@ public class ArmorModGasMaskItem extends ArmorModItem implements IGasMask {
     }
 
     @Override
-    public ItemStack getFilter(ItemStack stack, LivingEntity entity) {
-        return ArmorUtil.getGasMaskFilter(stack);
-    }
-
-    @Override
-    public boolean isFilterApplicable(ItemStack stack, LivingEntity entity, ItemStack filter) {
-        return true;
-    }
-
-    @Override
-    public void installFilter(ItemStack stack, LivingEntity entity, ItemStack filter) {
-        ArmorUtil.installGasMaskFilter(stack, filter);
-    }
-
-    @Override
-    public void damageFilter(ItemStack stack, LivingEntity entity, int damage) {
-        ArmorUtil.damageGasMaskFilter(stack, damage);
-    }
-
-    @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
         ArmorUtil.addGasMaskTooltip(stack, null, tooltip, flag);

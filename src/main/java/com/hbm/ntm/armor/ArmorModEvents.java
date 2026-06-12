@@ -70,6 +70,7 @@ public final class ArmorModEvents {
             return;
         }
         tickArmorMods(entity);
+        tickDirectWearablePlateMod(entity);
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
@@ -198,6 +199,18 @@ public final class ArmorModEvents {
                     armorMod.onArmorModTick(entity, armor, mod);
                 }
             }
+        }
+    }
+
+    private static void tickDirectWearablePlateMod(LivingEntity entity) {
+        if (!(entity instanceof Player player)) {
+            return;
+        }
+        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        if (chest.getItem() instanceof ArmorModItems.Jetpack jetpack) {
+            jetpack.tickJetpack(player, chest);
+        } else if (chest.getItem() instanceof ArmorModItems.Wings wings) {
+            wings.tickWings(player);
         }
     }
 

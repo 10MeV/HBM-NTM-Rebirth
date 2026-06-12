@@ -115,7 +115,7 @@ public class LegacyDetCordBlock extends Block implements ChainExplodable, DetCon
     }
 
     private void explodeAt(Level level, double x, double y, double z) {
-        level.explode(null, x, y, z, 1.5F, true, Level.ExplosionInteraction.BLOCK);
+        level.explode(null, x, y, z, 1.5F, false, Level.ExplosionInteraction.BLOCK);
     }
 
     private BlockState updateConnections(BlockGetter level, BlockPos pos, BlockState state) {

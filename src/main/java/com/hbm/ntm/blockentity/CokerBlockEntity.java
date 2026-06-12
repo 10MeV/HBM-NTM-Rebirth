@@ -5,7 +5,6 @@ import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
-import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -16,6 +15,7 @@ import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryUtil;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -196,8 +196,7 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
 
     private boolean setInputTypeFromIdentifier() {
         ItemStackHandler items = getItems();
-        return items != null && HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
-                inputTank, level, worldPosition);
+        return items != null && setFluidTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER, inputTank);
     }
 
     private boolean tryPullHeat(Level level, BlockPos pos) {
@@ -316,7 +315,8 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
             if (existing.isEmpty()) {
                 return ItemStack.EMPTY;
             }
-            ItemStack extracted = existing.copyWithCount(Math.min(amount, existing.getCount()));
+            ItemStack extracted = HbmItemStackUtil.carefulCopyWithSize(existing,
+                    Math.min(amount, existing.getCount()));
             if (!simulate) {
                 ItemStack remaining = existing.copy();
                 remaining.shrink(extracted.getCount());

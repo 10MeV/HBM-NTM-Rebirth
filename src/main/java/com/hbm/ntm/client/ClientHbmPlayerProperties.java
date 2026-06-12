@@ -47,6 +47,10 @@ public final class ClientHbmPlayerProperties {
         return magnetEnabled;
     }
 
+    public static boolean isMagnetActive() {
+        return isMagnetEnabled();
+    }
+
     public static boolean isHudEnabled() {
         registerListener();
         return hudEnabled;
@@ -89,6 +93,10 @@ public final class ClientHbmPlayerProperties {
 
     public static void update(ResourceLocation dataType, CompoundTag data) {
         ClientPlayerSyncData.update(dataType, data);
+    }
+
+    public static void update(HbmPlayerProperties.SyncData data) {
+        apply(data == null ? HbmPlayerProperties.emptySyncedData() : data);
     }
 
     public static void addListener(ClientHbmPlayerPropertiesListener listener) {
@@ -142,7 +150,10 @@ public final class ClientHbmPlayerProperties {
     }
 
     private static void apply(CompoundTag data) {
-        HbmPlayerProperties.SyncData syncData = HbmPlayerProperties.readSyncedData(data);
+        apply(HbmPlayerProperties.readSyncedData(data));
+    }
+
+    private static void apply(HbmPlayerProperties.SyncData syncData) {
         hasReceivedBook = syncData.hasReceivedBook();
         shield = syncData.shield();
         maxShield = syncData.maxShield();

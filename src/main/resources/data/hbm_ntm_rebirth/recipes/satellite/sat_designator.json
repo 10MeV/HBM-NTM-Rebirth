@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "pattern": [
+    "RRD",
+    "PIC",
+    "  P"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:sat_chip"
+    },
+    "P": {
+      "tag": "forge:plates/gold"
+    },
+    "I": {
+      "tag": "forge:ingots/gold"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_advanced"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:sat_designator"
+  }
+}

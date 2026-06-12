@@ -7,6 +7,7 @@ import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
+import com.hbm.ntm.entity.missile.AntiBallisticMissileEntity;
 import com.hbm.ntm.entity.missile.MissileEntity;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
@@ -159,9 +160,8 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oldDelay = delay;
         boolean oldRedstone = redstonePowered;
 
-        HbmFluidItemTransfer.processTransfers(items, List.of(
-                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_FUEL_INPUT, SLOT_FUEL_OUTPUT, fuelTank()),
-                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_OXIDIZER_INPUT, SLOT_OXIDIZER_OUTPUT, oxidizerTank())));
+        processFluidItemTransfers(items, HbmFluidItemTransfer.loadTransfers(
+                SLOT_FUEL_INPUT, SLOT_FUEL_OUTPUT, 2, fuelTank(), oxidizerTank()));
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
         updateFuelTankTypes();
 
@@ -213,6 +213,9 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (!canLaunchBase()) {
             return false;
         }
+        if (items.getStackInSlot(SLOT_MISSILE).is(ModItems.MISSILE_ANTI_BALLISTIC.get())) {
+            return launchToCoordinate(worldPosition.getX(), worldPosition.getZ());
+        }
         ItemStack stack = items.getStackInSlot(SLOT_DESIGNATOR);
         if (stack.isEmpty()) {
             return false;
@@ -225,7 +228,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (!(level instanceof ServerLevel serverLevel) || !canLaunchBase()) {
             return false;
         }
-        MissileEntity missile = instantiateMissile(serverLevel, targetX, targetZ);
+        Entity missile = instantiateMissile(serverLevel, targetX, targetZ, null);
         if (missile == null) {
             return false;
         }
@@ -240,16 +243,29 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public boolean sendCommandEntity(Entity target) {
-        return target != null && launchToCoordinate((int) Math.floor(target.getX()), (int) Math.floor(target.getZ()));
+        return target != null && launchToEntity(target);
     }
 
     private boolean canLaunchBase() {
         return isMissileValid() && hasFuel() && delay <= 0 && canInstantiateMissile();
     }
 
-    private MissileEntity instantiateMissile(ServerLevel level, int targetX, int targetZ) {
+    private boolean launchToEntity(Entity target) {
+        if (!(level instanceof ServerLevel serverLevel) || !canLaunchBase()) {
+            return false;
+        }
+        Entity missile = instantiateMissile(serverLevel, (int) Math.floor(target.getX()),
+                (int) Math.floor(target.getZ()), target);
+        if (missile == null) {
+            return false;
+        }
+        finalizeLaunch(serverLevel, missile);
+        return true;
+    }
+
+    private Entity instantiateMissile(ServerLevel level, int targetX, int targetZ, @Nullable Entity targetEntity) {
         ItemStack stack = items.getStackInSlot(SLOT_MISSILE);
-        MissileEntity missile;
+        Entity missile;
         MissileEntity.Variant variant;
         if (stack.is(ModItems.MISSILE_GENERIC.get())) {
             variant = MissileEntity.Variant.GENERIC;
@@ -278,18 +294,69 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         } else if (stack.is(ModItems.MISSILE_BUSTER_STRONG.get())) {
             variant = MissileEntity.Variant.BUSTER_STRONG;
             missile = new MissileEntity(ModEntityTypes.MISSILE_BUSTER_STRONG.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_EMP_STRONG.get())) {
+            variant = MissileEntity.Variant.EMP_STRONG;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_EMP_STRONG.get(), level, variant);
         } else if (stack.is(ModItems.MISSILE_BURST.get())) {
             variant = MissileEntity.Variant.BURST;
             missile = new MissileEntity(ModEntityTypes.MISSILE_BURST.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_INFERNO.get())) {
+            variant = MissileEntity.Variant.INFERNO;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_INFERNO.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_RAIN.get())) {
+            variant = MissileEntity.Variant.RAIN;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_RAIN.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_DRILL.get())) {
+            variant = MissileEntity.Variant.DRILL;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_DRILL.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_STEALTH.get())) {
+            variant = MissileEntity.Variant.STEALTH;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_STEALTH.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_EMP.get())) {
+            variant = MissileEntity.Variant.EMP;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_EMP.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_MICRO.get())) {
+            variant = MissileEntity.Variant.MICRO;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_MICRO.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_SCHRABIDIUM.get())) {
+            variant = MissileEntity.Variant.SCHRABIDIUM;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_SCHRABIDIUM.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_BHOLE.get())) {
+            variant = MissileEntity.Variant.BHOLE;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_BHOLE.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_TAINT.get())) {
+            variant = MissileEntity.Variant.TAINT;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_TAINT.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_NUCLEAR.get())) {
+            variant = MissileEntity.Variant.NUCLEAR;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_NUCLEAR.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_NUCLEAR_CLUSTER.get())) {
+            variant = MissileEntity.Variant.MIRV;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_NUCLEAR_CLUSTER.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_VOLCANO.get())) {
+            variant = MissileEntity.Variant.VOLCANO;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_VOLCANO.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_DOOMSDAY.get())) {
+            variant = MissileEntity.Variant.DOOMSDAY;
+            missile = new MissileEntity(ModEntityTypes.MISSILE_DOOMSDAY.get(), level, variant);
+        } else if (stack.is(ModItems.MISSILE_ANTI_BALLISTIC.get())) {
+            AntiBallisticMissileEntity abm = new AntiBallisticMissileEntity(ModEntityTypes.MISSILE_ANTI_BALLISTIC.get(), level);
+            abm.setTrackingTarget(targetEntity);
+            missile = abm;
         } else {
             return null;
         }
-        missile.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + 1.0D,
-                worldPosition.getZ() + 0.5D, targetX, targetZ);
+        if (missile instanceof MissileEntity ballistic) {
+            ballistic.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + 1.0D,
+                    worldPosition.getZ() + 0.5D, targetX, targetZ);
+        } else if (missile instanceof AntiBallisticMissileEntity abm) {
+            abm.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + 1.0D,
+                    worldPosition.getZ() + 0.5D);
+        }
         return missile;
     }
 
-    private void finalizeLaunch(ServerLevel level, MissileEntity missile) {
+    private void finalizeLaunch(ServerLevel level, Entity missile) {
         level.addFreshEntity(missile);
         level.playSound(null, worldPosition, ModSounds.WEAPON_MISSILE_TAKE_OFF.get(), SoundSource.PLAYERS, 2.0F, 1.0F);
         energy.setPower(Math.max(0L, energy.getPower() - LAUNCH_POWER));
@@ -314,7 +381,22 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || stack.is(ModItems.MISSILE_INCENDIARY_STRONG.get())
                 || stack.is(ModItems.MISSILE_CLUSTER_STRONG.get())
                 || stack.is(ModItems.MISSILE_BUSTER_STRONG.get())
-                || stack.is(ModItems.MISSILE_BURST.get());
+                || stack.is(ModItems.MISSILE_EMP_STRONG.get())
+                || stack.is(ModItems.MISSILE_BURST.get())
+                || stack.is(ModItems.MISSILE_INFERNO.get())
+                || stack.is(ModItems.MISSILE_RAIN.get())
+                || stack.is(ModItems.MISSILE_DRILL.get())
+                || stack.is(ModItems.MISSILE_STEALTH.get())
+                || stack.is(ModItems.MISSILE_EMP.get())
+                || stack.is(ModItems.MISSILE_MICRO.get())
+                || stack.is(ModItems.MISSILE_SCHRABIDIUM.get())
+                || stack.is(ModItems.MISSILE_BHOLE.get())
+                || stack.is(ModItems.MISSILE_TAINT.get())
+                || stack.is(ModItems.MISSILE_NUCLEAR.get())
+                || stack.is(ModItems.MISSILE_NUCLEAR_CLUSTER.get())
+                || stack.is(ModItems.MISSILE_VOLCANO.get())
+                || stack.is(ModItems.MISSILE_DOOMSDAY.get())
+                || stack.is(ModItems.MISSILE_ANTI_BALLISTIC.get());
     }
 
     public boolean isMissileValid() {

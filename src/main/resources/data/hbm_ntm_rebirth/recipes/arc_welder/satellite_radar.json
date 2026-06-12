@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.satelliteradar",
+  "duration": 600,
+  "power": 10000,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:sat_base" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:sat_head_radar" }, "count": 1 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:sat_radar" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

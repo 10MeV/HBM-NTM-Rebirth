@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.satellitelaser",
+  "duration": 600,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:shells/steel" }, "count": 6, "legacy_ore": "shellSteel" },
+    { "ingredient": { "tag": "forge:cast_plates/copper" }, "count": 24, "legacy_ore": "plateCastCopper" },
+    { "ingredient": { "tag": "forge:ingots/any_hardplastic" }, "count": 16, "legacy_ore": "ingotAnyHardplastic" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_controller_advanced" }, "count": 8, "legacy_id": "hbm:circuit", "legacy_meta": 14 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_capacitor_board" }, "count": 16, "legacy_id": "hbm:circuit", "legacy_meta": 10 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:crystal_diamond" }, "count": 8 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:glass_quartz" }, "count": 8 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:sat_head_laser" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

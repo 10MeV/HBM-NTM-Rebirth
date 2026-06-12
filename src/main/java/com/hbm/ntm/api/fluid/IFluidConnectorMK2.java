@@ -2,7 +2,6 @@ package com.hbm.ntm.api.fluid;
 
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnector;
-import com.hbm.ntm.fluid.HbmFluids;
 import net.minecraft.core.Direction;
 
 /**
@@ -11,7 +10,7 @@ import net.minecraft.core.Direction;
 @Deprecated(forRemoval = false)
 public interface IFluidConnectorMK2 extends HbmFluidConnector {
     default boolean canConnect(FluidType type, Direction side) {
-        return type != null && type != HbmFluids.NONE && side != null;
+        return side != null;
     }
 
     @Override

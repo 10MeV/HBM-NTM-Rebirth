@@ -14,9 +14,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class RadioAutocalRenderer implements BlockEntityRenderer<RadioAutocalBlockEntity> {
-    private static final ResourceLocation TEXTURE =
+    static final ResourceLocation TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/autocal.png");
-    private static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(
+    static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(
             new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/autocal.obj"), TEXTURE).noSmooth().asVBO();
 
     public RadioAutocalRenderer(BlockEntityRendererProvider.Context context) {

@@ -23,10 +23,12 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public class AnnihilatorSavedData extends SavedData {
     public static final String DATA_NAME = "annihilator";
@@ -43,6 +45,7 @@ public class AnnihilatorSavedData extends SavedData {
 
     private final Map<String, AnnihilatorPool> pools = new HashMap<>();
     private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
+    private List<PoolLoadDiagnostics> poolLoadDiagnostics = List.of();
 
     public AnnihilatorSavedData() {
         setDirty();
@@ -51,25 +54,53 @@ public class AnnihilatorSavedData extends SavedData {
     public static AnnihilatorSavedData load(CompoundTag tag) {
         AnnihilatorSavedData data = new AnnihilatorSavedData();
         data.pools.clear();
+        boolean hasPoolsTag = tag.contains(TAG_POOLS, Tag.TAG_LIST);
         ListTag pools = tag.getList(TAG_POOLS, Tag.TAG_COMPOUND);
+        int poolsLoaded = 0;
+        int missingPoolNames = 0;
+        int missingPoolTags = 0;
+        int duplicatePoolNames = 0;
         int entriesRead = 0;
         int entriesLoaded = 0;
         int invalidKeys = 0;
         int invalidAmounts = 0;
         int duplicateKeys = 0;
+        Set<String> seenPoolNames = new HashSet<>();
+        List<PoolLoadDiagnostics> poolDiagnostics = new ArrayList<>();
         for (int i = 0; i < pools.size(); i++) {
             CompoundTag poolTag = pools.getCompound(i);
+            boolean hasPoolName = poolTag.contains(TAG_POOL_NAME, Tag.TAG_STRING)
+                    && !poolTag.getString(TAG_POOL_NAME).isBlank();
+            boolean hasPoolList = poolTag.contains(TAG_POOL, Tag.TAG_LIST);
+            if (!hasPoolName) {
+                missingPoolNames++;
+            }
+            if (!hasPoolList) {
+                missingPoolTags++;
+            }
+            String poolName = poolTag.getString(TAG_POOL_NAME);
+            boolean duplicatePoolName = !seenPoolNames.add(poolName);
+            if (duplicatePoolName) {
+                duplicatePoolNames++;
+            }
             AnnihilatorPool pool = new AnnihilatorPool();
-            PoolLoadDiagnostics poolDiagnostics = pool.deserialize(poolTag.getList(TAG_POOL, Tag.TAG_COMPOUND));
-            entriesRead += poolDiagnostics.entriesRead();
-            entriesLoaded += poolDiagnostics.entriesLoaded();
-            invalidKeys += poolDiagnostics.invalidKeys();
-            invalidAmounts += poolDiagnostics.invalidAmounts();
-            duplicateKeys += poolDiagnostics.duplicateKeys();
-            data.pools.put(poolTag.getString(TAG_POOL_NAME), pool);
+            PoolEntryLoadDiagnostics entryDiagnostics = pool.deserialize(poolTag.getList(TAG_POOL, Tag.TAG_COMPOUND));
+            entriesRead += entryDiagnostics.entriesRead();
+            entriesLoaded += entryDiagnostics.entriesLoaded();
+            invalidKeys += entryDiagnostics.invalidKeys();
+            invalidAmounts += entryDiagnostics.invalidAmounts();
+            duplicateKeys += entryDiagnostics.duplicateKeys();
+            poolDiagnostics.add(new PoolLoadDiagnostics(i, poolName, hasPoolName, hasPoolList, duplicatePoolName,
+                    entryDiagnostics.entriesRead(), entryDiagnostics.entriesLoaded(),
+                    entryDiagnostics.invalidKeys(), entryDiagnostics.invalidAmounts(),
+                    entryDiagnostics.duplicateKeys()));
+            data.pools.put(poolName, pool);
+            poolsLoaded++;
         }
-        data.loadDiagnostics = new LoadDiagnostics(pools.size(), entriesRead, entriesLoaded,
-                invalidKeys, invalidAmounts, duplicateKeys);
+        data.loadDiagnostics = new LoadDiagnostics(hasPoolsTag, pools.size(), poolsLoaded, missingPoolNames,
+                missingPoolTags, duplicatePoolNames, entriesRead, entriesLoaded, invalidKeys, invalidAmounts,
+                duplicateKeys);
+        data.poolLoadDiagnostics = List.copyOf(poolDiagnostics);
         data.setDirty(false);
         return data;
     }
@@ -337,6 +368,16 @@ public class AnnihilatorSavedData extends SavedData {
         return loadDiagnostics;
     }
 
+    public List<PoolLoadDiagnostics> poolLoadDiagnosticsSnapshot() {
+        return poolLoadDiagnostics;
+    }
+
+    public List<PoolLoadDiagnostics> problemPoolLoadDiagnosticsSnapshot() {
+        return poolLoadDiagnostics.stream()
+                .filter(diagnostics -> !diagnostics.clean())
+                .toList();
+    }
+
     public void markDirty() {
         setDirty();
     }
@@ -423,7 +464,7 @@ public class AnnihilatorSavedData extends SavedData {
             return list;
         }
 
-        private PoolLoadDiagnostics deserialize(ListTag list) {
+        private PoolEntryLoadDiagnostics deserialize(ListTag list) {
             int entriesLoaded = 0;
             int invalidKeys = 0;
             int invalidAmounts = 0;
@@ -446,7 +487,8 @@ public class AnnihilatorSavedData extends SavedData {
                 items.put(key.get(), amount.get());
                 entriesLoaded++;
             }
-            return new PoolLoadDiagnostics(list.size(), entriesLoaded, invalidKeys, invalidAmounts, duplicateKeys);
+            return new PoolEntryLoadDiagnostics(list.size(), entriesLoaded, invalidKeys, invalidAmounts,
+                    duplicateKeys);
         }
 
         private AnnihilatorPool copy() {
@@ -583,22 +625,48 @@ public class AnnihilatorSavedData extends SavedData {
     public record IncrementResult(BigInteger previous, BigInteger current) {
     }
 
-    public record LoadDiagnostics(int poolsRead, int entriesRead, int entriesLoaded,
+    public record LoadDiagnostics(boolean hasPoolsTag, int poolsRead, int poolsLoaded,
+                                  int missingPoolNames, int missingPoolTags, int duplicatePoolNames,
+                                  int entriesRead, int entriesLoaded,
                                   int invalidKeys, int invalidAmounts, int duplicateKeys) {
         public static LoadDiagnostics empty() {
-            return new LoadDiagnostics(0, 0, 0, 0, 0, 0);
+            return new LoadDiagnostics(false, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         }
 
         public boolean clean() {
-            return invalidKeys == 0 && invalidAmounts == 0 && duplicateKeys == 0;
+            return hasPoolsTag
+                    && missingPoolNames == 0
+                    && missingPoolTags == 0
+                    && duplicatePoolNames == 0
+                    && invalidKeys == 0
+                    && invalidAmounts == 0
+                    && duplicateKeys == 0;
         }
 
         public int problemCount() {
-            return invalidKeys + invalidAmounts + duplicateKeys;
+            return (hasPoolsTag ? 0 : 1)
+                    + missingPoolNames
+                    + missingPoolTags
+                    + duplicatePoolNames
+                    + invalidKeys
+                    + invalidAmounts
+                    + duplicateKeys;
         }
 
         public List<String> issues() {
             List<String> issues = new ArrayList<>();
+            if (!hasPoolsTag) {
+                issues.add("missing_pools");
+            }
+            if (missingPoolNames > 0) {
+                issues.add("missing_pool_names=" + missingPoolNames);
+            }
+            if (missingPoolTags > 0) {
+                issues.add("missing_pool_tags=" + missingPoolTags);
+            }
+            if (duplicatePoolNames > 0) {
+                issues.add("duplicate_pool_names=" + duplicatePoolNames);
+            }
             if (invalidKeys > 0) {
                 issues.add("invalid_keys=" + invalidKeys);
             }
@@ -612,7 +680,12 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public String summary() {
-            return "poolsRead=" + poolsRead
+            return "hasPools=" + hasPoolsTag
+                    + " poolsRead=" + poolsRead
+                    + " poolsLoaded=" + poolsLoaded
+                    + " missingPoolNames=" + missingPoolNames
+                    + " missingPoolTags=" + missingPoolTags
+                    + " duplicatePoolNames=" + duplicatePoolNames
                     + " entriesRead=" + entriesRead
                     + " entriesLoaded=" + entriesLoaded
                     + " invalidKeys=" + invalidKeys
@@ -624,8 +697,73 @@ public class AnnihilatorSavedData extends SavedData {
         }
     }
 
-    private record PoolLoadDiagnostics(int entriesRead, int entriesLoaded,
-                                       int invalidKeys, int invalidAmounts, int duplicateKeys) {
+    private record PoolEntryLoadDiagnostics(int entriesRead, int entriesLoaded,
+                                            int invalidKeys, int invalidAmounts, int duplicateKeys) {
+    }
+
+    public record PoolLoadDiagnostics(int poolIndex, String poolName, boolean hasPoolName, boolean hasPoolTag,
+                                      boolean duplicatePoolName, int entriesRead, int entriesLoaded,
+                                      int invalidKeys, int invalidAmounts, int duplicateKeys) {
+        public PoolLoadDiagnostics {
+            poolName = poolName == null ? "" : poolName;
+        }
+
+        public boolean clean() {
+            return hasPoolName
+                    && hasPoolTag
+                    && !duplicatePoolName
+                    && invalidKeys == 0
+                    && invalidAmounts == 0
+                    && duplicateKeys == 0;
+        }
+
+        public int problemCount() {
+            return (hasPoolName ? 0 : 1)
+                    + (hasPoolTag ? 0 : 1)
+                    + (duplicatePoolName ? 1 : 0)
+                    + invalidKeys
+                    + invalidAmounts
+                    + duplicateKeys;
+        }
+
+        public List<String> issues() {
+            List<String> issues = new ArrayList<>();
+            if (!hasPoolName) {
+                issues.add("missing_pool_name");
+            }
+            if (!hasPoolTag) {
+                issues.add("missing_pool");
+            }
+            if (duplicatePoolName) {
+                issues.add("duplicate_pool_name");
+            }
+            if (invalidKeys > 0) {
+                issues.add("invalid_keys=" + invalidKeys);
+            }
+            if (invalidAmounts > 0) {
+                issues.add("invalid_amounts=" + invalidAmounts);
+            }
+            if (duplicateKeys > 0) {
+                issues.add("duplicate_keys=" + duplicateKeys);
+            }
+            return List.copyOf(issues);
+        }
+
+        public String summary() {
+            return "poolIndex=" + poolIndex
+                    + " poolName=" + poolName
+                    + " hasPoolName=" + hasPoolName
+                    + " hasPoolTag=" + hasPoolTag
+                    + " duplicatePoolName=" + duplicatePoolName
+                    + " entriesRead=" + entriesRead
+                    + " entriesLoaded=" + entriesLoaded
+                    + " invalidKeys=" + invalidKeys
+                    + " invalidAmounts=" + invalidAmounts
+                    + " duplicateKeys=" + duplicateKeys
+                    + " problems=" + problemCount()
+                    + " issues=" + issues()
+                    + " clean=" + clean();
+        }
     }
 
     public record PoolPushResult(IncrementResult increment, boolean paidOut, String payoutStatus,

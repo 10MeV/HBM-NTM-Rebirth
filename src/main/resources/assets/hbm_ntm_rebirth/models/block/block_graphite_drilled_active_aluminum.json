@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "hbm_ntm_rebirth:block/block_graphite_drilled_aluminum",
+    "particle": "hbm_ntm_rebirth:block/block_graphite",
+    "side": "hbm_ntm_rebirth:block/block_graphite"
+  }
+}

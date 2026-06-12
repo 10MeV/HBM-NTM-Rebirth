@@ -11,16 +11,18 @@ import com.hbm.ntm.neutron.PileNeutronColumn;
 import com.hbm.ntm.neutron.PileNeutronDetectorState;
 import com.hbm.ntm.neutron.PileNeutronPassthroughReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class PileNeutronDetectorBlockEntity extends BlockEntity
+public class PileNeutronDetectorBlockEntity extends PileGraphiteBlockEntity
         implements PileNeutronColumn, PileNeutronPassthroughReceiver {
     private final PileNeutronDetectorState detectorState = new PileNeutronDetectorState();
 
@@ -72,7 +74,20 @@ public class PileNeutronDetectorBlockEntity extends BlockEntity
                 }
             }
         }
+        for (PileGraphiteBlockEntityPlanner.SoundPlan sound : plan.sounds()) {
+            playPlannedSound(level, sound);
+        }
         blockEntity.setChanged();
+    }
+
+    private static void playPlannedSound(Level level, PileGraphiteBlockEntityPlanner.SoundPlan sound) {
+        SoundEvent soundEvent = switch (sound.legacySoundId()) {
+            case "hbm:item.techBleep" -> ModSounds.ITEM_TECH_BLEEP.get();
+            default -> null;
+        };
+        if (soundEvent != null) {
+            level.playSound(null, sound.pos(), soundEvent, SoundSource.BLOCKS, sound.volume(), sound.pitch());
+        }
     }
 
     @Override

@@ -479,7 +479,8 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         changed |= runAfterburner();
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
         changed |= oldPower != energy.getPower();
-        changed |= HbmFluidItemTransfer.processTransfers(items, fluidTransfers());
+        changed |= processFluidItemTransfers(items, HbmFluidItemTransfer.unloadTransfers(
+                SLOT_OIL_CONTAINER, SLOT_OIL_CONTAINER_OUTPUT, 2, oilTank, gasTank));
         if (oilTank.getFill() > 0) {
             tryProvideFluidToPorts(oilTank.getTankType(), oilTank.getPressure(), this);
         }
@@ -502,15 +503,6 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         changed |= updatePumpjackSpeed();
         return changed;
-    }
-
-    private List<HbmFluidItemTransfer.TankSlotTransfer> fluidTransfers() {
-        List<HbmFluidItemTransfer.TankSlotTransfer> transfers = new ArrayList<>();
-        transfers.add(HbmFluidItemTransfer.TankSlotTransfer.unload(
-                SLOT_OIL_CONTAINER, SLOT_OIL_CONTAINER_OUTPUT, oilTank));
-        transfers.add(HbmFluidItemTransfer.TankSlotTransfer.unload(
-                SLOT_GAS_CONTAINER, SLOT_GAS_CONTAINER_OUTPUT, gasTank));
-        return transfers;
     }
 
     private boolean updateUpgrades() {

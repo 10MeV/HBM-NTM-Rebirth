@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "tag": "forge:crystals/phosphorus" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_fire", "count": 8 }
+}

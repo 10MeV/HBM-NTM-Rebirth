@@ -50,9 +50,7 @@ public class MovingPackageEntity extends MovingConveyorObjectEntity implements I
     public InteractionResult interact(Player player, InteractionHand hand) {
         if (!level().isClientSide && !isRemoved()) {
             for (ItemStack stack : contents) {
-                if (!stack.isEmpty() && !player.getInventory().add(stack.copy())) {
-                    level().addFreshEntity(new ItemEntity(level(), getX(), getY() + 0.125D, getZ(), stack.copy()));
-                }
+                HbmItemStackUtil.giveOrDrop(player, stack, level(), getX(), getY() + 0.125D, getZ());
             }
             discard();
         }

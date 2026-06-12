@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "combat",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:ammo_arty_he" },
+    { "item": "hbm_ntm_rebirth:boy_bullet" },
+    { "item": "hbm_ntm_rebirth:boy_target" },
+    { "item": "hbm_ntm_rebirth:boy_shielding" },
+    { "item": "hbm_ntm_rebirth:circuit_controller" },
+    { "item": "hbm_ntm_rebirth:ducttape" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:ammo_arty_nuke" }
+}

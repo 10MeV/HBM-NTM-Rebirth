@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "tag": "forge:crystals/trixite" } },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_plutonium", "count": 2 },
+    { "item": "hbm_ntm_rebirth:powder_cobalt", "count": 3 },
+    { "item": "hbm_ntm_rebirth:powder_niobium", "count": 2 },
+    { "item": "hbm_ntm_rebirth:powder_nitan_mix" }
+  ]
+}

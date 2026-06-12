@@ -3,6 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.entity.RadarEntry;
 import com.hbm.ntm.api.entity.RadarScreenDisplayProfile;
+import com.hbm.ntm.api.entity.RadarScreenSnapshot;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.RadarScreenBlockEntity;
@@ -60,8 +61,9 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
         ObjRenderContext overlayContext = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
                 .fullBright()
                 .withTranslucencyNoDepthWrite();
-        if (screen.isLinked()) {
-            renderLinkedOverlay(screen, partialTick, overlayContext);
+        RadarScreenSnapshot snapshot = screen.getSnapshot();
+        if (snapshot.linked()) {
+            renderLinkedOverlay(screen, snapshot, partialTick, overlayContext);
         } else {
             renderNoiseOverlay(screen, overlayContext);
         }
@@ -69,16 +71,17 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
         poseStack.popPose();
     }
 
-    private static void renderLinkedOverlay(RadarScreenBlockEntity screen, float partialTick,
+    private static void renderLinkedOverlay(RadarScreenBlockEntity screen, RadarScreenSnapshot snapshot,
+            float partialTick,
             ObjRenderContext context) {
         Level level = screen.getLevel();
         long gameTime = level == null ? 0L : level.getGameTime();
         LegacyRadarDisplayRenderer.renderWorldLinkedSweep(context,
-                LegacyRadarDisplayRenderer.worldScanOffset(gameTime, partialTick));
+                RadarScreenDisplayProfile.worldSweepOffset(gameTime, partialTick));
 
-        BlockPos ref = screen.getRefPos();
-        for (RadarEntry entry : screen.getEntries()) {
-            LegacyRadarDisplayRenderer.renderWorldBlip(RADAR_GUI_TEXTURE, context, entry, ref, screen.getRange());
+        BlockPos ref = snapshot.refPos();
+        for (RadarEntry entry : snapshot.entries()) {
+            LegacyRadarDisplayRenderer.renderWorldBlip(RADAR_GUI_TEXTURE, context, entry, ref, snapshot.range());
         }
     }
 
@@ -86,6 +89,7 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
         Level level = screen.getLevel();
         long gameTime = level == null ? 0L : level.getGameTime();
         LegacyRadarDisplayRenderer.renderWorldNoise(RADAR_GUI_TEXTURE, context,
-                LegacyRadarDisplayRenderer.noiseV(gameTime * 31L + screen.getBlockPos().asLong()));
+                LegacyRadarDisplayRenderer.noiseV(
+                        RadarScreenDisplayProfile.worldNoiseSeed(gameTime, screen.getBlockPos())));
     }
 }

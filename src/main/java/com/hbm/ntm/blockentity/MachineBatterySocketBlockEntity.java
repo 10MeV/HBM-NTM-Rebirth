@@ -455,9 +455,6 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
 
     private void tickSelfChargingBattery() {
         if (!hasLoadedSelfChargingBattery()) {
-            damageTimer = 0;
-            damageTarget = 0;
-            scPowerMult = 1.0D;
             return;
         }
         if (damageTarget == 0) {
@@ -593,7 +590,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         }
         damageTimer = tag.getInt(TAG_DAMAGE_TIMER);
         damageTarget = tag.getInt(TAG_DAMAGE_TARGET);
-        scPowerMult = tag.contains(TAG_SC_POWER_MULT) ? tag.getDouble(TAG_SC_POWER_MULT) : 1.0D;
+        scPowerMult = tag.getDouble(TAG_SC_POWER_MULT);
         if (tag.contains(TAG_PRIORITY)) {
             socketEnergy.setPriority(readLegacyPriority(tag));
         }

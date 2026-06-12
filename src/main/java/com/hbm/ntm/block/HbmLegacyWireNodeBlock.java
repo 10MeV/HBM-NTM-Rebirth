@@ -2,14 +2,18 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.energy.HbmEnergyNodeHost;
 import com.hbm.ntm.energy.HbmLegacyWireNode;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.List;
 
 @SuppressWarnings("deprecation")
 public abstract class HbmLegacyWireNodeBlock extends BaseEntityBlock {
@@ -66,5 +70,14 @@ public abstract class HbmLegacyWireNodeBlock extends BaseEntityBlock {
         for (Direction direction : Direction.values()) {
             refreshNode(level, pos.relative(direction));
         }
+    }
+
+    public static void appendLegacyWireTooltip(List<Component> tooltip, String connectionType, int rangeMeters) {
+        tooltip.add(Component.literal("Connection Type: ")
+                .withStyle(ChatFormatting.GOLD)
+                .append(Component.literal(connectionType).withStyle(ChatFormatting.YELLOW)));
+        tooltip.add(Component.literal("Connection Range: ")
+                .withStyle(ChatFormatting.GOLD)
+                .append(Component.literal(rangeMeters + "m").withStyle(ChatFormatting.YELLOW)));
     }
 }

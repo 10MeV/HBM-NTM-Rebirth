@@ -77,6 +77,7 @@ public final class SpentCasingDefinition {
         straight().colors(COLOR_CASE_EQUESTRIAN).smokeDefaults().names("m44equestrianPip", "m44equestrianMn7");
         straight().colors(COLOR_CASE_BRASS).scale(2.0F, 2.0F, 1.5F).names("b75", "b75inc", "b75exp");
         straight().colors(0xCEB78E).name("35-800");
+        straight().colors(COLOR_CASE_BRASS).scale(1.5F).bounceMotion(1.0F, 0.5F).age(60).name("DGK");
 
         shotgun(0xB52B2B, COLOR_CASE_BRASS).scale(0.75F).names("12GA", "12GA_BP", "12GA_BP_MAGNUM", "12GA_BP_SLUG");
         shotgun(0x393939, COLOR_CASE_BRASS).scale(0.75F).name("12GA_SLUG");

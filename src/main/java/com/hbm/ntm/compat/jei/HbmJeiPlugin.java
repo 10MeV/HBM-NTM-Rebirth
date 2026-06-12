@@ -2,6 +2,15 @@ package com.hbm.ntm.compat.jei;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.config.HbmClientConfig;
+import com.hbm.ntm.energy.HbmBatteryItem;
+import com.hbm.ntm.item.ConveyorWandItem;
+import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.item.FluidIdentifierItem;
+import com.hbm.ntm.item.FluidPipeBlockItem;
+import com.hbm.ntm.item.HbmFluidContainerItem;
+import com.hbm.ntm.item.LegacyStateBlockItem;
+import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
+import com.hbm.ntm.item.TrinketBlockItem;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.ItemProcessingRecipe;
 import com.hbm.ntm.recipe.LegacyBlueprintPools;
@@ -10,20 +19,30 @@ import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.PressRecipe;
 import com.hbm.ntm.recipe.PyroOvenRecipe;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.satellite.SoyuzRocketItem;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.ingredients.subtypes.IIngredientSubtypeInterpreter;
+import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
+import mezz.jei.api.registration.ISubtypeRegistration;
 import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraftforge.registries.RegistryObject;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @JeiPlugin
 public final class HbmJeiPlugin implements IModPlugin {
@@ -69,6 +88,17 @@ public final class HbmJeiPlugin implements IModPlugin {
     @Override
     public ResourceLocation getPluginUid() {
         return new ResourceLocation(HbmNtm.MOD_ID, "jei_plugin");
+    }
+
+    @Override
+    public void registerItemSubtypes(ISubtypeRegistration registration) {
+        Set<Item> seen = new HashSet<>();
+        for (RegistryObject<Item> item : ModItems.ITEMS.getEntries()) {
+            registerHbmSubtype(registration, seen, item.get());
+        }
+        for (RegistryObject<? extends net.minecraft.world.level.block.Block> block : ModBlocks.BLOCKS.getEntries()) {
+            registerHbmSubtype(registration, seen, block.get().asItem());
+        }
     }
 
     @Override
@@ -186,5 +216,51 @@ public final class HbmJeiPlugin implements IModPlugin {
         return recipes.stream()
                 .sorted(java.util.Comparator.comparing(recipe -> recipe.getId().toString()))
                 .toList();
+    }
+
+    private static void registerHbmSubtype(ISubtypeRegistration registration, Set<Item> seen, Item item) {
+        if (!seen.add(item)) {
+            return;
+        }
+        if (item instanceof HbmFluidContainerItem container) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> fluidContainerSubtype(container, stack));
+        } else if (item instanceof HbmBatteryItem battery) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> batterySubtype(battery, stack));
+        } else if (item instanceof DepletedFuelItem) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> "damage=" + stack.getDamageValue());
+        } else if (item instanceof FluidIdentifierItem) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> "primary="
+                    + FluidIdentifierItem.getType(stack, true).getName());
+        } else if (item instanceof FluidPipeBlockItem) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> "fluid="
+                    + FluidPipeBlockItem.getFluidType(stack).getName());
+        } else if (item instanceof LegacyStateBlockItem stateItem) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> "variant=" + stateItem.getVariant(stack));
+        } else if (item instanceof LegacyStateMultiblockBlockItem stateItem) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> "variant=" + stateItem.getVariant(stack));
+        } else if (item instanceof TrinketBlockItem trinket) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> "variant=" + TrinketBlockItem.getVariant(stack));
+        } else if (item instanceof SoyuzRocketItem) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> "skin=" + SoyuzRocketItem.getSkin(stack));
+        } else if (item instanceof ConveyorWandItem) {
+            registration.registerSubtypeInterpreter(item, HbmJeiPlugin::conveyorWandSubtype);
+        }
+    }
+
+    private static String fluidContainerSubtype(HbmFluidContainerItem item, ItemStack stack) {
+        return "kind=" + item.getContainerKind().name()
+                + ";fluid=" + item.getFirstFluidType(stack).getName()
+                + ";amount=" + item.getFill(stack)
+                + ";pressure=" + item.getPressure(stack);
+    }
+
+    private static String batterySubtype(HbmBatteryItem item, ItemStack stack) {
+        return "charge=" + item.getCharge(stack) + ";max=" + item.getMaxCharge(stack);
+    }
+
+    private static String conveyorWandSubtype(ItemStack stack, UidContext context) {
+        CompoundTag tag = stack.getTag();
+        String type = tag == null || !tag.contains("Type") ? "REGULAR" : tag.getString("Type");
+        return "type=" + type;
     }
 }

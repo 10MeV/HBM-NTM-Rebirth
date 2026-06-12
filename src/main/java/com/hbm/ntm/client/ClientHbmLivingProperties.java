@@ -65,6 +65,10 @@ public final class ClientHbmLivingProperties {
         return ClientRadiationData.getBombTimer();
     }
 
+    public static int getTimer() {
+        return getBombTimer();
+    }
+
     public static int getContagion() {
         return ClientRadiationData.getContagion();
     }
@@ -93,6 +97,10 @@ public final class ClientHbmLivingProperties {
         return ClientRadiationData.getContaminationEffects().stream()
                 .map(effect -> new ContaminationEffectData(effect.maxRad(), effect.maxTime(), effect.time(), effect.ignoreArmor()))
                 .toList();
+    }
+
+    public static List<ContaminationEffectData> getCont() {
+        return getContaminationEffects();
     }
 
     public static int getContaminationCount() {

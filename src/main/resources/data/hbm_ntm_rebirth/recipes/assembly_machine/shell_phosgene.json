@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.shellphosgene",
+  "duration": 100,
+  "power": 1000,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:ammo_arty" }, "count": 1 },
+    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 1, "legacy_ore": "ingotAnyPlastic" }
+  ],
+  "input_fluids": [
+    { "fluid": "hbm_ntm_rebirth:phosgene", "amount": 4000 }
+  ],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:ammo_arty_phosgene" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

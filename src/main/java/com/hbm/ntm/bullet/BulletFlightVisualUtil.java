@@ -1,14 +1,19 @@
 package com.hbm.ntm.bullet;
 
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public final class BulletFlightVisualUtil {
     public static int spawnClientTickVisuals(BulletConfig config, Level level, Vec3 previousPosition,
             Vec3 currentPosition, Vec3 motion, int ticksExisted, RandomSource random) {
         return spawnBlackPowderBurst(config, level, currentPosition, motion, ticksExisted, random)
+                + spawnFlamethrowerTrail(config, level, currentPosition)
+                + spawnFireExtinguisherTrail(config, level, currentPosition, motion, random)
                 + spawnVanillaTrail(config, level, previousPosition, currentPosition);
     }
 
@@ -70,6 +75,56 @@ public final class BulletFlightVisualUtil {
                     ParticleUtil.VANILLA_FLAME, 0.0D, 0.0D, 0.0D);
         }
         return 5;
+    }
+
+    public static int spawnFlamethrowerTrail(BulletConfig config, Level level, Vec3 position) {
+        if (config == null || level == null || !level.isClientSide() || position == null) {
+            return 0;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.BALEFIRE_VISUAL)) {
+            ParticleUtil.spawnLegacyFlameEffectClient(level, position.x, position.y - 0.125D, position.z,
+                    ParticleUtil.FLAMETHROWER_META_BALEFIRE);
+            return 1;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.FLAME_VISUAL)) {
+            ParticleUtil.spawnLegacyFlameEffectClient(level, position.x, position.y - 0.125D, position.z,
+                    ParticleUtil.FLAMETHROWER_META_FIRE);
+            return 1;
+        }
+        return 0;
+    }
+
+    public static int spawnFireExtinguisherTrail(BulletConfig config, Level level, Vec3 position, Vec3 motion,
+            RandomSource random) {
+        if (config == null || level == null || !level.isClientSide() || position == null || motion == null) {
+            return 0;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.FIRE_EXTINGUISH_WATER_VISUAL)) {
+            spawnFireExtinguisherDust(level, position, motion, random, Blocks.WATER.defaultBlockState(), 0.05D);
+            return 1;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.FIRE_EXTINGUISH_FOAM_VISUAL)) {
+            spawnFireExtinguisherDust(level, position, motion, random,
+                    ModBlocks.legacyBlock("block_foam").get().defaultBlockState(),
+                    0.1D);
+            return 1;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.FIRE_EXTINGUISH_SAND_VISUAL)) {
+            spawnFireExtinguisherDust(level, position, motion, random, ModBlocks.SAND_BORON.get().defaultBlockState(),
+                    0.1D);
+            return 1;
+        }
+        return 0;
+    }
+
+    private static void spawnFireExtinguisherDust(Level level, Vec3 position, Vec3 motion, RandomSource random,
+            BlockState state, double deviation) {
+        RandomSource roll = random == null ? level.random : random;
+        ParticleUtil.spawnVanillaExtBlockDust(level, position.x, position.y, position.z,
+                motion.x + roll.nextGaussian() * deviation,
+                motion.y - 0.2D + roll.nextGaussian() * deviation,
+                motion.z + roll.nextGaussian() * deviation,
+                state);
     }
 
     private BulletFlightVisualUtil() {

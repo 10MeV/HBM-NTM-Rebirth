@@ -130,7 +130,7 @@ public final class PileGraphiteBlockEntityPlanner {
         }
         return switch (tool) {
             case HAND_DRILL -> planHandDrillTool(pos, blockKind, meta, side, fuelState);
-            case SCREWDRIVER -> planScrewdriverTool(pos, blockKind, meta, side, playerSneaking);
+            case SCREWDRIVER -> planScrewdriverTool(pos, blockKind, meta, side, playerSneaking, detectorState);
             case DEFUSER -> planDefuserTool(pos, playerSneaking, detectorState);
         };
     }
@@ -169,13 +169,18 @@ public final class PileGraphiteBlockEntityPlanner {
             PileGraphiteInsertionPlanner.GraphiteBlockKind blockKind,
             int meta,
             Direction side,
-            boolean playerSneaking) {
+            boolean playerSneaking,
+            PileNeutronDetectorState detectorState) {
         if (blockKind == null) {
             return ToolUseExecutionPlan.empty();
         }
+        DiagnosticSnapshot diagnosticSnapshot =
+                blockKind == PileGraphiteInsertionPlanner.GraphiteBlockKind.DETECTOR && playerSneaking
+                        ? diagnosticSnapshot(blockKind, null, detectorState, meta)
+                        : null;
         return new ToolUseExecutionPlan(
                 PileGraphiteInteractionPlanner.planScrewdriver(pos, blockKind, meta, side, playerSneaking),
-                null,
+                diagnosticSnapshot,
                 null);
     }
 

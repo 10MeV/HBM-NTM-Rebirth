@@ -47,6 +47,7 @@ public final class HbmLegacyLootUtil {
     private static final Map<String, String> ITEM_POOL_LOOT_NAMES = Map.ofEntries(
             entry(LOOT_BONES, HbmItemPoolIds.POOL_PILE_BONES),
             entry(LOOT_GLYPHID_HIVE, HbmItemPoolIds.POOL_PILE_HIVE),
+            entry(LOOT_CAPSTASH, HbmItemPoolIds.POOL_PILE_CAPS),
             entry(LOOT_SHIT, HbmItemPoolIds.POOL_PILE_OF_GARBAGE),
             entry(LOOT_MECHANICAL, HbmItemPoolIds.POOL_PILE_MECHANICAL),
             entry(LOOT_GEAR, HbmItemPoolIds.POOL_PILE_MECHANICAL)
@@ -82,12 +83,32 @@ public final class HbmLegacyLootUtil {
 
         RandomSource roll = random == null ? RandomSource.create() : random;
         Vec3 lootOrigin = origin == null ? Vec3.ZERO : origin;
+        if (LOOT_CAPSTASH.equals(lootName)) {
+            return rollCapStash(level, poolId.get(), lootOrigin, roll);
+        }
+
         int limit = mappedRollCount(lootName, roll);
         List<PlacedLootStack> stacks = new ArrayList<>();
         for (int i = 0; i < limit; i++) {
             ItemStack stack = HbmItemPoolRegistry.getStack(level, poolId.get(), lootOrigin);
             if (!stack.isEmpty()) {
                 stacks.add(withDeviation(stack, roll.nextDouble() - 0.5D, i * 0.03125D, roll.nextDouble() - 0.5D, roll));
+            }
+        }
+        return List.copyOf(stacks);
+    }
+
+    private static List<PlacedLootStack> rollCapStash(ServerLevel level, String poolId, Vec3 origin, RandomSource random) {
+        List<PlacedLootStack> stacks = new ArrayList<>();
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                int count = random.nextInt(5) + 3;
+                for (int y = 0; y < count; y++) {
+                    ItemStack stack = HbmItemPoolRegistry.getStack(level, poolId, origin);
+                    if (!stack.isEmpty()) {
+                        stacks.add(withDeviation(stack, x * 0.3125D, y * 0.03125D, z * 0.3125D, random));
+                    }
+                }
             }
         }
         return List.copyOf(stacks);

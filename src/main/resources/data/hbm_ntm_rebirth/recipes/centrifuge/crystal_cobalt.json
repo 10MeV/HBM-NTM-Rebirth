@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "tag": "forge:crystals/cobalt" } },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_cobalt", "count": 2 },
+    { "item": "hbm_ntm_rebirth:powder_iron", "count": 3 },
+    { "item": "hbm_ntm_rebirth:powder_copper", "count": 3 },
+    { "item": "hbm_ntm_rebirth:powder_lithium_tiny" }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "tag": "forge:crystals/sulfur" } },
+  "output": { "item": "hbm_ntm_rebirth:sulfur", "count": 8 }
+}

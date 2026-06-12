@@ -2,12 +2,14 @@ package com.hbm.ntm.bullet;
 
 import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.util.RayTraceUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -46,6 +48,10 @@ public final class BulletUpdateBehaviorUtil {
             return new KnownUpdateResult(updatedMotion, currentHomingTarget, false, false, brokenInPath,
                     acceleration, acceleration != currentAcceleration);
         }
+        if (applyFireExtinguisherWaterUpdate(config, projectile)) {
+            return new KnownUpdateResult(updatedMotion, currentHomingTarget, false, false, brokenInPath,
+                    acceleration, acceleration != currentAcceleration, true);
+        }
         if (config.hasBehavior(BulletBehaviorTag.UFO_HOMING)) {
             HomingResult homing = updateHoming(projectile, shooter, updatedMotion, currentHomingTarget,
                     BulletHomingUtil.UFO_RANGE, BulletHomingUtil.UFO_ANGLE);
@@ -68,6 +74,18 @@ public final class BulletUpdateBehaviorUtil {
 
         return new KnownUpdateResult(updatedMotion, currentHomingTarget, false, false, brokenInPath,
                 acceleration, acceleration != currentAcceleration);
+    }
+
+    private static boolean applyFireExtinguisherWaterUpdate(BulletConfig config, Entity projectile) {
+        if (!config.hasBehavior(BulletBehaviorTag.FIRE_EXTINGUISH_WATER)
+                || projectile == null || projectile.level().isClientSide()) {
+            return false;
+        }
+        BlockPos pos = BlockPos.containing(projectile.position());
+        if (!projectile.level().getBlockState(pos).is(ModBlocks.VOLCANIC_LAVA_BLOCK.get())) {
+            return false;
+        }
+        return projectile.level().setBlock(pos, Blocks.OBSIDIAN.defaultBlockState(), 3);
     }
 
     public static HomingResult updateHoming(Entity projectile, @Nullable Entity shooter, Vec3 motion,
@@ -180,12 +198,15 @@ public final class BulletUpdateBehaviorUtil {
     }
 
     public record KnownUpdateResult(Vec3 motion, @Nullable LivingEntity homingTarget, boolean acquiredHomingTarget,
-            boolean triggeredUfoBlast, int coilBlocksBroken, float acceleration, boolean accelerated) {
+            boolean triggeredUfoBlast, int coilBlocksBroken, float acceleration, boolean accelerated,
+            boolean discardProjectile) {
         public static final KnownUpdateResult NONE = new KnownUpdateResult(Vec3.ZERO, null, false, false, 0,
                 0.0F, false);
 
-        public boolean discardProjectile() {
-            return triggeredUfoBlast;
+        public KnownUpdateResult(Vec3 motion, @Nullable LivingEntity homingTarget, boolean acquiredHomingTarget,
+                boolean triggeredUfoBlast, int coilBlocksBroken, float acceleration, boolean accelerated) {
+            this(motion, homingTarget, acquiredHomingTarget, triggeredUfoBlast, coilBlocksBroken, acceleration,
+                    accelerated, triggeredUfoBlast);
         }
     }
 

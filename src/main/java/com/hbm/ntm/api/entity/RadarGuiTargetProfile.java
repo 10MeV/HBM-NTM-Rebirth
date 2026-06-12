@@ -33,6 +33,16 @@ public final class RadarGuiTargetProfile {
         return Target.position(x, z);
     }
 
+    public static RadarLaunchCommand launchCommand(List<RadarEntry> entries, BlockPos radarPos, int range,
+            int leftPos, int topPos, int mouseX, int mouseY, int linkSlot) {
+        Target entryTarget = hoveredEntry(entries, radarPos, range, leftPos, topPos, mouseX, mouseY);
+        if (entryTarget != null && entryTarget.hasEntry()) {
+            return RadarLaunchCommand.entity(linkSlot, entryTarget.entry().entityId());
+        }
+        Target positionTarget = positionTarget(radarPos, range, leftPos, topPos, mouseX, mouseY);
+        return RadarLaunchCommand.position(linkSlot, positionTarget.x(), positionTarget.z());
+    }
+
     public record Target(@Nullable RadarEntry entry, int x, int z, int screenX, int screenZ) {
         public static Target entry(RadarEntry entry, int screenX, int screenZ) {
             return new Target(entry, entry.pos().getX(), entry.pos().getZ(), screenX, screenZ);

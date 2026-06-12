@@ -97,7 +97,7 @@ public class ExplosionBalefire {
         int y = level.getHeight(Heightmap.Types.WORLD_SURFACE, worldX, worldZ);
         int maxDepth = (int) (10 + radius * 0.25D);
         int depthOffset = (int) ((maxDepth * distance / (double) radius) + (Math.sin(distance * 0.15D + 2.0D) * 2.0D));
-        int depth = Math.max(y - depthOffset, level.getMinBuildHeight());
+        int depth = Math.max(y - depthOffset, 0);
 
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         while (y > depth) {
@@ -118,7 +118,7 @@ public class ExplosionBalefire {
             }
         }
 
-        for (int i = depth; i > depth - 5 && i >= level.getMinBuildHeight(); i--) {
+        for (int i = depth; i > depth - 5 && i >= 0; i--) {
             cursor.set(worldX, i, worldZ);
             if (level.getBlockState(cursor).is(Blocks.STONE)) {
                 level.setBlock(cursor, ModBlocks.SELLAFIELD_SLAKED.get().defaultBlockState(), 3);

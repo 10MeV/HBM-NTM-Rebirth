@@ -393,6 +393,18 @@ public final class ArmorRegistry {
         return ArmorUtil.getWornGasMaskFilter(entity);
     }
 
+    public static boolean hasWornGasMask(LivingEntity entity) {
+        return ArmorUtil.hasWornGasMask(entity);
+    }
+
+    public static boolean hasWornGasMaskFilter(LivingEntity entity) {
+        return ArmorUtil.hasWornGasMaskFilter(entity);
+    }
+
+    public static boolean canInstallWornGasMaskFilter(LivingEntity entity, ItemStack filter) {
+        return ArmorUtil.canInstallWornGasMaskFilter(entity, filter);
+    }
+
     public static boolean installWornGasMaskFilter(LivingEntity entity, ItemStack filter) {
         return ArmorUtil.installWornGasMaskFilter(entity, filter);
     }
@@ -406,8 +418,16 @@ public final class ArmorRegistry {
         return ArmorUtil.removeWornGasMaskFilter(entity);
     }
 
+    public static boolean removeWornGasMaskFilterToInventory(Player player) {
+        return ArmorUtil.removeWornGasMaskFilterToInventory(player);
+    }
+
     public static boolean removeGasMaskFilterToInventory(ItemStack mask, Player player) {
         return ArmorUtil.removeGasMaskFilterToInventory(mask, player);
+    }
+
+    public static ItemStack removeGasMaskFilterRecursively(ItemStack mask) {
+        return ArmorUtil.removeGasMaskFilterRecursively(mask);
     }
 
     public static ItemStack getGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
@@ -416,6 +436,18 @@ public final class ArmorRegistry {
 
     public static ItemStack getGasMaskFilter(ItemStack mask) {
         return ArmorUtil.getGasMaskFilter(mask);
+    }
+
+    public static boolean hasGasMaskFilter(ItemStack mask) {
+        return ArmorUtil.hasGasMaskFilter(mask);
+    }
+
+    public static boolean hasGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
+        return ArmorUtil.hasGasMaskFilterRecursively(mask, entity);
+    }
+
+    public static boolean canInstallGasMaskFilter(ItemStack maskStack, LivingEntity entity, ItemStack filter) {
+        return ArmorUtil.canInstallGasMaskFilter(maskStack, entity, filter);
     }
 
     public static void installGasMaskFilter(ItemStack mask, ItemStack filter) {

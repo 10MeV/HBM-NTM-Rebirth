@@ -5,10 +5,12 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFillableItemCapabilityProvider;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.util.HbmTextUtil;
+import java.util.Arrays;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -20,7 +22,8 @@ import org.jetbrains.annotations.Nullable;
 public class FsbFueledArmorItem extends FsbArmorItem implements IFillableItem {
     private static final String TAG_FUEL = "fuel";
 
-    private final FluidType fuelType;
+    private final List<FluidType> acceptedFuelTypes;
+    private final FluidType primaryFuelType;
     private final int maxFuel;
     private final int fillRate;
     private final int consumption;
@@ -29,12 +32,33 @@ public class FsbFueledArmorItem extends FsbArmorItem implements IFillableItem {
     public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, FluidType fuelType, int maxFuel, int fillRate, int consumption,
             int drain) {
+        this(material, type, properties, fullSetEffects, List.of(fuelType), maxFuel, fillRate, consumption, drain);
+    }
+
+    public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+            List<FullSetEffect> fullSetEffects, List<FluidType> acceptedFuelTypes, int maxFuel, int fillRate,
+            int consumption, int drain) {
         super(material, type, properties, fullSetEffects);
-        this.fuelType = fuelType == null ? HbmFluids.NONE : fuelType;
+        List<FluidType> fuels = acceptedFuelTypes == null ? List.of()
+                : acceptedFuelTypes.stream()
+                        .map(fluid -> fluid == null ? HbmFluids.NONE : fluid)
+                        .filter(fluid -> fluid != HbmFluids.NONE)
+                        .distinct()
+                        .toList();
+        this.acceptedFuelTypes = fuels.isEmpty() ? List.of(HbmFluids.NONE) : List.copyOf(fuels);
+        this.primaryFuelType = this.acceptedFuelTypes.get(0);
         this.maxFuel = Math.max(0, maxFuel);
         this.fillRate = Math.max(0, fillRate);
         this.consumption = Math.max(0, consumption);
         this.drain = Math.max(0, drain);
+    }
+
+    public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+            List<FullSetEffect> fullSetEffects, int maxFuel, int fillRate, int consumption, int drain,
+            FluidType... acceptedFuelTypes) {
+        this(material, type, properties, fullSetEffects,
+                acceptedFuelTypes == null ? List.of() : Arrays.asList(acceptedFuelTypes),
+                maxFuel, fillRate, consumption, drain);
     }
 
     @Override
@@ -43,8 +67,8 @@ public class FsbFueledArmorItem extends FsbArmorItem implements IFillableItem {
     }
 
     @Override
-    public void onArmorTick(ItemStack stack, Level level, Player player) {
-        super.onArmorTick(stack, level, player);
+    public void tickEquippedArmor(ItemStack stack, Level level, Player player) {
+        super.tickEquippedArmor(stack, level, player);
         if (!level.isClientSide && drain > 0 && !player.getAbilities().instabuild
                 && level.getGameTime() % 10L == 0L && hasFullSet(player)) {
             setFill(stack, Math.max(getFill(stack) - drain, 0));
@@ -90,7 +114,7 @@ public class FsbFueledArmorItem extends FsbArmorItem implements IFillableItem {
 
     @Override
     public boolean acceptsFluid(FluidType type, ItemStack stack) {
-        return type == fuelType && getFill(stack) < maxFuel;
+        return acceptedFuelTypes.contains(type) && getFill(stack) < maxFuel;
     }
 
     @Override
@@ -154,14 +178,26 @@ public class FsbFueledArmorItem extends FsbArmorItem implements IFillableItem {
     }
 
     public FluidType getFuelType() {
-        return fuelType;
+        return primaryFuelType;
+    }
+
+    public List<FluidType> getAcceptedFuelTypes() {
+        return acceptedFuelTypes;
     }
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(fuelType.getDisplayName().copy().append(Component.literal(": "
+        tooltip.add(fuelDisplayName().copy().append(Component.literal(": "
                 + HbmTextUtil.shortNumber(getFill(stack)) + " / " + HbmTextUtil.shortNumber(maxFuel)))
                 .withStyle(ChatFormatting.YELLOW));
         super.appendHoverText(stack, level, tooltip, flag);
+    }
+
+    private Component fuelDisplayName() {
+        MutableComponent displayName = Component.empty().append(primaryFuelType.getDisplayName());
+        for (int i = 1; i < acceptedFuelTypes.size(); i++) {
+            displayName.append(Component.literal(" / ")).append(acceptedFuelTypes.get(i).getDisplayName());
+        }
+        return displayName;
     }
 }

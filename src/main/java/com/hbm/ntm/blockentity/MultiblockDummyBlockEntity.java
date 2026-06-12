@@ -1,5 +1,8 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.redstoneoverradio.RORInfo;
+import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
+import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.util.HbmRegistryUtil;
 
 import com.hbm.ntm.energy.HbmEnergyConnector;
@@ -38,7 +41,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmFluidConnector, HbmFluidReceiver {
+public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmFluidConnector,
+        HbmFluidReceiver, RORValueProvider, RORInteractive {
     private static final String TAG_CORE_POS = "CorePos";
     private static final String TAG_LEGACY_TARGET_X = "tx";
     private static final String TAG_LEGACY_TARGET_Y = "ty";
@@ -283,6 +287,24 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         this.dropCoreOnRemoval = dropCoreOnRemoval;
     }
 
+    @Override
+    public String[] getFunctionInfo() {
+        Object target = rorTarget();
+        return target instanceof RORInfo info ? info.getFunctionInfo() : new String[0];
+    }
+
+    @Override
+    public String provideRORValue(String name) {
+        Object target = rorTarget();
+        return target instanceof RORValueProvider provider ? provider.provideRORValue(name) : null;
+    }
+
+    @Override
+    public String runRORFunction(String name, String[] params) {
+        Object target = rorTarget();
+        return target instanceof RORInteractive interactive ? interactive.runRORFunction(name, params) : null;
+    }
+
     public void destroyCore() {
         destroyCore(dropCoreOnRemoval);
     }
@@ -319,6 +341,19 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
             }
         }
         return coreEntity;
+    }
+
+    @Nullable
+    private Object rorTarget() {
+        if (!proxyMode.isProxy()) {
+            return null;
+        }
+        MultiblockHelper.CoreLookup core = validCore();
+        if (level == null || core == null) {
+            return null;
+        }
+        ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
+        return target == this ? null : target;
     }
 
     @Nullable

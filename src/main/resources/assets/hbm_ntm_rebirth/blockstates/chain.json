@@ -1,0 +1,14 @@
+{
+  "variants": {
+    "end=false,support=east": { "model": "hbm_ntm_rebirth:block/chain", "y": 270 },
+    "end=false,support=north": { "model": "hbm_ntm_rebirth:block/chain", "y": 180 },
+    "end=false,support=south": { "model": "hbm_ntm_rebirth:block/chain" },
+    "end=false,support=up": { "model": "hbm_ntm_rebirth:block/chain" },
+    "end=false,support=west": { "model": "hbm_ntm_rebirth:block/chain", "y": 90 },
+    "end=true,support=east": { "model": "hbm_ntm_rebirth:block/chain_end", "y": 270 },
+    "end=true,support=north": { "model": "hbm_ntm_rebirth:block/chain_end", "y": 180 },
+    "end=true,support=south": { "model": "hbm_ntm_rebirth:block/chain_end" },
+    "end=true,support=up": { "model": "hbm_ntm_rebirth:block/chain_end" },
+    "end=true,support=west": { "model": "hbm_ntm_rebirth:block/chain_end", "y": 90 }
+  }
+}

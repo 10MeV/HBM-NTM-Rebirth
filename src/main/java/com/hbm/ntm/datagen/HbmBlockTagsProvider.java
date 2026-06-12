@@ -23,6 +23,8 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
     protected void addTags(HolderLookup.Provider provider) {
         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
+        ModBlocks.TURRET_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
+        ModBlocks.TURRET_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         ModBlocks.HIDDEN_MACHINE_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.HIDDEN_MACHINE_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         ModBlocks.SATELLITE_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
@@ -31,21 +33,30 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.DUMMY_BLOCK.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_SCAFFOLD.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_SCAFFOLD.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_BEAM.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_BEAM.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.CHAIN.get());
+        ModBlocks.CAP_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
+        ModBlocks.CAP_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
                 ModBlocks.RAD_LAVA_BLOCK.get(), ModBlocks.SELLAFIELD.get(), ModBlocks.SELLAFIELD_SLAKED.get(),
                 ModBlocks.SELLAFIELD_BEDROCK.get(), ModBlocks.ORE_SELLAFIELD_DIAMOND.get(),
                 ModBlocks.ORE_SELLAFIELD_EMERALD.get(), ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED.get(),
                 ModBlocks.ORE_SELLAFIELD_SCHRABIDIUM.get(), ModBlocks.ORE_SELLAFIELD_RADGEM.get(),
-                ModBlocks.GLASS_TRINITITE.get());
+                ModBlocks.GLASS_TRINITITE.get(), ModBlocks.REINFORCED_LAMINATE.get(),
+                ModBlocks.REINFORCED_LAMINATE_PANE.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.PRIBRIS_DIGAMMA.get(), ModBlocks.VOLCANIC_LAVA_BLOCK.get(),
                 ModBlocks.RAD_LAVA_BLOCK.get(), ModBlocks.SELLAFIELD.get(), ModBlocks.SELLAFIELD_SLAKED.get(),
                 ModBlocks.SELLAFIELD_BEDROCK.get(), ModBlocks.ORE_SELLAFIELD_DIAMOND.get(),
                 ModBlocks.ORE_SELLAFIELD_EMERALD.get(), ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED.get(),
                 ModBlocks.ORE_SELLAFIELD_SCHRABIDIUM.get(), ModBlocks.ORE_SELLAFIELD_RADGEM.get(),
-                ModBlocks.GLASS_TRINITITE.get());
+                ModBlocks.GLASS_TRINITITE.get(), ModBlocks.REINFORCED_LAMINATE.get(),
+                ModBlocks.REINFORCED_LAMINATE_PANE.get());
         tag(BlockTags.MINEABLE_WITH_SHOVEL).add(ModBlocks.ASH_DIGAMMA.get(), ModBlocks.WASTE_TRINITITE.get(),
                 ModBlocks.WASTE_TRINITITE_RED.get(), ModBlocks.FROZEN_GRASS.get(), ModBlocks.FROZEN_DIRT.get(),
-                ModBlocks.TEKTITE.get(), ModBlocks.ORE_TEKTITE_OSMIRIDIUM.get());
+                ModBlocks.TEKTITE.get(), ModBlocks.ORE_TEKTITE_OSMIRIDIUM.get(), ModBlocks.MOON_TURF.get(),
+                ModBlocks.SAND_BORON.get(), ModBlocks.SAND_LEAD.get(), ModBlocks.SAND_URANIUM.get(),
+                ModBlocks.SAND_POLONIUM.get(), ModBlocks.SAND_QUARTZ.get());
         addLegacyMineable(BlockTags.MINEABLE_WITH_SHOVEL, "dirt_dead", "dirt_oily", "sand_dirty", "sand_dirty_red");
         addLegacyMineable(BlockTags.MINEABLE_WITH_PICKAXE, "stone_cracked",
                 "stone_depth", "ore_depth_cinnebar", "ore_depth_zirconium", "ore_depth_borax",
@@ -102,7 +113,9 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 Blocks.GRAY_STAINED_GLASS, Blocks.LIGHT_GRAY_STAINED_GLASS, Blocks.CYAN_STAINED_GLASS,
                 Blocks.PURPLE_STAINED_GLASS, Blocks.BLUE_STAINED_GLASS, Blocks.BROWN_STAINED_GLASS,
                 Blocks.GREEN_STAINED_GLASS, Blocks.RED_STAINED_GLASS, Blocks.BLACK_STAINED_GLASS,
-                ModBlocks.GLASS_BORON.get(), ModBlocks.GLASS_TRINITITE.get());
+                ModBlocks.GLASS_BORON.get(), ModBlocks.GLASS_LEAD.get(), ModBlocks.GLASS_QUARTZ.get(), ModBlocks.GLASS_TRINITITE.get(),
+                ModBlocks.REINFORCED_LAMINATE.get());
+        tag(forgeBlockTag("glass_panes")).add(ModBlocks.REINFORCED_LAMINATE_PANE.get());
 
         addLegacyForgeOreTag("uranium", "ore_uranium", "ore_uranium_scorched", "ore_nether_uranium", "ore_nether_uranium_scorched", "ore_gneiss_uranium", "ore_gneiss_uranium_scorched");
         addLegacyForgeOreTag("thorium", "ore_thorium");

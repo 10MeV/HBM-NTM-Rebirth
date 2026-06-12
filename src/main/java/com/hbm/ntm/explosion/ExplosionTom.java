@@ -98,9 +98,10 @@ public class ExplosionTom {
         double craterRing = craterBase + Math.pow(Math.E, -Math.pow(radialDistance - 200.0D, 2.0D) / 400.0D) * 13.0D;
         int craterFloor = (int) (craterRing + Math.pow(Math.E, -Math.pow(radialDistance - 500.0D, 2.0D) / 2000.0D) * 37.0D);
 
-        int y = level.getMaxBuildHeight() - 1;
+        int sampleTop = Math.min(256, level.getMaxBuildHeight() - 1);
+        int y = sampleTop;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        for (int sampleY = level.getMaxBuildHeight() - 1; sampleY > level.getMinBuildHeight(); sampleY--) {
+        for (int sampleY = sampleTop; sampleY > 0; sampleY--) {
             cursor.set(worldX, sampleY, worldZ);
             if (sampleY == craterFloor || !level.getBlockState(cursor).isAir()) {
                 y = sampleY;
@@ -111,7 +112,7 @@ public class ExplosionTom {
         int height = terrain - 14;
         int offset = 20;
         int threshold = (int) (radialDistance * (height + offset) / Math.max(1.0D, radius) + level.random.nextInt(2) - offset);
-        while (y > threshold && y > level.getMinBuildHeight()) {
+        while (y > threshold && y > 0) {
             cursor.set(worldX, y, worldZ);
             if (y <= craterFloor) {
                 level.setBlock(cursor, level.random.nextInt(200) == 0 ? tektiteOreState() : tektiteState(), 3);

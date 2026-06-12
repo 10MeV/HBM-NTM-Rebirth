@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.turrettauon",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:capacitor_niobium" }, "count": 1, "legacy_id": "hbm:battery_pack", "legacy_meta": 8 },
+    { "ingredient": { "tag": "forge:ingots/steel" }, "count": 16, "legacy_ore": "ingotSteel" },
+    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 4, "legacy_ore": "ingotAnyPlastic" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor" }, "count": 2 },
+    { "ingredient": { "tag": "forge:circuits/advanced" }, "count": 1, "legacy_ore": "circuitAdvanced" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor_desh" }, "count": 1 },
+    { "ingredient": { "tag": "forge:ingots/copper" }, "count": 32, "legacy_ore": "ingotCopper" },
+    { "ingredient": { "tag": "forge:gun_mechanisms/saturnite" }, "count": 3, "legacy_ore": "gunMechanismSaturnite" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:crt_display" }, "count": 1 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:turret_tauon" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

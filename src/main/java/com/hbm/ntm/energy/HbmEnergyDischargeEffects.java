@@ -1,18 +1,18 @@
 package com.hbm.ntm.energy;
 
-import com.hbm.ntm.damage.EntityDamageUtil;
-import com.hbm.ntm.radiation.ModDamageSources;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.bullet.BulletCollisionUtil;
+import com.hbm.ntm.bullet.BulletConfig;
+import com.hbm.ntm.bullet.BulletImpactUtil;
+import com.hbm.ntm.bullet.BulletLaunchUtil;
+import com.hbm.ntm.bullet.BulletProjectileHitUtil;
+import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
+import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Collections;
@@ -21,9 +21,7 @@ import java.util.Random;
 
 public final class HbmEnergyDischargeEffects {
     private static final double SELF_CHARGING_RANGE = 15.0D;
-    private static final double SELF_CHARGING_BLAST_RADIUS = 5.0D;
     private static final float SELF_CHARGING_BEAM_DAMAGE = 50.0F;
-    private static final float SELF_CHARGING_BLAST_DAMAGE = 20.0F;
 
     private HbmEnergyDischargeEffects() {
     }
@@ -39,7 +37,7 @@ public final class HbmEnergyDischargeEffects {
             if (origin.distanceToSqr(targetPoint) > SELF_CHARGING_RANGE * SELF_CHARGING_RANGE) {
                 continue;
             }
-            dischargeArc(level, origin, target, targetPoint);
+            dischargeArc(level, socketPos, origin, targetPoint);
         }
 
         Vec3 randomBlast = origin.add(
@@ -57,45 +55,47 @@ public final class HbmEnergyDischargeEffects {
                 socketPos.getZ() + 0.5D - facing.getStepZ() * 0.5D + side.getStepX() * 0.5D);
     }
 
-    private static void dischargeArc(ServerLevel level, Vec3 origin, LivingEntity target, Vec3 targetPoint) {
-        BlockHitResult hit = level.clip(new ClipContext(origin, targetPoint, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, target));
-        Vec3 impact = targetPoint;
-        if (hit.getType() == HitResult.Type.BLOCK && hit.getLocation().distanceToSqr(origin) + 0.25D < targetPoint.distanceToSqr(origin)) {
-            BlockPos hitPos = hit.getBlockPos();
-            if (!level.getBlockState(hitPos).isAir()) {
-                level.destroyBlock(hitPos, false);
-            }
-            impact = hit.getLocation();
-        } else {
-            EntityDamageUtil.attackEntityFromNt(target, ModDamageSources.electric(level), SELF_CHARGING_BEAM_DAMAGE);
+    private static void dischargeArc(ServerLevel level, BlockPos socketPos, Vec3 origin, Vec3 targetPoint) {
+        Vec3 delta = targetPoint.subtract(origin);
+        if (delta.lengthSqr() <= 1.0E-7D) {
+            return;
         }
 
-        spawnElectricArc(level, origin, impact);
-        explodeElectricDischarge(level, impact);
+        Vec3 normalized = delta.normalize();
+        double dominantAxis = Math.max(Math.abs(normalized.x), Math.max(Math.abs(normalized.y), Math.abs(normalized.z)));
+        if (dominantAxis <= 1.0E-7D) {
+            return;
+        }
+
+        Vec3 legacyOffset = normalized.scale(1.125D / dominantAxis);
+        Vec3 beamStart = new Vec3(socketPos.getX() + legacyOffset.x, socketPos.getY() + legacyOffset.y,
+                socketPos.getZ() + legacyOffset.z);
+        Vec3 actualDelta = targetPoint.subtract(beamStart);
+        if (actualDelta.lengthSqr() <= 1.0E-7D) {
+            return;
+        }
+
+        BulletConfig config = LegacySednaRuntimeBulletConfigs.BATTERY_SOCKET_DISCHARGE;
+        float throwForce = config.velocity() <= 0.0F
+                ? (float) actualDelta.length()
+                : (float) (actualDelta.length() / config.velocity());
+        BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedLaunchPlan(config, beamStart, actualDelta,
+                throwForce, 0.0F, level.random);
+        BulletProjectileEntity projectile = BulletProjectileEntity.fromLaunchPlan(level, plan, null);
+        projectile.overrideDamage = SELF_CHARGING_BEAM_DAMAGE;
+
+        BulletCollisionUtil.CollisionScan scan = BulletCollisionUtil.scan(config, level, projectile, null,
+                projectile.getBoundingBox(), beamStart, plan.motion(), 3);
+        BulletProjectileHitUtil.HitApplication hit = BulletProjectileHitUtil.applyScannedHits(config, level,
+                projectile, null, plan.motion(), scan, level.random, SELF_CHARGING_BEAM_DAMAGE, false, 3);
+        BulletProjectileEntity.spawnAll(level, hit.spawnRequests());
+
+        Vec3 impact = scan.blockHit() != null ? scan.blockHit().location() : targetPoint;
+        spawnElectricArc(level, beamStart, impact);
     }
 
     private static void explodeElectricDischarge(ServerLevel level, Vec3 position) {
-        AABB bounds = new AABB(position, position).inflate(SELF_CHARGING_BLAST_RADIUS);
-        for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, bounds, LivingEntity::isAlive)) {
-            double distance = Math.sqrt(entity.distanceToSqr(position));
-            if (distance > SELF_CHARGING_BLAST_RADIUS) {
-                continue;
-            }
-            float damage = (float) (SELF_CHARGING_BLAST_DAMAGE * (1.0D - distance / SELF_CHARGING_BLAST_RADIUS));
-            if (damage <= 0.0F) {
-                continue;
-            }
-            EntityDamageUtil.attackEntityFromNt(entity, ModDamageSources.electric(level), damage);
-            Vec3 push = entity.position().subtract(position);
-            if (push.lengthSqr() > 0.0001D) {
-                entity.push(push.x * 0.08D, 0.04D, push.z * 0.08D);
-            }
-        }
-
-        level.sendParticles(ParticleTypes.EXPLOSION, position.x, position.y, position.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-        level.sendParticles(ParticleTypes.END_ROD, position.x, position.y, position.z, 18, 0.6D, 0.6D, 0.6D, 0.08D);
-        level.playSound(null, position.x, position.y, position.z, ModSounds.ENTITY_UFO_BLAST.get(), SoundSource.BLOCKS,
-                5.0F, 0.9F + level.random.nextFloat() * 0.2F);
+        BulletImpactUtil.applyBatterySocketDischarge(level, position, null);
     }
 
     private static void spawnElectricArc(ServerLevel level, Vec3 start, Vec3 end) {

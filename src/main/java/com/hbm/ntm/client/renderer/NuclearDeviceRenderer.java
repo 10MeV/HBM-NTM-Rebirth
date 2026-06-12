@@ -67,7 +67,7 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
     }
 
     public static void renderCustomNuke(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjNukeModels.BOY.renderAll(ObjNukeModels.texture("custom_nuke"), poseStack, buffer, packedLight, packedOverlay);
+        ObjNukeModels.BOY.renderAll(ObjNukeModels.CUSTOM_NUKE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
     }
 
     public static void applyCustomNukeLegacyCommon(PoseStack poseStack) {

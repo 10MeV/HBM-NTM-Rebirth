@@ -8,10 +8,12 @@ import com.hbm.ntm.block.FluidPipeAnchorBlock;
 import com.hbm.ntm.block.FluidValveBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyChargeBlock;
+import com.hbm.ntm.block.LegacyChainBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
+import com.hbm.ntm.block.LegacyNtmGlassPaneBlock;
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
 import com.hbm.ntm.block.PoweredRedCableBlock;
 import com.hbm.ntm.block.RedCableGaugeBlock;
@@ -36,6 +38,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     @Override
     protected void registerStatesAndModels() {
         existingModelWithItemNoRotation(ModBlocks.MACHINE_PRESS, "machine_press");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_EPRESS, "machines/epress");
         difurnaceWithItem(ModBlocks.MACHINE_DIFURNACE_OFF);
         sidedCubeWithItem(ModBlocks.MACHINE_ELECTRIC_FURNACE_OFF,
                 "machine_electric_furnace_bottom",
@@ -124,7 +127,10 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "battery_side_alt",
                 "battery_side_alt");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_FENSU, "machines/fensu");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_BATTERY_REDD, "machines/fensu2");
         existingModelWithCustomItem(ModBlocks.MACHINE_BATTERY_SOCKET, "machines/battery_socket_socket");
+        storageCrateWithItem(ModBlocks.CRATE_IRON, "crate_iron");
+        storageCrateWithItem(ModBlocks.CRATE_STEEL, "crate_steel");
         existingModelWithCustomItem(ModBlocks.MACHINE_RADAR, "machines/radar");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADAR_LARGE, "machines/radar_large");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADAR_SCREEN, "machines/radar_screen");
@@ -193,6 +199,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.HEATER_OILBURNER, "machines/oilburner");
         visibleMachineWithItemRenderer(ModBlocks.HEATER_ELECTRIC, "machines/electric_heater");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CONDENSER_POWERED, "machines/condenser");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_COMPRESSOR_COMPACT, "machines/compressor_compact");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_LPW2, "reactors/lpw2");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ASSEMBLY_FACTORY, "machines/assembly_factory");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_PUREX, "machines/purex");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SILEX, "machines/silex");
@@ -231,7 +239,22 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.FRACTION_SPACER, "machines/fraction_spacer");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_INDUSTRIAL_TURBINE, "machines/industrial_turbine");
         translucentCubeWithItem(ModBlocks.GLASS_BORON, "glass_boron");
+        translucentCubeWithItem(ModBlocks.GLASS_LEAD, "glass_lead");
         translucentCubeWithItem(ModBlocks.GLASS_QUARTZ, "glass_quartz");
+        simpleCubeWithItem(ModBlocks.SAND_BORON, "sand_boron");
+        simpleCubeWithItem(ModBlocks.SAND_LEAD, "sand_lead");
+        simpleCubeWithItem(ModBlocks.SAND_URANIUM, "sand_uranium");
+        simpleCubeWithItem(ModBlocks.SAND_POLONIUM, "sand_polonium");
+        simpleCubeWithItem(ModBlocks.SAND_QUARTZ, "sand_quartz");
+        simpleCubeWithItem(ModBlocks.MOON_TURF, "moon_turf");
+        translucentCubeWithItem(ModBlocks.REINFORCED_LAMINATE, "reinforced_laminate");
+        reinforcedLaminatePaneWithItem();
+        capBlockWithItem(ModBlocks.BLOCK_CAP_NUKA, "block_cap_nuka");
+        capBlockWithItem(ModBlocks.BLOCK_CAP_QUANTUM, "block_cap_quantum");
+        capBlockWithItem(ModBlocks.BLOCK_CAP_SPARKLE, "block_cap_sparkle");
+        capBlockWithItem(ModBlocks.BLOCK_CAP_RAD, "block_cap_rad");
+        capBlockWithItem(ModBlocks.BLOCK_CAP_KORL, "block_cap_korl");
+        capBlockWithItem(ModBlocks.BLOCK_CAP_FRITZ, "block_cap_fritz");
         simpleCubeWithItem(ModBlocks.GAS_RADON, "gas_radon");
         simpleCubeWithItem(ModBlocks.GAS_RADON_DENSE, "gas_radon_dense");
         simpleCubeWithItem(ModBlocks.GAS_RADON_TOMB, "gas_radon_tomb");
@@ -248,6 +271,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         radAbsorberWithItem();
         simpleCubeWithItem(ModBlocks.DUMMY_BLOCK, "block_steel");
         steelScaffoldWithItem();
+        simpleCubeWithItem(ModBlocks.STEEL_BEAM, "steel_beam");
+        chainWithItem();
         wasteLogWithItem();
         simpleCubeWithItem(ModBlocks.WASTE_PLANKS, "waste_planks");
         leavesLayerWithItem();
@@ -268,6 +293,9 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk_debris_digamma");
         simpleCubeWithItem(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still");
         simpleCubeWithItem(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still");
+        volcanoCoreWithItem(ModBlocks.VOLCANO_CORE, "volcano_core");
+        volcanoCoreWithItem(ModBlocks.VOLCANO_RAD_CORE, "volcano_rad_core");
+        taintWithItem();
         translucentCubeBlockOnly(ModBlocks.MUD_BLOCK, "mud_still");
         frozenGrassWithItem();
         simpleCubeWithItem(ModBlocks.FROZEN_DIRT, "frozen_dirt");
@@ -303,6 +331,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         barrelWithItem(ModBlocks.RED_BARREL, "barrel_red");
         barrelWithItem(ModBlocks.PINK_BARREL, "barrel_pink");
         barrelWithItem(ModBlocks.LOX_BARREL, "barrel_lox");
+        barrelWithItem(ModBlocks.TAINT_BARREL, "barrel_taint");
         barrelWithItem(ModBlocks.YELLOW_BARREL, "barrel_yellow");
         barrelWithItem(ModBlocks.VITRIFIED_BARREL, "barrel_vitrified");
     }
@@ -332,6 +361,15 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void taintWithItem() {
+        ModelFile model = models().cubeAll("taint", modLoc("block/legacy_blocks/taint"));
+        getVariantBuilder(ModBlocks.TAINT.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .build());
+        simpleBlockItem(ModBlocks.TAINT.get(), model);
+    }
+
     private void legacyChargeWithItem(RegistryObject<Block> block, String textureName) {
         ModelFile marker = models().getBuilder(block.getId().getPath())
                 .texture("particle", modLoc("block/legacy_blocks/" + textureName));
@@ -344,6 +382,19 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         itemModels().getBuilder(block.getId().getPath())
                 .parent(new ModelFile.UncheckedModelFile(new ResourceLocation("minecraft", "item/generated")))
                 .texture("layer0", modLoc("block/legacy_blocks/" + textureName));
+    }
+
+    private void chainWithItem() {
+        ModelFile chain = models().cross("chain", modLoc("block/chain"))
+                .renderType("minecraft:cutout");
+        ModelFile chainEnd = models().cross("chain_end", modLoc("block/chain_end"))
+                .renderType("minecraft:cutout");
+        getVariantBuilder(ModBlocks.CHAIN.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(state.getValue(LegacyChainBlock.END) ? chainEnd : chain)
+                        .rotationY(rotationY(state.getValue(LegacyChainBlock.SUPPORT)))
+                        .build());
+        simpleBlockItem(ModBlocks.CHAIN.get(), chain);
     }
 
     private void plasticExplosiveWithItem(RegistryObject<Block> block, String textureName) {
@@ -594,6 +645,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void volcanoCoreWithItem(RegistryObject<Block> block, String textureName) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
+        getVariantBuilder(block.get()).forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
+        simpleBlockItem(block.get(), model);
+    }
+
     private void crossBlockOnly(RegistryObject<Block> block, String textureName) {
         String blockName = block.getId().getPath();
         ModelFile model = models().cross(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
@@ -609,11 +667,32 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void capBlockWithItem(RegistryObject<Block> block, String textureName) {
+        String blockName = block.getId().getPath();
+        ModelFile model = models().cubeBottomTop(blockName,
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName + "_top"),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName + "_top"));
+        simpleBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
     private void translucentCubeBlockOnly(RegistryObject<Block> block, String textureName) {
         String blockName = block.getId().getPath();
         ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
                 .renderType("minecraft:translucent");
         simpleBlock(block.get(), model);
+    }
+
+    private void reinforcedLaminatePaneWithItem() {
+        ResourceLocation pane = new ResourceLocation(HbmNtm.MOD_ID, "block/reinforced_laminate_pane");
+        ResourceLocation edge = new ResourceLocation(HbmNtm.MOD_ID, "block/reinforced_laminate_pane_edge");
+        paneBlockWithRenderType((LegacyNtmGlassPaneBlock) ModBlocks.REINFORCED_LAMINATE_PANE.get(),
+                pane, edge, "minecraft:translucent");
+        itemModels().withExistingParent("reinforced_laminate_pane",
+                        new ResourceLocation("minecraft", "item/generated"))
+                .texture("layer0", pane)
+                .renderType("minecraft:translucent");
     }
 
     private void wasteLogWithItem() {
@@ -1003,6 +1082,15 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .modelFile(model)
                 .rotationY(((int) state.getValue(ConveyorBlock.FACING).toYRot() + 180) % 360)
                 .build());
+        simpleBlockItem(block.get(), model);
+    }
+
+    private void storageCrateWithItem(RegistryObject<Block> block, String texturePrefix) {
+        ModelFile model = models().cubeBottomTop(block.getId().getPath(),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + texturePrefix + "_side"),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + texturePrefix + "_top"),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + texturePrefix + "_top"));
+        simpleBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
     }
 

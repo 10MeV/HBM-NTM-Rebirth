@@ -1,0 +1,30 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.satelliteasteroidminer",
+  "duration": 600,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/saturnite" }, "count": 24, "legacy_ore": "plateSaturnite" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor_desh" }, "count": 2 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:drill_titanium" }, "count": 2 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 12, "legacy_id": "hbm:circuit", "legacy_meta": 9 },
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:fluid_barrel_full" },
+      "count": 1,
+      "exact_stack": {
+        "item": "hbm_ntm_rebirth:fluid_barrel_full",
+        "nbt": "{hbm_fluid:\"KEROSENE\",hbm_fluid_amount:16000,hbm_fluid_pressure:0}"
+      }
+    },
+    { "ingredient": { "item": "hbm_ntm_rebirth:thruster_small" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:photo_panel" }, "count": 12 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:centrifuge_element" }, "count": 4 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:battery_lithium" }, "count": 1, "legacy_id": "hbm:battery_pack", "legacy_meta": 2 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:sat_miner" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

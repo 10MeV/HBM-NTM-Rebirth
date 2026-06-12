@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    {
+      "tag": "forge:sand"
+    },
+    {
+      "tag": "forge:sand"
+    },
+    {
+      "tag": "forge:dusts/quartz"
+    },
+    {
+      "tag": "forge:dusts/quartz"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:sand_quartz"
+  }
+}

@@ -6,6 +6,6 @@ import net.minecraft.world.level.BlockGetter;
 
 public interface HbmFluidConnectorBlock {
     default boolean canConnectFluid(BlockGetter level, BlockPos pos, FluidType type, Direction side) {
-        return type != null && type != HbmFluids.NONE && side != null;
+        return side != null;
     }
 }

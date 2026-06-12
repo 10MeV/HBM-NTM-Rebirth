@@ -27,7 +27,8 @@ public final class RORRemoteBridge {
         if (interactive == null || command == null || command.isEmpty()) {
             return null;
         }
-        return interactive.runRORFunction(ROR.function(RORInteractive.getCommand(command)), RORInteractive.getParams(command));
+        return interactive.runRORFunction(ROR.functionName(RORInteractive.getCommand(command)),
+                RORInteractive.getParams(command));
     }
 
     public static boolean shouldRunControllerCommand(RTTYSystem.RTTYChannel channel, long currentGameTime,

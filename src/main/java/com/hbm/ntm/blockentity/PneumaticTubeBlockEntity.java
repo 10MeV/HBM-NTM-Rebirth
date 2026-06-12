@@ -212,7 +212,7 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
             return false;
         }
         for (ItemStack filterStack : filter) {
-            if (!filterStack.isEmpty() && ItemStack.isSameItemSameTags(filterStack, stack)) {
+            if (!filterStack.isEmpty() && HbmItemStackUtil.doesStackDataMatch(filterStack, stack)) {
                 return true;
             }
         }

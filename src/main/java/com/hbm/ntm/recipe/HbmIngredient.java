@@ -5,7 +5,10 @@ import com.hbm.ntm.util.HbmRegistryUtil;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -26,7 +29,7 @@ import java.util.Optional;
 
 public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactStack,
         CompoundTag partialNbt, @Nullable ResourceLocation legacyId, int legacyMeta, boolean legacyWildcard,
-        @Nullable String legacyOreName) {
+        @Nullable String legacyOreName, @Nullable FluidType fluidContainerType, int fluidContainerAmount) {
     public static final int WILDCARD_META = Short.MAX_VALUE;
 
     public HbmIngredient {
@@ -34,35 +37,44 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         exactStack = exactStack == null ? ItemStack.EMPTY : exactStack.copy();
         partialNbt = partialNbt == null ? new CompoundTag() : partialNbt.copy();
         legacyOreName = legacyOreName == null || legacyOreName.isBlank() ? null : legacyOreName;
+        if (fluidContainerType == HbmFluids.NONE) {
+            fluidContainerType = null;
+        }
+        fluidContainerAmount = Math.max(0, fluidContainerAmount);
     }
 
     public static HbmIngredient of(ItemLike item, int count) {
-        return new HbmIngredient(Ingredient.of(item), count, ItemStack.EMPTY, new CompoundTag(), null, -1, false, null);
+        return new HbmIngredient(Ingredient.of(item), count, ItemStack.EMPTY, new CompoundTag(), null, -1, false, null,
+                null, 0);
     }
 
     public static HbmIngredient of(TagKey<Item> tag, int count) {
-        return new HbmIngredient(Ingredient.of(tag), count, ItemStack.EMPTY, new CompoundTag(), null, -1, false, null);
+        return new HbmIngredient(Ingredient.of(tag), count, ItemStack.EMPTY, new CompoundTag(), null, -1, false, null,
+                null, 0);
     }
 
     public static HbmIngredient legacyOre(String legacyOreName, int count) {
         return new HbmIngredient(Ingredient.of(LegacyOreDictionaryMappings.itemTag(legacyOreName)), count,
-                ItemStack.EMPTY, new CompoundTag(), null, -1, false, legacyOreName);
+                ItemStack.EMPTY, new CompoundTag(), null, -1, false, legacyOreName, null, 0);
     }
 
     public static HbmIngredient exact(ItemStack stack) {
-        return new HbmIngredient(Ingredient.of(stack), stack.getCount(), stack, new CompoundTag(), null, -1, false, null);
+        return new HbmIngredient(Ingredient.of(stack), stack.getCount(), stack, new CompoundTag(), null, -1, false,
+                null, null, 0);
     }
 
     public static HbmIngredient partialNbt(ItemStack stack) {
         CompoundTag tag = stack.hasTag() ? stack.getTag().copy() : new CompoundTag();
         ItemStack displayStack = stack.copy();
         displayStack.setTag(null);
-        return new HbmIngredient(Ingredient.of(displayStack), stack.getCount(), ItemStack.EMPTY, tag, null, -1, false, null);
+        return new HbmIngredient(Ingredient.of(displayStack), stack.getCount(), ItemStack.EMPTY, tag, null, -1,
+                false, null, null, 0);
     }
 
     public static HbmIngredient legacyMeta(ResourceLocation legacyId, int legacyMeta, int count) {
         RegistryObject<Item> item = LegacyMetaItemMappings.requireItem(legacyId, legacyMeta);
-        return new HbmIngredient(Ingredient.of(item.get()), count, ItemStack.EMPTY, new CompoundTag(), legacyId, legacyMeta, false, null);
+        return new HbmIngredient(Ingredient.of(item.get()), count, ItemStack.EMPTY, new CompoundTag(), legacyId,
+                legacyMeta, false, null, null, 0);
     }
 
     public static HbmIngredient legacyWildcard(ResourceLocation legacyId, int count) {
@@ -73,7 +85,17 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         ItemStack[] stacks = variants.stream()
                 .map(item -> new ItemStack(item.get()))
                 .toArray(ItemStack[]::new);
-        return new HbmIngredient(Ingredient.of(stacks), count, ItemStack.EMPTY, new CompoundTag(), legacyId, WILDCARD_META, true, null);
+        return new HbmIngredient(Ingredient.of(stacks), count, ItemStack.EMPTY, new CompoundTag(), legacyId,
+                WILDCARD_META, true, null, null, 0);
+    }
+
+    public static HbmIngredient fluidContainer(FluidType type, int amount, int count) {
+        List<ItemStack> stacks = fluidContainerStacks(type, amount, 1);
+        if (stacks.isEmpty()) {
+            throw new IllegalStateException("Missing fluid container mapping: " + type.getName() + " " + amount + "mB");
+        }
+        return new HbmIngredient(Ingredient.of(stacks.toArray(ItemStack[]::new)), count, ItemStack.EMPTY,
+                new CompoundTag(), null, -1, false, null, type, amount);
     }
 
     public boolean test(ItemStack stack) {
@@ -90,7 +112,11 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         if (!exactStack.isEmpty() && !ItemStack.isSameItemSameTags(exactStack, stack)) {
             return false;
         }
-        return partialNbt.isEmpty() || matchesPartialNbt(stack);
+        if (!partialNbt.isEmpty() && !matchesPartialNbt(stack)) {
+            return false;
+        }
+        return fluidContainerType == null || HbmFluidContainerRegistry.getFluidType(stack) == fluidContainerType
+                && HbmFluidContainerRegistry.getFluidContent(stack, fluidContainerType) == fluidContainerAmount;
     }
 
     public boolean hasExactStack() {
@@ -131,6 +157,9 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         if (hasExactStack()) {
             return List.of(exactStack());
         }
+        if (fluidContainerType != null) {
+            return fluidContainerStacks(fluidContainerType, fluidContainerAmount, count);
+        }
         return Arrays.stream(ingredient.getItems())
                 .map(stack -> {
                     ItemStack copy = stack.copy();
@@ -156,6 +185,9 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         if (legacyOreName != null) {
             return "legacy ore " + legacyOreName + " -> #" + LegacyOreDictionaryMappings.itemTagId(legacyOreName);
         }
+        if (fluidContainerType != null) {
+            return count + "x fluid container " + fluidContainerAmount + "mB " + fluidContainerType.getName();
+        }
         if (legacyId != null) {
             return legacyWildcard
                     ? "legacy wildcard " + legacyId
@@ -178,6 +210,9 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
     public String diagnosticKey() {
         if (legacyOreName != null) {
             return "legacy_ore:" + legacyOreName + "->" + LegacyOreDictionaryMappings.itemTagId(legacyOreName);
+        }
+        if (fluidContainerType != null) {
+            return "fluid_container:" + fluidContainerType.getName() + ":" + fluidContainerAmount;
         }
         if (legacyId != null) {
             return legacyWildcard
@@ -241,6 +276,12 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         if (legacyOreName != null) {
             entry.addProperty("legacy_ore", legacyOreName);
         }
+        if (fluidContainerType != null) {
+            JsonObject fluidContainer = new JsonObject();
+            fluidContainer.addProperty("fluid", new ResourceLocation(HbmNtm.MOD_ID, fluidContainerType.toPath()).toString());
+            fluidContainer.addProperty("amount", fluidContainerAmount);
+            entry.add("fluid_container", fluidContainer);
+        }
         return entry;
     }
 
@@ -266,8 +307,21 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
             throw new JsonSyntaxException("Missing legacy item mapping: " + legacyId + " meta " + legacyMeta);
         }
         String legacyOreName = object.has("legacy_ore") ? object.get("legacy_ore").getAsString() : null;
+        FluidType fluidContainerType = null;
+        int fluidContainerAmount = 0;
+        if (object.has("fluid_container")) {
+            JsonObject fluidContainer = object.getAsJsonObject("fluid_container");
+            String fluidName = fluidContainer.get("fluid").getAsString();
+            fluidContainerType = HbmFluids.fromName(fluidName.contains(":")
+                    ? new ResourceLocation(fluidName).getPath()
+                    : fluidName);
+            fluidContainerAmount = fluidContainer.get("amount").getAsInt();
+            if (fluidContainerType == null || fluidContainerType == HbmFluids.NONE || fluidContainerAmount <= 0) {
+                throw new JsonSyntaxException("Invalid HBM fluid container ingredient");
+            }
+        }
         return new HbmIngredient(ingredient, count, exactStack, partialNbt, legacyId, legacyMeta, legacyWildcard,
-                legacyOreName);
+                legacyOreName, fluidContainerType, fluidContainerAmount);
     }
 
     public void toNetwork(FriendlyByteBuf buffer) {
@@ -291,6 +345,11 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         if (legacyOreName != null) {
             buffer.writeUtf(legacyOreName);
         }
+        buffer.writeBoolean(fluidContainerType != null);
+        if (fluidContainerType != null) {
+            buffer.writeUtf(fluidContainerType.getName());
+            buffer.writeVarInt(fluidContainerAmount);
+        }
     }
 
     public static HbmIngredient fromNetwork(FriendlyByteBuf buffer) {
@@ -307,8 +366,14 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
             legacyWildcard = buffer.readBoolean();
         }
         String legacyOreName = buffer.readBoolean() ? buffer.readUtf() : null;
+        FluidType fluidContainerType = null;
+        int fluidContainerAmount = 0;
+        if (buffer.readBoolean()) {
+            fluidContainerType = HbmFluids.fromName(buffer.readUtf());
+            fluidContainerAmount = buffer.readVarInt();
+        }
         return new HbmIngredient(ingredient, count, exactStack, partialNbt, legacyId, legacyMeta, legacyWildcard,
-                legacyOreName);
+                legacyOreName, fluidContainerType, fluidContainerAmount);
     }
 
     private boolean matchesPartialNbt(ItemStack stack) {
@@ -365,6 +430,22 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
             object.addProperty("nbt", stack.getTag().toString());
         }
         return object;
+    }
+
+    private static List<ItemStack> fluidContainerStacks(FluidType type, int amount, int count) {
+        if (type == null || type == HbmFluids.NONE || amount <= 0) {
+            return List.of();
+        }
+        return HbmFluidContainerRegistry.getContainers(type).stream()
+                .filter(entry -> entry.content() == amount)
+                .map(HbmFluidContainerRegistry.ContainerEntry::copyFullContainer)
+                .filter(stack -> !stack.isEmpty())
+                .map(stack -> {
+                    ItemStack copy = stack.copy();
+                    copy.setCount(count);
+                    return copy;
+                })
+                .toList();
     }
 
     @Nullable

@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "tag": "forge:crystals/phosphorus" } },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_fire", "count": 3 },
+    { "item": "hbm_ntm_rebirth:powder_fire", "count": 3 },
+    { "item": "hbm_ntm_rebirth:ingot_phosphorus", "count": 2 },
+    { "item": "minecraft:blaze_powder", "count": 2 }
+  ]
+}

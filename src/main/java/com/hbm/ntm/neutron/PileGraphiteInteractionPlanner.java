@@ -201,7 +201,7 @@ public final class PileGraphiteInteractionPlanner {
         }
 
         public static LegacyItemStack aluminumShell() {
-            return new LegacyItemStack("shell", 1, "Mats.MAT_ALUMINIUM");
+            return new LegacyItemStack("shell_aluminium", 1, "");
         }
 
         public static LegacyItemStack insertedItem(PileGraphiteInsertionPlanner.InsertedItem insertedItem) {

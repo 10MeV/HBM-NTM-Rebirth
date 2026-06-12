@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.satellitemapper",
+  "duration": 600,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:shells/steel" }, "count": 3, "legacy_ore": "shellSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:plate_desh" }, "count": 4 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 4, "legacy_id": "hbm:circuit", "legacy_meta": 9 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:glass_quartz" }, "count": 8 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:sat_head_mapper" }
+  ],
+  "output_fluids": [],
+  "pools": []
+}

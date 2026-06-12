@@ -2,8 +2,10 @@ package com.hbm.ntm.item;
 
 import api.hbm.item.IGasMask;
 import com.hbm.ntm.api.item.HazardClass;
+import com.hbm.ntm.client.renderer.LegacyHeadArmorRenderer;
 import com.hbm.ntm.radiation.ArmorUtil;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -15,6 +17,7 @@ import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 
 public class GasMaskArmorItem extends ArmorItem implements IGasMask {
     private final List<HazardClass> blacklist;
@@ -36,23 +39,8 @@ public class GasMaskArmorItem extends ArmorItem implements IGasMask {
     }
 
     @Override
-    public ItemStack getFilter(ItemStack stack, LivingEntity entity) {
-        return ArmorUtil.getGasMaskFilter(stack);
-    }
-
-    @Override
-    public boolean isFilterApplicable(ItemStack stack, LivingEntity entity, ItemStack filter) {
-        return true;
-    }
-
-    @Override
-    public void installFilter(ItemStack stack, LivingEntity entity, ItemStack filter) {
-        ArmorUtil.installGasMaskFilter(stack, filter);
-    }
-
-    @Override
-    public void damageFilter(ItemStack stack, LivingEntity entity, int damage) {
-        ArmorUtil.damageGasMaskFilter(stack, damage);
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        LegacyHeadArmorRenderer.acceptExtensions(consumer);
     }
 
     @Override

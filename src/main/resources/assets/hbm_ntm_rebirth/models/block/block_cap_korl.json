@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "hbm_ntm_rebirth:block/block_cap_korl",
+    "bottom": "hbm_ntm_rebirth:block/block_cap_korl_top",
+    "top": "hbm_ntm_rebirth:block/block_cap_korl_top",
+    "particle": "hbm_ntm_rebirth:block/block_cap_korl"
+  }
+}

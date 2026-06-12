@@ -15,9 +15,11 @@ import com.hbm.ntm.neutron.PileNeutronBlockResult;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModSounds;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -103,12 +105,47 @@ public class PileGraphiteDrilledBaseBlock extends BaseEntityBlock
         }
         if (!level.isClientSide) {
             executeInteraction(level, player, plan.interaction());
+            sendDiagnostics(player, pos, plan.diagnosticSnapshot());
             if (plan.detectorThresholdPlan() != null
                     && level.getBlockEntity(pos) instanceof PileNeutronDetectorBlockEntity detector) {
                 detector.setMaxNeutrons(plan.detectorThresholdPlan().newThreshold());
             }
         }
         return true;
+    }
+
+    private static void sendDiagnostics(
+            Player player,
+            BlockPos pos,
+            @Nullable PileGraphiteBlockEntityPlanner.DiagnosticSnapshot snapshot) {
+        if (snapshot == null) {
+            return;
+        }
+        player.sendSystemMessage(Component.literal("CP1 FUEL ASSEMBLY "
+                + pos.getX() + " " + pos.getY() + " " + pos.getZ()).withStyle(ChatFormatting.GOLD));
+        if (snapshot.blockKind() == PileGraphiteInsertionPlanner.GraphiteBlockKind.FUEL) {
+            player.sendSystemMessage(Component.literal("HEAT: " + snapshot.heat() + "/" + snapshot.maxHeat())
+                    .withStyle(ChatFormatting.YELLOW));
+            player.sendSystemMessage(Component.literal("DEPLETION: "
+                    + snapshot.progress() + "/" + snapshot.maxProgress()).withStyle(ChatFormatting.YELLOW));
+            player.sendSystemMessage(Component.literal("FLUX: " + snapshot.lastNeutrons())
+                    .withStyle(ChatFormatting.YELLOW));
+            if (snapshot.metadataBit8Set()) {
+                player.sendSystemMessage(Component.literal("PU-239 RICH").withStyle(ChatFormatting.DARK_GREEN));
+            }
+            return;
+        }
+        if (snapshot.blockKind() == PileGraphiteInsertionPlanner.GraphiteBlockKind.LITHIUM) {
+            player.sendSystemMessage(Component.literal("DEPLETION: "
+                    + snapshot.progress() + "/" + snapshot.maxProgress()).withStyle(ChatFormatting.YELLOW));
+            player.sendSystemMessage(Component.literal("FLUX: " + snapshot.lastNeutrons())
+                    .withStyle(ChatFormatting.YELLOW));
+            return;
+        }
+        if (snapshot.blockKind() == PileGraphiteInsertionPlanner.GraphiteBlockKind.DETECTOR) {
+            player.sendSystemMessage(Component.literal("FLUX: "
+                    + snapshot.lastNeutrons() + "/" + snapshot.detectorMaxNeutrons()).withStyle(ChatFormatting.YELLOW));
+        }
     }
 
     @Override
@@ -341,6 +378,10 @@ public class PileGraphiteDrilledBaseBlock extends BaseEntityBlock
     private static PileGraphiteInteractionPlanner.HeldItem heldItem(ItemStack stack) {
         if (stack.isEmpty()) {
             return PileGraphiteInteractionPlanner.HeldItem.NONE;
+        }
+        RegistryObject<Item> aluminumShell = ModItems.legacyItem("shell_aluminium");
+        if (aluminumShell != null && aluminumShell.isPresent() && stack.is(aluminumShell.get())) {
+            return PileGraphiteInteractionPlanner.HeldItem.ALUMINUM_SHELL;
         }
         for (PileGraphiteInteractionPlanner.HeldItem held : PileGraphiteInteractionPlanner.HeldItem.values()) {
             if (held == PileGraphiteInteractionPlanner.HeldItem.NONE

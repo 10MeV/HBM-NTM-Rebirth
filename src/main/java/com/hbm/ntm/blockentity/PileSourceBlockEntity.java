@@ -8,10 +8,9 @@ import com.hbm.ntm.neutron.PileNeutronHandler;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class PileSourceBlockEntity extends BlockEntity implements PileNeutronColumn {
+public class PileSourceBlockEntity extends PileGraphiteBlockEntity implements PileNeutronColumn {
     public PileSourceBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.PILE_SOURCE.get(), pos, state);
     }

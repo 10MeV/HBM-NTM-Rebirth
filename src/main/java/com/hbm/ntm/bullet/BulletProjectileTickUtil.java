@@ -58,6 +58,9 @@ public final class BulletProjectileTickUtil {
         int preMoveParticles = BulletFlightVisualUtil.spawnBlackPowderBurst(config, level, position, motion,
                 ticksExisted, roll);
         int meteorFlameParticles = BulletFlightVisualUtil.spawnMeteorFlameParticles(config, level, position, roll);
+        int flameTrailParticles = BulletFlightVisualUtil.spawnFlamethrowerTrail(config, level, position);
+        int fireExtinguisherParticles = BulletFlightVisualUtil.spawnFireExtinguisherTrail(config, level, position,
+                motion, roll);
         List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests = new ArrayList<>(
                 BulletSpecialSpawnUtil.collectPreMoveSpawnRequests(config, projectile, shooter, ticksExisted, roll));
 
@@ -70,8 +73,9 @@ public final class BulletProjectileTickUtil {
         boolean discardProjectile = lifetime.shouldDiscard() || update.discardProjectile();
         if (lifetime.zeroMaxAge() || update.discardProjectile()) {
             return new TickResult(position, updatedMotion, update.homingTarget(),
-                    BulletProjectileHitUtil.HitApplication.NONE, update, tauTrail, preMoveParticles, 0, lifetime,
-                    true, false, meteorFlameParticles, Collections.unmodifiableList(spawnRequests),
+                    BulletProjectileHitUtil.HitApplication.NONE, update, tauTrail, preMoveParticles,
+                    flameTrailParticles + fireExtinguisherParticles, lifetime, true, false, meteorFlameParticles,
+                    Collections.unmodifiableList(spawnRequests),
                     updatedAcceleration);
         }
 
@@ -80,8 +84,14 @@ public final class BulletProjectileTickUtil {
                         ticksInAir, updatedAcceleration)
                 : BulletCollisionUtil.scan(config, level, projectile, shooter, projectileBounds, position,
                         updatedMotion, ticksInAir, updatedAcceleration);
+        boolean ni4niCoinInterrupt = config.hasBehavior(BulletBehaviorTag.NI4NI_COIN_RICOCHET)
+                && Ni4NiCoinRicochetUtil.interceptsBeforePrimary(level, projectile, scan);
         BulletProjectileHitUtil.HitApplication hit = projectile == null
                 ? BulletProjectileHitUtil.HitApplication.NONE
+                : ni4niCoinInterrupt
+                ? new BulletProjectileHitUtil.HitApplication(scan, Collections.emptyList(),
+                        BulletRicochetUtil.BlockHitResult.NONE, updatedMotion, false, false,
+                        Collections.emptyList(), 0.0F, false)
                 : BulletProjectileHitUtil.applyScannedHits(config, level, projectile, shooter, updatedMotion, scan,
                         roll, overrideDamage, inGround, ticksInAir);
         discardProjectile |= hit.discardProjectile();
@@ -94,7 +104,8 @@ public final class BulletProjectileTickUtil {
         Vec3 nextMotion = inWater
                 ? BulletKinematicsUtil.applyPostMoveWaterPhysics(config, postHitMotion)
                 : BulletKinematicsUtil.applyPostMovePhysics(config, postHitMotion);
-        int trailParticles = BulletFlightVisualUtil.spawnVanillaTrail(config, level,
+        int trailParticles = flameTrailParticles + fireExtinguisherParticles
+                + BulletFlightVisualUtil.spawnVanillaTrail(config, level,
                 previousPosition == null ? position : previousPosition, nextPosition);
 
         return new TickResult(nextPosition, nextMotion, update.homingTarget(), hit, update, tauTrail,

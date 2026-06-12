@@ -77,7 +77,7 @@ public class HbmNtm {
             ItemRadiationRegistry.registerDefaults();
             DamageResistanceConfig.LoadReport damageReport = DamageResistanceConfig.initialize(FMLPaths.CONFIGDIR.get());
             LOGGER.info("Loaded {}.", damageReport.summary());
-            damageReport.warnings().forEach(warning -> LOGGER.warn("Damage resistance config: missing migrated {}", warning));
+            damageReport.warnings().forEach(warning -> LOGGER.warn("Damage resistance config: {}", warning));
             LegacyFalloutConversions.LoadReport falloutReport = LegacyFalloutConversions.initialize(FMLPaths.CONFIGDIR.get());
             LOGGER.info("Loaded {}.", falloutReport.summary());
             falloutReport.warnings().forEach(warning -> LOGGER.warn("Fallout conversion config: {}", warning));

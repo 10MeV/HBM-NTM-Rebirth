@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:chain"
+    },
+    "I": {
+      "item": "hbm_ntm_rebirth:ingot_chainsteel"
+    }
+  },
+  "pattern": [
+    "CIC",
+    "C C",
+    "I I"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:shackles"
+  },
+  "show_notification": true
+}

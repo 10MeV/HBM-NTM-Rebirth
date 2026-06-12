@@ -87,9 +87,6 @@ public class LegacyWiringItem extends Item {
         if (!level.isClientSide || !(entity instanceof Player player) || !hasStoredPos(stack.getTag())) {
             return;
         }
-        if (!selected && player.getOffhandItem() != stack) {
-            return;
-        }
         CompoundTag tag = stack.getTag();
         double dx = entity.getX() - tag.getInt(TAG_X);
         double dy = entity.getY() - tag.getInt(TAG_Y);

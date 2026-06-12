@@ -22,6 +22,7 @@ public class LargeExplodeParticle extends TextureSheetParticle {
     private static final int SECONDARY_SPRITES = 8;
     private static final int LAST_SPRITE_INDEX = PRIMARY_SPRITES + SECONDARY_SPRITES - 1;
     private static final int HUGE_SEED_LIFETIME = 8;
+    private static final float LEGACY_MUZZLE_PRIMARY_SCALE = 0.5F;
     private static SpriteSet sharedSprites;
 
     private final SpriteSet sprites;
@@ -42,7 +43,7 @@ public class LargeExplodeParticle extends TextureSheetParticle {
         if (primary) {
             this.hasPhysics = false;
             this.lifetime = 6 + this.random.nextInt(4);
-            this.quadSize = 2.0F * (1.0F - scale * 0.5F);
+            this.quadSize = LEGACY_MUZZLE_PRIMARY_SCALE * scale;
             this.setPrimarySprite(0.0F);
         } else {
             this.gravity = -0.1F;
@@ -50,7 +51,7 @@ public class LargeExplodeParticle extends TextureSheetParticle {
             this.xd += (this.random.nextDouble() * 2.0D - 1.0D) * 0.05D;
             this.yd += (this.random.nextDouble() * 2.0D - 1.0D) * 0.05D;
             this.zd += (this.random.nextDouble() * 2.0D - 1.0D) * 0.05D;
-            this.quadSize = scale * (this.random.nextFloat() * this.random.nextFloat() * 6.0F + 1.0F);
+            this.quadSize = 0.1F * scale * (this.random.nextFloat() * this.random.nextFloat() * 6.0F + 1.0F);
             this.lifetime = (int) (16.0D / (this.random.nextDouble() * 0.8D + 0.2D)) + 2;
             this.setSecondarySprite();
         }

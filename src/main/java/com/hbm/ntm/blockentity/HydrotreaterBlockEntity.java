@@ -105,19 +105,17 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
 
     private boolean setInputTypeFromIdentifier() {
         ItemStackHandler items = getItems();
-        return items != null && HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
-                inputTank, level, worldPosition);
+        return items != null && setFluidTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER, inputTank);
     }
 
     private boolean processFluidContainers() {
         ItemStackHandler items = getItems();
-        return items != null && HbmFluidItemTransfer.processTransfers(items, List.of(
-                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank),
-                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_HYDROGEN_INPUT, SLOT_HYDROGEN_OUTPUT, hydrogenTank),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT_LEFT_CONTAINER,
-                        SLOT_OUTPUT_LEFT_CONTAINER_OUTPUT, desulfurizedOilTank),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT_RIGHT_CONTAINER,
-                        SLOT_OUTPUT_RIGHT_CONTAINER_OUTPUT, sourGasTank)));
+        return items != null && processFluidItemTransfers(items, HbmFluidItemTransfer.combineTransfers(
+                HbmFluidItemTransfer.loadTransfers(
+                        SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, 2, inputTank, hydrogenTank),
+                HbmFluidItemTransfer.unloadTransfers(
+                        SLOT_OUTPUT_LEFT_CONTAINER, SLOT_OUTPUT_LEFT_CONTAINER_OUTPUT, 2,
+                        desulfurizedOilTank, sourGasTank)));
     }
 
     private boolean reform() {

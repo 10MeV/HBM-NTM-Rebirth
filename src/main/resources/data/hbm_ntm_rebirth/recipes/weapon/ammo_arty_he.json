@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [
+    "TTT",
+    "TST",
+    "TTT"
+  ],
+  "key": {
+    "T": { "item": "hbm_ntm_rebirth:ball_tnt" },
+    "S": { "item": "hbm_ntm_rebirth:ammo_arty" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:ammo_arty_he" }
+}

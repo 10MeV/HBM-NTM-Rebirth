@@ -1,0 +1,80 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      }
+    },
+    {
+      "count": 36,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rocket_fuel"
+      }
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ball_tatb"
+      }
+    },
+    {
+      "count": 16,
+      "fluid_container": {
+        "amount": 1000,
+        "fluid": "hbm_ntm_rebirth:kerosene_reform"
+      },
+      "ingredient": [
+        {
+          "item": "hbm_ntm_rebirth:canister_full"
+        },
+        {
+          "item": "hbm_ntm_rebirth:fluid_tank_full"
+        },
+        {
+          "item": "hbm_ntm_rebirth:fluid_tank_lead_full"
+        }
+      ]
+    },
+    {
+      "count": 16,
+      "fluid_container": {
+        "amount": 1000,
+        "fluid": "hbm_ntm_rebirth:peroxide"
+      },
+      "ingredient": [
+        {
+          "item": "hbm_ntm_rebirth:fluid_tank_full"
+        },
+        {
+          "item": "hbm_ntm_rebirth:fluid_tank_lead_full"
+        }
+      ]
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:circuits/advanced"
+      }
+    }
+  ],
+  "internal_name": "ass.himarslargetb",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:ammo_himars_single_tb"
+    }
+  ],
+  "pools": [],
+  "power": 100
+}

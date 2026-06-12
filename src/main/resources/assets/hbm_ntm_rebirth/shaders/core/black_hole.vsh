@@ -2,10 +2,6 @@
 
 in vec3 Position;
 
-uniform mat4 ModelViewMat;
-uniform mat4 ProjMat;
-uniform vec2 ScreenSize;
-
 out vec2 texCoord;
 
 void main()

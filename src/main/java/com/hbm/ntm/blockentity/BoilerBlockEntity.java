@@ -2,6 +2,8 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
+import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.config.BoilerConfig;
@@ -27,7 +29,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidReceiver, HbmStandardFluidSender, HeatSource {
+public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements HbmStandardFluidReceiver, HbmStandardFluidSender, HeatSource, RORValueProvider {
     public static final int FEED_TANK = 0;
     public static final int STEAM_TANK = 1;
     private static final int FEED_TANK_CAPACITY = 16_000;
@@ -35,6 +37,7 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
 
     private final HbmFluidTank feedTank;
     private final HbmFluidTank steamTank;
+    private final RORDispatcher ror;
     private int heat;
 
     public BoilerBlockEntity(BlockPos pos, BlockState state) {
@@ -50,6 +53,10 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
         super(ModBlockEntities.BOILER.get(), pos, state, List.of(feedTank, steamTank));
         this.feedTank = feedTank;
         this.steamTank = steamTank;
+        this.ror = RORDispatcher.builder()
+                .value("input", () -> Integer.toString(this.feedTank.getFill()))
+                .value("output", () -> Integer.toString(this.steamTank.getFill()))
+                .build();
         this.feedTank.conform(new HbmFluidStack(HbmFluids.WATER, 0));
         this.steamTank.conform(new HbmFluidStack(HbmFluids.STEAM, 0));
     }
@@ -64,6 +71,16 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
 
     public int getHeat() {
         return heat;
+    }
+
+    @Override
+    public String[] getFunctionInfo() {
+        return ror.getFunctionInfo();
+    }
+
+    @Override
+    public String provideRORValue(String name) {
+        return ror.provideValue(name);
     }
 
     @Override

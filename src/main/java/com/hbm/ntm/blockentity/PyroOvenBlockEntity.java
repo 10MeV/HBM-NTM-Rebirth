@@ -71,6 +71,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_PROGRESSING = "isProgressing";
     private static final String TAG_VENTING = "isVenting";
     private static final String TAG_SMOKE = "smoke";
+    private static final String TAG_LEGACY_SMOKE = "smoke0";
     private static final long MAX_POWER = 10_000_000L;
     private static final int BASE_CONSUMPTION = 10_000;
     private static final int TANK_CAPACITY = 24_000;
@@ -302,6 +303,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putBoolean(TAG_PROGRESSING, progressing);
         tag.putBoolean(TAG_VENTING, venting);
         smokeTank.writeToNbt(tag, TAG_SMOKE);
+        smokeTank.writeToNbt(tag, TAG_LEGACY_SMOKE);
         tag.putInt("usage", usage);
         tag.putInt("speedLevel", speedLevel);
         tag.putInt("powerLevel", powerLevel);
@@ -320,6 +322,8 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
         venting = tag.getBoolean(TAG_VENTING);
         if (tag.contains(TAG_SMOKE)) {
             smokeTank.readFromNbt(tag, TAG_SMOKE);
+        } else if (tag.contains(TAG_LEGACY_SMOKE)) {
+            smokeTank.readFromNbt(tag, TAG_LEGACY_SMOKE);
         }
         usage = tag.contains("usage") ? tag.getInt("usage") : BASE_CONSUMPTION;
         speedLevel = tag.getInt("speedLevel");
@@ -463,7 +467,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private void polluteSoot(Level level) {
         venting = SmokeExhaustPollution.polluteBuffered(level, worldPosition, smokeTank,
-                PollutionType.SOOT, PollutionManager.SOOT_PER_SECOND);
+                PollutionType.SOOT, PollutionManager.SOOT_PER_SECOND, false);
     }
 
     private static int getConsumption(int speed, int powerSaving) {

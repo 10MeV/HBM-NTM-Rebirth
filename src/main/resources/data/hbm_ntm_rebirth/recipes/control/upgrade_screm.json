@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:crystal_xen"
+    },
+    "S": {
+      "tag": "forge:plates/steel"
+    },
+    "U": {
+      "item": "hbm_ntm_rebirth:upgrade_template"
+    }
+  },
+  "pattern": [
+    "SUS",
+    "SCS",
+    "SUS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:upgrade_screm"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [
+    " P ",
+    "NSN",
+    " P "
+  ],
+  "key": {
+    "P": { "item": "hbm_ntm_rebirth:nugget_pu239" },
+    "N": { "item": "hbm_ntm_rebirth:neutron_reflector" },
+    "S": { "item": "hbm_ntm_rebirth:ammo_arty" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:ammo_arty_mini_nuke" }
+}

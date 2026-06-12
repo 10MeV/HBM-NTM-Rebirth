@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -51,7 +52,7 @@ public abstract class Satellite {
     public static Satellite load(int legacyId, CompoundTag data) {
         Satellite satellite = create(legacyId);
         if (satellite != null) {
-            satellite.load(data);
+            satellite.readFromNBT(data);
         }
         return satellite;
     }
@@ -64,6 +65,18 @@ public abstract class Satellite {
         satellite.onOrbit(level, x, y, z);
         SatelliteSavedData.get(level).putSatellite(frequency, satellite);
         return true;
+    }
+
+    public static boolean orbit(ServerLevel level, LegacySatelliteType type, int frequency, double x, double y, double z) {
+        return type != null && orbit(level, type.legacyId(), frequency, x, y, z);
+    }
+
+    public static boolean orbit(ServerLevel level, Item item, int frequency, double x, double y, double z) {
+        return orbit(level, getLegacyIdFromItem(item), frequency, x, y, z);
+    }
+
+    public static boolean orbit(ServerLevel level, ItemStack stack, int frequency, double x, double y, double z) {
+        return stack != null && !stack.isEmpty() && orbit(level, stack.getItem(), frequency, x, y, z);
     }
 
     public static void registerSatelliteItem(Item item, LegacySatelliteType type) {
@@ -87,8 +100,18 @@ public abstract class Satellite {
         return Optional.ofNullable(ITEM_TYPES.get(item));
     }
 
+    public static Optional<LegacySatelliteType> getTypeFromStack(ItemStack stack) {
+        return stack == null || stack.isEmpty() ? Optional.empty() : getTypeFromItem(stack.getItem());
+    }
+
     public static int getLegacyIdFromItem(Item item) {
         return getTypeFromItem(item)
+                .map(LegacySatelliteType::legacyId)
+                .orElse(-1);
+    }
+
+    public static int getLegacyIdFromStack(ItemStack stack) {
+        return getTypeFromStack(stack)
                 .map(LegacySatelliteType::legacyId)
                 .orElse(-1);
     }
@@ -101,9 +124,18 @@ public abstract class Satellite {
         return getTypeFromItem(item).flatMap(Satellite::cargoPoolForType);
     }
 
+    public static Optional<String> getCargoPoolFromStack(ItemStack stack) {
+        return getTypeFromStack(stack).flatMap(Satellite::cargoPoolForType);
+    }
+
     @Nullable
     public static String getCargoForItem(Item item) {
         return getCargoPoolFromItem(item).orElse(null);
+    }
+
+    @Nullable
+    public static String getCargoForStack(ItemStack stack) {
+        return getCargoPoolFromStack(stack).orElse(null);
     }
 
     public static void registerCargo(LegacySatelliteType type, String cargoPool) {
@@ -132,6 +164,10 @@ public abstract class Satellite {
 
     public static Map<Item, LegacySatelliteType> itemTypesSnapshot() {
         return Map.copyOf(ITEM_TYPES);
+    }
+
+    public static Map<LegacySatelliteType, String> cargoPoolsSnapshot() {
+        return Map.copyOf(CARGO_POOLS);
     }
 
     public abstract LegacySatelliteType type();

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "forge:ingots/titanium"
+    },
+    "P": {
+      "tag": "forge:plates/titanium"
+    }
+  },
+  "pattern": [
+    " PP",
+    "III",
+    " PP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:fins_quad_titanium"
+  },
+  "show_notification": true
+}

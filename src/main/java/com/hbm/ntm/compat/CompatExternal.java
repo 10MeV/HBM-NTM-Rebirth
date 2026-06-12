@@ -146,6 +146,22 @@ public final class CompatExternal {
         CompatRecipeRegistry.registerRecipeRegisterListener(listener);
     }
 
+    public static boolean unregisterRecipeRegisterListener(RecipeRegisterListener listener) {
+        return CompatRecipeRegistry.unregisterRecipeRegisterListener(listener);
+    }
+
+    public static CompatRecipeRegistry.Diagnostics recipeDiagnostics() {
+        return CompatRecipeRegistry.diagnostics();
+    }
+
+    public static CompatRecipeRegistry.RecipeFacadeCoverage recipeFacadeCoverage() {
+        return CompatRecipeRegistry.recipeFacadeCoverage();
+    }
+
+    public static List<CompatRecipeRegistry.RecipeFacadeStatus> recipeFacadeStatuses() {
+        return CompatRecipeRegistry.recipeFacadeStatuses();
+    }
+
     public static void registerFluidRegisterListener(HbmFluidRegisterListener listener) {
         HbmCompatFluidRegistry.registerFluidRegisterListener(listener);
     }

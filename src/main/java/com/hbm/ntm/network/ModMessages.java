@@ -208,6 +208,8 @@ public final class ModMessages {
                     "compressed affected block positions for client explosion effects"),
             new LegacyPacketMapping("AuxButtonPacket", "LegacyButtonPacket", "C2S",
                     "legacy block position plus value/id button packet"),
+            new LegacyPacketMapping("AuxButtonPacket", "MachineBatteryButtonPacket", "C2S",
+                    "machine battery GUI slot transfer buttons were value/id cases inside the legacy AuxButtonPacket handler"),
             new LegacyPacketMapping("AuxButtonPacket", "ServerTileActionPacket", "C2S",
                     "typed tile action replacement for migrated machines"),
             new LegacyPacketMapping("NBTControlPacket", "TileControlPacket", "C2S",
@@ -227,9 +229,7 @@ public final class ModMessages {
             new LegacyPacketMapping("AnvilCraftPacket", "TypedMenuActionPacket", "C2S",
                     "hbm_ntm_rebirth:anvil_craft typed menu action"),
             new LegacyPacketMapping("KeybindPacket", "KeybindPacket", "C2S",
-                    "key id plus pressed state"),
-            new LegacyPacketMapping("MachineBatteryButtonPacket", "MachineBatteryButtonPacket", "C2S",
-                    "early dedicated machine battery button compatibility"));
+                    "key id plus pressed state"));
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
             .named(CHANNEL_NAME)
@@ -2371,6 +2371,15 @@ public final class ModMessages {
         sendClientTileBinaryData(blockEntity, channel, provider::writeClientTileBinaryData);
     }
 
+    public static void syncTileBinaryToTrackingThreaded(HbmTileBinarySyncProvider provider, BlockEntity blockEntity) {
+        syncTileBinaryToTrackingThreaded(provider, blockEntity, provider.getClientTileBinarySyncChannel());
+    }
+
+    public static void syncTileBinaryToTrackingThreaded(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                        ResourceLocation channel) {
+        sendClientTileBinaryDataThreaded(blockEntity, channel, provider::writeClientTileBinaryData);
+    }
+
     public static boolean syncTileBinaryToTrackingIfChanged(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
                                                             HbmTileBinarySyncState syncState) {
         return syncTileBinaryToTrackingIfChanged(provider, blockEntity, provider.getClientTileBinarySyncChannel(), syncState);
@@ -2395,6 +2404,16 @@ public final class ModMessages {
     public static void syncTileBinaryToPlayer(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
                                               ServerPlayer player, ResourceLocation channel) {
         sendClientTileBinaryData(player, blockEntity.getBlockPos(), channel, provider::writeClientTileBinaryData);
+    }
+
+    public static void syncTileBinaryToPlayerThreaded(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                      ServerPlayer player) {
+        syncTileBinaryToPlayerThreaded(provider, blockEntity, player, provider.getClientTileBinarySyncChannel());
+    }
+
+    public static void syncTileBinaryToPlayerThreaded(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
+                                                      ServerPlayer player, ResourceLocation channel) {
+        sendClientTileBinaryDataThreaded(player, blockEntity.getBlockPos(), channel, provider::writeClientTileBinaryData);
     }
 
     public static boolean syncTileBinaryToPlayerIfChanged(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
@@ -2501,6 +2520,28 @@ public final class ModMessages {
         return syncTileBinaryAroundThreadedIfChanged(provider, blockEntity, channel, range, syncState);
     }
 
+    public static boolean networkPackNT(BlockEntity blockEntity, int range) {
+        return networkPackNT(blockEntity, (double) range);
+    }
+
+    public static boolean networkPackNT(BlockEntity blockEntity, double range) {
+        if (blockEntity instanceof HbmTileBinarySyncProvider provider) {
+            return provider.networkPackNT(range);
+        }
+        return false;
+    }
+
+    public static boolean networkPackNT(BlockEntity blockEntity, ResourceLocation channel, int range) {
+        return networkPackNT(blockEntity, channel, (double) range);
+    }
+
+    public static boolean networkPackNT(BlockEntity blockEntity, ResourceLocation channel, double range) {
+        if (blockEntity instanceof HbmTileBinarySyncProvider provider) {
+            return provider.networkPackNT(channel, range);
+        }
+        return false;
+    }
+
     public static boolean networkPackNT(BlockEntity blockEntity, double range, HbmTileBinarySyncState syncState) {
         if (blockEntity instanceof HbmTileBinarySyncProvider provider) {
             return networkPackNT(provider, blockEntity, range, syncState);
@@ -2518,10 +2559,24 @@ public final class ModMessages {
         }
     }
 
+    public static void sendBufPacketThreaded(BlockEntity blockEntity) {
+        if (blockEntity instanceof HbmLegacyBufPacketReceiver receiver) {
+            syncTileBinaryToTrackingThreaded(receiver, blockEntity, receiver.getClientTileBinarySyncChannel());
+        }
+    }
+
+    public static void sendBufPacket(BlockEntity blockEntity, int range) {
+        sendBufPacket(blockEntity, (double) range);
+    }
+
     public static void sendBufPacket(BlockEntity blockEntity, double range) {
         if (blockEntity instanceof HbmLegacyBufPacketReceiver receiver) {
             syncTileBinaryAround(receiver, blockEntity, receiver.getClientTileBinarySyncChannel(), range);
         }
+    }
+
+    public static void sendBufPacketThreaded(BlockEntity blockEntity, int range) {
+        sendBufPacketThreaded(blockEntity, (double) range);
     }
 
     public static void sendBufPacketThreaded(BlockEntity blockEntity, double range) {
@@ -2533,6 +2588,12 @@ public final class ModMessages {
     public static void sendBufPacket(ServerPlayer player, BlockEntity blockEntity) {
         if (blockEntity instanceof HbmLegacyBufPacketReceiver receiver) {
             syncTileBinaryToPlayer(receiver, blockEntity, player, receiver.getClientTileBinarySyncChannel());
+        }
+    }
+
+    public static void sendBufPacketThreaded(ServerPlayer player, BlockEntity blockEntity) {
+        if (blockEntity instanceof HbmLegacyBufPacketReceiver receiver) {
+            syncTileBinaryToPlayerThreaded(receiver, blockEntity, player, receiver.getClientTileBinarySyncChannel());
         }
     }
 
@@ -2752,8 +2813,38 @@ public final class ModMessages {
         }
     }
 
+    public static void sendClientTileBinaryDataThreaded(BlockEntity blockEntity, ResourceLocation channel,
+                                                        java.util.function.Consumer<FriendlyByteBuf> writer) {
+        FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
+        try {
+            writer.accept(buffer);
+            byte[] payload = new byte[buffer.readableBytes()];
+            buffer.getBytes(buffer.readerIndex(), payload);
+            sendClientTileBinaryDataThreaded(blockEntity, channel, payload);
+        } finally {
+            buffer.release();
+        }
+    }
+
+    public static void sendClientTileBinaryDataThreaded(ServerPlayer player, BlockPos pos, ResourceLocation channel,
+                                                        java.util.function.Consumer<FriendlyByteBuf> writer) {
+        FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
+        try {
+            writer.accept(buffer);
+            byte[] payload = new byte[buffer.readableBytes()];
+            buffer.getBytes(buffer.readerIndex(), payload);
+            sendClientTileBinaryDataThreaded(player, pos, channel, payload);
+        } finally {
+            buffer.release();
+        }
+    }
+
     public static void sendClientTileBinaryData(BlockEntity blockEntity, ResourceLocation channel, byte[] payload) {
         sendClientTileBinaryData(blockEntity.getLevel(), blockEntity.getBlockPos(), channel, payload);
+    }
+
+    public static void sendClientTileBinaryDataThreaded(BlockEntity blockEntity, ResourceLocation channel, byte[] payload) {
+        sendClientTileBinaryDataThreaded(blockEntity.getLevel(), blockEntity.getBlockPos(), channel, payload);
     }
 
     public static void sendClientTileBinaryData(ServerPlayer player, BlockPos pos, ResourceLocation channel, byte[] payload) {
@@ -2769,6 +2860,29 @@ public final class ModMessages {
             int start = chunkIndex * chunkSize;
             int end = Math.min(start + chunkSize, safePayload.length);
             sendToPlayer(new ClientTileBinaryDataChunkPacket(
+                    transferId,
+                    pos,
+                    channel,
+                    chunkIndex,
+                    chunkCount,
+                    Arrays.copyOfRange(safePayload, start, end)), player);
+        }
+    }
+
+    public static void sendClientTileBinaryDataThreaded(ServerPlayer player, BlockPos pos,
+                                                        ResourceLocation channel, byte[] payload) {
+        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
+            ThreadedPacketDispatcher.sendToPlayer(clientTileBinaryDataPacket(pos, channel, safePayload), player);
+            return;
+        }
+        UUID transferId = UUID.randomUUID();
+        int chunkSize = ClientTileBinaryDataChunkPacket.MAX_CHUNK_BYTES;
+        int chunkCount = (safePayload.length + chunkSize - 1) / chunkSize;
+        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+            int start = chunkIndex * chunkSize;
+            int end = Math.min(start + chunkSize, safePayload.length);
+            ThreadedPacketDispatcher.sendToPlayer(new ClientTileBinaryDataChunkPacket(
                     transferId,
                     pos,
                     channel,
@@ -2800,6 +2914,33 @@ public final class ModMessages {
                     chunkIndex,
                     chunkCount,
                     Arrays.copyOfRange(safePayload, start, end)), level, pos);
+        }
+    }
+
+    public static void sendClientTileBinaryDataThreaded(Level level, BlockPos pos,
+                                                        ResourceLocation channel, byte[] payload) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
+            ThreadedPacketDispatcher.sendToTrackingChunk(clientTileBinaryDataPacket(pos, channel, safePayload),
+                    serverLevel, pos);
+            return;
+        }
+        UUID transferId = UUID.randomUUID();
+        int chunkSize = ClientTileBinaryDataChunkPacket.MAX_CHUNK_BYTES;
+        int chunkCount = (safePayload.length + chunkSize - 1) / chunkSize;
+        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+            int start = chunkIndex * chunkSize;
+            int end = Math.min(start + chunkSize, safePayload.length);
+            ThreadedPacketDispatcher.sendToTrackingChunk(new ClientTileBinaryDataChunkPacket(
+                    transferId,
+                    pos,
+                    channel,
+                    chunkIndex,
+                    chunkCount,
+                    Arrays.copyOfRange(safePayload, start, end)), serverLevel, pos);
         }
     }
 

@@ -73,6 +73,9 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
             if (port == null) {
                 continue;
             }
+            if (!HbmEnergyUtil.isLoadedPort(level, worldPosition, port)) {
+                continue;
+            }
             BlockPos connectorPos = port.conductorPos(worldPosition);
             positions.add(connectorPos.relative(port.direction().getOpposite()));
             connections.add(new HbmNetworkNode.NodeConnection(connectorPos, port.direction()));

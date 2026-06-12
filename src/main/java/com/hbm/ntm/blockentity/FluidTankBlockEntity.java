@@ -11,7 +11,6 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmExtinguishType;
 import com.hbm.ntm.fluid.HbmFluidOverpressurable;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
-import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
 import com.hbm.ntm.fluid.HbmFluidRepairMaterials;
 import com.hbm.ntm.fluid.HbmFluidRepairMaterials.HbmRepairMaterial;
 import com.hbm.ntm.fluid.HbmFluidRepairable;
@@ -149,19 +148,14 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     protected boolean handleItemTransfer() {
         boolean changed = false;
         changed |= setTankTypeFromIdentifierSlot();
-        changed |= HbmFluidItemTransfer.processTransfers(items, List.of(
-                TankSlotTransfer.load(SLOT_LOAD_INPUT, SLOT_LOAD_OUTPUT, tank),
-                TankSlotTransfer.unload(SLOT_UNLOAD_INPUT, SLOT_UNLOAD_OUTPUT, tank)));
+        changed |= processFluidItemTransfers(items, HbmFluidItemTransfer.combineTransfers(
+                HbmFluidItemTransfer.loadTransfers(SLOT_LOAD_INPUT, SLOT_LOAD_OUTPUT, tank),
+                HbmFluidItemTransfer.unloadTransfers(SLOT_UNLOAD_INPUT, SLOT_UNLOAD_OUTPUT, tank)));
         return changed;
     }
 
     protected boolean setTankTypeFromIdentifierSlot() {
-        boolean changed = HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_TYPE_INPUT,
-                SLOT_TYPE_OUTPUT, tank, level, worldPosition);
-        if (changed) {
-            onFluidContentsChanged();
-        }
-        return changed;
+        return setFluidTankTypeFromIdentifierSlot(items, SLOT_TYPE_INPUT, SLOT_TYPE_OUTPUT, tank);
     }
 
     protected void markPlayersOnFauxLadder(Level level, BlockPos pos, BlockState state) {

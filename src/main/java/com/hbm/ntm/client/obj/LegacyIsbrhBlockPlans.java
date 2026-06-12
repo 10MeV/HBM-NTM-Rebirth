@@ -20,6 +20,15 @@ public final class LegacyIsbrhBlockPlans {
     public static final double FENCE_CENTER_MAX = 0.5625D;
     public static final double FENCE_POST_MIN = 0.375D;
     public static final double FENCE_POST_MAX = 0.625D;
+    public static final int CT_LEFT = 0;
+    public static final int CT_RIGHT = 1;
+    public static final int CT_TOP = 0;
+    public static final int CT_BOTTOM = 2;
+    public static final int CT_FULL = 0;
+    public static final int CT_CONNECTED = 4;
+    public static final int CT_JUNCTION = 8;
+    public static final int CT_HORIZONTAL = 12;
+    public static final int CT_VERTICAL = 16;
     public static final TranslationPlan PEDESTAL_INVENTORY_TRANSLATION =
             new TranslationPlan(-0.5D, -0.5D, -0.5D);
     public static final LegacyAtlasCuboidRenderer.CuboidBounds STEEL_WALL_INVENTORY_BOUNDS =
@@ -502,6 +511,538 @@ public final class LegacyIsbrhBlockPlans {
                 true, List.copyOf(cuboids));
     }
 
+    public static PlantCrossRenderPlan reedsWorldPlan(int colorMultiplier, boolean renderDeepReeds, int waterDepth,
+            double x, double y, double z) {
+        int depth = renderDeepReeds ? Math.max(0, waterDepth) : 1;
+        ColorPlan color = scaledColorPlan(colorMultiplier, 0.75F);
+        List<CrossedSquareLayerPlan> layers = new ArrayList<>();
+        for (int i = 0; i < depth; i++) {
+            String iconRole = i == 0 ? "top" : i == depth - 1 ? "bottom" : "middle";
+            double yOffset = -i;
+            layers.add(new CrossedSquareLayerPlan("reed_" + i, iconRole, yOffset,
+                    color, false, 1.0D, 0.45D, crossedSquareQuads(x, y + yOffset, z, 1.0D)));
+        }
+        return new PlantCrossRenderPlan("reeds", false, false, depth, color, layers);
+    }
+
+    public static PlantCrossRenderPlan hangingVineWorldPlan(int colorMultiplier, double x, double y, double z) {
+        ColorPlan color = colorPlan(colorMultiplier);
+        return new PlantCrossRenderPlan("hanging_vine", false, false, 2, color, List.of(
+                new CrossedSquareLayerPlan("vine_base", "base", 0.0D,
+                        color, false, 1.0D, 0.45D, crossedSquareQuads(x, y, z, 1.0D)),
+                new CrossedSquareLayerPlan("vine_glow", "glow", 0.0D,
+                        color, true, 1.0D, 0.45D, crossedSquareQuads(x, y, z, 1.0D))));
+    }
+
+    public static RbmkRodRenderPlan rbmkRodInventoryPlan(boolean overrideTexture) {
+        List<RbmkStackLayerPlan> layers = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            layers.add(new RbmkStackLayerPlan(i, i,
+                    rbmkCubeFaces("side", 0), List.of(
+                    new NamedIconPartPlan("rbmk_element", "Inner", "inner", 0, 0,
+                            0.0F, 0.0F, false),
+                    new NamedIconPartPlan("rbmk_element", "Cap", overrideTexture ? "override" : "cap", 0, 0,
+                            0.0F, 0.0F, false),
+                    new NamedIconPartPlan("rbmk_element_rods", "Rods", "fuel", 0, 0,
+                            0.0F, 0.0F, false))));
+        }
+        return new RbmkRodRenderPlan(true, 0, new TranslationPlan(0.0D, -0.675D, 0.0D),
+                0.35F, false, overrideTexture, true, new ColorPlan(0x304825, red(0x304825),
+                green(0x304825), blue(0x304825)), layers,
+                false, 0, false, List.of(), List.of());
+    }
+
+    public static RbmkRodRenderPlan rbmkRodWorldPlan(int metadata, boolean overrideTexture, int lid) {
+        boolean renderLid = metadata >= 6 && metadata < 12 && lid != 0;
+        return new RbmkRodRenderPlan(false, metadata, new TranslationPlan(0.5D, 0.0D, 0.5D),
+                1.0F, true, overrideTexture, true, new ColorPlan(0x304825, red(0x304825),
+                green(0x304825), blue(0x304825)), List.of(),
+                true, lid, renderLid, rbmkWorldRodParts(overrideTexture),
+                renderLid ? List.of(rbmkLidCuboid(lid)) : List.of());
+    }
+
+    public static RbmkStackRenderPlan rbmkReflectorInventoryPlan() {
+        return new RbmkStackRenderPlan("reflector", true, 0,
+                new TranslationPlan(0.0D, -0.675D, 0.0D), 0.35F, true,
+                rbmkStandardStackLayers(4), true, 0, false, List.of(), List.of());
+    }
+
+    public static RbmkStackRenderPlan rbmkReflectorWorldPlan(int metadata, int lid) {
+        boolean renderLid = metadata >= 6 && metadata < 12 && lid != 0;
+        return new RbmkStackRenderPlan("reflector", false, metadata,
+                new TranslationPlan(0.0D, 0.0D, 0.0D), 1.0F, true,
+                List.of(), true, lid, renderLid,
+                List.of(faceCuboid("body", bounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D),
+                        "up", "down", "west", "east", "north", "south", metadata, uv(), false)),
+                renderLid ? List.of(rbmkLidCuboid(lid)) : List.of());
+    }
+
+    public static RbmkControlRenderPlan rbmkControlInventoryPlan(boolean boilerOrHeater, boolean overrideTexture) {
+        return new RbmkControlRenderPlan(true, 0, boilerOrHeater,
+                new TranslationPlan(0.0D, -0.75D, 0.0D), 0.35F,
+                rbmkStandardStackLayers(4), rbmkPipePadCuboids(0),
+                !boilerOrHeater, !boilerOrHeater ? rbmkControlLidPart(overrideTexture, false) : null,
+                true, 0, false, List.of(), List.of());
+    }
+
+    public static RbmkControlRenderPlan rbmkControlWorldPlan(int metadata, boolean boilerOrHeater, int lid) {
+        boolean upper = metadata >= 6 && metadata < 12;
+        boolean renderLid = upper && boilerOrHeater && lid != 0;
+        boolean renderPipes = upper && !renderLid;
+        return new RbmkControlRenderPlan(false, metadata, boilerOrHeater,
+                new TranslationPlan(0.0D, 0.0D, 0.0D), 1.0F, List.of(),
+                renderPipes ? rbmkPipePadCuboids(1) : List.of(),
+                false, null, true, lid, renderLid,
+                List.of(faceCuboid("body", bounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D),
+                        "up", "down", "west", "east", "north", "south", metadata, uv(), false)),
+                renderLid ? List.of(rbmkLidCuboid(lid)) : List.of());
+    }
+
+    public static ObjIconModelRenderPlan pribrisInventoryPlan(boolean overrideTexture) {
+        return new ObjIconModelRenderPlan("rbmk_debris", 0, OBJ_INVENTORY_TRANSLATION,
+                0.0F, 0.0F, false, overrideTexture, true);
+    }
+
+    public static ObjIconModelRenderPlan pribrisWorldPlan(int metadata, double x, double y, double z,
+            boolean overrideTexture) {
+        return new ObjIconModelRenderPlan("rbmk_debris", metadata, new TranslationPlan(x + 0.5D, y, z + 0.5D),
+                0.0F, 0.0F, true, overrideTexture, true);
+    }
+
+    public static SolarMirrorRenderPlan solarMirrorWorldPlan(boolean hasTile, boolean targetAbove,
+            int deltaX, int deltaY, int deltaZ, double x, double y, double z, boolean overrideTexture) {
+        SolarMirrorAimPlan aim = hasTile && targetAbove ? solarMirrorAim(deltaX, deltaY, deltaZ) : null;
+        TranslationPlan translation = new TranslationPlan(x + 0.5D, y, z + 0.5D);
+        return new SolarMirrorRenderPlan(hasTile, targetAbove, deltaX, deltaY, deltaZ, translation,
+                overrideTexture, new ObjIconPartRenderPlan("solar_mirror", "Base", 0,
+                translation, 0.0F, 0.0F, true, overrideTexture, false, false),
+                new ObjIconPartRenderPlan("solar_mirror", "Mirror", 0,
+                        translation, aim == null ? 0.0F : (float) aim.yawRadians(),
+                        aim == null ? 0.0F : (float) aim.pitchRadians(), true, overrideTexture, false, false),
+                aim);
+    }
+
+    public static RailDelegateRenderPlan railDelegatePlan(int metadata, boolean inventory) {
+        return new RailDelegateRenderPlan(metadata, inventory, true,
+                inventory ? "IRenderBlock.renderInventory" : "IRenderBlock.renderWorld");
+    }
+
+    public static GenericObjModelRenderPlan blockRotatedInventoryPlan(String legacyResourceModel,
+            boolean overrideTexture) {
+        return new GenericObjModelRenderPlan("block_rotated", legacyResourceModel, 0,
+                new TranslationPlan(0.0D, 0.375D, 0.0D),
+                (float) Math.PI * -0.5F, 0.0F, (float) Math.PI * -0.5F, 1.0F,
+                false, overrideTexture, true, false);
+    }
+
+    public static GenericObjModelRenderPlan blockRotatedWorldPlan(String legacyResourceModel, int metadata,
+            double x, double y, double z, boolean overrideTexture) {
+        OrientationPlan orientation = blockRotatedOrientation(metadata);
+        return new GenericObjModelRenderPlan("block_rotated", legacyResourceModel, 0,
+                new TranslationPlan(x + 0.5D, y + 0.5D, z + 0.5D),
+                orientation.yawRadians(), orientation.pitchRadians(), 0.0F, 1.0F,
+                true, overrideTexture, true, true);
+    }
+
+    public static GenericObjModelRenderPlan blockDecoModelInventoryPlan(String legacyResourceModel,
+            int metadata, boolean overrideTexture) {
+        return new GenericObjModelRenderPlan("block_deco_model", legacyResourceModel, metadata,
+                new TranslationPlan(0.0D, 0.1D, 0.0D), 0.0F, 0.0F, 0.0F, 1.2F,
+                false, overrideTexture, true, false);
+    }
+
+    public static GenericObjModelRenderPlan blockDecoModelWorldPlan(String legacyResourceModel, int metadata,
+            double x, double y, double z, boolean overrideTexture) {
+        return new GenericObjModelRenderPlan("block_deco_model", legacyResourceModel, metadata & 3,
+                new TranslationPlan(x + 0.5D, y + 0.5D, z + 0.5D),
+                blockDecoRotation(metadata), 0.0F, 0.0F, 1.0F,
+                true, overrideTexture, true, false);
+    }
+
+    public static MultiPartObjRenderPlan diFurnaceExtensionInventoryPlan() {
+        return new MultiPartObjRenderPlan(0, OBJ_INVENTORY_TRANSLATION,
+                0.0F, 0.0F, 1.0F, false, true, diFurnaceExtensionParts(0.0F, 0.0F, false));
+    }
+
+    public static MultiPartObjRenderPlan diFurnaceExtensionWorldPlan(double x, double y, double z) {
+        return new MultiPartObjRenderPlan(0, new TranslationPlan(x + 0.5D, y, z + 0.5D),
+                0.0F, 0.0F, 1.0F, true, true, diFurnaceExtensionParts(0.0F, 0.0F, true));
+    }
+
+    public static SideRotationRenderPlan sideRotationInventoryPlan(int metadata) {
+        return new SideRotationRenderPlan(metadata, true, true,
+                new TranslationPlan(-0.5D, -0.5D, -0.5D), (float) Math.PI * 0.5F,
+                null, LegacyBlockRenderHelper.STANDARD_INVENTORY_FACE_ORDER,
+                faceCuboid("inventory_block", bounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D),
+                        "side_1", "side_0", "side_2", "side_3", "side_5", "side_4",
+                        metadata, uv(), false));
+    }
+
+    public static SideRotationRenderPlan sideRotationWorldPlan(int metadata, boolean sideRotationBlock,
+            int side0, int side1, int side2, int side3, int side4, int side5) {
+        UvRotationPlan uvPlan = sideRotationBlock ? uv(side1, side0, side5, side4, side3, side2) : uv();
+        return new SideRotationRenderPlan(metadata, false, true,
+                new TranslationPlan(0.0D, 0.0D, 0.0D), 0.0F,
+                uvPlan, List.of(), faceCuboid("world_block",
+                bounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D),
+                "side_1", "side_0", "side_2", "side_3", "side_5", "side_4",
+                metadata, uvPlan, false));
+    }
+
+    public static ConnectedTextureRenderPlan connectedTextureInventoryPlan(int metadata) {
+        return new ConnectedTextureRenderPlan(metadata, false, true, false,
+                "RenderBlocksCT.renderBlockAsItem", false);
+    }
+
+    public static ConnectedTextureRenderPlan connectedTextureWorldPlan(int metadata) {
+        return new ConnectedTextureRenderPlan(metadata, true, true, true,
+                "CTContext.loadContext -> RenderBlocksCT.renderStandardBlock -> CTContext.dropContext", false);
+    }
+
+    public static List<ConnectedTextureFragmentPlan> connectedTextureFragmentPlans() {
+        List<ConnectedTextureFragmentPlan> fragments = new ArrayList<>();
+        for (int type = 0; type < 20; type++) {
+            int subdivisions = type < 4 ? 2 : 4;
+            int cellU = 0;
+            int cellV = 0;
+            if (ctIsVertical(type) || ctIsJunction(type)) {
+                cellU += 2;
+            }
+            if (ctIsHorizontal(type) || ctIsJunction(type)) {
+                cellV += 2;
+            }
+            if ((type & CT_RIGHT) != 0) {
+                cellU += 1;
+            }
+            if ((type & CT_BOTTOM) != 0) {
+                cellV += 1;
+            }
+            fragments.add(new ConnectedTextureFragmentPlan(type, type < 4 ? "full_parent" : "ct_parent",
+                    subdivisions, cellU, cellV, 1, 1, ctFragmentKind(type)));
+        }
+        return List.copyOf(fragments);
+    }
+
+    public static ConnectedTextureAccessPlan connectedTextureAccessPlan(Direction face) {
+        Direction up;
+        Direction left;
+        switch (face) {
+            case DOWN -> {
+                up = Direction.SOUTH;
+                left = Direction.WEST;
+            }
+            case UP -> {
+                up = Direction.NORTH;
+                left = Direction.WEST;
+            }
+            case NORTH -> {
+                up = Direction.UP;
+                left = Direction.EAST;
+            }
+            case SOUTH -> {
+                up = Direction.UP;
+                left = Direction.WEST;
+            }
+            case WEST -> {
+                up = Direction.UP;
+                left = Direction.NORTH;
+            }
+            case EAST -> {
+                up = Direction.UP;
+                left = Direction.SOUTH;
+            }
+            default -> throw new IllegalStateException("Unexpected direction: " + face);
+        }
+        Direction down = up.getOpposite();
+        Direction right = left.getOpposite();
+        return new ConnectedTextureAccessPlan(face, up, left, List.of(
+                ctOffset("top_left", up, left),
+                ctOffset("top", up),
+                ctOffset("top_right", up, right),
+                ctOffset("left", left),
+                ctOffset("right", right),
+                ctOffset("bottom_left", down, left),
+                ctOffset("bottom", down),
+                ctOffset("bottom_right", down, right)));
+    }
+
+    public static ConnectedTextureFacePlan connectedTextureFacePlan(Direction face,
+            boolean topLeft, boolean top, boolean topRight, boolean left,
+            boolean right, boolean bottomLeft, boolean bottom, boolean bottomRight) {
+        int indexTopLeft = CT_TOP | CT_LEFT | connectedTextureCornerType(left, topLeft, top);
+        int indexTopRight = CT_TOP | CT_RIGHT | connectedTextureCornerType(right, topRight, top);
+        int indexBottomLeft = CT_BOTTOM | CT_LEFT | connectedTextureCornerType(left, bottomLeft, bottom);
+        int indexBottomRight = CT_BOTTOM | CT_RIGHT | connectedTextureCornerType(right, bottomRight, bottom);
+        return new ConnectedTextureFacePlan(face, connectedTextureAccessPlan(face),
+                connectedTextureAoPlan(face),
+                new ConnectedTextureFaceIndices(indexTopLeft, indexTopRight, indexBottomLeft, indexBottomRight),
+                List.of(
+                        new ConnectedTextureSubFacePlan("top_left", indexTopLeft,
+                                "face_top_left", "face_top_center", "face_center_left", "face_center"),
+                        new ConnectedTextureSubFacePlan("top_right", indexTopRight,
+                                "face_top_center", "face_top_right", "face_center", "face_center_right"),
+                        new ConnectedTextureSubFacePlan("bottom_left", indexBottomLeft,
+                                "face_center_left", "face_center", "face_bottom_left", "face_bottom_center"),
+                        new ConnectedTextureSubFacePlan("bottom_right", indexBottomRight,
+                                "face_center", "face_center_right", "face_bottom_center", "face_bottom_right")));
+    }
+
+    public static InsideOutsideBlockRenderPlan wandWorldPlan() {
+        return new InsideOutsideBlockRenderPlan(false, false, true, true, true);
+    }
+
+    public static IsbrhUniversalDelegatePlan isbrhUniversalDelegatePlan(int metadata, boolean inventory) {
+        return new IsbrhUniversalDelegatePlan(metadata, inventory, true,
+                inventory ? "ISBRHUniversal.renderInventoryBlock" : "ISBRHUniversal.renderWorldBlock");
+    }
+
+    public static MultipassRenderPlan multipassInventoryPlan(int metadata, int passes, boolean renderItemMulti) {
+        int passCount = renderItemMulti ? Math.max(0, passes) : 1;
+        return new MultipassRenderPlan(metadata, true, true, false, passCount, renderItemMulti,
+                new TranslationPlan(-0.5D, -0.5D, -0.5D), (float) Math.PI * 0.5F,
+                true, true, false, multipassPasses(passCount, true));
+    }
+
+    public static MultipassRenderPlan multipassWorldPlan(int metadata, int passes, boolean multipassBlock) {
+        int passCount = multipassBlock ? Math.max(0, passes) : 1;
+        return new MultipassRenderPlan(metadata, false, true, !multipassBlock, passCount, multipassBlock,
+                new TranslationPlan(0.0D, 0.0D, 0.0D), 0.0F,
+                multipassBlock, multipassBlock, true, multipassPasses(passCount, false));
+    }
+
+    public static PaintableMultipassPlan paintableCableMultipassPlan(int metadata,
+            boolean hasPaintBlock, int paintMetadata) {
+        List<MultipassTexturePlan> passes = new ArrayList<>();
+        passes.add(new MultipassTexturePlan(0, hasPaintBlock ? "paint_block" : "base",
+                hasPaintBlock ? paintMetadata : metadata, whiteColorPlan(), true, false, -1));
+        passes.add(new MultipassTexturePlan(1,
+                hasPaintBlock && metadata != 0 ? "paint_block" : "overlay",
+                hasPaintBlock && metadata != 0 ? paintMetadata : metadata,
+                whiteColorPlan(), true, false, -1));
+        return new PaintableMultipassPlan("cable_paintable", metadata, hasPaintBlock, paintMetadata,
+                2, false, passes);
+    }
+
+    public static PaintableMultipassPlan paintableFluidDuctMultipassPlan(int metadata,
+            boolean hasPaintBlock, int paintMetadata, int fluidColor) {
+        List<MultipassTexturePlan> passes = new ArrayList<>();
+        passes.add(new MultipassTexturePlan(0, hasPaintBlock ? "paint_block" : "base",
+                hasPaintBlock ? paintMetadata : metadata, whiteColorPlan(), true, false, -1));
+        if (hasPaintBlock) {
+            passes.add(new MultipassTexturePlan(1, metadata == 0 ? "overlay" : "paint_block",
+                    metadata == 0 ? metadata : paintMetadata, whiteColorPlan(), true, false, -1));
+        } else {
+            passes.add(new MultipassTexturePlan(1, "overlay_color", metadata,
+                    colorPlan(fluidColor), true, true, -1));
+        }
+        return new PaintableMultipassPlan("fluid_duct_paintable", metadata, hasPaintBlock, paintMetadata,
+                2, false, passes);
+    }
+
+    public static PaintableMultipassPlan sellafieldOreMultipassPlan(int metadata, int slakedColor) {
+        return new PaintableMultipassPlan("sellafield_ore", metadata, false, 0, 2, true,
+                List.of(
+                        new MultipassTexturePlan(0, "slaked_overlay", 0, colorPlan(slakedColor), true, true, -1),
+                        new MultipassTexturePlan(1, "ore_block", metadata, whiteColorPlan(), true, false, -1)));
+    }
+
+    public static PaintableMultipassPlan craneRouterMultipassPlan(int metadata) {
+        return new PaintableMultipassPlan("crane_router", metadata, false, 0, 7, false,
+                List.of(
+                        new MultipassTexturePlan(0, "base", metadata, whiteColorPlan(), true, false, -1),
+                        new MultipassTexturePlan(1, "overlay", metadata, colorPlan(0xff0000), false, true, 0),
+                        new MultipassTexturePlan(2, "overlay", metadata, colorPlan(0xff8000), false, true, 1),
+                        new MultipassTexturePlan(3, "overlay", metadata, colorPlan(0xffff00), false, true, 2),
+                        new MultipassTexturePlan(4, "overlay", metadata, colorPlan(0x00ff00), false, true, 3),
+                        new MultipassTexturePlan(5, "overlay", metadata, colorPlan(0x0080ff), false, true, 4),
+                        new MultipassTexturePlan(6, "overlay", metadata, colorPlan(0x8000ff), false, true, 5)));
+    }
+
+    public static TestPipeRenderPlan testPipeInventoryPlan(int metadata, int emptyFluidColor,
+            boolean overrideTexture) {
+        return new TestPipeRenderPlan(metadata, true, new TranslationPlan(0.0D, 0.0D, 0.0D),
+                (float) Math.PI, 0.0F, 1.25F, false, overrideTexture, true,
+                emptyConnections(), emptyFluidColor,
+                pipeNeoLayeredParts(metadata, emptyFluidColor, false, List.of("pX", "nX", "pZ", "nZ")));
+    }
+
+    public static TestPipeRenderPlan testPipeWorldPlan(int metadata, int fluidColor, boolean overrideTexture,
+            boolean posX, boolean negX, boolean posY, boolean negY, boolean posZ, boolean negZ) {
+        ConnectionMaskPlan connections = connections(posX, negX, posY, negY, posZ, negZ);
+        return new TestPipeRenderPlan(metadata, false, new TranslationPlan(0.5D, 0.5D, 0.5D),
+                0.0F, 0.0F, 1.0F, true, overrideTexture, true, connections, fluidColor,
+                pipeNeoWorldParts(metadata, fluidColor, connections));
+    }
+
+    public static ObjUtilLibraryStatePlan objUtilLibraryStatePlan(int color, boolean hasColor,
+            int alpha, String renderMode, boolean fullBright, double uOffset, double vOffset) {
+        return new ObjUtilLibraryStatePlan(hasColor, hasColor ? colorPlan(color) : whiteColorPlan(),
+                Math.max(0, Math.min(255, alpha)), renderMode, fullBright,
+                new UvScrollPlan(1.0D, 1.0D, uOffset, vOffset, true));
+    }
+
+    public static ObjUtilLibraryStatePlan objUtilLibraryStatePlan(int color, boolean hasColor,
+            int alpha, LegacyTexturedRenderMode renderMode, boolean fullBright, double uOffset, double vOffset) {
+        return objUtilLibraryStatePlan(color, hasColor, alpha, renderMode.name(), fullBright, uOffset, vOffset);
+    }
+
+    public static ObjUtilLibraryStatePlan translucentObjStatePlan(int color, int alpha,
+            boolean depthWrite, boolean fullBright) {
+        return objUtilLibraryStatePlan(color, true, alpha,
+                depthWrite ? LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE
+                        : LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+                fullBright, 0.0D, 0.0D);
+    }
+
+    public static ObjUtilLibraryStatePlan additiveObjStatePlan(int color, int alpha,
+            boolean depthWrite, boolean fullBright) {
+        return objUtilLibraryStatePlan(color, true, alpha,
+                depthWrite ? LegacyTexturedRenderMode.ADDITIVE_DEPTH_WRITE
+                        : LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                fullBright, 0.0D, 0.0D);
+    }
+
+    public static ObjUtilLibraryStatePlan uvScrollObjStatePlan(int color, boolean hasColor,
+            int alpha, LegacyTexturedRenderMode renderMode, boolean fullBright,
+            double uOffset, double vOffset) {
+        return objUtilLibraryStatePlan(color, hasColor, alpha, renderMode, fullBright, uOffset, vOffset);
+    }
+
+    public static UniversalCuboidRenderPlan barrierInventoryPlan(int metadata) {
+        return new UniversalCuboidRenderPlan("barrier", metadata, true, new TranslationPlan(-0.5D, -0.5D, -0.5D),
+                (float) Math.PI * 0.5F, true, false, false, false, false, false, false,
+                List.of(
+                        cuboid("center_post", bounds(0.4375D, 0.0D, 0.4375D, 0.5625D, 1.0D, 0.5625D),
+                                "block", metadata, uv(), false),
+                        cuboid("lower_rail_z", bounds(0.5D, 0.0625D, 0.0D, 0.5625D, 0.4725D, 1.0D),
+                                "block", metadata, uv(), false),
+                        cuboid("upper_rail_z", bounds(0.5D, 0.5625D, 0.0D, 0.5625D, 0.9375D, 1.0D),
+                                "block", metadata, uv(), false)));
+    }
+
+    public static UniversalCuboidRenderPlan barrierWorldPlan(int metadata,
+            boolean negX, boolean posX, boolean negZ, boolean posZ, boolean posY) {
+        List<CuboidUvPlan> cuboids = new ArrayList<>();
+        if (negX) {
+            cuboids.add(cuboid("neg_x_post", bounds(0.0D, 0.0D, 0.4375D, 0.125D, 1.0D, 0.5625D),
+                    "block", metadata, uv(), false));
+            cuboids.add(cuboid("neg_x_lower_rail", bounds(0.0D, 0.0625D, negZ ? 0.125D : 0.0D,
+                    0.0625D, 0.4375D, posZ ? 0.875D : 1.0D), "block", metadata, uv(), false));
+            cuboids.add(cuboid("neg_x_upper_rail", bounds(0.0D, 0.5625D, negZ ? 0.125D : 0.0D,
+                    0.0625D, 0.9375D, posZ ? 0.875D : 1.0D), "block", metadata, uv(), false));
+        }
+        if (negZ) {
+            cuboids.add(cuboid("neg_z_post", bounds(0.4375D, 0.0D, 0.0D, 0.5625D, 1.0D, 0.125D),
+                    "block", metadata, uv(), false));
+            cuboids.add(cuboid("neg_z_lower_rail", bounds(negX ? 0.125D : 0.0D, 0.0625D, 0.0D,
+                    posX ? 0.875D : 1.0D, 0.4375D, 0.0625D), "block", metadata, uv(), false));
+            cuboids.add(cuboid("neg_z_upper_rail", bounds(negX ? 0.125D : 0.0D, 0.5625D, 0.0D,
+                    posX ? 0.875D : 1.0D, 0.9375D, 0.0625D), "block", metadata, uv(), false));
+        }
+        if (posX) {
+            cuboids.add(cuboid("pos_x_post", bounds(0.875D, 0.0D, 0.4375D, 1.0D, 1.0D, 0.5625D),
+                    "block", metadata, uv(), false));
+            cuboids.add(cuboid("pos_x_lower_rail", bounds(0.9375D, 0.0625D, negZ ? 0.125D : 0.0D,
+                    1.0D, 0.4375D, posZ ? 0.875D : 1.0D), "block", metadata, uv(), false));
+            cuboids.add(cuboid("pos_x_upper_rail", bounds(0.9375D, 0.5625D, negZ ? 0.125D : 0.0D,
+                    1.0D, 0.9375D, posZ ? 0.875D : 1.0D), "block", metadata, uv(), false));
+        }
+        if (posZ) {
+            cuboids.add(cuboid("pos_z_post", bounds(0.4375D, 0.0D, 0.875D, 0.5625D, 1.0D, 1.0D),
+                    "block", metadata, uv(), false));
+            cuboids.add(cuboid("pos_z_lower_rail", bounds(negX ? 0.125D : 0.0D, 0.0625D, 0.9375D,
+                    posX ? 0.875D : 1.0D, 0.4375D, 1.0D), "block", metadata, uv(), false));
+            cuboids.add(cuboid("pos_z_upper_rail", bounds(negX ? 0.125D : 0.0D, 0.5625D, 0.9375D,
+                    posX ? 0.875D : 1.0D, 0.9375D, 1.0D), "block", metadata, uv(), false));
+        }
+        if (posY) {
+            cuboids.add(cuboid("top_neg_x_rail", bounds(0.0D, 0.875D, 0.0D, 0.125D, 0.9375D, 1.0D),
+                    "block", metadata, uv(), false));
+            cuboids.add(cuboid("top_pos_x_rail", bounds(0.875D, 0.875D, 0.0D, 1.0D, 0.9375D, 1.0D),
+                    "block", metadata, uv(), false));
+            cuboids.add(cuboid("top_neg_z_rail", bounds(0.0D, 0.9375D, 0.0625D, 1.0D, 1.0D, 0.4375D),
+                    "block", metadata, uv(), false));
+            cuboids.add(cuboid("top_pos_z_rail", bounds(0.0D, 0.9375D, 0.5625D, 1.0D, 1.0D, 0.9375D),
+                    "block", metadata, uv(), false));
+        }
+        return new UniversalCuboidRenderPlan("barrier", metadata, false, new TranslationPlan(0.0D, 0.0D, 0.0D),
+                0.0F, true, negX, posX, negZ, posZ, posY, false, List.copyOf(cuboids));
+    }
+
+    public static UniversalCuboidRenderPlan sandbagsInventoryPlan(int metadata) {
+        return new UniversalCuboidRenderPlan("sandbags", metadata, true, new TranslationPlan(-0.5D, -0.5D, -0.5D),
+                (float) Math.PI * 0.5F, true, false, false, false, false, false, false,
+                List.of(cuboid("body", bounds(0.125D, 0.0D, 0.125D, 0.875D, 1.0D, 0.875D),
+                        "block", metadata, uv(), false)));
+    }
+
+    public static UniversalCuboidRenderPlan sandbagsWorldPlan(int metadata,
+            boolean negX, boolean posX, boolean negZ, boolean posZ) {
+        LegacyAtlasCuboidRenderer.CuboidBounds body = bounds(negX ? 0.0D : 0.25D, 0.0D,
+                negZ ? 0.0D : 0.25D, posX ? 1.0D : 0.75D, 1.0D, posZ ? 1.0D : 0.75D);
+        return new UniversalCuboidRenderPlan("sandbags", metadata, false, new TranslationPlan(0.0D, 0.0D, 0.0D),
+                0.0F, true, negX, posX, negZ, posZ, false, false,
+                List.of(cuboid("body", body, "block", metadata, uv(), false)));
+    }
+
+    public static UniversalCuboidRenderPlan rbmkMiniPanelInventoryPlan(int metadata) {
+        return new UniversalCuboidRenderPlan("rbmk_mini_panel", metadata, true,
+                new TranslationPlan(-0.5D, -0.5D, -0.5D), (float) Math.PI * 0.5F,
+                true, false, false, false, false, false, false,
+                List.of(cuboid("body", bounds(0.25D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D),
+                        "block", metadata, uv(), false)));
+    }
+
+    public static UniversalCuboidRenderPlan rbmkMiniPanelWorldPlan(int metadata) {
+        LegacyAtlasCuboidRenderer.CuboidBounds body = bounds(metadata == 4 ? 0.25D : 0.0D, 0.0D,
+                metadata == 2 ? 0.25D : 0.0D, metadata == 5 ? 0.75D : 1.0D, 1.0D,
+                metadata == 3 ? 0.75D : 1.0D);
+        return new UniversalCuboidRenderPlan("rbmk_mini_panel", metadata, false,
+                new TranslationPlan(0.0D, 0.0D, 0.0D), 0.0F,
+                true, false, false, false, false, false, false,
+                List.of(cuboid("body", body, "block", metadata, uv(), false)));
+    }
+
+    public static RebarRenderPlan rebarInventoryPlan(int metadata) {
+        return new RebarRenderPlan(metadata, true, false, false, 0.0D, 1.0D,
+                new TranslationPlan(-0.5D, -0.5D, -0.5D), (float) Math.PI * 0.5F,
+                rebarComplexCuboids(metadata, 0.0D, 1.0D), List.of(), false);
+    }
+
+    public static RebarRenderPlan rebarWorldPlan(int metadata, boolean simple) {
+        double min = -0.001D;
+        double max = 1.001D;
+        return new RebarRenderPlan(metadata, false, simple, false, min, max,
+                new TranslationPlan(0.0D, 0.0D, 0.0D), 0.0F,
+                simple ? rebarSimpleCuboids(metadata, min, max) : rebarComplexCuboids(metadata, min, max),
+                List.of(), false);
+    }
+
+    public static RebarRenderPlan rebarConcreteFillPlan(int progress, int concreteColor) {
+        double height = Math.max(0, Math.min(progress, 1000)) / 1000.0D;
+        return new RebarRenderPlan(0, false, false, true, 0.0D, height,
+                new TranslationPlan(0.0D, 0.0D, 0.0D), 0.0F, List.of(),
+                List.of(cuboid("concrete_fill", bounds(0.0D, 0.0D, 0.0D, 1.0D, height, 1.0D),
+                        "concrete_liquid", 0, uv(), true)), true);
+    }
+
+    public static WoodStructureRenderPlan woodStructureInventoryPlan(int metadata) {
+        WoodStructureKind kind = woodStructureKind(metadata);
+        return new WoodStructureRenderPlan(kind, metadata, true, new TranslationPlan(-0.5D,
+                kind == WoodStructureKind.ROOF ? -0.375D : kind == WoodStructureKind.CEILING ? 0.125D : -0.5D,
+                -0.5D), (float) Math.PI * 0.5F,
+                false, false, false, false, false, woodStructureInventoryCuboids(kind, metadata), false);
+    }
+
+    public static WoodStructureRenderPlan woodStructureWorldPlan(int metadata,
+            boolean negX, boolean posX, boolean negZ, boolean posZ, boolean posY) {
+        WoodStructureKind kind = woodStructureKind(metadata);
+        return new WoodStructureRenderPlan(kind, metadata, false, new TranslationPlan(0.0D, 0.0D, 0.0D),
+                0.0F, negX, posX, negZ, posZ, posY,
+                woodStructureWorldCuboids(kind, metadata, negX, posX, negZ, posZ, posY),
+                kind == WoodStructureKind.SCAFFOLD);
+    }
+
     public static FoundryOpenVesselRenderPlan foundryBasinInventoryPlan() {
         return new FoundryOpenVesselRenderPlan("basin", new TranslationPlan(-0.5D, -0.5D, -0.5D),
                 null, true, false, foundryOpenVesselFaces(-0.875D),
@@ -922,6 +1463,96 @@ public final class LegacyIsbrhBlockPlans {
         return List.copyOf(plans);
     }
 
+    private static List<MultipassPassPlan> multipassPasses(int passCount, boolean inventory) {
+        List<MultipassPassPlan> passes = new ArrayList<>();
+        for (int pass = 0; pass < passCount; pass++) {
+            passes.add(new MultipassPassPlan(pass, true, "block_icon_current_pass",
+                    whiteColorPlan(), inventory ? LegacyBlockRenderHelper.STANDARD_INVENTORY_FACE_ORDER : List.of(),
+                    -1));
+        }
+        return List.copyOf(passes);
+    }
+
+    private static ConnectedTextureNeighborOffsetPlan ctOffset(String role, Direction... directions) {
+        int x = 0;
+        int y = 0;
+        int z = 0;
+        for (Direction direction : directions) {
+            x += direction.getStepX();
+            y += direction.getStepY();
+            z += direction.getStepZ();
+        }
+        return new ConnectedTextureNeighborOffsetPlan(role, x, y, z, List.of(directions));
+    }
+
+    private static int connectedTextureCornerType(boolean horizontal, boolean corner, boolean vertical) {
+        if (vertical && horizontal && corner) {
+            return CT_CONNECTED;
+        }
+        if (vertical && horizontal) {
+            return CT_JUNCTION;
+        }
+        if (vertical) {
+            return CT_VERTICAL;
+        }
+        if (horizontal) {
+            return CT_HORIZONTAL;
+        }
+        return CT_FULL;
+    }
+
+    private static ConnectedTextureAoPlan connectedTextureAoPlan(Direction face) {
+        return switch (face) {
+            case SOUTH -> new ConnectedTextureAoPlan(face,
+                    "colorRedTopLeft", "colorRedTopRight", "colorRedBottomLeft", "colorRedBottomRight",
+                    "brightnessTopLeft", "brightnessTopRight", "brightnessBottomLeft", "brightnessBottomRight");
+            case NORTH, WEST -> new ConnectedTextureAoPlan(face,
+                    "colorRedBottomLeft", "colorRedTopLeft", "colorRedBottomRight", "colorRedTopRight",
+                    "brightnessBottomLeft", "brightnessTopLeft", "brightnessBottomRight", "brightnessTopRight");
+            case EAST -> new ConnectedTextureAoPlan(face,
+                    "colorRedTopRight", "colorRedBottomRight", "colorRedTopLeft", "colorRedBottomLeft",
+                    "brightnessTopRight", "brightnessBottomRight", "brightnessTopLeft", "brightnessBottomLeft");
+            case UP -> new ConnectedTextureAoPlan(face,
+                    "colorRedBottomRight", "colorRedBottomLeft", "colorRedTopRight", "colorRedTopLeft",
+                    "brightnessBottomRight", "brightnessBottomLeft", "brightnessTopRight", "brightnessTopLeft");
+            case DOWN -> new ConnectedTextureAoPlan(face,
+                    "colorRedTopLeft", "colorRedTopRight", "colorRedBottomLeft", "colorRedBottomRight",
+                    "brightnessTopLeft", "brightnessTopRight", "brightnessBottomLeft", "brightnessBottomRight");
+        };
+    }
+
+    private static boolean ctIsConnected(int type) {
+        return type >= CT_CONNECTED && type < CT_CONNECTED + 4;
+    }
+
+    private static boolean ctIsJunction(int type) {
+        return type >= CT_JUNCTION && type < CT_JUNCTION + 4;
+    }
+
+    private static boolean ctIsHorizontal(int type) {
+        return type >= CT_HORIZONTAL && type < CT_HORIZONTAL + 4;
+    }
+
+    private static boolean ctIsVertical(int type) {
+        return type >= CT_VERTICAL && type < CT_VERTICAL + 4;
+    }
+
+    private static String ctFragmentKind(int type) {
+        if (ctIsConnected(type)) {
+            return "connected";
+        }
+        if (ctIsJunction(type)) {
+            return "junction";
+        }
+        if (ctIsHorizontal(type)) {
+            return "horizontal";
+        }
+        if (ctIsVertical(type)) {
+            return "vertical";
+        }
+        return "full";
+    }
+
     private static OrientationPlan legacyPipeOrientation(int metadata) {
         if (metadata == 8) {
             return new OrientationPlan((float) Math.PI * 0.5F, (float) Math.PI * 0.5F);
@@ -1040,6 +1671,262 @@ public final class LegacyIsbrhBlockPlans {
                     faceCuboid("connector_neg_z", bounds(neckLower, neckLower, 0.0D, neckUpper, neckUpper, neckLower),
                             iconRole, iconRole, iconRole, iconRole, iconRole, iconRole, 0, uv(), false));
         };
+    }
+
+    private static List<LegacyQuadPlan> crossedSquareQuads(double x, double y, double z, double height) {
+        double factor = 0.45D * height;
+        double minX = x + 0.5D - factor;
+        double maxX = x + 0.5D + factor;
+        double minZ = z + 0.5D - factor;
+        double maxZ = z + 0.5D + factor;
+        double minU = 0.0D;
+        double minV = 0.0D;
+        double maxU = 1.0D;
+        double maxV = 1.0D;
+        return List.of(
+                quad("cross_a_front",
+                        vertex(minX, y, minZ, maxU, maxV),
+                        vertex(minX, y + height, minZ, maxU, minV),
+                        vertex(maxX, y + height, maxZ, minU, minV),
+                        vertex(maxX, y, maxZ, minU, maxV)),
+                quad("cross_a_back",
+                        vertex(maxX, y, maxZ, maxU, maxV),
+                        vertex(maxX, y + height, maxZ, maxU, minV),
+                        vertex(minX, y + height, minZ, minU, minV),
+                        vertex(minX, y, minZ, minU, maxV)),
+                quad("cross_b_front",
+                        vertex(maxX, y, minZ, maxU, maxV),
+                        vertex(maxX, y + height, minZ, maxU, minV),
+                        vertex(minX, y + height, maxZ, minU, minV),
+                        vertex(minX, y, maxZ, minU, maxV)),
+                quad("cross_b_back",
+                        vertex(minX, y, maxZ, maxU, maxV),
+                        vertex(minX, y + height, maxZ, maxU, minV),
+                        vertex(maxX, y + height, minZ, minU, minV),
+                        vertex(maxX, y, minZ, minU, maxV)));
+    }
+
+    private static List<RbmkStackLayerPlan> rbmkStandardStackLayers(int count) {
+        List<RbmkStackLayerPlan> layers = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            layers.add(new RbmkStackLayerPlan(i, i, rbmkCubeFaces("block", 0), List.of()));
+        }
+        return List.copyOf(layers);
+    }
+
+    private static List<FaceIconCuboidPlan> rbmkCubeFaces(String iconRole, int metadata) {
+        return List.of(faceCuboid("cube", bounds(-0.5D, 0.0D, -0.5D, 0.5D, 1.0D, 0.5D),
+                "up", "down", "west", "east", "north", "south", metadata, uv(), false));
+    }
+
+    private static List<NamedIconPartPlan> rbmkWorldRodParts(boolean overrideTexture) {
+        return List.of(
+                new NamedIconPartPlan("rbmk_element", "Cap", overrideTexture ? "override" : "cap",
+                        0, 0, 0.0F, 0.0F, true),
+                new NamedIconPartPlan("rbmk_element", "Inner", "inner",
+                        0, 0, 0.0F, 0.0F, true));
+    }
+
+    private static List<FaceIconCuboidPlan> rbmkPipePadCuboids(int yOffset) {
+        return List.of(
+                rbmkPipePad("pipe_pad_north_west", yOffset, 0.0625D, 0.0625D, 0.4375D, 0.4375D),
+                rbmkPipePad("pipe_pad_south_west", yOffset, 0.0625D, 0.5625D, 0.4375D, 0.9375D),
+                rbmkPipePad("pipe_pad_south_east", yOffset, 0.5625D, 0.5625D, 0.9375D, 0.9375D),
+                rbmkPipePad("pipe_pad_north_east", yOffset, 0.5625D, 0.0625D, 0.9375D, 0.4375D));
+    }
+
+    private static FaceIconCuboidPlan rbmkPipePad(String role, int yOffset,
+            double minX, double minZ, double maxX, double maxZ) {
+        return faceCuboid(role, bounds(minX, yOffset, minZ, maxX, yOffset + 0.125D, maxZ),
+                "up", "down", "west", "east", "north", "south", 0, uv(), false);
+    }
+
+    private static FaceIconCuboidPlan rbmkLidCuboid(int lid) {
+        return faceCuboid("lid", bounds(0.0D, 1.0D, 0.0D, 1.0D, 1.25D, 1.0D),
+                "lid_" + lid, "lid_" + lid, "lid_" + lid, "lid_" + lid,
+                "lid_" + lid, "lid_" + lid, lid, uv(), false);
+    }
+
+    private static ObjIconPartRenderPlan rbmkControlLidPart(boolean overrideTexture, boolean shadow) {
+        return new ObjIconPartRenderPlan("rbmk_rods", "Lid", 0,
+                new TranslationPlan(0.0D, 0.0D, 0.0D), 0.0F, 0.0F,
+                shadow, overrideTexture, true, false);
+    }
+
+    private static SolarMirrorAimPlan solarMirrorAim(int deltaX, int deltaY, int deltaZ) {
+        double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        if (distance <= 0.0D) {
+            return new SolarMirrorAimPlan(0.0D, 0.0D, 0.45F, distance);
+        }
+        double pitch = -Math.asin(deltaY / distance) + Math.PI / 2.0D;
+        double yaw = -Math.atan2(deltaZ, deltaX) - Math.PI / 2.0D;
+        return new SolarMirrorAimPlan(yaw, pitch, 0.45F, distance);
+    }
+
+    private static OrientationPlan blockRotatedOrientation(int metadata) {
+        float pitch = metadata == 0 ? (float) Math.PI : 0.0F;
+        float rotation = switch (metadata) {
+            case 2 -> (float) Math.PI * 0.5F;
+            case 3 -> (float) Math.PI * 1.5F;
+            case 4 -> (float) Math.PI;
+            default -> 0.0F;
+        };
+        if (rotation != 0.0F || metadata == 5) {
+            pitch = (float) Math.PI * 0.5F;
+        }
+        return new OrientationPlan(rotation, pitch);
+    }
+
+    private static float blockDecoRotation(int metadata) {
+        return switch (metadata >> 2) {
+            case 1 -> 0.0F;
+            case 2 -> (float) Math.PI * 1.5F;
+            case 3 -> (float) Math.PI * 0.5F;
+            default -> (float) Math.PI;
+        };
+    }
+
+    private static List<NamedIconPartPlan> diFurnaceExtensionParts(float yawRadians,
+            float pitchRadians, boolean shadeNormals) {
+        return List.of(
+                new NamedIconPartPlan("difurnace_extension", "Top", "top", 1, 0,
+                        yawRadians, pitchRadians, shadeNormals),
+                new NamedIconPartPlan("difurnace_extension", "Bottom", "bottom", 0, 0,
+                        yawRadians, pitchRadians, shadeNormals),
+                new NamedIconPartPlan("difurnace_extension", "Side", "side", 3, 0,
+                        yawRadians, pitchRadians, shadeNormals));
+    }
+
+    private static List<CuboidUvPlan> rebarSimpleCuboids(int metadata, double min, double max) {
+        return List.of(
+                cuboid("vertical_center", bounds(0.4375D, min, 0.4375D, 0.5625D, max, 0.5625D),
+                        "block", metadata, uv(), false),
+                cuboid("x_center", bounds(min, 0.4375D, 0.4375D, max, 0.5625D, 0.5625D),
+                        "block", metadata, uv(), false),
+                cuboid("z_center", bounds(0.4375D, 0.4375D, min, 0.5625D, 0.5625D, max),
+                        "block", metadata, uv(), false));
+    }
+
+    private static List<CuboidUvPlan> rebarComplexCuboids(int metadata, double min, double max) {
+        double o = 0.25D;
+        List<CuboidUvPlan> cuboids = new ArrayList<>();
+        cuboids.add(cuboid("vertical_north_west", bounds(0.4375D - o, min, 0.4375D - o,
+                0.5625D - o, max, 0.5625D - o), "block", metadata, uv(), false));
+        cuboids.add(cuboid("vertical_south_west", bounds(0.4375D - o, min, 0.4375D + o,
+                0.5625D - o, max, 0.5625D + o), "block", metadata, uv(), false));
+        cuboids.add(cuboid("vertical_north_east", bounds(0.4375D + o, min, 0.4375D - o,
+                0.5625D + o, max, 0.5625D - o), "block", metadata, uv(), false));
+        cuboids.add(cuboid("vertical_south_east", bounds(0.4375D + o, min, 0.4375D + o,
+                0.5625D + o, max, 0.5625D + o), "block", metadata, uv(), false));
+        cuboids.add(cuboid("x_lower_north", bounds(min, 0.4375D - o, 0.4375D - o,
+                max, 0.5625D - o, 0.5625D - o), "block", metadata, uv(), false));
+        cuboids.add(cuboid("x_lower_south", bounds(min, 0.4375D - o, 0.4375D + o,
+                max, 0.5625D - o, 0.5625D + o), "block", metadata, uv(), false));
+        cuboids.add(cuboid("x_upper_north", bounds(min, 0.4375D + o, 0.4375D - o,
+                max, 0.5625D + o, 0.5625D - o), "block", metadata, uv(), false));
+        cuboids.add(cuboid("x_upper_south", bounds(min, 0.4375D + o, 0.4375D + o,
+                max, 0.5625D + o, 0.5625D + o), "block", metadata, uv(), false));
+        cuboids.add(cuboid("z_lower_west", bounds(0.4375D - o, 0.4375D - o, min,
+                0.5625D - o, 0.5625D - o, max), "block", metadata, uv(), false));
+        cuboids.add(cuboid("z_upper_west", bounds(0.4375D - o, 0.4375D + o, min,
+                0.5625D - o, 0.5625D + o, max), "block", metadata, uv(), false));
+        cuboids.add(cuboid("z_lower_east", bounds(0.4375D + o, 0.4375D - o, min,
+                0.5625D + o, 0.5625D - o, max), "block", metadata, uv(), false));
+        cuboids.add(cuboid("z_upper_east", bounds(0.4375D + o, 0.4375D + o, min,
+                0.5625D + o, 0.5625D + o, max), "block", metadata, uv(), false));
+        return List.copyOf(cuboids);
+    }
+
+    private static WoodStructureKind woodStructureKind(int metadata) {
+        return switch (metadata) {
+            case 1 -> WoodStructureKind.SCAFFOLD;
+            case 2 -> WoodStructureKind.CEILING;
+            default -> WoodStructureKind.ROOF;
+        };
+    }
+
+    private static List<CuboidUvPlan> woodStructureInventoryCuboids(WoodStructureKind kind, int metadata) {
+        return switch (kind) {
+            case ROOF -> List.of(
+                    cuboid("roof_west_rail", bounds(0.0D, 0.0D, 0.0D, 0.125D, 0.125D, 1.0D),
+                            "block", metadata, uv(), false),
+                    cuboid("roof_east_rail", bounds(0.875D, 0.0D, 0.0D, 1.0D, 0.125D, 1.0D),
+                            "block", metadata, uv(), false),
+                    cuboid("roof_north_slat", bounds(0.0D, 0.125D, 0.0625D, 1.0D, 0.1875D, 0.4375D),
+                            "block", metadata, uv(), false),
+                    cuboid("roof_south_slat", bounds(0.0D, 0.125D, 0.5625D, 1.0D, 0.1875D, 0.9375D),
+                            "block", metadata, uv(), false));
+            case SCAFFOLD -> woodScaffoldCuboids(metadata, false, false, false, false, false, true);
+            case CEILING -> List.of(
+                    cuboid("ceiling_west_rail", bounds(0.0D, 0.0625D, 0.0D, 0.125D, 0.125D, 1.0D),
+                            "block", metadata, uv(), false),
+                    cuboid("ceiling_east_rail", bounds(0.875D, 0.0625D, 0.0D, 1.0D, 0.125D, 1.0D),
+                            "block", metadata, uv(), false),
+                    cuboid("ceiling_north_slat", bounds(0.0D, 0.125D, 0.0625D, 1.0D, 0.1875D, 0.4375D),
+                            "block", metadata, uv(), false),
+                    cuboid("ceiling_south_slat", bounds(0.0D, 0.125D, 0.5625D, 1.0D, 0.1875D, 0.9375D),
+                            "block", metadata, uv(), false));
+        };
+    }
+
+    private static List<CuboidUvPlan> woodStructureWorldCuboids(WoodStructureKind kind, int metadata,
+            boolean negX, boolean posX, boolean negZ, boolean posZ, boolean posY) {
+        return switch (kind) {
+            case ROOF -> List.of(
+                    cuboid("roof_west_rail", bounds(0.0D, 0.0D, 0.0D, 0.125D, 0.125D, 1.0D),
+                            "block", metadata, uv(), false),
+                    cuboid("roof_east_rail", bounds(0.875D, 0.0D, 0.0D, 1.0D, 0.125D, 1.0D),
+                            "block", metadata, uv(), false),
+                    cuboid("roof_north_slat", bounds(negX ? 0.0D : 0.0625D, 0.125D, 0.0625D,
+                            posX ? 1.0D : 0.9375D, 0.1875D, 0.4375D), "block", metadata, uv(), false),
+                    cuboid("roof_south_slat", bounds(negX ? 0.0D : 0.0625D, 0.125D, 0.5625D,
+                            posX ? 1.0D : 0.9375D, 0.1875D, 0.9375D), "block", metadata, uv(), false));
+            case SCAFFOLD -> woodScaffoldCuboids(metadata, negX, posX, negZ, posZ, posY, false);
+            case CEILING -> List.of(
+                    cuboid("ceiling_west_rail", bounds(0.0D, 0.875D, 0.0D, 0.125D, 0.9375D, 1.0D),
+                            "block", metadata, uv(), false),
+                    cuboid("ceiling_east_rail", bounds(0.875D, 0.875D, 0.0D, 1.0D, 0.9375D, 1.0D),
+                            "block", metadata, uv(), false),
+                    cuboid("ceiling_north_slat", bounds(0.0D, 0.9375D, 0.0625D, 1.0D, 1.0D, 0.4375D),
+                            "block", metadata, uv(), false),
+                    cuboid("ceiling_south_slat", bounds(0.0D, 0.9375D, 0.5625D, 1.0D, 1.0D, 0.9375D),
+                            "block", metadata, uv(), false));
+        };
+    }
+
+    private static List<CuboidUvPlan> woodScaffoldCuboids(int metadata, boolean negX, boolean posX,
+            boolean negZ, boolean posZ, boolean posY, boolean inventory) {
+        double postTop = inventory || !posY ? 0.875D : 1.0D;
+        List<CuboidUvPlan> cuboids = new ArrayList<>();
+        cuboids.add(cuboid("post_north_west", bounds(0.0625D, 0.0D, 0.0625D, 0.1875D, postTop, 0.1875D),
+                "block", metadata, uv(), false));
+        cuboids.add(cuboid("post_north_east", bounds(0.8125D, 0.0D, 0.0625D, 0.9375D, postTop, 0.1875D),
+                "block", metadata, uv(), false));
+        cuboids.add(cuboid("post_south_west", bounds(0.0625D, 0.0D, 0.8125D, 0.1875D, postTop, 0.9375D),
+                "block", metadata, uv(), false));
+        cuboids.add(cuboid("post_south_east", bounds(0.8125D, 0.0D, 0.8125D, 0.9375D, postTop, 0.9375D),
+                "block", metadata, uv(), false));
+        if (inventory || !negX) {
+            cuboids.add(cuboid("west_panel", bounds(0.0D, 0.125D, 0.0D, 0.0625D, 0.375D, 1.0D),
+                    "block", metadata, uv(), false));
+        }
+        if (inventory || !posX) {
+            cuboids.add(cuboid("east_panel", bounds(0.9375D, 0.125D, 0.0D, 1.0D, 0.375D, 1.0D),
+                    "block", metadata, uv(), false));
+        }
+        if (inventory || !negZ) {
+            cuboids.add(cuboid("north_panel", bounds(0.0D, 0.5D, 0.0D, 1.0D, 0.75D, 0.0625D),
+                    "block", metadata, uv(), false));
+        }
+        if (inventory || !posZ) {
+            cuboids.add(cuboid("south_panel", bounds(0.0D, 0.5D, 0.9375D, 1.0D, 0.75D, 1.0D),
+                    "block", metadata, uv(), false));
+        }
+        if (inventory || !posY) {
+            cuboids.add(cuboid("top_deck", bounds(0.0D, 0.875D, 0.0D, 1.0D, 1.0D, 1.0D),
+                    "block", metadata, uv(), false));
+        }
+        return List.copyOf(cuboids);
     }
 
     private static SpotlightPartRenderPlan spotlightWorldPlan(String legacyResourceModel, String partName,
@@ -1814,6 +2701,15 @@ public final class LegacyIsbrhBlockPlans {
         return new ColorPlan(0xFFFFFF, 1.0F, 1.0F, 1.0F);
     }
 
+    private static ColorPlan colorPlan(int color) {
+        return new ColorPlan(color & 0xFFFFFF, red(color), green(color), blue(color));
+    }
+
+    private static ColorPlan scaledColorPlan(int color, float multiplier) {
+        int rgb = color & 0xFFFFFF;
+        return new ColorPlan(rgb, red(rgb) * multiplier, green(rgb) * multiplier, blue(rgb) * multiplier);
+    }
+
     private static float red(int color) {
         return (float) (color >> 16 & 255) / 255.0F;
     }
@@ -1974,6 +2870,216 @@ public final class LegacyIsbrhBlockPlans {
                                        boolean compressorOrEndpoint, Direction insertionDirection,
                                        Direction ejectionDirection, List<Direction> airConnectors,
                                        boolean renders3DInInventory, List<FaceIconCuboidPlan> cuboids) {
+    }
+
+    public record PlantCrossRenderPlan(String kind, boolean renders3DInInventory,
+                                       boolean inventoryRendererImplemented, int layerCount,
+                                       ColorPlan color, List<CrossedSquareLayerPlan> layers) {
+    }
+
+    public record CrossedSquareLayerPlan(String role, String iconRole, double yOffset,
+                                         ColorPlan color, boolean fullBright, double height,
+                                         double factor, List<LegacyQuadPlan> quads) {
+    }
+
+    public record RbmkStackRenderPlan(String kind, boolean inventory, int metadata,
+                                      TranslationPlan translation, float scale,
+                                      boolean renders3DInInventory, List<RbmkStackLayerPlan> stackLayers,
+                                      boolean worldStandardBlock, int lid, boolean renderLid,
+                                      List<FaceIconCuboidPlan> worldCuboids,
+                                      List<FaceIconCuboidPlan> lidCuboids) {
+    }
+
+    public record RbmkRodRenderPlan(boolean inventory, int metadata, TranslationPlan translation,
+                                    float scale, boolean shadeNormals, boolean usesOverrideTexture,
+                                    boolean renders3DInInventory, ColorPlan fuelRodColor,
+                                    List<RbmkStackLayerPlan> stackLayers,
+                                    boolean worldStandardBlock, int lid, boolean renderLid,
+                                    List<NamedIconPartPlan> worldParts,
+                                    List<FaceIconCuboidPlan> lidCuboids) {
+    }
+
+    public record RbmkControlRenderPlan(boolean inventory, int metadata, boolean boilerOrHeater,
+                                        TranslationPlan translation, float scale,
+                                        List<RbmkStackLayerPlan> stackLayers,
+                                        List<FaceIconCuboidPlan> pipeCuboids,
+                                        boolean renderInventoryLidPart,
+                                        ObjIconPartRenderPlan inventoryLidPart,
+                                        boolean worldStandardBlock, int lid, boolean renderWorldLid,
+                                        List<FaceIconCuboidPlan> worldCuboids,
+                                        List<FaceIconCuboidPlan> lidCuboids) {
+    }
+
+    public record RbmkStackLayerPlan(int index, double yOffset,
+                                     List<FaceIconCuboidPlan> cuboids,
+                                     List<NamedIconPartPlan> parts) {
+    }
+
+    public record SolarMirrorRenderPlan(boolean hasTile, boolean targetAbove,
+                                        int deltaX, int deltaY, int deltaZ,
+                                        TranslationPlan translation,
+                                        boolean usesOverrideTexture,
+                                        ObjIconPartRenderPlan base,
+                                        ObjIconPartRenderPlan mirror,
+                                        SolarMirrorAimPlan aim) {
+    }
+
+    public record SolarMirrorAimPlan(double yawRadians, double pitchRadians,
+                                     float minNormalBrightness, double distance) {
+    }
+
+    public record RailDelegateRenderPlan(int metadata, boolean inventory,
+                                         boolean renders3DInInventory, String legacyDelegateMethod) {
+    }
+
+    public record GenericObjModelRenderPlan(String rendererKind, String legacyResourceModel,
+                                            int iconMetadata, TranslationPlan translation,
+                                            float yawRadians, float pitchRadians, float rollRadians, float scale,
+                                            boolean shadeNormals, boolean usesOverrideTexture,
+                                            boolean renders3DInInventory, boolean worldRenderReturn) {
+    }
+
+    public record SideRotationRenderPlan(int metadata, boolean inventory, boolean renders3DInInventory,
+                                         TranslationPlan translation, float inventoryYawRadians,
+                                         UvRotationPlan uvRotations,
+                                         List<LegacyBlockRenderHelper.InventoryFace> inventoryFaceOrder,
+                                         FaceIconCuboidPlan cuboid) {
+    }
+
+    public record ConnectedTextureRenderPlan(int metadata, boolean world,
+                                             boolean renders3DInInventory,
+                                             boolean loadsAndDropsContext,
+                                             String legacyRenderPath,
+                                             boolean inventoryUsesWorldContext) {
+    }
+
+    public record ConnectedTextureFragmentPlan(int type, String parentIconRole,
+                                               int parentSubdivisions, int cellU, int cellV,
+                                               int cellWidth, int cellHeight, String kind) {
+    }
+
+    public record ConnectedTextureAccessPlan(Direction face, Direction up, Direction left,
+                                             List<ConnectedTextureNeighborOffsetPlan> neighbors) {
+    }
+
+    public record ConnectedTextureNeighborOffsetPlan(String role, int offsetX, int offsetY, int offsetZ,
+                                                     List<Direction> directions) {
+    }
+
+    public record ConnectedTextureFacePlan(Direction face,
+                                           ConnectedTextureAccessPlan access,
+                                           ConnectedTextureAoPlan ao,
+                                           ConnectedTextureFaceIndices indices,
+                                           List<ConnectedTextureSubFacePlan> subFaces) {
+    }
+
+    public record ConnectedTextureFaceIndices(int topLeft, int topRight,
+                                              int bottomLeft, int bottomRight) {
+    }
+
+    public record ConnectedTextureSubFacePlan(String role, int fragmentType,
+                                              String topLeftVertexRole,
+                                              String topRightVertexRole,
+                                              String bottomLeftVertexRole,
+                                              String bottomRightVertexRole) {
+    }
+
+    public record ConnectedTextureAoPlan(Direction face,
+                                         String topLeftColorSource,
+                                         String topRightColorSource,
+                                         String bottomLeftColorSource,
+                                         String bottomRightColorSource,
+                                         String topLeftBrightnessSource,
+                                         String topRightBrightnessSource,
+                                         String bottomLeftBrightnessSource,
+                                         String bottomRightBrightnessSource) {
+    }
+
+    public record InsideOutsideBlockRenderPlan(boolean renders3DInInventory,
+                                              boolean inventoryRendererImplemented,
+                                              boolean worldRender, boolean renderInsidePass,
+                                              boolean renderOutsidePass) {
+    }
+
+    public record IsbrhUniversalDelegatePlan(int metadata, boolean inventory,
+                                             boolean renders3DInInventory,
+                                             String legacyDelegateMethod) {
+    }
+
+    public record MultipassRenderPlan(int metadata, boolean inventory,
+                                      boolean renders3DInInventory,
+                                      boolean fallbackStandardBlock, int passCount,
+                                      boolean itemMayRenderMultiplePasses,
+                                      TranslationPlan translation, float inventoryYawRadians,
+                                      boolean setsCurrentPass, boolean resetsCurrentPass,
+                                      boolean setsWorldBrightness,
+                                      List<MultipassPassPlan> passes) {
+    }
+
+    public record MultipassPassPlan(int pass, boolean rendersStandardBlock,
+                                    String iconRole, ColorPlan color,
+                                    List<LegacyBlockRenderHelper.InventoryFace> inventoryFaceOrder,
+                                    int onlySide) {
+    }
+
+    public record PaintableMultipassPlan(String kind, int metadata,
+                                         boolean hasPaintBlock, int paintMetadata,
+                                         int passCount, boolean itemRendersMultiplePasses,
+                                         List<MultipassTexturePlan> passes) {
+    }
+
+    public record MultipassTexturePlan(int pass, String iconRole, int iconMetadata,
+                                       ColorPlan color, boolean rendersAllSides,
+                                       boolean colorFromCurrentPass, int onlySide) {
+    }
+
+    public record TestPipeRenderPlan(int metadata, boolean inventory,
+                                     TranslationPlan translation,
+                                     float yawRadians, float pitchRadians, float scale,
+                                     boolean shadeNormals, boolean usesOverrideTexture,
+                                     boolean renders3DInInventory,
+                                     ConnectionMaskPlan connections, int overlayColor,
+                                     List<LayeredObjPartPlan> parts) {
+    }
+
+    public record ObjUtilLibraryStatePlan(boolean hasColor, ColorPlan color,
+                                          int alpha, String renderMode,
+                                          boolean fullBright,
+                                          UvScrollPlan uvScroll) {
+    }
+
+    public record UvScrollPlan(double uScale, double vScale,
+                               double uOffset, double vOffset,
+                               boolean clearAfterRender) {
+    }
+
+    public record UniversalCuboidRenderPlan(String kind, int metadata, boolean inventory,
+                                            TranslationPlan translation, float inventoryYawRadians,
+                                            boolean renders3DInInventory,
+                                            boolean negX, boolean posX, boolean negZ, boolean posZ,
+                                            boolean posY, boolean selectedFullBlock,
+                                            List<CuboidUvPlan> cuboids) {
+    }
+
+    public record RebarRenderPlan(int metadata, boolean inventory, boolean simple,
+                                  boolean concreteFill, double min, double max,
+                                  TranslationPlan translation, float inventoryYawRadians,
+                                  List<CuboidUvPlan> rebarCuboids,
+                                  List<CuboidUvPlan> overlayCuboids,
+                                  boolean usesConcreteOverrideTexture) {
+    }
+
+    public record WoodStructureRenderPlan(WoodStructureKind kind, int metadata, boolean inventory,
+                                          TranslationPlan translation, float inventoryYawRadians,
+                                          boolean negX, boolean posX, boolean negZ, boolean posZ,
+                                          boolean posY, List<CuboidUvPlan> cuboids,
+                                          boolean scaffoldActsAsLadder) {
+    }
+
+    public enum WoodStructureKind {
+        ROOF,
+        SCAFFOLD,
+        CEILING
     }
 
     public record DuctBoundsPlan(double lower, double upper, double junctionLower, double junctionUpper) {

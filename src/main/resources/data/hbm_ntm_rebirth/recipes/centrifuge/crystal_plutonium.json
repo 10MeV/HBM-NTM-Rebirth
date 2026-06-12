@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "tag": "forge:crystals/plutonium" } },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_plutonium", "count": 2 },
+    { "item": "hbm_ntm_rebirth:powder_plutonium", "count": 2 },
+    { "item": "hbm_ntm_rebirth:powder_polonium" },
+    { "item": "hbm_ntm_rebirth:powder_lithium_tiny" }
+  ]
+}

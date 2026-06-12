@@ -4,6 +4,7 @@ import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import com.hbm.ntm.recipe.LegacyBlueprintPools;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -40,7 +41,7 @@ public class ItemBlueprints extends Item {
 
         player.getInventory().clearOrCountMatchingItems(candidate -> candidate.is(Items.PAPER), 1, player.inventoryMenu.getCraftSlots());
         player.swing(hand);
-        ItemStack copy = stack.copyWithCount(1);
+        ItemStack copy = HbmItemStackUtil.carefulCopyWithSize(stack, 1);
         if (player.getAbilities().instabuild) {
             player.drop(copy, false);
             return InteractionResultHolder.success(stack);
@@ -49,9 +50,7 @@ public class ItemBlueprints extends Item {
             stack.grow(1);
             return InteractionResultHolder.success(stack);
         }
-        if (!player.getInventory().add(copy)) {
-            player.drop(copy, false);
-        }
+        HbmItemStackUtil.giveOrDrop(player, copy);
         return InteractionResultHolder.success(stack);
     }
 

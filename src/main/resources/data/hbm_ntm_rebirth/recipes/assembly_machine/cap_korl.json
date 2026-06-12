@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 10,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:cap_korl"
+      }
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:cap_korl"
+      }
+    }
+  ],
+  "internal_name": "ass.capkorl",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:block_cap_korl"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 75
+}

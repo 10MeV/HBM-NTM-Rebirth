@@ -2,6 +2,7 @@ package com.hbm.ntm.network;
 
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionSavedData;
+import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.world.saveddata.TomImpactSavedData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,7 +33,13 @@ public final class HbmPermaSyncData {
     }
 
     public static int[] deathEffectEntityIds(ServerPlayer player) {
-        return new int[0];
+        if (player == null) {
+            return new int[0];
+        }
+        return player.serverLevel().players().stream()
+                .filter(candidate -> candidate.hasEffect(ModEffects.DEATH.get()))
+                .mapToInt(ServerPlayer::getId)
+                .toArray();
     }
 
     private HbmPermaSyncData() {

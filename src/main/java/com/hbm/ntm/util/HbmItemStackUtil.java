@@ -281,6 +281,46 @@ public final class HbmItemStackUtil {
         return list;
     }
 
+    public static ListTag saveSlottedItems(ItemStackHandler items, String slotKey) {
+        return saveSlottedItems((IItemHandler) items, slotKey);
+    }
+
+    public static ListTag saveSlottedItems(IItemHandler items, String slotKey) {
+        ListTag list = new ListTag();
+        if (items == null) {
+            return list;
+        }
+        String key = validSlotKey(slotKey);
+        for (int slot = 0; slot < items.getSlots(); slot++) {
+            ItemStack stack = items.getStackInSlot(slot);
+            if (!stack.isEmpty()) {
+                CompoundTag stackTag = new CompoundTag();
+                stackTag.putByte(key, (byte) slot);
+                stack.save(stackTag);
+                list.add(stackTag);
+            }
+        }
+        return list;
+    }
+
+    public static ListTag saveSlottedItems(Container items, String slotKey) {
+        ListTag list = new ListTag();
+        if (items == null) {
+            return list;
+        }
+        String key = validSlotKey(slotKey);
+        for (int slot = 0; slot < items.getContainerSize(); slot++) {
+            ItemStack stack = items.getItem(slot);
+            if (!stack.isEmpty()) {
+                CompoundTag stackTag = new CompoundTag();
+                stackTag.putByte(key, (byte) slot);
+                stack.save(stackTag);
+                list.add(stackTag);
+            }
+        }
+        return list;
+    }
+
     public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey, ItemStack[] items) {
         if (target == null || listKey == null || listKey.isBlank()) {
             return;
@@ -290,6 +330,26 @@ public final class HbmItemStackUtil {
 
     public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey,
             NonNullList<ItemStack> items) {
+        if (target == null || listKey == null || listKey.isBlank()) {
+            return;
+        }
+        target.put(listKey, saveSlottedItems(items, slotKey));
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey,
+            ItemStackHandler items) {
+        saveSlottedItemsToTag(target, listKey, slotKey, (IItemHandler) items);
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey,
+            IItemHandler items) {
+        if (target == null || listKey == null || listKey.isBlank()) {
+            return;
+        }
+        target.put(listKey, saveSlottedItems(items, slotKey));
+    }
+
+    public static void saveSlottedItemsToTag(CompoundTag target, String listKey, String slotKey, Container items) {
         if (target == null || listKey == null || listKey.isBlank()) {
             return;
         }
@@ -391,11 +451,11 @@ public final class HbmItemStackUtil {
     }
 
     public static void loadLegacyItemsCompound(CompoundTag tag, String key, ItemStackHandler items) {
-        loadLegacyItems(getCompoundOrNull(tag, key), items);
+        loadLegacyItems(getCompoundOrWrappedLegacyList(tag, key), items);
     }
 
     public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, ItemStackHandler items) {
-        loadLegacyOrForgeItems(getCompoundOrNull(tag, key), items);
+        loadLegacyOrForgeItems(getCompoundOrWrappedLegacyList(tag, key), items);
     }
 
     public static void loadLegacyOrForgeItems(CompoundTag tag, ItemStackHandler items) {
@@ -421,7 +481,7 @@ public final class HbmItemStackUtil {
     }
 
     public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, ItemStack[] items) {
-        loadLegacyOrForgeItems(getCompoundOrNull(tag, key), items);
+        loadLegacyOrForgeItems(getCompoundOrWrappedLegacyList(tag, key), items);
     }
 
     public static void loadLegacyItems(CompoundTag tag, ItemStack[] items) {
@@ -436,7 +496,7 @@ public final class HbmItemStackUtil {
     }
 
     public static void loadLegacyItemsCompound(CompoundTag tag, String key, ItemStack[] items) {
-        loadLegacyItems(getCompoundOrNull(tag, key), items);
+        loadLegacyItems(getCompoundOrWrappedLegacyList(tag, key), items);
     }
 
     public static void loadLegacyItems(CompoundTag tag, Container items) {
@@ -455,7 +515,22 @@ public final class HbmItemStackUtil {
     }
 
     public static void loadLegacyItemsCompound(CompoundTag tag, String key, Container items) {
-        loadLegacyItems(getCompoundOrNull(tag, key), items);
+        loadLegacyItems(getCompoundOrWrappedLegacyList(tag, key), items);
+    }
+
+    public static void loadLegacyOrForgeItems(CompoundTag tag, Container items) {
+        if (items == null) {
+            return;
+        }
+        NonNullList<ItemStack> stacks = loadLegacyOrForgeItems(tag, items.getContainerSize());
+        for (int slot = 0; slot < stacks.size(); slot++) {
+            items.setItem(slot, stacks.get(slot));
+        }
+        items.setChanged();
+    }
+
+    public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, Container items) {
+        loadLegacyOrForgeItems(getCompoundOrWrappedLegacyList(tag, key), items);
     }
 
     public static void loadLegacyItems(CompoundTag tag, NonNullList<ItemStack> items) {
@@ -470,7 +545,7 @@ public final class HbmItemStackUtil {
     }
 
     public static void loadLegacyItemsCompound(CompoundTag tag, String key, NonNullList<ItemStack> items) {
-        loadLegacyItems(getCompoundOrNull(tag, key), items);
+        loadLegacyItems(getCompoundOrWrappedLegacyList(tag, key), items);
     }
 
     public static void loadLegacyOrForgeItems(CompoundTag tag, NonNullList<ItemStack> items) {
@@ -485,7 +560,7 @@ public final class HbmItemStackUtil {
     }
 
     public static void loadLegacyOrForgeItemsCompound(CompoundTag tag, String key, NonNullList<ItemStack> items) {
-        loadLegacyOrForgeItems(getCompoundOrNull(tag, key), items);
+        loadLegacyOrForgeItems(getCompoundOrWrappedLegacyList(tag, key), items);
     }
 
     public static NonNullList<ItemStack> loadLegacyOrForgeItems(CompoundTag tag, int slotCount) {
@@ -522,6 +597,19 @@ public final class HbmItemStackUtil {
         for (int slot = 0; slot < stacks.size(); slot++) {
             target.setStackInSlot(slot, stacks.get(slot));
         }
+    }
+
+    public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey, Container target) {
+        if (target == null) {
+            return;
+        }
+        for (int slot = 0; slot < target.getContainerSize(); slot++) {
+            target.setItem(slot, ItemStack.EMPTY);
+        }
+        if (tag != null && listKey != null && !listKey.isBlank() && tag.contains(listKey, Tag.TAG_LIST)) {
+            loadSlottedItems(tag.getList(listKey, Tag.TAG_COMPOUND), slotKey, target);
+        }
+        target.setChanged();
     }
 
     public static void loadSlottedItems(CompoundTag tag, String listKey, String slotKey,
@@ -566,6 +654,39 @@ public final class HbmItemStackUtil {
         }
     }
 
+    public static void loadSlottedItems(ListTag list, String slotKey, ItemStackHandler target) {
+        if (list == null || target == null) {
+            return;
+        }
+        String key = validSlotKey(slotKey);
+        for (int index = 0; index < list.size(); index++) {
+            CompoundTag stackTag = list.getCompound(index);
+            int slot = stackTag.getByte(key) & 255;
+            if (slot >= 0 && slot < target.getSlots()) {
+                target.setStackInSlot(slot, ItemStack.of(stackTag));
+            }
+        }
+    }
+
+    public static void loadSlottedItems(ListTag list, String slotKey, Container target) {
+        if (list == null || target == null) {
+            return;
+        }
+        String key = validSlotKey(slotKey);
+        boolean changed = false;
+        for (int index = 0; index < list.size(); index++) {
+            CompoundTag stackTag = list.getCompound(index);
+            int slot = stackTag.getByte(key) & 255;
+            if (slot >= 0 && slot < target.getContainerSize()) {
+                target.setItem(slot, ItemStack.of(stackTag));
+                changed = true;
+            }
+        }
+        if (changed) {
+            target.setChanged();
+        }
+    }
+
     private static CompoundTag wrapLegacyItemsList(CompoundTag tag, String key) {
         if (tag == null || key == null || key.isBlank() || !tag.contains(key, Tag.TAG_LIST)) {
             return null;
@@ -575,8 +696,17 @@ public final class HbmItemStackUtil {
         return wrapper;
     }
 
-    private static CompoundTag getCompoundOrNull(CompoundTag tag, String key) {
-        return tag == null || key == null || key.isBlank() ? null : tag.getCompound(key);
+    private static CompoundTag getCompoundOrWrappedLegacyList(CompoundTag tag, String key) {
+        if (tag == null || key == null || key.isBlank()) {
+            return null;
+        }
+        if (tag.contains(key, Tag.TAG_COMPOUND)) {
+            return tag.getCompound(key);
+        }
+        if (tag.contains(key, Tag.TAG_LIST)) {
+            return wrapLegacyItemsList(tag, key);
+        }
+        return null;
     }
 
     private static int slottedItemListSize(CompoundTag tag) {
@@ -729,13 +859,29 @@ public final class HbmItemStackUtil {
     }
 
     public static boolean giveOrDrop(Player player, ItemStack stack) {
+        return giveOrDrop(player, stack, false);
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, boolean throwRandomly) {
         if (player == null || stack == null || stack.isEmpty()) {
             return true;
         }
         ItemStack copy = stack.copy();
         boolean inserted = player.getInventory().add(copy);
         if (!copy.isEmpty()) {
-            player.drop(copy, false);
+            player.drop(copy, throwRandomly);
+        }
+        return inserted && copy.isEmpty();
+    }
+
+    public static boolean giveOrDrop(Player player, ItemStack stack, Level fallbackLevel, double x, double y, double z) {
+        if (player == null || stack == null || stack.isEmpty()) {
+            return true;
+        }
+        ItemStack copy = stack.copy();
+        boolean inserted = player.getInventory().add(copy);
+        if (!copy.isEmpty() && fallbackLevel != null && !fallbackLevel.isClientSide) {
+            fallbackLevel.addFreshEntity(new ItemEntity(fallbackLevel, x, y, z, copy));
         }
         return inserted && copy.isEmpty();
     }

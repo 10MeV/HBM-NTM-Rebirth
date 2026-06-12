@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/machines/chemical_plant",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/machines/chemical_plant"
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/machines/chemical_plant",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/machines/chemical_plant",
+      "y": 270
+    }
+  }
+}

@@ -117,23 +117,17 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
 
     private boolean setInputTypeFromIdentifier() {
         ItemStackHandler items = getItems();
-        return items != null && HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
-                inputTank, level, worldPosition, 2, true);
+        return items != null && setFluidTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER, inputTank, 2, true);
     }
 
     private boolean processFluidContainers() {
         ItemStackHandler items = getItems();
-        return items != null && HbmFluidItemTransfer.processTransfers(items, List.of(
-                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_INPUT_CONTAINER,
-                        SLOT_INPUT_CONTAINER_OUTPUT, inputTank),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT_HEAVY_CONTAINER,
-                        SLOT_OUTPUT_HEAVY_CONTAINER_OUTPUT, heavyOilTank),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT_REFORMATE_CONTAINER,
-                        SLOT_OUTPUT_REFORMATE_CONTAINER_OUTPUT, reformateTank),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT_LIGHT_CONTAINER,
-                        SLOT_OUTPUT_LIGHT_CONTAINER_OUTPUT, lightOilTank),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT_GAS_CONTAINER,
-                        SLOT_OUTPUT_GAS_CONTAINER_OUTPUT, sourGasTank)));
+        return items != null && processFluidItemTransfers(items, HbmFluidItemTransfer.combineTransfers(
+                HbmFluidItemTransfer.loadTransfers(
+                        SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank),
+                HbmFluidItemTransfer.unloadTransfers(
+                        SLOT_OUTPUT_HEAVY_CONTAINER, SLOT_OUTPUT_HEAVY_CONTAINER_OUTPUT, 2,
+                        heavyOilTank, reformateTank, lightOilTank, sourGasTank)));
     }
 
     private boolean refine() {

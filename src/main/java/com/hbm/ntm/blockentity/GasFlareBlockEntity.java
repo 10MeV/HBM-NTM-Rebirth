@@ -10,7 +10,6 @@ import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
-import com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -138,8 +137,8 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         blockEntity.lastOutput = 0;
         changed |= blockEntity.updateUpgrades();
         changed |= blockEntity.setTankTypeFromIdentifierSlot();
-        changed |= HbmFluidItemTransfer.processTransfers(blockEntity.items,
-                List.of(TankSlotTransfer.load(SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, blockEntity.tank)));
+        changed |= blockEntity.processFluidItemTransfers(blockEntity.items,
+                HbmFluidItemTransfer.loadTransfers(SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, blockEntity.tank));
         changed |= blockEntity.consumeFluid(level, pos);
         HbmEnergyUtil.chargeItemFromStorage(blockEntity.items.getStackInSlot(SLOT_ENERGY_OUTPUT),
                 blockEntity.energy, blockEntity.energy.getProviderSpeed());
@@ -172,11 +171,9 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         if (blockEntity.burn && flammable != null) {
             if (level.random.nextBoolean()) {
-                ParticleUtil.spawnVanillaExt(level, pos.getX() + 1.5D, pos.getY() + 10.75D, pos.getZ() + 1.5D,
-                        ParticleUtil.VANILLA_SMOKE, 0.0D, 0.0D, 0.0D, 50, true);
+                ParticleUtil.spawnGasFlareSmoke(level, pos.getX() + 1.5D, pos.getY() + 10.75D, pos.getZ() + 1.5D);
             } else {
-                ParticleUtil.spawnVanillaExt(level, pos.getX() + 1.125D, pos.getY() + 11.75D, pos.getZ() - 0.5D,
-                        ParticleUtil.VANILLA_SMOKE, 0.0D, 0.0D, 0.0D, 50, true);
+                ParticleUtil.spawnGasFlareSmoke(level, pos.getX() + 1.125D, pos.getY() + 11.75D, pos.getZ() - 0.5D);
             }
         }
     }
@@ -436,12 +433,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean setTankTypeFromIdentifierSlot() {
-        boolean changed = HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER,
-                tank, level, worldPosition);
-        if (changed) {
-            onFluidContentsChanged();
-        }
-        return changed;
+        return setFluidTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER, tank);
     }
 
     @Override

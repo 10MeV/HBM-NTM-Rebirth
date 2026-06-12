@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": { "ingredient": { "tag": "forge:crystals/schrabidium" } },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_schrabidium", "count": 2 },
+    { "item": "hbm_ntm_rebirth:powder_schrabidium", "count": 2 },
+    { "item": "hbm_ntm_rebirth:powder_plutonium" },
+    { "item": "hbm_ntm_rebirth:powder_lithium_tiny" }
+  ]
+}
