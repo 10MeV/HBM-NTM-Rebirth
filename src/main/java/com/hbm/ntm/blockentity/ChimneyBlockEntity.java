@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnector;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
@@ -10,30 +11,51 @@ import com.hbm.ntm.fluid.HbmFluidReceiver;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 public class ChimneyBlockEntity extends BlockEntity
-        implements HbmFluidConnector, HbmFluidReceiver, LegacyLookOverlayProvider {
+        implements HbmFluidConnector, HbmFluidReceiver, LegacyLookOverlayProvider, HbmLegacyLoadedTile {
+    private static final String TAG_ON_TICKS = "onTicks";
     private static final List<FluidPort> SMOKE_PORTS = HbmFluidPortLayouts.cardinal(2);
-    private static final double BRICK_POLLUTION_MULTIPLIER = 0.25D;
-    private static final double INDUSTRIAL_POLLUTION_MULTIPLIER = 0.1D;
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
+    private int onTicks;
 
     public ChimneyBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CHIMNEY.get(), pos, state);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ChimneyBlockEntity chimney) {
-        if (!level.isClientSide && level.getGameTime() % 20L == 0L) {
+        if (level.isClientSide) {
+            return;
+        }
+        if (level.getGameTime() % 20L == 0L) {
             chimney.refreshSubscriptions();
         }
+        chimney.networkPackNT(150);
+        if (chimney.onTicks > 0) {
+            chimney.onTicks--;
+        }
+    }
+
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
+    }
+
+    public int getOnTicks() {
+        return onTicks;
     }
 
     @Override
@@ -53,6 +75,7 @@ public class ChimneyBlockEntity extends BlockEntity
         if (!SmokeExhaustPollution.isSmoke(type) || amount <= 0L) {
             return amount;
         }
+        onTicks = 20;
         captureAshpitProducts(amount);
         SmokeExhaustPollution.pollute(level, worldPosition, type, amount, pollutionMultiplier());
         return 0L;
@@ -82,9 +105,48 @@ public class ChimneyBlockEntity extends BlockEntity
     }
 
     private double pollutionMultiplier() {
-        return getBlockState().is(ModBlocks.CHIMNEY_INDUSTRIAL.get())
-                ? INDUSTRIAL_POLLUTION_MULTIPLIER
-                : BRICK_POLLUTION_MULTIPLIER;
+        return RadiationConfig.chimneyPollutionMultiplier(getBlockState().is(ModBlocks.CHIMNEY_INDUSTRIAL.get()));
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        readLegacyLoadedTileNbt(tag);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
+        tag.putInt(TAG_ON_TICKS, onTicks);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_ON_TICKS)) {
+            onTicks = Math.max(0, tag.getInt(TAG_ON_TICKS));
+        }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     private void captureAshpitProducts(long amount) {

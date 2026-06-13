@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " B ",
+    "GRG",
+    " B "
+  ],
+  "key": {
+    "G": {
+      "item": "hbm_ntm_rebirth:ingot_graphite"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:motor"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:rbmk_absorber"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_control"
+  },
+  "show_notification": true
+}

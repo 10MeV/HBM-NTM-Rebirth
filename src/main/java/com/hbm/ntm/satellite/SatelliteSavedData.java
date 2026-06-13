@@ -22,23 +22,29 @@ import java.util.TreeSet;
 
 public class SatelliteSavedData extends SavedData {
     public static final String DATA_NAME = "satellites";
-    private static final String TAG_SAT_COUNT = "satCount";
-    private static final String TAG_SAT_ID = "sat_id_";
-    private static final String TAG_SAT_DATA = "sat_data_";
-    private static final String TAG_SAT_FREQ = "sat_freq_";
+    public static final String KEY = DATA_NAME;
+    public static final String TAG_SAT_COUNT = "satCount";
+    public static final String TAG_SAT_ID = "sat_id_";
+    public static final String TAG_SAT_DATA = "sat_data_";
+    public static final String TAG_SAT_FREQ = "sat_freq_";
     private static final String TAG_ENTRIES = "entries";
     private static final String TAG_FREQUENCY = "frequency";
     private static final String TAG_LEGACY_ID = "legacyId";
     private static final String TAG_LEGACY_NAME = "legacyName";
     private static final String TAG_DATA = "data";
 
-    private final Map<Integer, Satellite> satellites = new HashMap<>();
+    public final HashMap<Integer, Satellite> sats = new DirtyTrackingSatelliteMap();
+    private final Map<Integer, Satellite> satellites = sats;
     private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
     private List<EntryLoadDiagnostics> legacyEntryLoadDiagnostics = List.of();
     private List<EntryLoadDiagnostics> modernEntryLoadDiagnostics = List.of();
 
     public SatelliteSavedData() {
         setDirty();
+    }
+
+    public SatelliteSavedData(String name) {
+        this();
     }
 
     public static SatelliteSavedData load(CompoundTag tag) {
@@ -147,6 +153,15 @@ public class SatelliteSavedData extends SavedData {
         return WorldSavedDataHelper.get(level, DATA_NAME, SatelliteSavedData::load, SatelliteSavedData::new);
     }
 
+    public static SatelliteSavedData get(MinecraftServer server) {
+        return WorldSavedDataHelper.get(server, DATA_NAME, SatelliteSavedData::load, SatelliteSavedData::new);
+    }
+
+    public static Optional<SatelliteSavedData> get(MinecraftServer server, ResourceKey<Level> dimension) {
+        return WorldSavedDataHelper.get(server, dimension, DATA_NAME, SatelliteSavedData::load,
+                SatelliteSavedData::new);
+    }
+
     public static Optional<SatelliteSavedData> getExisting(ServerLevel level) {
         return WorldSavedDataHelper.getExisting(level, DATA_NAME, SatelliteSavedData::load);
     }
@@ -171,6 +186,30 @@ public class SatelliteSavedData extends SavedData {
         return get(level);
     }
 
+    public static SatelliteSavedData getData(MinecraftServer server) {
+        return get(server);
+    }
+
+    public static Optional<SatelliteSavedData> getData(MinecraftServer server, ResourceKey<Level> dimension) {
+        return get(server, dimension);
+    }
+
+    public static SatelliteSavedData forWorld(ServerLevel level) {
+        return get(level);
+    }
+
+    public static Optional<SatelliteSavedData> forWorld(Level level) {
+        return get(level);
+    }
+
+    public static SatelliteSavedData forWorld(MinecraftServer server) {
+        return get(server);
+    }
+
+    public static Optional<SatelliteSavedData> forWorld(MinecraftServer server, ResourceKey<Level> dimension) {
+        return get(server, dimension);
+    }
+
     @Override
     public CompoundTag save(CompoundTag tag) {
         tag.putInt(TAG_SAT_COUNT, satellites.size());
@@ -186,11 +225,33 @@ public class SatelliteSavedData extends SavedData {
         return tag;
     }
 
+    public void readFromNBT(CompoundTag tag) {
+        SatelliteSavedData loaded = load(tag == null ? new CompoundTag() : tag);
+        satellites.clear();
+        satellites.putAll(loaded.satellites);
+        loadDiagnostics = loaded.loadDiagnostics;
+        legacyEntryLoadDiagnostics = loaded.legacyEntryLoadDiagnostics;
+        modernEntryLoadDiagnostics = loaded.modernEntryLoadDiagnostics;
+        setDirty(false);
+    }
+
+    public void writeToNBT(CompoundTag tag) {
+        save(tag);
+    }
+
     public boolean isFreqTaken(int frequency) {
         return getSatFromFreq(frequency) != null;
     }
 
     public boolean isFrequencyTaken(int frequency) {
+        return isFreqTaken(frequency);
+    }
+
+    public boolean containsFrequency(int frequency) {
+        return isFreqTaken(frequency);
+    }
+
+    public boolean containsFreq(int frequency) {
         return isFreqTaken(frequency);
     }
 
@@ -202,12 +263,42 @@ public class SatelliteSavedData extends SavedData {
         return getSatFromFreq(frequency);
     }
 
+    public Optional<Satellite> getSatelliteOptional(int frequency) {
+        return Optional.ofNullable(getSatFromFreq(frequency));
+    }
+
     public void putSatellite(int frequency, Satellite satellite) {
         if (satellite == null) {
             return;
         }
         satellites.put(frequency, satellite);
         setDirty();
+    }
+
+    public boolean putSatelliteData(int frequency, int legacyId, CompoundTag data) {
+        Satellite satellite = Satellite.load(legacyId, data == null ? new CompoundTag() : data);
+        if (satellite == null) {
+            return false;
+        }
+        putSatellite(frequency, satellite);
+        return true;
+    }
+
+    public boolean putSatelliteData(int frequency, LegacySatelliteType type, CompoundTag data) {
+        return type != null && putSatelliteData(frequency, type.legacyId(), data);
+    }
+
+    public boolean putSatellite(int frequency, int legacyId) {
+        Satellite satellite = Satellite.create(legacyId);
+        if (satellite == null) {
+            return false;
+        }
+        putSatellite(frequency, satellite);
+        return true;
+    }
+
+    public boolean putSatellite(int frequency, LegacySatelliteType type) {
+        return type != null && putSatellite(frequency, type.legacyId());
     }
 
     public boolean descendSatellite(int frequency) {
@@ -220,6 +311,22 @@ public class SatelliteSavedData extends SavedData {
             return true;
         }
         return false;
+    }
+
+    public int removeSatellites(Iterable<Integer> frequencies) {
+        if (frequencies == null) {
+            return 0;
+        }
+        int removed = 0;
+        for (Integer frequency : frequencies) {
+            if (frequency != null && satellites.remove(frequency) != null) {
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            setDirty();
+        }
+        return removed;
     }
 
     public boolean isEmpty() {
@@ -303,6 +410,66 @@ public class SatelliteSavedData extends SavedData {
 
     public void markDirty() {
         setDirty();
+    }
+
+    public boolean readLegacyEntry(CompoundTag tag, int index) {
+        if (tag == null) {
+            return false;
+        }
+        int legacyId = tag.getInt(TAG_SAT_ID + index);
+        int frequency = tag.getInt(TAG_SAT_FREQ + index);
+        return putSatelliteData(frequency, legacyId, tag.getCompound(TAG_SAT_DATA + index));
+    }
+
+    public static void writeLegacyEntry(CompoundTag tag, int index, int frequency, Satellite satellite) {
+        if (tag == null || satellite == null) {
+            return;
+        }
+        tag.putInt(TAG_SAT_ID + index, satellite.legacyId());
+        tag.put(TAG_SAT_DATA + index, satellite.saveData());
+        tag.putInt(TAG_SAT_FREQ + index, frequency);
+    }
+
+    public static CompoundTag writeLegacyEntryTag(int frequency, Satellite satellite) {
+        CompoundTag tag = new CompoundTag();
+        writeLegacyEntry(tag, 0, frequency, satellite);
+        return tag;
+    }
+
+    private final class DirtyTrackingSatelliteMap extends HashMap<Integer, Satellite> {
+        @Override
+        public Satellite put(Integer key, Satellite value) {
+            Satellite previous = super.put(key, value);
+            if (previous != value) {
+                setDirty();
+            }
+            return previous;
+        }
+
+        @Override
+        public Satellite remove(Object key) {
+            Satellite previous = super.remove(key);
+            if (previous != null) {
+                setDirty();
+            }
+            return previous;
+        }
+
+        @Override
+        public void putAll(Map<? extends Integer, ? extends Satellite> map) {
+            if (!map.isEmpty()) {
+                super.putAll(map);
+                setDirty();
+            }
+        }
+
+        @Override
+        public void clear() {
+            if (!isEmpty()) {
+                super.clear();
+                setDirty();
+            }
+        }
     }
 
     private ListTag entriesTag() {

@@ -11,7 +11,7 @@ public final class BulletKinematicsUtil {
     public static final double SIDE_OFFSET = 0.16D;
     public static final double EYE_Y_OFFSET = 0.1D;
     public static final float DEFAULT_THROW_FORCE = 1.0F;
-    public static final double HEADING_FORCE_MULTIPLIER = 1.0D;
+    public static final double HEADING_FORCE_MULTIPLIER = 0.0075D;
     public static final float AIR_DRAG = 1.0F;
     public static final float WATER_DRAG = 1.0F;
 

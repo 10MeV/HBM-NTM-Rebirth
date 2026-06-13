@@ -1,9 +1,11 @@
 package com.hbm.ntm.radiation;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.damage.DamageClass;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
@@ -294,12 +296,364 @@ public final class ModDamageSources {
         return Optional.empty();
     }
 
+    public static Optional<LegacyDamageType> legacyDamageType(String legacyTypeOrId) {
+        return legacyKey(legacyTypeOrId).flatMap(ModDamageSources::legacyDamageType);
+    }
+
+    public static Optional<LegacyDamageType> legacyDamageType(DamageSource source) {
+        if (source == null) {
+            return Optional.empty();
+        }
+        for (LegacyDamageType legacy : LEGACY_DAMAGE_TYPES) {
+            if (source.is(legacy.key())) {
+                return Optional.of(legacy);
+            }
+        }
+        return legacyKey(source.getMsgId()).flatMap(ModDamageSources::legacyDamageType);
+    }
+
+    public static List<String> expectedTagLabels(ResourceKey<DamageType> key) {
+        return legacyDamageType(key)
+                .map(LegacyDamageType::expectedTagLabels)
+                .orElse(List.of());
+    }
+
+    public static List<String> expectedTagLabels(String legacyTypeOrId) {
+        return legacyDamageType(legacyTypeOrId)
+                .map(LegacyDamageType::expectedTagLabels)
+                .orElse(List.of());
+    }
+
+    public static ResourceKey<DamageType> damageClassKey(DamageClass damageClass) {
+        return switch (damageClass == null ? DamageClass.OTHER : damageClass) {
+            case PHYSICAL -> REVOLVER_BULLET;
+            case FIRE -> FLAMETHROWER;
+            case EXPLOSIVE -> EXPLOSION;
+            case ELECTRIC -> ELECTRIC;
+            case PLASMA -> PLASMA;
+            case LASER -> LASER;
+            case MICROWAVE -> MICROWAVE;
+            case SUBATOMIC -> SUBATOMIC;
+            case OTHER -> minecraft("generic");
+        };
+    }
+
+    public static DamageSource source(Level level, DamageClass damageClass) {
+        return source(level, damageClassKey(damageClass));
+    }
+
+    public static DamageSource source(Level level, DamageClass damageClass, @Nullable Entity source) {
+        return source(level, damageClassKey(damageClass), source);
+    }
+
+    public static DamageSource indirect(Level level, DamageClass damageClass, Entity direct, @Nullable Entity cause) {
+        return indirect(level, damageClassKey(damageClass), direct, cause);
+    }
+
+    public static List<String> expectedTagLabels(DamageClass damageClass) {
+        return expectedTagLabels(damageClassKey(damageClass));
+    }
+
+    public static List<String> actualTagLabels(DamageSource source) {
+        if (source == null) {
+            return List.of();
+        }
+        List<String> labels = new ArrayList<>(7);
+        if (isProjectile(source)) {
+            labels.add("projectile");
+        }
+        if (isExplosion(source)) {
+            labels.add("explosion");
+        }
+        if (isFireDamage(source)) {
+            labels.add("fire");
+        }
+        if (isUnblockable(source)) {
+            labels.add("bypassesArmor");
+        }
+        if (isDamageAbsolute(source)) {
+            labels.add("absolute");
+        }
+        if (bypassesEffects(source)) {
+            labels.add("effects");
+        }
+        if (isDamageAllowedInCreativeMode(source)) {
+            labels.add("creativeAllowed");
+        }
+        return List.copyOf(labels);
+    }
+
     public static boolean isTau(DamageSource source) {
-        return source.is(TAU);
+        return source != null && source.is(TAU);
+    }
+
+    public static boolean isTau(ResourceKey<DamageType> type) {
+        return matches(type, TAU);
+    }
+
+    public static boolean isTau(String legacyTypeOrId) {
+        return matches(legacyTypeOrId, TAU);
+    }
+
+    public static boolean isTau(DamageClass damageClass) {
+        return matches(damageClass, TAU);
     }
 
     public static boolean isSubatomic(DamageSource source) {
-        return source.is(SUBATOMIC) || normalizeAlias(source.getMsgId()).startsWith("subatomic");
+        return source != null && (source.is(SUBATOMIC) || normalizeAlias(source.getMsgId()).startsWith("subatomic"));
+    }
+
+    public static boolean isSubatomic(ResourceKey<DamageType> type) {
+        return matches(type, SUBATOMIC);
+    }
+
+    public static boolean isSubatomic(String legacyTypeOrId) {
+        return legacyKey(legacyTypeOrId)
+                .filter(SUBATOMIC::equals)
+                .isPresent()
+                || (legacyTypeOrId != null && normalizeAlias(legacyTypeOrId).startsWith("subatomic"));
+    }
+
+    public static boolean isSubatomic(DamageClass damageClass) {
+        return matches(damageClass, SUBATOMIC);
+    }
+
+    public static boolean is(DamageSource source, ResourceKey<DamageType> type) {
+        return source != null && source.is(type);
+    }
+
+    public static boolean is(DamageSource source, String legacyTypeOrId) {
+        return source != null && legacyKey(legacyTypeOrId).filter(source::is).isPresent();
+    }
+
+    public static boolean is(DamageSource source, DamageClass damageClass) {
+        return sourceMatches(source, damageClass);
+    }
+
+    public static boolean sourceMatches(DamageSource source, ResourceKey<DamageType> expected) {
+        return is(source, expected);
+    }
+
+    public static boolean sourceMatches(DamageSource source, String expectedLegacyTypeOrId) {
+        return is(source, expectedLegacyTypeOrId);
+    }
+
+    public static boolean sourceMatches(DamageSource source, DamageClass expectedDamageClass) {
+        return source != null && source.is(damageClassKey(expectedDamageClass));
+    }
+
+    public static boolean matches(ResourceKey<DamageType> actual, ResourceKey<DamageType> expected) {
+        return actual != null && expected != null && actual.equals(expected);
+    }
+
+    public static boolean matches(ResourceKey<DamageType> actual, String expectedLegacyTypeOrId) {
+        return actual != null && legacyKey(expectedLegacyTypeOrId).filter(actual::equals).isPresent();
+    }
+
+    public static boolean matches(ResourceKey<DamageType> actual, DamageClass expectedDamageClass) {
+        return matches(actual, damageClassKey(expectedDamageClass));
+    }
+
+    public static boolean matches(String actualLegacyTypeOrId, ResourceKey<DamageType> expected) {
+        return expected != null && legacyKey(actualLegacyTypeOrId).filter(expected::equals).isPresent();
+    }
+
+    public static boolean matches(String actualLegacyTypeOrId, String expectedLegacyTypeOrId) {
+        Optional<ResourceKey<DamageType>> actual = legacyKey(actualLegacyTypeOrId);
+        Optional<ResourceKey<DamageType>> expected = legacyKey(expectedLegacyTypeOrId);
+        return actual.isPresent() && actual.equals(expected);
+    }
+
+    public static boolean matches(String actualLegacyTypeOrId, DamageClass expectedDamageClass) {
+        return matches(actualLegacyTypeOrId, damageClassKey(expectedDamageClass));
+    }
+
+    public static boolean matches(DamageClass actualDamageClass, ResourceKey<DamageType> expected) {
+        return matches(damageClassKey(actualDamageClass), expected);
+    }
+
+    public static boolean matches(DamageClass actualDamageClass, String expectedLegacyTypeOrId) {
+        return matches(damageClassKey(actualDamageClass), expectedLegacyTypeOrId);
+    }
+
+    public static boolean matches(DamageClass actualDamageClass, DamageClass expectedDamageClass) {
+        return damageClassKey(actualDamageClass).equals(damageClassKey(expectedDamageClass));
+    }
+
+    public static boolean isProjectile(DamageSource source) {
+        return source != null && source.is(DamageTypeTags.IS_PROJECTILE);
+    }
+
+    public static boolean isProjectile(ResourceKey<DamageType> type) {
+        return legacyDamageType(type)
+                .map(LegacyDamageType::projectile)
+                .orElse(false);
+    }
+
+    public static boolean isProjectile(String legacyTypeOrId) {
+        return legacyDamageType(legacyTypeOrId)
+                .map(LegacyDamageType::projectile)
+                .orElse(false);
+    }
+
+    public static boolean isProjectile(DamageClass damageClass) {
+        return isProjectile(damageClassKey(damageClass));
+    }
+
+    public static boolean isExplosion(DamageSource source) {
+        return source != null && source.is(DamageTypeTags.IS_EXPLOSION);
+    }
+
+    public static boolean isExplosion(ResourceKey<DamageType> type) {
+        return legacyDamageType(type)
+                .map(LegacyDamageType::explosion)
+                .orElse(false);
+    }
+
+    public static boolean isExplosion(String legacyTypeOrId) {
+        return legacyDamageType(legacyTypeOrId)
+                .map(LegacyDamageType::explosion)
+                .orElse(false);
+    }
+
+    public static boolean isExplosion(DamageClass damageClass) {
+        return isExplosion(damageClassKey(damageClass));
+    }
+
+    public static boolean isFireDamage(DamageSource source) {
+        return source != null && source.is(DamageTypeTags.IS_FIRE);
+    }
+
+    public static boolean isFireDamage(ResourceKey<DamageType> type) {
+        return legacyDamageType(type)
+                .map(LegacyDamageType::fire)
+                .orElse(false);
+    }
+
+    public static boolean isFireDamage(String legacyTypeOrId) {
+        return legacyDamageType(legacyTypeOrId)
+                .map(LegacyDamageType::fire)
+                .orElse(false);
+    }
+
+    public static boolean isFireDamage(DamageClass damageClass) {
+        return isFireDamage(damageClassKey(damageClass));
+    }
+
+    public static boolean isUnblockable(DamageSource source) {
+        return source != null && source.is(DamageTypeTags.BYPASSES_ARMOR);
+    }
+
+    public static boolean isUnblockable(ResourceKey<DamageType> type) {
+        return legacyDamageType(type)
+                .map(LegacyDamageType::bypassesArmor)
+                .orElse(false);
+    }
+
+    public static boolean isUnblockable(String legacyTypeOrId) {
+        return legacyDamageType(legacyTypeOrId)
+                .map(LegacyDamageType::bypassesArmor)
+                .orElse(false);
+    }
+
+    public static boolean isUnblockable(DamageClass damageClass) {
+        return isUnblockable(damageClassKey(damageClass));
+    }
+
+    public static boolean isDamageAbsolute(DamageSource source) {
+        return source != null && source.is(DamageTypeTags.BYPASSES_RESISTANCE);
+    }
+
+    public static boolean isDamageAbsolute(ResourceKey<DamageType> type) {
+        return legacyDamageType(type)
+                .map(LegacyDamageType::absolute)
+                .orElse(false);
+    }
+
+    public static boolean isDamageAbsolute(String legacyTypeOrId) {
+        return legacyDamageType(legacyTypeOrId)
+                .map(LegacyDamageType::absolute)
+                .orElse(false);
+    }
+
+    public static boolean isDamageAbsolute(DamageClass damageClass) {
+        return isDamageAbsolute(damageClassKey(damageClass));
+    }
+
+    public static boolean bypassesEffects(DamageSource source) {
+        return source != null && source.is(DamageTypeTags.BYPASSES_EFFECTS);
+    }
+
+    public static boolean bypassesEffects(ResourceKey<DamageType> type) {
+        return legacyDamageType(type)
+                .map(LegacyDamageType::bypassesEffects)
+                .orElse(false);
+    }
+
+    public static boolean bypassesEffects(String legacyTypeOrId) {
+        return legacyDamageType(legacyTypeOrId)
+                .map(LegacyDamageType::bypassesEffects)
+                .orElse(false);
+    }
+
+    public static boolean bypassesEffects(DamageClass damageClass) {
+        return bypassesEffects(damageClassKey(damageClass));
+    }
+
+    public static boolean isDamageAllowedInCreativeMode(DamageSource source) {
+        return source != null && source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
+    }
+
+    public static boolean isDamageAllowedInCreativeMode(ResourceKey<DamageType> type) {
+        return legacyDamageType(type)
+                .map(LegacyDamageType::creativeAllowed)
+                .orElse(false);
+    }
+
+    public static boolean isDamageAllowedInCreativeMode(String legacyTypeOrId) {
+        return legacyDamageType(legacyTypeOrId)
+                .map(LegacyDamageType::creativeAllowed)
+                .orElse(false);
+    }
+
+    public static boolean isDamageAllowedInCreativeMode(DamageClass damageClass) {
+        return isDamageAllowedInCreativeMode(damageClassKey(damageClass));
+    }
+
+    public static String damageType(DamageSource source) {
+        return source == null ? "" : source.getMsgId();
+    }
+
+    public static String damageType(ResourceKey<DamageType> type) {
+        if (type == null) {
+            return "";
+        }
+        return legacyDamageType(type)
+                .map(LegacyDamageType::expectedMessageId)
+                .orElseGet(() -> type.location().getPath());
+    }
+
+    public static String damageType(String legacyTypeOrId) {
+        if (legacyTypeOrId == null || legacyTypeOrId.isBlank()) {
+            return "";
+        }
+        return legacyKey(legacyTypeOrId)
+                .map(ModDamageSources::damageType)
+                .orElse(legacyTypeOrId);
+    }
+
+    public static String damageType(DamageClass damageClass) {
+        return damageType(damageClassKey(damageClass));
+    }
+
+    @Nullable
+    public static Entity getEntity(DamageSource source) {
+        return source == null ? null : source.getEntity();
+    }
+
+    @Nullable
+    public static Entity getSourceOfDamage(DamageSource source) {
+        return source == null ? null : source.getDirectEntity();
     }
 
     public static DamageAliasAudit aliasAudit() {
@@ -324,6 +678,15 @@ public final class ModDamageSources {
         expectResolve(problems, "s_emp", ELECTRICITY);
         expectResolve(problems, "revolverBullet", REVOLVER_BULLET);
         expectResolve(problems, "s_bullet", REVOLVER_BULLET);
+        expectResolve(problems, "PHYSICAL", REVOLVER_BULLET);
+        expectResolve(problems, "FIRE", FLAMETHROWER);
+        expectResolve(problems, "EXPLOSIVE", EXPLOSION);
+        expectResolve(problems, "ELECTRIC", ELECTRIC);
+        expectResolve(problems, "PLASMA", PLASMA);
+        expectResolve(problems, "LASER", LASER);
+        expectResolve(problems, "MICROWAVE", MICROWAVE);
+        expectResolve(problems, "SUBATOMIC", SUBATOMIC);
+        expectResolve(problems, "OTHER", minecraft("generic"));
         expectResolve(problems, "chopperBullet", CHOPPER_BULLET);
         expectResolve(problems, "s_emplacer", CHOPPER_BULLET);
         expectResolve(problems, "cmb", COMBINE_BALL);
@@ -337,6 +700,12 @@ public final class ModDamageSources {
         expectResolve(problems, "frozen", minecraft("freeze"));
         expectResolve(problems, "playerAttack", minecraft("player_attack"));
         expectResolve(problems, "mobAttack", minecraft("mob_attack"));
+        expect(problems, "null damage type empty", damageType((DamageSource) null).isEmpty());
+        expect(problems, "null entity source missing", getEntity(null) == null && getSourceOfDamage(null) == null);
+        expect(problems, "null projectile false", !isProjectile((DamageSource) null));
+        expect(problems, "null absolute false", !isDamageAbsolute((DamageSource) null));
+        expect(problems, "null legacy source missing", legacyDamageType((DamageSource) null).isEmpty());
+        expect(problems, "null actual tags empty", actualTagLabels(null).isEmpty());
 
         expectLegacy(problems, NUCLEAR_BLAST, false, true, false, false, false, false);
         expectLegacy(problems, DIGAMMA, false, false, false, true, true, true);
@@ -364,6 +733,53 @@ public final class ModDamageSources {
                 .map(LegacyDamageType::expectedTagLabels)
                 .filter(tags -> tags.equals(List.of("bypassesArmor", "absolute", "effects")))
                 .isPresent());
+        expect(problems, "key projectile metadata", isProjectile(TAU) && isProjectile("tau"));
+        expect(problems, "key explosion metadata", isExplosion(TAU_BLAST) && isExplosion("tauBlast"));
+        expect(problems, "key fire metadata", isFireDamage(FLAMETHROWER) && isFireDamage("flamethrower"));
+        expect(problems, "key bypass metadata", isUnblockable(SUBATOMIC) && isUnblockable("subAtomic4"));
+        expect(problems, "tau helper metadata",
+                isTau(TAU) && isTau("tau") && isTau("s_tau") && !isTau(SUBATOMIC));
+        expect(problems, "subatomic helper metadata",
+                isSubatomic(SUBATOMIC) && isSubatomic("subAtomic4") && isSubatomic(DamageClass.SUBATOMIC)
+                        && !isSubatomic(TAU));
+        expect(problems, "source key matches without world",
+                matches(COMBINE_BALL, "cmb") && matches("combineBall", COMBINE_BALL)
+                        && matches("s_combineball", "cmb") && !matches(TAU, COMBINE_BALL));
+        expect(problems, "damage class matches without world",
+                matches(DamageClass.PHYSICAL, REVOLVER_BULLET)
+                        && matches(DamageClass.SUBATOMIC, "subAtomic3")
+                        && !matches(DamageClass.LASER, DamageClass.PLASMA));
+        expect(problems, "key absolute metadata", isDamageAbsolute(DIGAMMA) && isDamageAbsolute("digamma"));
+        expect(problems, "key effects metadata", bypassesEffects(BLACKHOLE) && bypassesEffects("blackhole"));
+        expect(problems, "key creative metadata", isDamageAllowedInCreativeMode(NITAN)
+                && isDamageAllowedInCreativeMode("nitan"));
+        expect(problems, "key expected labels", expectedTagLabels(COMBINE_BALL)
+                .equals(List.of("projectile", "bypassesArmor")));
+        expect(problems, "string expected labels", expectedTagLabels("subAtomic2")
+                .equals(List.of("projectile", "bypassesArmor")));
+        expect(problems, "damage class physical maps projectile",
+                damageClassKey(DamageClass.PHYSICAL).equals(REVOLVER_BULLET)
+                        && isProjectile(DamageClass.PHYSICAL));
+        expect(problems, "damage class fire maps flamethrower",
+                damageClassKey(DamageClass.FIRE).equals(FLAMETHROWER)
+                        && isFireDamage(DamageClass.FIRE));
+        expect(problems, "damage class explosive maps explosion",
+                damageClassKey(DamageClass.EXPLOSIVE).equals(EXPLOSION)
+                        && isExplosion(DamageClass.EXPLOSIVE));
+        expect(problems, "damage class electric maps electric",
+                damageClassKey(DamageClass.ELECTRIC).equals(ELECTRIC)
+                        && damageType(DamageClass.ELECTRIC).equals("electric"));
+        expect(problems, "damage class subatomic bypass",
+                damageClassKey(DamageClass.SUBATOMIC).equals(SUBATOMIC)
+                        && isProjectile(DamageClass.SUBATOMIC)
+                        && isUnblockable(DamageClass.SUBATOMIC));
+        expect(problems, "damage class other maps generic",
+                damageClassKey(DamageClass.OTHER).equals(minecraft("generic"))
+                        && expectedTagLabels(DamageClass.OTHER).isEmpty());
+        expect(problems, "key damage type expected message id", damageType(COMBINE_BALL).equals("cmb"));
+        expect(problems, "string damage type expected message id", damageType("subAtomic4").equals("subAtomic"));
+        expect(problems, "unknown string metadata false", !isProjectile("not_a_real_damage_type")
+                && expectedTagLabels("not_a_real_damage_type").isEmpty());
         expectMessageId(problems, COMBINE_BALL, "cmb");
         expectMessageId(problems, SUBATOMIC, "subAtomic");
         expectMessageId(problems, NUCLEAR_BLAST, "nuclearBlast");
@@ -428,6 +844,15 @@ public final class ModDamageSources {
         registerAlias(aliases, EUTHANIZED, "s_euthanized");
         registerAlias(aliases, TAU, "s_tau");
         registerAlias(aliases, ELECTRICITY, "s_emp");
+        registerAlias(aliases, REVOLVER_BULLET, "PHYSICAL", "physical");
+        registerAlias(aliases, FLAMETHROWER, "FIRE", "fire");
+        registerAlias(aliases, EXPLOSION, "EXPLOSIVE", "explosive");
+        registerAlias(aliases, ELECTRIC, "ELECTRIC", "electric");
+        registerAlias(aliases, PLASMA, "PLASMA", "plasma");
+        registerAlias(aliases, LASER, "LASER", "laser");
+        registerAlias(aliases, MICROWAVE, "MICROWAVE", "microwave");
+        registerAlias(aliases, SUBATOMIC, "SUBATOMIC", "subatomic");
+        registerAlias(aliases, minecraft("generic"), "OTHER", "other");
         registerAlias(aliases, minecraft("on_fire"), "onFire", "on_fire");
         registerAlias(aliases, minecraft("in_fire"), "inFire", "in_fire");
         registerAlias(aliases, minecraft("hot_floor"), "hotFloor", "hot_floor");
@@ -462,6 +887,7 @@ public final class ModDamageSources {
         aliases.put(BOIL, List.of("s_boil"));
         aliases.put(EUTHANIZED, List.of("s_euthanized"));
         aliases.put(TAU, List.of("s_tau"));
+        aliases.put(minecraft("generic"), List.of("OTHER"));
         aliases.put(minecraft("on_fire"), List.of("onFire"));
         aliases.put(minecraft("in_fire"), List.of("inFire"));
         aliases.put(minecraft("hot_floor"), List.of("hotFloor"));

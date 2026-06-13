@@ -164,23 +164,31 @@ public final class ExplosionThermo {
         }
 
         double entityRadius = bombStartStrength;
-        int blockRadius = bombStartStrength * 2;
+        double broadRadius = bombStartStrength * 2.0D;
         AABB bounds = new AABB(x - entityRadius - 1.0D, y - entityRadius - 1.0D, z - entityRadius - 1.0D,
                 x + entityRadius + 1.0D, y + entityRadius + 1.0D, z + entityRadius + 1.0D);
         for (Entity entity : level.getEntities(null, bounds)) {
             if (!(entity instanceof LivingEntity living) || entity instanceof Ocelot) {
                 continue;
             }
-            if (entity.distanceToSqr(x, y, z) > entityRadius * entityRadius) {
+            if (entity.distanceToSqr(x, y, z) > broadRadius * broadRadius) {
+                continue;
+            }
+            double dx = entity.getX() - x;
+            double dy = entity.getEyeY() - y;
+            double dz = entity.getZ() - z;
+            if (dx * dx + dy * dy + dz * dz >= entityRadius * entityRadius) {
                 continue;
             }
 
-            BlockPos base = entity.blockPosition();
+            int baseX = (int) entity.getX();
+            int baseY = (int) entity.getY();
+            int baseZ = (int) entity.getZ();
             BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
             for (int a = -2; a <= 0; a++) {
                 for (int b = 0; b < 3; b++) {
                     for (int c = -1; c <= 1; c++) {
-                        cursor.set(base.getX() + a, base.getY() + b, base.getZ() + c);
+                        cursor.set(baseX + a, baseY + b, baseZ + c);
                         level.setBlock(cursor, Blocks.ICE.defaultBlockState(), 3);
                     }
                 }
@@ -190,8 +198,6 @@ public final class ExplosionThermo {
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 90 * 20, 2));
             living.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 3 * 60 * 20, 2));
         }
-
-        bombStartStrength = blockRadius / 2;
     }
 
     public static void setEntitiesOnFire(Level level, double x, double y, double z, int radius) {

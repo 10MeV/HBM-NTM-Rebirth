@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.overdrive3",
+  "duration": 1200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:upgrade_overdrive_2" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:upgrade_speed_3" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:upgrade_effect_3" }, "count": 1 },
+    { "ingredient": { "tag": "forge:ingots/any_bismoid_bronze" }, "count": 16, "legacy_ore": "ingotAnyBismoidBronze" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:ingot_cft" }, "count": 16 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_bismoid" }, "count": 16, "legacy_id": "hbm:circuit", "legacy_meta": 11 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:upgrade_overdrive_3" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 191
+}

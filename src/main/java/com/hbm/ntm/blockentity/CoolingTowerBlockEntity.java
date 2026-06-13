@@ -72,25 +72,21 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
             tower.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+        tower.networkPackNT(150);
     }
 
     protected static void tickSmallTowerClient(Level level, BlockPos pos, CoolingTowerBlockEntity tower) {
         if (!shouldSpawnCoolingTowerParticles(level, tower, 2L)) {
             return;
         }
-        ParticleUtil.spawnCoolingTower(level, pos.getX() + 0.5D, pos.getY() + 18.0D, pos.getZ() + 0.5D,
-                1.0F, 0.5F, 4.0F, 250 + level.random.nextInt(250));
+        ParticleUtil.spawnSmallCoolingTowerSteam(level, pos);
     }
 
     protected static void tickLargeTowerClient(Level level, BlockPos pos, CoolingTowerBlockEntity tower) {
         if (!shouldSpawnCoolingTowerParticles(level, tower, 4L)) {
             return;
         }
-        ParticleUtil.spawnCoolingTower(level,
-                pos.getX() + 0.5D + level.random.nextDouble() * 3.0D - 1.5D,
-                pos.getY() + 1.0D,
-                pos.getZ() + 0.5D + level.random.nextDouble() * 3.0D - 1.5D,
-                0.5F, 1.0F, 10.0F, 750 + level.random.nextInt(250));
+        ParticleUtil.spawnLargeCoolingTowerSteam(level, pos);
     }
 
     private static boolean shouldSpawnCoolingTowerParticles(Level level, CoolingTowerBlockEntity tower, long interval) {

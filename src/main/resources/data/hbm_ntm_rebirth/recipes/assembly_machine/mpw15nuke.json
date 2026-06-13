@@ -1,0 +1,61 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:assembly_machine",
+    "internal_name":  "ass.mpw15nuke",
+    "duration":  400,
+    "power":  100,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:seg_15"
+                                           },
+                            "count":  1
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:plates/weapon_steel"
+                                           },
+                            "count":  32,
+                            "legacy_ore":  "plateWeaponSteel"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:billets/pu239"
+                                           },
+                            "count":  12,
+                            "legacy_ore":  "billetPu239"
+                        },
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:neutron_reflector"
+                                           },
+                            "count":  12
+                        },
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:ball_tatb"
+                                           },
+                            "count":  24
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:circuits/controller"
+                                           },
+                            "count":  3
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:mp_warhead_15_nuclear"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  312
+}

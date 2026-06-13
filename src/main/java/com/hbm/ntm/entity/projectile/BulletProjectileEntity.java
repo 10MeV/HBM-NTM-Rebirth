@@ -20,7 +20,7 @@ import com.hbm.ntm.bullet.BulletSyncedState;
 import com.hbm.ntm.bullet.BulletTauTrailUtil;
 import com.hbm.ntm.bullet.Ni4NiCoinRicochetUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -30,7 +30,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -127,22 +126,22 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
             return 0;
         }
         int spawned = spawnAll(level, request.spawnRequests());
-        SoundEvent sound = modernNpcSound(request.legacySoundName());
+        String sound = legacyNpcSound(request.legacySoundName());
         if (spawned > 0 && sound != null) {
-            level.playSound(null, soundX, soundY, soundZ, sound, SoundSource.HOSTILE, 1.0F, 1.0F);
+            LegacySoundPlayer.playSoundEffect(level, soundX, soundY, soundZ, sound, SoundSource.HOSTILE, 1.0F, 1.0F);
         }
         return spawned;
     }
 
     @Nullable
-    private static SoundEvent modernNpcSound(String legacySoundName) {
+    private static String legacyNpcSound(String legacySoundName) {
         if (legacySoundName == null) {
             return null;
         }
         return switch (legacySoundName) {
-            case BulletNpcLaunchUtil.MASKMAN_MINIGUN_SOUND -> ModSounds.WEAPON_CAL_SHOOT.get();
-            case BulletNpcLaunchUtil.MASKMAN_ORB_SOUND -> ModSounds.WEAPON_TESLA_SHOOT.get();
-            case BulletNpcLaunchUtil.MASKMAN_MISSILE_SOUND -> ModSounds.WEAPON_HK_SHOOT.get();
+            case BulletNpcLaunchUtil.MASKMAN_MINIGUN_SOUND -> BulletNpcLaunchUtil.MASKMAN_MINIGUN_SOUND;
+            case BulletNpcLaunchUtil.MASKMAN_ORB_SOUND -> BulletNpcLaunchUtil.MASKMAN_ORB_SOUND;
+            case BulletNpcLaunchUtil.MASKMAN_MISSILE_SOUND -> BulletNpcLaunchUtil.MASKMAN_MISSILE_SOUND;
             default -> null;
         };
     }

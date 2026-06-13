@@ -12,6 +12,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public final class HbmFluidForgeMappings {
     private static final Map<FluidType, Fluid> TO_FORGE = new IdentityHashMap<>();
@@ -69,53 +70,87 @@ public final class HbmFluidForgeMappings {
     }
 
     public static FluidType fromForge(FluidStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return HbmFluids.NONE;
-        }
-        return fromForge(stack.getFluid());
+        return inspectImportMapping(stack).hbmType();
     }
 
     public static FluidType fromForge(Fluid fluid) {
+        return inspectImportMapping(fluid).hbmType();
+    }
+
+    public static ForgeImportMappingReport inspectImportMapping(FluidStack stack) {
+        boolean stackPresent = stack != null && !stack.isEmpty();
+        return inspectImportMapping(stackPresent ? stack.getFluid() : Fluids.EMPTY,
+                stackPresent ? stack.getAmount() : 0, stackPresent);
+    }
+
+    public static ForgeImportMappingReport inspectImportMapping(Fluid fluid) {
+        return inspectImportMapping(fluid, 0, fluid != null && fluid != Fluids.EMPTY);
+    }
+
+    private static ForgeImportMappingReport inspectImportMapping(Fluid fluid, int amount, boolean stackPresent) {
+        if (fluid == null || fluid == Fluids.EMPTY || !stackPresent) {
+            return ForgeImportMappingReport.empty(Math.max(0, amount));
+        }
         FluidType direct = FROM_FORGE.get(fluid);
         if (direct != null) {
-            return direct;
-        }
-        if (fluid == null || fluid == Fluids.EMPTY) {
-            return HbmFluids.NONE;
+            return new ForgeImportMappingReport(true, forgeFluidId(fluid), Math.max(0, amount),
+                    direct, MappingKind.DIRECT, null);
         }
         for (TagAlias alias : TAG_ALIASES) {
             if (fluid.builtInRegistryHolder().is(alias.tag())) {
-                return alias.hbmType();
+                return new ForgeImportMappingReport(true, forgeFluidId(fluid), Math.max(0, amount),
+                        alias.hbmType(), MappingKind.TAG_ALIAS, alias.tag().location());
             }
         }
-        return HbmFluids.NONE;
+        return new ForgeImportMappingReport(true, forgeFluidId(fluid), Math.max(0, amount),
+                HbmFluids.NONE, MappingKind.NONE, null);
     }
 
     public static FluidType fromForgeExport(FluidStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return HbmFluids.NONE;
-        }
-        return fromForgeExport(stack.getFluid());
+        return inspectForgeExportMapping(stack).hbmType();
     }
 
     public static FluidType fromForgeExport(Fluid fluid) {
+        return inspectForgeExportMapping(fluid).hbmType();
+    }
+
+    public static ForgeExportRequestMappingReport inspectForgeExportMapping(FluidStack stack) {
+        boolean stackPresent = stack != null && !stack.isEmpty();
+        return inspectForgeExportMapping(stackPresent ? stack.getFluid() : Fluids.EMPTY,
+                stackPresent ? stack.getAmount() : 0, stackPresent);
+    }
+
+    public static ForgeExportRequestMappingReport inspectForgeExportMapping(Fluid fluid) {
+        return inspectForgeExportMapping(fluid, 0, fluid != null && fluid != Fluids.EMPTY);
+    }
+
+    private static ForgeExportRequestMappingReport inspectForgeExportMapping(Fluid fluid, int amount, boolean requestPresent) {
         if (fluid == null || fluid == Fluids.EMPTY) {
-            return HbmFluids.NONE;
+            return ForgeExportRequestMappingReport.empty(Math.max(0, amount));
         }
         for (Entry<FluidType, Fluid> entry : TO_FORGE.entrySet()) {
             if (entry.getValue() == fluid) {
-                return entry.getKey();
+                return new ForgeExportRequestMappingReport(requestPresent, forgeFluidId(fluid),
+                        Math.max(0, amount), entry.getKey(), MappingKind.DIRECT);
             }
         }
-        return HbmFluids.NONE;
+        return new ForgeExportRequestMappingReport(requestPresent, forgeFluidId(fluid),
+                Math.max(0, amount), HbmFluids.NONE, MappingKind.NONE);
     }
 
     public static FluidStack toForge(FluidType type, int amount) {
-        Fluid fluid = TO_FORGE.get(type);
-        if (fluid == null || amount <= 0) {
-            return FluidStack.EMPTY;
+        return inspectHbmExportMapping(type, amount).forgeStack();
+    }
+
+    public static HbmExportMappingReport inspectHbmExportMapping(FluidType type, int amount) {
+        FluidType normalized = type == null ? HbmFluids.NONE : type;
+        int normalizedAmount = Math.max(0, amount);
+        Fluid fluid = TO_FORGE.get(normalized);
+        if (fluid == null || normalized == HbmFluids.NONE || normalizedAmount <= 0) {
+            return new HbmExportMappingReport(normalized, normalizedAmount, false, null, FluidStack.EMPTY);
         }
-        return new FluidStack(fluid, amount);
+        return new HbmExportMappingReport(normalized, normalizedAmount, true,
+                forgeFluidId(fluid), new FluidStack(fluid, normalizedAmount));
     }
 
     public static boolean canExport(FluidType type) {
@@ -163,7 +198,79 @@ public final class HbmFluidForgeMappings {
         registerTagAlias(new ResourceLocation("forge", path), hbmType);
     }
 
+    private static ResourceLocation forgeFluidId(Fluid fluid) {
+        ResourceLocation id = ForgeRegistries.FLUIDS.getKey(fluid);
+        return id == null ? new ResourceLocation("minecraft", "empty") : id;
+    }
+
     private record TagAlias(TagKey<Fluid> tag, FluidType hbmType) {
+    }
+
+    public enum MappingKind {
+        EMPTY,
+        DIRECT,
+        TAG_ALIAS,
+        NONE
+    }
+
+    public record ForgeImportMappingReport(
+            boolean stackPresent,
+            ResourceLocation forgeFluidId,
+            int amountMb,
+            FluidType hbmType,
+            MappingKind mappingKind,
+            ResourceLocation matchedTag) {
+        public ForgeImportMappingReport {
+            forgeFluidId = forgeFluidId == null ? new ResourceLocation("minecraft", "empty") : forgeFluidId;
+            amountMb = Math.max(0, amountMb);
+            hbmType = hbmType == null ? HbmFluids.NONE : hbmType;
+            mappingKind = mappingKind == null ? MappingKind.NONE : mappingKind;
+        }
+
+        private static ForgeImportMappingReport empty(int amount) {
+            return new ForgeImportMappingReport(false, new ResourceLocation("minecraft", "empty"),
+                    amount, HbmFluids.NONE, MappingKind.EMPTY, null);
+        }
+
+        public boolean mapped() {
+            return hbmType != HbmFluids.NONE;
+        }
+    }
+
+    public record ForgeExportRequestMappingReport(
+            boolean requestPresent,
+            ResourceLocation forgeFluidId,
+            int amountMb,
+            FluidType hbmType,
+            MappingKind mappingKind) {
+        public ForgeExportRequestMappingReport {
+            forgeFluidId = forgeFluidId == null ? new ResourceLocation("minecraft", "empty") : forgeFluidId;
+            amountMb = Math.max(0, amountMb);
+            hbmType = hbmType == null ? HbmFluids.NONE : hbmType;
+            mappingKind = mappingKind == null ? MappingKind.NONE : mappingKind;
+        }
+
+        private static ForgeExportRequestMappingReport empty(int amount) {
+            return new ForgeExportRequestMappingReport(false, new ResourceLocation("minecraft", "empty"),
+                    amount, HbmFluids.NONE, MappingKind.EMPTY);
+        }
+
+        public boolean mapped() {
+            return hbmType != HbmFluids.NONE;
+        }
+    }
+
+    public record HbmExportMappingReport(
+            FluidType hbmType,
+            int amountMb,
+            boolean exportMapped,
+            ResourceLocation forgeFluidId,
+            FluidStack forgeStack) {
+        public HbmExportMappingReport {
+            hbmType = hbmType == null ? HbmFluids.NONE : hbmType;
+            amountMb = Math.max(0, amountMb);
+            forgeStack = forgeStack == null ? FluidStack.EMPTY : forgeStack.copy();
+        }
     }
 
     public record Diagnostics(int exportMappings, int importMappings, int tagAliases) {

@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.warheadbb2",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:warhead_generic_medium" }, "count": 1 },
+    { "ingredient": { "tag": "forge:ingots/any_high_explosive" }, "count": 4, "legacy_ore": "ingotAnyHighExplosive" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:warhead_buster_medium" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 260
+}

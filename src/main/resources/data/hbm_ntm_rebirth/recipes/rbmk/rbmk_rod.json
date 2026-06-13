@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "C",
+    "R",
+    "C"
+  ],
+  "key": {
+    "C": {
+      "tag": "forge:shells/steel"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:rbmk_blank"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_rod"
+  },
+  "show_notification": true
+}

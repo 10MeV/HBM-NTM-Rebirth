@@ -1,6 +1,8 @@
 package com.hbm.ntm.entity.logic;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.entity.projectile.ArtilleryRocketEntity;
+import com.hbm.ntm.entity.projectile.ArtilleryShellEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.world.ForgeChunkManager;
@@ -15,7 +17,9 @@ public final class ExplosionChunkLoading {
     private static void validateTickets(ServerLevel level, ForgeChunkManager.TicketHelper ticketHelper) {
         for (UUID owner : ticketHelper.getEntityTickets().keySet()) {
             Entity entity = level.getEntity(owner);
-            if (!(entity instanceof ExplosionChunkLoadingEntity)) {
+            if (!(entity instanceof ExplosionChunkLoadingEntity)
+                    && !(entity instanceof ArtilleryShellEntity)
+                    && !(entity instanceof ArtilleryRocketEntity)) {
                 ticketHelper.removeAllTickets(owner);
             }
         }

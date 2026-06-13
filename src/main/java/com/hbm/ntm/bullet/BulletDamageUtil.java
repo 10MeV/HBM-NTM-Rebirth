@@ -115,12 +115,20 @@ public final class BulletDamageUtil {
         if (legacyName.startsWith("rocket_")) {
             return true;
         }
-        if (target == shooter && ("r762_he".equals(legacyName) || "bmg50_he".equals(legacyName))) {
+        if (target == shooter && skipsEarlySelfExplosiveImpact(legacyName)) {
             return true;
         }
         return target == shooter
                 && legacyName.startsWith("g40_")
                 && !config.hasBehavior(BulletBehaviorTag.STANDARD_EXPLODE);
+    }
+
+    private static boolean skipsEarlySelfExplosiveImpact(String legacyName) {
+        return "r762_he".equals(legacyName)
+                || "g10_explosive".equals(legacyName)
+                || "bmg50_he".equals(legacyName)
+                || "b75".equals(legacyName)
+                || legacyName.startsWith("nuke_");
     }
 
     private static boolean hasExplosiveImpactBehavior(BulletConfig config) {

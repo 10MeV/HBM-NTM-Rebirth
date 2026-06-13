@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.warheadcl3",
+  "duration": 400,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:warhead_generic_large" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:pellet_cluster" }, "count": 8 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:warhead_cluster_large" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 258
+}

@@ -8,10 +8,9 @@ import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -35,7 +34,7 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
     private boolean screm;
 
     public TurretMaxwellBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.TURRET_MAXWELL.get(), pos, state, 10_000_000L);
+        super(ModBlockEntities.TURRET_MAXWELL.get(), pos, state, 10_000_000L, 10_000_000L);
     }
 
     @Override
@@ -164,11 +163,11 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
         if (!target.isAlive() && target instanceof LivingEntity) {
             ParticleUtil.spawnGiblets(target, ParticleUtil.GIBLET_MEAT);
             if (screm) {
-                level.playSound(null, target.getX(), target.getY(), target.getZ(),
-                        ModSounds.BLOCK_SCREM.get(), SoundSource.HOSTILE, 20.0F, 1.0F);
+                LegacySoundPlayer.playSoundEffect(level, target.getX(), target.getY(), target.getZ(),
+                        "hbm:block.screm", SoundSource.HOSTILE, 20.0F, 1.0F);
             } else {
-                level.playSound(null, target.getX(), target.getY(), target.getZ(),
-                        SoundEvents.ZOMBIE_ATTACK_WOODEN_DOOR, SoundSource.HOSTILE,
+                LegacySoundPlayer.playSoundEffect(level, target.getX(), target.getY(), target.getZ(),
+                        "mob.zombie.woodbreak", SoundSource.HOSTILE,
                         2.0F, 0.95F + level.random.nextFloat() * 0.2F);
             }
         }

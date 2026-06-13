@@ -35,6 +35,10 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_SCAFFOLD.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_BEAM.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_BEAM.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_GRATE.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_GRATE.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_GRATE_WIDE.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_GRATE_WIDE.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.CHAIN.get());
         ModBlocks.CAP_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CAP_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
@@ -113,7 +117,8 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 Blocks.GRAY_STAINED_GLASS, Blocks.LIGHT_GRAY_STAINED_GLASS, Blocks.CYAN_STAINED_GLASS,
                 Blocks.PURPLE_STAINED_GLASS, Blocks.BLUE_STAINED_GLASS, Blocks.BROWN_STAINED_GLASS,
                 Blocks.GREEN_STAINED_GLASS, Blocks.RED_STAINED_GLASS, Blocks.BLACK_STAINED_GLASS,
-                ModBlocks.GLASS_BORON.get(), ModBlocks.GLASS_LEAD.get(), ModBlocks.GLASS_QUARTZ.get(), ModBlocks.GLASS_TRINITITE.get(),
+                ModBlocks.GLASS_BORON.get(), ModBlocks.GLASS_LEAD.get(), ModBlocks.GLASS_URANIUM.get(),
+                ModBlocks.GLASS_POLONIUM.get(), ModBlocks.GLASS_QUARTZ.get(), ModBlocks.GLASS_TRINITITE.get(),
                 ModBlocks.REINFORCED_LAMINATE.get());
         tag(forgeBlockTag("glass_panes")).add(ModBlocks.REINFORCED_LAMINATE_PANE.get());
 

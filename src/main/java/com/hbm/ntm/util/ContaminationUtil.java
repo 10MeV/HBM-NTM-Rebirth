@@ -31,12 +31,30 @@ public final class ContaminationUtil {
         if (!(entity instanceof LivingEntity living)) {
             return false;
         }
+        return isRegisteredRadImmune(entity) || RadiationUtil.isRadImmune(living);
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static void registerRadImmune(Class type) {
+        if (type != null) {
+            immuneEntities.add(type);
+        }
+    }
+
+    public static boolean isRegisteredRadImmune(Entity entity) {
+        if (entity == null) {
+            return false;
+        }
         for (Class<?> type : immuneEntities) {
             if (type.isAssignableFrom(entity.getClass())) {
                 return true;
             }
         }
-        return RadiationUtil.isRadImmune(living);
+        return false;
+    }
+
+    public static boolean isRadiationImmuneMarker(Entity entity) {
+        return RadiationUtil.isRadiationImmuneMarker(entity);
     }
 
     public static void applyAsbestos(Entity entity, int amount) {

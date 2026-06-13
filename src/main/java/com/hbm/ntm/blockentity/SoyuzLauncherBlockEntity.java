@@ -17,13 +17,14 @@ import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.menu.SoyuzLauncherMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.satellite.LegacySatelliteType;
 import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -133,6 +134,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (changed) {
             launcher.setChanged();
         }
+        launcher.networkPackNT(250);
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -146,21 +148,17 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (!launcher.starting || launcher.countdown <= 0) {
             return;
         }
-        if (level.getGameTime() % 8L == 0L
-                && !level.getEntitiesOfClass(SoyuzEntity.class,
+        if (!level.getEntitiesOfClass(SoyuzEntity.class,
                         new AABB(pos.getX() - 5.0D, pos.getY(), pos.getZ() - 5.0D,
                                 pos.getX() + 5.0D, pos.getY() + 10.0D, pos.getZ() + 5.0D)).isEmpty()) {
-            level.addParticle(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE,
-                    pos.getX() + level.random.nextDouble() * 12.0D - 6.0D,
-                    pos.getY() + level.random.nextDouble() * 4.0D,
-                    pos.getZ() + level.random.nextDouble() * 12.0D - 6.0D,
-                    0.0D, 0.05D, 0.0D);
+            ParticleUtil.spawnSmokeShockRandom(level, pos.getX() + 0.5D, pos.getY() - 3.0D,
+                    pos.getZ() + 0.5D, 50, level.random.nextGaussian() * 3.0D + 6.0D);
         }
     }
 
     private void updateAudioLoop() {
         boolean active = starting && countdown > 0 && canLaunch();
-        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, ModSounds.BLOCK_SOYUZ_READY.getId(),
+        audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.soyuzReady",
                 active, 100.0D, 100.0F, 2.0F, 1.0F);
     }
 
@@ -181,7 +179,8 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         } else if (countdown > 0) {
             countdown--;
             if (countdown % 100 == 0) {
-                level.playSound(null, pos, ModSounds.ALARM_HATCH.get(), SoundSource.RECORDS, 100.0F, 1.1F);
+                LegacySoundPlayer.playSoundEffect(level, pos.getX(), pos.getY(), pos.getZ(),
+                        "hbm:alarm.hatch", SoundSource.RECORDS, 100.0F, 1.1F);
             }
         } else if (level instanceof ServerLevel serverLevel) {
             liftOff(serverLevel);
@@ -210,7 +209,8 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         soyuz.setMode(mode);
         soyuz.setPos(worldPosition.getX() + 0.5D, worldPosition.getY() + 1.0D, worldPosition.getZ() + 0.5D);
         level.addFreshEntity(soyuz);
-        level.playSound(null, worldPosition, ModSounds.ENTITY_SOYUZ_TAKEOFF.get(), SoundSource.PLAYERS, 100.0F, 1.1F);
+        LegacySoundPlayer.playSoundEffect(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                "hbm:entity.soyuzTakeoff", SoundSource.PLAYERS, 100.0F, 1.1F);
 
         keroseneTank().drain(fuelRequired, false);
         oxygenTank().drain(fuelRequired, false);

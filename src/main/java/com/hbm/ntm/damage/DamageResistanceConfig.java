@@ -24,7 +24,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public final class DamageResistanceConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -442,91 +441,15 @@ public final class DamageResistanceConfig {
     }
 
     private static JsonObject serialize(DamageResistanceStats stats) {
-        JsonObject object = new JsonObject();
-        if (!stats.exactResistances().isEmpty()) {
-            JsonArray exact = new JsonArray();
-            for (Map.Entry<String, DamageResistance> entry : stats.exactResistances().entrySet()) {
-                exact.add(resistance(entry.getKey(), entry.getValue()));
-            }
-            object.add("exact", exact);
-        }
-        if (!stats.categoryResistances().isEmpty()) {
-            JsonArray category = new JsonArray();
-            for (Map.Entry<String, DamageResistance> entry : stats.categoryResistances().entrySet()) {
-                category.add(resistance(entry.getKey(), entry.getValue()));
-            }
-            object.add("category", category);
-        }
-        if (stats.otherResistance() != null) {
-            JsonArray other = new JsonArray();
-            other.add(stats.otherResistance().threshold());
-            other.add(stats.otherResistance().resistance());
-            object.add("other", other);
-        }
-        return object;
-    }
-
-    private static JsonArray resistance(String key, DamageResistance resistance) {
-        JsonArray array = new JsonArray();
-        array.add(key);
-        array.add(resistance.threshold());
-        array.add(resistance.resistance());
-        return array;
+        return stats.toJson();
     }
 
     private static DamageResistanceStats deserialize(JsonElement statsElement, ConfigStats configStats, String context) {
-        if (statsElement == null || !statsElement.isJsonObject()) {
-            return null;
+        DamageResistanceStats.JsonParseResult result = DamageResistanceStats.parseJson(statsElement, context);
+        for (String warning : result.warnings()) {
+            configStats.addWarning(warning);
         }
-        JsonObject json = statsElement.getAsJsonObject();
-        DamageResistanceStats stats = new DamageResistanceStats();
-        int index = 0;
-        for (JsonElement exactElement : array(json, "exact")) {
-            if (!isArray(exactElement, 3)) {
-                configStats.addWarning("invalid exact resistance in " + context + " #" + index);
-                index++;
-                continue;
-            }
-            JsonArray array = exactElement.getAsJsonArray();
-            String key = stringValue(array.get(0));
-            Float threshold = floatValue(array.get(1));
-            Float resistance = floatValue(array.get(2));
-            if (key == null || threshold == null || resistance == null) {
-                configStats.addWarning("invalid exact resistance values in " + context + " #" + index);
-            } else {
-                stats.addExact(key, threshold, resistance);
-            }
-            index++;
-        }
-        index = 0;
-        for (JsonElement categoryElement : array(json, "category")) {
-            if (!isArray(categoryElement, 3)) {
-                configStats.addWarning("invalid category resistance in " + context + " #" + index);
-                index++;
-                continue;
-            }
-            JsonArray array = categoryElement.getAsJsonArray();
-            String key = stringValue(array.get(0));
-            Float threshold = floatValue(array.get(1));
-            Float resistance = floatValue(array.get(2));
-            if (key == null || threshold == null || resistance == null) {
-                configStats.addWarning("invalid category resistance values in " + context + " #" + index);
-            } else {
-                stats.addCategory(key, threshold, resistance);
-            }
-            index++;
-        }
-        if (json.has("other") && isArray(json.get("other"), 2)) {
-            JsonArray other = json.getAsJsonArray("other");
-            Float threshold = floatValue(other.get(0));
-            Float resistance = floatValue(other.get(1));
-            if (threshold == null || resistance == null) {
-                configStats.addWarning("invalid other resistance values in " + context);
-            } else {
-                stats.setOther(threshold, resistance);
-            }
-        }
-        return stats;
+        return result.stats();
     }
 
     private static JsonObject statsForItem(JsonArray itemStats, String itemName) {

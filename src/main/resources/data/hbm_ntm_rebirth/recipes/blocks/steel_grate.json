@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SS",
+    "SS"
+  ],
+  "key": {
+    "S": {
+      "item": "hbm_ntm_rebirth:steel_beam"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:steel_grate",
+    "count": 4
+  },
+  "show_notification": true
+}

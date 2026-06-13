@@ -1,10 +1,12 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.bullet.BulletConfig;
+import com.hbm.ntm.bullet.BulletCasingEjectUtil;
 import com.hbm.ntm.bullet.BulletConfigSyncRegistry;
 import com.hbm.ntm.bullet.BulletKinematicsUtil;
 import com.hbm.ntm.bullet.BulletLaunchUtil;
 import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
+import com.hbm.ntm.bullet.LegacySednaGunConfigs;
 import com.hbm.ntm.bullet.SednaGunConfig;
 import com.hbm.ntm.bullet.SednaMagazineConfig;
 import com.hbm.ntm.bullet.SednaReceiverConfig;
@@ -18,6 +20,7 @@ import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmKeybindReceiver;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.player.HbmLivingProperties;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.sound.LegacySoundIds;
 import com.hbm.ntm.util.RayTraceUtil;
@@ -47,6 +50,7 @@ import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -61,9 +65,20 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
     private static final String KEY_MODE = "mode_";
     private static final String KEY_TIMER = "timer_";
     private static final String KEY_STATE = "state_";
+    private static final String KEY_LAST_ANIM = "lastanim_";
+    private static final String KEY_ANIM_TIMER = "animtimer_";
     private static final String KEY_BAYONET_STRIKE = "bayonet_strike_";
     private static final String KEY_CANCEL_RELOAD = "cancel";
     private static final String KEY_EQUIPPED = "eqipped";
+    protected static final int LEGACY_ANIM_RELOAD = 0;
+    protected static final int LEGACY_ANIM_RELOAD_CYCLE = 1;
+    protected static final int LEGACY_ANIM_RELOAD_END = 2;
+    protected static final int LEGACY_ANIM_CYCLE = 3;
+    protected static final int LEGACY_ANIM_CYCLE_DRY = 5;
+    protected static final int LEGACY_ANIM_SPINUP = 7;
+    protected static final int LEGACY_ANIM_EQUIP = 9;
+    protected static final int LEGACY_ANIM_INSPECT = 10;
+    protected static final int LEGACY_ANIM_JAMMED = 11;
     private static final double BAYONET_REACH = 3.0D;
     private static final float BAYONET_DAMAGE = 15.0F;
     private static final int BAYONET_DAMAGE_TIMER = 15;
@@ -103,6 +118,13 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         for (GunParts gun : allModeParts(stack)) {
             clearReleasedKeyStates(player, stack, gun.mode().configIndex());
             tickBayonetStrike(player, stack, gun);
+            playLegacyReloadOrchestra(player.level(), player, stack, gun);
+            playLegacyCycleOrchestra(player, stack, gun);
+            playLegacyDryfireOrchestra(player.level(), player, stack, gun);
+            playLegacyJammedOrchestra(player.level(), player, stack, gun);
+            playLegacyInspectOrchestra(player.level(), player, stack, gun);
+            playLegacyEquipOrchestra(player.level(), player, stack, gun);
+            incrementLegacyAnimationTimer(stack, gun.mode().configIndex());
             tickStandardStateMachine(player, stack, gun);
         }
     }
@@ -142,6 +164,39 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         return primaryParts(stack)
                 .map(parts -> parts.mode().hideCrosshair() && isAiming(stack))
                 .orElse(false);
+    }
+
+    public boolean legacyIsAiming(ItemStack stack) {
+        return isAiming(stack);
+    }
+
+    public List<LegacyHudComponent> legacyHudComponents(ItemStack stack, Player player) {
+        List<LegacyHudComponent> components = new ArrayList<>();
+        for (SednaGunConfig.GunModeConfig mode : gunConfig.configs()) {
+            if (mode.hudComponentNames().isEmpty()) {
+                continue;
+            }
+            int bottomOffset = 0;
+            for (String componentName : mode.hudComponentNames()) {
+                if (isDurabilityHudComponent(componentName)) {
+                    int durabilityLoss = mode.durability() <= 0.0F
+                            ? 50
+                            : (int) (50.0F * wear(stack, mode.configIndex()) / mode.durability());
+                    components.add(new LegacyHudComponent(componentName, mode.configIndex(), bottomOffset,
+                            durabilityLoss, ItemStack.EMPTY, ""));
+                } else if (isAmmoHudComponent(componentName)) {
+                    int receiverIndex = LegacySednaGunConfigs.HUD_COMPONENT_AMMO_SECOND.equals(componentName) ? 1 : 0;
+                    Optional<GunParts> parts = partsForReceiver(stack, mode.configIndex(), receiverIndex);
+                    if (parts.isPresent()) {
+                        SednaMagazineConfig magazine = parts.get().magazine();
+                        components.add(new LegacyHudComponent(componentName, mode.configIndex(), bottomOffset, 0,
+                                hudIconStack(stack, player, magazine), hudAmmoText(stack, player, magazine)));
+                    }
+                }
+                bottomOffset += hudComponentHeight(componentName);
+            }
+        }
+        return List.copyOf(components);
     }
 
     @Override
@@ -263,6 +318,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
                 setGunState(stack, gun.mode().configIndex(), SednaGunConfig.GunState.COOLDOWN);
                 setTimer(stack, gun.mode().configIndex(), gun.receiver().delayAfterFire());
             } else if (gun.receiver().doesDryFire()) {
+                playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_CYCLE_DRY);
                 setGunState(stack, gun.mode().configIndex(), gun.receiver().refireAfterDry()
                         ? SednaGunConfig.GunState.COOLDOWN
                         : SednaGunConfig.GunState.DRAWING);
@@ -280,11 +336,13 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             LoadedRound round = getLoadedRound(player, stack, gun.magazine()).orElse(null);
             if (round != null) {
                 if (fireLimited(player.level(), player, stack, gun, round, 1) > 0) {
+                    playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_CYCLE);
                     playFireSound(player.level(), player, gun.receiver());
                 }
                 setGunState(stack, gun.mode().configIndex(), SednaGunConfig.GunState.COOLDOWN);
                 setTimer(stack, gun.mode().configIndex(), gun.receiver().delayAfterFire());
             } else if (gun.receiver().doesDryFire()) {
+                playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_CYCLE_DRY);
                 setGunState(stack, gun.mode().configIndex(), gun.receiver().refireAfterDry()
                         ? SednaGunConfig.GunState.COOLDOWN
                         : SednaGunConfig.GunState.DRAWING);
@@ -304,11 +362,13 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
                 int shotsFired = fireLimited(player.level(), player, stack, gun, round,
                         1 + gun.receiver().roundsPerCycle());
                 if (shotsFired > 0) {
+                    playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_CYCLE);
                     playFireSound(player.level(), player, gun.receiver(), shotsFired > 1 ? 0.9F : 1.0F);
                 }
                 setGunState(stack, gun.mode().configIndex(), SednaGunConfig.GunState.COOLDOWN);
                 setTimer(stack, gun.mode().configIndex(), 20);
             } else if (gun.receiver().doesDryFire()) {
+                playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_CYCLE_DRY);
                 setGunState(stack, gun.mode().configIndex(), SednaGunConfig.GunState.DRAWING);
                 setTimer(stack, gun.mode().configIndex(), gun.receiver().delayAfterDryFire());
             }
@@ -338,11 +398,13 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         if (canReload(player, stack, gun.magazine())) {
             int loaded = magazineCount(stack, gun.magazine());
             setAmountBeforeReload(stack, gun.magazine(), loaded);
+            playLegacyAnimation(stack, configIndex, LEGACY_ANIM_RELOAD);
             setGunState(stack, configIndex, SednaGunConfig.GunState.RELOADING);
             setTimer(stack, configIndex, gun.receiver().reloadBeginDuration()
                     + (loaded <= 0 ? gun.receiver().reloadCockOnEmptyPre() : 0));
             return;
         }
+        playLegacyAnimation(stack, configIndex, LEGACY_ANIM_INSPECT);
         if (!gun.mode().inspectCancel()) {
             setGunState(stack, configIndex, SednaGunConfig.GunState.DRAWING);
             setTimer(stack, configIndex, gun.mode().inspectDuration());
@@ -359,6 +421,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             return;
         }
         setAiming(stack, false);
+        playLegacyAnimation(stack, configIndex, LEGACY_ANIM_INSPECT);
         setGunState(stack, configIndex, SednaGunConfig.GunState.DRAWING);
         setTimer(stack, configIndex, gun.mode().inspectDuration());
         setBayonetStrikePending(stack, configIndex, true);
@@ -405,6 +468,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         if (shotsFired <= 0) {
             return;
         }
+        playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_CYCLE);
         playFireSound(level, player, gun.receiver());
     }
 
@@ -477,6 +541,1266 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         }
     }
 
+    private void playLegacyReloadOrchestra(Level level, Entity entity, ItemStack stack, GunParts gun) {
+        int configIndex = gun.mode().configIndex();
+        int animation = legacyAnimation(stack, configIndex);
+        if (animation == LEGACY_ANIM_RELOAD_CYCLE) {
+            if (gunState(stack, configIndex) == SednaGunConfig.GunState.RELOADING) {
+                playLegacyReloadCycleOrchestra(level, entity, stack, gun);
+            }
+            return;
+        }
+        if (animation == LEGACY_ANIM_RELOAD_END) {
+            if (gunState(stack, configIndex) == SednaGunConfig.GunState.DRAWING) {
+                playLegacyReloadEndOrchestra(level, entity, stack, gun);
+            }
+            return;
+        }
+        if (gunState(stack, configIndex) != SednaGunConfig.GunState.RELOADING) {
+            return;
+        }
+        if (animation != LEGACY_ANIM_RELOAD) {
+            return;
+        }
+        int elapsed = legacyAnimationTimer(stack, configIndex);
+        String orchestra = gun.mode().orchestraName();
+        switch (orchestra) {
+            case "Orchestras.DEBUG_ORCHESTRA", "Orchestras.ORCHESTRA_NOPIP" -> {
+                if (elapsed == 3) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 1.0F);
+                } else if (elapsed == 10) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 1.0F);
+                } else if (elapsed == 34) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.0F);
+                } else if (elapsed == 40) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_PEPPERBOX" -> {
+                if (elapsed == 24) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.0F);
+                } else if (elapsed == 55) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_SPIN", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_ATLAS", "Orchestras.ORCHESTRA_DANI" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 1.0F);
+                } else if (elapsed == 36) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.0F);
+                } else if (elapsed == 44) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_HENRY" -> {
+                if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 1.0F);
+                } else if (elapsed == 16) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MARESLEG", "Orchestras.ORCHESTRA_MARESLEG_SHORT",
+                 "Orchestras.ORCHESTRA_MARESLEG_AKIMBO" -> {
+                if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.8F);
+                } else if (elapsed == 16) {
+                    playLegacyOrchestraSound(level, entity, "GUN_SHOTGUN_LOAD", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_GREASEGUN" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 24) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                } else if (elapsed == 36) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 0.8F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_FLAREGUN" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 0.8F);
+                } else if (elapsed == 16) {
+                    playLegacyOrchestraSound(level, entity, "GUN_CANISTER_INSERT", 1.0F);
+                } else if (elapsed == 24) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CARBINE" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 26) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LAG" -> {
+                if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 26) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                } else if (elapsed == 40) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_UZI", "Orchestras.ORCHESTRA_UZI_AKIMBO" -> {
+                if (elapsed == 4) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 26) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                } else if (elapsed == 36) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CONGOLAKE" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_GRENADE_RELOAD", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LIBERATOR" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.75F);
+                } else if (elapsed == 15) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SPAS" -> {
+                if (magazineCount(stack, gun.magazine()) == 0) {
+                    if (elapsed == 0) {
+                        playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 1.0F);
+                    } else if (elapsed == 7) {
+                        playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                    }
+                }
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_SHOTGUN_LOAD", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_STAR_F", "Orchestras.ORCHESTRA_STAR_F_AKIMBO" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 22) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                } else if (elapsed == 30) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.1F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_G3" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 4) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.9F);
+                } else if (elapsed == 32) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                } else if (elapsed == 36) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MK108" -> {
+                if (elapsed == 0 || elapsed == 125) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.65F);
+                } else if (elapsed == 10) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 0.75F);
+                } else if (elapsed == 40) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 0.75F);
+                } else if (elapsed == 60) {
+                    playLegacyOrchestraSound(level, entity, "GUN_IMPACT", 0.5F, 1.0F);
+                } else if (elapsed == 90) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 0.75F);
+                } else if (elapsed == 100) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 0.75F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SHREDDER" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 32) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SHREDDER_SEXY" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 1.0F);
+                } else if (elapsed == 4) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.75F);
+                } else if (elapsed == 16) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 1.0F);
+                } else if (elapsed == 30) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 55) {
+                    playLegacyOrchestraSound(level, entity, "GUN_IMPACT", 0.5F, 1.0F);
+                } else if (elapsed == 65) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                } else if (elapsed == 74) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.0F);
+                } else if (elapsed == 88) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.75F);
+                } else if (elapsed == 100) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MINIGUN", "Orchestras.ORCHESTRA_MINIGUN_DUAL" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_SPIN", 0.75F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_PANERSCHRECK", "Orchestras.ORCHESTRA_QUADRO" -> {
+                if (elapsed == 30) {
+                    playLegacyOrchestraSound(level, entity, "GUN_CANISTER_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MISSILE_LAUNCHER" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_OPEN", 0.9F);
+                } else if (elapsed == 30) {
+                    playLegacyOrchestraSound(level, entity, "GUN_CANISTER_INSERT", 1.0F);
+                } else if (elapsed == 42) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_CLOSE", 0.9F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_AMAT" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 20) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                } else if (elapsed == 32) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_OPEN", 0.5F, 1.0F);
+                } else if (elapsed == 41) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_CLOSE", 0.5F, 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LASRIFLE" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 1.0F);
+                } else if (elapsed == 18) {
+                    playLegacyOrchestraSound(level, entity, "GUN_IMPACT", 0.25F, 1.0F);
+                } else if (elapsed == 30) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                } else if (elapsed == 38) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LASER_PISTOL" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 1.0F);
+                } else if (elapsed == 10) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 1.0F, 1.25F);
+                } else if (elapsed == 34) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.0F, 1.25F);
+                } else if (elapsed == 40) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F, 1.25F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_COILGUN" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_COIL_RELOAD", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_HANGMAN" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.8F);
+                } else if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 0.8F);
+                } else if (elapsed == 25) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                } else if (elapsed == 35) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.75F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_BOLTER" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 26) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_FATMAN" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_FATMAN_RELOAD", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_FOLLY" -> {
+                if (elapsed == 20 || elapsed == 120) {
+                    playLegacyOrchestraSound(level, entity, "GUN_SCREW", 1.0F);
+                } else if (elapsed == 80) {
+                    playLegacyOrchestraSound(level, entity, "GUN_ROCKET_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_STINGER" -> {
+                if (elapsed == 30) {
+                    playLegacyOrchestraSound(level, entity, "GUN_CANISTER_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_FIREEXT" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_VALVE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CHARGE_THROWER" -> {
+                if (elapsed == 30) {
+                    playLegacyOrchestraSound(level, entity, "GUN_ROCKET_INSERT", 1.0F);
+                } else if (elapsed == 40) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_DOUBLE_BARREL" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.75F);
+                } else if (elapsed == 19) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 0.9F);
+                } else if (elapsed == 29) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.8F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_ABERRATOR" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 0.75F);
+                } else if (elapsed == 32) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 0.75F);
+                } else if (elapsed == 42) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 0.75F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MAS36" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_OPEN", 1.0F);
+                } else if (elapsed == 20) {
+                    playLegacyOrchestraSound(level, entity, "GUN_RIFLE_COCK", 1.0F);
+                } else if (elapsed == 36) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_CLOSE", 1.0F);
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void playLegacyReloadCycleOrchestra(Level level, Entity entity, ItemStack stack, GunParts gun) {
+        int elapsed = legacyAnimationTimer(stack, gun.mode().configIndex());
+        switch (gun.mode().orchestraName()) {
+            case "Orchestras.ORCHESTRA_HENRY" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MARESLEG", "Orchestras.ORCHESTRA_MARESLEG_SHORT",
+                 "Orchestras.ORCHESTRA_MARESLEG_AKIMBO" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_SHOTGUN_LOAD", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LIBERATOR" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CONGOLAKE" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_GRENADE_RELOAD", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SPAS" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_SHOTGUN_LOAD", 1.0F);
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void playLegacyReloadEndOrchestra(Level level, Entity entity, ItemStack stack, GunParts gun) {
+        int elapsed = legacyAnimationTimer(stack, gun.mode().configIndex());
+        switch (gun.mode().orchestraName()) {
+            case "Orchestras.ORCHESTRA_HENRY" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 0.9F);
+                } else if (elapsed == 12 && amountBeforeReload(stack, gun.magazine()) <= 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_LEVER_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MARESLEG", "Orchestras.ORCHESTRA_MARESLEG_SHORT",
+                 "Orchestras.ORCHESTRA_MARESLEG_AKIMBO" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.7F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CARBINE" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 0.8F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LIBERATOR" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.9F);
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void playLegacyCycleOrchestra(ServerPlayer player, ItemStack stack, GunParts gun) {
+        int configIndex = gun.mode().configIndex();
+        if (gunState(stack, configIndex) != SednaGunConfig.GunState.COOLDOWN
+                || legacyAnimation(stack, configIndex) != LEGACY_ANIM_CYCLE) {
+            return;
+        }
+        int elapsed = legacyAnimationTimer(stack, configIndex);
+        boolean aiming = isAiming(stack);
+        Level level = player.level();
+        String orchestra = gun.mode().orchestraName();
+        switch (orchestra) {
+            case "Orchestras.DEBUG_ORCHESTRA", "Orchestras.ORCHESTRA_NOPIP" -> {
+                if (elapsed == 11) {
+                    playLegacyOrchestraSound(level, player, "GUN_REVOLVER_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_PEPPERBOX" -> {
+                if (elapsed == 21) {
+                    playLegacyOrchestraSound(level, player, "GUN_REVOLVER_COCK", 0.6F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_ATLAS", "Orchestras.ORCHESTRA_DANI" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, player, "GUN_REVOLVER_COCK", 0.9F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_HENRY" -> {
+                if (elapsed == 12) {
+                    playLegacyOrchestraSound(level, player, "GUN_LEVER_COCK", 1.0F);
+                } else if (elapsed == 14) {
+                    spawnLegacyCasing(player, stack, gun, 0.5D, -0.125D, aiming ? -0.125D : -0.375D,
+                            0.0D, 0.12D, -0.12D, 0.01D,
+                            -7.5F + player.getRandom().nextGaussian() * 5.0F,
+                            player.getRandom().nextGaussian() * 1.5F, true, 60, 0.5D, 20);
+                }
+            }
+            case "Orchestras.ORCHESTRA_GREASEGUN" -> {
+                if (elapsed == 2) {
+                    spawnLegacyCasing(player, stack, gun, 0.55D, aiming ? 0.0D : -0.125D,
+                            aiming ? 0.0D : -0.25D, 0.0D, 0.18D, -0.12D, 0.01D,
+                            -7.5F + player.getRandom().nextGaussian() * 5.0F,
+                            12.0F + player.getRandom().nextGaussian() * 5.0F, false, 0, 0.0D, 0);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MARESLEG", "Orchestras.ORCHESTRA_MARESLEG_SHORT",
+                 "Orchestras.ORCHESTRA_MARESLEG_AKIMBO" -> {
+                if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, player, "GUN_LEVER_COCK", 0.8F);
+                } else if (elapsed == 14) {
+                    boolean normal = "Orchestras.ORCHESTRA_MARESLEG".equals(orchestra);
+                    int side = "Orchestras.ORCHESTRA_MARESLEG_AKIMBO".equals(orchestra)
+                            ? (configIndex == 0 ? -1 : 1)
+                            : 1;
+                    spawnLegacyCasing(player, stack, gun, 0.3125D, -0.125D,
+                            aiming ? -0.125D * side : -0.375D * side,
+                            0.0D, normal ? 0.18D : -0.08D, normal ? -0.12D : 0.0D, 0.01D,
+                            (normal ? -10.0F : -15.0F) + player.getRandom().nextGaussian() * 5.0F,
+                            player.getRandom().nextGaussian() * 2.5F, true, 60, 0.5D, 20);
+                }
+            }
+            case "Orchestras.ORCHESTRA_FLAREGUN" -> {
+                if (elapsed == 12) {
+                    playLegacyOrchestraSound(level, player, "GUN_REVOLVER_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CONGOLAKE" -> {
+                if (elapsed == 15) {
+                    spawnLegacyCasing(player, stack, gun, 0.625D, aiming ? -0.0625D : -0.25D,
+                            aiming ? 0.0D : -0.375D, 0.0D, 0.18D, 0.12D, 0.01D,
+                            -5.0F + player.getRandom().nextGaussian() * 3.5F,
+                            -10.0F + player.getRandom().nextFloat() * 5.0F, true, 60, 0.5D, 20);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CARBINE" -> {
+                if (elapsed == 1) {
+                    spawnLegacyCasing(player, stack, gun, 0.3125D, aiming ? 0.0D : -0.125D,
+                            aiming ? 0.0D : -0.25D, 0.0D, 0.21D, -0.06D, 0.01D,
+                            -10.0F + player.getRandom().nextGaussian() * 2.5F,
+                            2.5F + player.getRandom().nextGaussian() * 2.0F, true, 60, 0.5D, 20);
+                }
+            }
+            case "Orchestras.ORCHESTRA_AM180" -> {
+                if (elapsed == 0) {
+                    spawnLegacyCasing(player, stack, gun, 0.4375D, aiming ? 0.0D : -0.125D,
+                            aiming ? 0.0D : -0.25D, 0.0D, -0.06D, 0.0D, 0.01D,
+                            player.getRandom().nextGaussian() * 10.0F,
+                            player.getRandom().nextGaussian() * 10.0F, false, 0, 0.0D, 0);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LAG", "Orchestras.ORCHESTRA_UZI" -> {
+                if (elapsed == 1) {
+                    boolean lag = "Orchestras.ORCHESTRA_LAG".equals(orchestra);
+                    spawnLegacyCasing(player, stack, gun, 0.375D, aiming ? 0.0D : (lag ? -0.0625D : -0.125D),
+                            aiming ? 0.0D : -0.25D, 0.0D, 0.18D, -0.12D, 0.01D,
+                            (lag ? -10.0F : -2.5F) + player.getRandom().nextGaussian() * 5.0F,
+                            10.0F + player.getRandom().nextFloat() * (lag ? 10.0F : 15.0F), false, 0, 0.0D, 0);
+                }
+            }
+            case "Orchestras.ORCHESTRA_UZI_AKIMBO" -> {
+                if (elapsed == 1) {
+                    int side = configIndex == 0 ? -1 : 1;
+                    spawnLegacyCasing(player, stack, gun, 0.375D, -0.125D, -0.375D * side,
+                            0.0D, 0.18D, -0.12D * side, 0.01D,
+                            -2.5F + player.getRandom().nextGaussian() * 5.0F,
+                            (10.0F + player.getRandom().nextFloat() * 15.0F) * side, false, 0, 0.0D, 0);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SPAS" -> {
+                if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, player, "GUN_SHOTGUN_COCK", 1.0F);
+                } else if (elapsed == 10) {
+                    spawnLegacyCasing(player, stack, gun, 0.375D, aiming ? 0.0D : -0.125D,
+                            aiming ? 0.0D : -0.25D, 0.0D, 0.18D, -0.12D, 0.01D,
+                            -3.0F + player.getRandom().nextGaussian() * 2.5F,
+                            -15.0F + player.getRandom().nextFloat() * -5.0F, false, 0, 0.0D, 0);
+                }
+            }
+            case "Orchestras.ORCHESTRA_STAR_F", "Orchestras.ORCHESTRA_STAR_F_AKIMBO" -> {
+                if (elapsed == 0) {
+                    int side = "Orchestras.ORCHESTRA_STAR_F_AKIMBO".equals(orchestra)
+                            ? (configIndex == 0 ? -1 : 1)
+                            : 1;
+                    spawnLegacyCasing(player, stack, gun, 0.3125D, aiming ? 0.0D : -0.125D,
+                            aiming ? 0.0D : -0.1875D * side,
+                            0.0D, 0.18D, -0.12D * side, 0.01D,
+                            player.getRandom().nextGaussian() * 5.0F,
+                            12.5F + player.getRandom().nextFloat() * 5.0F, false, 0, 0.0D, 0);
+                }
+            }
+            case "Orchestras.ORCHESTRA_G3" -> {
+                if (elapsed == 0) {
+                    boolean scoped = gunConfig.legacyName().equals("gun_g3_zebra")
+                            || SednaWeaponModEvaluator.hasUpgrade(stack, 0, SednaWeaponModEvaluator.ID_SCOPE);
+                    boolean localAiming = aiming && !scoped;
+                    spawnLegacyCasing(player, stack, gun, 0.5D, localAiming ? 0.0D : -0.125D,
+                            localAiming ? 0.0D : -0.25D, 0.0D, 0.18D, -0.12D, 0.01D,
+                            player.getRandom().nextGaussian() * 5.0F,
+                            12.5F + player.getRandom().nextFloat() * 5.0F, false, 0, 0.0D, 0);
+                }
+            }
+            case "Orchestras.ORCHESTRA_AMAT" -> {
+                if (elapsed == 7) {
+                    playLegacyOrchestraSound(level, player, "GUN_BOLT_OPEN", 0.5F, 1.0F);
+                } else if (elapsed == 12) {
+                    spawnLegacyCasing(player, stack, gun, 0.375D, aiming ? 0.0D : -0.125D, -0.25D,
+                            -0.05D, 0.2D, -0.025D, 0.01D,
+                            -10.0F + player.getRandom().nextGaussian() * 10.0F,
+                            player.getRandom().nextGaussian() * 12.5F, true, 60, 0.5D, 10);
+                } else if (elapsed == 16) {
+                    playLegacyOrchestraSound(level, player, "GUN_BOLT_CLOSE", 0.5F, 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MK108" -> {
+                if (elapsed == 2) {
+                    spawnLegacyCasing(player, stack, gun, 0.5D, aiming ? -0.125D : -0.3125D,
+                            aiming ? -0.375D : -0.3125D, 0.0D, 0.18D, -0.12D, 0.01D,
+                            -10.0F + player.getRandom().nextGaussian() * 2.5F,
+                            player.getRandom().nextGaussian() * -20.0F + 15.0F, true, 60, 0.5D, 10);
+                }
+            }
+            case "Orchestras.ORCHESTRA_M2" -> {
+                if (elapsed == 0) {
+                    spawnLegacyCasing(player, stack, gun, 0.375D, aiming ? 0.0D : -0.125D,
+                            aiming ? 0.0D : -0.3125D, 0.0D, 0.06D, -0.18D, 0.01D,
+                            player.getRandom().nextGaussian() * 20.0F,
+                            12.5F + player.getRandom().nextGaussian() * 7.5F, false, 0, 0.0D, 0);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SHREDDER" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, player, "GUN_SHREDDER_CYCLE", 0.25F, 1.5F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SHREDDER_SEXY" -> {
+                if (elapsed == 2) {
+                    spawnLegacyCasing(player, stack, gun, 0.375D, aiming ? -0.0625D : -0.125D,
+                            aiming ? -0.125D : -0.25D, 0.0D, 0.18D, -0.12D, 0.01D,
+                            -10.0F + player.getRandom().nextGaussian() * 2.5F,
+                            player.getRandom().nextGaussian() * -20.0F + 15.0F,
+                            false, 60, 0.5D, 20);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MINIGUN", "Orchestras.ORCHESTRA_MINIGUN_DUAL" -> {
+                boolean dual = "Orchestras.ORCHESTRA_MINIGUN_DUAL".equals(orchestra);
+                int side = dual && configIndex == 0 ? -1 : 1;
+                if (elapsed == 0) {
+                    int rounds = SednaWeaponModEvaluator.hasUpgrade(stack, configIndex,
+                            SednaWeaponModEvaluator.ID_MINIGUN_SPEED) ? 3 : 1;
+                    for (int i = 0; i < rounds; i++) {
+                        spawnLegacyCasing(player, stack, gun, dual ? 0.25D : (aiming ? 0.125D : 0.5D),
+                                dual ? -0.25D : (aiming ? -0.125D : -0.25D),
+                                dual ? -0.5D * side : (aiming ? -0.25D : -0.5D),
+                                0.0D, 0.18D, dual ? -0.12D * side : -0.12D, 0.01D,
+                                player.getRandom().nextGaussian() * 15.0F,
+                                player.getRandom().nextGaussian() * 15.0F, false, 0, 0.0D, 0);
+                    }
+                }
+                int spinTimer = SednaWeaponModEvaluator.hasUpgrade(stack, 0,
+                        SednaWeaponModEvaluator.ID_MINIGUN_SLOWDOWN) ? 3 : 1;
+                if (elapsed == spinTimer) {
+                    playLegacyOrchestraSound(level, player, "GUN_REVOLVER_SPIN", 0.75F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_TESLA" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, player, "GUN_SHREDDER_CYCLE", 0.25F, 1.25F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_STG77" -> {
+                if (elapsed == 0) {
+                    spawnLegacyCasing(player, stack, gun, 0.125D, aiming ? -0.125D : -0.25D,
+                            aiming ? -0.125D : -0.25D,
+                            0.0D, 0.18D, -0.12D, 0.01D,
+                            player.getRandom().nextGaussian() * 5.0F,
+                            7.5F + player.getRandom().nextFloat() * 5.0F, false, 0, 0.0D, 0);
+                } else if (elapsed == 40) {
+                    playLegacyOrchestraSound(level, player, "GUN_DRY_FIRE", 0.25F, 1.25F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_BOLTER" -> {
+                if (elapsed == 1) {
+                    spawnLegacyCasing(player, stack, gun, 0.5D, aiming ? 0.0D : -0.125D,
+                            aiming ? -0.0625D : -0.25D, 0.0D, 0.18D, -0.12D, 0.01D,
+                            -10.0F + player.getRandom().nextGaussian() * 5.0F,
+                            10.0F + player.getRandom().nextFloat() * 10.0F, false, 0, 0.0D, 0);
+                }
+            }
+            case "Orchestras.ORCHESTRA_ABERRATOR" -> {
+                if (elapsed == 1) {
+                    int side = gunConfig.legacyName().equals("gun_aberrator_eott") && configIndex == 0 ? -1 : 1;
+                    spawnLegacyCasing(player, stack, gun, 0.5D, aiming ? 0.0D : -0.125D,
+                            aiming ? -0.0625D : -0.25D * side,
+                            -0.05D, 0.25D, -0.05D * side, 0.01D,
+                            -10.0F + player.getRandom().nextGaussian() * 10.0F,
+                            player.getRandom().nextGaussian() * 12.5F, false, 0, 0.0D, 0);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MAS36" -> {
+                boolean localAiming = aiming && !SednaWeaponModEvaluator.hasUpgrade(stack, 0,
+                        SednaWeaponModEvaluator.ID_SCOPE);
+                if (elapsed == 7) {
+                    playLegacyOrchestraSound(level, player, "GUN_BOLT_OPEN", 0.5F, 1.0F);
+                } else if (elapsed == 12) {
+                    spawnLegacyCasing(player, stack, gun, 0.375D, localAiming ? 0.0D : -0.125D,
+                            localAiming ? 0.0D : -0.25D,
+                            -0.05D, 0.2D, -0.025D, 0.01D,
+                            -10.0F + player.getRandom().nextGaussian() * 10.0F,
+                            player.getRandom().nextGaussian() * 12.5F, true, 60, 0.5D, 10);
+                } else if (elapsed == 16) {
+                    playLegacyOrchestraSound(level, player, "GUN_BOLT_CLOSE", 0.5F, 1.0F);
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void spawnLegacyCasing(ServerPlayer player, ItemStack stack, GunParts gun, double frontOffset,
+            double heightOffset, double sideOffset, double frontMotion, double heightMotion, double sideMotion,
+            double motionVariance, double momentumPitch, double momentumYaw, boolean smoking, int smokeLife,
+            double smokeLift, int nodeLife) {
+        currentCasingName(stack, player, gun.magazine()).ifPresent(casingName ->
+                BulletCasingEjectUtil.execute(player.level(), BulletCasingEjectUtil.directFromShooter(player,
+                        frontOffset, heightOffset, sideOffset, frontMotion, heightMotion, sideMotion, motionVariance,
+                        (float) momentumPitch, (float) momentumYaw, casingName, smoking, smokeLife, smokeLift,
+                        nodeLife, player.getRandom())));
+    }
+
+    private Optional<String> currentCasingName(ItemStack stack, Player player, SednaMagazineConfig magazine) {
+        return currentBulletConfig(stack, player, magazine)
+                .map(BulletConfig::spentCasingName)
+                .filter(name -> !name.isBlank());
+    }
+
+    private Optional<BulletConfig> currentBulletConfig(ItemStack stack, Player player, SednaMagazineConfig magazine) {
+        CompoundTag tag = stack.getTag();
+        Optional<BulletConfig> stored = tag == null
+                ? Optional.empty()
+                : LegacySednaRuntimeBulletConfigs.byName(tag.getString(magazine.nbtTypeKey()));
+        if (stored.isPresent()) {
+            return stored;
+        }
+        if (magazine.kind() == SednaMagazineConfig.Kind.BELT) {
+            return findBeltAmmo(player, magazine).map(RuntimeAmmo::config);
+        }
+        List<BulletConfig> accepted = acceptedRuntimeConfigs(magazine);
+        return accepted.isEmpty() ? Optional.empty() : Optional.of(accepted.get(0));
+    }
+
+    private static void playLegacyOrchestraSound(Level level, Entity entity, String legacyName, float pitch) {
+        playLegacyOrchestraSound(level, entity, legacyName, 1.0F, pitch);
+    }
+
+    private static void playLegacyOrchestraSound(Level level, Entity entity, String legacyName, float volume, float pitch) {
+        SoundEvent sound = LegacySoundIds.resolveEvent(legacyName);
+        if (sound != null) {
+            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), sound, SoundSource.PLAYERS,
+                    volume, pitch);
+        }
+    }
+
+    private void playLegacyDryfireOrchestra(Level level, Entity entity, ItemStack stack, GunParts gun) {
+        int configIndex = gun.mode().configIndex();
+        if (legacyAnimation(stack, configIndex) != LEGACY_ANIM_CYCLE_DRY) {
+            return;
+        }
+        int elapsed = legacyAnimationTimer(stack, configIndex);
+        switch (gun.mode().orchestraName()) {
+            case "Orchestras.DEBUG_ORCHESTRA", "Orchestras.ORCHESTRA_NOPIP" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 11) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_PEPPERBOX" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.8F);
+                } else if (elapsed == 11) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.6F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_ATLAS", "Orchestras.ORCHESTRA_DANI" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.9F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_HENRY" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 12) {
+                    playLegacyOrchestraSound(level, entity, "GUN_LEVER_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_GREASEGUN" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.8F);
+                } else if (elapsed == 11) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 0.8F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MARESLEG", "Orchestras.ORCHESTRA_MARESLEG_SHORT",
+                 "Orchestras.ORCHESTRA_MARESLEG_AKIMBO" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, entity, "GUN_LEVER_COCK", 0.8F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_FLAREGUN" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 12) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CARBINE" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 0.8F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_AM180" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 6) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 0.9F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LAG" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_UZI", "Orchestras.ORCHESTRA_UZI_AKIMBO" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SPAS" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, entity, "GUN_SHOTGUN_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_STAR_F", "Orchestras.ORCHESTRA_STAR_F_AKIMBO" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.9F);
+                } else if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 1.1F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_G3" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.8F);
+                } else if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 0.9F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MK108" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.75F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_AMAT", "Orchestras.ORCHESTRA_MAS36" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.75F);
+                } else if (elapsed == 7) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_OPEN", 0.5F, 1.0F);
+                } else if (elapsed == 16) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_CLOSE", 0.5F, 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SHREDDER" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_SHREDDER_CYCLE", 0.25F, 1.5F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SHREDDER_SEXY" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MINIGUN", "Orchestras.ORCHESTRA_MINIGUN_DUAL" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.75F);
+                } else if (elapsed == 1) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_SPIN", 0.75F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MISSILE_LAUNCHER" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.25F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_TESLA" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                } else if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_SHREDDER_CYCLE", 0.25F, 1.25F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LASER_PISTOL", "Orchestras.ORCHESTRA_LASRIFLE" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.5F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_STG77" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.8F);
+                } else if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 0.9F);
+                } else if (elapsed == 40) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.25F, 1.25F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_HANGMAN", "Orchestras.ORCHESTRA_LIBERATOR" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_DOUBLE_BARREL" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_ABERRATOR" -> {
+                if (elapsed == 1) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.75F);
+                } else if (elapsed == 9) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 0.75F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CHARGE_THROWER" -> {
+                if (elapsed == 0 && entity instanceof ServerPlayer player
+                        && player.level().getEntity(ChargeThrowerItem.getLastHook(stack)) == null) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.75F);
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void playLegacyJammedOrchestra(Level level, Entity entity, ItemStack stack, GunParts gun) {
+        int configIndex = gun.mode().configIndex();
+        if (gunState(stack, configIndex) != SednaGunConfig.GunState.JAMMED
+                || legacyAnimation(stack, configIndex) != LEGACY_ANIM_JAMMED) {
+            return;
+        }
+        int elapsed = legacyAnimationTimer(stack, configIndex);
+        switch (gun.mode().orchestraName()) {
+            case "Orchestras.ORCHESTRA_PEPPERBOX" -> {
+                if (elapsed == 28) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.75F);
+                } else if (elapsed == 45) {
+                    playLegacyOrchestraSound(level, entity, "GUN_DRY_FIRE", 0.6F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_ATLAS", "Orchestras.ORCHESTRA_DANI" -> {
+                if (elapsed == 12) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 1.0F);
+                } else if (elapsed == 34) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_HENRY" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 0.9F);
+                } else if (elapsed == 12 || elapsed == 36 || elapsed == 44) {
+                    playLegacyOrchestraSound(level, entity, "GUN_LEVER_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_GREASEGUN" -> {
+                if (elapsed == 11 || elapsed == 26) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 0.8F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MARESLEG", "Orchestras.ORCHESTRA_MARESLEG_SHORT",
+                 "Orchestras.ORCHESTRA_MARESLEG_AKIMBO" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.7F);
+                } else if (elapsed == 17 || elapsed == 29) {
+                    playLegacyOrchestraSound(level, entity, "GUN_LEVER_COCK", 0.8F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_FLAREGUN" -> {
+                if (elapsed == 10) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 0.8F);
+                } else if (elapsed == 29) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CARBINE" -> {
+                if (elapsed == 2 || elapsed == 31) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 0.8F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LAG" -> {
+                if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 20) {
+                    playLegacyOrchestraSound(level, entity, "GUN_IMPACT", 0.5F, 1.6F);
+                } else if (elapsed == 36) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_UZI", "Orchestras.ORCHESTRA_UZI_AKIMBO" -> {
+                if (elapsed == 17 || elapsed == 31) {
+                    playLegacyOrchestraSound(level, entity, "GUN_PISTOL_COCK", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LIBERATOR" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.9F);
+                } else if (elapsed == 12) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.75F);
+                } else if (elapsed == 26) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.9F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SPAS" -> {
+                if (elapsed == 18 || elapsed == 25) {
+                    playLegacyOrchestraSound(level, entity, "GUN_WHACK", 1.0F);
+                } else if (elapsed == 29) {
+                    playLegacyOrchestraSound(level, entity, "GUN_SHOTGUN_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MISSILE_LAUNCHER" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_OPEN", 0.9F);
+                } else if (elapsed == 27) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_CLOSE", 0.9F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_STAR_F", "Orchestras.ORCHESTRA_STAR_F_AKIMBO" -> {
+                if (elapsed == 15 || elapsed == 23) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                } else if (elapsed == 19 || elapsed == 27) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.1F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_G3" -> {
+                if (elapsed == 16 || elapsed == 26) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.9F);
+                } else if (elapsed == 20 || elapsed == 30) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_AMAT", "Orchestras.ORCHESTRA_MAS36" -> {
+                if (elapsed == 5 || elapsed == 16) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_OPEN", 0.5F, 1.0F);
+                } else if (elapsed == 12 || elapsed == 23) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_CLOSE", 0.5F, 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LASER_PISTOL" -> {
+                if (elapsed == 10) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 1.0F);
+                } else if (elapsed == 15) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.25F);
+                } else if (elapsed == 30) {
+                    playLegacyOrchestraSound(level, entity, "GUN_IMPACT", 0.25F, 1.5F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LASRIFLE" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 1.0F);
+                } else if (elapsed == 22) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                } else if (elapsed == 30) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_HANGMAN" -> {
+                if (elapsed == 10) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.8F);
+                } else if (elapsed == 15) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 0.8F);
+                } else if (elapsed == 20) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                } else if (elapsed == 25) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.75F);
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void playLegacyInspectOrchestra(Level level, Entity entity, ItemStack stack, GunParts gun) {
+        int configIndex = gun.mode().configIndex();
+        if (legacyAnimation(stack, configIndex) != LEGACY_ANIM_INSPECT) {
+            return;
+        }
+        int elapsed = legacyAnimationTimer(stack, configIndex);
+        switch (gun.mode().orchestraName()) {
+            case "Orchestras.DEBUG_ORCHESTRA", "Orchestras.ORCHESTRA_NOPIP" -> {
+                if (elapsed == 3) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 1.0F);
+                } else if (elapsed == 16) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_PEPPERBOX" -> {
+                if (elapsed == 3) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_SPIN", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_ATLAS", "Orchestras.ORCHESTRA_DANI" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 1.0F);
+                } else if (elapsed == 24) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_GREASEGUN" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.8F);
+                } else if (elapsed == 26) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_INSERT", 1.25F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CARBINE" -> {
+                if (elapsed == 3) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 1.0F);
+                } else if (elapsed == 16) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LIBERATOR" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.75F);
+                } else if (elapsed == 20) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.9F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_CONGOLAKE" -> {
+                if (elapsed == 9) {
+                    playLegacyOrchestraSound(level, entity, "GUN_GRENADE_OPEN", 1.0F);
+                } else if (elapsed == 27) {
+                    playLegacyOrchestraSound(level, entity, "GUN_GRENADE_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SPAS" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_SHOTGUN_OPEN", 1.0F);
+                } else if (elapsed == 18) {
+                    playLegacyOrchestraSound(level, entity, "GUN_SHOTGUN_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_STAR_F", "Orchestras.ORCHESTRA_STAR_F_AKIMBO" -> {
+                if (elapsed == 7) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                } else if (elapsed == 30) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.1F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_G3" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 28) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MK108" -> {
+                if (elapsed == 9 || elapsed == 14 || elapsed == 19) {
+                    playLegacyOrchestraSound(level, entity, "GUN_IMPACT", 0.5F, 1.5F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_AMAT" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.5F, 1.0F);
+                } else if (elapsed == 45) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.5F, 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MAS36" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_OPEN", 0.5F, 1.0F);
+                } else if (elapsed == 17) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_CLOSE", 0.5F, 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SHREDDER" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_REMOVE", 1.0F);
+                } else if (elapsed == 28) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_SHREDDER_SEXY" -> {
+                if (elapsed == 20 || elapsed == 25 || elapsed == 30 || elapsed == 35) {
+                    playLegacyOrchestraSound(level, entity, "PLAYER_GULP", 1.0F);
+                } else if (elapsed == 50) {
+                    playLegacyOrchestraSound(level, entity, "PLAYER_GROAN", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MINIGUN", "Orchestras.ORCHESTRA_MINIGUN_DUAL" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_SPIN", 0.75F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MISSILE_LAUNCHER" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_OPEN", 0.9F);
+                } else if (elapsed == 27) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_CLOSE", 0.9F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_TESLA" -> {
+                if (elapsed == 12) {
+                    playLegacyOrchestraSound(level, entity, "BLOCK_PLUSHY", 0.25F, 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_LASRIFLE" -> {
+                if (elapsed == 2) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_SMALL_REMOVE", 1.0F);
+                } else if (elapsed == 12) {
+                    playLegacyOrchestraSound(level, entity, "GUN_MAG_INSERT", 1.0F);
+                } else if (elapsed == 20) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_BOLTER" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.75F);
+                } else if (elapsed == 19) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.8F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_DOUBLE_BARREL" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.75F);
+                } else if (elapsed == 19) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.8F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_M2" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_OPEN", 0.5F, 1.0F);
+                } else if (elapsed == 17) {
+                    playLegacyOrchestraSound(level, entity, "GUN_BOLT_CLOSE", 0.5F, 1.0F);
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void playLegacyEquipOrchestra(Level level, Entity entity, ItemStack stack, GunParts gun) {
+        int configIndex = gun.mode().configIndex();
+        if (legacyAnimation(stack, configIndex) != LEGACY_ANIM_EQUIP) {
+            return;
+        }
+        int elapsed = legacyAnimationTimer(stack, configIndex);
+        switch (gun.mode().orchestraName()) {
+            case "Orchestras.ORCHESTRA_GREASEGUN" -> {
+                if (elapsed == 5) {
+                    playLegacyOrchestraSound(level, entity, "GUN_LATCH_OPEN", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_UZI", "Orchestras.ORCHESTRA_UZI_AKIMBO" -> {
+                if (elapsed == 8) {
+                    playLegacyOrchestraSound(level, entity, "GUN_LATCH_OPEN", 1.25F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MK108" -> {
+                if (elapsed == 10) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_COCK", 0.5F, 1.25F);
+                } else if (elapsed == 15) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 0.5F, 1.25F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_M2" -> {
+                if (elapsed == 0) {
+                    playLegacyOrchestraSound(level, entity, "TURRET_CIWS_RELOAD", 1.0F);
+                }
+            }
+            case "Orchestras.ORCHESTRA_MAS36" -> {
+                if (elapsed == 10) {
+                    playLegacyOrchestraSound(level, entity, "GUN_LATCH_OPEN", 1.0F);
+                } else if (elapsed == 18) {
+                    playLegacyOrchestraSound(level, entity, "GUN_REVOLVER_CLOSE", 1.0F);
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    protected void playLegacyAnimation(ItemStack stack, int configIndex, int animation) {
+        CompoundTag tag = stack.getOrCreateTag();
+        tag.putInt(KEY_LAST_ANIM + configIndex, animation);
+        tag.putInt(KEY_ANIM_TIMER + configIndex, 0);
+    }
+
+    protected int legacyAnimation(ItemStack stack, int configIndex) {
+        CompoundTag tag = stack.getTag();
+        return tag == null ? LEGACY_ANIM_CYCLE : tag.getInt(KEY_LAST_ANIM + configIndex);
+    }
+
+    protected int legacyAnimationTimer(ItemStack stack, int configIndex) {
+        CompoundTag tag = stack.getTag();
+        return tag == null ? 0 : tag.getInt(KEY_ANIM_TIMER + configIndex);
+    }
+
+    private void incrementLegacyAnimationTimer(ItemStack stack, int configIndex) {
+        CompoundTag tag = stack.getOrCreateTag();
+        tag.putInt(KEY_ANIM_TIMER + configIndex, tag.getInt(KEY_ANIM_TIMER + configIndex) + 1);
+    }
+
     private void decideStandardState(ServerPlayer player, ItemStack stack, GunParts gun,
             SednaGunConfig.GunState lastState) {
         int configIndex = gun.mode().configIndex();
@@ -504,13 +1828,16 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         tryReload(stack, player, magazine);
         boolean cancel = reloadCancel(stack);
         if (!cancel && canReload(player, stack, magazine)) {
+            playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_RELOAD_CYCLE);
             setGunState(stack, gun.mode().configIndex(), SednaGunConfig.GunState.RELOADING);
             setTimer(stack, gun.mode().configIndex(), gun.receiver().reloadCycleDuration());
         } else {
             if (jamChance(stack, gun) > player.getRandom().nextFloat()) {
+                playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_JAMMED);
                 setGunState(stack, gun.mode().configIndex(), SednaGunConfig.GunState.JAMMED);
                 setTimer(stack, gun.mode().configIndex(), gun.receiver().jamDuration());
             } else {
+                playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_RELOAD_END);
                 setGunState(stack, gun.mode().configIndex(), SednaGunConfig.GunState.DRAWING);
                 setTimer(stack, gun.mode().configIndex(), gun.receiver().reloadEndDuration()
                         + (amountBeforeReload(stack, magazine) <= 0
@@ -531,6 +1858,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
                 setGunState(stack, gun.mode().configIndex(), SednaGunConfig.GunState.COOLDOWN);
                 setTimer(stack, gun.mode().configIndex(), gun.receiver().delayAfterFire());
             } else if (gun.receiver().doesDryFireAfterAuto()) {
+                playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_CYCLE_DRY);
                 setGunState(stack, gun.mode().configIndex(), gun.receiver().refireAfterDry()
                         ? SednaGunConfig.GunState.COOLDOWN
                         : SednaGunConfig.GunState.DRAWING);
@@ -544,6 +1872,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             if (canReload(player, stack, gun.magazine())) {
                 int loaded = magazineCount(stack, gun.magazine());
                 setAmountBeforeReload(stack, gun.magazine(), loaded);
+                playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_RELOAD);
                 setGunState(stack, gun.mode().configIndex(), SednaGunConfig.GunState.RELOADING);
                 setTimer(stack, gun.mode().configIndex(), gun.receiver().reloadBeginDuration()
                         + (loaded <= 0 ? gun.receiver().reloadCockOnEmptyPre() : 0));
@@ -758,6 +2087,106 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         return Optional.empty();
     }
 
+    private ItemStack hudIconStack(ItemStack stack, Player player, SednaMagazineConfig magazine) {
+        if (magazine.kind() == SednaMagazineConfig.Kind.FLUID
+                || magazine.kind() == SednaMagazineConfig.Kind.LIQUID_ENGINE) {
+            return new ItemStack(ModItems.FLUID_ICON.get());
+        }
+        if (magazine.kind() == SednaMagazineConfig.Kind.ELECTRIC_ENGINE) {
+            return new ItemStack(ModItems.BATTERY_CREATIVE.get());
+        }
+        Optional<BulletConfig> config = hudBulletConfig(stack, player, magazine);
+        if (config.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        Item item = ForgeRegistries.ITEMS.getValue(config.get().ammo().itemId());
+        return item == null ? ItemStack.EMPTY : new ItemStack(item);
+    }
+
+    private String hudAmmoText(ItemStack stack, Player player, SednaMagazineConfig magazine) {
+        int amount = magazine.kind() == SednaMagazineConfig.Kind.BELT
+                ? hudBulletConfig(stack, player, magazine).map(config -> beltAmmoCount(player, config)).orElse(0)
+                : magazine.kind() == SednaMagazineConfig.Kind.INFINITE ? 9999 : magazineCount(stack, magazine);
+        return switch (magazine.hudStyle()) {
+            case ROUNDS_WITH_CAPACITY -> amount + " / " + magazine.capacity();
+            case BELT_COUNT -> "x" + amount;
+            case INFINITE -> "\u221e";
+            case FLUID_AMOUNT_ONLY -> amount + "mB";
+            case ENGINE_FLUID_WITH_CAPACITY -> amount + "/" + magazine.capacity() + "mB";
+            case ENGINE_ENERGY_WITH_CAPACITY -> shortNumber(amount) + "/" + shortNumber(magazine.capacity()) + "HE";
+        };
+    }
+
+    private Optional<BulletConfig> hudBulletConfig(ItemStack stack, Player player, SednaMagazineConfig magazine) {
+        if (magazine.kind() == SednaMagazineConfig.Kind.BELT) {
+            return findBeltAmmo(player, magazine).map(RuntimeAmmo::config);
+        }
+        if (magazine.kind() == SednaMagazineConfig.Kind.INFINITE) {
+            List<BulletConfig> accepted = acceptedRuntimeConfigs(magazine);
+            return accepted.isEmpty() ? Optional.empty() : Optional.of(accepted.get(0));
+        }
+        CompoundTag tag = stack.getTag();
+        String legacyName = tag == null ? "" : tag.getString(magazine.nbtTypeKey());
+        Optional<BulletConfig> stored = LegacySednaRuntimeBulletConfigs.byName(legacyName);
+        if (stored.isPresent() && acceptedRuntimeConfigs(magazine).contains(stored.get())) {
+            return stored;
+        }
+        return Optional.empty();
+    }
+
+    private static boolean isDurabilityHudComponent(String componentName) {
+        return LegacySednaGunConfigs.HUD_COMPONENT_DURABILITY.equals(componentName)
+                || LegacySednaGunConfigs.HUD_COMPONENT_DURABILITY_MIRROR.equals(componentName);
+    }
+
+    private static boolean isAmmoHudComponent(String componentName) {
+        return LegacySednaGunConfigs.HUD_COMPONENT_AMMO.equals(componentName)
+                || LegacySednaGunConfigs.HUD_COMPONENT_AMMO_MIRROR.equals(componentName)
+                || LegacySednaGunConfigs.HUD_COMPONENT_AMMO_NOCOUNTER.equals(componentName)
+                || LegacySednaGunConfigs.HUD_COMPONENT_AMMO_SECOND.equals(componentName);
+    }
+
+    private static int hudComponentHeight(String componentName) {
+        if (isAmmoHudComponent(componentName)) {
+            return 17;
+        }
+        if (isDurabilityHudComponent(componentName)) {
+            return 5;
+        }
+        return 0;
+    }
+
+    private static String shortNumber(long value) {
+        double result;
+        String suffix;
+        long abs = Math.abs(value);
+        if (abs >= 1_000_000_000_000_000_000L) {
+            result = value / 1_000_000_000_000_000_000.0D;
+            suffix = "E";
+        } else if (abs >= 1_000_000_000_000_000L) {
+            result = value / 1_000_000_000_000_000.0D;
+            suffix = "P";
+        } else if (abs >= 1_000_000_000_000L) {
+            result = value / 1_000_000_000_000.0D;
+            suffix = "T";
+        } else if (abs >= 1_000_000_000L) {
+            result = value / 1_000_000_000.0D;
+            suffix = "G";
+        } else if (abs >= 1_000_000L) {
+            result = value / 1_000_000.0D;
+            suffix = "M";
+        } else if (abs >= 1_000L) {
+            result = value / 1_000.0D;
+            suffix = "k";
+        } else {
+            return Long.toString(value);
+        }
+        double rounded = result <= -100.0D
+                ? Math.round(result * 10.0D) / 10.0D
+                : Math.round(result * 100.0D) / 100.0D;
+        return rounded + suffix;
+    }
+
     private int beltAmmoCount(Player player, BulletConfig config) {
         if (player.getAbilities().instabuild) {
             return Integer.MAX_VALUE;
@@ -900,6 +2329,10 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
                 handleEdgeKey(stack, KEY_SECONDARY, configIndex, false);
                 handleEdgeKey(stack, KEY_TERTIARY, configIndex, false);
                 handleEdgeKey(stack, KEY_RELOAD, configIndex, false);
+                if (legacyAnimation(stack, configIndex) != LEGACY_ANIM_EQUIP
+                        || legacyAnimationTimer(stack, configIndex) >= 5) {
+                    playLegacyAnimation(stack, configIndex, LEGACY_ANIM_EQUIP);
+                }
                 if (gunState(stack, configIndex) == SednaGunConfig.GunState.DRAWING
                         && timer(stack, configIndex) == 0) {
                     setTimer(stack, configIndex, gun.mode().drawDuration());
@@ -919,6 +2352,7 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             setAiming(stack, false);
             setReloadCancel(stack, false);
             setEquipped(stack, false);
+            playLegacyAnimation(stack, configIndex, LEGACY_ANIM_CYCLE);
             setBayonetStrikePending(stack, configIndex, false);
         }
     }
@@ -1043,6 +2477,15 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             SednaGunConfig.GunModeConfig mode,
             SednaReceiverConfig receiver,
             SednaMagazineConfig magazine) {
+    }
+
+    public record LegacyHudComponent(
+            String componentName,
+            int configIndex,
+            int bottomOffset,
+            int durabilityLoss,
+            ItemStack ammoIcon,
+            String ammoText) {
     }
 
     protected record RuntimeAmmo(BulletConfig config, ItemStack stack) {

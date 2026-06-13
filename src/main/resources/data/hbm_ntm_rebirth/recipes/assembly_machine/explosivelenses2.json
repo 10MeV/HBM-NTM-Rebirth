@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.explosivelenses2",
+  "duration": 400,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/aluminium" }, "count": 8, "legacy_ore": "plateAluminum" },
+    { "ingredient": { "tag": "forge:ingots/any_plastic_explosive" }, "count": 4, "legacy_ore": "ingotAnyPlasticExplosive" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:neutron_reflector" }, "count": 2 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:ball_tatb" }, "count": 16 },
+    { "ingredient": { "tag": "forge:ingots/rubber" }, "count": 2, "legacy_ore": "ingotRubber" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:explosive_lenses" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 212
+}

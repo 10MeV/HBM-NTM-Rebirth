@@ -133,8 +133,10 @@ public final class ExplosionLarge {
         if (level == null || level.isClientSide()) {
             return;
         }
-        for (ItemStack stack : debris) {
-            spawnDebrisItem(level, x, y, z, stack);
+        if (debris != null) {
+            for (ItemStack stack : debris) {
+                spawnDebrisItem(level, x, y, z, stack);
+            }
         }
         if (rareDrop != null && !rareDrop.isEmpty() && level.random.nextInt(25) == 0) {
             spawnDebrisItem(level, x, y, z, rareDrop);
@@ -143,21 +145,23 @@ public final class ExplosionLarge {
 
     public static void spawnMissileDebris(Level level, double x, double y, double z, double motionX, double motionY,
             double motionZ, double deviation, List<ItemStack> debris, @Nullable ItemStack rareDrop) {
-        if (level == null || level.isClientSide() || debris == null) {
+        if (level == null || level.isClientSide()) {
             return;
         }
-        for (ItemStack stack : debris) {
-            if (stack.isEmpty()) {
-                continue;
-            }
-            int amount = level.random.nextInt(stack.getCount() + 1);
-            for (int i = 0; i < amount; i++) {
-                ItemStack copy = stack.copy();
-                Vec3 motion = new Vec3(
-                        motionX + level.random.nextGaussian() * deviation,
-                        motionY + level.random.nextGaussian() * deviation,
-                        motionZ + level.random.nextGaussian() * deviation).scale(0.85D);
-                spawnDebrisItem(level, x, y, z, copy, motion, true);
+        if (debris != null) {
+            for (ItemStack stack : debris) {
+                if (stack.isEmpty()) {
+                    continue;
+                }
+                int amount = level.random.nextInt(stack.getCount() + 1);
+                for (int i = 0; i < amount; i++) {
+                    ItemStack copy = stack.copy();
+                    Vec3 motion = new Vec3(
+                            motionX + level.random.nextGaussian() * deviation,
+                            motionY + level.random.nextGaussian() * deviation,
+                            motionZ + level.random.nextGaussian() * deviation).scale(0.85D);
+                    spawnDebrisItem(level, x, y, z, copy, motion, true);
+                }
             }
         }
         if (rareDrop != null && !rareDrop.isEmpty() && level.random.nextInt(10) == 0) {
@@ -250,6 +254,9 @@ public final class ExplosionLarge {
                 rubble.setBlockState(state);
                 rubble.setPos(sampleX + 0.5D, sampleY + 0.5D, sampleZ + 0.5D);
                 Vec3 motion = new Vec3(x - rubble.getX(), y - rubble.getY(), z - rubble.getZ());
+                if (motion.lengthSqr() > 1.0E-7D) {
+                    motion = motion.normalize();
+                }
                 rubble.setDeltaMovement(motion.scale(velocity));
                 serverLevel.addFreshEntity(rubble);
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
@@ -276,7 +283,7 @@ public final class ExplosionLarge {
 
     private static void spawnLegacyExtras(Level level, double x, double y, double z, float strength, boolean cloud, boolean rubble,
             boolean shrapnel, @Nullable Entity source) {
-        int intStrength = Math.max(0, Math.round(strength));
+        int intStrength = Math.max(0, (int) strength);
         if (cloud) {
             spawnParticles(level, x, y, z, cloudFunction(intStrength));
         }

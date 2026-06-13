@@ -12,9 +12,9 @@ public class ForgeRecipeFluidHandlerAdapter extends ForgeFluidHandlerAdapter {
 
     public ForgeRecipeFluidHandlerAdapter(List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks,
             int inputPressure, Runnable onChanged) {
-        super(inputTanks, outputTanks, inputPressure, true, true, onChanged);
-        this.recipeInputTanks = List.copyOf(inputTanks == null ? List.of() : inputTanks);
-        this.recipeOutputTanks = List.copyOf(outputTanks == null ? List.of() : outputTanks);
+        super(safeTanks(inputTanks), safeTanks(outputTanks), inputPressure, true, true, onChanged);
+        this.recipeInputTanks = safeTanks(inputTanks);
+        this.recipeOutputTanks = safeTanks(outputTanks);
         this.recipeVisibleTanks = mergeVisibleTanks(this.recipeInputTanks, this.recipeOutputTanks);
         this.onChanged = onChanged == null ? () -> {
         } : onChanged;
@@ -26,6 +26,9 @@ public class ForgeRecipeFluidHandlerAdapter extends ForgeFluidHandlerAdapter {
             return false;
         }
         HbmFluidTank hbmTank = recipeInputTanks.get(tank);
+        if (hbmTank == null) {
+            return false;
+        }
         FluidType type = HbmFluidForgeMappings.fromForge(stack);
         return hbmTank.getTankType() != HbmFluids.NONE && hbmTank.canAccept(type, hbmTank.getPressure());
     }
@@ -41,24 +44,96 @@ public class ForgeRecipeFluidHandlerAdapter extends ForgeFluidHandlerAdapter {
 
     @Override
     public FluidStack drain(FluidStack resource, FluidAction action) {
-        if (resource == null || resource.isEmpty()) {
-            return FluidStack.EMPTY;
-        }
-        FluidType type = HbmFluidForgeMappings.fromForgeExport(resource);
-        if (type == HbmFluids.NONE) {
-            return FluidStack.EMPTY;
-        }
-        int drained = drainMatchingRecipeOutput(type, resource.getAmount(), action.simulate());
-        return drained <= 0 ? FluidStack.EMPTY : new FluidStack(resource.getFluid(), drained);
+        return drainRecipeReport(resource, action).drainedStack();
     }
 
     @Override
     public FluidStack drain(int maxDrain, FluidAction action) {
+        return drainRecipeReport(maxDrain, action).drainedStack();
+    }
+
+    @Override
+    public int fill(FluidStack resource, FluidAction action) {
+        return fillRecipeReport(resource, action).acceptedMb();
+    }
+
+    public RecipeForgeFillReport previewRecipeFillReport(FluidStack resource) {
+        return fillRecipeReport(resource, FluidAction.SIMULATE);
+    }
+
+    public RecipeForgeFillReport fillRecipeReport(FluidStack resource, FluidAction action) {
+        boolean simulate = action == null || action.simulate();
+        if (resource == null || resource.isEmpty()) {
+            return new RecipeForgeFillReport(simulate, false, false, HbmFluids.NONE, 0, 0, List.of());
+        }
+        FluidType type = HbmFluidForgeMappings.fromForge(resource);
+        if (type == HbmFluids.NONE) {
+            return new RecipeForgeFillReport(simulate, true, false, HbmFluids.NONE,
+                    resource.getAmount(), 0, List.of());
+        }
+        int remaining = resource.getAmount();
+        int filled = 0;
+        List<RecipeTankTransferDetail> details = new ArrayList<>();
+        for (HbmFluidTank tank : recipeInputTanks) {
+            if (remaining <= 0) {
+                break;
+            }
+            HbmFluidTank.TankState before = state(tank);
+            boolean eligible = tank != null && tank.getTankType() != HbmFluids.NONE;
+            HbmFluidTank.TankMutationReport mutation = eligible
+                    ? tank.fillReport(type, remaining, tank.getPressure(), simulate)
+                    : new HbmFluidTank.TankMutationReport(
+                            "fill", simulate, before, before, remaining, 0, 0, Math.max(0, remaining), false);
+            int accepted = mutation.movedMb();
+            details.add(new RecipeTankTransferDetail(
+                    recipeVisibleTanks.indexOf(tank), recipeInputTanks.indexOf(tank), -1, eligible, mutation));
+            if (accepted <= 0) {
+                continue;
+            }
+            filled += accepted;
+            remaining -= accepted;
+        }
+        if (!simulate && filled > 0) {
+            onChanged.run();
+        }
+        return new RecipeForgeFillReport(simulate, true, true, type, resource.getAmount(), filled, details);
+    }
+
+    public RecipeForgeDrainReport previewRecipeDrainReport(FluidStack resource) {
+        return drainRecipeReport(resource, FluidAction.SIMULATE);
+    }
+
+    public RecipeForgeDrainReport previewRecipeDrainReport(int maxDrain) {
+        return drainRecipeReport(maxDrain, FluidAction.SIMULATE);
+    }
+
+    public RecipeForgeDrainReport drainRecipeReport(FluidStack resource, FluidAction action) {
+        boolean simulate = action == null || action.simulate();
+        boolean requestPresent = resource != null && !resource.isEmpty();
+        FluidType type = requestPresent ? HbmFluidForgeMappings.fromForgeExport(resource) : HbmFluids.NONE;
+        boolean exportMapped = type != HbmFluids.NONE;
+        int requested = requestPresent ? resource.getAmount() : 0;
+        if (!requestPresent || !exportMapped || requested <= 0) {
+            return new RecipeForgeDrainReport(simulate, requestPresent, exportMapped, type, requested,
+                    0, FluidStack.EMPTY, List.of());
+        }
+        RecipeDrainMatchReport match = drainMatchingRecipeOutputReport(type, requested, simulate);
+        FluidStack drained = match.drainedMb() <= 0 ? FluidStack.EMPTY : new FluidStack(resource.getFluid(), match.drainedMb());
+        return new RecipeForgeDrainReport(simulate, true, true, type, requested, match.drainedMb(), drained,
+                match.details());
+    }
+
+    public RecipeForgeDrainReport drainRecipeReport(int maxDrain, FluidAction action) {
+        boolean simulate = action == null || action.simulate();
         if (maxDrain <= 0) {
-            return FluidStack.EMPTY;
+            return new RecipeForgeDrainReport(simulate, maxDrain > 0, false, HbmFluids.NONE,
+                    Math.max(0, maxDrain), 0, FluidStack.EMPTY, List.of());
         }
         FluidType type = HbmFluids.NONE;
         for (HbmFluidTank tank : recipeOutputTanks) {
+            if (tank == null) {
+                continue;
+            }
             FluidType tankType = tank.getTankType();
             if (tank.getFill() <= 0 || !HbmFluidForgeMappings.canExport(tankType)) {
                 continue;
@@ -67,59 +142,129 @@ public class ForgeRecipeFluidHandlerAdapter extends ForgeFluidHandlerAdapter {
             break;
         }
         if (type == HbmFluids.NONE) {
-            return FluidStack.EMPTY;
+            return new RecipeForgeDrainReport(simulate, true, false, type, maxDrain,
+                    0, FluidStack.EMPTY, List.of());
         }
-        int drained = drainMatchingRecipeOutput(type, maxDrain, action.simulate());
-        return drained <= 0 ? FluidStack.EMPTY : HbmFluidForgeMappings.toForge(type, drained);
+        RecipeDrainMatchReport match = drainMatchingRecipeOutputReport(type, maxDrain, simulate);
+        FluidStack drained = match.drainedMb() <= 0 ? FluidStack.EMPTY : HbmFluidForgeMappings.toForge(type, match.drainedMb());
+        return new RecipeForgeDrainReport(simulate, true, true, type, maxDrain, match.drainedMb(), drained,
+                match.details());
     }
 
-    @Override
-    public int fill(FluidStack resource, FluidAction action) {
-        if (resource == null || resource.isEmpty()) {
-            return 0;
-        }
-        FluidType type = HbmFluidForgeMappings.fromForge(resource);
-        if (type == HbmFluids.NONE) {
-            return 0;
-        }
-        int remaining = resource.getAmount();
-        int filled = 0;
-        boolean simulate = action.simulate();
-        for (HbmFluidTank tank : recipeInputTanks) {
-            if (remaining <= 0) {
-                break;
-            }
-            if (tank.getTankType() == HbmFluids.NONE) {
-                continue;
-            }
-            int accepted = tank.fill(type, remaining, tank.getPressure(), simulate);
-            filled += accepted;
-            remaining -= accepted;
-        }
-        if (!simulate && filled > 0) {
-            onChanged.run();
-        }
-        return filled;
-    }
-
-    private int drainMatchingRecipeOutput(FluidType type, int amount, boolean simulate) {
+    private RecipeDrainMatchReport drainMatchingRecipeOutputReport(FluidType type, int amount, boolean simulate) {
         int remaining = amount;
         int drained = 0;
+        List<RecipeTankTransferDetail> details = new ArrayList<>();
         for (HbmFluidTank tank : recipeOutputTanks) {
             if (remaining <= 0) {
                 break;
             }
-            if (tank.getTankType() != type || tank.getFill() <= 0 || !HbmFluidForgeMappings.canExport(type)) {
+            HbmFluidTank.TankState before = state(tank);
+            boolean eligible = tank != null && tank.getTankType() == type && tank.getFill() > 0
+                    && HbmFluidForgeMappings.canExport(type);
+            HbmFluidTank.TankMutationReport mutation = eligible
+                    ? tank.drainReport(remaining, simulate)
+                    : new HbmFluidTank.TankMutationReport(
+                            "drain", simulate, before, before, remaining, 0, 0, Math.max(0, remaining), false);
+            int taken = mutation.movedMb();
+            details.add(new RecipeTankTransferDetail(
+                    recipeVisibleTanks.indexOf(tank), -1, recipeOutputTanks.indexOf(tank), eligible, mutation));
+            if (taken <= 0) {
                 continue;
             }
-            int taken = tank.drain(remaining, simulate);
             drained += taken;
             remaining -= taken;
         }
         if (!simulate && drained > 0) {
             onChanged.run();
         }
-        return drained;
+        return new RecipeDrainMatchReport(drained, details);
+    }
+
+    private static HbmFluidTank.TankState state(HbmFluidTank tank) {
+        return tank == null ? new HbmFluidTank.TankState(HbmFluids.NONE, 0, 0, 0) : tank.snapshot();
+    }
+
+    private static List<HbmFluidTank> safeTanks(List<HbmFluidTank> tanks) {
+        if (tanks == null || tanks.isEmpty()) {
+            return List.of();
+        }
+        List<HbmFluidTank> result = new ArrayList<>();
+        for (HbmFluidTank tank : tanks) {
+            if (tank != null) {
+                result.add(tank);
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    public record RecipeForgeFillReport(
+            boolean simulated,
+            boolean requestPresent,
+            boolean importMapped,
+            FluidType hbmType,
+            int requestedMb,
+            int acceptedMb,
+            List<RecipeTankTransferDetail> details) {
+        public RecipeForgeFillReport {
+            hbmType = hbmType == null ? HbmFluids.NONE : hbmType;
+            requestedMb = Math.max(0, requestedMb);
+            acceptedMb = Math.max(0, acceptedMb);
+            details = details == null ? List.of() : List.copyOf(details);
+        }
+
+        public boolean moved() {
+            return acceptedMb > 0;
+        }
+    }
+
+    public record RecipeForgeDrainReport(
+            boolean simulated,
+            boolean requestPresent,
+            boolean exportMapped,
+            FluidType hbmType,
+            int requestedMb,
+            int drainedMb,
+            FluidStack drainedStack,
+            List<RecipeTankTransferDetail> details) {
+        public RecipeForgeDrainReport {
+            hbmType = hbmType == null ? HbmFluids.NONE : hbmType;
+            requestedMb = Math.max(0, requestedMb);
+            drainedMb = Math.max(0, drainedMb);
+            drainedStack = drainedStack == null ? FluidStack.EMPTY : drainedStack.copy();
+            details = details == null ? List.of() : List.copyOf(details);
+        }
+
+        public boolean moved() {
+            return drainedMb > 0;
+        }
+    }
+
+    public record RecipeTankTransferDetail(
+            int visibleTankIndex,
+            int inputTankIndex,
+            int outputTankIndex,
+            boolean eligible,
+            HbmFluidTank.TankMutationReport mutation) {
+        public RecipeTankTransferDetail {
+            inputTankIndex = inputTankIndex < 0 ? -1 : inputTankIndex;
+            outputTankIndex = outputTankIndex < 0 ? -1 : outputTankIndex;
+            mutation = mutation == null
+                    ? new HbmFluidTank.TankMutationReport(
+                            "unknown", true, state(null), state(null), 0, 0, 0, 0, false)
+                    : mutation;
+        }
+
+        public int movedMb() {
+            return mutation.movedMb();
+        }
+    }
+
+    private record RecipeDrainMatchReport(int drainedMb, List<RecipeTankTransferDetail> details) {
+        private RecipeDrainMatchReport {
+            drainedMb = Math.max(0, drainedMb);
+            details = details == null ? List.of() : List.copyOf(details);
+        }
     }
 
     private static List<HbmFluidTank> mergeVisibleTanks(List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks) {

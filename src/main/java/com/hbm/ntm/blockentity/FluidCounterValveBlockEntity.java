@@ -9,9 +9,11 @@ import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.fluid.HbmFluidNet;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.network.HbmLegacyBufPacketReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -21,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
-        implements RORValueProvider, RORInteractive {
+        implements RORValueProvider, RORInteractive, HbmLegacyBufPacketReceiver {
     private static final String TAG_COUNTER = "counter";
     private final RORDispatcher ror;
     private long counter;
@@ -46,6 +48,7 @@ public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
             counterValve.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+        counterValve.networkPackNT(25);
     }
 
     public long getCounter() {
@@ -77,6 +80,16 @@ public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         counter = Math.max(0L, tag.getLong(TAG_COUNTER));
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeLong(counter);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        counter = Math.max(0L, data.readLong());
     }
 
     @Override

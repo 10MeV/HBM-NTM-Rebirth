@@ -129,7 +129,11 @@ public final class HbmEnergyUtil {
         if (level == null || pos == null || side == null || receiver == null || maxTransfer <= 0L) {
             return 0L;
         }
-        BlockEntity neighbor = level.getBlockEntity(pos.relative(side));
+        BlockPos neighborPos = pos.relative(side);
+        if (!isLoadedBlock(level, neighborPos)) {
+            return 0L;
+        }
+        BlockEntity neighbor = level.getBlockEntity(neighborPos);
         if (neighbor == null) {
             return 0L;
         }
@@ -143,7 +147,11 @@ public final class HbmEnergyUtil {
         if (level == null || pos == null || side == null || provider == null || maxTransfer <= 0L) {
             return 0L;
         }
-        BlockEntity neighbor = level.getBlockEntity(pos.relative(side));
+        BlockPos neighborPos = pos.relative(side);
+        if (!isLoadedBlock(level, neighborPos)) {
+            return 0L;
+        }
+        BlockEntity neighbor = level.getBlockEntity(neighborPos);
         if (neighbor == null) {
             return 0L;
         }
@@ -188,6 +196,9 @@ public final class HbmEnergyUtil {
         if (level == null || port == null || port.getDir() == null || provider == null) {
             return false;
         }
+        if (!isLoadedPort(level, port)) {
+            return false;
+        }
         boolean subscribed = subscribeProviderToNetwork(level, port, port.getDir().getOpposite(), provider);
         HbmEnergyDebug.spawnRemoteProviderSubscription(level, port, port.getDir(), subscribed);
         return subscribed;
@@ -208,6 +219,9 @@ public final class HbmEnergyUtil {
 
     public static boolean subscribeReceiverToPort(Level level, DirPos port, HbmEnergyReceiver receiver) {
         if (level == null || port == null || port.getDir() == null || receiver == null) {
+            return false;
+        }
+        if (!isLoadedPort(level, port)) {
             return false;
         }
         boolean subscribed = subscribeReceiverToNetwork(level, port, port.getDir().getOpposite(), receiver);
@@ -235,6 +249,32 @@ public final class HbmEnergyUtil {
         int subscribed = 0;
         for (EnergyPort port : ports) {
             if (subscribeReceiverToPort(level, origin, port, receiver)) {
+                subscribed++;
+            }
+        }
+        return subscribed;
+    }
+
+    public static int subscribeProviderToDirPosPorts(Level level, Iterable<DirPos> ports, HbmEnergyProvider provider) {
+        if (ports == null) {
+            return 0;
+        }
+        int subscribed = 0;
+        for (DirPos port : ports) {
+            if (subscribeProviderToPort(level, port, provider)) {
+                subscribed++;
+            }
+        }
+        return subscribed;
+    }
+
+    public static int subscribeReceiverToDirPosPorts(Level level, Iterable<DirPos> ports, HbmEnergyReceiver receiver) {
+        if (ports == null) {
+            return 0;
+        }
+        int subscribed = 0;
+        for (DirPos port : ports) {
+            if (subscribeReceiverToPort(level, port, receiver)) {
                 subscribed++;
             }
         }
@@ -284,7 +324,10 @@ public final class HbmEnergyUtil {
     }
 
     public static boolean unsubscribeProviderFromPort(Level level, DirPos port, HbmEnergyProvider provider) {
-        if (level == null || port == null || provider == null) {
+        if (level == null || port == null || port.getDir() == null || provider == null) {
+            return false;
+        }
+        if (!isLoadedPort(level, port)) {
             return false;
         }
         return unsubscribeProviderFromNetwork(level, port, provider);
@@ -301,10 +344,39 @@ public final class HbmEnergyUtil {
     }
 
     public static boolean unsubscribeReceiverFromPort(Level level, DirPos port, HbmEnergyReceiver receiver) {
-        if (level == null || port == null || receiver == null) {
+        if (level == null || port == null || port.getDir() == null || receiver == null) {
+            return false;
+        }
+        if (!isLoadedPort(level, port)) {
             return false;
         }
         return unsubscribeReceiverFromNetwork(level, port, receiver);
+    }
+
+    public static int unsubscribeProviderFromDirPosPorts(Level level, Iterable<DirPos> ports, HbmEnergyProvider provider) {
+        if (ports == null) {
+            return 0;
+        }
+        int unsubscribed = 0;
+        for (DirPos port : ports) {
+            if (unsubscribeProviderFromPort(level, port, provider)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
+    }
+
+    public static int unsubscribeReceiverFromDirPosPorts(Level level, Iterable<DirPos> ports, HbmEnergyReceiver receiver) {
+        if (ports == null) {
+            return 0;
+        }
+        int unsubscribed = 0;
+        for (DirPos port : ports) {
+            if (unsubscribeReceiverFromPort(level, port, receiver)) {
+                unsubscribed++;
+            }
+        }
+        return unsubscribed;
     }
 
     public static boolean unsubscribeProviderFromNetwork(Level level, BlockPos conductorPos, Direction conductorSide, HbmEnergyProvider provider) {
@@ -382,8 +454,24 @@ public final class HbmEnergyUtil {
         return touched;
     }
 
+    public static int tryProvideToDirPosPorts(Level level, Iterable<DirPos> ports, HbmEnergyProvider provider) {
+        if (ports == null) {
+            return 0;
+        }
+        int touched = 0;
+        for (DirPos port : ports) {
+            if (tryProvideToPort(level, port, provider)) {
+                touched++;
+            }
+        }
+        return touched;
+    }
+
     public static boolean tryProvideToPort(Level level, DirPos port, HbmEnergyProvider provider) {
         if (level == null || port == null || port.getDir() == null || provider == null) {
+            return false;
+        }
+        if (!isLoadedPort(level, port)) {
             return false;
         }
         boolean subscribed = subscribeProviderToPort(level, port, provider);
@@ -544,6 +632,9 @@ public final class HbmEnergyUtil {
         if (level == null || conductorPos == null) {
             return null;
         }
+        if (!isLoadedBlock(level, conductorPos)) {
+            return null;
+        }
         HbmEnergyNode node = HbmEnergyNodespace.getNode(level, conductorPos);
         HbmPowerNet powerNet = node == null ? null : node.getPowerNet();
         return powerNet != null && powerNet.isValid() ? powerNet : null;
@@ -596,7 +687,11 @@ public final class HbmEnergyUtil {
     }
 
     private static long provideDirectlyToNeighbor(Level level, BlockPos pos, Direction side, HbmEnergyProvider provider) {
-        BlockEntity neighbor = level.getBlockEntity(pos.relative(side));
+        BlockPos neighborPos = pos.relative(side);
+        if (!isLoadedBlock(level, neighborPos)) {
+            return 0L;
+        }
+        BlockEntity neighbor = level.getBlockEntity(neighborPos);
         if (!(neighbor instanceof HbmEnergyReceiver receiver)
                 || !(neighbor instanceof HbmEnergyConnector connector)
                 || receiver == provider
@@ -636,6 +731,9 @@ public final class HbmEnergyUtil {
 
     private static long provideDirectlyToPort(Level level, DirPos port, HbmEnergyProvider provider) {
         if (level == null || port == null || port.getDir() == null || provider == null) {
+            return 0L;
+        }
+        if (!isLoadedPort(level, port)) {
             return 0L;
         }
         Direction targetSide = port.getDir().getOpposite();
@@ -682,6 +780,10 @@ public final class HbmEnergyUtil {
         BlockPos conductorPos = port.conductorPos(origin);
         return isLoadedBlock(level, conductorPos)
                 && isLoadedBlock(level, conductorPos.relative(port.direction().getOpposite()));
+    }
+
+    public static boolean isLoadedPort(Level level, DirPos port) {
+        return level != null && port != null && port.getDir() != null && isLoadedBlock(level, port);
     }
 
     public static boolean isLoadedBlock(Level level, BlockPos pos) {

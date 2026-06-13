@@ -12,7 +12,9 @@ import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public final class LegacyHelmetOverlayRenderer {
+    private static final ResourceLocation OVERLAY_ASBESTOS = texture("overlay_asbestos");
     private static final ResourceLocation OVERLAY_DARK = texture("overlay_dark");
+    private static final ResourceLocation OVERLAY_HAZMAT = texture("overlay_hazmat");
     private static final ResourceLocation[] OVERLAY_GOGGLES = overlaySet("overlay_goggles");
     private static final ResourceLocation[] OVERLAY_GASMASK = overlaySet("overlay_gasmask");
 
@@ -44,6 +46,8 @@ public final class LegacyHelmetOverlayRenderer {
             case "goggles", "gas_mask_m65", "hazmat_helmet_red", "hazmat_helmet_grey" ->
                     OVERLAY_GOGGLES[damageIndex(stack)];
             case "gas_mask" -> OVERLAY_GASMASK[damageIndex(stack)];
+            case "hazmat_helmet", "hazmat_paa_helmet" -> OVERLAY_HAZMAT;
+            case "asbestos_helmet" -> OVERLAY_ASBESTOS;
             case "liquidator_helmet" -> OVERLAY_DARK;
             default -> null;
         };

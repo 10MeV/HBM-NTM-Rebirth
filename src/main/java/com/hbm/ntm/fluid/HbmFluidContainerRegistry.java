@@ -84,69 +84,102 @@ public final class HbmFluidContainerRegistry {
     }
 
     public static @Nullable ContainerEntry getContainer(FluidType type, ItemStack stack) {
-        if (stack.isEmpty() || type == null || type == HbmFluids.NONE) {
-            return null;
-        }
-        for (ContainerEntry entry : getContainers(type)) {
-            if (entry.matchesEmpty(stack)) {
-                return entry;
-            }
-        }
-        return null;
+        return inspectFullContainerFor(stack, type).matchedEntry();
     }
 
     public static int getFluidContent(ItemStack stack, FluidType type) {
-        if (stack.isEmpty() || type == null || type == HbmFluids.NONE) {
-            return 0;
-        }
-        if (stack.getItem() instanceof HbmFluidContainerItem container && !(container instanceof HbmInfiniteFluidItem)) {
-            return container.getFirstFluidType(stack) == type ? container.getFill(stack) : 0;
-        }
-        for (ContainerEntry entry : fixedEntries()) {
-            if (entry.type() == type && entry.matchesFull(stack)) {
-                return entry.content();
-            }
-        }
-        return 0;
+        return inspectFluidContent(stack, type).contentMb();
     }
 
     public static FluidType getFluidType(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return HbmFluids.NONE;
-        }
-        if (stack.getItem() instanceof HbmFluidContainerItem container && !(container instanceof HbmInfiniteFluidItem)) {
-            FluidType type = container.getFirstFluidType(stack);
-            return container.getFill(stack) > 0 ? type : HbmFluids.NONE;
-        }
-        for (ContainerEntry entry : fixedEntries()) {
-            if (entry.matchesFull(stack)) {
-                return entry.type();
-            }
-        }
-        return HbmFluids.NONE;
+        return inspectFluidType(stack).matchedType();
     }
 
     public static ItemStack getFullContainer(ItemStack stack, FluidType type) {
-        ContainerEntry entry = getContainer(type, stack);
-        return entry == null ? ItemStack.EMPTY : entry.copyFullContainer();
+        return inspectFullContainerFor(stack, type).copyFullContainer();
     }
 
     public static ItemStack getEmptyContainer(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return ItemStack.EMPTY;
+        return inspectEmptyContainerFor(stack).copyEmptyContainer();
+    }
+
+    public static EmptyContainerLookupReport inspectFullContainerFor(ItemStack emptyStack, FluidType type) {
+        ItemStack input = safeSingleCopy(emptyStack);
+        FluidType requested = type == null ? HbmFluids.NONE : type;
+        if (input.isEmpty() || requested == HbmFluids.NONE) {
+            return new EmptyContainerLookupReport(requested, !input.isEmpty(), input, List.of(), -1, null);
         }
-        if (!(stack.getItem() instanceof HbmFluidContainerItem container) || container instanceof HbmInfiniteFluidItem) {
-            for (ContainerEntry entry : fixedEntries()) {
-                if (entry.matchesFull(stack)) {
-                    return entry.copyEmptyContainer();
-                }
+        List<ContainerEntry> candidates = getContainers(requested);
+        for (int i = 0; i < candidates.size(); i++) {
+            ContainerEntry entry = candidates.get(i);
+            if (entry.matchesEmpty(input)) {
+                return new EmptyContainerLookupReport(requested, true, input, candidates, i, entry);
             }
-            return ItemStack.EMPTY;
         }
-        if (container.getFill(stack) <= 0) {
-            return ItemStack.EMPTY;
+        return new EmptyContainerLookupReport(requested, true, input, candidates, -1, null);
+    }
+
+    public static FluidContentLookupReport inspectFluidContent(ItemStack fullStack, FluidType type) {
+        ItemStack input = safeSingleCopy(fullStack);
+        FluidType requested = type == null ? HbmFluids.NONE : type;
+        if (input.isEmpty() || requested == HbmFluids.NONE) {
+            return new FluidContentLookupReport(requested, HbmFluids.NONE, !input.isEmpty(), input,
+                    0, 0, null, null);
         }
-        return emptyContainer(container.getContainerKind());
+        if (input.getItem() instanceof HbmFluidContainerItem container && !(container instanceof HbmInfiniteFluidItem)) {
+            FluidType contained = container.getFirstFluidType(input);
+            int fill = contained == requested ? container.getFill(input) : 0;
+            return new FluidContentLookupReport(requested, contained, true, input, fill,
+                    container.getPressure(input), ContainerSource.KIND_DYNAMIC, null);
+        }
+        for (ContainerEntry entry : fixedEntries()) {
+            if (entry.type() == requested && entry.matchesFull(input)) {
+                return new FluidContentLookupReport(requested, entry.type(), true, input,
+                        entry.content(), 0, entry.source(), entry);
+            }
+        }
+        return new FluidContentLookupReport(requested, HbmFluids.NONE, true, input, 0, 0, null, null);
+    }
+
+    public static FluidTypeLookupReport inspectFluidType(ItemStack fullStack) {
+        ItemStack input = safeSingleCopy(fullStack);
+        if (input.isEmpty()) {
+            return new FluidTypeLookupReport(false, input, HbmFluids.NONE, 0, 0, null, null);
+        }
+        if (input.getItem() instanceof HbmFluidContainerItem container && !(container instanceof HbmInfiniteFluidItem)) {
+            FluidType type = container.getFirstFluidType(input);
+            int fill = container.getFill(input);
+            return new FluidTypeLookupReport(true, input, fill > 0 ? type : HbmFluids.NONE,
+                    fill, container.getPressure(input), ContainerSource.KIND_DYNAMIC, null);
+        }
+        for (ContainerEntry entry : fixedEntries()) {
+            if (entry.matchesFull(input)) {
+                return new FluidTypeLookupReport(true, input, entry.type(), entry.content(),
+                        0, entry.source(), entry);
+            }
+        }
+        return new FluidTypeLookupReport(true, input, HbmFluids.NONE, 0, 0, null, null);
+    }
+
+    public static FullContainerLookupReport inspectEmptyContainerFor(ItemStack fullStack) {
+        ItemStack input = safeSingleCopy(fullStack);
+        if (input.isEmpty()) {
+            return new FullContainerLookupReport(false, input, HbmFluids.NONE, 0, 0, null, null, ItemStack.EMPTY);
+        }
+        if (input.getItem() instanceof HbmFluidContainerItem container && !(container instanceof HbmInfiniteFluidItem)) {
+            FluidType type = container.getFirstFluidType(input);
+            int fill = container.getFill(input);
+            ItemStack empty = fill <= 0 ? ItemStack.EMPTY : emptyContainer(container.getContainerKind());
+            return new FullContainerLookupReport(true, input, fill > 0 ? type : HbmFluids.NONE,
+                    fill, container.getPressure(input), ContainerSource.KIND_DYNAMIC, null, empty);
+        }
+        for (ContainerEntry entry : fixedEntries()) {
+            if (entry.matchesFull(input)) {
+                return new FullContainerLookupReport(true, input, entry.type(), entry.content(),
+                        0, entry.source(), entry, entry.copyEmptyContainer());
+            }
+        }
+        return new FullContainerLookupReport(true, input, HbmFluids.NONE, 0, 0, null, null, ItemStack.EMPTY);
     }
 
     public static ItemStack getCraftingRemainder(ItemStack stack) {
@@ -367,6 +400,105 @@ public final class HbmFluidContainerRegistry {
     private static void register(HbmFluidContainerRules.ContainerKind kind, RegistryObject<Item> empty, RegistryObject<Item> full) {
         EMPTY_ITEMS.put(kind, empty);
         FULL_ITEMS.put(kind, full);
+    }
+
+    private static ItemStack safeSingleCopy(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack copy = stack.copy();
+        copy.setCount(1);
+        return copy;
+    }
+
+    public record EmptyContainerLookupReport(
+            FluidType requestedType,
+            boolean stackPresent,
+            ItemStack inputStack,
+            List<ContainerEntry> candidates,
+            int matchedIndex,
+            @Nullable ContainerEntry matchedEntry) {
+        public EmptyContainerLookupReport {
+            requestedType = requestedType == null ? HbmFluids.NONE : requestedType;
+            inputStack = inputStack == null ? ItemStack.EMPTY : inputStack.copy();
+            candidates = candidates == null ? List.of() : List.copyOf(candidates);
+        }
+
+        public boolean matched() {
+            return matchedEntry != null;
+        }
+
+        public ItemStack copyFullContainer() {
+            return matchedEntry == null ? ItemStack.EMPTY : matchedEntry.copyFullContainer();
+        }
+    }
+
+    public record FluidContentLookupReport(
+            FluidType requestedType,
+            FluidType matchedType,
+            boolean stackPresent,
+            ItemStack inputStack,
+            int contentMb,
+            int pressure,
+            @Nullable ContainerSource source,
+            @Nullable ContainerEntry matchedEntry) {
+        public FluidContentLookupReport {
+            requestedType = requestedType == null ? HbmFluids.NONE : requestedType;
+            matchedType = matchedType == null ? HbmFluids.NONE : matchedType;
+            inputStack = inputStack == null ? ItemStack.EMPTY : inputStack.copy();
+            contentMb = Math.max(0, contentMb);
+            pressure = HbmFluidTank.clampPressure(pressure);
+        }
+
+        public boolean matched() {
+            return matchedType != HbmFluids.NONE && contentMb > 0;
+        }
+    }
+
+    public record FluidTypeLookupReport(
+            boolean stackPresent,
+            ItemStack inputStack,
+            FluidType matchedType,
+            int contentMb,
+            int pressure,
+            @Nullable ContainerSource source,
+            @Nullable ContainerEntry matchedEntry) {
+        public FluidTypeLookupReport {
+            inputStack = inputStack == null ? ItemStack.EMPTY : inputStack.copy();
+            matchedType = matchedType == null ? HbmFluids.NONE : matchedType;
+            contentMb = Math.max(0, contentMb);
+            pressure = HbmFluidTank.clampPressure(pressure);
+        }
+
+        public boolean matched() {
+            return matchedType != HbmFluids.NONE && contentMb > 0;
+        }
+    }
+
+    public record FullContainerLookupReport(
+            boolean stackPresent,
+            ItemStack inputStack,
+            FluidType matchedType,
+            int contentMb,
+            int pressure,
+            @Nullable ContainerSource source,
+            @Nullable ContainerEntry matchedEntry,
+            ItemStack emptyContainer) {
+        public FullContainerLookupReport {
+            inputStack = inputStack == null ? ItemStack.EMPTY : inputStack.copy();
+            matchedType = matchedType == null ? HbmFluids.NONE : matchedType;
+            contentMb = Math.max(0, contentMb);
+            pressure = HbmFluidTank.clampPressure(pressure);
+            emptyContainer = emptyContainer == null ? ItemStack.EMPTY : emptyContainer.copy();
+        }
+
+        public boolean matched() {
+            return matchedType != HbmFluids.NONE && contentMb > 0;
+        }
+
+        public ItemStack copyEmptyContainer() {
+            return emptyContainer.copy();
+        }
     }
 
     public record ContainerEntry(

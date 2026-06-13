@@ -11,7 +11,7 @@ import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.explosion.ExplosionSolinium;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvents;
@@ -293,8 +293,7 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
     }
 
     private static void playInterruptionEffect(Level level, double x, double y, double z) {
-        level.playSound(null, x, y, z, ModSounds.ENTITY_UFO_BLAST.get(), SoundSource.BLOCKS,
-                15.0F, 0.7F + level.random.nextFloat() * 0.2F);
+        LegacySoundPlayer.playLegacyUfoBlast(level, x, y, z, 15.0F, 0.7F, 0.2F);
         ParticleUtil.spawnPlasmaBlast(level, x, y, z, 0.0F, 0.75F, 1.0F, 0.0F, 0.0F, 7.5F);
     }
 

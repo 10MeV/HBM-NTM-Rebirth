@@ -25,7 +25,7 @@ import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.Map;
 import java.util.List;
@@ -35,7 +35,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
@@ -151,6 +150,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (changed) {
             blockEntity.setChanged();
         }
+        blockEntity.networkPackNT(50);
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -165,9 +165,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         if ((!blockEntity.burn || flammable == null)
                 && (type.hasTrait(SimpleFluidTraits.Gaseous.class)
                 || type.hasTrait(SimpleFluidTraits.GaseousAtRoomTemperature.class))) {
-            ParticleUtil.spawnCoolingTower(level, pos.getX() + 0.5D, pos.getY() + 11.0D, pos.getZ() + 0.5D,
-                    1.0F, 0.25F, 3.0F, 150 + level.random.nextInt(20), false, 0.075F, 0.25F,
-                    type.getColor());
+            ParticleUtil.spawnGasFlareVentSmoke(level, pos, type.getColor());
         }
         if (blockEntity.burn && flammable != null) {
             if (level.random.nextBoolean()) {
@@ -373,8 +371,8 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             tank.release(level, pos, eject, FluidReleaseType.SPILL, false);
             fluidUsed = eject;
             if (level.getGameTime() % 7L == 0L) {
-                level.playSound(null, pos.getX(), pos.getY() + 11.0D, pos.getZ(), SoundEvents.FIRE_EXTINGUISH,
-                        SoundSource.BLOCKS, 1.5F, 0.5F);
+                LegacySoundPlayer.playSoundEffect(level, pos.getX(), pos.getY() + 11.0D, pos.getZ(),
+                        "random.fizz", SoundSource.BLOCKS, 1.5F, 0.5F);
             }
             return true;
         }
@@ -395,12 +393,11 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             lastOutput = (int) Math.min(Integer.MAX_VALUE, energy.getPower() - before);
         }
         fluidUsed = eject;
-        ParticleUtil.spawnGasFlame(level, pos.getX() + 0.5D, pos.getY() + 11.75D, pos.getZ() + 0.5D,
-                level.random.nextGaussian() * 0.15D, 0.2D, level.random.nextGaussian() * 0.15D);
+        ParticleUtil.spawnGasFlareBurnFlame(level, pos);
         burnEntities(level, pos);
         if (level.getGameTime() % 3L == 0L) {
-            level.playSound(null, pos.getX(), pos.getY() + 11.0D, pos.getZ(),
-                    ModSounds.WEAPON_FLAMETHROWER_SHOOT.get(), SoundSource.BLOCKS, 1.5F, 0.75F);
+            LegacySoundPlayer.playSoundEffect(level, pos.getX(), pos.getY() + 11.0D, pos.getZ(),
+                    "hbm:weapon.flamethrowerShoot", SoundSource.BLOCKS, 1.5F, 0.75F);
         }
         return true;
     }

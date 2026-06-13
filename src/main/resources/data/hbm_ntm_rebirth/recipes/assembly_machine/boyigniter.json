@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.boyigniter",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:shells/aluminium" }, "count": 3, "legacy_ore": "shellAluminum" },
+    { "ingredient": { "tag": "forge:cast_plates/dura_steel" }, "count": 1, "legacy_ore": "plateCastDuraSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 1, "legacy_id": "hbm:circuit", "legacy_meta": 9 },
+    { "ingredient": { "tag": "forge:wires/mingrade" }, "count": 16, "legacy_ore": "wireFineMingrade" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:boy_igniter" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 219
+}

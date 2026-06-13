@@ -5,11 +5,14 @@ import com.hbm.ntm.menu.BasicMachineMenu;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.PressRecipe;
 import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.SimpleContainer;
@@ -37,7 +40,7 @@ import com.hbm.ntm.item.ItemPressStamp;
 
 import java.util.List;
 
-public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider {
+public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyLoadedTile {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_TICKS_EXISTED = "TicksExisted";
     private static final String TAG_BURN_TIME = "BurnTime";
@@ -58,6 +61,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     public static final int SLOT_STORAGE_START = 4;
     public static final int SLOT_STORAGE_END = 13;
 
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final ItemStackHandler items = new ItemStackHandler(13) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -101,6 +105,11 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
         super(ModBlockEntities.BASIC_MACHINE.get(), pos, state);
     }
 
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, BasicMachineBlockEntity blockEntity) {
         blockEntity.ticksExisted++;
         PressRecipe recipe = blockEntity.findMatchingPressRecipe(level);
@@ -142,6 +151,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
         }
 
         blockEntity.setChanged();
+        blockEntity.networkPackNT(50);
         if (blockEntity.isPressActiveForSync(canProcess) || blockEntity.ticksExisted % 10 == 0) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -231,6 +241,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         tag.putLong(TAG_TICKS_EXISTED, ticksExisted);
         tag.putInt(TAG_BURN_TIME, burnTime);
@@ -243,6 +254,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         ticksExisted = tag.getLong(TAG_TICKS_EXISTED);
         burnTime = tag.getInt(TAG_BURN_TIME);
@@ -267,6 +279,29 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     @Override
     public CompoundTag getUpdateTag() {
         return saveWithoutMetadata();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        return saveWithoutMetadata();
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        load(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(saveWithoutMetadata());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            load(tag);
+        }
     }
 
     @Nullable

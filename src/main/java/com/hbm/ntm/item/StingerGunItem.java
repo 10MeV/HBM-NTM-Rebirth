@@ -10,6 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -35,6 +36,14 @@ public class StingerGunItem extends SednaGunItem {
 
     public StingerGunItem(Properties properties, SednaGunConfig gunConfig) {
         super(properties, gunConfig);
+    }
+
+    public boolean shouldRenderLegacyStingerCrosshair(ItemStack stack) {
+        return isAiming(stack);
+    }
+
+    public float legacyStingerLockonProgress(ItemStack stack) {
+        return Mth.clamp(lockonProgress(stack) / (float) LOCKON_TICKS, 0.0F, 1.0F);
     }
 
     @Override

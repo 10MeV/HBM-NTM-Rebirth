@@ -10,6 +10,7 @@ import com.hbm.ntm.util.HbmMathUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Data plans for repeated legacy TESR render states and animated quads.
@@ -33,7 +34,22 @@ public final class LegacyTileRenderPlans {
     public static final double BIG_ASS_TANK_FLUID_HEIGHT = 1.5D;
     public static final double BIG_ASS_TANK_FLUID_U_PERIOD = 250.0D;
     public static final double BIG_ASS_TANK_FLUID_U_SCALE = 0.5D;
+    public static final double CHEMICAL_FACTORY_FAN_PIVOT_X = 1.0D;
+    public static final double CHEMICAL_FACTORY_FAN_ROTATION_SCALE = -45.0D;
     public static final double CHEMICAL_PLANT_FLUID_ALPHA = 0.5D;
+    public static final double BASIC_PRESS_HEAD_TRAVEL = 0.875D;
+    public static final double BASIC_PRESS_ITEM_TRANSLATE_X = 0.5D;
+    public static final double BASIC_PRESS_ITEM_TRANSLATE_Y = 0.896875D;
+    public static final double BASIC_PRESS_ITEM_TRANSLATE_Z = 0.5D;
+    public static final double BASIC_PRESS_ITEM_ROTATION_Y = 180.0D;
+    public static final double BASIC_PRESS_ITEM_ROTATION_X = 90.0D;
+    public static final double BASIC_PRESS_ITEM_SCALE = 0.45D;
+    public static final double PYRO_OVEN_SLIDER_ANIM_SCALE = 0.125D;
+    public static final double PYRO_OVEN_SLIDER_TRAVEL_SCALE = 0.5D;
+    public static final double PYRO_OVEN_SLIDER_BASE_X = -0.5D;
+    public static final double PYRO_OVEN_FAN_PIVOT_X = 1.5D;
+    public static final double PYRO_OVEN_FAN_PIVOT_Z = 1.5D;
+    public static final double PYRO_OVEN_FAN_ROTATION_SCALE = 45.0D;
     public static final double SMALL_REACTOR_CHERENKOV_START = 0.285D;
     public static final double SMALL_REACTOR_CHERENKOV_END = 0.7D;
     public static final double SMALL_REACTOR_CHERENKOV_STEP = 0.025D;
@@ -46,6 +62,7 @@ public final class LegacyTileRenderPlans {
     public static final float SOLAR_BOILER_BEAM_MAX_ALPHA = 0.01F;
     public static final double REFUELER_FLUID_CLIP_D = -0.125D;
     public static final double REFUELER_FLUID_TRAVEL = -0.625D;
+    public static final double LIQUEFACTOR_FLUID_PIVOT_Y = 1.0D;
     public static final double SOLIDIFIER_FLUID_PIVOT_Y = 1.25D;
     public static final double BATTERY_REDD_TRAIL_LENGTH = 4.25D;
     public static final double BATTERY_REDD_TRAIL_WIDTH = 0.125D;
@@ -133,6 +150,21 @@ public final class LegacyTileRenderPlans {
     public static final int TAUON_BEAM_OUTER_COLOR = 0xFFA200;
     public static final int TAUON_BEAM_INNER_COLOR = 0xFFD000;
     public static final float TAUON_BEAM_SIZE = 0.1F;
+    public static final double CREATIVE_BATTERY_HORSE_SCALE = 0.75D;
+    public static final double CREATIVE_BATTERY_BEAM_TRANSLATE_Y = 0.75D;
+    public static final double CREATIVE_BATTERY_BEAM_XZ = 0.4375D;
+    public static final double CREATIVE_BATTERY_BEAM_Y = 1.1875D;
+    public static final int CREATIVE_BATTERY_BEAM_OUTER_COLOR = 0x404040;
+    public static final int CREATIVE_BATTERY_BEAM_INNER_COLOR = 0x002040;
+    public static final int CREATIVE_BATTERY_BEAM_RANDOM_BOUND = 4;
+    public static final int CREATIVE_BATTERY_BEAM_PERIOD_MILLIS = 1000;
+    public static final int CREATIVE_BATTERY_BEAM_START_DIVISOR = 50;
+    public static final int CREATIVE_BATTERY_LONG_BEAM_SEGMENTS = 15;
+    public static final int CREATIVE_BATTERY_SHORT_BEAM_SEGMENTS = 1;
+    public static final float CREATIVE_BATTERY_LONG_BEAM_SIZE = 0.0625F;
+    public static final float CREATIVE_BATTERY_SHORT_BEAM_SIZE = 0.0F;
+    public static final int CREATIVE_BATTERY_BEAM_LAYERS = 3;
+    public static final float CREATIVE_BATTERY_BEAM_THICKNESS = 0.025F;
     public static final int LASER_MINER_BEAM_COUNT = 3;
     public static final double LASER_MINER_EMITTER_OFFSET = 1.5D;
     public static final int LASER_MINER_BEAM_COLOR = 0xA00000;
@@ -208,6 +240,28 @@ public final class LegacyTileRenderPlans {
     public static final double THRESHER_ARM_LOWER_NUDGE_X = -0.01D;
     public static final double THRESHER_FRONT_NUDGE_X = 0.01D;
     public static final double TURBOFAN_BLADE_PIVOT_Y = 1.5D;
+    public static final double INDUSTRIAL_TURBINE_PIVOT_Y = 1.5D;
+    public static final double INDUSTRIAL_TURBINE_GAUGE_STEAM = 135.0D;
+    public static final double INDUSTRIAL_TURBINE_GAUGE_HOTSTEAM = 45.0D;
+    public static final double INDUSTRIAL_TURBINE_GAUGE_SUPERHOTSTEAM = -45.0D;
+    public static final double INDUSTRIAL_TURBINE_GAUGE_ULTRAHOTSTEAM = -135.0D;
+    public static final double INDUSTRIAL_TURBINE_ITEM_FLYWHEEL_PERIOD = 5.0D;
+    public static final double INDUSTRIAL_TURBINE_ITEM_FLYWHEEL_MODULO = 336.0D;
+    public static final double PUMPJACK_ROTOR_PIVOT_Y = 1.5D;
+    public static final double PUMPJACK_ROTOR_PIVOT_Z = -5.5D;
+    public static final double PUMPJACK_HEAD_PIVOT_Y = 3.5D;
+    public static final double PUMPJACK_HEAD_PIVOT_Z = -3.5D;
+    public static final double PUMPJACK_HEAD_ROTATION_SCALE = 0.25D;
+    public static final double PUMPJACK_BACK_ROD_X = 0.53125D;
+    public static final double PUMPJACK_BACK_ROD_Z_WIDTH = 0.0625D;
+    public static final double PUMPJACK_FRONT_ROD_HALF_THICKNESS = 0.03125D;
+    public static final double PUMPJACK_FRONT_ROD_WIDTH = 0.25D;
+    public static final double PUMPJACK_FRONT_ROD_RADIUS = 2.5D;
+    public static final double PUMPJACK_FRONT_ROD_DIST = 0.03125D;
+    public static final double PUMPJACK_FRONT_ROD_CUTLET = 360.0D / 32.0D;
+    public static final int PUMPJACK_FRONT_ROD_SEGMENTS = 4;
+    public static final int PUMPJACK_BACK_ROD_COLOR = 0x808080;
+    public static final int PUMPJACK_FRONT_ROD_COLOR = 0x333333;
     public static final double BIG_TURBINE_BASE_ROTATION_Y = 90.0D;
     public static final double BIG_TURBINE_TRANSLATE_Z = -1.0D;
     public static final double BIG_TURBINE_BLADE_PIVOT_Y = 1.0D;
@@ -333,6 +387,122 @@ public final class LegacyTileRenderPlans {
                 CHEMICAL_PLANT_FLUID_ALPHA, normalAlphaBlendPlan(false, 0.0F), false);
     }
 
+    public static ChemicalFactoryPlan chemicalFactoryPlan(double animation) {
+        double angle = animation * CHEMICAL_FACTORY_FAN_ROTATION_SCALE % 360.0D;
+        return new ChemicalFactoryPlan(List.of(
+                new RotatingModelPartPlan("chemical_factory_fan_1", "Fan1",
+                        CHEMICAL_FACTORY_FAN_PIVOT_X, 0.0D, 0.0D,
+                        0.0F, 1.0F, 0.0F, angle),
+                new RotatingModelPartPlan("chemical_factory_fan_2", "Fan2",
+                        -CHEMICAL_FACTORY_FAN_PIVOT_X, 0.0D, 0.0D,
+                        0.0F, 1.0F, 0.0F, angle)));
+    }
+
+    public static BasicPressPlan basicPressPlan(boolean hasStack, double press, double maxPress) {
+        double progress = maxPress <= 0.0D ? 0.0D : Math.max(0.0D, Math.min(1.0D, press / maxPress));
+        return new BasicPressPlan(
+                new TranslatedModelPartPlan("basic_press_head", "Head", true,
+                        0.0D, (1.0D - progress) * BASIC_PRESS_HEAD_TRAVEL, 0.0D),
+                new ItemTransformPlan("basic_press_item", hasStack,
+                        BASIC_PRESS_ITEM_TRANSLATE_X, BASIC_PRESS_ITEM_TRANSLATE_Y, BASIC_PRESS_ITEM_TRANSLATE_Z,
+                        BASIC_PRESS_ITEM_ROTATION_Y, BASIC_PRESS_ITEM_ROTATION_X, 0.0D,
+                        BASIC_PRESS_ITEM_SCALE));
+    }
+
+    public static PyroOvenPlan pyroOvenPlan(double animation) {
+        return new PyroOvenPlan(
+                new TranslatedModelPartPlan("pyro_oven_slider", "Slider", true,
+                        LegacyObjTransforms.softPeakSine(animation * PYRO_OVEN_SLIDER_ANIM_SCALE)
+                                * PYRO_OVEN_SLIDER_TRAVEL_SCALE + PYRO_OVEN_SLIDER_BASE_X,
+                        0.0D, 0.0D),
+                new RotatingModelPartPlan("pyro_oven_fan", "Fan",
+                        PYRO_OVEN_FAN_PIVOT_X, 0.0D, PYRO_OVEN_FAN_PIVOT_Z,
+                        0.0F, 1.0F, 0.0F,
+                        animation * PYRO_OVEN_FAN_ROTATION_SCALE % 360.0D));
+    }
+
+    public static PumpjackPlan pumpjackPlan(double rotationDegrees) {
+        double radians = Math.toRadians(rotationDegrees);
+        double sin = Math.sin(radians);
+        double pRot = -sin * PUMPJACK_HEAD_ROTATION_SCALE;
+        Vec3 backPos = rotateX(new Vec3(0.0D, 0.0D, -2.0D), pRot);
+        Vec3 rot = rotateX(new Vec3(0.0D, 0.5D, 0.0D), -Math.toRadians(rotationDegrees - 90.0D));
+        List<UntexturedQuadPlan> rods = new ArrayList<>();
+
+        for (int i = -1; i <= 1; i += 2) {
+            rods.add(new UntexturedQuadPlan("pumpjack_back_rod_" + i, List.of(
+                    vertex(PUMPJACK_BACK_ROD_X * i,
+                            PUMPJACK_ROTOR_PIVOT_Y + rot.y,
+                            PUMPJACK_ROTOR_PIVOT_Z + rot.z - PUMPJACK_BACK_ROD_Z_WIDTH,
+                            rgba(PUMPJACK_BACK_ROD_COLOR, 1.0F)),
+                    vertex(PUMPJACK_BACK_ROD_X * i,
+                            PUMPJACK_ROTOR_PIVOT_Y + rot.y,
+                            PUMPJACK_ROTOR_PIVOT_Z + rot.z + PUMPJACK_BACK_ROD_Z_WIDTH,
+                            rgba(PUMPJACK_BACK_ROD_COLOR, 1.0F)),
+                    vertex(PUMPJACK_BACK_ROD_X * i,
+                            PUMPJACK_HEAD_PIVOT_Y + backPos.y,
+                            PUMPJACK_HEAD_PIVOT_Z + backPos.z + PUMPJACK_BACK_ROD_Z_WIDTH,
+                            rgba(PUMPJACK_BACK_ROD_COLOR, 1.0F)),
+                    vertex(PUMPJACK_BACK_ROD_X * i,
+                            PUMPJACK_HEAD_PIVOT_Y + backPos.y,
+                            PUMPJACK_HEAD_PIVOT_Z + backPos.z - PUMPJACK_BACK_ROD_Z_WIDTH,
+                            rgba(PUMPJACK_BACK_ROD_COLOR, 1.0F)))));
+        }
+
+        double height = -sin;
+        for (int i = -1; i <= 1; i += 2) {
+            Vec3 frontPos = rotateX(new Vec3(0.0D, 0.0D, 1.0D), pRot);
+            Vec3 frontRad = rotateX(new Vec3(0.0D, 0.0D,
+                    PUMPJACK_FRONT_ROD_RADIUS + PUMPJACK_FRONT_ROD_DIST), pRot);
+            frontRad = rotateX(frontRad, -Math.toRadians(PUMPJACK_FRONT_ROD_CUTLET * -3.0D));
+            for (int j = 0; j < PUMPJACK_FRONT_ROD_SEGMENTS; j++) {
+                Vec3 start = fixedPumpjackFrontRodPoint(frontPos, frontRad, PUMPJACK_FRONT_ROD_DIST);
+                Vec3 nextRad = rotateX(frontRad, -Math.toRadians(PUMPJACK_FRONT_ROD_CUTLET));
+                Vec3 end = fixedPumpjackFrontRodPoint(frontPos, nextRad, PUMPJACK_FRONT_ROD_DIST);
+                rods.add(pumpjackFrontRodQuad("pumpjack_front_rod_" + i + "_" + j, i, start, end));
+                frontRad = nextRad;
+            }
+            Vec3 tail = fixedPumpjackFrontRodPoint(frontPos, frontRad, PUMPJACK_FRONT_ROD_DIST);
+            rods.add(new UntexturedQuadPlan("pumpjack_front_tail_" + i, List.of(
+                    vertex((PUMPJACK_FRONT_ROD_WIDTH + PUMPJACK_FRONT_ROD_HALF_THICKNESS) * i,
+                            PUMPJACK_HEAD_PIVOT_Y + tail.y, PUMPJACK_HEAD_PIVOT_Z + tail.z,
+                            rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)),
+                    vertex((PUMPJACK_FRONT_ROD_WIDTH - PUMPJACK_FRONT_ROD_HALF_THICKNESS) * i,
+                            PUMPJACK_HEAD_PIVOT_Y + tail.y, PUMPJACK_HEAD_PIVOT_Z + tail.z,
+                            rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)),
+                    vertex((PUMPJACK_FRONT_ROD_WIDTH - PUMPJACK_FRONT_ROD_HALF_THICKNESS) * i,
+                            2.0D + height, 0.0D,
+                            rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)),
+                    vertex((PUMPJACK_FRONT_ROD_WIDTH + PUMPJACK_FRONT_ROD_HALF_THICKNESS) * i,
+                            2.0D + height, 0.0D,
+                            rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)))));
+        }
+
+        double p = PUMPJACK_FRONT_ROD_HALF_THICKNESS;
+        rods.add(new UntexturedQuadPlan("pumpjack_center_rod_a", List.of(
+                vertex(p, height + 1.5D, p, rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)),
+                vertex(-p, height + 1.5D, -p, rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)),
+                vertex(-p, 0.75D, -p, rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)),
+                vertex(p, 0.75D, p, rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)))));
+        rods.add(new UntexturedQuadPlan("pumpjack_center_rod_b", List.of(
+                vertex(-p, height + 1.5D, p, rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)),
+                vertex(p, height + 1.5D, -p, rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)),
+                vertex(p, 0.75D, -p, rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)),
+                vertex(-p, 0.75D, p, rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)))));
+
+        return new PumpjackPlan(rotationDegrees,
+                new RotatingModelPartPlan("pumpjack_rotor", "Rotor",
+                        0.0D, PUMPJACK_ROTOR_PIVOT_Y, PUMPJACK_ROTOR_PIVOT_Z,
+                        1.0F, 0.0F, 0.0F, rotationDegrees - 90.0D),
+                new RotatingModelPartPlan("pumpjack_head", "Head",
+                        0.0D, PUMPJACK_HEAD_PIVOT_Y, PUMPJACK_HEAD_PIVOT_Z,
+                        1.0F, 0.0F, 0.0F,
+                        Math.toDegrees(sin) * PUMPJACK_HEAD_ROTATION_SCALE),
+                new TranslatedModelPartPlan("pumpjack_carriage", "Carriage", true,
+                        0.0D, -sin, 0.0D),
+                List.copyOf(rods));
+    }
+
     public static TankDangerDiamondPlan smallTankDangerDiamondPlan(boolean hasFluid) {
         return new TankDangerDiamondPlan(hasFluid, List.of(
                 new DiamondTransformPlan("front", -0.25D, 0.5D, -1.501D,
@@ -432,6 +602,19 @@ public final class LegacyTileRenderPlans {
     public static ModelPartTintPlan radgenGlassPlan() {
         return new ModelPartTintPlan("radgen_glass", "Glass", true,
                 rgba(0.5F, 0.75F, 1.0F, 0.3F), null,
+                normalAlphaBlendPlan(false, 0.0F), false);
+    }
+
+    public static ScaledModelPartPlan liquefactorFluidPlan(int fill, int maxFill, int fluidColor) {
+        double height = maxFill <= 0 ? 0.0D : clamp01((double) Math.max(0, fill) / (double) maxFill);
+        return new ScaledModelPartPlan("liquefactor_fluid", "Fluid", height > 0.0D,
+                rgba(fluidColor, 1.0F), LIQUEFACTOR_FLUID_PIVOT_Y,
+                1.0D, height, 1.0D, null, false);
+    }
+
+    public static ModelPartTintPlan liquefactorGlassPlan() {
+        return new ModelPartTintPlan("liquefactor_glass", "Glass", true,
+                rgba(0.75F, 1.0F, 1.0F, 0.15F), null,
                 normalAlphaBlendPlan(false, 0.0F), false);
     }
 
@@ -736,17 +919,46 @@ public final class LegacyTileRenderPlans {
     }
 
     public static TauonBeamPlan tauonBeamPlan(int beamTicks, double beamDistance, long worldTime) {
+        return tauonBeamPlan(beamTicks, beamDistance, (double) worldTime);
+    }
+
+    public static TauonBeamPlan tauonBeamPlan(int beamTicks, double beamDistance, double renderTime) {
         boolean active = beamTicks > 0 && beamDistance > 0.0D;
         LegacyBeamRenderer.BeamPlan beam = active
                 ? LegacyBeamRenderer.beamPlan(beamDistance, 0.0D, 0.0D,
                         LegacyBeamRenderer.WaveType.RANDOM, LegacyBeamRenderer.BeamType.LINE,
                         TAUON_BEAM_OUTER_COLOR, TAUON_BEAM_INNER_COLOR,
-                        (int) (worldTime / 5L % 360L), (int) beamDistance + 1,
+                        (int) ((renderTime / 5.0D) % 360.0D), (int) beamDistance + 1,
                         TAUON_BEAM_SIZE, 0, 0.0F)
                 : null;
         return new TauonBeamPlan(active, beamTicks, beamDistance,
                 0.0D, TAUON_BEAM_TRANSLATE_Y, 0.0D,
                 lightmapOnlyFullbrightPlan(), beam);
+    }
+
+    public static CreativeBatterySocketPlan creativeBatterySocketPlan(long worldTime, long currentMillis,
+            float partialTicks) {
+        double horseYaw = ((worldTime % 360L) + partialTicks) * 25.0D;
+        Random random = new Random(worldTime / 5L);
+        random.nextBoolean();
+        int start = (int) (currentMillis % CREATIVE_BATTERY_BEAM_PERIOD_MILLIS)
+                / CREATIVE_BATTERY_BEAM_START_DIVISOR;
+        List<LegacyBeamRenderer.BeamPlan> beams = new ArrayList<>();
+        for (int i = -1; i <= 1; i += 2) {
+            for (int j = -1; j <= 1; j += 2) {
+                if (random.nextInt(CREATIVE_BATTERY_BEAM_RANDOM_BOUND) != 0) {
+                    continue;
+                }
+                double x = CREATIVE_BATTERY_BEAM_XZ * i;
+                double z = CREATIVE_BATTERY_BEAM_XZ * j;
+                beams.add(creativeBatterySocketBeam(x, z, start, CREATIVE_BATTERY_LONG_BEAM_SEGMENTS,
+                        CREATIVE_BATTERY_LONG_BEAM_SIZE));
+                beams.add(creativeBatterySocketBeam(x, z, start, CREATIVE_BATTERY_SHORT_BEAM_SEGMENTS,
+                        CREATIVE_BATTERY_SHORT_BEAM_SIZE));
+            }
+        }
+        return new CreativeBatterySocketPlan(CREATIVE_BATTERY_HORSE_SCALE, horseYaw,
+                0.0D, CREATIVE_BATTERY_BEAM_TRANSLATE_Y, 0.0D, List.copyOf(beams));
     }
 
     public static LaserMinerBeamPlan laserMinerBeamPlan(boolean active, double vx, double vy,
@@ -979,6 +1191,11 @@ public final class LegacyTileRenderPlans {
                 arcCablePlans(electrodePlans, cableAngle));
     }
 
+    public static ArcFurnacePlan arcFurnaceStaticPreviewPlan() {
+        return arcFurnacePlan(0.0D, 0.0D, false, 0L, 0.0F, 0, 0, false,
+                List.of(ArcElectrodeState.FRESH, ArcElectrodeState.FRESH, ArcElectrodeState.FRESH));
+    }
+
     public static SteamEnginePlan steamEnginePlan(double lastRotor, double rotor, float partialTicks) {
         return steamEnginePlan(lastRotor + (rotor - lastRotor) * partialTicks);
     }
@@ -1094,6 +1311,27 @@ public final class LegacyTileRenderPlans {
                 new RotatingModelPartPlan("turbofan_blades", "Blades",
                         0.0D, TURBOFAN_BLADE_PIVOT_Y, 0.0D,
                         0.0F, 0.0F, -1.0F, bladeSpin));
+    }
+
+    public static IndustrialTurbinePlan industrialTurbinePlan(double gaugeDegrees,
+            double lastRotor, double rotor, float partialTicks) {
+        return industrialTurbinePlan(gaugeDegrees, lastRotor + (rotor - lastRotor) * partialTicks);
+    }
+
+    public static IndustrialTurbinePlan industrialTurbineItemPlan(long currentMillis) {
+        return industrialTurbinePlan(INDUSTRIAL_TURBINE_GAUGE_STEAM,
+                currentMillis / INDUSTRIAL_TURBINE_ITEM_FLYWHEEL_PERIOD
+                        % INDUSTRIAL_TURBINE_ITEM_FLYWHEEL_MODULO);
+    }
+
+    public static IndustrialTurbinePlan industrialTurbinePlan(double gaugeDegrees, double flywheelDegrees) {
+        return new IndustrialTurbinePlan(gaugeDegrees, flywheelDegrees,
+                new RotatingModelPartPlan("industrial_turbine_gauge", "Gauge",
+                        0.0D, INDUSTRIAL_TURBINE_PIVOT_Y, 0.0D,
+                        0.0F, 0.0F, 1.0F, gaugeDegrees),
+                new RotatingModelPartPlan("industrial_turbine_flywheel", "Flywheel",
+                        0.0D, INDUSTRIAL_TURBINE_PIVOT_Y, 0.0D,
+                        0.0F, 0.0F, -1.0F, flywheelDegrees));
     }
 
     public static BigTurbinePlan bigTurbinePlan(double lastRotor, double rotor, float partialTicks) {
@@ -1225,6 +1463,34 @@ public final class LegacyTileRenderPlans {
             double angleDegrees, double translateX, double translateY, double translateZ) {
         return new PivotedModelPartPlan(role, partName, pivotX, pivotY, pivotZ,
                 axisX, axisY, axisZ, angleDegrees, translateX, translateY, translateZ);
+    }
+
+    private static UntexturedQuadPlan pumpjackFrontRodQuad(String role, int side, Vec3 start, Vec3 end) {
+        RgbaPlan color = rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F);
+        return new UntexturedQuadPlan(role, List.of(
+                vertex((PUMPJACK_FRONT_ROD_WIDTH - PUMPJACK_FRONT_ROD_HALF_THICKNESS) * side,
+                        PUMPJACK_HEAD_PIVOT_Y + start.y, PUMPJACK_HEAD_PIVOT_Z + start.z, color),
+                vertex((PUMPJACK_FRONT_ROD_WIDTH + PUMPJACK_FRONT_ROD_HALF_THICKNESS) * side,
+                        PUMPJACK_HEAD_PIVOT_Y + start.y, PUMPJACK_HEAD_PIVOT_Z + start.z, color),
+                vertex((PUMPJACK_FRONT_ROD_WIDTH + PUMPJACK_FRONT_ROD_HALF_THICKNESS) * side,
+                        PUMPJACK_HEAD_PIVOT_Y + end.y, PUMPJACK_HEAD_PIVOT_Z + end.z, color),
+                vertex((PUMPJACK_FRONT_ROD_WIDTH - PUMPJACK_FRONT_ROD_HALF_THICKNESS) * side,
+                        PUMPJACK_HEAD_PIVOT_Y + end.y, PUMPJACK_HEAD_PIVOT_Z + end.z, color)));
+    }
+
+    private static Vec3 fixedPumpjackFrontRodPoint(Vec3 frontPos, Vec3 frontRad, double dist) {
+        double y = frontPos.y + frontRad.y;
+        double z = frontPos.z + frontRad.z;
+        if (frontRad.y < 0.0D) {
+            z = -PUMPJACK_HEAD_PIVOT_Z + dist * 0.5D;
+        }
+        return new Vec3(0.0D, y, z);
+    }
+
+    private static Vec3 rotateX(Vec3 vec, double radians) {
+        double cos = Math.cos(radians);
+        double sin = Math.sin(radians);
+        return new Vec3(vec.x, vec.y * cos + vec.z * sin, vec.z * cos - vec.y * sin);
     }
 
     private static CraneRigPlan craneRigPlan(CraneSetupInputPlan input, float partialTicks) {
@@ -1691,6 +1957,14 @@ public final class LegacyTileRenderPlans {
                         start, segments, size, layers, thickness));
     }
 
+    private static LegacyBeamRenderer.BeamPlan creativeBatterySocketBeam(double x, double z, int start,
+            int segments, float size) {
+        return LegacyBeamRenderer.beamPlan(x, CREATIVE_BATTERY_BEAM_Y, z,
+                LegacyBeamRenderer.WaveType.RANDOM, LegacyBeamRenderer.BeamType.SOLID,
+                CREATIVE_BATTERY_BEAM_OUTER_COLOR, CREATIVE_BATTERY_BEAM_INNER_COLOR,
+                start, segments, size, CREATIVE_BATTERY_BEAM_LAYERS, CREATIVE_BATTERY_BEAM_THICKNESS);
+    }
+
     private static RgbaPlan rbmkColumnBaseColor(int index, RbmkColumnInputPlan column) {
         if (column.color() >= 0) {
             return rgba(switch (column.color()) {
@@ -1794,6 +2068,26 @@ public final class LegacyTileRenderPlans {
                                          double textureTranslateU, double textureTranslateV,
                                          double alpha, BlendStatePlan blend,
                                          boolean depthWrite) {
+    }
+
+    public record ChemicalFactoryPlan(List<RotatingModelPartPlan> fans) {
+    }
+
+    public record BasicPressPlan(TranslatedModelPartPlan head, ItemTransformPlan item) {
+    }
+
+    public record ItemTransformPlan(String role, boolean active,
+                                    double translateX, double translateY, double translateZ,
+                                    double rotateYDegrees, double rotateXDegrees, double rotateZDegrees,
+                                    double scale) {
+    }
+
+    public record PyroOvenPlan(TranslatedModelPartPlan slider, RotatingModelPartPlan fan) {
+    }
+
+    public record PumpjackPlan(double rotationDegrees, RotatingModelPartPlan rotor,
+                               RotatingModelPartPlan head, TranslatedModelPartPlan carriage,
+                               List<UntexturedQuadPlan> rods) {
     }
 
     public record CherenkovShellPlan(boolean active, BlendStatePlan blend,
@@ -2008,6 +2302,12 @@ public final class LegacyTileRenderPlans {
                                 LegacyBeamRenderer.BeamPlan beam) {
     }
 
+    public record CreativeBatterySocketPlan(double horseScale, double horseYawDegrees,
+                                            double beamTranslateX, double beamTranslateY,
+                                            double beamTranslateZ,
+                                            List<LegacyBeamRenderer.BeamPlan> beams) {
+    }
+
     public record LaserMinerBeamPlan(boolean active, double targetVectorX,
                                      double targetVectorY, double targetVectorZ,
                                      double beamVectorX, double beamVectorY, double beamVectorZ,
@@ -2128,6 +2428,11 @@ public final class LegacyTileRenderPlans {
     public record TurbofanPlan(double bladeSpinDegrees, boolean afterburner,
                                String afterburnerTextureRole,
                                RotatingModelPartPlan blades) {
+    }
+
+    public record IndustrialTurbinePlan(double gaugeDegrees, double flywheelDegrees,
+                                        RotatingModelPartPlan gauge,
+                                        RotatingModelPartPlan flywheel) {
     }
 
     public record BigTurbinePlan(boolean cullEnabled, double baseRotationY,

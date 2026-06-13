@@ -3,7 +3,6 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.AssemblyFactoryBlockEntity;
-import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
@@ -69,7 +68,8 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
 
         if (LegacyRecipeIconRenderer.shouldRender(blockEntity)) {
             renderRecipeIcons(blockEntity, poseStack, buffer, packedLight);
-            renderSparks(blockEntity, partialTick, poseStack, buffer, state, packedOverlay, slide1, slide2, arm2, arm4);
+            renderSparks(blockEntity, partialTick, poseStack, buffer, state, packedLight, packedOverlay,
+                    slide1, slide2, arm2, arm4);
         }
 
         poseStack.popPose();
@@ -161,27 +161,12 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
     }
 
     private static void renderSparks(AssemblyFactoryBlockEntity blockEntity, float partialTick, PoseStack poseStack,
-            MultiBufferSource buffer, BlockState state, int packedOverlay, double slide1, double slide2,
-            double[] arm2, double[] arm4) {
-        if (arm2[3] > -0.375D && arm4[3] > -0.375D) {
-            return;
-        }
-        LegacyUvAnimation.Range u = LegacyUvAnimation.assemblyFactorySparkU(blockEntity.getLevel().getGameTime(), partialTick);
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, 0xF000F0, packedOverlay)
-                .withTranslucencyNoDepthWrite();
-        if (arm2[3] <= -0.375D) {
-            poseStack.pushPose();
-            poseStack.translate(0.5D + slide1, 1.0625D, -arm2[2] / 45.0D);
-            LegacyAssemblySparkRenderer.renderSparkPair(ObjMachineModels.ASSEMBLY_FACTORY_SPARKS_TEXTURE,
-                    context, u, LegacyAssemblySparkRenderer.LENGTH);
-            poseStack.popPose();
-        }
-        if (arm4[3] <= -0.375D) {
-            poseStack.pushPose();
-            poseStack.translate(-0.5D - slide2, 1.0625D, arm4[2] / 45.0D);
-            LegacyAssemblySparkRenderer.renderSparkPair(ObjMachineModels.ASSEMBLY_FACTORY_SPARKS_TEXTURE,
-                    context, u, -LegacyAssemblySparkRenderer.LENGTH);
-            poseStack.popPose();
-        }
+            MultiBufferSource buffer, BlockState state, int packedLight, int packedOverlay,
+            double slide1, double slide2, double[] arm2, double[] arm4) {
+        LegacyTileRenderPlans.AssemblySparkRenderPlan plan = LegacyTileRenderPlans.assemblySparkPlan(
+                blockEntity.getLevel().getGameTime(), partialTick, slide1, slide2, arm2[2], arm2[3],
+                arm4[2], arm4[3]);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
+        LegacyAssemblySparkRenderer.renderPlan(ObjMachineModels.ASSEMBLY_FACTORY_SPARKS_TEXTURE, context, plan);
     }
 }

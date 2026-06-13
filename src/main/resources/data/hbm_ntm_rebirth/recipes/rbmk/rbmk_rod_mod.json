@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "BGB",
+    "GRG",
+    "BGB"
+  ],
+  "key": {
+    "G": {
+      "item": "hbm_ntm_rebirth:block_graphite"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:rbmk_rod"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:nugget_bismuth"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_rod_mod"
+  },
+  "show_notification": true
+}

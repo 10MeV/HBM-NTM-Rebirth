@@ -21,6 +21,12 @@ public class BjJetpackArmorItem extends FsbPoweredArmorItem {
         super(material, type, properties, fullSetEffects, baseMaxCharge, chargeRate, consumption, drain);
     }
 
+    public BjJetpackArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+            List<FullSetEffect> fullSetEffects, long baseMaxCharge, long chargeRate, long consumption, long drain,
+            FullSetTraits fullSetTraits) {
+        super(material, type, properties, fullSetEffects, baseMaxCharge, chargeRate, consumption, drain, fullSetTraits);
+    }
+
     @Override
     public void tickEquippedArmor(ItemStack stack, Level level, Player player) {
         super.tickEquippedArmor(stack, level, player);
@@ -37,7 +43,7 @@ public class BjJetpackArmorItem extends FsbPoweredArmorItem {
             }
             player.fallDistance = 0.0F;
             level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                    ModSounds.WEAPON_FLAMETHROWER_SHOOT.get(), player.getSoundSource(), 0.125F, 1.5F);
+                    ModSounds.WEAPON_IMMOLATOR_SHOOT.get(), player.getSoundSource(), 0.125F, 1.5F);
             if (!level.isClientSide) {
                 ParticleUtil.spawnJetpackBj(level, player);
             }

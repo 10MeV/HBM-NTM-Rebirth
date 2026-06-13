@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SS"
+  ],
+  "key": {
+    "S": {
+      "item": "hbm_ntm_rebirth:steel_grate_wide"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:steel_grate"
+  },
+  "show_notification": true
+}

@@ -10,6 +10,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -24,11 +25,13 @@ public record LegacyMachineDefinition(
         ResourceLocation modelLocation,
         ResourceLocation textureLocation,
         Map<String, ResourceLocation> partTextures,
+        Map<String, LegacyMachinePartRenderProperties> partRenderProperties,
         boolean renderAll,
         List<String> renderParts,
         boolean itemRenderAll,
         List<String> itemRenderParts,
         Map<String, ResourceLocation> itemPartTextures,
+        Map<String, LegacyMachinePartRenderProperties> itemPartRenderProperties,
         float itemFitSize,
         float legacyItemScale,
         Function<Direction, Vec3> modelTranslationFactory,
@@ -38,7 +41,8 @@ public record LegacyMachineDefinition(
         Function<BlockPos, AABB> renderBoundingBoxFactory,
         Function<BlockState, VoxelShape> collisionShapeFactory,
         Function<BlockState, VoxelShape> highlightShapeFactory,
-        Function<BlockState, BlockState> particleStateFactory) {
+        Function<BlockState, BlockState> particleStateFactory,
+        LegacyMachineRenderProfile renderProfile) {
 
     public LegacyMultiblockLayout layout(BlockState state) {
         return layoutFactory.apply(state.getValue(HorizontalMachineBlock.FACING));
@@ -114,11 +118,13 @@ public record LegacyMachineDefinition(
         private Function<Direction, Direction> placementFacingFactory;
         private Function<Direction, LegacyMultiblockLayout> layoutFactory;
         private Map<String, ResourceLocation> partTextures = Map.of();
+        private Map<String, LegacyMachinePartRenderProperties> partRenderProperties = Map.of();
         private boolean renderAll = true;
         private List<String> renderParts = List.of();
         private Boolean itemRenderAll;
         private List<String> itemRenderParts;
         private Map<String, ResourceLocation> itemPartTextures = Map.of();
+        private Map<String, LegacyMachinePartRenderProperties> itemPartRenderProperties = Map.of();
         private float itemFitSize = 0.58F;
         private float legacyItemScale;
         private Function<Direction, Vec3> modelTranslationFactory;
@@ -129,6 +135,7 @@ public record LegacyMachineDefinition(
         private Function<BlockState, VoxelShape> collisionShapeFactory;
         private Function<BlockState, VoxelShape> highlightShapeFactory;
         private Function<BlockState, BlockState> particleStateFactory;
+        private LegacyMachineRenderProfile renderProfile = LegacyMachineRenderProfile.DEFAULT;
 
         private Builder(ResourceLocation modelLocation, ResourceLocation textureLocation) {
             this.modelLocation = modelLocation;
@@ -171,6 +178,33 @@ public record LegacyMachineDefinition(
             return this;
         }
 
+        public Builder partRenderProperties(Map<String, LegacyMachinePartRenderProperties> partRenderProperties) {
+            this.partRenderProperties = Map.copyOf(partRenderProperties);
+            return this;
+        }
+
+        public Builder partRenderProperty(String part, LegacyMachinePartRenderProperties properties) {
+            Map<String, LegacyMachinePartRenderProperties> updated = new HashMap<>(partRenderProperties);
+            updated.put(part, properties);
+            this.partRenderProperties = Map.copyOf(updated);
+            return this;
+        }
+
+        public Builder translucentPart(String part, int color, int alpha) {
+            return partRenderProperty(part, LegacyMachinePartRenderProperties.color(color, alpha,
+                    LegacyMachinePartRenderMode.TRANSLUCENT_NO_DEPTH_WRITE));
+        }
+
+        public Builder translucentParts(String... parts) {
+            Map<String, LegacyMachinePartRenderProperties> updated = new HashMap<>(partRenderProperties);
+            for (String part : parts) {
+                updated.put(part, LegacyMachinePartRenderProperties.mode(
+                        LegacyMachinePartRenderMode.TRANSLUCENT_NO_DEPTH_WRITE));
+            }
+            this.partRenderProperties = Map.copyOf(updated);
+            return this;
+        }
+
         public Builder renderParts(String... renderParts) {
             this.renderAll = false;
             this.renderParts = List.of(renderParts);
@@ -185,6 +219,18 @@ public record LegacyMachineDefinition(
 
         public Builder itemPartTextures(Map<String, ResourceLocation> itemPartTextures) {
             this.itemPartTextures = Map.copyOf(itemPartTextures);
+            return this;
+        }
+
+        public Builder itemPartRenderProperties(Map<String, LegacyMachinePartRenderProperties> itemPartRenderProperties) {
+            this.itemPartRenderProperties = Map.copyOf(itemPartRenderProperties);
+            return this;
+        }
+
+        public Builder itemPartRenderProperty(String part, LegacyMachinePartRenderProperties properties) {
+            Map<String, LegacyMachinePartRenderProperties> updated = new HashMap<>(itemPartRenderProperties);
+            updated.put(part, properties);
+            this.itemPartRenderProperties = Map.copyOf(updated);
             return this;
         }
 
@@ -254,18 +300,26 @@ public record LegacyMachineDefinition(
             return particleState(state -> particleState);
         }
 
+        public Builder renderProfile(LegacyMachineRenderProfile renderProfile) {
+            this.renderProfile = renderProfile;
+            return this;
+        }
+
         public LegacyMachineDefinition build() {
             Function<Direction, LegacyMultiblockLayout> resolvedLayout = layoutFactory != null
                     ? layoutFactory
                     : facing -> LegacyMultiblockLayout.ofLegacyXrChecked(legacyXrDimensions, facing);
             boolean resolvedItemRenderAll = itemRenderAll == null ? renderAll : itemRenderAll;
             List<String> resolvedItemRenderParts = itemRenderParts == null ? renderParts : itemRenderParts;
+            Map<String, LegacyMachinePartRenderProperties> resolvedItemPartRenderProperties =
+                    itemPartRenderProperties.isEmpty() ? partRenderProperties : itemPartRenderProperties;
             return new LegacyMachineDefinition(legacyXrDimensions, legacyOffset, legacyHeightOffset,
                     placementFacingFactory, resolvedLayout, modelLocation, textureLocation, partTextures,
-                    renderAll, renderParts, resolvedItemRenderAll, resolvedItemRenderParts, itemPartTextures, itemFitSize,
+                    partRenderProperties, renderAll, renderParts, resolvedItemRenderAll, resolvedItemRenderParts,
+                    itemPartTextures, resolvedItemPartRenderProperties, itemFitSize,
                     legacyItemScale, modelTranslationFactory, postModelYRotationFactory, yRotationOffset,
                     yRotationFactory, renderBoundingBoxFactory, collisionShapeFactory, highlightShapeFactory,
-                    particleStateFactory);
+                    particleStateFactory, renderProfile);
         }
     }
 }

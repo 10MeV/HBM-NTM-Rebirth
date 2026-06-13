@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.wiring",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:wires/gold" }, "count": 24, "legacy_ore": "wireFineGold" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:gadget_wireing" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 213
+}

@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.missileassembly",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:shells/aluminium" }, "count": 2, "legacy_ore": "shellAluminum" },
+    { "ingredient": { "tag": "forge:shells/titanium" }, "count": 4, "legacy_ore": "shellTitanium" },
+    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 8, "legacy_ore": "ingotAnyPlastic" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:rocket_fuel" }, "count": 8 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_basic" }, "count": 1, "legacy_id": "hbm:circuit", "legacy_meta": 8 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:missile_assembly" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 249
+}

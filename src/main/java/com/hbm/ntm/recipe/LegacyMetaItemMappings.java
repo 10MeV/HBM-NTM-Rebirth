@@ -85,7 +85,8 @@ public final class LegacyMetaItemMappings {
         registerSparse(PLATE_CAST, Map.of(
                 39, requireLegacyItem("plate_cast_combine_steel"),
                 46, requireLegacyItem("plate_cast_bismuth_bronze"),
-                47, requireLegacyItem("plate_cast_arsenic_bronze")));
+                47, requireLegacyItem("plate_cast_arsenic_bronze"),
+                7_400, requireLegacyItem("plate_cast_tungsten")));
         registerSparse(PLATE_WELDED, Map.of(
                 36, requireLegacyItem("plate_welded_tcalloy"),
                 43, requireLegacyItem("plate_welded_cdalloy")));
@@ -158,16 +159,23 @@ public final class LegacyMetaItemMappings {
                 4, requireLegacyItem("casing_shotshell"),
                 5, requireLegacyItem("casing_buckshot"),
                 6, requireLegacyItem("casing_buckshot_advanced")));
-        registerSparse(AMMO_STANDARD, Map.of(
-                41, requireLegacyItem("ammo_standard_g12_bp"),
-                42, requireLegacyItem("ammo_standard_g12_bp_magnum"),
-                43, requireLegacyItem("ammo_standard_g12_bp_slug"),
-                44, requireLegacyItem("ammo_standard_g12"),
-                45, requireLegacyItem("ammo_standard_g12_slug"),
-                46, requireLegacyItem("ammo_standard_g12_flechette"),
-                47, requireLegacyItem("ammo_standard_g12_magnum"),
-                48, requireLegacyItem("ammo_standard_g12_explosive"),
-                49, requireLegacyItem("ammo_standard_g12_phosphorus")));
+        registerSparse(AMMO_STANDARD, Map.ofEntries(
+                Map.entry(33, requireLegacyItem("ammo_standard_bmg50_sp")),
+                Map.entry(34, requireLegacyItem("ammo_standard_bmg50_fmj")),
+                Map.entry(35, requireLegacyItem("ammo_standard_bmg50_jhp")),
+                Map.entry(36, requireLegacyItem("ammo_standard_bmg50_ap")),
+                Map.entry(37, requireLegacyItem("ammo_standard_bmg50_du")),
+                Map.entry(41, requireLegacyItem("ammo_standard_g12_bp")),
+                Map.entry(42, requireLegacyItem("ammo_standard_g12_bp_magnum")),
+                Map.entry(43, requireLegacyItem("ammo_standard_g12_bp_slug")),
+                Map.entry(44, requireLegacyItem("ammo_standard_g12")),
+                Map.entry(45, requireLegacyItem("ammo_standard_g12_slug")),
+                Map.entry(46, requireLegacyItem("ammo_standard_g12_flechette")),
+                Map.entry(47, requireLegacyItem("ammo_standard_g12_magnum")),
+                Map.entry(48, requireLegacyItem("ammo_standard_g12_explosive")),
+                Map.entry(49, requireLegacyItem("ammo_standard_g12_phosphorus")),
+                Map.entry(83, requireLegacyItem("ammo_standard_bmg50_he")),
+                Map.entry(94, requireLegacyItem("ammo_standard_bmg50_sm"))));
         registerSparse(FUEL_ADDITIVE, Map.of(
                 0, requireLegacyItem("fuel_additive_antiknock"),
                 1, requireLegacyItem("fuel_additive_deicer")));

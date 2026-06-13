@@ -4,9 +4,8 @@ import com.hbm.ntm.config.BombConfig;
 import com.hbm.ntm.explosion.ExplosionNT.ExAttrib;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 
 import java.util.Arrays;
@@ -30,7 +29,7 @@ public final class ExplosionNukeSmall {
                     ParticleUtil.TYPE_MUKE.equals(params.particle) && level.random.nextInt(100) == 0);
         }
 
-        level.playSound(null, x, y, z, ModSounds.WEAPON_MUKE_EXPLOSION.get(), SoundSource.BLOCKS, 15.0F, 1.0F);
+        LegacySoundPlayer.playLegacyMukeExplosion(level, x, y, z);
 
         if (params.shrapnelCount > 0) {
             ExplosionLarge.spawnShrapnels(level, x, y, z, params.shrapnelCount);
@@ -47,8 +46,9 @@ public final class ExplosionNukeSmall {
         if (params.miniNuke) {
             irradiateMiniNukeFootprint(level, x, y, z, params.radiationLevel);
         } else {
-            ExplosionLarge.spawnParticles(level, x, y, z, ExplosionLarge.cloudFunction(Math.round(params.blastRadius)));
-            NuclearExplosionUtil.spawnNuclear(level, Math.round(params.blastRadius), x, y, z);
+            int blastRadius = (int) params.blastRadius;
+            ExplosionLarge.spawnParticles(level, x, y, z, ExplosionLarge.cloudFunction(blastRadius));
+            NuclearExplosionUtil.spawnNuclear(level, blastRadius, x, y, z);
         }
     }
 

@@ -17,6 +17,12 @@ public final class ClientParticleBridge {
                 com.hbm.ntm.client.particle.HbmParticleEffects.burst(pos, state));
     }
 
+    public static boolean isLocalPlayerWithin(double x, double y, double z, double range) {
+        return DistExecutor.unsafeRunForDist(
+                () -> () -> com.hbm.ntm.client.particle.HbmParticleEffects.isLocalPlayerWithin(x, y, z, range),
+                () -> () -> false);
+    }
+
     private ClientParticleBridge() {
     }
 }

@@ -1,0 +1,62 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:assembly_machine",
+    "internal_name":  "ass.mpw10nukesmall",
+    "duration":  200,
+    "power":  100,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:seg_10"
+                                           },
+                            "count":  1
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:plates/weapon_steel"
+                                           },
+                            "count":  16,
+                            "legacy_ore":  "plateWeaponSteel"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:billets/pu239"
+                                           },
+                            "count":  2,
+                            "legacy_ore":  "billetPu239"
+                        },
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:neutron_reflector"
+                                           },
+                            "count":  4
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:ingots/any_high_explosive"
+                                           },
+                            "count":  4,
+                            "legacy_ore":  "ingotAnyHighExplosive"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:circuits/controller"
+                                           },
+                            "count":  1
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:mp_warhead_10_nuclear"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  306
+}

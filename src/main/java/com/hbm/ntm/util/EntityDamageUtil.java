@@ -26,6 +26,11 @@ public final class EntityDamageUtil {
         return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromIgnoreIFrame(victim, type, damage);
     }
 
+    public static boolean attackEntityFromIgnoreIFrame(Entity victim, DamageResistanceHandler.DamageClass damageClass,
+            float damage) {
+        return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromIgnoreIFrame(victim, damageClass.modern(), damage);
+    }
+
     public static boolean attackEntityFromIgnoreIFrame(Entity victim, String legacyTypeOrId, float damage) {
         return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromIgnoreIFrame(victim, legacyTypeOrId, damage);
     }
@@ -36,6 +41,11 @@ public final class EntityDamageUtil {
 
     public static boolean attackEntityFromNt(Entity entity, ResourceKey<DamageType> type, float amount) {
         return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(entity, type, amount);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, DamageResistanceHandler.DamageClass damageClass,
+            float amount) {
+        return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(entity, damageClass.modern(), amount);
     }
 
     public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount) {
@@ -51,6 +61,12 @@ public final class EntityDamageUtil {
         return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(entity, type, amount, ignoreIFrame);
     }
 
+    public static boolean attackEntityFromNt(Entity entity, DamageResistanceHandler.DamageClass damageClass,
+            float amount, boolean ignoreIFrame) {
+        return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(entity, damageClass.modern(), amount,
+                ignoreIFrame);
+    }
+
     public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount, boolean ignoreIFrame) {
         return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(entity, legacyTypeOrId, amount, ignoreIFrame);
     }
@@ -62,6 +78,12 @@ public final class EntityDamageUtil {
     public static boolean attackEntityFromNt(Entity entity, ResourceKey<DamageType> type, float amount,
             float pierceDt, float pierceDr) {
         return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(entity, type, amount, pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, DamageResistanceHandler.DamageClass damageClass,
+            float amount, float pierceDt, float pierceDr) {
+        return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(entity, damageClass.modern(), amount, pierceDt,
+                pierceDr);
     }
 
     public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
@@ -82,6 +104,12 @@ public final class EntityDamageUtil {
                 pierceDt, pierceDr);
     }
 
+    public static boolean attackEntityFromNt(Entity entity, DamageResistanceHandler.DamageClass damageClass,
+            float amount, boolean ignoreIFrame, float pierceDt, float pierceDr) {
+        return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(entity, damageClass.modern(), amount,
+                ignoreIFrame, pierceDt, pierceDr);
+    }
+
     public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
             boolean ignoreIFrame, float pierceDt, float pierceDr) {
         return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(entity, legacyTypeOrId, amount, ignoreIFrame,
@@ -98,6 +126,12 @@ public final class EntityDamageUtil {
             boolean ignoreIFrame, double knockbackMultiplier, float pierceDt, float pierceDr) {
         return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(entity, type, amount, ignoreIFrame,
                 knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, DamageResistanceHandler.DamageClass damageClass,
+            float amount, boolean ignoreIFrame, double knockbackMultiplier, float pierceDt, float pierceDr) {
+        return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(entity, damageClass.modern(), amount,
+                ignoreIFrame, knockbackMultiplier, pierceDt, pierceDr);
     }
 
     public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
@@ -118,10 +152,73 @@ public final class EntityDamageUtil {
                 allowSpecialCancel, knockbackMultiplier, pierceDt, pierceDr);
     }
 
+    public static boolean attackEntityFromNt(LivingEntity living, DamageResistanceHandler.DamageClass damageClass,
+            float amount, boolean ignoreIFrame, boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt,
+            float pierceDr) {
+        return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(living, damageClass.modern(), amount,
+                ignoreIFrame, allowSpecialCancel, knockbackMultiplier, pierceDt, pierceDr);
+    }
+
     public static boolean attackEntityFromNt(LivingEntity living, String legacyTypeOrId, float amount,
             boolean ignoreIFrame, boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt, float pierceDr) {
         return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNt(living, legacyTypeOrId, amount, ignoreIFrame,
                 allowSpecialCancel, knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static com.hbm.ntm.damage.EntityDamageUtil.DamageApplication attackEntityFromNtDetailed(
+            Entity entity, DamageSource source, float amount, boolean ignoreIFrame, boolean allowSpecialCancel,
+            double knockbackMultiplier, float pierceDt, float pierceDr) {
+        return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNtDetailed(entity, source, amount, ignoreIFrame,
+                allowSpecialCancel, knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static com.hbm.ntm.damage.EntityDamageUtil.DamageApplication attackEntityFromNtDetailed(
+            Entity entity, ResourceKey<DamageType> type, float amount, boolean ignoreIFrame, boolean allowSpecialCancel,
+            double knockbackMultiplier, float pierceDt, float pierceDr) {
+        return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNtDetailed(entity, type, amount, ignoreIFrame,
+                allowSpecialCancel, knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static com.hbm.ntm.damage.EntityDamageUtil.DamageApplication attackEntityFromNtDetailed(
+            Entity entity, DamageResistanceHandler.DamageClass damageClass, float amount, boolean ignoreIFrame,
+            boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt, float pierceDr) {
+        return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNtDetailed(entity, damageClass.modern(), amount,
+                ignoreIFrame, allowSpecialCancel, knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static com.hbm.ntm.damage.EntityDamageUtil.DamageApplication attackEntityFromNtDetailed(
+            Entity entity, String legacyTypeOrId, float amount, boolean ignoreIFrame, boolean allowSpecialCancel,
+            double knockbackMultiplier, float pierceDt, float pierceDr) {
+        return com.hbm.ntm.damage.EntityDamageUtil.attackEntityFromNtDetailed(entity, legacyTypeOrId, amount,
+                ignoreIFrame, allowSpecialCancel, knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static com.hbm.ntm.damage.EntityDamageUtil.DamageApplication attackEntityFromNTDetailed(
+            Entity entity, DamageSource source, float amount, boolean ignoreIFrame, boolean allowSpecialCancel,
+            double knockbackMultiplier, float pierceDt, float pierceDr) {
+        return attackEntityFromNtDetailed(entity, source, amount, ignoreIFrame, allowSpecialCancel,
+                knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static com.hbm.ntm.damage.EntityDamageUtil.DamageApplication attackEntityFromNTDetailed(
+            Entity entity, ResourceKey<DamageType> type, float amount, boolean ignoreIFrame, boolean allowSpecialCancel,
+            double knockbackMultiplier, float pierceDt, float pierceDr) {
+        return attackEntityFromNtDetailed(entity, type, amount, ignoreIFrame, allowSpecialCancel,
+                knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static com.hbm.ntm.damage.EntityDamageUtil.DamageApplication attackEntityFromNTDetailed(
+            Entity entity, DamageResistanceHandler.DamageClass damageClass, float amount, boolean ignoreIFrame,
+            boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt, float pierceDr) {
+        return attackEntityFromNtDetailed(entity, damageClass, amount, ignoreIFrame, allowSpecialCancel,
+                knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static com.hbm.ntm.damage.EntityDamageUtil.DamageApplication attackEntityFromNTDetailed(
+            Entity entity, String legacyTypeOrId, float amount, boolean ignoreIFrame, boolean allowSpecialCancel,
+            double knockbackMultiplier, float pierceDt, float pierceDr) {
+        return attackEntityFromNtDetailed(entity, legacyTypeOrId, amount, ignoreIFrame, allowSpecialCancel,
+                knockbackMultiplier, pierceDt, pierceDr);
     }
 
     public static boolean attackEntityFromNT(Entity entity, DamageSource source, float amount) {
@@ -130,6 +227,11 @@ public final class EntityDamageUtil {
 
     public static boolean attackEntityFromNT(Entity entity, ResourceKey<DamageType> type, float amount) {
         return attackEntityFromNt(entity, type, amount);
+    }
+
+    public static boolean attackEntityFromNT(Entity entity, DamageResistanceHandler.DamageClass damageClass,
+            float amount) {
+        return attackEntityFromNt(entity, damageClass, amount);
     }
 
     public static boolean attackEntityFromNT(Entity entity, String legacyTypeOrId, float amount) {
@@ -145,6 +247,11 @@ public final class EntityDamageUtil {
         return attackEntityFromNt(entity, type, amount, ignoreIFrame);
     }
 
+    public static boolean attackEntityFromNT(Entity entity, DamageResistanceHandler.DamageClass damageClass,
+            float amount, boolean ignoreIFrame) {
+        return attackEntityFromNt(entity, damageClass, amount, ignoreIFrame);
+    }
+
     public static boolean attackEntityFromNT(Entity entity, String legacyTypeOrId, float amount, boolean ignoreIFrame) {
         return attackEntityFromNt(entity, legacyTypeOrId, amount, ignoreIFrame);
     }
@@ -156,6 +263,11 @@ public final class EntityDamageUtil {
     public static boolean attackEntityFromNT(Entity entity, ResourceKey<DamageType> type, float amount,
             float pierceDt, float pierceDr) {
         return attackEntityFromNt(entity, type, amount, pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNT(Entity entity, DamageResistanceHandler.DamageClass damageClass,
+            float amount, float pierceDt, float pierceDr) {
+        return attackEntityFromNt(entity, damageClass, amount, pierceDt, pierceDr);
     }
 
     public static boolean attackEntityFromNT(Entity entity, String legacyTypeOrId, float amount,
@@ -173,6 +285,11 @@ public final class EntityDamageUtil {
         return attackEntityFromNt(entity, type, amount, ignoreIFrame, pierceDt, pierceDr);
     }
 
+    public static boolean attackEntityFromNT(Entity entity, DamageResistanceHandler.DamageClass damageClass,
+            float amount, boolean ignoreIFrame, float pierceDt, float pierceDr) {
+        return attackEntityFromNt(entity, damageClass, amount, ignoreIFrame, pierceDt, pierceDr);
+    }
+
     public static boolean attackEntityFromNT(Entity entity, String legacyTypeOrId, float amount,
             boolean ignoreIFrame, float pierceDt, float pierceDr) {
         return attackEntityFromNt(entity, legacyTypeOrId, amount, ignoreIFrame, pierceDt, pierceDr);
@@ -186,6 +303,11 @@ public final class EntityDamageUtil {
     public static boolean attackEntityFromNT(Entity entity, ResourceKey<DamageType> type, float amount,
             boolean ignoreIFrame, double knockbackMultiplier, float pierceDt, float pierceDr) {
         return attackEntityFromNt(entity, type, amount, ignoreIFrame, knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNT(Entity entity, DamageResistanceHandler.DamageClass damageClass,
+            float amount, boolean ignoreIFrame, double knockbackMultiplier, float pierceDt, float pierceDr) {
+        return attackEntityFromNt(entity, damageClass, amount, ignoreIFrame, knockbackMultiplier, pierceDt, pierceDr);
     }
 
     public static boolean attackEntityFromNT(Entity entity, String legacyTypeOrId, float amount,
@@ -203,6 +325,13 @@ public final class EntityDamageUtil {
     public static boolean attackEntityFromNT(LivingEntity living, ResourceKey<DamageType> type, float amount,
             boolean ignoreIFrame, boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt, float pierceDr) {
         return attackEntityFromNt(living, type, amount, ignoreIFrame, allowSpecialCancel, knockbackMultiplier,
+                pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNT(LivingEntity living, DamageResistanceHandler.DamageClass damageClass,
+            float amount, boolean ignoreIFrame, boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt,
+            float pierceDr) {
+        return attackEntityFromNt(living, damageClass, amount, ignoreIFrame, allowSpecialCancel, knockbackMultiplier,
                 pierceDt, pierceDr);
     }
 

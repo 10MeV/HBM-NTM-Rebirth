@@ -10,7 +10,12 @@ import com.hbm.ntm.explosion.ExplosionChaos;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.explosion.ExplosionNT;
 import com.hbm.ntm.explosion.NuclearExplosionUtil;
-import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
+import com.hbm.ntm.explosion.vnt.ExplosionVnt;
+import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorStandard;
+import com.hbm.ntm.explosion.vnt.standard.BlockMutatorFire;
+import com.hbm.ntm.explosion.vnt.standard.BlockProcessorStandard;
+import com.hbm.ntm.explosion.vnt.standard.EntityProcessorCross;
+import com.hbm.ntm.explosion.vnt.standard.PlayerProcessorStandard;
 import com.hbm.ntm.item.missile.MissileItem;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.particle.ParticleUtil;
@@ -94,6 +99,11 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
 
         updateFlight();
         Vec3 motion = getDeltaMovement();
+        if (!level().isClientSide && cluster && motion.y < -1.5D) {
+            explodeClusterInFlight();
+            discard();
+            return;
+        }
         setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
         updateRotationFromMotion(motion);
 
@@ -147,13 +157,10 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         Variant variant = variant();
         switch (variant.impact()) {
             case STANDARD -> {
-                ExplosionLarge.explode(level(), getX(), getY(), getZ(), variant.explosionStrength(),
-                        true, false, true, this);
-                spawnImpactShrapnel(variant);
+                explodeLegacyStandard(variant, false);
             }
             case FIRE -> {
-                ExplosionLarge.explodeFire(level(), getX(), getY(), getZ(), variant.explosionStrength(),
-                        true, false, true, this);
+                explodeLegacyStandard(variant, true);
                 if (variant.igniteRadius() > 0) {
                     ExplosionChaos.igniteFlammableBlocks(level(), Mth.floor(getX() + 0.5D),
                             Mth.floor(getY() + 0.5D), Mth.floor(getZ() + 0.5D), variant.igniteRadius());
@@ -162,19 +169,18 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
                     ExplosionChaos.igniteAllBlocks(level(), Mth.floor(getX()),
                             Mth.floor(getY()), Mth.floor(getZ()), variant.igniteAllRadius());
                 }
-                spawnImpactShrapnel(variant);
             }
-            case DECOY -> WeaponExplosionUtil.explodeStandard(level(), getX(), getY(), getZ(),
-                    variant.explosionStrength(), this, false, false);
+            case DECOY -> level().explode(this, getX(), getY(), getZ(), variant.explosionStrength(),
+                    false, Level.ExplosionInteraction.NONE);
             case CLUSTER -> {
-                WeaponExplosionUtil.explodeStandard(level(), getX(), getY(), getZ(),
-                        variant.explosionStrength(), this, true, true);
+                level().explode(this, getX(), getY(), getZ(), variant.explosionStrength(),
+                        false, Level.ExplosionInteraction.BLOCK);
                 spawnClusterSubmunitions(variant.clusterCount());
             }
             case BUSTER -> {
                 for (int i = 0; i < variant.busterDepth(); i++) {
-                    WeaponExplosionUtil.explodeStandard(level(), getX(), getY() - i, getZ(),
-                            variant.explosionStrength(), this, true, true);
+                    level().explode(this, getX(), getY() - i, getZ(), variant.explosionStrength(),
+                            false, Level.ExplosionInteraction.BLOCK);
                 }
                 ExplosionLarge.spawnParticles(level(), getX(), getY(), getZ(), variant.busterExtraCount());
                 ExplosionLarge.spawnShrapnels(level(), getX(), getY(), getZ(), variant.busterExtraCount(),
@@ -227,6 +233,35 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         }
     }
 
+    private void explodeLegacyStandard(Variant variant, boolean fire) {
+        new ExplosionVnt(level(), getX(), getY(), getZ(), variant.explosionStrength(), this)
+                .setBlockAllocator(new BlockAllocatorStandard(legacyStandardResolution(variant)))
+                .setBlockProcessor(new BlockProcessorStandard().setNoDrop()
+                        .withBlockEffect(fire ? new BlockMutatorFire() : null))
+                .setEntityProcessor(new EntityProcessorCross(7.5D).withRangeMod(2.0F))
+                .setPlayerProcessor(new PlayerProcessorStandard())
+                .explode();
+        spawnLegacyStandardVisual(variant);
+    }
+
+    private static int legacyStandardResolution(Variant variant) {
+        return switch (variant) {
+            case STRONG, INCENDIARY_STRONG -> 32;
+            case BURST, INFERNO -> 48;
+            default -> 24;
+        };
+    }
+
+    private void spawnLegacyStandardVisual(Variant variant) {
+        switch (variant) {
+            case GENERIC, INCENDIARY -> ParticleUtil.spawnLegacyExplosionSmall(level(), getX(), getY(), getZ());
+            case STRONG, INCENDIARY_STRONG, STEALTH -> ParticleUtil.spawnLegacyExplosionStandard(level(), getX(), getY(), getZ());
+            case BURST, INFERNO -> ParticleUtil.spawnLegacyExplosionLarge(level(), getX(), getY(), getZ());
+            default -> {
+            }
+        }
+    }
+
     private void placeVolcanoCore() {
         int originX = Mth.floor(getX());
         int originY = Mth.floor(getY());
@@ -248,26 +283,27 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         }
     }
 
-    private void spawnImpactShrapnel(Variant variant) {
-        if (variant.shrapnelCount() > 0) {
-            ExplosionLarge.spawnShrapnelShower(level(), getX(), getY(), getZ(), variant.shrapnelCount(), 1.0F, this);
-        }
-    }
-
     private void spawnClusterSubmunitions(int count) {
         ExplosionChaos.cluster(level(), getX(), getY(), getZ(), count,
                 getYRot() * Mth.DEG_TO_RAD, getXRot() * Mth.DEG_TO_RAD,
                 (float) Math.PI * 0.25F, (float) Math.PI * 0.25F, 1.0F, this);
     }
 
+    private void explodeClusterInFlight() {
+        Variant variant = variant();
+        level().explode(this, getX(), getY(), getZ(), variant.explosionStrength(),
+                false, Level.ExplosionInteraction.BLOCK);
+        spawnClusterSubmunitions(variant.clusterCount());
+    }
+
     public void killMissile() {
         if (!level().isClientSide) {
-            ExplosionLarge.explode(level(), getX(), getY(), getZ(), 5.0F, true, false, false, this);
+            ExplosionLarge.explode(level(), getX(), getY(), getZ(), 5.0F, true, false, true, this);
             ExplosionLarge.spawnShrapnelShower(level(), getX(), getY(), getZ(),
-                    getDeltaMovement().x, getDeltaMovement().y, getDeltaMovement().z, 12, 0.35D, this);
+                    getDeltaMovement().x, getDeltaMovement().y, getDeltaMovement().z, 15, 0.075D, this);
             ExplosionLarge.spawnMissileDebris(level(), getX(), getY(), getZ(),
-                    getDeltaMovement().x, getDeltaMovement().y, getDeltaMovement().z, 0.35D,
-                    variant().debris(), ItemStack.EMPTY);
+                    getDeltaMovement().x, getDeltaMovement().y, getDeltaMovement().z, 0.25D,
+                    variant().debris(), variant().rareDebrisDrop());
             discard();
         }
     }
@@ -308,6 +344,7 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
 
     public void setVariant(Variant variant) {
         entityData.set(VARIANT, variant.ordinal());
+        cluster = variant.impact() == Impact.CLUSTER;
     }
 
     public float health() {
@@ -336,6 +373,9 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         startZ = tag.getDouble("sZ");
         velocity = tag.getDouble("veloc");
         cluster = tag.getBoolean("cluster");
+        if (!tag.contains("cluster")) {
+            cluster = variant().impact() == Impact.CLUSTER;
+        }
         if (tag.contains("variant")) {
             setVariant(Variant.byId(tag.getInt("variant")));
         }
@@ -526,6 +566,32 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
             return debris;
         }
 
+        public ItemStack rareDebrisDrop() {
+            return switch (this) {
+                case GENERIC -> rareItem("warhead_generic_small");
+                case DECOY -> rareItem("ingot_steel");
+                case INCENDIARY -> rareItem("warhead_incendiary_small");
+                case CLUSTER -> rareItem("warhead_cluster_small");
+                case BUSTER -> rareItem("warhead_buster_small");
+                case STRONG, EMP_STRONG -> rareItem("warhead_generic_medium");
+                case INCENDIARY_STRONG -> rareItem("warhead_incendiary_medium");
+                case CLUSTER_STRONG -> rareItem("warhead_cluster_medium");
+                case BUSTER_STRONG -> rareItem("warhead_buster_medium");
+                case BURST -> rareItem("warhead_generic_large");
+                case INFERNO -> rareItem("warhead_incendiary_large");
+                case RAIN -> rareItem("warhead_cluster_large");
+                case DRILL -> rareItem("warhead_buster_large");
+                case STEALTH -> rareItem("powder_ash_misc");
+                case MICRO -> rareItem("ammo_standard_nuke_high");
+                case BHOLE -> rareItem("black_hole");
+                case TAINT -> rareItem("powder_spark_mix");
+                case NUCLEAR -> rareItem("warhead_nuclear");
+                case MIRV -> rareItem("warhead_mirv");
+                case VOLCANO -> rareItem("warhead_volcano");
+                default -> ItemStack.EMPTY;
+            };
+        }
+
         private static List<ItemStack> buildDebris(Object... entries) {
             List<ItemStack> stacks = new ArrayList<>();
             for (int i = 0; i + 1 < entries.length; i += 2) {
@@ -536,6 +602,11 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
                 }
             }
             return List.copyOf(stacks);
+        }
+
+        private static ItemStack rareItem(String legacyName) {
+            RegistryObject<Item> item = ModItems.legacyItem(legacyName);
+            return item == null ? ItemStack.EMPTY : new ItemStack(item.get());
         }
     }
 

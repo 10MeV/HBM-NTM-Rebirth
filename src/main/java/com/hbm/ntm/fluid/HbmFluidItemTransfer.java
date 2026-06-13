@@ -69,6 +69,22 @@ public final class HbmFluidItemTransfer {
         return loadTankFromSlot(items, inputSlot, outputSlot, tank, Integer.MAX_VALUE, false);
     }
 
+    public static TankSlotTransferResult loadTankFromSlotReport(
+            IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank) {
+        return loadTankFromSlotReport(items, inputSlot, outputSlot, tank, Integer.MAX_VALUE, false);
+    }
+
+    public static TankSlotTransferResult loadTankFromSlotReport(
+            IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank,
+            int maxAmount, boolean simulate) {
+        return TankSlotTransfer.load(inputSlot, outputSlot, tank, maxAmount).processResult(items, simulate);
+    }
+
+    public static TankSlotTransferResult previewLoadTankFromSlot(
+            IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank) {
+        return loadTankFromSlotReport(items, inputSlot, outputSlot, tank, Integer.MAX_VALUE, true);
+    }
+
     public static boolean loadTankFromSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank, int maxAmount, boolean simulate) {
         if (!isValidSlot(items, inputSlot) || !isValidSlot(items, outputSlot) || tank == null || maxAmount <= 0) {
             return false;
@@ -101,6 +117,22 @@ public final class HbmFluidItemTransfer {
 
     public static boolean unloadTankToSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank) {
         return unloadTankToSlot(items, inputSlot, outputSlot, tank, Integer.MAX_VALUE, false);
+    }
+
+    public static TankSlotTransferResult unloadTankToSlotReport(
+            IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank) {
+        return unloadTankToSlotReport(items, inputSlot, outputSlot, tank, Integer.MAX_VALUE, false);
+    }
+
+    public static TankSlotTransferResult unloadTankToSlotReport(
+            IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank,
+            int maxAmount, boolean simulate) {
+        return TankSlotTransfer.unload(inputSlot, outputSlot, tank, maxAmount).processResult(items, simulate);
+    }
+
+    public static TankSlotTransferResult previewUnloadTankToSlot(
+            IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank) {
+        return unloadTankToSlotReport(items, inputSlot, outputSlot, tank, Integer.MAX_VALUE, true);
     }
 
     public static boolean unloadTankToSlot(IItemHandlerModifiable items, int inputSlot, int outputSlot, HbmFluidTank tank, int maxAmount, boolean simulate) {
@@ -772,13 +804,34 @@ public final class HbmFluidItemTransfer {
         }
     }
 
-    public record TankSlotTransferResult(int inputSlot, int outputSlot, TankSlotTransfer.Direction direction,
-                                         boolean moved, int movedAmount, int tankBefore, int tankAfter,
-                                         ItemStack inputBefore, ItemStack inputAfter,
-                                         ItemStack outputBefore, ItemStack outputAfter) {
+    public record TankSlotTransferResult(
+            int inputSlot,
+            int outputSlot,
+            TankSlotTransfer.Direction direction,
+            boolean moved,
+            int movedAmount,
+            int tankBefore,
+            int tankAfter,
+            int tankCapacity,
+            FluidType tankType,
+            int tankPressure,
+            int maxAmount,
+            boolean inputSlotValid,
+            boolean outputSlotValid,
+            boolean standardPressure,
+            boolean inputEmpty,
+            FluidType inputFluidType,
+            int inputFluidAmount,
+            int inputFluidPressure,
+            ItemStack inputBefore,
+            ItemStack inputAfter,
+            ItemStack outputBefore,
+            ItemStack outputAfter) {
         private static TankSlotTransferResult of(TankSlotTransfer transfer, boolean moved, int movedAmount,
                 int tankBefore, int tankAfter, ItemStack inputBefore, ItemStack inputAfter,
-                ItemStack outputBefore, ItemStack outputAfter) {
+                ItemStack outputBefore, ItemStack outputAfter, boolean inputSlotValid, boolean outputSlotValid) {
+            HbmFluidTank tank = transfer.tank();
+            HbmFluidStack inputFluid = safeItemFluid(inputBefore);
             return new TankSlotTransferResult(
                     transfer.inputSlot(),
                     transfer.outputSlot(),
@@ -787,6 +840,17 @@ public final class HbmFluidItemTransfer {
                     Math.max(0, movedAmount),
                     tankBefore,
                     tankAfter,
+                    tank == null ? 0 : tank.getMaxFill(),
+                    tank == null ? HbmFluids.NONE : tank.getTankType(),
+                    tank == null ? 0 : tank.getPressure(),
+                    transfer.maxAmount(),
+                    inputSlotValid,
+                    outputSlotValid,
+                    tank != null && HbmForgeFluidInterop.isStandardPressure(tank.getPressure()),
+                    inputBefore == null || inputBefore.isEmpty(),
+                    inputFluid.type(),
+                    inputFluid.amount(),
+                    inputFluid.pressure(),
                     safeCopy(inputBefore),
                     safeCopy(inputAfter),
                     safeCopy(outputBefore),
@@ -795,6 +859,10 @@ public final class HbmFluidItemTransfer {
 
         private static ItemStack safeCopy(ItemStack stack) {
             return stack == null ? ItemStack.EMPTY : stack.copy();
+        }
+
+        private static HbmFluidStack safeItemFluid(ItemStack stack) {
+            return stack == null || stack.isEmpty() ? new HbmFluidStack(HbmFluids.NONE, 0) : getItemFluid(stack);
         }
     }
 
@@ -827,16 +895,18 @@ public final class HbmFluidItemTransfer {
         }
 
         private TankSlotTransferResult processResult(IItemHandlerModifiable items, boolean simulate) {
+            boolean inputSlotValid = isValidSlot(items, inputSlot);
+            boolean outputSlotValid = isValidSlot(items, outputSlot);
             int tankBefore = tank == null ? 0 : tank.getFill();
-            ItemStack inputBefore = isValidSlot(items, inputSlot) ? items.getStackInSlot(inputSlot) : ItemStack.EMPTY;
-            ItemStack outputBefore = isValidSlot(items, outputSlot) ? items.getStackInSlot(outputSlot) : ItemStack.EMPTY;
+            ItemStack inputBefore = inputSlotValid ? items.getStackInSlot(inputSlot) : ItemStack.EMPTY;
+            ItemStack outputBefore = outputSlotValid ? items.getStackInSlot(outputSlot) : ItemStack.EMPTY;
             boolean moved = process(items, simulate);
             int tankAfter = tank == null ? tankBefore : tank.getFill();
-            ItemStack inputAfter = isValidSlot(items, inputSlot) ? items.getStackInSlot(inputSlot) : inputBefore;
-            ItemStack outputAfter = isValidSlot(items, outputSlot) ? items.getStackInSlot(outputSlot) : outputBefore;
+            ItemStack inputAfter = inputSlotValid ? items.getStackInSlot(inputSlot) : inputBefore;
+            ItemStack outputAfter = outputSlotValid ? items.getStackInSlot(outputSlot) : outputBefore;
             int movedAmount = moved ? estimateMovedAmount(tankBefore, tankAfter, inputBefore) : 0;
             return TankSlotTransferResult.of(this, moved, movedAmount, tankBefore, tankAfter,
-                    inputBefore, inputAfter, outputBefore, outputAfter);
+                    inputBefore, inputAfter, outputBefore, outputAfter, inputSlotValid, outputSlotValid);
         }
 
         private int estimateMovedAmount(int tankBefore, int tankAfter, ItemStack inputBefore) {

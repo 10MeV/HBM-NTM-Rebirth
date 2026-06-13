@@ -63,7 +63,7 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart {
         if (player.getItemInHand(hand).is(ModItems.RADAR_LINKER.get())) {
             return InteractionResult.PASS;
         }
-        if (!level.isClientSide && !player.isShiftKeyDown()
+        if (!level.isClientSide
                 && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
             return dummy.forwardUse(serverPlayer, hand, hit);
@@ -138,6 +138,20 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart {
     }
 
     @Override
+    public boolean hasAnalogOutputSignal(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core == null || !core.state().hasAnalogOutputSignal()) {
+            return 0;
+        }
+        return core.state().getAnalogOutputSignal(level, core.pos());
+    }
+
+    @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return forwardedShape(level, pos, context, false);
     }
@@ -166,13 +180,9 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart {
             if (collision && !coreBlock.usesForwardedDummyCollisionShape(core.state(), level, core.pos())) {
                 return SHAPE;
             }
-            VoxelShape shape = collision
-                    ? coreBlock.getMultiblockCollisionShape(core.state(), level, core.pos(), context)
-                    : coreBlock.getMultiblockShape(core.state(), level, core.pos(), context);
-            return shape.move(
-                    core.pos().getX() - pos.getX(),
-                    core.pos().getY() - pos.getY(),
-                    core.pos().getZ() - pos.getZ());
+            return collision
+                    ? coreBlock.getMultiblockDummyCollisionShape(core.state(), level, core.pos(), pos, context)
+                    : coreBlock.getMultiblockDummyShape(core.state(), level, core.pos(), pos, context);
         }
         return SHAPE;
     }

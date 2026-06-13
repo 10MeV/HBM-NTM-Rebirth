@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.boytarget",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:nuggets/u235" }, "count": 18, "legacy_ore": "nuggetU235" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:boy_target" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 216
+}

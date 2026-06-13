@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.soliniumcore",
+  "duration": 600,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:nuggets/solinium" }, "count": 9, "legacy_ore": "nuggetSolinium" },
+    { "ingredient": { "tag": "forge:nuggets/euphemium" }, "count": 1, "legacy_ore": "nuggetEuphemium" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:solinium_core" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 229
+}

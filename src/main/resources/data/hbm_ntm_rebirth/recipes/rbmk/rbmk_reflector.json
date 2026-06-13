@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "GGG",
+    "GRG",
+    "GGG"
+  ],
+  "key": {
+    "G": {
+      "item": "hbm_ntm_rebirth:neutron_reflector"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:rbmk_blank"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_reflector"
+  },
+  "show_notification": true
+}

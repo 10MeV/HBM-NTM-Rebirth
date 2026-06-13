@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.warheadinc2",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:warhead_generic_medium" }, "count": 1 },
+    { "ingredient": { "tag": "forge:dusts/red_phosphorus" }, "count": 4, "legacy_ore": "dustRedPhosphorus" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:warhead_incendiary_medium" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 254
+}

@@ -3,7 +3,6 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.PyroOvenBlockEntity;
-import com.hbm.ntm.client.obj.LegacyObjTransforms;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -55,16 +54,33 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
 
         model.renderPart("Oven", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
 
-        poseStack.pushPose();
-        poseStack.translate(LegacyObjTransforms.softPeakSine(anim * 0.125D) / 2.0D - 0.5D, 0.0D, 0.0D);
-        model.renderPart("Slider", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+        LegacyTileRenderPlans.PyroOvenPlan plan = LegacyTileRenderPlans.pyroOvenPlan(anim);
+        renderTranslatedPart(model, plan.slider(), definition, poseStack, buffer, modelLight, packedOverlay);
+        renderRotatingPart(model, plan.fan(), definition, poseStack, buffer, modelLight, packedOverlay);
 
-        poseStack.pushPose();
-        LegacyObjTransforms.rotateAroundY(poseStack, 1.5D, 0.0D, 1.5D, (anim * 45.0F) % 360.0F);
-        model.renderPart("Fan", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         poseStack.popPose();
+    }
 
+    private static void renderTranslatedPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.TranslatedModelPartPlan part, LegacyMachineDefinition definition,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!part.active()) {
+            return;
+        }
+        poseStack.pushPose();
+        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
+        model.renderPart(part.partName(), definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, LegacyMachineDefinition definition,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) part.angleDegrees()));
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        model.renderPart(part.partName(), definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 }

@@ -483,31 +483,23 @@ public final class LegacySednaRuntimeBulletConfigs {
     }
 
     private static ResourceKey<DamageType> damageType(DamageClass damageClass) {
-        return switch (damageClass) {
-            case FIRE -> ModDamageSources.FLAMETHROWER;
-            case EXPLOSIVE -> ModDamageSources.EXPLOSION;
-            case ELECTRIC -> ModDamageSources.ELECTRIC;
-            case PLASMA -> ModDamageSources.PLASMA;
-            case LASER -> ModDamageSources.LASER;
-            case SUBATOMIC -> ModDamageSources.SUBATOMIC;
-            default -> ModDamageSources.REVOLVER_BULLET;
-        };
+        return ModDamageSources.damageClassKey(damageClass);
     }
 
     private static boolean damageProjectile(DamageClass damageClass) {
-        return damageClass == DamageClass.PHYSICAL || damageClass == DamageClass.SUBATOMIC;
+        return ModDamageSources.isProjectile(damageClass);
     }
 
     private static boolean damageFire(DamageClass damageClass) {
-        return damageClass == DamageClass.FIRE || damageClass == DamageClass.PLASMA;
+        return ModDamageSources.isFireDamage(damageClass);
     }
 
     private static boolean damageExplosion(DamageClass damageClass) {
-        return damageClass == DamageClass.EXPLOSIVE;
+        return ModDamageSources.isExplosion(damageClass);
     }
 
     private static boolean damageBypass(DamageClass damageClass) {
-        return damageClass == DamageClass.SUBATOMIC;
+        return ModDamageSources.isUnblockable(damageClass);
     }
 
     private LegacySednaRuntimeBulletConfigs() {

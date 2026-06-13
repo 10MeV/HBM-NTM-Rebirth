@@ -12,6 +12,8 @@ import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -27,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("deprecation")
 public class LegacyLanternBlock extends BaseEntityBlock {
     public static final IntegerProperty SEGMENT = IntegerProperty.create("segment", 0, 4);
-    private static final VoxelShape SHAPE = box(4.0D, 0.0D, 4.0D, 12.0D, 16.0D, 12.0D);
+    private static final VoxelShape SHAPE = Shapes.block();
 
     public LegacyLanternBlock(BlockBehaviour.Properties properties) {
         super(properties);
@@ -68,9 +70,6 @@ public class LegacyLanternBlock extends BaseEntityBlock {
 
     @Override
     public List<ItemStack> getDrops(BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder builder) {
-        if (state.getValue(SEGMENT) != 0) {
-            return List.of();
-        }
         return super.getDrops(state, builder);
     }
 
@@ -100,7 +99,7 @@ public class LegacyLanternBlock extends BaseEntityBlock {
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return state.getValue(SEGMENT) == 0 ? SHAPE : Shapes.empty();
+        return SHAPE;
     }
 
     @Override
@@ -115,13 +114,26 @@ public class LegacyLanternBlock extends BaseEntityBlock {
 
     @Override
     public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
-        return state.getValue(SEGMENT) == 0 ? super.getLightEmission(state, level, pos) : 0;
+        return super.getLightEmission(state, level, pos);
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return state.getValue(SEGMENT) == 0 ? new LegacyLanternBlockEntity(pos, state) : null;
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        if (level.isClientSide || state.getValue(SEGMENT) != 0) {
+            return null;
+        }
+        return (tickLevel, tickPos, tickState, blockEntity) -> {
+            if (blockEntity instanceof LegacyLanternBlockEntity lantern) {
+                LegacyLanternBlockEntity.serverTick(tickLevel, tickPos, tickState, lantern);
+            }
+        };
     }
 
     @Override

@@ -26,19 +26,19 @@ public final class ModEffects {
     public static final RegistryObject<MobEffect> RADAWAY =
             EFFECTS.register("radaway", RadawayMobEffect::new);
     public static final RegistryObject<MobEffect> RADX =
-            EFFECTS.register("radx", () -> new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x4FAE4F));
+            EFFECTS.register("radx", () -> new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0xBB4B00));
     public static final RegistryObject<MobEffect> TAINT =
             EFFECTS.register("taint", TaintMobEffect::new);
     public static final RegistryObject<MobEffect> MUTATION =
-            EFFECTS.register("mutation", () -> new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x63C642));
+            EFFECTS.register("mutation", () -> new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x800080));
     public static final RegistryObject<MobEffect> STABILITY =
-            EFFECTS.register("stability", () -> new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x4F9CFF));
+            EFFECTS.register("stability", () -> new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0xD0D0D0));
     public static final RegistryObject<MobEffect> LEAD =
             EFFECTS.register("lead", LeadMobEffect::new);
     public static final RegistryObject<MobEffect> PHOSPHORUS =
             EFFECTS.register("phosphorus", PhosphorusMobEffect::new);
     public static final RegistryObject<MobEffect> POTION_SICKNESS =
-            EFFECTS.register("potionsickness", () -> new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFF8080));
+            EFFECTS.register("potionsickness", () -> new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0xFF8080));
     public static final RegistryObject<MobEffect> DEATH =
             EFFECTS.register("death", () -> new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x111111));
 

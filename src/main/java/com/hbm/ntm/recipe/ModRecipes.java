@@ -20,6 +20,10 @@ public final class ModRecipes {
             SERIALIZERS.register("fluid_duct_identifier",
                     () -> new net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer<>(
                             FluidDuctIdentifierRecipe::new));
+    public static final RegistryObject<RecipeSerializer<RBMKFuelDisassemblyRecipe>> RBMK_FUEL_DISASSEMBLY =
+            SERIALIZERS.register("rbmk_fuel_disassembly",
+                    () -> new net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer<>(
+                            RBMKFuelDisassemblyRecipe::new));
     public static final RecipeHolder<PressRecipe> PRESS = register("press", PressRecipe.Serializer::new);
     public static final RecipeHolder<GenericMachineRecipe> CHEMICAL_PLANT =
             register("chemical_plant", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.CHEMICAL_PLANT));

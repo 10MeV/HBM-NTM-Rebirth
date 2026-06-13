@@ -79,12 +79,59 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
         return fill(resource, FluidAction.SIMULATE);
     }
 
+    public ForgeFillReport previewFillReport(FluidStack resource) {
+        return fillReport(resource, FluidAction.SIMULATE);
+    }
+
+    public ForgeFillReport fillReport(FluidStack resource, FluidAction action) {
+        boolean simulate = action == null || action.simulate();
+        boolean stackPresent = resource != null && !resource.isEmpty();
+        FluidType type = stackPresent ? HbmFluidForgeMappings.fromForge(resource) : HbmFluids.NONE;
+        boolean importMapped = type != HbmFluids.NONE;
+        int requested = stackPresent ? resource.getAmount() : 0;
+        if (!canFill || !stackPresent || !importMapped || requested <= 0) {
+            return new ForgeFillReport(simulate, canFill, stackPresent, importMapped, type, requested, 0, List.of());
+        }
+
+        int remaining = requested;
+        int filled = 0;
+        List<TankFillDetail> details = new ArrayList<>();
+        for (HbmFluidTank tank : inputTanks) {
+            if (remaining <= 0) {
+                break;
+            }
+            int before = tank.getFill();
+            FluidType typeBefore = tank.getTankType();
+            boolean eligible = HbmForgeFluidInterop.canFillFromForge(tank, inputPressure)
+                    && tank.canAccept(type, inputPressure);
+            int accepted = eligible ? tank.fill(type, remaining, inputPressure, simulate) : 0;
+            int after = tank.getFill();
+            FluidType typeAfter = tank.getTankType();
+            filled += accepted;
+            remaining -= accepted;
+            details.add(TankFillDetail.of(tanks.indexOf(tank), tank, eligible, accepted,
+                    typeBefore, typeAfter, before, after));
+        }
+        if (!simulate && filled > 0) {
+            onChanged.run();
+        }
+        return new ForgeFillReport(simulate, canFill, true, true, type, requested, filled, details);
+    }
+
     public FluidStack previewDrain(FluidStack resource) {
         return drain(resource, FluidAction.SIMULATE);
     }
 
+    public ForgeDrainReport previewDrainReport(FluidStack resource) {
+        return drainReport(resource, FluidAction.SIMULATE);
+    }
+
     public FluidStack previewDrain(int maxDrain) {
         return drain(maxDrain, FluidAction.SIMULATE);
+    }
+
+    public ForgeDrainReport previewDrainReport(int maxDrain) {
+        return drainReport(maxDrain, FluidAction.SIMULATE);
     }
 
     @Override
@@ -122,52 +169,43 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
 
     @Override
     public int fill(FluidStack resource, FluidAction action) {
-        if (!canFill || resource == null || resource.isEmpty()) {
-            return 0;
-        }
-        FluidType type = HbmFluidForgeMappings.fromForge(resource);
-        if (type == HbmFluids.NONE) {
-            return 0;
-        }
-        int remaining = resource.getAmount();
-        int filled = 0;
-        boolean simulate = action.simulate();
-        for (HbmFluidTank tank : inputTanks) {
-            if (!HbmForgeFluidInterop.canFillFromForge(tank, inputPressure)) {
-                continue;
-            }
-            if (remaining <= 0) {
-                break;
-            }
-            int accepted = tank.fill(type, remaining, inputPressure, simulate);
-            filled += accepted;
-            remaining -= accepted;
-        }
-        if (!simulate && filled > 0) {
-            onChanged.run();
-        }
-        return filled;
+        return fillReport(resource, action).acceptedMb();
     }
 
     @Override
     public FluidStack drain(FluidStack resource, FluidAction action) {
-        if (!canDrain || resource == null || resource.isEmpty()) {
-            return FluidStack.EMPTY;
+        return drainReport(resource, action).drainedStack();
+    }
+
+    public ForgeDrainReport drainReport(FluidStack resource, FluidAction action) {
+        boolean simulate = action == null || action.simulate();
+        boolean stackPresent = resource != null && !resource.isEmpty();
+        FluidType type = stackPresent ? HbmFluidForgeMappings.fromForgeExport(resource) : HbmFluids.NONE;
+        boolean exportMapped = type != HbmFluids.NONE;
+        int requested = stackPresent ? resource.getAmount() : 0;
+        if (!canDrain || !stackPresent || !exportMapped || requested <= 0) {
+            return new ForgeDrainReport(simulate, canDrain, stackPresent, exportMapped, type, requested,
+                    0, FluidStack.EMPTY, List.of());
         }
-        FluidType type = HbmFluidForgeMappings.fromForgeExport(resource);
-        if (type == HbmFluids.NONE) {
-            return FluidStack.EMPTY;
-        }
-        int drained = drainMatching(type, resource.getAmount(), action.simulate());
-        return drained <= 0 ? FluidStack.EMPTY : new FluidStack(resource.getFluid(), drained);
+        DrainMatchReport match = drainMatchingReport(type, requested, simulate);
+        FluidStack drainedStack = match.drainedMb() <= 0 ? FluidStack.EMPTY : new FluidStack(resource.getFluid(), match.drainedMb());
+        return new ForgeDrainReport(simulate, canDrain, true, true, type, requested,
+                match.drainedMb(), drainedStack, match.details());
     }
 
     @Override
     public FluidStack drain(int maxDrain, FluidAction action) {
-        if (!canDrain || maxDrain <= 0) {
-            return FluidStack.EMPTY;
-        }
+        return drainReport(maxDrain, action).drainedStack();
+    }
+
+    public ForgeDrainReport drainReport(int maxDrain, FluidAction action) {
+        boolean simulate = action == null || action.simulate();
         FluidType type = HbmFluids.NONE;
+        boolean stackPresent = maxDrain > 0;
+        if (!canDrain || maxDrain <= 0) {
+            return new ForgeDrainReport(simulate, canDrain, stackPresent, false, type, Math.max(0, maxDrain),
+                    0, FluidStack.EMPTY, List.of());
+        }
         for (HbmFluidTank tank : outputTanks) {
             if (!HbmForgeFluidInterop.canExposeToForge(tank)) {
                 continue;
@@ -176,30 +214,42 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
             break;
         }
         if (type == HbmFluids.NONE) {
-            return FluidStack.EMPTY;
+            return new ForgeDrainReport(simulate, canDrain, true, false, type, maxDrain,
+                    0, FluidStack.EMPTY, List.of());
         }
-        int drained = drainMatching(type, maxDrain, action.simulate());
-        return drained <= 0 ? FluidStack.EMPTY : HbmFluidForgeMappings.toForge(type, drained);
+        DrainMatchReport match = drainMatchingReport(type, maxDrain, simulate);
+        FluidStack drainedStack = match.drainedMb() <= 0 ? FluidStack.EMPTY : HbmFluidForgeMappings.toForge(type, match.drainedMb());
+        return new ForgeDrainReport(simulate, canDrain, true, true, type, maxDrain,
+                match.drainedMb(), drainedStack, match.details());
     }
 
     private int drainMatching(FluidType type, int amount, boolean simulate) {
+        return drainMatchingReport(type, amount, simulate).drainedMb();
+    }
+
+    private DrainMatchReport drainMatchingReport(FluidType type, int amount, boolean simulate) {
         int remaining = amount;
         int drained = 0;
+        List<TankDrainDetail> details = new ArrayList<>();
         for (HbmFluidTank tank : outputTanks) {
             if (remaining <= 0) {
                 break;
             }
-            if (tank.getTankType() != type || !HbmForgeFluidInterop.canExposeToForge(tank)) {
-                continue;
-            }
-            int taken = tank.drain(remaining, simulate);
+            int before = tank.getFill();
+            FluidType typeBefore = tank.getTankType();
+            boolean eligible = tank.getTankType() == type && HbmForgeFluidInterop.canExposeToForge(tank);
+            int taken = eligible ? tank.drain(remaining, simulate) : 0;
+            int after = tank.getFill();
+            FluidType typeAfter = tank.getTankType();
             drained += taken;
             remaining -= taken;
+            details.add(TankDrainDetail.of(tanks.indexOf(tank), tank, eligible, taken,
+                    typeBefore, typeAfter, before, after));
         }
         if (!simulate && drained > 0) {
             onChanged.run();
         }
-        return drained;
+        return new DrainMatchReport(drained, details);
     }
 
     private boolean isValidTank(int tank) {
@@ -228,5 +278,106 @@ public class ForgeFluidHandlerAdapter implements IFluidHandler {
             int inputPressure,
             boolean canFill,
             boolean canDrain) {
+    }
+
+    public record ForgeFillReport(
+            boolean simulated,
+            boolean adapterCanFill,
+            boolean stackPresent,
+            boolean importMapped,
+            FluidType hbmType,
+            int requestedMb,
+            int acceptedMb,
+            List<TankFillDetail> details) {
+        public ForgeFillReport {
+            hbmType = hbmType == null ? HbmFluids.NONE : hbmType;
+            requestedMb = Math.max(0, requestedMb);
+            acceptedMb = Math.max(0, acceptedMb);
+            details = details == null ? List.of() : List.copyOf(details);
+        }
+
+        public boolean moved() {
+            return acceptedMb > 0;
+        }
+    }
+
+    public record ForgeDrainReport(
+            boolean simulated,
+            boolean adapterCanDrain,
+            boolean requestPresent,
+            boolean exportMapped,
+            FluidType hbmType,
+            int requestedMb,
+            int drainedMb,
+            FluidStack drainedStack,
+            List<TankDrainDetail> details) {
+        public ForgeDrainReport {
+            hbmType = hbmType == null ? HbmFluids.NONE : hbmType;
+            requestedMb = Math.max(0, requestedMb);
+            drainedMb = Math.max(0, drainedMb);
+            drainedStack = drainedStack == null ? FluidStack.EMPTY : drainedStack.copy();
+            details = details == null ? List.of() : List.copyOf(details);
+        }
+
+        public boolean moved() {
+            return drainedMb > 0;
+        }
+    }
+
+    public record TankFillDetail(
+            int visibleTankIndex,
+            FluidType typeBefore,
+            FluidType typeAfter,
+            int pressure,
+            int fillBefore,
+            int fillAfter,
+            int capacity,
+            boolean eligible,
+            int acceptedMb) {
+        private static TankFillDetail of(int visibleTankIndex, HbmFluidTank tank, boolean eligible, int acceptedMb,
+                FluidType typeBefore, FluidType typeAfter, int fillBefore, int fillAfter) {
+            return new TankFillDetail(
+                    visibleTankIndex,
+                    typeBefore == null ? HbmFluids.NONE : typeBefore,
+                    typeAfter == null ? HbmFluids.NONE : typeAfter,
+                    tank == null ? 0 : tank.getPressure(),
+                    fillBefore,
+                    fillAfter,
+                    tank == null ? 0 : tank.getMaxFill(),
+                    eligible,
+                    Math.max(0, acceptedMb));
+        }
+    }
+
+    public record TankDrainDetail(
+            int visibleTankIndex,
+            FluidType typeBefore,
+            FluidType typeAfter,
+            int pressure,
+            int fillBefore,
+            int fillAfter,
+            int capacity,
+            boolean eligible,
+            int drainedMb) {
+        private static TankDrainDetail of(int visibleTankIndex, HbmFluidTank tank, boolean eligible, int drainedMb,
+                FluidType typeBefore, FluidType typeAfter, int fillBefore, int fillAfter) {
+            return new TankDrainDetail(
+                    visibleTankIndex,
+                    typeBefore == null ? HbmFluids.NONE : typeBefore,
+                    typeAfter == null ? HbmFluids.NONE : typeAfter,
+                    tank == null ? 0 : tank.getPressure(),
+                    fillBefore,
+                    fillAfter,
+                    tank == null ? 0 : tank.getMaxFill(),
+                    eligible,
+                    Math.max(0, drainedMb));
+        }
+    }
+
+    private record DrainMatchReport(int drainedMb, List<TankDrainDetail> details) {
+        private DrainMatchReport {
+            drainedMb = Math.max(0, drainedMb);
+            details = details == null ? List.of() : List.copyOf(details);
+        }
     }
 }

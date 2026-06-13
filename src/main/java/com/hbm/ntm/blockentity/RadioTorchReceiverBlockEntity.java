@@ -18,20 +18,19 @@ public class RadioTorchReceiverBlockEntity extends RadioTorchDeviceBlockEntity {
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadioTorchReceiverBlockEntity torch) {
-        if (torch.radio.channel().isEmpty()) {
-            return;
+        if (!torch.radio.channel().isEmpty()) {
+            RTTYSystem.RTTYChannel channel = RTTYSystem.listen(level, torch.radio.channel());
+            RTTYDeviceState.RedstoneReceiveResult result = torch.radio.receiveRedstoneSignal(channel, level.getGameTime());
+            if (result.received()) {
+                if (result.selfDestruct()) {
+                    torch.selfDestruct();
+                    return;
+                }
+                if (torch.radio.applyLastState(result.redstoneLevel())) {
+                    torch.setChangedAndSync(true);
+                }
+            }
         }
-        RTTYSystem.RTTYChannel channel = RTTYSystem.listen(level, torch.radio.channel());
-        RTTYDeviceState.RedstoneReceiveResult result = torch.radio.receiveRedstoneSignal(channel, level.getGameTime());
-        if (!result.received()) {
-            return;
-        }
-        if (result.selfDestruct()) {
-            torch.selfDestruct();
-            return;
-        }
-        if (torch.radio.applyLastState(result.redstoneLevel())) {
-            torch.setChangedAndSync(true);
-        }
+        torch.networkPackLegacyRadioTorch();
     }
 }

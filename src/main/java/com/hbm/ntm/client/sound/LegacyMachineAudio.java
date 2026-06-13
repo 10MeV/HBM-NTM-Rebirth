@@ -21,6 +21,12 @@ public final class LegacyMachineAudio {
     public static Object updateLoop(Object current, BlockEntity blockEntity, ResourceLocation sound,
             boolean active, double maxDistance, float range, float volume, float pitch) {
         SoundLoopMachine loop = current instanceof SoundLoopMachine machine ? machine : null;
+        if (sound == null) {
+            if (loop != null) {
+                loop.requestStop();
+            }
+            return null;
+        }
         Minecraft minecraft = Minecraft.getInstance();
         boolean audible = active
                 && minecraft.player != null
@@ -46,6 +52,9 @@ public final class LegacyMachineAudio {
 
     public static void playLocal(BlockEntity blockEntity, ResourceLocation sound, float volume, float pitch,
             double maxDistance) {
+        if (sound == null) {
+            return;
+        }
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) {
             return;

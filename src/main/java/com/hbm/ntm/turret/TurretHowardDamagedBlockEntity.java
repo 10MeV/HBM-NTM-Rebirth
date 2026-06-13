@@ -6,7 +6,6 @@ import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.particle.LegacyCasingEjectors;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -65,13 +64,6 @@ public class TurretHowardDamagedBlockEntity extends DamagedTurretBlockEntityBase
     }
 
     @Override
-    protected void tickServerSpecificAnimations() {
-        if (getTargetPos() != null) {
-            triggerBarrelSpin(45.0F);
-        }
-    }
-
-    @Override
     protected void tickClientSpecificAnimations() {
         if (getTargetPos() != null) {
             triggerClientBarrelSpin(45.0F);
@@ -89,7 +81,7 @@ public class TurretHowardDamagedBlockEntity extends DamagedTurretBlockEntityBase
         }
         spawnMuzzleLargeExplodeAt(getMuzzlePos().add(rotateLegacyLocal(new Vec3(0.0D, 0.25D, 0.0D))), 1.5F, 1);
         spawnHowardCasing();
-        playTurretSound(ModSounds.TURRET_HOWARD_FIRE.get(), 4.0F, 0.7F + level.random.nextFloat() * 0.3F);
+        playTurretSound("hbm:turret.howard_fire", 4.0F, 0.7F + level.random.nextFloat() * 0.3F);
         Entity target = getTarget();
         if (target != null && level.random.nextInt(100) + 1 <= WeaponConfig.ciwsHitrate() * 0.5D) {
             EntityDamageUtil.attackEntityFromIgnoreIFrame(target, ModDamageSources.shrapnel(level),

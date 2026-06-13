@@ -137,12 +137,18 @@ public final class HbmRecipeProvider extends RecipeProvider {
         legacyToolRecipes(consumer);
         legacyPartRecipes(consumer);
         legacyStructuralRecipes(consumer);
+        legacyUpgradeRecipes(consumer);
+        legacyWeaponPartRecipes(consumer);
+        legacyBombPartRecipes(consumer);
+        legacyStandardMissileRecipes(consumer);
         legacyArmorTableRecipe(consumer);
         legacyArmorModuleMaterialRecipes(consumer);
         legacyArmorModuleRecipes(consumer);
         legacyHazmatRecipes(consumer);
         legacyArmorRecipes(consumer);
         legacyArtilleryAmmoRecipes(consumer);
+        legacyCustomMissilePartRecipes(consumer);
+        legacyAmmunitionRecipes(consumer);
         legacyTurretRecipes(consumer);
 
         chemicalPlantSourceRecipes(consumer);
@@ -299,6 +305,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void rbmkRecipes(Consumer<FinishedRecipe> consumer) {
+        SpecialRecipeBuilder.special(ModRecipes.RBMK_FUEL_DISASSEMBLY.get())
+                .save(consumer, id("rbmk/rbmk_fuel_disassembly").toString());
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.RBMK_LID.get(), 4)
                 .pattern("PPP")
                 .pattern("CCC")
@@ -345,6 +354,189 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('R', item("rod_quad_empty"))
                 .unlockedBy("has_zirconium_ingot", has(item("ingot_zirconium")))
                 .save(consumer, id("rbmk/rbmk_fuel_empty"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_BLANK.get())
+                .pattern("RRR")
+                .pattern("R R")
+                .pattern("RRR")
+                .define('R', block("deco_rbmk"))
+                .unlockedBy("has_deco_rbmk", has(block("deco_rbmk")))
+                .save(consumer, id("rbmk/rbmk_blank_from_deco_rbmk"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_BLANK.get())
+                .pattern("RRR")
+                .pattern("R R")
+                .pattern("RRR")
+                .define('R', block("deco_rbmk_smooth"))
+                .unlockedBy("has_deco_rbmk_smooth", has(block("deco_rbmk_smooth")))
+                .save(consumer, id("rbmk/rbmk_blank_from_deco_rbmk_smooth"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_MODERATOR.get())
+                .pattern(" G ")
+                .pattern("GRG")
+                .pattern(" G ")
+                .define('G', ModBlocks.BLOCK_GRAPHITE.get())
+                .define('R', ModBlocks.RBMK_BLANK.get())
+                .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
+                .save(consumer, id("rbmk/rbmk_moderator"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_ABSORBER.get())
+                .pattern("GGG")
+                .pattern("GRG")
+                .pattern("GGG")
+                .define('G', forgeTag("ingots/boron"))
+                .define('R', ModBlocks.RBMK_BLANK.get())
+                .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
+                .save(consumer, id("rbmk/rbmk_absorber"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_REFLECTOR.get())
+                .pattern("GGG")
+                .pattern("GRG")
+                .pattern("GGG")
+                .define('G', item("neutron_reflector"))
+                .define('R', ModBlocks.RBMK_BLANK.get())
+                .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
+                .save(consumer, id("rbmk/rbmk_reflector"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_ROD.get())
+                .pattern("C")
+                .pattern("R")
+                .pattern("C")
+                .define('C', forgeTag("shells/steel"))
+                .define('R', ModBlocks.RBMK_BLANK.get())
+                .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
+                .save(consumer, id("rbmk/rbmk_rod"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_ROD_MOD.get())
+                .pattern("BGB")
+                .pattern("GRG")
+                .pattern("BGB")
+                .define('G', ModBlocks.BLOCK_GRAPHITE.get())
+                .define('R', ModBlocks.RBMK_ROD.get())
+                .define('B', item("nugget_bismuth"))
+                .unlockedBy("has_rbmk_rod", has(ModBlocks.RBMK_ROD.get()))
+                .save(consumer, id("rbmk/rbmk_rod_mod"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_ROD_REASIM.get())
+                .pattern("ZCZ")
+                .pattern("ZRZ")
+                .pattern("ZCZ")
+                .define('Z', item("ingot_zirconium"))
+                .define('C', forgeTag("shells/steel"))
+                .define('R', ModBlocks.RBMK_BLANK.get())
+                .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
+                .save(consumer, id("rbmk/rbmk_rod_reasim"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_ROD_REASIM_MOD.get())
+                .pattern("BGB")
+                .pattern("GRG")
+                .pattern("BGB")
+                .define('G', ModBlocks.BLOCK_GRAPHITE.get())
+                .define('R', ModBlocks.RBMK_ROD_REASIM.get())
+                .define('B', forgeTag("ingots/any_resistant_alloy"))
+                .unlockedBy("has_rbmk_rod_reasim", has(ModBlocks.RBMK_ROD_REASIM.get()))
+                .save(consumer, id("rbmk/rbmk_rod_reasim_mod"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_BOILER.get())
+                .pattern("CPC")
+                .pattern("CRC")
+                .pattern("CPC")
+                .define('C', forgeTag("pipes/copper"))
+                .define('P', forgeTag("shells/copper"))
+                .define('R', ModBlocks.RBMK_BLANK.get())
+                .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
+                .save(consumer, id("rbmk/rbmk_boiler"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_HEATER.get())
+                .pattern("CIC")
+                .pattern("PRP")
+                .pattern("CIC")
+                .define('C', forgeTag("pipes/copper"))
+                .define('I', forgeTag("ingots/any_plastic"))
+                .define('P', forgeTag("shells/steel"))
+                .define('R', ModBlocks.RBMK_BLANK.get())
+                .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
+                .save(consumer, id("rbmk/rbmk_heater"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_STORAGE.get())
+                .pattern("C")
+                .pattern("R")
+                .pattern("C")
+                .define('C', ModBlocks.CRATE_STEEL.get())
+                .define('R', ModBlocks.RBMK_BLANK.get())
+                .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
+                .save(consumer, id("rbmk/rbmk_storage"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_OUTGASSER.get())
+                .pattern("GHG")
+                .pattern("GRG")
+                .pattern("GTG")
+                .define('G', ModBlocks.STEEL_GRATE.get())
+                .define('H', Items.HOPPER)
+                .define('R', ModBlocks.RBMK_BLANK.get())
+                .define('T', item("tank_steel"))
+                .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
+                .save(consumer, id("rbmk/rbmk_outgasser"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_COOLER.get())
+                .pattern("IGI")
+                .pattern("GCG")
+                .pattern("IGI")
+                .define('I', item("plate_polymer"))
+                .define('G', ModBlocks.STEEL_GRATE.get())
+                .define('C', ModBlocks.RBMK_BLANK.get())
+                .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
+                .save(consumer, id("rbmk/rbmk_cooler"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_CONTROL.get())
+                .pattern(" B ")
+                .pattern("GRG")
+                .pattern(" B ")
+                .define('G', item("ingot_graphite"))
+                .define('B', item("motor"))
+                .define('R', ModBlocks.RBMK_ABSORBER.get())
+                .unlockedBy("has_rbmk_absorber", has(ModBlocks.RBMK_ABSORBER.get()))
+                .save(consumer, id("rbmk/rbmk_control"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_CONTROL_MOD.get())
+                .pattern("BGB")
+                .pattern("GRG")
+                .pattern("BGB")
+                .define('G', ModBlocks.BLOCK_GRAPHITE.get())
+                .define('R', ModBlocks.RBMK_CONTROL.get())
+                .define('B', item("nugget_bismuth"))
+                .unlockedBy("has_rbmk_control", has(ModBlocks.RBMK_CONTROL.get()))
+                .save(consumer, id("rbmk/rbmk_control_mod"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_CONTROL_AUTO.get())
+                .pattern("C")
+                .pattern("R")
+                .pattern("D")
+                .define('C', forgeTag("circuits/advanced"))
+                .define('R', ModBlocks.RBMK_CONTROL.get())
+                .define('D', item("crt_display"))
+                .unlockedBy("has_rbmk_control", has(ModBlocks.RBMK_CONTROL.get()))
+                .save(consumer, id("rbmk/rbmk_control_auto"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_CONTROL_REASIM.get())
+                .pattern(" B ")
+                .pattern("GRG")
+                .pattern(" B ")
+                .define('G', item("ingot_graphite"))
+                .define('B', item("motor"))
+                .define('R', ModBlocks.RBMK_ABSORBER.get())
+                .unlockedBy("has_rbmk_absorber", has(ModBlocks.RBMK_ABSORBER.get()))
+                .save(consumer, id("rbmk/rbmk_control_reasim"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_CONTROL_REASIM_AUTO.get())
+                .pattern("C")
+                .pattern("R")
+                .pattern("D")
+                .define('C', forgeTag("circuits/advanced"))
+                .define('R', ModBlocks.RBMK_CONTROL.get())
+                .define('D', item("crt_display"))
+                .unlockedBy("has_rbmk_control", has(ModBlocks.RBMK_CONTROL.get()))
+                .save(consumer, id("rbmk/rbmk_control_reasim_auto"));
 
         rbmkFuelRodRecipe(consumer, "rbmk_fuel_ueu", "billet_uranium");
         rbmkFuelRodRecipe(consumer, "rbmk_fuel_meu", "billet_uranium_fuel");
@@ -407,6 +599,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_lead_sand", has(ModBlocks.SAND_LEAD.get()))
                 .save(consumer, id("smelting/glass_lead_from_sand_lead"));
 
+        SimpleCookingRecipeBuilder.smelting(Ingredient.of(ModBlocks.SAND_URANIUM.get()), RecipeCategory.BUILDING_BLOCKS,
+                        ModBlocks.GLASS_URANIUM.get(), 0.25F, 200)
+                .unlockedBy("has_uranium_sand", has(ModBlocks.SAND_URANIUM.get()))
+                .save(consumer, id("smelting/glass_uranium_from_sand_uranium"));
+
+        SimpleCookingRecipeBuilder.smelting(Ingredient.of(ModBlocks.SAND_POLONIUM.get()), RecipeCategory.BUILDING_BLOCKS,
+                        ModBlocks.GLASS_POLONIUM.get(), 0.75F, 200)
+                .unlockedBy("has_polonium_sand", has(ModBlocks.SAND_POLONIUM.get()))
+                .save(consumer, id("smelting/glass_polonium_from_sand_polonium"));
+
         SimpleCookingRecipeBuilder.smelting(Ingredient.of(ModBlocks.SAND_QUARTZ.get()), RecipeCategory.BUILDING_BLOCKS,
                         ModBlocks.GLASS_QUARTZ.get(), 0.25F, 200)
                 .unlockedBy("has_quartz_sand", has(ModBlocks.SAND_QUARTZ.get()))
@@ -433,6 +635,23 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void legacyToolRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.RANGEFINDER.get())
+                .pattern("GRC")
+                .pattern("  S")
+                .define('G', forgeTag("glass_panes"))
+                .define('R', Items.REDSTONE)
+                .define('C', forgeTag("circuits/basic"))
+                .define('S', forgeTag("plates/steel"))
+                .unlockedBy("has_basic_circuit", has(forgeTag("circuits/basic")))
+                .save(consumer, id("tools/rangefinder"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.TOOLS, ModItems.DESIGNATOR_ARTY_RANGE.get())
+                .requires(ModItems.RANGEFINDER.get())
+                .requires(forgeTag("circuits/advanced"))
+                .requires(forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_rangefinder", has(ModItems.RANGEFINDER.get()))
+                .save(consumer, id("tools/designator_arty_range"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.POLLUTION_DETECTOR.get())
                 .pattern("SFS")
                 .pattern("SCS")
@@ -2056,6 +2275,25 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('S', ModBlocks.STEEL_BEAM.get())
                 .unlockedBy("has_steel_beam", has(ModBlocks.STEEL_BEAM.get()))
                 .save(consumer, id("blocks/chain"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STEEL_GRATE.get(), 4)
+                .pattern("SS")
+                .pattern("SS")
+                .define('S', ModBlocks.STEEL_BEAM.get())
+                .unlockedBy("has_steel_beam", has(ModBlocks.STEEL_BEAM.get()))
+                .save(consumer, id("blocks/steel_grate"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STEEL_GRATE_WIDE.get(), 4)
+                .pattern("SS")
+                .define('S', ModBlocks.STEEL_GRATE.get())
+                .unlockedBy("has_steel_grate", has(ModBlocks.STEEL_GRATE.get()))
+                .save(consumer, id("blocks/steel_grate_wide"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STEEL_GRATE.get())
+                .pattern("SS")
+                .define('S', ModBlocks.STEEL_GRATE_WIDE.get())
+                .unlockedBy("has_steel_grate_wide", has(ModBlocks.STEEL_GRATE_WIDE.get()))
+                .save(consumer, id("blocks/steel_grate_from_wide"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.CRATE_IRON.get())
                 .pattern("PPP")
@@ -4502,6 +4740,416 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("assembly_machine/himarslargetb"));
     }
 
+    private static void legacyCustomMissilePartRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.assembly("ass.mpt10kero", 100, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputLegacyOre("ntmpipeSteel", 1)
+                .inputLegacyOre("ingotTungsten", 4)
+                .inputLegacyOre("plateSteel", 4)
+                .outputItem(item("mp_thruster_10_kerosene"))
+                .sourceOrder(270)
+                .save(consumer, id("assembly_machine/mpt10kero"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt10solid", 100, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputLegacyOre("ntmpipeDuraSteel", 1)
+                .inputLegacyOre("ingotTungsten", 4)
+                .inputLegacyOre("plateSteel", 4)
+                .outputItem(item("mp_thruster_10_solid"))
+                .sourceOrder(271)
+                .save(consumer, id("assembly_machine/mpt10solid"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt10xenon", 100, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputLegacyOre("plateDuraSteel", 4)
+                .inputItem(item("arc_electrode_graphite"), 1)
+                .outputItem(item("mp_thruster_10_xenon"))
+                .sourceOrder(272)
+                .save(consumer, id("assembly_machine/mpt10xenon"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt15kero", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("ntmpipeSteel", 3)
+                .inputLegacyOre("ingotTungsten", 8)
+                .inputLegacyOre("plateSteel", 8)
+                .outputItem(item("mp_thruster_15_kerosene"))
+                .sourceOrder(273)
+                .save(consumer, id("assembly_machine/mpt15kero"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt15kerodual", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("ntmpipeSteel", 3)
+                .inputLegacyOre("ingotTungsten", 8)
+                .inputLegacyOre("plateSteel", 8)
+                .outputItem(item("mp_thruster_15_kerosene_dual"))
+                .sourceOrder(274)
+                .save(consumer, id("assembly_machine/mpt15kerodual"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt15kerotriple", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("ntmpipeSteel", 3)
+                .inputLegacyOre("ingotTungsten", 8)
+                .inputLegacyOre("plateSteel", 8)
+                .outputItem(item("mp_thruster_15_kerosene_triple"))
+                .sourceOrder(275)
+                .save(consumer, id("assembly_machine/mpt15kerotriple"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt15solid", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("ntmpipeDuraSteel", 3)
+                .inputLegacyOre("ingotTungsten", 8)
+                .inputLegacyOre("plateSteel", 8)
+                .outputItem(item("mp_thruster_15_solid"))
+                .sourceOrder(276)
+                .save(consumer, id("assembly_machine/mpt15solid"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt15solid16", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("ntmpipeDuraSteel", 3)
+                .inputLegacyOre("ingotTungsten", 8)
+                .inputLegacyOre("plateSteel", 8)
+                .outputItem(item("mp_thruster_15_solid_hexdecuple"))
+                .sourceOrder(277)
+                .save(consumer, id("assembly_machine/mpt15solid16"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt15hydro", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("ntmpipeDuraSteel", 3)
+                .inputLegacyOre("ingotTungsten", 8)
+                .inputLegacyOre("ingotDesh", 4)
+                .outputItem(item("mp_thruster_15_hydrogen"))
+                .sourceOrder(278)
+                .save(consumer, id("assembly_machine/mpt15hydro"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt15hydrodual", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("ntmpipeDuraSteel", 3)
+                .inputLegacyOre("ingotTungsten", 8)
+                .inputLegacyOre("ingotDesh", 4)
+                .outputItem(item("mp_thruster_15_hydrogen_dual"))
+                .sourceOrder(279)
+                .save(consumer, id("assembly_machine/mpt15hydrodual"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt15bfshort", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("ntmpipeDuraSteel", 5)
+                .inputLegacyOre("plateCastTungsten", 8)
+                .inputLegacyOre("plateSaturnite", 8)
+                .outputItem(item("mp_thruster_15_balefire_short"))
+                .sourceOrder(280)
+                .save(consumer, id("assembly_machine/mpt15bfshort"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt15bf", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("ntmpipeDuraSteel", 5)
+                .inputLegacyOre("plateCastTungsten", 16)
+                .inputLegacyOre("plateSaturnite", 16)
+                .outputItem(item("mp_thruster_15_balefire_short"))
+                .sourceOrder(281)
+                .save(consumer, id("assembly_machine/mpt15bf"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt15bflarge", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("ntmpipeDuraSteel", 10)
+                .inputLegacyOre("plateCastTungsten", 16)
+                .inputLegacyOre("plateSaturnite", 24)
+                .outputItem(item("mp_thruster_15_balefire_large"))
+                .sourceOrder(282)
+                .save(consumer, id("assembly_machine/mpt15bflarge"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt20kero", 400, 100)
+                .inputItem(item("seg_20"), 1)
+                .inputLegacyOre("ntmpipeSteel", 6)
+                .inputLegacyOre("ingotTungsten", 16)
+                .inputLegacyOre("plateSteel", 16)
+                .outputItem(item("mp_thruster_20_kerosene"))
+                .sourceOrder(283)
+                .save(consumer, id("assembly_machine/mpt20kero"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt20kerodual", 400, 100)
+                .inputItem(item("seg_20"), 1)
+                .inputLegacyOre("ntmpipeSteel", 6)
+                .inputLegacyOre("ingotTungsten", 16)
+                .inputLegacyOre("plateSteel", 16)
+                .outputItem(item("mp_thruster_20_kerosene_dual"))
+                .sourceOrder(284)
+                .save(consumer, id("assembly_machine/mpt20kerodual"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt20kerotriple", 400, 100)
+                .inputItem(item("seg_20"), 1)
+                .inputLegacyOre("ntmpipeSteel", 6)
+                .inputLegacyOre("ingotTungsten", 16)
+                .inputLegacyOre("plateSteel", 16)
+                .outputItem(item("mp_thruster_20_kerosene_triple"))
+                .sourceOrder(285)
+                .save(consumer, id("assembly_machine/mpt20kerotriple"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt20solid", 400, 100)
+                .inputItem(item("seg_20"), 1)
+                .inputLegacyOre("ntmpipeDuraSteel", 6)
+                .inputLegacyOre("ingotTungsten", 16)
+                .inputLegacyOre("plateSteel", 16)
+                .outputItem(item("mp_thruster_20_solid"))
+                .sourceOrder(286)
+                .save(consumer, id("assembly_machine/mpt20solid"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt20solidmulti", 400, 100)
+                .inputItem(item("seg_20"), 1)
+                .inputLegacyOre("ntmpipeDuraSteel", 6)
+                .inputLegacyOre("ingotTungsten", 16)
+                .inputLegacyOre("plateSteel", 16)
+                .outputItem(item("mp_thruster_20_solid_multi"))
+                .sourceOrder(287)
+                .save(consumer, id("assembly_machine/mpt20solidmulti"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpt20solidmultier", 400, 100)
+                .inputItem(item("seg_20"), 1)
+                .inputLegacyOre("ntmpipeDuraSteel", 6)
+                .inputLegacyOre("ingotTungsten", 16)
+                .inputLegacyOre("plateSteel", 16)
+                .outputItem(item("mp_thruster_20_solid_multier"))
+                .sourceOrder(288)
+                .save(consumer, id("assembly_machine/mpt20solidmultier"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf10kero", 100, 100)
+                .inputItem(item("seg_10"), 2)
+                .inputLegacyOre("plateAluminum", 12)
+                .inputLegacyOre("plateSteel", 3)
+                .outputItem(item("mp_fuselage_10_kerosene"))
+                .sourceOrder(289)
+                .save(consumer, id("assembly_machine/mpf10kero"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf10kerolong", 100, 100)
+                .inputItem(item("seg_10"), 2)
+                .inputLegacyOre("plateAluminum", 16)
+                .inputLegacyOre("plateSteel", 6)
+                .outputItem(item("mp_fuselage_10_kerosene"))
+                .sourceOrder(290)
+                .save(consumer, id("assembly_machine/mpf10kerolong"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf10solid", 100, 100)
+                .inputItem(item("seg_10"), 2)
+                .inputLegacyOre("plateTitanium", 12)
+                .inputLegacyOre("plateSteel", 3)
+                .outputItem(item("mp_fuselage_10_solid"))
+                .sourceOrder(291)
+                .save(consumer, id("assembly_machine/mpf10solid"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf10solidlong", 100, 100)
+                .inputItem(item("seg_10"), 2)
+                .inputLegacyOre("plateTitanium", 16)
+                .inputLegacyOre("plateSteel", 6)
+                .outputItem(item("mp_fuselage_10_solid"))
+                .sourceOrder(292)
+                .save(consumer, id("assembly_machine/mpf10solidlong"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf10xenon", 100, 100)
+                .inputItem(item("seg_10"), 2)
+                .inputLegacyOre("plateCopper", 12)
+                .inputLegacyOre("plateSteel", 3)
+                .outputItem(item("mp_fuselage_10_xenon"))
+                .sourceOrder(293)
+                .save(consumer, id("assembly_machine/mpf10xenon"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf1015kero", 200, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("plateAluminum", 24)
+                .inputLegacyOre("plateSteel", 8)
+                .outputItem(item("mp_fuselage_10_15_kerosene"))
+                .sourceOrder(294)
+                .save(consumer, id("assembly_machine/mpf1015kero"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf1015solid", 200, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("plateTitanium", 24)
+                .inputLegacyOre("plateSteel", 8)
+                .outputItem(item("mp_fuselage_10_15_solid"))
+                .sourceOrder(295)
+                .save(consumer, id("assembly_machine/mpf1015solid"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf1015hydro", 200, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("plateCopper", 24)
+                .inputLegacyOre("plateSteel", 8)
+                .outputItem(item("mp_fuselage_10_15_hydrogen"))
+                .sourceOrder(296)
+                .save(consumer, id("assembly_machine/mpf1015hydro"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf1015bf", 200, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("plateSaturnite", 24)
+                .inputLegacyOre("plateSteel", 8)
+                .outputItem(item("mp_fuselage_10_15_balefire"))
+                .sourceOrder(297)
+                .save(consumer, id("assembly_machine/mpf1015bf"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf15kero", 200, 100)
+                .inputItem(item("seg_15"), 2)
+                .inputLegacyOre("plateAluminum", 32)
+                .inputLegacyOre("plateSteel", 12)
+                .outputItem(item("mp_fuselage_15_kerosene"))
+                .sourceOrder(298)
+                .save(consumer, id("assembly_machine/mpf15kero"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf15solid", 200, 100)
+                .inputItem(item("seg_15"), 2)
+                .inputLegacyOre("plateTitanium", 32)
+                .inputLegacyOre("plateSteel", 12)
+                .outputItem(item("mp_fuselage_15_solid"))
+                .sourceOrder(299)
+                .save(consumer, id("assembly_machine/mpf15solid"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf15hydro", 200, 100)
+                .inputItem(item("seg_15"), 2)
+                .inputLegacyOre("plateCopper", 32)
+                .inputLegacyOre("plateSteel", 12)
+                .outputItem(item("mp_fuselage_15_hydrogen"))
+                .sourceOrder(300)
+                .save(consumer, id("assembly_machine/mpf15hydro"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf1520kero", 400, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputItem(item("seg_20"), 1)
+                .inputLegacyOre("plateAluminum", 48)
+                .inputLegacyOre("plateSteel", 16)
+                .outputItem(item("mp_fuselage_15_20_kerosene"))
+                .sourceOrder(301)
+                .save(consumer, id("assembly_machine/mpf1520kero"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpf1520solid", 400, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputItem(item("seg_20"), 1)
+                .inputLegacyOre("plateTitanium", 48)
+                .inputLegacyOre("plateSteel", 16)
+                .outputItem(item("mp_fuselage_15_20_solid"))
+                .sourceOrder(302)
+                .save(consumer, id("assembly_machine/mpf1520solid"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw10he", 100, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputLegacyOre("plateSteel", 6)
+                .inputLegacyOre("ingotAnyHighExplosive", 3)
+                .inputTag(forgeTag("circuits/basic"), 1)
+                .outputItem(item("mp_warhead_10_he"))
+                .sourceOrder(303)
+                .save(consumer, id("assembly_machine/mpw10he"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw10inc", 100, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputLegacyOre("plateSteel", 6)
+                .inputLegacyOre("ingotAnyHighExplosive", 2)
+                .inputLegacyOre("dustRedPhosphorus", 6)
+                .inputTag(forgeTag("circuits/basic"), 1)
+                .outputItem(item("mp_warhead_10_incendiary"))
+                .sourceOrder(304)
+                .save(consumer, id("assembly_machine/mpw10inc"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw10bus", 100, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputLegacyOre("plateWeaponSteel", 6)
+                .inputLegacyOre("ingotAnyHighExplosive", 6)
+                .inputTag(forgeTag("circuits/basic"), 2)
+                .outputItem(item("mp_warhead_10_buster"))
+                .sourceOrder(305)
+                .save(consumer, id("assembly_machine/mpw10bus"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw10nukesmall", 200, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputLegacyOre("plateWeaponSteel", 16)
+                .inputLegacyOre("billetPu239", 2)
+                .inputItem(item("neutron_reflector"), 4)
+                .inputLegacyOre("ingotAnyHighExplosive", 4)
+                .inputTag(forgeTag("circuits/controller"), 1)
+                .outputItem(item("mp_warhead_10_nuclear"))
+                .sourceOrder(306)
+                .save(consumer, id("assembly_machine/mpw10nukesmall"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw10nukelarge", 200, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputLegacyOre("plateWeaponSteel", 16)
+                .inputLegacyOre("billetPu239", 6)
+                .inputItem(item("neutron_reflector"), 8)
+                .inputLegacyOre("ingotAnyHighExplosive", 12)
+                .inputTag(forgeTag("circuits/controller"), 1)
+                .outputItem(item("mp_warhead_10_nuclear_large"))
+                .sourceOrder(307)
+                .save(consumer, id("assembly_machine/mpw10nukelarge"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw10taint", 100, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputLegacyOre("plateSteel", 12)
+                .inputItem(block("det_cord"), 2)
+                .inputItem(item("powder_magic"), 12)
+                .inputFluidContainer(HbmFluids.WATZ, 1_000, 1)
+                .outputItem(item("mp_warhead_10_taint"))
+                .sourceOrder(308)
+                .save(consumer, id("assembly_machine/mpw10taint"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw10cloud", 100, 100)
+                .inputItem(item("seg_10"), 1)
+                .inputLegacyOre("plateSteel", 12)
+                .inputItem(block("det_cord"), 2)
+                .inputItem(item("powder_magic"), 16)
+                .outputItem(item("mp_warhead_10_cloud"))
+                .sourceOrder(309)
+                .save(consumer, id("assembly_machine/mpw10cloud"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw15he", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("plateSteel", 12)
+                .inputLegacyOre("ingotAnyHighExplosive", 12)
+                .inputTag(forgeTag("circuits/basic"), 3)
+                .outputItem(item("mp_warhead_15_he"))
+                .sourceOrder(310)
+                .save(consumer, id("assembly_machine/mpw15he"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw15inc", 200, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("plateSteel", 12)
+                .inputLegacyOre("ingotAnyHighExplosive", 8)
+                .inputLegacyOre("dustRedPhosphorus", 16)
+                .inputTag(forgeTag("circuits/basic"), 3)
+                .outputItem(item("mp_warhead_15_incendiary"))
+                .sourceOrder(311)
+                .save(consumer, id("assembly_machine/mpw15inc"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw15nuke", 400, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("plateWeaponSteel", 32)
+                .inputLegacyOre("billetPu239", 12)
+                .inputItem(item("neutron_reflector"), 12)
+                .inputItem(item("ball_tatb"), 24)
+                .inputTag(forgeTag("circuits/controller"), 3)
+                .outputItem(item("mp_warhead_15_nuclear"))
+                .sourceOrder(312)
+                .save(consumer, id("assembly_machine/mpw15nuke"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw15n2", 400, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("plateWeaponSteel", 32)
+                .inputItem(item("ball_tatb"), 32)
+                .inputTag(forgeTag("circuits/advanced"), 8)
+                .outputItem(item("mp_warhead_15_n2"))
+                .sourceOrder(313)
+                .save(consumer, id("assembly_machine/mpw15n2"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mpw15bf", 400, 100)
+                .inputItem(item("seg_15"), 1)
+                .inputLegacyOre("plateWeaponSteel", 32)
+                .inputItem(item("neutron_reflector"), 16)
+                .inputItem(item("powder_magic"), 8)
+                .inputItem(item("egg_balefire_shard"), 4)
+                .inputLegacyOre("ingotAnyHighExplosive", 16)
+                .inputTag(forgeTag("circuits/controller"), 2)
+                .outputItem(item("mp_warhead_15_balefire"))
+                .sourceOrder(314)
+                .save(consumer, id("assembly_machine/mpw15bf"));
+    }
+
     private static void legacyTurretRecipes(Consumer<FinishedRecipe> consumer) {
         GenericMachineRecipeBuilder.assembly("ass.turretchekhov", 200, 100)
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 1, 1)
@@ -4641,6 +5289,391 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('D', item("crt_display"))
                 .unlockedBy("has_crt_display", has(item("crt_display")))
                 .save(consumer, id("weapon/turret_sentry"));
+    }
+
+    private static void legacyUpgradeRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.assembly("ass.overdrive1", 200, 100)
+                .inputItem(item("upgrade_speed_3"), 1)
+                .inputItem(item("upgrade_effect_3"), 1)
+                .inputLegacyOre("ingotSaturnite", 16)
+                .inputLegacyOre("ingotAnyHardPlastic", 16)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 16)
+                .outputItem(item("upgrade_overdrive_1"))
+                .sourceOrder(189)
+                .save(consumer, id("assembly_machine/overdrive1"));
+
+        GenericMachineRecipeBuilder.assembly("ass.overdrive2", 600, 100)
+                .inputItem(item("upgrade_overdrive_1"), 1)
+                .inputItem(item("upgrade_speed_3"), 1)
+                .inputItem(item("upgrade_effect_3"), 1)
+                .inputLegacyOre("ingotSaturnite", 16)
+                .inputItem(item("ingot_cft"), 8)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 10, 16)
+                .outputItem(item("upgrade_overdrive_2"))
+                .sourceOrder(190)
+                .save(consumer, id("assembly_machine/overdrive2"));
+
+        GenericMachineRecipeBuilder.assembly("ass.overdrive3", 1_200, 100)
+                .inputItem(item("upgrade_overdrive_2"), 1)
+                .inputItem(item("upgrade_speed_3"), 1)
+                .inputItem(item("upgrade_effect_3"), 1)
+                .inputLegacyOre("ingotAnyBismoidBronze", 16)
+                .inputItem(item("ingot_cft"), 16)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 11, 16)
+                .outputItem(item("upgrade_overdrive_3"))
+                .sourceOrder(191)
+                .save(consumer, id("assembly_machine/overdrive3"));
+    }
+
+    private static void legacyWeaponPartRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.assembly("ass.clusterpellets", 50, 100)
+                .inputLegacyOre("plateSteel", 4)
+                .inputLegacyOre("ingotAnyHighExplosive", 1)
+                .outputItem(item("pellet_cluster"))
+                .sourceOrder(194)
+                .save(consumer, id("assembly_machine/clusterpellets"));
+
+        GenericMachineRecipeBuilder.assembly("ass.buckshot", 50, 100)
+                .inputLegacyOre("nuggetLead", 6)
+                .outputItem(item("pellet_buckshot"))
+                .sourceOrder(195)
+                .save(consumer, id("assembly_machine/buckshot"));
+    }
+
+    private static void legacyAmmunitionRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.assembly("ass.50bmgsm", 100, 100)
+                .inputLegacyMeta(LegacyMetaItemMappings.CASING, 3, 1)
+                .inputLegacyOre("dustAnySmokeless", 6)
+                .inputLegacyOre("ingotStarmetal", 3)
+                .outputItem(new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.AMMO_STANDARD, 94).get(), 6))
+                .pool(LegacyBlueprintPools.PREFIX_DISCOVER + "silverstorm")
+                .sourceOrder(315)
+                .save(consumer, id("assembly_machine/50bmgsm"));
+    }
+
+    private static void legacyBombPartRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.assembly("ass.explosivelenses1", 400, 100)
+                .inputLegacyOre("plateAluminum", 8)
+                .inputItem(block("det_cord"), 8)
+                .inputLegacyOre("plateSaturnite", 2)
+                .inputLegacyOre("ingotAnyHighExplosive", 20)
+                .inputLegacyOre("ingotAnyPlastic", 4)
+                .outputItem(item("early_explosive_lenses"))
+                .sourceOrder(211)
+                .save(consumer, id("assembly_machine/explosivelenses1"));
+
+        GenericMachineRecipeBuilder.assembly("ass.explosivelenses2", 400, 100)
+                .inputLegacyOre("plateAluminum", 8)
+                .inputLegacyOre("ingotAnyPlasticExplosive", 4)
+                .inputItem(item("neutron_reflector"), 2)
+                .inputItem(item("ball_tatb"), 16)
+                .inputLegacyOre("ingotRubber", 2)
+                .outputItem(item("explosive_lenses"))
+                .sourceOrder(212)
+                .save(consumer, id("assembly_machine/explosivelenses2"));
+
+        GenericMachineRecipeBuilder.assembly("ass.wiring", 200, 100)
+                .inputLegacyOre("wireFineGold", 24)
+                .outputItem(item("gadget_wireing"))
+                .sourceOrder(213)
+                .save(consumer, id("assembly_machine/wiring"));
+
+        GenericMachineRecipeBuilder.assembly("ass.core1", 1_200, 100)
+                .inputLegacyOre("nuggetPu239", 7)
+                .inputLegacyOre("nuggetU238", 3)
+                .outputItem(item("gadget_core"))
+                .sourceOrder(214)
+                .save(consumer, id("assembly_machine/core1"));
+
+        GenericMachineRecipeBuilder.assembly("ass.boyshield", 200, 100)
+                .inputItem(item("neutron_reflector"), 12)
+                .inputLegacyOre("plateSteel", 4)
+                .outputItem(item("boy_shielding"))
+                .sourceOrder(215)
+                .save(consumer, id("assembly_machine/boyshield"));
+
+        GenericMachineRecipeBuilder.assembly("ass.boytarget", 200, 100)
+                .inputLegacyOre("nuggetU235", 18)
+                .outputItem(item("boy_target"))
+                .sourceOrder(216)
+                .save(consumer, id("assembly_machine/boytarget"));
+
+        GenericMachineRecipeBuilder.assembly("ass.boybullet", 200, 100)
+                .inputLegacyOre("nuggetU235", 9)
+                .outputItem(item("boy_bullet"))
+                .sourceOrder(217)
+                .save(consumer, id("assembly_machine/boybullet"));
+
+        GenericMachineRecipeBuilder.assembly("ass.boypropellant", 200, 100)
+                .inputItem(item("cordite"), 8)
+                .inputLegacyOre("plateIron", 8)
+                .inputLegacyOre("plateAluminum", 4)
+                .inputLegacyOre("wireFineMingrade", 4)
+                .outputItem(item("boy_propellant"))
+                .sourceOrder(218)
+                .save(consumer, id("assembly_machine/boypropellant"));
+
+        GenericMachineRecipeBuilder.assembly("ass.boyigniter", 200, 100)
+                .inputLegacyOre("shellAluminum", 3)
+                .inputLegacyOre("plateCastDuraSteel", 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
+                .inputLegacyOre("wireFineMingrade", 16)
+                .outputItem(item("boy_igniter"))
+                .sourceOrder(219)
+                .save(consumer, id("assembly_machine/boyigniter"));
+
+        GenericMachineRecipeBuilder.assembly("ass.manigniter", 200, 100)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 3)
+                .inputLegacyOre("wireFineGold", 24)
+                .outputItem(item("man_igniter"))
+                .sourceOrder(220)
+                .save(consumer, id("assembly_machine/manigniter"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mancore", 1_200, 100)
+                .inputLegacyOre("nuggetPu239", 8)
+                .inputLegacyOre("nuggetBeryllium", 2)
+                .outputItem(item("man_core"))
+                .sourceOrder(221)
+                .save(consumer, id("assembly_machine/mancore"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mikecore", 1_200, 100)
+                .inputLegacyOre("nuggetU238", 24)
+                .inputLegacyOre("plateLead", 6)
+                .outputItem(item("mike_core"))
+                .sourceOrder(222)
+                .save(consumer, id("assembly_machine/mikecore"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mikedeut", 600, 100)
+                .inputLegacyOre("plateWeaponSteel", 16)
+                .inputLegacyOre("plateTitanium", 16)
+                .inputFluid(HbmFluids.DEUTERIUM, 10_000)
+                .outputItem(item("mike_deut"))
+                .sourceOrder(223)
+                .save(consumer, id("assembly_machine/mikedeut"));
+
+        GenericMachineRecipeBuilder.assembly("ass.mikecooler", 300, 100)
+                .inputLegacyOre("plateDuraSteel", 8)
+                .inputItem(item("coil_copper"), 5)
+                .inputItem(item("coil_tungsten"), 5)
+                .inputItem(item("motor"), 2)
+                .outputItem(item("mike_cooling_unit"))
+                .sourceOrder(224)
+                .save(consumer, id("assembly_machine/mikecooler"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fleijaigniter", 200, 100)
+                .inputLegacyOre("plateTitanium", 6)
+                .inputLegacyOre("wireFineSchrabidium", 2)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
+                .outputItem(item("fleija_igniter"))
+                .sourceOrder(225)
+                .save(consumer, id("assembly_machine/fleijaigniter"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fleijacore", 600, 100)
+                .inputLegacyOre("nuggetU235", 8)
+                .inputLegacyOre("nuggetNp237", 2)
+                .inputLegacyOre("nuggetBeryllium", 4)
+                .inputItem(item("coil_copper"), 2)
+                .outputItem(item("fleija_core"))
+                .sourceOrder(226)
+                .save(consumer, id("assembly_machine/fleijacore"));
+
+        GenericMachineRecipeBuilder.assembly("ass.fleijacharge", 300, 100)
+                .inputLegacyOre("ingotAnyHighExplosive", 3)
+                .inputLegacyOre("plateSchrabidium", 8)
+                .outputItem(item("fleija_propellant"))
+                .sourceOrder(227)
+                .save(consumer, id("assembly_machine/fleijacharge"));
+
+        GenericMachineRecipeBuilder.assembly("ass.soliniumigniter", 200, 100)
+                .inputLegacyOre("plateTitanium", 4)
+                .inputLegacyOre("wireFineMingrade", 8)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
+                .inputItem(item("coil_gold"), 1)
+                .outputItem(item("solinium_igniter"))
+                .sourceOrder(228)
+                .save(consumer, id("assembly_machine/soliniumigniter"));
+
+        GenericMachineRecipeBuilder.assembly("ass.soliniumcore", 600, 100)
+                .inputLegacyOre("nuggetSolinium", 9)
+                .inputLegacyOre("nuggetEuphemium", 1)
+                .outputItem(item("solinium_core"))
+                .sourceOrder(229)
+                .save(consumer, id("assembly_machine/soliniumcore"));
+
+        GenericMachineRecipeBuilder.assembly("ass.soliniumcharge", 300, 100)
+                .inputLegacyOre("ingotAnyHighExplosive", 3)
+                .inputItem(item("neutron_reflector"), 2)
+                .inputItem(item("plate_polymer"), 6)
+                .inputLegacyOre("wireFineTungsten", 6)
+                .inputItem(item("biomass_compressed"), 4)
+                .outputItem(item("solinium_propellant"))
+                .sourceOrder(230)
+                .save(consumer, id("assembly_machine/soliniumcharge"));
+    }
+
+    private static void legacyStandardMissileRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.assembly("ass.missileassembly", 200, 100)
+                .inputLegacyOre("shellAluminum", 2)
+                .inputLegacyOre("shellTitanium", 4)
+                .inputLegacyOre("ingotAnyPlastic", 8)
+                .inputItem(item("rocket_fuel"), 8)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 1)
+                .outputItem(item("missile_assembly"))
+                .sourceOrder(249)
+                .save(consumer, id("assembly_machine/missileassembly"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadhe1", 100, 100)
+                .inputLegacyOre("plateTitanium", 4)
+                .inputItem(item("ball_dynamite"), 2)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 5, 1)
+                .outputItem(item("warhead_generic_small"))
+                .sourceOrder(250)
+                .save(consumer, id("assembly_machine/warheadhe1"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadhe2", 200, 100)
+                .inputLegacyOre("plateTitanium", 8)
+                .inputLegacyOre("ingotAnyHighExplosive", 4)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 1)
+                .outputItem(item("warhead_generic_medium"))
+                .sourceOrder(251)
+                .save(consumer, id("assembly_machine/warheadhe2"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadhe3", 400, 100)
+                .inputLegacyOre("plateTitanium", 16)
+                .inputLegacyOre("ingotAnyHighExplosive", 8)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
+                .outputItem(item("warhead_generic_large"))
+                .sourceOrder(252)
+                .save(consumer, id("assembly_machine/warheadhe3"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadinc1", 100, 100)
+                .inputItem(item("warhead_generic_small"), 1)
+                .inputLegacyOre("dustRedPhosphorus", 2)
+                .outputItem(item("warhead_incendiary_small"))
+                .sourceOrder(253)
+                .save(consumer, id("assembly_machine/warheadinc1"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadinc2", 200, 100)
+                .inputItem(item("warhead_generic_medium"), 1)
+                .inputLegacyOre("dustRedPhosphorus", 4)
+                .outputItem(item("warhead_incendiary_medium"))
+                .sourceOrder(254)
+                .save(consumer, id("assembly_machine/warheadinc2"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadinc3", 400, 100)
+                .inputItem(item("warhead_generic_large"), 1)
+                .inputLegacyOre("dustRedPhosphorus", 8)
+                .outputItem(item("warhead_incendiary_large"))
+                .sourceOrder(255)
+                .save(consumer, id("assembly_machine/warheadinc3"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadcl1", 100, 100)
+                .inputItem(item("warhead_generic_small"), 1)
+                .inputItem(item("pellet_cluster"), 2)
+                .outputItem(item("warhead_cluster_small"))
+                .sourceOrder(256)
+                .save(consumer, id("assembly_machine/warheadcl1"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadcl2", 200, 100)
+                .inputItem(item("warhead_generic_medium"), 1)
+                .inputItem(item("pellet_cluster"), 4)
+                .outputItem(item("warhead_cluster_medium"))
+                .sourceOrder(257)
+                .save(consumer, id("assembly_machine/warheadcl2"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadcl3", 400, 100)
+                .inputItem(item("warhead_generic_large"), 1)
+                .inputItem(item("pellet_cluster"), 8)
+                .outputItem(item("warhead_cluster_large"))
+                .sourceOrder(258)
+                .save(consumer, id("assembly_machine/warheadcl3"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadbb1", 100, 100)
+                .inputItem(item("warhead_generic_small"), 1)
+                .inputLegacyOre("ingotAnyHighExplosive", 2)
+                .outputItem(item("warhead_buster_small"))
+                .sourceOrder(259)
+                .save(consumer, id("assembly_machine/warheadbb1"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadbb2", 200, 100)
+                .inputItem(item("warhead_generic_medium"), 1)
+                .inputLegacyOre("ingotAnyHighExplosive", 4)
+                .outputItem(item("warhead_buster_medium"))
+                .sourceOrder(260)
+                .save(consumer, id("assembly_machine/warheadbb2"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadbb3", 400, 100)
+                .inputItem(item("warhead_generic_large"), 1)
+                .inputLegacyOre("ingotAnyHighExplosive", 8)
+                .outputItem(item("warhead_buster_large"))
+                .sourceOrder(261)
+                .save(consumer, id("assembly_machine/warheadbb3"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadnuke", 400, 100)
+                .inputLegacyOre("plateCastTitanium", 12)
+                .inputLegacyOre("plateCastLead", 6)
+                .inputLegacyOre("billetU235", 6)
+                .inputItem(item("cordite"), 12)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 13, 1)
+                .outputItem(item("warhead_nuclear"))
+                .sourceOrder(262)
+                .save(consumer, id("assembly_machine/warheadnuke"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadthermonuke", 600, 100)
+                .inputLegacyOre("plateCastTitanium", 12)
+                .inputLegacyOre("plateCastLead", 6)
+                .inputLegacyOre("billetPu239", 8)
+                .inputItem(item("ball_tatb"), 12)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 14, 2)
+                .inputFluid(HbmFluids.DEUTERIUM, 4_000)
+                .outputItem(item("warhead_mirv"))
+                .sourceOrder(263)
+                .save(consumer, id("assembly_machine/warheadthermonuke"));
+
+        GenericMachineRecipeBuilder.assembly("ass.warheadvolcano", 600, 100)
+                .inputLegacyOre("plateCastTitanium", 12)
+                .inputLegacyOre("plateCastSteel", 6)
+                .inputItem(block("det_nuke"), 3)
+                .inputLegacyOre("blockU238", 24)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 10, 5)
+                .outputItem(item("warhead_volcano"))
+                .sourceOrder(264)
+                .save(consumer, id("assembly_machine/warheadvolcano"));
+
+        GenericMachineRecipeBuilder.assembly("ass.thrusternerva", 600, 100)
+                .inputLegacyOre("ingotDuraSteel", 32)
+                .inputLegacyOre("ingotBoron", 8)
+                .inputLegacyOre("plateLead", 16)
+                .inputLegacyOre("ntmpipeSteel", 4)
+                .outputItem(item("thruster_nuclear"))
+                .sourceOrder(265)
+                .save(consumer, id("assembly_machine/thrusternerva"));
+
+        GenericMachineRecipeBuilder.assembly("ass.stealthmissile", 1_200, 100)
+                .inputLegacyOre("plateTitanium", 20)
+                .inputLegacyOre("plateAluminum", 20)
+                .inputLegacyOre("dyeBlack", 16)
+                .inputLegacyOre("ingotAnyHardPlastic", 16)
+                .inputLegacyOre("ingotAnyHighExplosive", 4)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 4)
+                .inputLegacyOre("boltSteel", 32)
+                .outputItem(item("missile_stealth"))
+                .sourceOrder(266)
+                .save(consumer, id("assembly_machine/stealthmissile"));
+
+        GenericMachineRecipeBuilder.assembly("ass.shuttlemissile", 200, 100)
+                .inputItem(item("missile_generic"), 1)
+                .inputItem(item("missile_strong"), 1)
+                .inputLegacyOre("dyeOrange", 5)
+                .inputFluidContainer(HbmFluids.GASOLINE_LEADED, 1_000, 24)
+                .inputLegacyOre("ingotFiberglass", 12)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 3)
+                .inputLegacyOre("ingotAnyPlasticExplosive", 8)
+                .inputLegacyOre("paneGlass", 6)
+                .inputLegacyOre("plateSteel", 4)
+                .outputItem(item("missile_shuttle"))
+                .sourceOrder(267)
+                .save(consumer, id("assembly_machine/shuttlemissile"));
     }
 
     private static ResourceLocation id(String path) {

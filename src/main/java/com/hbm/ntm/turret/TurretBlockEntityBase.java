@@ -18,16 +18,19 @@ import com.hbm.ntm.menu.TurretMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.api.redstoneoverradio.ROR;
+import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
@@ -42,9 +45,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -61,7 +64,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity implements MenuProvider, HbmEnergyReceiver {
+public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity implements MenuProvider, HbmEnergyReceiver, RORInteractive {
+    private static final AABB DEFAULT_STATIC_RENDER_BOUNDS = new AABB(-3.5D, 0.0D, -3.5D, 3.5D, 5.5D, 3.5D);
+    private static final AABB ARTY_STATIC_RENDER_BOUNDS = new AABB(-4.5D, 0.0D, -5.5D, 4.5D, 5.5D, 5.5D);
+    private static final AABB HIMARS_STATIC_RENDER_BOUNDS = new AABB(-4.5D, 0.0D, -5.5D, 4.5D, 6.5D, 5.5D);
+    private static final AABB SENTRY_STATIC_RENDER_BOUNDS = new AABB(-2.0D, 0.0D, -2.0D, 2.0D, 3.5D, 2.0D);
+
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_LEGACY_POWER = "power";
     private static final String TAG_IS_ON = "isOn";
@@ -86,7 +94,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     private static final String TAG_NAME = "Name";
     private static final String TAG_INDEX = "Index";
     private static final long DEFAULT_MAX_POWER = 100_000L;
-    private static final long DEFAULT_TRANSFER = 10_000L;
+    private static final double LEGACY_SYNC_RANGE = 250.0D;
 
     public static final int SLOT_CHIP = 0;
     public static final int SLOT_AMMO_START = 1;
@@ -155,11 +163,43 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     private int stattrak;
 
     protected TurretBlockEntityBase(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(type, pos, state, new HbmEnergyStorage(DEFAULT_MAX_POWER, DEFAULT_TRANSFER, 0L));
+        super(type, pos, state, new HbmEnergyStorage(DEFAULT_MAX_POWER, DEFAULT_MAX_POWER, 0L));
     }
 
     protected TurretBlockEntityBase(BlockEntityType<?> type, BlockPos pos, BlockState state, long maxPower) {
-        super(type, pos, state, new HbmEnergyStorage(maxPower, Math.min(DEFAULT_TRANSFER, maxPower), 0L));
+        super(type, pos, state, new HbmEnergyStorage(maxPower, maxPower, 0L));
+    }
+
+    protected TurretBlockEntityBase(BlockEntityType<?> type, BlockPos pos, BlockState state, long maxPower,
+            long maxReceive) {
+        super(type, pos, state, new HbmEnergyStorage(maxPower, Math.min(maxReceive, maxPower), 0L));
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        AABB localBounds = staticRenderBounds();
+        Vec3 offset = getRenderHorizontalOffset();
+        BlockPos pos = getBlockPos();
+        return new AABB(
+                pos.getX() + offset.x + localBounds.minX,
+                pos.getY() + offset.y + localBounds.minY,
+                pos.getZ() + offset.z + localBounds.minZ,
+                pos.getX() + offset.x + localBounds.maxX,
+                pos.getY() + offset.y + localBounds.maxY,
+                pos.getZ() + offset.z + localBounds.maxZ);
+    }
+
+    private AABB staticRenderBounds() {
+        if (this instanceof TurretArtyBlockEntity) {
+            return ARTY_STATIC_RENDER_BOUNDS;
+        }
+        if (this instanceof TurretHimarsBlockEntity) {
+            return HIMARS_STATIC_RENDER_BOUNDS;
+        }
+        if (this instanceof TurretSentryBlockEntity || this instanceof TurretSentryDamagedBlockEntity) {
+            return SENTRY_STATIC_RENDER_BOUNDS;
+        }
+        return DEFAULT_STATIC_RENDER_BOUNDS;
     }
 
     @Override
@@ -173,7 +213,6 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         boolean oldAligned = turret.aligned;
         double oldYaw = turret.rotationYaw;
         double oldPitch = turret.rotationPitch;
-        float oldSpin = turret.spin;
         float oldBarrelLeft = turret.barrelLeftPos;
         float oldBarrelRight = turret.barrelRightPos;
         int oldBeamTicks = turret.beamTicks;
@@ -197,7 +236,6 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
                 || oldAligned != turret.aligned
                 || oldYaw != turret.rotationYaw
                 || oldPitch != turret.rotationPitch
-                || oldSpin != turret.spin
                 || oldBarrelLeft != turret.barrelLeftPos
                 || oldBarrelRight != turret.barrelRightPos
                 || oldBeamTicks != turret.beamTicks
@@ -205,9 +243,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         if (changed) {
             turret.setChanged();
         }
-        if (changed || level.getGameTime() % 10L == 0L) {
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        }
+        turret.networkPackTurretLikeLegacy();
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, TurretBlockEntityBase turret) {
@@ -256,6 +292,10 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
 
     public int getStattrak() {
         return stattrak;
+    }
+
+    protected boolean isAligned() {
+        return aligned;
     }
 
     public double getRotationYaw() {
@@ -342,7 +382,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
             targetPos = null;
             stattrak++;
         }
-        if (target != null && doesLineOfSightCheck() && !entityInLineOfSight(target)) {
+        if (target != null && !canAcquireTarget(target)) {
             target = null;
             targetPos = null;
         }
@@ -350,12 +390,14 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         if (target != null) {
             targetPos = getEntityPos(target);
         }
+        updateManualTargeting();
+        updateTargetingBeforeMovement();
 
         if (isActive() && hasPower()) {
-            if (!canSeekNewTarget()) {
+            if (!canSeekNewTarget() && shouldClearTargetWhenSeekingDisabled()) {
                 clearTarget();
             }
-            if (targetPos != null) {
+            if (targetPos != null && shouldTurnTowardTargetPosition()) {
                 turnTowards(targetPos);
             }
             searchTimer--;
@@ -374,7 +416,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
             clearTarget();
         }
 
-        if (aligned) {
+        if (aligned && shouldUpdateFiringTick()) {
             updateFiringTick();
         }
     }
@@ -564,8 +606,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         for (Entity entity : level.getEntitiesOfClass(Entity.class, bounds)) {
             Vec3 entityPos = getEntityPos(entity);
             double distance = entityPos.distanceTo(pos);
-            if (distance > range || !entityAcceptableTarget(entity)
-                    || (doesLineOfSightCheck() && !entityInLineOfSight(entity))) {
+            if (distance > range || !entityAcceptableTarget(entity) || !canAcquireTarget(entity)) {
                 continue;
             }
             if (distance < closest) {
@@ -651,6 +692,25 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         return result.getType() == HitResult.Type.MISS;
     }
 
+    protected boolean entityInSurfaceTargetEnvelope(Entity entity) {
+        if (level == null || !entity.isAlive()) {
+            return false;
+        }
+        Vec3 pos = getTurretPos();
+        Vec3 entityPos = getEntityPos(entity);
+        double length = entityPos.distanceTo(pos);
+        if (length < getDetectorGrace() || length > getDetectorRange() * 1.1D) {
+            return false;
+        }
+        int height = level.getHeight(Heightmap.Types.MOTION_BLOCKING,
+                Mth.floor(entity.getX()), Mth.floor(entity.getZ()));
+        return height < entity.getY() + entity.getBbHeight();
+    }
+
+    protected boolean canAcquireTarget(Entity entity) {
+        return doesLineOfSightCheck() ? entityInLineOfSight(entity) : true;
+    }
+
     protected boolean doesLineOfSightCheck() {
         return true;
     }
@@ -659,9 +719,32 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         return true;
     }
 
+    protected boolean shouldClearTargetWhenSeekingDisabled() {
+        return true;
+    }
+
+    protected void updateManualTargeting() {
+    }
+
+    protected void updateTargetingBeforeMovement() {
+    }
+
+    protected boolean shouldTurnTowardTargetPosition() {
+        return true;
+    }
+
+    protected boolean shouldUpdateFiringTick() {
+        return true;
+    }
+
     protected void clearTarget() {
         target = null;
         targetPos = null;
+    }
+
+    protected void setManualTarget(@Nullable Vec3 pos) {
+        target = null;
+        targetPos = pos;
     }
 
     protected boolean entityAcceptableTarget(Entity entity) {
@@ -795,18 +878,27 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     }
 
     protected boolean spawnBullet(BulletConfig config, float baseDamage, @Nullable LivingEntity homingTarget) {
+        return spawnBullet(config, baseDamage, config == null ? 0.0F : config.spread(), homingTarget);
+    }
+
+    protected boolean spawnBullet(BulletConfig config, float baseDamage, float gunSpread,
+            @Nullable LivingEntity homingTarget) {
         if (level == null || level.isClientSide || config == null) {
             return false;
         }
         BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedLaunchPlan(config, getMuzzlePos(),
-                getBarrelHeading(), 1.0F, config.spread(), level.random);
+                getBarrelHeading(), 1.0F, gunSpread, level.random);
         if (!plan.valid()) {
             return false;
         }
         BulletProjectileEntity bullet = BulletProjectileEntity.fromLaunchPlan(level, plan, null);
-        bullet.overrideDamage = baseDamage;
+        bullet.overrideDamage = legacyTurretDamage(config, baseDamage);
         bullet.setHomingTargetEntity(homingTarget);
         return level.addFreshEntity(bullet);
+    }
+
+    private static float legacyTurretDamage(BulletConfig config, float baseDamage) {
+        return baseDamage * config.damageMin();
     }
 
     protected void scheduleCasing(BulletConfig config) {
@@ -878,9 +970,16 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         ParticleUtil.spawnTau(level, pos.x, pos.y, pos.z, count, false);
     }
 
-    protected void playTurretSound(SoundEvent sound, float volume, float pitch) {
-        if (level != null && !level.isClientSide && sound != null) {
-            level.playSound(null, worldPosition, sound, SoundSource.BLOCKS, volume, pitch);
+    protected void playTurretSound(String sound, float volume, float pitch) {
+        if (level != null && !level.isClientSide) {
+            LegacySoundPlayer.playSoundEffect(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                    sound, SoundSource.BLOCKS, volume, pitch);
+        }
+    }
+
+    protected void playTurretSoundAtEntity(Entity entity, String sound, float volume, float pitch) {
+        if (level != null && !level.isClientSide && entity != null) {
+            LegacySoundPlayer.playSoundAtEntity(entity, sound, SoundSource.BLOCKS, volume, pitch);
         }
     }
 
@@ -935,6 +1034,17 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     }
 
     protected void tickServerSpecificAnimations() {
+    }
+
+    protected void syncRuntimeToTracking() {
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            networkPackNT(LEGACY_SYNC_RANGE);
+        }
+    }
+
+    private void networkPackTurretLikeLegacy() {
+        networkPackNT(LEGACY_SYNC_RANGE);
     }
 
     private void decayClientBeam() {
@@ -997,10 +1107,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
             default -> {
             }
         }
-        setChanged();
-        if (level != null) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-        }
+        syncRuntimeToTracking();
     }
 
     private void toggleTarget(String type) {
@@ -1027,6 +1134,67 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         if (isWhitelistChip(stack)) {
             TurretBiometryItem.removeName(stack, index);
             setChanged();
+        }
+    }
+
+    @Override
+    public String[] getFunctionInfo() {
+        return new String[] {
+                ROR.functionInfo("setActive", "active (0 or 1)"),
+                ROR.functionInfo("targetPlayers", "enabled (0 or 1)"),
+                ROR.functionInfo("targetAnimals", "enabled (0 or 1)"),
+                ROR.functionInfo("targetMobs", "enabled (0 or 1)"),
+                ROR.functionInfo("targetMachines", "enabled (0 or 1)"),
+                ROR.functionInfo("addWhitelist", "name"),
+                ROR.functionInfo("removeWhitelist", "name"),
+        };
+    }
+
+    @Override
+    public String runRORFunction(String name, String[] params) {
+        if (params == null) {
+            params = new String[0];
+        }
+        if (ROR.function("setActive").equals(name) && params.length > 0) {
+            isOn = parseLegacyBool(params[0]);
+            syncRuntimeToTracking();
+        }
+        if (ROR.function("targetPlayers").equals(name) && params.length > 0) {
+            targetPlayers = parseLegacyBool(params[0]);
+            syncRuntimeToTracking();
+        }
+        if (ROR.function("targetAnimals").equals(name) && params.length > 0) {
+            targetFriendly = parseLegacyBool(params[0]);
+            syncRuntimeToTracking();
+        }
+        if (ROR.function("targetMobs").equals(name) && params.length > 0) {
+            targetHostile = parseLegacyBool(params[0]);
+            syncRuntimeToTracking();
+        }
+        if (ROR.function("targetMachines").equals(name) && params.length > 0) {
+            targetMachines = parseLegacyBool(params[0]);
+            syncRuntimeToTracking();
+        }
+        if (ROR.function("addWhitelist").equals(name) && params.length > 0) {
+            addName(params[0]);
+            syncRuntimeToTracking();
+        }
+        if (ROR.function("removeWhitelist").equals(name) && params.length > 0) {
+            List<String> whitelist = getWhitelist();
+            int index = whitelist.indexOf(params[0]);
+            if (index >= 0) {
+                removeName(index);
+                syncRuntimeToTracking();
+            }
+        }
+        return null;
+    }
+
+    private static boolean parseLegacyBool(String value) {
+        try {
+            return Integer.parseInt(value) == 1;
+        } catch (NumberFormatException ex) {
+            return false;
         }
     }
 
@@ -1110,10 +1278,12 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         }
         syncRotationPitch = tag.getDouble(TAG_ROTATION_PITCH);
         syncRotationYaw = tag.getDouble(TAG_ROTATION_YAW);
-        lastSpin = spin;
-        spin = tag.getFloat(TAG_SPIN);
-        if (Math.abs(lastSpin - spin) > 180.0F) {
-            lastSpin += lastSpin < spin ? 360.0F : -360.0F;
+        if (tag.contains(TAG_SPIN)) {
+            lastSpin = spin;
+            spin = tag.getFloat(TAG_SPIN);
+            if (Math.abs(lastSpin - spin) > 180.0F) {
+                lastSpin += lastSpin < spin ? 360.0F : -360.0F;
+            }
         }
         lastBarrelLeftPos = barrelLeftPos;
         lastBarrelRightPos = barrelRightPos;
@@ -1129,6 +1299,19 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         stattrak = tag.getInt(TAG_STATTRAK);
     }
 
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
     private void writeTurretSync(CompoundTag tag) {
         tag.putBoolean(TAG_TARGET_PRESENT, targetPos != null);
         if (targetPos != null) {
@@ -1138,7 +1321,6 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         }
         tag.putDouble(TAG_ROTATION_PITCH, rotationPitch);
         tag.putDouble(TAG_ROTATION_YAW, rotationYaw);
-        tag.putFloat(TAG_SPIN, spin);
         tag.putFloat(TAG_BARREL_LEFT, barrelLeftPos);
         tag.putFloat(TAG_BARREL_RIGHT, barrelRightPos);
         tag.putInt(TAG_BEAM_TICKS, beamTicks);

@@ -39,6 +39,22 @@ public interface MultiblockCoreBlock {
         return getMultiblockShape(state, level, corePos, context);
     }
 
+    default VoxelShape getMultiblockDummyShape(BlockState state, BlockGetter level, BlockPos corePos,
+            BlockPos dummyPos, CollisionContext context) {
+        return getMultiblockShape(state, level, corePos, context).move(
+                corePos.getX() - dummyPos.getX(),
+                corePos.getY() - dummyPos.getY(),
+                corePos.getZ() - dummyPos.getZ());
+    }
+
+    default VoxelShape getMultiblockDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
+            BlockPos dummyPos, CollisionContext context) {
+        return getMultiblockCollisionShape(state, level, corePos, context).move(
+                corePos.getX() - dummyPos.getX(),
+                corePos.getY() - dummyPos.getY(),
+                corePos.getZ() - dummyPos.getZ());
+    }
+
     default boolean usesForwardedDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
         return false;
     }

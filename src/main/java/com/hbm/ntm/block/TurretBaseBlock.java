@@ -87,6 +87,9 @@ public class TurretBaseBlock extends LegacyXrMultiblockBlock implements EntityBl
         if (!opensGui) {
             return InteractionResult.PASS;
         }
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof TurretBlockEntityBase turret) {
             NetworkHooks.openScreen(serverPlayer, turret, pos);
@@ -110,12 +113,12 @@ public class TurretBaseBlock extends LegacyXrMultiblockBlock implements EntityBl
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return HALF_HEIGHT;
+        return isArtilleryLayout() ? Shapes.block() : HALF_HEIGHT;
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return HALF_HEIGHT;
+        return isArtilleryLayout() ? Shapes.block() : HALF_HEIGHT;
     }
 
     @Override
@@ -142,23 +145,40 @@ public class TurretBaseBlock extends LegacyXrMultiblockBlock implements EntityBl
     @Override
     public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos,
             CollisionContext context) {
-        return getLayout(state).shape(0.5D);
+        return isArtilleryLayout() ? Shapes.block() : getLayout(state).shape(0.5D);
     }
 
     @Override
     public VoxelShape getMultiblockCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
             CollisionContext context) {
-        return getLayout(state).shape(0.5D);
+        return isArtilleryLayout() ? Shapes.block() : getLayout(state).shape(0.5D);
+    }
+
+    @Override
+    public VoxelShape getMultiblockDummyShape(BlockState state, BlockGetter level, BlockPos corePos,
+            BlockPos dummyPos, CollisionContext context) {
+        return isArtilleryLayout() ? Shapes.block() : HALF_HEIGHT;
+    }
+
+    @Override
+    public VoxelShape getMultiblockDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
+            BlockPos dummyPos, CollisionContext context) {
+        return isArtilleryLayout() ? Shapes.block() : HALF_HEIGHT;
     }
 
     @Override
     public boolean usesForwardedDummyShape(BlockState state, BlockGetter level, BlockPos corePos) {
-        return true;
+        return !isArtilleryLayout();
     }
 
     @Override
     public boolean usesForwardedDummyCollisionShape(BlockState state, BlockGetter level, BlockPos corePos) {
-        return true;
+        return !isArtilleryLayout();
+    }
+
+    private boolean isArtilleryLayout() {
+        return legacyDimensions.length == ARTILLERY_DIMENSIONS.length
+                && java.util.Arrays.equals(legacyDimensions, ARTILLERY_DIMENSIONS);
     }
 
     @Override

@@ -71,6 +71,11 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
     }
 
     @Override
+    protected int legacyNetworkPackRange() {
+        return 25;
+    }
+
+    @Override
     public LegacyGuiProfile getLegacyGuiProfile() {
         return LegacyGuiProfile.COKER;
     }
@@ -106,8 +111,7 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
             tryProvideFluidToPorts(outputTank.getTankType(), outputTank.getPressure(), this);
         }
         if (wasOn && level.getGameTime() % 2L == 0L) {
-            ParticleUtil.spawnCoolingTower(level, pos.getX() + 0.5D, pos.getY() + 22.0D, pos.getZ() + 0.5D,
-                    10.0F, 0.75F, 3.0F, 200 + level.random.nextInt(50), false, 0.075F, 0.25F, 0x404040);
+            ParticleUtil.spawnCokerChimneySmoke(level, pos);
         }
         return changed || oldWasOn != wasOn;
     }

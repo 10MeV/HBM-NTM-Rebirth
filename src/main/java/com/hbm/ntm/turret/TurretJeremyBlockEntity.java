@@ -3,7 +3,6 @@ package com.hbm.ntm.turret;
 import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -65,7 +64,7 @@ public class TurretJeremyBlockEntity extends TurretBlockEntityBase {
         if (reload > 0) {
             reload--;
             if (reload == 1) {
-                playTurretSound(ModSounds.TURRET_JEREMY_RELOAD.get(), 2.0F, 1.0F);
+                playTurretSound("hbm:turret.jeremy_reload", 2.0F, 1.0F);
             }
         }
     }
@@ -83,7 +82,7 @@ public class TurretJeremyBlockEntity extends TurretBlockEntityBase {
         spawnBullet(config, 50.0F);
         spawnMuzzleLargeExplode(0.0F, 5);
         scheduleCasing(config);
-        playTurretSound(ModSounds.TURRET_JEREMY_FIRE.get(), 4.0F, 1.0F);
+        playTurretSound("hbm:turret.jeremy_fire", 4.0F, 1.0F);
         reload = 20;
     }
 

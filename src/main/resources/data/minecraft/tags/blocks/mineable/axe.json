@@ -3,6 +3,8 @@
   "values": [
     "hbm_ntm_rebirth:frozen_log",
     "hbm_ntm_rebirth:frozen_planks",
-    "hbm_ntm_rebirth:radio_telex"
+    "hbm_ntm_rebirth:radio_telex",
+    "hbm_ntm_rebirth:red_pylon_medium_wood",
+    "hbm_ntm_rebirth:red_pylon_medium_wood_transformer"
   ]
 }

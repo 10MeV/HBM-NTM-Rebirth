@@ -150,6 +150,14 @@ public final class ParticleUtil {
                 6.5F, 75.0D);
     }
 
+    public static void spawnGasFlareBurnFlame(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return;
+        }
+        spawnGasFlame(level, pos.getX() + 0.5D, pos.getY() + 11.75D, pos.getZ() + 0.5D,
+                level.random.nextGaussian() * 0.15D, 0.2D, level.random.nextGaussian() * 0.15D);
+    }
+
     public static void spawnTurbofanAfterburnerFlame(Level level, BlockPos pos, Direction exhaustDirection, int nozzleIndex) {
         if (level == null || pos == null) {
             return;
@@ -545,7 +553,13 @@ public final class ParticleUtil {
     }
 
     public static void spawnBnuuy(Level level, Entity player) {
-        spawnPlayerBackpackEffect(level, player, TYPE_BNUUY);
+        if (player == null) {
+            return;
+        }
+        CompoundTag data = new CompoundTag();
+        data.putString("type", TYPE_BNUUY);
+        data.putInt("player", player.getId());
+        spawnAux(level, player.getX(), player.getY(), player.getZ(), data, 100.0D);
     }
 
     public static void spawnJetpackBj(Level level, Entity player) {
@@ -669,7 +683,7 @@ public final class ParticleUtil {
         CompoundTag data = new CompoundTag();
         data.putString("type", type);
         data.putInt("player", player.getId());
-        spawnAux(level, player.getX(), player.getY(), player.getZ(), data, 150.0D);
+        spawnAux(level, player.getX(), player.getY(), player.getZ(), data, 100.0D);
     }
 
     public static void spawnSmoke(Level level, double x, double y, double z, String mode, int count) {
@@ -807,6 +821,11 @@ public final class ParticleUtil {
 
     public static void spawnVanillaCloud(Level level, double x, double y, double z) {
         spawnVanilla(level, x, y, z, VANILLA_CLOUD, 0.0D, 0.0D, 0.0D);
+    }
+
+    public static void spawnVanillaCloud(Level level, double x, double y, double z,
+            double motionX, double motionY, double motionZ) {
+        spawnVanilla(level, x, y, z, VANILLA_CLOUD, motionX, motionY, motionZ);
     }
 
     public static void spawnVanillaExplode(Level level, double x, double y, double z, double motionX, double motionY, double motionZ) {
@@ -1383,6 +1402,30 @@ public final class ParticleUtil {
         Direction dir = horizontalOrNorth(ventDirection);
         spawnMachineVentSmoke(level, pos.getX() + 0.5D - dir.getStepX(), pos.getY() + 3.0D,
                 pos.getZ() + 0.5D - dir.getStepZ(), 0.25F, 2.5F, 0x202020);
+    }
+
+    public static void spawnPyroOvenOperatingClouds(Level level, BlockPos pos, Direction facing, Direction ventDirection) {
+        if (level == null || pos == null) {
+            return;
+        }
+        Direction dir = horizontalOrNorth(facing);
+        Direction rot = horizontalOrNorth(ventDirection);
+        spawnPyroOvenOperatingCloud(level, pos, dir, rot, -0.875D);
+        spawnPyroOvenOperatingCloud(level, pos, dir, rot, -2.375D);
+        spawnPyroOvenOperatingCloud(level, pos, dir, rot, 0.875D);
+        spawnPyroOvenOperatingCloud(level, pos, dir, rot, 2.375D);
+    }
+
+    private static void spawnPyroOvenOperatingCloud(Level level, BlockPos pos, Direction facing, Direction ventDirection,
+            double forwardOffset) {
+        if (level.random.nextInt(20) != 0) {
+            return;
+        }
+        spawnVanillaCloud(level,
+                pos.getX() + 0.5D - ventDirection.getStepX() + facing.getStepX() * forwardOffset,
+                pos.getY() + 3.0D,
+                pos.getZ() + 0.5D - ventDirection.getStepZ() + facing.getStepZ() * forwardOffset,
+                0.0D, 0.05D, 0.0D);
     }
 
     public static void spawnRotaryFurnaceVentSmoke(Level level, BlockPos pos, Direction ventDirection) {

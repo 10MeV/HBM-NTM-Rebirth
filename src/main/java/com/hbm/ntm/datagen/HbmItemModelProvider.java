@@ -218,6 +218,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "pellets_charged");
             return;
         }
+        if (path.equals("pellet_buckshot")) {
+            generatedItem(path, "pellets_lead");
+            return;
+        }
         if (path.startsWith("pellet_rtg_depleted_")) {
             generatedItem(path, "pellet_rtg_depleted." + path.substring("pellet_rtg_depleted_".length()));
             return;

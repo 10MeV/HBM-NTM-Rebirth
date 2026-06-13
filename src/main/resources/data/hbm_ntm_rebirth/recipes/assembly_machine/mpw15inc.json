@@ -1,0 +1,56 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:assembly_machine",
+    "internal_name":  "ass.mpw15inc",
+    "duration":  200,
+    "power":  100,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:seg_15"
+                                           },
+                            "count":  1
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:plates/steel"
+                                           },
+                            "count":  12,
+                            "legacy_ore":  "plateSteel"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:ingots/any_high_explosive"
+                                           },
+                            "count":  8,
+                            "legacy_ore":  "ingotAnyHighExplosive"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:dusts/red_phosphorus"
+                                           },
+                            "count":  16,
+                            "legacy_ore":  "dustRedPhosphorus"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:circuits/basic"
+                                           },
+                            "count":  3
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:mp_warhead_15_incendiary"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  311
+}

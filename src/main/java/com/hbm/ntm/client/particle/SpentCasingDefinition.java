@@ -96,12 +96,12 @@ public final class SpentCasingDefinition {
                 .names("240standard", "240ext", "240w", "240u", "240n");
         straight().scale(15.0F, 15.0F, 10.0F).age(300).bounceMotion(1.0F, 0.5F)
                 .colors(COLOR_CASE_16INCH).names("ammo_arty", "ammo_arty_classic", "ammo_arty_he", "ammo_arty_cargo",
-                        "ammo_arty_chlorine", "ammo_arty_mustard_gas");
+                        "ammo_arty_chlorine");
         straight().scale(15.0F, 15.0F, 10.0F).age(300).bounceMotion(1.0F, 0.5F)
                 .colors(COLOR_CASE_16INCH_PHOS).names("ammo_arty_phosphorus", "ammo_arty_phosphorus_multi");
         straight().scale(15.0F, 15.0F, 10.0F).age(300).bounceMotion(1.0F, 0.5F)
                 .colors(COLOR_CASE_16INCH_NUKE).names("ammo_arty_mini_nuke", "ammo_arty_nuke",
-                        "ammo_arty_mini_nuke_multi", "ammo_arty_phosgene");
+                        "ammo_arty_mini_nuke_multi", "ammo_arty_phosgene", "ammo_arty_mustard_gas");
     }
 
     private static SpentCasingDefinition straight() {

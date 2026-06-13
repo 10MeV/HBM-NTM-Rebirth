@@ -7,7 +7,6 @@ import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.config.ServerConfig;
 import com.hbm.ntm.config.WeaponConfig;
 import com.hbm.ntm.api.entity.RadarScanner;
-import com.hbm.ntm.api.entity.ResistanceProvider;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
 import com.hbm.ntm.damage.DamageResistanceHandler;
 import com.hbm.ntm.damage.EntityDamageUtil;
@@ -21,9 +20,12 @@ import com.hbm.ntm.explosion.ExplosionNukeSmall;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.item.EuphemiumArmorItem;
+import com.hbm.ntm.item.DnsArmorItem;
 import com.hbm.ntm.item.FsbArmorItem;
 import com.hbm.ntm.item.HbmAbilityToolItem;
+import com.hbm.ntm.item.NcrpaArmorItem;
 import com.hbm.ntm.item.No9ArmorItem;
+import com.hbm.ntm.item.TrenchmasterArmorItem;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
@@ -87,6 +89,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingFallEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.TickEvent;
@@ -132,6 +135,9 @@ public final class CommonForgeEvents {
 
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
+        if (TrenchmasterArmorItem.tryCancelIncomingAttack(event)) {
+            return;
+        }
         if (DamageResistanceHandler.isAbsolute(event.getSource())) {
             return;
         }
@@ -148,7 +154,9 @@ public final class CommonForgeEvents {
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         LivingEntity entity = event.getEntity();
-        float amount = DamageResistanceHandler.calculateDamage(entity, event.getSource(), event.getAmount());
+        float amount = DamageResistanceHandler.applyLegacyPreResistanceDamageModifiers(entity, event.getSource(),
+                event.getAmount());
+        amount = DamageResistanceHandler.calculateDamage(entity, event.getSource(), amount);
 
         if (entity instanceof Player player) {
             amount = HbmPlayerProperties.absorbShieldDamage(player, amount);
@@ -157,11 +165,12 @@ public final class CommonForgeEvents {
         if (HbmLivingProperties.getContagion(entity) > 0 && amount < 100.0F) {
             amount *= 2.0F;
         }
+        if (entity instanceof Player player && TrenchmasterArmorItem.ignoresSelfExplosion(player, event.getSource())) {
+            amount = 0.0F;
+        }
 
         event.setAmount(amount);
-        if (entity instanceof ResistanceProvider provider) {
-            provider.onDamageDealt(event.getSource(), amount);
-        }
+        DamageResistanceHandler.notifyDamageDealt(entity, event.getSource(), amount);
     }
 
     @SubscribeEvent
@@ -203,7 +212,24 @@ public final class CommonForgeEvents {
         Player player = event.player;
         HbmPlayerProperties.tickRuntime(player);
         tickEquippedHbmArmor(player);
+        DnsArmorItem.reconcileSprintBoost(player);
+        NcrpaArmorItem.reconcileSprintBoost(player);
+        FsbArmorItem.reconcileStepHeight(player);
         HazardExposureUtil.updatePlayerInventory(player);
+    }
+
+    @SubscribeEvent
+    public static void onLivingJump(LivingEvent.LivingJumpEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            FsbArmorItem.handleFullSetJump(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingFall(LivingFallEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            FsbArmorItem.handleFullSetFall(player, event.getDistance());
+        }
     }
 
     private static void tickEquippedHbmArmor(Player player) {
@@ -791,9 +817,9 @@ public final class CommonForgeEvents {
     private static void handleLegacyLongTermEffects(LivingEntity entity) {
         handleContaminationEffects(entity);
         handleContagion(entity);
-        handlePollution(entity);
         handleLungDisease(entity);
         handleOil(entity);
+        handlePollution(entity);
         handleTemperatureEffects(entity);
     }
 
@@ -895,8 +921,8 @@ public final class CommonForgeEvents {
         }
 
         int blackLungRaw = HbmLivingProperties.getBlackLung(entity);
-        int maxBlackLung = 2 * 60 * 60 * 20;
-        int maxAsbestos = 60 * 60 * 20;
+        int maxBlackLung = HbmLivingProperties.MAX_BLACK_LUNG;
+        int maxAsbestos = HbmLivingProperties.MAX_ASBESTOS;
         if (blackLungRaw > 0 && blackLungRaw < maxBlackLung * 0.5D) {
             HbmLivingProperties.setBlackLung(entity, blackLungRaw - 1);
         }
@@ -991,7 +1017,11 @@ public final class CommonForgeEvents {
             EntityDamageUtil.attackEntityFromNt(entity, entity.damageSources().onFire(), effect.damage);
         }
         if (entity.level() instanceof ServerLevel level) {
-            ParticleUtil.spawnSweat(entity, effect.particle, 1);
+            double width = entity.getBbWidth();
+            double x = entity.getX() - width * 0.5D + width * entity.getRandom().nextDouble();
+            double y = entity.getY() + entity.getRandom().nextDouble() * entity.getBbHeight();
+            double z = entity.getZ() - width * 0.5D + width * entity.getRandom().nextDouble();
+            ParticleUtil.spawnLegacyFlameEffect(level, x, y, z, effect.flameMeta);
         }
     }
 
@@ -1017,29 +1047,29 @@ public final class CommonForgeEvents {
     }
 
     private enum TemperatureEffect {
-        FIRE(Blocks.FIRE, 2.0F, false) {
+        FIRE(ParticleUtil.FLAMETHROWER_META_FIRE, 2.0F, false) {
             @Override int get(LivingEntity entity) { return HbmLivingProperties.getFire(entity); }
             @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setFire(entity, value); }
         },
-        PHOSPHORUS(Blocks.FIRE, 5.0F, false) {
+        PHOSPHORUS(ParticleUtil.FLAMETHROWER_META_FIRE, 5.0F, false) {
             @Override int get(LivingEntity entity) { return HbmLivingProperties.getPhosphorus(entity); }
             @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setPhosphorus(entity, value); }
         },
-        BALEFIRE(Blocks.SOUL_FIRE, 5.0F, true) {
+        BALEFIRE(ParticleUtil.FLAMETHROWER_META_BALEFIRE, 5.0F, true) {
             @Override int get(LivingEntity entity) { return HbmLivingProperties.getBalefire(entity); }
             @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setBalefire(entity, value); }
         },
-        BLACK_FIRE(Blocks.BLACKSTONE, 10.0F, true) {
+        BLACK_FIRE(ParticleUtil.FLAMETHROWER_META_BLACK, 10.0F, true) {
             @Override int get(LivingEntity entity) { return HbmLivingProperties.getBlackFire(entity); }
             @Override void set(LivingEntity entity, int value) { HbmLivingProperties.setBlackFire(entity, value); }
         };
 
-        private final net.minecraft.world.level.block.Block particle;
+        private final int flameMeta;
         private final float damage;
         private final boolean radiates;
 
-        TemperatureEffect(net.minecraft.world.level.block.Block particle, float damage, boolean radiates) {
-            this.particle = particle;
+        TemperatureEffect(int flameMeta, float damage, boolean radiates) {
+            this.flameMeta = flameMeta;
             this.damage = damage;
             this.radiates = radiates;
         }

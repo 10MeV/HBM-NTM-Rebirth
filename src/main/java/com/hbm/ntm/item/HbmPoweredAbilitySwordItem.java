@@ -108,6 +108,14 @@ public class HbmPoweredAbilitySwordItem extends HbmAbilitySwordItem implements I
     }
 
     @Override
+    public long peekCharge(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return 0L;
+        }
+        return stack.hasTag() ? stack.getTag().getLong(HbmBatteryItem.DEFAULT_CHARGE_TAG) : maxCharge;
+    }
+
+    @Override
     public void setCharge(ItemStack stack, long charge) {
         if (!stack.isEmpty()) {
             stack.getOrCreateTag().putLong(HbmBatteryItem.DEFAULT_CHARGE_TAG, charge);

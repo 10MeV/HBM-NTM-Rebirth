@@ -3,7 +3,6 @@ package com.hbm.ntm.turret;
 import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
@@ -103,7 +102,7 @@ public class TurretRichardBlockEntity extends TurretBlockEntityBase {
         }
         LivingEntity homingTarget = getTarget() instanceof LivingEntity living ? living : null;
         spawnBullet(config, 30.0F, homingTarget);
-        playTurretSound(ModSounds.TURRET_RICHARD_FIRE.get(), 2.0F, 1.0F);
+        playTurretSound("hbm:turret.richard_fire", 2.0F, 1.0F);
         loaded--;
     }
 

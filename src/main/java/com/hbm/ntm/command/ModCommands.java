@@ -100,6 +100,7 @@ import com.hbm.ntm.world.WorldUtil;
 import com.hbm.ntm.world.saveddata.AnnihilatorSavedData;
 import com.hbm.ntm.world.saveddata.TomImpactSavedData;
 import com.hbm.ntm.world.saveddata.WorldSavedDataDiagnostics;
+import com.hbm.ntm.world.saveddata.WorldSavedDataHelper;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.LegacySatelliteType;
 import com.hbm.ntm.satellite.Satellite;
@@ -441,6 +442,21 @@ public final class ModCommands {
                                                 .executes(context -> worldSavedDataSatelliteFrequencies(
                                                         context.getSource(),
                                                         IntegerArgumentType.getInteger(context, "limit"))))))
+                        .then(Commands.literal("pollution")
+                                .then(Commands.literal("load")
+                                        .executes(context -> worldSavedDataPollutionLoad(context.getSource())))
+                                .then(Commands.literal("loadAll")
+                                        .executes(context -> worldSavedDataPollutionLoadAll(context.getSource()))))
+                        .then(Commands.literal("chunkRadiation")
+                                .then(Commands.literal("load")
+                                        .executes(context -> worldSavedDataChunkRadiationLoad(context.getSource())))
+                                .then(Commands.literal("loadAll")
+                                        .executes(context -> worldSavedDataChunkRadiationLoadAll(context.getSource()))))
+                        .then(Commands.literal("craterRadiation")
+                                .then(Commands.literal("load")
+                                        .executes(context -> worldSavedDataCraterRadiationLoad(context.getSource())))
+                                .then(Commands.literal("loadAll")
+                                        .executes(context -> worldSavedDataCraterRadiationLoadAll(context.getSource()))))
                         .then(Commands.literal("chunks")
                                 .then(Commands.literal("here")
                                         .executes(context -> worldSavedDataChunkStatus(
@@ -1416,6 +1432,147 @@ public final class ModCommands {
                     + " truncated=true"), false);
         }
         return rootProblems + problemEntries;
+    }
+
+    private static int worldSavedDataPollutionLoad(CommandSourceStack source) {
+        Optional<WorldSavedDataHelper.ExistingDataLookup<PollutionSavedData>> lookup =
+                WorldSavedDataHelper.findExistingWithFallback(source.getLevel(), PollutionSavedData.DATA_NAME,
+                        PollutionSavedData::load, PollutionSavedData.MODERN_COMPAT_DATA_NAME);
+        if (lookup.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("hbmpollution absent"), false);
+            return 0;
+        }
+        WorldSavedDataHelper.ExistingDataLookup<PollutionSavedData> result = lookup.get();
+        PollutionSavedData.LoadDiagnostics diagnostics = result.data().loadDiagnostics();
+        source.sendSuccess(() -> Component.literal("hbmpollution load " + result.summary()
+                + " " + diagnostics.summary()
+                + " readOnly=true"), false);
+        return diagnostics.clean() ? 1 : 0;
+    }
+
+    private static int worldSavedDataPollutionLoadAll(CommandSourceStack source) {
+        int dimensions = 0;
+        int present = 0;
+        int primary = 0;
+        int fallback = 0;
+        int rootProblems = 0;
+        for (ServerLevel level : source.getServer().getAllLevels()) {
+            dimensions++;
+            Optional<WorldSavedDataHelper.ExistingDataLookup<PollutionSavedData>> lookup =
+                    WorldSavedDataHelper.findExistingWithFallback(level, PollutionSavedData.DATA_NAME,
+                            PollutionSavedData::load, PollutionSavedData.MODERN_COMPAT_DATA_NAME);
+            if (lookup.isEmpty()) {
+                continue;
+            }
+            present++;
+            WorldSavedDataHelper.ExistingDataLookup<PollutionSavedData> result = lookup.get();
+            if (result.primary()) {
+                primary++;
+            } else {
+                fallback++;
+            }
+            PollutionSavedData.LoadDiagnostics diagnostics = result.data().loadDiagnostics();
+            rootProblems += diagnostics.problemCount();
+            String detail = " - " + level.dimension().location()
+                    + " hbmpollution load " + result.summary()
+                    + " " + diagnostics.summary();
+            source.sendSuccess(() -> Component.literal(detail), false);
+        }
+        String summary = "hbmpollution loadAll dimensions=" + dimensions
+                + " present=" + present
+                + " primary=" + primary
+                + " fallback=" + fallback
+                + " rootProblems=" + rootProblems
+                + " readOnly=true";
+        source.sendSuccess(() -> Component.literal(summary), false);
+        return rootProblems;
+    }
+
+    private static int worldSavedDataChunkRadiationLoad(CommandSourceStack source) {
+        Optional<RadiationSavedData> data = WorldSavedDataHelper.getExisting(source.getLevel(),
+                RadiationSavedData.DATA_NAME, RadiationSavedData::load);
+        if (data.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("hbm_chunk_radiation absent"), false);
+            return 0;
+        }
+        RadiationSavedData.LoadDiagnostics diagnostics = data.get().loadDiagnostics();
+        source.sendSuccess(() -> Component.literal("hbm_chunk_radiation load "
+                + diagnostics.summary()
+                + " readOnly=true"), false);
+        return diagnostics.clean() ? 1 : 0;
+    }
+
+    private static int worldSavedDataChunkRadiationLoadAll(CommandSourceStack source) {
+        int dimensions = 0;
+        int present = 0;
+        int rootProblems = 0;
+        int entries = 0;
+        for (ServerLevel level : source.getServer().getAllLevels()) {
+            dimensions++;
+            Optional<RadiationSavedData> data = WorldSavedDataHelper.getExisting(level,
+                    RadiationSavedData.DATA_NAME, RadiationSavedData::load);
+            if (data.isEmpty()) {
+                continue;
+            }
+            present++;
+            RadiationSavedData.LoadDiagnostics diagnostics = data.get().loadDiagnostics();
+            rootProblems += diagnostics.problemCount();
+            entries += diagnostics.entries();
+            String detail = " - " + level.dimension().location()
+                    + " hbm_chunk_radiation load " + diagnostics.summary();
+            source.sendSuccess(() -> Component.literal(detail), false);
+        }
+        String summary = "hbm_chunk_radiation loadAll dimensions=" + dimensions
+                + " present=" + present
+                + " entries=" + entries
+                + " rootProblems=" + rootProblems
+                + " readOnly=true";
+        source.sendSuccess(() -> Component.literal(summary), false);
+        return rootProblems;
+    }
+
+    private static int worldSavedDataCraterRadiationLoad(CommandSourceStack source) {
+        Optional<CraterRadiationData> data = CraterRadiationData.getExisting(source.getLevel());
+        if (data.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("hbm_crater_radiation absent"), false);
+            return 0;
+        }
+        CraterRadiationData.LoadDiagnostics diagnostics = data.get().loadDiagnostics();
+        source.sendSuccess(() -> Component.literal("hbm_crater_radiation load "
+                + diagnostics.summary()
+                + " readOnly=true"), false);
+        return diagnostics.clean() ? 1 : 0;
+    }
+
+    private static int worldSavedDataCraterRadiationLoadAll(CommandSourceStack source) {
+        int dimensions = 0;
+        int present = 0;
+        int rootProblems = 0;
+        int cells = 0;
+        int zones = 0;
+        for (ServerLevel level : source.getServer().getAllLevels()) {
+            dimensions++;
+            Optional<CraterRadiationData> data = CraterRadiationData.getExisting(level);
+            if (data.isEmpty()) {
+                continue;
+            }
+            present++;
+            CraterRadiationData.LoadDiagnostics diagnostics = data.get().loadDiagnostics();
+            rootProblems += diagnostics.problemCount();
+            cells += diagnostics.cells();
+            zones += diagnostics.zones();
+            String detail = " - " + level.dimension().location()
+                    + " hbm_crater_radiation load " + diagnostics.summary();
+            source.sendSuccess(() -> Component.literal(detail), false);
+        }
+        String summary = "hbm_crater_radiation loadAll dimensions=" + dimensions
+                + " present=" + present
+                + " cells=" + cells
+                + " zones=" + zones
+                + " rootProblems=" + rootProblems
+                + " readOnly=true";
+        source.sendSuccess(() -> Component.literal(summary), false);
+        return rootProblems;
     }
 
     private static int worldSavedDataSatelliteTypes(CommandSourceStack source) {
@@ -3526,6 +3683,7 @@ public final class ModCommands {
     private static int getEnergyInfo(CommandSourceStack source, BlockPos pos) {
         BlockEntity blockEntity = CompatEnergyControl.findTileEntity(source.getLevel(), pos);
         if (!(blockEntity instanceof InfoProviderEC)
+                && !CompatEnergyControl.hasEnergy(blockEntity)
                 && CompatEnergyControl.getAllTanks(blockEntity) == null
                 && CompatEnergyControl.getHeat(blockEntity) < 0) {
             source.sendFailure(Component.literal("No HBM EnergyControl info provider at " + pos.toShortString()));

@@ -49,7 +49,7 @@ public final class HbmMachineRecipeCategory implements IRecipeCategory<GenericMa
             case ASSEMBLY_MACHINE -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_assembly_machine", "Assembly Machine");
             case CHEMICAL_PLANT -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_chemical_plant", "Chemical Plant");
             case PUREX -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_purex", "PUREX");
-            case PRECASS -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_assembly_machine", "Precision Assembler");
+            case PRECASS -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_precass", "Precision Assembly Machine");
             case ARC_WELDER -> Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_arc_welder", "Arc Welder");
         };
     }

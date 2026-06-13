@@ -6,24 +6,36 @@ import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.bullet.SednaWeaponModEvaluator;
 import com.hbm.ntm.bullet.SednaMagazineConfig;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.sound.LegacyClientSoundPlayer;
 import com.hbm.ntm.item.Ni4NiGunItem;
 import com.hbm.ntm.item.SednaGunItem;
+import com.hbm.ntm.item.StingerGunItem;
+import com.hbm.ntm.util.RayTraceUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -74,6 +86,9 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             "textures/models/weapons/carbine_bayonet.png");
     private static final ResourceLocation LILMAC_SCOPE_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
             "textures/models/weapons/lilmac_scope.png");
+    private static long follyAimStartMillis;
+    private static boolean follyJingle;
+    private static boolean follyWasAiming;
 
     private static final Map<String, RenderSpec> SPECS = Map.ofEntries(
             specOnly("gun_pepperbox", "pepperbox", "pepperbox",
@@ -251,7 +266,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             specFatman("gun_fatman", "fatman", "fatman",
                     inv(1.375D, 0.0D, -0.5D, 0.0D),
                     fp(0.5D, 0.875D, -1.5D * 0.8D, -1.25D * 0.8D, 0.5D * 0.8D)),
-            spec("gun_folly", "folly", "moonlight",
+            specSpecial("gun_folly", "folly", "moonlight", SpecialRender.FOLLY,
                     inv(1.25D, 0.0D, -0.5D, 0.0D),
                     fp(0.75D, 0.875D, -2.5D * 0.8D, -1.5D * 0.8D, 2.75D * 0.8D)),
             specSpecial("gun_fireext", "fireext", "fireext_normal", SpecialRender.FIREEXT,
@@ -317,6 +332,8 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             renderTeslaCannon(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.FATMAN) {
             renderFatman(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else if (spec.specialRender() == SpecialRender.FOLLY) {
+            renderFolly(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.TAU) {
             renderTau(model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.GREASEGUN) {
@@ -342,7 +359,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         } else if (spec.specialRender() == SpecialRender.MAS36) {
             renderMas36(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.BOLTER) {
-            renderBolter(displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderBolter(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.STG77) {
             renderStg77(model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.LASER_PISTOL) {
@@ -350,7 +367,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         } else if (spec.specialRender() == SpecialRender.PANZERSCHRECK) {
             renderPanzerschreck(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.STINGER) {
-            renderStinger(displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderStinger(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.QUADRO) {
             renderQuadro(displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.MISSILE_LAUNCHER) {
@@ -500,6 +517,164 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 .findFirst()
                 .map(magazine -> beltAmmoCount(player, magazine))
                 .orElse(0);
+    }
+
+    private static void renderFolly(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
+
+        model.renderPart("Cannon", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        model.renderPart("Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        model.renderPart("Shell", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        model.renderPart("Breech", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        model.renderPart("Cog", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        renderFollyAimingText(stack, poseStack, buffer);
+    }
+
+    private static void renderFollyAimingText(ItemStack stack, PoseStack poseStack, MultiBufferSource buffer) {
+        boolean aiming = stack.getItem() instanceof SednaGunItem gunItem && gunItem.legacyIsAiming(stack);
+        if (aiming && !follyWasAiming) {
+            follyAimStartMillis = System.currentTimeMillis();
+        }
+        if (!aiming) {
+            follyJingle = false;
+            follyWasAiming = false;
+            return;
+        }
+        follyWasAiming = true;
+
+        Minecraft minecraft = Minecraft.getInstance();
+        Player player = minecraft.player;
+        if (player == null) {
+            return;
+        }
+        long elapsed = System.currentTimeMillis() - follyAimStartMillis;
+        Font font = minecraft.font;
+        int color = follyTextColor(player);
+
+        if (elapsed > 5000L) {
+            String msg = primaryMagazineAmount(stack) > 0 ? "+" : "No ammo";
+            poseStack.pushPose();
+            float crosshairSize = 0.01F;
+            poseStack.translate((font.width(msg) / 2.0D) * crosshairSize + 2.0D,
+                    1.0D + font.lineHeight * crosshairSize / 2.0D, -2.75D);
+            poseStack.scale(crosshairSize, -crosshairSize, crosshairSize);
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            renderLegacyModelText(font, msg, color, poseStack, buffer);
+            poseStack.popPose();
+        }
+
+        String splash = follyBootSplash(elapsed);
+        if (!splash.isEmpty()) {
+            if (!follyJingle) {
+                LegacyClientSoundPlayer.playSoundClient(player.getX(), player.getY(), player.getZ(),
+                        "hbm:weapon.fire.vstar", SoundSource.PLAYERS, 0.5F, 1.0F);
+                follyJingle = true;
+            }
+            poseStack.pushPose();
+            float splashSize = 0.02F;
+            poseStack.translate((font.width(splash) / 2.0D) * splashSize + 2.0D,
+                    1.0D + font.lineHeight * splashSize / 2.0D, -2.75D);
+            poseStack.scale(splashSize, -splashSize, splashSize);
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            renderLegacyModelText(font, splash, color, poseStack, buffer);
+            poseStack.popPose();
+        }
+
+        List<String> tty = follyTtyLines(player, elapsed);
+        if (!tty.isEmpty()) {
+            poseStack.pushPose();
+            float fontSize = 0.005F;
+            poseStack.translate(2.5D, 1.375D, -2.75D);
+            poseStack.scale(fontSize, -fontSize, fontSize);
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            for (String line : tty) {
+                renderLegacyModelText(font, line, color, poseStack, buffer);
+                poseStack.translate(0.0D, font.lineHeight + 2.0D, 0.0D);
+            }
+            poseStack.popPose();
+        }
+    }
+
+    private static int follyTextColor(Player player) {
+        float variance = 0.85F + player.getRandom().nextFloat() * 0.15F;
+        int red = Math.min(255, Math.max(0, Math.round(variance * 255.0F)));
+        int green = Math.min(255, Math.max(0, Math.round(variance * 0.5F * 255.0F)));
+        return 0xFF000000 | (red << 16) | (green << 8);
+    }
+
+    private static String follyBootSplash(long elapsedMillis) {
+        if (elapsedMillis > 5000L || elapsedMillis < 3000L) {
+            return "";
+        }
+        int splashIndex = (int) ((elapsedMillis - 3000L) * 35L / 2000L) - 10;
+        char[] letters = "VStarOS".toCharArray();
+        StringBuilder splash = new StringBuilder();
+        for (int i = 0; i < letters.length; i++) {
+            if (i < splashIndex - 1) {
+                splash.append(ChatFormatting.LIGHT_PURPLE);
+            }
+            if (i == splashIndex - 1) {
+                splash.append(ChatFormatting.AQUA);
+            }
+            if (i == splashIndex) {
+                splash.append(ChatFormatting.WHITE);
+            }
+            if (i == splashIndex + 1) {
+                splash.append(ChatFormatting.AQUA);
+            }
+            if (i == splashIndex + 2) {
+                splash.append(ChatFormatting.LIGHT_PURPLE);
+            }
+            if (i > splashIndex + 2) {
+                splash.append(ChatFormatting.BLACK);
+            }
+            splash.append(letters[i]);
+        }
+        return splash.toString();
+    }
+
+    private static List<String> follyTtyLines(Player player, long elapsedMillis) {
+        List<String> tty = new ArrayList<>();
+        if (elapsedMillis < 3000L) {
+            if (elapsedMillis > 250L) {
+                tty.add(ChatFormatting.GREEN + "POST successful - Code 0");
+            }
+            if (elapsedMillis > 500L) {
+                tty.add(ChatFormatting.GREEN + "8,388,608 bytes of RAM installed");
+                tty.add(ChatFormatting.GREEN + "5,187,427 bytes available");
+            }
+            if (elapsedMillis > 750L) {
+                tty.add(ChatFormatting.GREEN + "Reticulating splines...");
+            }
+            if (elapsedMillis > 1500L) {
+                tty.add(ChatFormatting.GREEN + "No keyboard found!");
+            }
+            if (elapsedMillis > 2000L) {
+                tty.add(ChatFormatting.GREEN + "Booting from /dev/sda1...");
+            }
+        }
+        if (elapsedMillis > 5000L) {
+            tty.add(follyTargetLine(player));
+            tty.add(ChatFormatting.GREEN + "Angle: " + ((int) (-player.getXRot() * 100.0F) / 100.0D));
+        }
+        return tty;
+    }
+
+    private static String follyTargetLine(Player player) {
+        HitResult hit = RayTraceUtil.getMouseOver(player, 250.0D);
+        String target = ChatFormatting.GREEN + "Target: ";
+        if (hit.getType() == HitResult.Type.BLOCK && hit instanceof BlockHitResult blockHit) {
+            BlockPos pos = blockHit.getBlockPos();
+            return target + pos.getX() + "/" + pos.getY() + "/" + pos.getZ();
+        }
+        if (hit.getType() == HitResult.Type.ENTITY && hit instanceof EntityHitResult entityHit) {
+            return target + entityHit.getEntity().getName().getString();
+        }
+        return target + "N/A";
     }
 
     private static int beltAmmoCount(Player player, SednaMagazineConfig magazine) {
@@ -820,16 +995,29 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    private static void renderBolter(ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    private static void renderBolter(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
         if (displayContext.firstPerson()) {
             model.renderPart("Body", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
             model.renderPart("Mag", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
             model.renderPart("Bullet", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            renderBolterAmmoText(stack, poseStack, buffer);
         } else {
             model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
         }
+    }
+
+    private static void renderBolterAmmoText(ItemStack stack, PoseStack poseStack, MultiBufferSource buffer) {
+        String text = Integer.toString(primaryMagazineAmount(stack));
+        Font font = Minecraft.getInstance().font;
+        float scale = 0.04F;
+        poseStack.pushPose();
+        poseStack.translate(0.025D - (font.width(text) / 2.0D) * scale, 2.11D, 2.91D);
+        poseStack.scale(scale, -scale, scale);
+        poseStack.mulPose(Axis.XP.rotationDegrees(45.0F));
+        renderLegacyModelText(font, text, 0xFFFF0000, poseStack, buffer);
+        poseStack.popPose();
     }
 
     private static void renderStg77(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
@@ -870,9 +1058,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    private static void renderStinger(ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    private static void renderStinger(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (displayContext.firstPerson()) {
+            if (stack.getItem() instanceof StingerGunItem stinger && stinger.shouldRenderLegacyStingerCrosshair(stack)) {
+                return;
+            }
             poseStack.pushPose();
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
             model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
@@ -882,10 +1073,24 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate(0.0D, 3.5D, -3.0D);
             extraModel("panzerschreck", "panzerschreck", "panzerschreck")
                     .renderPart("Rocket", PANZERSCHRECK_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+            renderStingerNotAccurateText(poseStack, buffer);
             poseStack.popPose();
         } else {
             model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
         }
+    }
+
+    private static void renderStingerNotAccurateText(PoseStack poseStack, MultiBufferSource buffer) {
+        String text = "Not accurate";
+        Font font = Minecraft.getInstance().font;
+        float scale = 0.04F;
+        poseStack.pushPose();
+        poseStack.translate(0.025D, -0.5D, (font.width(text) / 2.0D) * scale - 3.0D);
+        poseStack.scale(scale, -scale, scale);
+        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        poseStack.mulPose(Axis.XN.rotationDegrees(45.0F));
+        renderLegacyModelText(font, text, 0xFFFF0000, poseStack, buffer);
+        poseStack.popPose();
     }
 
     private static void renderQuadro(ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
@@ -968,6 +1173,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
         model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    private static void renderLegacyModelText(Font font, String text, int color, PoseStack poseStack,
+            MultiBufferSource buffer) {
+        font.drawInBatch(text, 0.0F, 0.0F, color, false, poseStack.last().pose(), buffer,
+                Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
     }
 
     private static void renderChargeThrower(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
@@ -2044,6 +2255,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         LAG(false),
         M2(false),
         COILGUN(false),
+        FOLLY(false),
         MARESLEG_AKIMBO(true),
         MINIGUN_DUAL(true),
         EOTT(true),

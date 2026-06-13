@@ -141,6 +141,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (changed) {
             refinery.setChanged();
         }
+        refinery.networkPackNT(150);
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

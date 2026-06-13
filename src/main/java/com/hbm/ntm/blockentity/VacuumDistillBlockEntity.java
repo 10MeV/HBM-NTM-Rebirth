@@ -69,6 +69,11 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
     }
 
     @Override
+    protected int legacyNetworkPackRange() {
+        return 150;
+    }
+
+    @Override
     public LegacyGuiProfile getLegacyGuiProfile() {
         return LegacyGuiProfile.VACUUM_DISTILL;
     }

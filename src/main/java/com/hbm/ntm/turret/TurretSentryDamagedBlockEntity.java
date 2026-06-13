@@ -4,12 +4,9 @@ import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.particle.LegacyCasingEjectors;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -83,8 +80,7 @@ public class TurretSentryDamagedBlockEntity extends DamagedTurretBlockEntityBase
         super.seekNewTarget();
         Entity current = getTarget();
         if (level != null && current != null && current != previous) {
-            level.playSound(null, current.blockPosition(), ModSounds.TURRET_SENTRY_LOCKON.get(),
-                    SoundSource.BLOCKS, 2.0F, 1.5F);
+            playTurretSoundAtEntity(current, "hbm:turret.sentry_lockon", 2.0F, 1.5F);
         }
     }
 
@@ -96,12 +92,12 @@ public class TurretSentryDamagedBlockEntity extends DamagedTurretBlockEntityBase
         }
         if (shotSide) {
             triggerLeftBarrelRecoil();
-            playTurretSound(ModSounds.TURRET_SENTRY_FIRE.get(), 2.0F, 1.0F);
+            playTurretSound("hbm:turret.sentry_fire", 2.0F, 1.0F);
             spawnBullet(CONFIG, 5.0F);
             spawnMuzzleLargeExplodeAt(sentryMuzzlePos(), 1.0F, 1);
         } else {
             triggerRightBarrelRecoil();
-            playTurretSound(ModSounds.TURRET_SENTRY_FIRE.get(), 2.0F, 0.75F);
+            playTurretSound("hbm:turret.sentry_fire", 2.0F, 0.75F);
             spawnMuzzleLargeExplodeAt(getTurretPos(), 1.0F, 1);
         }
         scheduleCasing(CONFIG);
@@ -153,10 +149,7 @@ public class TurretSentryDamagedBlockEntity extends DamagedTurretBlockEntityBase
     }
 
     private void syncSentryRecoil() {
-        setChanged();
-        if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-        }
+        syncRuntimeToTracking();
     }
 
     @Override

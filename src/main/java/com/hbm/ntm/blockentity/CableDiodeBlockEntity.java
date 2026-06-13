@@ -136,6 +136,9 @@ public class CableDiodeBlockEntity extends BlockEntity
                 long toTransfer = Math.min(power, receiver.getReceiverSpeed());
                 long remainder = receiver.transferPower(toTransfer);
                 long transferred = toTransfer - remainder;
+                if (transferred > 0L) {
+                    this.power += transferred;
+                }
                 return power - transferred;
             }
 

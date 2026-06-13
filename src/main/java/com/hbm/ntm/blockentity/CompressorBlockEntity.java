@@ -140,6 +140,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (changed) {
             compressor.setChanged();
         }
+        compressor.networkPackNT(100);
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

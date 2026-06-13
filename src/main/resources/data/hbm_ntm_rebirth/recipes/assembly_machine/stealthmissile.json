@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.stealthmissile",
+  "duration": 1200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/titanium" }, "count": 20, "legacy_ore": "plateTitanium" },
+    { "ingredient": { "tag": "forge:plates/aluminium" }, "count": 20, "legacy_ore": "plateAluminum" },
+    { "ingredient": { "tag": "forge:dyes/black" }, "count": 16, "legacy_ore": "dyeBlack" },
+    { "ingredient": { "tag": "forge:ingots/any_hardplastic" }, "count": 16, "legacy_ore": "ingotAnyHardPlastic" },
+    { "ingredient": { "tag": "forge:ingots/any_high_explosive" }, "count": 4, "legacy_ore": "ingotAnyHighExplosive" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 4, "legacy_id": "hbm:circuit", "legacy_meta": 9 },
+    { "ingredient": { "tag": "forge:bolts/steel" }, "count": 32, "legacy_ore": "boltSteel" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:missile_stealth" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 266
+}

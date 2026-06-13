@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.LiquefactorBlockEntity;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -42,24 +43,59 @@ public class LiquefactorRenderer implements BlockEntityRenderer<LiquefactorBlock
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
 
-        ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart("Main", poseStack, buffer, modelLight, packedOverlay);
-        if (blockEntity.getTank().getFill() > 0) {
-            int color = blockEntity.getTank().getTankType().getColor();
-            int red = color >> 16 & 255;
-            int green = color >> 8 & 255;
-            int blue = color & 255;
-            double height = (double) blockEntity.getTank().getFill() / (double) blockEntity.getTank().getMaxFill();
-            poseStack.pushPose();
-            poseStack.translate(0.0D, 1.0D, 0.0D);
-            poseStack.scale(1.0F, (float) height, 1.0F);
-            poseStack.translate(0.0D, -1.0D, 0.0D);
-            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart("Fluid", ObjModelLibrary.MACHINE_LIQUEFACTOR.textureLocation(),
-                    poseStack, buffer, modelLight, packedOverlay, red, green, blue, 255);
-            poseStack.popPose();
-        }
-        ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart("Glass", ObjModelLibrary.MACHINE_LIQUEFACTOR.textureLocation(),
-                poseStack, buffer, modelLight, packedOverlay, 191, 255, 255, 64);
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, modelLight, packedOverlay);
+        ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart("Main", context);
+        renderFluid(blockEntity, context, poseStack);
+        renderTintedPart(LegacyTileRenderPlans.liquefactorGlassPlan(), context);
 
         poseStack.popPose();
+    }
+
+    private static void renderFluid(LiquefactorBlockEntity blockEntity, ObjRenderContext context, PoseStack poseStack) {
+        LegacyTileRenderPlans.ScaledModelPartPlan plan = LegacyTileRenderPlans.liquefactorFluidPlan(
+                blockEntity.getTank().getFill(), blockEntity.getTank().getMaxFill(),
+                blockEntity.getTank().getTankType().getColor());
+        if (!plan.active()) {
+            return;
+        }
+        poseStack.pushPose();
+        poseStack.translate(0.0D, plan.pivotY(), 0.0D);
+        poseStack.scale((float) plan.scaleX(), (float) plan.scaleY(), (float) plan.scaleZ());
+        poseStack.translate(0.0D, -plan.pivotY(), 0.0D);
+        renderScaledPart(plan, context);
+        poseStack.popPose();
+    }
+
+    private static void renderScaledPart(LegacyTileRenderPlans.ScaledModelPartPlan plan, ObjRenderContext context) {
+        ObjRenderContext resolved = applyColorBlend(context, plan.color(), plan.blend());
+        if (plan.textured()) {
+            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart(plan.partName(), resolved);
+        } else {
+            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPartUntextured(plan.partName(), resolved);
+        }
+    }
+
+    private static void renderTintedPart(LegacyTileRenderPlans.ModelPartTintPlan plan, ObjRenderContext context) {
+        if (!plan.active()) {
+            return;
+        }
+        ObjRenderContext resolved = applyColorBlend(context, plan.color(), plan.blend());
+        if (plan.textured()) {
+            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPart(plan.partName(), resolved);
+        } else {
+            ObjModelLibrary.MACHINE_LIQUEFACTOR.renderPartUntextured(plan.partName(), resolved);
+        }
+    }
+
+    private static ObjRenderContext applyColorBlend(ObjRenderContext context, LegacyTileRenderPlans.RgbaPlan color,
+            LegacyTileRenderPlans.BlendStatePlan blend) {
+        ObjRenderContext resolved = context;
+        if (blend != null) {
+            resolved = resolved.withRenderMode(blend.modernRenderMode());
+        }
+        if (color != null) {
+            resolved = resolved.withRgba(color.redByte(), color.greenByte(), color.blueByte(), color.alphaByte());
+        }
+        return resolved;
     }
 }

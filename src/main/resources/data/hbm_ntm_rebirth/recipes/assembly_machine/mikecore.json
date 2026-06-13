@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.mikecore",
+  "duration": 1200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:nuggets/u238" }, "count": 24, "legacy_ore": "nuggetU238" },
+    { "ingredient": { "tag": "forge:plates/lead" }, "count": 6, "legacy_ore": "plateLead" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:mike_core" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 222
+}

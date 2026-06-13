@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "lid=none": { "model": "hbm_ntm_rebirth:block/rbmk_control_reasim_auto" },
+    "lid=standard": { "model": "hbm_ntm_rebirth:block/rbmk_control_reasim_auto" },
+    "lid=glass": { "model": "hbm_ntm_rebirth:block/rbmk_control_reasim_auto" }
+  }
+}

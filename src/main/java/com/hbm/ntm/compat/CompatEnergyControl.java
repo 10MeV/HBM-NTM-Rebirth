@@ -79,8 +79,7 @@ public final class CompatEnergyControl {
         data.putString(KEY_EUTYPE, "HE");
         BlockEntity resolved = findTileEntity(blockEntity);
         if (resolved instanceof HbmEnergyHandler handler) {
-            data.putLong(L_ENERGY_HE, handler.getPower());
-            data.putLong(L_CAPACITY_HE, handler.getMaxPower());
+            handler.provideInfoForEnergyControl(data);
         }
     }
 

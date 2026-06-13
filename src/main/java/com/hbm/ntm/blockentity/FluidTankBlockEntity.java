@@ -143,6 +143,15 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
             blockEntity.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+
+        int networkRange = blockEntity.legacyNetworkPackRange();
+        if (networkRange > 0) {
+            blockEntity.networkPackNT(networkRange);
+        }
+    }
+
+    protected int legacyNetworkPackRange() {
+        return 150;
     }
 
     protected boolean handleItemTransfer() {

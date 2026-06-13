@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -143,6 +142,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (changed) {
             oven.setChanged();
         }
+        oven.networkPackNT(50);
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -431,9 +431,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
                     false, 50.0D, 15.0F, 1.0F, 1.0F);
         }
         if (venting && level.getGameTime() % 2L == 0L) {
-            ParticleUtil.spawnCoolingTower(level, pos.getX() + 0.5D - rot.getStepX(), pos.getY() + 3.0D,
-                    pos.getZ() + 0.5D - rot.getStepZ(), 10.0F, 0.25F, 2.5F,
-                    100 + level.random.nextInt(20), false, 0.075F, 0.25F, 0x202020);
+            ParticleUtil.spawnPyroOvenVentSmoke(level, pos, rot);
         }
     }
 
@@ -620,20 +618,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private static void spawnOperatingClouds(Level level, BlockPos pos, Direction dir, Direction rot) {
-        spawnCloud(level, pos.getX() + 0.5D - rot.getStepX() - dir.getStepX() * 0.875D,
-                pos.getY() + 3.0D, pos.getZ() + 0.5D - rot.getStepZ() - dir.getStepZ() * 0.875D);
-        spawnCloud(level, pos.getX() + 0.5D - rot.getStepX() - dir.getStepX() * 2.375D,
-                pos.getY() + 3.0D, pos.getZ() + 0.5D - rot.getStepZ() - dir.getStepZ() * 2.375D);
-        spawnCloud(level, pos.getX() + 0.5D - rot.getStepX() + dir.getStepX() * 0.875D,
-                pos.getY() + 3.0D, pos.getZ() + 0.5D - rot.getStepZ() + dir.getStepZ() * 0.875D);
-        spawnCloud(level, pos.getX() + 0.5D - rot.getStepX() + dir.getStepX() * 2.375D,
-                pos.getY() + 3.0D, pos.getZ() + 0.5D - rot.getStepZ() + dir.getStepZ() * 2.375D);
-    }
-
-    private static void spawnCloud(Level level, double x, double y, double z) {
-        if (level.random.nextInt(20) == 0) {
-            level.addParticle(ParticleTypes.CLOUD, x, y, z, 0.0D, 0.05D, 0.0D);
-        }
+        ParticleUtil.spawnPyroOvenOperatingClouds(level, pos, dir, rot);
     }
 
     private static final class PyroOvenExternalItemHandler implements IItemHandler {

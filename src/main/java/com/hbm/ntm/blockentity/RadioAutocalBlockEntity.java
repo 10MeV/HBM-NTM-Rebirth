@@ -3,10 +3,12 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.redstoneoverradio.RTTYAutocalState;
 import com.hbm.ntm.config.ServerConfig;
 import com.hbm.ntm.menu.RadioAutocalMenu;
-import com.hbm.ntm.network.HbmTileSyncable;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,7 +23,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
-public class RadioAutocalBlockEntity extends BlockEntity implements MenuProvider, HbmTileSyncable {
+public class RadioAutocalBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyLoadedTile {
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final RTTYAutocalState autocal = new RTTYAutocalState();
     private long ticksExisted;
 
@@ -37,10 +40,16 @@ public class RadioAutocalBlockEntity extends BlockEntity implements MenuProvider
             blockEntity.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+        blockEntity.networkPackNT(15);
     }
 
     public RTTYAutocalState autocalState() {
         return autocal;
+    }
+
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
     }
 
     public void sendControl(CompoundTag tag) {
@@ -63,12 +72,14 @@ public class RadioAutocalBlockEntity extends BlockEntity implements MenuProvider
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         autocal.save(tag);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         if (level != null && level.isClientSide) {
             autocal.loadClient(tag);
         } else {
@@ -90,13 +101,28 @@ public class RadioAutocalBlockEntity extends BlockEntity implements MenuProvider
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
         autocal.saveClient(tag);
         return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
         autocal.loadClient(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Override

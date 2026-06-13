@@ -57,6 +57,9 @@ public final class CustomMissileExplosion {
                 ExplosionLarge.buster(level, x, y, z, motion, strength, strength * 4.0F, source);
                 return true;
             }
+            case CLUSTER -> {
+                return true;
+            }
             case NUCLEAR, TX -> {
                 NuclearExplosionUtil.spawnNuclear(level, (int) strength, x, y, z);
                 return true;

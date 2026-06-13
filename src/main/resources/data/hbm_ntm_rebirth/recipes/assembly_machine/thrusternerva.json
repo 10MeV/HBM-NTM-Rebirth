@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.thrusternerva",
+  "duration": 600,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:ingots/dura_steel" }, "count": 32, "legacy_ore": "ingotDuraSteel" },
+    { "ingredient": { "tag": "forge:ingots/boron" }, "count": 8, "legacy_ore": "ingotBoron" },
+    { "ingredient": { "tag": "forge:plates/lead" }, "count": 16, "legacy_ore": "plateLead" },
+    { "ingredient": { "tag": "forge:pipes/steel" }, "count": 4, "legacy_ore": "ntmpipeSteel" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:thruster_nuclear" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 265
+}

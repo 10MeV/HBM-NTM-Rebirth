@@ -74,6 +74,7 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (turbine.outputTank.getTankType() != HbmFluids.NONE && turbine.outputTank.getFill() > 0) {
             turbine.tryProvideFluidToPorts(turbine.outputTank.getTankType(), turbine.outputTank.getPressure(), turbine);
         }
+        turbine.networkPackNT(25);
         if (result.converted() || level.getGameTime() % 20L == 0L) {
             turbine.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);

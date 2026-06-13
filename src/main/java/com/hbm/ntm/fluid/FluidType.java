@@ -75,12 +75,21 @@ public final class FluidType {
     }
 
     public boolean hasTrait(Class<? extends FluidTrait> trait) {
-        return traits.containsKey(trait);
+        return getTrait(trait) != null;
     }
 
     @SuppressWarnings("unchecked")
     public <T extends FluidTrait> T getTrait(Class<T> trait) {
-        return (T) traits.get(trait);
+        FluidTrait exact = traits.get(trait);
+        if (exact != null) {
+            return (T) exact;
+        }
+        for (FluidTrait candidate : traits.values()) {
+            if (trait.isInstance(candidate)) {
+                return (T) candidate;
+            }
+        }
+        return null;
     }
 
     public Collection<FluidTrait> getTraits() {

@@ -4,11 +4,10 @@ import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModEntityTypes;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
@@ -43,8 +42,7 @@ public class DeathBlastEntity extends Entity {
             discard();
             applyDamageOnlyBlast();
             ParticleUtil.spawnNuclearBurstVisual(level(), getX(), getY() + 0.5D, getZ(), ParticleUtil.TYPE_MUKE, false);
-            level().playSound(null, getX(), getY(), getZ(), ModSounds.WEAPON_MUKE_EXPLOSION.get(),
-                    SoundSource.BLOCKS, 25.0F, 0.9F);
+            LegacySoundPlayer.playLegacyMukeExplosion(level(), getX(), getY(), getZ(), 25.0F, 0.9F);
         }
     }
 

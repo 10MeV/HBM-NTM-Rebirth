@@ -1,11 +1,10 @@
 package com.hbm.ntm.bullet;
 
 import com.hbm.ntm.block.ShotDetonatableBlock;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -66,16 +65,15 @@ public final class BulletRicochetUtil {
         if (sound == null || level == null || position == null || level.isClientSide()) {
             return false;
         }
-        level.playSound(null, position.x, position.y, position.z, sound.event(), SoundSource.PLAYERS,
-                sound.volume(), 1.0F);
+        LegacySoundPlayer.playSoundEffect(level, position, sound.id(), SoundSource.PLAYERS, sound.volume(), 1.0F);
         return true;
     }
 
     @Nullable
     private static SoundSpec soundFor(BulletPlink plink) {
         return switch (plink) {
-            case BULLET -> new SoundSpec(ModSounds.WEAPON_RICOCHET.get(), 0.25F);
-            case GRENADE -> new SoundSpec(ModSounds.WEAPON_GRENADE_BOUNCE.get(), 1.0F);
+            case BULLET -> new SoundSpec("hbm:weapon.ricochet", 0.25F);
+            case GRENADE -> new SoundSpec("hbm:weapon.gBounce", 1.0F);
             default -> null;
         };
     }
@@ -179,7 +177,7 @@ public final class BulletRicochetUtil {
                 BulletImpactUtil.BlockImpactResult.NONE, false);
     }
 
-    private record SoundSpec(SoundEvent event, float volume) {
+    private record SoundSpec(String id, float volume) {
     }
 
     private record ShredderBlockTouch(boolean brokeGlass, boolean shotDetonated) {

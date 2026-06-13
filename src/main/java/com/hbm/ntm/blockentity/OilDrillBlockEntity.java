@@ -158,6 +158,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (changed) {
             drill.setChanged();
         }
+        drill.networkPackNT(25);
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

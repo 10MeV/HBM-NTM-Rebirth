@@ -52,6 +52,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("ingots/gold", net.minecraft.world.item.Items.GOLD_INGOT);
         addLegacyForgeTag("ingots/iron", net.minecraft.world.item.Items.IRON_INGOT);
         addLegacyForgeTag("dusts/any_plastic", "powder_polymer", "powder_bakelite");
+        addLegacyForgeTag("dusts/any_smokeless", "ballistite", "cordite");
         addLegacyForgeTag("ingots/any_plastic", "ingot_polymer", "ingot_bakelite");
         addLegacyForgeTag("ingots/plastic", "ingot_polymer", "ingot_bakelite");
         addLegacyForgeTag("ingots/any_hardplastic", "ingot_pc", "ingot_pvc");
@@ -235,6 +236,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("ingot", "ingots", "ingot_asbestos", "Asbestos");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_cobalt", "Cobalt");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_boron", "Boron");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_fiberglass", "Fiberglass");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_graphite", "Graphite", "Carbon");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_polymer", "Polymer");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_bakelite", "Bakelite");
@@ -306,6 +308,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("dust", "dusts", "powder_diamond", "Diamond");
         addLegacyMaterialAliases("dust", "dusts", "powder_emerald", "Emerald");
         addLegacyMaterialAliases("dust", "dusts", "powder_limestone", "Limestone");
+        addLegacyMaterialAliases("dust", "dusts", "powder_fire", "RedPhosphorus");
         addLegacyMaterialAliases("dust", "dusts", "sulfur", "Sulfur");
         addLegacyMaterialAliases("dust", "dusts", "niter", "Saltpeter", "Niter");
         addLegacyMaterialAliases("dust", "dusts", "fluorite", "Fluorite");
@@ -339,6 +342,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_am242", "Americium242", "Am242");
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_am_mix", "AmericiumRG");
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_neptunium", "Neptunium237", "Np237", "Neptunium");
+        addLegacyMaterialAliases("nugget", "nuggets", "nugget_beryllium", "Beryllium");
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_polonium", "Polonium210", "Po210", "Polonium");
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_technetium", "Technetium99", "Tc99");
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_cobalt", "Cobalt");
@@ -398,6 +402,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("wireFine", "wires", "wire_fine_copper", "Copper");
         addLegacyMaterialAliases("wireFine", "wires", "wire_fine_mingrade", "Mingrade");
         addLegacyMaterialAliases("wireFine", "wires", "wire_fine_tungsten", "Tungsten");
+        addLegacyMaterialAliases("wireFine", "wires", "wire_fine_schrabidium", "Schrabidium");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_gold", "Gold");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_copper", "Copper");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_titanium", "Titanium");
@@ -430,6 +435,8 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_combine_steel", "CMBSteel");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_ferrouranium", "Ferrouranium");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_ferrouranium", "Ferrouranium");
+        addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_tungsten", "Tungsten");
+        addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_tungsten", "Tungsten");
         addLegacyMaterialAliases("plateSextuple", "welded_plates", "plate_welded_steel", "Steel");
         addLegacyMaterialAliases("plateSextuple", "welded_plates", "plate_welded_copper", "Copper");
         addLegacyMaterialAliases("plateSextuple", "welded_plates", "plate_welded_zirconium", "Zirconium");

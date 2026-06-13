@@ -16,6 +16,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import com.hbm.ntm.menu.NuclearDeviceMenu;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -170,6 +171,18 @@ public class NuclearDeviceBlockEntity extends BlockEntity implements MenuProvide
             case TSAR -> isFilled() ? NuclearDeviceBlock.Kind.TSAR : NuclearDeviceBlock.Kind.MAN;
             case MIKE -> NuclearDeviceBlock.Kind.MIKE;
             default -> kind;
+        };
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        BlockPos pos = getBlockPos();
+        return switch (kind) {
+            case GADGET -> new AABB(pos.offset(-2, 0, -2), pos.offset(2, 3, 2));
+            case BOY, MAN, PROTOTYPE, FLEIJA, SOLINIUM ->
+                    new AABB(pos.offset(-4, -1, -4), pos.offset(5, 3, 5));
+            case TSAR -> new AABB(pos.offset(-7, -1, -7), pos.offset(7, 4, 7));
+            case MIKE, N2 -> new AABB(pos.offset(-2, 0, -2), pos.offset(3, 8, 3));
         };
     }
 

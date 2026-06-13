@@ -5,11 +5,13 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
 import com.hbm.ntm.block.RBMKPanelBlock;
 import com.hbm.ntm.menu.RBMKPanelMenu;
-import com.hbm.ntm.network.HbmTileSyncable;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -27,7 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RBMKPanelBlockEntity extends BlockEntity
-        implements MenuProvider, HbmTileSyncable, LegacyLookOverlayProvider {
+        implements MenuProvider, HbmLegacyLoadedTile, LegacyLookOverlayProvider {
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private RBMKPanelPlanner.GaugeUnit[] gauges = defaultGauges();
     private RBMKPanelPlanner.GraphUnit[] graphs = defaultGraphs();
     private RBMKPanelPlanner.IndicatorUnit[] indicators = defaultIndicators();
@@ -37,6 +40,11 @@ public class RBMKPanelBlockEntity extends BlockEntity
 
     public RBMKPanelBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.RBMK_PANEL.get(), pos, state);
+    }
+
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
     }
 
     public RBMKPanelPlanner.PanelType panelType() {
@@ -80,6 +88,9 @@ public class RBMKPanelBlockEntity extends BlockEntity
         };
         if (changed) {
             panel.setChangedAndSync(false);
+            panel.networkPackNT(50);
+        } else if (level.getGameTime() % 20L == 0L) {
+            panel.networkPackNT(50);
         }
     }
 
@@ -130,13 +141,32 @@ public class RBMKPanelBlockEntity extends BlockEntity
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
         writePanelData(tag);
         return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
         readPanelData(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        writeLegacyLoadedTileBinary(data);
+        CompoundTag tag = new CompoundTag();
+        writePanelData(tag);
+        data.writeNbt(tag);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            readPanelData(tag);
+        }
     }
 
     @Override
@@ -156,12 +186,14 @@ public class RBMKPanelBlockEntity extends BlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         writePanelData(tag);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         readPanelData(tag);
     }
 

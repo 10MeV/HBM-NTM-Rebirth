@@ -20,15 +20,12 @@ import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
 import com.hbm.ntm.item.FluidIconItem;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -43,6 +40,7 @@ public class TurretFritzBlockEntity extends TurretBlockEntityBase
     private static final int TANK_CAPACITY = 16_000;
     private static final int FLUID_PER_SHOT = 2;
     private static final int DIESEL_CAN_AMOUNT = 1_000;
+    private static final float LEGACY_FLAME_SPREAD = 0.05F;
     private static final LegacyPort[] FLUID_PORT_TEMPLATE = {
             LegacyPort.of(-1, 0, Direction.NORTH),
             LegacyPort.of(-1, -1, Direction.NORTH),
@@ -175,10 +173,9 @@ public class TurretFritzBlockEntity extends TurretBlockEntityBase
         BulletConfig config = type == HbmFluids.BALEFIRE
                 ? LegacySednaRuntimeBulletConfigs.FLAME_NOGRAV_BF
                 : LegacySednaRuntimeBulletConfigs.FLAME_NOGRAV;
-        spawnBullet(config, legacyFlameDamage(flammable));
+        spawnBullet(config, legacyFlameDamage(flammable), LEGACY_FLAME_SPREAD, null);
 
-        level.playSound(null, worldPosition, ModSounds.WEAPON_FLAMETHROWER_SHOOT.get(),
-                SoundSource.BLOCKS, 2.0F, 1.0F + level.random.nextFloat() * 0.5F);
+        playTurretSound("hbm:weapon.flamethrowerShoot", 2.0F, 1.0F + level.random.nextFloat() * 0.5F);
         onFluidContentsChanged();
     }
 
@@ -187,7 +184,8 @@ public class TurretFritzBlockEntity extends TurretBlockEntityBase
     }
 
     private boolean updateTankFromInventory() {
-        boolean changed = false;
+        boolean changed = HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(
+                getItems(), SLOT_AMMO_END, tank, level, worldPosition);
         for (int slot = SLOT_AMMO_START; slot < SLOT_AMMO_END; slot++) {
             changed |= HbmFluidItemTransfer.loadTankFromSlot(getItems(), slot, SLOT_AMMO_END, tank);
         }
@@ -223,10 +221,7 @@ public class TurretFritzBlockEntity extends TurretBlockEntityBase
     }
 
     private void onFluidContentsChanged() {
-        setChanged();
-        if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-        }
+        syncRuntimeToTracking();
     }
 
     @Override

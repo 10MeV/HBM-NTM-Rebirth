@@ -36,6 +36,9 @@ public class FollyGunItem extends SednaGunItem {
         }
         boolean wasAiming = isAiming(stack);
         setAiming(stack, !wasAiming);
+        if (!wasAiming) {
+            playLegacyAnimation(stack, CONFIG_INDEX, LEGACY_ANIM_SPINUP);
+        }
         stack.getOrCreateTag().putInt(KEY_SPINUP_TIMER, wasAiming ? 0 : 1);
     }
 
@@ -55,7 +58,9 @@ public class FollyGunItem extends SednaGunItem {
 
     @Override
     protected void clickPrimary(ServerPlayer player, ItemStack stack, GunParts gun) {
-        if (!isAiming(stack) || spinupTimer(stack) < SPINUP_TICKS) {
+        if (!isAiming(stack)
+                || legacyAnimation(stack, CONFIG_INDEX) != LEGACY_ANIM_SPINUP
+                || legacyAnimationTimer(stack, CONFIG_INDEX) < SPINUP_TICKS) {
             return;
         }
         super.clickPrimary(player, stack, gun);

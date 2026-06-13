@@ -16,6 +16,7 @@ import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.block.LegacyNtmGlassPaneBlock;
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
 import com.hbm.ntm.block.PoweredRedCableBlock;
+import com.hbm.ntm.block.RBMKColumnBlock;
 import com.hbm.ntm.block.RedCableGaugeBlock;
 import com.hbm.ntm.block.SteelScaffoldBlock;
 import com.hbm.ntm.block.VendingMachineBlock;
@@ -29,6 +30,7 @@ import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.registries.RegistryObject;
+import org.jetbrains.annotations.Nullable;
 
 public class HbmBlockStateProvider extends BlockStateProvider {
     public HbmBlockStateProvider(net.minecraft.data.PackOutput output, String modId, ExistingFileHelper existingFileHelper) {
@@ -153,6 +155,26 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         existingModelWithItem(ModBlocks.RBMK_KEY_PAD, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_LEVER, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_NUMITRON, "rbmk_panel_base");
+        rbmkColumnWithItem(ModBlocks.RBMK_BLANK, "rbmk_blank");
+        rbmkColumnWithItem(ModBlocks.RBMK_MODERATOR, "rbmk_moderator");
+        rbmkColumnWithItem(ModBlocks.RBMK_REFLECTOR, "rbmk_reflector");
+        rbmkColumnWithItem(ModBlocks.RBMK_ABSORBER, "rbmk_absorber");
+        rbmkColumnWithItem(ModBlocks.RBMK_ROD, "rbmk_element");
+        rbmkColumnWithItem(ModBlocks.RBMK_ROD_MOD, "rbmk_element_mod");
+        rbmkColumnWithItem(ModBlocks.RBMK_ROD_REASIM, "rbmk_element_reasim");
+        rbmkColumnWithItem(ModBlocks.RBMK_ROD_REASIM_MOD, "rbmk_element_reasim_mod");
+        rbmkColumnWithItem(ModBlocks.RBMK_BOILER, "rbmk_boiler");
+        rbmkColumnWithItem(ModBlocks.RBMK_HEATER, "rbmk_heater");
+        rbmkColumnWithItem(ModBlocks.RBMK_COOLER, "rbmk_cooler");
+        rbmkColumnWithItem(ModBlocks.RBMK_OUTGASSER, "rbmk_outgasser");
+        rbmkColumnWithItem(ModBlocks.RBMK_STORAGE, "rbmk_storage");
+        rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL, "rbmk_control");
+        rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_MOD, "rbmk_control_mod");
+        rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_AUTO, "rbmk_control_auto");
+        rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_REASIM,
+                "rbmk_control_reasim", "rbmk_control_reasim_bottom");
+        rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_REASIM_AUTO,
+                "rbmk_control_reasim_auto", "rbmk_control_reasim_auto_bottom");
         pileGraphiteBlocksWithItems();
         existingModelBlockOnly(ModBlocks.MACHINE_ASSEMBLY_MACHINE, "machine_assembly_machine");
         customBlockItem(ModBlocks.MACHINE_ASSEMBLY_MACHINE);
@@ -201,7 +223,9 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CONDENSER_POWERED, "machines/condenser");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_COMPRESSOR_COMPACT, "machines/compressor_compact");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_LPW2, "reactors/lpw2");
+        visibleMachineWithItemRenderer(ModBlocks.CARGO_ELEVATOR, "machines/elevator");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ASSEMBLY_FACTORY, "machines/assembly_factory");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_PRECASS, "machines/precass");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_PUREX, "machines/purex");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SILEX, "machines/silex");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_EXPOSURE_CHAMBER, "machines/exposure_chamber");
@@ -240,6 +264,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_INDUSTRIAL_TURBINE, "machines/industrial_turbine");
         translucentCubeWithItem(ModBlocks.GLASS_BORON, "glass_boron");
         translucentCubeWithItem(ModBlocks.GLASS_LEAD, "glass_lead");
+        translucentCubeWithItem(ModBlocks.GLASS_URANIUM, "glass_uranium");
+        translucentCubeWithItem(ModBlocks.GLASS_POLONIUM, "glass_polonium");
         translucentCubeWithItem(ModBlocks.GLASS_QUARTZ, "glass_quartz");
         simpleCubeWithItem(ModBlocks.SAND_BORON, "sand_boron");
         simpleCubeWithItem(ModBlocks.SAND_LEAD, "sand_lead");
@@ -272,6 +298,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.DUMMY_BLOCK, "block_steel");
         steelScaffoldWithItem();
         simpleCubeWithItem(ModBlocks.STEEL_BEAM, "steel_beam");
+        steelGrateWithItem(ModBlocks.STEEL_GRATE, "steel_grate");
+        steelGrateWithItem(ModBlocks.STEEL_GRATE_WIDE, "steel_grate_wide");
         chainWithItem();
         wasteLogWithItem();
         simpleCubeWithItem(ModBlocks.WASTE_PLANKS, "waste_planks");
@@ -478,6 +506,55 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "block_graphite_detector_out_aluminum");
     }
 
+    private void rbmkColumnWithItem(RegistryObject<Block> block, String textureBase) {
+        ModelFile none = rbmkColumnModel(block.getId().getPath(), textureBase + "_side", textureBase + "_top");
+        ModelFile standard = rbmkColumnModel(block.getId().getPath() + "_lid",
+                textureBase + "_cover_side", textureBase + "_cover_top");
+        ModelFile glass = rbmkColumnModel(block.getId().getPath() + "_glass_lid",
+                textureBase + "_glass_side", textureBase + "_glass_top");
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(switch (state.getValue(RBMKColumnBlock.LID)) {
+                            case STANDARD -> standard;
+                            case GLASS -> glass;
+                            case NONE -> none;
+                        })
+                        .build());
+        simpleBlockItem(block.get(), none);
+    }
+
+    private void rbmkOwnLidColumnWithItem(RegistryObject<Block> block, String textureBase) {
+        rbmkOwnLidColumnWithItem(block, textureBase, null);
+    }
+
+    private void rbmkOwnLidColumnWithItem(RegistryObject<Block> block, String textureBase, @Nullable String bottomTexture) {
+        ModelFile model = bottomTexture == null
+                ? rbmkColumnModel(block.getId().getPath(), textureBase + "_side", textureBase + "_top")
+                : rbmkColumnBottomTopModel(block.getId().getPath(),
+                        textureBase + "_side", textureBase + "_top", bottomTexture);
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .build());
+        simpleBlockItem(block.get(), model);
+    }
+
+    private ModelFile rbmkColumnModel(String modelName, String sideTexture, String topTexture) {
+        return models().withExistingParent(modelName, mcLoc("block/cube_column"))
+                .texture("particle", modLoc("block/rbmk/" + sideTexture))
+                .texture("side", modLoc("block/rbmk/" + sideTexture))
+                .texture("end", modLoc("block/rbmk/" + topTexture));
+    }
+
+    private ModelFile rbmkColumnBottomTopModel(String modelName, String sideTexture, String topTexture,
+            String bottomTexture) {
+        return models().withExistingParent(modelName, mcLoc("block/cube_bottom_top"))
+                .texture("particle", modLoc("block/rbmk/" + sideTexture))
+                .texture("side", modLoc("block/rbmk/" + sideTexture))
+                .texture("top", modLoc("block/rbmk/" + topTexture))
+                .texture("bottom", modLoc("block/rbmk/" + bottomTexture));
+    }
+
     private void pileGraphiteColumnWithItem(
             RegistryObject<Block> block,
             String endTexture,
@@ -592,6 +669,15 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         getVariantBuilder(ModBlocks.STEEL_SCAFFOLD.get())
                 .forAllStates(state -> scaffoldModel(state.getValue(SteelScaffoldBlock.AXIS), model));
         simpleBlockItem(ModBlocks.STEEL_SCAFFOLD.get(), model);
+    }
+
+    private void steelGrateWithItem(RegistryObject<Block> block, String modelName) {
+        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/" + modelName));
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .build());
+        simpleBlockItem(block.get(), model);
     }
 
     private ConfiguredModel[] scaffoldModel(Direction.Axis axis, ModelFile model) {

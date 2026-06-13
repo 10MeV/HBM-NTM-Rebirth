@@ -1,6 +1,7 @@
 package com.hbm.ntm.bullet;
 
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.particle.ClientParticleBridge;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
@@ -9,6 +10,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public final class BulletFlightVisualUtil {
+    private static final double LEGACY_FLAMER_VISUAL_RANGE = 100.0D;
+
     public static int spawnClientTickVisuals(BulletConfig config, Level level, Vec3 previousPosition,
             Vec3 currentPosition, Vec3 motion, int ticksExisted, RandomSource random) {
         return spawnBlackPowderBurst(config, level, currentPosition, motion, ticksExisted, random)
@@ -78,7 +81,9 @@ public final class BulletFlightVisualUtil {
     }
 
     public static int spawnFlamethrowerTrail(BulletConfig config, Level level, Vec3 position) {
-        if (config == null || level == null || !level.isClientSide() || position == null) {
+        if (config == null || level == null || !level.isClientSide() || position == null
+                || !ClientParticleBridge.isLocalPlayerWithin(position.x, position.y, position.z,
+                        LEGACY_FLAMER_VISUAL_RANGE)) {
             return 0;
         }
         if (config.hasBehavior(BulletBehaviorTag.BALEFIRE_VISUAL)) {

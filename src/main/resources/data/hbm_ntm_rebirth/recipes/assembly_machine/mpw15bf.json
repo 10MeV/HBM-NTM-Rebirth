@@ -1,0 +1,67 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:assembly_machine",
+    "internal_name":  "ass.mpw15bf",
+    "duration":  400,
+    "power":  100,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:seg_15"
+                                           },
+                            "count":  1
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:plates/weapon_steel"
+                                           },
+                            "count":  32,
+                            "legacy_ore":  "plateWeaponSteel"
+                        },
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:neutron_reflector"
+                                           },
+                            "count":  16
+                        },
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:powder_magic"
+                                           },
+                            "count":  8
+                        },
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:egg_balefire_shard"
+                                           },
+                            "count":  4
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:ingots/any_high_explosive"
+                                           },
+                            "count":  16,
+                            "legacy_ore":  "ingotAnyHighExplosive"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:circuits/controller"
+                                           },
+                            "count":  2
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:mp_warhead_15_balefire"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  314
+}

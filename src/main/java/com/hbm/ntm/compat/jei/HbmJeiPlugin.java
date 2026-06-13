@@ -112,7 +112,7 @@ public final class HbmJeiPlugin implements IModPlugin {
                 new HbmMachineRecipeCategory(PUREX, GenericMachineRecipe.Machine.PUREX,
                         ModBlocks.MACHINE_PUREX.get(), guiHelper),
                 new HbmMachineRecipeCategory(PRECASS, GenericMachineRecipe.Machine.PRECASS,
-                        ModBlocks.MACHINE_ASSEMBLY_MACHINE.get(), guiHelper),
+                        ModBlocks.MACHINE_PRECASS.get(), guiHelper),
                 new HbmMachineRecipeCategory(ARC_WELDER, GenericMachineRecipe.Machine.ARC_WELDER,
                         ModBlocks.MACHINE_ARC_WELDER.get(), guiHelper),
                 new PressRecipeCategory(PRESS, ModBlocks.MACHINE_PRESS.get(), guiHelper),
@@ -181,8 +181,7 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_CHEMICAL_PLANT.get()), CHEMICAL_PLANT);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_CHEMICAL_FACTORY.get()), CHEMICAL_PLANT);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_PUREX.get()), PUREX);
-        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get()), PRECASS);
-        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ASSEMBLY_FACTORY.get()), PRECASS);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_PRECASS.get()), PRECASS);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ARC_WELDER.get()), ARC_WELDER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_PRESS.get()), PRESS);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_REFINERY.get()), REFINERY);

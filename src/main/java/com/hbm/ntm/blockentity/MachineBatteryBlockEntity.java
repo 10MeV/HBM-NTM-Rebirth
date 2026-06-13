@@ -166,6 +166,12 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
                 level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
             }
         }
+
+        blockEntity.networkPackNT(blockEntity.legacyNetworkPackRange());
+    }
+
+    protected int legacyNetworkPackRange() {
+        return 20;
     }
 
     public int getComparatorPower() {
@@ -188,14 +194,14 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
 
     @Override
     protected void refreshEnergyNetworkSubscriptions() {
-        if (getCurrentMode() == MODE_BUFFER) {
+        if (shouldKeepEnergyNodeForMode(getCurrentMode())) {
             super.refreshEnergyNetworkSubscriptions();
         }
     }
 
     @Override
     protected boolean shouldCreateEnergyNode() {
-        return level != null && getCurrentMode() == MODE_BUFFER;
+        return level != null && shouldKeepEnergyNodeForMode(getCurrentMode());
     }
 
     @Override
@@ -218,13 +224,21 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         return clampMode(powered ? redHigh : redLow);
     }
 
+    protected boolean shouldKeepEnergyNodeForMode(int currentMode) {
+        return currentMode == MODE_BUFFER;
+    }
+
     protected void handleModeTransition(int currentMode) {
         if (currentMode == lastMode) {
             return;
         }
+        if (getPowerNet() != null) {
+            getPowerNet().removeProvider(energy);
+            getPowerNet().removeReceiver(energy);
+        }
         unsubscribeEnergyProviderFromAllSides();
         unsubscribeEnergyReceiverFromAllSides();
-        if (currentMode != MODE_BUFFER) {
+        if (!shouldKeepEnergyNodeForMode(currentMode)) {
             removeEnergyNode();
         }
         lastMode = currentMode;
@@ -365,7 +379,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     private RORDispatcher createRorDispatcher() {
         return RORDispatcher.builder()
                 .value("fill", () -> Long.toString(getPower()))
-                .value("fillpercent", () -> Long.toString(getPowerBarHeight(100)))
+                .value("fillpercent", () -> Long.toString(getPower() * 100L / Math.max(getMaxPower(), 1L)))
                 .value("delta", () -> Long.toString(delta))
                 .function("setmode", this::runRorSetMode,
                         "mode (0-3)",

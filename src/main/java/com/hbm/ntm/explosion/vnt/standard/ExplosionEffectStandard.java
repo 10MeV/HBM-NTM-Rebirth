@@ -3,10 +3,9 @@ package com.hbm.ntm.explosion.vnt.standard;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.explosion.vnt.interfaces.ExplosionEffect;
 import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Set;
@@ -28,8 +27,7 @@ public class ExplosionEffectStandard implements ExplosionEffect {
     @Override
     public void doEffect(ExplosionVnt explosion, ServerLevel level, Vec3 position, float size, Set<BlockPos> affectedBlocks) {
         if (sound) {
-            level.playSound(null, position.x, position.y, position.z, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS,
-                    4.0F, (1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.2F) * 0.7F);
+            LegacySoundPlayer.playLegacyExplosion(level, position);
         }
         if (particles) {
             ParticleUtil.spawnVntExplosion(level, position.x, position.y, position.z, size, sampledPositions(affectedBlocks));

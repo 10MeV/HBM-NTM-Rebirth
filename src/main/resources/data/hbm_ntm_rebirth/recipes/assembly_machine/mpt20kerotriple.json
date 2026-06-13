@@ -1,0 +1,50 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:assembly_machine",
+    "internal_name":  "ass.mpt20kerotriple",
+    "duration":  400,
+    "power":  100,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:seg_20"
+                                           },
+                            "count":  1
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:pipes/steel"
+                                           },
+                            "count":  6,
+                            "legacy_ore":  "ntmpipeSteel"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:ingots/tungsten"
+                                           },
+                            "count":  16,
+                            "legacy_ore":  "ingotTungsten"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:plates/steel"
+                                           },
+                            "count":  16,
+                            "legacy_ore":  "plateSteel"
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:mp_thruster_20_kerosene_triple"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  285
+}

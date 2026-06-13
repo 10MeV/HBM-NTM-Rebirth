@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.warheadnuke",
+  "duration": 400,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:cast_plates/titanium" }, "count": 12, "legacy_ore": "plateCastTitanium" },
+    { "ingredient": { "tag": "forge:cast_plates/lead" }, "count": 6, "legacy_ore": "plateCastLead" },
+    { "ingredient": { "tag": "forge:billets/u235" }, "count": 6, "legacy_ore": "billetU235" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:cordite" }, "count": 12 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_controller" }, "count": 1, "legacy_id": "hbm:circuit", "legacy_meta": 13 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:warhead_nuclear" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 262
+}

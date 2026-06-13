@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "lid=none": { "model": "hbm_ntm_rebirth:block/rbmk_heater" },
+    "lid=standard": { "model": "hbm_ntm_rebirth:block/rbmk_heater_lid" },
+    "lid=glass": { "model": "hbm_ntm_rebirth:block/rbmk_heater_glass_lid" }
+  }
+}

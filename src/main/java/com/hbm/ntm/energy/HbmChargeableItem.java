@@ -11,6 +11,10 @@ public interface HbmChargeableItem {
 
     long getCharge(ItemStack stack);
 
+    default long peekCharge(ItemStack stack) {
+        return getCharge(stack);
+    }
+
     void setCharge(ItemStack stack, long charge);
 
     long chargeBattery(ItemStack stack, long amount);

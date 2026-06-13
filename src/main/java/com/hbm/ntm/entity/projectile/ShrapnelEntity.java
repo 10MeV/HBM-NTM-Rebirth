@@ -5,6 +5,7 @@ import com.hbm.ntm.explosion.ExplosionNT;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEntityTypes;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -12,7 +13,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
@@ -67,7 +67,8 @@ public class ShrapnelEntity extends LegacyThrowableEntity {
             } else {
                 spawnLavaSplash(serverLevel, hit);
             }
-            level().playSound(null, getX(), getY(), getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F, 1.0F);
+            LegacySoundPlayer.playSoundEffect(level(), getX(), getY(), getZ(),
+                    "random.fizz", SoundSource.BLOCKS, 1.0F, 1.0F);
             discard();
         }
     }

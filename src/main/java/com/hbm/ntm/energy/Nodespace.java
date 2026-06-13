@@ -1,6 +1,7 @@
 package com.hbm.ntm.energy;
 
 import com.hbm.ntm.util.fauxpointtwelve.DirPos;
+import com.hbm.ntm.uninos.HbmNetworkNode.NodeConnection;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -33,13 +34,20 @@ public final class Nodespace {
         HbmEnergyNodespace.destroyNode(level, pos);
     }
 
+    public static void destroyNode(Level level, HbmEnergyNode node) {
+        HbmEnergyNodespace.destroyNode(level, node);
+    }
+
     public static class PowerNode extends HbmEnergyNode {
+        private Set<Direction> mutableConnections;
+        private Set<NodeConnection> mutableConnectionPoints;
+
         public PowerNode(BlockPos... positions) {
-            this(positions(positions), EnumSet.allOf(Direction.class));
+            this(positions(positions), EnumSet.noneOf(Direction.class));
         }
 
         public PowerNode(com.hbm.ntm.util.fauxpointtwelve.BlockPos... positions) {
-            this(legacyPositions(positions), EnumSet.allOf(Direction.class));
+            this(legacyPositions(positions), EnumSet.noneOf(Direction.class));
         }
 
         public PowerNode(Set<BlockPos> positions, Set<Direction> connections) {
@@ -47,15 +55,54 @@ public final class Nodespace {
         }
 
         public PowerNode setConnections(Direction... connections) {
-            return new PowerNode(getPositions(), directions(connections));
+            mutableConnections = connections(directions(connections));
+            mutableConnectionPoints = standardConnectionPoints(getPos(), mutableConnections);
+            markRecentlyChanged();
+            return this;
         }
 
         public PowerNode setConnections(DirPos... connections) {
-            return new PowerNode(getPositions(), directions(connections));
+            mutableConnectionPoints = connectionPoints(connections);
+            mutableConnections = directionsFromConnectionPoints(mutableConnectionPoints);
+            markRecentlyChanged();
+            return this;
         }
 
         public PowerNode setConnections(com.hbm.ntm.world.DirPos... connections) {
-            return new PowerNode(getPositions(), worldDirections(connections));
+            mutableConnectionPoints = worldConnectionPoints(connections);
+            mutableConnections = directionsFromConnectionPoints(mutableConnectionPoints);
+            markRecentlyChanged();
+            return this;
+        }
+
+        public PowerNode addConnection(DirPos connection) {
+            if (connection == null) {
+                return this;
+            }
+            mutableConnectionPoints = appendConnectionPoint(getConnectionPoints(), connectionPoint(connection));
+            mutableConnections = directionsFromConnectionPoints(mutableConnectionPoints);
+            markRecentlyChanged();
+            return this;
+        }
+
+        public PowerNode addConnection(com.hbm.ntm.world.DirPos connection) {
+            if (connection == null) {
+                return this;
+            }
+            mutableConnectionPoints = appendConnectionPoint(getConnectionPoints(), worldConnectionPoint(connection));
+            mutableConnections = directionsFromConnectionPoints(mutableConnectionPoints);
+            markRecentlyChanged();
+            return this;
+        }
+
+        @Override
+        public Set<Direction> getConnections() {
+            return mutableConnections == null ? super.getConnections() : Set.copyOf(mutableConnections);
+        }
+
+        @Override
+        public Set<NodeConnection> getConnectionPoints() {
+            return mutableConnectionPoints == null ? super.getConnectionPoints() : Set.copyOf(mutableConnectionPoints);
         }
     }
 
@@ -124,30 +171,79 @@ public final class Nodespace {
         return result;
     }
 
-    private static Set<Direction> directions(DirPos... connections) {
+    private static Set<NodeConnection> connectionPoints(DirPos... connections) {
         if (connections == null || connections.length == 0) {
+            return Set.of();
+        }
+        LinkedHashSet<NodeConnection> result = new LinkedHashSet<>();
+        for (DirPos pos : connections) {
+            if (pos != null) {
+                result.add(connectionPoint(pos));
+            }
+        }
+        return Set.copyOf(result);
+    }
+
+    private static NodeConnection connectionPoint(DirPos pos) {
+        return pos.getDir() == null
+                ? NodeConnection.point(pos.immutable())
+                : new NodeConnection(pos.immutable(), pos.getDir());
+    }
+
+    private static Set<NodeConnection> standardConnectionPoints(BlockPos pos, Set<Direction> directions) {
+        if (pos == null || directions == null || directions.isEmpty()) {
+            return Set.of();
+        }
+        LinkedHashSet<NodeConnection> result = new LinkedHashSet<>();
+        for (Direction direction : directions) {
+            if (direction != null) {
+                result.add(new NodeConnection(pos.relative(direction), direction));
+            }
+        }
+        return Set.copyOf(result);
+    }
+
+    private static Set<Direction> directionsFromConnectionPoints(Set<NodeConnection> connections) {
+        if (connections == null || connections.isEmpty()) {
             return EnumSet.noneOf(Direction.class);
         }
         EnumSet<Direction> result = EnumSet.noneOf(Direction.class);
-        for (DirPos pos : connections) {
-            if (pos != null && pos.getDir() != null) {
-                result.add(pos.getDir());
+        for (NodeConnection connection : connections) {
+            if (connection != null && !connection.direct() && connection.direction() != null) {
+                result.add(connection.direction());
             }
         }
         return result;
     }
 
-    private static Set<Direction> worldDirections(com.hbm.ntm.world.DirPos... connections) {
+    private static Set<NodeConnection> worldConnectionPoints(com.hbm.ntm.world.DirPos... connections) {
         if (connections == null || connections.length == 0) {
-            return EnumSet.noneOf(Direction.class);
+            return Set.of();
         }
-        EnumSet<Direction> result = EnumSet.noneOf(Direction.class);
+        LinkedHashSet<NodeConnection> result = new LinkedHashSet<>();
         for (com.hbm.ntm.world.DirPos pos : connections) {
-            if (pos != null && pos.getDir() != null) {
-                result.add(pos.getDir());
+            if (pos != null) {
+                result.add(worldConnectionPoint(pos));
             }
         }
-        return result;
+        return Set.copyOf(result);
+    }
+
+    private static NodeConnection worldConnectionPoint(com.hbm.ntm.world.DirPos pos) {
+        return pos.getDir() == null
+                ? NodeConnection.point(pos.immutable())
+                : new NodeConnection(pos.immutable(), pos.getDir());
+    }
+
+    private static Set<NodeConnection> appendConnectionPoint(Set<NodeConnection> existing, NodeConnection connection) {
+        LinkedHashSet<NodeConnection> result = new LinkedHashSet<>();
+        if (existing != null) {
+            result.addAll(existing);
+        }
+        if (connection != null) {
+            result.add(connection);
+        }
+        return Set.copyOf(result);
     }
 
     private Nodespace() {

@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.mpt15bflarge",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:seg_15" }, "count": 1 },
+    { "ingredient": { "tag": "forge:pipes/dura_steel" }, "count": 10, "legacy_ore": "ntmpipeDuraSteel" },
+    { "ingredient": { "tag": "forge:cast_plates/tungsten" }, "count": 16, "legacy_ore": "plateCastTungsten" },
+    { "ingredient": { "tag": "forge:plates/saturnite" }, "count": 24, "legacy_ore": "plateSaturnite" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:mp_thruster_15_balefire_large" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 282
+}

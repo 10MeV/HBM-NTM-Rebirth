@@ -116,6 +116,57 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
                 receiversByPriority);
     }
 
+    public PressureBalanceSnapshot createPressureBalanceSnapshot() {
+        pruneExpired(System.currentTimeMillis());
+        PressureBalanceAccumulator[] balances = new PressureBalanceAccumulator[HbmFluidUser.HIGHEST_VALID_PRESSURE + 1];
+        for (int pressure = 0; pressure < balances.length; pressure++) {
+            balances[pressure] = new PressureBalanceAccumulator(pressure);
+        }
+
+        for (HbmFluidProvider provider : providerEntries.keySet()) {
+            if (!isValidProvider(provider)) {
+                continue;
+            }
+            int[] range = pressureRange(provider.getProvidingPressureRange(type));
+            for (int pressure = range[0]; pressure <= range[1]; pressure++) {
+                long available = Math.max(0L, provider.getFluidAvailable(type, pressure));
+                long rate = Math.max(0L, provider.getProviderSpeed(type, pressure));
+                balances[pressure].addProvider(available, rate);
+            }
+        }
+
+        for (HbmFluidReceiver receiver : receiverEntries.keySet()) {
+            if (!isValidReceiver(receiver)) {
+                continue;
+            }
+            int[] range = pressureRange(receiver.getReceivingPressureRange(type));
+            HbmEnergyReceiver.ConnectionPriority priority = receiver.getFluidPriority();
+            for (int pressure = range[0]; pressure <= range[1]; pressure++) {
+                long demand = Math.max(0L, receiver.getDemand(type, pressure));
+                long rate = Math.max(0L, receiver.getReceiverSpeed(type, pressure));
+                balances[pressure].addReceiver(priority, demand, rate);
+            }
+        }
+
+        PressureBalance[] pressureBalances = new PressureBalance[balances.length];
+        for (int pressure = 0; pressure < balances.length; pressure++) {
+            pressureBalances[pressure] = balances[pressure].toBalance();
+        }
+
+        return new PressureBalanceSnapshot(
+                isValid(),
+                type.getName(),
+                linkCount(),
+                getProviderCount(),
+                getReceiverCount(),
+                pressureBalances,
+                fluidTracker,
+                lastAttemptedByPressure.clone(),
+                lastTransferredByPressure.clone(),
+                lastProviderUseByPressure.clone(),
+                lastUnaccountedByPressure.clone());
+    }
+
     public void addReceiver(HbmFluidReceiver receiver) {
         if (receiver != null) {
             receiverEntries.put(receiver, System.currentTimeMillis());
@@ -404,7 +455,149 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
             Map<HbmEnergyReceiver.ConnectionPriority, Integer> receiversByPriority) {
     }
 
+    public record PressureBalanceSnapshot(
+            boolean valid,
+            String fluid,
+            int links,
+            int providers,
+            int receivers,
+            PressureBalance[] pressures,
+            long lastTransfer,
+            long[] lastAttemptedByPressure,
+            long[] lastTransferredByPressure,
+            long[] lastProviderUseByPressure,
+            long[] lastUnaccountedByPressure) {
+        public PressureBalanceSnapshot {
+            pressures = pressures == null ? new PressureBalance[0] : pressures.clone();
+            lastAttemptedByPressure = lastAttemptedByPressure == null ? new long[0] : lastAttemptedByPressure.clone();
+            lastTransferredByPressure = lastTransferredByPressure == null ? new long[0] : lastTransferredByPressure.clone();
+            lastProviderUseByPressure = lastProviderUseByPressure == null ? new long[0] : lastProviderUseByPressure.clone();
+            lastUnaccountedByPressure = lastUnaccountedByPressure == null ? new long[0] : lastUnaccountedByPressure.clone();
+        }
+
+        @Override
+        public PressureBalance[] pressures() {
+            return pressures.clone();
+        }
+
+        @Override
+        public long[] lastAttemptedByPressure() {
+            return lastAttemptedByPressure.clone();
+        }
+
+        @Override
+        public long[] lastTransferredByPressure() {
+            return lastTransferredByPressure.clone();
+        }
+
+        @Override
+        public long[] lastProviderUseByPressure() {
+            return lastProviderUseByPressure.clone();
+        }
+
+        @Override
+        public long[] lastUnaccountedByPressure() {
+            return lastUnaccountedByPressure.clone();
+        }
+    }
+
+    public record PressureBalance(
+            int pressure,
+            int providers,
+            int receivers,
+            long providerAvailable,
+            long providerRate,
+            long providerOffered,
+            long receiverDemand,
+            long receiverRate,
+            long receiverRequested,
+            long possibleTransfer,
+            Map<HbmEnergyReceiver.ConnectionPriority, Integer> receiverCountsByPriority,
+            Map<HbmEnergyReceiver.ConnectionPriority, Long> receiverDemandByPriority,
+            Map<HbmEnergyReceiver.ConnectionPriority, Long> receiverRequestedByPriority) {
+        public PressureBalance {
+            receiverCountsByPriority = copyPriorityMap(receiverCountsByPriority, 0);
+            receiverDemandByPriority = copyPriorityMap(receiverDemandByPriority, 0L);
+            receiverRequestedByPriority = copyPriorityMap(receiverRequestedByPriority, 0L);
+        }
+    }
+
     private record ProviderRemovalStats(long requestedUse, long unaccounted) {
+    }
+
+    private static final class PressureBalanceAccumulator {
+        private final int pressure;
+        private final Map<HbmEnergyReceiver.ConnectionPriority, Integer> receiverCountsByPriority =
+                new EnumMap<>(HbmEnergyReceiver.ConnectionPriority.class);
+        private final Map<HbmEnergyReceiver.ConnectionPriority, Long> receiverDemandByPriority =
+                new EnumMap<>(HbmEnergyReceiver.ConnectionPriority.class);
+        private final Map<HbmEnergyReceiver.ConnectionPriority, Long> receiverRequestedByPriority =
+                new EnumMap<>(HbmEnergyReceiver.ConnectionPriority.class);
+        private int providers;
+        private int receivers;
+        private long providerAvailable;
+        private long providerRate;
+        private long providerOffered;
+        private long receiverDemand;
+        private long receiverRate;
+        private long receiverRequested;
+
+        private PressureBalanceAccumulator(int pressure) {
+            this.pressure = pressure;
+            for (HbmEnergyReceiver.ConnectionPriority priority : HbmEnergyReceiver.ConnectionPriority.values()) {
+                receiverCountsByPriority.put(priority, 0);
+                receiverDemandByPriority.put(priority, 0L);
+                receiverRequestedByPriority.put(priority, 0L);
+            }
+        }
+
+        private void addProvider(long available, long rate) {
+            providers++;
+            providerAvailable += available;
+            providerRate += rate;
+            providerOffered += Math.min(available, rate);
+        }
+
+        private void addReceiver(HbmEnergyReceiver.ConnectionPriority priority, long demand, long rate) {
+            HbmEnergyReceiver.ConnectionPriority resolvedPriority =
+                    priority == null ? HbmEnergyReceiver.ConnectionPriority.NORMAL : priority;
+            long requested = Math.min(demand, rate);
+            receivers++;
+            receiverDemand += demand;
+            receiverRate += rate;
+            receiverRequested += requested;
+            receiverCountsByPriority.put(resolvedPriority, receiverCountsByPriority.get(resolvedPriority) + 1);
+            receiverDemandByPriority.put(resolvedPriority, receiverDemandByPriority.get(resolvedPriority) + demand);
+            receiverRequestedByPriority.put(
+                    resolvedPriority, receiverRequestedByPriority.get(resolvedPriority) + requested);
+        }
+
+        private PressureBalance toBalance() {
+            return new PressureBalance(
+                    pressure,
+                    providers,
+                    receivers,
+                    providerAvailable,
+                    providerRate,
+                    providerOffered,
+                    receiverDemand,
+                    receiverRate,
+                    receiverRequested,
+                    Math.min(providerOffered, receiverRequested),
+                    receiverCountsByPriority,
+                    receiverDemandByPriority,
+                    receiverRequestedByPriority);
+        }
+    }
+
+    private static <T> Map<HbmEnergyReceiver.ConnectionPriority, T> copyPriorityMap(
+            Map<HbmEnergyReceiver.ConnectionPriority, T> source, T defaultValue) {
+        Map<HbmEnergyReceiver.ConnectionPriority, T> copy =
+                new EnumMap<>(HbmEnergyReceiver.ConnectionPriority.class);
+        for (HbmEnergyReceiver.ConnectionPriority priority : HbmEnergyReceiver.ConnectionPriority.values()) {
+            copy.put(priority, source == null ? defaultValue : source.getOrDefault(priority, defaultValue));
+        }
+        return Map.copyOf(copy);
     }
 
     @SuppressWarnings("unchecked")

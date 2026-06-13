@@ -59,6 +59,15 @@ public interface FsbPoweredArmor extends IBatteryItem {
     }
 
     @Override
+    default long peekCharge(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return 0L;
+        }
+        return stack.hasTag() ? Math.min(stack.getTag().getLong(HbmBatteryItem.DEFAULT_CHARGE_TAG), getMaxCharge(stack))
+                : getMaxCharge(stack);
+    }
+
+    @Override
     default void setCharge(ItemStack stack, long charge) {
         if (!stack.isEmpty()) {
             stack.getOrCreateTag().putLong(HbmBatteryItem.DEFAULT_CHARGE_TAG, charge);

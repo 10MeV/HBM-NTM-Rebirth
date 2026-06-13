@@ -61,6 +61,9 @@ public class SingleTurretBlock extends HorizontalMachineBlock implements EntityB
         if (!opensGui) {
             return InteractionResult.PASS;
         }
+        if (player.isShiftKeyDown()) {
+            return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.PASS;
+        }
         if (!level.isClientSide && !player.isShiftKeyDown()
                 && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof TurretBlockEntityBase turret) {

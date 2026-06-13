@@ -29,10 +29,12 @@ public class SteamTurbineMultiblockBlock extends LegacyVisibleMultiblockMachineB
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide) {
-            return null;
-        }
         if (kind == Kind.INDUSTRIAL && type == ModBlockEntities.INDUSTRIAL_STEAM_TURBINE.get()) {
+            if (level.isClientSide) {
+                return (tickLevel, tickPos, tickState, blockEntity) ->
+                        IndustrialSteamTurbineBlockEntity.clientTick(tickLevel, tickPos, tickState,
+                                (IndustrialSteamTurbineBlockEntity) blockEntity);
+            }
             return (tickLevel, tickPos, tickState, blockEntity) ->
                     IndustrialSteamTurbineBlockEntity.serverTick(tickLevel, tickPos, tickState,
                             (IndustrialSteamTurbineBlockEntity) blockEntity);

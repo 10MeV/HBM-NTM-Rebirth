@@ -141,6 +141,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         if (changed) {
             blockEntity.setChanged();
         }
+        blockEntity.networkPackNT(50);
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

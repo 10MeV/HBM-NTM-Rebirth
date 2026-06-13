@@ -20,16 +20,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.Random;
-
 public class MachineBatterySocketRenderer implements BlockEntityRenderer<MachineBatterySocketBlockEntity> {
     private static final ResourceLocation MODEL_LOCATION = new ResourceLocation(HbmNtm.MOD_ID, "models/block/machines/battery.obj");
     static final ResourceLocation SOCKET_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/battery_socket.png");
     private static final ResourceLocation SELF_CHARGING_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/block/machines/battery_sc.png");
     static final LegacyWavefrontModel MODEL = new LegacyWavefrontModel(MODEL_LOCATION, SOCKET_TEXTURE);
     private static final LegacyHorseRenderer CREATIVE_HORSE = new LegacyHorseRenderer();
-    private static final int CREATIVE_BEAM_OUTER = 0x404040;
-    private static final int CREATIVE_BEAM_INNER = 0x002040;
 
     public MachineBatterySocketRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -77,36 +73,24 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
             return;
         }
 
+        LegacyTileRenderPlans.CreativeBatterySocketPlan plan = LegacyTileRenderPlans.creativeBatterySocketPlan(
+                level.getGameTime(), System.currentTimeMillis(), partialTick);
+
         poseStack.pushPose();
-        poseStack.scale(0.75F, 0.75F, 0.75F);
-        poseStack.mulPose(Axis.YN.rotationDegrees(((level.getGameTime() % 360L) + partialTick) * 25.0F));
+        poseStack.scale((float) plan.horseScale(), (float) plan.horseScale(), (float) plan.horseScale());
+        poseStack.mulPose(Axis.YN.rotationDegrees((float) plan.horseYawDegrees()));
         CREATIVE_HORSE.reset();
         CREATIVE_HORSE.enableHorn();
         CREATIVE_HORSE.render(poseStack, buffer, LegacyHorseRenderer.SUNBURST_TEXTURE, packedLight, packedOverlay);
         poseStack.popPose();
 
-        Random random = new Random(level.getGameTime() / 5L);
-        random.nextBoolean();
-        int start = (int) (System.currentTimeMillis() % 1000L) / 50;
-
-        for (int i = -1; i <= 1; i += 2) {
-            for (int j = -1; j <= 1; j += 2) {
-                if (random.nextInt(4) != 0) {
-                    continue;
-                }
-
-                poseStack.pushPose();
-                poseStack.translate(0.0D, 0.75D, 0.0D);
-                double x = 0.4375D * i;
-                double z = 0.4375D * j;
-                LegacyBeamRenderer.solidBeam(poseStack, buffer, x, 1.1875D, z,
-                        LegacyBeamRenderer.WaveType.RANDOM, CREATIVE_BEAM_OUTER, CREATIVE_BEAM_INNER,
-                        start, 15, 0.0625F, 3, 0.025F);
-                LegacyBeamRenderer.solidBeam(poseStack, buffer, x, 1.1875D, z,
-                        LegacyBeamRenderer.WaveType.RANDOM, CREATIVE_BEAM_OUTER, CREATIVE_BEAM_INNER,
-                        start, 1, 0.0F, 3, 0.025F);
-                poseStack.popPose();
+        if (!plan.beams().isEmpty()) {
+            poseStack.pushPose();
+            poseStack.translate(plan.beamTranslateX(), plan.beamTranslateY(), plan.beamTranslateZ());
+            for (LegacyBeamRenderer.BeamPlan beam : plan.beams()) {
+                LegacyBeamRenderer.beam(poseStack, buffer, beam);
             }
+            poseStack.popPose();
         }
     }
 

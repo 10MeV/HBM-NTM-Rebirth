@@ -1,7 +1,6 @@
 package com.hbm.ntm.energy;
 
 import com.hbm.ntm.api.tile.LoadedTile;
-import com.hbm.ntm.compat.CompatEnergyControl;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
@@ -21,10 +20,7 @@ public interface IEnergyHandlerMK2 extends IEnergyConnectorMK2, HbmEnergyHandler
     }
 
     default void provideInfoForECMK2(CompoundTag data) {
-        if (data != null) {
-            data.putLong(CompatEnergyControl.L_ENERGY_HE, getPower());
-            data.putLong(CompatEnergyControl.L_CAPACITY_HE, getMaxPower());
-        }
+        provideInfoForEnergyControl(data);
     }
 
     @Override

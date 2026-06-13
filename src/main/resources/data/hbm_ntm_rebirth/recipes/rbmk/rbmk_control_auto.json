@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "C",
+    "R",
+    "D"
+  ],
+  "key": {
+    "C": {
+      "tag": "forge:circuits/advanced"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:rbmk_control"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:crt_display"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_control_auto"
+  },
+  "show_notification": true
+}

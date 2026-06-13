@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
-import com.hbm.ntm.client.obj.ObjBlockEntityAnimation;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -15,11 +14,6 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlockEntity> {
-    private static final ObjBlockEntityAnimation<BasicMachineBlockEntity> PRESS_HEAD_ANIMATION = (blockEntity, partialTick, poseStack) -> {
-        double press = Math.max(0.0D, Math.min(1.0D, blockEntity.getInterpolatedPress(partialTick) / (double) BasicMachineBlockEntity.MAX_PRESS));
-        poseStack.translate(0.0D, (1.0D - press) * 0.875D, 0.0D);
-    };
-
     public BasicMachineRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -36,25 +30,24 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
     @Override
     public void render(BasicMachineBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        double press = Math.max(0.0D, Math.min(1.0D, blockEntity.getInterpolatedPress(partialTick) / (double) BasicMachineBlockEntity.MAX_PRESS));
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
+        ItemStack stack = blockEntity.getRenderStack();
+        LegacyTileRenderPlans.BasicPressPlan plan = LegacyTileRenderPlans.basicPressPlan(!stack.isEmpty(),
+                blockEntity.getInterpolatedPress(partialTick), BasicMachineBlockEntity.MAX_PRESS);
 
         poseStack.pushPose();
-        PRESS_HEAD_ANIMATION.apply(blockEntity, partialTick, poseStack);
+        LegacyTileRenderPlans.TranslatedModelPartPlan head = plan.head();
+        poseStack.translate(head.translateX(), head.translateY(), head.translateZ());
         ObjMachineModels.PRESS.renderPart("Head", new ObjRenderContext(poseStack, buffer, blockEntity.getBlockState(),
                 modelLight, packedOverlay));
         poseStack.popPose();
 
-        ItemStack stack = blockEntity.getRenderStack();
-        if (stack.isEmpty()) {
+        if (!plan.item().active()) {
             return;
         }
 
         poseStack.pushPose();
-        poseStack.translate(0.5D, 0.896875D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-        poseStack.scale(0.45F, 0.45F, 0.45F);
+        applyItemTransform(plan.item(), poseStack);
         Minecraft.getInstance().getItemRenderer().renderStatic(
                 stack,
                 ItemDisplayContext.FIXED,
@@ -66,5 +59,15 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
                 0
         );
         poseStack.popPose();
+    }
+
+    private static void applyItemTransform(LegacyTileRenderPlans.ItemTransformPlan plan, PoseStack poseStack) {
+        poseStack.translate(plan.translateX(), plan.translateY(), plan.translateZ());
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.rotateYDegrees()));
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) plan.rotateXDegrees()));
+        if (plan.rotateZDegrees() != 0.0D) {
+            poseStack.mulPose(Axis.ZP.rotationDegrees((float) plan.rotateZDegrees()));
+        }
+        poseStack.scale((float) plan.scale(), (float) plan.scale(), (float) plan.scale());
     }
 }

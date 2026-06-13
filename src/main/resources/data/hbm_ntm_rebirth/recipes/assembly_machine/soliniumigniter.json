@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.soliniumigniter",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/titanium" }, "count": 4, "legacy_ore": "plateTitanium" },
+    { "ingredient": { "tag": "forge:wires/mingrade" }, "count": 8, "legacy_ore": "wireFineMingrade" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 1, "legacy_id": "hbm:circuit", "legacy_meta": 9 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:coil_gold" }, "count": 1 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:solinium_igniter" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 228
+}

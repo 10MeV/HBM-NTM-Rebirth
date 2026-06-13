@@ -4,9 +4,7 @@ import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
-import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
-import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -91,37 +89,25 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         if (recipe == null) {
             return;
         }
-        int[] color = averageFluidColor(recipe.getFluidOutputs());
-        if (color == null) {
-            color = averageFluidColor(recipe.getFluidInputs());
-        }
-        if (color == null) {
+        LegacyTileRenderPlans.ChemicalPlantFluidPlan plan = LegacyTileRenderPlans.chemicalPlantFluidPlan(anim,
+                fluidColors(recipe.getFluidOutputs()), fluidColors(recipe.getFluidInputs()));
+        if (!plan.active()) {
             return;
         }
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
-                .withRgba(color[0], color[1], color[2], 128)
-                .withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE)
+                .withRgba(plan.color().red(), plan.color().green(), plan.color().blue(),
+                        Math.round((float) plan.alpha() * 255.0F))
+                .withRenderMode(plan.blend().modernRenderMode())
                 .withLegacyTextureMatrix(1.0F, 1.0F,
-                        (float) LegacyUvAnimation.chemicalPlantFluidU(anim),
-                        (float) LegacyUvAnimation.chemicalPlantFluidV(anim));
+                        (float) plan.textureTranslateU(), (float) plan.textureTranslateV());
         model.renderPart("Fluid", ObjMachineModels.CHEMICAL_PLANT_FLUID_TEXTURE, context);
     }
 
-    private static int[] averageFluidColor(List<HbmFluidStack> stacks) {
-        if (stacks.isEmpty()) {
-            return null;
-        }
-        int red = 0;
-        int green = 0;
-        int blue = 0;
-        int count = 0;
+    private static List<Integer> fluidColors(List<HbmFluidStack> stacks) {
+        java.util.ArrayList<Integer> colors = new java.util.ArrayList<>();
         for (HbmFluidStack stack : stacks) {
-            int color = stack.type().getColor();
-            red += color >> 16 & 255;
-            green += color >> 8 & 255;
-            blue += color & 255;
-            count++;
+            colors.add(stack.type().getColor());
         }
-        return count == 0 ? null : new int[] { red / count, green / count, blue / count };
+        return colors;
     }
 }

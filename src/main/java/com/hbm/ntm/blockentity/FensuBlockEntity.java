@@ -60,17 +60,37 @@ public class FensuBlockEntity extends MachineBatteryBlockEntity {
     }
 
     @Override
+    protected boolean shouldKeepEnergyNodeForMode(int currentMode) {
+        return true;
+    }
+
+    @Override
     protected boolean shouldUseRemotePortEnergyNode() {
         return true;
     }
 
     @Override
+    protected boolean shouldSubscribeAsProvider() {
+        int mode = getCurrentMode();
+        return mode == MODE_OUTPUT || mode == MODE_BUFFER;
+    }
+
+    @Override
+    protected boolean shouldSubscribeAsReceiver() {
+        int mode = getCurrentMode();
+        return mode == MODE_INPUT || mode == MODE_BUFFER;
+    }
+
+    @Override
     protected void handleInputMode() {
-        subscribeEnergyReceiverToSide(Direction.DOWN);
+        refreshEnergyNodeState();
+        refreshEnergyNetworkSubscriptions();
     }
 
     @Override
     protected void handleOutputMode() {
+        refreshEnergyNodeState();
+        refreshEnergyNetworkSubscriptions();
         if (level != null) {
             HbmEnergyUtil.tryProvideToNeighbor(level, worldPosition, Direction.DOWN, energy);
         }

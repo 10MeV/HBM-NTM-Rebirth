@@ -64,6 +64,7 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity implements 
             pump.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+        pump.networkPackNT(15);
     }
 
     public HbmFluidTank getTank() {

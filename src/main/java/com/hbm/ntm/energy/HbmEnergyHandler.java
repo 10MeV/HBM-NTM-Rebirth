@@ -1,5 +1,8 @@
 package com.hbm.ntm.energy;
 
+import com.hbm.ntm.compat.CompatEnergyControl;
+import net.minecraft.nbt.CompoundTag;
+
 /**
  * Base HBM HE energy contract, preserving the 1.7.10 long-valued storage model.
  */
@@ -20,5 +23,13 @@ public interface HbmEnergyHandler {
 
     default boolean hasPower(long amount) {
         return getPower() >= amount;
+    }
+
+    default void provideInfoForEnergyControl(CompoundTag data) {
+        if (data == null) {
+            return;
+        }
+        data.putLong(CompatEnergyControl.L_ENERGY_HE, getPower());
+        data.putLong(CompatEnergyControl.L_CAPACITY_HE, getMaxPower());
     }
 }

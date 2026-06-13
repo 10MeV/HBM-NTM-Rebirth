@@ -145,6 +145,7 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
         if (result.converted() || level.getGameTime() % 20L == 0L) {
             blockEntity.setChanged();
         }
+        blockEntity.networkPackNT(25);
     }
 
     private void normalizeConfigState() {

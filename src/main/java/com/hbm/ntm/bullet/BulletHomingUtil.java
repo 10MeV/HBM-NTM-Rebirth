@@ -85,6 +85,34 @@ public final class BulletHomingUtil {
         return delta.normalize().scale(speed);
     }
 
+    public static Vec3 steerLegacyLockOn(Entity target, Vec3 position, Vec3 currentMotion, int ticksExisted) {
+        if (target == null) {
+            return currentMotion;
+        }
+        return steerLegacyLockOn(center(target), position, currentMotion, ticksExisted);
+    }
+
+    public static Vec3 steerLegacyLockOn(Vec3 targetCenter, Vec3 position, Vec3 currentMotion, int ticksExisted) {
+        if (targetCenter == null || position == null || currentMotion == null) {
+            return currentMotion;
+        }
+        double speed = currentMotion.length();
+        Vec3 delta = targetCenter.subtract(position);
+        if (speed <= 1.0E-7D || delta.lengthSqr() <= 1.0E-7D) {
+            return currentMotion;
+        }
+        float turn = Math.min(0.005F * ticksExisted, 1.0F);
+        Vec3 blended = new Vec3(
+                lerp(currentMotion.x, delta.x, turn),
+                lerp(currentMotion.y, delta.y, turn),
+                lerp(currentMotion.z, delta.z, turn));
+        return blended.lengthSqr() <= 1.0E-7D ? currentMotion : blended.normalize().scale(speed);
+    }
+
+    private static double lerp(double from, double to, float amount) {
+        return from + (to - from) * amount;
+    }
+
     public static boolean shouldTriggerUfoBlast(Entity projectile, Entity target) {
         return projectile != null && target != null && projectile.distanceToSqr(target) < UFO_BLAST_DISTANCE_SQR;
     }

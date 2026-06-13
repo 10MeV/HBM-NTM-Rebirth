@@ -1,14 +1,16 @@
 package com.hbm.ntm.energy;
 
+import java.util.function.BooleanSupplier;
 import net.minecraft.nbt.CompoundTag;
 
-public class HbmEnergyStorage implements HbmEnergyProvider, HbmEnergyReceiver {
+public class HbmEnergyStorage implements HbmEnergyProvider, HbmEnergyReceiver, HbmLoadedEnergy {
     public static final String DEFAULT_POWER_TAG = "Power";
 
     private long maxPower;
     private long maxReceive;
     private long maxExtract;
     private long power;
+    private BooleanSupplier loadedCheck;
 
     public HbmEnergyStorage(long maxPower) {
         this(maxPower, maxPower, maxPower);
@@ -47,6 +49,16 @@ public class HbmEnergyStorage implements HbmEnergyProvider, HbmEnergyReceiver {
     public void setTransferRates(long maxReceive, long maxExtract) {
         this.maxReceive = Math.max(0L, maxReceive);
         this.maxExtract = Math.max(0L, maxExtract);
+    }
+
+    public HbmEnergyStorage setLoadedCheck(BooleanSupplier loadedCheck) {
+        this.loadedCheck = loadedCheck;
+        return this;
+    }
+
+    @Override
+    public boolean isEnergyLoaded() {
+        return loadedCheck == null || loadedCheck.getAsBoolean();
     }
 
     @Override

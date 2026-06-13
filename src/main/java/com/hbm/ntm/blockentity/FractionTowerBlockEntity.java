@@ -46,6 +46,11 @@ public class FractionTowerBlockEntity extends LegacyRemoteFluidMachineBlockEntit
     }
 
     @Override
+    protected int legacyNetworkPackRange() {
+        return 50;
+    }
+
+    @Override
     protected boolean tickLegacyMachine(Level level, BlockPos pos, BlockState state) {
         boolean changed = transferStackedTowerFluids(level, pos);
         PairRecipe recipe = LegacyOilFluidRecipes.getFractioning(inputTank.getTankType());

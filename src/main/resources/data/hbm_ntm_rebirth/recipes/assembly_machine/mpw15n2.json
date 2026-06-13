@@ -1,0 +1,48 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:assembly_machine",
+    "internal_name":  "ass.mpw15n2",
+    "duration":  400,
+    "power":  100,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:seg_15"
+                                           },
+                            "count":  1
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:plates/weapon_steel"
+                                           },
+                            "count":  32,
+                            "legacy_ore":  "plateWeaponSteel"
+                        },
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:ball_tatb"
+                                           },
+                            "count":  32
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:circuits/advanced"
+                                           },
+                            "count":  8
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:mp_warhead_15_n2"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  313
+}

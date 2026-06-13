@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.warheadvolcano",
+  "duration": 600,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:cast_plates/titanium" }, "count": 12, "legacy_ore": "plateCastTitanium" },
+    { "ingredient": { "tag": "forge:cast_plates/steel" }, "count": 6, "legacy_ore": "plateCastSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:det_nuke" }, "count": 3 },
+    { "ingredient": { "tag": "forge:storage_blocks/u238" }, "count": 24, "legacy_ore": "blockU238" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_capacitor_board" }, "count": 5, "legacy_id": "hbm:circuit", "legacy_meta": 10 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:warhead_volcano" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 264
+}

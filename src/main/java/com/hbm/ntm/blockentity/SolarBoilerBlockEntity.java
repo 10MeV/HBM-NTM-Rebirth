@@ -72,6 +72,7 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
             boiler.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+        boiler.networkPackNT(15);
     }
 
     public HbmFluidTank getWaterTank() {

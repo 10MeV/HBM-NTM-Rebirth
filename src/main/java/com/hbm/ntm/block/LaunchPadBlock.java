@@ -57,14 +57,12 @@ public class LaunchPadBlock extends LegacyXrMultiblockBlock implements EntityBlo
     @Override
     protected LegacyMultiblockLayout getLayout(BlockState state) {
         Direction facing = state.getValue(FACING);
-        List<BlockPos> proxyOffsets = LegacyMultiblockLayout.legacyXrFillOffsets(LEGACY_XR_DIMENSIONS, facing);
         return LegacyMultiblockLayout.ofLegacyXrChecked(LEGACY_XR_DIMENSIONS, facing)
-                .withProxyOffsets(proxyOffsets, LegacyProxyMode.combo(true, true, true))
                 .withExtraProxyOffsets(List.of(
                         new BlockPos(1, 0, 1),
                         new BlockPos(1, 0, -1),
                         new BlockPos(-1, 0, 1),
-                        new BlockPos(-1, 0, -1)), LegacyProxyMode.none());
+                        new BlockPos(-1, 0, -1)), LegacyProxyMode.combo(true, true, true));
     }
 
     @Nullable

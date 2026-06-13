@@ -92,6 +92,10 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, blockEntity);
         boolean changed = blockEntity.tickLegacyMachine(level, pos, state);
         blockEntity.refreshFluidPorts();
+        int networkRange = blockEntity.legacyNetworkPackRange();
+        if (networkRange > 0) {
+            blockEntity.networkPackNT(networkRange);
+        }
         if (changed || level.getGameTime() % 20L == 0L) {
             blockEntity.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
@@ -100,6 +104,10 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
 
     protected boolean tickLegacyMachine(Level level, BlockPos pos, BlockState state) {
         return false;
+    }
+
+    protected int legacyNetworkPackRange() {
+        return -1;
     }
 
     protected boolean isItemValid(int slot, ItemStack stack) {

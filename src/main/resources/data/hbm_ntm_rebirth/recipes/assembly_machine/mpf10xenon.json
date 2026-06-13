@@ -1,0 +1,43 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:assembly_machine",
+    "internal_name":  "ass.mpf10xenon",
+    "duration":  100,
+    "power":  100,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:seg_10"
+                                           },
+                            "count":  2
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:plates/copper"
+                                           },
+                            "count":  12,
+                            "legacy_ore":  "plateCopper"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:plates/steel"
+                                           },
+                            "count":  3,
+                            "legacy_ore":  "plateSteel"
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:mp_fuselage_10_xenon"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  293
+}

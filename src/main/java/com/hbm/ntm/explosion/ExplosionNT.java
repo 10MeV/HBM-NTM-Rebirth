@@ -100,7 +100,7 @@ public class ExplosionNT {
                 .setEffects(new ExplosionEffectStandard(!attributes.contains(ExAttrib.NOSOUND), !attributes.contains(ExAttrib.NOPARTICLE)));
 
         if (!attributes.contains(ExAttrib.NOHURT)) {
-            explosion.setEntityProcessor(new EntityProcessorStandard().allowSelfDamage())
+            explosion.setEntityProcessor(new EntityProcessorStandard())
                     .setPlayerProcessor(new PlayerProcessorStandard());
         }
 

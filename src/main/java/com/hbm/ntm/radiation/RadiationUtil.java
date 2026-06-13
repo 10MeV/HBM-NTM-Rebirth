@@ -7,6 +7,7 @@ import com.hbm.ntm.registry.ModEffects;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.MushroomCow;
 import net.minecraft.world.entity.animal.Ocelot;
@@ -113,7 +114,7 @@ public final class RadiationUtil {
     }
 
     public static void applyDigammaDirect(LivingEntity entity, float amount) {
-        if (amount <= 0.0F || entity instanceof RadiationImmune || isLegacyClassName(entity, "EntityDuck")) {
+        if (amount <= 0.0F || isRadiationImmuneMarker(entity) || isLegacyClassName(entity, "EntityDuck")) {
             return;
         }
         if (entity instanceof Player player && player.isCreative()) {
@@ -122,8 +123,12 @@ public final class RadiationUtil {
         RadiationData.incrementDigamma(entity, amount);
     }
 
+    public static boolean isRadiationImmuneMarker(Entity entity) {
+        return entity instanceof RadiationImmune;
+    }
+
     public static boolean isRadImmune(LivingEntity entity) {
-        return entity instanceof RadiationImmune
+        return isRadiationImmuneMarker(entity)
                 || entity.hasEffect(ModEffects.MUTATION.get())
                 || entity instanceof MushroomCow
                 || entity instanceof Zombie

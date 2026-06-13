@@ -5,6 +5,7 @@ import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.armor.ArmorModItems;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
 import com.hbm.ntm.client.overlay.LegacyHelmetOverlayRenderer;
+import com.hbm.ntm.client.overlay.LegacyHevHudRenderer;
 import com.hbm.ntm.client.overlay.LegacyLookOverlayRenderer;
 import com.hbm.ntm.client.obj.ObjArmorModels;
 import com.hbm.ntm.client.overlay.ToolAbilityHudRenderer;
@@ -14,8 +15,10 @@ import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.render.LegacyMultiblockHighlightRenderer;
 import com.hbm.ntm.client.renderer.LegacyAccessoryRenderHelper;
 import com.hbm.ntm.client.renderer.LegacyHeadArmorRenderer;
+import com.hbm.ntm.client.renderer.LegacyJetpackRenderer;
 import com.hbm.ntm.client.renderer.LegacyObjArmorRenderer;
 import com.hbm.ntm.client.renderer.LegacyScreenQuadRenderer;
+import com.hbm.ntm.client.renderer.SednaGunHudRenderer;
 import com.hbm.ntm.client.renderer.SednaGunItemRenderer;
 import com.hbm.ntm.client.sound.LegacyMovingEntitySound;
 import com.hbm.ntm.client.sound.LegacyNullSoundRedirects;
@@ -31,6 +34,7 @@ import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.item.SednaGunItem;
+import com.hbm.ntm.item.StingerGunItem;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.particle.ParticleUtil;
@@ -93,6 +97,7 @@ public final class ClientForgeEvents {
     private static final int NOTICE_EMPTY_GAS_MASK_FILTER = 1;
     private static final int NOTICE_EMPTY_GAS_MASK_FILTER_MILLIS = 1_500;
     private static final Map<Integer, Long> VANISHED_ENTITIES = new HashMap<>();
+    private static final Map<Integer, LegacyObjArmorRenderer.PartVisibilityState> LEGACY_PART_VISIBILITY = new HashMap<>();
 
     @SubscribeEvent
     public static void onTooltip(ItemTooltipEvent event) {
@@ -198,6 +203,9 @@ public final class ClientForgeEvents {
     @SubscribeEvent
     public static void onOverlayPre(RenderGuiOverlayEvent.Pre event) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (LegacyHevHudRenderer.handlePre(event)) {
+            return;
+        }
         if (!ClientHbmPlayerProperties.shouldRenderHud()) {
             popNukeHudShake(event.getGuiGraphics());
             return;
@@ -242,6 +250,8 @@ public final class ClientForgeEvents {
         if (RadiationHud.hasGeigerCounter(player)) {
             RadiationHud.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
         }
+        SednaGunHudRenderer.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(),
+                event.getWindow().getGuiScaledHeight(), player);
         DashHud.render(event.getGuiGraphics(), event.getWindow().getGuiScaledHeight());
         ClientInformMessages.render(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
     }
@@ -256,6 +266,18 @@ public final class ClientForgeEvents {
             return;
         }
         event.setCanceled(true);
+        if (gun instanceof StingerGunItem stinger) {
+            if (!stinger.shouldRenderLegacyStingerCrosshair(stack)) {
+                return;
+            }
+            int screenWidth = event.getWindow().getGuiScaledWidth();
+            int screenHeight = event.getWindow().getGuiScaledHeight();
+            LegacyScreenQuadRenderer.renderCrosshair(OVERLAY_MISC_TEXTURE, event.getGuiGraphics(),
+                    screenWidth, screenHeight, stinger.currentCrosshair(stack));
+            LegacyScreenQuadRenderer.renderStingerLockon(OVERLAY_MISC_TEXTURE, event.getGuiGraphics(),
+                    screenWidth, screenHeight, stinger.legacyStingerLockonProgress(stack));
+            return;
+        }
         if (gun.shouldHideCrosshair(stack)) {
             return;
         }
@@ -577,20 +599,32 @@ public final class ClientForgeEvents {
     public static void onRenderLivingPre(RenderLivingEvent.Pre<?, ?> event) {
         if (isVanished(event.getEntity())) {
             event.setCanceled(true);
+            return;
+        }
+        if (event.getRenderer().getModel() instanceof HumanoidModel<?> humanoid) {
+            LEGACY_PART_VISIBILITY.put(event.getEntity().getId(),
+                    LegacyObjArmorRenderer.hideLegacyPlayerParts(event.getEntity(), humanoid));
         }
     }
 
     @SubscribeEvent
     public static void onRenderLivingPost(RenderLivingEvent.Post<?, ?> event) {
-        if (event.getRenderer().getModel() instanceof HumanoidModel<?> humanoid) {
-            LegacyObjArmorRenderer.renderEquippedArmor(event.getEntity(), humanoid, event.getPoseStack(),
-                    event.getMultiBufferSource(), event.getPackedLight());
-            LegacyHeadArmorRenderer.renderEquippedHeadArmor(event.getEntity(), humanoid, event.getPoseStack(),
-                    event.getMultiBufferSource(), event.getPackedLight());
-            if (event.getEntity() instanceof Player player) {
-                renderBackTesla(player, humanoid, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
-                renderWings(player, humanoid, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+        LegacyObjArmorRenderer.PartVisibilityState visibility = LEGACY_PART_VISIBILITY.remove(event.getEntity().getId());
+        try {
+            if (event.getRenderer().getModel() instanceof HumanoidModel<?> humanoid) {
+                LegacyObjArmorRenderer.renderEquippedArmor(event.getEntity(), humanoid, event.getPoseStack(),
+                        event.getMultiBufferSource(), event.getPackedLight());
+                LegacyHeadArmorRenderer.renderEquippedHeadArmor(event.getEntity(), humanoid, event.getPoseStack(),
+                        event.getMultiBufferSource(), event.getPackedLight());
+                if (event.getEntity() instanceof Player player) {
+                    LegacyJetpackRenderer.renderEquippedJetpack(player, humanoid, event.getPoseStack(),
+                            event.getMultiBufferSource(), event.getPackedLight());
+                    renderBackTesla(player, humanoid, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+                    renderWings(player, humanoid, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+                }
             }
+        } finally {
+            LegacyObjArmorRenderer.restoreLegacyPlayerParts(visibility);
         }
     }
 

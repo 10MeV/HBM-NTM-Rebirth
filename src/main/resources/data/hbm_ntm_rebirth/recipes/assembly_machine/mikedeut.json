@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.mikedeut",
+  "duration": 600,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/weapon_steel" }, "count": 16, "legacy_ore": "plateWeaponSteel" },
+    { "ingredient": { "tag": "forge:plates/titanium" }, "count": 16, "legacy_ore": "plateTitanium" }
+  ],
+  "input_fluids": [
+    { "fluid": "hbm_ntm_rebirth:deuterium", "amount": 10000 }
+  ],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:mike_deut" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 223
+}

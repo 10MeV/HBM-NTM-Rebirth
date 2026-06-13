@@ -63,6 +63,11 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
     }
 
     @Override
+    protected int legacyNetworkPackRange() {
+        return 150;
+    }
+
+    @Override
     public LegacyGuiProfile getLegacyGuiProfile() {
         return LegacyGuiProfile.CATALYTIC_REFORMER;
     }

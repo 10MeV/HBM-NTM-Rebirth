@@ -4,10 +4,13 @@ import com.hbm.ntm.api.entity.RadarScanProvider;
 import com.hbm.ntm.api.entity.RadarScanResult;
 import com.hbm.ntm.api.entity.RadarScreenDisplayProfile;
 import com.hbm.ntm.api.entity.RadarScreenSnapshot;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -15,11 +18,17 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
-public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProvider {
+public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProvider, HbmLegacyLoadedTile {
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private RadarScreenSnapshot snapshot = RadarScreenSnapshot.UNLINKED;
 
     public RadarScreenBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MACHINE_RADAR_SCREEN.get(), pos, state);
+    }
+
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadarScreenBlockEntity screen) {
@@ -33,6 +42,7 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
         }
         screen.snapshot = tickPlan.nextSnapshot();
         screen.setChanged();
+        screen.networkPackNT(100);
     }
 
     public void receiveRadarUpdate(RadarBlockEntity radar) {
@@ -44,6 +54,9 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            if (!level.isClientSide) {
+                networkPackNT(25);
+            }
         }
     }
 
@@ -76,13 +89,35 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         tag.merge(snapshot.toTag(false));
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         snapshot = RadarScreenSnapshot.fromTag(tag);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        return getUpdateTag();
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        load(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        snapshot.writeLegacyWire(data);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        snapshot = RadarScreenSnapshot.readLegacyWire(data);
     }
 
     @Override

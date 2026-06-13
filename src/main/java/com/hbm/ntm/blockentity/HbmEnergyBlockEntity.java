@@ -10,10 +10,12 @@ import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
-import com.hbm.ntm.network.HbmTileSyncable;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.Connection;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -29,10 +31,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmEnergyHandler, HbmLoadedEnergy, InfoProviderEC, HbmTileSyncable {
+public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmEnergyHandler,
+        HbmLoadedEnergy, InfoProviderEC, HbmLegacyLoadedTile {
     private static final String TAG_ENERGY = "Energy";
 
     protected final HbmEnergyStorage energy;
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final LazyOptional<IEnergyStorage> forgeEnergy;
     private final LazyOptional<IEnergyStorage> forgeEnergyInput;
     private final LazyOptional<IEnergyStorage> forgeEnergyOutput;
@@ -40,6 +44,7 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
     protected HbmEnergyBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, HbmEnergyStorage energy) {
         super(type, pos, state);
         this.energy = energy;
+        this.energy.setLoadedCheck(this::isEnergyLoaded);
         this.forgeEnergy = LazyOptional.of(() -> new ForgeEnergyAdapter(this.energy));
         this.forgeEnergyInput = LazyOptional.of(() -> new ForgeEnergyAdapter(this.energy, true, false));
         this.forgeEnergyOutput = LazyOptional.of(() -> new ForgeEnergyAdapter(this.energy, false, true));
@@ -52,6 +57,11 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
 
     public HbmEnergyStorage getEnergyStorage() {
         return energy;
+    }
+
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
     }
 
     @Override
@@ -291,12 +301,14 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         tag.put(TAG_ENERGY, energy.serializeNBT());
     }
 
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
         tag.put(TAG_ENERGY, energy.serializeNBT());
         return tag;
     }
@@ -319,8 +331,22 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
         if (tag.contains(TAG_ENERGY)) {
             energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
+        }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(saveWithoutMetadata());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            load(tag);
         }
     }
 
@@ -337,6 +363,7 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
     }
 

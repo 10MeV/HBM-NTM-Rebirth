@@ -145,11 +145,13 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
 
         if (previousPower != blockEntity.getPower() || previousRedstone != blockEntity.lastRedstone) {
             blockEntity.setChanged();
-            level.updateNeighbourForOutputSignal(pos, state.getBlock());
+            blockEntity.updateComparatorOutputs();
             if (level.getGameTime() % 15L == 0L) {
                 level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
             }
         }
+
+        blockEntity.networkPackNT(100);
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, MachineBatterySocketBlockEntity blockEntity) {
@@ -345,9 +347,6 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
 
     private void markSettingsChanged() {
         setChangedAndSync();
-        if (level != null && !level.isClientSide) {
-            level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
-        }
     }
 
     @Override
@@ -626,9 +625,7 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
 
     @Override
     public void provideExtraInfo(CompoundTag data) {
-        data.putString(CompatEnergyControl.KEY_EUTYPE, "HE");
-        data.putLong(CompatEnergyControl.L_ENERGY_HE, getPower());
-        data.putLong(CompatEnergyControl.L_CAPACITY_HE, getMaxPower());
+        super.provideExtraInfo(data);
         data.putLong(CompatEnergyControl.L_DIFF_HE, (powerLog[0] - powerLog[powerLog.length - 1]) / 20L);
     }
 
@@ -650,6 +647,19 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            if (!level.isClientSide) {
+                updateComparatorOutputs();
+            }
+        }
+    }
+
+    private void updateComparatorOutputs() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        Block block = getBlockState().getBlock();
+        for (BlockPos offset : MachineBatterySocketBlock.socketOffsets(getFacing())) {
+            level.updateNeighbourForOutputSignal(worldPosition.offset(offset), block);
         }
     }
 

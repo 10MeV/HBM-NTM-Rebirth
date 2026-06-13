@@ -45,6 +45,7 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
                 key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()));
         float anim = Mth.lerp(partialTick, chemicalFactory.getPrevAnim(), chemicalFactory.getAnim());
+        LegacyTileRenderPlans.ChemicalFactoryPlan plan = LegacyTileRenderPlans.chemicalFactoryPlan(anim);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -58,22 +59,33 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
             model.renderPart("Frame", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
         }
 
-        poseStack.pushPose();
-        rotateFanAround(poseStack, 1.0D, (-anim * 45.0F) % 360.0F);
-        model.renderPart("Fan1", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
-
-        poseStack.pushPose();
-        rotateFanAround(poseStack, -1.0D, (-anim * 45.0F) % 360.0F);
-        model.renderPart("Fan2", definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+        for (LegacyTileRenderPlans.RotatingModelPartPlan fan : plan.fans()) {
+            renderRotatingPart(model, fan, definition, poseStack, buffer, modelLight, packedOverlay);
+        }
 
         poseStack.popPose();
     }
 
-    private static void rotateFanAround(PoseStack poseStack, double x, float degrees) {
-        poseStack.translate(x, 0.0D, 0.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(degrees));
-        poseStack.translate(-x, 0.0D, 0.0D);
+    private static void renderRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, LegacyMachineDefinition definition,
+            PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        model.renderPart(part.partName(), definition.textureLocation(), poseStack, buffer, light, overlay);
+        poseStack.popPose();
+    }
+
+    private static void rotate(PoseStack poseStack, float axisX, float axisY, float axisZ, double degrees) {
+        if (axisX != 0.0F) {
+            poseStack.mulPose(Axis.XP.rotationDegrees((float) (degrees * axisX)));
+        }
+        if (axisY != 0.0F) {
+            poseStack.mulPose(Axis.YP.rotationDegrees((float) (degrees * axisY)));
+        }
+        if (axisZ != 0.0F) {
+            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (degrees * axisZ)));
+        }
     }
 }

@@ -27,6 +27,8 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
     private static final double FLYWHEEL_MAX_ENERGY = 50_000_000D;
 
     private double spin;
+    private double rotor;
+    private double lastRotor;
     private long lastPowerTarget;
     private long flywheelEnergy;
     private long maxPowerTarget;
@@ -43,6 +45,16 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, IndustrialSteamTurbineBlockEntity turbine) {
         tickTurbine(level, pos, state, turbine);
+    }
+
+    public static void clientTick(Level level, BlockPos pos, BlockState state, IndustrialSteamTurbineBlockEntity turbine) {
+        turbine.lastRotor = turbine.rotor;
+        double speed = turbine.spin >= 0.5D ? 30.0D : Math.sqrt(Math.max(0.0D, turbine.spin) * 2.0D) * 30.0D;
+        turbine.rotor += speed;
+        if (turbine.rotor >= 360.0D) {
+            turbine.lastRotor -= 360.0D;
+            turbine.rotor -= 360.0D;
+        }
     }
 
     @Override
@@ -80,6 +92,14 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
 
     public double getSpin() {
         return spin;
+    }
+
+    public double getRotor() {
+        return rotor;
+    }
+
+    public double getLastRotor() {
+        return lastRotor;
     }
 
     public long getLastPowerTarget() {

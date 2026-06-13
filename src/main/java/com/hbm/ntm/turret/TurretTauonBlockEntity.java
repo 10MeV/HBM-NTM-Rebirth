@@ -5,7 +5,6 @@ import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -71,13 +70,6 @@ public class TurretTauonBlockEntity extends TurretBlockEntityBase {
     }
 
     @Override
-    protected void tickServerSpecificAnimations() {
-        if (getTargetPos() != null) {
-            triggerBarrelSpin(45.0F);
-        }
-    }
-
-    @Override
     protected void tickClientSpecificAnimations() {
         if (getTargetPos() != null) {
             triggerClientBarrelSpin(45.0F);
@@ -99,6 +91,6 @@ public class TurretTauonBlockEntity extends TurretBlockEntityBase {
                 30.0F + level.random.nextInt(11));
         triggerBeam(3);
         spawnTauMuzzleParticles(5);
-        playTurretSound(ModSounds.WEAPON_TAU_SHOOT.get(), 4.0F, 0.9F + level.random.nextFloat() * 0.3F);
+        playTurretSound("hbm:weapon.tauShoot", 4.0F, 0.9F + level.random.nextFloat() * 0.3F);
     }
 }

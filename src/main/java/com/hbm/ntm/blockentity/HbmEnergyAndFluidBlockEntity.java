@@ -39,6 +39,7 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
             HbmEnergyStorage energy, List<HbmFluidTank> tanks) {
         super(type, pos, state, tanks);
         this.energy = energy;
+        this.energy.setLoadedCheck(this::isEnergyLoaded);
         this.forgeEnergy = LazyOptional.of(() -> new ForgeEnergyAdapter(this.energy));
         this.forgeEnergyInput = LazyOptional.of(() -> new ForgeEnergyAdapter(this.energy, true, false));
         this.forgeEnergyOutput = LazyOptional.of(() -> new ForgeEnergyAdapter(this.energy, false, true));

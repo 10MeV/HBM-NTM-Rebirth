@@ -80,6 +80,7 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
             engine.tryProvideFluidToPorts(engine.spentSteamTank.getTankType(), engine.spentSteamTank.getPressure(), engine);
         }
 
+        engine.networkPackNT(150);
         if (result.converted() || level.getGameTime() % 20L == 0L) {
             engine.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);

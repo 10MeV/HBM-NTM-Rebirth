@@ -1,0 +1,50 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:assembly_machine",
+    "internal_name":  "ass.mpt10kero",
+    "duration":  100,
+    "power":  100,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:seg_10"
+                                           },
+                            "count":  1
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:pipes/steel"
+                                           },
+                            "count":  1,
+                            "legacy_ore":  "ntmpipeSteel"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:ingots/tungsten"
+                                           },
+                            "count":  4,
+                            "legacy_ore":  "ingotTungsten"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:plates/steel"
+                                           },
+                            "count":  4,
+                            "legacy_ore":  "plateSteel"
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:mp_thruster_10_kerosene"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  270
+}

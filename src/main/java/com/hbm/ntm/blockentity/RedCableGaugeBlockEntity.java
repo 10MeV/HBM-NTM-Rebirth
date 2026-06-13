@@ -7,9 +7,11 @@ import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.energy.HbmEnergyNode;
 import com.hbm.ntm.energy.HbmPowerNet;
+import com.hbm.ntm.network.HbmLegacyBufPacketReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -19,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class RedCableGaugeBlockEntity extends HbmEnergyNodeBlockEntity
-        implements LegacyLookOverlayProvider, RORValueProvider {
+        implements LegacyLookOverlayProvider, RORValueProvider, HbmLegacyBufPacketReceiver {
     private static final String TAG_DELTA_TICK = "deltaTick";
     private static final String TAG_DELTA_SECOND = "deltaSecond";
     private static final String TAG_DELTA_LAST_SECOND = "deltaLastSecond";
@@ -55,6 +57,7 @@ public class RedCableGaugeBlockEntity extends HbmEnergyNodeBlockEntity
             gauge.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+        gauge.networkPackNT(25);
     }
 
     public long getDeltaTick() {
@@ -97,6 +100,18 @@ public class RedCableGaugeBlockEntity extends HbmEnergyNodeBlockEntity
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void serialize(FriendlyByteBuf data) {
+        data.writeLong(deltaTick);
+        data.writeLong(deltaLastSecond);
+    }
+
+    @Override
+    public void deserialize(FriendlyByteBuf data) {
+        deltaTick = Math.max(data.readLong(), 0L);
+        deltaLastSecond = Math.max(data.readLong(), 0L);
     }
 
     @Override

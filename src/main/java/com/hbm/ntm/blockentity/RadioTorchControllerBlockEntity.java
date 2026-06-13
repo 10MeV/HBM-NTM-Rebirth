@@ -32,23 +32,22 @@ public class RadioTorchControllerBlockEntity extends RadioTorchBlockEntity {
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadioTorchControllerBlockEntity torch) {
-        if (torch.radio.channel().isEmpty()) {
-            return;
+        if (!torch.radio.channel().isEmpty()) {
+            BlockEntity attached = level.getBlockEntity(torch.attachedPos());
+            if (attached instanceof RORInteractive interactive) {
+                RTTYSystem.RTTYChannel channel = RTTYSystem.listen(level, torch.radio.channel());
+                RTTYControllerState.ControllerRunResult result =
+                        torch.radio.runFromChannel(interactive, channel, level.getGameTime());
+                if (result.selfDestruct()) {
+                    torch.selfDestruct();
+                    return;
+                }
+                if (result.ran() || result.exceptionMessage() != null) {
+                    torch.setChangedAndSync(false);
+                }
+            }
         }
-        BlockEntity attached = level.getBlockEntity(torch.attachedPos());
-        if (!(attached instanceof RORInteractive interactive)) {
-            return;
-        }
-        RTTYSystem.RTTYChannel channel = RTTYSystem.listen(level, torch.radio.channel());
-        RTTYControllerState.ControllerRunResult result =
-                torch.radio.runFromChannel(interactive, channel, level.getGameTime());
-        if (result.selfDestruct()) {
-            torch.selfDestruct();
-            return;
-        }
-        if (result.ran() || result.exceptionMessage() != null) {
-            torch.setChangedAndSync(false);
-        }
+        torch.networkPackLegacyRadioTorch();
     }
 
     @Override

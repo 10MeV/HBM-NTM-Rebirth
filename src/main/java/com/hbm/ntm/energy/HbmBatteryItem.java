@@ -63,6 +63,14 @@ public class HbmBatteryItem extends Item implements IBatteryItem {
         return defaultCharge;
     }
 
+    @Override
+    public long peekCharge(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return 0L;
+        }
+        return stack.hasTag() ? stack.getTag().getLong(getChargeTagName(stack)) : getDefaultCharge(stack);
+    }
+
     public void setCharge(ItemStack stack, long charge) {
         if (!stack.isEmpty()) {
             stack.getOrCreateTag().putLong(getChargeTagName(stack), charge);

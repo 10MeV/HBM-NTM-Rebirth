@@ -31,6 +31,17 @@ public interface IEnergyReceiverMK2 extends IEnergyHandlerMK2, HbmEnergyReceiver
         return HbmEnergyUtil.subscribeReceiverToPort(level, conductorPort, this);
     }
 
+    default int trySubscribe(Level level, Iterable<DirPos> conductorPorts) {
+        return HbmEnergyUtil.subscribeReceiverToDirPosPorts(level, conductorPorts, this);
+    }
+
+    default boolean trySubscribe(Level level, com.hbm.ntm.util.fauxpointtwelve.DirPos conductorPort) {
+        if (conductorPort == null) {
+            return false;
+        }
+        return trySubscribe(level, new DirPos(conductorPort.immutable(), conductorPort.getDir()));
+    }
+
     default boolean trySubscribe(Level level, int x, int y, int z, Direction directionFromReceiver) {
         return trySubscribe(level, new BlockPos(x, y, z), directionFromReceiver);
     }
@@ -42,6 +53,17 @@ public interface IEnergyReceiverMK2 extends IEnergyHandlerMK2, HbmEnergyReceiver
 
     default boolean tryUnsubscribe(Level level, DirPos conductorPort) {
         return HbmEnergyUtil.unsubscribeReceiverFromPort(level, conductorPort, this);
+    }
+
+    default int tryUnsubscribe(Level level, Iterable<DirPos> conductorPorts) {
+        return HbmEnergyUtil.unsubscribeReceiverFromDirPosPorts(level, conductorPorts, this);
+    }
+
+    default boolean tryUnsubscribe(Level level, com.hbm.ntm.util.fauxpointtwelve.DirPos conductorPort) {
+        if (conductorPort == null) {
+            return false;
+        }
+        return tryUnsubscribe(level, new DirPos(conductorPort.immutable(), conductorPort.getDir()));
     }
 
     default boolean tryUnsubscribe(Level level, BlockPos conductorPos) {

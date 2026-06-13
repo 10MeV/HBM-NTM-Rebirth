@@ -59,6 +59,11 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
     }
 
     @Override
+    protected int legacyNetworkPackRange() {
+        return 25;
+    }
+
+    @Override
     public LegacyGuiProfile getLegacyGuiProfile() {
         return LegacyGuiProfile.HYDROTREATER;
     }

@@ -73,6 +73,9 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
     public static void serverTick(Level level, BlockPos pos, BlockState state, PneumaticTubeBlockEntity tube) {
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, tube);
         tube.serverTick();
+        if (!level.isClientSide) {
+            tube.networkPackNT(15);
+        }
     }
 
     private void serverTick() {

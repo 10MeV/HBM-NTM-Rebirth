@@ -50,26 +50,18 @@ public final class LegacyFluidTankRenderHelper {
         if (tank.isEmpty() || tank.getMaxFill() <= 0) {
             return;
         }
-        double height = (double) tank.getFill() * 1.5D / (double) tank.getMaxFill();
         FluidType type = tank.getTankType();
-        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
-                .withColor(0xFFFFFF, 192)
-                .withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
-
-        double off = 5.9375D;
+        double height = (double) tank.getFill() * LegacyTileRenderPlans.BIG_ASS_TANK_FLUID_HEIGHT
+                / (double) tank.getMaxFill();
         LegacyUvAnimation.Range u = LegacyUvAnimation.bigAssTankFluidU(animation);
-        double fluidV = LegacyUvAnimation.bigAssTankFluidV(height);
+        LegacyTileRenderPlans.BigAssTankFluidPlan plan = LegacyTileRenderPlans.bigAssTankFluidPlan(
+                height, u.min(), u.max(), LegacyUvAnimation.bigAssTankFluidV(height));
+        ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
+                .withRenderMode(plan.blend().modernRenderMode());
         ResourceLocation texture = type == null ? HbmFluids.NONE.getTexture() : type.getTexture();
-        LegacyTexturedQuadRenderer.quad(texture, context, 1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.vertex(-off, 1.75D, -0.25D, u.min(), 0.0D, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(-off, 1.75D + height, -0.25D, u.min(), fluidV, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(-off, 1.75D + height, 0.25D, u.max(), fluidV, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(-off, 1.75D, 0.25D, u.max(), 0.0D, 0xFFFFFF, 192));
-        LegacyTexturedQuadRenderer.quad(texture, context, -1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.vertex(off, 1.75D, -0.25D, u.max(), 0.0D, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(off, 1.75D + height, -0.25D, u.max(), fluidV, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(off, 1.75D + height, 0.25D, u.min(), fluidV, 0xFFFFFF, 192),
-                LegacyTexturedQuadRenderer.vertex(off, 1.75D, 0.25D, u.min(), 0.0D, 0xFFFFFF, 192));
+        for (LegacyTileRenderPlans.TexturedQuadPlan quad : plan.quads()) {
+            renderTexturedQuad(texture, context, quad);
+        }
     }
 
     public static void renderBat9000Fluid(HbmFluidTank tank, BlockState state, PoseStack poseStack,
@@ -77,11 +69,13 @@ public final class LegacyFluidTankRenderHelper {
         if (tank.isEmpty() || tank.getMaxFill() <= 0) {
             return;
         }
-        double height = (double) tank.getFill() * 1.5D / (double) tank.getMaxFill();
-        int color = fluidColor(tank.getTankType());
+        LegacyTileRenderPlans.Bat9000FluidPlan plan = LegacyTileRenderPlans.bat9000FluidPlan(tank.getFill(),
+                tank.getMaxFill(), fluidColor(tank.getTankType()));
         ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay)
                 .withoutTranslucency();
-        LegacyUntexturedQuadRenderer.verticalCrossPanels(context, 1.5D, height, 0.5D, 2.2D, color, 255);
+        for (LegacyTileRenderPlans.UntexturedQuadPlan quad : plan.quads()) {
+            renderUntexturedQuad(context, quad);
+        }
     }
 
     public static void renderSmallTankDiamonds(FluidType type, PoseStack poseStack, MultiBufferSource buffer,
@@ -89,19 +83,8 @@ public final class LegacyFluidTankRenderHelper {
         if (type == null || type == HbmFluids.NONE) {
             return;
         }
-        poseStack.pushPose();
-        poseStack.translate(-0.25D, 0.5D, -1.501D);
-        poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(90.0F));
-        poseStack.scale(1.0F, 0.375F, 0.375F);
-        renderDangerDiamond(type, poseStack, buffer, packedLight, packedOverlay);
-        poseStack.popPose();
-
-        poseStack.pushPose();
-        poseStack.translate(0.25D, 0.5D, 1.501D);
-        poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-90.0F));
-        poseStack.scale(1.0F, 0.375F, 0.375F);
-        renderDangerDiamond(type, poseStack, buffer, packedLight, packedOverlay);
-        poseStack.popPose();
+        renderDangerDiamondPlan(LegacyTileRenderPlans.smallTankDangerDiamondPlan(true), type,
+                poseStack, buffer, packedLight, packedOverlay);
     }
 
     public static void renderBigAssTankDiamonds(FluidType type, PoseStack poseStack, MultiBufferSource buffer,
@@ -109,16 +92,8 @@ public final class LegacyFluidTankRenderHelper {
         if (type == null || type == HbmFluids.NONE) {
             return;
         }
-        poseStack.pushPose();
-        poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(22.5F));
-        for (int i = 0; i < 2; i++) {
-            poseStack.pushPose();
-            poseStack.translate(5.5D, 2.0D, 0.0D);
-            renderDangerDiamond(type, poseStack, buffer, packedLight, packedOverlay);
-            poseStack.popPose();
-            poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180.0F));
-        }
-        poseStack.popPose();
+        renderDangerDiamondPlan(LegacyTileRenderPlans.bigAssTankDangerDiamondPlan(true), type,
+                poseStack, buffer, packedLight, packedOverlay);
     }
 
     public static void renderBat9000Diamonds(FluidType type, PoseStack poseStack, MultiBufferSource buffer,
@@ -126,17 +101,8 @@ public final class LegacyFluidTankRenderHelper {
         if (type == null || type == HbmFluids.NONE) {
             return;
         }
-        poseStack.pushPose();
-        poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(45.0F));
-        for (int i = 0; i < 4; i++) {
-            poseStack.pushPose();
-            poseStack.translate(2.5D, 2.25D, 0.0D);
-            poseStack.scale(1.0F, 0.75F, 0.75F);
-            renderDangerDiamond(type, poseStack, buffer, packedLight, packedOverlay);
-            poseStack.popPose();
-            poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(90.0F));
-        }
-        poseStack.popPose();
+        renderDangerDiamondPlan(LegacyTileRenderPlans.bat9000DangerDiamondPlan(true), type,
+                poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static void renderTankPart(LegacyWavefrontModel model, String part, FluidType type,
@@ -153,6 +119,64 @@ public final class LegacyFluidTankRenderHelper {
                 packedLight, packedOverlay).withRenderMode(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
         LegacyDangerDiamondRenderer.render(context, type.getPoison(), type.getFlammability(),
                 type.getReactivity(), dangerSymbol(type.getSymbol()));
+    }
+
+    private static void renderDangerDiamondPlan(LegacyTileRenderPlans.TankDangerDiamondPlan plan, FluidType type,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!plan.hasFluid()) {
+            return;
+        }
+        for (LegacyTileRenderPlans.DiamondTransformPlan transform : plan.transforms()) {
+            poseStack.pushPose();
+            if (transform.role().startsWith("radial_")) {
+                poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(transform.yawDegrees()));
+                poseStack.translate(transform.translateX(), transform.translateY(), transform.translateZ());
+            } else {
+                poseStack.translate(transform.translateX(), transform.translateY(), transform.translateZ());
+                poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(transform.yawDegrees()));
+            }
+            poseStack.scale(transform.scaleX(), transform.scaleY(), transform.scaleZ());
+            renderDangerDiamond(type, poseStack, buffer, packedLight, packedOverlay);
+            poseStack.popPose();
+        }
+    }
+
+    private static void renderTexturedQuad(ResourceLocation texture, ObjRenderContext context,
+            LegacyTileRenderPlans.TexturedQuadPlan quad) {
+        if (quad.vertices().size() != 4) {
+            return;
+        }
+        float normalX = quad.role().startsWith("pos_x") ? -1.0F : 1.0F;
+        LegacyTileRenderPlans.QuadVertexPlan v0 = quad.vertices().get(0);
+        LegacyTileRenderPlans.QuadVertexPlan v1 = quad.vertices().get(1);
+        LegacyTileRenderPlans.QuadVertexPlan v2 = quad.vertices().get(2);
+        LegacyTileRenderPlans.QuadVertexPlan v3 = quad.vertices().get(3);
+        LegacyTexturedQuadRenderer.quad(texture, context, normalX, 0.0F, 0.0F,
+                vertex(v0), vertex(v1), vertex(v2), vertex(v3));
+    }
+
+    private static LegacyTexturedQuadRenderer.Vertex vertex(LegacyTileRenderPlans.QuadVertexPlan vertex) {
+        return LegacyTexturedQuadRenderer.vertex(vertex.x(), vertex.y(), vertex.z(), vertex.u(), vertex.v(),
+                vertex.color(), vertex.alpha());
+    }
+
+    private static void renderUntexturedQuad(ObjRenderContext context,
+            LegacyTileRenderPlans.UntexturedQuadPlan quad) {
+        if (quad.vertices().size() != 4) {
+            return;
+        }
+        LegacyTileRenderPlans.UntexturedVertexPlan v0 = quad.vertices().get(0);
+        LegacyTileRenderPlans.UntexturedVertexPlan v1 = quad.vertices().get(1);
+        LegacyTileRenderPlans.UntexturedVertexPlan v2 = quad.vertices().get(2);
+        LegacyTileRenderPlans.UntexturedVertexPlan v3 = quad.vertices().get(3);
+        LegacyTileRenderPlans.RgbaPlan color = v0.color();
+        int rgb = color.redByte() << 16 | color.greenByte() << 8 | color.blueByte();
+        LegacyUntexturedQuadRenderer.quad(context,
+                v0.x(), v0.y(), v0.z(),
+                v1.x(), v1.y(), v1.z(),
+                v2.x(), v2.y(), v2.z(),
+                v3.x(), v3.y(), v3.z(),
+                rgb, color.alphaByte(), color.alphaByte(), color.alphaByte(), color.alphaByte());
     }
 
     private static ResourceLocation tankTextureFor(FluidType type) {

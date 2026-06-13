@@ -3,6 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.client.obj.ObjArmorModels;
+import com.hbm.ntm.item.FsbArmorItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -10,6 +11,7 @@ import java.util.Locale;
 import java.util.function.Consumer;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.Model;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -17,6 +19,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
@@ -48,6 +51,30 @@ public final class LegacyObjArmorRenderer {
         renderSlot(entity.getItemBySlot(EquipmentSlot.FEET), EquipmentSlot.FEET, humanoid, poseStack, buffer, packedLight);
     }
 
+    public static PartVisibilityState hideLegacyPlayerParts(LivingEntity entity, HumanoidModel<?> humanoid) {
+        if (!(entity instanceof Player player) || humanoid == null) {
+            return PartVisibilityState.NONE;
+        }
+        PartVisibilityState state = PartVisibilityState.capture(humanoid);
+        boolean changed = false;
+        if (hidesSkinHat(player.getItemBySlot(EquipmentSlot.HEAD))) {
+            humanoid.hat.visible = false;
+            changed = true;
+        }
+        if (hidesFauLegs(player.getItemBySlot(EquipmentSlot.LEGS), player)) {
+            humanoid.leftLeg.visible = false;
+            humanoid.rightLeg.visible = false;
+            changed = true;
+        }
+        return changed ? state : PartVisibilityState.NONE;
+    }
+
+    public static void restoreLegacyPlayerParts(PartVisibilityState state) {
+        if (state != null) {
+            state.restore();
+        }
+    }
+
     private static void renderSlot(ItemStack stack, EquipmentSlot slot, HumanoidModel<?> humanoid, PoseStack poseStack,
                                    MultiBufferSource buffer, int packedLight) {
         if (!(stack.getItem() instanceof ArmorItem armor) || slotFor(armor.getType()) != slot) {
@@ -67,7 +94,7 @@ public final class LegacyObjArmorRenderer {
                 renderPart(spec, humanoid.body, poseStack, buffer, packedLight, spec.chestTexture(), spec.chestParts());
                 renderPart(spec, humanoid.leftArm, poseStack, buffer, packedLight, spec.armTexture(), spec.leftArmParts());
                 renderPart(spec, humanoid.rightArm, poseStack, buffer, packedLight, spec.armTexture(), spec.rightArmParts());
-                if (spec.jetpackTexture() != null) {
+                if (spec.jetpackTexture() != null && shouldRenderJetpack(spec, stack)) {
                     renderPart(spec, humanoid.body, poseStack, buffer, packedLight, spec.jetpackTexture(), "Jetpack");
                 }
                 if (spec.cassetteTexture() != null) {
@@ -214,7 +241,7 @@ public final class LegacyObjArmorRenderer {
         if (path.startsWith("trenchmaster_")) {
             return TRENCHMASTER;
         }
-        if (path.equals("goggles")) {
+        if (path.equals("goggles") || path.equals("ashglasses")) {
             return GOGGLES;
         }
         if (path.equals("nossy_hat") || path.equals("hat")) {
@@ -224,6 +251,32 @@ public final class LegacyObjArmorRenderer {
             return NO9;
         }
         return Spec.EMPTY;
+    }
+
+    private static boolean hidesSkinHat(ItemStack stack) {
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        String path = id == null ? "" : id.getPath().toLowerCase(Locale.ROOT);
+        return switch (path) {
+            case "t51_helmet", "steamsuit_helmet", "ajr_helmet", "ajro_helmet", "rpa_helmet",
+                    "ncrpa_helmet", "envsuit_helmet", "hev_helmet", "fau_helmet", "dns_helmet",
+                    "taurun_helmet", "trenchmaster_helmet" -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean hidesFauLegs(ItemStack stack, Player player) {
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        String path = id == null ? "" : id.getPath().toLowerCase(Locale.ROOT);
+        return "fau_legs".equals(path) && FsbArmorItem.hasFullFsbSet(player, true);
+    }
+
+    private static boolean shouldRenderJetpack(Spec spec, ItemStack stack) {
+        if (spec != BJ) {
+            return true;
+        }
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        String path = id == null ? "" : id.getPath().toLowerCase(Locale.ROOT);
+        return "bj_plate_jetpack".equals(path);
     }
 
     private static final Spec T51 = standard(ObjArmorModels.T51, ObjArmorModels.T51_HELMET_TEXTURE,
@@ -414,6 +467,34 @@ public final class LegacyObjArmorRenderer {
 
         private double rotationDegrees() {
             return -(System.currentTimeMillis() / 2.0D) % 360.0D;
+        }
+    }
+
+    public record PartVisibilityState(HumanoidModel<?> model, boolean head, boolean hat, boolean body,
+                                      boolean rightArm, boolean leftArm, boolean rightLeg, boolean leftLeg) {
+        private static final PartVisibilityState NONE = new PartVisibilityState(null, true, true, true,
+                true, true, true, true);
+
+        private static PartVisibilityState capture(HumanoidModel<?> model) {
+            return new PartVisibilityState(model, visible(model.head), visible(model.hat), visible(model.body),
+                    visible(model.rightArm), visible(model.leftArm), visible(model.rightLeg), visible(model.leftLeg));
+        }
+
+        private void restore() {
+            if (model == null) {
+                return;
+            }
+            model.head.visible = head;
+            model.hat.visible = hat;
+            model.body.visible = body;
+            model.rightArm.visible = rightArm;
+            model.leftArm.visible = leftArm;
+            model.rightLeg.visible = rightLeg;
+            model.leftLeg.visible = leftLeg;
+        }
+
+        private static boolean visible(ModelPart part) {
+            return part == null || part.visible;
         }
     }
 

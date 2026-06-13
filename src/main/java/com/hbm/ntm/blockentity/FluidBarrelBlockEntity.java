@@ -88,6 +88,11 @@ public class FluidBarrelBlockEntity extends FluidTankBlockEntity {
     }
 
     @Override
+    protected int legacyNetworkPackRange() {
+        return 50;
+    }
+
+    @Override
     public Component getDisplayName() {
         return Component.translatable("container.barrel");
     }

@@ -81,19 +81,24 @@ public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity {
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadioTorchCounterBlockEntity torch) {
         BlockEntity attached = level.getBlockEntity(torch.attachedPos());
-        if (attached == null) {
-            return;
+        if (attached != null) {
+            attached.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
+                int[] counts = new int[RTTYCounterState.SLOT_COUNT];
+                for (int i = 0; i < counts.length; i++) {
+                    ItemStack pattern = torch.filterItems.getStackInSlot(i);
+                    counts[i] = pattern.isEmpty() ? 0 : countItems(handler, pattern, i, torch.matcher);
+                }
+                if (torch.radio.broadcastCounts(level, counts) > 0) {
+                    torch.setChangedAndSync(false);
+                }
+            });
         }
-        attached.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
-            int[] counts = new int[RTTYCounterState.SLOT_COUNT];
-            for (int i = 0; i < counts.length; i++) {
-                ItemStack pattern = torch.filterItems.getStackInSlot(i);
-                counts[i] = pattern.isEmpty() ? 0 : countItems(handler, pattern, i, torch.matcher);
-            }
-            if (torch.radio.broadcastCounts(level, counts) > 0) {
-                torch.setChangedAndSync(false);
-            }
-        });
+        torch.networkPackLegacyRadioTorch();
+    }
+
+    @Override
+    protected int legacyNetworkPackRange() {
+        return 15;
     }
 
     @Override

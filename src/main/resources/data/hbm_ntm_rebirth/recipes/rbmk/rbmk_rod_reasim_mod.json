@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "BGB",
+    "GRG",
+    "BGB"
+  ],
+  "key": {
+    "G": {
+      "item": "hbm_ntm_rebirth:block_graphite"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:rbmk_rod_reasim"
+    },
+    "B": {
+      "tag": "forge:ingots/any_resistant_alloy"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_rod_reasim_mod"
+  },
+  "show_notification": true
+}

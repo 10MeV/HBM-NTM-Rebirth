@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/rbmk/rbmk_element_mod_side",
+    "side": "hbm_ntm_rebirth:block/rbmk/rbmk_element_mod_side",
+    "end": "hbm_ntm_rebirth:block/rbmk/rbmk_element_mod_top"
+  }
+}

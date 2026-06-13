@@ -1,8 +1,10 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.entity.effect.MistEntity;
 import com.hbm.ntm.explosion.ExplosionChaos;
 import com.hbm.ntm.explosion.ExplosionLarge;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.menu.BombMultiMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
@@ -166,7 +168,11 @@ public class BombMultiBlockEntity extends BlockEntity implements MenuProvider {
             if (poisonRadius > 0) {
                 ExplosionNukeGeneric.wasteNoSchrab(level, pos.getX(), pos.getY(), pos.getZ(), poisonRadius);
             }
-            // Legacy pellet_gas spawns EntityMist(CHLORINE); the shared mist entity is still a later library slice.
+            if (gasCloud > 0) {
+                level.addFreshEntity(MistEntity.create(level, pos.getX() + 0.5D, pos.getY() + 0.5D,
+                        pos.getZ() + 0.5D, HbmFluids.CHLORINE, gasCloud * 15.0F / 50.0F,
+                        gasCloud * 7.5F / 50.0F, 150));
+            }
         }
     }
 }

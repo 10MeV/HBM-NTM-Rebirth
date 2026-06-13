@@ -1,7 +1,10 @@
 package com.hbm.ntm.damage;
 
-import com.hbm.ntm.api.entity.ResistanceProvider;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.api.entity.ResistanceProvider;
+import com.hbm.ntm.armor.FsbPoweredArmor;
 import com.hbm.ntm.radiation.ModDamageSources;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.DamageTypeTags;
@@ -29,6 +32,7 @@ public final class DamageResistanceHandler {
     public static final String CATEGORY_FIRE = "FIRE";
     public static final String CATEGORY_PHYSICAL = "PHYS";
     public static final String CATEGORY_ENERGY = "EN";
+    public static final float LEGACY_FSB_ELECTRIC_DAMAGE_MULTIPLIER = 5.0F;
 
     private static final ThreadLocal<PierceState> CURRENT_PIERCING = ThreadLocal.withInitial(() -> PierceState.NONE);
 
@@ -102,8 +106,114 @@ public final class DamageResistanceHandler {
         return calculateDamage(entity, source, amount, piercing.pierceDt(), piercing.pierceDr());
     }
 
+    public static float calculateDamage(LivingEntity entity, ResourceKey<DamageType> type, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return calculateDamage(entity, type, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static float calculateDamage(LivingEntity entity, DamageClass damageClass, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return calculateDamage(entity, damageClass, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static float calculateDamage(LivingEntity entity, String legacyTypeOrId, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return calculateDamage(entity, legacyTypeOrId, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
     public static float calculateDamage(LivingEntity entity, DamageSource source, float amount, float pierceDt, float pierceDr) {
         return breakdown(entity, source, amount, pierceDt, pierceDr).finalDamage();
+    }
+
+    public static float applyLegacyPreResistanceDamageModifiers(@Nullable LivingEntity entity,
+            @Nullable DamageSource source, float amount) {
+        if (hasLegacyPoweredArmorElectricWeakness(entity, source)) {
+            return amount * LEGACY_FSB_ELECTRIC_DAMAGE_MULTIPLIER;
+        }
+        return amount;
+    }
+
+    public static float applyLegacyPreResistanceDamageModifiers(@Nullable LivingEntity entity,
+            @Nullable ResourceKey<DamageType> type, float amount) {
+        if (hasLegacyPoweredArmorElectricWeakness(entity, type)) {
+            return amount * LEGACY_FSB_ELECTRIC_DAMAGE_MULTIPLIER;
+        }
+        return amount;
+    }
+
+    public static float applyLegacyPreResistanceDamageModifiers(@Nullable LivingEntity entity,
+            @Nullable DamageClass damageClass, float amount) {
+        if (hasLegacyPoweredArmorElectricWeakness(entity, damageClass)) {
+            return amount * LEGACY_FSB_ELECTRIC_DAMAGE_MULTIPLIER;
+        }
+        return amount;
+    }
+
+    public static float applyLegacyPreResistanceDamageModifiers(@Nullable LivingEntity entity,
+            @Nullable String legacyTypeOrId, float amount) {
+        if (hasLegacyPoweredArmorElectricWeakness(entity, legacyTypeOrId)) {
+            return amount * LEGACY_FSB_ELECTRIC_DAMAGE_MULTIPLIER;
+        }
+        return amount;
+    }
+
+    public static boolean hasLegacyPoweredArmorElectricWeakness(@Nullable LivingEntity entity,
+            @Nullable DamageSource source) {
+        if (entity == null || source == null || !isLegacyDamageClassElectric(source)) {
+            return false;
+        }
+        return hasPoweredChestplate(entity);
+    }
+
+    public static boolean hasLegacyPoweredArmorElectricWeakness(@Nullable LivingEntity entity,
+            @Nullable ResourceKey<DamageType> type) {
+        return entity != null && isLegacyDamageClassElectric(type) && hasPoweredChestplate(entity);
+    }
+
+    public static boolean hasLegacyPoweredArmorElectricWeakness(@Nullable LivingEntity entity,
+            @Nullable DamageClass damageClass) {
+        return entity != null && isLegacyDamageClassElectric(damageClass) && hasPoweredChestplate(entity);
+    }
+
+    public static boolean hasLegacyPoweredArmorElectricWeakness(@Nullable LivingEntity entity,
+            @Nullable String legacyTypeOrId) {
+        return entity != null && isLegacyDamageClassElectric(legacyTypeOrId) && hasPoweredChestplate(entity);
+    }
+
+    private static boolean hasPoweredChestplate(LivingEntity entity) {
+        ItemStack chest = entity.getItemBySlot(EquipmentSlot.CHEST);
+        return !chest.isEmpty() && chest.getItem() instanceof FsbPoweredArmor;
+    }
+
+    public static boolean isLegacyDamageClassElectric(@Nullable DamageSource source) {
+        return source != null && exactTypeKey(DamageClass.ELECTRIC).equals(exactTypeKey(source));
+    }
+
+    public static boolean isLegacyDamageClassElectric(@Nullable ResourceKey<DamageType> type) {
+        return ModDamageSources.matches(type, DamageClass.ELECTRIC);
+    }
+
+    public static boolean isLegacyDamageClassElectric(@Nullable DamageClass damageClass) {
+        return damageClass == DamageClass.ELECTRIC;
+    }
+
+    public static boolean isLegacyDamageClassElectric(@Nullable String legacyTypeOrId) {
+        return ModDamageSources.matches(legacyTypeOrId, DamageClass.ELECTRIC);
+    }
+
+    public static float calculateDamage(LivingEntity entity, ResourceKey<DamageType> type, float amount,
+            float pierceDt, float pierceDr) {
+        return calculateDamage(entity, sourceFor(entity, type), amount, pierceDt, pierceDr);
+    }
+
+    public static float calculateDamage(LivingEntity entity, DamageClass damageClass, float amount,
+            float pierceDt, float pierceDr) {
+        return calculateDamage(entity, sourceFor(entity, damageClass), amount, pierceDt, pierceDr);
+    }
+
+    public static float calculateDamage(LivingEntity entity, String legacyTypeOrId, float amount,
+            float pierceDt, float pierceDr) {
+        return calculateDamage(entity, sourceFor(entity, legacyTypeOrId), amount, pierceDt, pierceDr);
     }
 
     public static float[] getDtDr(LivingEntity entity, DamageSource source, float amount) {
@@ -111,9 +221,39 @@ public final class DamageResistanceHandler {
         return getDtDr(entity, source, amount, piercing.pierceDt(), piercing.pierceDr());
     }
 
+    public static float[] getDtDr(LivingEntity entity, ResourceKey<DamageType> type, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return getDtDr(entity, type, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static float[] getDtDr(LivingEntity entity, DamageClass damageClass, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return getDtDr(entity, damageClass, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static float[] getDtDr(LivingEntity entity, String legacyTypeOrId, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return getDtDr(entity, legacyTypeOrId, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
     public static float[] getDtDr(LivingEntity entity, DamageSource source, float amount, float pierceDt, float pierceDr) {
         ResistanceContributionTotals totals = collectResistanceContributions(entity, source, amount, pierceDt, pierceDr);
         return new float[] { totals.threshold(), totals.resistance() };
+    }
+
+    public static float[] getDtDr(LivingEntity entity, ResourceKey<DamageType> type, float amount,
+            float pierceDt, float pierceDr) {
+        return getDtDr(entity, sourceFor(entity, type), amount, pierceDt, pierceDr);
+    }
+
+    public static float[] getDtDr(LivingEntity entity, DamageClass damageClass, float amount,
+            float pierceDt, float pierceDr) {
+        return getDtDr(entity, sourceFor(entity, damageClass), amount, pierceDt, pierceDr);
+    }
+
+    public static float[] getDtDr(LivingEntity entity, String legacyTypeOrId, float amount,
+            float pierceDt, float pierceDr) {
+        return getDtDr(entity, sourceFor(entity, legacyTypeOrId), amount, pierceDt, pierceDr);
     }
 
     public static List<ResistanceContribution> resistanceContributions(LivingEntity entity, DamageSource source, float amount) {
@@ -121,21 +261,167 @@ public final class DamageResistanceHandler {
         return resistanceContributions(entity, source, amount, piercing.pierceDt(), piercing.pierceDr());
     }
 
+    public static List<ResistanceContribution> resistanceContributions(LivingEntity entity,
+            ResourceKey<DamageType> type, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return resistanceContributions(entity, type, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static List<ResistanceContribution> resistanceContributions(LivingEntity entity,
+            DamageClass damageClass, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return resistanceContributions(entity, damageClass, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static List<ResistanceContribution> resistanceContributions(LivingEntity entity,
+            String legacyTypeOrId, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return resistanceContributions(entity, legacyTypeOrId, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
     public static List<ResistanceContribution> resistanceContributions(LivingEntity entity, DamageSource source, float amount,
             float pierceDt, float pierceDr) {
         return collectResistanceContributions(entity, source, amount, pierceDt, pierceDr).contributions();
+    }
+
+    public static List<ResistanceContribution> resistanceContributions(LivingEntity entity,
+            ResourceKey<DamageType> type, float amount, float pierceDt, float pierceDr) {
+        return resistanceContributions(entity, sourceFor(entity, type), amount, pierceDt, pierceDr);
+    }
+
+    public static List<ResistanceContribution> resistanceContributions(LivingEntity entity,
+            DamageClass damageClass, float amount, float pierceDt, float pierceDr) {
+        return resistanceContributions(entity, sourceFor(entity, damageClass), amount, pierceDt, pierceDr);
+    }
+
+    public static List<ResistanceContribution> resistanceContributions(LivingEntity entity,
+            String legacyTypeOrId, float amount, float pierceDt, float pierceDr) {
+        return resistanceContributions(entity, sourceFor(entity, legacyTypeOrId), amount, pierceDt, pierceDr);
+    }
+
+    public static boolean isResistanceProvider(@Nullable Entity entity) {
+        return entity instanceof ResistanceProvider;
+    }
+
+    public static DamageResistance providerResistance(@Nullable LivingEntity entity, DamageSource source, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return providerResistance(entity, source, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static DamageResistance providerResistance(@Nullable LivingEntity entity, ResourceKey<DamageType> type,
+            float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return providerResistance(entity, type, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static DamageResistance providerResistance(@Nullable LivingEntity entity, DamageClass damageClass,
+            float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return providerResistance(entity, damageClass, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static DamageResistance providerResistance(@Nullable LivingEntity entity, String legacyTypeOrId,
+            float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return providerResistance(entity, legacyTypeOrId, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static DamageResistance providerResistance(@Nullable LivingEntity entity, DamageSource source,
+            float amount, float pierceDt, float pierceDr) {
+        if (!(entity instanceof ResistanceProvider provider)) {
+            return null;
+        }
+        float[] provided = provider.getCurrentDtDr(source, amount, pierceDt, pierceDr);
+        return resistanceFromProvider(provided);
+    }
+
+    public static DamageResistance providerResistance(@Nullable LivingEntity entity, ResourceKey<DamageType> type,
+            float amount, float pierceDt, float pierceDr) {
+        if (!(entity instanceof ResistanceProvider)) {
+            return null;
+        }
+        return providerResistance(entity, sourceFor(entity, type), amount, pierceDt, pierceDr);
+    }
+
+    public static DamageResistance providerResistance(@Nullable LivingEntity entity, DamageClass damageClass,
+            float amount, float pierceDt, float pierceDr) {
+        if (!(entity instanceof ResistanceProvider)) {
+            return null;
+        }
+        return providerResistance(entity, sourceFor(entity, damageClass), amount, pierceDt, pierceDr);
+    }
+
+    public static DamageResistance providerResistance(@Nullable LivingEntity entity, String legacyTypeOrId,
+            float amount, float pierceDt, float pierceDr) {
+        if (!(entity instanceof ResistanceProvider)) {
+            return null;
+        }
+        return providerResistance(entity, sourceFor(entity, legacyTypeOrId), amount, pierceDt, pierceDr);
+    }
+
+    public static float[] getProviderDtDr(@Nullable LivingEntity entity, DamageSource source, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return getProviderDtDr(entity, source, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static float[] getProviderDtDr(@Nullable LivingEntity entity, ResourceKey<DamageType> type, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return getProviderDtDr(entity, type, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static float[] getProviderDtDr(@Nullable LivingEntity entity, DamageClass damageClass, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return getProviderDtDr(entity, damageClass, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static float[] getProviderDtDr(@Nullable LivingEntity entity, String legacyTypeOrId, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return getProviderDtDr(entity, legacyTypeOrId, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static float[] getProviderDtDr(@Nullable LivingEntity entity, DamageSource source, float amount,
+            float pierceDt, float pierceDr) {
+        DamageResistance resistance = providerResistance(entity, source, amount, pierceDt, pierceDr);
+        return resistance == null ? new float[] { 0.0F, 0.0F }
+                : new float[] { resistance.threshold(), resistance.resistance() };
+    }
+
+    public static float[] getProviderDtDr(@Nullable LivingEntity entity, ResourceKey<DamageType> type, float amount,
+            float pierceDt, float pierceDr) {
+        DamageResistance resistance = providerResistance(entity, type, amount, pierceDt, pierceDr);
+        return resistance == null ? new float[] { 0.0F, 0.0F }
+                : new float[] { resistance.threshold(), resistance.resistance() };
+    }
+
+    public static float[] getProviderDtDr(@Nullable LivingEntity entity, DamageClass damageClass, float amount,
+            float pierceDt, float pierceDr) {
+        DamageResistance resistance = providerResistance(entity, damageClass, amount, pierceDt, pierceDr);
+        return resistance == null ? new float[] { 0.0F, 0.0F }
+                : new float[] { resistance.threshold(), resistance.resistance() };
+    }
+
+    public static float[] getProviderDtDr(@Nullable LivingEntity entity, String legacyTypeOrId, float amount,
+            float pierceDt, float pierceDr) {
+        DamageResistance resistance = providerResistance(entity, legacyTypeOrId, amount, pierceDt, pierceDr);
+        return resistance == null ? new float[] { 0.0F, 0.0F }
+                : new float[] { resistance.threshold(), resistance.resistance() };
+    }
+
+    public static boolean notifyDamageDealt(@Nullable LivingEntity entity, DamageSource source, float amount) {
+        if (!(entity instanceof ResistanceProvider provider)) {
+            return false;
+        }
+        provider.onDamageDealt(source, amount);
+        return true;
     }
 
     private static ResistanceContributionTotals collectResistanceContributions(LivingEntity entity, DamageSource source,
             float amount, float pierceDt, float pierceDr) {
         List<ResistanceContribution> contributions = new ArrayList<>();
 
-        if (entity instanceof ResistanceProvider provider) {
-            float[] provided = provider.getCurrentDtDr(source, amount, pierceDt, pierceDr);
-            if (provided != null && provided.length >= 2) {
-                addContribution(contributions, "provider", entity.getClass().getName(), "provided", "provider",
-                        new DamageResistance(provided[0], provided[1]));
-            }
+        DamageResistance provided = providerResistance(entity, source, amount, pierceDt, pierceDr);
+        if (provided != null) {
+            addContribution(contributions, "provider", entity.getClass().getName(), "provided", "provider", provided);
         }
 
         DamageResistanceStats setResistance = SET_STATS.get(ArmorSet.of(entity));
@@ -180,6 +466,14 @@ public final class DamageResistanceHandler {
         return new ResistanceContributionTotals(List.copyOf(contributions));
     }
 
+    @Nullable
+    private static DamageResistance resistanceFromProvider(@Nullable float[] provided) {
+        if (provided == null || provided.length < 2) {
+            return null;
+        }
+        return new DamageResistance(provided[0], provided[1]);
+    }
+
     private static void addContribution(List<ResistanceContribution> contributions, String source, String id,
             String matchKind, String matchKey, DamageResistance resistance) {
         if (resistance.threshold() == 0.0F && resistance.resistance() == 0.0F) {
@@ -191,6 +485,21 @@ public final class DamageResistanceHandler {
     public static ResistanceBreakdown breakdown(LivingEntity entity, DamageSource source, float amount) {
         PierceState piercing = CURRENT_PIERCING.get();
         return breakdown(entity, source, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static ResistanceBreakdown breakdown(LivingEntity entity, ResourceKey<DamageType> type, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return breakdown(entity, type, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static ResistanceBreakdown breakdown(LivingEntity entity, DamageClass damageClass, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return breakdown(entity, damageClass, amount, piercing.pierceDt(), piercing.pierceDr());
+    }
+
+    public static ResistanceBreakdown breakdown(LivingEntity entity, String legacyTypeOrId, float amount) {
+        PierceState piercing = CURRENT_PIERCING.get();
+        return breakdown(entity, legacyTypeOrId, amount, piercing.pierceDt(), piercing.pierceDr());
     }
 
     public static ResistanceBreakdown breakdown(LivingEntity entity, DamageSource source, float amount, float pierceDt, float pierceDr) {
@@ -208,6 +517,21 @@ public final class DamageResistanceHandler {
                 formula.effectiveDt(), formula.effectiveDr(), formula.finalDamage());
     }
 
+    public static ResistanceBreakdown breakdown(LivingEntity entity, ResourceKey<DamageType> type, float amount,
+            float pierceDt, float pierceDr) {
+        return breakdown(entity, sourceFor(entity, type), amount, pierceDt, pierceDr);
+    }
+
+    public static ResistanceBreakdown breakdown(LivingEntity entity, DamageClass damageClass, float amount,
+            float pierceDt, float pierceDr) {
+        return breakdown(entity, sourceFor(entity, damageClass), amount, pierceDt, pierceDr);
+    }
+
+    public static ResistanceBreakdown breakdown(LivingEntity entity, String legacyTypeOrId, float amount,
+            float pierceDt, float pierceDr) {
+        return breakdown(entity, sourceFor(entity, legacyTypeOrId), amount, pierceDt, pierceDr);
+    }
+
     public static DamageFormula reduceDamage(float amount, float rawDt, float rawDr, float pierceDt, float pierceDr) {
         float effectiveDt = Math.max(0.0F, rawDt - pierceDt);
         float effectiveDr = Mth.clamp(rawDr * Mth.clamp(1.0F - pierceDr, 0.0F, 2.0F), 0.0F, 1.0F);
@@ -223,6 +547,40 @@ public final class DamageResistanceHandler {
         expect(problems, "combine exact alias", "cmb".equals(exactTypeKey("combine_ball")));
         expect(problems, "subatomic exact alias", "subatomic".equals(exactTypeKey("subAtomic3")));
         expect(problems, "registry exact alias", "cmb".equals(exactTypeKey(ModDamageSources.COMBINE_BALL)));
+        expect(problems, "registry projectile category", CATEGORY_PHYSICAL.equals(typeToCategory(ModDamageSources.SHRAPNEL)));
+        expect(problems, "registry explosion category", CATEGORY_EXPLOSION.equals(typeToCategory(ModDamageSources.NUCLEAR_BLAST)));
+        expect(problems, "legacy string energy category", CATEGORY_ENERGY.equals(typeToCategory(com.hbm.lib.ModDamageSource.s_emp)));
+        expect(problems, "vanilla entity attack string physical category",
+                CATEGORY_PHYSICAL.equals(typeToCategory("minecraft:player_attack"))
+                        && CATEGORY_PHYSICAL.equals(typeToCategory("minecraft:mob_attack"))
+                        && CATEGORY_PHYSICAL.equals(typeToCategory("minecraft:arrow")));
+        expect(problems, "null damage helper paths empty",
+                exactType((DamageSource) null).isEmpty()
+                        && exactTypeKey((DamageSource) null).isEmpty()
+                        && exactTypeKey((ResourceKey<DamageType>) null).isEmpty()
+                        && exactTypeKey((String) null).isEmpty()
+                        && typeToCategory((DamageSource) null).isEmpty()
+                        && typeToCategory((ResourceKey<DamageType>) null).isEmpty()
+                        && typeToCategory((String) null).isEmpty()
+                        && registryTypeKey(null) == null
+                        && !isAbsolute((DamageSource) null)
+                        && !isUnblockableForLegacyResistance((DamageSource) null));
+        expect(problems, "damage class category physical/fire/explosive",
+                CATEGORY_PHYSICAL.equals(typeToCategory(DamageClass.PHYSICAL))
+                        && CATEGORY_FIRE.equals(typeToCategory(DamageClass.FIRE))
+                        && CATEGORY_EXPLOSION.equals(typeToCategory(DamageClass.EXPLOSIVE)));
+        expect(problems, "damage class energy category",
+                CATEGORY_ENERGY.equals(typeToCategory(DamageClass.LASER))
+                        && CATEGORY_ENERGY.equals(typeToCategory(DamageClass.PLASMA))
+                        && CATEGORY_ENERGY.equals(typeToCategory(DamageClass.SUBATOMIC)));
+        expect(problems, "damage class exact key",
+                "revolverbullet".equals(exactTypeKey(DamageClass.PHYSICAL))
+                        && "subatomic".equals(exactTypeKey(DamageClass.SUBATOMIC)));
+        expect(problems, "registry absolute metadata", isAbsolute(ModDamageSources.DIGAMMA));
+        expect(problems, "legacy string unblockable metadata", isUnblockableForLegacyResistance("subAtomic4"));
+        expect(problems, "damage class unblockable metadata",
+                isUnblockableForLegacyResistance(DamageClass.SUBATOMIC)
+                        && !isUnblockableForLegacyResistance(DamageClass.LASER));
         DamageResistanceStats stats = new DamageResistanceStats()
                 .addExact("subAtomic4", 1.0F, 0.2F)
                 .addExact("on_fire", 2.0F, 0.3F)
@@ -233,6 +591,22 @@ public final class DamageResistanceHandler {
         expectResistance(problems, "stats exact normalizes on_fire", stats.exactResistances().get("onfire"), 2.0F, 0.3F);
         expectResistance(problems, "stats category normalizes energy", stats.categoryResistances().get(CATEGORY_ENERGY), 4.0F, 0.5F);
         expectResistance(problems, "stats other preserved", stats.otherResistance(), 5.0F, 0.6F);
+        DamageResistanceStats roundTrip = DamageResistanceStats.fromJson(stats.toJson());
+        expectResistance(problems, "stats json exact roundtrip", roundTrip.exactResistances().get("subatomic"), 1.0F, 0.2F);
+        expectResistance(problems, "stats json category roundtrip", roundTrip.categoryResistances().get(CATEGORY_ENERGY), 4.0F, 0.5F);
+        expectResistance(problems, "stats json other roundtrip", roundTrip.otherResistance(), 5.0F, 0.6F);
+        JsonObject invalidStatsJson = new JsonObject();
+        JsonArray invalidExact = new JsonArray();
+        JsonArray invalidExactEntry = new JsonArray();
+        invalidExactEntry.add("laser");
+        invalidExactEntry.add("not a number");
+        invalidExactEntry.add(0.5F);
+        invalidExact.add(invalidExactEntry);
+        invalidStatsJson.add("exact", invalidExact);
+        DamageResistanceStats.JsonParseResult invalidStats = DamageResistanceStats.parseJson(invalidStatsJson, "coreAudit");
+        expect(problems, "stats json invalid warning",
+                invalidStats.stats() != null
+                        && invalidStats.warnings().stream().anyMatch(warning -> warning.contains("invalid exact resistance values")));
         DamageResistanceStats precedence = new DamageResistanceStats()
                 .addExact("laser", 7.0F, 0.7F)
                 .addCategory(CATEGORY_ENERGY, 8.0F, 0.8F)
@@ -247,6 +621,32 @@ public final class DamageResistanceHandler {
                 precedence.matchKeys("missing", null, "unknown", false), "other", "other", 9.0F, 0.9F);
         expect(problems, "stats bypass armor skips other",
                 precedence.matchKeys("missing", null, "unknown", true) == null);
+        DamageResistanceStats keyMatching = new DamageResistanceStats()
+                .addExact("cmb", 1.0F, 0.1F)
+                .addCategory(CATEGORY_ENERGY, 2.0F, 0.2F)
+                .setOther(3.0F, 0.3F);
+        expectMatch(problems, "stats match registry key exact",
+                keyMatching.match(ModDamageSources.COMBINE_BALL), "exact", "cmb", 1.0F, 0.1F);
+        expectMatch(problems, "stats match namespaced string exact",
+                keyMatching.match("hbm_ntm_rebirth:combine_ball"), "exact", "cmb", 1.0F, 0.1F);
+        expectMatch(problems, "stats match legacy string category",
+                keyMatching.match(com.hbm.lib.ModDamageSource.s_emp), "category", CATEGORY_ENERGY, 2.0F, 0.2F);
+        expectMatch(problems, "stats match damage class exact",
+                new DamageResistanceStats().addExact(DamageClass.LASER, 4.0F, 0.4F)
+                        .match(DamageClass.LASER), "exact", "laser", 4.0F, 0.4F);
+        expectMatch(problems, "stats match damage class category",
+                new DamageResistanceStats().addCategory(DamageClass.ELECTRIC, 5.0F, 0.5F)
+                        .match(DamageClass.ELECTRIC), "category", CATEGORY_ENERGY, 5.0F, 0.5F);
+        expectMatch(problems, "stats add exact registry key",
+                new DamageResistanceStats().addExact(ModDamageSources.COMBINE_BALL, 6.0F, 0.6F)
+                        .match("cmb"), "exact", "cmb", 6.0F, 0.6F);
+        expectMatch(problems, "stats add category registry key",
+                new DamageResistanceStats().addCategory(ModDamageSources.SHRAPNEL, 6.0F, 0.6F)
+                        .match(ModDamageSources.REVOLVER_BULLET), "category", CATEGORY_PHYSICAL, 6.0F, 0.6F);
+        expect(problems, "stats match string bypass skips other",
+                new DamageResistanceStats().setOther(3.0F, 0.3F).match("subAtomic4") == null);
+        expect(problems, "stats null source match missing",
+                new DamageResistanceStats().setOther(3.0F, 0.3F).match((DamageSource) null) == null);
         PierceState previous = capturePiercing();
         try {
             setup(7.0F, 0.3F);
@@ -275,21 +675,96 @@ public final class DamageResistanceHandler {
         float[] legacyProvided = legacyProvider.getCurrentDtDr(null, 2.0F, 3.0F, 0.4F);
         expect(problems, "legacy api resistance provider delegates",
                 legacyProvided.length >= 2 && nearly(legacyProvided[0], 5.0F) && nearly(legacyProvided[1], 0.4F));
+        expect(problems, "null entity is not resistance provider", !isResistanceProvider(null));
+        expect(problems, "null provider resistance missing",
+                providerResistance(null, (DamageSource) null, 1.0F) == null);
+        float[] noProvider = getProviderDtDr(null, (DamageSource) null, 1.0F);
+        expect(problems, "null provider DTDR zero",
+                noProvider.length >= 2 && nearly(noProvider[0], 0.0F) && nearly(noProvider[1], 0.0F));
+        float[] noProviderDamageClass = getProviderDtDr(null, DamageClass.LASER, 1.0F);
+        expect(problems, "null provider damage class DTDR zero",
+                noProviderDamageClass.length >= 2 && nearly(noProviderDamageClass[0], 0.0F)
+                        && nearly(noProviderDamageClass[1], 0.0F));
+        expect(problems, "null provider damage dealt skip",
+                !notifyDamageDealt(null, null, 1.0F));
+        expect(problems, "legacy FSB electric modifier null path",
+                nearly(applyLegacyPreResistanceDamageModifiers(null, (DamageSource) null, 2.0F), 2.0F)
+                        && !hasLegacyPoweredArmorElectricWeakness(null, (DamageSource) null)
+                        && !isLegacyDamageClassElectric((DamageSource) null));
+        expect(problems, "legacy FSB electric key discrimination",
+                isLegacyDamageClassElectric(ModDamageSources.ELECTRIC)
+                        && isLegacyDamageClassElectric(DamageClass.ELECTRIC)
+                        && isLegacyDamageClassElectric("ELECTRIC")
+                        && isLegacyDamageClassElectric("hbm_ntm_rebirth:electric")
+                        && !isLegacyDamageClassElectric(ModDamageSources.ELECTRICITY)
+                        && !isLegacyDamageClassElectric("electricity")
+                        && !isLegacyDamageClassElectric(DamageClass.LASER));
+        expect(problems, "legacy FSB electric key null modifier path",
+                nearly(applyLegacyPreResistanceDamageModifiers(null, ModDamageSources.ELECTRIC, 3.0F), 3.0F)
+                        && nearly(applyLegacyPreResistanceDamageModifiers(null, DamageClass.ELECTRIC, 3.0F), 3.0F)
+                        && nearly(applyLegacyPreResistanceDamageModifiers(null, "ELECTRIC", 3.0F), 3.0F));
         expect(problems, "legacy util handler category bridge",
                 com.hbm.util.DamageResistanceHandler.CATEGORY_ENERGY.equals(CATEGORY_ENERGY)
                         && com.hbm.util.DamageResistanceHandler.categoryKey(
                                 com.hbm.util.DamageResistanceHandler.DamageClass.LASER).equals(CATEGORY_ENERGY));
+        expect(problems, "legacy util handler null provider bridge",
+                com.hbm.util.DamageResistanceHandler.getProviderResistance(null, (DamageSource) null, 1.0F) == null);
+        expect(problems, "legacy util handler null damage class provider bridge",
+                com.hbm.util.DamageResistanceHandler.getProviderResistance(null,
+                        com.hbm.util.DamageResistanceHandler.DamageClass.LASER, 1.0F) == null);
+        float[] legacyNoProvider = com.hbm.util.DamageResistanceHandler.getProviderDTDR(null, (DamageSource) null, 1.0F);
+        expect(problems, "legacy util handler provider DTDR zero",
+                legacyNoProvider.length >= 2 && nearly(legacyNoProvider[0], 0.0F)
+                        && nearly(legacyNoProvider[1], 0.0F));
         com.hbm.util.DamageResistanceHandler.ResistanceStats legacyStats =
                 new com.hbm.util.DamageResistanceHandler.ResistanceStats()
                         .addExact("subAtomic2", 1.0F, 0.2F)
+                        .addExact("combine_ball", 1.5F, 0.25F)
                         .addCategory(com.hbm.util.DamageResistanceHandler.DamageClass.ELECTRIC, 2.0F, 0.3F)
                         .setOther(3.0F, 0.4F);
-        expectResistance(problems, "legacy util handler exact normalization",
-                legacyStats.modern().exactResistances().get("subatomic"), 1.0F, 0.2F);
-        expectResistance(problems, "legacy util handler category normalization",
-                legacyStats.modern().categoryResistances().get(CATEGORY_ENERGY), 2.0F, 0.3F);
+        expectLegacyResistance(problems, "legacy util handler public exact normalization",
+                legacyStats.exactResistances.get("subatomic"), 1.0F, 0.2F);
+        expectLegacyResistance(problems, "legacy util handler public exact alias normalization",
+                legacyStats.exactResistances.get("cmb"), 1.5F, 0.25F);
+        expectLegacyResistance(problems, "legacy util handler public category normalization",
+                legacyStats.categoryResistances.get(CATEGORY_ENERGY), 2.0F, 0.3F);
         expectResistance(problems, "legacy util handler other conversion",
                 legacyStats.modern().otherResistance(), 3.0F, 0.4F);
+        expectLegacyResistance(problems, "legacy util handler key match",
+                legacyStats.getResistance(ModDamageSources.SUBATOMIC), 1.0F, 0.2F);
+        expectLegacyResistance(problems, "legacy util handler string match",
+                legacyStats.getResistance("hbm_ntm_rebirth:subatomic"), 1.0F, 0.2F);
+        expectLegacyResistance(problems, "legacy util handler damage class match",
+                new com.hbm.util.DamageResistanceHandler.ResistanceStats()
+                        .addExact(com.hbm.util.DamageResistanceHandler.DamageClass.LASER, 3.0F, 0.3F)
+                        .getResistance(com.hbm.util.DamageResistanceHandler.DamageClass.LASER), 3.0F, 0.3F);
+        JsonObject legacyConfigStatsJson = new JsonObject();
+        JsonArray legacyConfigExact = new JsonArray();
+        JsonArray legacyConfigExactEntry = new JsonArray();
+        legacyConfigExactEntry.add("subAtomic5");
+        legacyConfigExactEntry.add(4.0F);
+        legacyConfigExactEntry.add(0.45F);
+        legacyConfigExact.add(legacyConfigExactEntry);
+        legacyConfigStatsJson.add("exact", legacyConfigExact);
+        JsonArray legacyConfigCategory = new JsonArray();
+        JsonArray legacyConfigCategoryEntry = new JsonArray();
+        legacyConfigCategoryEntry.add("laser");
+        legacyConfigCategoryEntry.add(5.0F);
+        legacyConfigCategoryEntry.add(0.55F);
+        legacyConfigCategory.add(legacyConfigCategoryEntry);
+        legacyConfigStatsJson.add("category", legacyConfigCategory);
+        JsonArray legacyConfigOther = new JsonArray();
+        legacyConfigOther.add(6.0F);
+        legacyConfigOther.add(0.65F);
+        legacyConfigStatsJson.add("other", legacyConfigOther);
+        com.hbm.util.DamageResistanceHandler.ResistanceStats legacyConfigStats =
+                com.hbm.util.DamageResistanceHandler.ResistanceStats.deserialize(legacyConfigStatsJson);
+        expectLegacyResistance(problems, "legacy util handler deserialize exact normalization",
+                legacyConfigStats.exactResistances.get("subatomic"), 4.0F, 0.45F);
+        expectLegacyResistance(problems, "legacy util handler deserialize category normalization",
+                legacyConfigStats.categoryResistances.get(CATEGORY_ENERGY), 5.0F, 0.55F);
+        expectLegacyResistance(problems, "legacy util handler deserialize other",
+                legacyConfigStats.otherResistance, 6.0F, 0.65F);
         DamageResistanceStats firstSet = new DamageResistanceStats().setOther(1.0F, 0.1F);
         DamageResistanceStats secondSet = new DamageResistanceStats().setOther(2.0F, 0.2F);
         Item shared = net.minecraft.world.item.Items.IRON_HELMET;
@@ -318,6 +793,9 @@ public final class DamageResistanceHandler {
     }
 
     public static String typeToCategory(DamageSource source) {
+        if (source == null) {
+            return "";
+        }
         if (source.is(DamageTypeTags.IS_EXPLOSION)) {
             return CATEGORY_EXPLOSION;
         }
@@ -339,7 +817,45 @@ public final class DamageResistanceHandler {
         return exactTypeKey(source);
     }
 
+    public static String typeToCategory(ResourceKey<DamageType> type) {
+        if (type == null) {
+            return "";
+        }
+        if (isExplosion(type)) {
+            return CATEGORY_EXPLOSION;
+        }
+        if (isFireDamage(type)) {
+            return CATEGORY_FIRE;
+        }
+        if (isProjectile(type)) {
+            return CATEGORY_PHYSICAL;
+        }
+        if (isEnergy(type)) {
+            return CATEGORY_ENERGY;
+        }
+        if (type.equals(DamageTypes.CACTUS) || type.equals(ModDamageSources.SPIKES)) {
+            return CATEGORY_PHYSICAL;
+        }
+        if (isPhysicalEntityDamageType(type)) {
+            return CATEGORY_PHYSICAL;
+        }
+        return exactTypeKey(type);
+    }
+
+    public static String typeToCategory(String legacyTypeOrId) {
+        return ModDamageSources.legacyKey(legacyTypeOrId)
+                .map(DamageResistanceHandler::typeToCategory)
+                .orElseGet(() -> categoryKey(legacyTypeOrId));
+    }
+
+    public static String typeToCategory(DamageClass damageClass) {
+        return typeToCategory(ModDamageSources.damageClassKey(damageClass));
+    }
+
     public static String categoryKey(String category) {
+        if (category == null || category.isBlank()) {
+            return "";
+        }
         String normalized = exactTypeKey(category);
         if (normalized.equals("phys") || normalized.equals("physical")) {
             return CATEGORY_PHYSICAL;
@@ -429,38 +945,83 @@ public final class DamageResistanceHandler {
     }
 
     public static String exactType(DamageSource source) {
-        return source.getMsgId().toLowerCase(Locale.US);
+        return source == null ? "" : source.getMsgId().toLowerCase(Locale.US);
     }
 
     public static String exactTypeKey(DamageSource source) {
-        return exactTypeKey(source.getMsgId());
+        return source == null ? "" : exactTypeKey(source.getMsgId());
     }
 
     public static String exactTypeKey(ResourceKey<DamageType> type) {
-        return exactTypeKey(type.location().getPath());
+        return type == null ? "" : exactTypeKey(type.location().getPath());
+    }
+
+    public static String exactTypeKey(DamageClass damageClass) {
+        return exactTypeKey(ModDamageSources.damageType(damageClass));
     }
 
     @Nullable
     public static String registryTypeKey(DamageSource source) {
+        if (source == null) {
+            return null;
+        }
         return source.typeHolder().unwrapKey()
                 .map(DamageResistanceHandler::exactTypeKey)
                 .orElse(null);
     }
 
     public static String exactTypeKey(String type) {
+        if (type == null || type.isBlank()) {
+            return "";
+        }
         String normalized = normalizeExactType(type);
         return EXACT_ALIASES.getOrDefault(normalized, normalized);
     }
 
     public static boolean isAbsolute(DamageSource source) {
-        return source.is(DamageTypeTags.BYPASSES_RESISTANCE);
+        return source != null && source.is(DamageTypeTags.BYPASSES_RESISTANCE);
+    }
+
+    public static boolean isAbsolute(ResourceKey<DamageType> type) {
+        return ModDamageSources.legacyDamageType(type)
+                .map(ModDamageSources.LegacyDamageType::absolute)
+                .orElse(false);
+    }
+
+    public static boolean isAbsolute(String legacyTypeOrId) {
+        return ModDamageSources.legacyKey(legacyTypeOrId)
+                .map(DamageResistanceHandler::isAbsolute)
+                .orElse(false);
+    }
+
+    public static boolean isAbsolute(DamageClass damageClass) {
+        return isAbsolute(ModDamageSources.damageClassKey(damageClass));
     }
 
     public static boolean isUnblockableForLegacyResistance(DamageSource source) {
-        return source.is(DamageTypeTags.BYPASSES_ARMOR);
+        return source != null && source.is(DamageTypeTags.BYPASSES_ARMOR);
+    }
+
+    public static boolean isUnblockableForLegacyResistance(ResourceKey<DamageType> type) {
+        return ModDamageSources.legacyDamageType(type)
+                .map(ModDamageSources.LegacyDamageType::bypassesArmor)
+                .orElse(false);
+    }
+
+    public static boolean isUnblockableForLegacyResistance(String legacyTypeOrId) {
+        return ModDamageSources.legacyKey(legacyTypeOrId)
+                .map(DamageResistanceHandler::isUnblockableForLegacyResistance)
+                .orElse(false);
+    }
+
+    public static boolean isUnblockableForLegacyResistance(DamageClass damageClass) {
+        return isUnblockableForLegacyResistance(ModDamageSources.damageClassKey(damageClass));
     }
 
     private static boolean isEnergy(DamageSource source) {
+        if (source == null) {
+            return false;
+        }
         String type = exactTypeKey(source);
         return type.equals(DamageClass.LASER.name().toLowerCase(Locale.US))
                 || type.equals(DamageClass.PLASMA.name().toLowerCase(Locale.US))
@@ -473,6 +1034,71 @@ public final class DamageResistanceHandler {
                 || source.is(ModDamageSources.LASER)
                 || source.is(ModDamageSources.PLASMA)
                 || source.is(ModDamageSources.SUBATOMIC);
+    }
+
+    private static boolean isEnergy(ResourceKey<DamageType> type) {
+        String exact = exactTypeKey(type);
+        return exact.equals(DamageClass.LASER.name().toLowerCase(Locale.US))
+                || exact.equals(DamageClass.PLASMA.name().toLowerCase(Locale.US))
+                || exact.equals(DamageClass.MICROWAVE.name().toLowerCase(Locale.US))
+                || exact.equals(DamageClass.SUBATOMIC.name().toLowerCase(Locale.US))
+                || exact.equals(DamageClass.ELECTRIC.name().toLowerCase(Locale.US))
+                || type.equals(ModDamageSources.ELECTRIC)
+                || type.equals(ModDamageSources.ELECTRICITY)
+                || type.equals(ModDamageSources.MICROWAVE)
+                || type.equals(ModDamageSources.LASER)
+                || type.equals(ModDamageSources.PLASMA)
+                || type.equals(ModDamageSources.SUBATOMIC);
+    }
+
+    private static boolean isProjectile(ResourceKey<DamageType> type) {
+        return ModDamageSources.legacyDamageType(type)
+                .map(ModDamageSources.LegacyDamageType::projectile)
+                .orElse(false);
+    }
+
+    private static boolean isExplosion(ResourceKey<DamageType> type) {
+        return ModDamageSources.legacyDamageType(type)
+                .map(ModDamageSources.LegacyDamageType::explosion)
+                .orElse(false);
+    }
+
+    private static boolean isFireDamage(ResourceKey<DamageType> type) {
+        return ModDamageSources.legacyDamageType(type)
+                .map(ModDamageSources.LegacyDamageType::fire)
+                .orElse(false);
+    }
+
+    private static boolean isPhysicalEntityDamageType(ResourceKey<DamageType> type) {
+        if (type == null || !"minecraft".equals(type.location().getNamespace())) {
+            return false;
+        }
+        return switch (type.location().getPath()) {
+            case "player_attack", "mob_attack", "mob_attack_no_aggro", "arrow", "trident", "thrown",
+                    "mob_projectile", "sting" -> true;
+            default -> false;
+        };
+    }
+
+    private static DamageSource sourceFor(LivingEntity entity, ResourceKey<DamageType> type) {
+        if (entity == null) {
+            throw new IllegalArgumentException("A living entity is required to create damage source " + type.location());
+        }
+        return ModDamageSources.source(entity.level(), type);
+    }
+
+    private static DamageSource sourceFor(LivingEntity entity, DamageClass damageClass) {
+        if (entity == null) {
+            throw new IllegalArgumentException("A living entity is required to create damage source " + damageClass);
+        }
+        return ModDamageSources.source(entity.level(), damageClass);
+    }
+
+    private static DamageSource sourceFor(LivingEntity entity, String legacyTypeOrId) {
+        if (entity == null) {
+            throw new IllegalArgumentException("A living entity is required to create damage source " + legacyTypeOrId);
+        }
+        return ModDamageSources.source(entity.level(), legacyTypeOrId);
     }
 
     private static String normalizeExactType(String type) {
@@ -541,6 +1167,13 @@ public final class DamageResistanceHandler {
         expect(problems, label, actual != null
                 && nearly(actual.threshold(), threshold)
                 && nearly(actual.resistance(), resistance));
+    }
+
+    private static void expectLegacyResistance(List<String> problems, String label,
+            @Nullable com.hbm.util.DamageResistanceHandler.Resistance actual, float threshold, float resistance) {
+        expect(problems, label, actual != null
+                && nearly(actual.threshold, threshold)
+                && nearly(actual.resistance, resistance));
     }
 
     private static void expectMatch(List<String> problems, String label, @Nullable DamageResistanceStats.ResistanceMatch actual,

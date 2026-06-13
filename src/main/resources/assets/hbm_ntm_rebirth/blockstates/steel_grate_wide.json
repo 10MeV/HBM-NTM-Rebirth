@@ -1,0 +1,14 @@
+{
+  "variants": {
+    "height=0": { "model": "hbm_ntm_rebirth:block/steel_grate_wide" },
+    "height=1": { "model": "hbm_ntm_rebirth:block/steel_grate_wide" },
+    "height=2": { "model": "hbm_ntm_rebirth:block/steel_grate_wide" },
+    "height=3": { "model": "hbm_ntm_rebirth:block/steel_grate_wide" },
+    "height=4": { "model": "hbm_ntm_rebirth:block/steel_grate_wide" },
+    "height=5": { "model": "hbm_ntm_rebirth:block/steel_grate_wide" },
+    "height=6": { "model": "hbm_ntm_rebirth:block/steel_grate_wide" },
+    "height=7": { "model": "hbm_ntm_rebirth:block/steel_grate_wide" },
+    "height=8": { "model": "hbm_ntm_rebirth:block/steel_grate_wide" },
+    "height=9": { "model": "hbm_ntm_rebirth:block/steel_grate_wide" }
+  }
+}

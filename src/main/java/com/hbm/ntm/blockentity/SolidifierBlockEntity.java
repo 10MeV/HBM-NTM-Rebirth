@@ -119,6 +119,7 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (changed) {
             solidifier.setChanged();
         }
+        solidifier.networkPackNT(50);
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }

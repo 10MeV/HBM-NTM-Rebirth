@@ -31,6 +31,17 @@ public interface IEnergyProviderMK2 extends IEnergyHandlerMK2, HbmEnergyProvider
         return HbmEnergyUtil.tryProvideToPort(level, conductorPort, this);
     }
 
+    default int tryProvide(Level level, Iterable<DirPos> conductorPorts) {
+        return HbmEnergyUtil.tryProvideToDirPosPorts(level, conductorPorts, this);
+    }
+
+    default boolean tryProvide(Level level, com.hbm.ntm.util.fauxpointtwelve.DirPos conductorPort) {
+        if (conductorPort == null) {
+            return false;
+        }
+        return tryProvide(level, new DirPos(conductorPort.immutable(), conductorPort.getDir()));
+    }
+
     default boolean tryProvide(Level level, int x, int y, int z, Direction directionFromProvider) {
         return tryProvide(level, new DirPos(x, y, z, directionFromProvider));
     }

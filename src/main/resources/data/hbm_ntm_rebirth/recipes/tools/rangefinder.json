@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "key": {
+    "G": { "tag": "forge:glass_panes" },
+    "R": { "item": "minecraft:redstone" },
+    "C": { "tag": "forge:circuits/basic" },
+    "S": { "tag": "forge:plates/steel" }
+  },
+  "pattern": [
+    "GRC",
+    "  S"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:rangefinder"
+  },
+  "show_notification": true
+}

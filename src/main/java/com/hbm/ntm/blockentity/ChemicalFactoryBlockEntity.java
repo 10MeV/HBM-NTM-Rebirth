@@ -22,7 +22,8 @@ import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.ChemicalFactoryMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
-import com.hbm.ntm.network.HbmTileSyncable;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime.ProcessingFactors;
@@ -36,6 +37,7 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -66,7 +68,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
-        HbmStandardFluidTransceiver, HbmTileSyncable, LegacyLookOverlayProvider, LegacyProxyDelegateProvider {
+        HbmStandardFluidTransceiver, HbmLegacyLoadedTile, LegacyLookOverlayProvider, LegacyProxyDelegateProvider {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_LEGACY_POWER = "power";
@@ -90,6 +92,7 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
             UpgradeType.POWER, 3,
             UpgradeType.OVERDRIVE, 3);
 
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     public static final int SLOT_BATTERY = 0;
     public static final int SLOT_UPGRADE_START = 1;
     public static final int SLOT_UPGRADE_END = 3;
@@ -178,6 +181,11 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
         }
     }
 
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, ChemicalFactoryBlockEntity blockEntity) {
         long oldPower = blockEntity.energy.getPower();
         HbmEnergyUtil.chargeStorageFromItem(blockEntity.items.getStackInSlot(SLOT_BATTERY), blockEntity,
@@ -190,6 +198,7 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
         if (changed) {
             blockEntity.setChanged();
         }
+        blockEntity.networkPackNT(100);
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -348,6 +357,7 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
         tag.put(TAG_ENERGY, energy.serializeNBT());
         tag.putLong(TAG_LEGACY_POWER, energy.getPower());
@@ -370,6 +380,7 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
         if (tag.contains(TAG_ENERGY)) {
             energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
@@ -406,6 +417,29 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public CompoundTag getUpdateTag() {
         return saveWithoutMetadata();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        return saveWithoutMetadata();
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        load(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(saveWithoutMetadata());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            load(tag);
+        }
     }
 
     @Nullable

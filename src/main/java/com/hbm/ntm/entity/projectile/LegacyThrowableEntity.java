@@ -29,6 +29,10 @@ public abstract class LegacyThrowableEntity extends Entity {
     @Override
     public void tick() {
         super.tick();
+        if (level().isClientSide() && clientUsesServerInterpolationOnly()) {
+            tickClientServerInterpolationOnly();
+            return;
+        }
         if (inGround) {
             ticksInGround++;
             if (groundDespawn() > 0 && ticksInGround >= groundDespawn()) {
@@ -124,6 +128,13 @@ public abstract class LegacyThrowableEntity extends Entity {
 
     protected int groundDespawn() {
         return 1200;
+    }
+
+    protected boolean clientUsesServerInterpolationOnly() {
+        return false;
+    }
+
+    protected void tickClientServerInterpolationOnly() {
     }
 
     protected abstract void onImpact(HitResult hit);

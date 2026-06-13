@@ -8,7 +8,6 @@ import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.particle.LegacyCasingEjectors;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
@@ -94,14 +93,7 @@ public class TurretHowardBlockEntity extends TurretBlockEntityBase {
         BulletConfig config = getFirstConfigLoaded();
         if (config != null && consumeAmmo(config)) {
             loaded = 200;
-            playTurretSound(ModSounds.TURRET_HOWARD_RELOAD.get(), 4.0F, 1.0F);
-        }
-    }
-
-    @Override
-    protected void tickServerSpecificAnimations() {
-        if (getTargetPos() != null) {
-            triggerBarrelSpin(45.0F);
+            playTurretSound("hbm:turret.howard_reload", 4.0F, 1.0F);
         }
     }
 
@@ -118,8 +110,8 @@ public class TurretHowardBlockEntity extends TurretBlockEntityBase {
             return;
         }
         timer++;
-        playTurretSound(ModSounds.TURRET_HOWARD_FIRE.get(), 4.0F, 0.9F + level.random.nextFloat() * 0.3F);
-        playTurretSound(ModSounds.TURRET_HOWARD_FIRE.get(), 4.0F, 1.0F + level.random.nextFloat() * 0.3F);
+        playTurretSound("hbm:turret.howard_fire", 4.0F, 0.9F + level.random.nextFloat() * 0.3F);
+        playTurretSound("hbm:turret.howard_fire", 4.0F, 1.0F + level.random.nextFloat() * 0.3F);
         spawnHowardCasing();
         spawnHowardCasing();
         if (timer % 2 != 0) {

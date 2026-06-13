@@ -5,7 +5,7 @@ import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.ParticleBurstPacket;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModEntityTypes;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -43,7 +43,7 @@ public class RubbleEntity extends LegacyThrowableEntity {
         }
         if (level() instanceof ServerLevel serverLevel) {
             BlockPos pos = BlockPos.containing(hit.getLocation());
-            level().playSound(null, getX(), getY(), getZ(), ModSounds.BLOCK_DEBRIS.get(), SoundSource.BLOCKS, 1.5F, 1.0F);
+            LegacySoundPlayer.playSoundAtEntity(this, "hbm:block.debris", SoundSource.BLOCKS, 1.5F, 1.0F);
             ModMessages.sendToAllAround(new ParticleBurstPacket(pos, blockState()), serverLevel, getX(), getY(), getZ(), 50.0D);
             discard();
         }

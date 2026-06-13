@@ -89,6 +89,9 @@ public interface HbmLegacyWireNode extends HbmEnergyNodeHost {
         BlockPos selfPos = getWirePos();
         if (level != null && selfPos != null) {
             for (BlockPos remotePos : getWireConnections().connected()) {
+                if (!isLoadedBlock(level, remotePos)) {
+                    continue;
+                }
                 BlockEntity remote = level.getBlockEntity(remotePos);
                 if (remote == (Object) this) {
                     continue;
@@ -128,5 +131,9 @@ public interface HbmLegacyWireNode extends HbmEnergyNodeHost {
                         blockEntity.getBlockState(), Block.UPDATE_CLIENTS);
             }
         }
+    }
+
+    private static boolean isLoadedBlock(Level level, BlockPos pos) {
+        return level != null && pos != null && level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4);
     }
 }

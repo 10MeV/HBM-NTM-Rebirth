@@ -744,32 +744,12 @@
           "source_order": 188
         },
         {
-          "internal_name": "ass.overdrive1",
-          "source_order": 189
-        },
-        {
-          "internal_name": "ass.overdrive2",
-          "source_order": 190
-        },
-        {
-          "internal_name": "ass.overdrive3",
-          "source_order": 191
-        },
-        {
           "internal_name": "ass.chopper",
           "source_order": 192
         },
         {
           "internal_name": "ass.ballsotron",
           "source_order": 193
-        },
-        {
-          "internal_name": "ass.clusterpellets",
-          "source_order": 194
-        },
-        {
-          "internal_name": "ass.buckshot",
-          "source_order": 195
         },
         {
           "internal_name": "ass.minenaval",
@@ -832,368 +812,12 @@
           "source_order": 210
         },
         {
-          "internal_name": "ass.explosivelenses1",
-          "source_order": 211
-        },
-        {
-          "internal_name": "ass.explosivelenses2",
-          "source_order": 212
-        },
-        {
-          "internal_name": "ass.wiring",
-          "source_order": 213
-        },
-        {
-          "internal_name": "ass.core1",
-          "source_order": 214
-        },
-        {
-          "internal_name": "ass.boyshield",
-          "source_order": 215
-        },
-        {
-          "internal_name": "ass.boytarget",
-          "source_order": 216
-        },
-        {
-          "internal_name": "ass.boybullet",
-          "source_order": 217
-        },
-        {
-          "internal_name": "ass.boypropellant",
-          "source_order": 218
-        },
-        {
-          "internal_name": "ass.boyigniter",
-          "source_order": 219
-        },
-        {
-          "internal_name": "ass.manigniter",
-          "source_order": 220
-        },
-        {
-          "internal_name": "ass.mancore",
-          "source_order": 221
-        },
-        {
-          "internal_name": "ass.mikecore",
-          "source_order": 222
-        },
-        {
-          "internal_name": "ass.mikedeut",
-          "source_order": 223
-        },
-        {
-          "internal_name": "ass.mikecooler",
-          "source_order": 224
-        },
-        {
-          "internal_name": "ass.fleijaigniter",
-          "source_order": 225
-        },
-        {
-          "internal_name": "ass.fleijacore",
-          "source_order": 226
-        },
-        {
-          "internal_name": "ass.fleijacharge",
-          "source_order": 227
-        },
-        {
-          "internal_name": "ass.soliniumigniter",
-          "source_order": 228
-        },
-        {
-          "internal_name": "ass.soliniumcore",
-          "source_order": 229
-        },
-        {
-          "internal_name": "ass.soliniumcharge",
-          "source_order": 230
-        },
-        {
-          "internal_name": "ass.turretchekhov",
-          "source_order": 231
-        },
-        {
-          "internal_name": "ass.turretfriendly",
-          "source_order": 232
-        },
-        {
-          "internal_name": "ass.turretjeremy",
-          "source_order": 233
-        },
-        {
-          "internal_name": "ass.turretrichard",
-          "source_order": 235
-        },
-        {
-          "internal_name": "ass.turrethoward",
-          "source_order": 236
-        },
-        {
-          "internal_name": "ass.missileassembly",
-          "source_order": 249
-        },
-        {
-          "internal_name": "ass.warheadhe1",
-          "source_order": 250
-        },
-        {
-          "internal_name": "ass.warheadhe2",
-          "source_order": 251
-        },
-        {
-          "internal_name": "ass.warheadhe3",
-          "source_order": 252
-        },
-        {
-          "internal_name": "ass.warheadinc1",
-          "source_order": 253
-        },
-        {
-          "internal_name": "ass.warheadinc2",
-          "source_order": 254
-        },
-        {
-          "internal_name": "ass.warheadinc3",
-          "source_order": 255
-        },
-        {
-          "internal_name": "ass.warheadcl1",
-          "source_order": 256
-        },
-        {
-          "internal_name": "ass.warheadcl2",
-          "source_order": 257
-        },
-        {
-          "internal_name": "ass.warheadcl3",
-          "source_order": 258
-        },
-        {
-          "internal_name": "ass.warheadbb1",
-          "source_order": 259
-        },
-        {
-          "internal_name": "ass.warheadbb2",
-          "source_order": 260
-        },
-        {
-          "internal_name": "ass.warheadbb3",
-          "source_order": 261
-        },
-        {
-          "internal_name": "ass.warheadnuke",
-          "source_order": 262
-        },
-        {
-          "internal_name": "ass.warheadthermonuke",
-          "source_order": 263
-        },
-        {
-          "internal_name": "ass.warheadvolcano",
-          "source_order": 264
-        },
-        {
-          "internal_name": "ass.thrusternerva",
-          "source_order": 265
-        },
-        {
-          "internal_name": "ass.stealthmissile",
-          "source_order": 266
-        },
-        {
-          "internal_name": "ass.shuttlemissile",
-          "source_order": 267
-        },
-        {
           "internal_name": "ass.launchpad",
           "source_order": 268
         },
         {
           "internal_name": "ass.launchpadsilo",
           "source_order": 269
-        },
-        {
-          "internal_name": "ass.mpt10kero",
-          "source_order": 270
-        },
-        {
-          "internal_name": "ass.mpt10solid",
-          "source_order": 271
-        },
-        {
-          "internal_name": "ass.mpt10xenon",
-          "source_order": 272
-        },
-        {
-          "internal_name": "ass.mpt15kero",
-          "source_order": 273
-        },
-        {
-          "internal_name": "ass.mpt15kerodual",
-          "source_order": 274
-        },
-        {
-          "internal_name": "ass.mpt15kerotriple",
-          "source_order": 275
-        },
-        {
-          "internal_name": "ass.mpt15solid",
-          "source_order": 276
-        },
-        {
-          "internal_name": "ass.mpt15solid16",
-          "source_order": 277
-        },
-        {
-          "internal_name": "ass.mpt15hydro",
-          "source_order": 278
-        },
-        {
-          "internal_name": "ass.mpt15hydrodual",
-          "source_order": 279
-        },
-        {
-          "internal_name": "ass.mpt15bfshort",
-          "source_order": 280
-        },
-        {
-          "internal_name": "ass.mpt15bf",
-          "source_order": 281
-        },
-        {
-          "internal_name": "ass.mpt15bflarge",
-          "source_order": 282
-        },
-        {
-          "internal_name": "ass.mpt20kero",
-          "source_order": 283
-        },
-        {
-          "internal_name": "ass.mpt20kerodual",
-          "source_order": 284
-        },
-        {
-          "internal_name": "ass.mpt20kerotriple",
-          "source_order": 285
-        },
-        {
-          "internal_name": "ass.mpt20solid",
-          "source_order": 286
-        },
-        {
-          "internal_name": "ass.mpt20solidmulti",
-          "source_order": 287
-        },
-        {
-          "internal_name": "ass.mpt20solidmultier",
-          "source_order": 288
-        },
-        {
-          "internal_name": "ass.mpf10kero",
-          "source_order": 289
-        },
-        {
-          "internal_name": "ass.mpf10kerolong",
-          "source_order": 290
-        },
-        {
-          "internal_name": "ass.mpf10solid",
-          "source_order": 291
-        },
-        {
-          "internal_name": "ass.mpf10solidlong",
-          "source_order": 292
-        },
-        {
-          "internal_name": "ass.mpf10xenon",
-          "source_order": 293
-        },
-        {
-          "internal_name": "ass.mpf1015kero",
-          "source_order": 294
-        },
-        {
-          "internal_name": "ass.mpf1015solid",
-          "source_order": 295
-        },
-        {
-          "internal_name": "ass.mpf1015hydro",
-          "source_order": 296
-        },
-        {
-          "internal_name": "ass.mpf1015bf",
-          "source_order": 297
-        },
-        {
-          "internal_name": "ass.mpf15kero",
-          "source_order": 298
-        },
-        {
-          "internal_name": "ass.mpf15solid",
-          "source_order": 299
-        },
-        {
-          "internal_name": "ass.mpf15hydro",
-          "source_order": 300
-        },
-        {
-          "internal_name": "ass.mpf1520kero",
-          "source_order": 301
-        },
-        {
-          "internal_name": "ass.mpf1520solid",
-          "source_order": 302
-        },
-        {
-          "internal_name": "ass.mpw10he",
-          "source_order": 303
-        },
-        {
-          "internal_name": "ass.mpw10inc",
-          "source_order": 304
-        },
-        {
-          "internal_name": "ass.mpw10bus",
-          "source_order": 305
-        },
-        {
-          "internal_name": "ass.mpw10nukesmall",
-          "source_order": 306
-        },
-        {
-          "internal_name": "ass.mpw10nukelarge",
-          "source_order": 307
-        },
-        {
-          "internal_name": "ass.mpw10taint",
-          "source_order": 308
-        },
-        {
-          "internal_name": "ass.mpw10cloud",
-          "source_order": 309
-        },
-        {
-          "internal_name": "ass.mpw15he",
-          "source_order": 310
-        },
-        {
-          "internal_name": "ass.mpw15inc",
-          "source_order": 311
-        },
-        {
-          "internal_name": "ass.mpw15nuke",
-          "source_order": 312
-        },
-        {
-          "internal_name": "ass.mpw15n2",
-          "source_order": 313
-        },
-        {
-          "internal_name": "ass.mpw15bf",
-          "source_order": 314
         },
         {
           "internal_name": "ass.50bmgsm",
@@ -1224,8 +848,8 @@
           "source_order": 334
         }
       ],
-      "missing_count": 190,
-      "modern_count": 418,
+      "missing_count": 96,
+      "modern_count": 512,
       "present": [
         {
           "internal_name": "ass.plateiron",
@@ -1942,10 +1566,190 @@
           "source_order": 158
         },
         {
+          "internal_name": "ass.overdrive1",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/overdrive1",
+          "modern_source_order": 189,
+          "source_order": 189
+        },
+        {
+          "internal_name": "ass.overdrive2",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/overdrive2",
+          "modern_source_order": 190,
+          "source_order": 190
+        },
+        {
+          "internal_name": "ass.overdrive3",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/overdrive3",
+          "modern_source_order": 191,
+          "source_order": 191
+        },
+        {
+          "internal_name": "ass.clusterpellets",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/clusterpellets",
+          "modern_source_order": 194,
+          "source_order": 194
+        },
+        {
+          "internal_name": "ass.buckshot",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/buckshot",
+          "modern_source_order": 195,
+          "source_order": 195
+        },
+        {
+          "internal_name": "ass.explosivelenses1",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/explosivelenses1",
+          "modern_source_order": 211,
+          "source_order": 211
+        },
+        {
+          "internal_name": "ass.explosivelenses2",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/explosivelenses2",
+          "modern_source_order": 212,
+          "source_order": 212
+        },
+        {
+          "internal_name": "ass.wiring",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/wiring",
+          "modern_source_order": 213,
+          "source_order": 213
+        },
+        {
+          "internal_name": "ass.core1",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/core1",
+          "modern_source_order": 214,
+          "source_order": 214
+        },
+        {
+          "internal_name": "ass.boyshield",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/boyshield",
+          "modern_source_order": 215,
+          "source_order": 215
+        },
+        {
+          "internal_name": "ass.boytarget",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/boytarget",
+          "modern_source_order": 216,
+          "source_order": 216
+        },
+        {
+          "internal_name": "ass.boybullet",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/boybullet",
+          "modern_source_order": 217,
+          "source_order": 217
+        },
+        {
+          "internal_name": "ass.boypropellant",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/boypropellant",
+          "modern_source_order": 218,
+          "source_order": 218
+        },
+        {
+          "internal_name": "ass.boyigniter",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/boyigniter",
+          "modern_source_order": 219,
+          "source_order": 219
+        },
+        {
+          "internal_name": "ass.manigniter",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/manigniter",
+          "modern_source_order": 220,
+          "source_order": 220
+        },
+        {
+          "internal_name": "ass.mancore",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mancore",
+          "modern_source_order": 221,
+          "source_order": 221
+        },
+        {
+          "internal_name": "ass.mikecore",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mikecore",
+          "modern_source_order": 222,
+          "source_order": 222
+        },
+        {
+          "internal_name": "ass.mikedeut",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mikedeut",
+          "modern_source_order": 223,
+          "source_order": 223
+        },
+        {
+          "internal_name": "ass.mikecooler",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mikecooler",
+          "modern_source_order": 224,
+          "source_order": 224
+        },
+        {
+          "internal_name": "ass.fleijaigniter",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fleijaigniter",
+          "modern_source_order": 225,
+          "source_order": 225
+        },
+        {
+          "internal_name": "ass.fleijacore",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fleijacore",
+          "modern_source_order": 226,
+          "source_order": 226
+        },
+        {
+          "internal_name": "ass.fleijacharge",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/fleijacharge",
+          "modern_source_order": 227,
+          "source_order": 227
+        },
+        {
+          "internal_name": "ass.soliniumigniter",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/soliniumigniter",
+          "modern_source_order": 228,
+          "source_order": 228
+        },
+        {
+          "internal_name": "ass.soliniumcore",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/soliniumcore",
+          "modern_source_order": 229,
+          "source_order": 229
+        },
+        {
+          "internal_name": "ass.soliniumcharge",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/soliniumcharge",
+          "modern_source_order": 230,
+          "source_order": 230
+        },
+        {
+          "internal_name": "ass.turretchekhov",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/turret_chekhov",
+          "modern_source_order": 2147483647,
+          "source_order": 231
+        },
+        {
+          "internal_name": "ass.turretfriendly",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/turret_friendly",
+          "modern_source_order": 2147483647,
+          "source_order": 232
+        },
+        {
+          "internal_name": "ass.turretjeremy",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/turret_jeremy",
+          "modern_source_order": 2147483647,
+          "source_order": 233
+        },
+        {
           "internal_name": "ass.turrettauon",
           "modern_id": "hbm_ntm_rebirth:assembly_machine/turret_tauon",
           "modern_source_order": 2147483647,
           "source_order": 234
+        },
+        {
+          "internal_name": "ass.turretrichard",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/turret_richard",
+          "modern_source_order": 2147483647,
+          "source_order": 235
+        },
+        {
+          "internal_name": "ass.turrethoward",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/turret_howard",
+          "modern_source_order": 2147483647,
+          "source_order": 236
         },
         {
           "internal_name": "ass.maxwell",
@@ -2018,6 +1822,390 @@
           "modern_id": "hbm_ntm_rebirth:assembly_machine/himarslargetb",
           "modern_source_order": 2147483647,
           "source_order": 248
+        },
+        {
+          "internal_name": "ass.missileassembly",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/missileassembly",
+          "modern_source_order": 249,
+          "source_order": 249
+        },
+        {
+          "internal_name": "ass.warheadhe1",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadhe1",
+          "modern_source_order": 250,
+          "source_order": 250
+        },
+        {
+          "internal_name": "ass.warheadhe2",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadhe2",
+          "modern_source_order": 251,
+          "source_order": 251
+        },
+        {
+          "internal_name": "ass.warheadhe3",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadhe3",
+          "modern_source_order": 252,
+          "source_order": 252
+        },
+        {
+          "internal_name": "ass.warheadinc1",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadinc1",
+          "modern_source_order": 253,
+          "source_order": 253
+        },
+        {
+          "internal_name": "ass.warheadinc2",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadinc2",
+          "modern_source_order": 254,
+          "source_order": 254
+        },
+        {
+          "internal_name": "ass.warheadinc3",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadinc3",
+          "modern_source_order": 255,
+          "source_order": 255
+        },
+        {
+          "internal_name": "ass.warheadcl1",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadcl1",
+          "modern_source_order": 256,
+          "source_order": 256
+        },
+        {
+          "internal_name": "ass.warheadcl2",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadcl2",
+          "modern_source_order": 257,
+          "source_order": 257
+        },
+        {
+          "internal_name": "ass.warheadcl3",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadcl3",
+          "modern_source_order": 258,
+          "source_order": 258
+        },
+        {
+          "internal_name": "ass.warheadbb1",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadbb1",
+          "modern_source_order": 259,
+          "source_order": 259
+        },
+        {
+          "internal_name": "ass.warheadbb2",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadbb2",
+          "modern_source_order": 260,
+          "source_order": 260
+        },
+        {
+          "internal_name": "ass.warheadbb3",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadbb3",
+          "modern_source_order": 261,
+          "source_order": 261
+        },
+        {
+          "internal_name": "ass.warheadnuke",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadnuke",
+          "modern_source_order": 262,
+          "source_order": 262
+        },
+        {
+          "internal_name": "ass.warheadthermonuke",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadthermonuke",
+          "modern_source_order": 263,
+          "source_order": 263
+        },
+        {
+          "internal_name": "ass.warheadvolcano",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/warheadvolcano",
+          "modern_source_order": 264,
+          "source_order": 264
+        },
+        {
+          "internal_name": "ass.thrusternerva",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/thrusternerva",
+          "modern_source_order": 265,
+          "source_order": 265
+        },
+        {
+          "internal_name": "ass.stealthmissile",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/stealthmissile",
+          "modern_source_order": 266,
+          "source_order": 266
+        },
+        {
+          "internal_name": "ass.shuttlemissile",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/shuttlemissile",
+          "modern_source_order": 267,
+          "source_order": 267
+        },
+        {
+          "internal_name": "ass.mpt10kero",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt10kero",
+          "modern_source_order": 270,
+          "source_order": 270
+        },
+        {
+          "internal_name": "ass.mpt10solid",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt10solid",
+          "modern_source_order": 271,
+          "source_order": 271
+        },
+        {
+          "internal_name": "ass.mpt10xenon",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt10xenon",
+          "modern_source_order": 272,
+          "source_order": 272
+        },
+        {
+          "internal_name": "ass.mpt15kero",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt15kero",
+          "modern_source_order": 273,
+          "source_order": 273
+        },
+        {
+          "internal_name": "ass.mpt15kerodual",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt15kerodual",
+          "modern_source_order": 274,
+          "source_order": 274
+        },
+        {
+          "internal_name": "ass.mpt15kerotriple",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt15kerotriple",
+          "modern_source_order": 275,
+          "source_order": 275
+        },
+        {
+          "internal_name": "ass.mpt15solid",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt15solid",
+          "modern_source_order": 276,
+          "source_order": 276
+        },
+        {
+          "internal_name": "ass.mpt15solid16",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt15solid16",
+          "modern_source_order": 277,
+          "source_order": 277
+        },
+        {
+          "internal_name": "ass.mpt15hydro",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt15hydro",
+          "modern_source_order": 278,
+          "source_order": 278
+        },
+        {
+          "internal_name": "ass.mpt15hydrodual",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt15hydrodual",
+          "modern_source_order": 279,
+          "source_order": 279
+        },
+        {
+          "internal_name": "ass.mpt15bfshort",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt15bfshort",
+          "modern_source_order": 280,
+          "source_order": 280
+        },
+        {
+          "internal_name": "ass.mpt15bf",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt15bf",
+          "modern_source_order": 281,
+          "source_order": 281
+        },
+        {
+          "internal_name": "ass.mpt15bflarge",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt15bflarge",
+          "modern_source_order": 282,
+          "source_order": 282
+        },
+        {
+          "internal_name": "ass.mpt20kero",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt20kero",
+          "modern_source_order": 283,
+          "source_order": 283
+        },
+        {
+          "internal_name": "ass.mpt20kerodual",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt20kerodual",
+          "modern_source_order": 284,
+          "source_order": 284
+        },
+        {
+          "internal_name": "ass.mpt20kerotriple",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt20kerotriple",
+          "modern_source_order": 285,
+          "source_order": 285
+        },
+        {
+          "internal_name": "ass.mpt20solid",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt20solid",
+          "modern_source_order": 286,
+          "source_order": 286
+        },
+        {
+          "internal_name": "ass.mpt20solidmulti",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt20solidmulti",
+          "modern_source_order": 287,
+          "source_order": 287
+        },
+        {
+          "internal_name": "ass.mpt20solidmultier",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpt20solidmultier",
+          "modern_source_order": 288,
+          "source_order": 288
+        },
+        {
+          "internal_name": "ass.mpf10kero",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf10kero",
+          "modern_source_order": 289,
+          "source_order": 289
+        },
+        {
+          "internal_name": "ass.mpf10kerolong",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf10kerolong",
+          "modern_source_order": 290,
+          "source_order": 290
+        },
+        {
+          "internal_name": "ass.mpf10solid",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf10solid",
+          "modern_source_order": 291,
+          "source_order": 291
+        },
+        {
+          "internal_name": "ass.mpf10solidlong",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf10solidlong",
+          "modern_source_order": 292,
+          "source_order": 292
+        },
+        {
+          "internal_name": "ass.mpf10xenon",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf10xenon",
+          "modern_source_order": 293,
+          "source_order": 293
+        },
+        {
+          "internal_name": "ass.mpf1015kero",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf1015kero",
+          "modern_source_order": 294,
+          "source_order": 294
+        },
+        {
+          "internal_name": "ass.mpf1015solid",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf1015solid",
+          "modern_source_order": 295,
+          "source_order": 295
+        },
+        {
+          "internal_name": "ass.mpf1015hydro",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf1015hydro",
+          "modern_source_order": 296,
+          "source_order": 296
+        },
+        {
+          "internal_name": "ass.mpf1015bf",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf1015bf",
+          "modern_source_order": 297,
+          "source_order": 297
+        },
+        {
+          "internal_name": "ass.mpf15kero",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf15kero",
+          "modern_source_order": 298,
+          "source_order": 298
+        },
+        {
+          "internal_name": "ass.mpf15solid",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf15solid",
+          "modern_source_order": 299,
+          "source_order": 299
+        },
+        {
+          "internal_name": "ass.mpf15hydro",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf15hydro",
+          "modern_source_order": 300,
+          "source_order": 300
+        },
+        {
+          "internal_name": "ass.mpf1520kero",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf1520kero",
+          "modern_source_order": 301,
+          "source_order": 301
+        },
+        {
+          "internal_name": "ass.mpf1520solid",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpf1520solid",
+          "modern_source_order": 302,
+          "source_order": 302
+        },
+        {
+          "internal_name": "ass.mpw10he",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw10he",
+          "modern_source_order": 303,
+          "source_order": 303
+        },
+        {
+          "internal_name": "ass.mpw10inc",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw10inc",
+          "modern_source_order": 304,
+          "source_order": 304
+        },
+        {
+          "internal_name": "ass.mpw10bus",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw10bus",
+          "modern_source_order": 305,
+          "source_order": 305
+        },
+        {
+          "internal_name": "ass.mpw10nukesmall",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw10nukesmall",
+          "modern_source_order": 306,
+          "source_order": 306
+        },
+        {
+          "internal_name": "ass.mpw10nukelarge",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw10nukelarge",
+          "modern_source_order": 307,
+          "source_order": 307
+        },
+        {
+          "internal_name": "ass.mpw10taint",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw10taint",
+          "modern_source_order": 308,
+          "source_order": 308
+        },
+        {
+          "internal_name": "ass.mpw10cloud",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw10cloud",
+          "modern_source_order": 309,
+          "source_order": 309
+        },
+        {
+          "internal_name": "ass.mpw15he",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw15he",
+          "modern_source_order": 310,
+          "source_order": 310
+        },
+        {
+          "internal_name": "ass.mpw15inc",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw15inc",
+          "modern_source_order": 311,
+          "source_order": 311
+        },
+        {
+          "internal_name": "ass.mpw15nuke",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw15nuke",
+          "modern_source_order": 312,
+          "source_order": 312
+        },
+        {
+          "internal_name": "ass.mpw15n2",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw15n2",
+          "modern_source_order": 313,
+          "source_order": 313
+        },
+        {
+          "internal_name": "ass.mpw15bf",
+          "modern_id": "hbm_ntm_rebirth:assembly_machine/mpw15bf",
+          "modern_source_order": 314,
+          "source_order": 314
         },
         {
           "internal_name": "chem.shellchlorine",
@@ -2098,7 +2286,7 @@
           "source_order": 333
         }
       ],
-      "present_count": 145,
+      "present_count": 239,
       "status": "checked"
     }
   ],

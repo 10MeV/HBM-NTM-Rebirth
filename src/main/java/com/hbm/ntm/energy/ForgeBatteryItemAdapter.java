@@ -18,7 +18,7 @@ public class ForgeBatteryItemAdapter implements IEnergyStorage {
             return 0;
         }
         long accepted = Math.min((long) maxReceive, battery.getChargeRate(stack));
-        accepted = Math.min(accepted, Math.max(0L, battery.getMaxCharge(stack) - battery.getCharge(stack)));
+        accepted = Math.min(accepted, Math.max(0L, battery.getMaxCharge(stack) - battery.peekCharge(stack)));
         if (!simulate && accepted > 0L) {
             accepted = battery.chargeBattery(stack, accepted);
         }
@@ -31,7 +31,7 @@ public class ForgeBatteryItemAdapter implements IEnergyStorage {
             return 0;
         }
         long extracted = Math.min((long) maxExtract, battery.getDischargeRate(stack));
-        extracted = Math.min(extracted, battery.getCharge(stack));
+        extracted = Math.min(extracted, battery.peekCharge(stack));
         if (!simulate && extracted > 0L) {
             extracted = battery.dischargeBattery(stack, extracted);
         }
@@ -40,7 +40,7 @@ public class ForgeBatteryItemAdapter implements IEnergyStorage {
 
     @Override
     public int getEnergyStored() {
-        return HbmEnergyUtil.toForgeInt(battery.getCharge(stack));
+        return HbmEnergyUtil.toForgeInt(battery.peekCharge(stack));
     }
 
     @Override

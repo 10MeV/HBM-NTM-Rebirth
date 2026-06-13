@@ -7,54 +7,28 @@ public interface HbmStandardFluidSender extends HbmFluidProvider {
 
     @Override
     default long getFluidAvailable(FluidType type, int pressure) {
-        long amount = 0L;
-        for (HbmFluidTank tank : getSendingTanks()) {
-            if (tank.getTankType() == type && tank.getPressure() == pressure) {
-                amount += tank.getFill();
-            }
-        }
-        return amount;
+        return inspectSendingTanks(type, pressure).availableMb();
     }
 
     @Override
     default void useUpFluid(FluidType type, int pressure, long amount) {
-        int matchingTanks = 0;
-        for (HbmFluidTank tank : getSendingTanks()) {
-            if (tank.getTankType() == type && tank.getPressure() == pressure) {
-                matchingTanks++;
-            }
-        }
-        if (matchingTanks > 1) {
-            int firstRound = (int) Math.floor((double) amount / (double) matchingTanks);
-            for (HbmFluidTank tank : getSendingTanks()) {
-                if (tank.getTankType() == type && tank.getPressure() == pressure) {
-                    int toRemove = Math.min(firstRound, tank.getFill());
-                    tank.setFill(tank.getFill() - toRemove);
-                    amount -= toRemove;
-                }
-            }
-        }
-        if (amount > 0L) {
-            for (HbmFluidTank tank : getSendingTanks()) {
-                if (tank.getTankType() == type && tank.getPressure() == pressure) {
-                    int toRemove = (int) Math.min(amount, tank.getFill());
-                    tank.setFill(tank.getFill() - toRemove);
-                    amount -= toRemove;
-                }
-            }
-        }
+        useUpFluidReport(type, pressure, amount);
     }
 
     @Override
     default int[] getProvidingPressureRange(FluidType type) {
-        int lowest = HIGHEST_VALID_PRESSURE;
-        int highest = 0;
-        for (HbmFluidTank tank : getSendingTanks()) {
-            if (tank.getTankType() == type) {
-                lowest = Math.min(lowest, tank.getPressure());
-                highest = Math.max(highest, tank.getPressure());
-            }
-        }
-        return lowest <= highest ? new int[] {lowest, highest} : DEFAULT_PRESSURE_RANGE;
+        return HbmFluidTankSet.pressureRange(getSendingTanks(), type);
+    }
+
+    default HbmFluidTankSet.TankSetInspection inspectSendingTanks(FluidType type, int pressure) {
+        return HbmFluidTankSet.inspectSendingTanks(getSendingTanks(), type, pressure);
+    }
+
+    default HbmFluidTankSet.TankTransferReport previewUseUpFluid(FluidType type, int pressure, long amount) {
+        return HbmFluidTankSet.previewUseUp(getSendingTanks(), type, pressure, amount);
+    }
+
+    default HbmFluidTankSet.TankTransferReport useUpFluidReport(FluidType type, int pressure, long amount) {
+        return HbmFluidTankSet.useUp(getSendingTanks(), type, pressure, amount, false);
     }
 }

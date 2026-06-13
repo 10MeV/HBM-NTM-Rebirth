@@ -123,6 +123,8 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.DUMMY_BLOCK.get(), noDrop());
         add(ModBlocks.GLASS_BORON.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_BORON.get()));
         add(ModBlocks.GLASS_LEAD.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_LEAD.get()));
+        add(ModBlocks.GLASS_URANIUM.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_URANIUM.get()));
+        add(ModBlocks.GLASS_POLONIUM.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_POLONIUM.get()));
         add(ModBlocks.GLASS_QUARTZ.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_QUARTZ.get()));
         dropSelf(ModBlocks.SAND_BORON.get());
         dropSelf(ModBlocks.SAND_LEAD.get());

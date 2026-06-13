@@ -572,6 +572,24 @@ public final class PollutionManager {
         return getPollutionAtEntityEyes(entity, PollutionType.SOOT);
     }
 
+    public static boolean shouldGlyphidUseExtendedTargeting(Level level, BlockPos pos) {
+        if (RadiationConfig.rampantExtendedTargetingEnabled()) {
+            return true;
+        }
+        return getPollution(level, pos, PollutionType.SOOT) >= RadiationConfig.glyphidTargetingThreshold();
+    }
+
+    public static boolean canTryRampantScoutSpawn(Level level, BlockPos pos) {
+        return isEnabled()
+                && level instanceof ServerLevel serverLevel
+                && pos != null
+                && serverLevel.dimension().equals(Level.OVERWORLD)
+                && RadiationConfig.rampantNaturalScoutSpawnEnabled()
+                && serverLevel.canSeeSky(pos)
+                && getPollution(serverLevel, pos, PollutionType.SOOT) >= RadiationConfig.rampantScoutSpawnThreshold()
+                && serverLevel.random.nextInt(RadiationConfig.rampantScoutSpawnChance()) == 0;
+    }
+
     private static void applyPoisonEffect(LivingEntity entity, PollutionSample sample) {
         if (!RadiationConfig.pollutionPoisonEnabled() || ArmorUtil.hasPollutionPoisonProtection(entity)) {
             return;

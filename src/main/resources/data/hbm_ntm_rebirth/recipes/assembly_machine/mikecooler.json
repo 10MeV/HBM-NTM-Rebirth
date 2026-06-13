@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.mikecooler",
+  "duration": 300,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/dura_steel" }, "count": 8, "legacy_ore": "plateDuraSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:coil_copper" }, "count": 5 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:coil_tungsten" }, "count": 5 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor" }, "count": 2 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:mike_cooling_unit" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 224
+}

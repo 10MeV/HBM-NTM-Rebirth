@@ -5,8 +5,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
 import com.hbm.ntm.damage.DamageResistanceConfig;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
@@ -18,7 +20,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -115,6 +116,18 @@ public class DamageResistanceHandler {
         return com.hbm.ntm.damage.DamageResistanceHandler.typeToCategory(source);
     }
 
+    public static String typeToCategory(ResourceKey<DamageType> type) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.typeToCategory(type);
+    }
+
+    public static String typeToCategory(String legacyTypeOrId) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.typeToCategory(legacyTypeOrId);
+    }
+
+    public static String typeToCategory(DamageClass damageClass) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.typeToCategory(damageClass.modern());
+    }
+
     public static String categoryKey(String category) {
         return com.hbm.ntm.damage.DamageResistanceHandler.categoryKey(category);
     }
@@ -131,8 +144,60 @@ public class DamageResistanceHandler {
         return com.hbm.ntm.damage.DamageResistanceHandler.exactTypeKey(type);
     }
 
+    public static String exactTypeKey(ResourceKey<DamageType> type) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.exactTypeKey(type);
+    }
+
+    public static String exactTypeKey(DamageClass damageClass) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.exactTypeKey(damageClass.modern());
+    }
+
+    public static boolean isAbsolute(DamageSource source) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isAbsolute(source);
+    }
+
+    public static boolean isAbsolute(ResourceKey<DamageType> type) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isAbsolute(type);
+    }
+
+    public static boolean isAbsolute(String legacyTypeOrId) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isAbsolute(legacyTypeOrId);
+    }
+
+    public static boolean isAbsolute(DamageClass damageClass) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isAbsolute(damageClass.modern());
+    }
+
+    public static boolean isUnblockableForLegacyResistance(DamageSource source) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isUnblockableForLegacyResistance(source);
+    }
+
+    public static boolean isUnblockableForLegacyResistance(ResourceKey<DamageType> type) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isUnblockableForLegacyResistance(type);
+    }
+
+    public static boolean isUnblockableForLegacyResistance(String legacyTypeOrId) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isUnblockableForLegacyResistance(legacyTypeOrId);
+    }
+
+    public static boolean isUnblockableForLegacyResistance(DamageClass damageClass) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isUnblockableForLegacyResistance(damageClass.modern());
+    }
+
     public static float calculateDamage(LivingEntity entity, DamageSource damage, float amount) {
         return com.hbm.ntm.damage.DamageResistanceHandler.calculateDamage(entity, damage, amount);
+    }
+
+    public static float calculateDamage(LivingEntity entity, ResourceKey<DamageType> damage, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.calculateDamage(entity, damage, amount);
+    }
+
+    public static float calculateDamage(LivingEntity entity, DamageClass damageClass, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.calculateDamage(entity, damageClass.modern(), amount);
+    }
+
+    public static float calculateDamage(LivingEntity entity, String legacyTypeOrId, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.calculateDamage(entity, legacyTypeOrId, amount);
     }
 
     public static float calculateDamage(LivingEntity entity, DamageSource damage, float amount,
@@ -140,20 +205,360 @@ public class DamageResistanceHandler {
         return com.hbm.ntm.damage.DamageResistanceHandler.calculateDamage(entity, damage, amount, pierceDT, pierce);
     }
 
+    public static float calculateDamage(LivingEntity entity, ResourceKey<DamageType> damage, float amount,
+            float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.calculateDamage(entity, damage, amount, pierceDT, pierce);
+    }
+
+    public static float calculateDamage(LivingEntity entity, DamageClass damageClass, float amount,
+            float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.calculateDamage(entity, damageClass.modern(), amount,
+                pierceDT, pierce);
+    }
+
+    public static float calculateDamage(LivingEntity entity, String legacyTypeOrId, float amount,
+            float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.calculateDamage(entity, legacyTypeOrId, amount, pierceDT, pierce);
+    }
+
+    public static float applyLegacyPreResistanceDamageModifiers(LivingEntity entity, DamageSource damage, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.applyLegacyPreResistanceDamageModifiers(entity, damage,
+                amount);
+    }
+
+    public static float applyLegacyPreResistanceDamageModifiers(LivingEntity entity, ResourceKey<DamageType> damage,
+            float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.applyLegacyPreResistanceDamageModifiers(entity, damage,
+                amount);
+    }
+
+    public static float applyLegacyPreResistanceDamageModifiers(LivingEntity entity, DamageClass damageClass,
+            float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.applyLegacyPreResistanceDamageModifiers(entity,
+                damageClass.modern(), amount);
+    }
+
+    public static float applyLegacyPreResistanceDamageModifiers(LivingEntity entity, String legacyTypeOrId,
+            float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.applyLegacyPreResistanceDamageModifiers(entity,
+                legacyTypeOrId, amount);
+    }
+
+    public static boolean hasLegacyPoweredArmorElectricWeakness(LivingEntity entity, DamageSource damage) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.hasLegacyPoweredArmorElectricWeakness(entity, damage);
+    }
+
+    public static boolean hasLegacyPoweredArmorElectricWeakness(LivingEntity entity, ResourceKey<DamageType> damage) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.hasLegacyPoweredArmorElectricWeakness(entity, damage);
+    }
+
+    public static boolean hasLegacyPoweredArmorElectricWeakness(LivingEntity entity, DamageClass damageClass) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.hasLegacyPoweredArmorElectricWeakness(entity,
+                damageClass.modern());
+    }
+
+    public static boolean hasLegacyPoweredArmorElectricWeakness(LivingEntity entity, String legacyTypeOrId) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.hasLegacyPoweredArmorElectricWeakness(entity,
+                legacyTypeOrId);
+    }
+
+    public static boolean isLegacyDamageClassElectric(DamageSource damage) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isLegacyDamageClassElectric(damage);
+    }
+
+    public static boolean isLegacyDamageClassElectric(ResourceKey<DamageType> damage) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isLegacyDamageClassElectric(damage);
+    }
+
+    public static boolean isLegacyDamageClassElectric(DamageClass damageClass) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isLegacyDamageClassElectric(damageClass.modern());
+    }
+
+    public static boolean isLegacyDamageClassElectric(String legacyTypeOrId) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isLegacyDamageClassElectric(legacyTypeOrId);
+    }
+
     public static float[] getDTDR(LivingEntity entity, DamageSource damage, float amount) {
         return com.hbm.ntm.damage.DamageResistanceHandler.getDtDr(entity, damage, amount);
+    }
+
+    public static float[] getDTDR(LivingEntity entity, ResourceKey<DamageType> damage, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getDtDr(entity, damage, amount);
+    }
+
+    public static float[] getDTDR(LivingEntity entity, DamageClass damageClass, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getDtDr(entity, damageClass.modern(), amount);
+    }
+
+    public static float[] getDTDR(LivingEntity entity, String legacyTypeOrId, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getDtDr(entity, legacyTypeOrId, amount);
     }
 
     public static float[] getDTDR(LivingEntity entity, DamageSource damage, float amount, float pierceDT, float pierce) {
         return com.hbm.ntm.damage.DamageResistanceHandler.getDtDr(entity, damage, amount, pierceDT, pierce);
     }
 
+    public static float[] getDTDR(LivingEntity entity, ResourceKey<DamageType> damage, float amount,
+            float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getDtDr(entity, damage, amount, pierceDT, pierce);
+    }
+
+    public static float[] getDTDR(LivingEntity entity, DamageClass damageClass, float amount,
+            float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getDtDr(entity, damageClass.modern(), amount, pierceDT,
+                pierce);
+    }
+
+    public static float[] getDTDR(LivingEntity entity, String legacyTypeOrId, float amount,
+            float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getDtDr(entity, legacyTypeOrId, amount, pierceDT, pierce);
+    }
+
     public static float[] getDtDr(LivingEntity entity, DamageSource damage, float amount) {
         return getDTDR(entity, damage, amount);
     }
 
+    public static float[] getDtDr(LivingEntity entity, ResourceKey<DamageType> damage, float amount) {
+        return getDTDR(entity, damage, amount);
+    }
+
+    public static float[] getDtDr(LivingEntity entity, DamageClass damageClass, float amount) {
+        return getDTDR(entity, damageClass, amount);
+    }
+
+    public static float[] getDtDr(LivingEntity entity, String legacyTypeOrId, float amount) {
+        return getDTDR(entity, legacyTypeOrId, amount);
+    }
+
     public static float[] getDtDr(LivingEntity entity, DamageSource damage, float amount, float pierceDT, float pierce) {
         return getDTDR(entity, damage, amount, pierceDT, pierce);
+    }
+
+    public static float[] getDtDr(LivingEntity entity, ResourceKey<DamageType> damage, float amount,
+            float pierceDT, float pierce) {
+        return getDTDR(entity, damage, amount, pierceDT, pierce);
+    }
+
+    public static float[] getDtDr(LivingEntity entity, DamageClass damageClass, float amount,
+            float pierceDT, float pierce) {
+        return getDTDR(entity, damageClass, amount, pierceDT, pierce);
+    }
+
+    public static float[] getDtDr(LivingEntity entity, String legacyTypeOrId, float amount, float pierceDT, float pierce) {
+        return getDTDR(entity, legacyTypeOrId, amount, pierceDT, pierce);
+    }
+
+    public static boolean isResistanceProvider(Entity entity) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.isResistanceProvider(entity);
+    }
+
+    public static Resistance getProviderResistance(LivingEntity entity, DamageSource damage, float amount) {
+        return Resistance.fromModernNullable(
+                com.hbm.ntm.damage.DamageResistanceHandler.providerResistance(entity, damage, amount));
+    }
+
+    public static Resistance getProviderResistance(LivingEntity entity, ResourceKey<DamageType> damage, float amount) {
+        return Resistance.fromModernNullable(
+                com.hbm.ntm.damage.DamageResistanceHandler.providerResistance(entity, damage, amount));
+    }
+
+    public static Resistance getProviderResistance(LivingEntity entity, DamageClass damageClass, float amount) {
+        return Resistance.fromModernNullable(
+                com.hbm.ntm.damage.DamageResistanceHandler.providerResistance(entity, damageClass.modern(), amount));
+    }
+
+    public static Resistance getProviderResistance(LivingEntity entity, String legacyTypeOrId, float amount) {
+        return Resistance.fromModernNullable(
+                com.hbm.ntm.damage.DamageResistanceHandler.providerResistance(entity, legacyTypeOrId, amount));
+    }
+
+    public static Resistance getProviderResistance(LivingEntity entity, DamageSource damage, float amount,
+            float pierceDT, float pierce) {
+        return Resistance.fromModernNullable(
+                com.hbm.ntm.damage.DamageResistanceHandler.providerResistance(entity, damage, amount, pierceDT, pierce));
+    }
+
+    public static Resistance getProviderResistance(LivingEntity entity, ResourceKey<DamageType> damage, float amount,
+            float pierceDT, float pierce) {
+        return Resistance.fromModernNullable(
+                com.hbm.ntm.damage.DamageResistanceHandler.providerResistance(entity, damage, amount, pierceDT, pierce));
+    }
+
+    public static Resistance getProviderResistance(LivingEntity entity, DamageClass damageClass, float amount,
+            float pierceDT, float pierce) {
+        return Resistance.fromModernNullable(
+                com.hbm.ntm.damage.DamageResistanceHandler.providerResistance(entity, damageClass.modern(), amount,
+                        pierceDT, pierce));
+    }
+
+    public static Resistance getProviderResistance(LivingEntity entity, String legacyTypeOrId, float amount,
+            float pierceDT, float pierce) {
+        return Resistance.fromModernNullable(
+                com.hbm.ntm.damage.DamageResistanceHandler.providerResistance(entity, legacyTypeOrId, amount,
+                        pierceDT, pierce));
+    }
+
+    public static float[] getProviderDTDR(LivingEntity entity, DamageSource damage, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getProviderDtDr(entity, damage, amount);
+    }
+
+    public static float[] getProviderDTDR(LivingEntity entity, ResourceKey<DamageType> damage, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getProviderDtDr(entity, damage, amount);
+    }
+
+    public static float[] getProviderDTDR(LivingEntity entity, DamageClass damageClass, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getProviderDtDr(entity, damageClass.modern(), amount);
+    }
+
+    public static float[] getProviderDTDR(LivingEntity entity, String legacyTypeOrId, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getProviderDtDr(entity, legacyTypeOrId, amount);
+    }
+
+    public static float[] getProviderDTDR(LivingEntity entity, DamageSource damage, float amount,
+            float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getProviderDtDr(entity, damage, amount, pierceDT, pierce);
+    }
+
+    public static float[] getProviderDTDR(LivingEntity entity, ResourceKey<DamageType> damage, float amount,
+            float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getProviderDtDr(entity, damage, amount, pierceDT, pierce);
+    }
+
+    public static float[] getProviderDTDR(LivingEntity entity, DamageClass damageClass, float amount,
+            float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getProviderDtDr(entity, damageClass.modern(), amount,
+                pierceDT, pierce);
+    }
+
+    public static float[] getProviderDTDR(LivingEntity entity, String legacyTypeOrId, float amount,
+            float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.getProviderDtDr(entity, legacyTypeOrId, amount, pierceDT,
+                pierce);
+    }
+
+    public static float[] getProviderDtDr(LivingEntity entity, DamageSource damage, float amount) {
+        return getProviderDTDR(entity, damage, amount);
+    }
+
+    public static float[] getProviderDtDr(LivingEntity entity, ResourceKey<DamageType> damage, float amount) {
+        return getProviderDTDR(entity, damage, amount);
+    }
+
+    public static float[] getProviderDtDr(LivingEntity entity, DamageClass damageClass, float amount) {
+        return getProviderDTDR(entity, damageClass, amount);
+    }
+
+    public static float[] getProviderDtDr(LivingEntity entity, String legacyTypeOrId, float amount) {
+        return getProviderDTDR(entity, legacyTypeOrId, amount);
+    }
+
+    public static float[] getProviderDtDr(LivingEntity entity, DamageSource damage, float amount,
+            float pierceDT, float pierce) {
+        return getProviderDTDR(entity, damage, amount, pierceDT, pierce);
+    }
+
+    public static float[] getProviderDtDr(LivingEntity entity, ResourceKey<DamageType> damage, float amount,
+            float pierceDT, float pierce) {
+        return getProviderDTDR(entity, damage, amount, pierceDT, pierce);
+    }
+
+    public static float[] getProviderDtDr(LivingEntity entity, DamageClass damageClass, float amount,
+            float pierceDT, float pierce) {
+        return getProviderDTDR(entity, damageClass, amount, pierceDT, pierce);
+    }
+
+    public static float[] getProviderDtDr(LivingEntity entity, String legacyTypeOrId, float amount,
+            float pierceDT, float pierce) {
+        return getProviderDTDR(entity, legacyTypeOrId, amount, pierceDT, pierce);
+    }
+
+    public static boolean notifyDamageDealt(LivingEntity entity, DamageSource damage, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.notifyDamageDealt(entity, damage, amount);
+    }
+
+    public static com.hbm.ntm.damage.DamageResistanceHandler.ResistanceBreakdown breakdown(
+            LivingEntity entity, DamageSource damage, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.breakdown(entity, damage, amount);
+    }
+
+    public static com.hbm.ntm.damage.DamageResistanceHandler.ResistanceBreakdown breakdown(
+            LivingEntity entity, ResourceKey<DamageType> damage, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.breakdown(entity, damage, amount);
+    }
+
+    public static com.hbm.ntm.damage.DamageResistanceHandler.ResistanceBreakdown breakdown(
+            LivingEntity entity, DamageClass damageClass, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.breakdown(entity, damageClass.modern(), amount);
+    }
+
+    public static com.hbm.ntm.damage.DamageResistanceHandler.ResistanceBreakdown breakdown(
+            LivingEntity entity, String legacyTypeOrId, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.breakdown(entity, legacyTypeOrId, amount);
+    }
+
+    public static com.hbm.ntm.damage.DamageResistanceHandler.ResistanceBreakdown breakdown(
+            LivingEntity entity, DamageSource damage, float amount, float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.breakdown(entity, damage, amount, pierceDT, pierce);
+    }
+
+    public static com.hbm.ntm.damage.DamageResistanceHandler.ResistanceBreakdown breakdown(
+            LivingEntity entity, ResourceKey<DamageType> damage, float amount, float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.breakdown(entity, damage, amount, pierceDT, pierce);
+    }
+
+    public static com.hbm.ntm.damage.DamageResistanceHandler.ResistanceBreakdown breakdown(
+            LivingEntity entity, DamageClass damageClass, float amount, float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.breakdown(entity, damageClass.modern(), amount, pierceDT,
+                pierce);
+    }
+
+    public static com.hbm.ntm.damage.DamageResistanceHandler.ResistanceBreakdown breakdown(
+            LivingEntity entity, String legacyTypeOrId, float amount, float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.breakdown(entity, legacyTypeOrId, amount, pierceDT, pierce);
+    }
+
+    public static List<com.hbm.ntm.damage.DamageResistanceHandler.ResistanceContribution> resistanceContributions(
+            LivingEntity entity, DamageSource damage, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.resistanceContributions(entity, damage, amount);
+    }
+
+    public static List<com.hbm.ntm.damage.DamageResistanceHandler.ResistanceContribution> resistanceContributions(
+            LivingEntity entity, ResourceKey<DamageType> damage, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.resistanceContributions(entity, damage, amount);
+    }
+
+    public static List<com.hbm.ntm.damage.DamageResistanceHandler.ResistanceContribution> resistanceContributions(
+            LivingEntity entity, DamageClass damageClass, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.resistanceContributions(entity, damageClass.modern(), amount);
+    }
+
+    public static List<com.hbm.ntm.damage.DamageResistanceHandler.ResistanceContribution> resistanceContributions(
+            LivingEntity entity, String legacyTypeOrId, float amount) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.resistanceContributions(entity, legacyTypeOrId, amount);
+    }
+
+    public static List<com.hbm.ntm.damage.DamageResistanceHandler.ResistanceContribution> resistanceContributions(
+            LivingEntity entity, DamageSource damage, float amount, float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.resistanceContributions(entity, damage, amount, pierceDT,
+                pierce);
+    }
+
+    public static List<com.hbm.ntm.damage.DamageResistanceHandler.ResistanceContribution> resistanceContributions(
+            LivingEntity entity, ResourceKey<DamageType> damage, float amount, float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.resistanceContributions(entity, damage, amount, pierceDT,
+                pierce);
+    }
+
+    public static List<com.hbm.ntm.damage.DamageResistanceHandler.ResistanceContribution> resistanceContributions(
+            LivingEntity entity, DamageClass damageClass, float amount, float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.resistanceContributions(entity, damageClass.modern(), amount,
+                pierceDT, pierce);
+    }
+
+    public static List<com.hbm.ntm.damage.DamageResistanceHandler.ResistanceContribution> resistanceContributions(
+            LivingEntity entity, String legacyTypeOrId, float amount, float pierceDT, float pierce) {
+        return com.hbm.ntm.damage.DamageResistanceHandler.resistanceContributions(entity, legacyTypeOrId, amount,
+                pierceDT, pierce);
     }
 
     public static void serialize(JsonWriter writer) throws IOException {
@@ -333,13 +738,59 @@ public class DamageResistanceHandler {
             return resistance == null ? null : Resistance.fromModern(resistance);
         }
 
+        public Resistance getResistance(ResourceKey<DamageType> type) {
+            com.hbm.ntm.damage.DamageResistance resistance = modern().getResistance(type);
+            return resistance == null ? null : Resistance.fromModern(resistance);
+        }
+
+        public Resistance getResistance(String legacyTypeOrId) {
+            com.hbm.ntm.damage.DamageResistance resistance = modern().getResistance(legacyTypeOrId);
+            return resistance == null ? null : Resistance.fromModern(resistance);
+        }
+
+        public Resistance getResistance(DamageClass damageClass) {
+            com.hbm.ntm.damage.DamageResistance resistance = modern().getResistance(damageClass.modern());
+            return resistance == null ? null : Resistance.fromModern(resistance);
+        }
+
+        public com.hbm.ntm.damage.DamageResistanceStats.ResistanceMatch match(DamageSource source) {
+            return modern().match(source);
+        }
+
+        public com.hbm.ntm.damage.DamageResistanceStats.ResistanceMatch match(ResourceKey<DamageType> type) {
+            return modern().match(type);
+        }
+
+        public com.hbm.ntm.damage.DamageResistanceStats.ResistanceMatch match(String legacyTypeOrId) {
+            return modern().match(legacyTypeOrId);
+        }
+
+        public com.hbm.ntm.damage.DamageResistanceStats.ResistanceMatch match(DamageClass damageClass) {
+            return modern().match(damageClass.modern());
+        }
+
         public ResistanceStats addExact(String type, float threshold, float resistance) {
-            exactResistances.put(type.toLowerCase(Locale.US), new Resistance(threshold, resistance));
+            exactResistances.put(exactTypeKey(type), new Resistance(threshold, resistance));
+            return this;
+        }
+
+        public ResistanceStats addExact(ResourceKey<DamageType> type, float threshold, float resistance) {
+            exactResistances.put(exactTypeKey(type), new Resistance(threshold, resistance));
+            return this;
+        }
+
+        public ResistanceStats addExact(DamageClass type, float threshold, float resistance) {
+            exactResistances.put(exactTypeKey(type), new Resistance(threshold, resistance));
             return this;
         }
 
         public ResistanceStats addCategory(String type, float threshold, float resistance) {
             categoryResistances.put(categoryKey(type), new Resistance(threshold, resistance));
+            return this;
+        }
+
+        public ResistanceStats addCategory(ResourceKey<DamageType> type, float threshold, float resistance) {
+            categoryResistances.put(typeToCategory(type), new Resistance(threshold, resistance));
             return this;
         }
 
@@ -369,10 +820,10 @@ public class DamageResistanceHandler {
         public static ResistanceStats fromModern(com.hbm.ntm.damage.DamageResistanceStats modern) {
             ResistanceStats stats = new ResistanceStats();
             for (Map.Entry<String, com.hbm.ntm.damage.DamageResistance> entry : modern.exactResistances().entrySet()) {
-                stats.exactResistances.put(entry.getKey(), Resistance.fromModern(entry.getValue()));
+                stats.addExact(entry.getKey(), entry.getValue().threshold(), entry.getValue().resistance());
             }
             for (Map.Entry<String, com.hbm.ntm.damage.DamageResistance> entry : modern.categoryResistances().entrySet()) {
-                stats.categoryResistances.put(entry.getKey(), Resistance.fromModern(entry.getValue()));
+                stats.addCategory(entry.getKey(), entry.getValue().threshold(), entry.getValue().resistance());
             }
             if (modern.otherResistance() != null) {
                 stats.otherResistance = Resistance.fromModern(modern.otherResistance());
@@ -381,48 +832,41 @@ public class DamageResistanceHandler {
         }
 
         public void serialize(JsonWriter writer) throws IOException {
-            if (!exactResistances.isEmpty()) {
+            JsonObject json = modern().toJson();
+            JsonArray exact = array(json, "exact");
+            if (exact.size() > 0) {
                 writer.name("exact").beginArray();
-                for (Map.Entry<String, Resistance> entry : exactResistances.entrySet()) {
+                for (JsonElement element : exact) {
+                    JsonArray entry = element.getAsJsonArray();
                     writer.beginArray().setIndent("");
-                    writer.value(entry.getKey()).value(entry.getValue().threshold).value(entry.getValue().resistance);
+                    writer.value(entry.get(0).getAsString()).value(entry.get(1).getAsFloat())
+                            .value(entry.get(2).getAsFloat());
                     writer.endArray().setIndent("  ");
                 }
                 writer.endArray();
             }
-            if (!categoryResistances.isEmpty()) {
+            JsonArray category = array(json, "category");
+            if (category.size() > 0) {
                 writer.name("category").beginArray();
-                for (Map.Entry<String, Resistance> entry : categoryResistances.entrySet()) {
+                for (JsonElement element : category) {
+                    JsonArray entry = element.getAsJsonArray();
                     writer.beginArray().setIndent("");
-                    writer.value(entry.getKey()).value(entry.getValue().threshold).value(entry.getValue().resistance);
+                    writer.value(entry.get(0).getAsString()).value(entry.get(1).getAsFloat())
+                            .value(entry.get(2).getAsFloat());
                     writer.endArray().setIndent("  ");
                 }
                 writer.endArray();
             }
-            if (otherResistance != null) {
+            JsonArray other = array(json, "other");
+            if (other.size() >= 2) {
                 writer.name("other").beginArray().setIndent("");
-                writer.value(otherResistance.threshold).value(otherResistance.resistance);
+                writer.value(other.get(0).getAsFloat()).value(other.get(1).getAsFloat());
                 writer.endArray().setIndent("  ");
             }
         }
 
         public static ResistanceStats deserialize(JsonObject json) {
-            ResistanceStats stats = new ResistanceStats();
-            for (JsonElement element : array(json, "exact")) {
-                JsonArray entry = element.getAsJsonArray();
-                stats.exactResistances.put(entry.get(0).getAsString().toLowerCase(Locale.US),
-                        new Resistance(entry.get(1).getAsFloat(), entry.get(2).getAsFloat()));
-            }
-            for (JsonElement element : array(json, "category")) {
-                JsonArray entry = element.getAsJsonArray();
-                stats.categoryResistances.put(categoryKey(entry.get(0).getAsString()),
-                        new Resistance(entry.get(1).getAsFloat(), entry.get(2).getAsFloat()));
-            }
-            JsonArray other = array(json, "other");
-            if (other.size() >= 2) {
-                stats.otherResistance = new Resistance(other.get(0).getAsFloat(), other.get(1).getAsFloat());
-            }
-            return stats;
+            return fromModern(com.hbm.ntm.damage.DamageResistanceStats.fromJson(json));
         }
     }
 
@@ -441,6 +885,10 @@ public class DamageResistanceHandler {
 
         public static Resistance fromModern(com.hbm.ntm.damage.DamageResistance modern) {
             return new Resistance(modern.threshold(), modern.resistance());
+        }
+
+        public static Resistance fromModernNullable(com.hbm.ntm.damage.DamageResistance modern) {
+            return modern == null ? null : fromModern(modern);
         }
     }
 }

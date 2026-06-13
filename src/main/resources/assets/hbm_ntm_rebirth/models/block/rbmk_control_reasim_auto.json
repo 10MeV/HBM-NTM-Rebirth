@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/rbmk/rbmk_control_reasim_auto_side",
+    "side": "hbm_ntm_rebirth:block/rbmk/rbmk_control_reasim_auto_side",
+    "top": "hbm_ntm_rebirth:block/rbmk/rbmk_control_reasim_auto_top",
+    "bottom": "hbm_ntm_rebirth:block/rbmk/rbmk_control_reasim_auto_bottom"
+  }
+}

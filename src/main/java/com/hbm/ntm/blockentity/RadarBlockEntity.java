@@ -44,6 +44,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
@@ -176,6 +177,7 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
                 level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
             }
         }
+        radar.networkPackNT(50);
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, RadarBlockEntity radar) {
@@ -569,6 +571,19 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
         super.handleClientSyncTag(tag);
         applySyncSnapshot(RadarSyncSnapshot.fromTag(tag), tag.contains(TAG_LEGACY_POWER, Tag.TAG_LONG),
                 tag.contains(TAG_ENTRIES, Tag.TAG_LIST));
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     private RadarSyncSnapshot syncSnapshot(RadarMapUpdate mapUpdate) {

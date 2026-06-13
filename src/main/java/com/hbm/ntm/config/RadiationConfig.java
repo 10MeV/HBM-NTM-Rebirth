@@ -29,7 +29,15 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.DoubleValue POLLUTION_SOOT_FOG_DIVISOR;
     public static ForgeConfigSpec.DoubleValue POLLUTION_SMOKE_STACK_SOOT_MULT;
     public static ForgeConfigSpec.BooleanValue ENABLE_MOB_GEAR;
+    public static ForgeConfigSpec.DoubleValue GLYPHID_TARGETING_THRESHOLD;
+    public static ForgeConfigSpec.BooleanValue RAMPANT_MODE;
+    public static ForgeConfigSpec.BooleanValue RAMPANT_NATURAL_SCOUT_SPAWN;
+    public static ForgeConfigSpec.DoubleValue RAMPANT_SCOUT_SPAWN_THRESHOLD;
+    public static ForgeConfigSpec.IntValue RAMPANT_SCOUT_SPAWN_CHANCE;
+    public static ForgeConfigSpec.BooleanValue RAMPANT_EXTENDED_TARGETING;
+    public static ForgeConfigSpec.BooleanValue RAMPANT_DIG;
     public static ForgeConfigSpec.BooleanValue RAMPANT_GLYPHID_GUIDANCE;
+    public static ForgeConfigSpec.DoubleValue RAMPANT_SMOKE_STACK_OVERRIDE;
 
     public static ForgeConfigSpec.BooleanValue DISABLE_ASBESTOS;
     public static ForgeConfigSpec.BooleanValue DISABLE_BLINDING;
@@ -122,9 +130,33 @@ public final class RadiationConfig {
         ENABLE_MOB_GEAR = builder
                 .comment("Legacy MobConfig 12.D01_enableMobGear: allows naturally spawning mobs to receive old HBM gear branches.")
                 .define("enableMobGear", true);
+        GLYPHID_TARGETING_THRESHOLD = builder
+                .comment("Legacy MobConfig 12.G08_targetingThreshold: soot required for glyphids' extended targeting range.")
+                .defineInRange("glyphidTargetingThreshold", 1.0D, 0.0D, Double.MAX_VALUE);
+        RAMPANT_MODE = builder
+                .comment("Legacy MobConfig 12.R01_rampantMode: aggregate toggle for old rampant glyphid/pollution behavior.")
+                .define("rampantMode", false);
+        RAMPANT_NATURAL_SCOUT_SPAWN = builder
+                .comment("Legacy MobConfig 12.R02_rampantScoutSpawn: allows scouts to spawn naturally in high-soot areas once glyphids exist.")
+                .define("rampantNaturalScoutSpawn", false);
+        RAMPANT_SCOUT_SPAWN_THRESHOLD = builder
+                .comment("Legacy MobConfig 12.R02.1_rampantScoutSpawnThresh: soot required for natural rampant scouts.")
+                .defineInRange("rampantScoutSpawnThreshold", 13.0D, 0.0D, Double.MAX_VALUE);
+        RAMPANT_SCOUT_SPAWN_CHANCE = builder
+                .comment("Legacy MobConfig 12.R02.2_rampantScoutSpawnChance: 1/x chance per potential spawn check.")
+                .defineInRange("rampantScoutSpawnChance", 1400, 1, Integer.MAX_VALUE);
+        RAMPANT_EXTENDED_TARGETING = builder
+                .comment("Legacy MobConfig 12.R03_rampantExtendedTargeting: forces glyphid extended targeting once glyphids exist.")
+                .define("rampantExtendedTargeting", false);
+        RAMPANT_DIG = builder
+                .comment("Legacy MobConfig 12.R04_rampantDig: allows rampant glyphids to dig toward waypoints once glyphids exist.")
+                .define("rampantDig", false);
         RAMPANT_GLYPHID_GUIDANCE = builder
                 .comment("Legacy MobConfig 12.R05_rampantGlyphidGuidance: records a sleeping player's bed as the pollution/rampant target point.")
                 .define("rampantGlyphidGuidance", false);
+        RAMPANT_SMOKE_STACK_OVERRIDE = builder
+                .comment("Legacy MobConfig 12.R06_rampantSmokeStackOverride: chimney pollution multiplier during rampant mode.")
+                .defineInRange("rampantSmokeStackOverride", 0.4D, 0.0D, Double.MAX_VALUE);
         builder.pop();
 
         builder.push("hazards");
@@ -213,7 +245,11 @@ public final class RadiationConfig {
     }
 
     public static float pollutionMultiplier() {
-        return POLLUTION_MULT.get().floatValue();
+        double multiplier = POLLUTION_MULT.get();
+        if (rampantModeEnabled() && multiplier == 1.0D) {
+            multiplier = 3.0D;
+        }
+        return (float) multiplier;
     }
 
     public static float pollutionBuffMobThreshold() {
@@ -221,7 +257,11 @@ public final class RadiationConfig {
     }
 
     public static float pollutionSootFogThreshold() {
-        return POLLUTION_SOOT_FOG_THRESHOLD.get().floatValue();
+        double threshold = POLLUTION_SOOT_FOG_THRESHOLD.get();
+        if (rampantModeEnabled()) {
+            threshold *= pollutionMultiplier();
+        }
+        return (float) threshold;
     }
 
     public static float pollutionSootFogDivisor() {
@@ -236,8 +276,44 @@ public final class RadiationConfig {
         return ENABLE_MOB_GEAR.get();
     }
 
+    public static float glyphidTargetingThreshold() {
+        return GLYPHID_TARGETING_THRESHOLD.get().floatValue();
+    }
+
+    public static boolean rampantModeEnabled() {
+        return RAMPANT_MODE.get();
+    }
+
+    public static boolean rampantNaturalScoutSpawnEnabled() {
+        return rampantModeEnabled() || RAMPANT_NATURAL_SCOUT_SPAWN.get();
+    }
+
+    public static float rampantScoutSpawnThreshold() {
+        return RAMPANT_SCOUT_SPAWN_THRESHOLD.get().floatValue();
+    }
+
+    public static int rampantScoutSpawnChance() {
+        return RAMPANT_SCOUT_SPAWN_CHANCE.get();
+    }
+
+    public static boolean rampantExtendedTargetingEnabled() {
+        return rampantModeEnabled() || RAMPANT_EXTENDED_TARGETING.get();
+    }
+
+    public static boolean rampantDigEnabled() {
+        return rampantModeEnabled() || RAMPANT_DIG.get();
+    }
+
     public static boolean rampantGlyphidGuidanceEnabled() {
-        return RAMPANT_GLYPHID_GUIDANCE.get();
+        return rampantModeEnabled() || RAMPANT_GLYPHID_GUIDANCE.get();
+    }
+
+    public static double chimneyPollutionMultiplier(boolean industrial) {
+        if (rampantModeEnabled()) {
+            double override = RAMPANT_SMOKE_STACK_OVERRIDE.get();
+            return industrial ? override / 2.0D : override;
+        }
+        return industrial ? 0.1D : 0.25D;
     }
 
     public static boolean asbestosHazardDisabled() {

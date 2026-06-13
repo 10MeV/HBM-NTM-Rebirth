@@ -24,10 +24,17 @@ public class TomImpactSavedData extends SavedData {
 
     private static TomImpactSavedData lastCachedUnsafe;
 
-    private float dust;
-    private float fire;
-    private boolean impact;
+    public float dust;
+    public float fire;
+    public boolean impact;
     private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
+
+    public TomImpactSavedData() {
+    }
+
+    public TomImpactSavedData(String tagName) {
+        this();
+    }
 
     public static TomImpactSavedData load(CompoundTag tag) {
         TomImpactSavedData data = new TomImpactSavedData();
@@ -50,6 +57,22 @@ public class TomImpactSavedData extends SavedData {
                 TomImpactSavedData::new);
         data.ifPresent(value -> lastCachedUnsafe = value);
         return data;
+    }
+
+    public static TomImpactSavedData forWorld(ServerLevel level) {
+        return forLevel(level);
+    }
+
+    public static Optional<TomImpactSavedData> forWorld(Level level) {
+        return forLevel(level);
+    }
+
+    public static TomImpactSavedData forWorld(MinecraftServer server) {
+        return getData(server);
+    }
+
+    public static Optional<TomImpactSavedData> forWorld(MinecraftServer server, ResourceKey<Level> dimension) {
+        return getData(server, dimension);
     }
 
     public static Optional<TomImpactSavedData> getExisting(ServerLevel level) {
@@ -85,6 +108,20 @@ public class TomImpactSavedData extends SavedData {
         return forLevel(level);
     }
 
+    public static TomImpactSavedData getData(MinecraftServer server) {
+        TomImpactSavedData data = WorldSavedDataHelper.get(server, DATA_NAME, TomImpactSavedData::load,
+                TomImpactSavedData::new);
+        lastCachedUnsafe = data;
+        return data;
+    }
+
+    public static Optional<TomImpactSavedData> getData(MinecraftServer server, ResourceKey<Level> dimension) {
+        Optional<TomImpactSavedData> data = WorldSavedDataHelper.get(server, dimension, DATA_NAME,
+                TomImpactSavedData::load, TomImpactSavedData::new);
+        data.ifPresent(value -> lastCachedUnsafe = value);
+        return data;
+    }
+
     public static TomImpactSavedData getLastCachedOrNull() {
         return lastCachedUnsafe;
     }
@@ -99,6 +136,19 @@ public class TomImpactSavedData extends SavedData {
         tag.putFloat(TAG_FIRE, fire);
         tag.putBoolean(TAG_IMPACT, impact);
         return tag;
+    }
+
+    public void readFromNBT(CompoundTag tag) {
+        TomImpactSavedData loaded = load(tag == null ? new CompoundTag() : tag);
+        dust = loaded.dust;
+        fire = loaded.fire;
+        impact = loaded.impact;
+        loadDiagnostics = loaded.loadDiagnostics;
+        setDirty(false);
+    }
+
+    public void writeToNBT(CompoundTag tag) {
+        save(tag);
     }
 
     public float dust() {
@@ -132,6 +182,31 @@ public class TomImpactSavedData extends SavedData {
             this.impact = impact;
             setDirty();
         }
+    }
+
+    public boolean setImpactState(float dust, float fire, boolean impact) {
+        boolean changed = Float.compare(this.dust, dust) != 0
+                || Float.compare(this.fire, fire) != 0
+                || this.impact != impact;
+        this.dust = dust;
+        this.fire = fire;
+        this.impact = impact;
+        if (changed) {
+            setDirty();
+        }
+        return changed;
+    }
+
+    public boolean setClimate(float dust, float fire) {
+        return setImpactState(dust, fire, impact);
+    }
+
+    public boolean beginTomImpactFire() {
+        return setImpactState(dust, 1.0F, true);
+    }
+
+    public boolean clearImpactState() {
+        return setImpactState(0.0F, 0.0F, false);
     }
 
     public boolean tickImpactClimate() {

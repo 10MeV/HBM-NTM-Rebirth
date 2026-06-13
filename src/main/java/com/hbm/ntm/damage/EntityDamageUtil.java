@@ -34,6 +34,13 @@ public final class EntityDamageUtil {
         return attackEntityFromNt(entity, sourceFor(entity, type), amount);
     }
 
+    public static boolean attackEntityFromNt(Entity entity, DamageClass damageClass, float amount) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, damageClass), amount);
+    }
+
     public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount) {
         if (amount <= 0.0F) {
             return false;
@@ -51,6 +58,14 @@ public final class EntityDamageUtil {
             return false;
         }
         return attackEntityFromNt(entity, sourceFor(entity, type), amount, pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, DamageClass damageClass, float amount,
+            float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, damageClass), amount, pierceDt, pierceDr);
     }
 
     public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
@@ -73,6 +88,14 @@ public final class EntityDamageUtil {
         return attackEntityFromNt(entity, sourceFor(entity, type), amount, ignoreIFrame);
     }
 
+    public static boolean attackEntityFromNt(Entity entity, DamageClass damageClass, float amount,
+            boolean ignoreIFrame) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, damageClass), amount, ignoreIFrame);
+    }
+
     public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
             boolean ignoreIFrame) {
         if (amount <= 0.0F) {
@@ -92,6 +115,14 @@ public final class EntityDamageUtil {
             return false;
         }
         return attackEntityFromNt(entity, sourceFor(entity, type), amount, ignoreIFrame, pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, DamageClass damageClass, float amount,
+            boolean ignoreIFrame, float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, damageClass), amount, ignoreIFrame, pierceDt, pierceDr);
     }
 
     public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
@@ -116,6 +147,15 @@ public final class EntityDamageUtil {
                 pierceDt, pierceDr);
     }
 
+    public static boolean attackEntityFromNt(Entity entity, DamageClass damageClass, float amount,
+            boolean ignoreIFrame, double knockbackMultiplier, float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, damageClass), amount, ignoreIFrame, knockbackMultiplier,
+                pierceDt, pierceDr);
+    }
+
     public static boolean attackEntityFromNt(Entity entity, String legacyTypeOrId, float amount,
             boolean ignoreIFrame, double knockbackMultiplier, float pierceDt, float pierceDr) {
         if (amount <= 0.0F) {
@@ -137,6 +177,16 @@ public final class EntityDamageUtil {
             return false;
         }
         return attackEntityFromNt(entity, sourceFor(entity, type), amount, ignoreIFrame, allowSpecialCancel,
+                knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static boolean attackEntityFromNt(Entity entity, DamageClass damageClass, float amount,
+            boolean ignoreIFrame, boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt,
+            float pierceDr) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromNt(entity, sourceFor(entity, damageClass), amount, ignoreIFrame, allowSpecialCancel,
                 knockbackMultiplier, pierceDt, pierceDr);
     }
 
@@ -199,6 +249,34 @@ public final class EntityDamageUtil {
         }
     }
 
+    public static DamageApplication attackEntityFromNtDetailed(Entity entity, ResourceKey<DamageType> type, float amount,
+            boolean ignoreIFrame, boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return DamageApplication.skipped(amount, 0.0F, OUTCOME_NON_POSITIVE_AMOUNT);
+        }
+        return attackEntityFromNtDetailed(entity, sourceFor(entity, type), amount, ignoreIFrame, allowSpecialCancel,
+                knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static DamageApplication attackEntityFromNtDetailed(Entity entity, DamageClass damageClass, float amount,
+            boolean ignoreIFrame, boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt,
+            float pierceDr) {
+        if (amount <= 0.0F) {
+            return DamageApplication.skipped(amount, 0.0F, OUTCOME_NON_POSITIVE_AMOUNT);
+        }
+        return attackEntityFromNtDetailed(entity, sourceFor(entity, damageClass), amount, ignoreIFrame,
+                allowSpecialCancel, knockbackMultiplier, pierceDt, pierceDr);
+    }
+
+    public static DamageApplication attackEntityFromNtDetailed(Entity entity, String legacyTypeOrId, float amount,
+            boolean ignoreIFrame, boolean allowSpecialCancel, double knockbackMultiplier, float pierceDt, float pierceDr) {
+        if (amount <= 0.0F) {
+            return DamageApplication.skipped(amount, 0.0F, OUTCOME_NON_POSITIVE_AMOUNT);
+        }
+        return attackEntityFromNtDetailed(entity, sourceFor(entity, legacyTypeOrId), amount, ignoreIFrame,
+                allowSpecialCancel, knockbackMultiplier, pierceDt, pierceDr);
+    }
+
     public static boolean attackEntityFromIgnoreIFrame(Entity entity, DamageSource source, float amount) {
         return attackEntityFromNt(entity, source, amount, true, true, 0.0D, 0.0F, 0.0F);
     }
@@ -208,6 +286,13 @@ public final class EntityDamageUtil {
             return false;
         }
         return attackEntityFromIgnoreIFrame(entity, sourceFor(entity, type), amount);
+    }
+
+    public static boolean attackEntityFromIgnoreIFrame(Entity entity, DamageClass damageClass, float amount) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        return attackEntityFromIgnoreIFrame(entity, sourceFor(entity, damageClass), amount);
     }
 
     public static boolean attackEntityFromIgnoreIFrame(Entity entity, String legacyTypeOrId, float amount) {
@@ -238,10 +323,27 @@ public final class EntityDamageUtil {
         expect(problems, "damaged should not retry i-frame",
                 !new DamageApplication(true, false, 5.0F, 3.0F, OUTCOME_DAMAGED).shouldRetryIgnoringIFrames());
         expect(problems, "legacy util facade skips non-positive key",
-                !com.hbm.util.EntityDamageUtil.attackEntityFromNT(null, com.hbm.lib.ModDamageSource.radiation, -1.0F));
+                !attackEntityFromNt((Entity) null, com.hbm.lib.ModDamageSource.radiation, -1.0F));
         expect(problems, "legacy util facade skips non-positive string",
-                !com.hbm.util.EntityDamageUtil.attackEntityFromIgnoreIFrame(null,
+                !attackEntityFromIgnoreIFrame((Entity) null,
                         com.hbm.lib.ModDamageSource.s_emp, 0.0F));
+        expect(problems, "damage class skips non-positive",
+                !attackEntityFromNt((Entity) null, DamageClass.LASER, -1.0F));
+        expect(problems, "legacy util facade skips non-positive damage class",
+                !com.hbm.util.EntityDamageUtil.attackEntityFromNT((Entity) null,
+                        com.hbm.util.DamageResistanceHandler.DamageClass.LASER, 0.0F));
+        DamageApplication skippedKey = attackEntityFromNtDetailed((Entity) null,
+                com.hbm.lib.ModDamageSource.radiation, 0.0F, true, true, 0.0D, 0.0F, 0.0F);
+        expect(problems, "detailed key skips before source creation",
+                OUTCOME_NON_POSITIVE_AMOUNT.equals(skippedKey.outcome()));
+        DamageApplication skippedString = attackEntityFromNtDetailed((Entity) null,
+                com.hbm.lib.ModDamageSource.s_emp, -1.0F, true, true, 0.0D, 0.0F, 0.0F);
+        expect(problems, "detailed string skips before source creation",
+                OUTCOME_NON_POSITIVE_AMOUNT.equals(skippedString.outcome()));
+        DamageApplication skippedDamageClass = attackEntityFromNtDetailed((Entity) null, DamageClass.SUBATOMIC,
+                -1.0F, true, true, 0.0D, 0.0F, 0.0F);
+        expect(problems, "detailed damage class skips before source creation",
+                OUTCOME_NON_POSITIVE_AMOUNT.equals(skippedDamageClass.outcome()));
 
         boolean previousAllowSpecialCancel = ALLOW_SPECIAL_CANCEL.get();
         try {
@@ -290,6 +392,13 @@ public final class EntityDamageUtil {
             throw new IllegalArgumentException("A target entity is required to create damage source " + type.location());
         }
         return ModDamageSources.source(entity.level(), type);
+    }
+
+    private static DamageSource sourceFor(Entity entity, DamageClass damageClass) {
+        if (entity == null) {
+            throw new IllegalArgumentException("A target entity is required to create damage source " + damageClass);
+        }
+        return ModDamageSources.source(entity.level(), damageClass);
     }
 
     private static DamageSource sourceFor(Entity entity, String legacyTypeOrId) {

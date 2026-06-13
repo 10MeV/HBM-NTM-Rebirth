@@ -1,10 +1,13 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.CargoElevatorBlock;
 import com.hbm.ntm.block.ElectricPressBlock;
 import com.hbm.ntm.block.LegacyConnectorBlock;
 import com.hbm.ntm.block.LegacyLargePylonBlock;
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachinePartRenderProperties;
+import com.hbm.ntm.block.LegacyMachineRenderProfile;
 import com.hbm.ntm.block.LegacyMediumPylonBlock;
 import com.hbm.ntm.block.LegacySmallPylonBlock;
 import com.hbm.ntm.block.LegacySubstationBlock;
@@ -18,6 +21,7 @@ import com.hbm.ntm.block.VendingMachineBlock;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjRenderContext;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -60,6 +64,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                 || blockItem.getBlock() instanceof AssemblyMachineBlock
                 || blockItem.getBlock() instanceof MachineBatterySocketBlock
                 || blockItem.getBlock() instanceof MachineLpw2Block
+                || blockItem.getBlock() instanceof CargoElevatorBlock
                 || blockItem.getBlock() instanceof ElectricPressBlock
                 || blockItem.getBlock() instanceof VendingMachineBlock
                 || blockItem.getBlock() instanceof LegacyConnectorBlock
@@ -80,6 +85,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             renderBatterySocketItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof MachineLpw2Block) {
             renderLpw2Item(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof CargoElevatorBlock) {
+            renderCargoElevatorItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof ElectricPressBlock) {
             renderElectricPressItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof VendingMachineBlock block) {
@@ -166,6 +173,36 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.pushPose();
         applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 0.0F);
         com.hbm.ntm.client.obj.ObjReactorModels.LPW2.renderAll(com.hbm.ntm.client.obj.ObjReactorModels.LPW2_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderCargoElevatorItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        AABB rawBounds = ObjMachineModels.ELEVATOR_LEGACY.boundsOnly("Base", "Piston", "Guides", "Platform");
+        AABB piston2 = transformBounds(ObjMachineModels.ELEVATOR_LEGACY.boundsOnly("Piston", "Guides", "Platform"),
+                point -> point.add(0.0D, 1.0D, 0.0D));
+        AABB guides3 = transformBounds(ObjMachineModels.ELEVATOR_LEGACY.boundsOnly("Guides"),
+                point -> point.add(0.0D, 2.0D, 0.0D));
+        AABB bounds = union(union(rawBounds, piston2), guides3);
+
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 3.25F);
+        ObjMachineModels.ELEVATOR_LEGACY.renderPart("Base", CargoElevatorRenderer.TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        ObjMachineModels.ELEVATOR_LEGACY.renderPart("Piston", CargoElevatorRenderer.TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        ObjMachineModels.ELEVATOR_LEGACY.renderPart("Guides", CargoElevatorRenderer.TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        ObjMachineModels.ELEVATOR_LEGACY.renderPart("Piston", CargoElevatorRenderer.TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        ObjMachineModels.ELEVATOR_LEGACY.renderPart("Guides", CargoElevatorRenderer.TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        ObjMachineModels.ELEVATOR_LEGACY.renderPart("Platform", CargoElevatorRenderer.TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        ObjMachineModels.ELEVATOR_LEGACY.renderPart("Guides", CargoElevatorRenderer.TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
@@ -394,14 +431,157 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         if (definition.itemRenderAll()) {
             model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
         } else {
-            for (String part : definition.itemRenderParts()) {
-                model.renderPart(part, definition.itemPartTextures().getOrDefault(part,
-                                definition.partTextures().getOrDefault(part, definition.textureLocation())),
-                        poseStack, buffer, packedLight, packedOverlay);
+            ObjRenderContext context = new ObjRenderContext(poseStack, buffer, state, packedLight, packedOverlay);
+            if (!renderMachineProfile(definition, model, context, poseStack)) {
+                renderMachineParts(definition, model, context);
             }
         }
 
         poseStack.popPose();
+    }
+
+    private static boolean renderMachineProfile(LegacyMachineDefinition definition, LegacyWavefrontModel model,
+            ObjRenderContext context, PoseStack poseStack) {
+        long currentMillis = System.currentTimeMillis();
+        if (definition.renderProfile() == LegacyMachineRenderProfile.ANNIHILATOR_UV_SCROLL) {
+            model.renderPart("Annihilator", definition.textureLocation(), context);
+            renderRotatingPart(model, LegacyTileRenderPlans.annihilatorRollerPlan(currentMillis), context, poseStack);
+            LegacyTileRenderPlans.TextureMatrixPartPlan belt = LegacyTileRenderPlans.annihilatorBeltPlan(currentMillis);
+            model.renderPart(belt.partName(), definition.itemPartTextures().getOrDefault(belt.partName(),
+                    definition.partTextures().getOrDefault(belt.partName(), definition.textureLocation())),
+                    context.withTextureMatrixPlan(belt.textureMatrix()));
+            return true;
+        }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.STEAM_ENGINE_ITEM_PREVIEW) {
+            SteamEngineRenderer.renderPlan(model,
+                    LegacyTileRenderPlans.steamEngineItemPlan(true, currentMillis), context, poseStack);
+            return true;
+        }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.INDUSTRIAL_TURBINE_ITEM_PREVIEW) {
+            IndustrialSteamTurbineRenderer.renderPlan(model,
+                    LegacyTileRenderPlans.industrialTurbineItemPlan(currentMillis), context, poseStack);
+            return true;
+        }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.ARC_FURNACE_STATIC_PREVIEW) {
+            LegacyArcFurnaceRenderHelper.renderPlan(model,
+                    LegacyTileRenderPlans.arcFurnaceStaticPreviewPlan(), context, poseStack);
+            return true;
+        }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.RADGEN_STATIC_SPECIAL) {
+            renderRadgenStatic(definition, model, context);
+            return true;
+        }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.BATTERY_REDD_STATIC_SPECIAL) {
+            renderBatteryReddStatic(definition, model, context);
+            return true;
+        }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.CRYSTALLIZER_STATIC_SPECIAL) {
+            renderCrystallizerStatic(definition, model, context);
+            return true;
+        }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.TURBOFAN_ITEM_PREVIEW) {
+            renderTurbofanItem(definition, model, context);
+            return true;
+        }
+        return false;
+    }
+
+    private static void renderRadgenStatic(LegacyMachineDefinition definition, LegacyWavefrontModel model,
+            ObjRenderContext context) {
+        model.renderPart("Base", definition.textureLocation(), context);
+        model.renderPart("Rotor", definition.textureLocation(), context);
+        renderTintedPart(model, definition.textureLocation(), LegacyTileRenderPlans.radgenLightPlan(false), context);
+        renderTintedPart(model, definition.textureLocation(), LegacyTileRenderPlans.radgenGlassPlan(), context);
+        model.renderPart("Glass", definition.textureLocation(), context);
+    }
+
+    private static void renderBatteryReddStatic(LegacyMachineDefinition definition, LegacyWavefrontModel model,
+            ObjRenderContext context) {
+        model.renderPart("Base", definition.textureLocation(), context);
+        model.renderPart("Wheel", definition.textureLocation(), context);
+        model.renderPart("Lights", definition.textureLocation(), context.fullBright());
+    }
+
+    private static void renderCrystallizerStatic(LegacyMachineDefinition definition, LegacyWavefrontModel model,
+            ObjRenderContext context) {
+        model.renderPart("Body", definition.textureLocation(), context);
+        model.renderPart("Spinner", definition.textureLocation(), context);
+        renderTintedPart(model, definition.textureLocation(), LegacyTileRenderPlans.crystallizerFluidPlan(false),
+                context);
+    }
+
+    private static void renderTurbofanItem(LegacyMachineDefinition definition, LegacyWavefrontModel model,
+            ObjRenderContext context) {
+        model.renderPart("Body", definition.textureLocation(), context);
+        model.renderPart("Blades", definition.textureLocation(), context);
+        model.renderPart("Afterburner", definition.itemPartTextures().getOrDefault("Afterburner",
+                definition.partTextures().getOrDefault("Afterburner", definition.textureLocation())), context);
+    }
+
+    private static void renderTintedPart(LegacyWavefrontModel model, net.minecraft.resources.ResourceLocation texture,
+            LegacyTileRenderPlans.ModelPartTintPlan plan, ObjRenderContext context) {
+        if (!plan.active()) {
+            return;
+        }
+        ObjRenderContext resolved = applyTintPlan(context, plan);
+        if (plan.textured()) {
+            model.renderPart(plan.partName(), texture, resolved);
+        } else {
+            model.renderPartUntextured(plan.partName(), resolved);
+        }
+    }
+
+    private static ObjRenderContext applyTintPlan(ObjRenderContext context,
+            LegacyTileRenderPlans.ModelPartTintPlan plan) {
+        ObjRenderContext resolved = context;
+        if (plan.blend() != null) {
+            resolved = resolved.withRenderMode(plan.blend().modernRenderMode());
+        }
+        if (plan.color() != null) {
+            resolved = resolved.withRgba(plan.color().redByte(), plan.color().greenByte(),
+                    plan.color().blueByte(), plan.color().alphaByte());
+        }
+        if (plan.fullbright() != null) {
+            resolved = resolved.withLegacyLightmap(plan.fullbright().lightmapX(), plan.fullbright().lightmapY());
+        }
+        return resolved;
+    }
+
+    private static void renderMachineParts(LegacyMachineDefinition definition, LegacyWavefrontModel model,
+            ObjRenderContext context) {
+        for (boolean translucentPass : new boolean[] { false, true }) {
+            for (String part : definition.itemRenderParts()) {
+                LegacyMachinePartRenderProperties properties = definition.itemPartRenderProperties().get(part);
+                if (LegacyMachinePartRenderContexts.translucent(properties) != translucentPass) {
+                    continue;
+                }
+                model.renderPart(part, definition.itemPartTextures().getOrDefault(part,
+                                definition.partTextures().getOrDefault(part, definition.textureLocation())),
+                        LegacyMachinePartRenderContexts.apply(context, properties));
+            }
+        }
+    }
+
+    private static void renderRotatingPart(LegacyWavefrontModel model,
+            LegacyTileRenderPlans.RotatingModelPartPlan part, ObjRenderContext context, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
+        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
+        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        model.renderPart(part.partName(), context);
+        poseStack.popPose();
+    }
+
+    private static void rotate(PoseStack poseStack, float axisX, float axisY, float axisZ, double degrees) {
+        if (axisX != 0.0F) {
+            poseStack.mulPose(Axis.XP.rotationDegrees((float) (degrees * axisX)));
+        }
+        if (axisY != 0.0F) {
+            poseStack.mulPose(Axis.YP.rotationDegrees((float) (degrees * axisY)));
+        }
+        if (axisZ != 0.0F) {
+            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (degrees * axisZ)));
+        }
     }
 
     private interface PointTransform {

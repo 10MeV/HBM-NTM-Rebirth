@@ -57,6 +57,11 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
     }
 
     @Override
+    protected int legacyNetworkPackRange() {
+        return 25;
+    }
+
+    @Override
     protected boolean tickLegacyMachine(Level level, BlockPos pos, BlockState state) {
         PairRecipe recipe = LegacyOilFluidRecipes.getCracking(inputTank.getTankType());
         boolean changed = setupTanks(recipe);

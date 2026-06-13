@@ -4,7 +4,6 @@ import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.particle.LegacyCasingEjectors;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -64,11 +63,6 @@ public class TurretChekhovBlockEntity extends TurretBlockEntityBase {
     }
 
     @Override
-    protected void tickServerSpecificAnimations() {
-        tickLegacySpin();
-    }
-
-    @Override
     protected void tickClientSpecificAnimations() {
         tickLegacySpin();
     }
@@ -79,11 +73,7 @@ public class TurretChekhovBlockEntity extends TurretBlockEntityBase {
         } else {
             spinAcceleration = Math.max(0.0F, spinAcceleration - 2.0F);
         }
-        if (level != null && level.isClientSide) {
-            triggerClientBarrelSpin(spinAcceleration);
-        } else {
-            triggerBarrelSpin(spinAcceleration);
-        }
+        triggerClientBarrelSpin(spinAcceleration);
     }
 
     @Override
@@ -99,7 +89,7 @@ public class TurretChekhovBlockEntity extends TurretBlockEntityBase {
         spawnBullet(config, 10.0F);
         spawnMuzzleLargeExplode(1.5F, 1);
         scheduleCasing(config);
-        playTurretSound(ModSounds.TURRET_CHEKHOV_FIRE.get(), 2.0F, 1.0F);
+        playTurretSound("hbm:turret.chekhov_fire", 2.0F, 1.0F);
     }
 
     @Override

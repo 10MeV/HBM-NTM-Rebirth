@@ -26,6 +26,7 @@ import com.hbm.ntm.menu.RadioAutocalMenu;
 import com.hbm.ntm.menu.RadioTelexMenu;
 import com.hbm.ntm.menu.RadioTorchMenu;
 import com.hbm.ntm.menu.RBMKPanelMenu;
+import com.hbm.ntm.menu.RBMKStorageMenu;
 import com.hbm.ntm.menu.RadarMenu;
 import com.hbm.ntm.menu.RemoteFluidMachineMenu;
 import com.hbm.ntm.menu.RefineryMenu;
@@ -151,6 +152,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<RBMKPanelMenu>> RBMK_PANEL =
             MENUS.register("rbmk_panel", () -> IForgeMenuType.create(RBMKPanelMenu::new));
+
+    public static final RegistryObject<MenuType<RBMKStorageMenu>> RBMK_STORAGE =
+            MENUS.register("rbmk_storage", () -> IForgeMenuType.create(RBMKStorageMenu::new));
 
     public static void register(IEventBus modBus) {
         MENUS.register(modBus);

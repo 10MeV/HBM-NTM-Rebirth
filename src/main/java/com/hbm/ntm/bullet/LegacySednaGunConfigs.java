@@ -13,6 +13,13 @@ import com.hbm.ntm.bullet.SednaGunConfig.ModeBuilder;
 import com.hbm.ntm.bullet.SednaGunConfig.WeaponQuality;
 
 public final class LegacySednaGunConfigs {
+    public static final String HUD_COMPONENT_DURABILITY = "HUD_COMPONENT_DURABILITY";
+    public static final String HUD_COMPONENT_DURABILITY_MIRROR = "HUD_COMPONENT_DURABILITY_MIRROR";
+    public static final String HUD_COMPONENT_AMMO = "HUD_COMPONENT_AMMO";
+    public static final String HUD_COMPONENT_AMMO_MIRROR = "HUD_COMPONENT_AMMO_MIRROR";
+    public static final String HUD_COMPONENT_AMMO_NOCOUNTER = "HUD_COMPONENT_AMMO_NOCOUNTER";
+    public static final String HUD_COMPONENT_AMMO_SECOND = "HUD_COMPONENT_AMMO_SECOND";
+
     private static final Map<String, SednaGunConfig> BY_NAME = new LinkedHashMap<>();
 
     public static final SednaGunConfig GUN_DEBUG = register(SednaGunConfig.builder("gun_debug", "GunFactory",
@@ -1025,8 +1032,62 @@ public final class LegacySednaGunConfigs {
     }
 
     private static SednaGunConfig register(SednaGunConfig config) {
+        config = withLegacyHud(config);
         BY_NAME.put(config.legacyName(), config);
         return config;
+    }
+
+    private static SednaGunConfig withLegacyHud(SednaGunConfig config) {
+        List<SednaGunConfig.GunModeConfig> modes = new ArrayList<>(config.configs().size());
+        for (SednaGunConfig.GunModeConfig mode : config.configs()) {
+            List<String> hud = legacyHudComponents(config.legacyName(), mode.configIndex());
+            modes.add(hud.isEmpty() ? mode : copyModeWithHud(mode, hud));
+        }
+        return new SednaGunConfig(config.legacyName(), config.sourceClassName(), config.itemClassName(),
+                config.quality(), modes, config.notes());
+    }
+
+    private static SednaGunConfig.GunModeConfig copyModeWithHud(SednaGunConfig.GunModeConfig mode,
+            List<String> hudComponents) {
+        return new SednaGunConfig.GunModeConfig(mode.configIndex(), mode.durability(), mode.drawDuration(),
+                mode.inspectDuration(), mode.inspectCancel(), mode.crosshair(), mode.hideCrosshair(),
+                mode.thermalSights(), mode.reloadRequiresTypeChange(), mode.reloadAnimationsSequential(),
+                mode.scopeTexture(), mode.smokeHandlerName(), mode.orchestraName(),
+                mode.pressPrimaryHandlerName(), mode.pressSecondaryHandlerName(), mode.pressTertiaryHandlerName(),
+                mode.pressReloadHandlerName(), mode.releasePrimaryHandlerName(), mode.releaseSecondaryHandlerName(),
+                mode.releaseTertiaryHandlerName(), mode.releaseReloadHandlerName(), mode.deciderName(),
+                mode.animationProfileName(), hudComponents, mode.receivers(), mode.notes());
+    }
+
+    private static List<String> legacyHudComponents(String legacyName, int configIndex) {
+        return switch (legacyName) {
+            case "gun_debug" -> List.of(HUD_COMPONENT_DURABILITY, HUD_COMPONENT_AMMO, HUD_COMPONENT_AMMO_SECOND);
+            case "gun_light_revolver_dani", "gun_maresleg_akimbo", "gun_uzi_akimbo", "gun_star_f_akimbo",
+                    "gun_minigun_dual" -> configIndex == 0
+                    ? List.of(HUD_COMPONENT_DURABILITY_MIRROR, HUD_COMPONENT_AMMO_MIRROR)
+                    : List.of(HUD_COMPONENT_DURABILITY, HUD_COMPONENT_AMMO);
+            case "gun_aberrator_eott" -> configIndex == 0
+                    ? List.of(HUD_COMPONENT_AMMO_MIRROR)
+                    : List.of(HUD_COMPONENT_AMMO);
+            case "gun_maresleg_broken", "gun_autoshotgun_heretic", "gun_folly", "gun_aberrator" ->
+                    List.of(HUD_COMPONENT_AMMO);
+            case "gun_flamer", "gun_flamer_topaz", "gun_flamer_daybreaker" ->
+                    List.of(HUD_COMPONENT_DURABILITY, HUD_COMPONENT_AMMO_NOCOUNTER);
+            case "gun_pepperbox", "gun_light_revolver", "gun_light_revolver_atlas", "gun_henry",
+                    "gun_henry_lincoln", "gun_greasegun", "gun_maresleg", "gun_flaregun",
+                    "gun_heavy_revolver", "gun_heavy_revolver_lilmac", "gun_heavy_revolver_protege",
+                    "gun_carbine", "gun_am180", "gun_liberator", "gun_congolake", "gun_uzi", "gun_spas12",
+                    "gun_panzerschreck", "gun_star_f", "gun_g3", "gun_g3_zebra", "gun_stinger", "gun_mk108",
+                    "gun_chemthrower", "gun_amat", "gun_amat_subtlety", "gun_amat_penance", "gun_m2",
+                    "gun_autoshotgun", "gun_autoshotgun_shredder", "gun_autoshotgun_sexy", "gun_quadro",
+                    "gun_lag", "gun_minigun", "gun_minigun_lacunae", "gun_missile_launcher",
+                    "gun_tesla_cannon", "gun_laser_pistol", "gun_laser_pistol_pew_pew",
+                    "gun_laser_pistol_morning_glory", "gun_stg77", "gun_tau", "gun_fatman", "gun_lasrifle",
+                    "gun_coilgun", "gun_hangman", "gun_mas36", "gun_bolter", "gun_double_barrel",
+                    "gun_double_barrel_sacred_dragon", "gun_fireext", "gun_charge_thrower" ->
+                    List.of(HUD_COMPONENT_DURABILITY, HUD_COMPONENT_AMMO);
+            default -> List.of();
+        };
     }
 
     private LegacySednaGunConfigs() {

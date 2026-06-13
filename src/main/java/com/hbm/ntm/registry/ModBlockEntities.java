@@ -11,6 +11,7 @@ import com.hbm.ntm.blockentity.BigAssTankBlockEntity;
 import com.hbm.ntm.blockentity.BoilerBlockEntity;
 import com.hbm.ntm.blockentity.BombMultiBlockEntity;
 import com.hbm.ntm.blockentity.CableDiodeBlockEntity;
+import com.hbm.ntm.blockentity.CargoElevatorBlockEntity;
 import com.hbm.ntm.blockentity.CatalyticCrackerBlockEntity;
 import com.hbm.ntm.blockentity.CatalyticReformerBlockEntity;
 import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
@@ -74,6 +75,7 @@ import com.hbm.ntm.blockentity.RadioTorchLogicBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchReaderBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchReceiverBlockEntity;
 import com.hbm.ntm.blockentity.RadioTorchSenderBlockEntity;
+import com.hbm.ntm.blockentity.RBMKColumnBlockEntity;
 import com.hbm.ntm.blockentity.RBMKPanelBlockEntity;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.blockentity.RedCableGaugeBlockEntity;
@@ -242,6 +244,28 @@ public final class ModBlockEntities {
                             ModBlocks.RBMK_KEY_PAD.get(),
                             ModBlocks.RBMK_LEVER.get(),
                             ModBlocks.RBMK_NUMITRON.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RBMKColumnBlockEntity>> RBMK_COLUMN =
+            BLOCK_ENTITIES.register("rbmk_column", () ->
+                    BlockEntityType.Builder.of(RBMKColumnBlockEntity::create,
+                            ModBlocks.RBMK_BLANK.get(),
+                            ModBlocks.RBMK_MODERATOR.get(),
+                            ModBlocks.RBMK_REFLECTOR.get(),
+                            ModBlocks.RBMK_ABSORBER.get(),
+                            ModBlocks.RBMK_ROD.get(),
+                            ModBlocks.RBMK_ROD_MOD.get(),
+                            ModBlocks.RBMK_ROD_REASIM.get(),
+                            ModBlocks.RBMK_ROD_REASIM_MOD.get(),
+                            ModBlocks.RBMK_BOILER.get(),
+                            ModBlocks.RBMK_HEATER.get(),
+                            ModBlocks.RBMK_COOLER.get(),
+                            ModBlocks.RBMK_OUTGASSER.get(),
+                            ModBlocks.RBMK_STORAGE.get(),
+                            ModBlocks.RBMK_CONTROL.get(),
+                            ModBlocks.RBMK_CONTROL_MOD.get(),
+                            ModBlocks.RBMK_CONTROL_AUTO.get(),
+                            ModBlocks.RBMK_CONTROL_REASIM.get(),
+                            ModBlocks.RBMK_CONTROL_REASIM_AUTO.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<PileFuelBlockEntity>> PILE_FUEL =
             BLOCK_ENTITIES.register("pile_fuel", () ->
@@ -558,6 +582,11 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(MachineLpw2BlockEntity::new,
                             ModBlocks.MACHINE_LPW2.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<CargoElevatorBlockEntity>> CARGO_ELEVATOR =
+            BLOCK_ENTITIES.register("cargo_elevator", () ->
+                    BlockEntityType.Builder.of(CargoElevatorBlockEntity::new,
+                            ModBlocks.CARGO_ELEVATOR.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<SteamEngineBlockEntity>> STEAM_ENGINE =
             BLOCK_ENTITIES.register("steam_engine", () ->
                     BlockEntityType.Builder.of(SteamEngineBlockEntity::new,
@@ -604,6 +633,7 @@ public final class ModBlockEntities {
                             ModBlocks.HEATER_ELECTRIC.get(),
                             ModBlocks.MACHINE_CONDENSER_POWERED.get(),
                             ModBlocks.MACHINE_COMPRESSOR_COMPACT.get(),
+                            ModBlocks.MACHINE_PRECASS.get(),
                             ModBlocks.MACHINE_PUREX.get(),
                             ModBlocks.MACHINE_SILEX.get(),
                             ModBlocks.MACHINE_EXPOSURE_CHAMBER.get(),

@@ -32,13 +32,28 @@ public class FsbFueledArmorItem extends FsbArmorItem implements IFillableItem {
     public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, FluidType fuelType, int maxFuel, int fillRate, int consumption,
             int drain) {
-        this(material, type, properties, fullSetEffects, List.of(fuelType), maxFuel, fillRate, consumption, drain);
+        this(material, type, properties, fullSetEffects, List.of(fuelType), maxFuel, fillRate, consumption, drain,
+                FullSetTraits.NONE);
+    }
+
+    public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+            List<FullSetEffect> fullSetEffects, FluidType fuelType, int maxFuel, int fillRate, int consumption,
+            int drain, FullSetTraits fullSetTraits) {
+        this(material, type, properties, fullSetEffects, List.of(fuelType), maxFuel, fillRate, consumption, drain,
+                fullSetTraits);
     }
 
     public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, List<FluidType> acceptedFuelTypes, int maxFuel, int fillRate,
             int consumption, int drain) {
-        super(material, type, properties, fullSetEffects);
+        this(material, type, properties, fullSetEffects, acceptedFuelTypes, maxFuel, fillRate, consumption, drain,
+                FullSetTraits.NONE);
+    }
+
+    public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+            List<FullSetEffect> fullSetEffects, List<FluidType> acceptedFuelTypes, int maxFuel, int fillRate,
+            int consumption, int drain, FullSetTraits fullSetTraits) {
+        super(material, type, properties, fullSetEffects, false, 0, fullSetTraits);
         List<FluidType> fuels = acceptedFuelTypes == null ? List.of()
                 : acceptedFuelTypes.stream()
                         .map(fluid -> fluid == null ? HbmFluids.NONE : fluid)
@@ -59,6 +74,14 @@ public class FsbFueledArmorItem extends FsbArmorItem implements IFillableItem {
         this(material, type, properties, fullSetEffects,
                 acceptedFuelTypes == null ? List.of() : Arrays.asList(acceptedFuelTypes),
                 maxFuel, fillRate, consumption, drain);
+    }
+
+    public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+            List<FullSetEffect> fullSetEffects, int maxFuel, int fillRate, int consumption, int drain,
+            FullSetTraits fullSetTraits, FluidType... acceptedFuelTypes) {
+        this(material, type, properties, fullSetEffects,
+                acceptedFuelTypes == null ? List.of() : Arrays.asList(acceptedFuelTypes),
+                maxFuel, fillRate, consumption, drain, fullSetTraits);
     }
 
     @Override

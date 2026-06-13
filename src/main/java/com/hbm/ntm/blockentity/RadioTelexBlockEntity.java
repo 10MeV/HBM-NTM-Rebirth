@@ -2,10 +2,12 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.redstoneoverradio.RTTYTelexState;
 import com.hbm.ntm.menu.RadioTelexMenu;
-import com.hbm.ntm.network.HbmTileSyncable;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,7 +22,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
-public class RadioTelexBlockEntity extends BlockEntity implements MenuProvider, HbmTileSyncable {
+public class RadioTelexBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyLoadedTile {
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final RTTYTelexState telex = new RTTYTelexState();
     private long ticksExisted;
 
@@ -34,10 +37,16 @@ public class RadioTelexBlockEntity extends BlockEntity implements MenuProvider, 
         if (blockEntity.ticksExisted % 16L == 0L || blockEntity.telex.isSending()) {
             blockEntity.setChangedAndSync();
         }
+        blockEntity.networkPackNT(16);
     }
 
     public RTTYTelexState telexState() {
         return telex;
+    }
+
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
     }
 
     public void sendControl(CompoundTag tag) {
@@ -60,12 +69,14 @@ public class RadioTelexBlockEntity extends BlockEntity implements MenuProvider, 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         telex.save(tag);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         if (level != null && level.isClientSide) {
             telex.loadClient(tag);
         } else {
@@ -87,13 +98,28 @@ public class RadioTelexBlockEntity extends BlockEntity implements MenuProvider, 
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
         telex.saveClient(tag);
         return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
         telex.loadClient(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(getClientSyncTag());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Override

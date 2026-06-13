@@ -6,7 +6,9 @@ import com.hbm.ntm.entity.effect.CloudFleijaRainbowEntity;
 import com.hbm.ntm.entity.effect.CloudSoliniumEntity;
 import com.hbm.ntm.entity.effect.EmpBlastEntity;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
+import com.hbm.ntm.entity.effect.FireLingeringEntity;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
+import com.hbm.ntm.entity.effect.MistEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
@@ -24,6 +26,8 @@ import com.hbm.ntm.entity.missile.MinerRocketEntity;
 import com.hbm.ntm.entity.missile.MissileEntity;
 import com.hbm.ntm.entity.missile.SoyuzCapsuleEntity;
 import com.hbm.ntm.entity.missile.SoyuzEntity;
+import com.hbm.ntm.entity.projectile.ArtilleryRocketEntity;
+import com.hbm.ntm.entity.projectile.ArtilleryShellEntity;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.entity.projectile.ChemicalProjectileEntity;
 import com.hbm.ntm.entity.projectile.CoinEntity;
@@ -124,6 +128,25 @@ public final class ModEntityTypes {
                     .fireImmune()
                     .noSummon()
                     .build("entity_emp_blast"));
+
+    public static final RegistryObject<EntityType<FireLingeringEntity>> FIRE_LINGERING =
+            ENTITY_TYPES.register("entity_fire_lingering", () -> EntityType.Builder
+                    .<FireLingeringEntity>of(FireLingeringEntity::new, MobCategory.MISC)
+                    .sized(6.0F, 2.0F)
+                    .clientTrackingRange(128)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_fire_lingering"));
+
+    public static final RegistryObject<EntityType<MistEntity>> MIST =
+            ENTITY_TYPES.register("entity_mist", () -> EntityType.Builder
+                    .<MistEntity>of(MistEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("entity_mist"));
 
     public static final RegistryObject<EntityType<EmpLogicEntity>> EMP_LOGIC =
             ENTITY_TYPES.register("entity_emp_logic", () -> EntityType.Builder
@@ -493,6 +516,22 @@ public final class ModEntityTypes {
                     .clientTrackingRange(128)
                     .updateInterval(1)
                     .build("entity_bullet_base_nt"));
+
+    public static final RegistryObject<EntityType<ArtilleryShellEntity>> ARTILLERY_SHELL =
+            ENTITY_TYPES.register("entity_artillery_shell", () -> EntityType.Builder
+                    .<ArtilleryShellEntity>of(ArtilleryShellEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .build("entity_artillery_shell"));
+
+    public static final RegistryObject<EntityType<ArtilleryRocketEntity>> ARTILLERY_ROCKET =
+            ENTITY_TYPES.register("entity_himars", () -> EntityType.Builder
+                    .<ArtilleryRocketEntity>of(ArtilleryRocketEntity::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .build("entity_himars"));
 
     public static final RegistryObject<EntityType<ChemicalProjectileEntity>> CHEMICAL_PROJECTILE =
             ENTITY_TYPES.register("entity_chemthrower_splash", () -> EntityType.Builder

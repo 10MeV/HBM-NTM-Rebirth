@@ -36,6 +36,7 @@ public class RadioTorchReaderBlockEntity extends RadioTorchBlockEntity {
         if (attached instanceof RORValueProvider provider && torch.radio.broadcastChangedValues(level, provider) > 0) {
             torch.setChangedAndSync(false);
         }
+        torch.networkPackLegacyRadioTorch();
     }
 
     @Override

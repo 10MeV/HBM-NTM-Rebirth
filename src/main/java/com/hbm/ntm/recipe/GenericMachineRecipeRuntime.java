@@ -2,6 +2,7 @@ package com.hbm.ntm.recipe;
 
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidRecipeIO;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionType;
@@ -181,14 +182,8 @@ public final class GenericMachineRecipeRuntime {
         if (recipe == null) {
             return;
         }
-        List<HbmFluidStack> fluidInputs = recipe.getFluidInputs();
-        List<HbmFluidStack> fluidOutputs = recipe.getFluidOutputs();
-        for (int i = 0; i < inputTanks.size(); i++) {
-            conformTank(inputTanks.get(i), i < fluidInputs.size() ? fluidInputs.get(i) : null, defaultCapacity);
-        }
-        for (int i = 0; i < outputTanks.size(); i++) {
-            conformTank(outputTanks.get(i), i < fluidOutputs.size() ? fluidOutputs.get(i) : null, defaultCapacity);
-        }
+        HbmFluidRecipeIO.setupRecipeTanks(
+                recipe.getFluidInputs(), recipe.getFluidOutputs(), inputTanks, outputTanks, defaultCapacity);
     }
 
     public static boolean isItemValidForCurrentRecipe(GenericMachineRecipe recipe, GenericMachineRecipe.Machine machine,
@@ -251,9 +246,10 @@ public final class GenericMachineRecipeRuntime {
         }
 
         List<HbmFluidStack> fluidInputs = recipe.getFluidInputs();
-        int fluidCount = Math.min(fluidInputs.size(), inputTanks.size());
-        for (int i = 0; i < fluidCount; i++) {
-            inputTanks.get(i).drain(fluidInputs.get(i).amount(), false);
+        HbmFluidRecipeIO.FluidStackSetTransferReport fluidReport =
+                HbmFluidRecipeIO.consumeInputsReport(fluidInputs, inputTanks, false);
+        if (!fluidReport.complete()) {
+            throw new IllegalStateException("Generic machine fluid inputs no longer match after canProcess: " + recipe.getId());
         }
     }
 
@@ -294,13 +290,10 @@ public final class GenericMachineRecipeRuntime {
         }
 
         List<HbmFluidStack> fluidOutputs = recipe.getFluidOutputs();
-        int fluidCount = Math.min(fluidOutputs.size(), outputTanks.size());
-        for (int i = 0; i < fluidCount; i++) {
-            HbmFluidStack output = fluidOutputs.get(i);
-            int filled = outputTanks.get(i).fill(output.type(), output.amount(), output.pressure(), false);
-            if (filled != output.amount()) {
-                throw new IllegalStateException("Generic machine fluid output no longer fits after canProcess: " + recipe.getId());
-            }
+        HbmFluidRecipeIO.FluidStackSetTransferReport fluidReport =
+                HbmFluidRecipeIO.produceOutputsReport(fluidOutputs, outputTanks, false);
+        if (!fluidReport.complete()) {
+            throw new IllegalStateException("Generic machine fluid output no longer fits after canProcess: " + recipe.getId());
         }
     }
 
@@ -371,20 +364,6 @@ public final class GenericMachineRecipeRuntime {
         return selectedRecipe == null || selectedRecipe.isBlank() ? NULL_RECIPE : selectedRecipe;
     }
 
-    private static void conformTank(HbmFluidTank tank, @Nullable HbmFluidStack stack, int defaultCapacity) {
-        if (stack == null) {
-            tank.resetTank();
-            if (defaultCapacity > 0) {
-                tank.changeTankSize(Math.max(tank.getFill(), defaultCapacity));
-            }
-            return;
-        }
-        tank.conform(stack);
-        if (defaultCapacity > 0) {
-            tank.changeTankSize(Math.max(Math.max(tank.getFill(), stack.amount() * 2), defaultCapacity));
-        }
-    }
-
     public record ProcessingFactors(double speedMultiplier, double powerMultiplier) {
         public ProcessingFactors {
             speedMultiplier = Math.max(0.0D, speedMultiplier);
@@ -404,18 +383,7 @@ public final class GenericMachineRecipeRuntime {
     }
 
     private static boolean hasFluidInputs(GenericMachineRecipe recipe, List<HbmFluidTank> inputTanks) {
-        List<HbmFluidStack> fluidInputs = recipe.getFluidInputs();
-        int fluidCount = Math.min(fluidInputs.size(), inputTanks.size());
-        for (int i = 0; i < fluidCount; i++) {
-            HbmFluidStack input = fluidInputs.get(i);
-            HbmFluidTank tank = inputTanks.get(i);
-            if (tank.getTankType() != input.type()
-                    || tank.getPressure() != HbmFluidTank.clampPressure(input.pressure())
-                    || tank.getFill() < input.amount()) {
-                return false;
-            }
-        }
-        return true;
+        return HbmFluidRecipeIO.inspectInputs(recipe.getFluidInputs(), inputTanks).complete();
     }
 
     private static boolean canFitItemOutputs(GenericMachineRecipe recipe, ItemStackHandler items, int[] inputSlots,
@@ -470,15 +438,7 @@ public final class GenericMachineRecipeRuntime {
     }
 
     private static boolean canFitFluidOutputs(GenericMachineRecipe recipe, List<HbmFluidTank> outputTanks) {
-        List<HbmFluidStack> outputs = recipe.getFluidOutputs();
-        int outputCount = Math.min(outputs.size(), outputTanks.size());
-        for (int i = 0; i < outputCount; i++) {
-            HbmFluidStack output = outputs.get(i);
-            if (outputTanks.get(i).fill(output.type(), output.amount(), output.pressure(), true) != output.amount()) {
-                return false;
-            }
-        }
-        return true;
+        return HbmFluidRecipeIO.inspectOutputs(recipe.getFluidOutputs(), outputTanks).complete();
     }
 
     public record Index(List<GenericMachineRecipe> recipes,

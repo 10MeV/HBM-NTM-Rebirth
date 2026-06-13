@@ -1,24 +1,37 @@
 package com.hbm.ntm.bullet;
 
 import com.hbm.ntm.block.ShotDetonatableBlock;
+import com.hbm.ntm.compat.CompatExternal;
 import com.hbm.ntm.damage.DamageClass;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.entity.effect.EmpBlastEntity;
+import com.hbm.ntm.entity.effect.FireLingeringEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.explosion.ExplosionLarge;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.explosion.NuclearExplosionUtil;
 import com.hbm.ntm.explosion.vnt.ExplosionVnt;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
+import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorBulkie;
+import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorStandard;
+import com.hbm.ntm.explosion.vnt.standard.BlockMutatorBalefire;
+import com.hbm.ntm.explosion.vnt.standard.BlockMutatorDebris;
+import com.hbm.ntm.explosion.vnt.standard.BlockMutatorFire;
+import com.hbm.ntm.explosion.vnt.standard.BlockProcessorStandard;
 import com.hbm.ntm.explosion.vnt.standard.EntityProcessorCrossSmooth;
 import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectStandard;
+import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectWeapon;
 import com.hbm.ntm.explosion.vnt.standard.PlayerProcessorStandard;
+import com.hbm.ntm.fluid.HbmExtinguishType;
+import com.hbm.ntm.fluid.HbmFluidRepairable;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.ArmorUtil;
+import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -37,11 +50,13 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.StainedGlassBlock;
 import net.minecraft.world.level.block.StainedGlassPaneBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -75,23 +90,30 @@ public final class BulletImpactUtil {
         }
 
         boolean fire = applyIncendiaryBlocks(config, level, position);
-        fire |= applyFlameBlockImpact(config, level, hitBlock, hitSide);
         boolean extinguish = applyFireExtinguishBlocks(config, level, hitBlock, position);
-        boolean extinguisherPlacement = applyFireExtinguisherPlacement(config, level, hitBlock, hitSide, position);
+        boolean extinguisherRepair = applyFireExtinguisherRepair(config, level, hitBlock);
+        boolean extinguisherPlacement = !extinguisherRepair
+                && applyFireExtinguisherPlacement(config, level, hitBlock, hitSide, position);
         boolean emp = applyEmp(config, level, position);
         boolean jolt = applyJolt(config, level, position);
-        boolean explosion = applyExplosion(config, level, position, source);
+        boolean explosion = applyExplosion(config, level, position, source, hitSide,
+                impactDamage(config, impactDamage));
         boolean shrapnel = applyShrapnel(config, level, position, source);
         boolean rainbow = applyRainbow(config, level, position);
         boolean nuke = applyNuke(config, level, position);
+        boolean flameBlockIgnited = applyFlameBlockImpact(config, level, hitBlock, hitSide);
+        fire |= flameBlockIgnited;
+        boolean lingeringFire = applyLegacyExplosiveLingeringFire(config, level, position);
+        lingeringFire |= applyLegacyFlamerLingeringFire(config, level, position, hitBlock, flameBlockIgnited);
+        lingeringFire |= applyLegacyBeamLingeringFire(config, level, position, hitBlock, flameBlockIgnited);
         boolean specialBehavior = applyTaggedImpactEffects(config, level, position, source, hitSide,
                 impactDamage(config, impactDamage));
         List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests =
                 BulletSpecialSpawnUtil.collectImpactSpawnRequests(config, level, source, position, null, hitSide,
                         impactDamage(config, impactDamage));
         BlockBreakResult blockBreak = applyBlockBreak(config, level, hitBlock, source);
-        return new BlockImpactResult(discard, fire, emp, jolt, explosion, shrapnel, rainbow, nuke,
-                specialBehavior || extinguish || extinguisherPlacement,
+        return new BlockImpactResult(discard, fire || lingeringFire, emp, jolt, explosion, shrapnel, rainbow, nuke,
+                specialBehavior || lingeringFire || extinguish || extinguisherRepair || extinguisherPlacement,
                 blockBreak.destroyedBlock() || blockBreak.brokeGlass() || blockBreak.shotDetonated(),
                 blockBreak.shotDetonated(), extinguish, spawnRequests);
     }
@@ -115,7 +137,29 @@ public final class BulletImpactUtil {
         Vec3 impact = position == null ? target.position() : position;
         BlockImpactResult block = applyBlockImpactEffects(config, target.level(), impact, source, null, null,
                 false, impactDamage);
+        List<BulletSpecialSpawnUtil.SpawnRequest> splitSubBeams =
+                BulletSpecialSpawnUtil.collectLightningSplitSubBeams(config, target.level(), source, target, impact,
+                        random, impactDamage(config, impactDamage));
+        block = withAdditionalSpawnRequests(block, splitSubBeams);
         return new EntityImpactResult(block.discardProjectile(), hurt, block);
+    }
+
+    private static BlockImpactResult withAdditionalSpawnRequests(BlockImpactResult result,
+            List<BulletSpecialSpawnUtil.SpawnRequest> additional) {
+        if (result == null) {
+            return BlockImpactResult.NONE;
+        }
+        if (additional == null || additional.isEmpty()) {
+            return result;
+        }
+        List<BulletSpecialSpawnUtil.SpawnRequest> merged =
+                new ArrayList<>(result.spawnRequests().size() + additional.size());
+        merged.addAll(result.spawnRequests());
+        merged.addAll(additional);
+        return new BlockImpactResult(result.discardProjectile(), result.placedFire(), result.emp(), result.jolt(),
+                result.explosion(), result.shrapnel(), result.rainbow(), result.nuke(), result.specialBehavior(),
+                result.brokeOrDestroyedBlock(), result.shotDetonated(), result.extinguishedFire(),
+                Collections.unmodifiableList(merged));
     }
 
     public static EntityHurtResult applyEntityHurtEffects(BulletConfig config, Entity target) {
@@ -136,11 +180,14 @@ public final class BulletImpactUtil {
         if (config.hasBehavior(BulletBehaviorTag.FIRE_EXTINGUISH_ENTITY)) {
             extinguished = applyEntityExtinguish(target);
         }
-        if (config.hasBehavior(BulletBehaviorTag.ENTITY_IGNITE) && target instanceof LivingEntity living) {
+        if (config.hasBehavior(BulletBehaviorTag.ENTITY_IGNITE) && target instanceof LivingEntity living
+                && !skipsLegacyEntityIgnite(config)) {
             applyEntityIgnite(config, living);
             fire = true;
         }
-        if (config.incendiaryTicks() > 0) {
+        if (config.incendiaryTicks() > 0 && !hasAnyBehavior(config,
+                BulletBehaviorTag.INCENDIARY_EXPLODE,
+                BulletBehaviorTag.PHOSPHORUS_EXPLODE)) {
             target.setSecondsOnFire(config.incendiaryTicks());
             fire = true;
         }
@@ -211,7 +258,9 @@ public final class BulletImpactUtil {
     }
 
     private static boolean applyIncendiaryBlocks(BulletConfig config, Level level, Vec3 position) {
-        if (config.incendiaryTicks() <= 0) {
+        if (config.incendiaryTicks() <= 0 || hasAnyBehavior(config,
+                BulletBehaviorTag.INCENDIARY_EXPLODE,
+                BulletBehaviorTag.PHOSPHORUS_EXPLODE)) {
             return false;
         }
         BlockPos base = legacyCastPos(position.x, position.y, position.z);
@@ -223,6 +272,134 @@ public final class BulletImpactUtil {
         placed |= maybeSetFire(level, base.below());
         placed |= maybeSetFire(level, base.south());
         placed |= maybeSetFire(level, base.north());
+        return placed;
+    }
+
+    private static boolean applyLegacyExplosiveLingeringFire(BulletConfig config, Level level, Vec3 position) {
+        if (!hasAnyBehavior(config, BulletBehaviorTag.INCENDIARY_EXPLODE,
+                BulletBehaviorTag.PHOSPHORUS_EXPLODE)) {
+            return false;
+        }
+        LegacyLingeringFire fire = legacyLingeringFire(config);
+        if (fire == null) {
+            return false;
+        }
+        FireLingeringEntity entity = FireLingeringEntity.create(level, position.x, position.y, position.z,
+                fire.fireType(), fire.width(), fire.height(), fire.duration());
+        boolean spawned = level.addFreshEntity(entity);
+        boolean placed = placeLegacyLingeringFireBlocks(level, position, fire.blockRadius());
+        return spawned || placed;
+    }
+
+    @Nullable
+    private static LegacyLingeringFire legacyLingeringFire(BulletConfig config) {
+        boolean phosphorus = config.hasBehavior(BulletBehaviorTag.PHOSPHORUS_EXPLODE);
+        String legacyName = config.legacyName();
+        if (legacyName.startsWith("g40_")) {
+            return new LegacyLingeringFire(5.0F, 2.0F, phosphorus ? 400 : 200, 1,
+                    phosphorus ? FireLingeringEntity.TYPE_PHOSPHORUS : FireLingeringEntity.TYPE_DIESEL);
+        }
+        if (legacyName.startsWith("rocket_")) {
+            return new LegacyLingeringFire(6.0F, 2.0F, phosphorus ? 600 : 300, 2,
+                    phosphorus ? FireLingeringEntity.TYPE_PHOSPHORUS : FireLingeringEntity.TYPE_DIESEL);
+        }
+        return null;
+    }
+
+    private static boolean applyLegacyFlamerLingeringFire(BulletConfig config, Level level, Vec3 position,
+            @Nullable BlockPos hitBlock, boolean flameBlockIgnited) {
+        if (hitBlock == null) {
+            return false;
+        }
+        LegacyLingeringFire fire = legacyFlamerLingeringFire(config, flameBlockIgnited);
+        if (fire == null) {
+            return false;
+        }
+        FireLingeringEntity entity = FireLingeringEntity.create(level, position.x, position.y, position.z,
+                fire.fireType(), fire.width(), fire.height(), fire.duration());
+        AABB duplicateCheck = new AABB(position, position)
+                .inflate(fire.width() / 2.0D + 0.5D, fire.height() / 2.0D + 0.5D,
+                        fire.width() / 2.0D + 0.5D);
+        if (!level.getEntitiesOfClass(FireLingeringEntity.class, duplicateCheck).isEmpty()) {
+            return true;
+        }
+        return level.addFreshEntity(entity);
+    }
+
+    @Nullable
+    private static LegacyLingeringFire legacyFlamerLingeringFire(BulletConfig config, boolean flameBlockIgnited) {
+        String legacyName = config.legacyName();
+        if (legacyName.contains("_gas")) {
+            return null;
+        }
+        if (legacyName.startsWith("flame_daybreaker_diesel")) {
+            return new LegacyLingeringFire(6.0F, 2.0F, 200, 0, FireLingeringEntity.TYPE_DIESEL);
+        }
+        if (legacyName.startsWith("flame_daybreaker_napalm")) {
+            return new LegacyLingeringFire(6.0F, 2.0F, 300, 0, FireLingeringEntity.TYPE_DIESEL);
+        }
+        if (legacyName.startsWith("flame_daybreaker_balefire")) {
+            return new LegacyLingeringFire(7.5F, 2.5F, 400, 0, FireLingeringEntity.TYPE_BALEFIRE);
+        }
+        if (config.hasBehavior(BulletBehaviorTag.FLAME_LINGER_BALEFIRE)) {
+            return new LegacyLingeringFire(3.0F, 1.0F, 300, 0, FireLingeringEntity.TYPE_BALEFIRE);
+        }
+        if (flameBlockIgnited) {
+            return null;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.FLAME_LINGER_DIESEL)) {
+            return new LegacyLingeringFire(2.0F, 1.0F, 100, 0, FireLingeringEntity.TYPE_DIESEL);
+        }
+        if (config.hasBehavior(BulletBehaviorTag.FLAME_LINGER_NAPALM)) {
+            return new LegacyLingeringFire(2.5F, 1.0F, 200, 0, FireLingeringEntity.TYPE_DIESEL);
+        }
+        return null;
+    }
+
+    private static boolean applyLegacyBeamLingeringFire(BulletConfig config, Level level, Vec3 position,
+            @Nullable BlockPos hitBlock, boolean flameBlockIgnited) {
+        if (hitBlock == null) {
+            return false;
+        }
+        LegacyLingeringFire fire = legacyBeamLingeringFire(config, flameBlockIgnited);
+        if (fire == null) {
+            return false;
+        }
+        FireLingeringEntity entity = FireLingeringEntity.create(level, position.x, position.y, position.z,
+                fire.fireType(), fire.width(), fire.height(), fire.duration());
+        return level.addFreshEntity(entity);
+    }
+
+    @Nullable
+    private static LegacyLingeringFire legacyBeamLingeringFire(BulletConfig config, boolean flameBlockIgnited) {
+        if (config.hasBehavior(BulletBehaviorTag.BLACK_FIRE_BEAM_HIT)) {
+            return new LegacyLingeringFire(7.5F, 2.0F, 200, 0, FireLingeringEntity.TYPE_BLACK);
+        }
+        if (config.hasBehavior(BulletBehaviorTag.INFRARED_BEAM_HIT) && !flameBlockIgnited) {
+            return new LegacyLingeringFire(2.0F, 1.0F, 100, 0, FireLingeringEntity.TYPE_DIESEL);
+        }
+        return null;
+    }
+
+    private static boolean placeLegacyLingeringFireBlocks(Level level, Vec3 position, int radius) {
+        BlockPos center = legacyFloorPos(position.x, position.y, position.z);
+        boolean placed = false;
+        for (BlockPos pos : BlockPos.betweenClosed(center.offset(-radius, -radius, -radius),
+                center.offset(radius, radius, radius))) {
+            if (!level.getBlockState(pos).isAir()) {
+                continue;
+            }
+            for (Direction direction : Direction.values()) {
+                BlockPos neighbor = pos.relative(direction);
+                if (level.getBlockState(neighbor).isFlammable(level, neighbor, direction.getOpposite())) {
+                    BlockState fire = BaseFireBlock.getState(level, pos);
+                    if (fire.canSurvive(level, pos) && level.setBlock(pos, fire, 3)) {
+                        placed = true;
+                    }
+                    break;
+                }
+            }
+        }
         return placed;
     }
 
@@ -239,30 +416,40 @@ public final class BulletImpactUtil {
                 BulletBehaviorTag.FLAME_LINGER_DIESEL,
                 BulletBehaviorTag.FLAME_LINGER_GAS,
                 BulletBehaviorTag.FLAME_LINGER_NAPALM,
-                BulletBehaviorTag.FLAME_LINGER_BALEFIRE,
                 BulletBehaviorTag.INFRARED_BEAM_HIT)) {
             return false;
         }
+        boolean legacyFlamer = hasAnyBehavior(config,
+                BulletBehaviorTag.FLAME_LINGER_DIESEL,
+                BulletBehaviorTag.FLAME_LINGER_GAS,
+                BulletBehaviorTag.FLAME_LINGER_NAPALM,
+                BulletBehaviorTag.FLAME_LINGER_BALEFIRE);
+        if (legacyFlamer && config.legacyName().startsWith("flame_daybreaker_")) {
+            return false;
+        }
         BlockState hitState = level.getBlockState(hitBlock);
-        if (!hitState.isFlammable(level, hitBlock, hitSide)) {
+        Direction flammableSide = legacyFlamer ? hitSide.getOpposite() : hitSide;
+        if (!hitState.isFlammable(level, hitBlock, flammableSide)) {
             return false;
         }
         BlockPos firePos = hitBlock.relative(hitSide);
         if (!level.getBlockState(firePos).isAir()) {
             return false;
         }
-        BlockState fireState = config.hasBehavior(BulletBehaviorTag.FLAME_LINGER_BALEFIRE)
-                ? ModBlocks.BALEFIRE.get().defaultBlockState()
-                : BaseFireBlock.getState(level, firePos);
+        BlockState fireState = BaseFireBlock.getState(level, firePos);
         if (!fireState.canSurvive(level, firePos)) {
             return false;
         }
         boolean placed = level.setBlock(firePos, fireState, 3);
-        if (placed) {
+        if (placed && !legacyFlamer) {
             level.playSound(null, firePos, ModSounds.WEAPON_FLAMETHROWER_IGNITE.get(),
                     SoundSource.BLOCKS, 0.75F, 0.9F + level.random.nextFloat() * 0.2F);
         }
         return placed;
+    }
+
+    private static boolean skipsLegacyEntityIgnite(BulletConfig config) {
+        return config.legacyName().startsWith("flame_daybreaker_");
     }
 
     private static boolean applyEntityExtinguish(Entity target) {
@@ -279,6 +466,33 @@ public final class BulletImpactUtil {
             HbmLivingProperties.setBlackFire(living, 0);
         }
         return changed;
+    }
+
+    private static boolean applyFireExtinguisherRepair(BulletConfig config, Level level, @Nullable BlockPos hitBlock) {
+        HbmExtinguishType type = extinguisherRepairType(config);
+        if (type == null || hitBlock == null) {
+            return false;
+        }
+        BlockEntity core = CompatExternal.getCoreFromPos(level, hitBlock);
+        if (!(core instanceof HbmFluidRepairable repairable)) {
+            return false;
+        }
+        repairable.tryExtinguish(type);
+        return true;
+    }
+
+    @Nullable
+    private static HbmExtinguishType extinguisherRepairType(BulletConfig config) {
+        if (config.hasBehavior(BulletBehaviorTag.FIRE_EXTINGUISH_WATER)) {
+            return HbmExtinguishType.WATER;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.FIRE_EXTINGUISH_FOAM)) {
+            return HbmExtinguishType.FOAM;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.FIRE_EXTINGUISH_SAND)) {
+            return HbmExtinguishType.SAND;
+        }
+        return null;
     }
 
     private static void applyEntityIgnite(BulletConfig config, LivingEntity target) {
@@ -368,14 +582,22 @@ public final class BulletImpactUtil {
         return true;
     }
 
-    private static boolean applyExplosion(BulletConfig config, Level level, Vec3 position, @Nullable Entity source) {
+    private static boolean applyExplosion(BulletConfig config, Level level, Vec3 position, @Nullable Entity source,
+            @Nullable Direction hitSide, float impactDamage) {
+        if (applyMiniNukeImpact(config, level, position, impactDamage)) {
+            return true;
+        }
+        if (applyLegacySpecialVntImpact(config, level, position, source, impactDamage)) {
+            return true;
+        }
         if (config.explosive() <= 0.0F) {
             return false;
         }
         if (hasAnyBehavior(config, BulletBehaviorTag.TINY_EXPLODE,
                 BulletBehaviorTag.GRENADE_TINY_EXPLOSIVE_PELLET)) {
-            WeaponExplosionUtil.explodeTinySmooth(level, position.x, position.y, position.z,
-                    config.explosive(), source, fixedExplosionDamage(config), 0.5D,
+            Vec3 explosionPosition = tinyExplosionPosition(position, hitSide);
+            WeaponExplosionUtil.explodeTinySmooth(level, explosionPosition.x, explosionPosition.y, explosionPosition.z,
+                    config.explosive(), source, Math.max(1.0F, impactDamage), 0.5D,
                     config.armorThresholdNegation(), config.armorPiercingPercent(), 0.25D);
             return true;
         }
@@ -386,7 +608,7 @@ public final class BulletImpactUtil {
                 BulletBehaviorTag.MINI_NUKE_DEMO,
                 BulletBehaviorTag.MINI_NUKE_BALEFIRE)) {
             WeaponExplosionUtil.smooth(level, position.x, position.y, position.z,
-                    config.explosive(), source, fixedExplosionDamage(config), 1.0D, true,
+                    config.explosive(), source, Math.max(1.0F, impactDamage), 1.0D, true,
                     config.armorThresholdNegation(), config.armorPiercingPercent()).explode();
             return true;
         }
@@ -399,13 +621,152 @@ public final class BulletImpactUtil {
                 BulletBehaviorTag.MINI_NUKE_TINYTOT,
                 BulletBehaviorTag.MINI_NUKE_HIVE)) {
             WeaponExplosionUtil.smooth(level, position.x, position.y, position.z,
-                    config.explosive(), source, fixedExplosionDamage(config), 1.0D, false,
+                    config.explosive(), source, Math.max(1.0F, impactDamage), 1.0D, false,
                     config.armorThresholdNegation(), config.armorPiercingPercent()).explode();
             return true;
         }
         WeaponExplosionUtil.explodeStandard(level, position.x, position.y, position.z, config.explosive(), source,
                 config.blockDamage(), config.incendiaryTicks() > 0);
         return true;
+    }
+
+    private static Vec3 tinyExplosionPosition(Vec3 position, @Nullable Direction hitSide) {
+        if (hitSide == null) {
+            return position;
+        }
+        return position.add(hitSide.getStepX() * 0.25D, hitSide.getStepY() * 0.25D,
+                hitSide.getStepZ() * 0.25D);
+    }
+
+    private static boolean applyLegacySpecialVntImpact(BulletConfig config, Level level, Vec3 position,
+            @Nullable Entity source, float impactDamage) {
+        String legacyName = config.legacyName();
+        if ("cluster_submunition".equals(legacyName)) {
+            explodeLegacyBlockVnt(level, position, source, 7.5F, 1.0D, impactDamage);
+            return true;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.DEMO_EXPLODE)) {
+            explodeLegacyBlockVnt(level, position, source, config.explosive(), 1.0D, impactDamage);
+            return true;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.TURRET_240_VNT_EXPLODE)) {
+            explodeLegacyBlockVnt(level, position, source, 10.0F, 1.0D, impactDamage);
+            return true;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.CHARGE_MORTAR_EXPLODE)) {
+            ExplosionVnt explosion = new ExplosionVnt(level, position.x, position.y, position.z, 5.0F, source);
+            explosion.setBlockAllocator(new BlockAllocatorBulkie(60.0D, 8))
+                    .setBlockProcessor(new BlockProcessorStandard())
+                    .setEntityProcessor(new EntityProcessorCrossSmooth(1.0D, Math.max(1.0F, impactDamage))
+                            .setupPiercing(config.armorThresholdNegation(), config.armorPiercingPercent()))
+                    .setPlayerProcessor(new PlayerProcessorStandard())
+                    .setEffects(new ExplosionEffectWeapon(10, 2.5F, 1.0F))
+                    .explode();
+            return true;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.CHARGE_MORTAR_CHARGE_EXPLODE)) {
+            BlockProcessorStandard processor = new BlockProcessorStandard().setNoDrop();
+            processor.withBlockEffect(new BlockMutatorDebris(ModBlocks.legacyBlock("block_slag").get()));
+            ParticleUtil.spawnLegacyExplosionSmall(level, position.x, position.y + 0.5D, position.z);
+            ExplosionVnt explosion = new ExplosionVnt(level, position.x, position.y, position.z, 15.0F, source);
+            explosion.setBlockAllocator(new BlockAllocatorStandard())
+                    .setBlockProcessor(processor)
+                    .setEntityProcessor(new EntityProcessorCrossSmooth(1.0D, Math.max(1.0F, impactDamage))
+                            .setupPiercing(config.armorThresholdNegation(), config.armorPiercingPercent()))
+                    .setPlayerProcessor(new PlayerProcessorStandard())
+                    .explode();
+            return true;
+        }
+        return false;
+    }
+
+    private static void explodeLegacyBlockVnt(Level level, Vec3 position, @Nullable Entity source, float radius,
+            double nodeDistance, float damage) {
+        EntityProcessorCrossSmooth entityProcessor =
+                new EntityProcessorCrossSmooth(nodeDistance, Math.max(1.0F, damage));
+        new ExplosionVnt(level, position.x, position.y, position.z, radius, source)
+                .setBlockAllocator(new BlockAllocatorStandard())
+                .setBlockProcessor(new BlockProcessorStandard())
+                .setEntityProcessor(entityProcessor)
+                .setPlayerProcessor(new PlayerProcessorStandard())
+                .setEffects(new ExplosionEffectWeapon(10, 2.5F, 1.0F))
+                .explode();
+    }
+
+    private static boolean applyMiniNukeImpact(BulletConfig config, Level level, Vec3 position, float impactDamage) {
+        if (config.hasBehavior(BulletBehaviorTag.MINI_NUKE_STANDARD)) {
+            explodeMiniNukeVnt(level, position, 10.0F, 2.0D, impactDamage, false, false);
+            incrementMiniNukeRadiation(level, position, 1.0F);
+            spawnMiniNukeMush(level, position, false);
+            return true;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.MINI_NUKE_DEMO)) {
+            explodeMiniNukeVnt(level, position, 15.0F, 2.0D, impactDamage, true, false);
+            incrementMiniNukeRadiation(level, position, 1.5F);
+            spawnMiniNukeMush(level, position, false);
+            return true;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.MINI_NUKE_TINYTOT)) {
+            explodeMiniNukeVnt(level, position, 5.0F, 2.0D, impactDamage, false, false);
+            incrementMiniNukeRadiation(level, position, 0.25F);
+            spawnMiniNukeTinyTot(level, position);
+            return true;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.MINI_NUKE_HIVE)) {
+            explodeMiniNukeVnt(level, position, 5.0F, 1.0D, impactDamage, false, true);
+            return true;
+        }
+        if (config.hasBehavior(BulletBehaviorTag.MINI_NUKE_BALEFIRE)) {
+            explodeMiniNukeVnt(level, position, 10.0F, 2.0D, impactDamage, true, true);
+            incrementMiniNukeRadiation(level, position, 1.5F);
+            spawnMiniNukeMush(level, position, true);
+            return true;
+        }
+        return false;
+    }
+
+    private static void explodeMiniNukeVnt(Level level, Vec3 position, float radius, double nodeDistance,
+            float damage, boolean blockDamage, boolean specialEffect) {
+        ExplosionVnt explosion = new ExplosionVnt(level, position.x, position.y, position.z, radius);
+        if (blockDamage) {
+            explosion.setBlockAllocator(new BlockAllocatorStandard(64));
+            explosion.setBlockProcessor(new BlockProcessorStandard().withBlockEffect(specialEffect
+                    ? new BlockMutatorBalefire()
+                    : new BlockMutatorFire()));
+        }
+        explosion.setEntityProcessor(new EntityProcessorCrossSmooth(nodeDistance, Math.max(1.0F, damage))
+                .withRangeMod(1.5F))
+                .setPlayerProcessor(new PlayerProcessorStandard());
+        if (specialEffect && !blockDamage) {
+            explosion.setEffects(new ExplosionEffectWeapon(10, 2.5F, 1.0F));
+        }
+        explosion.explode();
+    }
+
+    private static void incrementMiniNukeRadiation(Level level, Vec3 position, float multiplier) {
+        for (int x = -2; x <= 2; x++) {
+            for (int z = -2; z <= 2; z++) {
+                int distance = Math.abs(x) + Math.abs(z);
+                if (distance < 4) {
+                    float radiation = 50.0F / (distance + 1.0F) * multiplier;
+                    ChunkRadiationManager.incrementRadiation(level,
+                            BlockPos.containing(Math.floor(position.x + x * 16.0D),
+                                    Math.floor(position.y), Math.floor(position.z + z * 16.0D)),
+                            radiation);
+                }
+            }
+        }
+    }
+
+    private static void spawnMiniNukeMush(Level level, Vec3 position, boolean balefire) {
+        LegacySoundPlayer.playLegacyMukeExplosion(level, position.x, position.y + 0.5D, position.z);
+        ParticleUtil.spawnMuke(level, position.x, position.y + 0.5D, position.z,
+                balefire || level.random.nextInt(100) == 0);
+    }
+
+    private static void spawnMiniNukeTinyTot(Level level, Vec3 position) {
+        LegacySoundPlayer.playLegacyMukeExplosion(level, position.x, position.y + 0.5D, position.z);
+        ParticleUtil.spawnTinyTot(level, position.x, position.y + 0.5D, position.z);
     }
 
     private static float fixedExplosionDamage(BulletConfig config) {
@@ -436,8 +797,8 @@ public final class BulletImpactUtil {
         boolean spawned = NuclearExplosionUtil.spawnFleijaRainbow(level, position.x, position.y, position.z,
                 config.rainbow(), config.rainbow());
         if (spawned) {
-            level.playSound(null, position.x, position.y, position.z, SoundEvents.GENERIC_EXPLODE,
-                    SoundSource.BLOCKS, 100.0F, level.random.nextFloat() * 0.1F + 0.9F);
+            LegacySoundPlayer.playSoundEffectRandomPitch(level, position, "random.explode",
+                    SoundSource.BLOCKS, 100.0F, 0.9F, 0.1F);
         }
         return spawned;
     }
@@ -446,13 +807,15 @@ public final class BulletImpactUtil {
         if (config.nuke() <= 0) {
             return false;
         }
+        if (config.hasBehavior(BulletBehaviorTag.FOLLY_NUKE_IMPACT)) {
+            return NuclearExplosionUtil.spawnNuclear(level, config.nuke(), position.x, position.y, position.z);
+        }
         boolean spawned = level.addFreshEntity(NukeExplosionMk5Entity.statFac(level, config.nuke(),
                 position.x, position.y, position.z));
         if (spawned) {
             ParticleUtil.spawnMuke(level, position.x, position.y + 0.5D, position.z,
                     level.random.nextInt(100) == 0);
-            level.playSound(null, position.x, position.y, position.z, ModSounds.WEAPON_MUKE_EXPLOSION.get(),
-                    SoundSource.BLOCKS, 15.0F, 1.0F);
+            LegacySoundPlayer.playLegacyMukeExplosion(level, position.x, position.y, position.z);
         }
         return spawned;
     }
@@ -498,10 +861,8 @@ public final class BulletImpactUtil {
                         .setDamageClass(DamageClass.ELECTRIC))
                 .setPlayerProcessor(new PlayerProcessorStandard())
                 .explode();
-        level.playSound(null, position.x, position.y, position.z, ModSounds.ENTITY_UFO_BLAST.get(),
-                SoundSource.BLOCKS, 5.0F, 0.9F + level.random.nextFloat() * 0.2F);
-        level.playSound(null, position.x, position.y, position.z, SoundEvents.FIREWORK_ROCKET_BLAST,
-                SoundSource.BLOCKS, 5.0F, 0.5F);
+        LegacySoundPlayer.playLegacyUfoBlast(level, position, 5.0F, 0.9F, 0.2F);
+        LegacySoundPlayer.playLegacyFireworksBlast(level, position, 5.0F, 0.5F);
 
         float yaw = level.random.nextFloat() * 180.0F;
         for (int i = 0; i < 3; i++) {
@@ -521,8 +882,7 @@ public final class BulletImpactUtil {
                 .setPlayerProcessor(new PlayerProcessorStandard())
                 .setEffects(new ExplosionEffectStandard())
                 .explode();
-        level.playSound(null, position.x, position.y, position.z, ModSounds.ENTITY_UFO_BLAST.get(),
-                SoundSource.BLOCKS, 5.0F, 0.9F + level.random.nextFloat() * 0.2F);
+        LegacySoundPlayer.playLegacyUfoBlast(level, position, 5.0F, 0.9F, 0.2F);
     }
 
     public static void applyShredderPulse(Level level, Vec3 position, @Nullable Direction hitSide) {
@@ -580,10 +940,8 @@ public final class BulletImpactUtil {
         if (level == null || level.isClientSide() || position == null) {
             return;
         }
-        level.playSound(null, position.x, position.y, position.z, ModSounds.ENTITY_UFO_BLAST.get(),
-                SoundSource.BLOCKS, 5.0F, 0.9F + level.random.nextFloat() * 0.2F);
-        level.playSound(null, position.x, position.y, position.z, SoundEvents.FIREWORK_ROCKET_BLAST,
-                SoundSource.BLOCKS, 5.0F, 0.5F);
+        LegacySoundPlayer.playLegacyUfoBlast(level, position, 5.0F, 0.9F, 0.2F);
+        LegacySoundPlayer.playLegacyFireworksBlast(level, position, 5.0F, 0.5F);
         ExplosionNukeGeneric.dealDamage(level, position.x, position.y, position.z, 10.0D, 50.0F);
 
         for (int i = 0; i < 3; i++) {
@@ -662,6 +1020,9 @@ public final class BulletImpactUtil {
 
     private record BlockBreakResult(boolean destroyedBlock, boolean brokeGlass, boolean shotDetonated) {
         private static final BlockBreakResult NONE = new BlockBreakResult(false, false, false);
+    }
+
+    private record LegacyLingeringFire(float width, float height, int duration, int blockRadius, int fireType) {
     }
 
     private BulletImpactUtil() {

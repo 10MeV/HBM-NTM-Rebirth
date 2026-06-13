@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "GHG",
+    "GRG",
+    "GTG"
+  ],
+  "key": {
+    "G": {
+      "item": "hbm_ntm_rebirth:steel_grate"
+    },
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:rbmk_blank"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:tank_steel"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_outgasser"
+  },
+  "show_notification": true
+}

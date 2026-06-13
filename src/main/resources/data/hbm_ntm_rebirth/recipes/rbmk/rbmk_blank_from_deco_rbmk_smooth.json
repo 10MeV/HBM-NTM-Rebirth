@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "RRR",
+    "R R",
+    "RRR"
+  ],
+  "key": {
+    "R": {
+      "item": "hbm_ntm_rebirth:deco_rbmk_smooth"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_blank"
+  },
+  "show_notification": true
+}

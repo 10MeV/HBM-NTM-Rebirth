@@ -19,10 +19,11 @@ import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.item.missile.MissileItem;
 import com.hbm.ntm.menu.LaunchPadMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -126,6 +127,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (changed) {
             launchPad.setChanged();
         }
+        launchPad.networkPackNT(250);
         if (changed || level.getGameTime() % 20L == 0L) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -135,21 +137,13 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (!level.isClientSide) {
             return;
         }
-        if (level.getGameTime() % 4L != 0L
-                || level.getEntitiesOfClass(MissileEntity.class,
+        if (level.getEntitiesOfClass(MissileEntity.class,
                         new net.minecraft.world.phys.AABB(pos.getX() - 0.5D, pos.getY(), pos.getZ() - 0.5D,
                                 pos.getX() + 1.5D, pos.getY() + 10.0D, pos.getZ() + 1.5D)).isEmpty()) {
             return;
         }
-        for (int i = 0; i < 4; i++) {
-            level.addParticle(com.hbm.ntm.registry.ModParticleTypes.LAUNCH_SMOKE.get(),
-                    pos.getX() + 0.5D,
-                    pos.getY() + 0.25D,
-                    pos.getZ() + 0.5D,
-                    (level.random.nextGaussian() * 0.15D + 0.75D) * (level.random.nextBoolean() ? 1.0D : -1.0D),
-                    0.0D,
-                    (level.random.nextGaussian() * 0.15D + 0.75D) * (level.random.nextBoolean() ? 1.0D : -1.0D));
-        }
+        Direction facing = state.hasProperty(LaunchPadBlock.FACING) ? state.getValue(LaunchPadBlock.FACING) : Direction.NORTH;
+        ParticleUtil.spawnLaunchPadSmokeBurst(level, pos, facing, true);
     }
 
     private boolean tickMachine(Level level, BlockPos pos, BlockState blockState) {
@@ -358,7 +352,8 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private void finalizeLaunch(ServerLevel level, Entity missile) {
         level.addFreshEntity(missile);
-        level.playSound(null, worldPosition, ModSounds.WEAPON_MISSILE_TAKE_OFF.get(), SoundSource.PLAYERS, 2.0F, 1.0F);
+        LegacySoundPlayer.playSoundEffect(level, worldPosition.getX() + 0.5D, worldPosition.getY(),
+                worldPosition.getZ() + 0.5D, "hbm:weapon.missileTakeOff", SoundSource.PLAYERS, 2.0F, 1.0F);
         energy.setPower(Math.max(0L, energy.getPower() - LAUNCH_POWER));
         ItemStack stack = items.getStackInSlot(SLOT_MISSILE);
         if (stack.getItem() instanceof MissileItem missileItem && missileItem.fuel() != MissileItem.Fuel.SOLID) {

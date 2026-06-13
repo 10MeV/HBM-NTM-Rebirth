@@ -24,7 +24,14 @@ public class FsbPoweredArmorItem extends FsbArmorItem implements FsbPoweredArmor
 
     public FsbPoweredArmorItem(HbmArmorMaterials material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, long baseMaxCharge, long chargeRate, long consumption, long drain) {
-        super(material, type, properties, fullSetEffects);
+        this(material, type, properties, fullSetEffects, baseMaxCharge, chargeRate, consumption, drain,
+                FullSetTraits.NONE);
+    }
+
+    public FsbPoweredArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+            List<FullSetEffect> fullSetEffects, long baseMaxCharge, long chargeRate, long consumption, long drain,
+            FullSetTraits fullSetTraits) {
+        super(material, type, properties, fullSetEffects, false, 0, fullSetTraits);
         this.baseMaxCharge = Math.max(0L, baseMaxCharge);
         this.chargeRate = Math.max(0L, chargeRate);
         this.consumption = Math.max(0L, consumption);

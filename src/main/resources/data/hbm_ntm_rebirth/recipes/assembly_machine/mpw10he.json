@@ -1,0 +1,49 @@
+﻿{
+    "type":  "hbm_ntm_rebirth:assembly_machine",
+    "internal_name":  "ass.mpw10he",
+    "duration":  100,
+    "power":  100,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:seg_10"
+                                           },
+                            "count":  1
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:plates/steel"
+                                           },
+                            "count":  6,
+                            "legacy_ore":  "plateSteel"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:ingots/any_high_explosive"
+                                           },
+                            "count":  3,
+                            "legacy_ore":  "ingotAnyHighExplosive"
+                        },
+                        {
+                            "ingredient":  {
+                                               "tag":  "forge:circuits/basic"
+                                           },
+                            "count":  1
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "hbm_ntm_rebirth:mp_warhead_10_he"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  303
+}

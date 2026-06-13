@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.mancore",
+  "duration": 1200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:nuggets/pu239" }, "count": 8, "legacy_ore": "nuggetPu239" },
+    { "ingredient": { "tag": "forge:nuggets/beryllium" }, "count": 2, "legacy_ore": "nuggetBeryllium" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:man_core" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 221
+}

@@ -121,6 +121,25 @@ public final class HbmFluidNodespace {
                 fluidNet.createDebugSnapshot());
     }
 
+    public static NetworkPressureBalanceSnapshot getNetworkPressureBalanceSnapshot(
+            Level level, BlockPos pos, FluidType type) {
+        HbmFluidNode node = getNode(level, pos, type);
+        if (node == null) {
+            return NetworkPressureBalanceSnapshot.missing(pos, normalize(type));
+        }
+        HbmFluidNet fluidNet = node.getFluidNet();
+        if (fluidNet == null) {
+            return NetworkPressureBalanceSnapshot.noNetwork(
+                    pos, normalize(type), describeConnections(node), node.isRecentlyChanged());
+        }
+        return NetworkPressureBalanceSnapshot.present(
+                pos,
+                normalize(type),
+                describeConnections(node),
+                node.isRecentlyChanged(),
+                fluidNet.createPressureBalanceSnapshot());
+    }
+
     public static OverpressureDamageResult damageNetworkFromOverpressure(Level level, BlockPos pos, FluidType type) {
         HbmFluidNode node = getNode(level, pos, type);
         FluidType normalized = normalize(type);
@@ -291,6 +310,35 @@ public final class HbmFluidNodespace {
 
         private static NetworkDebugSnapshot present(BlockPos pos, FluidType type, String connections, boolean recentlyChanged, HbmFluidNet.DebugSnapshot network) {
             return new NetworkDebugSnapshot(pos, type.getName(), true, connections, recentlyChanged, true, network);
+        }
+    }
+
+    public record NetworkPressureBalanceSnapshot(
+            BlockPos pos,
+            String fluid,
+            boolean nodePresent,
+            String nodeConnections,
+            boolean recentlyChanged,
+            boolean networkPresent,
+            HbmFluidNet.PressureBalanceSnapshot network) {
+        private static NetworkPressureBalanceSnapshot missing(BlockPos pos, FluidType type) {
+            return new NetworkPressureBalanceSnapshot(pos, type.getName(), false, "none", false, false, null);
+        }
+
+        private static NetworkPressureBalanceSnapshot noNetwork(
+                BlockPos pos, FluidType type, String connections, boolean recentlyChanged) {
+            return new NetworkPressureBalanceSnapshot(
+                    pos, type.getName(), true, connections, recentlyChanged, false, null);
+        }
+
+        private static NetworkPressureBalanceSnapshot present(
+                BlockPos pos,
+                FluidType type,
+                String connections,
+                boolean recentlyChanged,
+                HbmFluidNet.PressureBalanceSnapshot network) {
+            return new NetworkPressureBalanceSnapshot(
+                    pos, type.getName(), true, connections, recentlyChanged, true, network);
         }
     }
 

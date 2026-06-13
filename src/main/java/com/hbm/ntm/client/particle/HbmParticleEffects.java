@@ -171,6 +171,14 @@ public final class HbmParticleEffects {
         }
     }
 
+    public static boolean isLocalPlayerWithin(double x, double y, double z, double range) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) {
+            return false;
+        }
+        return player.distanceToSqr(x, y, z) < range * range;
+    }
+
     public static void burst(BlockPos pos, BlockState state) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level != null && state != null) {

@@ -345,7 +345,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
             case ASSEMBLY_MACHINE -> new ItemStack(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get());
             case CHEMICAL_PLANT -> new ItemStack(ModBlocks.MACHINE_CHEMICAL_PLANT.get());
             case PUREX -> new ItemStack(ModBlocks.MACHINE_PUREX.get());
-            case PRECASS -> new ItemStack(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get());
+            case PRECASS -> new ItemStack(ModBlocks.MACHINE_PRECASS.get());
             case ARC_WELDER -> new ItemStack(ModBlocks.MACHINE_ARC_WELDER.get());
         };
     }

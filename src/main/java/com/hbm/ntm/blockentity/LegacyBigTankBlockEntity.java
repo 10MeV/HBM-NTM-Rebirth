@@ -37,6 +37,11 @@ public abstract class LegacyBigTankBlockEntity extends FluidTankBlockEntity {
     }
 
     @Override
+    protected int legacyNetworkPackRange() {
+        return 50;
+    }
+
+    @Override
     public boolean isExploded() {
         return false;
     }

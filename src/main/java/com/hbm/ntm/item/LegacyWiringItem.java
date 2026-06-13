@@ -63,7 +63,7 @@ public class LegacyWiringItem extends Item {
                 HbmLegacyPowerNodeShapes.WireConnectionResult result = start.node().connectWireTo(target.node());
                 player.sendSystemMessage(Component.literal(messageFor(result)));
             }
-            stack.setTag(null);
+            clearStoredPos(stack);
         }
 
         player.swing(context.getHand(), true);
@@ -101,12 +101,35 @@ public class LegacyWiringItem extends Item {
 
     @Nullable
     private static WireNodeLookup resolveWireNode(Level level, BlockPos pos) {
+        if (!isLoadedBlock(level, pos)) {
+            return null;
+        }
         BlockPos corePos = MultiblockHelper.resolveCorePos(level, pos);
+        if (!isLoadedBlock(level, corePos)) {
+            return null;
+        }
         BlockEntity blockEntity = level.getBlockEntity(corePos);
         if (blockEntity instanceof HbmLegacyWireNode wireNode) {
             return new WireNodeLookup(corePos, wireNode);
         }
         return null;
+    }
+
+    private static void clearStoredPos(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        if (tag == null) {
+            return;
+        }
+        tag.remove(TAG_X);
+        tag.remove(TAG_Y);
+        tag.remove(TAG_Z);
+        if (tag.isEmpty()) {
+            stack.setTag(null);
+        }
+    }
+
+    private static boolean isLoadedBlock(Level level, BlockPos pos) {
+        return level != null && pos != null && level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4);
     }
 
     private static String messageFor(HbmLegacyPowerNodeShapes.WireConnectionResult result) {

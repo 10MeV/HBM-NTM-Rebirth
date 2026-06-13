@@ -2,6 +2,8 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.config.AshpitConfig;
 import com.hbm.ntm.menu.AshpitMenu;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmInventoryUtil;
@@ -10,6 +12,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -28,7 +31,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AshpitBlockEntity extends BlockEntity implements MenuProvider {
+public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyLoadedTile {
     public static final int SLOT_COUNT = 5;
 
     private static final String TAG_ASH_WOOD = "ashLevelWood";
@@ -49,6 +52,7 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider {
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
 
     private int ashLevelWood;
     private int ashLevelCoal;
@@ -73,6 +77,12 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider {
         if (changed) {
             ashpit.setChanged();
         }
+        ashpit.networkPackNT(50);
+    }
+
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
     }
 
     public ItemStackHandler getItems() {
@@ -163,6 +173,7 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider {
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
         tag.putInt(TAG_ASH_WOOD, ashLevelWood);
         tag.putInt(TAG_ASH_COAL, ashLevelCoal);
@@ -174,12 +185,36 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider {
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
         ashLevelWood = tag.getInt(TAG_ASH_WOOD);
         ashLevelCoal = tag.getInt(TAG_ASH_COAL);
         ashLevelMisc = tag.getInt(TAG_ASH_MISC);
         ashLevelFly = tag.getInt(TAG_ASH_FLY);
         ashLevelSoot = tag.getInt(TAG_ASH_SOOT);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        return saveWithoutMetadata();
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        load(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeNbt(saveWithoutMetadata());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            load(tag);
+        }
     }
 
     @Override

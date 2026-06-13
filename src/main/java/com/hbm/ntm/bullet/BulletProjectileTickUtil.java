@@ -66,7 +66,7 @@ public final class BulletProjectileTickUtil {
 
         BulletUpdateBehaviorUtil.KnownUpdateResult update =
                 BulletUpdateBehaviorUtil.applyKnownPreMoveUpdate(config, projectile, shooter, motion,
-                        currentHomingTarget, previousPosition, acceleration);
+                        currentHomingTarget, previousPosition, acceleration, overrideDamage);
         Vec3 updatedMotion = update.motion();
         float updatedAcceleration = update.acceleration();
         BulletKinematicsUtil.LifetimeCheck lifetime = BulletKinematicsUtil.checkLifetime(config, ticksExisted);

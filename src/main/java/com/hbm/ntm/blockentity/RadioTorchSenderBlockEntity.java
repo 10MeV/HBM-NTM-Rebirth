@@ -26,5 +26,6 @@ public class RadioTorchSenderBlockEntity extends RadioTorchDeviceBlockEntity {
         if (decision.stateChanged() || decision.shouldBroadcast()) {
             torch.setChangedAndSync(false);
         }
+        torch.networkPackLegacyRadioTorch();
     }
 }

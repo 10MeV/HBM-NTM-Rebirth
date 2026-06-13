@@ -23,7 +23,7 @@ public class HbmCreativeBatteryItem extends HbmBatteryItem {
 
     @Override
     public long chargeBattery(ItemStack stack, long amount) {
-        return 0L;
+        return Math.max(0L, Math.min(amount, getChargeRate(stack)));
     }
 
     @Override

@@ -1,0 +1,24 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.shuttlemissile",
+  "duration": 200,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:missile_generic" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:missile_strong" }, "count": 1 },
+    { "ingredient": { "tag": "forge:dyes/orange" }, "count": 5, "legacy_ore": "dyeOrange" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:canister_full" }, "count": 24, "fluid_container": { "fluid": "hbm_ntm_rebirth:gasoline_leaded", "amount": 1000 } },
+    { "ingredient": { "tag": "forge:ingots/fiberglass" }, "count": 12, "legacy_ore": "ingotFiberglass" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_basic" }, "count": 3, "legacy_id": "hbm:circuit", "legacy_meta": 8 },
+    { "ingredient": { "tag": "forge:ingots/any_plastic_explosive" }, "count": 8, "legacy_ore": "ingotAnyPlasticExplosive" },
+    { "ingredient": { "tag": "forge:glass_panes" }, "count": 6, "legacy_ore": "paneGlass" },
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 4, "legacy_ore": "plateSteel" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:missile_shuttle" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 267
+}

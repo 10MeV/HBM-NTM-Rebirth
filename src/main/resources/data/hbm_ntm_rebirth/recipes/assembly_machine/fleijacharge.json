@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "internal_name": "ass.fleijacharge",
+  "duration": 300,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:ingots/any_high_explosive" }, "count": 3, "legacy_ore": "ingotAnyHighExplosive" },
+    { "ingredient": { "tag": "forge:plates/schrabidium" }, "count": 8, "legacy_ore": "plateSchrabidium" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:fleija_propellant" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 227
+}

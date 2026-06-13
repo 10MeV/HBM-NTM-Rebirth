@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "GGG",
+    "GRG",
+    "GGG"
+  ],
+  "key": {
+    "G": {
+      "tag": "forge:ingots/boron"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:rbmk_blank"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_absorber"
+  },
+  "show_notification": true
+}

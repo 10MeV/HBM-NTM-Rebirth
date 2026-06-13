@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "CPC",
+    "CRC",
+    "CPC"
+  ],
+  "key": {
+    "C": {
+      "tag": "forge:pipes/copper"
+    },
+    "P": {
+      "tag": "forge:shells/copper"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:rbmk_blank"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:rbmk_boiler"
+  },
+  "show_notification": true
+}

@@ -14,7 +14,7 @@ public final class HbmEnergyNodespace {
             new HbmNodespace<BlockPos, HbmEnergyNode, HbmPowerNet>(
             HbmEnergyNode::getPositions,
             (node, connection) -> connection.pos(),
-            node -> new HbmPowerNet(),
+            node -> new PowerNetMK2(),
             HbmPowerNet::resetTrackers,
             HbmPowerNet::update,
             BlockPos::immutable);
@@ -23,6 +23,9 @@ public final class HbmEnergyNodespace {
     }
 
     public static HbmEnergyNode getNode(Level level, BlockPos pos) {
+        if (!isLoadedBlock(level, pos)) {
+            return null;
+        }
         return NODESPACE.getNode(level, pos);
     }
 
@@ -32,6 +35,16 @@ public final class HbmEnergyNodespace {
 
     public static void destroyNode(Level level, BlockPos pos) {
         NODESPACE.destroyNode(level, pos);
+    }
+
+    public static void destroyNode(Level level, HbmEnergyNode node) {
+        if (level == null || node == null) {
+            return;
+        }
+        for (BlockPos pos : node.getPositions()) {
+            NODESPACE.destroyNode(level, pos);
+            return;
+        }
     }
 
     public static void unloadLevel(Level level) {
@@ -120,9 +133,16 @@ public final class HbmEnergyNodespace {
     }
 
     public static boolean markNodeAndNeighborsChanged(Level level, BlockPos pos) {
+        if (!isLoadedBlock(level, pos)) {
+            return false;
+        }
         boolean marked = NODESPACE.markNodeAndConnectionNeighborsChanged(level, pos);
         for (Direction direction : Direction.values()) {
-            HbmEnergyNode neighbor = NODESPACE.getNode(level, pos.relative(direction));
+            BlockPos neighborPos = pos.relative(direction);
+            if (!isLoadedBlock(level, neighborPos)) {
+                continue;
+            }
+            HbmEnergyNode neighbor = NODESPACE.getNode(level, neighborPos);
             if (neighbor != null) {
                 neighbor.markRecentlyChanged();
                 marked = true;
@@ -188,7 +208,14 @@ public final class HbmEnergyNodespace {
     }
 
     private static HbmPowerNet getPowerNet(Level level, BlockPos pos) {
+        if (!isLoadedBlock(level, pos)) {
+            return null;
+        }
         return NODESPACE.getNetwork(level, pos);
+    }
+
+    private static boolean isLoadedBlock(Level level, BlockPos pos) {
+        return level != null && pos != null && level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4);
     }
 
     private static String describeConnections(HbmEnergyNode node) {
